@@ -42,6 +42,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
 import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 
 @Slf4j
@@ -49,9 +50,10 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
         type = ComponentType.ACTION,
         name = "copy attributes",
         configClazz = EmptyNodeConfiguration.class,
-        nodeDescription = "Copy attributes from asset/device to entity view",
+        nodeDescription = "Copy attributes from asset/device to entity view and changes message originator to related entity view",
         nodeDetails = "Copy attributes from asset/device to related entity view according to entity view configuration. \n " +
-                "Copy will be done only for attributes that are between start and end dates and according to attribute keys configuration",
+                "Copy will be done only for attributes that are between start and end dates and according to attribute keys configuration. \n" +
+                "Changes message originator to related entity view and produces new messages according to count of updated entity views",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbNodeEmptyConfig",
         icon = "content_copy"
@@ -110,7 +112,8 @@ public class TbCopyAttributesToEntityViewNode implements TbNode {
                                         new FutureCallback<Void>() {
                                             @Override
                                             public void onSuccess(@Nullable Void result) {
-                                                ctx.tellNext(msg, SUCCESS);
+                                                TbMsg updMsg = ctx.transformMsg(msg, msg.getType(), entityView.getId(), msg.getMetaData(), msg.getData());
+                                                ctx.tellNext(updMsg, SUCCESS);
                                             }
 
                                             @Override
@@ -123,7 +126,7 @@ public class TbCopyAttributesToEntityViewNode implements TbNode {
                     },
                     t -> ctx.tellFailure(msg, t));
         } else {
-            ctx.tellNext(msg, TbRelationTypes.FAILURE);
+            ctx.tellNext(msg, FAILURE);
         }
     }
 

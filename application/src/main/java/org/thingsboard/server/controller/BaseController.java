@@ -318,7 +318,7 @@ public abstract class BaseController {
                     checkUserId(new UserId(entityId.getId()));
                     return;
                 case ENTITY_VIEW:
-                    checkEntityViewId(entityViewService.findEntityViewById(new EntityViewId(entityId.getId())));
+                    checkEntityView(entityViewService.findEntityViewById(new EntityViewId(entityId.getId())));
                     return;
                 default:
                     throw new IllegalArgumentException("Unsupported entity type: " + entityId.getEntityType());
@@ -351,14 +351,14 @@ public abstract class BaseController {
         try {
             validateId(entityViewId, "Incorrect entityViewId " + entityViewId);
             EntityView entityView = entityViewService.findEntityViewById(entityViewId);
-            checkEntityViewId(entityView);
+            checkEntityView(entityView);
             return entityView;
         } catch (Exception e) {
             throw handleException(e, false);
         }
     }
 
-    protected void checkEntityViewId(EntityView entityView) throws ThingsboardException {
+    protected void checkEntityView(EntityView entityView) throws ThingsboardException {
         checkNotNull(entityView);
         checkTenantId(entityView.getTenantId());
         if (entityView.getCustomerId() != null && !entityView.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {

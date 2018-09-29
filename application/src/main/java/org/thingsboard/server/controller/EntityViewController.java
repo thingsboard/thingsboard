@@ -204,7 +204,7 @@ public class EntityViewController extends BaseController {
             List<EntityView> entityViews = checkNotNull(entityViewService.findEntityViewsByQuery(query).get());
             entityViews = entityViews.stream().filter(entityView -> {
                 try {
-                    checkEntityViewId(entityView);
+                    checkEntityView(entityView);
                     return true;
                 } catch (ThingsboardException e) {
                     return false;
