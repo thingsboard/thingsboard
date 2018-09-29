@@ -50,6 +50,7 @@ import java.util.Set;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
@@ -319,12 +320,55 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
     }
 
     @Test
-    public void testTheCopyOfAttrsThatMatchWithDeviceCriteriaForTheView() throws Exception {
+    public void testTheCopyOfAttrsIntoTSForTheView() throws Exception {
+        Set<String> actualAttributesSet =
+                getAttributesByKeys("{\"caValue1\":\"value1\", \"caValue2\":true, \"caValue3\":42.0, \"caValue4\":73}");
 
+        Set<String> expectedActualAttributesSet =
+                new HashSet<>(Arrays.asList("caValue1", "caValue2", "caValue3", "caValue4"));
+        assertTrue(actualAttributesSet.containsAll(expectedActualAttributesSet));
+        Thread.sleep(1000);
+
+        EntityView savedView = getNewSavedEntityView("Test entity view");
+        List<Map<String, Object>> values = doGetAsync("/api/plugins/telemetry/ENTITY_VIEW/" + savedView.getId().getId().toString() +
+                "/values/attributes?keys=" + String.join(",", actualAttributesSet), List.class);
+
+        assertEquals("value1", getValue(values, "caValue1"));
+        assertEquals(true, getValue(values, "caValue2"));
+        assertEquals(42.0, getValue(values, "caValue3"));
+        assertEquals(73, getValue(values, "caValue4"));
+    }
+
+    @Test
+    public void testTheCopyOfAttrsOutOfTSForTheView() throws Exception {
+        Set<String> actualAttributesSet =
+                getAttributesByKeys("{\"caValue1\":\"value1\", \"caValue2\":true, \"caValue3\":42.0, \"caValue4\":73}");
+
+        Set<String> expectedActualAttributesSet = new HashSet<>(Arrays.asList("caValue1", "caValue2", "caValue3", "caValue4"));
+        assertTrue(actualAttributesSet.containsAll(expectedActualAttributesSet));
+        Thread.sleep(1000);
+
+        List<Map<String, Object>> valueTelemetryOfDevices = doGetAsync("/api/plugins/telemetry/DEVICE/" + testDevice.getId().getId().toString() +
+                "/values/attributes?keys=" + String.join(",", actualAttributesSet), List.class);
+
+        EntityView view = new EntityView();
+        view.setEntityId(testDevice.getId());
+        view.setTenantId(savedTenant.getId());
+        view.setName("Test entity view");
+        view.setKeys(telemetry);
+        view.setStartTimeMs((long) getValue(valueTelemetryOfDevices, "lastActivityTime") * 10);
+        view.setEndTimeMs((long) getValue(valueTelemetryOfDevices, "lastActivityTime") / 10);
+        EntityView savedView = doPost("/api/entityView", view, EntityView.class);
+
+        List<Map<String, Object>> values = doGetAsync("/api/plugins/telemetry/ENTITY_VIEW/" + savedView.getId().getId().toString() +
+                "/values/attributes?keys=" + String.join(",", actualAttributesSet), List.class);
+        assertEquals(0, values.size());
+    }
+
+    private Set<String> getAttributesByKeys(String stringKV) throws Exception {
         String viewDeviceId = testDevice.getId().getId().toString();
-        DeviceCredentials deviceCredentials
-                = doGet("/api/device/" + viewDeviceId + "/credentials", DeviceCredentials.class);
-
+        DeviceCredentials deviceCredentials =
+                doGet("/api/device/" + viewDeviceId + "/credentials", DeviceCredentials.class);
         assertEquals(testDevice.getId(), deviceCredentials.getDeviceId());
 
         String accessToken = deviceCredentials.getCredentialsId();
@@ -339,34 +383,18 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         Thread.sleep(3000);
 
         MqttMessage message = new MqttMessage();
-        message.setPayload(("{\"caValue1\":\"value1\", \"caValue2\":true, \"caValue3\":42.0, \"caValue4\":73}").getBytes());
+        message.setPayload((stringKV).getBytes());
         client.publish("v1/devices/me/attributes", message);
         Thread.sleep(1000);
 
-        List<String> actualTelemetry =
-                doGetAsync("/api/plugins/telemetry/DEVICE/" + viewDeviceId +  "/keys/attributes", List.class);
-        Set<String> actualTelemetrySet = new HashSet<>(actualTelemetry);
-
-        List<String> expectedActualTelemetry = Arrays.asList("caValue1", "caValue2", "caValue3", "caValue4");
-        Set<String> expectedActualTelemetrySet = new HashSet<>(expectedActualTelemetry);
-        assertTrue(actualTelemetrySet.containsAll(expectedActualTelemetrySet));
-        Thread.sleep(1000);
-
-        EntityView savedView = getNewSavedEntityView("Test entity view");
-        String urlOfTelemetryValues = "/api/plugins/telemetry/ENTITY_VIEW/" + savedView.getId().getId().toString() +
-                "/values/attributes?keys=" + String.join(",", actualTelemetrySet);
-        List<Map<String, Object>> values = doGetAsync(urlOfTelemetryValues, List.class);
-
-        assertEquals("value1", getValueOfMap(values, "caValue1"));
-        assertEquals(true, getValueOfMap(values, "caValue2"));
-        assertEquals(42.0, getValueOfMap(values, "caValue3"));
-        assertEquals(73, getValueOfMap(values, "caValue4"));
+        return new HashSet<>(doGetAsync("/api/plugins/telemetry/DEVICE/" + viewDeviceId +  "/keys/attributes", List.class));
     }
 
-    private Object getValueOfMap(List<Map<String, Object>> values, String stringValue) {
-        return values.stream()
-                .filter(value -> value.get("key").equals(stringValue))
-                .findFirst().get().get("value");
+    private Object getValue(List<Map<String, Object>> values, String stringValue) {
+        return values.size() == 0 ? null :
+                values.stream()
+                        .filter(value -> value.get("key").equals(stringValue))
+                        .findFirst().get().get("value");
     }
 
     private EntityView getNewSavedEntityView(String name) throws Exception {

@@ -17,7 +17,14 @@ package org.thingsboard.server.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
@@ -49,13 +56,10 @@ public class EntityViewController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/entityView/{entityViewId}", method = RequestMethod.GET)
     @ResponseBody
-    public EntityView getEntityViewById(@PathVariable(ENTITY_VIEW_ID) String strEntityViewId)
-            throws ThingsboardException {
-
+    public EntityView getEntityViewById(@PathVariable(ENTITY_VIEW_ID) String strEntityViewId) throws ThingsboardException {
         checkParameter(ENTITY_VIEW_ID, strEntityViewId);
         try {
-            EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
-            return checkEntityViewId(entityViewId);
+            return checkEntityViewId(new EntityViewId(toUUID(strEntityViewId)));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -70,13 +74,10 @@ public class EntityViewController extends BaseController {
             EntityView savedEntityView = checkNotNull(entityViewService.saveEntityView(entityView));
             logEntityAction(savedEntityView.getId(), savedEntityView, null,
                     entityView.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
-
             return savedEntityView;
-
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.ENTITY_VIEW), entityView, null,
                     entityView.getId() == null ? ActionType.ADDED : ActionType.UPDATED, e);
-
             throw handleException(e);
         }
     }
@@ -90,7 +91,6 @@ public class EntityViewController extends BaseController {
             EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
             EntityView entityView = checkEntityViewId(entityViewId);
             entityViewService.deleteEntityView(entityViewId);
-
             logEntityAction(entityViewId, entityView, entityView.getCustomerId(),
                     ActionType.DELETED,null, strEntityViewId);
         } catch (Exception e) {
@@ -117,11 +117,9 @@ public class EntityViewController extends BaseController {
             checkEntityViewId(entityViewId);
 
             EntityView savedEntityView = checkNotNull(entityViewService.assignEntityViewToCustomer(entityViewId, customerId));
-
             logEntityAction(entityViewId, savedEntityView,
                     savedEntityView.getCustomerId(),
                     ActionType.ASSIGNED_TO_CUSTOMER, null, strEntityViewId, strCustomerId, customer.getName());
-
             return savedEntityView;
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.ENTITY_VIEW), null,
@@ -143,9 +141,7 @@ public class EntityViewController extends BaseController {
                 throw new IncorrectParameterException("Entity View isn't assigned to any customer!");
             }
             Customer customer = checkCustomerId(entityView.getCustomerId());
-
             EntityView savedEntityView = checkNotNull(entityViewService.unassignEntityViewFromCustomer(entityViewId));
-
             logEntityAction(entityViewId, entityView,
                     entityView.getCustomerId(),
                     ActionType.UNASSIGNED_FROM_CUSTOMER, null, strEntityViewId, customer.getId().toString(), customer.getName());
@@ -208,7 +204,7 @@ public class EntityViewController extends BaseController {
             List<EntityView> entityViews = checkNotNull(entityViewService.findEntityViewsByQuery(query).get());
             entityViews = entityViews.stream().filter(entityView -> {
                 try {
-                    checkEntityView(entityView);
+                    checkEntityViewId(entityView);
                     return true;
                 } catch (ThingsboardException e) {
                     return false;

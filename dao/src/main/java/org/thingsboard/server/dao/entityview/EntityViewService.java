@@ -32,28 +32,27 @@ import java.util.List;
  */
 public interface EntityViewService {
 
-    EntityView findEntityViewById(EntityViewId entityViewId);
-
     EntityView saveEntityView(EntityView entityView);
 
     EntityView assignEntityViewToCustomer(EntityViewId entityViewId, CustomerId customerId);
 
     EntityView unassignEntityViewFromCustomer(EntityViewId entityViewId);
 
-    void deleteEntityView(EntityViewId entityViewId);
+    void unassignCustomerEntityViews(TenantId tenantId, CustomerId customerId);
+
+    EntityView findEntityViewById(EntityViewId entityViewId);
 
     TextPageData<EntityView> findEntityViewByTenantId(TenantId tenantId, TextPageLink pageLink);
 
-    void deleteEntityViewsByTenantId(TenantId tenantId);
-
-    TextPageData<EntityView> findEntityViewsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId,
-                                                                    TextPageLink pageLink);
-
-    void unassignCustomerEntityViews(TenantId tenantId, CustomerId customerId);
-
-    ListenableFuture<EntityView> findEntityViewByIdAsync(EntityViewId entityViewId);
+    TextPageData<EntityView> findEntityViewsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, TextPageLink pageLink);
 
     ListenableFuture<List<EntityView>> findEntityViewsByQuery(EntityViewSearchQuery query);
 
+    ListenableFuture<EntityView> findEntityViewByIdAsync(EntityViewId entityViewId);
+
     ListenableFuture<List<EntityView>> findEntityViewsByTenantIdAndEntityIdAsync(TenantId tenantId, EntityId entityId);
+
+    void deleteEntityView(EntityViewId entityViewId);
+
+    void deleteEntityViewsByTenantId(TenantId tenantId);
 }

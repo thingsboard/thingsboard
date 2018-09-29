@@ -15,9 +15,7 @@
  */
 package org.thingsboard.rule.engine.action;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Function;
-import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
@@ -28,24 +26,23 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.TbRelationTypes;
+import org.thingsboard.rule.engine.api.util.DonAsynchron;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.rule.engine.api.util.DonAsynchron.withCallback;
+import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 
 @Slf4j
 @RuleNode(
@@ -70,25 +67,22 @@ public class TbCopyAttributesToEntityViewNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        if (msg.getType().equals(SessionMsgType.POST_ATTRIBUTES_REQUEST.name()) ||
-                msg.getType().equals(DataConstants.ATTRIBUTES_DELETED) ||
-                msg.getType().equals(DataConstants.ATTRIBUTES_UPDATED)) {
+        if (!msg.getMetaData().getData().isEmpty()) {
             long now = System.currentTimeMillis();
-            String scope;
-            if (msg.getType().equals(SessionMsgType.POST_ATTRIBUTES_REQUEST.name())) {
-                scope = DataConstants.CLIENT_SCOPE;
-            } else {
-                scope = msg.getMetaData().getValue("scope");
-            }
+            String scope = msg.getType().equals(SessionMsgType.POST_ATTRIBUTES_REQUEST.name()) ?
+                    DataConstants.CLIENT_SCOPE : msg.getMetaData().getValue("scope");
+
             ListenableFuture<List<EntityView>> entityViewsFuture =
                     ctx.getEntityViewService().findEntityViewsByTenantIdAndEntityIdAsync(ctx.getTenantId(), msg.getOriginator());
-            withCallback(entityViewsFuture,
+
+            DonAsynchron.withCallback(entityViewsFuture,
                     entityViews -> {
-                        List<ListenableFuture<List<Void>>> saveFutures = new ArrayList<>();
                         for (EntityView entityView : entityViews) {
-                            if ((entityView.getEndTimeMs() != 0  && entityView.getEndTimeMs() > now && entityView.getStartTimeMs() < now) ||
-                                    (entityView.getEndTimeMs() == 0 && entityView.getStartTimeMs() < now)) {
-                                Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(new JsonParser().parse(msg.getData())).getAttributes();
+                            long startTime = entityView.getStartTimeMs();
+                            long endTime = entityView.getEndTimeMs();
+                            if ((endTime != 0  && endTime > now && startTime < now) || (endTime == 0 && startTime < now)) {
+                                Set<AttributeKvEntry> attributes =
+                                        JsonConverter.convertToAttributes(new JsonParser().parse(msg.getData())).getAttributes();
                                 List<AttributeKvEntry> filteredAttributes =
                                         attributes.stream()
                                                 .filter(attr -> {
@@ -110,19 +104,22 @@ public class TbCopyAttributesToEntityViewNode implements TbNode {
                                                             return entityView.getKeys().getAttributes().getSh().contains(attr.getKey());
                                                     }
                                                     return false;
-                                                })
-                                                .collect(Collectors.toList());
-                                saveFutures.add(ctx.getAttributesService().save(entityView.getId(), scope, new ArrayList<>(filteredAttributes)));
+                                                }).collect(Collectors.toList());
+
+                                ctx.getTelemetryService().saveAndNotify(entityView.getId(), scope, filteredAttributes,
+                                        new FutureCallback<Void>() {
+                                            @Override
+                                            public void onSuccess(@Nullable Void result) {
+                                                ctx.tellNext(msg, SUCCESS);
+                                            }
+
+                                            @Override
+                                            public void onFailure(Throwable t) {
+                                                ctx.tellFailure(msg, t);
+                                            }
+                                        });
                             }
                         }
-                        Futures.transform(Futures.allAsList(saveFutures), new Function<List<List<Void>>, Object>() {
-                            @Nullable
-                            @Override
-                            public Object apply(@Nullable List<List<Void>> lists) {
-                                ctx.tellNext(msg, TbRelationTypes.SUCCESS);
-                                return null;
-                            }
-                        });
                     },
                     t -> ctx.tellFailure(msg, t));
         } else {
