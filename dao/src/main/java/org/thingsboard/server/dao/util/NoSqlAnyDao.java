@@ -13,24 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.cassandra;
+package org.thingsboard.server.dao.util;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-import org.thingsboard.server.dao.util.NoSqlAnyDao;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 
-import javax.annotation.PostConstruct;
-
-@Component
-@NoSqlAnyDao
-public class CassandraCluster extends AbstractCassandraCluster {
-
-    @Value("${cassandra.keyspace_name}")
-    private String keyspaceName;
-
-    @PostConstruct
-    public void init() {
-        super.init(keyspaceName);
-    }
-
+@ConditionalOnExpression("'${database.ts.type}'=='cassandra' || '${database.entities.type}'=='cassandra'")
+public @interface NoSqlAnyDao {
 }

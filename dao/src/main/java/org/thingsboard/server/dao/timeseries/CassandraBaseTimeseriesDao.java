@@ -49,6 +49,7 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.nosql.CassandraAbstractAsyncDao;
 import org.thingsboard.server.dao.util.NoSqlDao;
+import org.thingsboard.server.dao.util.NoSqlTsDao;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
@@ -70,7 +71,7 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
  */
 @Component
 @Slf4j
-@NoSqlDao
+@NoSqlTsDao
 public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implements TimeseriesDao {
 
     private static final int MIN_AGGREGATION_STEP_MS = 1000;
