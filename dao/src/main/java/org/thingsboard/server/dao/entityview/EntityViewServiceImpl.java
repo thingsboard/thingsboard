@@ -194,7 +194,6 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
         return entityViewDao.findByIdAsync(entityViewId.getId());
     }
 
-    @Cacheable(cacheNames = ENTITY_VIEW_CACHE, key = "{#tenantId, #entityId}")
     @Override
     public ListenableFuture<List<EntityView>> findEntityViewsByTenantIdAndEntityIdAsync(TenantId tenantId, EntityId entityId) {
         log.trace("Executing findEntityViewsByTenantIdAndEntityIdAsync, tenantId [{}], entityId [{}]", tenantId, entityId);
