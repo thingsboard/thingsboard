@@ -17,6 +17,7 @@ import tinycolor from 'tinycolor2';
 
 import TbGoogleMap from './google-map';
 import TbOpenStreetMap from './openstreet-map';
+import TbOpenStreetMapLocal from './openstreet-map-local';
 import TbImageMap from './image-map';
 import TbTencentMap from './tencent-map';
 
@@ -78,6 +79,8 @@ export default class TbMapWidgetV2 {
             this.map = new TbGoogleMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.gmApiKey, settings.gmDefaultMapType);
         } else if (mapProvider === 'openstreet-map') {
             this.map = new TbOpenStreetMap($element, this.utils,  initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.mapProvider);
+        } else if (mapProvider === 'openstreet-map-local') {
+            this.map = new TbOpenStreetMapLocal($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.mapProvider);
         } else if (mapProvider === 'image-map') {
             this.map = new TbImageMap(this.ctx, $element, this.utils, initCallback,
                 settings.mapImageUrl,
@@ -466,6 +469,8 @@ export default class TbMapWidgetV2 {
         if (mapProvider === 'google-map') {
             schema = angular.copy(googleMapSettingsSchema);
         } else if (mapProvider === 'openstreet-map') {
+            schema = angular.copy(openstreetMapSettingsSchema);
+        } else if (mapProvider === 'openstreet-map-local') {
             schema = angular.copy(openstreetMapSettingsSchema);
         } else if (mapProvider === 'image-map') {
             return imageMapSettingsSchema;
