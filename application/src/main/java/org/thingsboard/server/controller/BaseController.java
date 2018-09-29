@@ -318,7 +318,7 @@ public abstract class BaseController {
                     checkUserId(new UserId(entityId.getId()));
                     return;
                 case ENTITY_VIEW:
-                    checkEntityView(entityViewService.findEntityViewById(new EntityViewId(entityId.getId())));
+                    checkEntityViewId(new EntityViewId(entityId.getId()));
                     return;
                 default:
                     throw new IllegalArgumentException("Unsupported entity type: " + entityId.getEntityType());
