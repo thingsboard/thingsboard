@@ -302,6 +302,9 @@ caffeine:
     assets:
       timeToLiveInMinutes: 1440
       maxSize: 100000
+    entityViews:
+      timeToLiveInMinutes: 1440
+      maxSize: 100000
 
 redis:
   # standalone or cluster
@@ -363,7 +366,7 @@ spring:
     password: "${SPRING_DATASOURCE_PASSWORD:}"
 
 # PostgreSQL DAO Configuration
-#spring:
+# spring:
 #  data:
 #    sql:
 #      repositories:

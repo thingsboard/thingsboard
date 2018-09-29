@@ -29,9 +29,11 @@ import org.thingsboard.rule.engine.api.util.DonAsynchron;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
@@ -48,6 +50,8 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
 import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
@@ -64,6 +68,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -102,6 +107,9 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
     private ClusterRpcService rpcService;
 
     @Autowired
+    private EntityViewService entityViewService;
+
+    @Autowired
     @Lazy
     private DeviceStateService stateService;
 
@@ -133,18 +141,62 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
 
     @Override
     public void addLocalWsSubscription(String sessionId, EntityId entityId, SubscriptionState sub) {
+        long startTime = 0L;
+        long endTime = 0L;
+        if (entityId.getEntityType().equals(EntityType.ENTITY_VIEW)) {
+            EntityView entityView = entityViewService.findEntityViewById(new EntityViewId(entityId.getId()));
+            entityId = entityView.getEntityId();
+            startTime = entityView.getStartTimeMs();
+            endTime = entityView.getEndTimeMs();
+            sub = getUpdatedSubscriptionState(entityId, sub, entityView);
+        }
         Optional<ServerAddress> server = routingService.resolveById(entityId);
         Subscription subscription;
         if (server.isPresent()) {
             ServerAddress address = server.get();
-            log.trace("[{}] Forwarding subscription [{}] for device [{}] to [{}]", sessionId, sub.getSubscriptionId(), entityId, address);
-            subscription = new Subscription(sub, true, address);
+            log.trace("[{}] Forwarding subscription [{}] for [{}] entity [{}] to [{}]", sessionId, sub.getSubscriptionId(), entityId.getEntityType().name(), entityId, address);
+            subscription = new Subscription(sub, true, address, startTime, endTime);
             tellNewSubscription(address, sessionId, subscription);
         } else {
-            log.trace("[{}] Registering local subscription [{}] for device [{}]", sessionId, sub.getSubscriptionId(), entityId);
-            subscription = new Subscription(sub, true);
+            log.trace("[{}] Registering local subscription [{}] for [{}] entity [{}]", sessionId, sub.getSubscriptionId(), entityId.getEntityType().name(), entityId);
+            subscription = new Subscription(sub, true, null, startTime, endTime);
         }
         registerSubscription(sessionId, entityId, subscription);
+    }
+
+    private SubscriptionState getUpdatedSubscriptionState(EntityId entityId, SubscriptionState sub, EntityView entityView) {
+        boolean allKeys;
+        Map<String, Long> keyStates;
+        if (sub.getType().equals(TelemetryFeature.TIMESERIES) && !entityView.getKeys().getTimeseries().isEmpty()) {
+            allKeys = false;
+            keyStates = sub.getKeyStates().entrySet()
+                    .stream().filter(entry -> entityView.getKeys().getTimeseries().contains(entry.getKey()))
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        } else if (sub.getType().equals(TelemetryFeature.ATTRIBUTES)) {
+            if (sub.getScope().equals(DataConstants.CLIENT_SCOPE) && !entityView.getKeys().getAttributes().getCs().isEmpty()) {
+                allKeys = false;
+                keyStates = filterMap(sub, entityView.getKeys().getAttributes().getCs());
+            } else if (sub.getScope().equals(DataConstants.SERVER_SCOPE) && !entityView.getKeys().getAttributes().getSs().isEmpty()) {
+                allKeys = false;
+                keyStates = filterMap(sub, entityView.getKeys().getAttributes().getSs());
+            } else if (sub.getScope().equals(DataConstants.SERVER_SCOPE) && !entityView.getKeys().getAttributes().getSh().isEmpty()) {
+                allKeys = false;
+                keyStates = filterMap(sub, entityView.getKeys().getAttributes().getSh());
+            } else {
+                allKeys = sub.isAllKeys();
+                keyStates = sub.getKeyStates();
+            }
+        } else {
+            allKeys = sub.isAllKeys();
+            keyStates = sub.getKeyStates();
+        }
+        return new SubscriptionState(sub.getWsSessionId(), sub.getSubscriptionId(), entityId, sub.getType(), allKeys, keyStates, sub.getScope());
+    }
+
+    private Map<String, Long> filterMap(SubscriptionState sub, List<String> allowedKeys) {
+        return sub.getKeyStates().entrySet()
+                .stream().filter(entry -> allowedKeys.contains(entry.getKey()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     @Override
@@ -415,7 +467,7 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
         onLocalSubUpdate(entityId, s -> TelemetryFeature.ATTRIBUTES == s.getType() && (StringUtils.isEmpty(s.getScope()) || scope.equals(s.getScope())), s -> {
             List<TsKvEntry> subscriptionUpdate = null;
             for (AttributeKvEntry kv : attributes) {
-                if (s.isAllKeys() || s.getKeyStates().containsKey(kv.getKey())) {
+                if (isInTimeRange(s, kv.getLastUpdateTs()) && (s.isAllKeys() || s.getKeyStates().containsKey(kv.getKey()))) {
                     if (subscriptionUpdate == null) {
                         subscriptionUpdate = new ArrayList<>();
                     }
@@ -430,7 +482,7 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
         onLocalSubUpdate(entityId, s -> TelemetryFeature.TIMESERIES == s.getType(), s -> {
             List<TsKvEntry> subscriptionUpdate = null;
             for (TsKvEntry kv : ts) {
-                if (s.isAllKeys() || s.getKeyStates().containsKey((kv.getKey()))) {
+                if (isInTimeRange(s, kv.getTs()) && (s.isAllKeys() || s.getKeyStates().containsKey((kv.getKey())))) {
                     if (subscriptionUpdate == null) {
                         subscriptionUpdate = new ArrayList<>();
                     }
@@ -439,6 +491,11 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
             }
             return subscriptionUpdate;
         });
+    }
+
+    private boolean isInTimeRange(Subscription subscription, long kvTime) {
+        return (subscription.getStartTime() == 0 || subscription.getStartTime() <= kvTime)
+                && (subscription.getEndTime() == 0 || subscription.getEndTime() >= kvTime);
     }
 
     private void onLocalSubUpdate(EntityId entityId, Predicate<Subscription> filter, Function<Subscription, List<TsKvEntry>> f) {
