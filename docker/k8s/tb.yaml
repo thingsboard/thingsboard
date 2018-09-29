@@ -120,7 +120,12 @@ spec:
             configMapKeyRef:
               name: tb-config
               key: cassandra.url
-        - name: DATABASE_TYPE
+        - name: DATABASE_ENTITIES_TYPE
+          valueFrom:
+            configMapKeyRef:
+              name: tb-config
+              key: database.type
+        - name: DATABASE_TS_TYPE
           valueFrom:
             configMapKeyRef:
               name: tb-config
