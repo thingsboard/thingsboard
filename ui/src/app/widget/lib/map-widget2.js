@@ -132,7 +132,7 @@ export default class TbMapWidgetV2 {
             this.locationSettings.lngKeyName = this.ctx.settings.lngKeyName || 'longitude';
         }
 
-        this.locationSettings.tooltipPattern = this.ctx.settings.tooltipPattern || "<b>${entityName}</b><br/><br/><b>Latitude:</b> ${"+this.locationSettings.latKeyName+":7}<br/><b>Longitude:</b> ${"+this.locationSettings.lngKeyName+":7}";
+        this.locationSettings.tooltipPattern = this.ctx.settings.tooltipPattern || "<b>${entityName}</b><br/><br/><b>维度:</b> ${"+this.locationSettings.latKeyName+":7}<br/><b>经度:</b> ${"+this.locationSettings.lngKeyName+":7}";
 
         this.locationSettings.showLabel = this.ctx.settings.showLabel !== false;
         this.locationSettings.displayTooltip = this.ctx.settings.showTooltip !== false;
@@ -471,7 +471,7 @@ export default class TbMapWidgetV2 {
         } else if (mapProvider === 'openstreet-map') {
             schema = angular.copy(openstreetMapSettingsSchema);
         } else if (mapProvider === 'openstreet-map-local') {
-            schema = angular.copy(openstreetMapSettingsSchema);
+            schema = angular.copy(openstreetMapLocalSettingsSchema);
         } else if (mapProvider === 'image-map') {
             return imageMapSettingsSchema;
         } else if (mapProvider === 'tencent-map') {
@@ -510,15 +510,15 @@ export default class TbMapWidgetV2 {
 const googleMapSettingsSchema =
     {
         "schema":{
-            "title":"Google Map Configuration",
+            "title":"谷歌地图配置",
             "type":"object",
             "properties":{
                 "gmApiKey":{
-                    "title":"Google Maps API Key",
+                    "title":"Google Map Configuration",
                     "type":"string"
                 },
                 "gmDefaultMapType":{
-                    "title":"Default map type",
+                    "title":"缺省地图类型",
                     "type":"string",
                     "default":"roadmap"
                 }
@@ -536,19 +536,19 @@ const googleMapSettingsSchema =
                 "items":[
                     {
                         "value":"roadmap",
-                        "label":"Roadmap"
+                        "label":"街道图"
                     },
                     {
                         "value":"satellite",
-                        "label":"Satellite"
+                        "label":"卫星图"
                     },
                     {
                         "value":"hybrid",
-                        "label":"Hybrid"
+                        "label":"混合图"
                     },
                     {
                         "value":"terrain",
-                        "label":"Terrain"
+                        "label":"地形图"
                     }
                 ]
             }
@@ -558,7 +558,7 @@ const googleMapSettingsSchema =
 const tencentMapSettingsSchema =
     {
         "schema":{
-            "title":"Tencent Map Configuration",
+            "title":"腾讯地图配置",
             "type":"object",
             "properties":{
                 "tmApiKey":{
@@ -566,7 +566,7 @@ const tencentMapSettingsSchema =
                     "type":"string"
                 },
                 "tmDefaultMapType":{
-                    "title":"Default map type",
+                    "title":"缺省的地图类型",
                     "type":"string",
                     "default":"roadmap"
                 }
@@ -584,15 +584,15 @@ const tencentMapSettingsSchema =
                 "items":[
                     {
                         "value":"roadmap",
-                        "label":"Roadmap"
+                        "label":"街道图"
                     },
                     {
                         "value":"satellite",
-                        "label":"Satellite"
+                        "label":"卫星图"
                     },
                     {
                         "value":"hybrid",
-                        "label":"Hybrid"
+                        "label":"混合图"
                     },
                 ]
             }
@@ -602,11 +602,11 @@ const tencentMapSettingsSchema =
 const openstreetMapSettingsSchema =
     {
         "schema":{
-            "title":"Openstreet Map Configuration",
+            "title":"Openstreet 地图配置",
             "type":"object",
             "properties":{
                 "mapProvider":{
-                    "title":"Map provider",
+                    "title":"地图提供者",
                     "type":"string",
                     "default":"OpenStreetMap.Mapnik"
                 }
@@ -622,11 +622,11 @@ const openstreetMapSettingsSchema =
                 "items":[
                     {
                         "value":"OpenStreetMap.Mapnik",
-                        "label":"OpenStreetMap.Mapnik (Default)"
+                        "label":"Mapnik (缺省)"
                     },
                     {
                         "value":"OpenStreetMap.BlackAndWhite",
-                        "label":"OpenStreetMap.BlackAndWhite"
+                        "label":"黑白"
                     },
                     {
                         "value":"OpenStreetMap.HOT",
@@ -634,111 +634,153 @@ const openstreetMapSettingsSchema =
                     },
                     {
                         "value":"Esri.WorldStreetMap",
-                        "label":"Esri.WorldStreetMap"
+                        "label":"Esri.世界街道图"
                     },
                     {
                         "value":"Esri.WorldTopoMap",
-                        "label":"Esri.WorldTopoMap"
+                        "label":"Esri.世界拓扑图"
                     },
                     {
                         "value":"CartoDB.Positron",
-                        "label":"CartoDB.Positron"
+                        "label":"CartoDB.正电子"
                     },
                     {
                         "value":"CartoDB.DarkMatter",
-                        "label":"CartoDB.DarkMatter"
+                        "label":"CartoDB.暗物质"
                     }
                 ]
             }
         ]
     };
 
+const openstreetMapLocalSettingsSchema =
+    {
+        "schema":{
+            "title":"本地地图配置",
+            "type":"object",
+            "properties":{
+                "mapProvider":{
+                    "title":"地图服务提供者",
+                    "type":"string",
+                    "default":"openstreetMapLocal.Bright"
+                }
+            },
+            "required":[
+            ]
+        },
+        "form":[
+            {
+                "key":"mapProvider",
+                "type":"rc-select",
+                "multiple":false,
+                "items":[
+                    {
+                        "value":"OpenStreetMapLocal.Klokantech",
+                        "label":"低亮风格"
+                    },
+                    {
+                        "value":"OpenStreetMapLocal.Bright",
+                        "label":"明亮风格(缺省)"
+                    }, 
+                    {
+                        "value":"OpenStreetMapLocal.DarkMatter",
+                        "label":"黑夜风格"
+                    },
+                    {
+                        "value":"OpenStreetMapLocal.Positron",
+                        "label":"青灰风格"
+                    }
+                ]
+            }
+        ]
+    };    
+
 const commonMapSettingsSchema =
     {
         "schema":{
-            "title":"Map Configuration",
+            "title":"地图配置",
             "type":"object",
             "properties":{
                 "defaultZoomLevel":{
-                    "title":"Default map zoom level (1 - 20)",
+                    "title":"缺省缩放级别 (1 - 20)",
                     "type":"number"
                 },
                 "fitMapBounds":{
-                    "title":"Fit map bounds to cover all markers",
+                    "title":"自动缩放地图以包含所有标记",
                     "type":"boolean",
                     "default":true
                 },
                 "latKeyName":{
-                    "title":"Latitude key name",
+                    "title":"维度属性名称",
                     "type":"string",
                     "default":"latitude"
                 },
                 "lngKeyName":{
-                    "title":"Longitude key name",
+                    "title":"经度属性名称",
                     "type":"string",
                     "default":"longitude"
                 },
                 "showLabel":{
-                    "title":"Show label",
+                    "title":"显示标注",
                     "type":"boolean",
                     "default":true
                 },
                 "label":{
-                    "title":"Label (pattern examples: '${entityName}', '${entityName}: (Text ${keyName} units.)' )",
+                    "title":"标注 (实例: '${entityName}', '${entityName}: (文本 ${keyName} 单位.)' )",
                     "type":"string",
-                    "default":"${entityName}"
+                    "default":"<div style=\"position: relative; white-space: nowrap; text-align: center; font-size: 14px; top: 5px;\">     <span style=\"border: 2px solid #000; border-radius: 10px; color: #000; background-color: #fff; padding-left: 5px; padding-right: 5px; padding-top: 5px; padding-bottom: 3px;\">${entityName}</span></div>"
                 },
                 "showTooltip": {
-                    "title": "Show tooltip",
+                    "title": "显示信息提示框",
                     "type":"boolean",
                     "default":true
                 },
                 "autocloseTooltip": {
-                    "title": "Auto-close tooltips",
+                    "title": "自动关闭信息提示框",
                     "type":"boolean",
                     "default":true
                 },
                 "tooltipPattern":{
-                    "title":"Tooltip (for ex. 'Text ${keyName} units.' or <link-act name='my-action'>Link text</link-act>')",
+                    "title":"信息提示框 (例如. '文本 ${keyName} 单位.' 或 <link-act name='my-action'>详细信息</link-act>')",
                     "type":"string",
-                    "default":"<b>${entityName}</b><br/><br/><b>Latitude:</b> ${latitude:7}<br/><b>Longitude:</b> ${longitude:7}"
+                    "default":"<b>${entityName}</b><br/><br/><b>维度:</b> ${latitude:7}<br/><b>经度:</b> ${longitude:7}"
                 },
                 "color":{
-                    "title":"Color",
+                    "title":"颜色",
                     "type":"string"
                 },
                 "useColorFunction":{
-                    "title":"Use color function",
+                    "title":"使用颜色函数",
                     "type":"boolean",
                     "default":false
                 },
                 "colorFunction":{
-                    "title":"Color function: f(data, dsData, dsIndex)",
+                    "title":"颜色函数: f(data, dsData, dsIndex)",
                     "type":"string"
                 },
                 "markerImage":{
-                    "title":"Custom marker image",
+                    "title":"自定义图标",
                     "type":"string"
                 },
                 "markerImageSize":{
-                    "title":"Custom marker image size (px)",
+                    "title":"自定义图标大小 (像素)",
                     "type":"number",
                     "default":34
                 },
                 "useMarkerImageFunction":{
-                    "title":"Use marker image function",
+                    "title":"使用自定义图标函数",
                     "type":"boolean",
                     "default":false
                 },
                 "markerImageFunction":{
-                    "title":"Marker image function: f(data, images, dsData, dsIndex)",
+                    "title":"图标函数: f(data, images, dsData, dsIndex)",
                     "type":"string"
                 },
                 "markerImages":{
-                    "title":"Marker images",
+                    "title":"图标",
                     "type":"array",
                     "items":{
-                        "title":"Marker image",
+                        "title":"图像",
                         "type":"string"
                     }
                 }
@@ -792,16 +834,16 @@ const commonMapSettingsSchema =
 const routeMapSettingsSchema =
     {
         "schema":{
-            "title":"Route Map Configuration",
+            "title":"路径图配置",
             "type":"object",
             "properties":{
                 "strokeWeight": {
-                    "title": "Stroke weight",
+                    "title": "线粗细",
                     "type": "number",
                     "default": 2
                 },
                 "strokeOpacity": {
-                    "title": "Stroke opacity",
+                    "title": "线透明度",
                     "type": "number",
                     "default": 1.0
                 }
@@ -822,106 +864,106 @@ const imageMapSettingsSchema =
         "type":"object",
         "properties":{
             "mapImageUrl": {
-                "title": "Image map background",
+                "title": "背景图",
                 "type": "string",
                 "default": "data:image/svg+xml;base64,PHN2ZyBpZD0ic3ZnMiIgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMTAwIiB3aWR0aD0iMTAwIiB2ZXJzaW9uPSIxLjEiIHhtbG5zOmNjPSJodHRwOi8vY3JlYXRpdmVjb21tb25zLm9yZy9ucyMiIHhtbG5zOmRjPSJodHRwOi8vcHVybC5vcmcvZGMvZWxlbWVudHMvMS4xLyIgdmlld0JveD0iMCAwIDEwMCAxMDAiPgogPGcgaWQ9ImxheWVyMSIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCAtOTUyLjM2KSI+CiAgPHJlY3QgaWQ9InJlY3Q0Njg0IiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBoZWlnaHQ9Ijk5LjAxIiB3aWR0aD0iOTkuMDEiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiB5PSI5NTIuODYiIHg9Ii40OTUwNSIgc3Ryb2tlLXdpZHRoPSIuOTkwMTAiIGZpbGw9IiNlZWUiLz4KICA8dGV4dCBpZD0idGV4dDQ2ODYiIHN0eWxlPSJ3b3JkLXNwYWNpbmc6MHB4O2xldHRlci1zcGFjaW5nOjBweDt0ZXh0LWFuY2hvcjptaWRkbGU7dGV4dC1hbGlnbjpjZW50ZXIiIGZvbnQtd2VpZ2h0PSJib2xkIiB4bWw6c3BhY2U9InByZXNlcnZlIiBmb250LXNpemU9IjEwcHgiIGxpbmUtaGVpZ2h0PSIxMjUlIiB5PSI5NzAuNzI4MDkiIHg9IjQ5LjM5NjQ3NyIgZm9udC1mYW1pbHk9IlJvYm90byIgZmlsbD0iIzY2NjY2NiI+PHRzcGFuIGlkPSJ0c3BhbjQ2OTAiIHg9IjUwLjY0NjQ3NyIgeT0iOTcwLjcyODA5Ij5JbWFnZSBiYWNrZ3JvdW5kIDwvdHNwYW4+PHRzcGFuIGlkPSJ0c3BhbjQ2OTIiIHg9IjQ5LjM5NjQ3NyIgeT0iOTgzLjIyODA5Ij5pcyBub3QgY29uZmlndXJlZDwvdHNwYW4+PC90ZXh0PgogIDxyZWN0IGlkPSJyZWN0NDY5NCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgaGVpZ2h0PSIxOS4zNiIgd2lkdGg9IjY5LjM2IiBzdHJva2U9IiMwMDAiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgeT0iOTkyLjY4IiB4PSIxNS4zMiIgc3Ryb2tlLXdpZHRoPSIuNjM5ODYiIGZpbGw9Im5vbmUiLz4KIDwvZz4KPC9zdmc+Cg=="
             },
             "imageEntityAlias": {
-                "title": "Image URL source entity alias",
+                "title": "图片 URL 源实体别名",//"Image URL source entity alias",
                 "type": "string",
                 "default": ""
             },
             "imageUrlAttribute": {
-                "title": "Image URL source entity attribute",
+                "title": "图片 URL 源实体属性",//"Image URL source entity attribute",
                 "type": "string",
                 "default": ""
             },
             "xPosKeyName":{
-                "title":"X position key name",
+                "title":"X 坐标属性名称",
                 "type":"string",
                 "default":"xPos"
             },
             "yPosKeyName":{
-                "title":"Y position key name",
+                "title":"Y 坐标属性名称",
                 "type":"string",
                 "default":"yPos"
             },
             "showLabel":{
-                "title":"Show label",
+                "title":"显示标注",
                 "type":"boolean",
                 "default":true
             },
             "label":{
-                "title":"Label (pattern examples: '${entityName}', '${entityName}: (Text ${keyName} units.)' )",
+                "title":"标注 (范例: '${entityName}', '${entityName}: (文本 ${keyName} 单位.)' )",
                 "type":"string",
                 "default":"${entityName}"
             },
             "showTooltip": {
-                "title": "Show tooltip",
+                "title": "显示信息提示框",
                 "type":"boolean",
                 "default":true
             },
             "autocloseTooltip": {
-                "title": "Auto-close tooltips",
+                "title": "自动关闭信息提示框",
                 "type":"boolean",
                 "default":true
             },
             "tooltipPattern":{
-                "title":"Tooltip (for ex. 'Text ${keyName} units.' or <link-act name='my-action'>Link text</link-act>')",
+                "title":"信息提示框 (例如. '文本 ${keyName} 单位.' 或 <link-act name='my-action'>详细</link-act>')",
                 "type":"string",
-                "default":"<b>${entityName}</b><br/><br/><b>X Pos:</b> ${xPos:2}<br/><b>Y Pos:</b> ${yPos:2}"
+                "default":"<b>${entityName}</b><br/><br/><b>X 坐标:</b> ${xPos:2}<br/><b>Y 坐标:</b> ${yPos:2}"
             },
             "color":{
                 "title":"Color",
                 "type":"string"
             },
             "posFunction":{
-                "title":"Position conversion function: f(origXPos, origYPos), should return x,y coordinates as double from 0 to 1 each",
+                "title":"位置转换函数: f(origXPos, origYPos), 应该返回0到1之间的x,y坐标的双精度数字",
                 "type":"string",
                 "default": "return {x: origXPos, y: origYPos};"
             },
             "markerOffsetX": {
-                "title": "Marker X offset relative to position",
+                "title": "图标在 X 方向的偏移量",
                 "type": "number",
                 "default": 0.5
             },
             "markerOffsetY": {
-                "title": "Marker Y offset relative to position",
+                "title": "图标在 Y 方向的偏移量",
                 "type": "number",
                 "default": 1
             },
             "useColorFunction":{
-                "title":"Use color function",
+                "title":"使用颜色函数",
                 "type":"boolean",
                 "default":false
             },
             "colorFunction":{
-                "title":"Color function: f(data, dsData, dsIndex)",
+                "title":"C颜色函数: f(data, dsData, dsIndex)",
                 "type":"string"
             },
             "markerImage":{
-                "title":"Custom marker image",
+                "title":"自定义图标",
                 "type":"string"
             },
             "markerImageSize":{
-                "title":"Custom marker image size (px)",
+                "title":"自定义图标大小 (像素为单位)",
                 "type":"number",
                 "default":34
             },
             "useMarkerImageFunction":{
-                "title":"Use marker image function",
+                "title":"使用颜色图标函数",
                 "type":"boolean",
                 "default":false
             },
             "markerImageFunction":{
-                "title":"Marker image function: f(data, images, dsData, dsIndex)",
+                "title":"颜色图标函数: f(data, images, dsData, dsIndex)",
                 "type":"string"
             },
             "markerImages":{
-                "title":"Marker images",
+                "title":"图标",
                 "type":"array",
                 "items":{
-                    "title":"Marker image",
+                    "title":"图像",
                     "type":"string"
                 }
             }
