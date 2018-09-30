@@ -61,6 +61,10 @@ module.exports = {
                 to: 'thingsboard.ico'
             },
             {
+                from: './src/images',
+                to: 'images'
+            },   
+            {
                 from: './src/app/locale',
                 to: 'locale',
                 ignore: [ '*.js' ],

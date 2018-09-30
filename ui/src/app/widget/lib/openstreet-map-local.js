@@ -109,16 +109,25 @@ export default class TbOpenStreetMapLocal {
     }
 
     createDefaultMarkerIcon(marker, color, onMarkerIconReady) {
-        var pinColor = color.substr(1);
+        //var pinColor = color.substr(1);
+        // var icon = L.icon({
+        //     iconUrl: 'https://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|' + pinColor,
+        //     iconSize: [21, 34],
+        //     iconAnchor: [10, 34],
+        //     popupAnchor: [0, -34],
+        //     shadowUrl: 'https://chart.apis.google.com/chart?chst=d_map_pin_shadow',
+        //     shadowSize: [40, 37],
+        //     shadowAnchor: [12, 35]
+        // });
         var icon = L.icon({
-            iconUrl: 'https://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|' + pinColor,
+            iconUrl: 'images/leaflet/marker.png',
             iconSize: [21, 34],
             iconAnchor: [10, 34],
             popupAnchor: [0, -34],
-            shadowUrl: 'https://chart.apis.google.com/chart?chst=d_map_pin_shadow',
+            shadowUrl: 'images/leaflet/marker_shadow.png',
             shadowSize: [40, 37],
             shadowAnchor: [12, 35]
-        });
+        });        
         var iconInfo = {
             size: [21, 34],
             icon: icon
