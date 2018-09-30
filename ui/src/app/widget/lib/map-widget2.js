@@ -132,7 +132,7 @@ export default class TbMapWidgetV2 {
             this.locationSettings.lngKeyName = this.ctx.settings.lngKeyName || 'longitude';
         }
 
-        this.locationSettings.tooltipPattern = this.ctx.settings.tooltipPattern || "<b>${entityName}</b><br/><br/><b>维度:</b> ${"+this.locationSettings.latKeyName+":7}<br/><b>经度:</b> ${"+this.locationSettings.lngKeyName+":7}";
+        this.locationSettings.tooltipPattern = this.ctx.settings.tooltipPattern || "<b>${entityName}</b><br/><br/><b>纬度:</b> ${"+this.locationSettings.latKeyName+":7}<br/><b>经度:</b> ${"+this.locationSettings.lngKeyName+":7}";
 
         this.locationSettings.showLabel = this.ctx.settings.showLabel !== false;
         this.locationSettings.displayTooltip = this.ctx.settings.showTooltip !== false;
@@ -514,7 +514,7 @@ const googleMapSettingsSchema =
             "type":"object",
             "properties":{
                 "gmApiKey":{
-                    "title":"Google Map Configuration",
+                    "title":"Google Maps API Key",
                     "type":"string"
                 },
                 "gmDefaultMapType":{
