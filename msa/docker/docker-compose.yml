@@ -29,7 +29,7 @@ services:
     environment:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_LISTENERS: INSIDE://:9093,OUTSIDE://:9092
-      KAFKA_ADVERTISED_LISTENERS: INSIDE://:9093,OUTSIDE://${KAFKA_HOSTNAME}:9092
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://:9093,OUTSIDE://${EXTERNAL_HOSTNAME}:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
       KAFKA_CREATE_TOPICS: "${KAFKA_TOPICS}"
@@ -44,3 +44,14 @@ services:
       - tb-js-executor.env
     depends_on:
       - kafka
+  tb-web-ui:
+    image: "local-maven-build/tb-web-ui:latest"
+    ports:
+      - "8090:8090"
+    environment:
+      HTTP_BIND_ADDRESS: 0.0.0.0
+      HTTP_BIND_PORT: 8090
+      TB_HOST: ${EXTERNAL_HOSTNAME}
+      TB_PORT: 8080
+    env_file:
+      - tb-web-ui.env

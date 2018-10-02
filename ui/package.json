@@ -2,7 +2,7 @@
   "name": "thingsboard",
   "private": true,
   "version": "2.2.0",
-  "description": "Thingsboard UI",
+  "description": "ThingsBoard UI",
   "licenses": [
     {
       "type": "Apache-2.0",

@@ -36,6 +36,7 @@
 
     <modules>
         <module>js-executor</module>
+        <module>web-ui</module>
     </modules>
 
 </project>
