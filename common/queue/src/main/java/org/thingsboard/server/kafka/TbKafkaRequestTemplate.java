@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.internals.RecordHeader;
 
@@ -33,11 +34,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
 /**
  * Created by ashvayka on 25.09.18.
@@ -86,6 +83,7 @@ public class TbKafkaRequestTemplate<Request, Response> {
         } catch (Exception e) {
             log.trace("Failed to create topic: {}", e.getMessage(), e);
         }
+        this.requestTemplate.init();
         tickTs = System.currentTimeMillis();
         responseTemplate.subscribe();
         executor.submit(() -> {

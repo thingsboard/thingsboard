@@ -16,8 +16,8 @@
 
 'use strict';
 
-const Long = require('long');
-const uuidParse = require('uuid-parse');
+const Long = require('long'),
+      uuidParse = require('uuid-parse');
 
 var logger = require('../config/logger')('Utils');
 

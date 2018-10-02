@@ -28,7 +28,7 @@ public class RuleNodeScriptFactory {
             "    var metadata = JSON.parse(metadataStr); " +
             "    return JSON.stringify(%s(msg, metadata, msgType));" +
             "    function %s(%s, %s, %s) {";
-    private static final String JS_WRAPPER_SUFFIX = "}" +
+    private static final String JS_WRAPPER_SUFFIX = "\n}" +
             "\n}";
 
 

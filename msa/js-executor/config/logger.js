@@ -22,7 +22,7 @@ const { combine, timestamp, label, printf, splat } = format;
 
 var loggerTransports = [];
 
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== 'production' || process.env.DOCKER_MODE === 'true') {
     loggerTransports.push(new transports.Console({
         handleExceptions: true
     }));

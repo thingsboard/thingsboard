@@ -166,7 +166,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 .setScriptBody(scriptIdToBodysMap.get(scriptId));
 
         for (int i = 0; i < args.length; i++) {
-            jsRequestBuilder.setArgs(i, args[i].toString());
+            jsRequestBuilder.addArgs(args[i].toString());
         }
 
         JsInvokeProtos.RemoteJsRequest jsRequestWrapper = JsInvokeProtos.RemoteJsRequest.newBuilder()
@@ -180,7 +180,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 return invokeResult.getResult();
             } else {
                 log.debug("[{}] Failed to compile script due to [{}]: {}", scriptId, invokeResult.getErrorCode().name(), invokeResult.getErrorDetails());
-                throw new RuntimeException(invokeResult.getErrorCode().name());
+                throw new RuntimeException(invokeResult.getErrorDetails());
             }
         });
     }

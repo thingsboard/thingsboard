@@ -40,6 +40,7 @@
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
         <pkg.linux.dist>${project.build.directory}/package/linux</pkg.linux.dist>
         <pkg.win.dist>${project.build.directory}/package/windows</pkg.win.dist>
+        <dockerfile.skip>true</dockerfile.skip>
     </properties>
 
     <dependencies>
@@ -211,6 +212,22 @@
                             </filters>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>copy-docker-config</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>docker</directory>
+                                    <filtering>true</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>
@@ -259,6 +276,27 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.spotify</groupId>
+                <artifactId>dockerfile-maven-plugin</artifactId>
+                <version>1.4.4</version>
+                <executions>
+                    <execution>
+                        <id>build-docker-image</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>build</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <skip>${dockerfile.skip}</skip>
+                    <repository>local-maven-build/${pkg.name}</repository>
+                    <verbose>true</verbose>
+                    <googleContainerRegistryEnabled>false</googleContainerRegistryEnabled>
+                    <contextDirectory>${project.build.directory}</contextDirectory>
+                </configuration>
             </plugin>
         </plugins>
     </build>

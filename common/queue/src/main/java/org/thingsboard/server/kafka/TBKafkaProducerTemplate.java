@@ -17,6 +17,9 @@ package org.thingsboard.server.kafka;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.admin.CreateTopicsResult;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -35,6 +38,7 @@ import java.util.function.BiConsumer;
 /**
  * Created by ashvayka on 24.09.18.
  */
+@Slf4j
 public class TBKafkaProducerTemplate<T> {
 
     private final KafkaProducer<String, byte[]> producer;
@@ -44,7 +48,7 @@ public class TBKafkaProducerTemplate<T> {
     private TbKafkaEnricher<T> enricher = ((value, responseTopic, requestId) -> value);
 
     private final TbKafkaPartitioner<T> partitioner;
-    private final List<PartitionInfo> partitionInfoList;
+    private List<PartitionInfo> partitionInfoList;
     @Getter
     private final String defaultTopic;
 
@@ -55,12 +59,22 @@ public class TBKafkaProducerTemplate<T> {
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArraySerializer");
         this.producer = new KafkaProducer<>(props);
-        //Maybe this should not be cached, but we don't plan to change size of partitions
-        this.partitionInfoList = producer.partitionsFor(defaultTopic);
         this.encoder = encoder;
         this.enricher = enricher;
         this.partitioner = partitioner;
         this.defaultTopic = defaultTopic;
+    }
+
+    public void init() {
+        try {
+            TBKafkaAdmin admin = new TBKafkaAdmin();
+            CreateTopicsResult result = admin.createTopic(new NewTopic(defaultTopic, 100, (short) 1));
+            result.all().get();
+        } catch (Exception e) {
+            log.trace("Failed to create topic: {}", e.getMessage(), e);
+        }
+        //Maybe this should not be cached, but we don't plan to change size of partitions
+        this.partitionInfoList = producer.partitionsFor(defaultTopic);
     }
 
     public T enrich(T value, String responseTopic, UUID requestId) {

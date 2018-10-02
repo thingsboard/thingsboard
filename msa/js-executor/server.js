@@ -16,17 +16,10 @@
 
 const config = require('config'),
       kafka = require('kafka-node'),
-      Consumer = kafka.Consumer,
+      ConsumerGroup = kafka.ConsumerGroup,
       Producer = kafka.Producer,
-      JsMessageConsumer = require('./api/jsMessageConsumer');
-
-const logger = require('./config/logger')('main');
-
-const kafkaBootstrapServers = config.get('kafka.bootstrap.servers');
-const kafkaRequestTopic = config.get('kafka.request_topic');
-
-logger.info('Kafka Bootstrap Servers: %s', kafkaBootstrapServers);
-logger.info('Kafka Requests Topic: %s', kafkaRequestTopic);
+      JsInvokeMessageProcessor = require('./api/jsInvokeMessageProcessor'),
+      logger = require('./config/logger')('main');
 
 var kafkaClient;
 
@@ -34,35 +27,42 @@ var kafkaClient;
     try {
         logger.info('Starting ThingsBoard JavaScript Executor Microservice...');
 
+        const kafkaBootstrapServers = config.get('kafka.bootstrap.servers');
+        const kafkaRequestTopic = config.get('kafka.request_topic');
+
+        logger.info('Kafka Bootstrap Servers: %s', kafkaBootstrapServers);
+        logger.info('Kafka Requests Topic: %s', kafkaRequestTopic);
+
         kafkaClient = new kafka.KafkaClient({kafkaHost: kafkaBootstrapServers});
 
-        var consumer = new Consumer(
-            kafkaClient,
-            [
-                { topic: kafkaRequestTopic, partition: 0 }
-            ],
+        var consumer = new ConsumerGroup(
             {
+                kafkaHost: kafkaBootstrapServers,
+                groupId: 'js-executor-group',
                 autoCommit: true,
                 encoding: 'buffer'
-            }
+            },
+            kafkaRequestTopic
         );
 
         var producer = new Producer(kafkaClient);
         producer.on('error', (err) => {
-            logger.error('Unexpected kafka producer error');
-            logger.error(err);
+            logger.error('Unexpected kafka producer error: %s', err.message);
+            logger.error(err.stack);
         });
+
+        var messageProcessor = new JsInvokeMessageProcessor(producer);
 
         producer.on('ready', () => {
             consumer.on('message', (message) => {
-                JsMessageConsumer.onJsInvokeMessage(message, producer);
+                messageProcessor.onJsInvokeMessage(message);
             });
+            logger.info('Started ThingsBoard JavaScript Executor Microservice.');
         });
 
-        logger.info('Started ThingsBoard JavaScript Executor Microservice.');
     } catch (e) {
         logger.error('Failed to start ThingsBoard JavaScript Executor Microservice: %s', e.message);
-        logger.error(e);
+        logger.error(e.stack);
         exit(-1);
     }
 })();
@@ -75,7 +75,9 @@ function exit(status) {
     logger.info('Exiting with status: %d ...', status);
     if (kafkaClient) {
         logger.info('Stopping Kafka Client...');
-        kafkaClient.close(() => {
+        var _kafkaClient = kafkaClient;
+        kafkaClient = null;
+        _kafkaClient.close(() => {
             logger.info('Kafka Client stopped.');
             process.exit(status);
         });

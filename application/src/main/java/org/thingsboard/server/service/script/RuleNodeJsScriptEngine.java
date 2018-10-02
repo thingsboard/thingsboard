@@ -174,6 +174,8 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
         } catch (ExecutionException e) {
             if (e.getCause() instanceof ScriptException) {
                 throw (ScriptException)e.getCause();
+            } else if (e.getCause() instanceof RuntimeException) {
+                throw new ScriptException(e.getCause().getMessage());
             } else {
                 throw new ScriptException(e);
             }
