@@ -20,7 +20,7 @@ DROP MATERIALIZED VIEW IF EXISTS thingsboard.entity_view_by_tenant_and_customer;
 DROP MATERIALIZED VIEW IF EXISTS thingsboard.entity_view_by_tenant_and_entity_id;
 
 DROP TABLE IF EXISTS thingsboard.entity_views;
-ControllerSqlTestSuite
+
 CREATE TABLE IF NOT EXISTS thingsboard.entity_views (
     id timeuuid,
     entity_id timeuuid,
