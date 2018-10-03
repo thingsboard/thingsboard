@@ -40,7 +40,8 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 import static org.thingsboard.server.dao.model.ModelConstants.CUSTOMER_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_ID_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_VIEW_BY_TENANT_AND_CUSTOMER_AND_SEARCH_TEXT;
+import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_VIEW_BY_TENANT_AND_CUSTOMER_CF;
+import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_VIEW_BY_TENANT_AND_ENTITY_ID_CF;
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_VIEW_BY_TENANT_AND_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_VIEW_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_VIEW_NAME_PROPERTY;
@@ -101,7 +102,7 @@ public class CassandraEntityViewDao extends CassandraAbstractSearchTextDao<Entit
         log.debug("Try to find entity views by tenantId [{}], customerId[{}] and pageLink [{}]",
                 tenantId, customerId, pageLink);
         List<EntityViewEntity> entityViewEntities = findPageWithTextSearch(
-                ENTITY_VIEW_BY_TENANT_AND_CUSTOMER_AND_SEARCH_TEXT,
+                ENTITY_VIEW_BY_TENANT_AND_CUSTOMER_CF,
                 Arrays.asList(eq(CUSTOMER_ID_PROPERTY, customerId), eq(TENANT_ID_PROPERTY, tenantId)),
                 pageLink);
         log.trace("Found find entity views [{}] by tenantId [{}], customerId [{}] and pageLink [{}]",
@@ -112,9 +113,9 @@ public class CassandraEntityViewDao extends CassandraAbstractSearchTextDao<Entit
     @Override
     public ListenableFuture<List<EntityView>> findEntityViewsByTenantIdAndEntityIdAsync(UUID tenantId, UUID entityId) {
         log.debug("Try to find entity views by tenantId [{}] and entityId [{}]", tenantId, entityId);
-        Select.Where query = select().from(getColumnFamilyName()).where();
+        Select.Where query = select().from(ENTITY_VIEW_BY_TENANT_AND_ENTITY_ID_CF).where();
         query.and(eq(TENANT_ID_PROPERTY, tenantId));
-        query.and(eq(ENTITY_ID_COLUMN, entityId));
+        query.and(eq(ENTITY_ID_COLUMN, entityId));dr
         return findListByStatementAsync(query);
     }
 }
