@@ -67,3 +67,14 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.entity_view_by_tenant_and_cus
       AND id IS NOT NULL
     PRIMARY KEY (tenant_id, customer_id, search_text, id, entity_id)
     WITH CLUSTERING ORDER BY (customer_id DESC, search_text ASC, id DESC);
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.entity_view_by_tenant_and_entity_id AS
+    SELECT *
+    from thingsboard.entity_views
+    WHERE tenant_id IS NOT NULL
+      AND customer_id IS NOT NULL
+      AND entity_id IS NOT NULL
+      AND search_text IS NOT NULL
+      AND id IS NOT NULL
+    PRIMARY KEY (tenant_id, entity_id, customer_id, search_text, id)
+    WITH CLUSTERING ORDER BY (entity_id DESC, customer_id DESC, search_text ASC, id DESC);
