@@ -19,17 +19,19 @@ version: '2'
 
 services:
   zookeeper:
+    restart: always
     image: "wurstmeister/zookeeper"
     ports:
       - "2181"
   kafka:
+    restart: always
     image: "wurstmeister/kafka"
     ports:
       - "9092:9092"
     environment:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_LISTENERS: INSIDE://:9093,OUTSIDE://:9092
-      KAFKA_ADVERTISED_LISTENERS: INSIDE://:9093,OUTSIDE://${EXTERNAL_HOSTNAME}:9092
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://:9093,OUTSIDE://kafka:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
       KAFKA_CREATE_TOPICS: "${KAFKA_TOPICS}"
@@ -37,21 +39,81 @@ services:
     depends_on:
       - zookeeper
   tb-js-executor:
-    image: "local-maven-build/tb-js-executor:latest"
+    restart: always
+    image: "${DOCKER_REPO}/tb-js-executor:${TB_VERSION}"
     environment:
       TB_KAFKA_SERVERS: kafka:9092
     env_file:
       - tb-js-executor.env
     depends_on:
       - kafka
-  tb-web-ui:
-    image: "local-maven-build/tb-web-ui:latest"
+  tb:
+    restart: always
+    image: "${DOCKER_REPO}/tb-node:${TB_VERSION}"
     ports:
-      - "8090:8090"
+      - "8080"
+      - "1883:1883"
+      - "5683:5683/udp"
+    env_file:
+      - tb-node.env
     environment:
-      HTTP_BIND_ADDRESS: 0.0.0.0
-      HTTP_BIND_PORT: 8090
-      TB_HOST: ${EXTERNAL_HOSTNAME}
+      ZOOKEEPER_URL: zk:2181
+      TB_KAFKA_SERVERS: kafka:9092
+      JS_EVALUATOR: remote
+    volumes:
+      - ./tb-node/db:/usr/share/thingsboard/data/db"
+      - ./tb-node/conf:/config
+      - ./tb-node/log:/var/log/thingsboard
+    depends_on:
+      - kafka
+  tb-web-ui1:
+    restart: always
+    image: "${DOCKER_REPO}/tb-web-ui:${TB_VERSION}"
+    ports:
+      - "8080"
+    environment:
+      TB_HOST: tb
       TB_PORT: 8080
     env_file:
       - tb-web-ui.env
+  tb-web-ui2:
+    restart: always
+    image: "${DOCKER_REPO}/tb-web-ui:${TB_VERSION}"
+    ports:
+      - "8080"
+    environment:
+      TB_HOST: tb
+      TB_PORT: 8080
+    env_file:
+      - tb-web-ui.env
+  tb-web-ui3:
+    restart: always
+    image: "${DOCKER_REPO}/tb-web-ui:${TB_VERSION}"
+    ports:
+      - "8080"
+    environment:
+      TB_HOST: tb
+      TB_PORT: 8080
+    env_file:
+      - tb-web-ui.env
+  web:
+    restart: always
+    container_name: haproxy-certbot
+    image: nmarus/haproxy-certbot
+    volumes:
+     - ./haproxy/config:/config
+     - ./haproxy/letsencrypt:/etc/letsencrypt
+     - ./haproxy/certs.d:/usr/local/etc/haproxy/certs.d
+    ports:
+     - "80:80"
+     - "443:443"
+     - "9999:9999"
+    cap_add:
+     - NET_ADMIN
+    environment:
+      HTTP_PORT: ${HTTP_PORT}
+      HTTPS_PORT: ${HTTPS_PORT}
+    links:
+        - tb-web-ui1
+        - tb-web-ui2
+        - tb-web-ui3

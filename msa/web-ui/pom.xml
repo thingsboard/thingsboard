@@ -40,7 +40,6 @@
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
         <pkg.linux.dist>${project.build.directory}/package/linux</pkg.linux.dist>
         <pkg.win.dist>${project.build.directory}/package/windows</pkg.win.dist>
-        <dockerfile.skip>true</dockerfile.skip>
     </properties>
 
     <dependencies>
@@ -304,7 +303,6 @@
             <plugin>
                 <groupId>com.spotify</groupId>
                 <artifactId>dockerfile-maven-plugin</artifactId>
-                <version>1.4.4</version>
                 <executions>
                     <execution>
                         <id>build-docker-image</id>
@@ -316,7 +314,8 @@
                 </executions>
                 <configuration>
                     <skip>${dockerfile.skip}</skip>
-                    <repository>local-maven-build/${pkg.name}</repository>
+                    <repository>${docker.repo}/${pkg.name}</repository>
+                    <tag>${project.version}</tag>
                     <verbose>true</verbose>
                     <googleContainerRegistryEnabled>false</googleContainerRegistryEnabled>
                     <contextDirectory>${project.build.directory}</contextDirectory>

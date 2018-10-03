@@ -55,7 +55,8 @@ public class TbKafkaRequestTemplate<Request, Response> {
     private volatile boolean stopped = false;
 
     @Builder
-    public TbKafkaRequestTemplate(TBKafkaProducerTemplate<Request> requestTemplate, TBKafkaConsumerTemplate<Response> responseTemplate,
+    public TbKafkaRequestTemplate(TBKafkaProducerTemplate<Request> requestTemplate,
+                                  TBKafkaConsumerTemplate<Response> responseTemplate,
                                   long maxRequestTimeout,
                                   long maxPendingRequests,
                                   long pollInterval,
@@ -77,7 +78,7 @@ public class TbKafkaRequestTemplate<Request, Response> {
 
     public void init() {
         try {
-            TBKafkaAdmin admin = new TBKafkaAdmin();
+            TBKafkaAdmin admin = new TBKafkaAdmin(this.requestTemplate.getSettings());
             CreateTopicsResult result = admin.createTopic(new NewTopic(responseTemplate.getTopic(), 1, (short) 1));
             result.all().get();
         } catch (Exception e) {

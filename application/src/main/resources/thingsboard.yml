@@ -407,7 +407,7 @@ state:
 
 kafka:
   enabled: true
-  bootstrap.servers: "${TB_KAFKA_SERVERS:192.168.2.157:9092}"
+  bootstrap.servers: "${TB_KAFKA_SERVERS:localhost:9092}"
   acks: "${TB_KAFKA_ACKS:all}"
   retries: "${TB_KAFKA_RETRIES:1}"
   batch.size: "${TB_KAFKA_BATCH_SIZE:16384}"
@@ -415,7 +415,7 @@ kafka:
   buffer.memory: "${TB_BUFFER_MEMORY:33554432}"
 
 js:
-  evaluator: "${JS_EVALUATOR:remote}" # local/remote
+  evaluator: "${JS_EVALUATOR:local}" # local/remote
   # Built-in JVM JavaScript environment properties
   local:
     # Use Sandboxed (secured) JVM JavaScript environment

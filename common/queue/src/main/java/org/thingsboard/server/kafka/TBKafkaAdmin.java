@@ -32,15 +32,8 @@ public class TBKafkaAdmin {
 
     AdminClient client;
 
-    public TBKafkaAdmin() {
-        Properties props = new Properties();
-        props.put("bootstrap.servers", "localhost:9092");
-        props.put("group.id", "test");
-        props.put("enable.auto.commit", "true");
-        props.put("auto.commit.interval.ms", "1000");
-        props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-        props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-        client = AdminClient.create(props);
+    public TBKafkaAdmin(TbKafkaSettings settings) {
+        client = AdminClient.create(settings.toProps());
     }
 
     public CreateTopicsResult createTopic(NewTopic topic){

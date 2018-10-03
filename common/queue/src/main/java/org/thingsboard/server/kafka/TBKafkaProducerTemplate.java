@@ -52,12 +52,16 @@ public class TBKafkaProducerTemplate<T> {
     @Getter
     private final String defaultTopic;
 
+    @Getter
+    private final TbKafkaSettings settings;
+
     @Builder
     private TBKafkaProducerTemplate(TbKafkaSettings settings, TbKafkaEncoder<T> encoder, TbKafkaEnricher<T> enricher,
                                     TbKafkaPartitioner<T> partitioner, String defaultTopic) {
         Properties props = settings.toProps();
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArraySerializer");
+        this.settings = settings;
         this.producer = new KafkaProducer<>(props);
         this.encoder = encoder;
         this.enricher = enricher;
@@ -67,7 +71,7 @@ public class TBKafkaProducerTemplate<T> {
 
     public void init() {
         try {
-            TBKafkaAdmin admin = new TBKafkaAdmin();
+            TBKafkaAdmin admin = new TBKafkaAdmin(this.settings);
             CreateTopicsResult result = admin.createTopic(new NewTopic(defaultTopic, 100, (short) 1));
             result.all().get();
         } catch (Exception e) {
