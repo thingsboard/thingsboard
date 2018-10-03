@@ -15,4 +15,6 @@
 # limitations under the License.
 #
 
-docker-compose up -d
+./check-dirs.sh
+
+docker-compose up -d --scale tb-js-executor=20

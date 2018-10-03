@@ -71,7 +71,7 @@ var server;
         const staticDir = path.join(root, 'static');
 
         app.all('/api/*', (req, res) => {
-            logger.info(req.method + ' ' + req.originalUrl);
+            logger.debug(req.method + ' ' + req.originalUrl);
             apiProxy.web(req, res);
         });
 

@@ -15,6 +15,8 @@
 # limitations under the License.
 #
 
+./check-dirs.sh
+
 while [[ $# -gt 0 ]]
 do
 key="$1"
@@ -37,6 +39,6 @@ else
     loadDemo=false
 fi
 
-docker-compose run --rm -e INSTALL_TB=true -e LOAD_DEMO=${loadDemo} tb
+docker-compose run --no-deps --rm -e INSTALL_TB=true -e LOAD_DEMO=${loadDemo} tb
 
 

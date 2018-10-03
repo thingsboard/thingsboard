@@ -15,27 +15,12 @@
 # limitations under the License.
 #
 
-./check-dirs.sh
+dirsArray=("./haproxy/certs.d" "./haproxy/letsencrypt" "./tb-node/db" "./tb-node/log")
 
-for i in "$@"
+for dir in ${dirsArray[@]}
 do
-case $i in
-    --fromVersion=*)
-    FROM_VERSION="${i#*=}"
-    shift
-    ;;
-    *)
-            # unknown option
-    ;;
-esac
+    if [ ! -d "$dir" ]; then
+        echo creating dir $dir
+        mkdir -p $dir
+    fi
 done
-
-if [[ -z "${FROM_VERSION// }" ]]; then
-    echo "--fromVersion parameter is invalid or unspecified!"
-    echo "Usage: docker-upgrade-tb.sh --fromVersion={VERSION}"
-    exit 1
-else
-    fromVersion="${FROM_VERSION// }"
-fi
-
-docker-compose run --no-deps --rm -e UPGRADE_TB=true -e FROM_VERSION=${fromVersion} tb

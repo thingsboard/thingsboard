@@ -61,7 +61,7 @@ services:
       TB_KAFKA_SERVERS: kafka:9092
       JS_EVALUATOR: remote
     volumes:
-      - ./tb-node/db:/usr/share/thingsboard/data/db"
+      - ./tb-node/db:/usr/share/thingsboard/data/db
       - ./tb-node/conf:/config
       - ./tb-node/log:/var/log/thingsboard
     depends_on:
@@ -86,16 +86,6 @@ services:
       TB_PORT: 8080
     env_file:
       - tb-web-ui.env
-  tb-web-ui3:
-    restart: always
-    image: "${DOCKER_REPO}/tb-web-ui:${TB_VERSION}"
-    ports:
-      - "8080"
-    environment:
-      TB_HOST: tb
-      TB_PORT: 8080
-    env_file:
-      - tb-web-ui.env
   web:
     restart: always
     container_name: haproxy-certbot
@@ -111,9 +101,8 @@ services:
     cap_add:
      - NET_ADMIN
     environment:
-      HTTP_PORT: ${HTTP_PORT}
-      HTTPS_PORT: ${HTTPS_PORT}
+      HTTP_PORT: 80
+      HTTPS_PORT: 443
     links:
         - tb-web-ui1
         - tb-web-ui2
-        - tb-web-ui3
