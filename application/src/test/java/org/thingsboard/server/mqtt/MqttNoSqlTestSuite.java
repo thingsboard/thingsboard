@@ -32,7 +32,8 @@ public class MqttNoSqlTestSuite {
     public static CustomCassandraCQLUnit cassandraUnit =
             new CustomCassandraCQLUnit(
                     Arrays.asList(
-                            new ClassPathCQLDataSet("cassandra/schema.cql", false, false),
+                            new ClassPathCQLDataSet("cassandra/schema-ts.cql", false, false),
+                            new ClassPathCQLDataSet("cassandra/schema-entities.cql", false, false),
                             new ClassPathCQLDataSet("cassandra/system-data.cql", false, false)),
                     "cassandra-test.yaml", 30000l);
 }

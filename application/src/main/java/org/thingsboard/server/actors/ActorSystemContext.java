@@ -48,6 +48,7 @@ import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
@@ -158,6 +159,10 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private AuditLogService auditLogService;
+
+    @Autowired
+    @Getter
+    private EntityViewService entityViewService;
 
     @Autowired
     @Getter
