@@ -155,8 +155,8 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         Device device = deviceDao.findById(deviceId.getId());
         try {
             List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndEntityIdAsync(device.getTenantId(), deviceId).get();
-        if (entityViews != null && !entityViews.isEmpty()) {
-            throw new DataValidationException("Can't delete device that is assigned to entity views!");
+            if (entityViews != null && !entityViews.isEmpty()) {
+                throw new DataValidationException("Can't delete device that is assigned to entity views!");
             }
         } catch (Exception e) {
             log.error("Exception while finding entity views for deviceId [{}]", deviceId, e);
