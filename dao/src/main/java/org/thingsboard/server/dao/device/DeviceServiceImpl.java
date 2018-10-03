@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -45,6 +46,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -85,6 +87,9 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
 
     @Autowired
     private DeviceCredentialsService deviceCredentialsService;
+
+    @Autowired
+    private EntityViewService entityViewService;
 
     @Autowired
     private CacheManager cacheManager;
@@ -145,18 +150,31 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     @Override
     public void deleteDevice(DeviceId deviceId) {
         log.trace("Executing deleteDevice [{}]", deviceId);
-        Cache cache = cacheManager.getCache(DEVICE_CACHE);
         validateId(deviceId, INCORRECT_DEVICE_ID + deviceId);
+
+        Device device = deviceDao.findById(deviceId.getId());
+        try {
+            List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndEntityIdAsync(device.getTenantId(), deviceId).get();
+            if (entityViews != null && !entityViews.isEmpty()) {
+                throw new DataValidationException("Can't delete device that is assigned to entity views!");
+            }
+        } catch (Exception e) {
+            log.error("Exception while finding entity views for deviceId [{}]", deviceId, e);
+            throw new RuntimeException("Exception while finding entity views for deviceId [" + deviceId + "]", e);
+        }
+
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(deviceId);
         if (deviceCredentials != null) {
             deviceCredentialsService.deleteDeviceCredentials(deviceCredentials);
         }
         deleteEntityRelations(deviceId);
-        Device device = deviceDao.findById(deviceId.getId());
+
         List<Object> list = new ArrayList<>();
         list.add(device.getTenantId());
         list.add(device.getName());
+        Cache cache = cacheManager.getCache(DEVICE_CACHE);
         cache.evict(list);
+
         deviceDao.removeById(deviceId.getId());
     }
 

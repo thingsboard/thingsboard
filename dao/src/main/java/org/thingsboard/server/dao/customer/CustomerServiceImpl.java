@@ -115,9 +115,9 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
             throw new IncorrectParameterException("Unable to delete non-existent customer.");
         }
         dashboardService.unassignCustomerDashboards(customerId);
+        entityViewService.unassignCustomerEntityViews(customer.getTenantId(), customerId);
         assetService.unassignCustomerAssets(customer.getTenantId(), customerId);
         deviceService.unassignCustomerDevices(customer.getTenantId(), customerId);
-        entityViewService.unassignCustomerEntityViews(customer.getTenantId(), customerId);
         userService.deleteCustomerUsers(customer.getTenantId(), customerId);
         deleteEntityRelations(customerId);
         customerDao.removeById(customerId.getId());
