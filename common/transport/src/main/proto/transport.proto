@@ -1,0 +1,79 @@
+/**
+ * Copyright © 2016-2018 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+syntax = "proto3";
+package transport;
+
+option java_package = "org.thingsboard.server.gen.transport";
+option java_outer_classname = "TransportProtos";
+
+/**
+ * Data Structures;
+ */
+message SessionInfoProto {
+  string nodeId = 1;
+  int64 sessionIdMSB = 2;
+  int64 sessionIdLSB = 3;
+}
+
+enum SessionEvent {
+  OPEN = 0;
+  CLOSED = 1;
+}
+
+message KeyValueProto {
+  string key = 1;
+  bool bool_v = 2;
+  int64 long_v = 3;
+  double double_v = 4;
+  string string_v = 5;
+}
+
+message TsKvListProto {
+  int64 ts = 1;
+  repeated KeyValueProto kv = 2;
+}
+
+/**
+ * Messages that use Data Structures;
+ */
+message SessionEventMsg {
+  SessionInfoProto sessionInfo = 1;
+  int64 deviceIdMSB = 2;
+  int64 deviceIdLSB = 3;
+}
+
+message PostTelemetryMsg {
+  SessionInfoProto sessionInfo = 1;
+  repeated TsKvListProto tsKvList = 2;
+}
+
+message PostAttributeMsg {
+  SessionInfoProto sessionInfo = 1;
+  repeated TsKvListProto tsKvList = 2;
+}
+
+message GetAttributeRequestMsg {
+  SessionInfoProto sessionInfo = 1;
+  repeated string clientAttributeNames = 2;
+  repeated string sharedAttributeNames = 3;
+}
+
+message GetAttributeResponseMsg {
+  SessionInfoProto sessionInfo = 1;
+  repeated TsKvListProto clientAttributeList = 2;
+  repeated TsKvListProto sharedAttributeList = 3;
+  repeated string deletedAttributeKeys = 4;
+}

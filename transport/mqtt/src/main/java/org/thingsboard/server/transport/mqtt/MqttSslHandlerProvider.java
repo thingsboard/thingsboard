@@ -60,7 +60,6 @@ public class MqttSslHandlerProvider {
     @Autowired
     private DeviceCredentialsService deviceCredentialsService;
 
-
     public SslHandler getSslHandler() {
         try {
             URL ksUrl = Resources.getResource(keyStoreFile);

@@ -22,6 +22,7 @@ import io.netty.handler.codec.mqtt.MqttDecoder;
 import io.netty.handler.codec.mqtt.MqttEncoder;
 import io.netty.handler.ssl.SslHandler;
 import org.thingsboard.server.common.transport.SessionMsgProcessor;
+import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.auth.DeviceAuthService;
 import org.thingsboard.server.common.transport.quota.QuotaService;
 import org.thingsboard.server.dao.device.DeviceService;
@@ -33,41 +34,25 @@ import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
  */
 public class MqttTransportServerInitializer extends ChannelInitializer<SocketChannel> {
 
-    private final SessionMsgProcessor processor;
-    private final DeviceService deviceService;
-    private final DeviceAuthService authService;
-    private final RelationService relationService;
-    private final MqttTransportAdaptor adaptor;
-    private final MqttSslHandlerProvider sslHandlerProvider;
-    private final QuotaService quotaService;
-    private final int maxPayloadSize;
+    private final MqttTransportContext context;
 
-    public MqttTransportServerInitializer(SessionMsgProcessor processor, DeviceService deviceService, DeviceAuthService authService, RelationService relationService,
-                                          MqttTransportAdaptor adaptor, MqttSslHandlerProvider sslHandlerProvider,
-                                          QuotaService quotaService, int maxPayloadSize) {
-        this.processor = processor;
-        this.deviceService = deviceService;
-        this.authService = authService;
-        this.relationService = relationService;
-        this.adaptor = adaptor;
-        this.sslHandlerProvider = sslHandlerProvider;
-        this.quotaService = quotaService;
-        this.maxPayloadSize = maxPayloadSize;
+    public MqttTransportServerInitializer(MqttTransportContext context) {
+        this.context = context;
     }
 
     @Override
     public void initChannel(SocketChannel ch) {
         ChannelPipeline pipeline = ch.pipeline();
         SslHandler sslHandler = null;
-        if (sslHandlerProvider != null) {
-            sslHandler = sslHandlerProvider.getSslHandler();
+        if (context.getSslHandlerProvider() != null) {
+            sslHandler = context.getSslHandlerProvider().getSslHandler();
             pipeline.addLast(sslHandler);
+            context.setSslHandler(sslHandler);
         }
-        pipeline.addLast("decoder", new MqttDecoder(maxPayloadSize));
+        pipeline.addLast("decoder", new MqttDecoder(context.getMaxPayloadSize()));
         pipeline.addLast("encoder", MqttEncoder.INSTANCE);
 
-        MqttTransportHandler handler = new MqttTransportHandler(processor, deviceService, authService, relationService,
-                adaptor, sslHandler, quotaService);
+        MqttTransportHandler handler = new MqttTransportHandler(context);
 
         pipeline.addLast(handler);
         ch.closeFuture().addListener(handler);

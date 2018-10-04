@@ -23,11 +23,14 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.ResourceLeakDetector;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.transport.SessionMsgProcessor;
+import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.auth.DeviceAuthService;
 import org.thingsboard.server.common.transport.quota.host.HostRequestsQuotaService;
 import org.thingsboard.server.dao.device.DeviceService;
@@ -48,27 +51,6 @@ public class MqttTransportService {
     private static final String V1 = "v1";
     private static final String DEVICE = "device";
 
-    @Autowired(required = false)
-    private ApplicationContext appContext;
-
-    @Autowired(required = false)
-    private SessionMsgProcessor processor;
-
-    @Autowired(required = false)
-    private DeviceService deviceService;
-
-    @Autowired(required = false)
-    private DeviceAuthService authService;
-
-    @Autowired(required = false)
-    private RelationService relationService;
-
-    @Autowired(required = false)
-    private MqttSslHandlerProvider sslHandlerProvider;
-
-    @Autowired(required = false)
-    private HostRequestsQuotaService quotaService;
-
     @Value("${mqtt.bind_address}")
     private String host;
     @Value("${mqtt.bind_port}")
@@ -82,10 +64,9 @@ public class MqttTransportService {
     private Integer bossGroupThreadCount;
     @Value("${mqtt.netty.worker_group_thread_count}")
     private Integer workerGroupThreadCount;
-    @Value("${mqtt.netty.max_payload_size}")
-    private Integer maxPayloadSize;
 
-    private MqttTransportAdaptor adaptor;
+    @Autowired
+    private MqttTransportContext context;
 
     private Channel serverChannel;
     private EventLoopGroup bossGroup;
@@ -97,17 +78,12 @@ public class MqttTransportService {
         ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.valueOf(leakDetectorLevel.toUpperCase()));
 
         log.info("Starting MQTT transport...");
-        log.info("Lookup MQTT transport adaptor {}", adaptorName);
-        this.adaptor = (MqttTransportAdaptor) appContext.getBean(adaptorName);
-
-        log.info("Starting MQTT transport server");
         bossGroup = new NioEventLoopGroup(bossGroupThreadCount);
         workerGroup = new NioEventLoopGroup(workerGroupThreadCount);
         ServerBootstrap b = new ServerBootstrap();
         b.group(bossGroup, workerGroup)
                 .channel(NioServerSocketChannel.class)
-                .childHandler(new MqttTransportServerInitializer(processor, deviceService, authService, relationService,
-                        adaptor, sslHandlerProvider, quotaService, maxPayloadSize));
+                .childHandler(new MqttTransportServerInitializer(context));
 
         serverChannel = b.bind(host, port).sync().channel();
         log.info("Mqtt transport started!");
