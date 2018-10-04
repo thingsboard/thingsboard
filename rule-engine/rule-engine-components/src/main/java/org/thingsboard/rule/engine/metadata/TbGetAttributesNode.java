@@ -36,6 +36,8 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
           nodeDescription = "Add Message Originator Attributes or Latest Telemetry into Message Metadata",
           nodeDetails = "If Attributes enrichment configured, <b>CLIENT/SHARED/SERVER</b> attributes are added into Message metadata " +
                 "with specific prefix: <i>cs/shared/ss</i>. Latest telemetry value added into metadata without prefix. " +
+				"If attribute or telemetry was not found or value is not present in the DB, "+
+				"it is not added into Message Metadata and still routed via Success chain. "+
                   "To access those attributes in other nodes this template can be used " +
                 "<code>metadata.cs_temperature</code> or <code>metadata.shared_limit</code> ",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
