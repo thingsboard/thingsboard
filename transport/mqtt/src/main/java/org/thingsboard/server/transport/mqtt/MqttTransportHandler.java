@@ -255,16 +255,12 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                         break;
                     }
                     case DEVICE_RPC_RESPONSE_SUB_TOPIC:
+                    case GATEWAY_ATTRIBUTES_TOPIC:
+                    case GATEWAY_RPC_TOPIC:
                         registerSubQoS(topic, grantedQoSList, reqQoS);
                         break;
                     case DEVICE_ATTRIBUTES_RESPONSES_TOPIC:
                         deviceSessionCtx.setAllowAttributeResponses();
-                        registerSubQoS(topic, grantedQoSList, reqQoS);
-                        break;
-                    case GATEWAY_ATTRIBUTES_TOPIC:
-                        registerSubQoS(topic, grantedQoSList, reqQoS);
-                        break;
-                    case GATEWAY_RPC_TOPIC:
                         registerSubQoS(topic, grantedQoSList, reqQoS);
                         break;
                     default:
