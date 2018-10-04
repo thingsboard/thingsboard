@@ -21,6 +21,7 @@ div.tb-widget {
   margin: 0;
   overflow: hidden;
   outline: none;
+
   @include transition(all .2s ease-in-out);
 
   .tb-widget-title {
@@ -32,7 +33,7 @@ div.tb-widget {
 
     tb-timewindow {
       font-size: 14px;
-      opacity: 0.85;
+      opacity: .85;
     }
   }
 
@@ -44,17 +45,19 @@ div.tb-widget {
     margin: 0;
 
     .md-button.md-icon-button {
-      margin: 0 !important;
-      padding: 0 !important;
-      line-height: 20px;
       width: 32px;
-      height: 32px;
       min-width: 32px;
+      height: 32px;
       min-height: 32px;
-      md-icon, ng-md-icon {
+      padding: 0 !important;
+      margin: 0 !important;
+      line-height: 20px;
+
+      md-icon,
+      ng-md-icon {
         width: 20px;
-        height: 20px;
         min-width: 20px;
+        height: 20px;
         min-height: 20px;
         font-size: 20px;
       }
@@ -63,8 +66,8 @@ div.tb-widget {
 
   .tb-widget-content {
     tb-widget {
-      width: 100%;
       position: relative;
+      width: 100%;
     }
   }
 }
@@ -75,40 +78,41 @@ div.tb-widget.tb-highlighted {
 }
 
 div.tb-widget.tb-not-highlighted {
-  opacity: 0.5;
+  opacity: .5;
 }
 
 tb-dashboard {
   position: absolute;
   top: 0;
-  left: 0;
   right: 0;
   bottom: 0;
+  left: 0;
 }
 
 md-content.tb-dashboard-content {
   position: absolute;
   top: 0;
-  left: 0;
   right: 0;
   bottom: 0;
-  outline: none;
+  left: 0;
   background: none;
+  outline: none;
+
   .gridster-item {
-      @include transition(none);
+    @include transition(none);
   }
 }
 
 .tb-widget-error-container {
   position: absolute;
-  background-color: #fff;
   width: 100%;
   height: 100%;
+  background-color: #fff;
 }
 
 .tb-widget-error-msg {
-  color: red;
-  font-size: 16px;
-  word-wrap: break-word;
   padding: 5px;
+  font-size: 16px;
+  color: #f00;
+  word-wrap: break-word;
 }

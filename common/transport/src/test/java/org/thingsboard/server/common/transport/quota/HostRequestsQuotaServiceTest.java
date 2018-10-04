@@ -17,9 +17,7 @@ package org.thingsboard.server.common.transport.quota;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.thingsboard.server.common.transport.quota.inmemory.HostRequestIntervalRegistry;
-import org.thingsboard.server.common.transport.quota.inmemory.IntervalRegistryCleaner;
-import org.thingsboard.server.common.transport.quota.inmemory.IntervalRegistryLogger;
+import org.thingsboard.server.common.transport.quota.host.*;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -35,8 +33,8 @@ public class HostRequestsQuotaServiceTest {
 
     private HostRequestIntervalRegistry requestRegistry = mock(HostRequestIntervalRegistry.class);
     private HostRequestLimitPolicy requestsPolicy = mock(HostRequestLimitPolicy.class);
-    private IntervalRegistryCleaner registryCleaner = mock(IntervalRegistryCleaner.class);
-    private IntervalRegistryLogger registryLogger = mock(IntervalRegistryLogger.class);
+    private HostIntervalRegistryCleaner registryCleaner = mock(HostIntervalRegistryCleaner.class);
+    private HostIntervalRegistryLogger registryLogger = mock(HostIntervalRegistryLogger.class);
 
     @Before
     public void init() {

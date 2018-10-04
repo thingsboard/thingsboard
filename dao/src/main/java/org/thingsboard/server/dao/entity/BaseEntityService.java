@@ -29,8 +29,7 @@ import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.plugin.PluginService;
-import org.thingsboard.server.dao.rule.RuleService;
+import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserService;
 
@@ -48,12 +47,6 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     private DeviceService deviceService;
 
     @Autowired
-    private RuleService ruleService;
-
-    @Autowired
-    private PluginService pluginService;
-
-    @Autowired
     private TenantService tenantService;
 
     @Autowired
@@ -67,6 +60,9 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
 
     @Autowired
     private AlarmService alarmService;
+
+    @Autowired
+    private RuleChainService ruleChainService;
 
     @Override
     public void deleteEntityRelations(EntityId entityId) {
@@ -85,12 +81,6 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
             case DEVICE:
                 hasName = deviceService.findDeviceByIdAsync(new DeviceId(entityId.getId()));
                 break;
-            case RULE:
-                hasName = ruleService.findRuleByIdAsync(new RuleId(entityId.getId()));
-                break;
-            case PLUGIN:
-                hasName = pluginService.findPluginByIdAsync(new PluginId(entityId.getId()));
-                break;
             case TENANT:
                 hasName = tenantService.findTenantByIdAsync(new TenantId(entityId.getId()));
                 break;
@@ -105,6 +95,9 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
                 break;
             case ALARM:
                 hasName = alarmService.findAlarmByIdAsync(new AlarmId(entityId.getId()));
+                break;
+            case RULE_CHAIN:
+                hasName = ruleChainService.findRuleChainByIdAsync(new RuleChainId(entityId.getId()));
                 break;
             default:
                 throw new IllegalStateException("Not Implemented!");

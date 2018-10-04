@@ -25,7 +25,6 @@ import org.thingsboard.server.dao.model.sql.ComponentDescriptorEntity;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Created by Valerii Sosliuk on 5/6/2017.

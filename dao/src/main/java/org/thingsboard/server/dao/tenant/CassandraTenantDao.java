@@ -28,7 +28,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
-import static org.thingsboard.server.dao.model.ModelConstants.*;
+import static org.thingsboard.server.dao.model.ModelConstants.TENANT_BY_REGION_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.TENANT_COLUMN_FAMILY_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.TENANT_REGION_PROPERTY;
 
 @Component
 @Slf4j

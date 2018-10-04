@@ -19,6 +19,8 @@ public enum RelationTypeGroup {
 
     COMMON,
     ALARM,
-    DASHBOARD
+    DASHBOARD,
+    RULE_CHAIN,
+    RULE_NODE
 
 }

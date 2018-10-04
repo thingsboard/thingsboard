@@ -29,9 +29,9 @@ import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.plugin.PluginService;
-import org.thingsboard.server.dao.rule.RuleService;
+import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
@@ -65,16 +65,16 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
     private DeviceService deviceService;
 
     @Autowired
+    private EntityViewService entityViewService;
+
+    @Autowired
     private WidgetsBundleService widgetsBundleService;
 
     @Autowired
     private DashboardService dashboardService;
 
     @Autowired
-    private RuleService ruleService;
-
-    @Autowired
-    private PluginService pluginService;
+    private RuleChainService ruleChainService;
 
     @Override
     public Tenant findTenantById(TenantId tenantId) {
@@ -105,11 +105,11 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
         customerService.deleteCustomersByTenantId(tenantId);
         widgetsBundleService.deleteWidgetsBundlesByTenantId(tenantId);
         dashboardService.deleteDashboardsByTenantId(tenantId);
+        entityViewService.deleteEntityViewsByTenantId(tenantId);
         assetService.deleteAssetsByTenantId(tenantId);
         deviceService.deleteDevicesByTenantId(tenantId);
         userService.deleteTenantAdmins(tenantId);
-        ruleService.deleteRulesByTenantId(tenantId);
-        pluginService.deletePluginsByTenantId(tenantId);
+        ruleChainService.deleteRuleChainsByTenantId(tenantId);
         tenantDao.removeById(tenantId.getId());
         deleteEntityRelations(tenantId);
     }

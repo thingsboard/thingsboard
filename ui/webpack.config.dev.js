@@ -18,8 +18,21 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const StyleLintPlugin = require('stylelint-webpack-plugin')
+
 const webpack = require('webpack');
 const path = require('path');
+const dirTree = require('directory-tree');
+const jsonminify = require("jsonminify");
+
+const PUBLIC_RESOURCE_PATH = '/';
+
+var langs = [];
+dirTree('./src/app/locale/', {extensions:/\.json$/}, (item) => {
+    /* It is expected what the name of a locale file has the following format: */
+    /* 'locale.constant-LANG_CODE[_REGION_CODE].json', e.g. locale.constant-es.json or locale.constant-zh_CN.json*/
+    langs.push(item.name.slice(item.name.lastIndexOf('-') + 1, -5));
+});
 
 /* devtool: 'cheap-module-eval-source-map', */
 
@@ -32,7 +45,7 @@ module.exports = {
     ],
     output: {
         path: path.resolve(__dirname, 'target/generated-resources/public/static'),
-        publicPath: '/',
+        publicPath: PUBLIC_RESOURCE_PATH,
         filename: 'bundle.js',
     },
     plugins: [
@@ -45,7 +58,18 @@ module.exports = {
             moment: "moment"
         }),
         new CopyWebpackPlugin([
-            { from: './src/thingsboard.ico', to: 'thingsboard.ico' }
+            {
+                from: './src/thingsboard.ico',
+                to: 'thingsboard.ico'
+            },
+            {
+                from: './src/app/locale',
+                to: 'locale',
+                ignore: [ '*.js' ],
+                transform: function(content, path) {
+                    return Buffer.from(jsonminify(content.toString()));
+                }
+            }
         ]),
         new webpack.HotModuleReplacementPlugin(),
         new HtmlWebpackPlugin({
@@ -54,6 +78,7 @@ module.exports = {
             title: 'ThingsBoard',
             inject: 'body',
         }),
+        new StyleLintPlugin(),
         new webpack.optimize.OccurrenceOrderPlugin(),
         new webpack.NoErrorsPlugin(),
         new ExtractTextPlugin('style.[contentHash].css', {
@@ -65,6 +90,8 @@ module.exports = {
             'process.env': {
                 NODE_ENV: JSON.stringify('development'),
             },
+            PUBLIC_PATH: JSON.stringify(PUBLIC_RESOURCE_PATH),
+            SUPPORTED_LANGS: JSON.stringify(langs)
         }),
     ],
     node: {
@@ -117,7 +144,7 @@ module.exports = {
                     'url?limit=8192',
                     'img?minimize'
                 ]
-            },
+            }
         ],
     },
     'html-minifier-loader': {

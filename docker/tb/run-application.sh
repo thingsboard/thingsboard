@@ -18,7 +18,12 @@
 
 dpkg -i /thingsboard.deb
 
-if [ "$DATABASE_TYPE" == "cassandra" ]; then
+# Copying env variables into conf files
+printenv | awk -F "=" '{print "export " $1 "='\''" $2 "'\''"}' >> /usr/share/thingsboard/conf/thingsboard.conf
+
+cat /usr/share/thingsboard/conf/thingsboard.conf
+
+if [ "$DATABASE_ENTITIES_TYPE" == "cassandra" ]; then
     until nmap $CASSANDRA_HOST -p $CASSANDRA_PORT | grep "$CASSANDRA_PORT/tcp open\|filtered"
     do
       echo "Wait for cassandra db to start..."
@@ -26,7 +31,7 @@ if [ "$DATABASE_TYPE" == "cassandra" ]; then
     done
 fi
 
-if [ "$DATABASE_TYPE" == "sql" ]; then
+if [ "$DATABASE_ENTITIES_TYPE" == "sql" ]; then
     if [ "$SPRING_DRIVER_CLASS_NAME" == "org.postgresql.Driver" ]; then
         until nmap $POSTGRES_HOST -p $POSTGRES_PORT | grep "$POSTGRES_PORT/tcp open"
         do
@@ -45,12 +50,6 @@ if [ "$ADD_SCHEMA_AND_SYSTEM_DATA" == "true" ]; then
         /usr/share/thingsboard/bin/install/install.sh
     fi
 fi
-
-
-# Copying env variables into conf files
-printenv | awk -F "=" '{print "export " $1 "='\''" $2 "'\''"}' >> /usr/share/thingsboard/conf/thingsboard.conf
-
-cat /usr/share/thingsboard/conf/thingsboard.conf
 
 echo "Starting 'Thingsboard' service..."
 service thingsboard start

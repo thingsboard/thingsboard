@@ -22,7 +22,7 @@ spec:
   containers:
   - name: cassandra-setup
     imagePullPolicy: Always
-    image: thingsboard/cassandra-setup:1.4.0
+    image: thingsboard/cassandra-setup:2.1.0
     env:
     - name: ADD_DEMO_DATA
       value: "true"
@@ -30,7 +30,9 @@ spec:
       value: "cassandra-headless"
     - name : CASSANDRA_PORT
       value: "9042"
-    - name : DATABASE_TYPE
+    - name : DATABASE_ENTITIES_TYPE
+      value: "cassandra"
+    - name : DATABASE_TS_TYPE
       value: "cassandra"
     - name : CASSANDRA_URL
       value: "cassandra-headless:9042"

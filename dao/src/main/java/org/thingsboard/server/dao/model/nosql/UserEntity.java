@@ -33,7 +33,16 @@ import org.thingsboard.server.dao.model.type.JsonCodec;
 
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.model.ModelConstants.*;
+import static org.thingsboard.server.dao.model.ModelConstants.ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.USER_ADDITIONAL_INFO_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.USER_AUTHORITY_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.USER_COLUMN_FAMILY_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.USER_CUSTOMER_ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.USER_EMAIL_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.USER_FIRST_NAME_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.USER_LAST_NAME_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.USER_TENANT_ID_PROPERTY;
 
 @Table(name = USER_COLUMN_FAMILY_NAME)
 @EqualsAndHashCode

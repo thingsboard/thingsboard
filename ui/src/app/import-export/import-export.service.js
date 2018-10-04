@@ -25,8 +25,7 @@ import entityAliasesTemplate from '../entity/alias/entity-aliases.tpl.html';
 
 /*@ngInject*/
 export default function ImportExport($log, $translate, $q, $mdDialog, $document, $http, itembuffer, utils, types,
-                                     dashboardUtils, entityService, dashboardService, pluginService, ruleService,
-                                     widgetService, toast, attributeService) {
+                                     dashboardUtils, entityService, dashboardService, ruleChainService, widgetService, toast, attributeService) {
 
 
     var service = {
@@ -34,10 +33,8 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         importDashboard: importDashboard,
         exportWidget: exportWidget,
         importWidget: importWidget,
-        exportPlugin: exportPlugin,
-        importPlugin: importPlugin,
-        exportRule: exportRule,
-        importRule: importRule,
+        exportRuleChain: exportRuleChain,
+        importRuleChain: importRuleChain,
         exportWidgetType: exportWidgetType,
         importWidgetType: importWidgetType,
         exportWidgetsBundle: exportWidgetsBundle,
@@ -219,42 +216,68 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         return true;
     }
 
-    // Rule functions
+    // Rule chain functions
 
-    function exportRule(ruleId) {
-        ruleService.getRule(ruleId).then(
-            function success(rule) {
-                var name = rule.name;
-                name = name.toLowerCase().replace(/\W/g,"_");
-                exportToPc(prepareExport(rule), name + '.json');
+    function exportRuleChain(ruleChainId) {
+        ruleChainService.getRuleChain(ruleChainId).then(
+            (ruleChain) => {
+                ruleChainService.getRuleChainMetaData(ruleChainId).then(
+                    (ruleChainMetaData) => {
+                        var ruleChainExport = {
+                            ruleChain: prepareRuleChain(ruleChain),
+                            metadata: prepareRuleChainMetaData(ruleChainMetaData)
+                        };
+                        var name = ruleChain.name;
+                        name = name.toLowerCase().replace(/\W/g,"_");
+                        exportToPc(ruleChainExport, name + '.json');
+                    },
+                    (rejection) => {
+                        processExportRuleChainRejection(rejection);
+                    }
+                );
             },
-            function fail(rejection) {
-                var message = rejection;
-                if (!message) {
-                    message = $translate.instant('error.unknown-error');
-                }
-                toast.showError($translate.instant('rule.export-failed-error', {error: message}));
+            (rejection) => {
+                processExportRuleChainRejection(rejection);
             }
         );
     }
 
-    function importRule($event) {
+    function prepareRuleChain(ruleChain) {
+        ruleChain = prepareExport(ruleChain);
+        if (ruleChain.firstRuleNodeId) {
+            ruleChain.firstRuleNodeId = null;
+        }
+        ruleChain.root = false;
+        return ruleChain;
+    }
+
+    function prepareRuleChainMetaData(ruleChainMetaData) {
+        delete ruleChainMetaData.ruleChainId;
+        for (var i=0;i<ruleChainMetaData.nodes.length;i++) {
+            var node = ruleChainMetaData.nodes[i];
+            delete node.ruleChainId;
+            ruleChainMetaData.nodes[i] = prepareExport(node);
+        }
+        return ruleChainMetaData;
+    }
+
+    function processExportRuleChainRejection(rejection) {
+        var message = rejection;
+        if (!message) {
+            message = $translate.instant('error.unknown-error');
+        }
+        toast.showError($translate.instant('rulechain.export-failed-error', {error: message}));
+    }
+
+    function importRuleChain($event) {
         var deferred = $q.defer();
-        openImportDialog($event, 'rule.import', 'rule.rule-file').then(
-            function success(rule) {
-                if (!validateImportedRule(rule)) {
-                    toast.showError($translate.instant('rule.invalid-rule-file-error'));
+        openImportDialog($event, 'rulechain.import', 'rulechain.rulechain-file').then(
+            function success(ruleChainImport) {
+                if (!validateImportedRuleChain(ruleChainImport)) {
+                    toast.showError($translate.instant('rulechain.invalid-rulechain-file-error'));
                     deferred.reject();
                 } else {
-                    rule.state = 'SUSPENDED';
-                    ruleService.saveRule(rule).then(
-                        function success() {
-                            deferred.resolve();
-                        },
-                        function fail() {
-                            deferred.reject();
-                        }
-                    );
+                    deferred.resolve(ruleChainImport);
                 }
             },
             function fail() {
@@ -264,71 +287,14 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         return deferred.promise;
     }
 
-    function validateImportedRule(rule) {
-        if (angular.isUndefined(rule.name)
-            || angular.isUndefined(rule.pluginToken)
-            || angular.isUndefined(rule.filters)
-            || angular.isUndefined(rule.action))
-        {
+    function validateImportedRuleChain(ruleChainImport) {
+        if (angular.isUndefined(ruleChainImport.ruleChain)) {
             return false;
         }
-        return true;
-    }
-
-    // Plugin functions
-
-    function exportPlugin(pluginId) {
-        pluginService.getPlugin(pluginId).then(
-            function success(plugin) {
-                if (!plugin.configuration || plugin.configuration === null) {
-                    plugin.configuration = {};
-                }
-                var name = plugin.name;
-                name = name.toLowerCase().replace(/\W/g,"_");
-                exportToPc(prepareExport(plugin), name + '.json');
-            },
-            function fail(rejection) {
-                var message = rejection;
-                if (!message) {
-                    message = $translate.instant('error.unknown-error');
-                }
-                toast.showError($translate.instant('plugin.export-failed-error', {error: message}));
-            }
-        );
-    }
-
-    function importPlugin($event) {
-        var deferred = $q.defer();
-        openImportDialog($event, 'plugin.import', 'plugin.plugin-file').then(
-            function success(plugin) {
-                if (!validateImportedPlugin(plugin)) {
-                    toast.showError($translate.instant('plugin.invalid-plugin-file-error'));
-                    deferred.reject();
-                } else {
-                    plugin.state = 'SUSPENDED';
-                    pluginService.savePlugin(plugin).then(
-                        function success() {
-                            deferred.resolve();
-                        },
-                        function fail() {
-                            deferred.reject();
-                        }
-                    );
-                }
-            },
-            function fail() {
-                deferred.reject();
-            }
-        );
-        return deferred.promise;
-    }
-
-    function validateImportedPlugin(plugin) {
-        if (angular.isUndefined(plugin.name)
-            || angular.isUndefined(plugin.clazz)
-            || angular.isUndefined(plugin.apiToken)
-            || angular.isUndefined(plugin.configuration))
-        {
+        if (angular.isUndefined(ruleChainImport.metadata)) {
+            return false;
+        }
+        if (angular.isUndefined(ruleChainImport.ruleChain.name)) {
             return false;
         }
         return true;

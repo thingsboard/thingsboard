@@ -15,11 +15,9 @@
  */
 package org.thingsboard.server.common.transport.quota.inmemory;
 
-import com.google.common.collect.Sets;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.Collections;
+import org.thingsboard.server.common.transport.quota.host.HostRequestIntervalRegistry;
 
 import static org.junit.Assert.assertEquals;
 

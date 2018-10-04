@@ -15,9 +15,9 @@
  */
 package org.thingsboard.server.service.component;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Charsets;
-import com.google.common.io.Resources;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,15 +26,27 @@ import org.springframework.context.annotation.ClassPathScanningCandidateComponen
 import org.springframework.core.env.Environment;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.stereotype.Service;
+import org.thingsboard.rule.engine.api.NodeConfiguration;
+import org.thingsboard.rule.engine.api.NodeDefinition;
+import org.thingsboard.rule.engine.api.RuleNode;
+import org.thingsboard.rule.engine.api.TbRelationTypes;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.dao.component.ComponentDescriptorService;
-import org.thingsboard.server.extensions.api.component.*;
 
 import javax.annotation.PostConstruct;
 import java.lang.annotation.Annotation;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 @Service
 @Slf4j
@@ -66,6 +78,24 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
         }
     }
 
+    private void registerRuleNodeComponents() {
+        Set<BeanDefinition> ruleNodeBeanDefinitions = getBeanDefinitions(RuleNode.class);
+        for (BeanDefinition def : ruleNodeBeanDefinitions) {
+            try {
+                String clazzName = def.getBeanClassName();
+                Class<?> clazz = Class.forName(clazzName);
+                RuleNode ruleNodeAnnotation = clazz.getAnnotation(RuleNode.class);
+                ComponentType type = ruleNodeAnnotation.type();
+                ComponentDescriptor component = scanAndPersistComponent(def, type);
+                components.put(component.getClazz(), component);
+                componentsMap.computeIfAbsent(type, k -> new ArrayList<>()).add(component);
+            } catch (Exception e) {
+                log.error("Can't initialize component {}, due to {}", def.getBeanClassName(), e.getMessage(), e);
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
     private void registerComponents(ComponentType type, Class<? extends Annotation> annotation) {
         List<ComponentDescriptor> components = persist(getBeanDefinitions(annotation), type);
         componentsMap.put(type, components);
@@ -79,8 +109,7 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
     private List<ComponentDescriptor> persist(Set<BeanDefinition> filterDefs, ComponentType type) {
         List<ComponentDescriptor> result = new ArrayList<>();
         for (BeanDefinition def : filterDefs) {
-            ComponentDescriptor scannedComponent = scanAndPersistComponent(def, type);
-            result.add(scannedComponent);
+            result.add(scanAndPersistComponent(def, type));
         }
         return result;
     }
@@ -91,49 +120,24 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
         try {
             scannedComponent.setType(type);
             Class<?> clazz = Class.forName(clazzName);
-            String descriptorResourceName;
             switch (type) {
+                case ENRICHMENT:
                 case FILTER:
-                    Filter filterAnnotation = clazz.getAnnotation(Filter.class);
-                    scannedComponent.setName(filterAnnotation.name());
-                    scannedComponent.setScope(filterAnnotation.scope());
-                    descriptorResourceName = filterAnnotation.descriptor();
-                    break;
-                case PROCESSOR:
-                    Processor processorAnnotation = clazz.getAnnotation(Processor.class);
-                    scannedComponent.setName(processorAnnotation.name());
-                    scannedComponent.setScope(processorAnnotation.scope());
-                    descriptorResourceName = processorAnnotation.descriptor();
-                    break;
+                case TRANSFORMATION:
                 case ACTION:
-                    Action actionAnnotation = clazz.getAnnotation(Action.class);
-                    scannedComponent.setName(actionAnnotation.name());
-                    scannedComponent.setScope(actionAnnotation.scope());
-                    descriptorResourceName = actionAnnotation.descriptor();
-                    break;
-                case PLUGIN:
-                    Plugin pluginAnnotation = clazz.getAnnotation(Plugin.class);
-                    scannedComponent.setName(pluginAnnotation.name());
-                    scannedComponent.setScope(pluginAnnotation.scope());
-                    descriptorResourceName = pluginAnnotation.descriptor();
-                    for (Class<?> actionClazz : pluginAnnotation.actions()) {
-                        ComponentDescriptor actionComponent = getComponent(actionClazz.getName())
-                                .orElseThrow(() -> {
-                                    log.error("Can't initialize plugin {}, due to missing action {}!", def.getBeanClassName(), actionClazz.getName());
-                                    return new ClassNotFoundException("Action: " + actionClazz.getName() + "is missing!");
-                                });
-                        if (actionComponent.getType() != ComponentType.ACTION) {
-                            log.error("Plugin {} action {} has wrong component type!", def.getBeanClassName(), actionClazz.getName(), actionComponent.getType());
-                            throw new RuntimeException("Plugin " + def.getBeanClassName() + "action " + actionClazz.getName() + " has wrong component type!");
-                        }
-                    }
-                    scannedComponent.setActions(Arrays.stream(pluginAnnotation.actions()).map(action -> action.getName()).collect(Collectors.joining(",")));
+                case EXTERNAL:
+                    RuleNode ruleNodeAnnotation = clazz.getAnnotation(RuleNode.class);
+                    scannedComponent.setName(ruleNodeAnnotation.name());
+                    scannedComponent.setScope(ruleNodeAnnotation.scope());
+                    NodeDefinition nodeDefinition = prepareNodeDefinition(ruleNodeAnnotation);
+                    ObjectNode configurationDescriptor = mapper.createObjectNode();
+                    JsonNode node = mapper.valueToTree(nodeDefinition);
+                    configurationDescriptor.set("nodeDefinition", node);
+                    scannedComponent.setConfigurationDescriptor(configurationDescriptor);
                     break;
                 default:
                     throw new RuntimeException(type + " is not supported yet!");
             }
-            scannedComponent.setConfigurationDescriptor(mapper.readTree(
-                    Resources.toString(Resources.getResource(descriptorResourceName), Charsets.UTF_8)));
             scannedComponent.setClazz(clazzName);
             log.info("Processing scanned component: {}", scannedComponent);
         } catch (Exception e) {
@@ -156,6 +160,34 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
         return scannedComponent;
     }
 
+    private NodeDefinition prepareNodeDefinition(RuleNode nodeAnnotation) throws Exception {
+        NodeDefinition nodeDefinition = new NodeDefinition();
+        nodeDefinition.setDetails(nodeAnnotation.nodeDetails());
+        nodeDefinition.setDescription(nodeAnnotation.nodeDescription());
+        nodeDefinition.setInEnabled(nodeAnnotation.inEnabled());
+        nodeDefinition.setOutEnabled(nodeAnnotation.outEnabled());
+        nodeDefinition.setRelationTypes(getRelationTypesWithFailureRelation(nodeAnnotation));
+        nodeDefinition.setCustomRelations(nodeAnnotation.customRelations());
+        Class<? extends NodeConfiguration> configClazz = nodeAnnotation.configClazz();
+        NodeConfiguration config = configClazz.newInstance();
+        NodeConfiguration defaultConfiguration = config.defaultConfiguration();
+        nodeDefinition.setDefaultConfiguration(mapper.valueToTree(defaultConfiguration));
+        nodeDefinition.setUiResources(nodeAnnotation.uiResources());
+        nodeDefinition.setConfigDirective(nodeAnnotation.configDirective());
+        nodeDefinition.setIcon(nodeAnnotation.icon());
+        nodeDefinition.setIconUrl(nodeAnnotation.iconUrl());
+        nodeDefinition.setDocUrl(nodeAnnotation.docUrl());
+        return nodeDefinition;
+    }
+
+    private String[] getRelationTypesWithFailureRelation(RuleNode nodeAnnotation) {
+        List<String> relationTypes = new ArrayList<>(Arrays.asList(nodeAnnotation.relationTypes()));
+        if (!relationTypes.contains(TbRelationTypes.FAILURE)) {
+            relationTypes.add(TbRelationTypes.FAILURE);
+        }
+        return relationTypes.toArray(new String[relationTypes.size()]);
+    }
+
     private Set<BeanDefinition> getBeanDefinitions(Class<? extends Annotation> componentType) {
         ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
         scanner.addIncludeFilter(new AnnotationTypeFilter(componentType));
@@ -168,42 +200,30 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
 
     @Override
     public void discoverComponents() {
-        registerComponents(ComponentType.FILTER, Filter.class);
-
-        registerComponents(ComponentType.PROCESSOR, Processor.class);
-
-        registerComponents(ComponentType.ACTION, Action.class);
-
-        registerComponents(ComponentType.PLUGIN, Plugin.class);
-
+        registerRuleNodeComponents();
         log.info("Found following definitions: {}", components.values());
     }
 
     @Override
     public List<ComponentDescriptor> getComponents(ComponentType type) {
-        return Collections.unmodifiableList(componentsMap.get(type));
+        if (componentsMap.containsKey(type)) {
+            return Collections.unmodifiableList(componentsMap.get(type));
+        } else {
+            return Collections.emptyList();
+        }
+    }
+
+    @Override
+    public List<ComponentDescriptor> getComponents(Set<ComponentType> types) {
+        List<ComponentDescriptor> result = new ArrayList<>();
+        types.stream().filter(type -> componentsMap.containsKey(type)).forEach(type -> {
+            result.addAll(componentsMap.get(type));
+        });
+        return Collections.unmodifiableList(result);
     }
 
     @Override
     public Optional<ComponentDescriptor> getComponent(String clazz) {
         return Optional.ofNullable(components.get(clazz));
-    }
-
-    @Override
-    public List<ComponentDescriptor> getPluginActions(String pluginClazz) {
-        Optional<ComponentDescriptor> pluginOpt = getComponent(pluginClazz);
-        if (pluginOpt.isPresent()) {
-            ComponentDescriptor plugin = pluginOpt.get();
-            if (ComponentType.PLUGIN != plugin.getType()) {
-                throw new IllegalArgumentException(pluginClazz + " is not a plugin!");
-            }
-            List<ComponentDescriptor> result = new ArrayList<>();
-            for (String action : plugin.getActions().split(",")) {
-                getComponent(action).ifPresent(v -> result.add(v));
-            }
-            return result;
-        } else {
-            throw new IllegalArgumentException(pluginClazz + " is not a component!");
-        }
     }
 }

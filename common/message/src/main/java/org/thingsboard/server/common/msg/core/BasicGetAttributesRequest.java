@@ -16,7 +16,8 @@
 package org.thingsboard.server.common.msg.core;
 
 import lombok.ToString;
-import org.thingsboard.server.common.msg.session.MsgType;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -41,8 +42,8 @@ public class BasicGetAttributesRequest extends BasicRequest implements GetAttrib
     }
 
     @Override
-    public MsgType getMsgType() {
-        return MsgType.GET_ATTRIBUTES_REQUEST;
+    public SessionMsgType getMsgType() {
+        return SessionMsgType.GET_ATTRIBUTES_REQUEST;
     }
 
     @Override

@@ -22,7 +22,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.util.SqlDao;
-import org.thingsboard.server.service.install.cql.CassandraDbHelper;
 import org.thingsboard.server.service.install.sql.SqlDbHelper;
 
 import java.nio.charset.Charset;
@@ -30,11 +29,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 
-import static org.thingsboard.server.service.install.DatabaseHelper.*;
+import static org.thingsboard.server.service.install.DatabaseHelper.ASSIGNED_CUSTOMERS;
 import static org.thingsboard.server.service.install.DatabaseHelper.CONFIGURATION;
+import static org.thingsboard.server.service.install.DatabaseHelper.CUSTOMER_ID;
+import static org.thingsboard.server.service.install.DatabaseHelper.DASHBOARD;
+import static org.thingsboard.server.service.install.DatabaseHelper.ID;
+import static org.thingsboard.server.service.install.DatabaseHelper.SEARCH_TEXT;
+import static org.thingsboard.server.service.install.DatabaseHelper.TENANT_ID;
+import static org.thingsboard.server.service.install.DatabaseHelper.TITLE;
 
 @Service
 @Profile("install")
@@ -43,9 +47,6 @@ import static org.thingsboard.server.service.install.DatabaseHelper.CONFIGURATIO
 public class SqlDatabaseUpgradeService implements DatabaseUpgradeService {
 
     private static final String SCHEMA_UPDATE_SQL = "schema_update.sql";
-
-    @Value("${install.data_dir}")
-    private String dataDir;
 
     @Value("${spring.datasource.url}")
     private String dbUrl;
@@ -59,15 +60,17 @@ public class SqlDatabaseUpgradeService implements DatabaseUpgradeService {
     @Autowired
     private DashboardService dashboardService;
 
+    @Autowired
+    private InstallScripts installScripts;
+
     @Override
     public void upgradeDatabase(String fromVersion) throws Exception {
         switch (fromVersion) {
             case "1.3.0":
                 log.info("Updating schema ...");
-                Path schemaUpdateFile = Paths.get(this.dataDir, "upgrade", "1.3.1", SCHEMA_UPDATE_SQL);
+                Path schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "1.3.1", SCHEMA_UPDATE_SQL);
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
-                    String sql = new String(Files.readAllBytes(schemaUpdateFile), Charset.forName("UTF-8"));
-                    conn.createStatement().execute(sql); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
+                    loadSql(schemaUpdateFile, conn);
                 }
                 log.info("Schema updated.");
                 break;
@@ -82,9 +85,8 @@ public class SqlDatabaseUpgradeService implements DatabaseUpgradeService {
                     log.info("Dashboards dumped.");
 
                     log.info("Updating schema ...");
-                    schemaUpdateFile = Paths.get(this.dataDir, "upgrade", "1.4.0", SCHEMA_UPDATE_SQL);
-                    String sql = new String(Files.readAllBytes(schemaUpdateFile), Charset.forName("UTF-8"));
-                    conn.createStatement().execute(sql); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
+                    schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "1.4.0", SCHEMA_UPDATE_SQL);
+                    loadSql(schemaUpdateFile, conn);
                     log.info("Schema updated.");
 
                     log.info("Restoring dashboards ...");
@@ -97,8 +99,31 @@ public class SqlDatabaseUpgradeService implements DatabaseUpgradeService {
                     log.info("Dashboards restored.");
                 }
                 break;
+            case "1.4.0":
+                try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+                    log.info("Updating schema ...");
+                    schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "2.0.0", SCHEMA_UPDATE_SQL);
+                    loadSql(schemaUpdateFile, conn);
+                    log.info("Schema updated.");
+                }
+                break;
+            case "2.0.0":
+                try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+                    log.info("Updating schema ...");
+                    schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "2.1.1", SCHEMA_UPDATE_SQL);
+                    loadSql(schemaUpdateFile, conn);
+                    log.info("Schema updated.");
+                }
+                break;
+
             default:
                 throw new RuntimeException("Unable to upgrade SQL database, unsupported fromVersion: " + fromVersion);
         }
+    }
+
+    private void loadSql(Path sqlFile, Connection conn) throws Exception {
+        String sql = new String(Files.readAllBytes(sqlFile), Charset.forName("UTF-8"));
+        conn.createStatement().execute(sql); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
+        Thread.sleep(5000);
     }
 }

@@ -34,7 +34,7 @@ public class DoubleDataEntry extends BasicKvEntry {
 
     @Override
     public Optional<Double> getDoubleValue() {
-        return Optional.of(value);
+        return Optional.ofNullable(value);
     }
 
     @Override

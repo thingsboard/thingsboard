@@ -26,7 +26,8 @@ function ComponentDescriptorService($http, $q) {
     var service = {
         getComponentDescriptorsByType: getComponentDescriptorsByType,
         getComponentDescriptorByClazz: getComponentDescriptorByClazz,
-        getPluginActionsByPluginClazz: getPluginActionsByPluginClazz
+        getPluginActionsByPluginClazz: getPluginActionsByPluginClazz,
+        getComponentDescriptorsByTypes: getComponentDescriptorsByTypes
     }
 
     return service;
@@ -48,6 +49,41 @@ function ComponentDescriptorService($http, $q) {
                 deferred.reject();
             });
 
+        }
+        return deferred.promise;
+    }
+
+    function getComponentDescriptorsByTypes(componentTypes) {
+        var deferred = $q.defer();
+        var result = [];
+        for (var i=componentTypes.length-1;i>=0;i--) {
+            var componentType = componentTypes[i];
+            if (componentsByType[componentType]) {
+                result = result.concat(componentsByType[componentType]);
+                componentTypes.splice(i, 1);
+            }
+        }
+        if (!componentTypes.length) {
+            deferred.resolve(result);
+        } else {
+            var url = '/api/components?componentTypes=' + componentTypes.join(',');
+            $http.get(url, null).then(function success(response) {
+                var components = response.data;
+                for (var i = 0; i < components.length; i++) {
+                    var component = components[i];
+                    var componentsList = componentsByType[component.type];
+                    if (!componentsList) {
+                        componentsList = [];
+                        componentsByType[component.type] = componentsList;
+                    }
+                    componentsList.push(component);
+                    componentsByClazz[component.clazz] = component;
+                }
+                result = result.concat(components);
+                deferred.resolve(components);
+            }, function fail() {
+                deferred.reject();
+            });
         }
         return deferred.promise;
     }

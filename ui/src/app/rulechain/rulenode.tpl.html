@@ -1,0 +1,54 @@
+<!--
+
+    Copyright © 2016-2018 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div
+        id="{{node.id}}"
+        ng-attr-style="position: absolute; top: {{ node.y }}px; left: {{ node.x }}px;"
+        ng-dblclick="callbacks.doubleClick($event, node)"
+        ng-mousedown="callbacks.mouseDown($event, node)"
+        ng-mouseenter="callbacks.mouseEnter($event, node)"
+        ng-mouseleave="callbacks.mouseLeave($event, node)">
+    <div class="{{flowchartConstants.nodeOverlayClass}}"></div>
+    <div class="tb-rule-node {{node.nodeClass}}" ng-class="{'tb-rule-node-highlighted' : node.highlighted, 'tb-rule-node-invalid': node.error }">
+        <md-icon ng-if="!node.iconUrl" aria-label="node-type-icon" flex="15"
+                 class="material-icons">{{node.icon}}</md-icon>
+        <md-icon ng-if="node.iconUrl" aria-label="node-type-icon" flex="15"
+                 md-svg-icon="{{node.iconUrl}}"></md-icon>
+        <div layout="column" flex="85" layout-align="center">
+            <span class="tb-node-type">{{ node.component.name }}</span>
+            <span class="tb-node-title" ng-if="node.name">{{ node.name }}</span>
+        </div>
+        <div class="{{flowchartConstants.leftConnectorClass}}">
+            <div fc-magnet
+                 ng-repeat="connector in modelservice.nodes.getConnectorsByType(node, flowchartConstants.leftConnectorType)">
+                <div fc-connector></div>
+            </div>
+        </div>
+        <div class="{{flowchartConstants.rightConnectorClass}}">
+            <div fc-magnet
+                 ng-repeat="connector in modelservice.nodes.getConnectorsByType(node, flowchartConstants.rightConnectorType)">
+                <div fc-connector></div>
+            </div>
+        </div>
+    </div>
+    <div ng-if="modelservice.isEditable() && !node.readonly" class="fc-nodeedit" ng-click="callbacks.nodeEdit($event, node)">
+        <i class="fa fa-pencil" aria-hidden="true"></i>
+    </div>
+    <div ng-if="modelservice.isEditable() && !node.readonly" class="fc-nodedelete" ng-click="modelservice.nodes.delete(node)">
+        &times;
+    </div>
+</div>

@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 .tb-material-icon-select {
-    md-icon {
-        padding: 4px;
-        margin: 8px 4px 4px;
-        cursor: pointer;
-        border: solid 1px rgba(0,0,0,0.27);
-    }
-    md-input-container {
-        margin-bottom: 0px;
-    }
+  md-icon {
+    padding: 4px;
+    margin: 8px 4px 4px;
+    cursor: pointer;
+    border: solid 1px rgba(0, 0, 0, .27);
+  }
+
+  md-input-container {
+    margin-bottom: 0;
+  }
 }

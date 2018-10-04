@@ -36,8 +36,8 @@ export default function EventTableDirective($compile, $templateCache, $rootScope
             for (var type in types.eventType) {
                 var eventType = types.eventType[type];
                 var enabled = true;
-                for (var disabledType in disabledEventTypes) {
-                    if (eventType.value === disabledEventTypes[disabledType]) {
+                for (var i=0;i<disabledEventTypes.length;i++) {
+                    if (eventType.value === disabledEventTypes[i]) {
                         enabled = false;
                         break;
                     }
@@ -47,7 +47,19 @@ export default function EventTableDirective($compile, $templateCache, $rootScope
                 }
             }
         } else {
-            scope.eventTypes = types.eventType;
+            scope.eventTypes = angular.copy(types.eventType);
+        }
+
+        if (attrs.debugEventTypes) {
+            var debugEventTypes = attrs.debugEventTypes.split(',');
+            for (i=0;i<debugEventTypes.length;i++) {
+                for (type in types.debugEventType) {
+                    eventType = types.debugEventType[type];
+                    if (eventType.value === debugEventTypes[i]) {
+                        scope.eventTypes[type] = eventType;
+                    }
+                }
+            }
         }
 
         scope.eventType = attrs.defaultEventType;

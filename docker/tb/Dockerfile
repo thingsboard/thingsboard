@@ -20,5 +20,7 @@ ADD run-application.sh /run-application.sh
 ADD thingsboard.deb /thingsboard.deb
 
 RUN apt-get update \
-        && apt-get install -y nmap \
+        && apt-get install --no-install-recommends -y nmap \
+        && apt-get clean \
+        && rm -r /var/lib/apt/lists/* \
         && chmod +x /run-application.sh

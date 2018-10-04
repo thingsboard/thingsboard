@@ -18,32 +18,33 @@ package org.thingsboard.server.common.msg.core;
 import java.io.Serializable;
 import java.util.Optional;
 
-import org.thingsboard.server.common.msg.session.MsgType;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
 
 
 public class BasicResponseMsg<T extends Serializable> implements ResponseMsg<T> {
 
     private static final long serialVersionUID = 1L;
 
-    private final MsgType requestMsgType;
+    private final SessionMsgType requestMsgType;
     private final Integer requestId;
-    private final MsgType msgType;
+    private final SessionMsgType sessionMsgType;
     private final boolean success;
     private final T data;
     private final Exception error;
 
-    protected BasicResponseMsg(MsgType requestMsgType, Integer requestId, MsgType msgType, boolean success, Exception error, T data) {
+    protected BasicResponseMsg(SessionMsgType requestMsgType, Integer requestId, SessionMsgType sessionMsgType, boolean success, Exception error, T data) {
         super();
         this.requestMsgType = requestMsgType;
         this.requestId = requestId;
-        this.msgType = msgType;
+        this.sessionMsgType = sessionMsgType;
         this.success = success;
         this.error = error;
         this.data = data;
     }
 
     @Override
-    public MsgType getRequestMsgType() {
+    public SessionMsgType getRequestMsgType() {
         return requestMsgType;
     }
 
@@ -72,8 +73,7 @@ public class BasicResponseMsg<T extends Serializable> implements ResponseMsg<T> 
         return "BasicResponseMsg [success=" + success + ", data=" + data + ", error=" + error + "]";
     }
 
-    @Override
-    public MsgType getMsgType() {
-        return msgType;
+    public SessionMsgType getSessionMsgType() {
+        return sessionMsgType;
     }
 }

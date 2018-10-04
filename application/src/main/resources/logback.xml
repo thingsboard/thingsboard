@@ -17,7 +17,7 @@
 
 -->
 <!DOCTYPE configuration>
-<configuration>
+<configuration scan="true" scanPeriod="10 seconds">
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
@@ -25,7 +25,7 @@
         </encoder>
     </appender>
 
-    <logger name="org.thingsboard.server" level="TRACE" />
+    <logger name="org.thingsboard.server" level="INFO" />
     <logger name="akka" level="INFO" />
 
     <root level="INFO">

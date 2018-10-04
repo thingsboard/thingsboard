@@ -17,61 +17,73 @@ package org.thingsboard.server.actors.device;
 
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
+import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
+import org.thingsboard.rule.engine.api.msg.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.actors.ActorSystemContext;
-import org.thingsboard.server.actors.rule.RulesProcessedMsg;
 import org.thingsboard.server.actors.service.ContextAwareActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
-import org.thingsboard.server.actors.tenant.RuleChainDeviceMsg;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
-import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
-import org.thingsboard.server.extensions.api.device.DeviceAttributesEventNotificationMsg;
-import org.thingsboard.server.extensions.api.device.DeviceCredentialsUpdateNotificationMsg;
-import org.thingsboard.server.extensions.api.device.DeviceNameOrTypeUpdateMsg;
-import org.thingsboard.server.extensions.api.device.ToDeviceActorNotificationMsg;
-import org.thingsboard.server.extensions.api.plugins.msg.*;
+import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
+import org.thingsboard.server.common.msg.timeout.DeviceActorClientSideRpcTimeoutMsg;
+import org.thingsboard.server.common.msg.timeout.DeviceActorQueueTimeoutMsg;
+import org.thingsboard.server.common.msg.timeout.DeviceActorServerSideRpcTimeoutMsg;
+import org.thingsboard.server.service.rpc.ToDeviceRpcRequestActorMsg;
+import org.thingsboard.server.service.rpc.ToServerRpcResponseActorMsg;
 
 public class DeviceActor extends ContextAwareActor {
 
     private final LoggingAdapter logger = Logging.getLogger(getContext().system(), this);
 
-    private final TenantId tenantId;
-    private final DeviceId deviceId;
     private final DeviceActorMessageProcessor processor;
 
     private DeviceActor(ActorSystemContext systemContext, TenantId tenantId, DeviceId deviceId) {
         super(systemContext);
-        this.tenantId = tenantId;
-        this.deviceId = deviceId;
-        this.processor = new DeviceActorMessageProcessor(systemContext, logger, deviceId);
+        this.processor = new DeviceActorMessageProcessor(systemContext, logger, tenantId, deviceId);
     }
 
     @Override
-    public void onReceive(Object msg) throws Exception {
-        if (msg instanceof RuleChainDeviceMsg) {
-            processor.process(context(), (RuleChainDeviceMsg) msg);
-        } else if (msg instanceof RulesProcessedMsg) {
-            processor.onRulesProcessedMsg(context(), (RulesProcessedMsg) msg);
-        } else if (msg instanceof ToDeviceActorMsg) {
-            processor.process(context(), (ToDeviceActorMsg) msg);
-        } else if (msg instanceof ToDeviceActorNotificationMsg) {
-            if (msg instanceof DeviceAttributesEventNotificationMsg) {
+    protected boolean process(TbActorMsg msg) {
+        switch (msg.getMsgType()) {
+            case CLUSTER_EVENT_MSG:
+                processor.processClusterEventMsg((ClusterEventMsg) msg);
+                break;
+            case DEVICE_SESSION_TO_DEVICE_ACTOR_MSG:
+                processor.process(context(), (DeviceToDeviceActorMsg) msg);
+                break;
+            case DEVICE_ATTRIBUTES_UPDATE_TO_DEVICE_ACTOR_MSG:
                 processor.processAttributesUpdate(context(), (DeviceAttributesEventNotificationMsg) msg);
-            } else if (msg instanceof ToDeviceRpcRequestPluginMsg) {
-                processor.processRpcRequest(context(), (ToDeviceRpcRequestPluginMsg) msg);
-            } else if (msg instanceof DeviceCredentialsUpdateNotificationMsg){
+                break;
+            case DEVICE_CREDENTIALS_UPDATE_TO_DEVICE_ACTOR_MSG:
                 processor.processCredentialsUpdate();
-            } else if (msg instanceof DeviceNameOrTypeUpdateMsg){
+                break;
+            case DEVICE_NAME_OR_TYPE_UPDATE_TO_DEVICE_ACTOR_MSG:
                 processor.processNameOrTypeUpdate((DeviceNameOrTypeUpdateMsg) msg);
-            }
-        } else if (msg instanceof TimeoutMsg) {
-            processor.processTimeout(context(), (TimeoutMsg) msg);
-        } else if (msg instanceof ClusterEventMsg) {
-            processor.processClusterEventMsg((ClusterEventMsg) msg);
-        } else {
-            logger.debug("[{}][{}] Unknown msg type.", tenantId, deviceId, msg.getClass().getName());
+                break;
+            case DEVICE_RPC_REQUEST_TO_DEVICE_ACTOR_MSG:
+                processor.processRpcRequest(context(), (ToDeviceRpcRequestActorMsg) msg);
+                break;
+            case SERVER_RPC_RESPONSE_TO_DEVICE_ACTOR_MSG:
+                processor.processToServerRPCResponse(context(), (ToServerRpcResponseActorMsg) msg);
+                break;
+            case DEVICE_ACTOR_SERVER_SIDE_RPC_TIMEOUT_MSG:
+                processor.processServerSideRpcTimeout(context(), (DeviceActorServerSideRpcTimeoutMsg) msg);
+                break;
+            case DEVICE_ACTOR_CLIENT_SIDE_RPC_TIMEOUT_MSG:
+                processor.processClientSideRpcTimeout(context(), (DeviceActorClientSideRpcTimeoutMsg) msg);
+                break;
+            case DEVICE_ACTOR_QUEUE_TIMEOUT_MSG:
+                processor.processQueueTimeout(context(), (DeviceActorQueueTimeoutMsg) msg);
+                break;
+            case RULE_ENGINE_QUEUE_PUT_ACK_MSG:
+                processor.processQueueAck(context(), (RuleEngineQueuePutAckMsg) msg);
+                break;
+            default:
+                return false;
         }
+        return true;
     }
 
     public static class ActorCreator extends ContextBasedCreator<DeviceActor> {

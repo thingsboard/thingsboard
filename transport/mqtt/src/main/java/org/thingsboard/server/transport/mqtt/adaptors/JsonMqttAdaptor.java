@@ -53,7 +53,7 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
     private static final ByteBufAllocator ALLOCATOR = new UnpooledByteBufAllocator(false);
 
     @Override
-    public AdaptorToSessionActorMsg convertToActorMsg(DeviceSessionCtx ctx, MsgType type, MqttMessage inbound) throws AdaptorException {
+    public AdaptorToSessionActorMsg convertToActorMsg(DeviceSessionCtx ctx, SessionMsgType type, MqttMessage inbound) throws AdaptorException {
         FromDeviceMsg msg;
         switch (type) {
             case POST_TELEMETRY_REQUEST:
@@ -94,7 +94,7 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
     public Optional<MqttMessage> convertToAdaptorMsg(DeviceSessionCtx ctx, SessionActorToAdaptorMsg sessionMsg) throws AdaptorException {
         MqttMessage result = null;
         ToDeviceMsg msg = sessionMsg.getMsg();
-        switch (msg.getMsgType()) {
+        switch (msg.getSessionMsgType()) {
             case STATUS_CODE_RESPONSE:
             case GET_ATTRIBUTES_RESPONSE:
                 ResponseMsg<?> responseMsg = (ResponseMsg) msg;
@@ -134,12 +134,12 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
     private MqttMessage convertResponseMsg(DeviceSessionCtx ctx, ToDeviceMsg msg,
                                            ResponseMsg<?> responseMsg, Optional<Exception> responseError) throws AdaptorException {
         MqttMessage result = null;
-        MsgType requestMsgType = responseMsg.getRequestMsgType();
+        SessionMsgType requestMsgType = responseMsg.getRequestMsgType();
         Integer requestId = responseMsg.getRequestId();
         if (requestId >= 0) {
-            if (requestMsgType == MsgType.POST_ATTRIBUTES_REQUEST || requestMsgType == MsgType.POST_TELEMETRY_REQUEST) {
+            if (requestMsgType == SessionMsgType.POST_ATTRIBUTES_REQUEST || requestMsgType == SessionMsgType.POST_TELEMETRY_REQUEST) {
                 result = MqttTransportHandler.createMqttPubAckMsg(requestId);
-            } else if (requestMsgType == MsgType.GET_ATTRIBUTES_REQUEST) {
+            } else if (requestMsgType == SessionMsgType.GET_ATTRIBUTES_REQUEST) {
                 GetAttributesResponse response = (GetAttributesResponse) msg;
                 Optional<AttributesKVMsg> responseData = response.getData();
                 if (response.isSuccess() && responseData.isPresent()) {
@@ -219,7 +219,7 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
         }
     }
 
-    private UpdateAttributesRequest convertToUpdateAttributesRequest(SessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
+    private AttributesUpdateRequest convertToUpdateAttributesRequest(SessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
         String payload = validatePayload(ctx.getSessionId(), inbound.payload());
         try {
             return JsonConverter.convertToAttributes(new JsonParser().parse(payload), inbound.variableHeader().messageId());

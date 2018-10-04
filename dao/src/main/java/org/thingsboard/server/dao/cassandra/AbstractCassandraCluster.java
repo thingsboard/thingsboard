@@ -16,10 +16,17 @@
 package org.thingsboard.server.dao.cassandra;
 
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.HostDistance;
+import com.datastax.driver.core.PoolingOptions;
 import com.datastax.driver.core.ProtocolOptions.Compression;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.mapping.DefaultPropertyMapper;
 import com.datastax.driver.mapping.Mapper;
+import com.datastax.driver.mapping.MappingConfiguration;
 import com.datastax.driver.mapping.MappingManager;
+import com.datastax.driver.mapping.PropertyAccessStrategy;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,6 +67,10 @@ public abstract class AbstractCassandraCluster {
     private long initTimeout;
     @Value("${cassandra.init_retry_interval_ms}")
     private long initRetryInterval;
+    @Value("${cassandra.max_requests_per_connection_local:32768}")
+    private int max_requests_local;
+    @Value("${cassandra.max_requests_per_connection_remote:32768}")
+    private int max_requests_remote;
 
     @Autowired
     private CassandraSocketOptions socketOpts;
@@ -90,8 +101,8 @@ public abstract class AbstractCassandraCluster {
                 .withClusterName(clusterName)
                 .withSocketOptions(socketOpts.getOpts())
                 .withPoolingOptions(new PoolingOptions()
-                        .setMaxRequestsPerConnection(HostDistance.LOCAL, 32768)
-                        .setMaxRequestsPerConnection(HostDistance.REMOTE, 32768));
+                        .setMaxRequestsPerConnection(HostDistance.LOCAL, max_requests_local)
+                        .setMaxRequestsPerConnection(HostDistance.REMOTE, max_requests_remote));
         this.clusterBuilder.withQueryOptions(queryOpts.getOpts());
         this.clusterBuilder.withCompression(StringUtils.isEmpty(compression) ? Compression.NONE : Compression.valueOf(compression.toUpperCase()));
         if (ssl) {
@@ -145,7 +156,13 @@ public abstract class AbstractCassandraCluster {
                 } else {
                     session = cluster.connect();
                 }
-                mappingManager = new MappingManager(session);
+//                For Cassandra Driver version 3.5.0
+                DefaultPropertyMapper propertyMapper = new DefaultPropertyMapper();
+                propertyMapper.setPropertyAccessStrategy(PropertyAccessStrategy.FIELDS);
+                MappingConfiguration configuration = MappingConfiguration.builder().withPropertyMapper(propertyMapper).build();
+                mappingManager = new MappingManager(session, configuration);
+//                For Cassandra Driver version 3.0.0
+//                mappingManager = new MappingManager(session);
                 break;
             } catch (Exception e) {
                 log.warn("Failed to initialize cassandra cluster due to {}. Will retry in {} ms", e.getMessage(), initRetryInterval);

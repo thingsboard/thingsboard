@@ -31,7 +31,12 @@ public enum ActionType {
     ACTIVATED(false), // log string id
     SUSPENDED(false), // log string id
     CREDENTIALS_READ(true), // log device id
-    ATTRIBUTES_READ(true); // log attributes
+    ATTRIBUTES_READ(true), // log attributes
+    RELATION_ADD_OR_UPDATE (false),
+    RELATION_DELETED (false),
+    RELATIONS_DELETED (false),
+    ALARM_ACK (false),
+    ALARM_CLEAR (false);
 
     private final boolean isRead;
 

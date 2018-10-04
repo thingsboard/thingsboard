@@ -16,21 +16,22 @@
 @import "~compass-sass-mixins/lib/compass";
 
 .tb-side-menu .md-button.tb-active {
-  background-color: rgba(255, 255, 255, 0.15);
   font-weight: 500;
+  background-color: rgba(255, 255, 255, .15);
 }
 
-.tb-side-menu, .tb-side-menu ul {
-  list-style: none;
+.tb-side-menu,
+.tb-side-menu ul {
   padding: 0;
   margin-top: 0;
+  list-style: none;
 }
 
 .tb-side-menu .tb-menu-toggle-list a.md-button {
   padding: 0 16px 0 32px;
+  font-weight: 500;
   text-transform: none;
   text-rendering: optimizeLegibility;
-  font-weight: 500;
 }
 
 .tb-side-menu .tb-menu-toggle-list .md-button {
@@ -43,36 +44,38 @@
 }
 
 .tb-side-menu > li {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  border-bottom: 1px solid rgba(0, 0, 0, .12);
 }
 
 .tb-side-menu .md-button-toggle .md-toggle-icon {
-  background-size: 100% auto;
   display: inline-block;
-  margin: auto 0 auto auto;
   width: 15px;
+  margin: auto 0 auto auto;
+  background-size: 100% auto;
+
   @include transition(transform .3s, ease-in-out);
 }
 
 .tb-side-menu .md-button {
   display: flex;
-  border-radius: 0;
-  color: inherit;
-  cursor: pointer;
-  line-height: 40px;
-  margin: 0;
+  width: 100%;
   max-height: 40px;
+  padding: 0 16px;
+  margin: 0;
   overflow: hidden;
-  padding: 0px 16px;
+  line-height: 40px;
+  color: inherit;
   text-align: left;
   text-decoration: none;
-  white-space: nowrap;
   text-overflow: ellipsis;
-  width: 100%;
+  white-space: nowrap;
+  cursor: pointer;
+  border-radius: 0;
+
   span {
     overflow: hidden;
-    white-space: nowrap;
     text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 
@@ -83,10 +86,10 @@
 
 .tb-side-menu ng-md-icon {
   margin-right: 8px;
-  margin-left: 0px;
+  margin-left: 0;
 }
 
 .tb-side-menu md-icon {
   margin-right: 8px;
-  margin-left: 0px;
+  margin-left: 0;
 }

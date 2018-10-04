@@ -23,7 +23,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.service.cluster.discovery.DiscoveryService;
 import org.thingsboard.server.service.cluster.discovery.DiscoveryServiceListener;
@@ -107,7 +106,7 @@ public class ConsistentClusterRoutingService implements ClusterRoutingService, D
 
     @Override
     public void onServerAdded(ServerInstance server) {
-        log.debug("On server added event: {}", server);
+        log.info("On server added event: {}", server);
         addNode(server);
         logCircle();
     }
@@ -119,7 +118,7 @@ public class ConsistentClusterRoutingService implements ClusterRoutingService, D
 
     @Override
     public void onServerRemoved(ServerInstance server) {
-        log.debug("On server removed event: {}", server);
+        log.info("On server removed event: {}", server);
         removeNode(server);
         logCircle();
     }

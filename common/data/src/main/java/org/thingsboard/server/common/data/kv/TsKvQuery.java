@@ -23,10 +23,4 @@ public interface TsKvQuery {
 
     long getEndTs();
 
-    long getInterval();
-
-    int getLimit();
-
-    Aggregation getAggregation();
-
 }

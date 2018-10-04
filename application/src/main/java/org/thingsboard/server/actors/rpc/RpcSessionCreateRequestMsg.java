@@ -30,6 +30,6 @@ public final class RpcSessionCreateRequestMsg {
 
     private final UUID msgUid;
     private final ServerAddress remoteAddress;
-    private final StreamObserver<ClusterAPIProtos.ToRpcServerMessage> responseObserver;
+    private final StreamObserver<ClusterAPIProtos.ClusterMessage> responseObserver;
 
 }

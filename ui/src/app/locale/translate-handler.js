@@ -13,8 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+ export default angular.module('thingsboard.locale', [])
+                       .factory('tbMissingTranslationHandler', ThingsboardMissingTranslateHandler)
+                       .name;
+
 /*@ngInject*/
-export default function ThingsboardMissingTranslateHandler($log, types) {
+function ThingsboardMissingTranslateHandler($log, types) {
 
     return function (translationId) {
         if (translationId && !translationId.startsWith(types.translate.customTranslationsPrefix)) {

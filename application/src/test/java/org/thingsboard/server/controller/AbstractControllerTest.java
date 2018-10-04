@@ -96,6 +96,8 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @Slf4j
 public abstract class AbstractControllerTest {
 
+    protected ObjectMapper mapper = new ObjectMapper();
+
     protected static final String TEST_TENANT_NAME = "TEST TENANT";
 
     protected static final String SYS_ADMIN_EMAIL = "sysadmin@thingsboard.org";

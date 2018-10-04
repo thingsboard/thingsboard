@@ -64,6 +64,7 @@ public abstract class BaseHttpDeviceApiTest extends AbstractControllerTest {
         mockMvc.perform(
                 asyncDispatch(doPost("/api/v1/" + deviceCredentials.getCredentialsId() + "/attributes", attrMap, new String[]{}).andReturn()))
                 .andExpect(status().isOk());
+        Thread.sleep(2000);
         doGetAsync("/api/v1/" + deviceCredentials.getCredentialsId() + "/attributes?clientKeys=keyA,keyB,keyC").andExpect(status().isOk());
     }
 

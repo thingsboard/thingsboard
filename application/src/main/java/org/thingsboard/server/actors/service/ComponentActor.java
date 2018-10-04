@@ -54,7 +54,7 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
     @Override
     public void preStart() {
         try {
-            processor.start();
+            processor.start(context());
             logLifecycleEvent(ComponentLifecycleEvent.STARTED);
             if (systemContext.isStatisticsEnabled()) {
                 scheduleStatsPersistTick();
@@ -78,7 +78,7 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
     @Override
     public void postStop() {
         try {
-            processor.stop();
+            processor.stop(context());
             logLifecycleEvent(ComponentLifecycleEvent.STOPPED);
         } catch (Exception e) {
             logger.warning("[{}][{}] Failed to stop {} processor: {}", tenantId, id, id.getEntityType(), e.getMessage());
@@ -141,7 +141,6 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
         messagesProcessed++;
     }
 
-
     protected void logAndPersist(String method, Exception e) {
         logAndPersist(method, e, false);
     }
@@ -160,11 +159,11 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
         }
     }
 
-    protected void logLifecycleEvent(ComponentLifecycleEvent event) {
+    private void logLifecycleEvent(ComponentLifecycleEvent event) {
         logLifecycleEvent(event, null);
     }
 
-    protected void logLifecycleEvent(ComponentLifecycleEvent event, Exception e) {
+    private void logLifecycleEvent(ComponentLifecycleEvent event, Exception e) {
         systemContext.persistLifecycleEvent(tenantId, id, event, e);
     }
 

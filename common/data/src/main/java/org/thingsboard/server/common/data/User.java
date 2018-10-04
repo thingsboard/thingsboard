@@ -15,9 +15,11 @@
  */
 package org.thingsboard.server.common.data;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
@@ -25,7 +27,7 @@ import org.thingsboard.server.common.data.security.Authority;
 import com.fasterxml.jackson.databind.JsonNode;
 
 @EqualsAndHashCode(callSuper = true)
-public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements HasName {
+public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements HasName, HasTenantId, HasCustomerId {
 
     private static final long serialVersionUID = 8250339805336035966L;
 
@@ -138,4 +140,18 @@ public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements H
         return builder.toString();
     }
 
+    @JsonIgnore
+    public boolean isSystemAdmin() {
+        return tenantId == null || EntityId.NULL_UUID.equals(tenantId.getId());
+    }
+
+    @JsonIgnore
+    public boolean isTenantAdmin() {
+        return !isSystemAdmin() && (customerId == null || EntityId.NULL_UUID.equals(customerId.getId()));
+    }
+
+    @JsonIgnore
+    public boolean isCustomerUser() {
+        return !isSystemAdmin() && !isTenantAdmin();
+    }
 }

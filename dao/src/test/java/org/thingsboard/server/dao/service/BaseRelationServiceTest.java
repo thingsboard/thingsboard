@@ -24,12 +24,12 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
-import org.thingsboard.server.common.data.relation.RelationTypeGroup;
-import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.EntityTypeFilter;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
+import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.Collections;
 import java.util.List;
@@ -96,7 +96,7 @@ public abstract class BaseRelationServiceTest extends AbstractServiceTest {
         saveRelation(relationA);
         saveRelation(relationB);
 
-        Assert.assertTrue(relationService.deleteEntityRelationsAsync(childId).get());
+        Assert.assertNull(relationService.deleteEntityRelationsAsync(childId).get());
 
         Assert.assertFalse(relationService.checkRelation(parentId, childId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get());
 
@@ -227,6 +227,13 @@ public abstract class BaseRelationServiceTest extends AbstractServiceTest {
         Assert.assertTrue(relations.contains(relationA));
         Assert.assertTrue(relations.contains(relationB));
         Assert.assertTrue(relations.contains(relationC));
+
+        //Test from cache
+        relations = relationService.findByQuery(query).get();
+        Assert.assertEquals(3, relations.size());
+        Assert.assertTrue(relations.contains(relationA));
+        Assert.assertTrue(relations.contains(relationB));
+        Assert.assertTrue(relations.contains(relationC));
     }
 
     @Test
@@ -250,6 +257,12 @@ public abstract class BaseRelationServiceTest extends AbstractServiceTest {
         query.setParameters(new RelationsSearchParameters(assetA, EntitySearchDirection.FROM, -1));
         query.setFilters(Collections.singletonList(new EntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.singletonList(EntityType.ASSET))));
         List<EntityRelation> relations = relationService.findByQuery(query).get();
+        Assert.assertEquals(2, relations.size());
+        Assert.assertTrue(relations.contains(relationAB));
+        Assert.assertTrue(relations.contains(relationBC));
+
+        //Test from cache
+        relations = relationService.findByQuery(query).get();
         Assert.assertEquals(2, relations.size());
         Assert.assertTrue(relations.contains(relationAB));
         Assert.assertTrue(relations.contains(relationBC));

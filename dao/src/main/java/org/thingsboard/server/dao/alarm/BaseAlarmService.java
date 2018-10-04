@@ -16,8 +16,8 @@
 package org.thingsboard.server.dao.alarm;
 
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Function;
-import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
@@ -25,19 +25,25 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.alarm.*;
+import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmId;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
+import org.thingsboard.server.common.data.alarm.AlarmQuery;
+import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
+import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
-import org.thingsboard.server.common.data.relation.EntitySearchDirection;
-import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
@@ -187,7 +193,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     }
 
     @Override
-    public ListenableFuture<Boolean> clearAlarm(AlarmId alarmId, long clearTime) {
+    public ListenableFuture<Boolean> clearAlarm(AlarmId alarmId, JsonNode details, long clearTime) {
         return getAndUpdate(alarmId, new Function<Alarm, Boolean>() {
             @Nullable
             @Override
@@ -199,6 +205,9 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                     AlarmStatus newStatus = oldStatus.isAck() ? AlarmStatus.CLEARED_ACK : AlarmStatus.CLEARED_UNACK;
                     alarm.setStatus(newStatus);
                     alarm.setClearTs(clearTime);
+                    if (details != null) {
+                        alarm.setDetails(details);
+                    }
                     alarmDao.save(alarm);
                     updateRelations(alarm, oldStatus, newStatus);
                     return true;
@@ -218,15 +227,14 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     public ListenableFuture<AlarmInfo> findAlarmInfoByIdAsync(AlarmId alarmId) {
         log.trace("Executing findAlarmInfoByIdAsync [{}]", alarmId);
         validateId(alarmId, "Incorrect alarmId " + alarmId);
-        return Futures.transform(alarmDao.findAlarmByIdAsync(alarmId.getId()),
-                (AsyncFunction<Alarm, AlarmInfo>) alarm1 -> {
-                    AlarmInfo alarmInfo = new AlarmInfo(alarm1);
+        return Futures.transformAsync(alarmDao.findAlarmByIdAsync(alarmId.getId()),
+                a -> {
+                    AlarmInfo alarmInfo = new AlarmInfo(a);
                     return Futures.transform(
-                            entityService.fetchEntityNameAsync(alarmInfo.getOriginator()), (Function<String, AlarmInfo>)
-                                    originatorName -> {
-                                        alarmInfo.setOriginatorName(originatorName);
-                                        return alarmInfo;
-                                    }
+                            entityService.fetchEntityNameAsync(alarmInfo.getOriginator()), originatorName -> {
+                                alarmInfo.setOriginatorName(originatorName);
+                                return alarmInfo;
+                            }
                     );
                 });
     }
@@ -235,18 +243,17 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     public ListenableFuture<TimePageData<AlarmInfo>> findAlarms(AlarmQuery query) {
         ListenableFuture<List<AlarmInfo>> alarms = alarmDao.findAlarms(query);
         if (query.getFetchOriginator() != null && query.getFetchOriginator().booleanValue()) {
-            alarms = Futures.transform(alarms, (AsyncFunction<List<AlarmInfo>, List<AlarmInfo>>) input -> {
+            alarms = Futures.transformAsync(alarms, input -> {
                 List<ListenableFuture<AlarmInfo>> alarmFutures = new ArrayList<>(input.size());
                 for (AlarmInfo alarmInfo : input) {
                     alarmFutures.add(Futures.transform(
-                            entityService.fetchEntityNameAsync(alarmInfo.getOriginator()), (Function<String, AlarmInfo>)
-                                    originatorName -> {
-                                        if (originatorName == null) {
-                                            originatorName = "Deleted";
-                                        }
-                                        alarmInfo.setOriginatorName(originatorName);
-                                        return alarmInfo;
-                                    }
+                            entityService.fetchEntityNameAsync(alarmInfo.getOriginator()), originatorName -> {
+                                if (originatorName == null) {
+                                    originatorName = "Deleted";
+                                }
+                                alarmInfo.setOriginatorName(originatorName);
+                                return alarmInfo;
+                            }
                     ));
                 }
                 return Futures.successfulAsList(alarmFutures);

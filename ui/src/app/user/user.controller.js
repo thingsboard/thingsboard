@@ -32,6 +32,17 @@ export default function UserController(userService, toast, $scope, $mdDialog, $d
     var userActionsList = [
         {
             onAction: function ($event, item) {
+                loginAsUser(item);
+            },
+            name: function() { return $translate.instant('login.login') },
+            details: function() { return $translate.instant(usersType === 'tenant' ? 'user.login-as-tenant-admin' : 'user.login-as-customer-user') },
+            icon: "login",
+            isEnabled: function() {
+                return userService.isUserTokenAccessEnabled();
+            }
+        },
+        {
+            onAction: function ($event, item) {
                 vm.grid.deleteItem($event, item);
             },
             name: function() { return $translate.instant('action.delete') },
@@ -78,6 +89,7 @@ export default function UserController(userService, toast, $scope, $mdDialog, $d
 
     vm.displayActivationLink = displayActivationLink;
     vm.resendActivation = resendActivation;
+    vm.loginAsUser = loginAsUser;
 
     initController();
 
@@ -183,5 +195,9 @@ export default function UserController(userService, toast, $scope, $mdDialog, $d
         userService.sendActivationEmail(user.email).then(function success() {
             toast.showSuccess($translate.instant('user.activation-email-sent-message'));
         });
+    }
+
+    function loginAsUser(user) {
+        userService.loginAsUser(user.id.id);
     }
 }

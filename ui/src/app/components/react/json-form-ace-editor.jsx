@@ -23,6 +23,8 @@ import FlatButton from 'material-ui/FlatButton';
 import 'brace/ext/language_tools';
 import 'brace/theme/github';
 
+import fixAceEditor from './../ace-editor-fix';
+
 class ThingsboardAceEditor extends React.Component {
 
     constructor(props) {
@@ -31,6 +33,7 @@ class ThingsboardAceEditor extends React.Component {
         this.onBlur = this.onBlur.bind(this);
         this.onFocus = this.onFocus.bind(this);
         this.onTidy = this.onTidy.bind(this);
+        this.onLoad = this.onLoad.bind(this);
         var value = props.value ? props.value + '' : '';
         this.state = {
             value: value,
@@ -70,6 +73,10 @@ class ThingsboardAceEditor extends React.Component {
                 }
             });
         }
+    }
+
+    onLoad(editor) {
+        fixAceEditor(editor);
     }
 
     render() {
@@ -117,6 +124,7 @@ class ThingsboardAceEditor extends React.Component {
                                onChange={this.onValueChanged}
                                onFocus={this.onFocus}
                                onBlur={this.onBlur}
+                               onLoad={this.onLoad}
                                name={this.props.form.title}
                                value={this.state.value}
                                readOnly={this.props.form.readonly}

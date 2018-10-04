@@ -34,10 +34,17 @@ import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.audit.ActionStatus;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
-import org.thingsboard.server.common.data.id.*;
+import org.thingsboard.server.common.data.id.AuditLogId;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UUIDBased;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.audit.sink.AuditLogSink;
 import org.thingsboard.server.dao.entity.EntityService;
@@ -109,7 +116,7 @@ public class AuditLogServiceImpl implements AuditLogService {
     }
 
     @Override
-    public <E extends BaseData<I> & HasName, I extends UUIDBased & EntityId> ListenableFuture<List<Void>>
+    public <E extends HasName, I extends EntityId> ListenableFuture<List<Void>>
         logEntityAction(TenantId tenantId, CustomerId customerId, UserId userId, String userName, I entityId, E entity,
                                ActionType actionType, Exception e, Object... additionalInfo) {
         if (canLog(entityId.getEntityType(), actionType)) {
@@ -150,19 +157,30 @@ public class AuditLogServiceImpl implements AuditLogService {
         }
     }
 
-    private <E extends BaseData<I> & HasName, I extends UUIDBased & EntityId> JsonNode constructActionData(I entityId,
-                                                                                                           E entity,
+    private <E extends HasName, I extends EntityId> JsonNode constructActionData(I entityId, E entity,
                                                                                                            ActionType actionType,
                                                                                                            Object... additionalInfo) {
         ObjectNode actionData = objectMapper.createObjectNode();
         switch(actionType) {
             case ADDED:
             case UPDATED:
-                ObjectNode entityNode = objectMapper.valueToTree(entity);
-                if (entityId.getEntityType() == EntityType.DASHBOARD) {
-                    entityNode.put("configuration", "");
+            case ALARM_ACK:
+            case ALARM_CLEAR:
+            case RELATIONS_DELETED:
+                if (entity != null) {
+                    ObjectNode entityNode = objectMapper.valueToTree(entity);
+                    if (entityId.getEntityType() == EntityType.DASHBOARD) {
+                        entityNode.put("configuration", "");
+                    }
+                    actionData.set("entity", entityNode);
                 }
-                actionData.set("entity", entityNode);
+                if (entityId.getEntityType() == EntityType.RULE_CHAIN) {
+                    RuleChainMetaData ruleChainMetaData = extractParameter(RuleChainMetaData.class, additionalInfo);
+                    if (ruleChainMetaData != null) {
+                        ObjectNode ruleChainMetaDataNode = objectMapper.valueToTree(ruleChainMetaData);
+                        actionData.set("metadata", ruleChainMetaDataNode);
+                    }
+                }
                 break;
             case DELETED:
             case ACTIVATED:
@@ -224,6 +242,11 @@ public class AuditLogServiceImpl implements AuditLogService {
                 actionData.put("entityId", strEntityId);
                 actionData.put("unassignedCustomerId", strCustomerId);
                 actionData.put("unassignedCustomerName", strCustomerName);
+                break;
+            case RELATION_ADD_OR_UPDATE:
+            case RELATION_DELETED:
+                EntityRelation relation = extractParameter(EntityRelation.class, 0, additionalInfo);
+                actionData.set("relation", objectMapper.valueToTree(relation));
                 break;
         }
         return actionData;

@@ -20,9 +20,9 @@ export default angular.module('thingsboard.api.entity', [thingsboardTypes])
     .name;
 
 /*@ngInject*/
-function EntityService($http, $q, $filter, $translate, $log, userService, deviceService,
-                       assetService, tenantService, customerService,
-                       ruleService, pluginService, dashboardService, entityRelationService, attributeService, types, utils) {
+function EntityService($http, $q, $filter, $translate, $log, userService, deviceService, assetService, tenantService,
+                       customerService, ruleChainService, dashboardService, entityRelationService, attributeService,
+                       entityViewService, types, utils) {
     var service = {
         getEntity: getEntity,
         getEntities: getEntities,
@@ -55,23 +55,23 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
             case types.entityType.asset:
                 promise = assetService.getAsset(entityId, true, config);
                 break;
+            case types.entityType.entityView:
+                promise = entityViewService.getEntityView(entityId, true, config);
+                break;
             case types.entityType.tenant:
                 promise = tenantService.getTenant(entityId, config);
                 break;
             case types.entityType.customer:
                 promise = customerService.getCustomer(entityId, config);
                 break;
-            case types.entityType.rule:
-                promise = ruleService.getRule(entityId, config);
-                break;
-            case types.entityType.plugin:
-                promise = pluginService.getPlugin(entityId, config);
-                break;
             case types.entityType.dashboard:
                 promise = dashboardService.getDashboardInfo(entityId, config);
                 break;
             case types.entityType.user:
                 promise = userService.getUser(entityId, true, config);
+                break;
+            case types.entityType.rulechain:
+                promise = ruleChainService.getRuleChain(entityId, config);
                 break;
             case types.entityType.alarm:
                 $log.error('Get Alarm Entity is not implemented!');
@@ -142,14 +142,6 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
             case types.entityType.customer:
                 promise = getEntitiesByIdsPromise(
                     (id) => customerService.getCustomer(id, config), entityIds);
-                break;
-            case types.entityType.rule:
-                promise = getEntitiesByIdsPromise(
-                    (id) => ruleService.getRule(id, config), entityIds);
-                break;
-            case types.entityType.plugin:
-                promise = getEntitiesByIdsPromise(
-                    (id) => pluginService.getPlugin(id, config), entityIds);
                 break;
             case types.entityType.dashboard:
                 promise = getEntitiesByIdsPromise(
@@ -251,6 +243,13 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                     promise = assetService.getTenantAssets(pageLink, false, config, subType);
                 }
                 break;
+            case types.entityType.entityView:
+                if (user.authority === 'CUSTOMER_USER') {
+                    promise = entityViewService.getCustomerEntityViews(customerId, pageLink, false, config, subType);
+                } else {
+                    promise = entityViewService.getTenantEntityViews(pageLink, false, config, subType);
+                }
+                break;
             case types.entityType.tenant:
                 if (user.authority === 'TENANT_ADMIN') {
                     promise = getSingleTenantByPageLinkPromise(pageLink, config);
@@ -265,11 +264,8 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                     promise = customerService.getCustomers(pageLink, config);
                 }
                 break;
-            case types.entityType.rule:
-                promise = ruleService.getAllRules(pageLink, config);
-                break;
-            case types.entityType.plugin:
-                promise = pluginService.getAllPlugins(pageLink, config);
+            case types.entityType.rulechain:
+                promise = ruleChainService.getRuleChains(pageLink, config);
                 break;
             case types.entityType.dashboard:
                 if (user.authority === 'CUSTOMER_USER') {
@@ -344,7 +340,7 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
     }
 
     function entityToEntityInfo(entity) {
-        return { name: entity.name, entityType: entity.id.entityType, id: entity.id.id };
+        return { name: entity.name, entityType: entity.id.entityType, id: entity.id.id, entityDescription: entity.additionalInfo?entity.additionalInfo.description:"" };
     }
 
     function entityRelationInfoToEntityInfo(entityRelationInfo, direction) {
@@ -736,16 +732,13 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         switch(authority) {
             case 'SYS_ADMIN':
                 entityTypes.tenant = types.entityType.tenant;
-                entityTypes.rule = types.entityType.rule;
-                entityTypes.plugin = types.entityType.plugin;
                 break;
             case 'TENANT_ADMIN':
                 entityTypes.device = types.entityType.device;
                 entityTypes.asset = types.entityType.asset;
+                entityTypes.entityView = types.entityType.entityView;
                 entityTypes.tenant = types.entityType.tenant;
                 entityTypes.customer = types.entityType.customer;
-                entityTypes.rule = types.entityType.rule;
-                entityTypes.plugin = types.entityType.plugin;
                 entityTypes.dashboard = types.entityType.dashboard;
                 if (useAliasEntityTypes) {
                     entityTypes.current_customer = types.aliasEntityType.current_customer;
@@ -754,6 +747,7 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
             case 'CUSTOMER_USER':
                 entityTypes.device = types.entityType.device;
                 entityTypes.asset = types.entityType.asset;
+                entityTypes.entityView = types.entityType.entityView;
                 entityTypes.customer = types.entityType.customer;
                 entityTypes.dashboard = types.entityType.dashboard;
                 if (useAliasEntityTypes) {

@@ -17,16 +17,20 @@ package org.thingsboard.server.dao.asset;
 
 
 import com.google.common.base.Function;
-import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetSearchQuery;
@@ -40,14 +44,20 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.common.data.CacheConstants.ASSET_CACHE;
 import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 import static org.thingsboard.server.dao.service.Validator.*;
@@ -69,6 +79,12 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
     @Autowired
     private CustomerDao customerDao;
 
+    @Autowired
+    private EntityViewService entityViewService;
+
+    @Autowired
+    private CacheManager cacheManager;
+
     @Override
     public Asset findAssetById(AssetId assetId) {
         log.trace("Executing findAssetById [{}]", assetId);
@@ -83,13 +99,16 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
         return assetDao.findByIdAsync(assetId.getId());
     }
 
+    @Cacheable(cacheNames = ASSET_CACHE, key = "{#tenantId, #name}")
     @Override
-    public Optional<Asset> findAssetByTenantIdAndName(TenantId tenantId, String name) {
+    public Asset findAssetByTenantIdAndName(TenantId tenantId, String name) {
         log.trace("Executing findAssetByTenantIdAndName [{}][{}]", tenantId, name);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        return assetDao.findAssetsByTenantIdAndName(tenantId.getId(), name);
+        return assetDao.findAssetsByTenantIdAndName(tenantId.getId(), name)
+                .orElse(null);
     }
 
+    @CacheEvict(cacheNames = ASSET_CACHE, key = "{#asset.tenantId, #asset.name}")
     @Override
     public Asset saveAsset(Asset asset) {
         log.trace("Executing saveAsset [{}]", asset);
@@ -116,6 +135,24 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
         log.trace("Executing deleteAsset [{}]", assetId);
         validateId(assetId, INCORRECT_ASSET_ID + assetId);
         deleteEntityRelations(assetId);
+
+        Asset asset = assetDao.findById(assetId.getId());
+        try {
+            List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndEntityIdAsync(asset.getTenantId(), assetId).get();
+            if (entityViews != null && !entityViews.isEmpty()) {
+                throw new DataValidationException("Can't delete asset that is assigned to entity views!");
+            }
+        } catch (ExecutionException | InterruptedException e) {
+            log.error("Exception while finding entity views for assetId [{}]", assetId, e);
+            throw new RuntimeException("Exception while finding entity views for assetId [" + assetId + "]", e);
+        }
+
+        List<Object> list = new ArrayList<>();
+        list.add(asset.getTenantId());
+        list.add(asset.getName());
+        Cache cache = cacheManager.getCache(ASSET_CACHE);
+        cache.evict(list);
+
         assetDao.removeById(assetId.getId());
     }
 
@@ -194,10 +231,10 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
     @Override
     public ListenableFuture<List<Asset>> findAssetsByQuery(AssetSearchQuery query) {
         ListenableFuture<List<EntityRelation>> relations = relationService.findByQuery(query.toEntitySearchQuery());
-        ListenableFuture<List<Asset>> assets = Futures.transform(relations, (AsyncFunction<List<EntityRelation>, List<Asset>>) relations1 -> {
+        ListenableFuture<List<Asset>> assets = Futures.transformAsync(relations, r -> {
             EntitySearchDirection direction = query.toEntitySearchQuery().getParameters().getDirection();
             List<ListenableFuture<Asset>> futures = new ArrayList<>();
-            for (EntityRelation relation : relations1) {
+            for (EntityRelation relation : r) {
                 EntityId entityId = direction == EntitySearchDirection.FROM ? relation.getTo() : relation.getFrom();
                 if (entityId.getEntityType() == EntityType.ASSET) {
                     futures.add(findAssetByIdAsync(new AssetId(entityId.getId())));

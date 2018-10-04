@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.sql.event;
 
 import com.datastax.driver.core.utils.UUIDs;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,10 +37,7 @@ import org.thingsboard.server.dao.model.sql.EventEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTimeDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -85,6 +83,18 @@ public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event
     }
 
     @Override
+    public ListenableFuture<Event> saveAsync(Event event) {
+        log.debug("Save event [{}] ", event);
+        if (event.getId() == null) {
+            event.setId(new EventId(UUIDs.timeBased()));
+        }
+        if (StringUtils.isEmpty(event.getUid())) {
+            event.setUid(event.getId().toString());
+        }
+        return service.submit(() -> save(new EventEntity(event), false).orElse(null));
+    }
+
+    @Override
     public Optional<Event> saveIfNotExists(Event event) {
         return save(new EventEntity(event), true);
     }
@@ -92,7 +102,7 @@ public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event
     @Override
     public Event findEvent(UUID tenantId, EntityId entityId, String eventType, String eventUid) {
         return DaoUtil.getData(eventRepository.findByTenantIdAndEntityTypeAndEntityIdAndEventTypeAndEventUid(
-                UUIDConverter.fromTimeUUID(tenantId), entityId.getEntityType(),  UUIDConverter.fromTimeUUID(entityId.getId()), eventType, eventUid));
+                UUIDConverter.fromTimeUUID(tenantId), entityId.getEntityType(), UUIDConverter.fromTimeUUID(entityId.getId()), eventType, eventUid));
     }
 
     @Override
@@ -107,6 +117,17 @@ public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event
         Sort.Direction sortDirection = pageLink.isAscOrder() ? Sort.Direction.ASC : Sort.Direction.DESC;
         Pageable pageable = new PageRequest(0, pageLink.getLimit(), sortDirection, ID_PROPERTY);
         return DaoUtil.convertDataList(eventRepository.findAll(where(timeSearchSpec).and(fieldsSpec), pageable).getContent());
+    }
+
+    @Override
+    public List<Event> findLatestEvents(UUID tenantId, EntityId entityId, String eventType, int limit) {
+        List<EventEntity> latest = eventRepository.findLatestByTenantIdAndEntityTypeAndEntityIdAndEventType(
+                UUIDConverter.fromTimeUUID(tenantId),
+                entityId.getEntityType(),
+                UUIDConverter.fromTimeUUID(entityId.getId()),
+                eventType,
+                new PageRequest(0, limit));
+        return DaoUtil.convertDataList(latest);
     }
 
     public Optional<Event> save(EventEntity entity, boolean ifNotExists) {

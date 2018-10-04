@@ -30,7 +30,13 @@ import org.thingsboard.server.dao.model.SearchTextEntity;
 import java.nio.ByteBuffer;
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.model.ModelConstants.*;
+import static org.thingsboard.server.dao.model.ModelConstants.ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.WIDGETS_BUNDLE_ALIAS_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.WIDGETS_BUNDLE_COLUMN_FAMILY_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.WIDGETS_BUNDLE_IMAGE_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.WIDGETS_BUNDLE_TENANT_ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.WIDGETS_BUNDLE_TITLE_PROPERTY;
 
 @Table(name = WIDGETS_BUNDLE_COLUMN_FAMILY_NAME)
 @EqualsAndHashCode

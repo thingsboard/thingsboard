@@ -1,0 +1,78 @@
+<!--
+
+    Copyright © 2016-2018 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<tb-grid grid-configuration="vm.ruleChainGridConfig">
+    <details-buttons tb-help="'rulechains'" help-container-id="help-container">
+        <div id="help-container"></div>
+    </details-buttons>
+    <md-tabs ng-class="{'tb-headless': (vm.grid.detailsConfig.isDetailsEditMode || !vm.isRuleChainEditable(vm.grid.operatingItem()))}"
+             id="tabs" md-border-bottom flex class="tb-absolute-fill">
+        <md-tab label="{{ 'rulechain.details' | translate }}">
+            <tb-rule-chain rule-chain="vm.grid.operatingItem()"
+                     is-edit="vm.grid.detailsConfig.isDetailsEditMode"
+                     is-read-only="vm.grid.isDetailsReadOnly(vm.grid.operatingItem())"
+                     the-form="vm.grid.detailsForm"
+                     on-set-root-rule-chain="vm.setRootRuleChain(event, vm.grid.detailsConfig.currentItem)"
+                     on-export-rule-chain="vm.exportRuleChain(event, vm.grid.detailsConfig.currentItem)"
+                     on-delete-rule-chain="vm.grid.deleteItem(event, vm.grid.detailsConfig.currentItem)">
+            </tb-rule-chain>
+        </md-tab>
+        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode && vm.isRuleChainEditable(vm.grid.operatingItem())" md-on-select="vm.grid.triggerResize()" label="{{ 'attribute.attributes' | translate }}">
+            <tb-attribute-table flex
+                                entity-id="vm.grid.operatingItem().id.id"
+                                entity-type="{{vm.types.entityType.rulechain}}"
+                                entity-name="vm.grid.operatingItem().name"
+                                default-attribute-scope="{{vm.types.attributesScope.server.value}}">
+            </tb-attribute-table>
+        </md-tab>
+        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode && vm.isRuleChainEditable(vm.grid.operatingItem())" md-on-select="vm.grid.triggerResize()" label="{{ 'attribute.latest-telemetry' | translate }}">
+            <tb-attribute-table flex
+                                entity-id="vm.grid.operatingItem().id.id"
+                                entity-type="{{vm.types.entityType.rulechain}}"
+                                entity-name="vm.grid.operatingItem().name"
+                                default-attribute-scope="{{vm.types.latestTelemetry.value}}"
+                                disable-attribute-scope-selection="true">
+            </tb-attribute-table>
+        </md-tab>
+        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode && vm.isRuleChainEditable(vm.grid.operatingItem())" md-on-select="vm.grid.triggerResize()" label="{{ 'alarm.alarms' | translate }}">
+            <tb-alarm-table flex entity-type="vm.types.entityType.rulechain"
+                            entity-id="vm.grid.operatingItem().id.id">
+            </tb-alarm-table>
+        </md-tab>
+        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode && vm.isRuleChainEditable(vm.grid.operatingItem())" md-on-select="vm.grid.triggerResize()" label="{{ 'rulechain.events' | translate }}">
+            <tb-event-table flex entity-type="vm.types.entityType.rulechain"
+                            entity-id="vm.grid.operatingItem().id.id"
+                            tenant-id="vm.grid.operatingItem().tenantId.id"
+                            debug-event-types="{{vm.types.debugEventType.debugRuleChain.value}}"
+                            default-event-type="{{vm.types.debugEventType.debugRuleChain.value}}">
+            </tb-event-table>
+        </md-tab>
+        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode && vm.isRuleChainEditable(vm.grid.operatingItem())" md-on-select="vm.grid.triggerResize()" label="{{ 'relation.relations' | translate }}">
+            <tb-relation-table flex
+                               entity-id="vm.grid.operatingItem().id.id"
+                               entity-type="{{vm.types.entityType.rulechain}}">
+            </tb-relation-table>
+        </md-tab>
+        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode && vm.isRuleChainEditable(vm.grid.operatingItem()) && vm.grid.isTenantAdmin()"
+                md-on-select="vm.grid.triggerResize()" label="{{ 'audit-log.audit-logs' | translate }}">
+            <tb-audit-log-table flex entity-type="vm.types.entityType.rulechain"
+                                entity-id="vm.grid.operatingItem().id.id"
+                                audit-log-mode="{{vm.types.auditLogMode.entity}}">
+            </tb-audit-log-table>
+        </md-tab>
+    </md-tabs>
+</tb-grid>

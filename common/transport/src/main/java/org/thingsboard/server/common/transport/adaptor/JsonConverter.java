@@ -36,9 +36,16 @@ public class JsonConverter {
         return convertToTelemetry(jsonObject, BasicRequest.DEFAULT_REQUEST_ID);
     }
 
+    public static TelemetryUploadRequest convertToTelemetry(JsonElement jsonObject, long ts) throws JsonSyntaxException {
+        return convertToTelemetry(jsonObject, ts, BasicRequest.DEFAULT_REQUEST_ID);
+    }
+
     public static TelemetryUploadRequest convertToTelemetry(JsonElement jsonObject, int requestId) throws JsonSyntaxException {
+        return convertToTelemetry(jsonObject, System.currentTimeMillis(), requestId);
+    }
+
+    private static TelemetryUploadRequest convertToTelemetry(JsonElement jsonObject, long systemTs, int requestId) throws JsonSyntaxException {
         BasicTelemetryUploadRequest request = new BasicTelemetryUploadRequest(requestId);
-        long systemTs = System.currentTimeMillis();
         if (jsonObject.isJsonObject()) {
             parseObject(request, systemTs, jsonObject);
         } else if (jsonObject.isJsonArray()) {
@@ -118,13 +125,13 @@ public class JsonConverter {
         }
     }
 
-    public static UpdateAttributesRequest convertToAttributes(JsonElement element) {
+    public static AttributesUpdateRequest convertToAttributes(JsonElement element) {
         return convertToAttributes(element, BasicRequest.DEFAULT_REQUEST_ID);
     }
 
-    public static UpdateAttributesRequest convertToAttributes(JsonElement element, int requestId) {
+    public static AttributesUpdateRequest convertToAttributes(JsonElement element, int requestId) {
         if (element.isJsonObject()) {
-            BasicUpdateAttributesRequest request = new BasicUpdateAttributesRequest(requestId);
+            BasicAttributesUpdateRequest request = new BasicAttributesUpdateRequest(requestId);
             long ts = System.currentTimeMillis();
             request.add(parseValues(element.getAsJsonObject()).stream().map(kv -> new BaseAttributeKvEntry(kv, ts)).collect(Collectors.toList()));
             return request;
