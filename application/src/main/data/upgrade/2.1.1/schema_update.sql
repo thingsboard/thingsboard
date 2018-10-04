@@ -14,9 +14,9 @@
 -- limitations under the License.
 --
 
-DROP TABLE IF EXISTS entity_views;
+DROP TABLE IF EXISTS entity_view;
 
-CREATE TABLE IF NOT EXISTS entity_views (
+CREATE TABLE IF NOT EXISTS entity_view (
     id varchar(31) NOT NULL CONSTRAINT entity_view_pkey PRIMARY KEY,
     entity_id varchar(31),
     entity_type varchar(255),

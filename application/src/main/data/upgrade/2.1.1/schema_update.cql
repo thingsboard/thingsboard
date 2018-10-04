@@ -19,9 +19,9 @@ DROP MATERIALIZED VIEW IF EXISTS thingsboard.entity_view_by_tenant_and_search_te
 DROP MATERIALIZED VIEW IF EXISTS thingsboard.entity_view_by_tenant_and_customer;
 DROP MATERIALIZED VIEW IF EXISTS thingsboard.entity_view_by_tenant_and_entity_id;
 
-DROP TABLE IF EXISTS thingsboard.entity_views;
+DROP TABLE IF EXISTS thingsboard.entity_view;
 
-CREATE TABLE IF NOT EXISTS thingsboard.entity_views (
+CREATE TABLE IF NOT EXISTS thingsboard.entity_view (
     id timeuuid,
     entity_id timeuuid,
     entity_type text,
@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS thingsboard.entity_views (
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.entity_view_by_tenant_and_name AS
     SELECT *
-    from thingsboard.entity_views
+    from thingsboard.entity_view
     WHERE tenant_id IS NOT NULL
         AND entity_id IS NOT NULL
         AND customer_id IS NOT NULL
@@ -49,7 +49,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.entity_view_by_tenant_and_nam
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.entity_view_by_tenant_and_search_text AS
     SELECT *
-    from thingsboard.entity_views
+    from thingsboard.entity_view
     WHERE tenant_id IS NOT NULL
       AND entity_id IS NOT NULL
       AND customer_id IS NOT NULL
@@ -60,7 +60,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.entity_view_by_tenant_and_sea
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.entity_view_by_tenant_and_customer AS
     SELECT *
-    from thingsboard.entity_views
+    from thingsboard.entity_view
     WHERE tenant_id IS NOT NULL
       AND customer_id IS NOT NULL
       AND entity_id IS NOT NULL
@@ -71,7 +71,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.entity_view_by_tenant_and_cus
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.entity_view_by_tenant_and_entity_id AS
     SELECT *
-    from thingsboard.entity_views
+    from thingsboard.entity_view
     WHERE tenant_id IS NOT NULL
       AND customer_id IS NOT NULL
       AND entity_id IS NOT NULL
