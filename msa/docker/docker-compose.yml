@@ -40,7 +40,7 @@ services:
       - zookeeper
   tb-js-executor:
     restart: always
-    image: "${DOCKER_REPO}/tb-js-executor:${TB_VERSION}"
+    image: "${DOCKER_REPO}/${JS_EXECUTOR_DOCKER_NAME}:${TB_VERSION}"
     environment:
       TB_KAFKA_SERVERS: kafka:9092
     env_file:
@@ -49,7 +49,7 @@ services:
       - kafka
   tb:
     restart: always
-    image: "${DOCKER_REPO}/tb-node:${TB_VERSION}"
+    image: "${DOCKER_REPO}/${TB_NODE_DOCKER_NAME}:${TB_VERSION}"
     ports:
       - "8080"
       - "1883:1883"
@@ -68,7 +68,7 @@ services:
       - kafka
   tb-web-ui1:
     restart: always
-    image: "${DOCKER_REPO}/tb-web-ui:${TB_VERSION}"
+    image: "${DOCKER_REPO}/${WEB_UI_DOCKER_NAME}:${TB_VERSION}"
     ports:
       - "8080"
     environment:
@@ -78,7 +78,7 @@ services:
       - tb-web-ui.env
   tb-web-ui2:
     restart: always
-    image: "${DOCKER_REPO}/tb-web-ui:${TB_VERSION}"
+    image: "${DOCKER_REPO}/${WEB_UI_DOCKER_NAME}:${TB_VERSION}"
     ports:
       - "8080"
     environment:

@@ -35,6 +35,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <main.dir>${basedir}/../..</main.dir>
         <pkg.name>tb-web-ui</pkg.name>
+        <docker.name>tb-web-ui</docker.name>
         <pkg.user>thingsboard</pkg.user>
         <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
@@ -314,7 +315,7 @@
                 </executions>
                 <configuration>
                     <skip>${dockerfile.skip}</skip>
-                    <repository>${docker.repo}/${pkg.name}</repository>
+                    <repository>${docker.repo}/${docker.name}</repository>
                     <tag>${project.version}</tag>
                     <verbose>true</verbose>
                     <googleContainerRegistryEnabled>false</googleContainerRegistryEnabled>
