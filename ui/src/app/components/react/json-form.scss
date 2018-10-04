@@ -28,7 +28,7 @@ $input-label-float-scale: .75 !default;
   line-height: 12px;
   color: rgb(244, 67, 54);
 
-  @include transition(all 450ms cubic-bezier(.23, 1, .32, 1) 0ms);
+  transition: all 450ms cubic-bezier(.23, 1, .32, 1) 0ms;
 }
 
 .tb-container {
@@ -77,13 +77,12 @@ label.tb-label {
   bottom: 100%;
   left: 0;
   color: rgba(0, 0, 0, .54);
+
+  transition: transform $swift-ease-out-timing-function $swift-ease-out-duration, width $swift-ease-out-timing-function $swift-ease-out-duration;
+
+  transform: translate3d(0, $input-label-float-offset, 0) scale($input-label-float-scale);
   transform-origin: left top;
   -webkit-font-smoothing: antialiased;
-
-  @include transform(translate3d(0, $input-label-float-offset, 0) scale($input-label-float-scale));
-
-  @include transition(transform $swift-ease-out-timing-function $swift-ease-out-duration,
-  width $swift-ease-out-timing-function $swift-ease-out-duration);
 
   &.tb-focused {
     color: rgb(96, 125, 139);

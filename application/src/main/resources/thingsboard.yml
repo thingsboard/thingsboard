@@ -391,6 +391,7 @@ audit_log:
       "user": "${AUDIT_LOG_MASK_USER:W}"
       "rule_chain": "${AUDIT_LOG_MASK_RULE_CHAIN:W}"
       "alarm": "${AUDIT_LOG_MASK_ALARM:W}"
+      "entity_view": "${AUDIT_LOG_MASK_RULE_CHAIN:W}"
   sink:
     # Type of external sink. possible options: none, elasticsearch
     type: "${AUDIT_LOG_SINK_TYPE:none}"

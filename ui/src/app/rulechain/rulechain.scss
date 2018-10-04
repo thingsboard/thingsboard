@@ -84,9 +84,6 @@
 
       .tb-panel-title {
         min-width: 150px;
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
         user-select: none;
       }
 
@@ -163,10 +160,6 @@
 .fc-canvas {
   min-width: 100%;
   min-height: 100%;
-  -webkit-user-select: none;
-  -khtml-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
   user-select: none;
   outline: none;
   -webkit-touch-callout: none;
@@ -441,13 +434,7 @@
 }
 
 .fc-noselect {
-  -webkit-touch-callout: none; /* iOS Safari */
-  -webkit-user-select: none; /* Safari */
-  -khtml-user-select: none; /* Konqueror HTML */
-  -moz-user-select: none; /* Firefox */
-  -ms-user-select: none; /* Internet Explorer/Edge */
-  user-select: none; /* Non-prefixed version, currently
-                                  supported by Chrome and Opera */
+  user-select: none;
 }
 
 .fc-edge-label {
@@ -495,7 +482,6 @@
   font-weight: 600;
   text-align: center;
   white-space: nowrap;
-  -webkit-transform: translate(-50%, -50%);
   transform: translate(-50%, -50%);
 
   span {

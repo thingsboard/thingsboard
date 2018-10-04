@@ -37,8 +37,6 @@ $background-color: #e6e7e8 !default;
     position: relative;
 
     &[draggable] {
-      -moz-user-select: none;
-      -webkit-user-select: none;
       user-select: none;
     }
 

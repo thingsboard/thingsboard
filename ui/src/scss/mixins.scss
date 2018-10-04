@@ -15,6 +15,7 @@
  */
 @import "~compass-sass-mixins/lib/compass";
 
+/* stylelint-disable selector-no-vendor-prefix */
 @mixin input-placeholder {
   // replaces compass/css/user-interface/input-placeholder()
 
@@ -36,6 +37,7 @@
     @content;
   }
 }
+/* stylelint-enable selector-no-vendor-prefix */
 
 @mixin line-clamp($numLines: 1, $lineHeight: 1.412) {
   position: relative;
