@@ -251,7 +251,7 @@
       "fill",
       "stroke"
     ],
-    "property-no-vendor-prefix": null,
+    "property-no-vendor-prefix": true,
     "rule-empty-line-before": ["always", {
       "except": ["first-nested"],
       "ignore": ["after-comment"]
@@ -272,7 +272,7 @@
     "selector-max-type": 5,
     "selector-max-universal": 1,
     "selector-no-qualifying-type": null,
-    "selector-no-vendor-prefix": null,
+    "selector-no-vendor-prefix": true,
     "selector-type-no-unknown": [true, {
       "ignoreTypes": [
         "/^md-/",
@@ -287,6 +287,6 @@
     "value-list-comma-newline-after": "always-multi-line",
     "value-list-comma-newline-before": "never-multi-line",
     "value-list-comma-space-after": "always-single-line",
-    "value-no-vendor-prefix": null
+    "value-no-vendor-prefix": true
   }
 }

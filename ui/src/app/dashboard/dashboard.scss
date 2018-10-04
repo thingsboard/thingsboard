@@ -75,13 +75,13 @@ section.tb-dashboard-toolbar {
 
   &.tb-dashboard-toolbar-opened {
     right: 0;
-    // @include transition(right .3s cubic-bezier(.55,0,.55,.2));
+    // transition: right .3s cubic-bezier(.55, 0, .55, .2);
   }
 
   &.tb-dashboard-toolbar-closed {
     right: 18px;
 
-    @include transition(right .3s cubic-bezier(.55,0,.55,.2) .2s);
+    transition: right .3s cubic-bezier(.55, 0, .55, .2) .2s;
   }
 }
 
@@ -102,14 +102,14 @@ section.tb-dashboard-toolbar {
         margin-top: $toolbar-height;
       }
 
-      @include transition(margin-top .3s cubic-bezier(.55,0,.55,.2));
+      transition: margin-top .3s cubic-bezier(.55, 0, .55, .2);
     }
   }
 
   &.tb-dashboard-toolbar-closed {
     margin-top: 0;
 
-    @include transition(margin-top .3s cubic-bezier(.55,0,.55,.2) .2s);
+    transition: margin-top .3s cubic-bezier(.55, 0, .55, .2) .2s;
   }
 
   .tb-dashboard-layouts {
