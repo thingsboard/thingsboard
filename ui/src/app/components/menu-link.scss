@@ -16,7 +16,7 @@
 @import "~compass-sass-mixins/lib/compass";
 
 .md-button-toggle .md-toggle-icon.tb-toggled {
-  @include transform(rotateZ(180deg));
+  transform: rotateZ(180deg);
 }
 
 .tb-menu-toggle-list.ng-hide {
@@ -28,7 +28,7 @@
   z-index: 1;
   overflow: hidden;
 
-  @include transition(.75s cubic-bezier(.35, 0, .25, 1));
+  transition: .75s cubic-bezier(.35, 0, .25, 1);
 
-  @include transition-property(height);
+  transition-property: height;
 }

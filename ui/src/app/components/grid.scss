@@ -20,7 +20,7 @@
 }
 
 .tb-card-item {
-  @include transition(all .2s ease-in-out);
+  transition: all .2s ease-in-out;
 
   md-card-content {
     max-height: 53px;
@@ -46,7 +46,7 @@
 .tb-current-item {
   opacity: .5;
 
-  @include transform(scale(1.05));
+  transform: scale(1.05);
 }
 
 #tb-vertical-container {

@@ -119,7 +119,7 @@
     "ng-annotate-loader": "^0.1.1",
     "ngtemplate-loader": "^1.3.1",
     "node-sass": "^4.5.3",
-    "postcss-loader": "^0.13.0",
+    "postcss-loader": "^3.0.0",
     "raw-loader": "^0.5.1",
     "react-hot-loader": "^3.0.0-beta.6",
     "sass-loader": "^4.0.2",
@@ -145,5 +145,19 @@
       "node_modules",
       "target"
     ]
+  },
+  "browserslist": [
+    "> 0.5%",
+    "last 2 versions",
+    "Firefox ESR",
+    "not ie <= 10",
+    "not ie_mob <= 10",
+    "not bb <= 10",
+    "not op_mob <= 12.1"
+  ],
+  "postcss": {
+    "plugins": {
+      "autoprefixer": true
+    }
   }
 }

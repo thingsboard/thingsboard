@@ -29,7 +29,7 @@ md-dialog.tb-node-script-test-dialog {
   }
 
   .tb-split {
-    @include box-sizing(border-box);
+    box-sizing: border-box;
     overflow-x: hidden;
     overflow-y: auto;
   }

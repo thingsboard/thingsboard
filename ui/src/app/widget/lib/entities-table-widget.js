@@ -371,19 +371,13 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
                     content = strContent;
                 }
             } else {
-                content = defaultContent(key, value);
+                var decimals = (contentInfo.decimals || contentInfo.decimals === 0) ? contentInfo.decimals : vm.widgetConfig.decimals;
+                var units = contentInfo.units || vm.widgetConfig.units;
+                content = vm.ctx.utils.formatValue(value, decimals, units, true);
             }
             return content;
         } else {
             return strContent;
-        }
-    }
-
-    function defaultContent(key, value) {
-        if (angular.isDefined(value)) {
-            return value;
-        } else {
-            return '';
         }
     }
 
@@ -542,7 +536,9 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
 
             vm.contentsInfo[dataKey.label] = {
                 useCellContentFunction: useCellContentFunction,
-                cellContentFunction: cellContentFunction
+                cellContentFunction: cellContentFunction,
+                units: dataKey.units,
+                decimals: dataKey.decimals
             };
 
             var columnWidth = angular.isDefined(keySettings.columnWidth) ? keySettings.columnWidth : '0px';
