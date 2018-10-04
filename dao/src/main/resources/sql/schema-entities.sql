@@ -228,7 +228,7 @@ CREATE TABLE IF NOT EXISTS rule_node (
     search_text varchar(255)
 );
 
-CREATE TABLE IF NOT EXISTS entity_views (
+CREATE TABLE IF NOT EXISTS entity_view (
     id varchar(31) NOT NULL CONSTRAINT entity_view_pkey PRIMARY KEY,
     entity_id varchar(31),
     entity_type varchar(255),
