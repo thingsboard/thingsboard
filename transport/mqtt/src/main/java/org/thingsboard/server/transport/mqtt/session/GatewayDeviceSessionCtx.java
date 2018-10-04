@@ -38,13 +38,15 @@ import org.thingsboard.server.transport.mqtt.MqttTransportHandler;
 
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by ashvayka on 19.01.17.
  */
-public class GatewayDeviceSessionCtx extends DeviceAwareSessionContext {
+public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext {
 
     private static final Gson GSON = new Gson();
     private static final Charset UTF8 = Charset.forName("UTF-8");
@@ -56,8 +58,8 @@ public class GatewayDeviceSessionCtx extends DeviceAwareSessionContext {
     private volatile boolean closed;
     private AtomicInteger msgIdSeq = new AtomicInteger(0);
 
-    public GatewayDeviceSessionCtx(GatewaySessionCtx parent, Device device) {
-        super(parent.getProcessor(), parent.getAuthService(), device);
+    public GatewayDeviceSessionCtx(GatewaySessionCtx parent, Device device, ConcurrentMap<String, Integer> mqttQoSMap) {
+        super(parent.getProcessor(), parent.getAuthService(), device, mqttQoSMap);
         this.parent = parent;
         this.sessionId = new MqttSessionId();
     }
@@ -195,7 +197,7 @@ public class GatewayDeviceSessionCtx extends DeviceAwareSessionContext {
 
     private MqttPublishMessage createMqttPublishMsg(String topic, JsonElement json) {
         MqttFixedHeader mqttFixedHeader =
-                new MqttFixedHeader(MqttMessageType.PUBLISH, false, MqttQoS.AT_LEAST_ONCE, false, 0);
+                new MqttFixedHeader(MqttMessageType.PUBLISH, false, getQoSForTopic(topic), false, 0);
         MqttPublishVariableHeader header = new MqttPublishVariableHeader(topic, msgIdSeq.incrementAndGet());
         ByteBuf payload = ALLOCATOR.buffer();
         payload.writeBytes(GSON.toJson(json).getBytes(UTF8));

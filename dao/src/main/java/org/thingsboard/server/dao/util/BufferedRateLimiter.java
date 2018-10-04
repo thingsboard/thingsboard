@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 @Slf4j
-@NoSqlDao
+@NoSqlAnyDao
 public class BufferedRateLimiter implements AsyncRateLimiter {
 
     private final ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));

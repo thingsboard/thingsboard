@@ -30,13 +30,15 @@ import org.thingsboard.server.common.transport.auth.DeviceAuthService;
 import org.thingsboard.server.common.transport.session.DeviceAwareSessionContext;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Andrew Shvayka
  */
 @Slf4j
-public class DeviceSessionCtx extends DeviceAwareSessionContext {
+public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
 
     private final MqttTransportAdaptor adaptor;
     private final MqttSessionId sessionId;
@@ -44,8 +46,8 @@ public class DeviceSessionCtx extends DeviceAwareSessionContext {
     private volatile boolean allowAttributeResponses;
     private AtomicInteger msgIdSeq = new AtomicInteger(0);
 
-    public DeviceSessionCtx(SessionMsgProcessor processor, DeviceAuthService authService, MqttTransportAdaptor adaptor) {
-        super(processor, authService);
+    public DeviceSessionCtx(SessionMsgProcessor processor, DeviceAuthService authService, MqttTransportAdaptor adaptor, ConcurrentMap<String, Integer> mqttQoSMap) {
+        super(processor, authService, mqttQoSMap);
         this.adaptor = adaptor;
         this.sessionId = new MqttSessionId();
     }

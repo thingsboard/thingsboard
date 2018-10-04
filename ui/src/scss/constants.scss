@@ -17,18 +17,18 @@
 
 // Colors
 
-$gray: #eee;
+$gray: #eee !default;
 
-$primary-palette-color: 'indigo';
-$default: '500';
-$hue-1: '300';
-$hue-2: '800';
-$hue-3: 'a100';
+$primary-palette-color: "indigo" !default;
+$default: "500" !default;
+$hue-1: "300" !default;
+$hue-2: "800" !default;
+$hue-3: "a100" !default;
 
-$primary-default: #305680; //material-color($primary-palette-color, $default);
-$primary-hue-1: material-color($primary-palette-color, $hue-1);
-$primary-hue-2: material-color($primary-palette-color, $hue-2);
-$primary-hue-3: rgb(207, 216, 220);
+$primary-default: #305680 !default; //material-color($primary-palette-color, $default);
+$primary-hue-1: material-color($primary-palette-color, $hue-1) !default;
+$primary-hue-2: material-color($primary-palette-color, $hue-2) !default;
+$primary-hue-3: rgb(207, 216, 220) !default;
 
 // Layout
 

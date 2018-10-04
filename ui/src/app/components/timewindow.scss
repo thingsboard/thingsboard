@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 .md-panel {
   &.tb-timewindow-panel {
     position: absolute;
@@ -20,38 +21,48 @@
 }
 
 .tb-timewindow-panel {
-  max-height: 440px;
   min-width: 417px;
-  background: white;
-  border-radius: 4px;
-  box-shadow: 0 7px 8px -4px rgba(0, 0, 0, 0.2),
-  0 13px 19px 2px rgba(0, 0, 0, 0.14),
-  0 5px 24px 4px rgba(0, 0, 0, 0.12);
+  max-height: 440px;
   overflow: hidden;
-  form, fieldset {
+  background: #fff;
+  border-radius: 4px;
+  box-shadow:
+    0 7px 8px -4px rgba(0, 0, 0, .2),
+    0 13px 19px 2px rgba(0, 0, 0, .14),
+    0 5px 24px 4px rgba(0, 0, 0, .12);
+
+  form,
+  fieldset {
     height: 100%;
   }
+
   md-content {
-    background-color: #fff;
     overflow: hidden;
+    background-color: #fff;
   }
+
   .md-padding {
     padding: 0 16px;
   }
+
   .md-radio-interactive {
-    md-select, md-switch {
+    md-select,
+    md-switch {
       pointer-events: all;
     }
   }
+
   md-radio-button {
     .md-label {
       width: 100%;
     }
+
     tb-timeinterval {
       width: 355px;
+
       .advanced-switch {
-        min-height: 30px;
         max-width: 44px;
+        min-height: 30px;
       }
     }
   }
@@ -59,15 +70,17 @@
 
 tb-timewindow {
   min-width: 52px;
+
   section.tb-timewindow {
     min-height: 32px;
     padding: 0 6px;
+
     span {
-      pointer-events: all;
-      cursor: pointer;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      pointer-events: all;
+      cursor: pointer;
     }
   }
 }

@@ -27,6 +27,7 @@
 					 the-form="vm.grid.detailsForm"
 					 on-display-activation-link="vm.displayActivationLink(event, vm.grid.detailsConfig.currentItem)"
 					 on-resend-activation="vm.resendActivation(vm.grid.detailsConfig.currentItem)"
+                     on-login-as-user="vm.loginAsUser(vm.grid.detailsConfig.currentItem)"
 					 on-delete-user="vm.grid.deleteItem(event, vm.grid.detailsConfig.currentItem)"></tb-user>
 		</md-tab>
 		<md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode && vm.grid.isTenantAdmin()" md-on-select="vm.grid.triggerResize()" label="{{ 'audit-log.audit-logs' | translate }}">

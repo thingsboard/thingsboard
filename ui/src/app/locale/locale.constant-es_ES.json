@@ -1307,11 +1307,13 @@
         "language": "Lenguaje",
         "locales": {
             "en_US": "Inglés",
+			"fr_FR": "Francés",
             "ko_KR": "Coreano",
             "zh_CN": "Chino",
             "ru_RU": "Ruso",
             "es_ES": "Español",
-            "it_IT": "Italiano"
+            "it_IT": "Italiano",
+            "ja_JA": "Japonés"
         }
     }
 }

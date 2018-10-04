@@ -26,14 +26,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
+import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.common.data.kv.TsKvQuery;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.TsKvEntity;
 import org.thingsboard.server.dao.model.sql.TsKvLatestCompositeKey;
@@ -42,6 +44,7 @@ import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
 import org.thingsboard.server.dao.timeseries.TimeseriesDao;
 import org.thingsboard.server.dao.timeseries.TsInsertExecutorType;
 import org.thingsboard.server.dao.util.SqlDao;
+import org.thingsboard.server.dao.util.SqlTsDao;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
@@ -58,7 +61,7 @@ import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
 
 @Component
 @Slf4j
-@SqlDao
+@SqlTsDao
 public class JpaTimeseriesDao extends JpaAbstractDaoListeningExecutorService implements TimeseriesDao {
 
     @Value("${sql.ts_inserts_executor_type}")
@@ -102,7 +105,7 @@ public class JpaTimeseriesDao extends JpaAbstractDaoListeningExecutorService imp
     }
 
     @Override
-    public ListenableFuture<List<TsKvEntry>> findAllAsync(EntityId entityId, List<TsKvQuery> queries) {
+    public ListenableFuture<List<TsKvEntry>> findAllAsync(EntityId entityId, List<ReadTsKvQuery> queries) {
         List<ListenableFuture<List<TsKvEntry>>> futures = queries
                 .stream()
                 .map(query -> findAllAsync(entityId, query))
@@ -121,7 +124,7 @@ public class JpaTimeseriesDao extends JpaAbstractDaoListeningExecutorService imp
         }, service);
     }
 
-    private ListenableFuture<List<TsKvEntry>> findAllAsync(EntityId entityId, TsKvQuery query) {
+    private ListenableFuture<List<TsKvEntry>> findAllAsync(EntityId entityId, ReadTsKvQuery query) {
         if (query.getAggregation() == Aggregation.NONE) {
             return findAllAsyncWithLimit(entityId, query);
         } else {
@@ -228,7 +231,7 @@ public class JpaTimeseriesDao extends JpaAbstractDaoListeningExecutorService imp
         });
     }
 
-    private ListenableFuture<List<TsKvEntry>> findAllAsyncWithLimit(EntityId entityId, TsKvQuery query) {
+    private ListenableFuture<List<TsKvEntry>> findAllAsyncWithLimit(EntityId entityId, ReadTsKvQuery query) {
         return Futures.immediateFuture(
                 DaoUtil.convertDataList(
                         tsKvRepository.findAllWithLimit(
@@ -237,7 +240,9 @@ public class JpaTimeseriesDao extends JpaAbstractDaoListeningExecutorService imp
                                 query.getKey(),
                                 query.getStartTs(),
                                 query.getEndTs(),
-                                new PageRequest(0, query.getLimit()))));
+                                new PageRequest(0, query.getLimit(),
+                                        new Sort(Sort.Direction.fromString(
+                                                query.getOrderBy()), "ts")))));
     }
 
     @Override
@@ -304,6 +309,36 @@ public class JpaTimeseriesDao extends JpaAbstractDaoListeningExecutorService imp
             tsKvLatestRepository.save(latestEntity);
             return null;
         });
+    }
+
+    @Override
+    public ListenableFuture<Void> remove(EntityId entityId, DeleteTsKvQuery query) {
+        return service.submit(() -> {
+            tsKvRepository.delete(
+                    fromTimeUUID(entityId.getId()),
+                    entityId.getEntityType(),
+                    query.getKey(),
+                    query.getStartTs(),
+                    query.getEndTs());
+            return null;
+        });
+    }
+
+    @Override
+    public ListenableFuture<Void> removeLatest(EntityId entityId, DeleteTsKvQuery query) {
+        TsKvLatestEntity latestEntity = new TsKvLatestEntity();
+        latestEntity.setEntityType(entityId.getEntityType());
+        latestEntity.setEntityId(fromTimeUUID(entityId.getId()));
+        latestEntity.setKey(query.getKey());
+        return service.submit(() -> {
+            tsKvLatestRepository.delete(latestEntity);
+            return null;
+        });
+    }
+
+    @Override
+    public ListenableFuture<Void> removePartition(EntityId entityId, DeleteTsKvQuery query) {
+        return service.submit(() -> null);
     }
 
     @PreDestroy

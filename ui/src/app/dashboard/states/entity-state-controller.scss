@@ -13,34 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import '../../../scss/constants';
+@import "../../../scss/constants";
 
 tb-states-component {
-    min-width: 0px;
+  min-width: 0;
 }
 
 .entity-state-controller {
-    .state-divider {
-        font-size: 18px;
-        padding-left: 15px;
-        padding-right: 15px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        pointer-events: none;
+  .state-divider {
+    padding-right: 15px;
+    padding-left: 15px;
+    overflow: hidden;
+    font-size: 18px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .state-entry {
+    overflow: hidden;
+    font-size: 18px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    outline: none;
+  }
+
+  md-select {
+    margin: 0;
+
+    .md-text {
+      font-size: 18px;
+      font-weight: 700;
     }
-    .state-entry {
-        font-size: 18px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        outline: none;
-    }
-    md-select {
-        margin: 0px;
-        .md-text {
-            font-size: 18px;
-            font-weight: bold;
-        }
-    }
+  }
 }

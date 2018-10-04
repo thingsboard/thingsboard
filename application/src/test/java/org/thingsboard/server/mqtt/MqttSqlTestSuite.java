@@ -15,11 +15,9 @@
  */
 package org.thingsboard.server.mqtt;
 
-import org.cassandraunit.dataset.cql.ClassPathCQLDataSet;
 import org.junit.ClassRule;
 import org.junit.extensions.cpsuite.ClasspathSuite;
 import org.junit.runner.RunWith;
-import org.thingsboard.server.dao.CustomCassandraCQLUnit;
 import org.thingsboard.server.dao.CustomSqlUnit;
 
 import java.util.Arrays;
@@ -31,7 +29,7 @@ public class MqttSqlTestSuite {
 
     @ClassRule
     public static CustomSqlUnit sqlUnit = new CustomSqlUnit(
-            Arrays.asList("sql/schema.sql", "sql/system-data.sql"),
+            Arrays.asList("sql/schema-ts.sql", "sql/schema-entities.sql", "sql/system-data.sql"),
             "sql/drop-all-tables.sql",
             "sql-test.properties");
 }

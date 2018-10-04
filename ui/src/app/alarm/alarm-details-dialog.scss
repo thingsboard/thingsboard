@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 .tb-alarm-details-panel {
-  margin-left: 15px;
-  border: 1px solid #C0C0C0;
   height: 100%;
+  margin-left: 15px;
+  border: 1px solid #c0c0c0;
+
   #tb-alarm-details {
-    min-width: 600px;
-    min-height: 200px;
     width: 100%;
+    min-width: 600px;
     height: 100%;
+    min-height: 200px;
   }
 }

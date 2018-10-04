@@ -179,30 +179,6 @@ CREATE TABLE IF NOT EXISTS tenant (
     zip varchar(255)
 );
 
-CREATE TABLE IF NOT EXISTS ts_kv (
-    entity_type varchar(255) NOT NULL,
-    entity_id varchar(31) NOT NULL,
-    key varchar(255) NOT NULL,
-    ts bigint NOT NULL,
-    bool_v boolean,
-    str_v varchar(10000000),
-    long_v bigint,
-    dbl_v double precision,
-    CONSTRAINT ts_kv_unq_key UNIQUE (entity_type, entity_id, key, ts)
-);
-
-CREATE TABLE IF NOT EXISTS ts_kv_latest (
-    entity_type varchar(255) NOT NULL,
-    entity_id varchar(31) NOT NULL,
-    key varchar(255) NOT NULL,
-    ts bigint NOT NULL,
-    bool_v boolean,
-    str_v varchar(10000000),
-    long_v bigint,
-    dbl_v double precision,
-    CONSTRAINT ts_kv_latest_unq_key UNIQUE (entity_type, entity_id, key)
-);
-
 CREATE TABLE IF NOT EXISTS user_credentials (
     id varchar(31) NOT NULL CONSTRAINT user_credentials_pkey PRIMARY KEY,
     activate_token varchar(255) UNIQUE,
@@ -250,4 +226,18 @@ CREATE TABLE IF NOT EXISTS rule_node (
     name varchar(255),
     debug_mode boolean,
     search_text varchar(255)
+);
+
+CREATE TABLE IF NOT EXISTS entity_views (
+    id varchar(31) NOT NULL CONSTRAINT entity_view_pkey PRIMARY KEY,
+    entity_id varchar(31),
+    entity_type varchar(255),
+    tenant_id varchar(31),
+    customer_id varchar(31),
+    name varchar(255),
+    keys varchar(255),
+    start_ts bigint,
+    end_ts bigint,
+    search_text varchar(255),
+    additional_info varchar
 );
