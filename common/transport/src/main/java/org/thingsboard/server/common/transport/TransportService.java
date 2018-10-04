@@ -7,10 +7,13 @@ import org.thingsboard.server.gen.transport.TransportProtos;
  */
 public interface TransportService {
 
-    void process(TransportProtos.SessionEventMsg msg);
+    void process(TransportProtos.ValidateDeviceTokenRequestMsg msg,
+                 TransportServiceCallback<TransportProtos.ValidateDeviceTokenResponseMsg> callback);
 
-    void process(TransportProtos.PostTelemetryMsg msg);
+    void process(TransportProtos.SessionEventMsg msg, TransportServiceCallback<Void> callback);
 
-    void process(TransportProtos.PostAttributeMsg msg);
+    void process(TransportProtos.PostTelemetryMsg msg, TransportServiceCallback<Void> callback);
+
+    void process(TransportProtos.PostAttributeMsg msg, TransportServiceCallback<Void> callback);
 
 }

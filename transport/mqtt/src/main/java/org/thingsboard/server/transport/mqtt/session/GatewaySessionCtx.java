@@ -78,6 +78,10 @@ public class GatewaySessionCtx {
         this.mqttQoSMap = gatewaySessionCtx.getMqttQoSMap();
     }
 
+    public GatewaySessionCtx(DeviceSessionCtx deviceSessionCtx) {
+
+    }
+
     public void onDeviceConnect(MqttPublishMessage msg) throws AdaptorException {
         JsonElement json = getJson(msg);
         String deviceName = checkDeviceName(getDeviceName(json));

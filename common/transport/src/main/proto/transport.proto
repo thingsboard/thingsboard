@@ -46,6 +46,14 @@ message TsKvListProto {
   repeated KeyValueProto kv = 2;
 }
 
+message DeviceInfoProto {
+  int64 deviceIdMSB = 1;
+  int64 deviceIdLSB = 2;
+  string deviceName = 3;
+  string deviceType = 4;
+  string additionalInfo = 5;
+}
+
 /**
  * Messages that use Data Structures;
  */
@@ -53,6 +61,7 @@ message SessionEventMsg {
   SessionInfoProto sessionInfo = 1;
   int64 deviceIdMSB = 2;
   int64 deviceIdLSB = 3;
+  SessionEvent event = 4;
 }
 
 message PostTelemetryMsg {
@@ -77,3 +86,12 @@ message GetAttributeResponseMsg {
   repeated TsKvListProto sharedAttributeList = 3;
   repeated string deletedAttributeKeys = 4;
 }
+
+message ValidateDeviceTokenRequestMsg {
+  string token = 1;
+}
+
+message ValidateDeviceTokenResponseMsg {
+  DeviceInfoProto deviceInfo = 1;
+}
+

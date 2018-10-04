@@ -40,15 +40,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
 
-    private final MqttTransportAdaptor adaptor;
     private final MqttSessionId sessionId;
     private ChannelHandlerContext channel;
     private volatile boolean allowAttributeResponses;
     private AtomicInteger msgIdSeq = new AtomicInteger(0);
 
-    public DeviceSessionCtx(SessionMsgProcessor processor, DeviceAuthService authService, MqttTransportAdaptor adaptor, ConcurrentMap<String, Integer> mqttQoSMap) {
-        super(processor, authService, mqttQoSMap);
-        this.adaptor = adaptor;
+    public DeviceSessionCtx(ConcurrentMap<String, Integer> mqttQoSMap) {
+        super(null, null, null);
         this.sessionId = new MqttSessionId();
     }
 
