@@ -366,7 +366,7 @@
             </dependency>
             <dependency>
                 <groupId>org.thingsboard.transport</groupId>
-                <artifactId>mqtt</artifactId>
+                <artifactId>mqtt-common</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

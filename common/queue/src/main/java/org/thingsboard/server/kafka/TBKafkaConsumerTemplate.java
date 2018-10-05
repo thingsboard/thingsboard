@@ -43,7 +43,8 @@ public class TBKafkaConsumerTemplate<T> {
     private final String topic;
 
     @Builder
-    private TBKafkaConsumerTemplate(TbKafkaSettings settings, TbKafkaDecoder<T> decoder, TbKafkaRequestIdExtractor<T> requestIdExtractor,
+    private TBKafkaConsumerTemplate(TbKafkaSettings settings, TbKafkaDecoder<T> decoder,
+                                    TbKafkaRequestIdExtractor<T> requestIdExtractor,
                                     String clientId, String groupId, String topic,
                                     boolean autoCommit, int autoCommitIntervalMs) {
         Properties props = settings.toProps();

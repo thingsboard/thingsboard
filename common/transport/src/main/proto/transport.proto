@@ -95,3 +95,17 @@ message ValidateDeviceTokenResponseMsg {
   DeviceInfoProto deviceInfo = 1;
 }
 
+/**
+ * Main messages;
+ */
+message TransportToRuleEngineMsg {
+
+}
+
+message TransportApiRequestMsg {
+   ValidateDeviceTokenRequestMsg validateTokenRequestMsg = 1;
+}
+
+message TransportApiResponseMsg {
+   ValidateDeviceTokenResponseMsg validateTokenResponseMsg = 1;
+}

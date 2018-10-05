@@ -17,6 +17,7 @@ package org.thingsboard.server.common.transport.quota.tenant;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.quota.inmemory.IntervalRegistryLogger;
 
@@ -25,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
+@ConditionalOnProperty(prefix = "quota.rule.tenant", value = "enabled", havingValue = "true", matchIfMissing = false)
 public class TenantIntervalRegistryLogger extends IntervalRegistryLogger {
 
     private final long logIntervalMin;

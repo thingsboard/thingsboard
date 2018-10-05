@@ -93,13 +93,12 @@ public class TbKafkaRequestTemplate<Request, Response> {
                 ConsumerRecords<String, byte[]> responses = responseTemplate.poll(Duration.ofMillis(pollInterval));
                 responses.forEach(response -> {
                     Header requestIdHeader = response.headers().lastHeader(TbKafkaSettings.REQUEST_ID_HEADER);
-                    Response decocedResponse = null;
+                    Response decodedResponse = null;
                     UUID requestId = null;
                     if (requestIdHeader == null) {
                         try {
-                            decocedResponse = responseTemplate.decode(response);
-                            requestId = responseTemplate.extractRequestId(decocedResponse);
-
+                            decodedResponse = responseTemplate.decode(response);
+                            requestId = responseTemplate.extractRequestId(decodedResponse);
                         } catch (IOException e) {
                             log.error("Failed to decode response", e);
                         }
@@ -107,17 +106,17 @@ public class TbKafkaRequestTemplate<Request, Response> {
                         requestId = bytesToUuid(requestIdHeader.value());
                     }
                     if (requestId == null) {
-                        log.error("[{}] Missing requestId in header and response", response);
+                        log.error("[{}] Missing requestId in header and body", response);
                     } else {
                         ResponseMetaData<Response> expectedResponse = pendingRequests.remove(requestId);
                         if (expectedResponse == null) {
                             log.trace("[{}] Invalid or stale request", requestId);
                         } else {
                             try {
-                                if (decocedResponse == null) {
-                                    decocedResponse = responseTemplate.decode(response);
+                                if (decodedResponse == null) {
+                                    decodedResponse = responseTemplate.decode(response);
                                 }
-                                expectedResponse.future.set(decocedResponse);
+                                expectedResponse.future.set(decodedResponse);
                             } catch (IOException e) {
                                 expectedResponse.future.setException(e);
                             }

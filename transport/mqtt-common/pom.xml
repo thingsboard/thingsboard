@@ -24,10 +24,10 @@
         <artifactId>transport</artifactId>
     </parent>
     <groupId>org.thingsboard.transport</groupId>
-    <artifactId>mqtt</artifactId>
+    <artifactId>mqtt-common</artifactId>
     <packaging>jar</packaging>
 
-    <name>Thingsboard MQTT Transport</name>
+    <name>Thingsboard MQTT Transport Common</name>
     <url>https://thingsboard.io</url>
 
     <properties>

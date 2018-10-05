@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,13 +27,12 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.header.Header;
 
-import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
-import java.util.function.BiConsumer;
 
 /**
  * Created by ashvayka on 24.09.18.
@@ -48,7 +47,7 @@ public class TBKafkaProducerTemplate<T> {
     private TbKafkaEnricher<T> enricher = ((value, responseTopic, requestId) -> value);
 
     private final TbKafkaPartitioner<T> partitioner;
-    private List<PartitionInfo> partitionInfoList;
+    private ConcurrentMap<String, List<PartitionInfo>> partitionInfoMap;
     @Getter
     private final String defaultTopic;
 
@@ -78,11 +77,16 @@ public class TBKafkaProducerTemplate<T> {
             log.trace("Failed to create topic: {}", e.getMessage(), e);
         }
         //Maybe this should not be cached, but we don't plan to change size of partitions
-        this.partitionInfoList = producer.partitionsFor(defaultTopic);
+        this.partitionInfoMap = new ConcurrentHashMap<>();
+        this.partitionInfoMap.putIfAbsent(defaultTopic, producer.partitionsFor(defaultTopic));
     }
 
-    public T enrich(T value, String responseTopic, UUID requestId) {
-        return enricher.enrich(value, responseTopic, requestId);
+    T enrich(T value, String responseTopic, UUID requestId) {
+        if (enricher != null) {
+            return enricher.enrich(value, responseTopic, requestId);
+        } else {
+            return value;
+        }
     }
 
     public Future<RecordMetadata> send(String key, T value) {
@@ -101,7 +105,7 @@ public class TBKafkaProducerTemplate<T> {
         byte[] data = encoder.encode(value);
         ProducerRecord<String, byte[]> record;
         Integer partition = getPartition(topic, key, value, data);
-        record = new ProducerRecord<>(this.defaultTopic, partition, timestamp, key, data, headers);
+        record = new ProducerRecord<>(topic, partition, timestamp, key, data, headers);
         return producer.send(record);
     }
 
@@ -109,7 +113,7 @@ public class TBKafkaProducerTemplate<T> {
         if (partitioner == null) {
             return null;
         } else {
-            return partitioner.partition(this.defaultTopic, key, value, data, partitionInfoList);
+            return partitioner.partition(topic, key, value, data, partitionInfoMap.computeIfAbsent(topic, producer::partitionsFor));
         }
     }
 }

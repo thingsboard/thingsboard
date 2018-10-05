@@ -17,7 +17,11 @@ package org.thingsboard.server.common.transport.quota;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.thingsboard.server.common.transport.quota.host.*;
+import org.thingsboard.server.common.transport.quota.host.HostIntervalRegistryCleaner;
+import org.thingsboard.server.common.transport.quota.host.HostIntervalRegistryLogger;
+import org.thingsboard.server.common.transport.quota.host.HostRequestIntervalRegistry;
+import org.thingsboard.server.common.transport.quota.host.HostRequestLimitPolicy;
+import org.thingsboard.server.common.transport.quota.host.HostRequestsQuotaService;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;

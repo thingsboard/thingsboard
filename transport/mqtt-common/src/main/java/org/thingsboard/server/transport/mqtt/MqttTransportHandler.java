@@ -395,7 +395,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                         }
 
                         @Override
-                        public void onError(Exception e) {
+                        public void onError(Throwable e) {
                             log.trace("[{}] Failed to process credentials: {}", address, userName, e);
                             ctx.writeAndFlush(createMqttConnAckMsg(MqttConnectReturnCode.CONNECTION_REFUSED_SERVER_UNAVAILABLE));
                             ctx.close();
@@ -521,6 +521,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     @Override
     public void operationComplete(Future<? super Void> future) throws Exception {
-        transportService.process(getSessionEventMsg(SessionEvent.CLOSED), null);
+        if (deviceSessionCtx.isConnected()) {
+            transportService.process(getSessionEventMsg(SessionEvent.CLOSED), null);
+        }
     }
 }

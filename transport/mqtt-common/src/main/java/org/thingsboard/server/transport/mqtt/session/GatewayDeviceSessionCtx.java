@@ -135,7 +135,7 @@ public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext {
     private MqttMessage createMqttPublishMsg(String topic, GetAttributesResponse response) {
         JsonObject result = new JsonObject();
         result.addProperty("id", response.getRequestId());
-        result.addProperty(DEVICE_PROPERTY, device.getName());
+//        result.addProperty(DEVICE_PROPERTY, device.getName());
         Optional<AttributesKVMsg> responseData = response.getData();
         if (responseData.isPresent()) {
             AttributesKVMsg msg = responseData.get();
@@ -183,14 +183,14 @@ public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext {
 
     private MqttMessage createMqttPublishMsg(String topic, AttributesKVMsg data) {
         JsonObject result = new JsonObject();
-        result.addProperty(DEVICE_PROPERTY, device.getName());
+//        result.addProperty(DEVICE_PROPERTY, device.getName());
         result.add("data", JsonConverter.toJson(data, false));
         return createMqttPublishMsg(topic, result);
     }
 
     private MqttMessage createMqttPublishMsg(String topic, ToDeviceRpcRequestMsg data) {
         JsonObject result = new JsonObject();
-        result.addProperty(DEVICE_PROPERTY, device.getName());
+//        result.addProperty(DEVICE_PROPERTY, device.getName());
         result.add("data", JsonConverter.toJson(data, true));
         return createMqttPublishMsg(topic, result);
     }

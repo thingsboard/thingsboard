@@ -16,10 +16,12 @@
 package org.thingsboard.server.common.transport.quota.tenant;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.quota.inmemory.KeyBasedIntervalRegistry;
 
 @Component
+@ConditionalOnProperty(prefix = "quota.rule.tenant", value = "enabled", havingValue = "true", matchIfMissing = false)
 public class TenantMsgsIntervalRegistry extends KeyBasedIntervalRegistry {
 
     public TenantMsgsIntervalRegistry(@Value("${quota.rule.tenant.intervalMs}") long intervalDurationMs,
