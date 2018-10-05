@@ -23,24 +23,25 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.internals.RecordHeader;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Created by ashvayka on 25.09.18.
  */
 @Slf4j
-public class TbKafkaRequestTemplate<Request, Response> {
+public class TbKafkaRequestTemplate<Request, Response> extends AbstractTbKafkaTemplate {
 
     private final TBKafkaProducerTemplate<Request> requestTemplate;
     private final TBKafkaConsumerTemplate<Response> responseTemplate;
@@ -161,24 +162,6 @@ public class TbKafkaRequestTemplate<Request, Response> {
         request = requestTemplate.enrich(request, responseTemplate.getTopic(), requestId);
         requestTemplate.send(key, request, headers);
         return future;
-    }
-
-    private byte[] uuidToBytes(UUID uuid) {
-        ByteBuffer buf = ByteBuffer.allocate(16);
-        buf.putLong(uuid.getMostSignificantBits());
-        buf.putLong(uuid.getLeastSignificantBits());
-        return buf.array();
-    }
-
-    private static UUID bytesToUuid(byte[] bytes) {
-        ByteBuffer bb = ByteBuffer.wrap(bytes);
-        long firstLong = bb.getLong();
-        long secondLong = bb.getLong();
-        return new UUID(firstLong, secondLong);
-    }
-
-    private byte[] stringToBytes(String string) {
-        return string.getBytes(StandardCharsets.UTF_8);
     }
 
     private static class ResponseMetaData<T> {
