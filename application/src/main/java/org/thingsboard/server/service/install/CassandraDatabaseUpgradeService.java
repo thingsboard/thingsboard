@@ -203,6 +203,7 @@ public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
                 log.info("Schema updated.");
 
                 break;
+
             case "2.0.0":
 
                 log.info("Updating schema ...");
@@ -211,6 +212,7 @@ public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
                 log.info("Schema updated.");
 
                 break;
+
             default:
                 throw new RuntimeException("Unable to upgrade Cassandra database, unsupported fromVersion: " + fromVersion);
         }

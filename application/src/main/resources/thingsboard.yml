@@ -77,6 +77,11 @@ security:
   # Enable/disable access to Tenant Administrators JWT token by System Administrator or Customer Users JWT token by Tenant Administrator
   user_token_access_enabled: "${SECURITY_USER_TOKEN_ACCESS_ENABLED:true}"
 
+# Dashboard parameters
+dashboard:
+  # Maximum allowed datapoints fetched by widgets
+  max_datapoints_limit: "${DASHBOARD_MAX_DATAPOINTS_LIMIT:50000}"
+
 # Device communication protocol parameters
 http:
   request_timeout: "${HTTP_REQUEST_TIMEOUT:60000}"
