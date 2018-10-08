@@ -26,6 +26,7 @@ import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
+import org.thingsboard.server.common.msg.cluster.ServerType;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
 import org.thingsboard.server.service.cluster.discovery.ServerInstance;
 
@@ -100,8 +101,7 @@ public class RpcManagerActor extends ContextAwareActor {
 
     private void onMsg(ClusterAPIProtos.ClusterMessage msg) {
         if (msg.hasServerAddress()) {
-            ServerAddress address = new ServerAddress(msg.getServerAddress().getHost(),
-                    msg.getServerAddress().getPort());
+            ServerAddress address = new ServerAddress(msg.getServerAddress().getHost(), msg.getServerAddress().getPort(), ServerType.CORE);
             SessionActorInfo session = sessionActors.get(address);
             if (session != null) {
                 log.debug("{} Forwarding msg to session actor", address);
@@ -112,7 +112,7 @@ public class RpcManagerActor extends ContextAwareActor {
                 if (queue == null) {
                     queue = new LinkedList<>();
                     pendingMsgs.put(new ServerAddress(
-                            msg.getServerAddress().getHost(), msg.getServerAddress().getPort()), queue);
+                            msg.getServerAddress().getHost(), msg.getServerAddress().getPort(), ServerType.CORE), queue);
                 }
                 queue.add(msg);
             }

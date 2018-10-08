@@ -41,23 +41,30 @@
             <table md-table>
                 <thead md-head md-order="vm.query.order" md-on-reorder="vm.onReorder">
                 <tr md-row>
-                    <th md-column ng-if="vm.displayEntityName" md-order-by="entityName"><span>{{vm.entityNameColumnTitle}}</span></th>
-                    <th md-column ng-if="vm.displayEntityType" md-order-by="entityType"><span translate>entity.entity-type</span></th>
-                    <th md-column md-order-by="{{ key.name }}" ng-repeat="key in vm.dataKeys"><span>{{ key.title }}</span></th>
-                    <th md-column ng-if="vm.actionCellDescriptors.length"><span>&nbsp</span></th>
+                    <th ng-if="column.display" md-column md-order-by="{{ column.name }}" ng-repeat="column in vm.columns"><span>{{ column.title }}</span></th>
+                    <th md-column class="tb-action-cell" layout="row" layout-align="end center">
+                        <md-button class="md-icon-button"
+                                   aria-label="{{'entity.columns-to-display' | translate}}"
+                                   ng-click="vm.editColumnsToDisplay($event)">
+                            <md-icon aria-label="{{'entity.columns-to-display' | translate}}"
+                                     class="material-icons">view_column
+                            </md-icon>
+                            <md-tooltip md-direction="top">
+                                {{'entity.columns-to-display' | translate}}
+                            </md-tooltip>
+                        </md-button>
+                    </th>
                 </tr>
                 </thead>
                 <tbody md-body>
                 <tr ng-show="vm.entities.length" md-row md-select="entity"
                     md-select-id="id.id" md-auto-select="false" ng-repeat="entity in vm.entities"
                     ng-click="vm.onRowClick($event, entity)" ng-class="{'tb-current': vm.isCurrent(entity)}">
-                    <td md-cell flex ng-if="vm.displayEntityName">{{entity.entityName}}</td>
-                    <td md-cell flex ng-if="vm.displayEntityType">{{entity.entityType}}</td>
-                    <td md-cell flex ng-repeat="key in vm.dataKeys"
-                        ng-style="vm.cellStyle(entity, key)"
-                        ng-bind-html="vm.cellContent(entity, key)">
+                    <td ng-if="column.display" md-cell flex ng-repeat="column in vm.columns"
+                        ng-style="vm.cellStyle(entity, column)"
+                        ng-bind-html="vm.cellContent(entity, column)">
                     </td>
-                    <td md-cell ng-if="vm.actionCellDescriptors.length" class="tb-action-cell"
+                    <td md-cell class="tb-action-cell"
                         ng-style="{minWidth: vm.actionCellDescriptors.length*36+'px',
                                    maxWidth: vm.actionCellDescriptors.length*36+'px',
                                    width: vm.actionCellDescriptors.length*36+'px'}">

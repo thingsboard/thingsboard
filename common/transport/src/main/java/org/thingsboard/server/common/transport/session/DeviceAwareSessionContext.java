@@ -73,4 +73,6 @@ public abstract class DeviceAwareSessionContext implements SessionContext {
     public Device getDevice() {
         return device;
     }
+
+
 }

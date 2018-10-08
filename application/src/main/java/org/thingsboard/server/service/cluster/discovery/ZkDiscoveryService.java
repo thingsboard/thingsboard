@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.cluster.discovery;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.SerializationException;
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.curator.framework.CuratorFramework;
@@ -24,6 +25,8 @@ import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
+import org.apache.curator.framework.state.ConnectionState;
+import org.apache.curator.framework.state.ConnectionStateListener;
 import org.apache.curator.retry.RetryForever;
 import org.apache.curator.utils.CloseableUtils;
 import org.apache.zookeeper.CreateMode;
@@ -35,7 +38,9 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
+import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
+import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
 import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import org.thingsboard.server.utils.MiscUtils;
@@ -44,7 +49,6 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 /**
@@ -79,16 +83,24 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
     @Lazy
     private DeviceStateService deviceStateService;
 
-    private final List<DiscoveryServiceListener> listeners = new CopyOnWriteArrayList<>();
+    @Autowired
+    @Lazy
+    private ActorService actorService;
+
+    @Autowired
+    @Lazy
+    private ClusterRoutingService routingService;
 
     private CuratorFramework client;
     private PathChildrenCache cache;
     private String nodePath;
-
+    //TODO: make persistent?
+    private String nodeId;
 
     @PostConstruct
     public void init() {
         log.info("Initializing...");
+        this.nodeId = RandomStringUtils.randomAlphabetic(10);
         Assert.hasLength(zkUrl, MiscUtils.missingProperty("zk.url"));
         Assert.notNull(zkRetryInterval, MiscUtils.missingProperty("zk.retry_interval_ms"));
         Assert.notNull(zkConnectionTimeout, MiscUtils.missingProperty("zk.connection_timeout_ms"));
@@ -127,9 +139,35 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
                     .creatingParentsIfNeeded()
                     .withMode(CreateMode.EPHEMERAL_SEQUENTIAL).forPath(zkNodesDir + "/", SerializationUtils.serialize(self.getServerAddress()));
             log.info("[{}:{}] Created ZK node for current instance: {}", self.getHost(), self.getPort(), nodePath);
+            client.getConnectionStateListenable().addListener(checkReconnect(self));
         } catch (Exception e) {
             log.error("Failed to create ZK node", e);
             throw new RuntimeException(e);
+        }
+    }
+
+    private ConnectionStateListener checkReconnect(ServerInstance self) {
+        return (client, newState) -> {
+            log.info("[{}:{}] ZK state changed: {}", self.getHost(), self.getPort(), newState);
+            if (newState == ConnectionState.LOST) {
+                reconnect();
+            }
+        };
+    }
+
+    private boolean reconnectInProgress = false;
+
+    private synchronized void reconnect() {
+        if (!reconnectInProgress) {
+            reconnectInProgress = true;
+            try {
+                client.blockUntilConnected();
+                publishCurrentServer();
+            } catch (InterruptedException e) {
+                log.error("Failed to reconnect to ZK: {}", e.getMessage(), e);
+            } finally {
+                reconnectInProgress = false;
+            }
         }
     }
 
@@ -146,6 +184,11 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
     }
 
     @Override
+    public String getNodeId() {
+        return nodeId;
+    }
+
+    @Override
     public ServerInstance getCurrentServer() {
         return serverInstance.getSelf();
     }
@@ -156,23 +199,13 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
                 .filter(cd -> !cd.getPath().equals(nodePath))
                 .map(cd -> {
                     try {
-                        return new ServerInstance( (ServerAddress) SerializationUtils.deserialize(cd.getData()));
+                        return new ServerInstance((ServerAddress) SerializationUtils.deserialize(cd.getData()));
                     } catch (NoSuchElementException e) {
                         log.error("Failed to decode ZK node", e);
                         throw new RuntimeException(e);
                     }
                 })
                 .collect(Collectors.toList());
-    }
-
-    @Override
-    public boolean addListener(DiscoveryServiceListener listener) {
-        return listeners.add(listener);
-    }
-
-    @Override
-    public boolean removeListener(DiscoveryServiceListener listener) {
-        return listeners.remove(listener);
     }
 
     @Override
@@ -198,7 +231,7 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
         }
         ServerInstance instance;
         try {
-            ServerAddress serverAddress  = SerializationUtils.deserialize(data.getData());
+            ServerAddress serverAddress = SerializationUtils.deserialize(data.getData());
             instance = new ServerInstance(serverAddress);
         } catch (SerializationException e) {
             log.error("Failed to decode server instance for node {}", data.getPath(), e);
@@ -207,17 +240,20 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
         log.info("Processing [{}] event for [{}:{}]", pathChildrenCacheEvent.getType(), instance.getHost(), instance.getPort());
         switch (pathChildrenCacheEvent.getType()) {
             case CHILD_ADDED:
+                routingService.onServerAdded(instance);
                 tsSubService.onClusterUpdate();
                 deviceStateService.onClusterUpdate();
-                listeners.forEach(listener -> listener.onServerAdded(instance));
+                actorService.onServerAdded(instance);
                 break;
             case CHILD_UPDATED:
-                listeners.forEach(listener -> listener.onServerUpdated(instance));
+                routingService.onServerUpdated(instance);
+                actorService.onServerUpdated(instance);
                 break;
             case CHILD_REMOVED:
+                routingService.onServerRemoved(instance);
                 tsSubService.onClusterUpdate();
                 deviceStateService.onClusterUpdate();
-                listeners.forEach(listener -> listener.onServerRemoved(instance));
+                actorService.onServerRemoved(instance);
                 break;
             default:
                 break;

@@ -48,6 +48,7 @@ import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
@@ -65,7 +66,7 @@ import org.thingsboard.server.service.mail.MailExecutorService;
 import org.thingsboard.server.service.queue.MsgQueueService;
 import org.thingsboard.server.service.rpc.DeviceRpcService;
 import org.thingsboard.server.service.script.JsExecutorService;
-import org.thingsboard.server.service.script.JsSandboxService;
+import org.thingsboard.server.service.script.JsInvokeService;
 import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
@@ -161,6 +162,10 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
+    private EntityViewService entityViewService;
+
+    @Autowired
+    @Getter
     private TelemetrySubscriptionService tsSubService;
 
     @Autowired
@@ -169,7 +174,7 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
-    private JsSandboxService jsSandbox;
+    private JsInvokeService jsSandbox;
 
     @Autowired
     @Getter

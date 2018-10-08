@@ -209,7 +209,7 @@ export default class CanvasDigitalGauge extends canvasGauges.BaseGauge {
                     this.elementValueClone.renderedValue = this._value;
                 }
                 if (angular.isUndefined(this.elementValueClone.renderedValue)) {
-                    this.elementValueClone.renderedValue = options.minValue;
+                    this.elementValueClone.renderedValue = this.value;
                 }
                 let context = this.contextValueClone;
                 // clear the cache

@@ -1,0 +1,119 @@
+<!--
+
+    Copyright © 2016-2018 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<md-button ng-click="onMakePublic({event: $event})"
+           ng-show="!isEdit && entityViewScope === 'tenant' && !isAssignedToCustomer && !isPublic"
+           class="md-raised md-primary">{{ 'entity-view.make-public' | translate }}</md-button>
+<md-button ng-click="onAssignToCustomer({event: $event})"
+           ng-show="!isEdit && entityViewScope === 'tenant' && !isAssignedToCustomer"
+           class="md-raised md-primary">{{ 'entity-view.assign-to-customer' | translate }}</md-button>
+<md-button ng-click="onUnassignFromCustomer({event: $event})"
+           ng-show="!isEdit && (entityViewScope === 'customer' || entityViewScope === 'tenant') && isAssignedToCustomer"
+           class="md-raised md-primary">{{'entity-view.unassign-from-customer' | translate }}</md-button>
+<md-button ng-click="onDeleteEntityView({event: $event})"
+           ng-show="!isEdit && entityViewScope === 'tenant'"
+           class="md-raised md-primary">{{ 'entity-view.delete' | translate }}</md-button>
+
+<div layout="row">
+	<md-button ngclipboard data-clipboard-action="copy"
+               ngclipboard-success="onEntityViewIdCopied(e)"
+               data-clipboard-text="{{entityView.id.id}}" ng-show="!isEdit"
+			   class="md-raised">
+        <md-icon md-svg-icon="mdi:clipboard-arrow-left"></md-icon>
+        <span translate>entity-view.copyId</span>
+    </md-button>
+</div>
+
+<md-content class="md-padding" layout="column">
+    <md-input-container class="md-block"
+                        ng-show="!isEdit && isAssignedToCustomer && entityViewScope === 'tenant'">
+        <label translate>entity-view.assignedToCustomer</label>
+        <input ng-model="assignedCustomer.title" disabled>
+    </md-input-container>
+	<fieldset ng-disabled="$root.loading || !isEdit">
+		<md-input-container class="md-block">
+			<label translate>entity-view.name</label>
+			<input required name="name" ng-model="entityView.name">
+			<div ng-messages="theForm.name.$error">
+	      		<div translate ng-message="required">entity-view.name-required</div>
+	    	</div>				
+		</md-input-container>
+        <tb-entity-select flex ng-disabled="!isEdit"
+                          the-form="theForm"
+                          tb-required="true"
+                          allowed-entity-types="allowedEntityTypes"
+                          ng-model="entityView.entityId">
+        </tb-entity-select>
+        <md-input-container class="md-block">
+            <label translate>entity-view.description</label>
+            <textarea ng-model="entityView.additionalInfo.description" rows="2"></textarea>
+        </md-input-container>
+        <section layout="column">
+            <label translate class="tb-title no-padding">entity-view.client-attributes</label>
+            <md-chips style="padding-bottom: 15px;"
+                      ng-required="false"
+                      readonly="!isEdit"
+                      ng-model="entityView.keys.attributes.cs"
+                      placeholder="{{'entity-view.client-attributes' | translate}}"
+                      md-separator-keys="separatorKeys">
+            </md-chips>
+            <label translate class="tb-title no-padding">entity-view.shared-attributes</label>
+            <md-chips style="padding-bottom: 15px;"
+                      ng-required="false"
+                      readonly="!isEdit"
+                      ng-model="entityView.keys.attributes.sh"
+                      placeholder="{{'entity-view.shared-attributes' | translate}}"
+                      md-separator-keys="separatorKeys">
+            </md-chips>
+            <label translate class="tb-title no-padding">entity-view.server-attributes</label>
+            <md-chips style="padding-bottom: 15px;"
+                      ng-required="false"
+                      readonly="!isEdit"
+                      ng-model="entityView.keys.attributes.ss"
+                      placeholder="{{'entity-view.server-attributes' | translate}}"
+                      md-separator-keys="separatorKeys">
+            </md-chips>
+            <label translate class="tb-title no-padding">entity-view.latest-timeseries</label>
+            <md-chips ng-required="false"
+                      readonly="!isEdit"
+                      ng-model="entityView.keys.timeseries"
+                      placeholder="{{'entity-view.latest-timeseries' | translate}}"
+                      md-separator-keys="separatorKeys">
+            </md-chips>
+        </section>
+        <section layout="column">
+            <section layout="row" layout-align="start start">
+                <mdp-date-picker ng-model="startTimeMs"
+                                 mdp-max-date="maxStartTimeMs"
+                                 mdp-placeholder="{{ 'entity-view.start-ts' | translate }}"></mdp-date-picker>
+                <mdp-time-picker ng-model="startTimeMs"
+                                 mdp-max-date="maxStartTimeMs"
+                                 mdp-placeholder="{{ 'entity-view.start-ts' | translate }}"
+                                 mdp-auto-switch="true"></mdp-time-picker>
+            </section>
+            <section layout="row" layout-align="start start">
+                <mdp-date-picker ng-model="endTimeMs"
+                                 mdp-min-date="minEndTimeMs"
+                                 mdp-placeholder="{{ 'entity-view.end-ts' | translate }}"></mdp-date-picker>
+                <mdp-time-picker ng-model="endTimeMs"
+                                 mdp-min-date="minEndTimeMs"
+                                 mdp-placeholder="{{ 'entity-view.end-ts' | translate }}"
+                                 mdp-auto-switch="true"></mdp-time-picker>
+            </section>
+        </section>
+	</fieldset>
+</md-content>

@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -36,16 +37,22 @@ import java.util.concurrent.ExecutionException;
 public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.ScriptEngine {
 
     private static final ObjectMapper mapper = new ObjectMapper();
-    private final JsSandboxService sandboxService;
+    private final JsInvokeService sandboxService;
 
     private final UUID scriptId;
+    private final EntityId entityId;
 
-    public RuleNodeJsScriptEngine(JsSandboxService sandboxService, String script, String... argNames) {
+    public RuleNodeJsScriptEngine(JsInvokeService sandboxService, EntityId entityId, String script, String... argNames) {
         this.sandboxService = sandboxService;
+        this.entityId = entityId;
         try {
             this.scriptId = this.sandboxService.eval(JsScriptType.RULE_NODE_SCRIPT, script, argNames).get();
         } catch (Exception e) {
-            throw new IllegalArgumentException("Can't compile script: " + e.getMessage(), e);
+            Throwable t = e;
+            if (e instanceof ExecutionException) {
+                t = e.getCause();
+            }
+            throw new IllegalArgumentException("Can't compile script: " + t.getMessage(), t);
         }
     }
 
@@ -167,11 +174,13 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
         } catch (ExecutionException e) {
             if (e.getCause() instanceof ScriptException) {
                 throw (ScriptException)e.getCause();
+            } else if (e.getCause() instanceof RuntimeException) {
+                throw new ScriptException(e.getCause().getMessage());
             } else {
-                throw new ScriptException("Failed to execute js script: " + e.getMessage());
+                throw new ScriptException(e);
             }
         } catch (Exception e) {
-            throw new ScriptException("Failed to execute js script: " + e.getMessage());
+            throw new ScriptException(e);
         }
     }
 

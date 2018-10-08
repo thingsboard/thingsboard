@@ -26,12 +26,10 @@ public interface DiscoveryService {
 
     void unpublishCurrentServer();
 
+    String getNodeId();
+
     ServerInstance getCurrentServer();
 
     List<ServerInstance> getOtherServers();
-
-    boolean addListener(DiscoveryServiceListener listener);
-
-    boolean removeListener(DiscoveryServiceListener listener);
 
 }

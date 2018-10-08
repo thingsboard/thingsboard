@@ -24,12 +24,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
+import org.thingsboard.server.common.msg.cluster.ServerType;
 import org.thingsboard.server.service.cluster.discovery.DiscoveryService;
 import org.thingsboard.server.service.cluster.discovery.DiscoveryServiceListener;
 import org.thingsboard.server.service.cluster.discovery.ServerInstance;
 import org.thingsboard.server.utils.MiscUtils;
 
 import javax.annotation.PostConstruct;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentNavigableMap;
@@ -41,7 +43,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 
 @Service
 @Slf4j
-public class ConsistentClusterRoutingService implements ClusterRoutingService, DiscoveryServiceListener {
+public class ConsistentClusterRoutingService implements ClusterRoutingService {
 
     @Autowired
     private DiscoveryService discoveryService;
@@ -55,15 +57,19 @@ public class ConsistentClusterRoutingService implements ClusterRoutingService, D
 
     private HashFunction hashFunction;
 
-    private final ConcurrentNavigableMap<Long, ServerInstance> circle =
-            new ConcurrentSkipListMap<>();
+    private ConsistentHashCircle[] circles;
+    private ConsistentHashCircle rootCircle;
 
     @PostConstruct
     public void init() {
         log.info("Initializing Cluster routing service!");
-        hashFunction = MiscUtils.forName(hashFunctionName);
-        discoveryService.addListener(this);
+        this.hashFunction = MiscUtils.forName(hashFunctionName);
         this.currentServer = discoveryService.getCurrentServer();
+        this.circles = new ConsistentHashCircle[ServerType.values().length];
+        for (ServerType serverType : ServerType.values()) {
+            circles[serverType.ordinal()] = new ConsistentHashCircle();
+        }
+        rootCircle = circles[ServerType.CORE.ordinal()];
         addNode(discoveryService.getCurrentServer());
         for (ServerInstance instance : discoveryService.getOtherServers()) {
             addNode(instance);
@@ -79,11 +85,25 @@ public class ConsistentClusterRoutingService implements ClusterRoutingService, D
 
     @Override
     public Optional<ServerAddress> resolveById(EntityId entityId) {
-        return resolveByUuid(entityId.getId());
+        return resolveByUuid(rootCircle, entityId.getId());
     }
 
     @Override
     public Optional<ServerAddress> resolveByUuid(UUID uuid) {
+        return resolveByUuid(rootCircle, uuid);
+    }
+
+    @Override
+    public Optional<ServerAddress> resolveByUuid(ServerType server, UUID uuid) {
+        return resolveByUuid(circles[server.ordinal()], uuid);
+    }
+
+    @Override
+    public Optional<ServerAddress> resolveById(ServerType server, EntityId entityId) {
+        return resolveByUuid(circles[server.ordinal()], entityId.getId());
+    }
+
+    private Optional<ServerAddress> resolveByUuid(ConsistentHashCircle circle, UUID uuid) {
         Assert.notNull(uuid);
         if (circle.isEmpty()) {
             return Optional.empty();
@@ -125,13 +145,13 @@ public class ConsistentClusterRoutingService implements ClusterRoutingService, D
 
     private void addNode(ServerInstance instance) {
         for (int i = 0; i < virtualNodesSize; i++) {
-            circle.put(hash(instance, i).asLong(), instance);
+            circles[instance.getServerAddress().getServerType().ordinal()].put(hash(instance, i).asLong(), instance);
         }
     }
 
     private void removeNode(ServerInstance instance) {
         for (int i = 0; i < virtualNodesSize; i++) {
-            circle.remove(hash(instance, i).asLong());
+            circles[instance.getServerAddress().getServerType().ordinal()].remove(hash(instance, i).asLong());
         }
     }
 
@@ -141,7 +161,7 @@ public class ConsistentClusterRoutingService implements ClusterRoutingService, D
 
     private void logCircle() {
         log.trace("Consistent Hash Circle Start");
-        circle.entrySet().forEach((e) -> log.debug("{} -> {}", e.getKey(), e.getValue().getServerAddress()));
+        Arrays.asList(circles).forEach(ConsistentHashCircle::log);
         log.trace("Consistent Hash Circle End");
     }
 
