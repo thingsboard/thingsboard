@@ -228,7 +228,7 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
                     if (angular.isDefined(value.aggregation.type) && value.aggregation.type.length > 0) {
                         model.aggregation.type = value.aggregation.type;
                     }
-                    model.aggregation.limit = value.aggregation.limit || timeService.avgAggregationLimit();
+                    model.aggregation.limit = value.aggregation.limit || Math.floor(timeService.getMaxDatapointsLimit() / 2);
                 }
             }
             scope.updateDisplayValue();

@@ -31,6 +31,8 @@ export default function TimewindowPanelController(mdPanelRef, $scope, timeServic
     vm.maxRealtimeAggInterval = maxRealtimeAggInterval;
     vm.minHistoryAggInterval = minHistoryAggInterval;
     vm.maxHistoryAggInterval = maxHistoryAggInterval;
+    vm.minDatapointsLimit = minDatapointsLimit;
+    vm.maxDatapointsLimit = maxDatapointsLimit;
 
     if (vm.historyOnly) {
         vm.timewindow.selectedTab = 1;
@@ -84,6 +86,14 @@ export default function TimewindowPanelController(mdPanelRef, $scope, timeServic
 
     function maxHistoryAggInterval () {
         return timeService.maxIntervalLimit(currentHistoryTimewindow());
+    }
+
+    function minDatapointsLimit () {
+        return timeService.getMinDatapointsLimit();
+    }
+
+    function maxDatapointsLimit () {
+        return timeService.getMaxDatapointsLimit();
     }
 
     function currentHistoryTimewindow() {
