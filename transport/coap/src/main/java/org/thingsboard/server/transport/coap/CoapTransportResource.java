@@ -157,10 +157,10 @@ public class CoapTransportResource extends CoapResource {
 
         CoapSessionCtx ctx = new CoapSessionCtx(exchange, adaptor, processor, authService, timeout);
 
-        if (!ctx.login(credentials.get())) {
-            exchange.respond(ResponseCode.UNAUTHORIZED);
-            return Optional.empty();
-        }
+//        if (!ctx.login(credentials.get())) {
+//            exchange.respond(ResponseCode.UNAUTHORIZED);
+//            return Optional.empty();
+//        }
 
         AdaptorToSessionActorMsg msg;
         try {
@@ -190,7 +190,7 @@ public class CoapTransportResource extends CoapResource {
                     throw new IllegalArgumentException("Unsupported msg type: " + type);
             }
             log.trace("Processing msg: {}", msg);
-            processor.process(new BasicTransportToDeviceSessionActorMsg(ctx.getDevice(), msg));
+//            processor.process(new BasicTransportToDeviceSessionActorMsg(ctx.getDevice(), msg));
         } catch (AdaptorException e) {
             log.debug("Failed to decode payload {}", e);
             exchange.respond(ResponseCode.BAD_REQUEST, e.getMessage());

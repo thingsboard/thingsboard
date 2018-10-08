@@ -73,13 +73,12 @@ kafka:
   batch.size: "${TB_KAFKA_BATCH_SIZE:16384}"
   linger.ms: "${TB_KAFKA_LINGER_MS:1}"
   buffer.memory: "${TB_BUFFER_MEMORY:33554432}"
-  transport-api:
-    requests-topic: "${TB_TRANSPORT_API_REQUEST_TOPIC:tb.transport.api.requests}"
-    responses-topic: "${TB_TRANSPORT_API_RESPONSE_TOPIC:tb.transport.api.responses}"
+  transport_api:
+    requests_topic: "${TB_TRANSPORT_API_REQUEST_TOPIC:tb.transport.api.requests}"
+    responses_topic: "${TB_TRANSPORT_API_RESPONSE_TOPIC:tb.transport.api.responses}"
     max_pending_requests: "${TB_TRANSPORT_MAX_PENDING_REQUESTS:10000}"
     max_requests_timeout: "${TB_TRANSPORT_MAX_REQUEST_TIMEOUT:10000}"
     response_poll_interval: "${TB_TRANSPORT_RESPONSE_POLL_INTERVAL_MS:25}"
     response_auto_commit_interval: "${TB_TRANSPORT_RESPONSE_AUTO_COMMIT_INTERVAL_MS:100}"
-    # Maximum allowed JavaScript execution errors before JavaScript will be blacklisted
-  rule-engine:
+  rule_engine:
     topic: "${TB_RULE_ENGINE_TOPIC:tb.rule-engine}"

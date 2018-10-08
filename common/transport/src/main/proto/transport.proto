@@ -47,11 +47,13 @@ message TsKvListProto {
 }
 
 message DeviceInfoProto {
-  int64 deviceIdMSB = 1;
-  int64 deviceIdLSB = 2;
-  string deviceName = 3;
-  string deviceType = 4;
-  string additionalInfo = 5;
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceIdMSB = 3;
+  int64 deviceIdLSB = 4;
+  string deviceName = 5;
+  string deviceType = 6;
+  string additionalInfo = 7;
 }
 
 /**

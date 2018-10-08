@@ -43,7 +43,7 @@ public class HttpSessionCtx extends DeviceAwareSessionContext {
     private final DeferredResult<ResponseEntity> responseWriter;
 
     public HttpSessionCtx(SessionMsgProcessor processor, DeviceAuthService authService, DeferredResult<ResponseEntity> responseWriter, long timeout) {
-        super(processor, authService);
+        super();
         this.sessionId = new HttpSessionId();
         this.responseWriter = responseWriter;
         this.timeout = timeout;

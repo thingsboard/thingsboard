@@ -49,7 +49,7 @@ public class CoapSessionCtx extends DeviceAwareSessionContext {
     private final AtomicInteger seqNumber = new AtomicInteger(2);
 
     public CoapSessionCtx(CoapExchange exchange, CoapTransportAdaptor adaptor, SessionMsgProcessor processor, DeviceAuthService authService, long timeout) {
-        super(processor, authService);
+        super();
         Request request = exchange.advanced().getRequest();
         this.token = request.getTokenString();
         this.sessionId = new CoapSessionId(request.getSource().getHostAddress(), request.getSourcePort(), this.token);
@@ -112,7 +112,7 @@ public class CoapSessionCtx extends DeviceAwareSessionContext {
 
     public void close() {
         log.info("[{}] Closing processing context. Timeout: {}", sessionId, exchange.advanced().isTimedOut());
-        processor.process(exchange.advanced().isTimedOut() ? SessionCloseMsg.onTimeout(sessionId) : SessionCloseMsg.onError(sessionId));
+//        processor.process(exchange.advanced().isTimedOut() ? SessionCloseMsg.onTimeout(sessionId) : SessionCloseMsg.onError(sessionId));
     }
 
     @Override

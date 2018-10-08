@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,13 +21,15 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.internals.RecordHeader;
 
-import java.io.IOException;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -40,12 +42,14 @@ public class TbKafkaResponseTemplate<Request, Response> extends AbstractTbKafkaT
     private final TBKafkaProducerTemplate<Response> responseTemplate;
     private final TbKafkaHandler<Request, Response> handler;
     private final ConcurrentMap<UUID, String> pendingRequests;
-    private final ExecutorService executor;
+    private final ExecutorService loopExecutor;
+    private final ScheduledExecutorService timeoutExecutor;
+    private final ExecutorService callbackExecutor;
     private final int maxPendingRequests;
+    private final long requestTimeout;
 
     private final long pollInterval;
     private volatile boolean stopped = false;
-    //TODO:
     private final AtomicInteger pendingRequestCount = new AtomicInteger();
 
     @Builder
@@ -53,6 +57,7 @@ public class TbKafkaResponseTemplate<Request, Response> extends AbstractTbKafkaT
                                    TBKafkaProducerTemplate<Response> responseTemplate,
                                    TbKafkaHandler<Request, Response> handler,
                                    long pollInterval,
+                                   long requestTimeout,
                                    int maxPendingRequests,
                                    ExecutorService executor) {
         this.requestTemplate = requestTemplate;
@@ -61,18 +66,24 @@ public class TbKafkaResponseTemplate<Request, Response> extends AbstractTbKafkaT
         this.pendingRequests = new ConcurrentHashMap<>();
         this.maxPendingRequests = maxPendingRequests;
         this.pollInterval = pollInterval;
-        this.executor = executor;
+        this.requestTimeout = requestTimeout;
+        this.callbackExecutor = executor;
+        this.timeoutExecutor = Executors.newSingleThreadScheduledExecutor();
+        this.loopExecutor = Executors.newSingleThreadExecutor();
     }
 
     public void init() {
         this.responseTemplate.init();
         requestTemplate.subscribe();
-        executor.submit(() -> {
+        loopExecutor.submit(() -> {
             while (!stopped) {
-                if(pendingRequestCount.get() > maxPendingRequests){
-
+                while (pendingRequestCount.get() >= maxPendingRequests) {
+                    try {
+                        Thread.sleep(pollInterval);
+                    } catch (InterruptedException e) {
+                        log.trace("Failed to wait until the server has capacity to handle new requests", e);
+                    }
                 }
-                //TODO: we need to protect from reading too much requests.
                 ConsumerRecords<String, byte[]> requests = requestTemplate.poll(Duration.ofMillis(pollInterval));
                 requests.forEach(request -> {
                     Header requestIdHeader = request.headers().lastHeader(TbKafkaSettings.REQUEST_ID_HEADER);
@@ -92,12 +103,27 @@ public class TbKafkaResponseTemplate<Request, Response> extends AbstractTbKafkaT
                     }
                     String responseTopic = bytesToString(responseTopicHeader.value());
                     try {
+                        pendingRequestCount.getAndIncrement();
                         Request decodedRequest = requestTemplate.decode(request);
-                        executor.submit(() -> handler.handle(decodedRequest,
-                                response -> reply(requestId, responseTopic, response),
-                                e -> log.error("[{}] Failed to process the request: {}", requestId, request, e)));
+                        AsyncCallbackTemplate.withCallbackAndTimeout(handler.handle(decodedRequest),
+                                response -> {
+                                    pendingRequestCount.decrementAndGet();
+                                    reply(requestId, responseTopic, response);
+                                },
+                                e -> {
+                                    pendingRequestCount.decrementAndGet();
+                                    if (e.getCause() != null && e.getCause() instanceof TimeoutException) {
+                                        log.warn("[{}] Timedout to process the request: {}", requestId, request, e);
+                                    } else {
+                                        log.trace("[{}] Failed to process the request: {}", requestId, request, e);
+                                    }
+                                },
+                                requestTimeout,
+                                timeoutExecutor,
+                                callbackExecutor);
                     } catch (Throwable e) {
-                        log.error("[{}] Failed to process the request: {}", requestId, request, e);
+                        pendingRequestCount.decrementAndGet();
+                        log.warn("[{}] Failed to process the request: {}", requestId, request, e);
                     }
                 });
             }
@@ -106,10 +132,16 @@ public class TbKafkaResponseTemplate<Request, Response> extends AbstractTbKafkaT
 
     public void stop() {
         stopped = true;
+        if (timeoutExecutor != null) {
+            timeoutExecutor.shutdownNow();
+        }
+        if (loopExecutor != null) {
+            loopExecutor.shutdownNow();
+        }
     }
 
     private void reply(UUID requestId, String topic, Response response) {
-        responseTemplate.send(topic, response, Collections.singletonList(new RecordHeader(TbKafkaSettings.REQUEST_ID_HEADER, uuidToBytes(requestId))));
+        responseTemplate.send(topic, requestId.toString(), response, Collections.singletonList(new RecordHeader(TbKafkaSettings.REQUEST_ID_HEADER, uuidToBytes(requestId))));
     }
 
 }

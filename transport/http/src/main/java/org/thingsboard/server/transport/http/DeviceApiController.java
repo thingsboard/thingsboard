@@ -73,20 +73,20 @@ public class DeviceApiController {
         if (quotaExceeded(httpRequest, responseWriter)) {
             return responseWriter;
         }
-        HttpSessionCtx ctx = getHttpSessionCtx(responseWriter);
-        if (ctx.login(new DeviceTokenCredentials(deviceToken))) {
-            GetAttributesRequest request;
-            if (StringUtils.isEmpty(clientKeys) && StringUtils.isEmpty(sharedKeys)) {
-                request = new BasicGetAttributesRequest(0);
-            } else {
-                Set<String> clientKeySet = !StringUtils.isEmpty(clientKeys) ? new HashSet<>(Arrays.asList(clientKeys.split(","))) : null;
-                Set<String> sharedKeySet = !StringUtils.isEmpty(sharedKeys) ? new HashSet<>(Arrays.asList(sharedKeys.split(","))) : null;
-                request = new BasicGetAttributesRequest(0, clientKeySet, sharedKeySet);
-            }
-            process(ctx, request);
-        } else {
-            responseWriter.setResult(new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
-        }
+//        HttpSessionCtx ctx = getHttpSessionCtx(responseWriter);
+//        if (ctx.login(new DeviceTokenCredentials(deviceToken))) {
+//            GetAttributesRequest request;
+//            if (StringUtils.isEmpty(clientKeys) && StringUtils.isEmpty(sharedKeys)) {
+//                request = new BasicGetAttributesRequest(0);
+//            } else {
+//                Set<String> clientKeySet = !StringUtils.isEmpty(clientKeys) ? new HashSet<>(Arrays.asList(clientKeys.split(","))) : null;
+//                Set<String> sharedKeySet = !StringUtils.isEmpty(sharedKeys) ? new HashSet<>(Arrays.asList(sharedKeys.split(","))) : null;
+//                request = new BasicGetAttributesRequest(0, clientKeySet, sharedKeySet);
+//            }
+//            process(ctx, request);
+//        } else {
+//            responseWriter.setResult(new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
+//        }
 
         return responseWriter;
     }
@@ -98,16 +98,16 @@ public class DeviceApiController {
         if (quotaExceeded(request, responseWriter)) {
             return responseWriter;
         }
-        HttpSessionCtx ctx = getHttpSessionCtx(responseWriter);
-        if (ctx.login(new DeviceTokenCredentials(deviceToken))) {
-            try {
-                process(ctx, JsonConverter.convertToAttributes(new JsonParser().parse(json)));
-            } catch (IllegalStateException | JsonSyntaxException ex) {
-                responseWriter.setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
-            }
-        } else {
-            responseWriter.setResult(new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
-        }
+//        HttpSessionCtx ctx = getHttpSessionCtx(responseWriter);
+//        if (ctx.login(new DeviceTokenCredentials(deviceToken))) {
+//            try {
+//                process(ctx, JsonConverter.convertToAttributes(new JsonParser().parse(json)));
+//            } catch (IllegalStateException | JsonSyntaxException ex) {
+//                responseWriter.setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
+//            }
+//        } else {
+//            responseWriter.setResult(new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
+//        }
         return responseWriter;
     }
 
@@ -119,15 +119,15 @@ public class DeviceApiController {
             return responseWriter;
         }
         HttpSessionCtx ctx = getHttpSessionCtx(responseWriter);
-        if (ctx.login(new DeviceTokenCredentials(deviceToken))) {
-            try {
-                process(ctx, JsonConverter.convertToTelemetry(new JsonParser().parse(json)));
-            } catch (IllegalStateException | JsonSyntaxException ex) {
-                responseWriter.setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
-            }
-        } else {
-            responseWriter.setResult(new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
-        }
+//        if (ctx.login(new DeviceTokenCredentials(deviceToken))) {
+//            try {
+//                process(ctx, JsonConverter.convertToTelemetry(new JsonParser().parse(json)));
+//            } catch (IllegalStateException | JsonSyntaxException ex) {
+//                responseWriter.setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
+//            }
+//        } else {
+//            responseWriter.setResult(new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
+//        }
         return responseWriter;
     }
 
@@ -147,17 +147,17 @@ public class DeviceApiController {
         if (quotaExceeded(request, responseWriter)) {
             return responseWriter;
         }
-        HttpSessionCtx ctx = getHttpSessionCtx(responseWriter);
-        if (ctx.login(new DeviceTokenCredentials(deviceToken))) {
-            try {
-                JsonObject response = new JsonParser().parse(json).getAsJsonObject();
-                process(ctx, new ToDeviceRpcResponseMsg(requestId, response.toString()));
-            } catch (IllegalStateException | JsonSyntaxException ex) {
-                responseWriter.setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
-            }
-        } else {
-            responseWriter.setResult(new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
-        }
+//        HttpSessionCtx ctx = getHttpSessionCtx(responseWriter);
+//        if (ctx.login(new DeviceTokenCredentials(deviceToken))) {
+//            try {
+//                JsonObject response = new JsonParser().parse(json).getAsJsonObject();
+//                process(ctx, new ToDeviceRpcResponseMsg(requestId, response.toString()));
+//            } catch (IllegalStateException | JsonSyntaxException ex) {
+//                responseWriter.setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
+//            }
+//        } else {
+//            responseWriter.setResult(new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
+//        }
         return responseWriter;
     }
 
@@ -169,18 +169,18 @@ public class DeviceApiController {
             return responseWriter;
         }
         HttpSessionCtx ctx = getHttpSessionCtx(responseWriter);
-        if (ctx.login(new DeviceTokenCredentials(deviceToken))) {
-            try {
-                JsonObject request = new JsonParser().parse(json).getAsJsonObject();
-                process(ctx, new ToServerRpcRequestMsg(0,
-                        request.get("method").getAsString(),
-                        request.get("params").toString()));
-            } catch (IllegalStateException | JsonSyntaxException ex) {
-                responseWriter.setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
-            }
-        } else {
-            responseWriter.setResult(new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
-        }
+//        if (ctx.login(new DeviceTokenCredentials(deviceToken))) {
+//            try {
+//                JsonObject request = new JsonParser().parse(json).getAsJsonObject();
+//                process(ctx, new ToServerRpcRequestMsg(0,
+//                        request.get("method").getAsString(),
+//                        request.get("params").toString()));
+//            } catch (IllegalStateException | JsonSyntaxException ex) {
+//                responseWriter.setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
+//            }
+//        } else {
+//            responseWriter.setResult(new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
+//        }
         return responseWriter;
     }
 
@@ -197,16 +197,16 @@ public class DeviceApiController {
         if (quotaExceeded(httpRequest, responseWriter)) {
             return responseWriter;
         }
-        HttpSessionCtx ctx = getHttpSessionCtx(responseWriter, timeout);
-        if (ctx.login(new DeviceTokenCredentials(deviceToken))) {
-            try {
-                process(ctx, msg);
-            } catch (IllegalStateException | JsonSyntaxException ex) {
-                responseWriter.setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
-            }
-        } else {
-            responseWriter.setResult(new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
-        }
+//        HttpSessionCtx ctx = getHttpSessionCtx(responseWriter, timeout);
+//        if (ctx.login(new DeviceTokenCredentials(deviceToken))) {
+//            try {
+//                process(ctx, msg);
+//            } catch (IllegalStateException | JsonSyntaxException ex) {
+//                responseWriter.setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
+//            }
+//        } else {
+//            responseWriter.setResult(new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
+//        }
         return responseWriter;
     }
 
@@ -220,7 +220,7 @@ public class DeviceApiController {
 
     private void process(HttpSessionCtx ctx, FromDeviceMsg request) {
         AdaptorToSessionActorMsg msg = new BasicAdaptorToSessionActorMsg(ctx, request);
-        processor.process(new BasicTransportToDeviceSessionActorMsg(ctx.getDevice(), msg));
+//        processor.process(new BasicTransportToDeviceSessionActorMsg(ctx.getDevice(), msg));
     }
 
     private boolean quotaExceeded(HttpServletRequest request, DeferredResult<ResponseEntity> responseWriter) {

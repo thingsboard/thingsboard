@@ -103,9 +103,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
         responseBuilder.autoCommit(true);
         responseBuilder.autoCommitIntervalMs(autoCommitInterval);
         responseBuilder.decoder(new RemoteJsResponseDecoder());
-        responseBuilder.requestIdExtractor((response) -> {
-            return new UUID(response.getRequestIdMSB(), response.getRequestIdLSB());
-        });
+        responseBuilder.requestIdExtractor((response) -> new UUID(response.getRequestIdMSB(), response.getRequestIdLSB()));
 
         TbKafkaRequestTemplate.TbKafkaRequestTemplateBuilder
                 <JsInvokeProtos.RemoteJsRequest, JsInvokeProtos.RemoteJsResponse> builder = TbKafkaRequestTemplate.builder();

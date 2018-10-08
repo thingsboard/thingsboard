@@ -84,7 +84,7 @@ http:
 # MQTT server parameters
 mqtt:
   # Enable/disable mqtt transport protocol.
-  enabled: "${MQTT_ENABLED:true}"
+  enabled: "${MQTT_ENABLED:false}"
   bind_address: "${MQTT_BIND_ADDRESS:0.0.0.0}"
   bind_port: "${MQTT_BIND_PORT:1883}"
   adaptor: "${MQTT_ADAPTOR_NAME:JsonMqttAdaptor}"
@@ -149,7 +149,7 @@ quota:
       # Interval for scheduled task that cleans expired records. TTL is used for expiring
       cleanPeriodMs: "${QUOTA_TENANT_CLEAN_PERIOD_MS:300000}"
       # Enable Host API Limits
-      enabled: "${QUOTA_TENANT_ENABLED:false}"
+      enabled: "${QUOTA_TENANT_ENABLED:true}"
       # Array of whitelist tenants
       whitelist: "${QUOTA_TENANT_WHITELIST:}"
       # Array of blacklist tenants
@@ -450,3 +450,16 @@ js:
     response_auto_commit_interval: "${REMOTE_JS_RESPONSE_AUTO_COMMIT_INTERVAL_MS:100}"
     # Maximum allowed JavaScript execution errors before JavaScript will be blacklisted
     max_errors: "${REMOTE_JS_SANDBOX_MAX_ERRORS:3}"
+
+transport:
+  remote:
+    enabled: "${REMOTE_TRANSPORT_ENABLED:true}"
+    transport_api:
+      requests_topic: "${TB_TRANSPORT_API_REQUEST_TOPIC:tb.transport.api.requests}"
+      responses_topic: "${TB_TRANSPORT_API_RESPONSE_TOPIC:tb.transport.api.responses}"
+      max_pending_requests: "${TB_TRANSPORT_MAX_PENDING_REQUESTS:10000}"
+      request_timeout: "${TB_TRANSPORT_MAX_REQUEST_TIMEOUT:10000}"
+      request_poll_interval: "${TB_TRANSPORT_RESPONSE_POLL_INTERVAL_MS:25}"
+      request_auto_commit_interval: "${TB_TRANSPORT_RESPONSE_AUTO_COMMIT_INTERVAL_MS:1000}"
+    rule_engine:
+      topic: "${TB_RULE_ENGINE_TOPIC:tb.rule-engine}"

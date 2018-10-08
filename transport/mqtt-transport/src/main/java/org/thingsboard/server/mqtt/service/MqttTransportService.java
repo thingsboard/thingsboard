@@ -1,3 +1,18 @@
+/**
+ * Copyright © 2016-2018 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.thingsboard.server.mqtt.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -5,6 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
+import org.thingsboard.server.kafka.AsyncCallbackTemplate;
 import org.thingsboard.server.kafka.TBKafkaConsumerTemplate;
 import org.thingsboard.server.kafka.TBKafkaProducerTemplate;
 import org.thingsboard.server.kafka.TbKafkaRequestTemplate;
@@ -23,19 +39,19 @@ import java.util.concurrent.Executors;
 @Service
 public class MqttTransportService implements TransportService {
 
-    @Value("${kafka.rule-engine.topic}")
+    @Value("${kafka.rule_engine.topic}")
     private String ruleEngineTopic;
-    @Value("${kafka.transport-api.requests-topic}")
+    @Value("${kafka.transport_api.requests_topic}")
     private String transportApiRequestsTopic;
-    @Value("${kafka.transport-api.responses-topic}")
+    @Value("${kafka.transport_api.responses_topic}")
     private String transportApiResponsesTopic;
-    @Value("${kafka.transport-api.max_pending_requests}")
+    @Value("${kafka.transport_api.max_pending_requests}")
     private long maxPendingRequests;
-    @Value("${kafka.transport-api.max_requests_timeout}")
+    @Value("${kafka.transport_api.max_requests_timeout}")
     private long maxRequestsTimeout;
-    @Value("${kafka.transport-api.response_poll_interval}")
+    @Value("${kafka.transport_api.response_poll_interval}")
     private int responsePollDuration;
-    @Value("${kafka.transport-api.response_auto_commit_interval}")
+    @Value("${kafka.transport_api.response_auto_commit_interval}")
     private int autoCommitInterval;
 
     @Autowired
