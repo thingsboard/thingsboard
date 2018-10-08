@@ -23,7 +23,10 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 public interface TransportService {
 
     void process(TransportProtos.ValidateDeviceTokenRequestMsg msg,
-                 TransportServiceCallback<TransportProtos.ValidateDeviceTokenResponseMsg> callback);
+                 TransportServiceCallback<TransportProtos.ValidateDeviceCredentialsResponseMsg> callback);
+
+    void process(TransportProtos.ValidateDeviceX509CertRequestMsg msg,
+                 TransportServiceCallback<TransportProtos.ValidateDeviceCredentialsResponseMsg> callback);
 
     void process(TransportProtos.SessionEventMsg msg, TransportServiceCallback<Void> callback);
 

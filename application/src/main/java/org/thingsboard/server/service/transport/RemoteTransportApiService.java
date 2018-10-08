@@ -33,7 +33,8 @@ import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
 import org.thingsboard.server.kafka.TBKafkaConsumerTemplate;
 import org.thingsboard.server.kafka.TBKafkaProducerTemplate;
 import org.thingsboard.server.kafka.TbKafkaResponseTemplate;
@@ -118,15 +119,22 @@ public class RemoteTransportApiService implements TransportApiService {
     public ListenableFuture<TransportApiResponseMsg> handle(TransportApiRequestMsg transportApiRequestMsg) throws Exception {
         if (transportApiRequestMsg.hasValidateTokenRequestMsg()) {
             ValidateDeviceTokenRequestMsg msg = transportApiRequestMsg.getValidateTokenRequestMsg();
-            //TODO: Make async and enable caching
-            DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(msg.getToken());
-            if (credentials != null && credentials.getCredentialsType() == DeviceCredentialsType.ACCESS_TOKEN) {
-                return getDeviceInfo(credentials.getDeviceId());
-            } else {
-                return getEmptyTransportApiResponseFuture();
-            }
+            return validateCredentials(msg.getToken(), DeviceCredentialsType.ACCESS_TOKEN);
+        } else if (transportApiRequestMsg.hasValidateX509CertRequestMsg()) {
+            ValidateDeviceX509CertRequestMsg msg = transportApiRequestMsg.getValidateX509CertRequestMsg();
+            return validateCredentials(msg.getHash(), DeviceCredentialsType.X509_CERTIFICATE);
         }
         return getEmptyTransportApiResponseFuture();
+    }
+
+    private ListenableFuture<TransportApiResponseMsg> validateCredentials(String credentialsId, DeviceCredentialsType credentialsType) {
+        //TODO: Make async and enable caching
+        DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(credentialsId);
+        if (credentials != null && credentials.getCredentialsType() == credentialsType) {
+            return getDeviceInfo(credentials.getDeviceId());
+        } else {
+            return getEmptyTransportApiResponseFuture();
+        }
     }
 
     private ListenableFuture<TransportApiResponseMsg> getDeviceInfo(DeviceId deviceId) {
@@ -146,7 +154,7 @@ public class RemoteTransportApiService implements TransportApiService {
                         .setAdditionalInfo(mapper.writeValueAsString(device.getAdditionalInfo()))
                         .build();
                 return TransportApiResponseMsg.newBuilder()
-                        .setValidateTokenResponseMsg(ValidateDeviceTokenResponseMsg.newBuilder().setDeviceInfo(deviceInfoProto).build()).build();
+                        .setValidateTokenResponseMsg(ValidateDeviceCredentialsResponseMsg.newBuilder().setDeviceInfo(deviceInfoProto).build()).build();
             } catch (JsonProcessingException e) {
                 log.warn("[{}] Failed to lookup device by id", deviceId, e);
                 return getEmptyTransportApiResponse();
@@ -160,6 +168,6 @@ public class RemoteTransportApiService implements TransportApiService {
 
     private TransportApiResponseMsg getEmptyTransportApiResponse() {
         return TransportApiResponseMsg.newBuilder()
-                .setValidateTokenResponseMsg(ValidateDeviceTokenResponseMsg.getDefaultInstance()).build();
+                .setValidateTokenResponseMsg(ValidateDeviceCredentialsResponseMsg.getDefaultInstance()).build();
     }
 }

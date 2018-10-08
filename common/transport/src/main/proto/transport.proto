@@ -93,7 +93,11 @@ message ValidateDeviceTokenRequestMsg {
   string token = 1;
 }
 
-message ValidateDeviceTokenResponseMsg {
+message ValidateDeviceX509CertRequestMsg {
+  string hash = 1;
+}
+
+message ValidateDeviceCredentialsResponseMsg {
   DeviceInfoProto deviceInfo = 1;
 }
 
@@ -106,8 +110,9 @@ message TransportToRuleEngineMsg {
 
 message TransportApiRequestMsg {
    ValidateDeviceTokenRequestMsg validateTokenRequestMsg = 1;
+   ValidateDeviceX509CertRequestMsg validateX509CertRequestMsg = 2;
 }
 
 message TransportApiResponseMsg {
-   ValidateDeviceTokenResponseMsg validateTokenResponseMsg = 1;
+   ValidateDeviceCredentialsResponseMsg validateTokenResponseMsg = 1;
 }

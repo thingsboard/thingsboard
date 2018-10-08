@@ -104,8 +104,16 @@ public class MqttTransportService implements TransportService {
     }
 
     @Override
-    public void process(ValidateDeviceTokenRequestMsg msg, TransportServiceCallback<ValidateDeviceTokenResponseMsg> callback) {
-        AsyncCallbackTemplate.withCallback(transportApiTemplate.post(msg.getToken(), TransportApiRequestMsg.newBuilder().setValidateTokenRequestMsg(msg).build()),
+    public void process(ValidateDeviceTokenRequestMsg msg, TransportServiceCallback<ValidateDeviceCredentialsResponseMsg> callback) {
+        AsyncCallbackTemplate.withCallback(transportApiTemplate.post(msg.getToken(),
+                TransportApiRequestMsg.newBuilder().setValidateTokenRequestMsg(msg).build()),
+                response -> callback.onSuccess(response.getValidateTokenResponseMsg()), callback::onError, transportCallbackExecutor);
+    }
+
+    @Override
+    public void process(ValidateDeviceX509CertRequestMsg msg, TransportServiceCallback<ValidateDeviceCredentialsResponseMsg> callback) {
+        AsyncCallbackTemplate.withCallback(transportApiTemplate.post(msg.getHash(),
+                TransportApiRequestMsg.newBuilder().setValidateX509CertRequestMsg(msg).build()),
                 response -> callback.onSuccess(response.getValidateTokenResponseMsg()), callback::onError, transportCallbackExecutor);
     }
 

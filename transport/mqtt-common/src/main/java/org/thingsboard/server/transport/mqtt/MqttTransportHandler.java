@@ -380,9 +380,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             ctx.close();
         } else {
             transportService.process(ValidateDeviceTokenRequestMsg.newBuilder().setToken(userName).build(),
-                    new TransportServiceCallback<ValidateDeviceTokenResponseMsg>() {
+                    new TransportServiceCallback<ValidateDeviceCredentialsResponseMsg>() {
                         @Override
-                        public void onSuccess(ValidateDeviceTokenResponseMsg msg) {
+                        public void onSuccess(ValidateDeviceCredentialsResponseMsg msg) {
                             if (!msg.hasDeviceInfo()) {
                                 ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_REFUSED_NOT_AUTHORIZED));
                                 ctx.close();
@@ -404,32 +404,36 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
     }
 
-    protected SessionEventMsg getSessionEventMsg(SessionEvent event) {
-        return SessionEventMsg.newBuilder()
-                .setSessionInfo(sessionInfo)
-                .setDeviceIdMSB(deviceSessionCtx.getDeviceIdMSB())
-                .setDeviceIdLSB(deviceSessionCtx.getDeviceIdLSB())
-                .setEvent(event).build();
-    }
-
     private void processX509CertConnect(ChannelHandlerContext ctx, X509Certificate cert) {
-//        try {
-//            String strCert = SslUtil.getX509CertificateString(cert);
-//            String sha3Hash = EncryptionUtil.getSha3Hash(strCert);
-//            if (deviceSessionCtx.login(new DeviceX509Credentials(sha3Hash))) {
-//                ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_ACCEPTED));
-//                connected = true;
-//                processor.process(new BasicTransportToDeviceSessionActorMsg(deviceSessionCtx.getDevice(),
-//                        new BasicAdaptorToSessionActorMsg(deviceSessionCtx, new SessionOpenMsg())));
-//                checkGatewaySession();
-//            } else {
-//                ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_REFUSED_NOT_AUTHORIZED));
-//                ctx.close();
-//            }
-//        } catch (Exception e) {
-//            ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_REFUSED_NOT_AUTHORIZED));
-//            ctx.close();
-//        }
+        try {
+            String strCert = SslUtil.getX509CertificateString(cert);
+            String sha3Hash = EncryptionUtil.getSha3Hash(strCert);
+            transportService.process(ValidateDeviceX509CertRequestMsg.newBuilder().setHash(sha3Hash).build(),
+                    new TransportServiceCallback<ValidateDeviceCredentialsResponseMsg>() {
+                        @Override
+                        public void onSuccess(ValidateDeviceCredentialsResponseMsg msg) {
+                            if (!msg.hasDeviceInfo()) {
+                                ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_REFUSED_NOT_AUTHORIZED));
+                                ctx.close();
+                            } else {
+                                ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_ACCEPTED));
+                                deviceSessionCtx.setDeviceInfo(msg.getDeviceInfo());
+                                transportService.process(getSessionEventMsg(SessionEvent.OPEN), null);
+                                checkGatewaySession();
+                            }
+                        }
+
+                        @Override
+                        public void onError(Throwable e) {
+                            log.trace("[{}] Failed to process credentials: {}", address, sha3Hash, e);
+                            ctx.writeAndFlush(createMqttConnAckMsg(MqttConnectReturnCode.CONNECTION_REFUSED_SERVER_UNAVAILABLE));
+                            ctx.close();
+                        }
+                    });
+        } catch (Exception e) {
+            ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_REFUSED_NOT_AUTHORIZED));
+            ctx.close();
+        }
     }
 
     private X509Certificate getX509Certificate() {
@@ -517,6 +521,14 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         } catch (IOException e) {
             log.trace("[{}][{}] Failed to fetch device additional info", sessionId, device.getDeviceName(), e);
         }
+    }
+
+    private SessionEventMsg getSessionEventMsg(SessionEvent event) {
+        return SessionEventMsg.newBuilder()
+                .setSessionInfo(sessionInfo)
+                .setDeviceIdMSB(deviceSessionCtx.getDeviceIdMSB())
+                .setDeviceIdLSB(deviceSessionCtx.getDeviceIdLSB())
+                .setEvent(event).build();
     }
 
     @Override
