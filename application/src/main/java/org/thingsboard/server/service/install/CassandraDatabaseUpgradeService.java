@@ -224,7 +224,7 @@ public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
 
             case "2.1.1":
 
-                log.info("Upgrading Cassandara DataBase from version {} to 2.1.1 ...", fromVersion);
+                log.info("Upgrading Cassandara DataBase from version {} to 2.1.2 ...", fromVersion);
 
                 cluster.getSession();
 
