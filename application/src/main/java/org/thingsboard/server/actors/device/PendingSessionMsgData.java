@@ -22,6 +22,7 @@ import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
 
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Created by ashvayka on 17.04.18.
@@ -30,7 +31,7 @@ import java.util.Optional;
 @AllArgsConstructor
 public final class PendingSessionMsgData {
 
-    private final SessionId sessionId;
+    private final UUID sessionId;
     private final Optional<ServerAddress> serverAddress;
     private final SessionMsgType sessionMsgType;
     private final int requestId;

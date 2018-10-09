@@ -13,14 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.actors.session;
+package org.thingsboard.server.service.transport;
 
-import org.thingsboard.server.actors.shared.ActorTerminationMsg;
-import org.thingsboard.server.common.data.id.SessionId;
+import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
+import org.thingsboard.server.kafka.TbKafkaDecoder;
 
-public class SessionTerminationMsg extends ActorTerminationMsg<SessionId> {
+import java.io.IOException;
 
-    public SessionTerminationMsg(SessionId id) {
-        super(id);
+/**
+ * Created by ashvayka on 05.10.18.
+ */
+public class ToRuleEngineMsgDecoder implements TbKafkaDecoder<ToRuleEngineMsg> {
+    @Override
+    public ToRuleEngineMsg decode(byte[] data) throws IOException {
+        return ToRuleEngineMsg.parseFrom(data);
     }
 }

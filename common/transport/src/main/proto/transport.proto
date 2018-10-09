@@ -23,9 +23,12 @@ option java_outer_classname = "TransportProtos";
  * Data Structures;
  */
 message SessionInfoProto {
-  string nodeId = 1;
-  int64 sessionIdMSB = 2;
-  int64 sessionIdLSB = 3;
+  int64 sessionIdMSB = 1;
+  int64 sessionIdLSB = 2;
+  int64 tenantIdMSB = 3;
+  int64 tenantIdLSB = 4;
+  int64 deviceIdMSB = 5;
+  int64 deviceIdLSB = 6;
 }
 
 enum SessionEvent {
@@ -33,12 +36,25 @@ enum SessionEvent {
   CLOSED = 1;
 }
 
+enum SessionType {
+  SYNC = 0;
+  ASYNC = 1;
+}
+
+enum KeyValueType {
+  BOOLEAN_V = 0;
+  LONG_V = 1;
+  DOUBLE_V = 2;
+  STRING_V = 3;
+}
+
 message KeyValueProto {
   string key = 1;
-  bool bool_v = 2;
-  int64 long_v = 3;
-  double double_v = 4;
-  string string_v = 5;
+  KeyValueType type = 2;
+  bool bool_v = 3;
+  int64 long_v = 4;
+  double double_v = 5;
+  string string_v = 6;
 }
 
 message TsKvListProto {
@@ -60,33 +76,28 @@ message DeviceInfoProto {
  * Messages that use Data Structures;
  */
 message SessionEventMsg {
-  SessionInfoProto sessionInfo = 1;
-  int64 deviceIdMSB = 2;
-  int64 deviceIdLSB = 3;
-  SessionEvent event = 4;
+  string nodeId = 1;
+  SessionType sessionType = 2;
+  SessionEvent event = 3;
 }
 
 message PostTelemetryMsg {
-  SessionInfoProto sessionInfo = 1;
-  repeated TsKvListProto tsKvList = 2;
+  repeated TsKvListProto tsKvList = 1;
 }
 
 message PostAttributeMsg {
-  SessionInfoProto sessionInfo = 1;
-  repeated TsKvListProto tsKvList = 2;
+  repeated KeyValueProto kv = 1;
 }
 
 message GetAttributeRequestMsg {
-  SessionInfoProto sessionInfo = 1;
-  repeated string clientAttributeNames = 2;
-  repeated string sharedAttributeNames = 3;
+  repeated string clientAttributeNames = 1;
+  repeated string sharedAttributeNames = 2;
 }
 
 message GetAttributeResponseMsg {
-  SessionInfoProto sessionInfo = 1;
-  repeated TsKvListProto clientAttributeList = 2;
-  repeated TsKvListProto sharedAttributeList = 3;
-  repeated string deletedAttributeKeys = 4;
+  repeated TsKvListProto clientAttributeList = 1;
+  repeated TsKvListProto sharedAttributeList = 2;
+  repeated string deletedAttributeKeys = 3;
 }
 
 message ValidateDeviceTokenRequestMsg {
@@ -101,11 +112,34 @@ message ValidateDeviceCredentialsResponseMsg {
   DeviceInfoProto deviceInfo = 1;
 }
 
+message SessionCloseNotificationProto {
+  string message = 1;
+}
+
+message TransportToDeviceActorMsg {
+  SessionInfoProto sessionInfo = 1;
+  SessionEventMsg sessionEvent = 2;
+  PostTelemetryMsg postTelemetry = 3;
+  PostAttributeMsg postAttributes = 4;
+  GetAttributeRequestMsg getAttributes = 5;
+}
+
+message DeviceActorToTransportMsg {
+   int64 sessionIdMSB = 1;
+   int64 sessionIdLSB = 2;
+   SessionCloseNotificationProto sessionCloseNotification = 3;
+   GetAttributeResponseMsg getAttributesResponse = 4;
+}
+
 /**
  * Main messages;
  */
-message TransportToRuleEngineMsg {
+message ToRuleEngineMsg {
+  TransportToDeviceActorMsg toDeviceActorMsg = 1;
+}
 
+message ToTransportMsg {
+  DeviceActorToTransportMsg toDeviceSessionMsg = 1;
 }
 
 message TransportApiRequestMsg {

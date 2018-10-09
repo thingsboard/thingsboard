@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -89,28 +90,28 @@ public class TBKafkaProducerTemplate<T> {
         }
     }
 
-    public Future<RecordMetadata> send(String key, T value) {
-        return send(key, value, null, null);
+    public Future<RecordMetadata> send(String key, T value, Callback callback) {
+        return send(key, value, null, callback);
     }
 
-    public Future<RecordMetadata> send(String key, T value, Iterable<Header> headers) {
-        return send(key, value, null, headers);
+    public Future<RecordMetadata> send(String key, T value, Iterable<Header> headers, Callback callback) {
+        return send(key, value, null, headers, callback);
     }
 
-    public Future<RecordMetadata> send(String key, T value, Long timestamp, Iterable<Header> headers) {
-        return send(this.defaultTopic, key, value, timestamp, headers);
+    public Future<RecordMetadata> send(String key, T value, Long timestamp, Iterable<Header> headers, Callback callback) {
+        return send(this.defaultTopic, key, value, timestamp, headers, callback);
     }
 
-    public Future<RecordMetadata> send(String topic, String key, T value, Iterable<Header> headers) {
-        return send(topic, key, value, null, headers);
+    public Future<RecordMetadata> send(String topic, String key, T value, Iterable<Header> headers, Callback callback) {
+        return send(topic, key, value, null, headers, callback);
     }
 
-    public Future<RecordMetadata> send(String topic, String key, T value, Long timestamp, Iterable<Header> headers) {
+    public Future<RecordMetadata> send(String topic, String key, T value, Long timestamp, Iterable<Header> headers, Callback callback) {
         byte[] data = encoder.encode(value);
         ProducerRecord<String, byte[]> record;
         Integer partition = getPartition(topic, key, value, data);
         record = new ProducerRecord<>(topic, partition, timestamp, key, data, headers);
-        return producer.send(record);
+        return producer.send(record, callback);
     }
 
     private Integer getPartition(String topic, String key, T value, byte[] data) {

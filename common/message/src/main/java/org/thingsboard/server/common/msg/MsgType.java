@@ -77,11 +77,6 @@ public enum MsgType {
      */
     RULE_TO_SELF_MSG,
 
-    /**
-     * Message that is sent by Session Actor to Device Actor. Represents messages from the device itself.
-     */
-    DEVICE_SESSION_TO_DEVICE_ACTOR_MSG,
-
     DEVICE_ATTRIBUTES_UPDATE_TO_DEVICE_ACTOR_MSG,
 
     DEVICE_CREDENTIALS_UPDATE_TO_DEVICE_ACTOR_MSG,
@@ -111,6 +106,12 @@ public enum MsgType {
     TRANSPORT_TO_DEVICE_SESSION_ACTOR_MSG,
     SESSION_TIMEOUT_MSG,
     SESSION_CTRL_MSG,
-    STATS_PERSIST_TICK_MSG;
+    STATS_PERSIST_TICK_MSG,
+
+
+    /**
+     * Message that is sent by TransportRuleEngineService to Device Actor. Represents messages from the device itself.
+     */
+    TRANSPORT_TO_DEVICE_ACTOR_MSG;
 
 }

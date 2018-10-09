@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.actors.device;
+package org.thingsboard.server.mqtt.service;
 
-import lombok.Data;
-import org.thingsboard.server.gen.transport.TransportProtos.SessionType;
+import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
+import org.thingsboard.server.kafka.TbKafkaEncoder;
 
 /**
- * @author Andrew Shvayka
+ * Created by ashvayka on 05.10.18.
  */
-@Data
-public class SessionInfo {
-    private final SessionType type;
-    private final String nodeId;
-
+public class ToRuleEngineMsgEncoder implements TbKafkaEncoder<ToRuleEngineMsg> {
+    @Override
+    public byte[] encode(ToRuleEngineMsg value) {
+        return value.toByteArray();
+    }
 }

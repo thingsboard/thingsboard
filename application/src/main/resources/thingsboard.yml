@@ -463,3 +463,7 @@ transport:
       request_auto_commit_interval: "${TB_TRANSPORT_RESPONSE_AUTO_COMMIT_INTERVAL_MS:1000}"
     rule_engine:
       topic: "${TB_RULE_ENGINE_TOPIC:tb.rule-engine}"
+      poll_interval: "${TB_RULE_ENGINE_POLL_INTERVAL_MS:25}"
+      auto_commit_interval: "${TB_RULE_ENGINE_AUTO_COMMIT_INTERVAL_MS:100}"
+    notifications:
+      topic: "${TB_TRANSPORT_NOTIFICATIONS_TOPIC:tb.transport.notifications}"

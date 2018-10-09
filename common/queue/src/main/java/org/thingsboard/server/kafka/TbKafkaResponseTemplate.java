@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -77,55 +77,64 @@ public class TbKafkaResponseTemplate<Request, Response> extends AbstractTbKafkaT
         requestTemplate.subscribe();
         loopExecutor.submit(() -> {
             while (!stopped) {
-                while (pendingRequestCount.get() >= maxPendingRequests) {
+                try {
+                    while (pendingRequestCount.get() >= maxPendingRequests) {
+                        try {
+                            Thread.sleep(pollInterval);
+                        } catch (InterruptedException e) {
+                            log.trace("Failed to wait until the server has capacity to handle new requests", e);
+                        }
+                    }
+                    ConsumerRecords<String, byte[]> requests = requestTemplate.poll(Duration.ofMillis(pollInterval));
+                    requests.forEach(request -> {
+                        Header requestIdHeader = request.headers().lastHeader(TbKafkaSettings.REQUEST_ID_HEADER);
+                        if (requestIdHeader == null) {
+                            log.error("[{}] Missing requestId in header", request);
+                            return;
+                        }
+                        UUID requestId = bytesToUuid(requestIdHeader.value());
+                        if (requestId == null) {
+                            log.error("[{}] Missing requestId in header and body", request);
+                            return;
+                        }
+                        Header responseTopicHeader = request.headers().lastHeader(TbKafkaSettings.RESPONSE_TOPIC_HEADER);
+                        if (responseTopicHeader == null) {
+                            log.error("[{}] Missing response topic in header", request);
+                            return;
+                        }
+                        String responseTopic = bytesToString(responseTopicHeader.value());
+                        try {
+                            pendingRequestCount.getAndIncrement();
+                            Request decodedRequest = requestTemplate.decode(request);
+                            AsyncCallbackTemplate.withCallbackAndTimeout(handler.handle(decodedRequest),
+                                    response -> {
+                                        pendingRequestCount.decrementAndGet();
+                                        reply(requestId, responseTopic, response);
+                                    },
+                                    e -> {
+                                        pendingRequestCount.decrementAndGet();
+                                        if (e.getCause() != null && e.getCause() instanceof TimeoutException) {
+                                            log.warn("[{}] Timedout to process the request: {}", requestId, request, e);
+                                        } else {
+                                            log.trace("[{}] Failed to process the request: {}", requestId, request, e);
+                                        }
+                                    },
+                                    requestTimeout,
+                                    timeoutExecutor,
+                                    callbackExecutor);
+                        } catch (Throwable e) {
+                            pendingRequestCount.decrementAndGet();
+                            log.warn("[{}] Failed to process the request: {}", requestId, request, e);
+                        }
+                    });
+                } catch (Throwable e) {
+                    log.warn("Failed to obtain messages from queue.", e);
                     try {
                         Thread.sleep(pollInterval);
-                    } catch (InterruptedException e) {
-                        log.trace("Failed to wait until the server has capacity to handle new requests", e);
+                    } catch (InterruptedException e2) {
+                        log.trace("Failed to wait until the server has capacity to handle new requests", e2);
                     }
                 }
-                ConsumerRecords<String, byte[]> requests = requestTemplate.poll(Duration.ofMillis(pollInterval));
-                requests.forEach(request -> {
-                    Header requestIdHeader = request.headers().lastHeader(TbKafkaSettings.REQUEST_ID_HEADER);
-                    if (requestIdHeader == null) {
-                        log.error("[{}] Missing requestId in header", request);
-                        return;
-                    }
-                    UUID requestId = bytesToUuid(requestIdHeader.value());
-                    if (requestId == null) {
-                        log.error("[{}] Missing requestId in header and body", request);
-                        return;
-                    }
-                    Header responseTopicHeader = request.headers().lastHeader(TbKafkaSettings.RESPONSE_TOPIC_HEADER);
-                    if (responseTopicHeader == null) {
-                        log.error("[{}] Missing response topic in header", request);
-                        return;
-                    }
-                    String responseTopic = bytesToString(responseTopicHeader.value());
-                    try {
-                        pendingRequestCount.getAndIncrement();
-                        Request decodedRequest = requestTemplate.decode(request);
-                        AsyncCallbackTemplate.withCallbackAndTimeout(handler.handle(decodedRequest),
-                                response -> {
-                                    pendingRequestCount.decrementAndGet();
-                                    reply(requestId, responseTopic, response);
-                                },
-                                e -> {
-                                    pendingRequestCount.decrementAndGet();
-                                    if (e.getCause() != null && e.getCause() instanceof TimeoutException) {
-                                        log.warn("[{}] Timedout to process the request: {}", requestId, request, e);
-                                    } else {
-                                        log.trace("[{}] Failed to process the request: {}", requestId, request, e);
-                                    }
-                                },
-                                requestTimeout,
-                                timeoutExecutor,
-                                callbackExecutor);
-                    } catch (Throwable e) {
-                        pendingRequestCount.decrementAndGet();
-                        log.warn("[{}] Failed to process the request: {}", requestId, request, e);
-                    }
-                });
             }
         });
     }
@@ -141,7 +150,7 @@ public class TbKafkaResponseTemplate<Request, Response> extends AbstractTbKafkaT
     }
 
     private void reply(UUID requestId, String topic, Response response) {
-        responseTemplate.send(topic, requestId.toString(), response, Collections.singletonList(new RecordHeader(TbKafkaSettings.REQUEST_ID_HEADER, uuidToBytes(requestId))));
+        responseTemplate.send(topic, requestId.toString(), response, Collections.singletonList(new RecordHeader(TbKafkaSettings.REQUEST_ID_HEADER, uuidToBytes(requestId))), null);
     }
 
 }

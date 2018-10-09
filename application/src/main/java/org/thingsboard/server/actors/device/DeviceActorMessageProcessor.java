@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -61,7 +61,6 @@ import org.thingsboard.server.common.msg.core.TelemetryUploadRequest;
 import org.thingsboard.server.common.msg.core.ToDeviceRpcRequestMsg;
 import org.thingsboard.server.common.msg.core.ToDeviceRpcResponseMsg;
 import org.thingsboard.server.common.msg.core.ToServerRpcRequestMsg;
-import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
 import org.thingsboard.server.common.msg.kv.BasicAttributeKVMsg;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 import org.thingsboard.server.common.msg.session.FromDeviceMsg;
@@ -71,9 +70,11 @@ import org.thingsboard.server.common.msg.session.ToDeviceMsg;
 import org.thingsboard.server.common.msg.timeout.DeviceActorClientSideRpcTimeoutMsg;
 import org.thingsboard.server.common.msg.timeout.DeviceActorQueueTimeoutMsg;
 import org.thingsboard.server.common.msg.timeout.DeviceActorServerSideRpcTimeoutMsg;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.service.rpc.ToDeviceRpcRequestActorMsg;
 import org.thingsboard.server.service.rpc.ToServerRpcResponseActorMsg;
+import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -92,6 +93,8 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.thingsboard.server.gen.transport.TransportProtos.*;
+
 /**
  * @author Andrew Shvayka
  */
@@ -99,12 +102,11 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
 
     private final TenantId tenantId;
     private final DeviceId deviceId;
-    private final Map<SessionId, SessionInfo> sessions;
-    private final Map<SessionId, SessionInfo> attributeSubscriptions;
-    private final Map<SessionId, SessionInfo> rpcSubscriptions;
+    private final Map<UUID, SessionInfo> sessions;
+    private final Map<UUID, SessionInfo> attributeSubscriptions;
+    private final Map<UUID, SessionInfo> rpcSubscriptions;
     private final Map<Integer, ToDeviceRpcRequestMetadata> toDeviceRpcPendingMap;
     private final Map<Integer, ToServerRpcRequestMetadata> toServerRpcPendingMap;
-    private final Map<UUID, PendingSessionMsgData> pendingMsgs;
 
     private final Gson gson = new Gson();
     private final JsonParser jsonParser = new JsonParser();
@@ -123,7 +125,6 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         this.rpcSubscriptions = new HashMap<>();
         this.toDeviceRpcPendingMap = new HashMap<>();
         this.toServerRpcPendingMap = new HashMap<>();
-        this.pendingMsgs = new HashMap<>();
         initAttributes();
     }
 
@@ -154,11 +155,11 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         boolean sent = rpcSubscriptions.size() > 0;
         Set<SessionId> syncSessionSet = new HashSet<>();
         rpcSubscriptions.entrySet().forEach(sub -> {
-            ActorSystemToDeviceSessionActorMsg response = new BasicActorSystemToDeviceSessionActorMsg(rpcRequest, sub.getKey());
-            sendMsgToSessionActor(response, sub.getValue().getServer());
-            if (SessionType.SYNC == sub.getValue().getType()) {
-                syncSessionSet.add(sub.getKey());
-            }
+//            ActorSystemToDeviceSessionActorMsg response = new BasicActorSystemToDeviceSessionActorMsg(rpcRequest, sub.getKey());
+//            sendMsgToSessionActor(response, sub.getValue().getServer());
+//            if (SessionType.SYNC == sub.getValue().getType()) {
+//                syncSessionSet.add(sub.getKey());
+//            }
         });
         syncSessionSet.forEach(rpcSubscriptions::remove);
 
@@ -188,15 +189,6 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
             logger.debug("[{}] RPC request [{}] timeout detected!", deviceId, msg.getId());
             systemContext.getDeviceRpcService().processRpcResponseFromDevice(new FromDeviceRpcResponse(requestMd.getMsg().getMsg().getId(),
                     requestMd.getMsg().getServerAddress(), null, requestMd.isSent() ? RpcError.TIMEOUT : RpcError.NO_ACTIVE_CONNECTION));
-        }
-    }
-
-    void processQueueTimeout(ActorContext context, DeviceActorQueueTimeoutMsg msg) {
-        PendingSessionMsgData data = pendingMsgs.remove(msg.getId());
-        if (data != null) {
-            logger.debug("[{}] Queue put [{}] timeout detected!", deviceId, msg.getId());
-            ToDeviceMsg toDeviceMsg = new RuleEngineErrorMsg(data.getSessionMsgType(), RuleEngineError.QUEUE_PUT_TIMEOUT);
-            sendMsgToSessionActor(new BasicActorSystemToDeviceSessionActorMsg(toDeviceMsg, data.getSessionId()), data.getServerAddress());
         }
     }
 
@@ -252,31 +244,37 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         };
     }
 
-    void process(ActorContext context, DeviceToDeviceActorMsg msg) {
-        processSubscriptionCommands(context, msg);
-        processRpcResponses(context, msg);
-        processSessionStateMsgs(msg);
-
-        SessionMsgType sessionMsgType = msg.getPayload().getMsgType();
-        if (sessionMsgType.requiresRulesProcessing()) {
-            switch (sessionMsgType) {
-                case GET_ATTRIBUTES_REQUEST:
-                    handleGetAttributesRequest(msg);
-                    break;
-                case POST_ATTRIBUTES_REQUEST:
-                    handlePostAttributesRequest(context, msg);
-                    reportActivity();
-                    break;
-                case POST_TELEMETRY_REQUEST:
-                    handlePostTelemetryRequest(context, msg);
-                    reportActivity();
-                    break;
-                case TO_SERVER_RPC_REQUEST:
-                    handleClientSideRPCRequest(context, msg);
-                    reportActivity();
-                    break;
-            }
+    void process(ActorContext context, TransportToDeviceActorMsgWrapper wrapper) {
+        TransportToDeviceActorMsg msg = wrapper.getMsg();
+//        processSubscriptionCommands(context, msg);
+//        processRpcResponses(context, msg);
+        if (msg.hasSessionEvent()) {
+            processSessionStateMsgs(msg.getSessionInfo(), msg.getSessionEvent());
         }
+
+        if (msg.hasPostAttributes()) {
+            handlePostAttributesRequest(context, msg.getSessionInfo(), msg.getPostAttributes());
+            reportActivity();
+        }
+        if (msg.hasPostTelemetry()) {
+            handlePostTelemetryRequest(context, msg.getSessionInfo(), msg.getPostTelemetry());
+            reportActivity();
+        }
+        if (msg.hasGetAttributes()) {
+            handleGetAttributesRequest(context, msg.getSessionInfo(), msg.getGetAttributes());
+        }
+//        SessionMsgType sessionMsgType = msg.getPayload().getMsgType();
+//        if (sessionMsgType.requiresRulesProcessing()) {
+//            switch (sessionMsgType) {
+//                case GET_ATTRIBUTES_REQUEST:
+//                    handleGetAttributesRequest(msg);
+//                    break;
+//                case TO_SERVER_RPC_REQUEST:
+//                    handleClientSideRPCRequest(context, msg);
+//                    reportActivity();
+//                    break;
+//            }
+//        }
     }
 
     private void reportActivity() {
@@ -289,6 +287,39 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
 
     private void reportSessionClose() {
         systemContext.getDeviceStateService().onDeviceDisconnect(deviceId);
+    }
+
+    private void handleGetAttributesRequest(ActorContext context, SessionInfoProto sessionInfo, GetAttributeRequestMsg request) {
+        ListenableFuture<List<AttributeKvEntry>> clientAttributesFuture = getAttributeKvEntries(deviceId, DataConstants.CLIENT_SCOPE, toOptionalSet(request.getClientAttributeNamesList()));
+        ListenableFuture<List<AttributeKvEntry>> sharedAttributesFuture = getAttributeKvEntries(deviceId, DataConstants.SHARED_SCOPE, toOptionalSet(request.getSharedAttributeNamesList()));
+
+        Futures.addCallback(Futures.allAsList(Arrays.asList(clientAttributesFuture, sharedAttributesFuture)), new FutureCallback<List<List<AttributeKvEntry>>>() {
+            @Override
+            public void onSuccess(@Nullable List<List<AttributeKvEntry>> result) {
+                systemContext.getRuleEngineTransportService().process();
+                BasicGetAttributesResponse response = BasicGetAttributesResponse.onSuccess(request.getMsgType(),
+                        request.getRequestId(), BasicAttributeKVMsg.from(result.get(0), result.get(1)));
+                sendMsgToSessionActor(new BasicActorSystemToDeviceSessionActorMsg(response, src.getSessionId()), src.getServerAddress());
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                if (t instanceof Exception) {
+                    ToDeviceMsg toDeviceMsg = BasicStatusCodeResponse.onError(SessionMsgType.GET_ATTRIBUTES_REQUEST, request.getRequestId(), (Exception) t);
+                    sendMsgToSessionActor(new BasicActorSystemToDeviceSessionActorMsg(toDeviceMsg, src.getSessionId()), src.getServerAddress());
+                } else {
+                    logger.error("[{}] Failed to process attributes request", deviceId, t);
+                }
+            }
+        });
+    }
+
+    private Optional<Set<String>> toOptionalSet(List<String> strings) {
+        if (strings == null || strings.isEmpty()) {
+            return Optional.empty();
+        } else {
+            return Optional.of(new HashSet<>(strings));
+        }
     }
 
     private void handleGetAttributesRequest(DeviceToDeviceActorMsg src) {
@@ -328,43 +359,20 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         }
     }
 
-    private void handlePostAttributesRequest(ActorContext context, DeviceToDeviceActorMsg src) {
-        AttributesUpdateRequest request = (AttributesUpdateRequest) src.getPayload();
-
-        JsonObject json = new JsonObject();
-        for (AttributeKvEntry kv : request.getAttributes()) {
-            kv.getBooleanValue().ifPresent(v -> json.addProperty(kv.getKey(), v));
-            kv.getLongValue().ifPresent(v -> json.addProperty(kv.getKey(), v));
-            kv.getDoubleValue().ifPresent(v -> json.addProperty(kv.getKey(), v));
-            kv.getStrValue().ifPresent(v -> json.addProperty(kv.getKey(), v));
-        }
-
-        TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), SessionMsgType.POST_ATTRIBUTES_REQUEST.name(), deviceId, defaultMetaData.copy(), TbMsgDataType.JSON, gson.toJson(json), null, null, 0L);
-        PendingSessionMsgData msgData = new PendingSessionMsgData(src.getSessionId(), src.getServerAddress(),
-                SessionMsgType.POST_ATTRIBUTES_REQUEST, request.getRequestId(), true, 1);
-        pushToRuleEngineWithTimeout(context, tbMsg, msgData);
+    private void handlePostAttributesRequest(ActorContext context, SessionInfoProto sessionInfo, PostAttributeMsg postAttributes) {
+        JsonObject json = getJsonObject(postAttributes.getKvList());
+        TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), SessionMsgType.POST_ATTRIBUTES_REQUEST.name(), deviceId, defaultMetaData.copy(),
+                TbMsgDataType.JSON, gson.toJson(json), null, null, 0L);
+        pushToRuleEngine(context, tbMsg);
     }
 
-    private void handlePostTelemetryRequest(ActorContext context, DeviceToDeviceActorMsg src) {
-        TelemetryUploadRequest request = (TelemetryUploadRequest) src.getPayload();
-
-        Map<Long, List<KvEntry>> tsData = request.getData();
-
-        PendingSessionMsgData msgData = new PendingSessionMsgData(src.getSessionId(), src.getServerAddress(),
-                SessionMsgType.POST_TELEMETRY_REQUEST, request.getRequestId(), true, tsData.size());
-
-        for (Map.Entry<Long, List<KvEntry>> entry : tsData.entrySet()) {
-            JsonObject json = new JsonObject();
-            for (KvEntry kv : entry.getValue()) {
-                kv.getBooleanValue().ifPresent(v -> json.addProperty(kv.getKey(), v));
-                kv.getLongValue().ifPresent(v -> json.addProperty(kv.getKey(), v));
-                kv.getDoubleValue().ifPresent(v -> json.addProperty(kv.getKey(), v));
-                kv.getStrValue().ifPresent(v -> json.addProperty(kv.getKey(), v));
-            }
+    private void handlePostTelemetryRequest(ActorContext context, SessionInfoProto sessionInfo, PostTelemetryMsg postTelemetry) {
+        for (TsKvListProto tsKv : postTelemetry.getTsKvListList()) {
+            JsonObject json = getJsonObject(tsKv.getKvList());
             TbMsgMetaData metaData = defaultMetaData.copy();
-            metaData.putValue("ts", entry.getKey() + "");
+            metaData.putValue("ts", tsKv.getTs() + "");
             TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, metaData, TbMsgDataType.JSON, gson.toJson(json), null, null, 0L);
-            pushToRuleEngineWithTimeout(context, tbMsg, msgData);
+            pushToRuleEngine(context, tbMsg);
         }
     }
 
@@ -401,16 +409,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         }
     }
 
-    private void pushToRuleEngineWithTimeout(ActorContext context, TbMsg tbMsg, PendingSessionMsgData pendingMsgData) {
-        SessionMsgType sessionMsgType = pendingMsgData.getSessionMsgType();
-        int requestId = pendingMsgData.getRequestId();
-        if (systemContext.isQueuePersistenceEnabled()) {
-            pendingMsgs.put(tbMsg.getId(), pendingMsgData);
-            scheduleMsgWithDelay(context, new DeviceActorQueueTimeoutMsg(tbMsg.getId(), systemContext.getQueuePersistenceTimeout()), systemContext.getQueuePersistenceTimeout());
-        } else {
-            ActorSystemToDeviceSessionActorMsg response = new BasicActorSystemToDeviceSessionActorMsg(BasicStatusCodeResponse.onSuccess(sessionMsgType, requestId), pendingMsgData.getSessionId());
-            sendMsgToSessionActor(response, pendingMsgData.getServerAddress());
-        }
+    private void pushToRuleEngine(ActorContext context, TbMsg tbMsg) {
         context.parent().tell(new DeviceActorToRuleEngineMsg(context.self(), tbMsg), context.self());
     }
 
@@ -497,13 +496,12 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         }
     }
 
-    private void processSessionStateMsgs(DeviceToDeviceActorMsg msg) {
-        SessionId sessionId = msg.getSessionId();
-        FromDeviceMsg inMsg = msg.getPayload();
-        if (inMsg instanceof SessionOpenMsg) {
+    private void processSessionStateMsgs(SessionInfoProto sessionInfo, SessionEventMsg msg) {
+        UUID sessionId = new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB());
+        if (msg.getEvent() == SessionEvent.OPEN) {
             logger.debug("[{}] Processing new session [{}]", deviceId, sessionId);
             if (sessions.size() >= systemContext.getMaxConcurrentSessionsPerDevice()) {
-                SessionId sessionIdToRemove = sessions.keySet().stream().findFirst().orElse(null);
+                UUID sessionIdToRemove = sessions.keySet().stream().findFirst().orElse(null);
                 if (sessionIdToRemove != null) {
                     closeSession(sessionIdToRemove, sessions.remove(sessionIdToRemove));
                 }
@@ -512,6 +510,10 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
             if (sessions.size() == 1) {
                 reportSessionOpen();
             }
+        }
+        FromDeviceMsg inMsg = msg.getPayload();
+        if (inMsg instanceof SessionOpenMsg) {
+            logger.debug("[{}] Processing new session [{}]", deviceId, sessionId);
         } else if (inMsg instanceof SessionCloseMsg) {
             logger.debug("[{}] Canceling subscriptions for closed session [{}]", deviceId, sessionId);
             sessions.remove(sessionId);
@@ -540,8 +542,12 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         rpcSubscriptions.clear();
     }
 
-    private void closeSession(SessionId sessionId, SessionInfo sessionInfo) {
-        sendMsgToSessionActor(new BasicActorSystemToDeviceSessionActorMsg(new SessionCloseNotification(), sessionId), sessionInfo.getServer());
+    private void closeSession(UUID sessionId, SessionInfo sessionInfo) {
+        DeviceActorToTransportMsg msg = DeviceActorToTransportMsg.newBuilder()
+                .setSessionIdMSB(sessionId.getMostSignificantBits())
+                .setSessionIdLSB(sessionId.getLeastSignificantBits())
+                .setSessionCloseNotification(SessionCloseNotificationProto.getDefaultInstance()).build();
+        systemContext.getRuleEngineTransportService().process(sessionInfo.getNodeId(), msg);
     }
 
     void processNameOrTypeUpdate(DeviceNameOrTypeUpdateMsg msg) {
@@ -552,4 +558,24 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         this.defaultMetaData.putValue("deviceType", deviceType);
     }
 
+    private JsonObject getJsonObject(List<KeyValueProto> tsKv) {
+        JsonObject json = new JsonObject();
+        for (KeyValueProto kv : tsKv) {
+            switch (kv.getType()) {
+                case BOOLEAN_V:
+                    json.addProperty(kv.getKey(), kv.getBoolV());
+                    break;
+                case LONG_V:
+                    json.addProperty(kv.getKey(), kv.getLongV());
+                    break;
+                case DOUBLE_V:
+                    json.addProperty(kv.getKey(), kv.getDoubleV());
+                    break;
+                case STRING_V:
+                    json.addProperty(kv.getKey(), kv.getStringV());
+                    break;
+            }
+        }
+        return json;
+    }
 }

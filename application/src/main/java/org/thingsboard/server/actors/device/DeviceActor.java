@@ -26,12 +26,12 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
-import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
 import org.thingsboard.server.common.msg.timeout.DeviceActorClientSideRpcTimeoutMsg;
 import org.thingsboard.server.common.msg.timeout.DeviceActorQueueTimeoutMsg;
 import org.thingsboard.server.common.msg.timeout.DeviceActorServerSideRpcTimeoutMsg;
 import org.thingsboard.server.service.rpc.ToDeviceRpcRequestActorMsg;
 import org.thingsboard.server.service.rpc.ToServerRpcResponseActorMsg;
+import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 
 public class DeviceActor extends ContextAwareActor {
 
@@ -50,8 +50,8 @@ public class DeviceActor extends ContextAwareActor {
             case CLUSTER_EVENT_MSG:
                 processor.processClusterEventMsg((ClusterEventMsg) msg);
                 break;
-            case DEVICE_SESSION_TO_DEVICE_ACTOR_MSG:
-                processor.process(context(), (DeviceToDeviceActorMsg) msg);
+            case TRANSPORT_TO_DEVICE_ACTOR_MSG:
+                processor.process(context(), (TransportToDeviceActorMsgWrapper) msg);
                 break;
             case DEVICE_ATTRIBUTES_UPDATE_TO_DEVICE_ACTOR_MSG:
                 processor.processAttributesUpdate(context(), (DeviceAttributesEventNotificationMsg) msg);
