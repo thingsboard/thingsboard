@@ -22,7 +22,7 @@ import entitySubtypeAutocompleteTemplate from './entity-subtype-autocomplete.tpl
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function EntitySubtypeAutocomplete($compile, $templateCache, $q, $filter, assetService, deviceService, types) {
+export default function EntitySubtypeAutocomplete($compile, $templateCache, $q, $filter, assetService, deviceService, entityViewService, types) {
 
     var linker = function (scope, element, attrs, ngModelCtrl) {
         var template = $templateCache.get(entitySubtypeAutocompleteTemplate);

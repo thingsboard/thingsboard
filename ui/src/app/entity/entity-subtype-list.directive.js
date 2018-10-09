@@ -22,7 +22,7 @@ import entitySubtypeListTemplate from './entity-subtype-list.tpl.html';
 import './entity-subtype-list.scss';
 
 /*@ngInject*/
-export default function EntitySubtypeListDirective($compile, $templateCache, $q, $mdUtil, $translate, $filter, types, assetService, deviceService) {
+export default function EntitySubtypeListDirective($compile, $templateCache, $q, $mdUtil, $translate, $filter, types, assetService, deviceService, entityViewService) {
 
     var linker = function (scope, element, attrs, ngModelCtrl) {
 

@@ -22,7 +22,7 @@ import entitySubtypeSelectTemplate from './entity-subtype-select.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function EntitySubtypeSelect($compile, $templateCache, $translate, assetService, deviceService, types) {
+export default function EntitySubtypeSelect($compile, $templateCache, $translate, assetService, deviceService, entityViewService, types) {
 
     var linker = function (scope, element, attrs, ngModelCtrl) {
         var template = $templateCache.get(entitySubtypeSelectTemplate);
