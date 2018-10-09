@@ -54,6 +54,11 @@ services:
       - "8080"
       - "1883:1883"
       - "5683:5683/udp"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "6g"
+        max-file: "30"
     env_file:
       - tb-node.env
     environment:
