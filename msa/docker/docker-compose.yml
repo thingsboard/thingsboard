@@ -15,7 +15,7 @@
 #
 
 
-version: '2'
+version: '2.2'
 
 services:
   zookeeper:
@@ -41,6 +41,7 @@ services:
   tb-js-executor:
     restart: always
     image: "${DOCKER_REPO}/${JS_EXECUTOR_DOCKER_NAME}:${TB_VERSION}"
+    scale: 20
     environment:
       TB_KAFKA_SERVERS: kafka:9092
     env_file:

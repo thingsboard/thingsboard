@@ -17,4 +17,4 @@
 
 ./check-dirs.sh
 
-docker-compose up -d --scale tb-js-executor=20
+docker-compose up -d
