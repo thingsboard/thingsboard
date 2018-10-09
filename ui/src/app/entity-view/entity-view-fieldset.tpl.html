@@ -59,12 +59,15 @@
                 ng-model="entityView.type"
                 entity-type="types.entityType.entityView">
         </tb-entity-subtype-autocomplete>
-        <tb-entity-select flex ng-disabled="!isEdit"
-                          the-form="theForm"
-                          tb-required="true"
-                          allowed-entity-types="allowedEntityTypes"
-                          ng-model="entityView.entityId">
-        </tb-entity-select>
+        <section layout="column">
+            <label translate class="tb-title no-padding">entity-view.related-entity</label>
+            <tb-entity-select flex ng-disabled="!isEdit"
+                              the-form="theForm"
+                              tb-required="true"
+                              allowed-entity-types="allowedEntityTypes"
+                              ng-model="entityView.entityId">
+            </tb-entity-select>
+        </section>
         <md-input-container class="md-block">
             <label translate>entity-view.description</label>
             <textarea ng-model="entityView.additionalInfo.description" rows="2"></textarea>

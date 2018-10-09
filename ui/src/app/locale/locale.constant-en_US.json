@@ -844,7 +844,8 @@
         "client-attributes": "Client attributes",
         "shared-attributes": "Shared attributes",
         "server-attributes": "Server attributes",
-        "latest-timeseries": "Latest timeseries"
+        "latest-timeseries": "Latest timeseries",
+        "related-entity": "Related entity"
     },
     "event": {
         "event-type": "Event type",

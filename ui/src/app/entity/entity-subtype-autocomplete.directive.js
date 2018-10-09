@@ -136,6 +136,13 @@ export default function EntitySubtypeAutocomplete($compile, $templateCache, $q, 
                 scope.$on('deviceSaved', function() {
                     scope.entitySubtypes = null;
                 });
+            } else if (scope.entityType == types.entityType.entityView) {
+                scope.selectEntitySubtypeText = 'entity-view.select-entity-view-type';
+                scope.entitySubtypeText = 'entity-view.entity-view-type';
+                scope.entitySubtypeRequiredText = 'entity-view.entity-view-type-required';
+                scope.$on('entityViewSaved', function() {
+                    scope.entitySubtypes = null;
+                });
             }
         }
 
