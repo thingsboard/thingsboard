@@ -97,6 +97,8 @@ export default function EntitySubtypeListDirective($compile, $templateCache, $q,
                     entitySubtypesPromise = assetService.getAssetTypes({ignoreLoading: true});
                 } else if (scope.entityType == types.entityType.device) {
                     entitySubtypesPromise = deviceService.getDeviceTypes({ignoreLoading: true});
+                } else if (scope.entityType == types.entityType.entityView) {
+                    entitySubtypesPromise = entityViewService.getEntityViewTypes({ignoreLoading: true});
                 }
                 if (entitySubtypesPromise) {
                     entitySubtypesPromise.then(

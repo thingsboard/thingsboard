@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -38,6 +40,7 @@ import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -161,6 +164,7 @@ public class EntityViewController extends BaseController {
     public TextPageData<EntityView> getCustomerEntityViews(
             @PathVariable("customerId") String strCustomerId,
             @RequestParam int limit,
+            @RequestParam(required = false) String type,
             @RequestParam(required = false) String textSearch,
             @RequestParam(required = false) String idOffset,
             @RequestParam(required = false) String textOffset) throws ThingsboardException {
@@ -170,7 +174,11 @@ public class EntityViewController extends BaseController {
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
             checkCustomerId(customerId);
             TextPageLink pageLink = createPageLink(limit, textSearch, idOffset, textOffset);
-            return checkNotNull(entityViewService.findEntityViewsByTenantIdAndCustomerId(tenantId, customerId, pageLink));
+            if (type != null && type.trim().length() > 0) {
+                return checkNotNull(entityViewService.findEntityViewsByTenantIdAndCustomerIdAndType(tenantId, customerId, pageLink, type));
+            } else {
+                return checkNotNull(entityViewService.findEntityViewsByTenantIdAndCustomerId(tenantId, customerId, pageLink));
+            }
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -181,13 +189,19 @@ public class EntityViewController extends BaseController {
     @ResponseBody
     public TextPageData<EntityView> getTenantEntityViews(
             @RequestParam int limit,
+            @RequestParam(required = false) String type,
             @RequestParam(required = false) String textSearch,
             @RequestParam(required = false) String idOffset,
             @RequestParam(required = false) String textOffset) throws ThingsboardException {
         try {
             TenantId tenantId = getCurrentUser().getTenantId();
             TextPageLink pageLink = createPageLink(limit, textSearch, idOffset, textOffset);
-            return checkNotNull(entityViewService.findEntityViewByTenantId(tenantId, pageLink));
+
+            if (type != null && type.trim().length() > 0) {
+                return checkNotNull(entityViewService.findEntityViewByTenantIdAndType(tenantId, pageLink, type));
+            } else {
+                return checkNotNull(entityViewService.findEntityViewByTenantId(tenantId, pageLink));
+            }
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -199,6 +213,7 @@ public class EntityViewController extends BaseController {
     public List<EntityView> findByQuery(@RequestBody EntityViewSearchQuery query) throws ThingsboardException {
         checkNotNull(query);
         checkNotNull(query.getParameters());
+        checkNotNull(query.getEntityViewTypes());
         checkEntityId(query.getParameters().getEntityId());
         try {
             List<EntityView> entityViews = checkNotNull(entityViewService.findEntityViewsByQuery(query).get());
@@ -211,6 +226,20 @@ public class EntityViewController extends BaseController {
                 }
             }).collect(Collectors.toList());
             return entityViews;
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/entityView/types", method = RequestMethod.GET)
+    @ResponseBody
+    public List<EntitySubtype> getEntityViewTypes() throws ThingsboardException {
+        try {
+            SecurityUser user = getCurrentUser();
+            TenantId tenantId = user.getTenantId();
+            ListenableFuture<List<EntitySubtype>> entityViewTypes = entityViewService.findEntityViewTypesByTenantId(tenantId);
+            return checkNotNull(entityViewTypes.get());
         } catch (Exception e) {
             throw handleException(e);
         }

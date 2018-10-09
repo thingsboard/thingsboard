@@ -52,6 +52,13 @@
 	      		<div translate ng-message="required">entity-view.name-required</div>
 	    	</div>				
 		</md-input-container>
+        <tb-entity-subtype-autocomplete
+                ng-disabled="$root.loading || !isEdit"
+                tb-required="true"
+                the-form="theForm"
+                ng-model="entityView.type"
+                entity-type="types.entityType.entityView">
+        </tb-entity-subtype-autocomplete>
         <tb-entity-select flex ng-disabled="!isEdit"
                           the-form="theForm"
                           tb-required="true"
