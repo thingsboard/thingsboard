@@ -33,6 +33,7 @@ import org.thingsboard.server.common.msg.session.*;
 import org.thingsboard.server.common.msg.session.ex.SessionException;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.common.transport.session.DeviceAwareSessionContext;
+import org.thingsboard.server.transport.mqtt.MqttTopicMatcher;
 import org.thingsboard.server.transport.mqtt.MqttTopics;
 import org.thingsboard.server.transport.mqtt.MqttTransportHandler;
 
@@ -58,7 +59,7 @@ public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext {
     private volatile boolean closed;
     private AtomicInteger msgIdSeq = new AtomicInteger(0);
 
-    public GatewayDeviceSessionCtx(GatewaySessionCtx parent, Device device, ConcurrentMap<String, Integer> mqttQoSMap) {
+    public GatewayDeviceSessionCtx(GatewaySessionCtx parent, Device device, ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap) {
         super(parent.getProcessor(), parent.getAuthService(), device, mqttQoSMap);
         this.parent = parent;
         this.sessionId = new MqttSessionId();
