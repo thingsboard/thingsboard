@@ -69,6 +69,9 @@ public class EntityViewEntity extends BaseSqlEntity<EntityView> implements Searc
     @Column(name = ModelConstants.ENTITY_VIEW_CUSTOMER_ID_PROPERTY)
     private String customerId;
 
+    @Column(name = ModelConstants.DEVICE_TYPE_PROPERTY)
+    private String type;
+
     @Column(name = ModelConstants.ENTITY_VIEW_NAME_PROPERTY)
     private String name;
 
@@ -108,6 +111,7 @@ public class EntityViewEntity extends BaseSqlEntity<EntityView> implements Searc
         if (entityView.getCustomerId() != null) {
             this.customerId = toString(entityView.getCustomerId().getId());
         }
+        this.type = entityView.getType();
         this.name = entityView.getName();
         try {
             this.keys = mapper.writeValueAsString(entityView.getKeys());
@@ -144,6 +148,7 @@ public class EntityViewEntity extends BaseSqlEntity<EntityView> implements Searc
         if (customerId != null) {
             entityView.setCustomerId(new CustomerId(toUUID(customerId)));
         }
+        entityView.setType(type);
         entityView.setName(name);
         try {
             entityView.setKeys(mapper.readValue(keys, TelemetryEntityView.class));

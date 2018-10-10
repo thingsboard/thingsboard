@@ -77,6 +77,15 @@ export default function EntityFilterViewDirective($compile, $templateCache, $q, 
                             scope.filterDisplayValue = $translate.instant('alias.filter-type-device-type-description', {deviceType: deviceType});
                         }
                         break;
+                    case types.aliasFilterType.entityViewType.value:
+                        var entityViewType = scope.filter.entityViewType;
+                        prefix = scope.filter.entityViewNameFilter;
+                        if (prefix && prefix.length) {
+                            scope.filterDisplayValue = $translate.instant('alias.filter-type-entity-view-type-and-name-description', {entityViewType: entityViewType, prefix: prefix});
+                        } else {
+                            scope.filterDisplayValue = $translate.instant('alias.filter-type-entity-view-type-description', {entityViewType: entityViewType});
+                        }
+                        break;
                     case types.aliasFilterType.relationsQuery.value:
                         var rootEntityText;
                         var directionText;
@@ -134,6 +143,7 @@ export default function EntityFilterViewDirective($compile, $templateCache, $q, 
                         break;
                     case types.aliasFilterType.assetSearchQuery.value:
                     case types.aliasFilterType.deviceSearchQuery.value:
+                    case types.aliasFilterType.entityViewSearchQuery.value:
                         allEntitiesText = $translate.instant('alias.all-entities');
                         anyRelationText = $translate.instant('alias.any-relation');
                         if (scope.filter.rootStateEntity) {
@@ -165,7 +175,7 @@ export default function EntityFilterViewDirective($compile, $templateCache, $q, 
                             scope.filterDisplayValue = $translate.instant('alias.filter-type-asset-search-query-description',
                                 translationValues
                             );
-                        } else {
+                        } else if (scope.filter.type == types.aliasFilterType.deviceSearchQuery.value) {
                             var deviceTypesQuoted = [];
                             scope.filter.deviceTypes.forEach(function(deviceType) {
                                 deviceTypesQuoted.push("'"+deviceType+"'");
@@ -173,6 +183,16 @@ export default function EntityFilterViewDirective($compile, $templateCache, $q, 
                             var deviceTypesText = deviceTypesQuoted.join(', ');
                             translationValues.deviceTypes = deviceTypesText;
                             scope.filterDisplayValue = $translate.instant('alias.filter-type-device-search-query-description',
+                                translationValues
+                            );
+                        } else if (scope.filter.type == types.aliasFilterType.entityViewSearchQuery.value) {
+                            var entityViewTypesQuoted = [];
+                            scope.filter.entityViewTypes.forEach(function(entityViewType) {
+                                entityViewTypesQuoted.push("'"+entityViewType+"'");
+                            });
+                            var entityViewTypesText = entityViewTypesQuoted.join(', ');
+                            translationValues.entityViewTypes = entityViewTypesText;
+                            scope.filterDisplayValue = $translate.instant('alias.filter-type-entity-view-search-query-description',
                                 translationValues
                             );
                         }

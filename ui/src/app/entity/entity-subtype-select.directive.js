@@ -22,7 +22,7 @@ import entitySubtypeSelectTemplate from './entity-subtype-select.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function EntitySubtypeSelect($compile, $templateCache, $translate, assetService, deviceService, types) {
+export default function EntitySubtypeSelect($compile, $templateCache, $translate, assetService, deviceService, entityViewService, types) {
 
     var linker = function (scope, element, attrs, ngModelCtrl) {
         var template = $templateCache.get(entitySubtypeSelectTemplate);
@@ -75,6 +75,8 @@ export default function EntitySubtypeSelect($compile, $templateCache, $translate
                 entitySubtypesPromise = assetService.getAssetTypes({ignoreLoading: true});
             } else if (scope.entityType == types.entityType.device) {
                 entitySubtypesPromise = deviceService.getDeviceTypes({ignoreLoading: true});
+            } else if (scope.entityType == types.entityType.entityView) {
+                entitySubtypesPromise = entityViewService.getEntityViewTypes({ignoreLoading: true});
             }
             if (entitySubtypesPromise) {
                 entitySubtypesPromise.then(
