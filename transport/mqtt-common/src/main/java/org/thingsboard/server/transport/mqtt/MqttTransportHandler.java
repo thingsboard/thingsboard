@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -71,6 +71,7 @@ import static io.netty.handler.codec.mqtt.MqttConnectReturnCode.CONNECTION_ACCEP
 import static io.netty.handler.codec.mqtt.MqttConnectReturnCode.CONNECTION_REFUSED_BAD_USER_NAME_OR_PASSWORD;
 import static io.netty.handler.codec.mqtt.MqttConnectReturnCode.CONNECTION_REFUSED_NOT_AUTHORIZED;
 import static io.netty.handler.codec.mqtt.MqttMessageType.CONNACK;
+import static io.netty.handler.codec.mqtt.MqttMessageType.PINGRESP;
 import static io.netty.handler.codec.mqtt.MqttMessageType.PUBACK;
 import static io.netty.handler.codec.mqtt.MqttMessageType.SUBACK;
 import static io.netty.handler.codec.mqtt.MqttMessageType.UNSUBACK;
@@ -148,16 +149,17 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             case UNSUBSCRIBE:
                 processUnsubscribe(ctx, (MqttUnsubscribeMessage) msg);
                 break;
-//            case PINGREQ:
-//                if (checkConnected(ctx)) {
-//                    ctx.writeAndFlush(new MqttMessage(new MqttFixedHeader(PINGRESP, false, AT_MOST_ONCE, false, 0)));
-//                }
-//                break;
-//            case DISCONNECT:
-//                if (checkConnected(ctx)) {
-//                    processDisconnect(ctx);
-//                }
-//                break;
+            case PINGREQ:
+                //TODO: should we push the notification to the rule engine?
+                if (checkConnected(ctx)) {
+                    ctx.writeAndFlush(new MqttMessage(new MqttFixedHeader(PINGRESP, false, AT_MOST_ONCE, false, 0)));
+                }
+                break;
+            case DISCONNECT:
+                if (checkConnected(ctx)) {
+                    processDisconnect(ctx);
+                }
+                break;
             default:
                 break;
         }
@@ -289,25 +291,20 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             MqttQoS reqQoS = subscription.qualityOfService();
             try {
                 switch (topic) {
-//                    case MqttTopics.DEVICE_ATTRIBUTES_TOPIC: {
-//                        AdaptorToSessionActorMsg msg = adaptor.convertToActorMsg(deviceSessionCtx, SUBSCRIBE_ATTRIBUTES_REQUEST, mqttMsg);
-//                        processor.process(new BasicTransportToDeviceSessionActorMsg(deviceSessionCtx.getDevice(), msg));
-//                        registerSubQoS(topic, grantedQoSList, reqQoS);
-//                        break;
-//                    }
-//                    case DEVICE_RPC_REQUESTS_SUB_TOPIC: {
-//                        AdaptorToSessionActorMsg msg = adaptor.convertToActorMsg(deviceSessionCtx, SUBSCRIBE_RPC_COMMANDS_REQUEST, mqttMsg);
-//                        processor.process(new BasicTransportToDeviceSessionActorMsg(deviceSessionCtx.getDevice(), msg));
-//                        registerSubQoS(topic, grantedQoSList, reqQoS);
-//                        break;
-//                    }
-//                    case DEVICE_RPC_RESPONSE_SUB_TOPIC:
-//                    case GATEWAY_ATTRIBUTES_TOPIC:
-//                    case GATEWAY_RPC_TOPIC:
-//                        registerSubQoS(topic, grantedQoSList, reqQoS);
-//                        break;
+                    case MqttTopics.DEVICE_ATTRIBUTES_TOPIC: {
+                        transportService.process(sessionInfo, TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder().build(), null);
+                        registerSubQoS(topic, grantedQoSList, reqQoS);
+                        break;
+                    }
+                    case MqttTopics.DEVICE_RPC_REQUESTS_SUB_TOPIC: {
+                        transportService.process(sessionInfo, TransportProtos.SubscribeToRPCMsg.newBuilder().build(), null);
+                        registerSubQoS(topic, grantedQoSList, reqQoS);
+                        break;
+                    }
+                    case MqttTopics.DEVICE_RPC_RESPONSE_SUB_TOPIC:
+                    case MqttTopics.GATEWAY_ATTRIBUTES_TOPIC:
+                    case MqttTopics.GATEWAY_RPC_TOPIC:
                     case MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_TOPIC:
-                        deviceSessionCtx.setAllowAttributeResponses();
                         registerSubQoS(topic, grantedQoSList, reqQoS);
                         break;
                     default:
@@ -337,19 +334,14 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             mqttQoSMap.remove(topicName);
             try {
                 switch (topicName) {
-//                    case DEVICE_ATTRIBUTES_TOPIC: {
-//                        AdaptorToSessionActorMsg msg = adaptor.convertToActorMsg(deviceSessionCtx, UNSUBSCRIBE_ATTRIBUTES_REQUEST, mqttMsg);
-//                        processor.process(new BasicTransportToDeviceSessionActorMsg(deviceSessionCtx.getDevice(), msg));
-//                        break;
-//                    }
-//                    case DEVICE_RPC_REQUESTS_SUB_TOPIC: {
-//                        AdaptorToSessionActorMsg msg = adaptor.convertToActorMsg(deviceSessionCtx, UNSUBSCRIBE_RPC_COMMANDS_REQUEST, mqttMsg);
-//                        processor.process(new BasicTransportToDeviceSessionActorMsg(deviceSessionCtx.getDevice(), msg));
-//                        break;
-//                    }
-                    case MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_TOPIC:
-                        deviceSessionCtx.setDisallowAttributeResponses();
+                    case MqttTopics.DEVICE_ATTRIBUTES_TOPIC: {
+                        transportService.process(sessionInfo, TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder().setUnsubscribe(true).build(), null);
                         break;
+                    }
+                    case MqttTopics.DEVICE_RPC_REQUESTS_SUB_TOPIC: {
+                        transportService.process(sessionInfo, TransportProtos.SubscribeToRPCMsg.newBuilder().setUnsubscribe(true).build(), null);
+                        break;
+                    }
                 }
             } catch (Exception e) {
                 log.warn("[{}] Failed to process unsubscription [{}] to [{}]", sessionId, mqttMsg.variableHeader().messageId(), topicName);
@@ -551,7 +543,16 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         try {
             adaptor.convertToPublish(deviceSessionCtx, response).ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
         } catch (Exception e) {
-            log.trace("[{}] Failed to convert device attributes to MQTT msg", sessionId, e);
+            log.trace("[{}] Failed to convert device attributes response to MQTT msg", sessionId, e);
+        }
+    }
+
+    @Override
+    public void onAttributeUpdate(TransportProtos.AttributeUpdateNotificationMsg notification) {
+        try {
+            adaptor.convertToPublish(deviceSessionCtx, notification).ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
+        } catch (Exception e) {
+            log.trace("[{}] Failed to convert device attributes update to MQTT msg", sessionId, e);
         }
     }
 }

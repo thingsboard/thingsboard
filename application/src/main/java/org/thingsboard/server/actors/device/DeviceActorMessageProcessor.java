@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -216,12 +216,16 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
 
     void process(ActorContext context, TransportToDeviceActorMsgWrapper wrapper) {
         TransportToDeviceActorMsg msg = wrapper.getMsg();
-//        processSubscriptionCommands(context, msg);
 //        processRpcResponses(context, msg);
         if (msg.hasSessionEvent()) {
             processSessionStateMsgs(msg.getSessionInfo(), msg.getSessionEvent());
         }
-
+        if (msg.hasSubscribeToAttributes()) {
+            processSubscriptionCommands(context, msg.getSessionInfo(), msg.getSubscribeToAttributes());
+        }
+        if (msg.hasSubscribeToRPC()) {
+            processSubscriptionCommands(context, msg.getSessionInfo(), msg.getSubscribeToRPC());
+        }
         if (msg.hasPostAttributes()) {
             handlePostAttributesRequest(context, msg.getSessionInfo(), msg.getPostAttributes());
             reportActivity();
@@ -236,9 +240,6 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
 //        SessionMsgType sessionMsgType = msg.getPayload().getMsgType();
 //        if (sessionMsgType.requiresRulesProcessing()) {
 //            switch (sessionMsgType) {
-//                case GET_ATTRIBUTES_REQUEST:
-//                    handleGetAttributesRequest(msg);
-//                    break;
 //                case TO_SERVER_RPC_REQUEST:
 //                    handleClientSideRPCRequest(context, msg);
 //                    reportActivity();
@@ -262,7 +263,6 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     private void handleGetAttributesRequest(ActorContext context, SessionInfoProto sessionInfo, GetAttributeRequestMsg request) {
         ListenableFuture<List<AttributeKvEntry>> clientAttributesFuture = getAttributeKvEntries(deviceId, DataConstants.CLIENT_SCOPE, toOptionalSet(request.getClientAttributeNamesList()));
         ListenableFuture<List<AttributeKvEntry>> sharedAttributesFuture = getAttributeKvEntries(deviceId, DataConstants.SHARED_SCOPE, toOptionalSet(request.getSharedAttributeNamesList()));
-        UUID sessionId = new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB());
         int requestId = request.getRequestId();
         Futures.addCallback(Futures.allAsList(Arrays.asList(clientAttributesFuture, sharedAttributesFuture)), new FutureCallback<List<List<AttributeKvEntry>>>() {
             @Override
@@ -272,7 +272,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
                         .addAllClientAttributeList(toTsKvProtos(result.get(0)))
                         .addAllSharedAttributeList(toTsKvProtos(result.get(1)))
                         .build();
-                sendToTransport(responseMsg, sessionId, sessionInfo);
+                sendToTransport(responseMsg, sessionInfo);
             }
 
             @Override
@@ -280,7 +280,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
                 GetAttributeResponseMsg responseMsg = GetAttributeResponseMsg.newBuilder()
                         .setError(t.getMessage())
                         .build();
-                sendToTransport(responseMsg, sessionId, sessionInfo);
+                sendToTransport(responseMsg, sessionInfo);
             }
         });
     }
@@ -353,28 +353,37 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
 
     void processAttributesUpdate(ActorContext context, DeviceAttributesEventNotificationMsg msg) {
         if (attributeSubscriptions.size() > 0) {
-            ToDeviceMsg notification = null;
+            boolean hasNotificationData = false;
+            AttributeUpdateNotificationMsg.Builder notification = AttributeUpdateNotificationMsg.newBuilder();
             if (msg.isDeleted()) {
-                List<AttributeKey> sharedKeys = msg.getDeletedKeys().stream()
+                List<String> sharedKeys = msg.getDeletedKeys().stream()
                         .filter(key -> DataConstants.SHARED_SCOPE.equals(key.getScope()))
+                        .map(AttributeKey::getAttributeKey)
                         .collect(Collectors.toList());
-                notification = new AttributesUpdateNotification(BasicAttributeKVMsg.fromDeleted(sharedKeys));
+                if (!sharedKeys.isEmpty()) {
+                    notification.addAllSharedDeleted(sharedKeys);
+                    hasNotificationData = true;
+                }
             } else {
                 if (DataConstants.SHARED_SCOPE.equals(msg.getScope())) {
                     List<AttributeKvEntry> attributes = new ArrayList<>(msg.getValues());
                     if (attributes.size() > 0) {
-                        notification = new AttributesUpdateNotification(BasicAttributeKVMsg.fromShared(attributes));
+                        List<TsKvProto> sharedUpdated = msg.getValues().stream().map(this::toTsKvProto)
+                                .collect(Collectors.toList());
+                        if (!sharedUpdated.isEmpty()) {
+                            notification.addAllSharedUpdated(sharedUpdated);
+                            hasNotificationData = true;
+                        }
                     } else {
                         logger.debug("[{}] No public server side attributes changed!", deviceId);
                     }
                 }
             }
-            if (notification != null) {
-                ToDeviceMsg finalNotification = notification;
-//                attributeSubscriptions.entrySet().forEach(sub -> {
-//                    ActorSystemToDeviceSessionActorMsg response = new BasicActorSystemToDeviceSessionActorMsg(finalNotification, sub.getKey());
-//                    sendMsgToSessionActor(response, sub.getValue().getServer());
-//                });
+            if (hasNotificationData) {
+                AttributeUpdateNotificationMsg finalNotification = notification.build();
+                attributeSubscriptions.entrySet().forEach(sub -> {
+                    sendToTransport(finalNotification, sub.getKey(), sub.getValue());
+                });
             }
         } else {
             logger.debug("[{}] No registered attributes subscriptions to process!", deviceId);
@@ -414,25 +423,35 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
 //        }
     }
 
-//    private void processSubscriptionCommands(ActorContext context, DeviceToDeviceActorMsg msg) {
-//        SessionId sessionId = msg.getSessionId();
-//        SessionType sessionType = msg.getSessionType();
-//        FromDeviceMsg inMsg = msg.getPayload();
-//        if (inMsg.getMsgType() == SessionMsgType.SUBSCRIBE_ATTRIBUTES_REQUEST) {
-//            logger.debug("[{}] Registering attributes subscription for session [{}]", deviceId, sessionId);
-//            attributeSubscriptions.put(sessionId, new SessionInfo(sessionType, msg.getServerAddress()));
-//        } else if (inMsg.getMsgType() == SessionMsgType.UNSUBSCRIBE_ATTRIBUTES_REQUEST) {
-//            logger.debug("[{}] Canceling attributes subscription for session [{}]", deviceId, sessionId);
-//            attributeSubscriptions.remove(sessionId);
-//        } else if (inMsg.getMsgType() == SessionMsgType.SUBSCRIBE_RPC_COMMANDS_REQUEST) {
-//            logger.debug("[{}] Registering rpc subscription for session [{}][{}]", deviceId, sessionId, sessionType);
-//            rpcSubscriptions.put(sessionId, new SessionInfo(sessionType, msg.getServerAddress()));
-//            sendPendingRequests(context, sessionId, sessionType, msg.getServerAddress());
-//        } else if (inMsg.getMsgType() == SessionMsgType.UNSUBSCRIBE_RPC_COMMANDS_REQUEST) {
-//            logger.debug("[{}] Canceling rpc subscription for session [{}][{}]", deviceId, sessionId, sessionType);
-//            rpcSubscriptions.remove(sessionId);
-//        }
-//    }
+    private void processSubscriptionCommands(ActorContext context, SessionInfoProto sessionInfo, SubscribeToAttributeUpdatesMsg subscribeCmd) {
+        UUID sessionId = new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB());
+        if (subscribeCmd.getUnsubscribe()) {
+            logger.debug("[{}] Canceling attributes subscription for session [{}]", deviceId, sessionId);
+            attributeSubscriptions.remove(sessionId);
+        } else {
+            SessionInfo session = sessions.get(sessionId);
+            if (session == null) {
+                session = new SessionInfo(TransportProtos.SessionType.SYNC, sessionInfo.getNodeId());
+            }
+            logger.debug("[{}] Registering attributes subscription for session [{}]", deviceId, sessionId);
+            attributeSubscriptions.put(sessionId, session);
+        }
+    }
+
+    private void processSubscriptionCommands(ActorContext context, SessionInfoProto sessionInfo, SubscribeToRPCMsg subscribeCmd) {
+        UUID sessionId = new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB());
+        if (subscribeCmd.getUnsubscribe()) {
+            logger.debug("[{}] Canceling rpc subscription for session [{}]", deviceId, sessionId);
+            rpcSubscriptions.remove(sessionId);
+        } else {
+            SessionInfo session = sessions.get(sessionId);
+            if (session == null) {
+                session = new SessionInfo(TransportProtos.SessionType.SYNC, sessionInfo.getNodeId());
+            }
+            logger.debug("[{}] Registering rpc subscription for session [{}]", deviceId, sessionId);
+            rpcSubscriptions.put(sessionId, session);
+        }
+    }
 
     private void processSessionStateMsgs(SessionInfoProto sessionInfo, SessionEventMsg msg) {
         UUID sessionId = new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB());
@@ -521,11 +540,19 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         }
     }
 
-    private void sendToTransport(GetAttributeResponseMsg responseMsg, UUID sessionId, SessionInfoProto sessionInfo) {
+    private void sendToTransport(GetAttributeResponseMsg responseMsg, SessionInfoProto sessionInfo) {
+        DeviceActorToTransportMsg msg = DeviceActorToTransportMsg.newBuilder()
+                .setSessionIdMSB(sessionInfo.getSessionIdMSB())
+                .setSessionIdLSB(sessionInfo.getSessionIdLSB())
+                .setGetAttributesResponse(responseMsg).build();
+        systemContext.getRuleEngineTransportService().process(sessionInfo.getNodeId(), msg);
+    }
+
+    private void sendToTransport(AttributeUpdateNotificationMsg notificationMsg, UUID sessionId, SessionInfo sessionInfo) {
         DeviceActorToTransportMsg msg = DeviceActorToTransportMsg.newBuilder()
                 .setSessionIdMSB(sessionId.getMostSignificantBits())
                 .setSessionIdLSB(sessionId.getLeastSignificantBits())
-                .setGetAttributesResponse(responseMsg).build();
+                .setAttributeUpdateNotification(notificationMsg).build();
         systemContext.getRuleEngineTransportService().process(sessionInfo.getNodeId(), msg);
     }
 

@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,6 +39,7 @@ import org.thingsboard.server.common.msg.core.ToDeviceRpcRequestMsg;
 import org.thingsboard.server.common.msg.core.ToServerRpcRequestMsg;
 import org.thingsboard.server.common.msg.core.ToServerRpcResponseMsg;
 import org.thingsboard.server.common.msg.kv.AttributesKVMsg;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.*;
 
 import java.util.ArrayList;
@@ -152,20 +153,6 @@ public class JsonConverter {
         }
         return result;
     }
-
-    private static void parseNumericProto(List<KvEntry> result, Entry<String, JsonElement> valueEntry, JsonPrimitive value) {
-        if (value.getAsString().contains(".")) {
-            result.add(new DoubleDataEntry(valueEntry.getKey(), value.getAsDouble()));
-        } else {
-            try {
-                long longValue = Long.parseLong(value.getAsString());
-                result.add(new LongDataEntry(valueEntry.getKey(), longValue));
-            } catch (NumberFormatException e) {
-                throw new JsonSyntaxException("Big integer values are not supported!");
-            }
-        }
-    }
-
 
     private static TelemetryUploadRequest convertToTelemetry(JsonElement jsonObject, long systemTs, int requestId) throws JsonSyntaxException {
         BasicTelemetryUploadRequest request = new BasicTelemetryUploadRequest(requestId);
@@ -283,6 +270,19 @@ public class JsonConverter {
         return result;
     }
 
+    public static JsonElement toJson(AttributeUpdateNotificationMsg payload) {
+        JsonObject result = new JsonObject();
+        if (payload.getSharedUpdatedCount() > 0) {
+            payload.getSharedUpdatedList().forEach(addToObjectFromProto(result));
+        }
+        if (payload.getSharedDeletedCount() > 0) {
+            JsonArray attrObject = new JsonArray();
+            payload.getSharedDeletedList().forEach(attrObject::add);
+            result.add("deleted", attrObject);
+        }
+        return result;
+    }
+
     public static JsonObject toJson(AttributesKVMsg payload, boolean asMap) {
         JsonObject result = new JsonObject();
         if (asMap) {
@@ -377,4 +377,5 @@ public class JsonConverter {
         error.addProperty("error", errorMsg);
         return error;
     }
+
 }

@@ -108,6 +108,11 @@ message GetAttributeResponseMsg {
   string error = 5;
 }
 
+message AttributeUpdateNotificationMsg {
+  repeated TsKvProto sharedUpdated = 1;
+  repeated string sharedDeleted = 2;
+}
+
 message ValidateDeviceTokenRequestMsg {
   string token = 1;
 }
@@ -124,12 +129,22 @@ message SessionCloseNotificationProto {
   string message = 1;
 }
 
+message SubscribeToAttributeUpdatesMsg {
+  bool unsubscribe = 1;
+}
+
+message SubscribeToRPCMsg {
+  bool unsubscribe = 1;
+}
+
 message TransportToDeviceActorMsg {
   SessionInfoProto sessionInfo = 1;
   SessionEventMsg sessionEvent = 2;
   PostTelemetryMsg postTelemetry = 3;
   PostAttributeMsg postAttributes = 4;
   GetAttributeRequestMsg getAttributes = 5;
+  SubscribeToAttributeUpdatesMsg subscribeToAttributes = 6;
+  SubscribeToRPCMsg subscribeToRPC= 7;
 }
 
 message DeviceActorToTransportMsg {
@@ -137,6 +152,7 @@ message DeviceActorToTransportMsg {
    int64 sessionIdLSB = 2;
    SessionCloseNotificationProto sessionCloseNotification = 3;
    GetAttributeResponseMsg getAttributesResponse = 4;
+   AttributeUpdateNotificationMsg attributeUpdateNotification = 5;
 }
 
 /**

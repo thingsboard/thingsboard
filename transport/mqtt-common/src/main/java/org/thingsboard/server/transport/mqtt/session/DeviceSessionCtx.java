@@ -44,7 +44,6 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
     private final MqttSessionId sessionId;
     @Getter
     private ChannelHandlerContext channel;
-    private volatile boolean allowAttributeResponses;
     private AtomicInteger msgIdSeq = new AtomicInteger(0);
 
     public DeviceSessionCtx(ConcurrentMap<String, Integer> mqttQoSMap) {
@@ -101,14 +100,6 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
 
     public void setChannel(ChannelHandlerContext channel) {
         this.channel = channel;
-    }
-
-    public void setAllowAttributeResponses() {
-        allowAttributeResponses = true;
-    }
-
-    public void setDisallowAttributeResponses() {
-        allowAttributeResponses = false;
     }
 
     public int nextMsgId() {
