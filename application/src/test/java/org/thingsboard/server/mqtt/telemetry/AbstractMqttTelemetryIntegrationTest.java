@@ -105,10 +105,9 @@ public abstract class AbstractMqttTelemetryIntegrationTest extends AbstractContr
         MqttConnectOptions options = new MqttConnectOptions();
         options.setUserName(accessToken);
         client.connect(options).waitForCompletion(3000);
-        TestMqttCallback callback = new TestMqttCallback(client);
-        client.setCallback(callback);
         CountDownLatch latch = new CountDownLatch(1);
-        latch.countDown();
+        TestMqttCallback callback = new TestMqttCallback(client, latch);
+        client.setCallback(callback);
         client.subscribe("v1/devices/me/attributes", MqttQoS.AT_MOST_ONCE.value());
         String payload = "{\"key\":\"value\"}";
         String result = doPostAsync("/api/plugins/telemetry/" + savedDevice.getId() + "/SHARED_SCOPE", payload, String.class, status().isOk());
@@ -120,6 +119,7 @@ public abstract class AbstractMqttTelemetryIntegrationTest extends AbstractContr
     private static class TestMqttCallback implements MqttCallback {
 
         private final MqttAsyncClient client;
+        private final CountDownLatch latch;
         private Integer qoS;
         private String payload;
 
@@ -127,8 +127,9 @@ public abstract class AbstractMqttTelemetryIntegrationTest extends AbstractContr
             return payload;
         }
 
-        TestMqttCallback(MqttAsyncClient client) {
+        TestMqttCallback(MqttAsyncClient client, CountDownLatch latch) {
             this.client = client;
+            this.latch = latch;
         }
 
         int getQoS() {
@@ -143,6 +144,7 @@ public abstract class AbstractMqttTelemetryIntegrationTest extends AbstractContr
         public void messageArrived(String requestTopic, MqttMessage mqttMessage) {
             payload = new String(mqttMessage.getPayload());
             qoS = mqttMessage.getQos();
+            latch.countDown();
         }
 
         @Override
