@@ -15,10 +15,9 @@
  */
 package org.thingsboard.server.mqtt.telemetry;
 
+import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.client.mqttv3.*;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -30,9 +29,12 @@ import org.thingsboard.server.dao.service.DaoNoSqlTest;
 
 import java.net.URI;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * @author Valerii Sosliuk
@@ -94,4 +96,62 @@ public abstract class AbstractMqttTelemetryIntegrationTest extends AbstractContr
         assertEquals("3.0", values.get("key3").get(0).get("value"));
         assertEquals("4", values.get("key4").get(0).get("value"));
     }
+
+    @Test
+    public void testMqttQoSLevel() throws Exception {
+        String clientId = MqttAsyncClient.generateClientId();
+        MqttAsyncClient client = new MqttAsyncClient(MQTT_URL, clientId);
+
+        MqttConnectOptions options = new MqttConnectOptions();
+        options.setUserName(accessToken);
+        client.connect(options).waitForCompletion(3000);
+        CountDownLatch latch = new CountDownLatch(1);
+        TestMqttCallback callback = new TestMqttCallback(client, latch);
+        client.setCallback(callback);
+        client.subscribe("v1/devices/me/attributes", MqttQoS.AT_MOST_ONCE.value());
+        String payload = "{\"key\":\"value\"}";
+        String result = doPostAsync("/api/plugins/telemetry/" + savedDevice.getId() + "/SHARED_SCOPE", payload, String.class, status().isOk());
+        latch.await(3, TimeUnit.SECONDS);
+        assertEquals(payload, callback.getPayload());
+        assertEquals(MqttQoS.AT_MOST_ONCE.value(), callback.getQoS());
+    }
+
+    private static class TestMqttCallback implements MqttCallback {
+
+        private final MqttAsyncClient client;
+        private final CountDownLatch latch;
+        private Integer qoS;
+        private String payload;
+
+        String getPayload() {
+            return payload;
+        }
+
+        TestMqttCallback(MqttAsyncClient client, CountDownLatch latch) {
+            this.client = client;
+            this.latch = latch;
+        }
+
+        int getQoS() {
+            return qoS;
+        }
+
+        @Override
+        public void connectionLost(Throwable throwable) {
+        }
+
+        @Override
+        public void messageArrived(String requestTopic, MqttMessage mqttMessage) {
+            payload = new String(mqttMessage.getPayload());
+            qoS = mqttMessage.getQos();
+            latch.countDown();
+        }
+
+        @Override
+        public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
+
+        }
+    }
+
+
 }
