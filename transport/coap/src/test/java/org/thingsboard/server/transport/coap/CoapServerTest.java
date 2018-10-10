@@ -106,30 +106,30 @@ public class CoapServerTest {
         public static SessionMsgProcessor sessionMsgProcessor() {
             return new SessionMsgProcessor() {
 
-                @Override
-                public void process(SessionAwareMsg toActorMsg) {
-                    if (toActorMsg instanceof TransportToDeviceSessionActorMsg) {
-                        AdaptorToSessionActorMsg sessionMsg = ((TransportToDeviceSessionActorMsg) toActorMsg).getSessionMsg();
-                        try {
-                            FromDeviceMsg deviceMsg = sessionMsg.getMsg();
-                            ToDeviceMsg toDeviceMsg = null;
-                            if (deviceMsg.getMsgType() == SessionMsgType.POST_TELEMETRY_REQUEST) {
-                                toDeviceMsg = BasicStatusCodeResponse.onSuccess(deviceMsg.getMsgType(), BasicRequest.DEFAULT_REQUEST_ID);
-                            } else if (deviceMsg.getMsgType() == SessionMsgType.GET_ATTRIBUTES_REQUEST) {
-                                List<AttributeKvEntry> data = new ArrayList<>();
-                                data.add(new BaseAttributeKvEntry(new StringDataEntry("key1", "value1"), System.currentTimeMillis()));
-                                data.add(new BaseAttributeKvEntry(new LongDataEntry("key2", 42L), System.currentTimeMillis()));
-                                BasicAttributeKVMsg kv = BasicAttributeKVMsg.fromClient(data);
-                                toDeviceMsg = BasicGetAttributesResponse.onSuccess(deviceMsg.getMsgType(), BasicRequest.DEFAULT_REQUEST_ID, kv);
-                            }
-                            if (toDeviceMsg != null) {
-                                sessionMsg.getSessionContext().onMsg(new BasicSessionActorToAdaptorMsg(sessionMsg.getSessionContext(), toDeviceMsg));
-                            }
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
+//                @Override
+//                public void process(SessionAwareMsg toActorMsg) {
+//                    if (toActorMsg instanceof TransportToDeviceSessionActorMsg) {
+//                        AdaptorToSessionActorMsg sessionMsg = ((TransportToDeviceSessionActorMsg) toActorMsg).getSessionMsg();
+//                        try {
+//                            FromDeviceMsg deviceMsg = sessionMsg.getMsg();
+//                            ToDeviceMsg toDeviceMsg = null;
+//                            if (deviceMsg.getMsgType() == SessionMsgType.POST_TELEMETRY_REQUEST) {
+//                                toDeviceMsg = BasicStatusCodeResponse.onSuccess(deviceMsg.getMsgType(), BasicRequest.DEFAULT_REQUEST_ID);
+//                            } else if (deviceMsg.getMsgType() == SessionMsgType.GET_ATTRIBUTES_REQUEST) {
+//                                List<AttributeKvEntry> data = new ArrayList<>();
+//                                data.add(new BaseAttributeKvEntry(new StringDataEntry("key1", "value1"), System.currentTimeMillis()));
+//                                data.add(new BaseAttributeKvEntry(new LongDataEntry("key2", 42L), System.currentTimeMillis()));
+//                                BasicAttributeKVMsg kv = BasicAttributeKVMsg.fromClient(data);
+//                                toDeviceMsg = BasicGetAttributesResponse.onSuccess(deviceMsg.getMsgType(), BasicRequest.DEFAULT_REQUEST_ID, kv);
+//                            }
+//                            if (toDeviceMsg != null) {
+//                                sessionMsg.getSessionContext().onMsg(new BasicSessionActorToAdaptorMsg(sessionMsg.getSessionContext(), toDeviceMsg));
+//                            }
+//                        } catch (Exception e) {
+//                            e.printStackTrace();
+//                        }
+//                    }
+//                }
 
                 @Override
                 public void onDeviceAdded(Device device) {

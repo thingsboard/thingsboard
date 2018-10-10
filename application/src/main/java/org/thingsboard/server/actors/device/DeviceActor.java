@@ -27,7 +27,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.timeout.DeviceActorClientSideRpcTimeoutMsg;
-import org.thingsboard.server.common.msg.timeout.DeviceActorQueueTimeoutMsg;
 import org.thingsboard.server.common.msg.timeout.DeviceActorServerSideRpcTimeoutMsg;
 import org.thingsboard.server.service.rpc.ToDeviceRpcRequestActorMsg;
 import org.thingsboard.server.service.rpc.ToServerRpcResponseActorMsg;
@@ -73,12 +72,6 @@ public class DeviceActor extends ContextAwareActor {
                 break;
             case DEVICE_ACTOR_CLIENT_SIDE_RPC_TIMEOUT_MSG:
                 processor.processClientSideRpcTimeout(context(), (DeviceActorClientSideRpcTimeoutMsg) msg);
-                break;
-            case DEVICE_ACTOR_QUEUE_TIMEOUT_MSG:
-                processor.processQueueTimeout(context(), (DeviceActorQueueTimeoutMsg) msg);
-                break;
-            case RULE_ENGINE_QUEUE_PUT_ACK_MSG:
-                processor.processQueueAck(context(), (RuleEngineQueuePutAckMsg) msg);
                 break;
             default:
                 return false;

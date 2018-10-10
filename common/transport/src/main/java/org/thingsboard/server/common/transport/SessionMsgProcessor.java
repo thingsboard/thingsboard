@@ -20,8 +20,6 @@ import org.thingsboard.server.common.msg.aware.SessionAwareMsg;
 
 public interface SessionMsgProcessor {
 
-    void process(SessionAwareMsg msg);
-
     void onDeviceAdded(Device device);
 
 }

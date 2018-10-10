@@ -20,6 +20,7 @@ import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.msg.session.SessionActorToAdaptorMsg;
 import org.thingsboard.server.common.msg.session.SessionContext;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
+import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.Optional;
 

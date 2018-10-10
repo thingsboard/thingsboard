@@ -200,10 +200,6 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
-    private MsgQueueService msgQueueService;
-
-    @Autowired
-    @Getter
     private DeviceStateService deviceStateService;
 
     @Lazy
@@ -266,10 +262,6 @@ public class ActorSystemContext {
     @Getter
     @Setter
     private ActorRef appActor;
-
-    @Getter
-    @Setter
-    private ActorRef sessionManagerActor;
 
     @Getter
     @Setter

@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -111,8 +111,8 @@ public class MqttTransportService implements TransportService {
         TBKafkaConsumerTemplate.TBKafkaConsumerTemplateBuilder<TransportApiResponseMsg> responseBuilder = TBKafkaConsumerTemplate.builder();
         responseBuilder.settings(kafkaSettings);
         responseBuilder.topic(transportApiResponsesTopic + "." + transportContext.getNodeId());
-        responseBuilder.clientId(transportContext.getNodeId());
-        responseBuilder.groupId(null);
+        responseBuilder.clientId("transport-api-client-" + transportContext.getNodeId());
+        responseBuilder.groupId("transport-api-client");
         responseBuilder.autoCommit(true);
         responseBuilder.autoCommitIntervalMs(autoCommitInterval);
         responseBuilder.decoder(new TransportApiResponseDecoder());
@@ -137,8 +137,8 @@ public class MqttTransportService implements TransportService {
         TBKafkaConsumerTemplate.TBKafkaConsumerTemplateBuilder<ToTransportMsg> mainConsumerBuilder = TBKafkaConsumerTemplate.builder();
         mainConsumerBuilder.settings(kafkaSettings);
         mainConsumerBuilder.topic(notificationsTopic + "." + transportContext.getNodeId());
-        mainConsumerBuilder.clientId(transportContext.getNodeId());
-        mainConsumerBuilder.groupId(null);
+        mainConsumerBuilder.clientId("transport-" + transportContext.getNodeId());
+        mainConsumerBuilder.groupId("transport");
         mainConsumerBuilder.autoCommit(true);
         mainConsumerBuilder.autoCommitIntervalMs(notificationsAutoCommitInterval);
         mainConsumerBuilder.decoder(new ToTransportMsgResponseDecoder());
@@ -243,6 +243,15 @@ public class MqttTransportService implements TransportService {
     }
 
     @Override
+    public void process(SessionInfoProto sessionInfo, TransportProtos.GetAttributeRequestMsg msg, TransportServiceCallback<Void> callback) {
+        ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
+                TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
+                        .setGetAttributes(msg).build()
+        ).build();
+        send(sessionInfo, toRuleEngineMsg, callback);
+    }
+
+    @Override
     public void registerSession(SessionInfoProto sessionInfo, SessionMsgListener listener) {
         sessions.putIfAbsent(toId(sessionInfo), listener);
         //TODO: monitor sessions periodically: PING REQ/RESP, etc.
@@ -271,9 +280,13 @@ public class MqttTransportService implements TransportService {
         @Override
         public void onCompletion(RecordMetadata metadata, Exception exception) {
             if (exception == null) {
-                callback.onSuccess(null);
+                if (callback != null) {
+                    callback.onSuccess(null);
+                }
             } else {
-                callback.onError(exception);
+                if (callback != null) {
+                    callback.onError(exception);
+                }
             }
         }
     }

@@ -35,14 +35,12 @@ public abstract class ComponentMsgProcessor<T extends EntityId> extends Abstract
 
     protected final TenantId tenantId;
     protected final T entityId;
-    protected final MsgQueueService queue;
     protected ComponentLifecycleState state;
 
     protected ComponentMsgProcessor(ActorSystemContext systemContext, LoggingAdapter logger, TenantId tenantId, T id) {
         super(systemContext, logger);
         this.tenantId = tenantId;
         this.entityId = id;
-        this.queue = systemContext.getMsgQueueService();
     }
 
     public abstract void start(ActorContext context) throws Exception;
@@ -86,18 +84,4 @@ public abstract class ComponentMsgProcessor<T extends EntityId> extends Abstract
         }
     }
 
-    protected void putToQueue(final TbMsg tbMsg, final Consumer<TbMsg> onSuccess) {
-        EntityId entityId = tbMsg.getRuleNodeId() != null ? tbMsg.getRuleNodeId() : tbMsg.getRuleChainId();
-        Futures.addCallback(queue.put(this.tenantId, tbMsg, entityId.getId(), tbMsg.getClusterPartition()), new FutureCallback<Void>() {
-            @Override
-            public void onSuccess(@Nullable Void result) {
-                onSuccess.accept(tbMsg);
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                logger.debug("Failed to push message [{}] to queue due to [{}]", tbMsg, t);
-            }
-        });
-    }
 }

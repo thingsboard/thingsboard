@@ -15,17 +15,37 @@
  */
 package org.thingsboard.server.common.transport.adaptor;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSyntaxException;
+import org.thingsboard.server.common.data.kv.AttributeKey;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BooleanDataEntry;
+import org.thingsboard.server.common.data.kv.DoubleDataEntry;
+import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.common.msg.core.AttributesUpdateRequest;
+import org.thingsboard.server.common.msg.core.BasicAttributesUpdateRequest;
+import org.thingsboard.server.common.msg.core.BasicRequest;
+import org.thingsboard.server.common.msg.core.BasicTelemetryUploadRequest;
+import org.thingsboard.server.common.msg.core.TelemetryUploadRequest;
+import org.thingsboard.server.common.msg.core.ToDeviceRpcRequestMsg;
+import org.thingsboard.server.common.msg.core.ToServerRpcRequestMsg;
+import org.thingsboard.server.common.msg.core.ToServerRpcResponseMsg;
+import org.thingsboard.server.common.msg.kv.AttributesKVMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.*;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-
-import com.google.gson.*;
-import org.thingsboard.server.common.msg.core.*;
-
-import org.thingsboard.server.common.data.kv.*;
-import org.thingsboard.server.common.msg.kv.AttributesKVMsg;
 
 public class JsonConverter {
 
@@ -43,6 +63,109 @@ public class JsonConverter {
     public static TelemetryUploadRequest convertToTelemetry(JsonElement jsonObject, int requestId) throws JsonSyntaxException {
         return convertToTelemetry(jsonObject, System.currentTimeMillis(), requestId);
     }
+
+    public static PostTelemetryMsg convertToTelemetryProto(JsonElement jsonObject) throws JsonSyntaxException {
+        long systemTs = System.currentTimeMillis();
+        PostTelemetryMsg.Builder builder = PostTelemetryMsg.newBuilder();
+        if (jsonObject.isJsonObject()) {
+            parseObject(builder, systemTs, jsonObject);
+        } else if (jsonObject.isJsonArray()) {
+            jsonObject.getAsJsonArray().forEach(je -> {
+                if (je.isJsonObject()) {
+                    parseObject(builder, systemTs, je.getAsJsonObject());
+                } else {
+                    throw new JsonSyntaxException(CAN_T_PARSE_VALUE + je);
+                }
+            });
+        } else {
+            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + jsonObject);
+        }
+        return builder.build();
+    }
+
+    public static PostAttributeMsg convertToAttributesProto(JsonElement jsonObject) throws JsonSyntaxException {
+        if (jsonObject.isJsonObject()) {
+            PostAttributeMsg.Builder result = PostAttributeMsg.newBuilder();
+            List<KeyValueProto> keyValueList = parseProtoValues(jsonObject.getAsJsonObject());
+            result.addAllKv(keyValueList);
+            return result.build();
+        } else {
+            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + jsonObject);
+        }
+    }
+
+
+    private static void parseObject(PostTelemetryMsg.Builder builder, long systemTs, JsonElement jsonObject) {
+        JsonObject jo = jsonObject.getAsJsonObject();
+        if (jo.has("ts") && jo.has("values")) {
+            parseWithTs(builder, jo);
+        } else {
+            parseWithoutTs(builder, systemTs, jo);
+        }
+    }
+
+    private static void parseWithoutTs(PostTelemetryMsg.Builder request, long systemTs, JsonObject jo) {
+        TsKvListProto.Builder builder = TsKvListProto.newBuilder();
+        builder.setTs(systemTs);
+        builder.addAllKv(parseProtoValues(jo));
+        request.addTsKvList(builder.build());
+    }
+
+    public static void parseWithTs(PostTelemetryMsg.Builder request, JsonObject jo) {
+        TsKvListProto.Builder builder = TsKvListProto.newBuilder();
+        builder.setTs(jo.get("ts").getAsLong());
+        builder.addAllKv(parseProtoValues(jo.get("values").getAsJsonObject()));
+        request.addTsKvList(builder.build());
+    }
+
+    public static List<KeyValueProto> parseProtoValues(JsonObject valuesObject) {
+        List<KeyValueProto> result = new ArrayList<>();
+        for (Entry<String, JsonElement> valueEntry : valuesObject.entrySet()) {
+            JsonElement element = valueEntry.getValue();
+            if (element.isJsonPrimitive()) {
+                JsonPrimitive value = element.getAsJsonPrimitive();
+                if (value.isString()) {
+                    result.add(KeyValueProto.newBuilder().setKey(valueEntry.getKey()).setType(KeyValueType.STRING_V)
+                            .setStringV(value.getAsString()).build());
+                } else if (value.isBoolean()) {
+                    result.add(KeyValueProto.newBuilder().setKey(valueEntry.getKey()).setType(KeyValueType.BOOLEAN_V)
+                            .setBoolV(value.getAsBoolean()).build());
+                } else if (value.isNumber()) {
+                    if (value.getAsString().contains(".")) {
+                        result.add(KeyValueProto.newBuilder().setKey(valueEntry.getKey()).setType(KeyValueType.DOUBLE_V)
+                                .setDoubleV(value.getAsDouble()).build());
+                    } else {
+                        try {
+                            long longValue = Long.parseLong(value.getAsString());
+                            result.add(KeyValueProto.newBuilder().setKey(valueEntry.getKey()).setType(KeyValueType.LONG_V)
+                                    .setLongV(longValue).build());
+                        } catch (NumberFormatException e) {
+                            throw new JsonSyntaxException("Big integer values are not supported!");
+                        }
+                    }
+                } else {
+                    throw new JsonSyntaxException(CAN_T_PARSE_VALUE + value);
+                }
+            } else {
+                throw new JsonSyntaxException(CAN_T_PARSE_VALUE + element);
+            }
+        }
+        return result;
+    }
+
+    private static void parseNumericProto(List<KvEntry> result, Entry<String, JsonElement> valueEntry, JsonPrimitive value) {
+        if (value.getAsString().contains(".")) {
+            result.add(new DoubleDataEntry(valueEntry.getKey(), value.getAsDouble()));
+        } else {
+            try {
+                long longValue = Long.parseLong(value.getAsString());
+                result.add(new LongDataEntry(valueEntry.getKey(), longValue));
+            } catch (NumberFormatException e) {
+                throw new JsonSyntaxException("Big integer values are not supported!");
+            }
+        }
+    }
+
 
     private static TelemetryUploadRequest convertToTelemetry(JsonElement jsonObject, long systemTs, int requestId) throws JsonSyntaxException {
         BasicTelemetryUploadRequest request = new BasicTelemetryUploadRequest(requestId);
@@ -140,6 +263,26 @@ public class JsonConverter {
         }
     }
 
+    public static JsonObject toJson(GetAttributeResponseMsg payload) {
+        JsonObject result = new JsonObject();
+        if (payload.getClientAttributeListCount() > 0) {
+            JsonObject attrObject = new JsonObject();
+            payload.getClientAttributeListList().forEach(addToObjectFromProto(attrObject));
+            result.add("client", attrObject);
+        }
+        if (payload.getSharedAttributeListCount() > 0) {
+            JsonObject attrObject = new JsonObject();
+            payload.getSharedAttributeListList().forEach(addToObjectFromProto(attrObject));
+            result.add("shared", attrObject);
+        }
+        if (payload.getDeletedAttributeKeysCount() > 0) {
+            JsonArray attrObject = new JsonArray();
+            payload.getDeletedAttributeKeysList().forEach(attrObject::add);
+            result.add("deleted", attrObject);
+        }
+        return result;
+    }
+
     public static JsonObject toJson(AttributesKVMsg payload, boolean asMap) {
         JsonObject result = new JsonObject();
         if (asMap) {
@@ -166,8 +309,29 @@ public class JsonConverter {
     }
 
     private static Consumer<AttributeKey> addToObject(JsonArray result) {
-        return key -> {
-            result.add(key.getAttributeKey());
+        return key -> result.add(key.getAttributeKey());
+    }
+
+    private static Consumer<TsKvProto> addToObjectFromProto(JsonObject result) {
+        return de -> {
+            JsonPrimitive value;
+            switch (de.getKv().getType()) {
+                case BOOLEAN_V:
+                    value = new JsonPrimitive(de.getKv().getBoolV());
+                    break;
+                case DOUBLE_V:
+                    value = new JsonPrimitive(de.getKv().getDoubleV());
+                    break;
+                case LONG_V:
+                    value = new JsonPrimitive(de.getKv().getLongV());
+                    break;
+                case STRING_V:
+                    value = new JsonPrimitive(de.getKv().getStringV());
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unsupported data type: " + de.getKv().getType());
+            }
+            result.add(de.getKv().getKey(), value);
         };
     }
 

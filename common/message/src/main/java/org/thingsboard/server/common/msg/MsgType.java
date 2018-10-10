@@ -91,8 +91,6 @@ public enum MsgType {
 
     DEVICE_ACTOR_CLIENT_SIDE_RPC_TIMEOUT_MSG,
 
-    DEVICE_ACTOR_QUEUE_TIMEOUT_MSG,
-
     /**
      * Message that is sent from the Device Actor to Rule Engine. Requires acknowledgement
      */
@@ -101,7 +99,6 @@ public enum MsgType {
     /**
      * Message that is sent from Rule Engine to the Device Actor when message is successfully pushed to queue.
      */
-    RULE_ENGINE_QUEUE_PUT_ACK_MSG,
     ACTOR_SYSTEM_TO_DEVICE_SESSION_ACTOR_MSG,
     TRANSPORT_TO_DEVICE_SESSION_ACTOR_MSG,
     SESSION_TIMEOUT_MSG,

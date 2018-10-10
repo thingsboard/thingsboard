@@ -160,7 +160,7 @@ public class TbKafkaRequestTemplate<Request, Response> extends AbstractTbKafkaTe
         SettableFuture<Response> future = SettableFuture.create();
         pendingRequests.putIfAbsent(requestId, new ResponseMetaData<>(tickTs + maxRequestTimeout, future));
         request = requestTemplate.enrich(request, responseTemplate.getTopic(), requestId);
-        requestTemplate.send(key, request, headers);
+        requestTemplate.send(key, request, headers, null);
         return future;
     }
 

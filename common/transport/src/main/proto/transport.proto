@@ -23,12 +23,13 @@ option java_outer_classname = "TransportProtos";
  * Data Structures;
  */
 message SessionInfoProto {
-  int64 sessionIdMSB = 1;
-  int64 sessionIdLSB = 2;
-  int64 tenantIdMSB = 3;
-  int64 tenantIdLSB = 4;
-  int64 deviceIdMSB = 5;
-  int64 deviceIdLSB = 6;
+  string nodeId = 1;
+  int64 sessionIdMSB = 2;
+  int64 sessionIdLSB = 3;
+  int64 tenantIdMSB = 4;
+  int64 tenantIdLSB = 5;
+  int64 deviceIdMSB = 6;
+  int64 deviceIdLSB = 7;
 }
 
 enum SessionEvent {
@@ -57,6 +58,11 @@ message KeyValueProto {
   string string_v = 6;
 }
 
+message TsKvProto {
+  int64 ts = 1;
+  KeyValueProto kv = 2;
+}
+
 message TsKvListProto {
   int64 ts = 1;
   repeated KeyValueProto kv = 2;
@@ -76,9 +82,8 @@ message DeviceInfoProto {
  * Messages that use Data Structures;
  */
 message SessionEventMsg {
-  string nodeId = 1;
-  SessionType sessionType = 2;
-  SessionEvent event = 3;
+  SessionType sessionType = 1;
+  SessionEvent event = 2;
 }
 
 message PostTelemetryMsg {
@@ -90,14 +95,17 @@ message PostAttributeMsg {
 }
 
 message GetAttributeRequestMsg {
-  repeated string clientAttributeNames = 1;
-  repeated string sharedAttributeNames = 2;
+  int32 requestId = 1;
+  repeated string clientAttributeNames = 2;
+  repeated string sharedAttributeNames = 3;
 }
 
 message GetAttributeResponseMsg {
-  repeated TsKvListProto clientAttributeList = 1;
-  repeated TsKvListProto sharedAttributeList = 2;
-  repeated string deletedAttributeKeys = 3;
+  int32 requestId = 1;
+  repeated TsKvProto clientAttributeList = 2;
+  repeated TsKvProto sharedAttributeList = 3;
+  repeated string deletedAttributeKeys = 4;
+  string error = 5;
 }
 
 message ValidateDeviceTokenRequestMsg {

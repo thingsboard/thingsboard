@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.mqtt.session;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.mqtt.*;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.SessionId;
 import org.thingsboard.server.common.msg.session.SessionActorToAdaptorMsg;
@@ -41,12 +42,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
 
     private final MqttSessionId sessionId;
+    @Getter
     private ChannelHandlerContext channel;
     private volatile boolean allowAttributeResponses;
     private AtomicInteger msgIdSeq = new AtomicInteger(0);
 
     public DeviceSessionCtx(ConcurrentMap<String, Integer> mqttQoSMap) {
-        super(null, null, null);
+        super(null, null, mqttQoSMap);
         this.sessionId = new MqttSessionId();
     }
 
