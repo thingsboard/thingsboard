@@ -39,6 +39,7 @@ import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.common.transport.auth.DeviceAuthService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.transport.mqtt.MqttTopicMatcher;
 import org.thingsboard.server.transport.mqtt.MqttTransportHandler;
 import org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor;
 
@@ -64,7 +65,7 @@ public class GatewaySessionCtx {
     private final DeviceAuthService authService;
     private final RelationService relationService;
     private final Map<String, GatewayDeviceSessionCtx> devices;
-    private final ConcurrentMap<String, Integer> mqttQoSMap;
+    private final ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap;
     private ChannelHandlerContext channel;
 
     public GatewaySessionCtx(SessionMsgProcessor processor, DeviceService deviceService, DeviceAuthService authService, RelationService relationService, DeviceSessionCtx gatewaySessionCtx) {

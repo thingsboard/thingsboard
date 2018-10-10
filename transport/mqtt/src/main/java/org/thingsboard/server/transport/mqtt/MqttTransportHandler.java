@@ -54,6 +54,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.regex.Pattern;
 
 import static io.netty.handler.codec.mqtt.MqttConnectReturnCode.*;
 import static io.netty.handler.codec.mqtt.MqttMessageType.*;
@@ -78,7 +79,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     private final RelationService relationService;
     private final QuotaService quotaService;
     private final SslHandler sslHandler;
-    private final ConcurrentMap<String, Integer> mqttQoSMap;
+    private final ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap;
 
     private volatile boolean connected;
     private volatile InetSocketAddress address;
@@ -278,7 +279,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     private void registerSubQoS(String topic, List<Integer> grantedQoSList, MqttQoS reqQoS) {
         grantedQoSList.add(getMinSupportedQos(reqQoS));
-        mqttQoSMap.put(topic, getMinSupportedQos(reqQoS));
+        mqttQoSMap.put(new MqttTopicMatcher(topic), getMinSupportedQos(reqQoS));
     }
 
     private void processUnsubscribe(ChannelHandlerContext ctx, MqttUnsubscribeMessage mqttMsg) {
@@ -287,7 +288,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
         log.trace("[{}] Processing subscription [{}]!", sessionId, mqttMsg.variableHeader().messageId());
         for (String topicName : mqttMsg.payload().topics()) {
-            mqttQoSMap.remove(topicName);
+            mqttQoSMap.remove(new MqttTopicMatcher(topicName));
             try {
                 switch (topicName) {
                     case DEVICE_ATTRIBUTES_TOPIC: {
