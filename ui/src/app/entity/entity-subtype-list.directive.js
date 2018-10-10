@@ -47,6 +47,12 @@ export default function EntitySubtypeListDirective($compile, $templateCache, $q,
             scope.secondaryPlaceholder = '+' + $translate.instant('device.device-type');
             scope.noSubtypesMathingText = 'device.no-device-types-matching';
             scope.subtypeListEmptyText = 'device.device-type-list-empty';
+        } else if (scope.entityType == types.entityType.entityView) {
+            scope.placeholder = scope.tbRequired ? $translate.instant('entity-view.enter-entity-view-type')
+                : $translate.instant('entity-view.any-entity-view');
+            scope.secondaryPlaceholder = '+' + $translate.instant('entity-view.entity-view-type');
+            scope.noSubtypesMathingText = 'entity-view.no-entity-view-types-matching';
+            scope.subtypeListEmptyText = 'entity-view.entity-view-type-list-empty';
         }
 
         scope.$watch('tbRequired', function () {
