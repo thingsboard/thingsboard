@@ -87,7 +87,11 @@ public class BaseTimeseriesService implements TimeseriesService {
                             .map(key -> new BaseReadTsKvQuery(key, entityView.getStartTimeMs(), entityView.getEndTimeMs(), 1, "ASC"))
                             .collect(Collectors.toList());
 
-            return timeseriesDao.findAllAsync(entityView.getEntityId(), updateQueriesForEntityView(entityView, queries));
+            if (queries.size() > 0) {
+                return timeseriesDao.findAllAsync(entityView.getEntityId(), queries);
+            } else {
+                return Futures.immediateFuture(new ArrayList<>());
+            }
         }
         keys.forEach(key -> futures.add(timeseriesDao.findLatest(entityId, key)));
         return Futures.allAsList(futures);
@@ -133,11 +137,20 @@ public class BaseTimeseriesService implements TimeseriesService {
 
     private List<ReadTsKvQuery> updateQueriesForEntityView(EntityView entityView, List<ReadTsKvQuery> queries) {
         return queries.stream().map(query -> {
-            long startTs = entityView.getStartTimeMs() == 0 ? query.getStartTs() : entityView.getStartTimeMs();
-            long endTs = entityView.getEndTimeMs() == 0 ? query.getEndTs() : entityView.getEndTimeMs();
+            long startTs;
+            if (entityView.getStartTimeMs() != 0 && entityView.getStartTimeMs() > query.getStartTs()) {
+                startTs = entityView.getStartTimeMs();
+            } else {
+                startTs = query.getStartTs();
+            }
 
-            return startTs <= query.getStartTs() && endTs >= query.getEndTs() ? query :
-                    new BaseReadTsKvQuery(query.getKey(), startTs, endTs, query.getInterval(), query.getLimit(), query.getAggregation());
+            long endTs;
+            if (entityView.getEndTimeMs() != 0 && entityView.getEndTimeMs() < query.getEndTs()) {
+                endTs = entityView.getEndTimeMs();
+            } else {
+                endTs = query.getEndTs();
+            }
+            return new BaseReadTsKvQuery(query.getKey(), startTs, endTs, query.getInterval(), query.getLimit(), query.getAggregation());
         }).collect(Collectors.toList());
     }
 
