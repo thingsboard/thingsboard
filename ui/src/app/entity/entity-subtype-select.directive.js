@@ -102,6 +102,9 @@ export default function EntitySubtypeSelect($compile, $templateCache, $translate
             } else if (scope.entityType == types.entityType.device) {
                 scope.entitySubtypeTitle = 'device.device-type';
                 scope.entitySubtypeRequiredText = 'device.device-type-required';
+            } else if (scope.entityType == types.entityType.entityView) {
+                scope.entitySubtypeTitle = 'entity-view.entity-view-type';
+                scope.entitySubtypeRequiredText = 'entity-view.entity-view-type-required';
             }
             scope.entitySubtypes.length = 0;
             if (scope.entitySubtypesList && scope.entitySubtypesList.length) {
@@ -116,6 +119,10 @@ export default function EntitySubtypeSelect($compile, $templateCache, $translate
                     });
                 } else if (scope.entityType == types.entityType.device) {
                     scope.$on('deviceSaved', function() {
+                        loadSubTypes();
+                    });
+                } else if (scope.entityType == types.entityType.entityView) {
+                    scope.$on('entityViewSaved', function() {
                         loadSubTypes();
                     });
                 }
