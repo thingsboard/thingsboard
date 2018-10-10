@@ -171,7 +171,7 @@ function Menu(userService, $state, $rootScope) {
                             name: 'entity-view.entity-views',
                             type: 'link',
                             state: 'home.entityViews',
-                            icon: 'view_stream'
+                            icon: 'view_quilt'
                         },
                         {
                             name: 'widget.widget-library',
@@ -238,7 +238,7 @@ function Menu(userService, $state, $rootScope) {
                                 places: [
                                     {
                                         name: 'entity-view.entity-views',
-                                        icon: 'view_stream',
+                                        icon: 'view_quilt',
                                         state: 'home.entityViews'
                                     }
                                 ]
@@ -293,7 +293,7 @@ function Menu(userService, $state, $rootScope) {
                             name: 'entity-view.entity-views',
                             type: 'link',
                             state: 'home.entityViews',
-                            icon: 'view_stream'
+                            icon: 'view_quilt'
                         },
                         {
                             name: 'dashboard.dashboards',
@@ -328,7 +328,7 @@ function Menu(userService, $state, $rootScope) {
                             places: [
                                 {
                                     name: 'entity-view.entity-views',
-                                    icon: 'view_stream',
+                                    icon: 'view_quilt',
                                     state: 'home.entityViews'
                                 }
                             ]
