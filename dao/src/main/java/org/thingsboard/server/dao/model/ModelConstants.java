@@ -145,18 +145,21 @@ public class ModelConstants {
     /**
      * Cassandra entityView constants.
      */
-    public static final String ENTITY_VIEW_TABLE_FAMILY_NAME = "entity_views";
+    public static final String ENTITY_VIEW_TABLE_FAMILY_NAME = "entity_view";
     public static final String ENTITY_VIEW_ENTITY_ID_PROPERTY = ENTITY_ID_COLUMN;
     public static final String ENTITY_VIEW_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String ENTITY_VIEW_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
     public static final String ENTITY_VIEW_NAME_PROPERTY = DEVICE_NAME_PROPERTY;
     public static final String ENTITY_VIEW_BY_TENANT_AND_CUSTOMER_CF = "entity_view_by_tenant_and_customer";
+    public static final String ENTITY_VIEW_BY_TENANT_AND_CUSTOMER_AND_TYPE_CF = "entity_view_by_tenant_and_customer_and_type";
     public static final String ENTITY_VIEW_BY_TENANT_AND_ENTITY_ID_CF = "entity_view_by_tenant_and_entity_id";
     public static final String ENTITY_VIEW_KEYS_PROPERTY = "keys";
+    public static final String ENTITY_VIEW_TYPE_PROPERTY = "type";
     public static final String ENTITY_VIEW_START_TS_PROPERTY = "start_ts";
     public static final String ENTITY_VIEW_END_TS_PROPERTY = "end_ts";
     public static final String ENTITY_VIEW_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
-    public static final String ENTITY_VIEW_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "entity_view_by_tenant_and_search_text";
+    public static final String ENTITY_VIEW_BY_TENANT_AND_SEARCH_TEXT_CF = "entity_view_by_tenant_and_search_text";
+    public static final String ENTITY_VIEW_BY_TENANT_BY_TYPE_AND_SEARCH_TEXT_CF = "entity_view_by_tenant_by_type_and_search_text";
     public static final String ENTITY_VIEW_BY_TENANT_AND_NAME = "entity_view_by_tenant_and_name";
 
     /**

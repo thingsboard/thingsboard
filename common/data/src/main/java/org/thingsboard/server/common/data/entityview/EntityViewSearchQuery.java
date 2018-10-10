@@ -30,6 +30,7 @@ public class EntityViewSearchQuery {
 
     private RelationsSearchParameters parameters;
     private String relationType;
+    private List<String> entityViewTypes;
 
     public EntityRelationsQuery toEntitySearchQuery() {
         EntityRelationsQuery query = new EntityRelationsQuery();

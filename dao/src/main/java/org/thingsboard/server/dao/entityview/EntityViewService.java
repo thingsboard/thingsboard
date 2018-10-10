@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.entityview;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -44,7 +45,11 @@ public interface EntityViewService {
 
     TextPageData<EntityView> findEntityViewByTenantId(TenantId tenantId, TextPageLink pageLink);
 
+    TextPageData<EntityView> findEntityViewByTenantIdAndType(TenantId tenantId, TextPageLink pageLink, String type);
+
     TextPageData<EntityView> findEntityViewsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, TextPageLink pageLink);
+
+    TextPageData<EntityView> findEntityViewsByTenantIdAndCustomerIdAndType(TenantId tenantId, CustomerId customerId, TextPageLink pageLink, String type);
 
     ListenableFuture<List<EntityView>> findEntityViewsByQuery(EntityViewSearchQuery query);
 
@@ -55,4 +60,6 @@ public interface EntityViewService {
     void deleteEntityView(EntityViewId entityViewId);
 
     void deleteEntityViewsByTenantId(TenantId tenantId);
+
+    ListenableFuture<List<EntitySubtype>> findEntityViewTypesByTenantId(TenantId tenantId);
 }

@@ -144,7 +144,9 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
 
     @Test
     public void testSaveEntityViewWithEmptyName() throws Exception {
-        doPost("/api/entityView", new EntityView())
+        EntityView entityView = new EntityView();
+        entityView.setType("default");
+        doPost("/api/entityView", entityView)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("Entity view name should be specified!")));
     }
@@ -355,6 +357,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         view.setEntityId(testDevice.getId());
         view.setTenantId(savedTenant.getId());
         view.setName("Test entity view");
+        view.setType("default");
         view.setKeys(telemetry);
         view.setStartTimeMs((long) getValue(valueTelemetryOfDevices, "lastActivityTime") * 10);
         view.setEndTimeMs((long) getValue(valueTelemetryOfDevices, "lastActivityTime") / 10);
@@ -402,6 +405,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         view.setEntityId(testDevice.getId());
         view.setTenantId(savedTenant.getId());
         view.setName(name);
+        view.setType("default");
         view.setKeys(telemetry);
         return doPost("/api/entityView", view, EntityView.class);
     }

@@ -533,6 +533,21 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                     }
                 );
                 break;
+            case types.aliasFilterType.entityViewType.value:
+                getEntitiesByNameFilter(types.entityType.entityView, filter.entityViewNameFilter, maxItems, {ignoreLoading: true}, filter.entityViewType).then(
+                    function success(entities) {
+                        if (entities && entities.length || !failOnEmpty) {
+                            result.entities = entitiesToEntitiesInfo(entities);
+                            deferred.resolve(result);
+                        } else {
+                            deferred.reject();
+                        }
+                    },
+                    function fail() {
+                        deferred.reject();
+                    }
+                );
+                break;
             case types.aliasFilterType.relationsQuery.value:
                 result.stateEntity = filter.rootStateEntity;
                 var rootEntityType;
@@ -578,6 +593,7 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                 break;
             case types.aliasFilterType.assetSearchQuery.value:
             case types.aliasFilterType.deviceSearchQuery.value:
+            case types.aliasFilterType.entityViewSearchQuery.value:
                 result.stateEntity = filter.rootStateEntity;
                 if (result.stateEntity && stateEntityId) {
                     rootEntityType = stateEntityId.entityType;
@@ -604,6 +620,9 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                     } else if (filter.type == types.aliasFilterType.deviceSearchQuery.value) {
                         searchQuery.deviceTypes = filter.deviceTypes;
                         findByQueryPromise = deviceService.findByQuery(searchQuery, false, {ignoreLoading: true});
+                    } else if (filter.type == types.aliasFilterType.entityViewSearchQuery.value) {
+                        searchQuery.entityViewTypes = filter.entityViewTypes;
+                        findByQueryPromise = entityViewService.findByQuery(searchQuery, false, {ignoreLoading: true});
                     }
                     findByQueryPromise.then(
                         function success(entities) {
@@ -646,6 +665,8 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                     return entityTypes.indexOf(types.entityType.asset)  > -1 ? true : false;
                 case types.aliasFilterType.deviceType.value:
                     return entityTypes.indexOf(types.entityType.device)  > -1 ? true : false;
+                case types.aliasFilterType.entityViewType.value:
+                    return entityTypes.indexOf(types.entityType.entityView)  > -1 ? true : false;
                 case types.aliasFilterType.relationsQuery.value:
                     if (filter.filters && filter.filters.length) {
                         var match = false;
@@ -671,6 +692,8 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                     return entityTypes.indexOf(types.entityType.asset)  > -1 ? true : false;
                 case types.aliasFilterType.deviceSearchQuery.value:
                     return entityTypes.indexOf(types.entityType.device)  > -1 ? true : false;
+                case types.aliasFilterType.entityViewSearchQuery.value:
+                    return entityTypes.indexOf(types.entityType.entityView)  > -1 ? true : false;
             }
         }
         return false;
@@ -690,12 +713,16 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                 return entityType === types.entityType.asset;
             case types.aliasFilterType.deviceType.value:
                 return entityType === types.entityType.device;
+            case types.aliasFilterType.entityViewType.value:
+                return entityType === types.entityType.entityView;
             case types.aliasFilterType.relationsQuery.value:
                 return true;
             case types.aliasFilterType.assetSearchQuery.value:
                 return entityType === types.entityType.asset;
             case types.aliasFilterType.deviceSearchQuery.value:
                 return entityType === types.entityType.device;
+            case types.aliasFilterType.entityViewSearchQuery.value:
+                return entityType === types.entityType.entityView;
         }
         return false;
     }
@@ -1046,6 +1073,8 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
             return assetService.deleteAsset(entityId.id);
         } else if (entityId.entityType == types.entityType.device) {
             return deviceService.deleteDevice(entityId.id);
+        } else if (entityId.entityType == types.entityType.entityView) {
+            return entityViewService.deleteEntityView(entityId.id);
         }
     }
 
@@ -1151,6 +1180,8 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
             return assetService.saveAsset(entity);
         } else if (entityType == types.entityType.device) {
             return deviceService.saveDevice(entity);
+        } else if (entityType == types.entityType.entityView) {
+            return entityViewService.saveEntityView(entity);
         }
     }
 
@@ -1279,6 +1310,8 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
             searchQuery.assetTypes = entitySubTypes;
         } else if (entityType == types.entityType.device) {
             searchQuery.deviceTypes = entitySubTypes;
+        } else if (entityType == types.entityType.entityView) {
+            searchQuery.entityViewTypes = entitySubTypes;
         } else {
             return null; //Not supported
         }
