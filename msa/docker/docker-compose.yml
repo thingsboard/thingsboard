@@ -58,7 +58,7 @@ services:
     logging:
       driver: "json-file"
       options:
-        max-size: "6g"
+        max-size: "200m"
         max-file: "30"
     env_file:
       - tb-node.env
