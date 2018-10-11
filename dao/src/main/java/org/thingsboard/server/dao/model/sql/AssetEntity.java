@@ -16,44 +16,44 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.datastax.driver.core.utils.UUIDs;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
+import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.model.MultipleCustomerAssignmentEntity;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+import java.io.IOException;
 
-import static org.thingsboard.server.dao.model.ModelConstants.ASSET_COLUMN_FAMILY_NAME;
-import static org.thingsboard.server.dao.model.ModelConstants.ASSET_CUSTOMER_ID_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.ASSET_NAME_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.ASSET_TENANT_ID_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.ASSET_TYPE_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ASSET_COLUMN_FAMILY_NAME)
-public final class AssetEntity extends BaseSqlEntity<Asset> implements SearchTextEntity<Asset> {
+@Slf4j
+public final class AssetEntity extends BaseSqlEntity<Asset> implements SearchTextEntity<Asset>, MultipleCustomerAssignmentEntity {
 
     @Column(name = ASSET_TENANT_ID_PROPERTY)
     private String tenantId;
 
-    @Column(name = ASSET_CUSTOMER_ID_PROPERTY)
-    private String customerId;
+    @Column(name = ASSET_ASSIGNED_CUSTOMERS_PROPERTY)
+    private String assignedCustomers;
 
     @Column(name = ASSET_NAME_PROPERTY)
     private String name;
@@ -79,8 +79,12 @@ public final class AssetEntity extends BaseSqlEntity<Asset> implements SearchTex
         if (asset.getTenantId() != null) {
             this.tenantId = UUIDConverter.fromTimeUUID(asset.getTenantId().getId());
         }
-        if (asset.getCustomerId() != null) {
-            this.customerId = UUIDConverter.fromTimeUUID(asset.getCustomerId().getId());
+        if (asset.getAssignedCustomers() != null) {
+            try {
+                this.assignedCustomers = objectMapper.writeValueAsString(asset.getAssignedCustomers());
+            } catch (JsonProcessingException e) {
+                log.error(UNABLE_TO_SERIALIZE_ASSIGNED_CUSTOMERS_TO_STRING, e);
+            }
         }
         this.name = asset.getName();
         this.type = asset.getType();
@@ -108,8 +112,12 @@ public final class AssetEntity extends BaseSqlEntity<Asset> implements SearchTex
         if (tenantId != null) {
             asset.setTenantId(new TenantId(UUIDConverter.fromString(tenantId)));
         }
-        if (customerId != null) {
-            asset.setCustomerId(new CustomerId(UUIDConverter.fromString(customerId)));
+        if (!StringUtils.isEmpty(assignedCustomers)) {
+            try {
+                asset.setAssignedCustomers(objectMapper.readValue(assignedCustomers, assignedCustomersType));
+            } catch (IOException e) {
+                log.warn(UNABLE_TO_PARSE_ASSIGNED_CUSTOMERS, e);
+            }
         }
         asset.setName(name);
         asset.setType(type);

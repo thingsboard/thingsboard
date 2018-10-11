@@ -76,7 +76,7 @@ public class DashboardInfoEntity extends BaseSqlEntity<DashboardInfo> implements
             try {
                 this.assignedCustomers = objectMapper.writeValueAsString(dashboardInfo.getAssignedCustomers());
             } catch (JsonProcessingException e) {
-                log.error("Unable to serialize assigned customers to string!", e);
+                log.error(ModelConstants.UNABLE_TO_SERIALIZE_ASSIGNED_CUSTOMERS_TO_STRING, e);
             }
         }
     }
@@ -107,7 +107,7 @@ public class DashboardInfoEntity extends BaseSqlEntity<DashboardInfo> implements
             try {
                 dashboardInfo.setAssignedCustomers(objectMapper.readValue(assignedCustomers, assignedCustomersType));
             } catch (IOException e) {
-                log.warn("Unable to parse assigned customers!", e);
+                log.warn(ModelConstants.UNABLE_TO_PARSE_ASSIGNED_CUSTOMERS, e);
             }
         }
         return dashboardInfo;

@@ -16,36 +16,41 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.datastax.driver.core.utils.UUIDs;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
+import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.model.MultipleCustomerAssignmentEntity;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+import java.io.IOException;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ModelConstants.DEVICE_COLUMN_FAMILY_NAME)
-public final class DeviceEntity extends BaseSqlEntity<Device> implements SearchTextEntity<Device> {
+@Slf4j
+public final class DeviceEntity extends BaseSqlEntity<Device> implements SearchTextEntity<Device>, MultipleCustomerAssignmentEntity {
 
     @Column(name = ModelConstants.DEVICE_TENANT_ID_PROPERTY)
     private String tenantId;
 
-    @Column(name = ModelConstants.DEVICE_CUSTOMER_ID_PROPERTY)
-    private String customerId;
+    @Column(name = ModelConstants.DEVICE_ASSIGNED_CUSTOMERS_PROPERTY)
+    private String assignedCustomers;
 
     @Column(name = ModelConstants.DEVICE_TYPE_PROPERTY)
     private String type;
@@ -71,8 +76,12 @@ public final class DeviceEntity extends BaseSqlEntity<Device> implements SearchT
         if (device.getTenantId() != null) {
             this.tenantId = toString(device.getTenantId().getId());
         }
-        if (device.getCustomerId() != null) {
-            this.customerId = toString(device.getCustomerId().getId());
+        if (device.getAssignedCustomers() != null) {
+            try {
+                this.assignedCustomers = objectMapper.writeValueAsString(device.getAssignedCustomers());
+            } catch (JsonProcessingException e) {
+                log.error(ModelConstants.UNABLE_TO_SERIALIZE_ASSIGNED_CUSTOMERS_TO_STRING, e);
+            }
         }
         this.name = device.getName();
         this.type = device.getType();
@@ -96,8 +105,12 @@ public final class DeviceEntity extends BaseSqlEntity<Device> implements SearchT
         if (tenantId != null) {
             device.setTenantId(new TenantId(toUUID(tenantId)));
         }
-        if (customerId != null) {
-            device.setCustomerId(new CustomerId(toUUID(customerId)));
+        if (!StringUtils.isEmpty(assignedCustomers)) {
+            try {
+                device.setAssignedCustomers(objectMapper.readValue(assignedCustomers, assignedCustomersType));
+            } catch (IOException e) {
+                log.warn(ModelConstants.UNABLE_TO_PARSE_ASSIGNED_CUSTOMERS, e);
+            }
         }
         device.setName(name);
         device.setType(type);

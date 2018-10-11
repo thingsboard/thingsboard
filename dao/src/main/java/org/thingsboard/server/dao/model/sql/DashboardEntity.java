@@ -17,9 +17,7 @@ package org.thingsboard.server.dao.model.sql;
 
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
@@ -27,11 +25,11 @@ import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Dashboard;
-import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.model.MultipleCustomerAssignmentEntity;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
@@ -39,7 +37,6 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import java.io.IOException;
-import java.util.HashSet;
 
 @Data
 @Slf4j
@@ -47,11 +44,7 @@ import java.util.HashSet;
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ModelConstants.DASHBOARD_COLUMN_FAMILY_NAME)
-public final class DashboardEntity extends BaseSqlEntity<Dashboard> implements SearchTextEntity<Dashboard> {
-
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-    private static final JavaType assignedCustomersType =
-            objectMapper.getTypeFactory().constructCollectionType(HashSet.class, ShortCustomerInfo.class);
+public final class DashboardEntity extends BaseSqlEntity<Dashboard> implements SearchTextEntity<Dashboard>, MultipleCustomerAssignmentEntity {
 
     @Column(name = ModelConstants.DASHBOARD_TENANT_ID_PROPERTY)
     private String tenantId;

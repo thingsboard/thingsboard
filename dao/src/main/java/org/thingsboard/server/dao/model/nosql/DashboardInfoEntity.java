@@ -20,53 +20,48 @@ import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.DashboardInfo;
-import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.model.MultipleCustomerAssignmentEntity;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.model.ModelConstants.DASHBOARD_ASSIGNED_CUSTOMERS_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.DASHBOARD_COLUMN_FAMILY_NAME;
-import static org.thingsboard.server.dao.model.ModelConstants.DASHBOARD_TENANT_ID_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.DASHBOARD_TITLE_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.ID_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Table(name = DASHBOARD_COLUMN_FAMILY_NAME)
 @EqualsAndHashCode
 @ToString
 @Slf4j
-public class DashboardInfoEntity implements SearchTextEntity<DashboardInfo> {
+public class DashboardInfoEntity implements SearchTextEntity<DashboardInfo>, MultipleCustomerAssignmentEntity {
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-    private static final JavaType assignedCustomersType =
-            objectMapper.getTypeFactory().constructCollectionType(HashSet.class, ShortCustomerInfo.class);
-
+    @Getter @Setter
     @PartitionKey(value = 0)
     @Column(name = ID_PROPERTY)
     private UUID id;
 
+    @Getter @Setter
     @PartitionKey(value = 1)
     @Column(name = DASHBOARD_TENANT_ID_PROPERTY)
     private UUID tenantId;
 
+    @Getter @Setter
     @Column(name = DASHBOARD_TITLE_PROPERTY)
     private String title;
 
+    @Getter @Setter
     @Column(name = SEARCH_TEXT_PROPERTY)
     private String searchText;
 
+    @Getter @Setter
     @Column(name = DASHBOARD_ASSIGNED_CUSTOMERS_PROPERTY)
     private String assignedCustomers;
 
@@ -91,50 +86,9 @@ public class DashboardInfoEntity implements SearchTextEntity<DashboardInfo> {
         }
     }
 
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public UUID getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(UUID tenantId) {
-        this.tenantId = tenantId;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getAssignedCustomers() {
-        return assignedCustomers;
-    }
-
-    public void setAssignedCustomers(String assignedCustomers) {
-        this.assignedCustomers = assignedCustomers;
-    }
-
     @Override
     public String getSearchTextSource() {
-        return getTitle();
-    }
-
-    @Override
-    public void setSearchText(String searchText) {
-        this.searchText = searchText;
-    }
-
-    public String getSearchText() {
-        return searchText;
+        return title;
     }
 
     @Override
