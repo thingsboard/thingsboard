@@ -30,6 +30,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -93,7 +94,11 @@ public class CoapServerTest {
                         Device dev = new Device();
                         dev.setId(devId);
                         dev.setTenantId(new TenantId(UUID.randomUUID()));
-                        dev.setCustomerId(new CustomerId(UUID.randomUUID()));
+                        Customer customer = new Customer();
+                        customer.setTenantId(dev.getTenantId());
+                        customer.setTitle("Test Customer");
+                        customer.setId(new CustomerId(UUID.randomUUID()));
+                        dev.addAssignedCustomer(customer);
                         return Optional.of(dev);
                     } else {
                         return Optional.empty();
