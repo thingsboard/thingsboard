@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS alarm (
 CREATE TABLE IF NOT EXISTS asset (
     id varchar(31) NOT NULL CONSTRAINT asset_pkey PRIMARY KEY,
     additional_info varchar,
-    customer_id varchar(31),
+    assigned_customers varchar(1000000),
     name varchar(255),
     search_text varchar(255),
     tenant_id varchar(31),
@@ -114,7 +114,7 @@ CREATE TABLE IF NOT EXISTS dashboard (
 CREATE TABLE IF NOT EXISTS device (
     id varchar(31) NOT NULL CONSTRAINT device_pkey PRIMARY KEY,
     additional_info varchar,
-    customer_id varchar(31),
+    assigned_customers varchar(1000000),
     type varchar(255),
     name varchar(255),
     search_text varchar(255),
