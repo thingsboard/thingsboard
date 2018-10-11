@@ -22,24 +22,20 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.EntitySubtype;
-import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.dao.model.ModelConstants;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
@@ -86,8 +82,7 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         Assert.assertNotNull(savedAsset.getId());
         Assert.assertTrue(savedAsset.getCreatedTime() > 0);
         Assert.assertEquals(savedTenant.getId(), savedAsset.getTenantId());
-        Assert.assertNotNull(savedAsset.getCustomerId());
-        Assert.assertEquals(NULL_UUID, savedAsset.getCustomerId().getId());
+        Assert.assertTrue(savedAsset.getAssignedCustomers().isEmpty());
         Assert.assertEquals(asset.getName(), savedAsset.getName());
 
         savedAsset.setName("My new asset");
@@ -184,17 +179,24 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
         Asset assignedAsset = doPost("/api/customer/" + savedCustomer.getId().getId().toString()
                 + "/asset/" + savedAsset.getId().getId().toString(), Asset.class);
-        Assert.assertEquals(savedCustomer.getId(), assignedAsset.getCustomerId());
+        List<CustomerId> customerIds = assignedAsset.getAssignedCustomers().stream().map(ShortCustomerInfo::getCustomerId).collect(Collectors.toList());
+        Assert.assertTrue(customerIds.contains(savedCustomer.getId()));
 
         Asset foundAsset = doGet("/api/asset/" + savedAsset.getId().getId().toString(), Asset.class);
-        Assert.assertEquals(savedCustomer.getId(), foundAsset.getCustomerId());
+        customerIds.clear();
+        customerIds = foundAsset.getAssignedCustomers().stream().map(ShortCustomerInfo::getCustomerId).collect(Collectors.toList());
+        Assert.assertTrue(customerIds.contains(savedCustomer.getId()));
 
         Asset unassignedAsset =
-                doDelete("/api/customer/asset/" + savedAsset.getId().getId().toString(), Asset.class);
-        Assert.assertEquals(ModelConstants.NULL_UUID, unassignedAsset.getCustomerId().getId());
+                doDelete("/api/customer/" + savedCustomer.getId().getId().toString() + "/asset/" + savedAsset.getId().getId().toString(), Asset.class);
+        customerIds.clear();
+        customerIds = unassignedAsset.getAssignedCustomers().stream().map(ShortCustomerInfo::getCustomerId).collect(Collectors.toList());
+        Assert.assertFalse(customerIds.contains(savedCustomer.getId()));
 
         foundAsset = doGet("/api/asset/" + savedAsset.getId().getId().toString(), Asset.class);
-        Assert.assertEquals(ModelConstants.NULL_UUID, foundAsset.getCustomerId().getId());
+        customerIds.clear();
+        customerIds = foundAsset.getAssignedCustomers().stream().map(ShortCustomerInfo::getCustomerId).collect(Collectors.toList());
+        Assert.assertFalse(customerIds.contains(savedCustomer.getId()));
     }
 
     @Test
@@ -542,7 +544,7 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         Assert.assertEquals(assetsTitle2, loadedAssetsTitle2);
 
         for (Asset asset : loadedAssetsTitle1) {
-            doDelete("/api/customer/asset/" + asset.getId().getId().toString())
+            doDelete("/api/customer/" + customerId.getId().toString() + "/asset/" + asset.getId().getId().toString())
                     .andExpect(status().isOk());
         }
 
@@ -553,7 +555,7 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         Assert.assertEquals(0, pageData.getData().size());
 
         for (Asset asset : loadedAssetsTitle2) {
-            doDelete("/api/customer/asset/" + asset.getId().getId().toString())
+            doDelete("/api/customer/" + customerId.getId().toString() + "/asset/" + asset.getId().getId().toString())
                     .andExpect(status().isOk());
         }
 
@@ -634,7 +636,7 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         Assert.assertEquals(assetsType2, loadedAssetsType2);
 
         for (Asset asset : loadedAssetsType1) {
-            doDelete("/api/customer/asset/" + asset.getId().getId().toString())
+            doDelete("/api/customer/" + customerId.getId().toString() + "/asset/" + asset.getId().getId().toString())
                     .andExpect(status().isOk());
         }
 
@@ -645,7 +647,7 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
         Assert.assertEquals(0, pageData.getData().size());
 
         for (Asset asset : loadedAssetsType2) {
-            doDelete("/api/customer/asset/" + asset.getId().getId().toString())
+            doDelete("/api/customer/" + customerId.getId().toString() + "/asset/" + asset.getId().getId().toString())
                     .andExpect(status().isOk());
         }
 

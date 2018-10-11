@@ -15,16 +15,13 @@
  */
 package org.thingsboard.server.controller;
 
-import static org.hamcrest.Matchers.containsString;
-import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import com.datastax.driver.core.utils.UUIDs;
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceCredentialsId;
@@ -34,13 +31,14 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
-import org.thingsboard.server.dao.model.ModelConstants;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static org.hamcrest.Matchers.containsString;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
     
@@ -87,10 +85,9 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         Assert.assertNotNull(savedDevice.getId());
         Assert.assertTrue(savedDevice.getCreatedTime() > 0);
         Assert.assertEquals(savedTenant.getId(), savedDevice.getTenantId());
-        Assert.assertNotNull(savedDevice.getCustomerId());
-        Assert.assertEquals(NULL_UUID, savedDevice.getCustomerId().getId());
+        Assert.assertTrue(savedDevice.getAssignedCustomers().isEmpty());
         Assert.assertEquals(device.getName(), savedDevice.getName());
-        
+
         DeviceCredentials deviceCredentials = 
                 doGet("/api/device/" + savedDevice.getId().getId().toString() + "/credentials", DeviceCredentials.class); 
 
@@ -195,17 +192,25 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         
         Device assignedDevice = doPost("/api/customer/" + savedCustomer.getId().getId().toString() 
                 + "/device/" + savedDevice.getId().getId().toString(), Device.class);
-        Assert.assertEquals(savedCustomer.getId(), assignedDevice.getCustomerId());
+        List<CustomerId> customerIds = assignedDevice.getAssignedCustomers().stream().map(ShortCustomerInfo::getCustomerId).collect(Collectors.toList());
+        Assert.assertTrue(customerIds.contains(savedCustomer.getId()));
         
         Device foundDevice = doGet("/api/device/" + savedDevice.getId().getId().toString(), Device.class);
-        Assert.assertEquals(savedCustomer.getId(), foundDevice.getCustomerId());
+        customerIds.clear();
+        customerIds = foundDevice.getAssignedCustomers().stream().map(ShortCustomerInfo::getCustomerId).collect(Collectors.toList());
+        Assert.assertTrue(customerIds.contains(savedCustomer.getId()));
 
         Device unassignedDevice = 
-                doDelete("/api/customer/device/" + savedDevice.getId().getId().toString(), Device.class);
-        Assert.assertEquals(ModelConstants.NULL_UUID, unassignedDevice.getCustomerId().getId());
+                doDelete("/api/customer/" + savedCustomer.getId().getId().toString()  +
+                        "/device/" + savedDevice.getId().getId().toString(), Device.class);
+        customerIds.clear();
+        customerIds = unassignedDevice.getAssignedCustomers().stream().map(ShortCustomerInfo::getCustomerId).collect(Collectors.toList());
+        Assert.assertFalse(customerIds.contains(savedCustomer.getId()));
         
         foundDevice = doGet("/api/device/" + savedDevice.getId().getId().toString(), Device.class);
-        Assert.assertEquals(ModelConstants.NULL_UUID, foundDevice.getCustomerId().getId());
+        customerIds.clear();
+        customerIds = foundDevice.getAssignedCustomers().stream().map(ShortCustomerInfo::getCustomerId).collect(Collectors.toList());
+        Assert.assertFalse(customerIds.contains(savedCustomer.getId()));
     }
     
     @Test
@@ -650,7 +655,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         Assert.assertEquals(devicesTitle2, loadedDevicesTitle2);
         
         for (Device device : loadedDevicesTitle1) {
-            doDelete("/api/customer/device/" + device.getId().getId().toString())
+            doDelete("/api/customer/"+ customerId.getId().toString() +"/device/" + device.getId().getId().toString())
             .andExpect(status().isOk());
         }
         
@@ -661,7 +666,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         Assert.assertEquals(0, pageData.getData().size());
         
         for (Device device : loadedDevicesTitle2) {
-            doDelete("/api/customer/device/" + device.getId().getId().toString())
+            doDelete("/api/customer/"+ customerId.getId().toString() +"/device/" + device.getId().getId().toString())
             .andExpect(status().isOk());
         }
         
@@ -742,7 +747,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         Assert.assertEquals(devicesType2, loadedDevicesType2);
 
         for (Device device : loadedDevicesType1) {
-            doDelete("/api/customer/device/" + device.getId().getId().toString())
+            doDelete("/api/customer/"+ customerId.getId().toString() +"/device/" + device.getId().getId().toString())
                     .andExpect(status().isOk());
         }
 
@@ -753,7 +758,7 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         Assert.assertEquals(0, pageData.getData().size());
 
         for (Device device : loadedDevicesType2) {
-            doDelete("/api/customer/device/" + device.getId().getId().toString())
+            doDelete("/api/customer/"+ customerId.getId().toString() +"/device/" + device.getId().getId().toString())
                     .andExpect(status().isOk());
         }
 

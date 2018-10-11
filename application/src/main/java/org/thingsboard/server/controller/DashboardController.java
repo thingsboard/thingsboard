@@ -19,19 +19,8 @@ import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
-import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.Dashboard;
-import org.thingsboard.server.common.data.DashboardInfo;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.ShortCustomerInfo;
+import org.springframework.web.bind.annotation.*;
+import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -279,15 +268,7 @@ public class DashboardController extends BaseController {
             DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
             Dashboard dashboard = checkDashboardId(dashboardId);
 
-            Set<CustomerId> customerIds = new HashSet<>();
-            if (strCustomerIds != null) {
-                for (String strCustomerId : strCustomerIds) {
-                    CustomerId customerId = new CustomerId(toUUID(strCustomerId));
-                    if (!dashboard.isAssignedToCustomer(customerId)) {
-                        customerIds.add(customerId);
-                    }
-                }
-            }
+            Set<CustomerId> customerIds = getCustomerIds(strCustomerIds, dashboard);
 
             if (customerIds.isEmpty()) {
                 return dashboard;
@@ -322,15 +303,7 @@ public class DashboardController extends BaseController {
             DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
             Dashboard dashboard = checkDashboardId(dashboardId);
 
-            Set<CustomerId> customerIds = new HashSet<>();
-            if (strCustomerIds != null) {
-                for (String strCustomerId : strCustomerIds) {
-                    CustomerId customerId = new CustomerId(toUUID(strCustomerId));
-                    if (dashboard.isAssignedToCustomer(customerId)) {
-                        customerIds.add(customerId);
-                    }
-                }
-            }
+            Set<CustomerId> customerIds = getCustomerIds(strCustomerIds, dashboard);
 
             if (customerIds.isEmpty()) {
                 return dashboard;

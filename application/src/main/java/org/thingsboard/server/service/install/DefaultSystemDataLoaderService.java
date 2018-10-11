@@ -23,11 +23,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.AdminSettings;
-import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.Authority;
@@ -139,11 +135,11 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         createUser(Authority.CUSTOMER_USER, demoTenant.getId(), customerB.getId(), "customerB@thingsboard.org", CUSTOMER_CRED);
         createUser(Authority.CUSTOMER_USER, demoTenant.getId(), customerC.getId(), "customerC@thingsboard.org", CUSTOMER_CRED);
 
-        createDevice(demoTenant.getId(), customerA.getId(), DEFAULT_DEVICE_TYPE, "Test Device A1", "A1_TEST_TOKEN", null);
-        createDevice(demoTenant.getId(), customerA.getId(), DEFAULT_DEVICE_TYPE, "Test Device A2", "A2_TEST_TOKEN", null);
-        createDevice(demoTenant.getId(), customerA.getId(), DEFAULT_DEVICE_TYPE, "Test Device A3", "A3_TEST_TOKEN", null);
-        createDevice(demoTenant.getId(), customerB.getId(), DEFAULT_DEVICE_TYPE, "Test Device B1", "B1_TEST_TOKEN", null);
-        createDevice(demoTenant.getId(), customerC.getId(), DEFAULT_DEVICE_TYPE, "Test Device C1", "C1_TEST_TOKEN", null);
+        createDevice(demoTenant.getId(), customerA, DEFAULT_DEVICE_TYPE, "Test Device A1", "A1_TEST_TOKEN", null);
+        createDevice(demoTenant.getId(), customerA, DEFAULT_DEVICE_TYPE, "Test Device A2", "A2_TEST_TOKEN", null);
+        createDevice(demoTenant.getId(), customerA, DEFAULT_DEVICE_TYPE, "Test Device A3", "A3_TEST_TOKEN", null);
+        createDevice(demoTenant.getId(), customerB, DEFAULT_DEVICE_TYPE, "Test Device B1", "B1_TEST_TOKEN", null);
+        createDevice(demoTenant.getId(), customerC, DEFAULT_DEVICE_TYPE, "Test Device C1", "C1_TEST_TOKEN", null);
 
         createDevice(demoTenant.getId(), null, DEFAULT_DEVICE_TYPE, "DHT11 Demo Device", "DHT11_DEMO_TOKEN", "Demo device that is used in sample " +
                 "applications that upload data from DHT11 temperature and humidity sensor");
@@ -187,14 +183,14 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     }
 
     private Device createDevice(TenantId tenantId,
-                                CustomerId customerId,
+                                Customer customer,
                                 String type,
                                 String name,
                                 String accessToken,
                                 String description) {
         Device device = new Device();
         device.setTenantId(tenantId);
-        device.setCustomerId(customerId);
+        device.addAssignedCustomer(customer);
         device.setType(type);
         device.setName(name);
         if (description != null) {

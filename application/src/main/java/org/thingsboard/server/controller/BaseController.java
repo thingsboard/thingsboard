@@ -74,10 +74,7 @@ import org.thingsboard.server.service.state.DeviceStateService;
 import javax.mail.MessagingException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -226,6 +223,19 @@ public abstract class BaseController {
         return new TextPageLink(limit, textSearch, idOffsetUuid, textOffset);
     }
 
+    Set<CustomerId> getCustomerIds(String[] strCustomerIds, HasMultipleCustomers element) {
+        Set<CustomerId> customerIds = new HashSet<>();
+        if (strCustomerIds != null) {
+            for (String strCustomerId : strCustomerIds) {
+                CustomerId customerId = new CustomerId(toUUID(strCustomerId));
+                if (!element.isAssignedToCustomer(customerId)) {
+                    customerIds.add(customerId);
+                }
+            }
+        }
+        return customerIds;
+    }
+
     protected SecurityUser getCurrentUser() throws ThingsboardException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof SecurityUser) {
@@ -254,7 +264,7 @@ public abstract class BaseController {
             validateId(customerId, "Incorrect customerId " + customerId);
             SecurityUser authUser = getCurrentUser();
             if (authUser.getAuthority() == Authority.SYS_ADMIN ||
-                    (authUser.getAuthority() != Authority.TENANT_ADMIN &&
+                    (authUser.getAuthority() != Authority.TENANT_ADMIN && authUser.getAuthority() != Authority.CUSTOMER_USER &&
                             (authUser.getCustomerId() == null || !authUser.getCustomerId().equals(customerId)))) {
                 throw new ThingsboardException(YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION,
                         ThingsboardErrorCode.PERMISSION_DENIED);
@@ -342,8 +352,10 @@ public abstract class BaseController {
     protected void checkDevice(Device device) throws ThingsboardException {
         checkNotNull(device);
         checkTenantId(device.getTenantId());
-        if (device.getCustomerId() != null && !device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
-            checkCustomerId(device.getCustomerId());
+        if (!device.getAssignedCustomers().isEmpty()) {
+            for (ShortCustomerInfo customerInfo : device.getAssignedCustomers()) {
+                checkCustomerId(customerInfo.getCustomerId());
+            }
         }
     }
 
@@ -380,8 +392,10 @@ public abstract class BaseController {
     protected void checkAsset(Asset asset) throws ThingsboardException {
         checkNotNull(asset);
         checkTenantId(asset.getTenantId());
-        if (asset.getCustomerId() != null && !asset.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
-            checkCustomerId(asset.getCustomerId());
+        if (!asset.getAssignedCustomers().isEmpty()) {
+            for (ShortCustomerInfo customerInfo : asset.getAssignedCustomers()) {
+                checkCustomerId(customerInfo.getCustomerId());
+            }
         }
     }
 
@@ -556,16 +570,16 @@ public abstract class BaseController {
     }
 
     protected <I extends EntityId> I emptyId(EntityType entityType) {
-        return (I)EntityIdFactory.getByTypeAndUuid(entityType, ModelConstants.NULL_UUID);
+        return (I) EntityIdFactory.getByTypeAndUuid(entityType, ModelConstants.NULL_UUID);
     }
 
     protected <E extends HasName, I extends EntityId> void logEntityAction(I entityId, E entity, CustomerId customerId,
-                                                                 ActionType actionType, Exception e, Object... additionalInfo) throws ThingsboardException {
+                                                                           ActionType actionType, Exception e, Object... additionalInfo) throws ThingsboardException {
         logEntityAction(getCurrentUser(), entityId, entity, customerId, actionType, e, additionalInfo);
     }
 
     protected <E extends HasName, I extends EntityId> void logEntityAction(User user, I entityId, E entity, CustomerId customerId,
-                                                                 ActionType actionType, Exception e, Object... additionalInfo) throws ThingsboardException {
+                                                                           ActionType actionType, Exception e, Object... additionalInfo) throws ThingsboardException {
         if (customerId == null || customerId.isNullUid()) {
             customerId = user.getCustomerId();
         }
@@ -581,7 +595,7 @@ public abstract class BaseController {
     }
 
     private <E extends HasName, I extends EntityId> void pushEntityActionToRuleEngine(I entityId, E entity, User user, CustomerId customerId,
-                                                                         ActionType actionType, Object... additionalInfo) {
+                                                                                      ActionType actionType, Object... additionalInfo) {
         String msgType = null;
         switch (actionType) {
             case ADDED:

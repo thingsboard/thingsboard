@@ -18,17 +18,11 @@ package org.thingsboard.server.controller;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetSearchQuery;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -41,11 +35,12 @@ import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -75,17 +70,19 @@ public class AssetController extends BaseController {
             asset.setTenantId(getCurrentUser().getTenantId());
             if (getCurrentUser().getAuthority() == Authority.CUSTOMER_USER) {
                 if (asset.getId() == null || asset.getId().isNullUid() ||
-                    asset.getCustomerId() == null || asset.getCustomerId().isNullUid()) {
+                    asset.getAssignedCustomers().isEmpty()) {
                     throw new ThingsboardException("You don't have permission to perform this operation!",
                             ThingsboardErrorCode.PERMISSION_DENIED);
                 } else {
-                    checkCustomerId(asset.getCustomerId());
+                    for (ShortCustomerInfo customerInfo : asset.getAssignedCustomers()) {
+                        checkCustomerId(customerInfo.getCustomerId());
+                    }
                 }
             }
             Asset savedAsset  = checkNotNull(assetService.saveAsset(asset));
 
             logEntityAction(savedAsset.getId(), savedAsset,
-                    savedAsset.getCustomerId(),
+                    null,
                     asset.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
 
             return  savedAsset;
@@ -107,7 +104,7 @@ public class AssetController extends BaseController {
             assetService.deleteAsset(assetId);
 
             logEntityAction(assetId, asset,
-                    asset.getCustomerId(),
+                    null,
                     ActionType.DELETED, null, strAssetId);
 
         } catch (Exception e) {
@@ -136,7 +133,7 @@ public class AssetController extends BaseController {
             Asset savedAsset = checkNotNull(assetService.assignAssetToCustomer(assetId, customerId));
 
             logEntityAction(assetId, savedAsset,
-                    savedAsset.getCustomerId(),
+                    customerId,
                     ActionType.ASSIGNED_TO_CUSTOMER, null, strAssetId, strCustomerId, customer.getName());
 
             return  savedAsset;
@@ -151,26 +148,163 @@ public class AssetController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/customer/asset/{assetId}", method = RequestMethod.DELETE)
+    @RequestMapping(value = "/customer/{customerId}/asset/{assetId}", method = RequestMethod.DELETE)
     @ResponseBody
-    public Asset unassignAssetFromCustomer(@PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
+    public Asset unassignAssetFromCustomer(@PathVariable("customerId") String strCustomerId,
+                                           @PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
+        checkParameter(ASSET_ID, strAssetId);
+        try {
+            CustomerId customerId = new CustomerId(toUUID(strCustomerId));
+            Customer customer = checkCustomerId(customerId);
+
+            AssetId assetId = new AssetId(toUUID(strAssetId));
+            Asset asset = checkAssetId(assetId);
+            if (asset.getAssignedCustomers().isEmpty()) {
+                throw new IncorrectParameterException("Asset isn't assigned to any customer!");
+            }
+            Asset savedAsset = checkNotNull(assetService.unassignAssetFromCustomer(assetId, customerId));
+
+            logEntityAction(assetId, asset,
+                    customerId,
+                    ActionType.UNASSIGNED_FROM_CUSTOMER, null, strAssetId, customer.getId().toString(), customer.getName());
+
+            return savedAsset;
+        } catch (Exception e) {
+
+            logEntityAction(emptyId(EntityType.ASSET), null,
+                    null,
+                    ActionType.UNASSIGNED_FROM_CUSTOMER, e, strAssetId);
+
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/asset/{assetId}/customers", method = RequestMethod.POST)
+    @ResponseBody
+    public Asset updateAssetCustomers(@PathVariable(ASSET_ID) String strAssetId,
+                                      @RequestBody String[] strCustomerIds) throws ThingsboardException {
         checkParameter(ASSET_ID, strAssetId);
         try {
             AssetId assetId = new AssetId(toUUID(strAssetId));
             Asset asset = checkAssetId(assetId);
-            if (asset.getCustomerId() == null || asset.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
-                throw new IncorrectParameterException("Asset isn't assigned to any customer!");
+
+            Set<CustomerId> customerIds = new HashSet<>();
+            if (strCustomerIds != null) {
+                for (String strCustomerId : strCustomerIds) {
+                    customerIds.add(new CustomerId(toUUID(strCustomerId)));
+                }
             }
 
-            Customer customer = checkCustomerId(asset.getCustomerId());
+            Set<CustomerId> addedCustomerIds = new HashSet<>();
+            Set<CustomerId> removedCustomerIds = new HashSet<>();
+            for (CustomerId customerId : customerIds) {
+                if (!asset.isAssignedToCustomer(customerId)) {
+                    addedCustomerIds.add(customerId);
+                }
+            }
 
-            Asset savedAsset = checkNotNull(assetService.unassignAssetFromCustomer(assetId));
+            Set<ShortCustomerInfo> assignedCustomers = asset.getAssignedCustomers();
+            if (assignedCustomers != null) {
+                for (ShortCustomerInfo customerInfo : assignedCustomers) {
+                    if (!customerIds.contains(customerInfo.getCustomerId())) {
+                        removedCustomerIds.add(customerInfo.getCustomerId());
+                    }
+                }
+            }
 
-            logEntityAction(assetId, asset,
-                    asset.getCustomerId(),
-                    ActionType.UNASSIGNED_FROM_CUSTOMER, null, strAssetId, customer.getId().toString(), customer.getName());
+            if (addedCustomerIds.isEmpty() && removedCustomerIds.isEmpty()) {
+                return asset;
+            } else {
+                Asset savedAsset = null;
+                for (CustomerId customerId : addedCustomerIds) {
+                    savedAsset = checkNotNull(assetService.assignAssetToCustomer(assetId, customerId));
+                    ShortCustomerInfo customerInfo = savedAsset.getAssignedCustomerInfo(customerId);
+                    logEntityAction(assetId, savedAsset,
+                            customerId,
+                            ActionType.ASSIGNED_TO_CUSTOMER, null, strAssetId, customerId.toString(), customerInfo.getTitle());
+                }
+                for (CustomerId customerId : removedCustomerIds) {
+                    ShortCustomerInfo customerInfo = asset.getAssignedCustomerInfo(customerId);
+                    savedAsset = checkNotNull(assetService.unassignAssetFromCustomer(assetId, customerId));
+                    logEntityAction(assetId, asset,
+                            customerId,
+                            ActionType.UNASSIGNED_FROM_CUSTOMER, null, strAssetId, customerId.toString(), customerInfo.getTitle());
 
-            return savedAsset;
+                }
+                return savedAsset;
+            }
+        } catch (Exception e) {
+
+            logEntityAction(emptyId(EntityType.ASSET), null,
+                    null,
+                    ActionType.ASSIGNED_TO_CUSTOMER, e, strAssetId);
+
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/asset/{assetId}/customers/add", method = RequestMethod.POST)
+    @ResponseBody
+    public Asset addAssetCustomers(@PathVariable(ASSET_ID) String strAssetId,
+                                   @RequestBody String[] strCustomerIds) throws ThingsboardException {
+        checkParameter(ASSET_ID, strAssetId);
+        try {
+            AssetId assetId = new AssetId(toUUID(strAssetId));
+            Asset asset = checkAssetId(assetId);
+
+            Set<CustomerId> customerIds = getCustomerIds(strCustomerIds, asset);
+
+            if (customerIds.isEmpty()) {
+                return asset;
+            } else {
+                Asset savedAsset = null;
+                for (CustomerId customerId : customerIds) {
+                    savedAsset = checkNotNull(assetService.assignAssetToCustomer(assetId, customerId));
+                    ShortCustomerInfo customerInfo = savedAsset.getAssignedCustomerInfo(customerId);
+                    logEntityAction(assetId, savedAsset,
+                            customerId,
+                            ActionType.ASSIGNED_TO_CUSTOMER, null, strAssetId, customerId.toString(), customerInfo.getTitle());
+                }
+                return savedAsset;
+            }
+        } catch (Exception e) {
+
+            logEntityAction(emptyId(EntityType.ASSET), null,
+                    null,
+                    ActionType.ASSIGNED_TO_CUSTOMER, e, strAssetId);
+
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/asset/{assetId}/customers/remove", method = RequestMethod.POST)
+    @ResponseBody
+    public Asset removeAssetCustomers(@PathVariable(ASSET_ID) String strAssetId,
+                                      @RequestBody String[] strCustomerIds) throws ThingsboardException {
+        checkParameter(ASSET_ID, strAssetId);
+        try {
+            AssetId assetId = new AssetId(toUUID(strAssetId));
+            Asset asset = checkAssetId(assetId);
+
+            Set<CustomerId> customerIds = getCustomerIds(strCustomerIds, asset);
+
+            if (customerIds.isEmpty()) {
+                return asset;
+            } else {
+                Asset savedAsset = null;
+                for (CustomerId customerId : customerIds) {
+                    ShortCustomerInfo customerInfo = asset.getAssignedCustomerInfo(customerId);
+                    savedAsset = checkNotNull(assetService.unassignAssetFromCustomer(assetId, customerId));
+                    logEntityAction(assetId, asset,
+                            customerId,
+                            ActionType.UNASSIGNED_FROM_CUSTOMER, null, strAssetId, customerId.toString(), customerInfo.getTitle());
+
+                }
+                return savedAsset;
+            }
         } catch (Exception e) {
 
             logEntityAction(emptyId(EntityType.ASSET), null,
@@ -193,7 +327,7 @@ public class AssetController extends BaseController {
             Asset savedAsset = checkNotNull(assetService.assignAssetToCustomer(assetId, publicCustomer.getId()));
 
             logEntityAction(assetId, savedAsset,
-                    savedAsset.getCustomerId(),
+                    null,
                     ActionType.ASSIGNED_TO_CUSTOMER, null, strAssetId, publicCustomer.getId().toString(), publicCustomer.getName());
 
             return savedAsset;
@@ -202,6 +336,33 @@ public class AssetController extends BaseController {
             logEntityAction(emptyId(EntityType.ASSET), null,
                     null,
                     ActionType.ASSIGNED_TO_CUSTOMER, e, strAssetId);
+
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/customer/public/asset/{assetId}", method = RequestMethod.DELETE)
+    @ResponseBody
+    public Asset unassignAssetFromPublicCustomer(@PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
+        checkParameter(ASSET_ID, strAssetId);
+        try {
+            AssetId assetId = new AssetId(toUUID(strAssetId));
+            Asset asset = checkAssetId(assetId);
+            Customer publicCustomer = customerService.findOrCreatePublicCustomer(asset.getTenantId());
+
+            Asset savedAsset = checkNotNull(assetService.unassignAssetFromCustomer(assetId, publicCustomer.getId()));
+
+            logEntityAction(assetId, asset,
+                    publicCustomer.getId(),
+                    ActionType.UNASSIGNED_FROM_CUSTOMER, null, strAssetId, publicCustomer.getId().toString(), publicCustomer.getName());
+
+            return savedAsset;
+        } catch (Exception e) {
+
+            logEntityAction(emptyId(EntityType.ASSET), null,
+                    null,
+                    ActionType.UNASSIGNED_FROM_CUSTOMER, e, strAssetId);
 
             throw handleException(e);
         }
