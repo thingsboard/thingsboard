@@ -82,9 +82,9 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
             l.forEach(r -> {
                 if (r.getValue() != null) {
                     msg.getMetaData().putValue(prefix + r.getKey(), r.getValueAsString());
-                } else {
+                } /*else {
                     throw new RuntimeException("[" + scope + "][" + r.getKey() + "] attribute value is not present in the DB!");
-                }
+                } */
             });
             return null;
         });
@@ -94,14 +94,14 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
         if (CollectionUtils.isEmpty(keys)) {
             return Futures.immediateFuture(null);
         }
-        ListenableFuture<List<TsKvEntry>> latest = ctx.getTimeseriesService().findLatest(entityId, keys);
+        ListenableFuture<List<TsKvEntry>> latest = ctx.getTimeseriesService().findLatest(entityId, keys);  /* if a key is not found it is returned with a null value witch causes RuntimeException in next loop */
         return Futures.transform(latest, l -> {
             l.forEach(r -> {
                 if (r.getValue() != null) {
                     msg.getMetaData().putValue(r.getKey(), r.getValueAsString());
-                } else {
-                    throw new RuntimeException("[" + r.getKey() + "] telemetry value is not present in the DB!");
-                }
+                } /* else {
+                    throw new RuntimeException("[" + r.getKey() + "] telemetry value is not present in the DB!"); 
+                } */
             });
             return null;
         });
