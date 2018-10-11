@@ -183,8 +183,8 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
             Integer requestId = Integer.valueOf(topicName.substring(MqttTopics.DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX.length()));
             String payload = inbound.payload().toString(UTF8);
             JsonElement requestBody = new JsonParser().parse(payload);
-            Set<String> clientKeys = toStringSet(requestBody, "clientKeys");
-            Set<String> sharedKeys = toStringSet(requestBody, "sharedKeys");
+            Set<String> clientKeys = toStringSet(requestBody, "client");
+            Set<String> sharedKeys = toStringSet(requestBody, "shared");
             if (clientKeys == null && sharedKeys == null) {
                 return new BasicGetAttributesRequest(requestId);
             } else {
