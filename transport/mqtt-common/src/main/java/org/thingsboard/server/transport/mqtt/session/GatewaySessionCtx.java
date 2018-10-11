@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,11 @@
  */
 package org.thingsboard.server.transport.mqtt.session;
 
+
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
@@ -25,28 +30,28 @@ import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
-import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.id.SessionId;
-import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
-import org.thingsboard.server.common.data.relation.EntityRelation;
-import org.thingsboard.server.common.msg.core.*;
-import org.thingsboard.server.common.msg.session.BasicAdaptorToSessionActorMsg;
-import org.thingsboard.server.common.msg.session.BasicTransportToDeviceSessionActorMsg;
-import org.thingsboard.server.common.msg.session.ctrl.SessionCloseMsg;
-import org.thingsboard.server.common.transport.SessionMsgProcessor;
+import org.thingsboard.server.common.transport.TransportService;
+import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
-import org.thingsboard.server.common.transport.auth.DeviceAuthService;
-import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
+import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
+import org.thingsboard.server.transport.mqtt.MqttTransportContext;
 import org.thingsboard.server.transport.mqtt.MqttTransportHandler;
 import org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor;
+import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 
-import java.util.*;
+import javax.annotation.Nullable;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Collectors;
-
-import static org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor.validateJsonPayload;
 
 /**
  * Created by ashvayka on 19.01.17.
@@ -55,184 +60,235 @@ import static org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor.val
 public class GatewaySessionCtx {
 
     private static final String DEFAULT_DEVICE_TYPE = "default";
-    public static final String CAN_T_PARSE_VALUE = "Can't parse value: ";
-    public static final String DEVICE_PROPERTY = "device";
-//    private final Device gateway;
-//    private final SessionId gatewaySessionId;
-//    private final SessionMsgProcessor processor;
-//    private final DeviceService deviceService;
-//    private final DeviceAuthService authService;
-//    private final RelationService relationService;
-//    private final Map<String, GatewayDeviceSessionCtx> devices;
-//    private final ConcurrentMap<String, Integer> mqttQoSMap;
-    private ChannelHandlerContext channel;
+    private static final String CAN_T_PARSE_VALUE = "Can't parse value: ";
+    private static final String DEVICE_PROPERTY = "device";
 
-//    public GatewaySessionCtx(SessionMsgProcessor processor, DeviceService deviceService, DeviceAuthService authService, RelationService relationService, DeviceSessionCtx gatewaySessionCtx) {
-//        this.processor = processor;
-//        this.deviceService = deviceService;
-//        this.authService = authService;
-//        this.relationService = relationService;
-//        this.gateway = gatewaySessionCtx.getDevice();
-//        this.gatewaySessionId = gatewaySessionCtx.getSessionId();
-//        this.devices = new HashMap<>();
-//        this.mqttQoSMap = gatewaySessionCtx.getMqttQoSMap();
-//    }
+    private final MqttTransportContext context;
+    private final TransportService transportService;
+    private final DeviceInfoProto gateway;
+    private final UUID sessionId;
+    private final Map<String, GatewayDeviceSessionCtx> devices;
+    private final ConcurrentMap<String, Integer> mqttQoSMap;
+    private final ChannelHandlerContext channel;
 
-    public GatewaySessionCtx(DeviceSessionCtx deviceSessionCtx) {
-
+    public GatewaySessionCtx(MqttTransportContext context, DeviceSessionCtx deviceSessionCtx, UUID sessionId) {
+        this.context = context;
+        this.transportService = context.getTransportService();
+        this.gateway = deviceSessionCtx.getDeviceInfo();
+        this.sessionId = sessionId;
+        this.devices = new ConcurrentHashMap<>();
+        this.mqttQoSMap = deviceSessionCtx.getMqttQoSMap();
+        this.channel = deviceSessionCtx.getChannel();
     }
 
     public void onDeviceConnect(MqttPublishMessage msg) throws AdaptorException {
         JsonElement json = getJson(msg);
         String deviceName = checkDeviceName(getDeviceName(json));
         String deviceType = getDeviceType(json);
-        onDeviceConnect(deviceName, deviceType);
-        ack(msg);
+        Futures.addCallback(onDeviceConnect(deviceName, deviceType), new FutureCallback<GatewayDeviceSessionCtx>() {
+            @Override
+            public void onSuccess(@Nullable GatewayDeviceSessionCtx result) {
+                ack(msg);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.warn("[{}] Failed to process device connect command: {}", sessionId, deviceName, t);
+
+            }
+        }, context.getExecutor());
     }
 
-    private void onDeviceConnect(String deviceName, String deviceType) {
-//        if (!devices.containsKey(deviceName)) {
-//            Device device = deviceService.findDeviceByTenantIdAndName(gateway.getTenantId(), deviceName);
-//            if (device == null) {
-//                device = new Device();
-//                device.setTenantId(gateway.getTenantId());
-//                device.setName(deviceName);
-//                device.setType(deviceType);
-//                device.setCustomerId(gateway.getCustomerId());
-//                device = deviceService.saveDevice(device);
-//                relationService.saveRelationAsync(new EntityRelation(gateway.getId(), device.getId(), "Created"));
-//                processor.onDeviceAdded(device);
-//            }
-//            GatewayDeviceSessionCtx ctx = new GatewayDeviceSessionCtx(this, device, mqttQoSMap);
-//            devices.put(deviceName, ctx);
-//            log.debug("[{}] Added device [{}] to the gateway session", gatewaySessionId, deviceName);
-//            processor.process(new BasicTransportToDeviceSessionActorMsg(device, new BasicAdaptorToSessionActorMsg(ctx, new AttributesSubscribeMsg())));
-//            processor.process(new BasicTransportToDeviceSessionActorMsg(device, new BasicAdaptorToSessionActorMsg(ctx, new RpcSubscribeMsg())));
-//        }
+    private ListenableFuture<GatewayDeviceSessionCtx> onDeviceConnect(String deviceName, String deviceType) {
+        SettableFuture<GatewayDeviceSessionCtx> future = SettableFuture.create();
+        GatewayDeviceSessionCtx result = devices.get(deviceName);
+        if (result == null) {
+            transportService.process(GetOrCreateDeviceFromGatewayRequestMsg.newBuilder()
+                            .setDeviceName(deviceName)
+                            .setDeviceType(deviceType)
+                            .setGatewayIdMSB(gateway.getDeviceIdMSB())
+                            .setGatewayIdLSB(gateway.getDeviceIdLSB()).build(),
+                    new TransportServiceCallback<GetOrCreateDeviceFromGatewayResponseMsg>() {
+                        @Override
+                        public void onSuccess(GetOrCreateDeviceFromGatewayResponseMsg msg) {
+                            GatewayDeviceSessionCtx deviceSessionCtx = new GatewayDeviceSessionCtx(GatewaySessionCtx.this, msg.getDeviceInfo(), mqttQoSMap);
+                            if (devices.putIfAbsent(deviceName, deviceSessionCtx) == null) {
+                                SessionInfoProto deviceSessionInfo = deviceSessionCtx.getSessionInfo();
+                                transportService.process(deviceSessionInfo, MqttTransportHandler.getSessionEventMsg(TransportProtos.SessionEvent.OPEN), null);
+                                transportService.registerSession(deviceSessionInfo, deviceSessionCtx);
+                            }
+                            future.set(devices.get(deviceName));
+                        }
+
+                        @Override
+                        public void onError(Throwable e) {
+                            log.warn("[{}] Failed to process device connect command: {}", sessionId, deviceName, e);
+                            future.setException(e);
+                        }
+                    });
+        } else {
+            future.set(result);
+        }
+        return future;
     }
 
     public void onDeviceDisconnect(MqttPublishMessage msg) throws AdaptorException {
-//        String deviceName = checkDeviceName(getDeviceName(getJson(msg)));
-//        GatewayDeviceSessionCtx deviceSessionCtx = devices.remove(deviceName);
-//        if (deviceSessionCtx != null) {
-//            processor.process(SessionCloseMsg.onDisconnect(deviceSessionCtx.getSessionId()));
-//            deviceSessionCtx.setClosed(true);
-//            log.debug("[{}] Removed device [{}] from the gateway session", gatewaySessionId, deviceName);
-//        } else {
-//            log.debug("[{}] Device [{}] was already removed from the gateway session", gatewaySessionId, deviceName);
-//        }
-//        ack(msg);
+        String deviceName = checkDeviceName(getDeviceName(getJson(msg)));
+        deregisterSession(deviceName);
+        ack(msg);
+    }
+
+    void deregisterSession(String deviceName) {
+        GatewayDeviceSessionCtx deviceSessionCtx = devices.remove(deviceName);
+        if (deviceSessionCtx != null) {
+            deregisterSession(deviceName, deviceSessionCtx);
+        } else {
+            log.debug("[{}] Device [{}] was already removed from the gateway session", sessionId, deviceName);
+        }
     }
 
     public void onGatewayDisconnect() {
-//        devices.forEach((k, v) -> {
-//            processor.process(SessionCloseMsg.onDisconnect(v.getSessionId()));
-//        });
+        devices.forEach(this::deregisterSession);
     }
 
     public void onDeviceTelemetry(MqttPublishMessage mqttMsg) throws AdaptorException {
-//        JsonElement json = validateJsonPayload(gatewaySessionId, mqttMsg.payload());
-//        int requestId = mqttMsg.variableHeader().messageId();
-//        if (json.isJsonObject()) {
-//            JsonObject jsonObj = json.getAsJsonObject();
-//            for (Map.Entry<String, JsonElement> deviceEntry : jsonObj.entrySet()) {
-//                String deviceName = checkDeviceConnected(deviceEntry.getKey());
-//                if (!deviceEntry.getValue().isJsonArray()) {
-//                    throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
-//                }
-//                BasicTelemetryUploadRequest request = new BasicTelemetryUploadRequest(requestId);
-//                JsonArray deviceData = deviceEntry.getValue().getAsJsonArray();
-//                for (JsonElement element : deviceData) {
-//                    JsonConverter.parseWithTs(request, element.getAsJsonObject());
-//                }
-//                GatewayDeviceSessionCtx deviceSessionCtx = devices.get(deviceName);
-//                processor.process(new BasicTransportToDeviceSessionActorMsg(deviceSessionCtx.getDevice(),
-//                        new BasicAdaptorToSessionActorMsg(deviceSessionCtx, request)));
-//            }
-//        } else {
-//            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
-//        }
-    }
+        JsonElement json = JsonMqttAdaptor.validateJsonPayload(sessionId, mqttMsg.payload());
+        int msgId = mqttMsg.variableHeader().packetId();
+        if (json.isJsonObject()) {
+            JsonObject jsonObj = json.getAsJsonObject();
+            for (Map.Entry<String, JsonElement> deviceEntry : jsonObj.entrySet()) {
+                String deviceName = deviceEntry.getKey();
+                Futures.addCallback(checkDeviceConnected(deviceName),
+                        new FutureCallback<GatewayDeviceSessionCtx>() {
+                            @Override
+                            public void onSuccess(@Nullable GatewayDeviceSessionCtx deviceCtx) {
+                                if (!deviceEntry.getValue().isJsonArray()) {
+                                    throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
+                                }
+                                TransportProtos.PostTelemetryMsg postTelemetryMsg = JsonConverter.convertToTelemetryProto(deviceEntry.getValue().getAsJsonArray());
+                                transportService.process(deviceCtx.getSessionInfo(), postTelemetryMsg, getPubAckCallback(channel, deviceName, msgId, postTelemetryMsg));
+                            }
 
-    public void onDeviceRpcResponse(MqttPublishMessage mqttMsg) throws AdaptorException {
-//        JsonElement json = validateJsonPayload(gatewaySessionId, mqttMsg.payload());
-//        if (json.isJsonObject()) {
-//            JsonObject jsonObj = json.getAsJsonObject();
-//            String deviceName = checkDeviceConnected(jsonObj.get(DEVICE_PROPERTY).getAsString());
-//            Integer requestId = jsonObj.get("id").getAsInt();
-//            String data = jsonObj.get("data").toString();
-//            GatewayDeviceSessionCtx deviceSessionCtx = devices.get(deviceName);
-//            processor.process(new BasicTransportToDeviceSessionActorMsg(deviceSessionCtx.getDevice(),
-//                    new BasicAdaptorToSessionActorMsg(deviceSessionCtx, new ToDeviceRpcResponseMsg(requestId, data))));
-//            ack(mqttMsg);
-//        } else {
-//            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
-//        }
+                            @Override
+                            public void onFailure(Throwable t) {
+                                log.debug("[{}] Failed to process device teleemtry command: {}", sessionId, deviceName, t);
+                            }
+                        }, context.getExecutor());
+            }
+        } else {
+            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
+        }
     }
 
     public void onDeviceAttributes(MqttPublishMessage mqttMsg) throws AdaptorException {
-//        JsonElement json = validateJsonPayload(gatewaySessionId, mqttMsg.payload());
-//        int requestId = mqttMsg.variableHeader().messageId();
-//        if (json.isJsonObject()) {
-//            JsonObject jsonObj = json.getAsJsonObject();
-//            for (Map.Entry<String, JsonElement> deviceEntry : jsonObj.entrySet()) {
-//                String deviceName = checkDeviceConnected(deviceEntry.getKey());
-//                if (!deviceEntry.getValue().isJsonObject()) {
-//                    throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
-//                }
-//                long ts = System.currentTimeMillis();
-//                BasicAttributesUpdateRequest request = new BasicAttributesUpdateRequest(requestId);
-//                JsonObject deviceData = deviceEntry.getValue().getAsJsonObject();
-//                request.add(JsonConverter.parseValues(deviceData).stream().map(kv -> new BaseAttributeKvEntry(kv, ts)).collect(Collectors.toList()));
-//                GatewayDeviceSessionCtx deviceSessionCtx = devices.get(deviceName);
-//                processor.process(new BasicTransportToDeviceSessionActorMsg(deviceSessionCtx.getDevice(),
-//                        new BasicAdaptorToSessionActorMsg(deviceSessionCtx, request)));
-//            }
-//        } else {
-//            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
-//        }
+        JsonElement json = JsonMqttAdaptor.validateJsonPayload(sessionId, mqttMsg.payload());
+        int msgId = mqttMsg.variableHeader().packetId();
+        if (json.isJsonObject()) {
+            JsonObject jsonObj = json.getAsJsonObject();
+            for (Map.Entry<String, JsonElement> deviceEntry : jsonObj.entrySet()) {
+                String deviceName = deviceEntry.getKey();
+                Futures.addCallback(checkDeviceConnected(deviceName),
+                        new FutureCallback<GatewayDeviceSessionCtx>() {
+                            @Override
+                            public void onSuccess(@Nullable GatewayDeviceSessionCtx deviceCtx) {
+                                if (!deviceEntry.getValue().isJsonObject()) {
+                                    throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
+                                }
+                                TransportProtos.PostAttributeMsg postAttributeMsg = JsonConverter.convertToAttributesProto(deviceEntry.getValue().getAsJsonObject());
+                                transportService.process(deviceCtx.getSessionInfo(), postAttributeMsg, getPubAckCallback(channel, deviceName, msgId, postAttributeMsg));
+                            }
+
+                            @Override
+                            public void onFailure(Throwable t) {
+                                log.debug("[{}] Failed to process device teleemtry command: {}", sessionId, deviceName, t);
+                            }
+                        }, context.getExecutor());
+            }
+        } else {
+            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
+        }
+    }
+
+    public void onDeviceRpcResponse(MqttPublishMessage mqttMsg) throws AdaptorException {
+        JsonElement json = JsonMqttAdaptor.validateJsonPayload(sessionId, mqttMsg.payload());
+        int msgId = mqttMsg.variableHeader().packetId();
+        if (json.isJsonObject()) {
+            JsonObject jsonObj = json.getAsJsonObject();
+            String deviceName = jsonObj.get(DEVICE_PROPERTY).getAsString();
+            Futures.addCallback(checkDeviceConnected(deviceName),
+                    new FutureCallback<GatewayDeviceSessionCtx>() {
+                        @Override
+                        public void onSuccess(@Nullable GatewayDeviceSessionCtx deviceCtx) {
+                            Integer requestId = jsonObj.get("id").getAsInt();
+                            String data = jsonObj.get("data").toString();
+                            TransportProtos.ToDeviceRpcResponseMsg rpcResponseMsg = TransportProtos.ToDeviceRpcResponseMsg.newBuilder()
+                                    .setRequestId(requestId).setPayload(data).build();
+                            transportService.process(deviceCtx.getSessionInfo(), rpcResponseMsg, getPubAckCallback(channel, deviceName, msgId, rpcResponseMsg));
+                        }
+
+                        @Override
+                        public void onFailure(Throwable t) {
+                            log.debug("[{}] Failed to process device teleemtry command: {}", sessionId, deviceName, t);
+                        }
+                    }, context.getExecutor());
+        } else {
+            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
+        }
     }
 
     public void onDeviceAttributesRequest(MqttPublishMessage msg) throws AdaptorException {
-//        JsonElement json = validateJsonPayload(gatewaySessionId, msg.payload());
-//        if (json.isJsonObject()) {
-//            JsonObject jsonObj = json.getAsJsonObject();
-//            int requestId = jsonObj.get("id").getAsInt();
-//            String deviceName = jsonObj.get(DEVICE_PROPERTY).getAsString();
-//            boolean clientScope = jsonObj.get("client").getAsBoolean();
-//            Set<String> keys;
-//            if (jsonObj.has("key")) {
-//                keys = Collections.singleton(jsonObj.get("key").getAsString());
-//            } else {
-//                JsonArray keysArray = jsonObj.get("keys").getAsJsonArray();
-//                keys = new HashSet<>();
-//                for (JsonElement keyObj : keysArray) {
-//                    keys.add(keyObj.getAsString());
-//                }
-//            }
-//
-//            BasicGetAttributesRequest request;
-//            if (clientScope) {
-//                request = new BasicGetAttributesRequest(requestId, keys, null);
-//            } else {
-//                request = new BasicGetAttributesRequest(requestId, null, keys);
-//            }
-//            GatewayDeviceSessionCtx deviceSessionCtx = devices.get(deviceName);
-//            processor.process(new BasicTransportToDeviceSessionActorMsg(deviceSessionCtx.getDevice(),
-//                    new BasicAdaptorToSessionActorMsg(deviceSessionCtx, request)));
-//            ack(msg);
-//        } else {
-//            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
-//        }
+        JsonElement json = JsonMqttAdaptor.validateJsonPayload(sessionId, msg.payload());
+        if (json.isJsonObject()) {
+            JsonObject jsonObj = json.getAsJsonObject();
+            int requestId = jsonObj.get("id").getAsInt();
+            String deviceName = jsonObj.get(DEVICE_PROPERTY).getAsString();
+            boolean clientScope = jsonObj.get("client").getAsBoolean();
+            Set<String> keys;
+            if (jsonObj.has("key")) {
+                keys = Collections.singleton(jsonObj.get("key").getAsString());
+            } else {
+                JsonArray keysArray = jsonObj.get("keys").getAsJsonArray();
+                keys = new HashSet<>();
+                for (JsonElement keyObj : keysArray) {
+                    keys.add(keyObj.getAsString());
+                }
+            }
+            TransportProtos.GetAttributeRequestMsg.Builder result = TransportProtos.GetAttributeRequestMsg.newBuilder();
+            result.setRequestId(requestId);
+
+            if (clientScope) {
+                result.addAllClientAttributeNames(keys);
+            } else {
+                result.addAllSharedAttributeNames(keys);
+            }
+            int msgId = msg.variableHeader().packetId();
+            TransportProtos.GetAttributeRequestMsg requestMsg = result.build();
+            Futures.addCallback(checkDeviceConnected(deviceName),
+                    new FutureCallback<GatewayDeviceSessionCtx>() {
+                        @Override
+                        public void onSuccess(@Nullable GatewayDeviceSessionCtx deviceCtx) {
+                            transportService.process(deviceCtx.getSessionInfo(), requestMsg, getPubAckCallback(channel, deviceName, msgId, requestMsg));
+                        }
+
+                        @Override
+                        public void onFailure(Throwable t) {
+                            log.debug("[{}] Failed to process device teleemtry command: {}", sessionId, deviceName, t);
+                        }
+                    }, context.getExecutor());
+            ack(msg);
+        } else {
+            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
+        }
     }
 
-    private String checkDeviceConnected(String deviceName) {
-//        if (!devices.containsKey(deviceName)) {
-//            log.debug("[{}] Missing device [{}] for the gateway session", gatewaySessionId, deviceName);
-//            onDeviceConnect(deviceName, DEFAULT_DEVICE_TYPE);
-//        }
-//        return deviceName;
-        return null;
+    private ListenableFuture<GatewayDeviceSessionCtx> checkDeviceConnected(String deviceName) {
+        GatewayDeviceSessionCtx ctx = devices.get(deviceName);
+        if (ctx == null) {
+            log.debug("[{}] Missing device [{}] for the gateway session", sessionId, deviceName);
+            return onDeviceConnect(deviceName, DEFAULT_DEVICE_TYPE);
+        } else {
+            return Futures.immediateFuture(ctx);
+        }
     }
 
     private String checkDeviceName(String deviceName) {
@@ -253,27 +309,12 @@ public class GatewaySessionCtx {
     }
 
     private JsonElement getJson(MqttPublishMessage mqttMsg) throws AdaptorException {
-//        return JsonMqttAdaptor.validateJsonPayload(gatewaySessionId, mqttMsg.payload());
-        return null;
-    }
-
-    protected SessionMsgProcessor getProcessor() {
-//        return processor;
-        return null;
-    }
-
-    DeviceAuthService getAuthService() {
-//        return authService;
-        return null;
-    }
-
-    public void setChannel(ChannelHandlerContext channel) {
-        this.channel = channel;
+        return JsonMqttAdaptor.validateJsonPayload(sessionId, mqttMsg.payload());
     }
 
     private void ack(MqttPublishMessage msg) {
-        if (msg.variableHeader().messageId() > 0) {
-            writeAndFlush(MqttTransportHandler.createMqttPubAckMsg(msg.variableHeader().messageId()));
+        if (msg.variableHeader().packetId() > 0) {
+            writeAndFlush(MqttTransportHandler.createMqttPubAckMsg(msg.variableHeader().packetId()));
         }
     }
 
@@ -281,4 +322,39 @@ public class GatewaySessionCtx {
         channel.writeAndFlush(mqttMessage);
     }
 
+    public String getNodeId() {
+        return context.getNodeId();
+    }
+
+    private void deregisterSession(String deviceName, GatewayDeviceSessionCtx deviceSessionCtx) {
+        transportService.deregisterSession(deviceSessionCtx.getSessionInfo());
+        transportService.process(deviceSessionCtx.getSessionInfo(), MqttTransportHandler.getSessionEventMsg(TransportProtos.SessionEvent.CLOSED), null);
+        log.debug("[{}] Removed device [{}] from the gateway session", sessionId, deviceName);
+    }
+
+    private <T> TransportServiceCallback<Void> getPubAckCallback(final ChannelHandlerContext ctx, final String deviceName, final int msgId, final T msg) {
+        return new TransportServiceCallback<Void>() {
+            @Override
+            public void onSuccess(Void dummy) {
+                log.trace("[{}][{}] Published msg: {}", sessionId, deviceName, msg);
+                if (msgId > 0) {
+                    ctx.writeAndFlush(MqttTransportHandler.createMqttPubAckMsg(msgId));
+                }
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                log.trace("[{}] Failed to publish msg: {}", sessionId, deviceName, msg, e);
+                ctx.close();
+            }
+        };
+    }
+
+    public MqttTransportContext getContext() {
+        return context;
+    }
+
+    public MqttTransportAdaptor getAdaptor() {
+        return context.getAdaptor();
+    }
 }

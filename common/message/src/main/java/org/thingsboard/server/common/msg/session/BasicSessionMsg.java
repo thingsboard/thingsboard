@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.common.msg.session;
 
-import org.thingsboard.server.common.data.id.SessionId;
-
 public class BasicSessionMsg implements SessionMsg {
 
     private final SessionContext ctx;

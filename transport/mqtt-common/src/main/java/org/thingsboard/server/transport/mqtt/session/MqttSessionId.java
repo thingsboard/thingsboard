@@ -15,9 +15,6 @@
  */
 package org.thingsboard.server.transport.mqtt.session;
 
-import org.thingsboard.server.common.data.id.SessionId;
-
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**

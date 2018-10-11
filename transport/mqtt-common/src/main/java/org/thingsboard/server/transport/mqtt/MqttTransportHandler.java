@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -108,7 +108,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         this.quotaService = context.getQuotaService();
         this.sslHandler = context.getSslHandler();
         this.mqttQoSMap = new ConcurrentHashMap<>();
-        this.deviceSessionCtx = new DeviceSessionCtx(mqttQoSMap);
+        this.deviceSessionCtx = new DeviceSessionCtx(sessionId, mqttQoSMap);
     }
 
     @Override
@@ -176,42 +176,40 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
         if (topicName.startsWith(MqttTopics.BASE_GATEWAY_API_TOPIC)) {
             if (gatewaySessionCtx != null) {
-                gatewaySessionCtx.setChannel(ctx);
-//                handleMqttPublishMsg(topicName, msgId, mqttMsg);
+                handleGatewayPublishMsg(topicName, msgId, mqttMsg);
             }
         } else {
             processDevicePublish(ctx, mqttMsg, topicName, msgId);
         }
     }
 
-    //
-//    private void handleMqttPublishMsg(String topicName, int msgId, MqttPublishMessage mqttMsg) {
-//        try {
-//            switch (topicName) {
-//                case GATEWAY_TELEMETRY_TOPIC:
-//                    gatewaySessionCtx.onDeviceTelemetry(mqttMsg);
-//                    break;
-//                case GATEWAY_ATTRIBUTES_TOPIC:
-//                    gatewaySessionCtx.onDeviceAttributes(mqttMsg);
-//                    break;
-//                case GATEWAY_ATTRIBUTES_REQUEST_TOPIC:
-//                    gatewaySessionCtx.onDeviceAttributesRequest(mqttMsg);
-//                    break;
-//                case GATEWAY_RPC_TOPIC:
-//                    gatewaySessionCtx.onDeviceRpcResponse(mqttMsg);
-//                    break;
-//                case GATEWAY_CONNECT_TOPIC:
-//                    gatewaySessionCtx.onDeviceConnect(mqttMsg);
-//                    break;
-//                case GATEWAY_DISCONNECT_TOPIC:
-//                    gatewaySessionCtx.onDeviceDisconnect(mqttMsg);
-//                    break;
-//            }
-//        } catch (RuntimeException | AdaptorException e) {
-//            log.warn("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
-//        }
-//    }
-//
+    private void handleGatewayPublishMsg(String topicName, int msgId, MqttPublishMessage mqttMsg) {
+        try {
+            switch (topicName) {
+                case MqttTopics.GATEWAY_TELEMETRY_TOPIC:
+                    gatewaySessionCtx.onDeviceTelemetry(mqttMsg);
+                    break;
+                case MqttTopics.GATEWAY_ATTRIBUTES_TOPIC:
+                    gatewaySessionCtx.onDeviceAttributes(mqttMsg);
+                    break;
+                case MqttTopics.GATEWAY_ATTRIBUTES_REQUEST_TOPIC:
+                    gatewaySessionCtx.onDeviceAttributesRequest(mqttMsg);
+                    break;
+                case MqttTopics.GATEWAY_RPC_TOPIC:
+                    gatewaySessionCtx.onDeviceRpcResponse(mqttMsg);
+                    break;
+                case MqttTopics.GATEWAY_CONNECT_TOPIC:
+                    gatewaySessionCtx.onDeviceConnect(mqttMsg);
+                    break;
+                case MqttTopics.GATEWAY_DISCONNECT_TOPIC:
+                    gatewaySessionCtx.onDeviceDisconnect(mqttMsg);
+                    break;
+            }
+        } catch (RuntimeException | AdaptorException e) {
+            log.warn("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
+        }
+    }
+
     private void processDevicePublish(ChannelHandlerContext ctx, MqttPublishMessage mqttMsg, String topicName, int msgId) {
         try {
             if (topicName.equals(MqttTopics.DEVICE_TELEMETRY_TOPIC)) {
@@ -223,10 +221,10 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             } else if (topicName.startsWith(MqttTopics.DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX)) {
                 TransportProtos.GetAttributeRequestMsg getAttributeMsg = adaptor.convertToGetAttributes(deviceSessionCtx, mqttMsg);
                 transportService.process(sessionInfo, getAttributeMsg, getPubAckCallback(ctx, msgId, getAttributeMsg));
-            } else if (topicName.startsWith(MqttTopics.DEVICE_RPC_RESPONSE_TOPIC)){
+            } else if (topicName.startsWith(MqttTopics.DEVICE_RPC_RESPONSE_TOPIC)) {
                 TransportProtos.ToDeviceRpcResponseMsg rpcResponseMsg = adaptor.convertToDeviceRpcResponse(deviceSessionCtx, mqttMsg);
                 transportService.process(sessionInfo, rpcResponseMsg, getPubAckCallback(ctx, msgId, rpcResponseMsg));
-            } else if (topicName.startsWith(MqttTopics.DEVICE_RPC_REQUESTS_TOPIC)){
+            } else if (topicName.startsWith(MqttTopics.DEVICE_RPC_REQUESTS_TOPIC)) {
                 TransportProtos.ToServerRpcRequestMsg rpcRequestMsg = adaptor.convertToServerRpcRequest(deviceSessionCtx, mqttMsg);
                 transportService.process(sessionInfo, rpcRequestMsg, getPubAckCallback(ctx, msgId, rpcRequestMsg));
             }
@@ -469,7 +467,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             if (infoNode != null) {
                 JsonNode gatewayNode = infoNode.get("gateway");
                 if (gatewayNode != null && gatewayNode.asBoolean()) {
-                    gatewaySessionCtx = new GatewaySessionCtx(deviceSessionCtx);
+                    gatewaySessionCtx = new GatewaySessionCtx(context, deviceSessionCtx, sessionId);
                 }
             }
         } catch (IOException e) {
@@ -477,7 +475,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
     }
 
-    private SessionEventMsg getSessionEventMsg(SessionEvent event) {
+    public static SessionEventMsg getSessionEventMsg(SessionEvent event) {
         return SessionEventMsg.newBuilder()
                 .setSessionType(TransportProtos.SessionType.ASYNC)
                 .setEvent(event).build();

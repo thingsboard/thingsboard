@@ -16,7 +16,6 @@
 package org.thingsboard.server.actors.shared;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.id.SessionId;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
 

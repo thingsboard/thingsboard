@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,19 +19,14 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.mqtt.*;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.data.id.SessionId;
 import org.thingsboard.server.common.msg.session.SessionActorToAdaptorMsg;
 import org.thingsboard.server.common.msg.session.SessionCtrlMsg;
 import org.thingsboard.server.common.msg.session.SessionType;
 import org.thingsboard.server.common.msg.session.ctrl.SessionCloseMsg;
 import org.thingsboard.server.common.msg.session.ex.SessionException;
-import org.thingsboard.server.common.transport.SessionMsgProcessor;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
-import org.thingsboard.server.common.transport.auth.DeviceAuthService;
-import org.thingsboard.server.common.transport.session.DeviceAwareSessionContext;
-import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 
-import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -41,14 +36,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
 
-    private final MqttSessionId sessionId;
+    private final UUID sessionId;
     @Getter
     private ChannelHandlerContext channel;
     private AtomicInteger msgIdSeq = new AtomicInteger(0);
 
-    public DeviceSessionCtx(ConcurrentMap<String, Integer> mqttQoSMap) {
+    public DeviceSessionCtx(UUID sessionId, ConcurrentMap<String, Integer> mqttQoSMap) {
         super(null, null, mqttQoSMap);
-        this.sessionId = new MqttSessionId();
+        this.sessionId = sessionId;
     }
 
     @Override
@@ -94,7 +89,7 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
     }
 
     @Override
-    public SessionId getSessionId() {
+    public UUID getSessionId() {
         return sessionId;
     }
 

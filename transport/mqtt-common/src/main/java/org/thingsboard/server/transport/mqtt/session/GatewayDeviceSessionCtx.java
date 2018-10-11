@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,68 +16,78 @@
 package org.thingsboard.server.transport.mqtt.session;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.sun.xml.internal.bind.v2.TODO;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.UnpooledByteBufAllocator;
-import io.netty.handler.codec.mqtt.*;
-import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.id.SessionId;
+import io.netty.handler.codec.mqtt.MqttFixedHeader;
+import io.netty.handler.codec.mqtt.MqttMessage;
+import io.netty.handler.codec.mqtt.MqttMessageType;
+import io.netty.handler.codec.mqtt.MqttPublishMessage;
+import io.netty.handler.codec.mqtt.MqttPublishVariableHeader;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
-import org.thingsboard.server.common.msg.core.*;
+import org.thingsboard.server.common.msg.core.AttributesUpdateNotification;
+import org.thingsboard.server.common.msg.core.GetAttributesResponse;
+import org.thingsboard.server.common.msg.core.ResponseMsg;
+import org.thingsboard.server.common.msg.core.ToDeviceRpcRequestMsg;
 import org.thingsboard.server.common.msg.kv.AttributesKVMsg;
-import org.thingsboard.server.common.msg.session.*;
-import org.thingsboard.server.common.msg.session.ex.SessionException;
+import org.thingsboard.server.common.msg.session.SessionActorToAdaptorMsg;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
+import org.thingsboard.server.common.msg.session.ToDeviceMsg;
+import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
-import org.thingsboard.server.common.transport.session.DeviceAwareSessionContext;
+import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
+import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.transport.mqtt.MqttTopics;
 import org.thingsboard.server.transport.mqtt.MqttTransportHandler;
 
 import java.nio.charset.Charset;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by ashvayka on 19.01.17.
  */
-public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext {
+@Slf4j
+public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext implements SessionMsgListener {
 
     private static final Gson GSON = new Gson();
     private static final Charset UTF8 = Charset.forName("UTF-8");
     private static final ByteBufAllocator ALLOCATOR = new UnpooledByteBufAllocator(false);
-    public static final String DEVICE_PROPERTY = "device";
 
-    private GatewaySessionCtx parent;
-    private final MqttSessionId sessionId;
+    private final GatewaySessionCtx parent;
+    private final UUID sessionId;
+    private final SessionInfoProto sessionInfo;
     private volatile boolean closed;
     private AtomicInteger msgIdSeq = new AtomicInteger(0);
 
-    public GatewayDeviceSessionCtx(GatewaySessionCtx parent, Device device, ConcurrentMap<String, Integer> mqttQoSMap) {
-        super(parent.getProcessor(), parent.getAuthService(), device, mqttQoSMap);
+    public GatewayDeviceSessionCtx(GatewaySessionCtx parent, DeviceInfoProto deviceInfo, ConcurrentMap<String, Integer> mqttQoSMap) {
+        super(mqttQoSMap);
         this.parent = parent;
-        this.sessionId = new MqttSessionId();
+        this.sessionId = UUID.randomUUID();
+        this.sessionInfo = SessionInfoProto.newBuilder()
+                .setNodeId(parent.getNodeId())
+                .setSessionIdMSB(sessionId.getMostSignificantBits())
+                .setSessionIdLSB(sessionId.getLeastSignificantBits())
+                .setDeviceIdMSB(deviceInfo.getDeviceIdMSB())
+                .setDeviceIdLSB(deviceInfo.getDeviceIdLSB())
+                .setTenantIdMSB(deviceInfo.getTenantIdMSB())
+                .setTenantIdLSB(deviceInfo.getTenantIdLSB())
+                .build();
+        setDeviceInfo(deviceInfo);
     }
 
     @Override
-    public SessionId getSessionId() {
+    public UUID getSessionId() {
         return sessionId;
-    }
-
-    @Override
-    public SessionType getSessionType() {
-        return SessionType.ASYNC;
-    }
-
-    @Override
-    public void onMsg(SessionActorToAdaptorMsg sessionMsg) throws SessionException {
-        Optional<MqttMessage> message = getToDeviceMsg(sessionMsg);
-        message.ifPresent(parent::writeAndFlush);
     }
 
     private Optional<MqttMessage> getToDeviceMsg(SessionActorToAdaptorMsg sessionMsg) {
@@ -111,25 +121,6 @@ public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext {
                 break;
         }
         return Optional.empty();
-    }
-
-    @Override
-    public void onMsg(SessionCtrlMsg msg) throws SessionException {
-        //Do nothing
-    }
-
-    @Override
-    public boolean isClosed() {
-        return closed;
-    }
-
-    public void setClosed(boolean closed) {
-        this.closed = closed;
-    }
-
-    @Override
-    public long getTimeout() {
-        return 0;
     }
 
     private MqttMessage createMqttPublishMsg(String topic, GetAttributesResponse response) {
@@ -204,4 +195,40 @@ public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext {
         return new MqttPublishMessage(mqttFixedHeader, header, payload);
     }
 
+    SessionInfoProto getSessionInfo() {
+        return sessionInfo;
+    }
+
+    @Override
+    public void onGetAttributesResponse(TransportProtos.GetAttributeResponseMsg response) {
+        try {
+            parent.getAdaptor().convertToGatewayPublish(this, response).ifPresent(parent::writeAndFlush);
+        } catch (Exception e) {
+            log.trace("[{}] Failed to convert device attributes response to MQTT msg", sessionId, e);
+        }
+    }
+
+    @Override
+    public void onAttributeUpdate(TransportProtos.AttributeUpdateNotificationMsg notification) {
+        try {
+            parent.getAdaptor().convertToGatewayPublish(this, getDeviceInfo().getDeviceName(), notification).ifPresent(parent::writeAndFlush);
+        } catch (Exception e) {
+            log.trace("[{}] Failed to convert device attributes response to MQTT msg", sessionId, e);
+        }
+    }
+
+    @Override
+    public void onRemoteSessionCloseCommand(TransportProtos.SessionCloseNotificationProto sessionCloseNotification) {
+        parent.deregisterSession(getDeviceInfo().getDeviceName());
+    }
+
+    @Override
+    public void onToDeviceRpcRequest(TransportProtos.ToDeviceRpcRequestMsg toDeviceRequest) {
+
+    }
+
+    @Override
+    public void onToServerRpcResponse(TransportProtos.ToServerRpcResponseMsg toServerResponse) {
+        TODO
+    }
 }

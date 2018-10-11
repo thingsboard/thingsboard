@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.transport.http.session;
 
-import org.thingsboard.server.common.data.id.SessionId;
-
 import java.util.UUID;
 
 /**

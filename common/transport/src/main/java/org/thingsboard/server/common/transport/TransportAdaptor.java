@@ -15,19 +15,8 @@
  */
 package org.thingsboard.server.common.transport;
 
-import org.thingsboard.server.common.msg.session.AdaptorToSessionActorMsg;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
-import org.thingsboard.server.common.msg.session.SessionActorToAdaptorMsg;
 import org.thingsboard.server.common.msg.session.SessionContext;
-import org.thingsboard.server.common.transport.adaptor.AdaptorException;
-import org.thingsboard.server.gen.transport.TransportProtos;
-
-import java.util.Optional;
 
 public interface TransportAdaptor<C extends SessionContext, T, V> {
-
-    AdaptorToSessionActorMsg convertToActorMsg(C ctx, SessionMsgType type, T inbound) throws AdaptorException;
-
-    Optional<V> convertToAdaptorMsg(C ctx, SessionActorToAdaptorMsg msg) throws AdaptorException;
 
 }

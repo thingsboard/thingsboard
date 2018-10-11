@@ -411,29 +411,6 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         }
     }
 
-//    private void processRpcResponses(ActorContext context, DeviceToDeviceActorMsg msg) {
-//        SessionId sessionId = msg.getSessionId();
-//        FromDeviceMsg inMsg = msg.getPayload();
-//        if (inMsg.getMsgType() == SessionMsgType.TO_DEVICE_RPC_RESPONSE) {
-//            logger.debug("[{}] Processing rpc command response [{}]", deviceId, sessionId);
-//            ToDeviceRpcResponseMsg responseMsg = (ToDeviceRpcResponseMsg) inMsg;
-//            ToDeviceRpcRequestMetadata requestMd = toDeviceRpcPendingMap.remove(responseMsg.getRequestId());
-//            boolean success = requestMd != null;
-//            if (success) {
-//                systemContext.getDeviceRpcService().processRpcResponseFromDevice(new FromDeviceRpcResponse(requestMd.getMsg().getMsg().getId(),
-//                        requestMd.getMsg().getServerAddress(), responseMsg.getData(), null));
-//            } else {
-//                logger.debug("[{}] Rpc command response [{}] is stale!", deviceId, responseMsg.getRequestId());
-//            }
-//            if (msg.getSessionType() == SessionType.SYNC) {
-//                BasicCommandAckResponse response = success
-//                        ? BasicCommandAckResponse.onSuccess(SessionMsgType.TO_DEVICE_RPC_REQUEST, responseMsg.getRequestId())
-//                        : BasicCommandAckResponse.onError(SessionMsgType.TO_DEVICE_RPC_REQUEST, responseMsg.getRequestId(), new TimeoutException());
-//                sendMsgToSessionActor(new BasicActorSystemToDeviceSessionActorMsg(response, msg.getSessionId()), msg.getServerAddress());
-//            }
-//        }
-//    }
-
     void processClusterEventMsg(ClusterEventMsg msg) {
 //        if (!msg.isAdded()) {
 //            logger.debug("[{}] Clearing attributes/rpc subscription for server [{}]", deviceId, msg.getServerAddress());

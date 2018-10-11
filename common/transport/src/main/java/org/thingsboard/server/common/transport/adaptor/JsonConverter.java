@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,7 +52,8 @@ import java.util.stream.Collectors;
 public class JsonConverter {
 
     private static final Gson GSON = new Gson();
-    public static final String CAN_T_PARSE_VALUE = "Can't parse value: ";
+    private static final String CAN_T_PARSE_VALUE = "Can't parse value: ";
+    private static final String DEVICE_PROPERTY = "device";
 
     public static TelemetryUploadRequest convertToTelemetry(JsonElement jsonObject) throws JsonSyntaxException {
         return convertToTelemetry(jsonObject, BasicRequest.DEFAULT_REQUEST_ID);
@@ -316,6 +317,57 @@ public class JsonConverter {
             result.add("deleted", attrObject);
         }
         return result;
+    }
+
+    public static JsonObject getJsonObjectForGateway(TransportProtos.GetAttributeResponseMsg responseMsg) {
+        JsonObject result = new JsonObject();
+        result.addProperty("id", responseMsg.getRequestId());
+        if (responseMsg.getClientAttributeListCount() > 0) {
+            addValues(result, responseMsg.getClientAttributeListList());
+        }
+        if (responseMsg.getSharedAttributeListCount() > 0) {
+            addValues(result, responseMsg.getSharedAttributeListList());
+        }
+        return result;
+    }
+
+    public static JsonObject getJsonObjectForGateway(String deviceName, AttributeUpdateNotificationMsg notificationMsg) {
+        JsonObject result = new JsonObject();
+        result.addProperty(DEVICE_PROPERTY, deviceName);
+        result.add("data", toJson(notificationMsg));
+        return result;
+    }
+
+    private static void addValues(JsonObject result, List<TransportProtos.TsKvProto> kvList) {
+        if (kvList.size() == 1) {
+            addValueToJson(result, "value", kvList.get(0).getKv());
+        } else {
+            JsonObject values;
+            if (result.has("values")) {
+                values = result.get("values").getAsJsonObject();
+            } else {
+                values = new JsonObject();
+                result.add("values", values);
+            }
+            kvList.forEach(value -> addValueToJson(values, value.getKv().getKey(), value.getKv()));
+        }
+    }
+
+    private static void addValueToJson(JsonObject json, String name, TransportProtos.KeyValueProto entry) {
+        switch (entry.getType()) {
+            case BOOLEAN_V:
+                json.addProperty(name, entry.getBoolV());
+                break;
+            case STRING_V:
+                json.addProperty(name, entry.getStringV());
+                break;
+            case DOUBLE_V:
+                json.addProperty(name, entry.getDoubleV());
+                break;
+            case LONG_V:
+                json.addProperty(name, entry.getLongV());
+                break;
+        }
     }
 
     private static Consumer<AttributeKey> addToObject(JsonArray result) {

@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.transport.coap.session;
 
-import org.thingsboard.server.common.data.id.SessionId;
-
 public final class CoapSessionId implements SessionId {
 
     private final String clientAddress;

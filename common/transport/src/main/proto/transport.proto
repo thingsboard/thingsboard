@@ -125,6 +125,17 @@ message ValidateDeviceCredentialsResponseMsg {
   DeviceInfoProto deviceInfo = 1;
 }
 
+message GetOrCreateDeviceFromGatewayRequestMsg {
+  int64 gatewayIdMSB = 1;
+  int64 gatewayIdLSB = 2;
+  string deviceName = 3;
+  string deviceType = 4;
+}
+
+message GetOrCreateDeviceFromGatewayResponseMsg {
+  DeviceInfoProto deviceInfo = 1;
+}
+
 message SessionCloseNotificationProto {
   string message = 1;
 }
@@ -196,8 +207,10 @@ message ToTransportMsg {
 message TransportApiRequestMsg {
    ValidateDeviceTokenRequestMsg validateTokenRequestMsg = 1;
    ValidateDeviceX509CertRequestMsg validateX509CertRequestMsg = 2;
+   GetOrCreateDeviceFromGatewayRequestMsg getOrCreateDeviceRequestMsg = 3;
 }
 
 message TransportApiResponseMsg {
    ValidateDeviceCredentialsResponseMsg validateTokenResponseMsg = 1;
+   GetOrCreateDeviceFromGatewayResponseMsg getOrCreateDeviceResponseMsg = 2;
 }

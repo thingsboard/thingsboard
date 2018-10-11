@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package org.thingsboard.server.transport.mqtt;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.handler.ssl.SslHandler;
 import lombok.Data;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,8 +31,11 @@ import org.thingsboard.server.common.transport.quota.host.HostRequestsQuotaServi
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Created by ashvayka on 04.10.18.
@@ -64,6 +68,9 @@ public class MqttTransportContext {
 
     private SslHandler sslHandler;
 
+    @Getter
+    private ExecutorService executor;
+
     @PostConstruct
     public void init() {
         if (StringUtils.isEmpty(nodeId)) {
@@ -74,6 +81,14 @@ public class MqttTransportContext {
             }
         }
         log.info("Current NodeId: {}", nodeId);
+        executor = Executors.newCachedThreadPool();
+    }
+
+    @PreDestroy
+    public void stop() {
+        if (executor != null) {
+            executor.shutdownNow();
+        }
     }
 
 }

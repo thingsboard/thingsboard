@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.msg.session.ctrl;
 
-import org.thingsboard.server.common.data.id.SessionId;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.session.SessionCtrlMsg;
 

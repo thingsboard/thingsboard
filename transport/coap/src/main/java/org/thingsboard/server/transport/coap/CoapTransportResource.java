@@ -27,7 +27,6 @@ import org.eclipse.californium.core.network.Exchange;
 import org.eclipse.californium.core.network.ExchangeObserver;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.eclipse.californium.core.server.resources.Resource;
-import org.thingsboard.server.common.data.id.SessionId;
 import org.thingsboard.server.common.data.security.DeviceCredentialsFilter;
 import org.thingsboard.server.common.data.security.DeviceTokenCredentials;
 import org.thingsboard.server.common.msg.session.*;

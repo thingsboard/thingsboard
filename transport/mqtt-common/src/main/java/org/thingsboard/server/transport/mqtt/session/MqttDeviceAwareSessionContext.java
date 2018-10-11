@@ -31,12 +31,7 @@ public abstract class MqttDeviceAwareSessionContext extends DeviceAwareSessionCo
 
     private final ConcurrentMap<String, Integer> mqttQoSMap;
 
-    public MqttDeviceAwareSessionContext(SessionMsgProcessor processor, DeviceAuthService authService, ConcurrentMap<String, Integer> mqttQoSMap) {
-        super();
-        this.mqttQoSMap = mqttQoSMap;
-    }
-
-    public MqttDeviceAwareSessionContext(SessionMsgProcessor processor, DeviceAuthService authService, Device device, ConcurrentMap<String, Integer> mqttQoSMap) {
+    public MqttDeviceAwareSessionContext(ConcurrentMap<String, Integer> mqttQoSMap) {
         super();
         this.mqttQoSMap = mqttQoSMap;
     }

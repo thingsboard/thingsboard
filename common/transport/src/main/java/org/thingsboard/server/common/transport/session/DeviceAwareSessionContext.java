@@ -31,15 +31,8 @@ public abstract class DeviceAwareSessionContext implements SessionContext {
 
     @Getter
     private volatile DeviceId deviceId;
+    @Getter
     private volatile DeviceInfoProto deviceInfo;
-
-    public long getDeviceIdMSB() {
-        return deviceInfo.getDeviceIdMSB();
-    }
-
-    public long getDeviceIdLSB() {
-        return deviceInfo.getDeviceIdLSB();
-    }
 
     public DeviceId getDeviceId() {
         return deviceId;
