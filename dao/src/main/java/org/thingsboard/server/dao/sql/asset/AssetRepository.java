@@ -38,7 +38,7 @@ public interface AssetRepository extends CrudRepository<AssetEntity, String> {
                                      @Param("idOffset") String idOffset,
                                      Pageable pageable);
 
-    @Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
+    /*@Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
             "AND a.customerId = :customerId " +
             "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
             "AND a.id > :idOffset ORDER BY a.id")
@@ -46,11 +46,11 @@ public interface AssetRepository extends CrudRepository<AssetEntity, String> {
                                                   @Param("customerId") String customerId,
                                                   @Param("textSearch") String textSearch,
                                                   @Param("idOffset") String idOffset,
-                                                  Pageable pageable);
+                                                  Pageable pageable);*/
 
     List<AssetEntity> findByTenantIdAndIdIn(String tenantId, List<String> assetIds);
 
-    List<AssetEntity> findByTenantIdAndCustomerIdAndIdIn(String tenantId, String customerId, List<String> assetIds);
+    /*List<AssetEntity> findByTenantIdAndCustomerIdAndIdIn(String tenantId, String customerId, List<String> assetIds);*/
 
     AssetEntity findByTenantIdAndName(String tenantId, String name);
 
@@ -64,7 +64,7 @@ public interface AssetRepository extends CrudRepository<AssetEntity, String> {
                                             @Param("idOffset") String idOffset,
                                             Pageable pageable);
 
-    @Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
+    /*@Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
             "AND a.customerId = :customerId AND a.type = :type " +
             "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
             "AND a.id > :idOffset ORDER BY a.id")
@@ -73,7 +73,7 @@ public interface AssetRepository extends CrudRepository<AssetEntity, String> {
                                                          @Param("type") String type,
                                                          @Param("textSearch") String textSearch,
                                                          @Param("idOffset") String idOffset,
-                                                         Pageable pageable);
+                                                         Pageable pageable);*/
 
     @Query("SELECT DISTINCT a.type FROM AssetEntity a WHERE a.tenantId = :tenantId")
     List<String> findTenantAssetTypes(@Param("tenantId") String tenantId);

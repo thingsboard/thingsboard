@@ -26,7 +26,6 @@ import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface AssetService {
 
@@ -40,7 +39,7 @@ public interface AssetService {
 
     Asset assignAssetToCustomer(AssetId assetId, CustomerId customerId);
 
-    Asset unassignAssetFromCustomer(AssetId assetId);
+    Asset unassignAssetFromCustomer(AssetId assetId, CustomerId customerId);
 
     void deleteAsset(AssetId assetId);
 

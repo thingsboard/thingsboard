@@ -15,18 +15,28 @@
  */
 package org.thingsboard.server.dao;
 
+import org.thingsboard.server.common.data.SearchTextBased;
 import org.thingsboard.server.common.data.id.UUIDBased;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.dao.model.ToData;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public abstract class DaoUtil {
 
     private DaoUtil() {
+    }
+
+    public static <I extends UUIDBased, D extends SearchTextBased<I>> List<D> filterDataListByRelation(List<EntityRelation> relations, List<D> dataList) {
+        List<UUID> ids = relations.stream().map(entityRelation -> entityRelation.getTo().getId()).collect(Collectors.toList());
+        List<D> result = new ArrayList<>();
+        for (D data : dataList) {
+            if (ids.contains(data.getId().getId())) {
+                result.add(data);
+            }
+        }
+        return result;
     }
 
     public static <T> List<T> convertDataList(Collection<? extends ToData<T>> toDataList) {

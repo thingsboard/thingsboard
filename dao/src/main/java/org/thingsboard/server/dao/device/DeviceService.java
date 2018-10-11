@@ -39,7 +39,7 @@ public interface DeviceService {
 
     Device assignDeviceToCustomer(DeviceId deviceId, CustomerId customerId);
 
-    Device unassignDeviceFromCustomer(DeviceId deviceId);
+    Device unassignDeviceFromCustomer(DeviceId deviceId, CustomerId customerId);
 
     void deleteDevice(DeviceId deviceId);
 

@@ -32,6 +32,15 @@ public class ModelConstants {
     public static final String NULL_UUID_STR = UUIDConverter.fromTimeUUID(NULL_UUID);
     public static final TenantId SYSTEM_TENANT = new TenantId(ModelConstants.NULL_UUID);
 
+
+    /**
+     * Generic error constants
+     */
+    public static final String UNABLE_TO_SERIALIZE_ASSIGNED_CUSTOMERS_TO_STRING = "Unable to serialize assigned customers to string!";
+    public static final String UNABLE_TO_PARSE_ASSIGNED_CUSTOMERS = "Unable to parse assigned customers!";
+
+    public static final int DEFAULT_PAGINATION_LIMIT = 40;
+
     /**
      * Generic constants.
      */
@@ -131,7 +140,7 @@ public class ModelConstants {
     public static final String DEVICE_COLUMN_FAMILY_NAME = "device";
     public static final String DEVICE_FAMILY_NAME = "device";
     public static final String DEVICE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
-    public static final String DEVICE_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
+    public static final String DEVICE_ASSIGNED_CUSTOMERS_PROPERTY = "assigned_customers";
     public static final String DEVICE_NAME_PROPERTY = "name";
     public static final String DEVICE_TYPE_PROPERTY = "type";
     public static final String DEVICE_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
@@ -192,7 +201,7 @@ public class ModelConstants {
      */
     public static final String ASSET_COLUMN_FAMILY_NAME = "asset";
     public static final String ASSET_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
-    public static final String ASSET_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
+    public static final String ASSET_ASSIGNED_CUSTOMERS_PROPERTY = DEVICE_ASSIGNED_CUSTOMERS_PROPERTY;
     public static final String ASSET_NAME_PROPERTY = "name";
     public static final String ASSET_TYPE_PROPERTY = "type";
     public static final String ASSET_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
@@ -289,7 +298,7 @@ public class ModelConstants {
     public static final String DASHBOARD_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String DASHBOARD_TITLE_PROPERTY = TITLE_PROPERTY;
     public static final String DASHBOARD_CONFIGURATION_PROPERTY = "configuration";
-    public static final String DASHBOARD_ASSIGNED_CUSTOMERS_PROPERTY = "assigned_customers";
+    public static final String DASHBOARD_ASSIGNED_CUSTOMERS_PROPERTY = DEVICE_ASSIGNED_CUSTOMERS_PROPERTY;
 
     public static final String DASHBOARD_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "dashboard_by_tenant_and_search_text";
 

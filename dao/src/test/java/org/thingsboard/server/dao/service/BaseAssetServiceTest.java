@@ -35,8 +35,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
-
 public abstract class BaseAssetServiceTest extends AbstractServiceTest {
 
     private IdComparator<Asset> idComparator = new IdComparator<>();
@@ -69,8 +67,6 @@ public abstract class BaseAssetServiceTest extends AbstractServiceTest {
         Assert.assertNotNull(savedAsset.getId());
         Assert.assertTrue(savedAsset.getCreatedTime() > 0);
         Assert.assertEquals(asset.getTenantId(), savedAsset.getTenantId());
-        Assert.assertNotNull(savedAsset.getCustomerId());
-        Assert.assertEquals(NULL_UUID, savedAsset.getCustomerId().getId());
         Assert.assertEquals(asset.getName(), savedAsset.getName());
 
         savedAsset.setName("My new asset");

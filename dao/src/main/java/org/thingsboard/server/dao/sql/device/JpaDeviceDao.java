@@ -24,20 +24,20 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.UUIDConverter;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.device.DeviceDao;
 import org.thingsboard.server.dao.model.sql.DeviceEntity;
+import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
 import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUIDs;
@@ -52,6 +52,9 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
 
     @Autowired
     private DeviceRepository deviceRepository;
+
+    @Autowired
+    private RelationDao relationDao;
 
     @Override
     protected Class<DeviceEntity> getEntityClass() {
@@ -80,19 +83,22 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
 
     @Override
     public List<Device> findDevicesByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TextPageLink pageLink) {
-        return DaoUtil.convertDataList(
-                deviceRepository.findByTenantIdAndCustomerId(
-                        fromTimeUUID(tenantId),
-                        fromTimeUUID(customerId),
-                        Objects.toString(pageLink.getTextSearch(), ""),
-                        pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
-                        new PageRequest(0, pageLink.getLimit())));
+        List<EntityRelation> relations = relationDao.findRelations(new CustomerId(customerId),
+                EntityRelation.CONTAINS_TYPE, RelationTypeGroup.DEVICE, EntityType.DEVICE);
+
+        List<Device> deviceList = findDevicesByTenantId(tenantId, pageLink);
+
+        return DaoUtil.filterDataListByRelation(relations, deviceList);
     }
 
     @Override
     public ListenableFuture<List<Device>> findDevicesByTenantIdCustomerIdAndIdsAsync(UUID tenantId, UUID customerId, List<UUID> deviceIds) {
-        return service.submit(() -> DaoUtil.convertDataList(
-                deviceRepository.findDevicesByTenantIdAndCustomerIdAndIdIn(fromTimeUUID(tenantId), fromTimeUUID(customerId), fromTimeUUIDs(deviceIds))));
+        List<EntityRelation> relations = relationDao.findRelations(new CustomerId(customerId),
+                EntityRelation.CONTAINS_TYPE, RelationTypeGroup.DEVICE, EntityType.DEVICE);
+
+        List<UUID> ids = relations.stream().map(entityRelation -> entityRelation.getTo().getId()).collect(Collectors.toList());
+        deviceIds.retainAll(ids);
+        return findDevicesByTenantIdAndIdsAsync(tenantId, deviceIds);
     }
 
     @Override
@@ -114,14 +120,12 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
 
     @Override
     public List<Device> findDevicesByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, TextPageLink pageLink) {
-        return DaoUtil.convertDataList(
-                deviceRepository.findByTenantIdAndCustomerIdAndType(
-                        fromTimeUUID(tenantId),
-                        fromTimeUUID(customerId),
-                        type,
-                        Objects.toString(pageLink.getTextSearch(), ""),
-                        pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
-                        new PageRequest(0, pageLink.getLimit())));
+        List<EntityRelation> relations = relationDao.findRelations(new CustomerId(customerId),
+                EntityRelation.CONTAINS_TYPE, RelationTypeGroup.DEVICE, EntityType.DEVICE);
+
+        List<Device> deviceList = findDevicesByTenantIdAndType(tenantId, type, pageLink);
+
+        return DaoUtil.filterDataListByRelation(relations, deviceList);
     }
 
     @Override

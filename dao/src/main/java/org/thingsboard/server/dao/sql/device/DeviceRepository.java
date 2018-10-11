@@ -31,7 +31,7 @@ import java.util.List;
 public interface DeviceRepository extends CrudRepository<DeviceEntity, String> {
 
 
-    @Query("SELECT d FROM DeviceEntity d WHERE d.tenantId = :tenantId " +
+    /*@Query("SELECT d FROM DeviceEntity d WHERE d.tenantId = :tenantId " +
             "AND d.customerId = :customerId " +
             "AND LOWER(d.searchText) LIKE LOWER(CONCAT(:searchText, '%')) " +
             "AND d.id > :idOffset ORDER BY d.id")
@@ -39,7 +39,7 @@ public interface DeviceRepository extends CrudRepository<DeviceEntity, String> {
                                                    @Param("customerId") String customerId,
                                                    @Param("searchText") String searchText,
                                                    @Param("idOffset") String idOffset,
-                                                   Pageable pageable);
+                                                   Pageable pageable);*/
 
     @Query("SELECT d FROM DeviceEntity d WHERE d.tenantId = :tenantId " +
             "AND LOWER(d.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
@@ -59,7 +59,7 @@ public interface DeviceRepository extends CrudRepository<DeviceEntity, String> {
                                              @Param("idOffset") String idOffset,
                                              Pageable pageable);
 
-    @Query("SELECT d FROM DeviceEntity d WHERE d.tenantId = :tenantId " +
+    /*@Query("SELECT d FROM DeviceEntity d WHERE d.tenantId = :tenantId " +
             "AND d.customerId = :customerId " +
             "AND d.type = :type " +
             "AND LOWER(d.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
@@ -69,14 +69,14 @@ public interface DeviceRepository extends CrudRepository<DeviceEntity, String> {
                                                           @Param("type") String type,
                                                           @Param("textSearch") String textSearch,
                                                           @Param("idOffset") String idOffset,
-                                                          Pageable pageable);
+                                                          Pageable pageable);*/
 
     @Query("SELECT DISTINCT d.type FROM DeviceEntity d WHERE d.tenantId = :tenantId")
     List<String> findTenantDeviceTypes(@Param("tenantId") String tenantId);
 
     DeviceEntity findByTenantIdAndName(String tenantId, String name);
 
-    List<DeviceEntity> findDevicesByTenantIdAndCustomerIdAndIdIn(String tenantId, String customerId, List<String> deviceIds);
+    /*List<DeviceEntity> findDevicesByTenantIdAndCustomerIdAndIdIn(String tenantId, String customerId, List<String> deviceIds);*/
 
     List<DeviceEntity> findDevicesByTenantIdAndIdIn(String tenantId, List<String> deviceIds);
 }

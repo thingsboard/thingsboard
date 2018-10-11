@@ -24,47 +24,38 @@ import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.EntitySubtypeEntity;
+import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.nosql.DeviceEntity;
 import org.thingsboard.server.dao.nosql.CassandraAbstractSearchTextDao;
+import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.util.NoSqlDao;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
-import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.in;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
-import static org.thingsboard.server.dao.model.ModelConstants.DEVICE_BY_CUSTOMER_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME;
-import static org.thingsboard.server.dao.model.ModelConstants.DEVICE_BY_CUSTOMER_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME;
-import static org.thingsboard.server.dao.model.ModelConstants.DEVICE_BY_TENANT_AND_NAME_VIEW_NAME;
-import static org.thingsboard.server.dao.model.ModelConstants.DEVICE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME;
-import static org.thingsboard.server.dao.model.ModelConstants.DEVICE_BY_TENANT_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME;
-import static org.thingsboard.server.dao.model.ModelConstants.DEVICE_COLUMN_FAMILY_NAME;
-import static org.thingsboard.server.dao.model.ModelConstants.DEVICE_CUSTOMER_ID_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.DEVICE_NAME_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.DEVICE_TENANT_ID_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.DEVICE_TYPE_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_SUBTYPE_COLUMN_FAMILY_NAME;
-import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_SUBTYPE_ENTITY_TYPE_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_SUBTYPE_TENANT_ID_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.ID_PROPERTY;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
+import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Component
 @Slf4j
 @NoSqlDao
 public class CassandraDeviceDao extends CassandraAbstractSearchTextDao<DeviceEntity, Device> implements DeviceDao {
+
+    @Autowired
+    private RelationDao relationDao;
 
     @Override
     protected Class<DeviceEntity> getColumnFamilyClass() {
@@ -119,37 +110,37 @@ public class CassandraDeviceDao extends CassandraAbstractSearchTextDao<DeviceEnt
     @Override
     public List<Device> findDevicesByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TextPageLink pageLink) {
         log.debug("Try to find devices by tenantId [{}], customerId[{}] and pageLink [{}]", tenantId, customerId, pageLink);
-        List<DeviceEntity> deviceEntities = findPageWithTextSearch(DEVICE_BY_CUSTOMER_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
-                Arrays.asList(eq(DEVICE_CUSTOMER_ID_PROPERTY, customerId),
-                        eq(DEVICE_TENANT_ID_PROPERTY, tenantId)),
-                pageLink);
+        List<EntityRelation> relations = relationDao.findRelations(new CustomerId(customerId),
+                EntityRelation.CONTAINS_TYPE, RelationTypeGroup.DEVICE, EntityType.DEVICE);
 
-        log.trace("Found devices [{}] by tenantId [{}], customerId [{}] and pageLink [{}]", deviceEntities, tenantId, customerId, pageLink);
-        return DaoUtil.convertDataList(deviceEntities);
+        List<Device> deviceList = findDevicesByTenantId(tenantId, pageLink);
+
+        return DaoUtil.filterDataListByRelation(relations, deviceList);
     }
 
     @Override
     public List<Device> findDevicesByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, TextPageLink pageLink) {
         log.debug("Try to find devices by tenantId [{}], customerId [{}], type [{}] and pageLink [{}]", tenantId, customerId, type, pageLink);
-        List<DeviceEntity> deviceEntities = findPageWithTextSearch(DEVICE_BY_CUSTOMER_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
-                Arrays.asList(eq(DEVICE_TYPE_PROPERTY, type),
-                        eq(DEVICE_CUSTOMER_ID_PROPERTY, customerId),
-                        eq(DEVICE_TENANT_ID_PROPERTY, tenantId)),
-                pageLink);
+        List<EntityRelation> relations = relationDao.findRelations(new CustomerId(customerId),
+                EntityRelation.CONTAINS_TYPE, RelationTypeGroup.DEVICE, EntityType.DEVICE);
 
-        log.trace("Found devices [{}] by tenantId [{}], customerId [{}], type [{}] and pageLink [{}]", deviceEntities, tenantId, customerId, type, pageLink);
-        return DaoUtil.convertDataList(deviceEntities);
+        List<Device> deviceList = findDevicesByTenantIdAndType(tenantId, type, pageLink);
+
+        return DaoUtil.filterDataListByRelation(relations, deviceList);
     }
 
     @Override
     public ListenableFuture<List<Device>> findDevicesByTenantIdCustomerIdAndIdsAsync(UUID tenantId, UUID customerId, List<UUID> deviceIds) {
         log.debug("Try to find devices by tenantId [{}], customerId [{}] and device Ids [{}]", tenantId, customerId, deviceIds);
-        Select select = select().from(getColumnFamilyName());
-        Select.Where query = select.where();
-        query.and(eq(DEVICE_TENANT_ID_PROPERTY, tenantId));
-        query.and(eq(DEVICE_CUSTOMER_ID_PROPERTY, customerId));
-        query.and(in(ID_PROPERTY, deviceIds));
-        return findListByStatementAsync(query);
+        TimePageLink timePageLink = new TimePageLink(ModelConstants.DEFAULT_PAGINATION_LIMIT);
+        ListenableFuture<List<EntityRelation>> relations = relationDao.findRelations(new CustomerId(customerId),
+                EntityRelation.CONTAINS_TYPE, RelationTypeGroup.DEVICE, EntityType.DEVICE, timePageLink);
+
+        return Futures.transformAsync(relations, (List<EntityRelation> input) -> {
+            List<UUID> ids = input.stream().map(entityRelation -> entityRelation.getTo().getId()).collect(Collectors.toList());
+            deviceIds.retainAll(ids);
+            return findDevicesByTenantIdAndIdsAsync(tenantId, deviceIds);
+        });
     }
 
     @Override

@@ -25,22 +25,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.alarm.AlarmId;
-import org.thingsboard.server.common.data.alarm.AlarmInfo;
-import org.thingsboard.server.common.data.alarm.AlarmQuery;
-import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
-import org.thingsboard.server.common.data.alarm.AlarmSeverity;
-import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.alarm.*;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
-import org.thingsboard.server.common.data.relation.EntityRelation;
-import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
-import org.thingsboard.server.common.data.relation.EntitySearchDirection;
-import org.thingsboard.server.common.data.relation.RelationTypeGroup;
-import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
+import org.thingsboard.server.common.data.relation.*;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -310,16 +300,6 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         } else {
             return null;
         }
-    }
-
-    private void deleteRelation(EntityRelation alarmRelation) throws ExecutionException, InterruptedException {
-        log.debug("Deleting Alarm relation: {}", alarmRelation);
-        relationService.deleteRelationAsync(alarmRelation).get();
-    }
-
-    private void createRelation(EntityRelation alarmRelation) throws ExecutionException, InterruptedException {
-        log.debug("Creating Alarm relation: {}", alarmRelation);
-        relationService.saveRelationAsync(alarmRelation).get();
     }
 
     private Alarm merge(Alarm existing, Alarm alarm) {

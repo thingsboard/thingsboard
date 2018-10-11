@@ -24,47 +24,35 @@ import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.EntitySubtypeEntity;
 import org.thingsboard.server.dao.model.nosql.AssetEntity;
 import org.thingsboard.server.dao.nosql.CassandraAbstractSearchTextDao;
+import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.util.NoSqlDao;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
-import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.in;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
-import static org.thingsboard.server.dao.model.ModelConstants.ASSET_BY_CUSTOMER_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME;
-import static org.thingsboard.server.dao.model.ModelConstants.ASSET_BY_CUSTOMER_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME;
-import static org.thingsboard.server.dao.model.ModelConstants.ASSET_BY_TENANT_AND_NAME_VIEW_NAME;
-import static org.thingsboard.server.dao.model.ModelConstants.ASSET_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME;
-import static org.thingsboard.server.dao.model.ModelConstants.ASSET_BY_TENANT_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME;
-import static org.thingsboard.server.dao.model.ModelConstants.ASSET_COLUMN_FAMILY_NAME;
-import static org.thingsboard.server.dao.model.ModelConstants.ASSET_CUSTOMER_ID_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.ASSET_NAME_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.ASSET_TENANT_ID_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.ASSET_TYPE_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_SUBTYPE_COLUMN_FAMILY_NAME;
-import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_SUBTYPE_ENTITY_TYPE_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_SUBTYPE_TENANT_ID_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.ID_PROPERTY;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
+import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Component
 @Slf4j
 @NoSqlDao
 public class CassandraAssetDao extends CassandraAbstractSearchTextDao<AssetEntity, Asset> implements AssetDao {
+    @Autowired
+    RelationDao relationDao;
 
     @Override
     protected Class<AssetEntity> getColumnFamilyClass() {
@@ -118,37 +106,33 @@ public class CassandraAssetDao extends CassandraAbstractSearchTextDao<AssetEntit
     @Override
     public List<Asset> findAssetsByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TextPageLink pageLink) {
         log.debug("Try to find assets by tenantId [{}], customerId[{}] and pageLink [{}]", tenantId, customerId, pageLink);
-        List<AssetEntity> assetEntities = findPageWithTextSearch(ASSET_BY_CUSTOMER_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
-                Arrays.asList(eq(ASSET_CUSTOMER_ID_PROPERTY, customerId),
-                        eq(ASSET_TENANT_ID_PROPERTY, tenantId)),
-                pageLink);
+        List<EntityRelation> relations = relationDao.findRelations(new CustomerId(customerId),
+                EntityRelation.CONTAINS_TYPE, RelationTypeGroup.ASSET, EntityType.ASSET);
 
-        log.trace("Found assets [{}] by tenantId [{}], customerId [{}] and pageLink [{}]", assetEntities, tenantId, customerId, pageLink);
-        return DaoUtil.convertDataList(assetEntities);
+        List<Asset> assetList = findAssetsByTenantId(tenantId, pageLink);
+
+        return DaoUtil.filterDataListByRelation(relations, assetList);
     }
 
     @Override
     public List<Asset> findAssetsByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, TextPageLink pageLink) {
         log.debug("Try to find assets by tenantId [{}], customerId [{}], type [{}] and pageLink [{}]", tenantId, customerId, type, pageLink);
-        List<AssetEntity> assetEntities = findPageWithTextSearch(ASSET_BY_CUSTOMER_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
-                Arrays.asList(eq(ASSET_TYPE_PROPERTY, type),
-                        eq(ASSET_CUSTOMER_ID_PROPERTY, customerId),
-                        eq(ASSET_TENANT_ID_PROPERTY, tenantId)),
-                pageLink);
+        List<EntityRelation> relations = relationDao.findRelations(new CustomerId(customerId),
+                EntityRelation.CONTAINS_TYPE, RelationTypeGroup.ASSET, EntityType.ASSET);
 
-        log.trace("Found assets [{}] by tenantId [{}], customerId [{}], type [{}] and pageLink [{}]", assetEntities, tenantId, customerId, type, pageLink);
-        return DaoUtil.convertDataList(assetEntities);
+        List<Asset> assetList = findAssetsByTenantIdAndType(tenantId, type, pageLink);
+
+        return DaoUtil.filterDataListByRelation(relations, assetList);
     }
 
     @Override
     public ListenableFuture<List<Asset>> findAssetsByTenantIdAndCustomerIdAndIdsAsync(UUID tenantId, UUID customerId, List<UUID> assetIds) {
         log.debug("Try to find assets by tenantId [{}], customerId [{}] and asset Ids [{}]", tenantId, customerId, assetIds);
-        Select select = select().from(getColumnFamilyName());
-        Select.Where query = select.where();
-        query.and(eq(ASSET_TENANT_ID_PROPERTY, tenantId));
-        query.and(eq(ASSET_CUSTOMER_ID_PROPERTY, customerId));
-        query.and(in(ID_PROPERTY, assetIds));
-        return findListByStatementAsync(query);
+        List<EntityRelation> relations = relationDao.findRelations(new CustomerId(customerId),
+                EntityRelation.CONTAINS_TYPE, RelationTypeGroup.ASSET, EntityType.ASSET);
+        List<UUID> ids = relations.stream().map(entityRelation -> entityRelation.getTo().getId()).collect(Collectors.toList());
+        assetIds.retainAll(ids);
+        return findAssetsByTenantIdAndIdsAsync(tenantId, assetIds);
     }
 
     @Override

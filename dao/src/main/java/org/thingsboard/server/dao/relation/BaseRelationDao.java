@@ -15,11 +15,7 @@
  */
 package org.thingsboard.server.dao.relation;
 
-import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.ResultSetFuture;
-import com.datastax.driver.core.Row;
+import com.datastax.driver.core.*;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -44,6 +40,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 
 /**
  * Created by ashvayka on 25.04.17.
@@ -242,6 +239,18 @@ public class BaseRelationDao extends CassandraAbstractAsyncDao implements Relati
                 ),
                 pageLink, ModelConstants.RELATION_TO_ID_PROPERTY);
         return getFuture(executeAsyncRead(query), this::getEntityRelations);
+    }
+
+    @Override
+    public List<EntityRelation> findRelations(EntityId from, String relationType, RelationTypeGroup typeGroup, EntityType toType) {
+        Select select = select().from(ModelConstants.RELATION_BY_TYPE_AND_CHILD_TYPE_VIEW_NAME);
+        Select.Where query = select.where();
+        query.and(eq(ModelConstants.RELATION_FROM_ID_PROPERTY, from.getId()));
+        query.and(eq(ModelConstants.RELATION_FROM_TYPE_PROPERTY, from.getEntityType().name()));
+        query.and(eq(ModelConstants.RELATION_TYPE_GROUP_PROPERTY, typeGroup.name()));
+        query.and(eq(ModelConstants.RELATION_TYPE_PROPERTY, relationType));
+        query.and(eq(ModelConstants.RELATION_TO_TYPE_PROPERTY, toType.name()));
+        return getEntityRelations(executeRead(query));
     }
 
     private PreparedStatement getSaveStmt() {

@@ -27,11 +27,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.EntitySubtype;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetSearchQuery;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -42,6 +38,7 @@ import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
@@ -59,7 +56,6 @@ import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.CacheConstants.ASSET_CACHE;
 import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
-import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 import static org.thingsboard.server.dao.service.Validator.*;
 
 @Service
@@ -119,15 +115,47 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
     @Override
     public Asset assignAssetToCustomer(AssetId assetId, CustomerId customerId) {
         Asset asset = findAssetById(assetId);
-        asset.setCustomerId(customerId);
-        return saveAsset(asset);
+        Customer customer = customerDao.findById(customerId.getId());
+        if (customer == null) {
+            throw new DataValidationException("Can't assign asset to non-existent customer");
+        }
+        if (!customer.getTenantId().getId().equals(asset.getTenantId().getId())) {
+            throw new DataValidationException("Can't assign asset to customer from different tenant");
+        }
+        if (asset.addAssignedCustomer(customer)) {
+            try {
+                createRelation(new EntityRelation(customerId, assetId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.ASSET));
+            } catch (ExecutionException | InterruptedException e) {
+                log.error("[{}] Failed to create asset relation. Customer Id: [{}]", assetId, customerId);
+                throw new RuntimeException(e);
+            }
+            return saveAsset(asset);
+        } else {
+            return asset;
+        }
     }
 
     @Override
-    public Asset unassignAssetFromCustomer(AssetId assetId) {
+    public Asset unassignAssetFromCustomer(AssetId assetId, CustomerId customerId) {
         Asset asset = findAssetById(assetId);
-        asset.setCustomerId(null);
-        return saveAsset(asset);
+        Customer customer = customerDao.findById(customerId.getId());
+        if (customer == null) {
+            throw new DataValidationException("Can't assign asset to non-existent customer");
+        }
+        if (!customer.getTenantId().getId().equals(asset.getTenantId().getId())) {
+            throw new DataValidationException("Can't assign asset to customer from different tenant");
+        }
+        if (asset.removeAssignedCustomer(customer)) {
+            try {
+                deleteRelation(new EntityRelation(customerId, assetId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.ASSET));
+            } catch (ExecutionException | InterruptedException e) {
+                log.warn("[{}] Failed to delete asset relation. Customer Id: [{}]", assetId, customerId);
+                throw new RuntimeException(e);
+            }
+            return saveAsset(asset);
+        } else {
+            return asset;
+        }
     }
 
     @Override
@@ -299,15 +327,15 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
                             throw new DataValidationException("Asset is referencing to non-existent tenant!");
                         }
                     }
-                    if (asset.getCustomerId() == null) {
-                        asset.setCustomerId(new CustomerId(NULL_UUID));
-                    } else if (!asset.getCustomerId().getId().equals(NULL_UUID)) {
-                        Customer customer = customerDao.findById(asset.getCustomerId().getId());
-                        if (customer == null) {
-                            throw new DataValidationException("Can't assign asset to non-existent customer!");
-                        }
-                        if (!customer.getTenantId().equals(asset.getTenantId())) {
-                            throw new DataValidationException("Can't assign asset to customer from different tenant!");
+                    if (!asset.getAssignedCustomers().isEmpty()) {
+                        for (ShortCustomerInfo customerInfo : asset.getAssignedCustomers()) {
+                            Customer customer = customerDao.findById(customerInfo.getCustomerId().getId());
+                            if (customer == null) {
+                                throw new DataValidationException("Can't assign asset to non-existent customer!");
+                            }
+                            if (!customer.getTenantId().equals(asset.getTenantId())) {
+                                throw new DataValidationException("Can't assign asset to customer from different tenant!");
+                            }
                         }
                     }
                 }
@@ -342,7 +370,9 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
 
         @Override
         protected void removeEntity(Asset entity) {
-            unassignAssetFromCustomer(new AssetId(entity.getId().getId()));
+            for (ShortCustomerInfo customerInfo : entity.getAssignedCustomers()) {
+                unassignAssetFromCustomer(new AssetId(entity.getId().getId()), customerInfo.getCustomerId());
+            }
         }
     }
 }

@@ -37,8 +37,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
-
 public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
     
     private IdComparator<Device> idComparator = new IdComparator<>();
@@ -71,8 +69,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         Assert.assertNotNull(savedDevice.getId());
         Assert.assertTrue(savedDevice.getCreatedTime() > 0);
         Assert.assertEquals(device.getTenantId(), savedDevice.getTenantId());
-        Assert.assertNotNull(savedDevice.getCustomerId());
-        Assert.assertEquals(NULL_UUID, savedDevice.getCustomerId().getId());
+        Assert.assertTrue(savedDevice.getAssignedCustomers().isEmpty());
         Assert.assertEquals(device.getName(), savedDevice.getName());
         
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(savedDevice.getId());
@@ -469,7 +466,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
     
     @Test
     public void testFindDevicesByTenantIdCustomerIdAndName() {
-        
+
         Customer customer = new Customer();
         customer.setTitle("Test customer");
         customer.setTenantId(tenantId);

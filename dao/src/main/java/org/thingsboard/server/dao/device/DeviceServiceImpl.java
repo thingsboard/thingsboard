@@ -27,12 +27,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.EntitySubtype;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -42,6 +37,7 @@ import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.customer.CustomerDao;
@@ -53,21 +49,13 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.CacheConstants.DEVICE_CACHE;
 import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
-import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
-import static org.thingsboard.server.dao.service.Validator.validateId;
-import static org.thingsboard.server.dao.service.Validator.validateIds;
-import static org.thingsboard.server.dao.service.Validator.validatePageLink;
-import static org.thingsboard.server.dao.service.Validator.validateString;
+import static org.thingsboard.server.dao.service.Validator.*;
 
 @Service
 @Slf4j
@@ -137,15 +125,47 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     @Override
     public Device assignDeviceToCustomer(DeviceId deviceId, CustomerId customerId) {
         Device device = findDeviceById(deviceId);
-        device.setCustomerId(customerId);
-        return saveDevice(device);
+        Customer customer = customerDao.findById(customerId.getId());
+        if (customer == null) {
+            throw new DataValidationException("Can't assign device to non-existent customer");
+        }
+        if (!customer.getTenantId().getId().equals(device.getTenantId().getId())) {
+            throw new DataValidationException("Can't assign device to customer from different tenant");
+        }
+        if (device.addAssignedCustomer(customer)) {
+            try {
+                createRelation(new EntityRelation(customerId, deviceId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.DEVICE));
+            } catch (ExecutionException | InterruptedException e) {
+                log.error("[{}] Failed to create device relation. Customer Id: [{}]", deviceId, customerId);
+                throw new RuntimeException(e);
+            }
+            return saveDevice(device);
+        } else {
+            return device;
+        }
     }
 
     @Override
-    public Device unassignDeviceFromCustomer(DeviceId deviceId) {
+    public Device unassignDeviceFromCustomer(DeviceId deviceId, CustomerId customerId) {
         Device device = findDeviceById(deviceId);
-        device.setCustomerId(null);
-        return saveDevice(device);
+        Customer customer = customerDao.findById(customerId.getId());
+        if (customer == null) {
+            throw new DataValidationException("Can't assign device to non-existent customer");
+        }
+        if (!customer.getTenantId().getId().equals(device.getTenantId().getId())) {
+            throw new DataValidationException("Can't assign device to customer from different tenant");
+        }
+        if (device.removeAssignedCustomer(customer)) {
+            try {
+                deleteRelation(new EntityRelation(customerId, deviceId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.DEVICE));
+            } catch (ExecutionException | InterruptedException e) {
+                log.warn("[{}] Failed to delete device relation. Customer Id: [{}]", deviceId, customerId);
+                throw new RuntimeException(e);
+            }
+            return saveDevice(device);
+        } else {
+            return device;
+        }
     }
 
     @Override
@@ -330,15 +350,15 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                             throw new DataValidationException("Device is referencing to non-existent tenant!");
                         }
                     }
-                    if (device.getCustomerId() == null) {
-                        device.setCustomerId(new CustomerId(NULL_UUID));
-                    } else if (!device.getCustomerId().getId().equals(NULL_UUID)) {
-                        Customer customer = customerDao.findById(device.getCustomerId().getId());
-                        if (customer == null) {
-                            throw new DataValidationException("Can't assign device to non-existent customer!");
-                        }
-                        if (!customer.getTenantId().getId().equals(device.getTenantId().getId())) {
-                            throw new DataValidationException("Can't assign device to customer from different tenant!");
+                    if (!device.getAssignedCustomers().isEmpty()) {
+                        for (ShortCustomerInfo customerInfo : device.getAssignedCustomers()) {
+                            Customer customer = customerDao.findById(customerInfo.getCustomerId().getId());
+                            if (customer == null) {
+                                throw new DataValidationException("Can't assign device to non-existent customer!");
+                            }
+                            if (!customer.getTenantId().equals(device.getTenantId())) {
+                                throw new DataValidationException("Can't assign device to customer from different tenant!");
+                            }
                         }
                     }
                 }
@@ -373,7 +393,10 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
 
         @Override
         protected void removeEntity(Device entity) {
-            unassignDeviceFromCustomer(new DeviceId(entity.getUuidId()));
+            for (ShortCustomerInfo customerInfo : entity.getAssignedCustomers()) {
+                unassignDeviceFromCustomer(new DeviceId(entity.getUuidId()), customerInfo.getCustomerId());
+            }
+
         }
 
     }

@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -142,7 +143,9 @@ public class JpaDeviceDaoTest extends AbstractJpaDaoTest {
         Device device = new Device();
         device.setId(new DeviceId(deviceId));
         device.setTenantId(new TenantId(tenantId));
-        device.setCustomerId(new CustomerId(customerID));
+        Customer customer = new Customer();
+        customer.setId(new CustomerId(customerID));
+        device.addAssignedCustomer(customer);
         device.setName("SEARCH_TEXT");
         return device;
     }

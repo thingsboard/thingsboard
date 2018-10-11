@@ -19,6 +19,7 @@ import com.datastax.driver.core.utils.UUIDs;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -35,9 +36,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 import static junit.framework.TestCase.assertFalse;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Created by Valerii Sosliuk on 5/21/2017.
@@ -213,7 +212,10 @@ public class JpaAssetDaoTest extends AbstractJpaDaoTest {
         Asset asset = new Asset();
         asset.setId(new AssetId(id));
         asset.setTenantId(new TenantId(tenantId));
-        asset.setCustomerId(new CustomerId(customerId));
+        Customer customer = new Customer();
+        customer.setId(new CustomerId(customerId));
+        customer.setTitle("Customer " + name);
+        asset.addAssignedCustomer(customer);
         asset.setName(name);
         asset.setType(type);
         assetDao.save(asset);

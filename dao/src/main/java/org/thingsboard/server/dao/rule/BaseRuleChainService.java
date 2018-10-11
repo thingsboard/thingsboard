@@ -30,11 +30,7 @@ import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
-import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
-import org.thingsboard.server.common.data.rule.RuleChain;
-import org.thingsboard.server.common.data.rule.RuleChainConnectionInfo;
-import org.thingsboard.server.common.data.rule.RuleChainMetaData;
-import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.common.data.rule.*;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -324,16 +320,6 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     private void deleteRuleNode(EntityId entityId) {
         deleteEntityRelations(entityId);
         ruleNodeDao.removeById(entityId.getId());
-    }
-
-    private void createRelation(EntityRelation relation) throws ExecutionException, InterruptedException {
-        log.debug("Creating relation: {}", relation);
-        relationService.saveRelation(relation);
-    }
-
-    private void deleteRelation(EntityRelation relation) throws ExecutionException, InterruptedException {
-        log.debug("Deleting relation: {}", relation);
-        relationService.deleteRelation(relation);
     }
 
     private DataValidator<RuleChain> ruleChainValidator =
