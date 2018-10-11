@@ -28,6 +28,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
@@ -187,8 +188,11 @@ public class TbGetCustomerAttributeNodeTest {
     public void assetsCustomerAttributesFetched() {
         AssetId assetId = new AssetId(UUIDs.timeBased());
         CustomerId customerId = new CustomerId(UUIDs.timeBased());
+        Customer customer = new Customer();
+        customer.setId(customerId);
+        customer.setTitle("Test Customer");
         Asset asset = new Asset();
-        asset.setCustomerId(customerId);
+        asset.addAssignedCustomer(customer);
 
         msg = new TbMsg(UUIDs.timeBased(), "USER", assetId, new TbMsgMetaData(), "{}", ruleChainId, ruleNodeId, 0L);
 
@@ -203,7 +207,10 @@ public class TbGetCustomerAttributeNodeTest {
         DeviceId deviceId = new DeviceId(UUIDs.timeBased());
         CustomerId customerId = new CustomerId(UUIDs.timeBased());
         Device device = new Device();
-        device.setCustomerId(customerId);
+        Customer customer = new Customer();
+        customer.setId(customerId);
+        customer.setTitle("Test Customer");
+        device.addAssignedCustomer(customer);
 
         msg = new TbMsg(UUIDs.timeBased(), "USER", deviceId, new TbMsgMetaData(), "{}", ruleChainId, ruleNodeId, 0L);
 
@@ -215,6 +222,7 @@ public class TbGetCustomerAttributeNodeTest {
 
     @Test
     public void deviceCustomerTelemetryFetched() throws TbNodeException {
+
         TbGetEntityAttrNodeConfiguration config = new TbGetEntityAttrNodeConfiguration();
         Map<String, String> attrMapping = new HashMap<>();
         attrMapping.putIfAbsent("temperature", "tempo");
@@ -229,8 +237,11 @@ public class TbGetCustomerAttributeNodeTest {
 
         DeviceId deviceId = new DeviceId(UUIDs.timeBased());
         CustomerId customerId = new CustomerId(UUIDs.timeBased());
+        Customer customer = new Customer();
+        customer.setTitle("Test Customer");
+        customer.setId(customerId);
         Device device = new Device();
-        device.setCustomerId(customerId);
+        device.addAssignedCustomer(customer);
 
         msg = new TbMsg(UUIDs.timeBased(), "USER", deviceId, new TbMsgMetaData(), "{}", ruleChainId, ruleNodeId, 0L);
 

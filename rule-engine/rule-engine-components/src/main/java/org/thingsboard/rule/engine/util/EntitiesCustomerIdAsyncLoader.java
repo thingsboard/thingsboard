@@ -15,13 +15,14 @@
  */
 package org.thingsboard.rule.engine.util;
 
-import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.HasCustomerId;
-import org.thingsboard.server.common.data.id.*;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.UserId;
 
 public class EntitiesCustomerIdAsyncLoader {
 
@@ -33,10 +34,6 @@ public class EntitiesCustomerIdAsyncLoader {
                 return Futures.immediateFuture((CustomerId) original);
             case USER:
                 return getCustomerAsync(ctx.getUserService().findUserByIdAsync((UserId) original));
-            case ASSET:
-                return getCustomerAsync(ctx.getAssetService().findAssetByIdAsync((AssetId) original));
-            case DEVICE:
-                return getCustomerAsync(ctx.getDeviceService().findDeviceByIdAsync((DeviceId) original));
             default:
                 return Futures.immediateFailedFuture(new TbNodeException("Unexpected original EntityType " + original));
         }

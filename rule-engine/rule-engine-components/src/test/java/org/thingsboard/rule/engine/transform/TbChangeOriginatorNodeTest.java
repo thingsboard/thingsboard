@@ -29,12 +29,9 @@ import org.thingsboard.rule.engine.api.ListeningExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.RuleChainId;
-import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.asset.AssetService;
@@ -83,8 +80,11 @@ public class TbChangeOriginatorNodeTest {
         init();
         AssetId assetId = new AssetId(UUIDs.timeBased());
         CustomerId customerId = new CustomerId(UUIDs.timeBased());
+        Customer customer = new Customer();
+        customer.setId(customerId);
+        customer.setTitle("Test Customer");
         Asset asset = new Asset();
-        asset.setCustomerId(customerId);
+        asset.addAssignedCustomer(customer);
 
         RuleChainId ruleChainId = new RuleChainId(UUIDs.timeBased());
         RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
@@ -111,8 +111,11 @@ public class TbChangeOriginatorNodeTest {
         init();
         AssetId assetId = new AssetId(UUIDs.timeBased());
         CustomerId customerId = new CustomerId(UUIDs.timeBased());
+        Customer customer = new Customer();
+        customer.setId(customerId);
+        customer.setTitle("Test Customer");
         Asset asset = new Asset();
-        asset.setCustomerId(customerId);
+        asset.addAssignedCustomer(customer);
 
         RuleChainId ruleChainId = new RuleChainId(UUIDs.timeBased());
         RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
@@ -138,8 +141,11 @@ public class TbChangeOriginatorNodeTest {
         init();
         AssetId assetId = new AssetId(UUIDs.timeBased());
         CustomerId customerId = new CustomerId(UUIDs.timeBased());
+        Customer customer = new Customer();
+        customer.setId(customerId);
+        customer.setTitle("Test Customer");
         Asset asset = new Asset();
-        asset.setCustomerId(customerId);
+        asset.addAssignedCustomer(customer);
 
         RuleChainId ruleChainId = new RuleChainId(UUIDs.timeBased());
         RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
