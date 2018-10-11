@@ -16,7 +16,7 @@
 package org.thingsboard.server.common.msg.device;
 
 import lombok.ToString;
-import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.SessionId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -27,6 +27,7 @@ import org.thingsboard.server.common.msg.session.SessionType;
 import org.thingsboard.server.common.msg.session.TransportToDeviceSessionActorMsg;
 
 import java.util.Optional;
+import java.util.Set;
 
 @ToString
 public class BasicDeviceToDeviceActorMsg implements DeviceToDeviceActorMsg {
@@ -34,7 +35,7 @@ public class BasicDeviceToDeviceActorMsg implements DeviceToDeviceActorMsg {
     private static final long serialVersionUID = -1866795134993115408L;
 
     private final TenantId tenantId;
-    private final CustomerId customerId;
+    private final Set<ShortCustomerInfo> assignedCustomers;
     private final DeviceId deviceId;
     private final SessionId sessionId;
     private final SessionType sessionType;
@@ -42,19 +43,19 @@ public class BasicDeviceToDeviceActorMsg implements DeviceToDeviceActorMsg {
     private final FromDeviceMsg msg;
 
     public BasicDeviceToDeviceActorMsg(DeviceToDeviceActorMsg other, FromDeviceMsg msg) {
-        this(null, other.getTenantId(), other.getCustomerId(), other.getDeviceId(), other.getSessionId(), other.getSessionType(), msg);
+        this(null, other.getTenantId(), other.getAssignedCustomers(), other.getDeviceId(), other.getSessionId(), other.getSessionType(), msg);
     }
 
     public BasicDeviceToDeviceActorMsg(TransportToDeviceSessionActorMsg msg, SessionType sessionType) {
-        this(null, msg.getTenantId(), msg.getCustomerId(), msg.getDeviceId(), msg.getSessionId(), sessionType, msg.getSessionMsg().getMsg());
+        this(null, msg.getTenantId(), msg.getAssignedCustomers(), msg.getDeviceId(), msg.getSessionId(), sessionType, msg.getSessionMsg().getMsg());
     }
 
-    private BasicDeviceToDeviceActorMsg(ServerAddress serverAddress, TenantId tenantId, CustomerId customerId, DeviceId deviceId, SessionId sessionId, SessionType sessionType,
+    private BasicDeviceToDeviceActorMsg(ServerAddress serverAddress, TenantId tenantId, Set<ShortCustomerInfo> assignedCustomers, DeviceId deviceId, SessionId sessionId, SessionType sessionType,
                                         FromDeviceMsg msg) {
         super();
         this.serverAddress = serverAddress;
         this.tenantId = tenantId;
-        this.customerId = customerId;
+        this.assignedCustomers = assignedCustomers;
         this.deviceId = deviceId;
         this.sessionId = sessionId;
         this.sessionType = sessionType;
@@ -67,8 +68,8 @@ public class BasicDeviceToDeviceActorMsg implements DeviceToDeviceActorMsg {
     }
 
     @Override
-    public CustomerId getCustomerId() {
-        return customerId;
+    public Set<ShortCustomerInfo> getAssignedCustomers() {
+        return assignedCustomers;
     }
 
     public TenantId getTenantId() {
@@ -97,7 +98,7 @@ public class BasicDeviceToDeviceActorMsg implements DeviceToDeviceActorMsg {
 
     @Override
     public DeviceToDeviceActorMsg toOtherAddress(ServerAddress otherAddress) {
-        return new BasicDeviceToDeviceActorMsg(otherAddress, tenantId, customerId, deviceId, sessionId, sessionType, msg);
+        return new BasicDeviceToDeviceActorMsg(otherAddress, tenantId, assignedCustomers, deviceId, sessionId, sessionType, msg);
     }
 
     @Override

@@ -24,21 +24,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.async.DeferredResult;
-import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.EntityIdFactory;
-import org.thingsboard.server.common.data.id.EntityViewId;
-import org.thingsboard.server.common.data.id.RuleChainId;
-import org.thingsboard.server.common.data.id.RuleNodeId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.controller.HttpValidationCallback;
@@ -56,9 +45,11 @@ import org.thingsboard.server.service.telemetry.exception.ToErrorResponseEntity;
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 /**
  * Created by ashvayka on 27.03.18.
@@ -183,9 +174,11 @@ public class AccessValidator {
                 if (device == null) {
                     return ValidationResult.entityNotFound(DEVICE_WITH_REQUESTED_ID_NOT_FOUND);
                 } else {
+                    List<CustomerId> customerIds = device.getAssignedCustomers().stream().
+                            map(ShortCustomerInfo::getCustomerId).collect(Collectors.toList());
                     if (!device.getTenantId().equals(currentUser.getTenantId())) {
                         return ValidationResult.accessDenied("Device doesn't belong to the current Tenant!");
-                    } else if (currentUser.isCustomerUser() && !device.getCustomerId().equals(currentUser.getCustomerId())) {
+                    } else if (currentUser.isCustomerUser() && !customerIds.contains(currentUser.getCustomerId())) {
                         return ValidationResult.accessDenied("Device doesn't belong to the current Customer!");
                     } else {
                         return ValidationResult.ok(device);
@@ -204,9 +197,11 @@ public class AccessValidator {
                 if (asset == null) {
                     return ValidationResult.entityNotFound("Asset with requested id wasn't found!");
                 } else {
+                    List<CustomerId> customerIds = asset.getAssignedCustomers().stream().
+                            map(ShortCustomerInfo::getCustomerId).collect(Collectors.toList());
                     if (!asset.getTenantId().equals(currentUser.getTenantId())) {
                         return ValidationResult.accessDenied("Asset doesn't belong to the current Tenant!");
-                    } else if (currentUser.isCustomerUser() && !asset.getCustomerId().equals(currentUser.getCustomerId())) {
+                    } else if (currentUser.isCustomerUser() && !customerIds.contains(currentUser.getCustomerId())) {
                         return ValidationResult.accessDenied("Asset doesn't belong to the current Customer!");
                     } else {
                         return ValidationResult.ok(asset);

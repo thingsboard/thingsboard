@@ -15,10 +15,12 @@
  */
 package org.thingsboard.server.common.msg.aware;
 
-import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.ShortCustomerInfo;
+
+import java.util.Set;
 
 public interface CustomerAwareMsg {
 
-	CustomerId getCustomerId();
+	Set<ShortCustomerInfo> getAssignedCustomers();
 	
 }

@@ -16,23 +16,25 @@
 package org.thingsboard.server.common.msg.session;
 
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.SessionId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.MsgType;
 
+import java.util.Set;
+
 public class BasicTransportToDeviceSessionActorMsg implements TransportToDeviceSessionActorMsg {
 
     private final TenantId tenantId;
-    private final CustomerId customerId;
+    private final Set<ShortCustomerInfo> assignedCustomers;
     private final DeviceId deviceId;
     private final AdaptorToSessionActorMsg msg;
 
     public BasicTransportToDeviceSessionActorMsg(Device device, AdaptorToSessionActorMsg msg) {
         super();
         this.tenantId = device.getTenantId();
-        this.customerId = device.getCustomerId();
+        this.assignedCustomers = device.getAssignedCustomers();
         this.deviceId = device.getId();
         this.msg = msg;
     }
@@ -43,8 +45,8 @@ public class BasicTransportToDeviceSessionActorMsg implements TransportToDeviceS
     }
 
     @Override
-    public CustomerId getCustomerId() {
-        return customerId;
+    public Set<ShortCustomerInfo> getAssignedCustomers() {
+        return assignedCustomers;
     }
 
     public TenantId getTenantId() {
@@ -63,7 +65,7 @@ public class BasicTransportToDeviceSessionActorMsg implements TransportToDeviceS
 
     @Override
     public String toString() {
-        return "BasicTransportToDeviceSessionActorMsg [tenantId=" + tenantId + ", customerId=" + customerId + ", deviceId=" + deviceId + ", msg=" + msg
+        return "BasicTransportToDeviceSessionActorMsg [tenantId=" + tenantId + ", deviceId=" + deviceId + ", msg=" + msg
                 + "]";
     }
 
