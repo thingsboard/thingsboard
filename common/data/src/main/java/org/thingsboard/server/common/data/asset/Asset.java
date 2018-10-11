@@ -15,20 +15,24 @@
  */
 package org.thingsboard.server.common.data.asset;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @EqualsAndHashCode(callSuper = true)
-public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements HasName, HasTenantId, HasCustomerId {
+public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements HasName, HasTenantId, HasMultipleCustomers {
 
     private static final long serialVersionUID = 2807343040519543363L;
 
     private TenantId tenantId;
-    private CustomerId customerId;
+    @Getter @Setter
+    private Set<ShortCustomerInfo> assignedCustomers = new HashSet<>();
     private String name;
     private String type;
 
@@ -43,7 +47,7 @@ public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements
     public Asset(Asset asset) {
         super(asset);
         this.tenantId = asset.getTenantId();
-        this.customerId = asset.getCustomerId();
+        setAssignedCustomers(asset.getAssignedCustomers());
         this.name = asset.getName();
         this.type = asset.getType();
     }
@@ -54,14 +58,6 @@ public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements
 
     public void setTenantId(TenantId tenantId) {
         this.tenantId = tenantId;
-    }
-
-    public CustomerId getCustomerId() {
-        return customerId;
-    }
-
-    public void setCustomerId(CustomerId customerId) {
-        this.customerId = customerId;
     }
 
     @Override
@@ -91,8 +87,6 @@ public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements
         StringBuilder builder = new StringBuilder();
         builder.append("Asset [tenantId=");
         builder.append(tenantId);
-        builder.append(", customerId=");
-        builder.append(customerId);
         builder.append(", name=");
         builder.append(name);
         builder.append(", type=");

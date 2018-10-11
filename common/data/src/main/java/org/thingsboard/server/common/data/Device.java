@@ -16,21 +16,24 @@
 package org.thingsboard.server.common.data;
 
 import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.id.CustomerId;
+import lombok.Getter;
+import lombok.Setter;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import java.util.HashSet;
+import java.util.Set;
 
 @EqualsAndHashCode(callSuper = true)
-public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implements HasName, HasTenantId, HasCustomerId {
+public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implements HasName, HasTenantId, HasMultipleCustomers {
 
     private static final long serialVersionUID = 2807343040519543363L;
 
     private TenantId tenantId;
-    private CustomerId customerId;
     private String name;
     private String type;
+    @Getter @Setter
+    private Set<ShortCustomerInfo> assignedCustomers = new HashSet<>();
 
     public Device() {
         super();
@@ -43,7 +46,7 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
     public Device(Device device) {
         super(device);
         this.tenantId = device.getTenantId();
-        this.customerId = device.getCustomerId();
+        setAssignedCustomers(device.getAssignedCustomers());
         this.name = device.getName();
         this.type = device.getType();
     }
@@ -54,14 +57,6 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
 
     public void setTenantId(TenantId tenantId) {
         this.tenantId = tenantId;
-    }
-
-    public CustomerId getCustomerId() {
-        return customerId;
-    }
-
-    public void setCustomerId(CustomerId customerId) {
-        this.customerId = customerId;
     }
 
     @Override
@@ -91,8 +86,6 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
         StringBuilder builder = new StringBuilder();
         builder.append("Device [tenantId=");
         builder.append(tenantId);
-        builder.append(", customerId=");
-        builder.append(customerId);
         builder.append(", name=");
         builder.append(name);
         builder.append(", type=");

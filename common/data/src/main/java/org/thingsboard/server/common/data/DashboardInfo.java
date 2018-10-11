@@ -16,18 +16,22 @@
 package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.thingsboard.server.common.data.id.CustomerId;
+import lombok.Getter;
+import lombok.Setter;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
-public class DashboardInfo extends SearchTextBased<DashboardId> implements HasName {
+
+public class DashboardInfo extends SearchTextBased<DashboardId> implements HasName, HasMultipleCustomers {
+
 
     private TenantId tenantId;
     private String title;
-    private Set<ShortCustomerInfo> assignedCustomers;
-
+    @Getter @Setter
+    private Set<ShortCustomerInfo> assignedCustomers = new HashSet<>();
     public DashboardInfo() {
         super();
     }
@@ -40,7 +44,7 @@ public class DashboardInfo extends SearchTextBased<DashboardId> implements HasNa
         super(dashboardInfo);
         this.tenantId = dashboardInfo.getTenantId();
         this.title = dashboardInfo.getTitle();
-        this.assignedCustomers = dashboardInfo.getAssignedCustomers();
+        setAssignedCustomers(dashboardInfo.getAssignedCustomers());
     }
 
     public TenantId getTenantId() {
@@ -57,63 +61,6 @@ public class DashboardInfo extends SearchTextBased<DashboardId> implements HasNa
 
     public void setTitle(String title) {
         this.title = title;
-    }
-
-    public Set<ShortCustomerInfo> getAssignedCustomers() {
-        return assignedCustomers;
-    }
-
-    public void setAssignedCustomers(Set<ShortCustomerInfo> assignedCustomers) {
-        this.assignedCustomers = assignedCustomers;
-    }
-
-    public boolean isAssignedToCustomer(CustomerId customerId) {
-        return this.assignedCustomers != null && this.assignedCustomers.contains(new ShortCustomerInfo(customerId, null, false));
-    }
-
-    public ShortCustomerInfo getAssignedCustomerInfo(CustomerId customerId) {
-        if (this.assignedCustomers != null) {
-            for (ShortCustomerInfo customerInfo : this.assignedCustomers) {
-                if (customerInfo.getCustomerId().equals(customerId)) {
-                    return customerInfo;
-                }
-            }
-        }
-        return null;
-    }
-
-    public boolean addAssignedCustomer(Customer customer) {
-        ShortCustomerInfo customerInfo = customer.toShortCustomerInfo();
-        if (this.assignedCustomers != null && this.assignedCustomers.contains(customerInfo)) {
-            return false;
-        } else {
-            if (this.assignedCustomers == null) {
-                this.assignedCustomers = new HashSet<>();
-            }
-            this.assignedCustomers.add(customerInfo);
-            return true;
-        }
-    }
-
-    public boolean updateAssignedCustomer(Customer customer) {
-        ShortCustomerInfo customerInfo = customer.toShortCustomerInfo();
-        if (this.assignedCustomers != null && this.assignedCustomers.contains(customerInfo)) {
-            this.assignedCustomers.remove(customerInfo);
-            this.assignedCustomers.add(customerInfo);
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    public boolean removeAssignedCustomer(Customer customer) {
-        ShortCustomerInfo customerInfo = customer.toShortCustomerInfo();
-        if (this.assignedCustomers != null && this.assignedCustomers.contains(customerInfo)) {
-            this.assignedCustomers.remove(customerInfo);
-            return true;
-        } else {
-            return false;
-        }
     }
 
     @Override
