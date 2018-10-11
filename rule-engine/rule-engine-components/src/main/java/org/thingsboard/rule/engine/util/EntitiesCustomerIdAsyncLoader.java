@@ -20,9 +20,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.HasCustomerId;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.HasMultipleCustomers;
+import org.thingsboard.server.common.data.id.*;
 
 public class EntitiesCustomerIdAsyncLoader {
 
@@ -34,6 +33,10 @@ public class EntitiesCustomerIdAsyncLoader {
                 return Futures.immediateFuture((CustomerId) original);
             case USER:
                 return getCustomerAsync(ctx.getUserService().findUserByIdAsync((UserId) original));
+            case ASSET:
+                return getCustomerAsyncFromMultipleCustomers(ctx.getAssetService().findAssetByIdAsync((AssetId) original));
+            case DEVICE:
+                return getCustomerAsyncFromMultipleCustomers(ctx.getDeviceService().findDeviceByIdAsync((DeviceId) original));
             default:
                 return Futures.immediateFailedFuture(new TbNodeException("Unexpected original EntityType " + original));
         }
@@ -43,4 +46,15 @@ public class EntitiesCustomerIdAsyncLoader {
         return Futures.transformAsync(future, in -> in != null ? Futures.immediateFuture(in.getCustomerId())
                 : Futures.immediateFuture(null));
     }
+
+    // TbChangeOriginatorNode description says "Related Entity found using configured relation direction and Relation
+    // Type. If multiple Related Entities are found, only first Entity is used as new Originator, other entities are d
+    // iscarded." So, returning the first customerId from assigned customers would be ok.
+    private static <T extends HasMultipleCustomers> ListenableFuture<CustomerId> getCustomerAsyncFromMultipleCustomers(
+            ListenableFuture<T> future) {
+        return Futures.transformAsync(future, in -> in != null ?
+                Futures.immediateFuture(in.getAssignedCustomers().isEmpty() ? null :
+                        in.getAssignedCustomers().iterator().next().getCustomerId()) : Futures.immediateFuture(null));
+    }
+
 }
