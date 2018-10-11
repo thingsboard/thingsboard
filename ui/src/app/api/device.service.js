@@ -33,7 +33,11 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
         saveDevice: saveDevice,
         saveDeviceCredentials: saveDeviceCredentials,
         unassignDeviceFromCustomer: unassignDeviceFromCustomer,
+        updateDeviceCustomers: updateDeviceCustomers,
+        addDeviceCustomers: addDeviceCustomers,
+        removeDeviceCustomers: removeDeviceCustomers,
         makeDevicePublic: makeDevicePublic,
+        makeDevicePrivate: makeDevicePrivate,
         getDeviceAttributes: getDeviceAttributes,
         subscribeForDeviceAttributes: subscribeForDeviceAttributes,
         unsubscribeForDeviceAttributes: unsubscribeForDeviceAttributes,
@@ -47,7 +51,7 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
 
     return service;
 
-    function getTenantDevices(pageLink, applyCustomersInfo, config, type) {
+    function getTenantDevices(pageLink, config, type) {
         var deferred = $q.defer();
         var url = '/api/tenant/devices?limit=' + pageLink.limit;
         if (angular.isDefined(pageLink.textSearch)) {
@@ -63,26 +67,14 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
             url += '&type=' + type;
         }
         $http.get(url, config).then(function success(response) {
-            if (applyCustomersInfo) {
-                customerService.applyAssignedCustomersInfo(response.data.data).then(
-                    function success(data) {
-                        response.data.data = data;
-                        deferred.resolve(response.data);
-                    },
-                    function fail() {
-                        deferred.reject();
-                    }
-                );
-            } else {
-                deferred.resolve(response.data);
-            }
+            deferred.resolve(prepareDevices(response.data));
         }, function fail() {
             deferred.reject();
         });
         return deferred.promise;
     }
 
-    function getCustomerDevices(customerId, pageLink, applyCustomersInfo, config, type) {
+    function getCustomerDevices(customerId, pageLink, config, type) {
         var deferred = $q.defer();
         var url = '/api/customer/' + customerId + '/devices?limit=' + pageLink.limit;
         if (angular.isDefined(pageLink.textSearch)) {
@@ -98,19 +90,7 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
             url += '&type=' + type;
         }
         $http.get(url, config).then(function success(response) {
-            if (applyCustomersInfo) {
-                customerService.applyAssignedCustomerInfo(response.data.data, customerId).then(
-                    function success(data) {
-                        response.data.data = data;
-                        deferred.resolve(response.data);
-                    },
-                    function fail() {
-                        deferred.reject();
-                    }
-                );
-            } else {
-                deferred.resolve(response.data);
-            }
+            deferred.resolve(prepareDevices(response.data));
         }, function fail() {
             deferred.reject();
         });
@@ -126,7 +106,7 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
         }
         config = Object.assign(config, { ignoreErrors: ignoreErrors });
         $http.get(url, config).then(function success(response) {
-            deferred.resolve(response.data);
+            deferred.resolve(prepareDevice(response.data));
         }, function fail(response) {
             deferred.reject(response.data);
         });
@@ -144,7 +124,7 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
         }
         var url = '/api/devices?deviceIds=' + ids;
         $http.get(url, config).then(function success(response) {
-            var devices = response.data;
+            var devices = prepareDevices(response.data);
             devices.sort(function (device1, device2) {
                var id1 =  device1.id.id;
                var id2 =  device2.id.id;
@@ -163,7 +143,7 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
         var deferred = $q.defer();
         var url = '/api/device';
         $http.post(url, device).then(function success(response) {
-            deferred.resolve(response.data);
+            deferred.resolve(prepareDevice(response.data));
         }, function fail() {
             deferred.reject();
         });
@@ -220,18 +200,51 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
         var deferred = $q.defer();
         var url = '/api/customer/' + customerId + '/device/' + deviceId;
         $http.post(url, null).then(function success(response) {
-            deferred.resolve(response.data);
+            deferred.resolve(prepareDevice(response.data));
         }, function fail() {
             deferred.reject();
         });
         return deferred.promise;
     }
 
-    function unassignDeviceFromCustomer(deviceId) {
+    function unassignDeviceFromCustomer(deviceId, customerId) {
         var deferred = $q.defer();
-        var url = '/api/customer/device/' + deviceId;
+        var url = '/api/customer/' + customerId + '/device/' + deviceId;
         $http.delete(url).then(function success(response) {
-            deferred.resolve(response.data);
+            deferred.resolve(prepareDevice(response.data));
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function updateDeviceCustomers(deviceId, customerIds) {
+        var deferred = $q.defer();
+        var url = '/api/device/' + deviceId + '/customers';
+        $http.post(url, customerIds).then(function success(response) {
+            deferred.resolve(prepareDevice(response.data));
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function addDeviceCustomers(deviceId, customerIds) {
+        var deferred = $q.defer();
+        var url = '/api/device/' + deviceId + '/customers/add';
+        $http.post(url, customerIds).then(function success(response) {
+            deferred.resolve(prepareDevice(response.data));
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function removeDeviceCustomers(deviceId, customerIds) {
+        var deferred = $q.defer();
+        var url = '/api/device/' + deviceId + '/customers/remove';
+        $http.post(url, customerIds).then(function success(response) {
+            deferred.resolve(prepareDevice(response.data));
         }, function fail() {
             deferred.reject();
         });
@@ -242,7 +255,18 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
         var deferred = $q.defer();
         var url = '/api/customer/public/device/' + deviceId;
         $http.post(url, null).then(function success(response) {
-            deferred.resolve(response.data);
+            deferred.resolve(prepareDevice(response.data));
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function makeDevicePrivate(deviceId) {
+        var deferred = $q.defer();
+        var url = '/api/customer/public/device/' + deviceId;
+        $http.delete(url).then(function success(response) {
+            deferred.resolve(prepareDevice(response.data));
         }, function fail() {
             deferred.reject();
         });
@@ -299,7 +323,7 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
         }
         config = Object.assign(config, { ignoreErrors: ignoreErrors });
         $http.post(url, query, config).then(function success(response) {
-            deferred.resolve(response.data);
+            deferred.resolve(prepareDevices(response.data));
         }, function fail() {
             deferred.reject();
         });
@@ -315,6 +339,35 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
             deferred.reject();
         });
         return deferred.promise;
+    }
+
+    function prepareDevices(devicesData) {
+        if (devicesData.data) {
+            for (var i = 0; i < devicesData.data.length; i++) {
+                devicesData.data[i] = prepareDevice(devicesData.data[i]);
+            }
+        }
+        return devicesData;
+    }
+
+    function prepareDevice(device) {
+        device.publicCustomerId = null;
+        device.assignedCustomersText = "";
+        device.assignedCustomersIds = [];
+        if (device.assignedCustomers && device.assignedCustomers.length) {
+            var assignedCustomersTitles = [];
+            for (var i = 0; i < device.assignedCustomers.length; i++) {
+                var assignedCustomer = device.assignedCustomers[i];
+                device.assignedCustomersIds.push(assignedCustomer.customerId.id);
+                if (assignedCustomer.public) {
+                    device.publicCustomerId = assignedCustomer.customerId.id;
+                } else {
+                    assignedCustomersTitles.push(assignedCustomer.title);
+                }
+            }
+            device.assignedCustomersText = assignedCustomersTitles.join(', ');
+        }
+        return device;
     }
 
 }

@@ -16,14 +16,18 @@
 
 -->
 <md-button ng-click="onMakePublic({event: $event})"
-           ng-show="!isEdit && deviceScope === 'tenant' && !isAssignedToCustomer && !isPublic"
-           class="md-raised md-primary">{{ 'device.make-public' | translate }}</md-button>
-<md-button ng-click="onAssignToCustomer({event: $event})"
-           ng-show="!isEdit && deviceScope === 'tenant' && !isAssignedToCustomer"
-           class="md-raised md-primary">{{ 'device.assign-to-customer' | translate }}</md-button>
-<md-button ng-click="onUnassignFromCustomer({event: $event, isPublic: isPublic})"
-           ng-show="!isEdit && (deviceScope === 'customer' || deviceScope === 'tenant') && isAssignedToCustomer"
-           class="md-raised md-primary">{{ isPublic ? 'device.make-private' : 'device.unassign-from-customer' | translate }}</md-button>
+		   ng-show="!isEdit && deviceScope === 'tenant' && !device.publicCustomerId"
+		   class="md-raised md-primary">{{ 'device.make-public' | translate }}</md-button>
+<md-button ng-click="onMakePrivate({event: $event})"
+		   ng-show="!isEdit && ((deviceScope === 'tenant' && device.publicCustomerId ||
+		   						deviceScope === 'customer' && customerId == device.publicCustomerId))"
+		   class="md-raised md-primary">{{ 'device.make-private' | translate }}</md-button>
+<md-button ng-click="onManageAssignedCustomers({event: $event})"
+		   ng-show="!isEdit && deviceScope === 'tenant'"
+		   class="md-raised md-primary">{{ 'device.manage-assigned-customers' | translate }}</md-button>
+<md-button ng-click="onUnassignFromCustomer({event: $event})"
+		   ng-show="!isEdit && deviceScope === 'customer' && customerId != device.publicCustomerId"
+		   class="md-raised md-primary">{{ 'device.unassign-from-customer' | translate }}</md-button>
 <md-button ng-click="onManageCredentials({event: $event})"
            ng-show="!isEdit"
            class="md-raised md-primary">{{ (deviceScope === 'customer_user' ? 'device.view-credentials' : 'device.manage-credentials') | translate }}</md-button>

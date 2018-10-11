@@ -27,7 +27,11 @@ function AssetService($http, $q, customerService, userService) {
         deleteAsset: deleteAsset,
         assignAssetToCustomer: assignAssetToCustomer,
         unassignAssetFromCustomer: unassignAssetFromCustomer,
+        updateAssetCustomers: updateAssetCustomers,
+        addAssetCustomers: addAssetCustomers,
+        removeAssetCustomers: removeAssetCustomers,
         makeAssetPublic: makeAssetPublic,
+        makeAssetPrivate: makeAssetPrivate,
         getTenantAssets: getTenantAssets,
         getCustomerAssets: getCustomerAssets,
         findByQuery: findByQuery,
@@ -45,7 +49,7 @@ function AssetService($http, $q, customerService, userService) {
         }
         config = Object.assign(config, { ignoreErrors: ignoreErrors });
         $http.get(url, config).then(function success(response) {
-            deferred.resolve(response.data);
+            deferred.resolve(prepareAsset(response.data));
         }, function fail() {
             deferred.reject();
         });
@@ -63,7 +67,7 @@ function AssetService($http, $q, customerService, userService) {
         }
         var url = '/api/assets?assetIds=' + ids;
         $http.get(url, config).then(function success(response) {
-            var assets = response.data;
+            var assets = prepareAssets(response.data);
             assets.sort(function (asset1, asset2) {
                 var id1 =  asset1.id.id;
                 var id2 =  asset2.id.id;
@@ -86,7 +90,7 @@ function AssetService($http, $q, customerService, userService) {
         }
         config = Object.assign(config, { ignoreErrors: ignoreErrors });
         $http.post(url, asset, config).then(function success(response) {
-            deferred.resolve(response.data);
+            deferred.resolve(prepareAsset(response.data));
         }, function fail() {
             deferred.reject();
         });
@@ -116,22 +120,55 @@ function AssetService($http, $q, customerService, userService) {
         }
         config = Object.assign(config, { ignoreErrors: ignoreErrors });
         $http.post(url, null, config).then(function success(response) {
-            deferred.resolve(response.data);
+            deferred.resolve(prepareAsset(response.data));
         }, function fail() {
             deferred.reject();
         });
         return deferred.promise;
     }
 
-    function unassignAssetFromCustomer(assetId, ignoreErrors, config) {
+    function unassignAssetFromCustomer(assetId, customerId, ignoreErrors, config) {
         var deferred = $q.defer();
-        var url = '/api/customer/asset/' + assetId;
+        var url = '/api/customer/' + customerId + '/asset/' + assetId;
         if (!config) {
             config = {};
         }
         config = Object.assign(config, { ignoreErrors: ignoreErrors });
         $http.delete(url, config).then(function success(response) {
-            deferred.resolve(response.data);
+            deferred.resolve(prepareAsset(response.data));
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function updateAssetCustomers(assetId, customerIds) {
+        var deferred = $q.defer();
+        var url = '/api/asset/' + assetId + '/customers';
+        $http.post(url, customerIds).then(function success(response) {
+            deferred.resolve(prepareAsset(response.data));
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function addAssetCustomers(assetId, customerIds) {
+        var deferred = $q.defer();
+        var url = '/api/asset/' + assetId + '/customers/add';
+        $http.post(url, customerIds).then(function success(response) {
+            deferred.resolve(prepareAsset(response.data));
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function removeAssetCustomers(assetId, customerIds) {
+        var deferred = $q.defer();
+        var url = '/api/asset/' + assetId + '/customers/remove';
+        $http.post(url, customerIds).then(function success(response) {
+            deferred.resolve(prepareAsset(response.data));
         }, function fail() {
             deferred.reject();
         });
@@ -146,14 +183,25 @@ function AssetService($http, $q, customerService, userService) {
         }
         config = Object.assign(config, { ignoreErrors: ignoreErrors });
         $http.post(url, null, config).then(function success(response) {
-            deferred.resolve(response.data);
+            deferred.resolve(prepareAsset(response.data));
         }, function fail() {
             deferred.reject();
         });
         return deferred.promise;
     }
 
-    function getTenantAssets(pageLink, applyCustomersInfo, config, type) {
+    function makeAssetPrivate(assetId) {
+        var deferred = $q.defer();
+        var url = '/api/customer/public/asset/' + assetId;
+        $http.delete(url).then(function success(response) {
+            deferred.resolve(prepareAsset(response.data));
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function getTenantAssets(pageLink, config, type) {
         var deferred = $q.defer();
         var url = '/api/tenant/assets?limit=' + pageLink.limit;
         if (angular.isDefined(pageLink.textSearch)) {
@@ -169,26 +217,14 @@ function AssetService($http, $q, customerService, userService) {
             url += '&type=' + type;
         }
         $http.get(url, config).then(function success(response) {
-            if (applyCustomersInfo) {
-                customerService.applyAssignedCustomersInfo(response.data.data).then(
-                    function success(data) {
-                        response.data.data = data;
-                        deferred.resolve(response.data);
-                    },
-                    function fail() {
-                        deferred.reject();
-                    }
-                );
-            } else {
-                deferred.resolve(response.data);
-            }
+            deferred.resolve(prepareAssets(response.data));
         }, function fail() {
             deferred.reject();
         });
         return deferred.promise;
     }
 
-    function getCustomerAssets(customerId, pageLink, applyCustomersInfo, config, type) {
+    function getCustomerAssets(customerId, pageLink, config, type) {
         var deferred = $q.defer();
         var url = '/api/customer/' + customerId + '/assets?limit=' + pageLink.limit;
         if (angular.isDefined(pageLink.textSearch)) {
@@ -204,19 +240,7 @@ function AssetService($http, $q, customerService, userService) {
             url += '&type=' + type;
         }
         $http.get(url, config).then(function success(response) {
-            if (applyCustomersInfo) {
-                customerService.applyAssignedCustomerInfo(response.data.data, customerId).then(
-                    function success(data) {
-                        response.data.data = data;
-                        deferred.resolve(response.data);
-                    },
-                    function fail() {
-                        deferred.reject();
-                    }
-                );
-            } else {
-                deferred.resolve(response.data);
-            }
+            deferred.resolve(prepareAssets(response.data));
         }, function fail() {
             deferred.reject();
         });
@@ -232,28 +256,28 @@ function AssetService($http, $q, customerService, userService) {
         }
         config = Object.assign(config, { ignoreErrors: ignoreErrors });
         $http.post(url, query, config).then(function success(response) {
-            deferred.resolve(response.data);
+            deferred.resolve(prepareAssets(response.data));
         }, function fail() {
             deferred.reject();
         });
         return deferred.promise;
     }
 
-    function fetchAssetsByNameFilter(assetNameFilter, limit, applyCustomersInfo, config) {
+    function fetchAssetsByNameFilter(assetNameFilter, limit, config) {
         var deferred = $q.defer();
         var user = userService.getCurrentUser();
         var promise;
         var pageLink = {limit: limit, textSearch: assetNameFilter};
         if (user.authority === 'CUSTOMER_USER') {
             var customerId = user.customerId;
-            promise = getCustomerAssets(customerId, pageLink, applyCustomersInfo, config);
+            promise = getCustomerAssets(customerId, pageLink, config);
         } else {
-            promise = getTenantAssets(pageLink, applyCustomersInfo, config);
+            promise = getTenantAssets(pageLink, config);
         }
         promise.then(
             function success(result) {
                 if (result.data && result.data.length > 0) {
-                    deferred.resolve(result.data);
+                    deferred.resolve(prepareAssets(result.data));
                 } else {
                     deferred.resolve(null);
                 }
@@ -274,6 +298,35 @@ function AssetService($http, $q, customerService, userService) {
             deferred.reject();
         });
         return deferred.promise;
+    }
+
+    function prepareAssets(assetsData) {
+        if (assetsData.data) {
+            for (var i = 0; i < assetsData.data.length; i++) {
+                assetsData.data[i] = prepareAsset(assetsData.data[i]);
+            }
+        }
+        return assetsData;
+    }
+
+    function prepareAsset(asset) {
+        asset.publicCustomerId = null;
+        asset.assignedCustomersText = "";
+        asset.assignedCustomersIds = [];
+        if (asset.assignedCustomers && asset.assignedCustomers.length) {
+            var assignedCustomersTitles = [];
+            for (var i = 0; i < asset.assignedCustomers.length; i++) {
+                var assignedCustomer = asset.assignedCustomers[i];
+                asset.assignedCustomersIds.push(assignedCustomer.customerId.id);
+                if (assignedCustomer.public) {
+                    asset.publicCustomerId = assignedCustomer.customerId.id;
+                } else {
+                    assignedCustomersTitles.push(assignedCustomer.title);
+                }
+            }
+            asset.assignedCustomersText = assignedCustomersTitles.join(', ');
+        }
+        return asset;
     }
 
 }

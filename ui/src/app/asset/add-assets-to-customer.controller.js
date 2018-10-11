@@ -52,7 +52,7 @@ export default function AddAssetsToCustomerController(assetService, $mdDialog, $
         fetchMoreItems_: function () {
             if (vm.assets.hasNext && !vm.assets.pending) {
                 vm.assets.pending = true;
-                assetService.getTenantAssets(vm.assets.nextPageLink, false).then(
+                assetService.getTenantAssets(vm.assets.nextPageLink).then(
                     function success(assets) {
                         vm.assets.data = vm.assets.data.concat(assets.data);
                         vm.assets.nextPageLink = assets.nextPageLink;

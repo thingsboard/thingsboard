@@ -20,7 +20,7 @@ import assetFieldsetTemplate from './asset-fieldset.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function AssetDirective($compile, $templateCache, toast, $translate, types, assetService, customerService) {
+export default function AssetDirective($compile, $templateCache, toast, $translate, types) {
     var linker = function (scope, element) {
         var template = $templateCache.get(assetFieldsetTemplate);
         element.html(template);
@@ -28,22 +28,17 @@ export default function AssetDirective($compile, $templateCache, toast, $transla
         scope.types = types;
         scope.isAssignedToCustomer = false;
         scope.isPublic = false;
-        scope.assignedCustomer = null;
+        scope.assignedCustomers = null;
 
         scope.$watch('asset', function(newVal) {
             if (newVal) {
-                if (scope.asset.customerId && scope.asset.customerId.id !== types.id.nullUid) {
+                if (scope.asset.assignedCustomers && scope.asset.assignedCustomers.length != 0) {
                     scope.isAssignedToCustomer = true;
-                    customerService.getShortCustomerInfo(scope.asset.customerId.id).then(
-                        function success(customer) {
-                            scope.assignedCustomer = customer;
-                            scope.isPublic = customer.isPublic;
-                        }
-                    );
+                    scope.assignedCustomers = scope.asset.assignedCustomersText;
                 } else {
                     scope.isAssignedToCustomer = false;
                     scope.isPublic = false;
-                    scope.assignedCustomer = null;
+                    scope.assignedCustomers = null;
                 }
             }
         });
@@ -63,8 +58,9 @@ export default function AssetDirective($compile, $templateCache, toast, $transla
             isEdit: '=',
             assetScope: '=',
             theForm: '=',
-            onAssignToCustomer: '&',
             onMakePublic: '&',
+            onMakePrivate: '&',
+            onManageAssignedCustomers: '&',
             onUnassignFromCustomer: '&',
             onDeleteAsset: '&'
         }

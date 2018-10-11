@@ -26,9 +26,10 @@
                        is-edit="vm.grid.detailsConfig.isDetailsEditMode"
                        device-scope="vm.devicesScope"
                        the-form="vm.grid.detailsForm"
-                       on-assign-to-customer="vm.assignToCustomer(event, [ vm.grid.detailsConfig.currentItem.id.id ])"
                        on-make-public="vm.makePublic(event, vm.grid.detailsConfig.currentItem)"
-                       on-unassign-from-customer="vm.unassignFromCustomer(event, vm.grid.detailsConfig.currentItem, isPublic)"
+                       on-make-private="vm.makePrivate(event, vm.grid.detailsConfig.currentItem)"
+                       on-manage-assigned-customers="vm.manageAssignedCustomers(event, vm.grid.detailsConfig.currentItem)"
+                       on-unassign-from-customer="vm.unassignFromCustomer(event, vm.grid.detailsConfig.currentItem, vm.customerId)"
                        on-manage-credentials="vm.manageCredentials(event, vm.grid.detailsConfig.currentItem)"
                        on-delete-device="vm.grid.deleteItem(event, vm.grid.detailsConfig.currentItem)"></tb-device>
         </md-tab>

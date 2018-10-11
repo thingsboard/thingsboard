@@ -20,30 +20,24 @@ import deviceFieldsetTemplate from './device-fieldset.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function DeviceDirective($compile, $templateCache, toast, $translate, types, clipboardService, deviceService, customerService) {
+export default function DeviceDirective($compile, $templateCache, toast, $translate, types, clipboardService, deviceService) {
     var linker = function (scope, element) {
         var template = $templateCache.get(deviceFieldsetTemplate);
         element.html(template);
 
         scope.types = types;
         scope.isAssignedToCustomer = false;
-        scope.isPublic = false;
-        scope.assignedCustomer = null;
+        scope.assignedCustomers = null;
 
         scope.$watch('device', function(newVal) {
             if (newVal) {
-                if (scope.device.customerId && scope.device.customerId.id !== types.id.nullUid) {
+                if (scope.device.assignedCustomers && scope.device.assignedCustomers.length != 0) {
                     scope.isAssignedToCustomer = true;
-                    customerService.getShortCustomerInfo(scope.device.customerId.id).then(
-                        function success(customer) {
-                            scope.assignedCustomer = customer;
-                            scope.isPublic = customer.isPublic;
-                        }
-                    );
+                    scope.assignedCustomers = scope.device.assignedCustomersText;
                 } else {
                     scope.isAssignedToCustomer = false;
                     scope.isPublic = false;
-                    scope.assignedCustomer = null;
+                    scope.assignedCustomers = null;
                 }
             }
         });
@@ -78,8 +72,9 @@ export default function DeviceDirective($compile, $templateCache, toast, $transl
             isEdit: '=',
             deviceScope: '=',
             theForm: '=',
-            onAssignToCustomer: '&',
             onMakePublic: '&',
+            onMakePrivate: '&',
+            onManageAssignedCustomers: '&',
             onUnassignFromCustomer: '&',
             onManageCredentials: '&',
             onDeleteDevice: '&'

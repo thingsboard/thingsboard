@@ -21,8 +21,8 @@ import thingsboardApiCustomer from '../api/customer.service';
 
 import DeviceRoutes from './device.routes';
 import {DeviceController, DeviceCardController} from './device.controller';
-import AssignDeviceToCustomerController from './assign-to-customer.controller';
 import AddDevicesToCustomerController from './add-devices-to-customer.controller';
+import ManageDeviceAssignedCustomersController from './manage-assigned-customers.controller';
 import ManageDeviceCredentialsController from './device-credentials.controller';
 import DeviceDirective from './device.directive';
 
@@ -36,8 +36,8 @@ export default angular.module('thingsboard.device', [
     .config(DeviceRoutes)
     .controller('DeviceController', DeviceController)
     .controller('DeviceCardController', DeviceCardController)
-    .controller('AssignDeviceToCustomerController', AssignDeviceToCustomerController)
     .controller('AddDevicesToCustomerController', AddDevicesToCustomerController)
+    .controller('ManageDeviceAssignedCustomersController', ManageDeviceAssignedCustomersController)
     .controller('ManageDeviceCredentialsController', ManageDeviceCredentialsController)
     .directive('tbDevice', DeviceDirective)
     .name;

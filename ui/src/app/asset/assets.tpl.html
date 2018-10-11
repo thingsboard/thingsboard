@@ -23,13 +23,14 @@
              id="tabs" md-border-bottom flex class="tb-absolute-fill">
         <md-tab label="{{ 'asset.details' | translate }}">
             <tb-asset  asset="vm.grid.operatingItem()"
-                       is-edit="vm.grid.detailsConfig.isDetailsEditMode"
-                       asset-scope="vm.assetsScope"
-                       the-form="vm.grid.detailsForm"
-                       on-assign-to-customer="vm.assignToCustomer(event, [ vm.grid.detailsConfig.currentItem.id.id ])"
-                       on-make-public="vm.makePublic(event, vm.grid.detailsConfig.currentItem)"
-                       on-unassign-from-customer="vm.unassignFromCustomer(event, vm.grid.detailsConfig.currentItem, isPublic)"
-                       on-delete-asset="vm.grid.deleteItem(event, vm.grid.detailsConfig.currentItem)"></tb-asset>
+                        is-edit="vm.grid.detailsConfig.isDetailsEditMode"
+                        asset-scope="vm.assetsScope"
+                        the-form="vm.grid.detailsForm"
+                        on-make-public="vm.makePublic(event, vm.grid.detailsConfig.currentItem)"
+                        on-make-private="vm.makePrivate(event, vm.grid.detailsConfig.currentItem)"
+                        on-manage-assigned-customers="vm.manageAssignedCustomers(event, vm.grid.detailsConfig.currentItem)"
+                        on-unassign-from-customer="vm.unassignFromCustomer(event, vm.grid.detailsConfig.currentItem, vm.customerId)"
+                        on-delete-asset="vm.grid.deleteItem(event, vm.grid.detailsConfig.currentItem)"></tb-asset>
         </md-tab>
         <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" md-on-select="vm.grid.triggerResize()" label="{{ 'attribute.attributes' | translate }}">
             <tb-attribute-table flex

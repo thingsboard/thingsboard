@@ -17,8 +17,8 @@
 
 import addAssetTemplate from './add-asset.tpl.html';
 import assetCard from './asset-card.tpl.html';
-import assignToCustomerTemplate from './assign-to-customer.tpl.html';
 import addAssetsToCustomerTemplate from './add-assets-to-customer.tpl.html';
+import manageAssignedCustomersTemplate from './manage-assigned-customers.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
 
@@ -30,18 +30,11 @@ export function AssetCardController(types) {
     vm.types = types;
 
     vm.isAssignedToCustomer = function() {
-        if (vm.item && vm.item.customerId && vm.parentCtl.assetsScope === 'tenant' &&
-            vm.item.customerId.id != vm.types.id.nullUid && !vm.item.assignedCustomer.isPublic) {
-            return true;
-        }
-        return false;
+        return (vm.item && vm.item.assignedCustomers.length !== 0 && vm.parentCtl.assetsScope === 'tenant');
     }
 
     vm.isPublic = function() {
-        if (vm.item && vm.item.assignedCustomer && vm.parentCtl.assetsScope === 'tenant' && vm.item.assignedCustomer.isPublic) {
-            return true;
-        }
-        return false;
+        return (vm.parentCtl.assetsScope === 'tenant' && vm.item && vm.item.publicCustomerId);
     }
 }
 
@@ -101,9 +94,10 @@ export function AssetController($rootScope, userService, assetService, customerS
 
     vm.assetsScope = $state.$current.data.assetsType;
 
-    vm.assignToCustomer = assignToCustomer;
     vm.makePublic = makePublic;
+    vm.makePrivate = makePrivate;
     vm.unassignFromCustomer = unassignFromCustomer;
+    vm.manageAssignedCustomers = manageAssignedCustomers;
 
     initController();
 
@@ -131,7 +125,7 @@ export function AssetController($rootScope, userService, assetService, customerS
 
         if (vm.assetsScope === 'tenant') {
             fetchAssetsFunction = function (pageLink, assetType) {
-                return assetService.getTenantAssets(pageLink, true, null, assetType);
+                return assetService.getTenantAssets(pageLink, null, assetType);
             };
             deleteAssetFunction = function (assetId) {
                 return assetService.deleteAsset(assetId);
@@ -148,49 +142,36 @@ export function AssetController($rootScope, userService, assetService, customerS
                 details: function() { return $translate.instant('asset.make-public') },
                 icon: "share",
                 isEnabled: function(asset) {
-                    return asset && (!asset.customerId || asset.customerId.id === types.id.nullUid);
+                    return asset && (!asset.publicCustomerId);
                 }
             });
 
-            assetActionsList.push(
-                {
-                    onAction: function ($event, item) {
-                        assignToCustomer($event, [ item.id.id ]);
-                    },
-                    name: function() { return $translate.instant('action.assign') },
-                    details: function() { return $translate.instant('asset.assign-to-customer') },
-                    icon: "assignment_ind",
-                    isEnabled: function(asset) {
-                        return asset && (!asset.customerId || asset.customerId.id === types.id.nullUid);
-                    }
-                }
-            );
-
-            assetActionsList.push(
-                {
-                    onAction: function ($event, item) {
-                        unassignFromCustomer($event, item, false);
-                    },
-                    name: function() { return $translate.instant('action.unassign') },
-                    details: function() { return $translate.instant('asset.unassign-from-customer') },
-                    icon: "assignment_return",
-                    isEnabled: function(asset) {
-                        return asset && asset.customerId && asset.customerId.id !== types.id.nullUid && !asset.assignedCustomer.isPublic;
-                    }
-                }
-            );
 
             assetActionsList.push({
                 onAction: function ($event, item) {
-                    unassignFromCustomer($event, item, true);
+                    makePrivate($event, item);
                 },
                 name: function() { return $translate.instant('action.make-private') },
                 details: function() { return $translate.instant('asset.make-private') },
                 icon: "reply",
                 isEnabled: function(asset) {
-                    return asset && asset.customerId && asset.customerId.id !== types.id.nullUid && asset.assignedCustomer.isPublic;
+                    return asset && asset.publicCustomerId;
                 }
             });
+
+            assetActionsList.push(
+                {
+                    onAction: function ($event, item) {
+                        manageAssignedCustomers($event, item);
+                    },
+                    name: function() { return $translate.instant('action.assign') },
+                    details: function() { return $translate.instant('asset.manage-assigned-customers') },
+                    icon: "assignment_ind",
+                    isEnabled: function(asset) {
+                        return asset;
+                    }
+                }
+            );
 
             assetActionsList.push(
                 {
@@ -206,7 +187,7 @@ export function AssetController($rootScope, userService, assetService, customerS
             assetGroupActionsList.push(
                 {
                     onAction: function ($event, items) {
-                        assignAssetsToCustomer($event, items);
+                        assignAssetsToCustomers($event, items);
                     },
                     name: function() { return $translate.instant('asset.assign-assets') },
                     details: function(selectedCount) {
@@ -231,7 +212,7 @@ export function AssetController($rootScope, userService, assetService, customerS
 
         } else if (vm.assetsScope === 'customer' || vm.assetsScope === 'customer_user') {
             fetchAssetsFunction = function (pageLink, assetType) {
-                return assetService.getCustomerAssets(customerId, pageLink, true, null, assetType);
+                return assetService.getCustomerAssets(customerId, pageLink, null, assetType);
             };
             deleteAssetFunction = function (assetId) {
                 return assetService.unassignAssetFromCustomer(assetId);
@@ -244,26 +225,26 @@ export function AssetController($rootScope, userService, assetService, customerS
                 assetActionsList.push(
                     {
                         onAction: function ($event, item) {
-                            unassignFromCustomer($event, item, false);
+                            unassignFromCustomer($event, item, customerId);
                         },
                         name: function() { return $translate.instant('action.unassign') },
                         details: function() { return $translate.instant('asset.unassign-from-customer') },
                         icon: "assignment_return",
                         isEnabled: function(asset) {
-                            return asset && !asset.assignedCustomer.isPublic;
+                            return asset && customerId != asset.publicCustomerId;
                         }
                     }
                 );
                 assetActionsList.push(
                     {
                         onAction: function ($event, item) {
-                            unassignFromCustomer($event, item, true);
+                            makePrivate($event, item);
                         },
                         name: function() { return $translate.instant('action.make-private') },
                         details: function() { return $translate.instant('asset.make-private') },
                         icon: "reply",
                         isEnabled: function(asset) {
-                            return asset && asset.assignedCustomer.isPublic;
+                            return asset && asset.publicCustomerId;
                         }
                     }
                 );
@@ -271,7 +252,7 @@ export function AssetController($rootScope, userService, assetService, customerS
                 assetGroupActionsList.push(
                     {
                         onAction: function ($event, items) {
-                            unassignAssetsFromCustomer($event, items);
+                            unassignAssetsFromCustomers($event, items);
                         },
                         name: function() { return $translate.instant('asset.unassign-assets') },
                         details: function(selectedCount) {
@@ -333,21 +314,9 @@ export function AssetController($rootScope, userService, assetService, customerS
     function saveAsset(asset) {
         var deferred = $q.defer();
         assetService.saveAsset(asset).then(
-            function success(savedAsset) {
+            function success() {
                 $rootScope.$broadcast('assetSaved');
-                var assets = [ savedAsset ];
-                customerService.applyAssignedCustomersInfo(assets).then(
-                    function success(items) {
-                        if (items && items.length == 1) {
-                            deferred.resolve(items[0]);
-                        } else {
-                            deferred.reject();
-                        }
-                    },
-                    function fail() {
-                        deferred.reject();
-                    }
-                );
+                deferred.resolve();
             },
             function fail() {
                 deferred.reject();
@@ -360,47 +329,12 @@ export function AssetController($rootScope, userService, assetService, customerS
         return vm.assetsScope === 'customer_user';
     }
 
-    function assignToCustomer($event, assetIds) {
-        if ($event) {
-            $event.stopPropagation();
-        }
-        var pageSize = 10;
-        customerService.getCustomers({limit: pageSize, textSearch: ''}).then(
-            function success(_customers) {
-                var customers = {
-                    pageSize: pageSize,
-                    data: _customers.data,
-                    nextPageLink: _customers.nextPageLink,
-                    selection: null,
-                    hasNext: _customers.hasNext,
-                    pending: false
-                };
-                if (customers.hasNext) {
-                    customers.nextPageLink.limit = pageSize;
-                }
-                $mdDialog.show({
-                    controller: 'AssignAssetToCustomerController',
-                    controllerAs: 'vm',
-                    templateUrl: assignToCustomerTemplate,
-                    locals: {assetIds: assetIds, customers: customers},
-                    parent: angular.element($document[0].body),
-                    fullscreen: true,
-                    targetEvent: $event
-                }).then(function () {
-                    vm.grid.refreshList();
-                }, function () {
-                });
-            },
-            function fail() {
-            });
-    }
-
     function addAssetsToCustomer($event) {
         if ($event) {
             $event.stopPropagation();
         }
         var pageSize = 10;
-        assetService.getTenantAssets({limit: pageSize, textSearch: ''}, false).then(
+        assetService.getTenantAssets({limit: pageSize, textSearch: ''}).then(
             function success(_assets) {
                 var assets = {
                     pageSize: pageSize,
@@ -431,30 +365,51 @@ export function AssetController($rootScope, userService, assetService, customerS
             });
     }
 
-    function assignAssetsToCustomer($event, items) {
+    function manageAssignedCustomers($event, asset) {
+        showManageAssignedCustomersDialog($event, [asset.id.id], 'manage', asset.assignedCustomersIds);
+    }
+
+    function assignAssetsToCustomers($event, items) {
         var assetIds = [];
         for (var id in items.selections) {
             assetIds.push(id);
         }
-        assignToCustomer($event, assetIds);
+        showManageAssignedCustomersDialog($event, assetIds, 'assign');
     }
 
-    function unassignFromCustomer($event, asset, isPublic) {
+    function unassignAssetsFromCustomers($event, items) {
+        var assetIds = [];
+        for (var id in items.selections) {
+            assetIds.push(id);
+        }
+        showManageAssignedCustomersDialog($event, assetIds, 'unassign');
+    }
+
+    function showManageAssignedCustomersDialog($event, assetIds, actionType, assignedCustomers) {
         if ($event) {
             $event.stopPropagation();
         }
-        var title;
-        var content;
-        var label;
-        if (isPublic) {
-            title = $translate.instant('asset.make-private-asset-title', {assetName: asset.name});
-            content = $translate.instant('asset.make-private-asset-text');
-            label = $translate.instant('asset.make-private');
-        } else {
-            title = $translate.instant('asset.unassign-asset-title', {assetName: asset.name});
-            content = $translate.instant('asset.unassign-asset-text');
-            label = $translate.instant('asset.unassign-asset');
+        $mdDialog.show({
+            controller: 'ManageAssetAssignedCustomersController',
+            controllerAs: 'vm',
+            templateUrl: manageAssignedCustomersTemplate,
+            locals: {actionType: actionType, assetIds: assetIds, assignedCustomers: assignedCustomers},
+            parent: angular.element($document[0].body),
+            fullscreen: true,
+            targetEvent: $event
+        }).then(function () {
+            vm.grid.refreshList();
+        }, function () {
+        });
+    }
+
+    function unassignFromCustomer($event, asset, customerId) {
+        if ($event) {
+            $event.stopPropagation();
         }
+        var title = $translate.instant('asset.unassign-asset-title', {assetName: asset.name});
+        var content = $translate.instant('asset.unassign-asset-text');
+        var label = $translate.instant('asset.unassign-asset');
         var confirm = $mdDialog.confirm()
             .targetEvent($event)
             .title(title)
@@ -463,26 +418,7 @@ export function AssetController($rootScope, userService, assetService, customerS
             .cancel($translate.instant('action.no'))
             .ok($translate.instant('action.yes'));
         $mdDialog.show(confirm).then(function () {
-            assetService.unassignAssetFromCustomer(asset.id.id).then(function success() {
-                vm.grid.refreshList();
-            });
-        });
-    }
-
-    function unassignAssetsFromCustomer($event, items) {
-        var confirm = $mdDialog.confirm()
-            .targetEvent($event)
-            .title($translate.instant('asset.unassign-assets-title', {count: items.selectedCount}, 'messageformat'))
-            .htmlContent($translate.instant('asset.unassign-assets-text'))
-            .ariaLabel($translate.instant('asset.unassign-asset'))
-            .cancel($translate.instant('action.no'))
-            .ok($translate.instant('action.yes'));
-        $mdDialog.show(confirm).then(function () {
-            var tasks = [];
-            for (var id in items.selections) {
-                tasks.push(assetService.unassignAssetFromCustomer(id));
-            }
-            $q.all(tasks).then(function () {
+            assetService.unassignAssetFromCustomer(asset.id.id, customerId).then(function success() {
                 vm.grid.refreshList();
             });
         });
@@ -501,6 +437,27 @@ export function AssetController($rootScope, userService, assetService, customerS
             .ok($translate.instant('action.yes'));
         $mdDialog.show(confirm).then(function () {
             assetService.makeAssetPublic(asset.id.id).then(function success() {
+                vm.grid.refreshList();
+            });
+        });
+    }
+
+    function makePrivate($event, asset) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        var title = $translate.instant('asset.make-private-asset-title', {assetTitle: asset.title});
+        var content = $translate.instant('asset.make-private-asset-text');
+        var label = $translate.instant('asset.make-private-asset');
+        var confirm = $mdDialog.confirm()
+            .targetEvent($event)
+            .title(title)
+            .htmlContent(content)
+            .ariaLabel(label)
+            .cancel($translate.instant('action.no'))
+            .ok($translate.instant('action.yes'));
+        $mdDialog.show(confirm).then(function () {
+            assetService.makeAssetPrivate(asset.id.id).then(function success() {
                 vm.grid.refreshList();
             });
         });
