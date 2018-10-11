@@ -137,6 +137,29 @@ message SubscribeToRPCMsg {
   bool unsubscribe = 1;
 }
 
+message ToDeviceRpcRequestMsg {
+  int32 requestId = 1;
+  string methodName = 2;
+  string params = 3;
+}
+
+message ToDeviceRpcResponseMsg {
+  int32 requestId = 1;
+  string payload = 2;
+}
+
+message ToServerRpcRequestMsg {
+  int32 requestId = 1;
+  string methodName = 2;
+  string params = 3;
+}
+
+message ToServerRpcResponseMsg {
+  int32 requestId = 1;
+  string payload = 2;
+  string error = 3;
+}
+
 message TransportToDeviceActorMsg {
   SessionInfoProto sessionInfo = 1;
   SessionEventMsg sessionEvent = 2;
@@ -144,7 +167,9 @@ message TransportToDeviceActorMsg {
   PostAttributeMsg postAttributes = 4;
   GetAttributeRequestMsg getAttributes = 5;
   SubscribeToAttributeUpdatesMsg subscribeToAttributes = 6;
-  SubscribeToRPCMsg subscribeToRPC= 7;
+  SubscribeToRPCMsg subscribeToRPC = 7;
+  ToDeviceRpcResponseMsg toDeviceRPCCallResponse = 8;
+  ToServerRpcRequestMsg toServerRPCCallRequest = 9;
 }
 
 message DeviceActorToTransportMsg {
@@ -153,6 +178,8 @@ message DeviceActorToTransportMsg {
    SessionCloseNotificationProto sessionCloseNotification = 3;
    GetAttributeResponseMsg getAttributesResponse = 4;
    AttributeUpdateNotificationMsg attributeUpdateNotification = 5;
+   ToDeviceRpcRequestMsg toDeviceRequest = 6;
+   ToServerRpcResponseMsg toServerResponse = 7;
 }
 
 /**

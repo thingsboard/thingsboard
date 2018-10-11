@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,6 @@ package org.thingsboard.server.transport.mqtt.adaptors;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import io.netty.buffer.ByteBuf;
@@ -99,6 +98,31 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
     }
 
     @Override
+    public TransportProtos.ToDeviceRpcResponseMsg convertToDeviceRpcResponse(DeviceSessionCtx ctx, MqttPublishMessage inbound) throws AdaptorException {
+        String topicName = inbound.variableHeader().topicName();
+        try {
+            Integer requestId = Integer.valueOf(topicName.substring(MqttTopics.DEVICE_RPC_RESPONSE_TOPIC.length()));
+            String payload = inbound.payload().toString(UTF8);
+            return TransportProtos.ToDeviceRpcResponseMsg.newBuilder().setRequestId(requestId).setPayload(payload).build();
+        } catch (RuntimeException e) {
+            log.warn("Failed to decode get attributes request", e);
+            throw new AdaptorException(e);
+        }
+    }
+
+    @Override
+    public TransportProtos.ToServerRpcRequestMsg convertToServerRpcRequest(DeviceSessionCtx ctx, MqttPublishMessage inbound) throws AdaptorException {
+        String topicName = inbound.variableHeader().topicName();
+        String payload = validatePayload(ctx.getSessionId(), inbound.payload());
+        try {
+            Integer requestId = Integer.valueOf(topicName.substring(MqttTopics.DEVICE_RPC_REQUESTS_TOPIC.length()));
+            return JsonConverter.convertToServerRpcRequest(new JsonParser().parse(payload), requestId);
+        } catch (IllegalStateException | JsonSyntaxException ex) {
+            throw new AdaptorException(ex);
+        }
+    }
+
+    @Override
     public Optional<MqttMessage> convertToPublish(DeviceSessionCtx ctx, TransportProtos.GetAttributeResponseMsg responseMsg) throws AdaptorException {
         if (!StringUtils.isEmpty(responseMsg.getError())) {
             throw new AdaptorException(responseMsg.getError());
@@ -115,9 +139,17 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
 
     @Override
     public Optional<MqttMessage> convertToPublish(DeviceSessionCtx ctx, TransportProtos.AttributeUpdateNotificationMsg notificationMsg) throws AdaptorException {
-        return Optional.of(createMqttPublishMsg(ctx,
-                MqttTopics.DEVICE_ATTRIBUTES_TOPIC,
-                JsonConverter.toJson(notificationMsg)));
+        return Optional.of(createMqttPublishMsg(ctx, MqttTopics.DEVICE_ATTRIBUTES_TOPIC, JsonConverter.toJson(notificationMsg)));
+    }
+
+    @Override
+    public Optional<MqttMessage> convertToPublish(DeviceSessionCtx ctx, TransportProtos.ToDeviceRpcRequestMsg rpcRequest) throws AdaptorException {
+        return Optional.of(createMqttPublishMsg(ctx, MqttTopics.DEVICE_RPC_REQUESTS_TOPIC + rpcRequest.getRequestId(), JsonConverter.toJson(rpcRequest, false)));
+    }
+
+    @Override
+    public Optional<MqttMessage> convertToPublish(DeviceSessionCtx ctx, TransportProtos.ToServerRpcResponseMsg rpcResponse) {
+        return Optional.of(createMqttPublishMsg(ctx, MqttTopics.DEVICE_RPC_RESPONSE_TOPIC + rpcResponse.getRequestId(), JsonConverter.toJson(rpcResponse)));
     }
 
     @Override
@@ -149,7 +181,7 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
                 msg = convertToRpcCommandResponse(ctx, (MqttPublishMessage) inbound);
                 break;
             case TO_SERVER_RPC_REQUEST:
-                msg = convertToServerRpcRequest(ctx, (MqttPublishMessage) inbound);
+                msg = null;//convertToServerRpcRequest(ctx, (MqttPublishMessage) inbound);
                 break;
             default:
                 log.warn("[{}] Unsupported msg type: {}!", ctx.getSessionId(), type);
@@ -181,13 +213,12 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
                 break;
             case TO_DEVICE_RPC_REQUEST:
                 ToDeviceRpcRequestMsg rpcRequest = (ToDeviceRpcRequestMsg) msg;
-                result = createMqttPublishMsg(ctx, MqttTopics.DEVICE_RPC_REQUESTS_TOPIC + rpcRequest.getRequestId(),
-                        rpcRequest);
+                result = createMqttPublishMsg(ctx, MqttTopics.DEVICE_RPC_REQUESTS_TOPIC + rpcRequest.getRequestId(), rpcRequest);
                 break;
             case TO_SERVER_RPC_RESPONSE:
-                ToServerRpcResponseMsg rpcResponse = (ToServerRpcResponseMsg) msg;
-                result = createMqttPublishMsg(ctx, MqttTopics.DEVICE_RPC_RESPONSE_TOPIC + rpcResponse.getRequestId(),
-                        rpcResponse);
+//                ToServerRpcResponseMsg rpcResponse = (ToServerRpcResponseMsg) msg;
+//                result = createMqttPublishMsg(ctx, MqttTopics.DEVICE_RPC_RESPONSE_TOPIC + rpcResponse.getRequestId(),
+//                        rpcResponse);
                 break;
             case RULE_ENGINE_ERROR:
                 RuleEngineErrorMsg errorMsg = (RuleEngineErrorMsg) msg;
@@ -232,7 +263,7 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
         return createMqttPublishMsg(ctx, topic, JsonConverter.toJson(msg, false));
     }
 
-    private MqttPublishMessage createMqttPublishMsg(DeviceSessionCtx ctx, String topic, ToServerRpcResponseMsg msg) {
+    private MqttPublishMessage createMqttPublishMsg(DeviceSessionCtx ctx, String topic, TransportProtos.ToServerRpcResponseMsg msg) {
         return createMqttPublishMsg(ctx, topic, JsonConverter.toJson(msg));
     }
 
@@ -290,7 +321,7 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
     private AttributesUpdateRequest convertToUpdateAttributesRequest(SessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
         String payload = validatePayload(ctx.getSessionId(), inbound.payload());
         try {
-            return JsonConverter.convertToAttributes(new JsonParser().parse(payload), inbound.variableHeader().messageId());
+            return JsonConverter.convertToAttributes(new JsonParser().parse(payload), inbound.variableHeader().packetId());
         } catch (IllegalStateException | JsonSyntaxException ex) {
             throw new AdaptorException(ex);
         }
@@ -299,18 +330,7 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
     private TelemetryUploadRequest convertToTelemetryUploadRequest(SessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
         String payload = validatePayload(ctx.getSessionId(), inbound.payload());
         try {
-            return JsonConverter.convertToTelemetry(new JsonParser().parse(payload), inbound.variableHeader().messageId());
-        } catch (IllegalStateException | JsonSyntaxException ex) {
-            throw new AdaptorException(ex);
-        }
-    }
-
-    private FromDeviceMsg convertToServerRpcRequest(DeviceSessionCtx ctx, MqttPublishMessage inbound) throws AdaptorException {
-        String topicName = inbound.variableHeader().topicName();
-        String payload = validatePayload(ctx.getSessionId(), inbound.payload());
-        try {
-            Integer requestId = Integer.valueOf(topicName.substring(MqttTopics.DEVICE_RPC_REQUESTS_TOPIC.length()));
-            return JsonConverter.convertToServerRpcRequest(new JsonParser().parse(payload), requestId);
+            return JsonConverter.convertToTelemetry(new JsonParser().parse(payload), inbound.variableHeader().packetId());
         } catch (IllegalStateException | JsonSyntaxException ex) {
             throw new AdaptorException(ex);
         }

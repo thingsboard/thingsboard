@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
+import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.kv.AttributeKey;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
@@ -95,6 +96,15 @@ public class JsonConverter {
         }
     }
 
+    public static JsonElement toJson(TransportProtos.ToDeviceRpcRequestMsg msg, boolean includeRequestId) {
+        JsonObject result = new JsonObject();
+        if (includeRequestId) {
+            result.addProperty("id", msg.getRequestId());
+        }
+        result.addProperty("method", msg.getMethodName());
+        result.add("params", new JsonParser().parse(msg.getParams()));
+        return result;
+    }
 
     private static void parseObject(PostTelemetryMsg.Builder builder, long systemTs, JsonElement jsonObject) {
         JsonObject jo = jsonObject.getAsJsonObject();
@@ -112,14 +122,14 @@ public class JsonConverter {
         request.addTsKvList(builder.build());
     }
 
-    public static void parseWithTs(PostTelemetryMsg.Builder request, JsonObject jo) {
+    private static void parseWithTs(PostTelemetryMsg.Builder request, JsonObject jo) {
         TsKvListProto.Builder builder = TsKvListProto.newBuilder();
         builder.setTs(jo.get("ts").getAsLong());
         builder.addAllKv(parseProtoValues(jo.get("values").getAsJsonObject()));
         request.addTsKvList(builder.build());
     }
 
-    public static List<KeyValueProto> parseProtoValues(JsonObject valuesObject) {
+    private static List<KeyValueProto> parseProtoValues(JsonObject valuesObject) {
         List<KeyValueProto> result = new ArrayList<>();
         for (Entry<String, JsonElement> valueEntry : valuesObject.entrySet()) {
             JsonElement element = valueEntry.getValue();
@@ -172,9 +182,9 @@ public class JsonConverter {
         return request;
     }
 
-    public static ToServerRpcRequestMsg convertToServerRpcRequest(JsonElement json, int requestId) throws JsonSyntaxException {
+    public static TransportProtos.ToServerRpcRequestMsg convertToServerRpcRequest(JsonElement json, int requestId) throws JsonSyntaxException {
         JsonObject object = json.getAsJsonObject();
-        return new ToServerRpcRequestMsg(requestId, object.get("method").getAsString(), GSON.toJson(object.get("params")));
+        return TransportProtos.ToServerRpcRequestMsg.newBuilder().setRequestId(requestId).setMethodName(object.get("method").getAsString()).setParams(GSON.toJson(object.get("params"))).build();
     }
 
     private static void parseObject(BasicTelemetryUploadRequest request, long systemTs, JsonElement jsonObject) {
@@ -368,8 +378,14 @@ public class JsonConverter {
         return result;
     }
 
-    public static JsonElement toJson(ToServerRpcResponseMsg msg) {
-        return new JsonParser().parse(msg.getData());
+    public static JsonElement toJson(TransportProtos.ToServerRpcResponseMsg msg) {
+        if (StringUtils.isEmpty(msg.getError())) {
+            return new JsonParser().parse(msg.getPayload());
+        } else {
+            JsonObject errorMsg = new JsonObject();
+            errorMsg.addProperty("error", msg.getError());
+            return errorMsg;
+        }
     }
 
     public static JsonElement toErrorJson(String errorMsg) {

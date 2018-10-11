@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -223,43 +223,18 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             } else if (topicName.startsWith(MqttTopics.DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX)) {
                 TransportProtos.GetAttributeRequestMsg getAttributeMsg = adaptor.convertToGetAttributes(deviceSessionCtx, mqttMsg);
                 transportService.process(sessionInfo, getAttributeMsg, getPubAckCallback(ctx, msgId, getAttributeMsg));
+            } else if (topicName.startsWith(MqttTopics.DEVICE_RPC_RESPONSE_TOPIC)){
+                TransportProtos.ToDeviceRpcResponseMsg rpcResponseMsg = adaptor.convertToDeviceRpcResponse(deviceSessionCtx, mqttMsg);
+                transportService.process(sessionInfo, rpcResponseMsg, getPubAckCallback(ctx, msgId, rpcResponseMsg));
+            } else if (topicName.startsWith(MqttTopics.DEVICE_RPC_REQUESTS_TOPIC)){
+                TransportProtos.ToServerRpcRequestMsg rpcRequestMsg = adaptor.convertToServerRpcRequest(deviceSessionCtx, mqttMsg);
+                transportService.process(sessionInfo, rpcRequestMsg, getPubAckCallback(ctx, msgId, rpcRequestMsg));
             }
         } catch (AdaptorException e) {
             log.warn("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
             log.info("[{}] Closing current session due to invalid publish msg [{}][{}]", sessionId, topicName, msgId);
             ctx.close();
         }
-//        AdaptorToSessionActorMsg msg = null;
-//        try {
-//            if (topicName.equals(DEVICE_TELEMETRY_TOPIC)) {
-//                msg = adaptor.convertToActorMsg(deviceSessionCtx, POST_TELEMETRY_REQUEST, mqttMsg);
-//            } else if (topicName.equals(DEVICE_ATTRIBUTES_TOPIC)) {
-//                msg = adaptor.convertToActorMsg(deviceSessionCtx, POST_ATTRIBUTES_REQUEST, mqttMsg);
-//            } else if (topicName.startsWith(DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX)) {
-//                msg = adaptor.convertToActorMsg(deviceSessionCtx, GET_ATTRIBUTES_REQUEST, mqttMsg);
-//                if (msgId >= 0) {
-//                    ctx.writeAndFlush(createMqttPubAckMsg(msgId));
-//                }
-//            } else if (topicName.startsWith(DEVICE_RPC_RESPONSE_TOPIC)) {
-//                msg = adaptor.convertToActorMsg(deviceSessionCtx, TO_DEVICE_RPC_RESPONSE, mqttMsg);
-//                if (msgId >= 0) {
-//                    ctx.writeAndFlush(createMqttPubAckMsg(msgId));
-//                }
-//            } else if (topicName.startsWith(DEVICE_RPC_REQUESTS_TOPIC)) {
-//                msg = adaptor.convertToActorMsg(deviceSessionCtx, TO_SERVER_RPC_REQUEST, mqttMsg);
-//                if (msgId >= 0) {
-//                    ctx.writeAndFlush(createMqttPubAckMsg(msgId));
-//                }
-//            }
-//        } catch (AdaptorException e) {
-//            log.warn("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
-//        }
-//        if (msg != null) {
-//            processor.process(new BasicTransportToDeviceSessionActorMsg(deviceSessionCtx.getDevice(), msg));
-//        } else {
-//            log.info("[{}] Closing current session due to invalid publish msg [{}][{}]", sessionId, topicName, msgId);
-//            ctx.close();
-//        }
     }
 
     private <T> TransportServiceCallback<Void> getPubAckCallback(final ChannelHandlerContext ctx, final int msgId, final T msg) {
@@ -553,6 +528,32 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             adaptor.convertToPublish(deviceSessionCtx, notification).ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
         } catch (Exception e) {
             log.trace("[{}] Failed to convert device attributes update to MQTT msg", sessionId, e);
+        }
+    }
+
+    @Override
+    public void onRemoteSessionCloseCommand(TransportProtos.SessionCloseNotificationProto sessionCloseNotification) {
+        log.trace("[{}] Received the remote command to close the session", sessionId);
+        processDisconnect(deviceSessionCtx.getChannel());
+    }
+
+    @Override
+    public void onToDeviceRpcRequest(TransportProtos.ToDeviceRpcRequestMsg rpcRequest) {
+        log.trace("[{}] Received RPC command to device", sessionId);
+        try {
+            adaptor.convertToPublish(deviceSessionCtx, rpcRequest).ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
+        } catch (Exception e) {
+            log.trace("[{}] Failed to convert device RPC commandto MQTT msg", sessionId, e);
+        }
+    }
+
+    @Override
+    public void onToServerRpcResponse(TransportProtos.ToServerRpcResponseMsg rpcResponse) {
+        log.trace("[{}] Received RPC command to device", sessionId);
+        try {
+            adaptor.convertToPublish(deviceSessionCtx, rpcResponse).ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
+        } catch (Exception e) {
+            log.trace("[{}] Failed to convert device RPC commandto MQTT msg", sessionId, e);
         }
     }
 }

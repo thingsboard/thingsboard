@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -164,6 +164,15 @@ public class MqttTransportService implements TransportService {
                                         if (toSessionMsg.hasAttributeUpdateNotification()) {
                                             listener.onAttributeUpdate(toSessionMsg.getAttributeUpdateNotification());
                                         }
+                                        if (toSessionMsg.hasSessionCloseNotification()) {
+                                            listener.onRemoteSessionCloseCommand(toSessionMsg.getSessionCloseNotification());
+                                        }
+                                        if (toSessionMsg.hasToDeviceRequest()) {
+                                            listener.onToDeviceRpcRequest(toSessionMsg.getToDeviceRequest());
+                                        }
+                                        if (toSessionMsg.hasToServerResponse()) {
+                                            listener.onToServerRpcResponse(toSessionMsg.getToServerResponse());
+                                        }
                                     });
                                 } else {
                                     //TODO: should we notify the device actor about missed session?
@@ -268,6 +277,24 @@ public class MqttTransportService implements TransportService {
         ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
                 TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
                         .setSubscribeToRPC(msg).build()
+        ).build();
+        send(sessionInfo, toRuleEngineMsg, callback);
+    }
+
+    @Override
+    public void process(SessionInfoProto sessionInfo, TransportProtos.ToDeviceRpcResponseMsg msg, TransportServiceCallback<Void> callback) {
+        ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
+                TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
+                        .setToDeviceRPCCallResponse(msg).build()
+        ).build();
+        send(sessionInfo, toRuleEngineMsg, callback);
+    }
+
+    @Override
+    public void process(SessionInfoProto sessionInfo, TransportProtos.ToServerRpcRequestMsg msg, TransportServiceCallback<Void> callback) {
+        ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
+                TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
+                        .setToServerRPCCallRequest(msg).build()
         ).build();
         send(sessionInfo, toRuleEngineMsg, callback);
     }

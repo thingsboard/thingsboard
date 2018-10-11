@@ -98,7 +98,8 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
 
         String payload = validatePayload(ctx, inbound);
 
-        return JsonConverter.convertToServerRpcRequest(new JsonParser().parse(payload), 0);
+//        return JsonConverter.convertToServerRpcRequest(new JsonParser().parse(payload), 0);
+        return null;
     }
 
     @Override
@@ -225,8 +226,8 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
     private Response convertToServerRpcResponse(SessionContext ctx, ToServerRpcResponseMsg msg) {
         if (msg.isSuccess()) {
             Response response = new Response(ResponseCode.CONTENT);
-            JsonElement result = JsonConverter.toJson(msg);
-            response.setPayload(result.toString());
+//            JsonElement result = JsonConverter.toJson(msg);
+//            response.setPayload(result.toString());
             return response;
         } else {
             return convertError(Optional.of(new RuntimeException("Server RPC response is empty!")));

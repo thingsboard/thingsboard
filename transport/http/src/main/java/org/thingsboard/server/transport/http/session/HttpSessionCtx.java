@@ -114,7 +114,7 @@ public class HttpSessionCtx extends DeviceAwareSessionContext {
     }
 
     private void reply(ToServerRpcResponseMsg msg) {
-        responseWriter.setResult(new ResponseEntity<>(JsonConverter.toJson(msg).toString(), HttpStatus.OK));
+//        responseWriter.setResult(new ResponseEntity<>(JsonConverter.toJson(msg).toString(), HttpStatus.OK));
     }
 
     private void reply(AttributesUpdateNotification msg) {
