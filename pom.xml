@@ -82,6 +82,8 @@
         </sonar.exclusions>
         <elasticsearch.version>5.0.2</elasticsearch.version>
         <delight-nashorn-sandbox.version>0.1.14</delight-nashorn-sandbox.version>
+        <local-map-server-host>192.168.15.100</local-map-server-host>
+        <local-map-server-port>8400</local-map-server-port>
     </properties>
 
     <modules>

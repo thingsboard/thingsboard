@@ -72,6 +72,80 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>2.7</version>
+                <executions>
+                    <execution>
+                        <id>copy-resource-leaflet-providers</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+
+                        <configuration>
+                            <overwrite>true</overwrite>
+                            <outputDirectory>${basedir}/node_modules/leaflet-providers</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/resourses/node-modules/leaflet-providers</directory>
+                                    <includes>
+                                        <include>leaflet-providers.js</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-resource-md-color-picker</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+
+                        <configuration>
+                            <overwrite>true</overwrite>
+                            <outputDirectory>${basedir}/node_modules/md-color-picker/dist</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/resourses/node-modules/md-color-picker/dist</directory>
+                                    <includes>
+                                        <include>mdColorPicker.min.js</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>                    
+               </executions>
+            </plugin>          
+            <plugin>
+                <groupId>com.google.code.maven-replacer-plugin</groupId>
+                <artifactId>replacer</artifactId>
+                <version>1.5.3</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>replace</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <includes>
+                        <include>${basedir}/node_modules/leaflet-providers/leaflet-providers.js</include>
+                    </includes>
+                    <replacements>
+                        <replacement>
+                            <token>@map-server-host@</token>
+                            <value>${local-map-server-host}</value>
+                        </replacement>
+                       <replacement>
+                            <token>@map-server-port@</token>
+                            <value>${local-map-server-port}</value>
+                        </replacement>                        
+                    </replacements>
+                </configuration>
+            </plugin>            
         </plugins>
     </build>
     <profiles>
