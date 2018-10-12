@@ -85,7 +85,7 @@ import static io.netty.handler.codec.mqtt.MqttQoS.FAILURE;
 @Slf4j
 public class MqttTransportHandler extends ChannelInboundHandlerAdapter implements GenericFutureListener<Future<? super Void>>, SessionMsgListener {
 
-    public static final MqttQoS MAX_SUPPORTED_QOS_LVL = AT_LEAST_ONCE;
+    private static final MqttQoS MAX_SUPPORTED_QOS_LVL = AT_LEAST_ONCE;
 
     private final UUID sessionId;
     private final MqttTransportContext context;
@@ -100,7 +100,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     private volatile DeviceSessionCtx deviceSessionCtx;
     private volatile GatewaySessionCtx gatewaySessionCtx;
 
-    public MqttTransportHandler(MqttTransportContext context) {
+    MqttTransportHandler(MqttTransportContext context) {
         this.sessionId = UUID.randomUUID();
         this.context = context;
         this.transportService = context.getTransportService();

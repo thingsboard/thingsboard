@@ -52,6 +52,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by ashvayka on 19.01.17.
@@ -70,10 +71,12 @@ public class GatewaySessionCtx {
     private final Map<String, GatewayDeviceSessionCtx> devices;
     private final ConcurrentMap<String, Integer> mqttQoSMap;
     private final ChannelHandlerContext channel;
+    private final DeviceSessionCtx deviceSessionCtx;
 
     public GatewaySessionCtx(MqttTransportContext context, DeviceSessionCtx deviceSessionCtx, UUID sessionId) {
         this.context = context;
         this.transportService = context.getTransportService();
+        this.deviceSessionCtx = deviceSessionCtx;
         this.gateway = deviceSessionCtx.getDeviceInfo();
         this.sessionId = sessionId;
         this.devices = new ConcurrentHashMap<>();
@@ -356,5 +359,9 @@ public class GatewaySessionCtx {
 
     public MqttTransportAdaptor getAdaptor() {
         return context.getAdaptor();
+    }
+
+    public int nextMsgId() {
+        return deviceSessionCtx.nextMsgId();
     }
 }
