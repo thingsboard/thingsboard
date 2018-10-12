@@ -18,6 +18,7 @@ package org.thingsboard.server.transport.http;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -34,6 +35,7 @@ import javax.servlet.http.HttpServletRequest;
  * @author Andrew Shvayka
  */
 @RestController
+@ConditionalOnProperty(prefix = "transport.http", value = "enabled", havingValue = "true")
 @RequestMapping("/api/v1")
 @Slf4j
 public class DeviceApiController {

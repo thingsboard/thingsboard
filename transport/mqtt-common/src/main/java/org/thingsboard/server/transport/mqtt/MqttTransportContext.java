@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -41,6 +42,7 @@ import java.util.concurrent.Executors;
  * Created by ashvayka on 04.10.18.
  */
 @Slf4j
+@ConditionalOnProperty(prefix = "transport.mqtt", value = "enabled", havingValue = "true", matchIfMissing = true)
 @Component
 @Data
 public class MqttTransportContext {
@@ -59,7 +61,7 @@ public class MqttTransportContext {
     @Autowired
     private MqttTransportAdaptor adaptor;
 
-    @Value("${mqtt.netty.max_payload_size}")
+    @Value("${transport.mqtt.netty.max_payload_size}")
     private Integer maxPayloadSize;
 
     @Value("${cluster.node_id:#{null}}")

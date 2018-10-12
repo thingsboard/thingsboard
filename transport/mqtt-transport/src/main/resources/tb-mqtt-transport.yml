@@ -17,32 +17,31 @@
 spring.main.web-application-type: none
 
 # MQTT server parameters
-mqtt:
-  # Enable/disable mqtt transport protocol.
-  enabled: "${MQTT_ENABLED:true}"
-  bind_address: "${MQTT_BIND_ADDRESS:0.0.0.0}"
-  bind_port: "${MQTT_BIND_PORT:1883}"
-  adaptor: "${MQTT_ADAPTOR_NAME:JsonMqttAdaptor}"
-  timeout: "${MQTT_TIMEOUT:10000}"
-  netty:
-    leak_detector_level: "${NETTY_LEASK_DETECTOR_LVL:DISABLED}"
-    boss_group_thread_count: "${NETTY_BOSS_GROUP_THREADS:1}"
-    worker_group_thread_count: "${NETTY_WORKER_GROUP_THREADS:12}"
-    max_payload_size: "${NETTY_MAX_PAYLOAD_SIZE:65536}"
-  # MQTT SSL configuration
-  ssl:
-    # Enable/disable SSL support
-    enabled: "${MQTT_SSL_ENABLED:false}"
-    # SSL protocol: See http://docs.oracle.com/javase/8/docs/technotes/guides/security/StandardNames.html#SSLContext
-    protocol: "${MQTT_SSL_PROTOCOL:TLSv1.2}"
-    # Path to the key store that holds the SSL certificate
-    key_store: "${MQTT_SSL_KEY_STORE:mqttserver.jks}"
-    # Password used to access the key store
-    key_store_password: "${MQTT_SSL_KEY_STORE_PASSWORD:server_ks_password}"
-    # Password used to access the key
-    key_password: "${MQTT_SSL_KEY_PASSWORD:server_key_password}"
-    # Type of the key store
-    key_store_type: "${MQTT_SSL_KEY_STORE_TYPE:JKS}"
+transport:
+  mqtt:
+    bind_address: "${MQTT_BIND_ADDRESS:0.0.0.0}"
+    bind_port: "${MQTT_BIND_PORT:1883}"
+    adaptor: "${MQTT_ADAPTOR_NAME:JsonMqttAdaptor}"
+    timeout: "${MQTT_TIMEOUT:10000}"
+    netty:
+      leak_detector_level: "${NETTY_LEASK_DETECTOR_LVL:DISABLED}"
+      boss_group_thread_count: "${NETTY_BOSS_GROUP_THREADS:1}"
+      worker_group_thread_count: "${NETTY_WORKER_GROUP_THREADS:12}"
+      max_payload_size: "${NETTY_MAX_PAYLOAD_SIZE:65536}"
+    # MQTT SSL configuration
+    ssl:
+      # Enable/disable SSL support
+      enabled: "${MQTT_SSL_ENABLED:false}"
+      # SSL protocol: See http://docs.oracle.com/javase/8/docs/technotes/guides/security/StandardNames.html#SSLContext
+      protocol: "${MQTT_SSL_PROTOCOL:TLSv1.2}"
+      # Path to the key store that holds the SSL certificate
+      key_store: "${MQTT_SSL_KEY_STORE:mqttserver.jks}"
+      # Password used to access the key store
+      key_store_password: "${MQTT_SSL_KEY_STORE_PASSWORD:server_ks_password}"
+      # Password used to access the key
+      key_password: "${MQTT_SSL_KEY_PASSWORD:server_key_password}"
+      # Type of the key store
+      key_store_type: "${MQTT_SSL_KEY_STORE_TYPE:JKS}"
 
 #Quota parameters
 quota:
@@ -56,7 +55,7 @@ quota:
     # Interval for scheduled task that cleans expired records. TTL is used for expiring
     cleanPeriodMs: "${QUOTA_HOST_CLEAN_PERIOD_MS:300000}"
     # Enable Host API Limits
-    enabled: "${QUOTA_HOST_ENABLED:false}"
+    enabled: "${QUOTA_HOST_ENABLED:true}"
     # Array of whitelist hosts
     whitelist: "${QUOTA_HOST_WHITELIST:localhost,127.0.0.1}"
     # Array of blacklist hosts

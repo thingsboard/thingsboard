@@ -44,25 +44,22 @@ import javax.annotation.PreDestroy;
  * @author Andrew Shvayka
  */
 @Service("MqttTransportService")
-@ConditionalOnProperty(prefix = "mqtt", value = "enabled", havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(prefix = "transport.mqtt", value = "enabled", havingValue = "true", matchIfMissing = true)
 @Slf4j
 public class MqttTransportService {
 
-    private static final String V1 = "v1";
-    private static final String DEVICE = "device";
-
-    @Value("${mqtt.bind_address}")
+    @Value("${transport.mqtt.bind_address}")
     private String host;
-    @Value("${mqtt.bind_port}")
+    @Value("${transport.mqtt.bind_port}")
     private Integer port;
-    @Value("${mqtt.adaptor}")
+    @Value("${transport.mqtt.adaptor}")
     private String adaptorName;
 
-    @Value("${mqtt.netty.leak_detector_level}")
+    @Value("${transport.mqtt.netty.leak_detector_level}")
     private String leakDetectorLevel;
-    @Value("${mqtt.netty.boss_group_thread_count}")
+    @Value("${transport.mqtt.netty.boss_group_thread_count}")
     private Integer bossGroupThreadCount;
-    @Value("${mqtt.netty.worker_group_thread_count}")
+    @Value("${transport.mqtt.netty.worker_group_thread_count}")
     private Integer workerGroupThreadCount;
 
     @Autowired

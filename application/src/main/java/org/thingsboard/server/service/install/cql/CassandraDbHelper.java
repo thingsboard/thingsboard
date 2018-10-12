@@ -147,6 +147,8 @@ public class CassandraDbHelper {
                     str = new Double(row.getDouble(index)).toString();
                 } else if (type == DataType.cint()) {
                     str = new Integer(row.getInt(index)).toString();
+                } else if (type == DataType.bigint()) {
+                    str = new Long(row.getLong(index)).toString();
                 } else if (type == DataType.uuid()) {
                     str = row.getUUID(index).toString();
                 } else if (type == DataType.timeuuid()) {
@@ -193,6 +195,8 @@ public class CassandraDbHelper {
             boundStatement.setDouble(column, Double.valueOf(value));
         } else if (type == DataType.cint()) {
             boundStatement.setInt(column, Integer.valueOf(value));
+        } else if (type == DataType.bigint()) {
+            boundStatement.setLong(column, Long.valueOf(value));
         } else if (type == DataType.uuid()) {
             boundStatement.setUUID(column, UUID.fromString(value));
         } else if (type == DataType.timeuuid()) {

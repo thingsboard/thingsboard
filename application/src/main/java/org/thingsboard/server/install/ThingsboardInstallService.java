@@ -97,6 +97,11 @@ public class ThingsboardInstallService {
 
                         databaseUpgradeService.upgradeDatabase("2.0.0");
 
+                    case "2.1.1":
+                        log.info("Upgrading ThingsBoard from version 2.1.1 to 2.1.2 ...");
+
+                        databaseUpgradeService.upgradeDatabase("2.1.1");
+
                         log.info("Updating system data...");
 
                         systemDataLoaderService.deleteSystemWidgetBundle("charts");

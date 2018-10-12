@@ -19,4 +19,4 @@ DROP TABLE IF EXISTS widget_type;
 DROP TABLE IF EXISTS widgets_bundle;
 DROP TABLE IF EXISTS rule_node;
 DROP TABLE IF EXISTS rule_chain;
-DROP TABLE IF EXISTS entity_views;
+DROP TABLE IF EXISTS entity_view;

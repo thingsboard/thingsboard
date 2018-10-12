@@ -23,4 +23,6 @@ RUN chmod a+x /tmp/*.sh \
 
 RUN dpkg -i /tmp/${pkg.name}.deb
 
+RUN update-rc.d ${pkg.name} disable
+
 CMD ["start-web-ui.sh"]

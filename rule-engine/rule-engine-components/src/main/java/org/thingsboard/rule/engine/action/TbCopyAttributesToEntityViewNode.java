@@ -48,7 +48,7 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 @Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
-        name = "copy attributes",
+        name = "copy to view",
         configClazz = EmptyNodeConfiguration.class,
         nodeDescription = "Copy attributes from asset/device to entity view and changes message originator to related entity view",
         nodeDetails = "Copy attributes from asset/device to related entity view according to entity view configuration. \n " +

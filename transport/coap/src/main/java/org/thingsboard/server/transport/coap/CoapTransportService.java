@@ -37,7 +37,7 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
 @Service("CoapTransportService")
-@ConditionalOnProperty(prefix = "coap", value = "enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "transport.coap", value = "enabled", havingValue = "true")
 @Slf4j
 public class CoapTransportService {
 

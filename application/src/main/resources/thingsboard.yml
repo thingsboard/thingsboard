@@ -77,46 +77,10 @@ security:
   # Enable/disable access to Tenant Administrators JWT token by System Administrator or Customer Users JWT token by Tenant Administrator
   user_token_access_enabled: "${SECURITY_USER_TOKEN_ACCESS_ENABLED:true}"
 
-# Device communication protocol parameters
-http:
-  request_timeout: "${HTTP_REQUEST_TIMEOUT:60000}"
-
-# MQTT server parameters
-mqtt:
-  # Enable/disable mqtt transport protocol.
-  enabled: "${MQTT_ENABLED:false}"
-  bind_address: "${MQTT_BIND_ADDRESS:0.0.0.0}"
-  bind_port: "${MQTT_BIND_PORT:1883}"
-  adaptor: "${MQTT_ADAPTOR_NAME:JsonMqttAdaptor}"
-  timeout: "${MQTT_TIMEOUT:10000}"
-  netty:
-    leak_detector_level: "${NETTY_LEASK_DETECTOR_LVL:DISABLED}"
-    boss_group_thread_count: "${NETTY_BOSS_GROUP_THREADS:1}"
-    worker_group_thread_count: "${NETTY_WORKER_GROUP_THREADS:12}"
-    max_payload_size: "${NETTY_MAX_PAYLOAD_SIZE:65536}"
-  # MQTT SSL configuration
-  ssl:
-    # Enable/disable SSL support
-    enabled: "${MQTT_SSL_ENABLED:false}"
-    # SSL protocol: See http://docs.oracle.com/javase/8/docs/technotes/guides/security/StandardNames.html#SSLContext
-    protocol: "${MQTT_SSL_PROTOCOL:TLSv1.2}"
-    # Path to the key store that holds the SSL certificate
-    key_store: "${MQTT_SSL_KEY_STORE:mqttserver.jks}"
-    # Password used to access the key store
-    key_store_password: "${MQTT_SSL_KEY_STORE_PASSWORD:server_ks_password}"
-    # Password used to access the key
-    key_password: "${MQTT_SSL_KEY_PASSWORD:server_key_password}"
-    # Type of the key store
-    key_store_type: "${MQTT_SSL_KEY_STORE_TYPE:JKS}"
-
-# CoAP server parameters
-coap:
-  # Enable/disable coap transport protocol.
-  enabled: "${COAP_ENABLED:false}"
-  bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"
-  bind_port: "${COAP_BIND_PORT:5683}"
-  adaptor:  "${COAP_ADAPTOR_NAME:JsonCoapAdaptor}"
-  timeout: "${COAP_TIMEOUT:10000}"
+# Dashboard parameters
+dashboard:
+  # Maximum allowed datapoints fetched by widgets
+  max_datapoints_limit: "${DASHBOARD_MAX_DATAPOINTS_LIMIT:50000}"
 
 #Quota parameters
 quota:
@@ -136,8 +100,8 @@ quota:
     # Array of blacklist hosts
     blacklist: "${QUOTA_HOST_BLACKLIST:}"
     log:
-      topSize: 10
-      intervalMin: 2
+      topSize: "${QUOTA_HOST_LOG_TOP_SIZE:10}"
+      intervalMin: "${QUOTA_HOST_LOG_INTERVAL_MIN:2}"
   rule:
     tenant:
       # Max allowed number of API requests in interval for single tenant
@@ -153,10 +117,10 @@ quota:
       # Array of whitelist tenants
       whitelist: "${QUOTA_TENANT_WHITELIST:}"
       # Array of blacklist tenants
-      blacklist: "${QUOTA_HOST_BLACKLIST:}"
+      blacklist: "${QUOTA_HOST_TENANT_BLACKLIST:}"
       log:
-        topSize: 10
-        intervalMin: 2
+        topSize: "${QUOTA_TENANT_LOG_TOP_SIZE:10}"
+        intervalMin: "${QUOTA_TENANT_LOG_INTERVAL_MIN:2}"
 
 database:
   entities:
@@ -185,7 +149,8 @@ cassandra:
   init_timeout_ms: "${CASSANDRA_CLUSTER_INIT_TIMEOUT_MS:300000}"
   # Specify cassandra claster initialization retry interval (if no hosts available during startup)
   init_retry_interval_ms: "${CASSANDRA_CLUSTER_INIT_RETRY_INTERVAL_MS:3000}"
-
+  max_requests_per_connection_local: "${CASSANDRA_MAX_REQUESTS_PER_CONNECTION_LOCAL:32768}"
+  max_requests_per_connection_remote: "${CASSANDRA_MAX_REQUESTS_PER_CONNECTION_REMOTE:32768}"
   # Credential parameters #
   credentials: "${CASSANDRA_USE_CREDENTIALS:false}"
   # Specify your username
@@ -467,3 +432,41 @@ transport:
       auto_commit_interval: "${TB_RULE_ENGINE_AUTO_COMMIT_INTERVAL_MS:100}"
     notifications:
       topic: "${TB_TRANSPORT_NOTIFICATIONS_TOPIC:tb.transport.notifications}"
+  # Local HTTP transport parameters
+  http:
+    request_timeout: "${HTTP_REQUEST_TIMEOUT:60000}"
+  # Local MQTT transport parameters
+  mqtt:
+    # Enable/disable mqtt transport protocol.
+    enabled: "${MQTT_ENABLED:false}"
+    bind_address: "${MQTT_BIND_ADDRESS:0.0.0.0}"
+    bind_port: "${MQTT_BIND_PORT:1883}"
+    adaptor: "${MQTT_ADAPTOR_NAME:JsonMqttAdaptor}"
+    timeout: "${MQTT_TIMEOUT:10000}"
+    netty:
+      leak_detector_level: "${NETTY_LEASK_DETECTOR_LVL:DISABLED}"
+      boss_group_thread_count: "${NETTY_BOSS_GROUP_THREADS:1}"
+      worker_group_thread_count: "${NETTY_WORKER_GROUP_THREADS:12}"
+      max_payload_size: "${NETTY_MAX_PAYLOAD_SIZE:65536}"
+    # MQTT SSL configuration
+    ssl:
+      # Enable/disable SSL support
+      enabled: "${MQTT_SSL_ENABLED:false}"
+      # SSL protocol: See http://docs.oracle.com/javase/8/docs/technotes/guides/security/StandardNames.html#SSLContext
+      protocol: "${MQTT_SSL_PROTOCOL:TLSv1.2}"
+      # Path to the key store that holds the SSL certificate
+      key_store: "${MQTT_SSL_KEY_STORE:mqttserver.jks}"
+      # Password used to access the key store
+      key_store_password: "${MQTT_SSL_KEY_STORE_PASSWORD:server_ks_password}"
+      # Password used to access the key
+      key_password: "${MQTT_SSL_KEY_PASSWORD:server_key_password}"
+      # Type of the key store
+      key_store_type: "${MQTT_SSL_KEY_STORE_TYPE:JKS}"
+  # Local CoAP transport parameters
+  coap:
+    # Enable/disable coap transport protocol.
+    enabled: "${COAP_ENABLED:false}"
+    bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"
+    bind_port: "${COAP_BIND_PORT:5683}"
+    adaptor:  "${COAP_ADAPTOR_NAME:JsonCoapAdaptor}"
+    timeout: "${COAP_TIMEOUT:10000}"

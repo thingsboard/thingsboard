@@ -15,4 +15,5 @@
 # limitations under the License.
 #
 
+docker-compose pull $@
 docker-compose up -d --no-deps --build $@

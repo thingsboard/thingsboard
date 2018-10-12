@@ -172,9 +172,9 @@ export default class Subscription {
         if (this.type === this.ctx.types.widgetType.rpc.value) {
             if (this.targetDeviceId) {
                 entityId = {
-                    entityType: this.ctx.entityType.device,
+                    entityType: this.ctx.types.entityType.device,
                     id: this.targetDeviceId
-                }
+                };
                 entityName = this.targetDeviceName;
             }
         } else if (this.type == this.ctx.types.widgetType.alarm.value) {
@@ -182,7 +182,7 @@ export default class Subscription {
                 entityId = {
                     entityType: this.alarmSource.entityType,
                     id: this.alarmSource.entityId
-                }
+                };
                 entityName = this.alarmSource.entityName;
             }
         } else {
@@ -192,7 +192,7 @@ export default class Subscription {
                     entityId = {
                         entityType: datasource.entityType,
                         id: datasource.entityId
-                    }
+                    };
                     entityName = datasource.entityName;
                     break;
                 }

@@ -36,17 +36,8 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
     private ChannelHandlerContext channel;
     private AtomicInteger msgIdSeq = new AtomicInteger(0);
 
-    public DeviceSessionCtx(UUID sessionId, ConcurrentMap<String, Integer> mqttQoSMap) {
+    public DeviceSessionCtx(UUID sessionId, ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap) {
         super(sessionId, mqttQoSMap);
-    }
-
-    private void logAndWrap(AdaptorException e) throws SessionException {
-        log.warn("Failed to convert msg: {}", e.getMessage(), e);
-        throw new SessionException(e);
-    }
-
-    private void pushToNetwork(MqttMessage msg) {
-        channel.writeAndFlush(msg);
     }
 
     public void setChannel(ChannelHandlerContext channel) {

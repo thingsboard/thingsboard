@@ -68,7 +68,7 @@ public class GatewaySessionHandler {
     private final DeviceInfoProto gateway;
     private final UUID sessionId;
     private final Map<String, GatewayDeviceSessionCtx> devices;
-    private final ConcurrentMap<String, Integer> mqttQoSMap;
+    private final ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap;
     private final ChannelHandlerContext channel;
     private final DeviceSessionCtx deviceSessionCtx;
 
