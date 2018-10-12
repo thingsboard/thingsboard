@@ -87,10 +87,12 @@ public class GatewaySessionHandler {
         JsonElement json = getJson(msg);
         String deviceName = checkDeviceName(getDeviceName(json));
         String deviceType = getDeviceType(json);
+        log.trace("[{}] onDeviceConnect: {}", sessionId, deviceName);
         Futures.addCallback(onDeviceConnect(deviceName, deviceType), new FutureCallback<GatewayDeviceSessionCtx>() {
             @Override
             public void onSuccess(@Nullable GatewayDeviceSessionCtx result) {
                 ack(msg);
+                log.trace("[{}] onDeviceConnectOk: {}", sessionId, deviceName);
             }
 
             @Override

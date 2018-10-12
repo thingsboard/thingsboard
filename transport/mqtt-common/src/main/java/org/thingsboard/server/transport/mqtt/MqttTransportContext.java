@@ -48,7 +48,6 @@ public class MqttTransportContext {
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Autowired
-    @Lazy
     private TransportService transportService;
 
     @Autowired(required = false)

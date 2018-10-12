@@ -22,6 +22,6 @@ import com.google.common.util.concurrent.ListenableFuture;
  */
 public interface TbKafkaHandler<Request, Response> {
 
-    ListenableFuture<Response> handle(Request request) throws Exception;
+    ListenableFuture<Response> handle(Request request);
 
 }

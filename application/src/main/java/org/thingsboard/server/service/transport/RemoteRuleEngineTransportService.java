@@ -55,7 +55,7 @@ import java.util.function.Consumer;
  */
 @Slf4j
 @Service
-@ConditionalOnProperty(prefix = "transport.remote", value = "enabled", havingValue = "true")
+@ConditionalOnProperty(prefix = "transport", value = "type", havingValue = "remote")
 public class RemoteRuleEngineTransportService implements RuleEngineTransportService {
 
     private static final ObjectMapper mapper = new ObjectMapper();
@@ -77,9 +77,6 @@ public class RemoteRuleEngineTransportService implements RuleEngineTransportServ
 
     @Autowired
     private ActorSystemContext actorContext;
-
-    @Autowired
-    private ActorService actorService;
 
     //TODO: completely replace this routing with the Kafka routing by partition ids.
     @Autowired

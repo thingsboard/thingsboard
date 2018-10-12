@@ -494,7 +494,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_REFUSED_NOT_AUTHORIZED));
             ctx.close();
         } else {
-            ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_ACCEPTED));
             deviceSessionCtx.setDeviceInfo(msg.getDeviceInfo());
             sessionInfo = SessionInfoProto.newBuilder()
                     .setNodeId(context.getNodeId())
@@ -508,6 +507,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             transportService.process(sessionInfo, getSessionEventMsg(SessionEvent.OPEN), null);
             transportService.registerSession(sessionInfo, this);
             checkGatewaySession();
+            ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_ACCEPTED));
         }
     }
 

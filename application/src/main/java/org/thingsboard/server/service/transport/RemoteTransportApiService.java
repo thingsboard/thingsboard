@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -48,20 +49,22 @@ import org.thingsboard.server.service.cluster.discovery.DiscoveryService;
 import org.thingsboard.server.service.state.DeviceStateService;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Created by ashvayka on 05.10.18.
  */
 @Slf4j
-@Service
-@ConditionalOnProperty(prefix = "transport.remote", value = "enabled", havingValue = "true")
-public class RemoteTransportApiService implements TransportApiService {
-
-    private static final ObjectMapper mapper = new ObjectMapper();
+@Component
+@ConditionalOnProperty(prefix = "transport", value = "type", havingValue = "remote")
+public class RemoteTransportApiService {
 
     @Value("${transport.remote.transport_api.requests_topic}")
     private String transportApiRequestsTopic;
@@ -83,26 +86,15 @@ public class RemoteTransportApiService implements TransportApiService {
     private DiscoveryService discoveryService;
 
     @Autowired
-    private DeviceService deviceService;
-
-    @Autowired
-    private RelationService relationService;
-
-    @Autowired
-    private DeviceCredentialsService deviceCredentialsService;
-
-    @Autowired
-    private DeviceStateService deviceStateService;
+    private TransportApiService transportApiService;
 
     private ExecutorService transportCallbackExecutor;
 
     private TbKafkaResponseTemplate<TransportApiRequestMsg, TransportApiResponseMsg> transportApiTemplate;
 
-    private ReentrantLock deviceCreationLock = new ReentrantLock();
-
     @PostConstruct
     public void init() {
-        this.transportCallbackExecutor = Executors.newCachedThreadPool();
+        this.transportCallbackExecutor = new ThreadPoolExecutor(0, 100, 60L, TimeUnit.SECONDS, new SynchronousQueue<>());
 
         TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<TransportApiResponseMsg> responseBuilder = TBKafkaProducerTemplate.builder();
         responseBuilder.settings(kafkaSettings);
@@ -126,98 +118,19 @@ public class RemoteTransportApiService implements TransportApiService {
         builder.requestTimeout(requestTimeout);
         builder.pollInterval(responsePollDuration);
         builder.executor(transportCallbackExecutor);
-        builder.handler(this);
+        builder.handler(transportApiService);
         transportApiTemplate = builder.build();
         transportApiTemplate.init();
     }
 
-    @Override
-    public ListenableFuture<TransportApiResponseMsg> handle(TransportApiRequestMsg transportApiRequestMsg) throws Exception {
-        if (transportApiRequestMsg.hasValidateTokenRequestMsg()) {
-            ValidateDeviceTokenRequestMsg msg = transportApiRequestMsg.getValidateTokenRequestMsg();
-            return validateCredentials(msg.getToken(), DeviceCredentialsType.ACCESS_TOKEN);
-        } else if (transportApiRequestMsg.hasValidateX509CertRequestMsg()) {
-            ValidateDeviceX509CertRequestMsg msg = transportApiRequestMsg.getValidateX509CertRequestMsg();
-            return validateCredentials(msg.getHash(), DeviceCredentialsType.X509_CERTIFICATE);
-        } else if (transportApiRequestMsg.hasGetOrCreateDeviceRequestMsg()) {
-            return handle(transportApiRequestMsg.getGetOrCreateDeviceRequestMsg());
+    @PreDestroy
+    public void destroy() {
+        if (transportApiTemplate != null) {
+            transportApiTemplate.stop();
         }
-        return getEmptyTransportApiResponseFuture();
-    }
-
-    private ListenableFuture<TransportApiResponseMsg> validateCredentials(String credentialsId, DeviceCredentialsType credentialsType) {
-        //TODO: Make async and enable caching
-        DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(credentialsId);
-        if (credentials != null && credentials.getCredentialsType() == credentialsType) {
-            return getDeviceInfo(credentials.getDeviceId());
-        } else {
-            return getEmptyTransportApiResponseFuture();
+        if (transportCallbackExecutor != null) {
+            transportCallbackExecutor.shutdownNow();
         }
     }
 
-    private ListenableFuture<TransportApiResponseMsg> handle(GetOrCreateDeviceFromGatewayRequestMsg requestMsg) {
-        DeviceId gatewayId = new DeviceId(new UUID(requestMsg.getGatewayIdMSB(), requestMsg.getGatewayIdLSB()));
-        ListenableFuture<Device> gatewayFuture = deviceService.findDeviceByIdAsync(gatewayId);
-        return Futures.transform(gatewayFuture, gateway -> {
-            deviceCreationLock.lock();
-            try {
-                Device device = deviceService.findDeviceByTenantIdAndName(gateway.getTenantId(), requestMsg.getDeviceName());
-                if (device == null) {
-                    device = new Device();
-                    device.setTenantId(gateway.getTenantId());
-                    device.setName(requestMsg.getDeviceName());
-                    device.setType(requestMsg.getDeviceType());
-                    device.setCustomerId(gateway.getCustomerId());
-                    device = deviceService.saveDevice(device);
-                    relationService.saveRelationAsync(new EntityRelation(gateway.getId(), device.getId(), "Created"));
-                    deviceStateService.onDeviceAdded(device);
-                }
-                return TransportApiResponseMsg.newBuilder()
-                        .setGetOrCreateDeviceResponseMsg(GetOrCreateDeviceFromGatewayResponseMsg.newBuilder().setDeviceInfo(getDeviceInfoProto(device)).build()).build();
-            } catch (JsonProcessingException e) {
-                log.warn("[{}] Failed to lookup device by gateway id and name", gatewayId, requestMsg.getDeviceName(), e);
-                throw new RuntimeException(e);
-            } finally {
-                deviceCreationLock.unlock();
-            }
-        }, transportCallbackExecutor);
-    }
-
-
-    private ListenableFuture<TransportApiResponseMsg> getDeviceInfo(DeviceId deviceId) {
-        return Futures.transform(deviceService.findDeviceByIdAsync(deviceId), device -> {
-            if (device == null) {
-                log.trace("[{}] Failed to lookup device by id", deviceId);
-                return getEmptyTransportApiResponse();
-            }
-            try {
-                return TransportApiResponseMsg.newBuilder()
-                        .setValidateTokenResponseMsg(ValidateDeviceCredentialsResponseMsg.newBuilder().setDeviceInfo(getDeviceInfoProto(device)).build()).build();
-            } catch (JsonProcessingException e) {
-                log.warn("[{}] Failed to lookup device by id", deviceId, e);
-                return getEmptyTransportApiResponse();
-            }
-        });
-    }
-
-    private DeviceInfoProto getDeviceInfoProto(Device device) throws JsonProcessingException {
-        return DeviceInfoProto.newBuilder()
-                .setTenantIdMSB(device.getTenantId().getId().getMostSignificantBits())
-                .setTenantIdLSB(device.getTenantId().getId().getLeastSignificantBits())
-                .setDeviceIdMSB(device.getId().getId().getMostSignificantBits())
-                .setDeviceIdLSB(device.getId().getId().getLeastSignificantBits())
-                .setDeviceName(device.getName())
-                .setDeviceType(device.getType())
-                .setAdditionalInfo(mapper.writeValueAsString(device.getAdditionalInfo()))
-                .build();
-    }
-
-    private ListenableFuture<TransportApiResponseMsg> getEmptyTransportApiResponseFuture() {
-        return Futures.immediateFuture(getEmptyTransportApiResponse());
-    }
-
-    private TransportApiResponseMsg getEmptyTransportApiResponse() {
-        return TransportApiResponseMsg.newBuilder()
-                .setValidateTokenResponseMsg(ValidateDeviceCredentialsResponseMsg.getDefaultInstance()).build();
-    }
 }
