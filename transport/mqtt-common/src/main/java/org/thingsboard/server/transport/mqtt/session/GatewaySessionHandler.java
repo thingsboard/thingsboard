@@ -52,13 +52,12 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by ashvayka on 19.01.17.
  */
 @Slf4j
-public class GatewaySessionCtx {
+public class GatewaySessionHandler {
 
     private static final String DEFAULT_DEVICE_TYPE = "default";
     private static final String CAN_T_PARSE_VALUE = "Can't parse value: ";
@@ -73,7 +72,7 @@ public class GatewaySessionCtx {
     private final ChannelHandlerContext channel;
     private final DeviceSessionCtx deviceSessionCtx;
 
-    public GatewaySessionCtx(MqttTransportContext context, DeviceSessionCtx deviceSessionCtx, UUID sessionId) {
+    public GatewaySessionHandler(MqttTransportContext context, DeviceSessionCtx deviceSessionCtx, UUID sessionId) {
         this.context = context;
         this.transportService = context.getTransportService();
         this.deviceSessionCtx = deviceSessionCtx;
@@ -114,10 +113,12 @@ public class GatewaySessionCtx {
                     new TransportServiceCallback<GetOrCreateDeviceFromGatewayResponseMsg>() {
                         @Override
                         public void onSuccess(GetOrCreateDeviceFromGatewayResponseMsg msg) {
-                            GatewayDeviceSessionCtx deviceSessionCtx = new GatewayDeviceSessionCtx(GatewaySessionCtx.this, msg.getDeviceInfo(), mqttQoSMap);
+                            GatewayDeviceSessionCtx deviceSessionCtx = new GatewayDeviceSessionCtx(GatewaySessionHandler.this, msg.getDeviceInfo(), mqttQoSMap);
                             if (devices.putIfAbsent(deviceName, deviceSessionCtx) == null) {
                                 SessionInfoProto deviceSessionInfo = deviceSessionCtx.getSessionInfo();
                                 transportService.process(deviceSessionInfo, MqttTransportHandler.getSessionEventMsg(TransportProtos.SessionEvent.OPEN), null);
+                                transportService.process(deviceSessionInfo, TransportProtos.SubscribeToRPCMsg.getDefaultInstance(), null);
+                                transportService.process(deviceSessionInfo, TransportProtos.SubscribeToAttributeUpdatesMsg.getDefaultInstance(), null);
                                 transportService.registerSession(deviceSessionInfo, deviceSessionCtx);
                             }
                             future.set(devices.get(deviceName));
@@ -203,7 +204,7 @@ public class GatewaySessionCtx {
 
                             @Override
                             public void onFailure(Throwable t) {
-                                log.debug("[{}] Failed to process device teleemtry command: {}", sessionId, deviceName, t);
+                                log.debug("[{}] Failed to process device attributes command: {}", sessionId, deviceName, t);
                             }
                         }, context.getExecutor());
             }
@@ -264,8 +265,8 @@ public class GatewaySessionCtx {
             } else {
                 result.addAllSharedAttributeNames(keys);
             }
-            int msgId = msg.variableHeader().packetId();
             TransportProtos.GetAttributeRequestMsg requestMsg = result.build();
+            int msgId = msg.variableHeader().packetId();
             Futures.addCallback(checkDeviceConnected(deviceName),
                     new FutureCallback<GatewayDeviceSessionCtx>() {
                         @Override
@@ -275,7 +276,7 @@ public class GatewaySessionCtx {
 
                         @Override
                         public void onFailure(Throwable t) {
-                            log.debug("[{}] Failed to process device teleemtry command: {}", sessionId, deviceName, t);
+                            log.debug("[{}] Failed to process device attributes request command: {}", sessionId, deviceName, t);
                         }
                     }, context.getExecutor());
             ack(msg);

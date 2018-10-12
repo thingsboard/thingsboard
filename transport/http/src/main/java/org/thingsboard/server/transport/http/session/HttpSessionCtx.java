@@ -29,6 +29,7 @@ import org.thingsboard.server.common.transport.auth.DeviceAuthService;
 import org.thingsboard.server.common.transport.session.DeviceAwareSessionContext;
 
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
@@ -37,127 +38,136 @@ import java.util.function.Consumer;
 @Slf4j
 public class HttpSessionCtx extends DeviceAwareSessionContext {
 
-    private final SessionId sessionId;
-    private final long timeout;
-    private final DeferredResult<ResponseEntity> responseWriter;
-
-    public HttpSessionCtx(SessionMsgProcessor processor, DeviceAuthService authService, DeferredResult<ResponseEntity> responseWriter, long timeout) {
-        super();
-        this.sessionId = new HttpSessionId();
-        this.responseWriter = responseWriter;
-        this.timeout = timeout;
+    public HttpSessionCtx(UUID sessionId) {
+        super(sessionId);
     }
 
     @Override
-    public SessionType getSessionType() {
-        return SessionType.SYNC;
+    public int nextMsgId() {
+        return 0;
     }
 
-    @Override
-    public void onMsg(SessionActorToAdaptorMsg source) throws SessionException {
-        ToDeviceMsg msg = source.getMsg();
-        switch (msg.getSessionMsgType()) {
-            case GET_ATTRIBUTES_RESPONSE:
-                reply((GetAttributesResponse) msg);
-                return;
-            case STATUS_CODE_RESPONSE:
-                reply((StatusCodeResponse) msg);
-                return;
-            case ATTRIBUTES_UPDATE_NOTIFICATION:
-                reply((AttributesUpdateNotification) msg);
-                return;
-            case TO_DEVICE_RPC_REQUEST:
-                reply((ToDeviceRpcRequestMsg) msg);
-                return;
-            case TO_SERVER_RPC_RESPONSE:
-                reply((ToServerRpcResponseMsg) msg);
-                return;
-            case RULE_ENGINE_ERROR:
-                reply((RuleEngineErrorMsg) msg);
-                return;
-            default:
-                break;
-        }
-    }
-
-    private void reply(RuleEngineErrorMsg msg) {
-        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
-        switch (msg.getError()) {
-            case QUEUE_PUT_TIMEOUT:
-                status = HttpStatus.REQUEST_TIMEOUT;
-                break;
-            default:
-                if (msg.getInSessionMsgType() == SessionMsgType.TO_SERVER_RPC_REQUEST) {
-                    status = HttpStatus.BAD_REQUEST;
-                }
-                break;
-        }
-        responseWriter.setResult(new ResponseEntity<>(JsonConverter.toErrorJson(msg.getErrorMsg()).toString(), status));
-    }
-
-    private <T> void reply(ResponseMsg<? extends T> msg, Consumer<T> f) {
-        Optional<Exception> msgError = msg.getError();
-        if (!msgError.isPresent()) {
-            Optional<? extends T> msgData = msg.getData();
-            if (msgData.isPresent()) {
-                f.accept(msgData.get());
-            }
-        } else {
-            Exception e = msgError.get();
-            responseWriter.setResult(new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR));
-        }
-    }
-
-    private void reply(ToDeviceRpcRequestMsg msg) {
-        responseWriter.setResult(new ResponseEntity<>(JsonConverter.toJson(msg, true).toString(), HttpStatus.OK));
-    }
-
-    private void reply(ToServerRpcResponseMsg msg) {
-//        responseWriter.setResult(new ResponseEntity<>(JsonConverter.toJson(msg).toString(), HttpStatus.OK));
-    }
-
-    private void reply(AttributesUpdateNotification msg) {
-        responseWriter.setResult(new ResponseEntity<>(JsonConverter.toJson(msg.getData(), false).toString(), HttpStatus.OK));
-    }
-
-    private void reply(GetAttributesResponse msg) {
-        reply(msg, payload -> {
-            if (payload.getClientAttributes().isEmpty() && payload.getSharedAttributes().isEmpty()) {
-                responseWriter.setResult(new ResponseEntity<>(HttpStatus.NOT_FOUND));
-            } else {
-                JsonObject result = JsonConverter.toJson(payload, false);
-                responseWriter.setResult(new ResponseEntity<>(result.toString(), HttpStatus.OK));
-            }
-        });
-    }
-
-    private void reply(StatusCodeResponse msg) {
-        reply(msg, payload -> {
-            if (payload == 0) {
-                responseWriter.setResult(new ResponseEntity<>(HttpStatus.OK));
-            } else {
-                responseWriter.setResult(new ResponseEntity<>(HttpStatus.valueOf(payload)));
-            }
-        });
-    }
-
-    @Override
-    public void onMsg(SessionCtrlMsg msg) throws SessionException {
-        //Do nothing
-    }
-
-    @Override
-    public boolean isClosed() {
-        return false;
-    }
-
-    @Override
-    public long getTimeout() {
-        return timeout;
-    }
-
-    @Override
-    public SessionId getSessionId() {
-        return sessionId;
-    }
+    //    private final SessionId sessionId;
+//    private final long timeout;
+//    private final DeferredResult<ResponseEntity> responseWriter;
+//
+//    public HttpSessionCtx(SessionMsgProcessor processor, DeviceAuthService authService, DeferredResult<ResponseEntity> responseWriter, long timeout) {
+//        super();
+//        this.sessionId = new HttpSessionId();
+//        this.responseWriter = responseWriter;
+//        this.timeout = timeout;
+//    }
+//
+//    @Override
+//    public SessionType getSessionType() {
+//        return SessionType.SYNC;
+//    }
+//
+//    @Override
+//    public void onMsg(SessionActorToAdaptorMsg source) throws SessionException {
+//        ToDeviceMsg msg = source.getMsg();
+//        switch (msg.getSessionMsgType()) {
+//            case GET_ATTRIBUTES_RESPONSE:
+//                reply((GetAttributesResponse) msg);
+//                return;
+//            case STATUS_CODE_RESPONSE:
+//                reply((StatusCodeResponse) msg);
+//                return;
+//            case ATTRIBUTES_UPDATE_NOTIFICATION:
+//                reply((AttributesUpdateNotification) msg);
+//                return;
+//            case TO_DEVICE_RPC_REQUEST:
+//                reply((ToDeviceRpcRequestMsg) msg);
+//                return;
+//            case TO_SERVER_RPC_RESPONSE:
+//                reply((ToServerRpcResponseMsg) msg);
+//                return;
+//            case RULE_ENGINE_ERROR:
+//                reply((RuleEngineErrorMsg) msg);
+//                return;
+//            default:
+//                break;
+//        }
+//    }
+//
+//    private void reply(RuleEngineErrorMsg msg) {
+//        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+//        switch (msg.getError()) {
+//            case QUEUE_PUT_TIMEOUT:
+//                status = HttpStatus.REQUEST_TIMEOUT;
+//                break;
+//            default:
+//                if (msg.getInSessionMsgType() == SessionMsgType.TO_SERVER_RPC_REQUEST) {
+//                    status = HttpStatus.BAD_REQUEST;
+//                }
+//                break;
+//        }
+//        responseWriter.setResult(new ResponseEntity<>(JsonConverter.toErrorJson(msg.getErrorMsg()).toString(), status));
+//    }
+//
+//    private <T> void reply(ResponseMsg<? extends T> msg, Consumer<T> f) {
+//        Optional<Exception> msgError = msg.getError();
+//        if (!msgError.isPresent()) {
+//            Optional<? extends T> msgData = msg.getData();
+//            if (msgData.isPresent()) {
+//                f.accept(msgData.get());
+//            }
+//        } else {
+//            Exception e = msgError.get();
+//            responseWriter.setResult(new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR));
+//        }
+//    }
+//
+//    private void reply(ToDeviceRpcRequestMsg msg) {
+//        responseWriter.setResult(new ResponseEntity<>(JsonConverter.toJson(msg, true).toString(), HttpStatus.OK));
+//    }
+//
+//    private void reply(ToServerRpcResponseMsg msg) {
+////        responseWriter.setResult(new ResponseEntity<>(JsonConverter.toJson(msg).toString(), HttpStatus.OK));
+//    }
+//
+//    private void reply(AttributesUpdateNotification msg) {
+//        responseWriter.setResult(new ResponseEntity<>(JsonConverter.toJson(msg.getData(), false).toString(), HttpStatus.OK));
+//    }
+//
+//    private void reply(GetAttributesResponse msg) {
+//        reply(msg, payload -> {
+//            if (payload.getClientAttributes().isEmpty() && payload.getSharedAttributes().isEmpty()) {
+//                responseWriter.setResult(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+//            } else {
+//                JsonObject result = JsonConverter.toJson(payload, false);
+//                responseWriter.setResult(new ResponseEntity<>(result.toString(), HttpStatus.OK));
+//            }
+//        });
+//    }
+//
+//    private void reply(StatusCodeResponse msg) {
+//        reply(msg, payload -> {
+//            if (payload == 0) {
+//                responseWriter.setResult(new ResponseEntity<>(HttpStatus.OK));
+//            } else {
+//                responseWriter.setResult(new ResponseEntity<>(HttpStatus.valueOf(payload)));
+//            }
+//        });
+//    }
+//
+//    @Override
+//    public void onMsg(SessionCtrlMsg msg) throws SessionException {
+//        //Do nothing
+//    }
+//
+//    @Override
+//    public boolean isClosed() {
+//        return false;
+//    }
+//
+//    @Override
+//    public long getTimeout() {
+//        return timeout;
+//    }
+//
+//    @Override
+//    public SessionId getSessionId() {
+//        return sessionId;
+//    }
 }

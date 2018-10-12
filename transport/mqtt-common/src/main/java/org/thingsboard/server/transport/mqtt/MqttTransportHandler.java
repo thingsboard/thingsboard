@@ -54,7 +54,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenR
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.session.DeviceSessionCtx;
-import org.thingsboard.server.transport.mqtt.session.GatewaySessionCtx;
+import org.thingsboard.server.transport.mqtt.session.GatewaySessionHandler;
 import org.thingsboard.server.transport.mqtt.util.SslUtil;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
@@ -98,7 +98,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     private volatile SessionInfoProto sessionInfo;
     private volatile InetSocketAddress address;
     private volatile DeviceSessionCtx deviceSessionCtx;
-    private volatile GatewaySessionCtx gatewaySessionCtx;
+    private volatile GatewaySessionHandler gatewaySessionHandler;
 
     MqttTransportHandler(MqttTransportContext context) {
         this.sessionId = UUID.randomUUID();
@@ -175,7 +175,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         log.trace("[{}] Processing publish msg [{}][{}]!", sessionId, topicName, msgId);
 
         if (topicName.startsWith(MqttTopics.BASE_GATEWAY_API_TOPIC)) {
-            if (gatewaySessionCtx != null) {
+            if (gatewaySessionHandler != null) {
                 handleGatewayPublishMsg(topicName, msgId, mqttMsg);
             }
         } else {
@@ -187,22 +187,22 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         try {
             switch (topicName) {
                 case MqttTopics.GATEWAY_TELEMETRY_TOPIC:
-                    gatewaySessionCtx.onDeviceTelemetry(mqttMsg);
+                    gatewaySessionHandler.onDeviceTelemetry(mqttMsg);
                     break;
                 case MqttTopics.GATEWAY_ATTRIBUTES_TOPIC:
-                    gatewaySessionCtx.onDeviceAttributes(mqttMsg);
+                    gatewaySessionHandler.onDeviceAttributes(mqttMsg);
                     break;
                 case MqttTopics.GATEWAY_ATTRIBUTES_REQUEST_TOPIC:
-                    gatewaySessionCtx.onDeviceAttributesRequest(mqttMsg);
+                    gatewaySessionHandler.onDeviceAttributesRequest(mqttMsg);
                     break;
                 case MqttTopics.GATEWAY_RPC_TOPIC:
-                    gatewaySessionCtx.onDeviceRpcResponse(mqttMsg);
+                    gatewaySessionHandler.onDeviceRpcResponse(mqttMsg);
                     break;
                 case MqttTopics.GATEWAY_CONNECT_TOPIC:
-                    gatewaySessionCtx.onDeviceConnect(mqttMsg);
+                    gatewaySessionHandler.onDeviceConnect(mqttMsg);
                     break;
                 case MqttTopics.GATEWAY_DISCONNECT_TOPIC:
-                    gatewaySessionCtx.onDeviceDisconnect(mqttMsg);
+                    gatewaySessionHandler.onDeviceDisconnect(mqttMsg);
                     break;
             }
         } catch (RuntimeException | AdaptorException e) {
@@ -405,8 +405,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         if (deviceSessionCtx.isConnected()) {
             transportService.process(sessionInfo, getSessionEventMsg(SessionEvent.CLOSED), null);
             transportService.deregisterSession(sessionInfo);
-            if (gatewaySessionCtx != null) {
-                gatewaySessionCtx.onGatewayDisconnect();
+            if (gatewaySessionHandler != null) {
+                gatewaySessionHandler.onGatewayDisconnect();
             }
         }
     }
@@ -467,7 +467,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             if (infoNode != null) {
                 JsonNode gatewayNode = infoNode.get("gateway");
                 if (gatewayNode != null && gatewayNode.asBoolean()) {
-                    gatewaySessionCtx = new GatewaySessionCtx(context, deviceSessionCtx, sessionId);
+                    gatewaySessionHandler = new GatewaySessionHandler(context, deviceSessionCtx, sessionId);
                 }
             }
         } catch (IOException e) {

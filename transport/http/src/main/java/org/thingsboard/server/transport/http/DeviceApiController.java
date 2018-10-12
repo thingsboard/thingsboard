@@ -122,7 +122,8 @@ public class DeviceApiController {
                                                               @RequestParam(value = "timeout", required = false, defaultValue = "0") long timeout,
                                                               HttpServletRequest request) {
 
-        return subscribe(deviceToken, timeout, new RpcSubscribeMsg(), request);
+//        return subscribe(deviceToken, timeout, new RpcSubscribeMsg(), request);
+        return null;
     }
 
     @RequestMapping(value = "/{deviceToken}/rpc/{requestId}", method = RequestMethod.POST)
@@ -174,15 +175,15 @@ public class DeviceApiController {
     public DeferredResult<ResponseEntity> subscribeToAttributes(@PathVariable("deviceToken") String deviceToken,
                                                                 @RequestParam(value = "timeout", required = false, defaultValue = "0") long timeout,
                                                                 HttpServletRequest httpRequest) {
-
-        return subscribe(deviceToken, timeout, new AttributesSubscribeMsg(), httpRequest);
+        return null;
+//        return subscribe(deviceToken, timeout, new AttributesSubscribeMsg(), httpRequest);
     }
 
-    private DeferredResult<ResponseEntity> subscribe(String deviceToken, long timeout, FromDeviceMsg msg, HttpServletRequest httpRequest) {
-        DeferredResult<ResponseEntity> responseWriter = new DeferredResult<ResponseEntity>();
-        if (quotaExceeded(httpRequest, responseWriter)) {
-            return responseWriter;
-        }
+//    private DeferredResult<ResponseEntity> subscribe(String deviceToken, long timeout, FromDeviceMsg msg, HttpServletRequest httpRequest) {
+//        DeferredResult<ResponseEntity> responseWriter = new DeferredResult<ResponseEntity>();
+//        if (quotaExceeded(httpRequest, responseWriter)) {
+//            return responseWriter;
+//        }
 //        HttpSessionCtx ctx = getHttpSessionCtx(responseWriter, timeout);
 //        if (ctx.login(new DeviceTokenCredentials(deviceToken))) {
 //            try {
@@ -193,21 +194,22 @@ public class DeviceApiController {
 //        } else {
 //            responseWriter.setResult(new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
 //        }
-        return responseWriter;
-    }
+//        return responseWriter;
+//    }
 
     private HttpSessionCtx getHttpSessionCtx(DeferredResult<ResponseEntity> responseWriter) {
         return getHttpSessionCtx(responseWriter, defaultTimeout);
     }
 
     private HttpSessionCtx getHttpSessionCtx(DeferredResult<ResponseEntity> responseWriter, long timeout) {
-        return new HttpSessionCtx(processor, authService, responseWriter, timeout != 0 ? timeout : defaultTimeout);
+        return null;
+//        return new HttpSessionCtx(processor, authService, responseWriter, timeout != 0 ? timeout : defaultTimeout);
     }
 
-    private void process(HttpSessionCtx ctx, FromDeviceMsg request) {
-        AdaptorToSessionActorMsg msg = new BasicAdaptorToSessionActorMsg(ctx, request);
-//        processor.process(new BasicTransportToDeviceSessionActorMsg(ctx.getDevice(), msg));
-    }
+//    private void process(HttpSessionCtx ctx, FromDeviceMsg request) {
+//        AdaptorToSessionActorMsg msg = new BasicAdaptorToSessionActorMsg(ctx, request);
+////        processor.process(new BasicTransportToDeviceSessionActorMsg(ctx.getDevice(), msg));
+//    }
 
     private boolean quotaExceeded(HttpServletRequest request, DeferredResult<ResponseEntity> responseWriter) {
         if (quotaService.isQuotaExceeded(request.getRemoteAddr())) {

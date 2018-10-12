@@ -51,6 +51,7 @@ import javax.annotation.PostConstruct;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Created by ashvayka on 05.10.18.
@@ -96,6 +97,8 @@ public class RemoteTransportApiService implements TransportApiService {
     private ExecutorService transportCallbackExecutor;
 
     private TbKafkaResponseTemplate<TransportApiRequestMsg, TransportApiResponseMsg> transportApiTemplate;
+
+    private ReentrantLock deviceCreationLock = new ReentrantLock();
 
     @PostConstruct
     public void init() {
@@ -156,23 +159,26 @@ public class RemoteTransportApiService implements TransportApiService {
         DeviceId gatewayId = new DeviceId(new UUID(requestMsg.getGatewayIdMSB(), requestMsg.getGatewayIdLSB()));
         ListenableFuture<Device> gatewayFuture = deviceService.findDeviceByIdAsync(gatewayId);
         return Futures.transform(gatewayFuture, gateway -> {
-            Device device = deviceService.findDeviceByTenantIdAndName(gateway.getTenantId(), gateway.getName());
-            if (device == null) {
-                device = new Device();
-                device.setTenantId(gateway.getTenantId());
-                device.setName(requestMsg.getDeviceName());
-                device.setType(requestMsg.getDeviceType());
-                device.setCustomerId(gateway.getCustomerId());
-                device = deviceService.saveDevice(device);
-                relationService.saveRelationAsync(new EntityRelation(gateway.getId(), device.getId(), "Created"));
-                deviceStateService.onDeviceAdded(device);
-            }
+            deviceCreationLock.lock();
             try {
+                Device device = deviceService.findDeviceByTenantIdAndName(gateway.getTenantId(), requestMsg.getDeviceName());
+                if (device == null) {
+                    device = new Device();
+                    device.setTenantId(gateway.getTenantId());
+                    device.setName(requestMsg.getDeviceName());
+                    device.setType(requestMsg.getDeviceType());
+                    device.setCustomerId(gateway.getCustomerId());
+                    device = deviceService.saveDevice(device);
+                    relationService.saveRelationAsync(new EntityRelation(gateway.getId(), device.getId(), "Created"));
+                    deviceStateService.onDeviceAdded(device);
+                }
                 return TransportApiResponseMsg.newBuilder()
                         .setGetOrCreateDeviceResponseMsg(GetOrCreateDeviceFromGatewayResponseMsg.newBuilder().setDeviceInfo(getDeviceInfoProto(device)).build()).build();
             } catch (JsonProcessingException e) {
                 log.warn("[{}] Failed to lookup device by gateway id and name", gatewayId, requestMsg.getDeviceName(), e);
                 throw new RuntimeException(e);
+            } finally {
+                deviceCreationLock.unlock();
             }
         }, transportCallbackExecutor);
     }

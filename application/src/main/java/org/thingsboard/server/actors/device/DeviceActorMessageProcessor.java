@@ -455,6 +455,10 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     private void processSessionStateMsgs(SessionInfoProto sessionInfo, SessionEventMsg msg) {
         UUID sessionId = getSessionId(sessionInfo);
         if (msg.getEvent() == SessionEvent.OPEN) {
+            if(sessions.containsKey(sessionId)){
+                logger.debug("[{}] Received duplicate session open event [{}]", deviceId, sessionId);
+                return;
+            }
             logger.debug("[{}] Processing new session [{}]", deviceId, sessionId);
             if (sessions.size() >= systemContext.getMaxConcurrentSessionsPerDevice()) {
                 UUID sessionIdToRemove = sessions.keySet().stream().findFirst().orElse(null);

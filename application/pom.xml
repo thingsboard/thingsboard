@@ -60,14 +60,14 @@
             <groupId>org.thingsboard.common</groupId>
             <artifactId>transport</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.thingsboard.transport</groupId>
-            <artifactId>http</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.thingsboard.transport</groupId>
-            <artifactId>coap</artifactId>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>org.thingsboard.transport</groupId>-->
+            <!--<artifactId>http</artifactId>-->
+        <!--</dependency>-->
+        <!--<dependency>-->
+            <!--<groupId>org.thingsboard.transport</groupId>-->
+            <!--<artifactId>coap</artifactId>-->
+        <!--</dependency>-->
         <dependency>
             <groupId>org.thingsboard.transport</groupId>
             <artifactId>mqtt-common</artifactId>
