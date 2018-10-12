@@ -84,7 +84,7 @@ public class TbCopyAttributesToEntityViewNode implements TbNode {
                             long endTime = entityView.getEndTimeMs();
                             if ((endTime != 0  && endTime > now && startTime < now) || (endTime == 0 && startTime < now)) {
                                 Set<AttributeKvEntry> attributes =
-                                        JsonConverter.convertToAttributes(new JsonParser().parse(msg.getData())).getAttributes();
+                                        JsonConverter.convertToAttributes(new JsonParser().parse(msg.getData()));
                                 List<AttributeKvEntry> filteredAttributes =
                                         attributes.stream()
                                                 .filter(attr -> {

@@ -30,6 +30,8 @@ import java.util.UUID;
 public abstract class DeviceAwareSessionContext implements SessionContext {
 
     @Getter
+    protected final UUID sessionId;
+    @Getter
     private volatile DeviceId deviceId;
     @Getter
     private volatile DeviceInfoProto deviceInfo;

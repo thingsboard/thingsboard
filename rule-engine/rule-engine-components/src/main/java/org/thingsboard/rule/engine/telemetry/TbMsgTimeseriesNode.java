@@ -29,7 +29,6 @@ import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.core.TelemetryUploadRequest;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 
@@ -68,13 +67,13 @@ public class TbMsgTimeseriesNode implements TbNode {
         if (!StringUtils.isEmpty(tsStr)) {
             try {
                 ts = Long.parseLong(tsStr);
-            } catch (NumberFormatException e) {}
+            } catch (NumberFormatException e) {
+            }
         } else {
             ts = System.currentTimeMillis();
         }
         String src = msg.getData();
-        TelemetryUploadRequest telemetryUploadRequest = JsonConverter.convertToTelemetry(new JsonParser().parse(src), ts);
-        Map<Long, List<KvEntry>> tsKvMap = telemetryUploadRequest.getData();
+        Map<Long, List<KvEntry>> tsKvMap = JsonConverter.convertToTelemetry(new JsonParser().parse(src), ts);
         if (tsKvMap == null) {
             ctx.tellFailure(msg, new IllegalArgumentException("Msg body is empty: " + src));
             return;

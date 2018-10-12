@@ -42,12 +42,8 @@ import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
-import org.thingsboard.server.common.msg.core.ActorSystemToDeviceSessionActorMsg;
-import org.thingsboard.server.common.msg.core.RuleEngineError;
-import org.thingsboard.server.common.msg.core.RuleEngineErrorMsg;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
-import org.thingsboard.server.common.msg.session.ToDeviceMsg;
 import org.thingsboard.server.common.msg.timeout.DeviceActorClientSideRpcTimeoutMsg;
 import org.thingsboard.server.common.msg.timeout.DeviceActorServerSideRpcTimeoutMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -478,17 +474,6 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
             if (sessions.isEmpty()) {
                 reportSessionClose();
             }
-        }
-    }
-
-    private void sendMsgToSessionActor(ActorSystemToDeviceSessionActorMsg response, Optional<ServerAddress> sessionAddress) {
-        if (sessionAddress.isPresent()) {
-            ServerAddress address = sessionAddress.get();
-            logger.debug("{} Forwarding msg: {}", address, response);
-            systemContext.getRpcService().tell(systemContext.getEncodingService()
-                    .convertToProtoDataMessage(sessionAddress.get(), response));
-        } else {
-//            systemContext.getSessionManagerActor().tell(response, ActorRef.noSender());
         }
     }
 

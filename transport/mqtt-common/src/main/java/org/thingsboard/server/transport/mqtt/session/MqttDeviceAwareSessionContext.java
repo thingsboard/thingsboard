@@ -22,6 +22,7 @@ import org.thingsboard.server.common.transport.auth.DeviceAuthService;
 import org.thingsboard.server.common.transport.session.DeviceAwareSessionContext;
 
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -31,8 +32,8 @@ public abstract class MqttDeviceAwareSessionContext extends DeviceAwareSessionCo
 
     private final ConcurrentMap<String, Integer> mqttQoSMap;
 
-    public MqttDeviceAwareSessionContext(ConcurrentMap<String, Integer> mqttQoSMap) {
-        super();
+    public MqttDeviceAwareSessionContext(UUID sessionId, ConcurrentMap<String, Integer> mqttQoSMap) {
+        super(sessionId);
         this.mqttQoSMap = mqttQoSMap;
     }
 

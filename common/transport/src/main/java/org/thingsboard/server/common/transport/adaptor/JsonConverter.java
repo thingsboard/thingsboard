@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,12 +31,6 @@ import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
-import org.thingsboard.server.common.msg.core.AttributesUpdateRequest;
-import org.thingsboard.server.common.msg.core.BasicAttributesUpdateRequest;
-import org.thingsboard.server.common.msg.core.BasicRequest;
-import org.thingsboard.server.common.msg.core.BasicTelemetryUploadRequest;
-import org.thingsboard.server.common.msg.core.TelemetryUploadRequest;
-import org.thingsboard.server.common.msg.core.ToDeviceRpcRequestMsg;
 import org.thingsboard.server.common.msg.kv.AttributesKVMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
@@ -49,8 +43,12 @@ import org.thingsboard.server.gen.transport.TransportProtos.TsKvListProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -59,18 +57,6 @@ public class JsonConverter {
     private static final Gson GSON = new Gson();
     private static final String CAN_T_PARSE_VALUE = "Can't parse value: ";
     private static final String DEVICE_PROPERTY = "device";
-
-    public static TelemetryUploadRequest convertToTelemetry(JsonElement jsonObject) throws JsonSyntaxException {
-        return convertToTelemetry(jsonObject, BasicRequest.DEFAULT_REQUEST_ID);
-    }
-
-    public static TelemetryUploadRequest convertToTelemetry(JsonElement jsonObject, long ts) throws JsonSyntaxException {
-        return convertToTelemetry(jsonObject, ts, BasicRequest.DEFAULT_REQUEST_ID);
-    }
-
-    public static TelemetryUploadRequest convertToTelemetry(JsonElement jsonObject, int requestId) throws JsonSyntaxException {
-        return convertToTelemetry(jsonObject, System.currentTimeMillis(), requestId);
-    }
 
     public static PostTelemetryMsg convertToTelemetryProto(JsonElement jsonObject) throws JsonSyntaxException {
         long systemTs = System.currentTimeMillis();
@@ -170,72 +156,9 @@ public class JsonConverter {
         return result;
     }
 
-    private static TelemetryUploadRequest convertToTelemetry(JsonElement jsonObject, long systemTs, int requestId) throws JsonSyntaxException {
-        BasicTelemetryUploadRequest request = new BasicTelemetryUploadRequest(requestId);
-        if (jsonObject.isJsonObject()) {
-            parseObject(request, systemTs, jsonObject);
-        } else if (jsonObject.isJsonArray()) {
-            jsonObject.getAsJsonArray().forEach(je -> {
-                if (je.isJsonObject()) {
-                    parseObject(request, systemTs, je.getAsJsonObject());
-                } else {
-                    throw new JsonSyntaxException(CAN_T_PARSE_VALUE + je);
-                }
-            });
-        } else {
-            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + jsonObject);
-        }
-        return request;
-    }
-
     public static TransportProtos.ToServerRpcRequestMsg convertToServerRpcRequest(JsonElement json, int requestId) throws JsonSyntaxException {
         JsonObject object = json.getAsJsonObject();
         return TransportProtos.ToServerRpcRequestMsg.newBuilder().setRequestId(requestId).setMethodName(object.get("method").getAsString()).setParams(GSON.toJson(object.get("params"))).build();
-    }
-
-    private static void parseObject(BasicTelemetryUploadRequest request, long systemTs, JsonElement jsonObject) {
-        JsonObject jo = jsonObject.getAsJsonObject();
-        if (jo.has("ts") && jo.has("values")) {
-            parseWithTs(request, jo);
-        } else {
-            parseWithoutTs(request, systemTs, jo);
-        }
-    }
-
-    private static void parseWithoutTs(BasicTelemetryUploadRequest request, long systemTs, JsonObject jo) {
-        for (KvEntry entry : parseValues(jo)) {
-            request.add(systemTs, entry);
-        }
-    }
-
-    public static void parseWithTs(BasicTelemetryUploadRequest request, JsonObject jo) {
-        long ts = jo.get("ts").getAsLong();
-        JsonObject valuesObject = jo.get("values").getAsJsonObject();
-        for (KvEntry entry : parseValues(valuesObject)) {
-            request.add(ts, entry);
-        }
-    }
-
-    public static List<KvEntry> parseValues(JsonObject valuesObject) {
-        List<KvEntry> result = new ArrayList<>();
-        for (Entry<String, JsonElement> valueEntry : valuesObject.entrySet()) {
-            JsonElement element = valueEntry.getValue();
-            if (element.isJsonPrimitive()) {
-                JsonPrimitive value = element.getAsJsonPrimitive();
-                if (value.isString()) {
-                    result.add(new StringDataEntry(valueEntry.getKey(), value.getAsString()));
-                } else if (value.isBoolean()) {
-                    result.add(new BooleanDataEntry(valueEntry.getKey(), value.getAsBoolean()));
-                } else if (value.isNumber()) {
-                    parseNumericValue(result, valueEntry, value);
-                } else {
-                    throw new JsonSyntaxException(CAN_T_PARSE_VALUE + value);
-                }
-            } else {
-                throw new JsonSyntaxException(CAN_T_PARSE_VALUE + element);
-            }
-        }
-        return result;
     }
 
     private static void parseNumericValue(List<KvEntry> result, Entry<String, JsonElement> valueEntry, JsonPrimitive value) {
@@ -248,21 +171,6 @@ public class JsonConverter {
             } catch (NumberFormatException e) {
                 throw new JsonSyntaxException("Big integer values are not supported!");
             }
-        }
-    }
-
-    public static AttributesUpdateRequest convertToAttributes(JsonElement element) {
-        return convertToAttributes(element, BasicRequest.DEFAULT_REQUEST_ID);
-    }
-
-    public static AttributesUpdateRequest convertToAttributes(JsonElement element, int requestId) {
-        if (element.isJsonObject()) {
-            BasicAttributesUpdateRequest request = new BasicAttributesUpdateRequest(requestId);
-            long ts = System.currentTimeMillis();
-            request.add(parseValues(element.getAsJsonObject()).stream().map(kv -> new BaseAttributeKvEntry(kv, ts)).collect(Collectors.toList()));
-            return request;
-        } else {
-            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + element);
         }
     }
 
@@ -425,16 +333,6 @@ public class JsonConverter {
         };
     }
 
-    public static JsonObject toJson(ToDeviceRpcRequestMsg msg, boolean includeRequestId) {
-        JsonObject result = new JsonObject();
-        if (includeRequestId) {
-            result.addProperty("id", msg.getRequestId());
-        }
-        result.addProperty("method", msg.getMethod());
-        result.add("params", new JsonParser().parse(msg.getParams()));
-        return result;
-    }
-
     public static JsonElement toJson(TransportProtos.ToServerRpcResponseMsg msg) {
         if (StringUtils.isEmpty(msg.getError())) {
             return new JsonParser().parse(msg.getPayload());
@@ -457,4 +355,76 @@ public class JsonConverter {
         result.add("data", JsonConverter.toJson(rpcRequest, true));
         return result;
     }
+
+    public static Set<AttributeKvEntry> convertToAttributes(JsonElement element) {
+        Set<AttributeKvEntry> result = new HashSet<>();
+        long ts = System.currentTimeMillis();
+        result.addAll(parseValues(element.getAsJsonObject()).stream().map(kv -> new BaseAttributeKvEntry(kv, ts)).collect(Collectors.toList()));
+        return result;
+    }
+
+    private static List<KvEntry> parseValues(JsonObject valuesObject) {
+        List<KvEntry> result = new ArrayList<>();
+        for (Entry<String, JsonElement> valueEntry : valuesObject.entrySet()) {
+            JsonElement element = valueEntry.getValue();
+            if (element.isJsonPrimitive()) {
+                JsonPrimitive value = element.getAsJsonPrimitive();
+                if (value.isString()) {
+                    result.add(new StringDataEntry(valueEntry.getKey(), value.getAsString()));
+                } else if (value.isBoolean()) {
+                    result.add(new BooleanDataEntry(valueEntry.getKey(), value.getAsBoolean()));
+                } else if (value.isNumber()) {
+                    parseNumericValue(result, valueEntry, value);
+                } else {
+                    throw new JsonSyntaxException(CAN_T_PARSE_VALUE + value);
+                }
+            } else {
+                throw new JsonSyntaxException(CAN_T_PARSE_VALUE + element);
+            }
+        }
+        return result;
+    }
+
+    public static Map<Long, List<KvEntry>> convertToTelemetry(JsonElement jsonObject, long systemTs) throws JsonSyntaxException {
+        Map<Long, List<KvEntry>> result = new HashMap<>();
+        if (jsonObject.isJsonObject()) {
+            parseObject(result, systemTs, jsonObject);
+        } else if (jsonObject.isJsonArray()) {
+            jsonObject.getAsJsonArray().forEach(je -> {
+                if (je.isJsonObject()) {
+                    parseObject(result, systemTs, je.getAsJsonObject());
+                } else {
+                    throw new JsonSyntaxException(CAN_T_PARSE_VALUE + je);
+                }
+            });
+        } else {
+            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + jsonObject);
+        }
+        return result;
+    }
+
+    private static void parseObject(Map<Long, List<KvEntry>> result, long systemTs, JsonElement jsonObject) {
+        JsonObject jo = jsonObject.getAsJsonObject();
+        if (jo.has("ts") && jo.has("values")) {
+            parseWithTs(result, jo);
+        } else {
+            parseWithoutTs(result, systemTs, jo);
+        }
+    }
+
+    private static void parseWithoutTs(Map<Long, List<KvEntry>> result, long systemTs, JsonObject jo) {
+        for (KvEntry entry : parseValues(jo)) {
+            result.computeIfAbsent(systemTs, tmp -> new ArrayList<>()).add(entry);
+        }
+    }
+
+    public static void parseWithTs(Map<Long, List<KvEntry>> result, JsonObject jo) {
+        long ts = jo.get("ts").getAsLong();
+        JsonObject valuesObject = jo.get("values").getAsJsonObject();
+        for (KvEntry entry : parseValues(valuesObject)) {
+            result.computeIfAbsent(ts, tmp -> new ArrayList<>()).add(entry);
+        }
+    }
+
+
 }

@@ -59,7 +59,6 @@ import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
-import org.thingsboard.server.common.msg.core.TelemetryUploadRequest;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
@@ -352,7 +351,7 @@ public class TelemetryController extends BaseController {
     }
 
     private DeferredResult<ResponseEntity> saveTelemetry(EntityId entityIdSrc, String requestBody, long ttl) throws ThingsboardException {
-        TelemetryUploadRequest telemetryRequest;
+        Map<Long, List<KvEntry>> telemetryRequest;
         JsonElement telemetryJson;
         try {
             telemetryJson = new JsonParser().parse(requestBody);
@@ -360,12 +359,12 @@ public class TelemetryController extends BaseController {
             return getImmediateDeferredResult("Unable to parse timeseries payload: Invalid JSON body!", HttpStatus.BAD_REQUEST);
         }
         try {
-            telemetryRequest = JsonConverter.convertToTelemetry(telemetryJson);
+            telemetryRequest = JsonConverter.convertToTelemetry(telemetryJson, System.currentTimeMillis());
         } catch (Exception e) {
             return getImmediateDeferredResult("Unable to parse timeseries payload. Invalid JSON body: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
         List<TsKvEntry> entries = new ArrayList<>();
-        for (Map.Entry<Long, List<KvEntry>> entry : telemetryRequest.getData().entrySet()) {
+        for (Map.Entry<Long, List<KvEntry>> entry : telemetryRequest.entrySet()) {
             for (KvEntry kv : entry.getValue()) {
                 entries.add(new BasicTsKvEntry(entry.getKey(), kv));
             }
