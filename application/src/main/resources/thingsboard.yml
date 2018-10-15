@@ -165,9 +165,9 @@ quota:
 
 database:
   entities:
-    type: "${DATABASE_ENTITIES_TYPE:cassandra}" # cassandra OR sql
+    type: "${DATABASE_ENTITIES_TYPE:sql}" # cassandra OR sql
   ts:
-    type: "${DATABASE_TS_TYPE:cassandra}" # cassandra OR sql (for hybrid mode, only this value should be cassandra)
+    type: "${DATABASE_TS_TYPE:sql}" # cassandra OR sql (for hybrid mode, only this value should be cassandra)
 
 
 # Cassandra driver configuration parameters
