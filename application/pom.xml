@@ -69,8 +69,8 @@
             <!--<artifactId>coap</artifactId>-->
         <!--</dependency>-->
         <dependency>
-            <groupId>org.thingsboard.transport</groupId>
-            <artifactId>mqtt-common</artifactId>
+            <groupId>org.thingsboard.common.transport</groupId>
+            <artifactId>mqtt</artifactId>
         </dependency>
         <dependency>
             <groupId>org.thingsboard</groupId>

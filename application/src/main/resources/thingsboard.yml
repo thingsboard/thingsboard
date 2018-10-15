@@ -417,7 +417,7 @@ js:
     max_errors: "${REMOTE_JS_SANDBOX_MAX_ERRORS:3}"
 
 transport:
-  type: "${TRANSPORT_TYPE:remote}" # local or remote
+  type: "${TRANSPORT_TYPE:local}" # local or remote
   remote:
     transport_api:
       requests_topic: "${TB_TRANSPORT_API_REQUEST_TOPIC:tb.transport.api.requests}"
@@ -434,11 +434,12 @@ transport:
       topic: "${TB_TRANSPORT_NOTIFICATIONS_TOPIC:tb.transport.notifications}"
   # Local HTTP transport parameters
   http:
+    enabled: "${MQTT_ENABLED:true}"
     request_timeout: "${HTTP_REQUEST_TIMEOUT:60000}"
   # Local MQTT transport parameters
   mqtt:
     # Enable/disable mqtt transport protocol.
-    enabled: "${MQTT_ENABLED:false}"
+    enabled: "${MQTT_ENABLED:true}"
     bind_address: "${MQTT_BIND_ADDRESS:0.0.0.0}"
     bind_port: "${MQTT_BIND_PORT:1883}"
     adaptor: "${MQTT_ADAPTOR_NAME:JsonMqttAdaptor}"
@@ -465,7 +466,7 @@ transport:
   # Local CoAP transport parameters
   coap:
     # Enable/disable coap transport protocol.
-    enabled: "${COAP_ENABLED:false}"
+    enabled: "${COAP_ENABLED:true}"
     bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"
     bind_port: "${COAP_BIND_PORT:5683}"
     adaptor:  "${COAP_ADAPTOR_NAME:JsonCoapAdaptor}"

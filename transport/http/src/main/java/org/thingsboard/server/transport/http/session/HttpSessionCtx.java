@@ -15,22 +15,10 @@
  */
 package org.thingsboard.server.transport.http.session;
 
-import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.context.request.async.DeferredResult;
-import org.thingsboard.server.common.msg.core.*;
-import org.thingsboard.server.common.msg.session.*;
-import org.thingsboard.server.common.msg.session.ex.SessionException;
-import org.thingsboard.server.common.transport.SessionMsgProcessor;
-import org.thingsboard.server.common.transport.adaptor.JsonConverter;
-import org.thingsboard.server.common.transport.auth.DeviceAuthService;
 import org.thingsboard.server.common.transport.session.DeviceAwareSessionContext;
 
-import java.util.Optional;
 import java.util.UUID;
-import java.util.function.Consumer;
 
 /**
  * @author Andrew Shvayka

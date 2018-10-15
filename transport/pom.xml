@@ -23,7 +23,6 @@
         <version>2.2.0-SNAPSHOT</version>
         <artifactId>thingsboard</artifactId>
     </parent>
-    <groupId>org.thingsboard</groupId>
     <artifactId>transport</artifactId>
     <packaging>pom</packaging>
 
@@ -37,7 +36,6 @@
     <modules>
         <module>http</module>
         <!--<module>coap</module>-->
-        <module>mqtt-common</module>
         <module>mqtt-transport</module>
     </modules>
 
