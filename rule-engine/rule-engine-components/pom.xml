@@ -45,8 +45,8 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>org.thingsboard.common</groupId>
-            <artifactId>transport</artifactId>
+            <groupId>org.thingsboard.common.transport</groupId>
+            <artifactId>transport-api</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>
