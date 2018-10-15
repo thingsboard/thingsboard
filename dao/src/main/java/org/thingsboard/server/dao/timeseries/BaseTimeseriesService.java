@@ -79,12 +79,16 @@ public class BaseTimeseriesService implements TimeseriesService {
         if (entityId.getEntityType().equals(EntityType.ENTITY_VIEW)) {
             EntityView entityView = entityViewService.findEntityViewById((EntityViewId) entityId);
             List<String> filteredKeys = new ArrayList<>(keys);
-            if (!entityView.getKeys().getTimeseries().isEmpty()) {
+            if (entityView.getKeys() != null && entityView.getKeys().getTimeseries() != null &&
+                    !entityView.getKeys().getTimeseries().isEmpty()) {
                 filteredKeys.retainAll(entityView.getKeys().getTimeseries());
             }
             List<ReadTsKvQuery> queries =
                     filteredKeys.stream()
-                            .map(key -> new BaseReadTsKvQuery(key, entityView.getStartTimeMs(), entityView.getEndTimeMs(), 1, "ASC"))
+                            .map(key -> {
+                                long endTs = entityView.getEndTimeMs() != 0 ? entityView.getEndTimeMs() : Long.MAX_VALUE;
+                                return new BaseReadTsKvQuery(key, entityView.getStartTimeMs(), endTs, 1, "DESC");
+                            })
                             .collect(Collectors.toList());
 
             if (queries.size() > 0) {
@@ -100,7 +104,17 @@ public class BaseTimeseriesService implements TimeseriesService {
     @Override
     public ListenableFuture<List<TsKvEntry>> findAllLatest(EntityId entityId) {
         validate(entityId);
-        return timeseriesDao.findAllLatest(entityId);
+        if (entityId.getEntityType().equals(EntityType.ENTITY_VIEW)) {
+            EntityView entityView = entityViewService.findEntityViewById((EntityViewId) entityId);
+            if (entityView.getKeys() != null && entityView.getKeys().getTimeseries() != null &&
+                    !entityView.getKeys().getTimeseries().isEmpty()) {
+                return findLatest(entityId, entityView.getKeys().getTimeseries());
+            } else {
+                return Futures.immediateFuture(new ArrayList<>());
+            }
+        } else {
+            return timeseriesDao.findAllLatest(entityId);
+        }
     }
 
     @Override

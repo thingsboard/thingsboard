@@ -839,7 +839,7 @@
         "client-attributes": "Client attributes",
         "shared-attributes": "Shared attributes",
         "server-attributes": "Server attributes",
-        "latest-timeseries": "Latest timeseries"
+        "timeseries": "Timeseries"
     },
     "event": {
         "event-type": "Tipo de evento",

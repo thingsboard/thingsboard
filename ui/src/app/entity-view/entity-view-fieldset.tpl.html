@@ -78,31 +78,79 @@
                       ng-required="false"
                       readonly="!isEdit"
                       ng-model="entityView.keys.attributes.cs"
-                      placeholder="{{'entity-view.client-attributes' | translate}}"
+                      placeholder="{{'entity-view.client-attributes-placeholder' | translate}}"
                       md-separator-keys="separatorKeys">
+                <md-autocomplete
+                        md-no-cache="true"
+                        id="ca_datakey"
+                        md-selected-item="selectedAttributeDataKey"
+                        md-search-text="attributeDataKeySearchText"
+                        md-items="item in dataKeysSearch(attributeDataKeySearchText, types.dataKeyType.attribute)"
+                        md-item-text="item.name"
+                        md-min-length="0"
+                        placeholder="{{'entity-view.client-attributes-placeholder' | translate }}"
+                        md-menu-class="tb-attribute-datakey-autocomplete">
+                    <span md-highlight-text="attributeDataKeySearchText" md-highlight-flags="^i">{{item}}</span>
+                </md-autocomplete>
             </md-chips>
             <label translate class="tb-title no-padding">entity-view.shared-attributes</label>
             <md-chips style="padding-bottom: 15px;"
                       ng-required="false"
                       readonly="!isEdit"
                       ng-model="entityView.keys.attributes.sh"
-                      placeholder="{{'entity-view.shared-attributes' | translate}}"
+                      placeholder="{{'entity-view.shared-attributes-placeholder' | translate}}"
                       md-separator-keys="separatorKeys">
+                <md-autocomplete
+                        md-no-cache="true"
+                        id="sh_datakey"
+                        md-selected-item="selectedAttributeDataKey"
+                        md-search-text="attributeDataKeySearchText"
+                        md-items="item in dataKeysSearch(attributeDataKeySearchText, types.dataKeyType.attribute)"
+                        md-item-text="item.name"
+                        md-min-length="0"
+                        placeholder="{{'entity-view.server-attributes-placeholder' | translate }}"
+                        md-menu-class="tb-attribute-datakey-autocomplete">
+                    <span md-highlight-text="attributeDataKeySearchText" md-highlight-flags="^i">{{item}}</span>
+                </md-autocomplete>
             </md-chips>
             <label translate class="tb-title no-padding">entity-view.server-attributes</label>
             <md-chips style="padding-bottom: 15px;"
                       ng-required="false"
                       readonly="!isEdit"
                       ng-model="entityView.keys.attributes.ss"
-                      placeholder="{{'entity-view.server-attributes' | translate}}"
+                      placeholder="{{'entity-view.server-attributes-placeholder' | translate}}"
                       md-separator-keys="separatorKeys">
+                <md-autocomplete
+                        md-no-cache="true"
+                        id="ss_datakey"
+                        md-selected-item="selectedAttributeDataKey"
+                        md-search-text="attributeDataKeySearchText"
+                        md-items="item in dataKeysSearch(attributeDataKeySearchText, types.dataKeyType.attribute)"
+                        md-item-text="item.name"
+                        md-min-length="0"
+                        placeholder="{{'entity-view.server-attributes-placeholder' | translate }}"
+                        md-menu-class="tb-attribute-datakey-autocomplete">
+                    <span md-highlight-text="attributeDataKeySearchText" md-highlight-flags="^i">{{item}}</span>
+                </md-autocomplete>
             </md-chips>
-            <label translate class="tb-title no-padding">entity-view.latest-timeseries</label>
+            <label translate class="tb-title no-padding">entity-view.timeseries</label>
             <md-chips ng-required="false"
                       readonly="!isEdit"
                       ng-model="entityView.keys.timeseries"
-                      placeholder="{{'entity-view.latest-timeseries' | translate}}"
+                      placeholder="{{'entity-view.timeseries-placeholder' | translate}}"
                       md-separator-keys="separatorKeys">
+                <md-autocomplete
+                        md-no-cache="true"
+                        id="timeseries_datakey"
+                        md-selected-item="selectedTimeseriesDataKey"
+                        md-search-text="timeseriesDataKeySearchText"
+                        md-items="item in dataKeysSearch(timeseriesDataKeySearchText, types.dataKeyType.timeseries)"
+                        md-item-text="item.name"
+                        md-min-length="0"
+                        placeholder="{{'entity-view.timeseries-placeholder' | translate }}"
+                        md-menu-class="tb-timeseries-datakey-autocomplete">
+                    <span md-highlight-text="timeseriesDataKeySearchText" md-highlight-flags="^i">{{item}}</span>
+                </md-autocomplete>
             </md-chips>
         </section>
         <section layout="column">

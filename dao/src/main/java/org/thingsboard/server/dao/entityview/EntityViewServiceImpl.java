@@ -107,7 +107,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
         EntityView savedEntityView = entityViewDao.save(entityView);
 
         List<ListenableFuture<List<Void>>> futures = new ArrayList<>();
-        if (savedEntityView.getKeys() != null) {
+        if (savedEntityView.getKeys() != null && savedEntityView.getKeys().getAttributes() != null) {
             futures.add(copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.CLIENT_SCOPE, savedEntityView.getKeys().getAttributes().getCs()));
             futures.add(copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.SERVER_SCOPE, savedEntityView.getKeys().getAttributes().getSs()));
             futures.add(copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.SHARED_SCOPE, savedEntityView.getKeys().getAttributes().getSh()));

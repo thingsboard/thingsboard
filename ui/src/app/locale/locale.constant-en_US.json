@@ -844,7 +844,11 @@
         "client-attributes": "Client attributes",
         "shared-attributes": "Shared attributes",
         "server-attributes": "Server attributes",
-        "latest-timeseries": "Latest timeseries",
+        "timeseries": "Timeseries",
+        "client-attributes-placeholder": "Client attributes",
+        "shared-attributes-placeholder": "Shared attributes",
+        "server-attributes-placeholder": "Server attributes",
+        "timeseries-placeholder": "Timeseries",
         "related-entity": "Related entity"
     },
     "event": {
