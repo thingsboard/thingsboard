@@ -113,10 +113,10 @@ public class TbCopyAttributesToEntityViewNode implements TbNode {
                                                     attributes.add(value.getAsString());
                                                 }
                                             }
-                                            List<String> filteredAttributes =
-                                                    attributes.stream().filter(attr -> attributeContainsInEntityView(scope, attr, entityView)).collect(Collectors.toList());
-                                            ctx.getAttributesService().removeAll(entityView.getId(), scope, filteredAttributes);
                                         }
+                                        List<String> filteredAttributes =
+                                                attributes.stream().filter(attr -> attributeContainsInEntityView(scope, attr, entityView)).collect(Collectors.toList());
+                                        ctx.getAttributesService().removeAll(entityView.getId(), scope, filteredAttributes);
                                         transformAndTellNext(ctx, msg, entityView);
                                     }
                                 }
