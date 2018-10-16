@@ -60,7 +60,7 @@
                 entity-type="types.entityType.entityView">
         </tb-entity-subtype-autocomplete>
         <section layout="column">
-            <label translate class="tb-title no-padding">entity-view.related-entity</label>
+            <label translate class="tb-title no-padding">entity-view.target-entity</label>
             <tb-entity-select flex ng-disabled="!isEdit"
                               the-form="theForm"
                               tb-required="true"
@@ -68,110 +68,145 @@
                               ng-model="entityView.entityId">
             </tb-entity-select>
         </section>
+        <md-expansion-panel-group class="tb-entity-view-panel-group" ng-class="{'disabled': $root.loading || !isEdit}"
+                                  auto-expand="true"
+                                  multiple="true"
+                                  md-component-id="attributesPanelGroup">
+            <md-expansion-panel md-component-id="{{attributesPanelId}}">
+                <md-expansion-panel-collapsed>
+                    <div class="tb-panel-title">{{ 'entity-view.attributes-propagation' | translate }}</div>
+                    <span flex></span>
+                    <md-expansion-panel-icon></md-expansion-panel-icon>
+                </md-expansion-panel-collapsed>
+                <md-expansion-panel-expanded>
+                    <md-expansion-panel-header ng-click="$mdExpansionPanel(attributesPanelId).collapse()">
+                        <div class="tb-panel-title">{{ 'entity-view.attributes-propagation' | translate }}</div>
+                        <span flex></span>
+                        <md-expansion-panel-icon></md-expansion-panel-icon>
+                    </md-expansion-panel-header>
+                    <md-expansion-panel-content>
+                        <div translate class="tb-hint">entity-view.attributes-propagation-hint</div>
+                        <label translate class="tb-title no-padding">entity-view.client-attributes</label>
+                        <md-chips style="padding-bottom: 15px;"
+                                  ng-required="false"
+                                  readonly="!isEdit"
+                                  ng-model="entityView.keys.attributes.cs"
+                                  placeholder="{{'entity-view.client-attributes-placeholder' | translate}}"
+                                  md-separator-keys="separatorKeys">
+                            <md-autocomplete
+                                    md-no-cache="true"
+                                    id="ca_datakey"
+                                    md-selected-item="selectedAttributeDataKey"
+                                    md-search-text="attributeDataKeySearchText"
+                                    md-items="item in dataKeysSearch(attributeDataKeySearchText, types.dataKeyType.attribute)"
+                                    md-item-text="item.name"
+                                    md-min-length="0"
+                                    placeholder="{{'entity-view.client-attributes-placeholder' | translate }}"
+                                    md-menu-class="tb-attribute-datakey-autocomplete">
+                                <span md-highlight-text="attributeDataKeySearchText" md-highlight-flags="^i">{{item}}</span>
+                            </md-autocomplete>
+                        </md-chips>
+                        <label translate class="tb-title no-padding">entity-view.shared-attributes</label>
+                        <md-chips style="padding-bottom: 15px;"
+                                  ng-required="false"
+                                  readonly="!isEdit"
+                                  ng-model="entityView.keys.attributes.sh"
+                                  placeholder="{{'entity-view.shared-attributes-placeholder' | translate}}"
+                                  md-separator-keys="separatorKeys">
+                            <md-autocomplete
+                                    md-no-cache="true"
+                                    id="sh_datakey"
+                                    md-selected-item="selectedAttributeDataKey"
+                                    md-search-text="attributeDataKeySearchText"
+                                    md-items="item in dataKeysSearch(attributeDataKeySearchText, types.dataKeyType.attribute)"
+                                    md-item-text="item.name"
+                                    md-min-length="0"
+                                    placeholder="{{'entity-view.server-attributes-placeholder' | translate }}"
+                                    md-menu-class="tb-attribute-datakey-autocomplete">
+                                <span md-highlight-text="attributeDataKeySearchText" md-highlight-flags="^i">{{item}}</span>
+                            </md-autocomplete>
+                        </md-chips>
+                        <label translate class="tb-title no-padding">entity-view.server-attributes</label>
+                        <md-chips style="padding-bottom: 15px;"
+                                  ng-required="false"
+                                  readonly="!isEdit"
+                                  ng-model="entityView.keys.attributes.ss"
+                                  placeholder="{{'entity-view.server-attributes-placeholder' | translate}}"
+                                  md-separator-keys="separatorKeys">
+                            <md-autocomplete
+                                    md-no-cache="true"
+                                    id="ss_datakey"
+                                    md-selected-item="selectedAttributeDataKey"
+                                    md-search-text="attributeDataKeySearchText"
+                                    md-items="item in dataKeysSearch(attributeDataKeySearchText, types.dataKeyType.attribute)"
+                                    md-item-text="item.name"
+                                    md-min-length="0"
+                                    placeholder="{{'entity-view.server-attributes-placeholder' | translate }}"
+                                    md-menu-class="tb-attribute-datakey-autocomplete">
+                                <span md-highlight-text="attributeDataKeySearchText" md-highlight-flags="^i">{{item}}</span>
+                            </md-autocomplete>
+                        </md-chips>
+                    </md-expansion-panel-content>
+                </md-expansion-panel-expanded>
+            </md-expansion-panel>
+            <md-expansion-panel md-component-id="{{timeseriesPanelId}}">
+                <md-expansion-panel-collapsed>
+                    <div class="tb-panel-title">{{ 'entity-view.timeseries-data' | translate }}</div>
+                    <span flex></span>
+                    <md-expansion-panel-icon></md-expansion-panel-icon>
+                </md-expansion-panel-collapsed>
+                <md-expansion-panel-expanded>
+                    <md-expansion-panel-header ng-click="$mdExpansionPanel(timeseriesPanelId).collapse()">
+                        <div class="tb-panel-title">{{ 'entity-view.timeseries-data' | translate }}</div>
+                        <span flex></span>
+                        <md-expansion-panel-icon></md-expansion-panel-icon>
+                    </md-expansion-panel-header>
+                    <md-expansion-panel-content>
+                        <div translate class="tb-hint">entity-view.timeseries-data-hint</div>
+                        <label translate class="tb-title no-padding">entity-view.timeseries</label>
+                        <md-chips ng-required="false"
+                                  readonly="!isEdit"
+                                  ng-model="entityView.keys.timeseries"
+                                  placeholder="{{'entity-view.timeseries-placeholder' | translate}}"
+                                  md-separator-keys="separatorKeys">
+                            <md-autocomplete
+                                    md-no-cache="true"
+                                    id="timeseries_datakey"
+                                    md-selected-item="selectedTimeseriesDataKey"
+                                    md-search-text="timeseriesDataKeySearchText"
+                                    md-items="item in dataKeysSearch(timeseriesDataKeySearchText, types.dataKeyType.timeseries)"
+                                    md-item-text="item.name"
+                                    md-min-length="0"
+                                    placeholder="{{'entity-view.timeseries-placeholder' | translate }}"
+                                    md-menu-class="tb-timeseries-datakey-autocomplete">
+                                <span md-highlight-text="timeseriesDataKeySearchText" md-highlight-flags="^i">{{item}}</span>
+                            </md-autocomplete>
+                        </md-chips>
+                    </md-expansion-panel-content>
+                </md-expansion-panel-expanded>
+            </md-expansion-panel>
+        </md-expansion-panel-group>
+        <section layout="row" layout-align="start start">
+            <mdp-date-picker ng-model="startTimeMs"
+                             mdp-max-date="maxStartTimeMs"
+                             mdp-placeholder="{{ 'entity-view.start-date' | translate }}"></mdp-date-picker>
+            <mdp-time-picker ng-model="startTimeMs"
+                             mdp-max-date="maxStartTimeMs"
+                             mdp-placeholder="{{ 'entity-view.start-ts' | translate }}"
+                             mdp-auto-switch="true"></mdp-time-picker>
+        </section>
+        <section layout="row" layout-align="start start">
+            <mdp-date-picker ng-model="endTimeMs"
+                             mdp-min-date="minEndTimeMs"
+                             mdp-placeholder="{{ 'entity-view.end-date' | translate }}"></mdp-date-picker>
+            <mdp-time-picker ng-model="endTimeMs"
+                             mdp-min-date="minEndTimeMs"
+                             mdp-placeholder="{{ 'entity-view.end-ts' | translate }}"
+                             mdp-auto-switch="true"></mdp-time-picker>
+        </section>
         <md-input-container class="md-block">
             <label translate>entity-view.description</label>
             <textarea ng-model="entityView.additionalInfo.description" rows="2"></textarea>
         </md-input-container>
-        <section layout="column">
-            <label translate class="tb-title no-padding">entity-view.client-attributes</label>
-            <md-chips style="padding-bottom: 15px;"
-                      ng-required="false"
-                      readonly="!isEdit"
-                      ng-model="entityView.keys.attributes.cs"
-                      placeholder="{{'entity-view.client-attributes-placeholder' | translate}}"
-                      md-separator-keys="separatorKeys">
-                <md-autocomplete
-                        md-no-cache="true"
-                        id="ca_datakey"
-                        md-selected-item="selectedAttributeDataKey"
-                        md-search-text="attributeDataKeySearchText"
-                        md-items="item in dataKeysSearch(attributeDataKeySearchText, types.dataKeyType.attribute)"
-                        md-item-text="item.name"
-                        md-min-length="0"
-                        placeholder="{{'entity-view.client-attributes-placeholder' | translate }}"
-                        md-menu-class="tb-attribute-datakey-autocomplete">
-                    <span md-highlight-text="attributeDataKeySearchText" md-highlight-flags="^i">{{item}}</span>
-                </md-autocomplete>
-            </md-chips>
-            <label translate class="tb-title no-padding">entity-view.shared-attributes</label>
-            <md-chips style="padding-bottom: 15px;"
-                      ng-required="false"
-                      readonly="!isEdit"
-                      ng-model="entityView.keys.attributes.sh"
-                      placeholder="{{'entity-view.shared-attributes-placeholder' | translate}}"
-                      md-separator-keys="separatorKeys">
-                <md-autocomplete
-                        md-no-cache="true"
-                        id="sh_datakey"
-                        md-selected-item="selectedAttributeDataKey"
-                        md-search-text="attributeDataKeySearchText"
-                        md-items="item in dataKeysSearch(attributeDataKeySearchText, types.dataKeyType.attribute)"
-                        md-item-text="item.name"
-                        md-min-length="0"
-                        placeholder="{{'entity-view.server-attributes-placeholder' | translate }}"
-                        md-menu-class="tb-attribute-datakey-autocomplete">
-                    <span md-highlight-text="attributeDataKeySearchText" md-highlight-flags="^i">{{item}}</span>
-                </md-autocomplete>
-            </md-chips>
-            <label translate class="tb-title no-padding">entity-view.server-attributes</label>
-            <md-chips style="padding-bottom: 15px;"
-                      ng-required="false"
-                      readonly="!isEdit"
-                      ng-model="entityView.keys.attributes.ss"
-                      placeholder="{{'entity-view.server-attributes-placeholder' | translate}}"
-                      md-separator-keys="separatorKeys">
-                <md-autocomplete
-                        md-no-cache="true"
-                        id="ss_datakey"
-                        md-selected-item="selectedAttributeDataKey"
-                        md-search-text="attributeDataKeySearchText"
-                        md-items="item in dataKeysSearch(attributeDataKeySearchText, types.dataKeyType.attribute)"
-                        md-item-text="item.name"
-                        md-min-length="0"
-                        placeholder="{{'entity-view.server-attributes-placeholder' | translate }}"
-                        md-menu-class="tb-attribute-datakey-autocomplete">
-                    <span md-highlight-text="attributeDataKeySearchText" md-highlight-flags="^i">{{item}}</span>
-                </md-autocomplete>
-            </md-chips>
-            <label translate class="tb-title no-padding">entity-view.timeseries</label>
-            <md-chips ng-required="false"
-                      readonly="!isEdit"
-                      ng-model="entityView.keys.timeseries"
-                      placeholder="{{'entity-view.timeseries-placeholder' | translate}}"
-                      md-separator-keys="separatorKeys">
-                <md-autocomplete
-                        md-no-cache="true"
-                        id="timeseries_datakey"
-                        md-selected-item="selectedTimeseriesDataKey"
-                        md-search-text="timeseriesDataKeySearchText"
-                        md-items="item in dataKeysSearch(timeseriesDataKeySearchText, types.dataKeyType.timeseries)"
-                        md-item-text="item.name"
-                        md-min-length="0"
-                        placeholder="{{'entity-view.timeseries-placeholder' | translate }}"
-                        md-menu-class="tb-timeseries-datakey-autocomplete">
-                    <span md-highlight-text="timeseriesDataKeySearchText" md-highlight-flags="^i">{{item}}</span>
-                </md-autocomplete>
-            </md-chips>
-        </section>
-        <section layout="column">
-            <section layout="row" layout-align="start start">
-                <mdp-date-picker ng-model="startTimeMs"
-                                 mdp-max-date="maxStartTimeMs"
-                                 mdp-placeholder="{{ 'entity-view.start-ts' | translate }}"></mdp-date-picker>
-                <mdp-time-picker ng-model="startTimeMs"
-                                 mdp-max-date="maxStartTimeMs"
-                                 mdp-placeholder="{{ 'entity-view.start-ts' | translate }}"
-                                 mdp-auto-switch="true"></mdp-time-picker>
-            </section>
-            <section layout="row" layout-align="start start">
-                <mdp-date-picker ng-model="endTimeMs"
-                                 mdp-min-date="minEndTimeMs"
-                                 mdp-placeholder="{{ 'entity-view.end-ts' | translate }}"></mdp-date-picker>
-                <mdp-time-picker ng-model="endTimeMs"
-                                 mdp-min-date="minEndTimeMs"
-                                 mdp-placeholder="{{ 'entity-view.end-ts' | translate }}"
-                                 mdp-auto-switch="true"></mdp-time-picker>
-            </section>
-        </section>
 	</fieldset>
 </md-content>

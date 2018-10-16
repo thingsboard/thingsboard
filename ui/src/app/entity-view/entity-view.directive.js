@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import './entity-view.scss';
+
 /* eslint-disable import/no-unresolved, import/default */
 
 import entityViewFieldsetTemplate from './entity-view-fieldset.tpl.html';
@@ -20,11 +23,15 @@ import entityViewFieldsetTemplate from './entity-view-fieldset.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function EntityViewDirective($q, $compile, $templateCache, $filter, toast, $translate, $mdConstant,
+export default function EntityViewDirective($q, $compile, $templateCache, $filter, toast, $translate, $mdConstant, $mdExpansionPanel,
                                             types, clipboardService, entityViewService, customerService, entityService) {
     var linker = function (scope, element) {
         var template = $templateCache.get(entityViewFieldsetTemplate);
         element.html(template);
+
+        scope.attributesPanelId = (Math.random()*1000).toFixed(0);
+        scope.timeseriesPanelId = (Math.random()*1000).toFixed(0);
+        scope.$mdExpansionPanel = $mdExpansionPanel;
 
         scope.types = types;
         scope.isAssignedToCustomer = false;

@@ -838,7 +838,9 @@
         "unable-entity-view-device-alias-text": "Device alias '{{entityViewAlias}}' can't be deleted as it used by the following widget(s):<br/>{{widgetsList}}",
         "select-entity-view": "Select entity view",
         "make-public": "Make entity view public",
+        "start-date": "Start date",
         "start-ts": "Start time",
+        "end-date": "End date",
         "end-ts": "End time",
         "date-limits": "Date limits",
         "client-attributes": "Client attributes",
@@ -849,7 +851,11 @@
         "shared-attributes-placeholder": "Shared attributes",
         "server-attributes-placeholder": "Server attributes",
         "timeseries-placeholder": "Timeseries",
-        "related-entity": "Related entity"
+        "target-entity": "Target entity",
+        "attributes-propagation": "Attributes propagation",
+        "attributes-propagation-hint": "Entity View will automatically copy specified attributes from Target Entity each time you save or update this entity view. For performance reasons target entity attributes are not propagated to entity view on each attribute change. You can enable automatic propagation by configuring \"copy to view\" rule node in your rule chain and linking \"Post attributes\" and \"Attributes Updated\" messages to the new rule node.",
+        "timeseries-data": "Timeseries data",
+        "timeseries-data-hint": "Configure timeseries data keys of the target entity that will be accessible to the entity view. This timeseries data is read-only."
     },
     "event": {
         "event-type": "Event type",
