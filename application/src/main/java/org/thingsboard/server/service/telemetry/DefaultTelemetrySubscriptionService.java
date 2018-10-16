@@ -169,9 +169,13 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
         Map<String, Long> keyStates;
         if (sub.getType().equals(TelemetryFeature.TIMESERIES) && !entityView.getKeys().getTimeseries().isEmpty()) {
             allKeys = false;
-            keyStates = sub.getKeyStates().entrySet()
-                    .stream().filter(entry -> entityView.getKeys().getTimeseries().contains(entry.getKey()))
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            if(sub.isAllKeys()) {
+                keyStates = entityView.getKeys().getTimeseries().stream().collect(Collectors.toMap(k -> k, k -> 0L));
+            } else {
+                keyStates = sub.getKeyStates().entrySet()
+                        .stream().filter(entry -> entityView.getKeys().getTimeseries().contains(entry.getKey()))
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            }
         } else if (sub.getType().equals(TelemetryFeature.ATTRIBUTES)) {
             if (sub.getScope().equals(DataConstants.CLIENT_SCOPE) && !entityView.getKeys().getAttributes().getCs().isEmpty()) {
                 allKeys = false;
@@ -179,7 +183,7 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
             } else if (sub.getScope().equals(DataConstants.SERVER_SCOPE) && !entityView.getKeys().getAttributes().getSs().isEmpty()) {
                 allKeys = false;
                 keyStates = filterMap(sub, entityView.getKeys().getAttributes().getSs());
-            } else if (sub.getScope().equals(DataConstants.SERVER_SCOPE) && !entityView.getKeys().getAttributes().getSh().isEmpty()) {
+            } else if (sub.getScope().equals(DataConstants.SHARED_SCOPE) && !entityView.getKeys().getAttributes().getSh().isEmpty()) {
                 allKeys = false;
                 keyStates = filterMap(sub, entityView.getKeys().getAttributes().getSh());
             } else {
