@@ -140,12 +140,6 @@ public class EntityViewController extends BaseController {
                             } catch (ThingsboardException e) {
                                 log.error("Failed to log attribute updates", e);
                             }
-                            if (entityId.getEntityType() == EntityType.ENTITY_VIEW) {
-                                DeviceId deviceId = new DeviceId(entityId.getId());
-                                DeviceAttributesEventNotificationMsg notificationMsg = DeviceAttributesEventNotificationMsg.onUpdate(
-                                        user.getTenantId(), deviceId, scope, attributes);
-                                actorService.onMsg(new SendToClusterMsg(deviceId, notificationMsg));
-                            }
                         }
 
                         @Override
