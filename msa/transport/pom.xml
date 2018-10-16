@@ -21,26 +21,21 @@
     <parent>
         <groupId>org.thingsboard</groupId>
         <version>2.2.0-SNAPSHOT</version>
-        <artifactId>thingsboard</artifactId>
+        <artifactId>msa</artifactId>
     </parent>
-    <groupId>org.thingsboard</groupId>
-    <artifactId>msa</artifactId>
+    <groupId>org.thingsboard.msa</groupId>
+    <artifactId>transport</artifactId>
     <packaging>pom</packaging>
 
-    <name>ThingsBoard Microservices</name>
+    <name>ThingsBoard Transport Microservices</name>
     <url>https://thingsboard.io</url>
 
     <properties>
-        <main.dir>${basedir}/..</main.dir>
-        <docker.repo>local-maven-build</docker.repo>
-        <dockerfile.skip>true</dockerfile.skip>
+        <main.dir>${basedir}/../..</main.dir>
     </properties>
 
     <modules>
-        <module>js-executor</module>
-        <module>web-ui</module>
-        <module>tb-node</module>
-        <module>transport</module>
+        <module>mqtt</module>
     </modules>
 
     <build>
