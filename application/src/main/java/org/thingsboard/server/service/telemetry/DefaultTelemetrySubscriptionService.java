@@ -143,7 +143,7 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
     public void addLocalWsSubscription(String sessionId, EntityId entityId, SubscriptionState sub) {
         long startTime = 0L;
         long endTime = 0L;
-        if (entityId.getEntityType().equals(EntityType.ENTITY_VIEW)) {
+        if (entityId.getEntityType().equals(EntityType.ENTITY_VIEW) && TelemetryFeature.TIMESERIES.equals(sub.getType())) {
             EntityView entityView = entityViewService.findEntityViewById(new EntityViewId(entityId.getId()));
             entityId = entityView.getEntityId();
             startTime = entityView.getStartTimeMs();
@@ -165,38 +165,15 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
     }
 
     private SubscriptionState getUpdatedSubscriptionState(EntityId entityId, SubscriptionState sub, EntityView entityView) {
-        boolean allKeys;
         Map<String, Long> keyStates;
-        if (sub.getType().equals(TelemetryFeature.TIMESERIES) && !entityView.getKeys().getTimeseries().isEmpty()) {
-            allKeys = false;
+        if(sub.isAllKeys()) {
+            keyStates = entityView.getKeys().getTimeseries().stream().collect(Collectors.toMap(k -> k, k -> 0L));
+        } else {
             keyStates = sub.getKeyStates().entrySet()
                     .stream().filter(entry -> entityView.getKeys().getTimeseries().contains(entry.getKey()))
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        } else if (sub.getType().equals(TelemetryFeature.ATTRIBUTES)) {
-            if (sub.getScope().equals(DataConstants.CLIENT_SCOPE) && !entityView.getKeys().getAttributes().getCs().isEmpty()) {
-                allKeys = false;
-                keyStates = filterMap(sub, entityView.getKeys().getAttributes().getCs());
-            } else if (sub.getScope().equals(DataConstants.SERVER_SCOPE) && !entityView.getKeys().getAttributes().getSs().isEmpty()) {
-                allKeys = false;
-                keyStates = filterMap(sub, entityView.getKeys().getAttributes().getSs());
-            } else if (sub.getScope().equals(DataConstants.SERVER_SCOPE) && !entityView.getKeys().getAttributes().getSh().isEmpty()) {
-                allKeys = false;
-                keyStates = filterMap(sub, entityView.getKeys().getAttributes().getSh());
-            } else {
-                allKeys = sub.isAllKeys();
-                keyStates = sub.getKeyStates();
-            }
-        } else {
-            allKeys = sub.isAllKeys();
-            keyStates = sub.getKeyStates();
         }
-        return new SubscriptionState(sub.getWsSessionId(), sub.getSubscriptionId(), entityId, sub.getType(), allKeys, keyStates, sub.getScope());
-    }
-
-    private Map<String, Long> filterMap(SubscriptionState sub, List<String> allowedKeys) {
-        return sub.getKeyStates().entrySet()
-                .stream().filter(entry -> allowedKeys.contains(entry.getKey()))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        return new SubscriptionState(sub.getWsSessionId(), sub.getSubscriptionId(), entityId, sub.getType(), false, keyStates, sub.getScope());
     }
 
     @Override
@@ -467,7 +444,7 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
         onLocalSubUpdate(entityId, s -> TelemetryFeature.ATTRIBUTES == s.getType() && (StringUtils.isEmpty(s.getScope()) || scope.equals(s.getScope())), s -> {
             List<TsKvEntry> subscriptionUpdate = null;
             for (AttributeKvEntry kv : attributes) {
-                if (isInTimeRange(s, kv.getLastUpdateTs()) && (s.isAllKeys() || s.getKeyStates().containsKey(kv.getKey()))) {
+                if (s.isAllKeys() || s.getKeyStates().containsKey(kv.getKey())) {
                     if (subscriptionUpdate == null) {
                         subscriptionUpdate = new ArrayList<>();
                     }
