@@ -116,8 +116,10 @@ public class TbCopyAttributesToEntityViewNode implements TbNode {
                                         }
                                         List<String> filteredAttributes =
                                                 attributes.stream().filter(attr -> attributeContainsInEntityView(scope, attr, entityView)).collect(Collectors.toList());
-                                        ctx.getAttributesService().removeAll(entityView.getId(), scope, filteredAttributes);
-                                        transformAndTellNext(ctx, msg, entityView);
+                                        if (filteredAttributes != null && !filteredAttributes.isEmpty()) {
+                                            ctx.getAttributesService().removeAll(entityView.getId(), scope, filteredAttributes);
+                                            transformAndTellNext(ctx, msg, entityView);
+                                        }
                                     }
                                 }
                             }
@@ -139,19 +141,10 @@ public class TbCopyAttributesToEntityViewNode implements TbNode {
     private boolean attributeContainsInEntityView(String scope, String attrKey, EntityView entityView) {
         switch (scope) {
             case DataConstants.CLIENT_SCOPE:
-                if (entityView.getKeys().getAttributes().getCs().isEmpty()) {
-                    return true;
-                }
                 return entityView.getKeys().getAttributes().getCs().contains(attrKey);
             case DataConstants.SERVER_SCOPE:
-                if (entityView.getKeys().getAttributes().getSs().isEmpty()) {
-                    return true;
-                }
                 return entityView.getKeys().getAttributes().getSs().contains(attrKey);
             case DataConstants.SHARED_SCOPE:
-                if (entityView.getKeys().getAttributes().getSh().isEmpty()) {
-                    return true;
-                }
                 return entityView.getKeys().getAttributes().getSh().contains(attrKey);
         }
         return false;
@@ -159,6 +152,5 @@ public class TbCopyAttributesToEntityViewNode implements TbNode {
 
     @Override
     public void destroy() {
-
     }
 }
