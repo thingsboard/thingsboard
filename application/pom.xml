@@ -61,16 +61,16 @@
             <artifactId>transport</artifactId>
         </dependency>
         <!--<dependency>-->
-            <!--<groupId>org.thingsboard.transport</groupId>-->
-            <!--<artifactId>http</artifactId>-->
-        <!--</dependency>-->
-        <!--<dependency>-->
-            <!--<groupId>org.thingsboard.transport</groupId>-->
-            <!--<artifactId>coap</artifactId>-->
+        <!--<groupId>org.thingsboard.transport</groupId>-->
+        <!--<artifactId>coap</artifactId>-->
         <!--</dependency>-->
         <dependency>
             <groupId>org.thingsboard.common.transport</groupId>
             <artifactId>mqtt</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common.transport</groupId>
+            <artifactId>http</artifactId>
         </dependency>
         <dependency>
             <groupId>org.thingsboard</groupId>
@@ -542,7 +542,8 @@
                     <args>
                         <arg>-PprojectBuildDir=${project.build.directory}</arg>
                         <arg>-PprojectVersion=${project.version}</arg>
-                        <arg>-PmainJar=${project.build.directory}/${project.build.finalName}-boot.${project.packaging}</arg>
+                        <arg>-PmainJar=${project.build.directory}/${project.build.finalName}-boot.${project.packaging}
+                        </arg>
                         <arg>-PpkgName=${pkg.name}</arg>
                         <arg>-PpkgInstallFolder=${pkg.installFolder}</arg>
                         <arg>-PpkgLogFolder=${pkg.unixLogFolder}</arg>

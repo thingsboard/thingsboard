@@ -365,7 +365,7 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.thingsboard.transport</groupId>
+                <groupId>org.thingsboard.common.transport</groupId>
                 <artifactId>http</artifactId>
                 <version>${project.version}</version>
             </dependency>

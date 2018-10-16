@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -85,7 +85,7 @@ public class RemoteTransportService implements TransportService {
     @Value("${kafka.transport_api.response_auto_commit_interval}")
     private int autoCommitInterval;
 
-    private ConcurrentMap<UUID, SessionMsgListener> sessions = new ConcurrentHashMap<>();
+    private ConcurrentMap<UUID, SessionMetaData> sessions = new ConcurrentHashMap<>();
 
     @Autowired
     private TbKafkaSettings kafkaSettings;
@@ -159,8 +159,9 @@ public class RemoteTransportService implements TransportService {
                             if (toTransportMsg.hasToDeviceSessionMsg()) {
                                 DeviceActorToTransportMsg toSessionMsg = toTransportMsg.getToDeviceSessionMsg();
                                 UUID sessionId = new UUID(toSessionMsg.getSessionIdMSB(), toSessionMsg.getSessionIdLSB());
-                                SessionMsgListener listener = sessions.get(sessionId);
-                                if (listener != null) {
+                                SessionMetaData md = sessions.get(sessionId);
+                                if (md != null) {
+                                    SessionMsgListener listener = md.getListener();
                                     transportCallbackExecutor.submit(() -> {
                                         if (toSessionMsg.hasGetAttributesResponse()) {
                                             listener.onGetAttributesResponse(toSessionMsg.getGetAttributesResponse());
@@ -178,6 +179,9 @@ public class RemoteTransportService implements TransportService {
                                             listener.onToServerRpcResponse(toSessionMsg.getToServerResponse());
                                         }
                                     });
+                                    if (md.getSessionType() == SessionType.SYNC) {
+                                        deregisterSession(md.getSessionInfo());
+                                    }
                                 } else {
                                     //TODO: should we notify the device actor about missed session?
                                     log.debug("[{}] Missing session.", sessionId);
@@ -311,8 +315,8 @@ public class RemoteTransportService implements TransportService {
     }
 
     @Override
-    public void registerSession(SessionInfoProto sessionInfo, SessionMsgListener listener) {
-        sessions.putIfAbsent(toId(sessionInfo), listener);
+    public void registerSession(SessionInfoProto sessionInfo, SessionType sessionType, SessionMsgListener listener) {
+        sessions.putIfAbsent(toId(sessionInfo), new SessionMetaData(sessionInfo, sessionType, listener));
         //TODO: monitor sessions periodically: PING REQ/RESP, etc.
     }
 

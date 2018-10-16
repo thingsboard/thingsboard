@@ -506,7 +506,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     .setTenantIdLSB(msg.getDeviceInfo().getTenantIdLSB())
                     .build();
             transportService.process(sessionInfo, getSessionEventMsg(SessionEvent.OPEN), null);
-            transportService.registerSession(sessionInfo, this);
+            transportService.registerSession(sessionInfo, TransportProtos.SessionType.ASYNC, this);
             checkGatewaySession();
             ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_ACCEPTED));
         }

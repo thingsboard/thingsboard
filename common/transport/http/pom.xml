@@ -19,15 +19,15 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>org.thingsboard</groupId>
+        <groupId>org.thingsboard.common</groupId>
         <version>2.2.0-SNAPSHOT</version>
         <artifactId>transport</artifactId>
     </parent>
-    <groupId>org.thingsboard.transport</groupId>
+    <groupId>org.thingsboard.common.transport</groupId>
     <artifactId>http</artifactId>
     <packaging>jar</packaging>
 
-    <name>Thingsboard HTTP Transport</name>
+    <name>Thingsboard HTTP Transport Common</name>
     <url>https://thingsboard.io</url>
 
     <properties>
@@ -37,8 +37,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.thingsboard.common</groupId>
-            <artifactId>transport</artifactId>
+            <groupId>org.thingsboard.common.transport</groupId>
+            <artifactId>transport-api</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

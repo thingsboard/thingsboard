@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.quota.host.HostRequestsQuotaService;
 import org.thingsboard.server.kafka.TbNodeIdProvider;
@@ -40,48 +41,21 @@ import java.util.concurrent.Executors;
 @Slf4j
 @ConditionalOnProperty(prefix = "transport.mqtt", value = "enabled", havingValue = "true", matchIfMissing = true)
 @Component
-@Data
-public class MqttTransportContext {
+public class MqttTransportContext extends TransportContext {
 
-    private final ObjectMapper mapper = new ObjectMapper();
-
-    @Autowired
-    private TransportService transportService;
-
+    @Getter
     @Autowired(required = false)
     private MqttSslHandlerProvider sslHandlerProvider;
 
-    @Autowired(required = false)
-    private HostRequestsQuotaService quotaService;
-
+    @Getter
     @Autowired
     private MqttTransportAdaptor adaptor;
 
-    @Autowired
-    private TbNodeIdProvider nodeIdProvider;
-
+    @Getter
     @Value("${transport.mqtt.netty.max_payload_size}")
     private Integer maxPayloadSize;
 
-
+    @Getter
     private SslHandler sslHandler;
 
-    @Getter
-    private ExecutorService executor;
-
-    @PostConstruct
-    public void init() {
-        executor = Executors.newCachedThreadPool();
-    }
-
-    @PreDestroy
-    public void stop() {
-        if (executor != null) {
-            executor.shutdownNow();
-        }
-    }
-
-    public String getNodeId() {
-        return nodeIdProvider.getNodeId();
-    }
 }

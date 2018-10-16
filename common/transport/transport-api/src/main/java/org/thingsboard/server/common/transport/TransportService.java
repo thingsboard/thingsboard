@@ -59,7 +59,7 @@ public interface TransportService {
 
     void process(SessionInfoProto sessionInfo, ToServerRpcRequestMsg msg, TransportServiceCallback<Void> callback);
 
-    void registerSession(SessionInfoProto sessionInfo, SessionMsgListener listener);
+    void registerSession(SessionInfoProto sessionInfo, TransportProtos.SessionType sessionType, SessionMsgListener listener);
 
     void deregisterSession(SessionInfoProto sessionInfo);
 

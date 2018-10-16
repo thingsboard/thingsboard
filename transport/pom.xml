@@ -34,7 +34,6 @@
     </properties>
 
     <modules>
-        <module>http</module>
         <!--<module>coap</module>-->
         <module>mqtt-transport</module>
     </modules>
