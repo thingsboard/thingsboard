@@ -121,7 +121,7 @@ public class GatewaySessionHandler {
                                 transportService.process(deviceSessionInfo, MqttTransportHandler.getSessionEventMsg(TransportProtos.SessionEvent.OPEN), null);
                                 transportService.process(deviceSessionInfo, TransportProtos.SubscribeToRPCMsg.getDefaultInstance(), null);
                                 transportService.process(deviceSessionInfo, TransportProtos.SubscribeToAttributeUpdatesMsg.getDefaultInstance(), null);
-                                transportService.registerSession(deviceSessionInfo, TransportProtos.SessionType.ASYNC, deviceSessionCtx);
+                                transportService.registerAsyncSession(deviceSessionInfo, deviceSessionCtx);
                             }
                             future.set(devices.get(deviceName));
                         }

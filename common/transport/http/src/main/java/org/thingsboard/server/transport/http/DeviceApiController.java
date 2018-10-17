@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.transport.http;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -33,9 +35,20 @@ import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
-import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.gen.transport.TransportProtos.*;
-import org.thingsboard.server.transport.http.session.HttpSessionCtx;
+import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
+import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.SessionCloseNotificationProto;
+import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
+import org.thingsboard.server.gen.transport.TransportProtos.SubscribeToAttributeUpdatesMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.SubscribeToRPCMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
@@ -76,7 +89,7 @@ public class DeviceApiController {
                         request.addAllSharedAttributeNames(sharedKeySet);
                     }
                     TransportService transportService = transportContext.getTransportService();
-                    transportService.registerSession(sessionInfo, TransportProtos.SessionType.SYNC, new HttpSessionListener(transportContext, responseWriter));
+                    transportService.registerSyncSession(sessionInfo, new HttpSessionListener(responseWriter), transportContext.getDefaultTimeout());
                     transportService.process(sessionInfo, request.build(), new SessionCloseOnErrorCallback(transportService, sessionInfo));
                 }));
         return responseWriter;
@@ -85,20 +98,16 @@ public class DeviceApiController {
     @RequestMapping(value = "/{deviceToken}/attributes", method = RequestMethod.POST)
     public DeferredResult<ResponseEntity> postDeviceAttributes(@PathVariable("deviceToken") String deviceToken,
                                                                @RequestBody String json, HttpServletRequest request) {
-        DeferredResult<ResponseEntity> responseWriter = new DeferredResult<ResponseEntity>();
+        DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
         if (quotaExceeded(request, responseWriter)) {
             return responseWriter;
         }
-//        HttpSessionCtx ctx = getHttpSessionCtx(responseWriter);
-//        if (ctx.login(new DeviceTokenCredentials(deviceToken))) {
-//            try {
-//                process(ctx, JsonConverter.convertToAttributes(new JsonParser().parse(json)));
-//            } catch (IllegalStateException | JsonSyntaxException ex) {
-//                responseWriter.setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
-//            }
-//        } else {
-//            responseWriter.setResult(new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
-//        }
+        transportContext.getTransportService().process(ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
+                new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
+                    TransportService transportService = transportContext.getTransportService();
+                    transportService.process(sessionInfo, JsonConverter.convertToAttributesProto(new JsonParser().parse(json)),
+                            new HttpOkCallback(responseWriter));
+                }));
         return responseWriter;
     }
 
@@ -109,26 +118,33 @@ public class DeviceApiController {
         if (quotaExceeded(request, responseWriter)) {
             return responseWriter;
         }
-        HttpSessionCtx ctx = getHttpSessionCtx(responseWriter);
-//        if (ctx.login(new DeviceTokenCredentials(deviceToken))) {
-//            try {
-//                process(ctx, JsonConverter.convertToTelemetry(new JsonParser().parse(json)));
-//            } catch (IllegalStateException | JsonSyntaxException ex) {
-//                responseWriter.setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
-//            }
-//        } else {
-//            responseWriter.setResult(new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
-//        }
+        transportContext.getTransportService().process(ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
+                new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
+                    TransportService transportService = transportContext.getTransportService();
+                    transportService.process(sessionInfo, JsonConverter.convertToTelemetryProto(new JsonParser().parse(json)),
+                            new HttpOkCallback(responseWriter));
+                }));
         return responseWriter;
     }
 
     @RequestMapping(value = "/{deviceToken}/rpc", method = RequestMethod.GET, produces = "application/json")
     public DeferredResult<ResponseEntity> subscribeToCommands(@PathVariable("deviceToken") String deviceToken,
                                                               @RequestParam(value = "timeout", required = false, defaultValue = "0") long timeout,
-                                                              HttpServletRequest request) {
+                                                              HttpServletRequest httpRequest) {
+        DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
+        if (quotaExceeded(httpRequest, responseWriter)) {
+            return responseWriter;
+        }
+        transportContext.getTransportService().process(ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
+                new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
+                    TransportService transportService = transportContext.getTransportService();
+                    transportService.registerSyncSession(sessionInfo, new HttpSessionListener(responseWriter),
+                            timeout == 0 ? transportContext.getDefaultTimeout() : timeout);
+                    transportService.process(sessionInfo, SubscribeToRPCMsg.getDefaultInstance(),
+                            new SessionCloseOnErrorCallback(transportService, sessionInfo));
 
-//        return subscribe(deviceToken, timeout, new RpcSubscribeMsg(), request);
-        return null;
+                }));
+        return responseWriter;
     }
 
     @RequestMapping(value = "/{deviceToken}/rpc/{requestId}", method = RequestMethod.POST)
@@ -139,17 +155,11 @@ public class DeviceApiController {
         if (quotaExceeded(request, responseWriter)) {
             return responseWriter;
         }
-//        HttpSessionCtx ctx = getHttpSessionCtx(responseWriter);
-//        if (ctx.login(new DeviceTokenCredentials(deviceToken))) {
-//            try {
-//                JsonObject response = new JsonParser().parse(json).getAsJsonObject();
-//                process(ctx, new ToDeviceRpcResponseMsg(requestId, response.toString()));
-//            } catch (IllegalStateException | JsonSyntaxException ex) {
-//                responseWriter.setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
-//            }
-//        } else {
-//            responseWriter.setResult(new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
-//        }
+        transportContext.getTransportService().process(ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
+                new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
+                    TransportService transportService = transportContext.getTransportService();
+                    transportService.process(sessionInfo, ToDeviceRpcResponseMsg.newBuilder().setRequestId(requestId).setPayload(json).build(), new HttpOkCallback(responseWriter));
+                }));
         return responseWriter;
     }
 
@@ -160,19 +170,16 @@ public class DeviceApiController {
         if (quotaExceeded(httpRequest, responseWriter)) {
             return responseWriter;
         }
-        HttpSessionCtx ctx = getHttpSessionCtx(responseWriter);
-//        if (ctx.login(new DeviceTokenCredentials(deviceToken))) {
-//            try {
-//                JsonObject request = new JsonParser().parse(json).getAsJsonObject();
-//                process(ctx, new ToServerRpcRequestMsg(0,
-//                        request.get("method").getAsString(),
-//                        request.get("params").toString()));
-//            } catch (IllegalStateException | JsonSyntaxException ex) {
-//                responseWriter.setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
-//            }
-//        } else {
-//            responseWriter.setResult(new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
-//        }
+        transportContext.getTransportService().process(ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
+                new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
+                    JsonObject request = new JsonParser().parse(json).getAsJsonObject();
+                    TransportService transportService = transportContext.getTransportService();
+                    transportService.registerSyncSession(sessionInfo, new HttpSessionListener(responseWriter), transportContext.getDefaultTimeout());
+                    transportService.process(sessionInfo, ToServerRpcRequestMsg.newBuilder().setRequestId(0)
+                                    .setMethodName(request.get("method").getAsString())
+                                    .setParams(request.get("params").toString()).build(),
+                            new SessionCloseOnErrorCallback(transportService, sessionInfo));
+                }));
         return responseWriter;
     }
 
@@ -180,49 +187,30 @@ public class DeviceApiController {
     public DeferredResult<ResponseEntity> subscribeToAttributes(@PathVariable("deviceToken") String deviceToken,
                                                                 @RequestParam(value = "timeout", required = false, defaultValue = "0") long timeout,
                                                                 HttpServletRequest httpRequest) {
-        return null;
-//        return subscribe(deviceToken, timeout, new AttributesSubscribeMsg(), httpRequest);
+        DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
+        if (quotaExceeded(httpRequest, responseWriter)) {
+            return responseWriter;
+        }
+        transportContext.getTransportService().process(ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
+                new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
+                    TransportService transportService = transportContext.getTransportService();
+                    transportService.registerSyncSession(sessionInfo, new HttpSessionListener(responseWriter),
+                            timeout == 0 ? transportContext.getDefaultTimeout() : timeout);
+                    transportService.process(sessionInfo, SubscribeToAttributeUpdatesMsg.getDefaultInstance(),
+                            new SessionCloseOnErrorCallback(transportService, sessionInfo));
+
+                }));
+        return responseWriter;
     }
-
-//    private DeferredResult<ResponseEntity> subscribe(String deviceToken, long timeout, FromDeviceMsg msg, HttpServletRequest httpRequest) {
-//        DeferredResult<ResponseEntity> responseWriter = new DeferredResult<ResponseEntity>();
-//        if (quotaExceeded(httpRequest, responseWriter)) {
-//            return responseWriter;
-//        }
-//        HttpSessionCtx ctx = getHttpSessionCtx(responseWriter, timeout);
-//        if (ctx.login(new DeviceTokenCredentials(deviceToken))) {
-//            try {
-//                process(ctx, msg);
-//            } catch (IllegalStateException | JsonSyntaxException ex) {
-//                responseWriter.setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
-//            }
-//        } else {
-//            responseWriter.setResult(new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
-//        }
-//        return responseWriter;
-//    }
-
-    private HttpSessionCtx getHttpSessionCtx(DeferredResult<ResponseEntity> responseWriter) {
-        return getHttpSessionCtx(responseWriter, transportContext.getDefaultTimeout());
-    }
-
-    private HttpSessionCtx getHttpSessionCtx(DeferredResult<ResponseEntity> responseWriter, long timeout) {
-        return null;
-//        return new HttpSessionCtx(processor, authService, responseWriter, timeout != 0 ? timeout : defaultTimeout);
-    }
-
-//    private void process(HttpSessionCtx ctx, FromDeviceMsg request) {
-//        AdaptorToSessionActorMsg msg = new BasicAdaptorToSessionActorMsg(ctx, request);
-////        processor.process(new BasicTransportToDeviceSessionActorMsg(ctx.getDevice(), msg));
-//    }
 
     private boolean quotaExceeded(HttpServletRequest request, DeferredResult<ResponseEntity> responseWriter) {
         if (transportContext.getQuotaService().isQuotaExceeded(request.getRemoteAddr())) {
             log.warn("REST Quota exceeded for [{}] . Disconnect", request.getRemoteAddr());
             responseWriter.setResult(new ResponseEntity<>(HttpStatus.BANDWIDTH_LIMIT_EXCEEDED));
             return true;
+        } else {
+            return false;
         }
-        return false;
     }
 
     private static class DeviceAuthCallback implements TransportServiceCallback<ValidateDeviceCredentialsResponseMsg> {
@@ -274,7 +262,6 @@ public class DeviceApiController {
 
         @Override
         public void onSuccess(Void msg) {
-
         }
 
         @Override
@@ -283,13 +270,30 @@ public class DeviceApiController {
         }
     }
 
-    private static class HttpSessionListener implements SessionMsgListener {
-
-        private final TransportContext transportContext;
+    private static class HttpOkCallback implements TransportServiceCallback<Void> {
         private final DeferredResult<ResponseEntity> responseWriter;
 
-        HttpSessionListener(TransportContext transportContext, DeferredResult<ResponseEntity> responseWriter) {
-            this.transportContext = transportContext;
+        public HttpOkCallback(DeferredResult<ResponseEntity> responseWriter) {
+            this.responseWriter = responseWriter;
+        }
+
+        @Override
+        public void onSuccess(Void msg) {
+            responseWriter.setResult(new ResponseEntity<>(HttpStatus.OK));
+        }
+
+        @Override
+        public void onError(Throwable e) {
+            responseWriter.setResult(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
+        }
+    }
+
+
+    private static class HttpSessionListener implements SessionMsgListener {
+
+        private final DeferredResult<ResponseEntity> responseWriter;
+
+        HttpSessionListener(DeferredResult<ResponseEntity> responseWriter) {
             this.responseWriter = responseWriter;
         }
 
@@ -305,16 +309,17 @@ public class DeviceApiController {
 
         @Override
         public void onRemoteSessionCloseCommand(SessionCloseNotificationProto sessionCloseNotification) {
+            responseWriter.setResult(new ResponseEntity<>(HttpStatus.REQUEST_TIMEOUT));
         }
 
         @Override
-        public void onToDeviceRpcRequest(ToDeviceRpcRequestMsg toDeviceRequest) {
-
+        public void onToDeviceRpcRequest(ToDeviceRpcRequestMsg msg) {
+            responseWriter.setResult(new ResponseEntity<>(JsonConverter.toJson(msg, true).toString(), HttpStatus.OK));
         }
 
         @Override
-        public void onToServerRpcResponse(ToServerRpcResponseMsg toServerResponse) {
-
+        public void onToServerRpcResponse(ToServerRpcResponseMsg msg) {
+            responseWriter.setResult(new ResponseEntity<>(JsonConverter.toJson(msg).toString(), HttpStatus.OK));
         }
     }
 }

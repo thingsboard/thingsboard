@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.handler.ssl.SslHandler;
 import lombok.Data;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -56,6 +57,7 @@ public class MqttTransportContext extends TransportContext {
     private Integer maxPayloadSize;
 
     @Getter
+    @Setter
     private SslHandler sslHandler;
 
 }

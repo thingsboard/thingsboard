@@ -439,7 +439,7 @@ transport:
   # Local MQTT transport parameters
   mqtt:
     # Enable/disable mqtt transport protocol.
-    enabled: "${MQTT_ENABLED:true}"
+    enabled: "${MQTT_ENABLED:false}"
     bind_address: "${MQTT_BIND_ADDRESS:0.0.0.0}"
     bind_port: "${MQTT_BIND_PORT:1883}"
     adaptor: "${MQTT_ADAPTOR_NAME:JsonMqttAdaptor}"

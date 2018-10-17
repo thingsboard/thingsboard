@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,6 +26,7 @@ import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
+import org.thingsboard.server.common.transport.service.AbstractTransportService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceActorToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestMsg;
@@ -56,6 +57,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -67,11 +70,7 @@ import java.util.function.Consumer;
 @Slf4j
 @Service
 @ConditionalOnProperty(prefix = "transport", value = "type", havingValue = "local")
-public class LocalTransportService implements TransportService, RuleEngineTransportService {
-
-    private ConcurrentMap<UUID, SessionMsgListener> sessions = new ConcurrentHashMap<>();
-
-    private ExecutorService transportCallbackExecutor;
+public class LocalTransportService extends AbstractTransportService implements RuleEngineTransportService {
 
     @Autowired
     private TransportApiService transportApiService;
@@ -89,14 +88,12 @@ public class LocalTransportService implements TransportService, RuleEngineTransp
 
     @PostConstruct
     public void init() {
-        this.transportCallbackExecutor = new ThreadPoolExecutor(0, 100, 60L, TimeUnit.SECONDS, new SynchronousQueue<>());
+        super.init();
     }
 
     @PreDestroy
     public void destroy() {
-        if (transportCallbackExecutor != null) {
-            transportCallbackExecutor.shutdownNow();
-        }
+        super.destroy();
     }
 
     @Override
@@ -176,51 +173,13 @@ public class LocalTransportService implements TransportService, RuleEngineTransp
     }
 
     @Override
-    public void registerSession(SessionInfoProto sessionInfo, TransportProtos.SessionType sessionType, SessionMsgListener listener) {
-        sessions.putIfAbsent(toId(sessionInfo), listener);
-        //TODO: monitor sessions periodically: PING REQ/RESP, etc.
-    }
-
-    @Override
-    public void deregisterSession(SessionInfoProto sessionInfo) {
-        sessions.remove(toId(sessionInfo));
-    }
-
-    private UUID toId(SessionInfoProto sessionInfo) {
-        return new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB());
-    }
-
-    @Override
     public void process(String nodeId, DeviceActorToTransportMsg msg) {
         process(nodeId, msg, null, null);
     }
 
     @Override
     public void process(String nodeId, DeviceActorToTransportMsg msg, Runnable onSuccess, Consumer<Throwable> onFailure) {
-        UUID sessionId = new UUID(msg.getSessionIdMSB(), msg.getSessionIdLSB());
-        SessionMsgListener listener = sessions.get(sessionId);
-        if (listener != null) {
-            transportCallbackExecutor.submit(() -> {
-                if (msg.hasGetAttributesResponse()) {
-                    listener.onGetAttributesResponse(msg.getGetAttributesResponse());
-                }
-                if (msg.hasAttributeUpdateNotification()) {
-                    listener.onAttributeUpdate(msg.getAttributeUpdateNotification());
-                }
-                if (msg.hasSessionCloseNotification()) {
-                    listener.onRemoteSessionCloseCommand(msg.getSessionCloseNotification());
-                }
-                if (msg.hasToDeviceRequest()) {
-                    listener.onToDeviceRpcRequest(msg.getToDeviceRequest());
-                }
-                if (msg.hasToServerResponse()) {
-                    listener.onToServerRpcResponse(msg.getToServerResponse());
-                }
-            });
-        } else {
-            //TODO: should we notify the device actor about missed session?
-            log.debug("[{}] Missing session.", sessionId);
-        }
+        processToTransportMsg(msg);
         if (onSuccess != null) {
             onSuccess.run();
         }

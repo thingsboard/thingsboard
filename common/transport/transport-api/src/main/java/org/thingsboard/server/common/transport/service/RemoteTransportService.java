@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.*;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayResponseMsg;
@@ -62,7 +63,7 @@ import java.util.concurrent.Executors;
 @ConditionalOnProperty(prefix = "transport", value = "type", havingValue = "remote", matchIfMissing = true)
 @Service
 @Slf4j
-public class RemoteTransportService implements TransportService {
+public class RemoteTransportService extends AbstractTransportService {
 
     @Value("${kafka.rule_engine.topic}")
     private String ruleEngineTopic;
@@ -85,15 +86,11 @@ public class RemoteTransportService implements TransportService {
     @Value("${kafka.transport_api.response_auto_commit_interval}")
     private int autoCommitInterval;
 
-    private ConcurrentMap<UUID, SessionMetaData> sessions = new ConcurrentHashMap<>();
-
     @Autowired
     private TbKafkaSettings kafkaSettings;
     //We use this to get the node id. We should replace this with a component that provides the node id.
     @Autowired
     private TbNodeIdProvider nodeIdProvider;
-
-    private ExecutorService transportCallbackExecutor;
 
     private TbKafkaRequestTemplate<TransportApiRequestMsg, TransportApiResponseMsg> transportApiTemplate;
     private TBKafkaProducerTemplate<ToRuleEngineMsg> ruleEngineProducer;
@@ -105,7 +102,7 @@ public class RemoteTransportService implements TransportService {
 
     @PostConstruct
     public void init() {
-        this.transportCallbackExecutor = Executors.newCachedThreadPool();
+        super.init();
 
         TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<TransportApiRequestMsg> requestBuilder = TBKafkaProducerTemplate.builder();
         requestBuilder.settings(kafkaSettings);
@@ -157,36 +154,7 @@ public class RemoteTransportService implements TransportService {
                         try {
                             ToTransportMsg toTransportMsg = mainConsumer.decode(record);
                             if (toTransportMsg.hasToDeviceSessionMsg()) {
-                                DeviceActorToTransportMsg toSessionMsg = toTransportMsg.getToDeviceSessionMsg();
-                                UUID sessionId = new UUID(toSessionMsg.getSessionIdMSB(), toSessionMsg.getSessionIdLSB());
-                                SessionMetaData md = sessions.get(sessionId);
-                                if (md != null) {
-                                    SessionMsgListener listener = md.getListener();
-                                    transportCallbackExecutor.submit(() -> {
-                                        if (toSessionMsg.hasGetAttributesResponse()) {
-                                            listener.onGetAttributesResponse(toSessionMsg.getGetAttributesResponse());
-                                        }
-                                        if (toSessionMsg.hasAttributeUpdateNotification()) {
-                                            listener.onAttributeUpdate(toSessionMsg.getAttributeUpdateNotification());
-                                        }
-                                        if (toSessionMsg.hasSessionCloseNotification()) {
-                                            listener.onRemoteSessionCloseCommand(toSessionMsg.getSessionCloseNotification());
-                                        }
-                                        if (toSessionMsg.hasToDeviceRequest()) {
-                                            listener.onToDeviceRpcRequest(toSessionMsg.getToDeviceRequest());
-                                        }
-                                        if (toSessionMsg.hasToServerResponse()) {
-                                            listener.onToServerRpcResponse(toSessionMsg.getToServerResponse());
-                                        }
-                                    });
-                                    if (md.getSessionType() == SessionType.SYNC) {
-                                        deregisterSession(md.getSessionInfo());
-                                    }
-                                } else {
-                                    //TODO: should we notify the device actor about missed session?
-                                    log.debug("[{}] Missing session.", sessionId);
-                                }
-
+                                processToTransportMsg(toTransportMsg.getToDeviceSessionMsg());
                             }
                         } catch (Throwable e) {
                             log.warn("Failed to process the notification.", e);
@@ -206,12 +174,10 @@ public class RemoteTransportService implements TransportService {
 
     @PreDestroy
     public void destroy() {
+        super.destroy();
         stopped = true;
         if (transportApiTemplate != null) {
             transportApiTemplate.stop();
-        }
-        if (transportCallbackExecutor != null) {
-            transportCallbackExecutor.shutdownNow();
         }
         if (mainConsumer != null) {
             mainConsumer.unsubscribe();
@@ -312,25 +278,6 @@ public class RemoteTransportService implements TransportService {
                         .setToServerRPCCallRequest(msg).build()
         ).build();
         send(sessionInfo, toRuleEngineMsg, callback);
-    }
-
-    @Override
-    public void registerSession(SessionInfoProto sessionInfo, SessionType sessionType, SessionMsgListener listener) {
-        sessions.putIfAbsent(toId(sessionInfo), new SessionMetaData(sessionInfo, sessionType, listener));
-        //TODO: monitor sessions periodically: PING REQ/RESP, etc.
-    }
-
-    @Override
-    public void deregisterSession(SessionInfoProto sessionInfo) {
-        sessions.remove(toId(sessionInfo));
-    }
-
-    private UUID toId(SessionInfoProto sessionInfo) {
-        return new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB());
-    }
-
-    private String getRoutingKey(SessionInfoProto sessionInfo) {
-        return new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()).toString();
     }
 
     private static class TransportCallbackAdaptor implements Callback {

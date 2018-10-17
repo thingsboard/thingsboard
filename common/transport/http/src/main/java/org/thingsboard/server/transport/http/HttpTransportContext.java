@@ -26,12 +26,12 @@ import org.thingsboard.server.common.transport.TransportContext;
  * Created by ashvayka on 04.10.18.
  */
 @Slf4j
-@ConditionalOnProperty(prefix = "transport.mqtt", value = "enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "transport.http", value = "enabled", havingValue = "true", matchIfMissing = true)
 @Component
 public class HttpTransportContext extends TransportContext {
 
     @Getter
-    @Value("${http.request_timeout}")
+    @Value("${transport.http.request_timeout}")
     private long defaultTimeout;
 
 }
