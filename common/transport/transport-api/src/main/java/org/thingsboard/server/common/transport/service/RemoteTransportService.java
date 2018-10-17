@@ -21,6 +21,7 @@ import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.transport.SessionMsgListener;
@@ -60,7 +61,7 @@ import java.util.concurrent.Executors;
 /**
  * Created by ashvayka on 05.10.18.
  */
-@ConditionalOnProperty(prefix = "transport", value = "type", havingValue = "remote", matchIfMissing = true)
+@ConditionalOnExpression("'${transport.type:null}'=='null'")
 @Service
 @Slf4j
 public class RemoteTransportService extends AbstractTransportService {

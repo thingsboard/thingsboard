@@ -58,8 +58,6 @@ import java.util.function.Consumer;
 @ConditionalOnProperty(prefix = "transport", value = "type", havingValue = "remote")
 public class RemoteRuleEngineTransportService implements RuleEngineTransportService {
 
-    private static final ObjectMapper mapper = new ObjectMapper();
-
     @Value("${transport.remote.rule_engine.topic}")
     private String ruleEngineTopic;
     @Value("${transport.remote.notifications.topic}")
