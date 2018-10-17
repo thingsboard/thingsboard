@@ -93,13 +93,7 @@ import java.util.stream.Collectors;
 public class TelemetryController extends BaseController {
 
     @Autowired
-    private AttributesService attributesService;
-
-    @Autowired
     private TimeseriesService tsService;
-
-    @Autowired
-    private TelemetrySubscriptionService tsSubService;
 
     @Autowired
     private AccessValidator accessValidator;

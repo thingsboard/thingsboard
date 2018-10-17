@@ -80,7 +80,8 @@ public abstract class ComponentMsgProcessor<T extends EntityId> extends Abstract
 
     protected void checkActive() {
         if (state != ComponentLifecycleState.ACTIVE) {
-            throw new IllegalStateException("Rule chain is not active!");
+            logger.warning("Rule chain is not active. Current state [{}] for processor [{}] tenant [{}]", state, tenantId, entityId);
+            throw new IllegalStateException("Rule chain is not active! " + entityId + " - " + tenantId);
         }
     }
 

@@ -36,6 +36,9 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
       KAFKA_CREATE_TOPICS: "${KAFKA_TOPICS}"
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
+      KAFKA_LOG_RETENTION_BYTES: 1073741824
+      KAFKA_LOG_RETENTION_MS: 300000
+      KAFKA_LOG_CLEANUP_POLICY: delete
     depends_on:
       - zookeeper
   tb-js-executor:
