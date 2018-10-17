@@ -84,8 +84,7 @@ public class CassandraEntityViewDao extends CassandraAbstractSearchTextDao<Entit
     @Override
     public EntityView save(EntityView domain) {
         EntityView savedEntityView = super.save(domain);
-        EntitySubtype entitySubtype = new EntitySubtype(savedEntityView.getTenantId(), EntityType.ENTITY_VIEW,
-                savedEntityView.getId().getEntityType().toString());
+        EntitySubtype entitySubtype = new EntitySubtype(savedEntityView.getTenantId(), EntityType.ENTITY_VIEW, savedEntityView.getType());
         EntitySubtypeEntity entitySubtypeEntity = new EntitySubtypeEntity(entitySubtype);
         Statement saveStatement = cluster.getMapper(EntitySubtypeEntity.class).saveQuery(entitySubtypeEntity);
         executeWrite(saveStatement);
