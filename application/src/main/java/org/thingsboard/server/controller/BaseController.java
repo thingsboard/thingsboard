@@ -605,6 +605,12 @@ public abstract class BaseController {
             case ATTRIBUTES_DELETED:
                 msgType = DataConstants.ATTRIBUTES_DELETED;
                 break;
+            case ALARM_ACK:
+                msgType = DataConstants.ALARM_ACK;
+                break;
+            case ALARM_CLEAR:
+                msgType = DataConstants.ALARM_CLEAR;
+                break;
         }
         if (!StringUtils.isEmpty(msgType)) {
             try {
