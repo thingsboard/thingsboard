@@ -75,9 +75,16 @@
         </md-checkbox>		
 		<tb-js-func ng-if="model.usePostProcessing"
 		         ng-model="model.postFuncBody"
-				 function-args="{{ ['time', 'value', 'prevValue'] }}"
-				 validation-args="{{ [[1, 1, 1],[1, '1', '1']] }}"
+				 function-args="{{ ['time', 'value', 'prevValue', 'timePrev', 'prevOrigValue'] }}"
+				 validation-args="{{ [[1, 1, 1, 1, 1],[1, '1', '1', 1, '1']] }}"
 				 result-type="any">
 		</tb-js-func>
+		<label ng-if="model.usePostProcessing" class="tb-title" style="margin-left: 15px;">
+			time - {{ 'datakey.time-description' | translate }}</br>
+			value - {{ 'datakey.value-description' | translate }}</br>
+			prevValue - {{ 'datakey.prev-value-description' | translate }}</br>
+			timePrev - {{ 'datakey.time-prev-description' | translate }}</br>
+			prevOrigValue - {{ 'datakey.prev-orig-value-description' | translate }}
+		</label>
 	</section>
 </md-content>
