@@ -56,7 +56,6 @@ services:
     image: "${DOCKER_REPO}/${TB_NODE_DOCKER_NAME}:${TB_VERSION}"
     ports:
       - "8080"
-      - "5683:5683/udp"
     logging:
       driver: "json-file"
       options:
@@ -96,6 +95,50 @@ services:
       - tb-mqtt-transport.env
     depends_on:
       - kafka
+  tb-http-transport1:
+    restart: always
+    image: "${DOCKER_REPO}/${HTTP_TRANSPORT_DOCKER_NAME}:${TB_VERSION}"
+    ports:
+      - "8081"
+    environment:
+      TB_KAFKA_SERVERS: kafka:9092
+    env_file:
+      - tb-http-transport.env
+    depends_on:
+      - kafka
+  tb-http-transport2:
+    restart: always
+    image: "${DOCKER_REPO}/${HTTP_TRANSPORT_DOCKER_NAME}:${TB_VERSION}"
+    ports:
+      - "8081"
+    environment:
+      TB_KAFKA_SERVERS: kafka:9092
+    env_file:
+      - tb-http-transport.env
+    depends_on:
+      - kafka
+  tb-coap-transport1:
+    restart: always
+    image: "${DOCKER_REPO}/${COAP_TRANSPORT_DOCKER_NAME}:${TB_VERSION}"
+    ports:
+      - "5683"
+    environment:
+      TB_KAFKA_SERVERS: kafka:9092
+    env_file:
+      - tb-coap-transport.env
+    depends_on:
+      - kafka
+  tb-coap-transport2:
+    restart: always
+    image: "${DOCKER_REPO}/${COAP_TRANSPORT_DOCKER_NAME}:${TB_VERSION}"
+    ports:
+      - "5683"
+    environment:
+      TB_KAFKA_SERVERS: kafka:9092
+    env_file:
+      - tb-coap-transport.env
+    depends_on:
+      - kafka
   tb-web-ui1:
     restart: always
     image: "${DOCKER_REPO}/${WEB_UI_DOCKER_NAME}:${TB_VERSION}"
@@ -116,6 +159,16 @@ services:
       TB_PORT: 8080
     env_file:
       - tb-web-ui.env
+  coap-lb:
+    restart: always
+    container_name: coap-loadbalancer
+    image: instantlinux/udp-nginx-proxy
+    ports:
+     - "5683:5683/udp"
+    environment:
+      BACKENDS: tb-coap-transport1 tb-coap-transport2
+      PORT_BACKEND: 5683
+      PORT_LISTEN: 5683
   web:
     restart: always
     container_name: haproxy-certbot
@@ -140,3 +193,5 @@ services:
         - tb-web-ui2
         - tb-mqtt-transport1
         - tb-mqtt-transport2
+        - tb-http-transport1
+        - tb-http-transport2

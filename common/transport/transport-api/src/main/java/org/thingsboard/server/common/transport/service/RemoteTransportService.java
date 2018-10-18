@@ -16,6 +16,8 @@
 package org.thingsboard.server.common.transport.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.admin.CreateTopicsResult;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.RecordMetadata;
@@ -42,12 +44,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
-import org.thingsboard.server.kafka.AsyncCallbackTemplate;
-import org.thingsboard.server.kafka.TBKafkaConsumerTemplate;
-import org.thingsboard.server.kafka.TBKafkaProducerTemplate;
-import org.thingsboard.server.kafka.TbKafkaRequestTemplate;
-import org.thingsboard.server.kafka.TbKafkaSettings;
-import org.thingsboard.server.kafka.TbNodeIdProvider;
+import org.thingsboard.server.kafka.*;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -136,9 +133,19 @@ public class RemoteTransportService extends AbstractTransportService {
         ruleEngineProducer = ruleEngineProducerBuilder.build();
         ruleEngineProducer.init();
 
+        String notificationsTopicName = notificationsTopic + "." + nodeIdProvider.getNodeId();
+
+        try {
+            TBKafkaAdmin admin = new TBKafkaAdmin(kafkaSettings);
+            CreateTopicsResult result = admin.createTopic(new NewTopic(notificationsTopicName, 1, (short) 1));
+            result.all().get();
+        } catch (Exception e) {
+            log.trace("Failed to create topic: {}", e.getMessage(), e);
+        }
+
         TBKafkaConsumerTemplate.TBKafkaConsumerTemplateBuilder<ToTransportMsg> mainConsumerBuilder = TBKafkaConsumerTemplate.builder();
         mainConsumerBuilder.settings(kafkaSettings);
-        mainConsumerBuilder.topic(notificationsTopic + "." + nodeIdProvider.getNodeId());
+        mainConsumerBuilder.topic(notificationsTopicName);
         mainConsumerBuilder.clientId("transport-" + nodeIdProvider.getNodeId());
         mainConsumerBuilder.groupId("transport");
         mainConsumerBuilder.autoCommit(true);

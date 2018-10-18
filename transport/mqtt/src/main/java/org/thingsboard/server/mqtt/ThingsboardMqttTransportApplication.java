@@ -1,4 +1,4 @@
-package org.thingsboard.server.mqtt; /**
+/**
  * Copyright © 2016-2018 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,8 @@ package org.thingsboard.server.mqtt; /**
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+package org.thingsboard.server.mqtt;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.SpringBootConfiguration;
