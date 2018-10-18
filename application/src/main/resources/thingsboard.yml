@@ -455,7 +455,6 @@ transport:
     enabled: "${MQTT_ENABLED:true}"
     bind_address: "${MQTT_BIND_ADDRESS:0.0.0.0}"
     bind_port: "${MQTT_BIND_PORT:1883}"
-    adaptor: "${MQTT_ADAPTOR_NAME:JsonMqttAdaptor}"
     timeout: "${MQTT_TIMEOUT:10000}"
     netty:
       leak_detector_level: "${NETTY_LEASK_DETECTOR_LVL:DISABLED}"
@@ -482,5 +481,4 @@ transport:
     enabled: "${COAP_ENABLED:true}"
     bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"
     bind_port: "${COAP_BIND_PORT:5683}"
-    adaptor:  "${COAP_ADAPTOR_NAME:JsonCoapAdaptor}"
     timeout: "${COAP_TIMEOUT:10000}"

@@ -145,7 +145,7 @@
                                 <resource>
                                     <directory>src/main/conf</directory>
                                     <excludes>
-                                        <exclude>tb-mqtt-transport.conf</exclude>
+                                        <exclude>tb-http-transport.conf</exclude>
                                     </excludes>
                                     <filtering>true</filtering>
                                 </resource>
@@ -229,7 +229,7 @@
                     </excludes>
                     <archive>
                         <manifestEntries>
-                            <Implementation-Title>ThingsBoard MQTT Transport Service</Implementation-Title>
+                            <Implementation-Title>ThingsBoard HTTP Transport Service</Implementation-Title>
                             <Implementation-Version>${project.version}</Implementation-Version>
                         </manifestEntries>
                     </archive>
@@ -239,7 +239,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>org.thingsboard.server.mqtt.ThingsboardHttpTransportApplication</mainClass>
+                    <mainClass>org.thingsboard.server.http.ThingsboardHttpTransportApplication</mainClass>
                     <classifier>boot</classifier>
                     <layout>ZIP</layout>
                     <executable>true</executable>

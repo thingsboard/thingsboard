@@ -60,10 +60,6 @@
             <groupId>org.thingsboard.common.transport</groupId>
             <artifactId>transport-api</artifactId>
         </dependency>
-        <!--<dependency>-->
-        <!--<groupId>org.thingsboard.transport</groupId>-->
-        <!--<artifactId>coap</artifactId>-->
-        <!--</dependency>-->
         <dependency>
             <groupId>org.thingsboard.common.transport</groupId>
             <artifactId>mqtt</artifactId>
@@ -71,6 +67,10 @@
         <dependency>
             <groupId>org.thingsboard.common.transport</groupId>
             <artifactId>http</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common.transport</groupId>
+            <artifactId>coap</artifactId>
         </dependency>
         <dependency>
             <groupId>org.thingsboard</groupId>

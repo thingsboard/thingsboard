@@ -43,8 +43,6 @@ public class MqttTransportService {
     private String host;
     @Value("${transport.mqtt.bind_port}")
     private Integer port;
-    @Value("${transport.mqtt.adaptor}")
-    private String adaptorName;
 
     @Value("${transport.mqtt.netty.leak_detector_level}")
     private String leakDetectorLevel;
