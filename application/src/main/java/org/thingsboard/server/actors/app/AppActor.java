@@ -38,8 +38,6 @@ import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.aware.TenantAwareMsg;
 import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
-import org.thingsboard.server.common.msg.core.BasicActorSystemToDeviceSessionActorMsg;
-import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -105,7 +103,7 @@ public class AppActor extends RuleChainManagerActor {
             case SERVICE_TO_RULE_ENGINE_MSG:
                 onServiceToRuleEngineMsg((ServiceToRuleEngineMsg) msg);
                 break;
-            case DEVICE_SESSION_TO_DEVICE_ACTOR_MSG:
+            case TRANSPORT_TO_DEVICE_ACTOR_MSG:
             case DEVICE_ATTRIBUTES_UPDATE_TO_DEVICE_ACTOR_MSG:
             case DEVICE_CREDENTIALS_UPDATE_TO_DEVICE_ACTOR_MSG:
             case DEVICE_NAME_OR_TYPE_UPDATE_TO_DEVICE_ACTOR_MSG:
@@ -114,17 +112,10 @@ public class AppActor extends RuleChainManagerActor {
             case REMOTE_TO_RULE_CHAIN_TELL_NEXT_MSG:
                 onToDeviceActorMsg((TenantAwareMsg) msg);
                 break;
-            case ACTOR_SYSTEM_TO_DEVICE_SESSION_ACTOR_MSG:
-                onToDeviceSessionMsg((BasicActorSystemToDeviceSessionActorMsg) msg);
-                break;
             default:
                 return false;
         }
         return true;
-    }
-
-    private void onToDeviceSessionMsg(BasicActorSystemToDeviceSessionActorMsg msg) {
-        systemContext.getSessionManagerActor().tell(msg, self());
     }
 
     private void onPossibleClusterMsg(SendToClusterMsg msg) {
@@ -167,16 +158,6 @@ public class AppActor extends RuleChainManagerActor {
 
     private void onToDeviceActorMsg(TenantAwareMsg msg) {
         getOrCreateTenantActor(msg.getTenantId()).tell(msg, ActorRef.noSender());
-    }
-
-    private void processDeviceMsg(DeviceToDeviceActorMsg deviceToDeviceActorMsg) {
-        TenantId tenantId = deviceToDeviceActorMsg.getTenantId();
-        ActorRef tenantActor = getOrCreateTenantActor(tenantId);
-        if (deviceToDeviceActorMsg.getPayload().getMsgType().requiresRulesProcessing()) {
-//            tenantActor.tell(new RuleChainDeviceMsg(deviceToDeviceActorMsg, ruleManager.getRuleChain(this.context())), context().self());
-        } else {
-            tenantActor.tell(deviceToDeviceActorMsg, context().self());
-        }
     }
 
     private ActorRef getOrCreateTenantActor(TenantId tenantId) {

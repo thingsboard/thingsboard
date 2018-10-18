@@ -82,47 +82,6 @@ dashboard:
   # Maximum allowed datapoints fetched by widgets
   max_datapoints_limit: "${DASHBOARD_MAX_DATAPOINTS_LIMIT:50000}"
 
-# Device communication protocol parameters
-http:
-  request_timeout: "${HTTP_REQUEST_TIMEOUT:60000}"
-
-# MQTT server parameters
-mqtt:
-  # Enable/disable mqtt transport protocol.
-  enabled: "${MQTT_ENABLED:true}"
-  bind_address: "${MQTT_BIND_ADDRESS:0.0.0.0}"
-  bind_port: "${MQTT_BIND_PORT:1883}"
-  adaptor: "${MQTT_ADAPTOR_NAME:JsonMqttAdaptor}"
-  timeout: "${MQTT_TIMEOUT:10000}"
-  netty:
-    leak_detector_level: "${NETTY_LEASK_DETECTOR_LVL:DISABLED}"
-    boss_group_thread_count: "${NETTY_BOSS_GROUP_THREADS:1}"
-    worker_group_thread_count: "${NETTY_WORKER_GROUP_THREADS:12}"
-    max_payload_size: "${NETTY_MAX_PAYLOAD_SIZE:65536}"
-  # MQTT SSL configuration
-  ssl:
-    # Enable/disable SSL support
-    enabled: "${MQTT_SSL_ENABLED:false}"
-    # SSL protocol: See http://docs.oracle.com/javase/8/docs/technotes/guides/security/StandardNames.html#SSLContext
-    protocol: "${MQTT_SSL_PROTOCOL:TLSv1.2}"
-    # Path to the key store that holds the SSL certificate
-    key_store: "${MQTT_SSL_KEY_STORE:mqttserver.jks}"
-    # Password used to access the key store
-    key_store_password: "${MQTT_SSL_KEY_STORE_PASSWORD:server_ks_password}"
-    # Password used to access the key
-    key_password: "${MQTT_SSL_KEY_PASSWORD:server_key_password}"
-    # Type of the key store
-    key_store_type: "${MQTT_SSL_KEY_STORE_TYPE:JKS}"
-
-# CoAP server parameters
-coap:
-  # Enable/disable coap transport protocol.
-  enabled: "${COAP_ENABLED:false}"
-  bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"
-  bind_port: "${COAP_BIND_PORT:5683}"
-  adaptor:  "${COAP_ADAPTOR_NAME:JsonCoapAdaptor}"
-  timeout: "${COAP_TIMEOUT:10000}"
-
 #Quota parameters
 quota:
   host:
@@ -154,7 +113,7 @@ quota:
       # Interval for scheduled task that cleans expired records. TTL is used for expiring
       cleanPeriodMs: "${QUOTA_TENANT_CLEAN_PERIOD_MS:300000}"
       # Enable Host API Limits
-      enabled: "${QUOTA_TENANT_ENABLED:false}"
+      enabled: "${QUOTA_TENANT_ENABLED:true}"
       # Array of whitelist tenants
       whitelist: "${QUOTA_TENANT_WHITELIST:}"
       # Array of blacklist tenants
@@ -427,6 +386,19 @@ kafka:
   batch.size: "${TB_KAFKA_BATCH_SIZE:16384}"
   linger.ms: "${TB_KAFKA_LINGER_MS:1}"
   buffer.memory: "${TB_BUFFER_MEMORY:33554432}"
+  transport_api:
+    requests_topic: "${TB_TRANSPORT_API_REQUEST_TOPIC:tb.transport.api.requests}"
+    responses_topic: "${TB_TRANSPORT_API_RESPONSE_TOPIC:tb.transport.api.responses}"
+    max_pending_requests: "${TB_TRANSPORT_MAX_PENDING_REQUESTS:10000}"
+    request_timeout: "${TB_TRANSPORT_MAX_REQUEST_TIMEOUT:10000}"
+    request_poll_interval: "${TB_TRANSPORT_REQUEST_POLL_INTERVAL_MS:25}"
+    request_auto_commit_interval: "${TB_TRANSPORT_REQUEST_AUTO_COMMIT_INTERVAL_MS:100}"
+  rule_engine:
+    topic: "${TB_RULE_ENGINE_TOPIC:tb.rule-engine}"
+    poll_interval: "${TB_RULE_ENGINE_POLL_INTERVAL_MS:25}"
+    auto_commit_interval: "${TB_RULE_ENGINE_AUTO_COMMIT_INTERVAL_MS:100}"
+  notifications:
+    topic: "${TB_TRANSPORT_NOTIFICATIONS_TOPIC:tb.transport.notifications}"
 
 js:
   evaluator: "${JS_EVALUATOR:local}" # local/remote
@@ -456,3 +428,57 @@ js:
     response_auto_commit_interval: "${REMOTE_JS_RESPONSE_AUTO_COMMIT_INTERVAL_MS:100}"
     # Maximum allowed JavaScript execution errors before JavaScript will be blacklisted
     max_errors: "${REMOTE_JS_SANDBOX_MAX_ERRORS:3}"
+
+transport:
+  type: "${TRANSPORT_TYPE:local}" # local or remote
+  remote:
+    transport_api:
+      requests_topic: "${TB_TRANSPORT_API_REQUEST_TOPIC:tb.transport.api.requests}"
+      responses_topic: "${TB_TRANSPORT_API_RESPONSE_TOPIC:tb.transport.api.responses}"
+      max_pending_requests: "${TB_TRANSPORT_MAX_PENDING_REQUESTS:10000}"
+      request_timeout: "${TB_TRANSPORT_MAX_REQUEST_TIMEOUT:10000}"
+      request_poll_interval: "${TB_TRANSPORT_RESPONSE_POLL_INTERVAL_MS:25}"
+      request_auto_commit_interval: "${TB_TRANSPORT_RESPONSE_AUTO_COMMIT_INTERVAL_MS:1000}"
+    rule_engine:
+      topic: "${TB_RULE_ENGINE_TOPIC:tb.rule-engine}"
+      poll_interval: "${TB_RULE_ENGINE_POLL_INTERVAL_MS:25}"
+      auto_commit_interval: "${TB_RULE_ENGINE_AUTO_COMMIT_INTERVAL_MS:100}"
+    notifications:
+      topic: "${TB_TRANSPORT_NOTIFICATIONS_TOPIC:tb.transport.notifications}"
+  # Local HTTP transport parameters
+  http:
+    enabled: "${HTTP_ENABLED:true}"
+    request_timeout: "${HTTP_REQUEST_TIMEOUT:60000}"
+  # Local MQTT transport parameters
+  mqtt:
+    # Enable/disable mqtt transport protocol.
+    enabled: "${MQTT_ENABLED:true}"
+    bind_address: "${MQTT_BIND_ADDRESS:0.0.0.0}"
+    bind_port: "${MQTT_BIND_PORT:1883}"
+    timeout: "${MQTT_TIMEOUT:10000}"
+    netty:
+      leak_detector_level: "${NETTY_LEASK_DETECTOR_LVL:DISABLED}"
+      boss_group_thread_count: "${NETTY_BOSS_GROUP_THREADS:1}"
+      worker_group_thread_count: "${NETTY_WORKER_GROUP_THREADS:12}"
+      max_payload_size: "${NETTY_MAX_PAYLOAD_SIZE:65536}"
+    # MQTT SSL configuration
+    ssl:
+      # Enable/disable SSL support
+      enabled: "${MQTT_SSL_ENABLED:false}"
+      # SSL protocol: See http://docs.oracle.com/javase/8/docs/technotes/guides/security/StandardNames.html#SSLContext
+      protocol: "${MQTT_SSL_PROTOCOL:TLSv1.2}"
+      # Path to the key store that holds the SSL certificate
+      key_store: "${MQTT_SSL_KEY_STORE:mqttserver.jks}"
+      # Password used to access the key store
+      key_store_password: "${MQTT_SSL_KEY_STORE_PASSWORD:server_ks_password}"
+      # Password used to access the key
+      key_password: "${MQTT_SSL_KEY_PASSWORD:server_key_password}"
+      # Type of the key store
+      key_store_type: "${MQTT_SSL_KEY_STORE_TYPE:JKS}"
+  # Local CoAP transport parameters
+  coap:
+    # Enable/disable coap transport protocol.
+    enabled: "${COAP_ENABLED:true}"
+    bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"
+    bind_port: "${COAP_BIND_PORT:5683}"
+    timeout: "${COAP_TIMEOUT:10000}"

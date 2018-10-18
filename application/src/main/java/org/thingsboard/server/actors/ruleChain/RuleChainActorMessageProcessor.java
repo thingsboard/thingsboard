@@ -25,7 +25,6 @@ import java.util.Optional;
 
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.device.DeviceActorToRuleEngineMsg;
-import org.thingsboard.server.actors.device.RuleEngineQueuePutAckMsg;
 import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.actors.shared.ComponentMsgProcessor;
 import org.thingsboard.server.common.data.EntityType;
@@ -90,23 +89,9 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
                 nodeActors.put(ruleNode.getId(), new RuleNodeCtx(tenantId, self, ruleNodeActor, ruleNode));
             }
             initRoutes(ruleChain, ruleNodeList);
-            reprocess(ruleNodeList);
             started = true;
         } else {
             onUpdate(context);
-        }
-    }
-
-    private void reprocess(List<RuleNode> ruleNodeList) {
-        for (RuleNode ruleNode : ruleNodeList) {
-            for (TbMsg tbMsg : queue.findUnprocessed(tenantId, ruleNode.getId().getId(), systemContext.getQueuePartitionId())) {
-                pushMsgToNode(nodeActors.get(ruleNode.getId()), tbMsg, "");
-            }
-        }
-        if (firstNode != null) {
-            for (TbMsg tbMsg : queue.findUnprocessed(tenantId, entityId.getId(), systemContext.getQueuePartitionId())) {
-                pushMsgToNode(firstNode, tbMsg, "");
-            }
         }
     }
 
@@ -134,7 +119,6 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         });
 
         initRoutes(ruleChain, ruleNodeList);
-        reprocess(ruleNodeList);
     }
 
     @Override
@@ -188,17 +172,14 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     void onServiceToRuleEngineMsg(ServiceToRuleEngineMsg envelope) {
         checkActive();
         if (firstNode != null) {
-            putToQueue(enrichWithRuleChainId(envelope.getTbMsg()), msg -> pushMsgToNode(firstNode, msg, ""));
+            pushMsgToNode(firstNode, enrichWithRuleChainId(envelope.getTbMsg()), "");
         }
     }
 
     void onDeviceActorToRuleEngineMsg(DeviceActorToRuleEngineMsg envelope) {
         checkActive();
         if (firstNode != null) {
-            putToQueue(enrichWithRuleChainId(envelope.getTbMsg()), msg -> {
-                pushMsgToNode(firstNode, msg, "");
-                envelope.getCallbackRef().tell(new RuleEngineQueuePutAckMsg(msg.getId()), self);
-            });
+            pushMsgToNode(firstNode, enrichWithRuleChainId(envelope.getTbMsg()), "");
         }
     }
 
@@ -206,15 +187,16 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         checkActive();
         if (envelope.isEnqueue()) {
             if (firstNode != null) {
-                putToQueue(enrichWithRuleChainId(envelope.getMsg()), msg -> pushMsgToNode(firstNode, msg, envelope.getFromRelationType()));
+                pushMsgToNode(firstNode, enrichWithRuleChainId(envelope.getMsg()), envelope.getFromRelationType());
             }
         } else {
             if (firstNode != null) {
                 pushMsgToNode(firstNode, envelope.getMsg(), envelope.getFromRelationType());
             } else {
-                TbMsg msg = envelope.getMsg();
-                EntityId ackId = msg.getRuleNodeId() != null ? msg.getRuleNodeId() : msg.getRuleChainId();
-                queue.ack(tenantId, envelope.getMsg(), ackId.getId(), msg.getClusterPartition());
+//                TODO: Ack this message in Kafka
+//                TbMsg msg = envelope.getMsg();
+//                EntityId ackId = msg.getRuleNodeId() != null ? msg.getRuleNodeId() : msg.getRuleChainId();
+//                queue.ack(tenantId, envelope.getMsg(), ackId.getId(), msg.getClusterPartition());
             }
         }
     }
@@ -249,7 +231,8 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         EntityId ackId = msg.getRuleNodeId() != null ? msg.getRuleNodeId() : msg.getRuleChainId();
         if (relationsCount == 0) {
             if (ackId != null) {
-                queue.ack(tenantId, msg, ackId.getId(), msg.getClusterPartition());
+//                TODO: Ack this message in Kafka
+//                queue.ack(tenantId, msg, ackId.getId(), msg.getClusterPartition());
             }
         } else if (relationsCount == 1) {
             for (RuleNodeRelation relation : relations) {
@@ -269,7 +252,8 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
             }
             //TODO: Ideally this should happen in async way when all targets confirm that the copied messages are successfully written to corresponding target queues.
             if (ackId != null) {
-                queue.ack(tenantId, msg, ackId.getId(), msg.getClusterPartition());
+//                TODO: Ack this message in Kafka
+//                queue.ack(tenantId, msg, ackId.getId(), msg.getClusterPartition());
             }
         }
     }
@@ -296,7 +280,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         RuleNodeId targetId = new RuleNodeId(target.getId());
         RuleNodeCtx targetNodeCtx = nodeActors.get(targetId);
         TbMsg copy = msg.copy(UUIDs.timeBased(), entityId, targetId, DEFAULT_CLUSTER_PARTITION);
-        putToQueue(copy, queuedMsg -> pushMsgToNode(targetNodeCtx, queuedMsg, fromRelationType));
+        pushMsgToNode(targetNodeCtx, copy, fromRelationType);
     }
 
     private void pushToTarget(TbMsg msg, EntityId target, String fromRelationType) {

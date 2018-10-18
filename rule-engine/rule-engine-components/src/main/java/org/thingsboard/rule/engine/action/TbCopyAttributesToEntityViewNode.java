@@ -88,8 +88,7 @@ public class TbCopyAttributesToEntityViewNode implements TbNode {
                                 if ((endTime != 0 && endTime > now && startTime < now) || (endTime == 0 && startTime < now)) {
                                     if (DataConstants.ATTRIBUTES_UPDATED.equals(msg.getType()) ||
                                             SessionMsgType.POST_ATTRIBUTES_REQUEST.name().equals(msg.getType())) {
-                                        Set<AttributeKvEntry> attributes =
-                                                JsonConverter.convertToAttributes(new JsonParser().parse(msg.getData())).getAttributes();
+                                        Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(new JsonParser().parse(msg.getData()));
                                         List<AttributeKvEntry> filteredAttributes =
                                                 attributes.stream().filter(attr -> attributeContainsInEntityView(scope, attr.getKey(), entityView)).collect(Collectors.toList());
                                         ctx.getTelemetryService().saveAndNotify(entityView.getId(), scope, filteredAttributes,

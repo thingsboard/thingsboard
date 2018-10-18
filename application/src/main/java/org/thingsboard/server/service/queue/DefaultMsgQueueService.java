@@ -49,7 +49,7 @@ public class DefaultMsgQueueService implements MsgQueueService {
     @Autowired
     private MsgQueue msgQueue;
 
-    @Autowired
+    @Autowired(required = false)
     private TenantQuotaService quotaService;
 
     private ScheduledExecutorService cleanupExecutor;
@@ -74,7 +74,7 @@ public class DefaultMsgQueueService implements MsgQueueService {
 
     @Override
     public ListenableFuture<Void> put(TenantId tenantId, TbMsg msg, UUID nodeId, long clusterPartition) {
-        if(quotaService.isQuotaExceeded(tenantId.getId().toString())) {
+        if(quotaService != null && quotaService.isQuotaExceeded(tenantId.getId().toString())) {
             log.warn("Tenant TbMsg Quota exceeded for [{}:{}] . Reject", tenantId.getId());
             return Futures.immediateFailedFuture(new RuntimeException("Tenant TbMsg Quota exceeded"));
         }

@@ -94,13 +94,10 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
     private CuratorFramework client;
     private PathChildrenCache cache;
     private String nodePath;
-    //TODO: make persistent?
-    private String nodeId;
 
     @PostConstruct
     public void init() {
         log.info("Initializing...");
-        this.nodeId = RandomStringUtils.randomAlphabetic(10);
         Assert.hasLength(zkUrl, MiscUtils.missingProperty("zk.url"));
         Assert.notNull(zkRetryInterval, MiscUtils.missingProperty("zk.retry_interval_ms"));
         Assert.notNull(zkConnectionTimeout, MiscUtils.missingProperty("zk.connection_timeout_ms"));
@@ -181,11 +178,6 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
             log.error("Failed to delete ZK node {}", nodePath, e);
             throw new RuntimeException(e);
         }
-    }
-
-    @Override
-    public String getNodeId() {
-        return nodeId;
     }
 
     @Override

@@ -43,12 +43,15 @@ public class TBKafkaConsumerTemplate<T> {
     private final String topic;
 
     @Builder
-    private TBKafkaConsumerTemplate(TbKafkaSettings settings, TbKafkaDecoder<T> decoder, TbKafkaRequestIdExtractor<T> requestIdExtractor,
+    private TBKafkaConsumerTemplate(TbKafkaSettings settings, TbKafkaDecoder<T> decoder,
+                                    TbKafkaRequestIdExtractor<T> requestIdExtractor,
                                     String clientId, String groupId, String topic,
                                     boolean autoCommit, int autoCommitIntervalMs) {
         Properties props = settings.toProps();
         props.put(ConsumerConfig.CLIENT_ID_CONFIG, clientId);
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+        if (groupId != null) {
+            props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+        }
         props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, autoCommit);
         props.put(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, autoCommitIntervalMs);
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
