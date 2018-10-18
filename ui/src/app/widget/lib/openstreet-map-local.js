@@ -28,7 +28,7 @@ export default class TbOpenStreetMapLocal {
         this.tooltips = [];
 
         if (!mapProvider) {
-            mapProvider = "OpenStreetMap.Mapnik";
+            mapProvider = "openstreetMapLocal.Bright";
         }
 
         this.map = L.map($containerElement[0]).setView([0, 0], this.defaultZoomLevel || 8);
@@ -120,11 +120,11 @@ export default class TbOpenStreetMapLocal {
         //     shadowAnchor: [12, 35]
         // });
         var icon = L.icon({
-            iconUrl: 'images/leaflet/marker.png',
+            iconUrl: 'static/images/leaflet/marker.png',
             iconSize: [21, 34],
             iconAnchor: [10, 34],
             popupAnchor: [0, -34],
-            shadowUrl: 'images/leaflet/marker_shadow.png',
+            shadowUrl: 'static/images/leaflet/marker_shadow.png',
             shadowSize: [40, 37],
             shadowAnchor: [12, 35]
         });        
