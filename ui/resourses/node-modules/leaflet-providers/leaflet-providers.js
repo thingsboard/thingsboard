@@ -134,23 +134,36 @@
 					'&版权; <a href="http://www.e-u.cn">长城数字</a>'
 			},
 			variants: {
-				Bright: {},
+				Bright: {
+                    url: 'http://@map-server-host@:@map-server-port@/styles/osm-bright/{z}/{x}/{y}.png',
+                    options: {
+                        maxZoom: 19,
+                        attribution:
+                            '&版权; <a href="http://www.e-u.cn">长城数字</a>'
+                    },                    
+                },
 				Klokantech: {
 					url: 'http://@map-server-host@:@map-server-port@/styles/klokantech-basic/{z}/{x}/{y}.png',
 					options: {
-						maxZoom: 20
+						maxZoom: 20,
+                        attribution:
+                            '&版权; <a href="http://www.e-u.cn">长城数字</a>'                        
 					}
 				},
 				DarkMatter: {
 					url: 'http://@map-server-host@:@map-server-port@/styles/dark-matter/{z}/{x}/{y}.png',
 					options: {
-						maxZoom: 20
+						maxZoom: 20,
+                        attribution:
+                            '&版权; <a href="http://www.e-u.cn">长城数字</a>'                         
 					}
 				},
 				Positron: {
 					url: 'http://@map-server-host@:@map-server-port@/styles/positron/{z}/{x}/{y}.png',
 					options: {
-						maxZoom: 20
+						maxZoom: 20,
+                        attribution:
+                            '&版权; <a href="http://www.e-u.cn">长城数字</a>'                        
 					}
 				}
 			}
