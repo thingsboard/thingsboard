@@ -675,13 +675,13 @@ const openstreetMapLocalSettingsSchema =
                 "multiple":false,
                 "items":[
                     {
-                        "value":"OpenStreetMapLocal.Klokantech",
-                        "label":"低亮风格"
-                    },
-                    {
                         "value":"OpenStreetMapLocal.Bright",
                         "label":"明亮风格(缺省)"
                     }, 
+                    {
+                        "value":"OpenStreetMapLocal.Klokantech",
+                        "label":"低亮风格"
+                    },
                     {
                         "value":"OpenStreetMapLocal.DarkMatter",
                         "label":"黑夜风格"
