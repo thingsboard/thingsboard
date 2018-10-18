@@ -659,10 +659,10 @@ const openstreetMapLocalSettingsSchema =
             "title":"本地地图配置",
             "type":"object",
             "properties":{
-                "localMapProvider":{
+                "mapProvider":{
                     "title":"地图服务提供者",
                     "type":"string",
-                    "default":"openstreetMapLocal.Bright"
+                    "default":"OpenStreetMapLocal.Bright"
                 }
             },
             "required":[
@@ -670,7 +670,7 @@ const openstreetMapLocalSettingsSchema =
         },
         "form":[
             {
-                "key":"localMapProvider",
+                "key":"mapProvider",
                 "type":"rc-select",
                 "multiple":false,
                 "items":[
