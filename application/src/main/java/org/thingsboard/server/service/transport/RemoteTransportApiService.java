@@ -15,48 +15,21 @@
  */
 package org.thingsboard.server.service.transport;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.relation.EntityRelation;
-import org.thingsboard.server.common.data.security.DeviceCredentials;
-import org.thingsboard.server.common.data.security.DeviceCredentialsType;
-import org.thingsboard.server.dao.device.DeviceCredentialsService;
-import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.relation.RelationService;
-import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayResponseMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
-import org.thingsboard.server.kafka.TBKafkaConsumerTemplate;
-import org.thingsboard.server.kafka.TBKafkaProducerTemplate;
-import org.thingsboard.server.kafka.TbKafkaResponseTemplate;
-import org.thingsboard.server.kafka.TbKafkaSettings;
-import org.thingsboard.server.service.cluster.discovery.DiscoveryService;
-import org.thingsboard.server.service.state.DeviceStateService;
+import org.thingsboard.server.kafka.*;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.UUID;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Created by ashvayka on 05.10.18.
@@ -83,7 +56,7 @@ public class RemoteTransportApiService {
     private TbKafkaSettings kafkaSettings;
 
     @Autowired
-    private DiscoveryService discoveryService;
+    private TbNodeIdProvider nodeIdProvider;
 
     @Autowired
     private TransportApiService transportApiService;
@@ -104,7 +77,7 @@ public class RemoteTransportApiService {
         TBKafkaConsumerTemplate.TBKafkaConsumerTemplateBuilder<TransportApiRequestMsg> requestBuilder = TBKafkaConsumerTemplate.builder();
         requestBuilder.settings(kafkaSettings);
         requestBuilder.topic(transportApiRequestsTopic);
-        requestBuilder.clientId(discoveryService.getNodeId());
+        requestBuilder.clientId(nodeIdProvider.getNodeId());
         requestBuilder.groupId("tb-node");
         requestBuilder.autoCommit(true);
         requestBuilder.autoCommitIntervalMs(autoCommitInterval);
