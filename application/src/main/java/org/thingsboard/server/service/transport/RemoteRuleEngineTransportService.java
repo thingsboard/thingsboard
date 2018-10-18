@@ -35,6 +35,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceAct
 import org.thingsboard.server.kafka.TBKafkaConsumerTemplate;
 import org.thingsboard.server.kafka.TBKafkaProducerTemplate;
 import org.thingsboard.server.kafka.TbKafkaSettings;
+import org.thingsboard.server.kafka.TbNodeIdProvider;
 import org.thingsboard.server.service.cluster.discovery.DiscoveryService;
 import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
 import org.thingsboard.server.service.cluster.rpc.ClusterRpcService;
@@ -71,7 +72,7 @@ public class RemoteRuleEngineTransportService implements RuleEngineTransportServ
     private TbKafkaSettings kafkaSettings;
 
     @Autowired
-    private DiscoveryService discoveryService;
+    private TbNodeIdProvider nodeIdProvider;
 
     @Autowired
     private ActorSystemContext actorContext;
@@ -104,7 +105,7 @@ public class RemoteRuleEngineTransportService implements RuleEngineTransportServ
         TBKafkaConsumerTemplate.TBKafkaConsumerTemplateBuilder<ToRuleEngineMsg> ruleEngineConsumerBuilder = TBKafkaConsumerTemplate.builder();
         ruleEngineConsumerBuilder.settings(kafkaSettings);
         ruleEngineConsumerBuilder.topic(ruleEngineTopic);
-        ruleEngineConsumerBuilder.clientId(discoveryService.getNodeId());
+        ruleEngineConsumerBuilder.clientId("transport-" + nodeIdProvider.getNodeId());
         ruleEngineConsumerBuilder.groupId("tb-node");
         ruleEngineConsumerBuilder.autoCommit(true);
         ruleEngineConsumerBuilder.autoCommitIntervalMs(autoCommitInterval);

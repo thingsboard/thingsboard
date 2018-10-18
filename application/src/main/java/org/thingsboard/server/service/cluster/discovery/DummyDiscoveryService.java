@@ -38,17 +38,9 @@ public class DummyDiscoveryService implements DiscoveryService {
     @Autowired
     private ServerInstanceService serverInstance;
 
-    private String nodeId;
-
     @PostConstruct
     public void init() {
         log.info("Initializing...");
-        this.nodeId = RandomStringUtils.randomAlphabetic(10);
-    }
-
-    @Override
-    public String getNodeId() {
-        return nodeId;
     }
 
     @Override

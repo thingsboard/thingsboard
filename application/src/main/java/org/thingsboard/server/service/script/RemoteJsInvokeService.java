@@ -28,6 +28,7 @@ import org.thingsboard.server.kafka.TBKafkaConsumerTemplate;
 import org.thingsboard.server.kafka.TBKafkaProducerTemplate;
 import org.thingsboard.server.kafka.TbKafkaRequestTemplate;
 import org.thingsboard.server.kafka.TbKafkaSettings;
+import org.thingsboard.server.kafka.TbNodeIdProvider;
 import org.thingsboard.server.service.cluster.discovery.DiscoveryService;
 
 import javax.annotation.PostConstruct;
@@ -42,7 +43,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class RemoteJsInvokeService extends AbstractJsInvokeService {
 
     @Autowired
-    private DiscoveryService discoveryService;
+    private TbNodeIdProvider nodeIdProvider;
 
     @Autowired
     private TbKafkaSettings kafkaSettings;
@@ -97,8 +98,8 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
 
         TBKafkaConsumerTemplate.TBKafkaConsumerTemplateBuilder<JsInvokeProtos.RemoteJsResponse> responseBuilder = TBKafkaConsumerTemplate.builder();
         responseBuilder.settings(kafkaSettings);
-        responseBuilder.topic(responseTopicPrefix + "." + discoveryService.getNodeId());
-        responseBuilder.clientId(discoveryService.getNodeId());
+        responseBuilder.topic(responseTopicPrefix + "." + nodeIdProvider.getNodeId());
+        responseBuilder.clientId("js-" + nodeIdProvider.getNodeId());
         responseBuilder.groupId("rule-engine-node");
         responseBuilder.autoCommit(true);
         responseBuilder.autoCommitIntervalMs(autoCommitInterval);
