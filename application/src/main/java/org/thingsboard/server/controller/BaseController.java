@@ -259,7 +259,6 @@ public abstract class BaseController {
 
     Customer checkCustomerId(CustomerId customerId) throws ThingsboardException {
         try {
-            validateId(customerId, "Incorrect customerId " + customerId);
             SecurityUser authUser = getCurrentUser();
             if (authUser.getAuthority() == Authority.SYS_ADMIN ||
                     (authUser.getAuthority() != Authority.TENANT_ADMIN &&
@@ -267,9 +266,13 @@ public abstract class BaseController {
                 throw new ThingsboardException(YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION,
                         ThingsboardErrorCode.PERMISSION_DENIED);
             }
-            Customer customer = customerService.findCustomerById(customerId);
-            checkCustomer(customer);
-            return customer;
+            if (customerId != null && !customerId.isNullUid()) {
+                Customer customer = customerService.findCustomerById(customerId);
+                checkCustomer(customer);
+                return customer;
+            } else {
+                return null;
+            }
         } catch (Exception e) {
             throw handleException(e, false);
         }
@@ -350,9 +353,7 @@ public abstract class BaseController {
     protected void checkDevice(Device device) throws ThingsboardException {
         checkNotNull(device);
         checkTenantId(device.getTenantId());
-        if (device.getCustomerId() != null && !device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
-            checkCustomerId(device.getCustomerId());
-        }
+        checkCustomerId(device.getCustomerId());
     }
 
     protected EntityView checkEntityViewId(EntityViewId entityViewId) throws ThingsboardException {
@@ -369,9 +370,7 @@ public abstract class BaseController {
     protected void checkEntityView(EntityView entityView) throws ThingsboardException {
         checkNotNull(entityView);
         checkTenantId(entityView.getTenantId());
-        if (entityView.getCustomerId() != null && !entityView.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
-            checkCustomerId(entityView.getCustomerId());
-        }
+        checkCustomerId(entityView.getCustomerId());
     }
 
     Asset checkAssetId(AssetId assetId) throws ThingsboardException {
@@ -388,9 +387,7 @@ public abstract class BaseController {
     protected void checkAsset(Asset asset) throws ThingsboardException {
         checkNotNull(asset);
         checkTenantId(asset.getTenantId());
-        if (asset.getCustomerId() != null && !asset.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
-            checkCustomerId(asset.getCustomerId());
-        }
+        checkCustomerId(asset.getCustomerId());
     }
 
     Alarm checkAlarmId(AlarmId alarmId) throws ThingsboardException {
@@ -499,8 +496,7 @@ public abstract class BaseController {
     ComponentDescriptor checkComponentDescriptorByClazz(String clazz) throws ThingsboardException {
         try {
             log.debug("[{}] Lookup component descriptor", clazz);
-            ComponentDescriptor componentDescriptor = checkNotNull(componentDescriptorService.getComponent(clazz));
-            return componentDescriptor;
+            return checkNotNull(componentDescriptorService.getComponent(clazz));
         } catch (Exception e) {
             throw handleException(e, false);
         }
@@ -564,16 +560,16 @@ public abstract class BaseController {
     }
 
     protected <I extends EntityId> I emptyId(EntityType entityType) {
-        return (I)EntityIdFactory.getByTypeAndUuid(entityType, ModelConstants.NULL_UUID);
+        return (I) EntityIdFactory.getByTypeAndUuid(entityType, ModelConstants.NULL_UUID);
     }
 
     protected <E extends HasName, I extends EntityId> void logEntityAction(I entityId, E entity, CustomerId customerId,
-                                                                 ActionType actionType, Exception e, Object... additionalInfo) throws ThingsboardException {
+                                                                           ActionType actionType, Exception e, Object... additionalInfo) throws ThingsboardException {
         logEntityAction(getCurrentUser(), entityId, entity, customerId, actionType, e, additionalInfo);
     }
 
     protected <E extends HasName, I extends EntityId> void logEntityAction(User user, I entityId, E entity, CustomerId customerId,
-                                                                 ActionType actionType, Exception e, Object... additionalInfo) throws ThingsboardException {
+                                                                           ActionType actionType, Exception e, Object... additionalInfo) throws ThingsboardException {
         if (customerId == null || customerId.isNullUid()) {
             customerId = user.getCustomerId();
         }
@@ -589,7 +585,7 @@ public abstract class BaseController {
     }
 
     private <E extends HasName, I extends EntityId> void pushEntityActionToRuleEngine(I entityId, E entity, User user, CustomerId customerId,
-                                                                         ActionType actionType, Object... additionalInfo) {
+                                                                                      ActionType actionType, Object... additionalInfo) {
         String msgType = null;
         switch (actionType) {
             case ADDED:
@@ -668,7 +664,7 @@ public abstract class BaseController {
                         String scope = extractParameter(String.class, 0, additionalInfo);
                         List<String> keys = extractParameter(List.class, 1, additionalInfo);
                         metaData.putValue("scope", scope);
-                        ArrayNode attrsArrayNode =  entityNode.putArray("attributes");
+                        ArrayNode attrsArrayNode = entityNode.putArray("attributes");
                         if (keys != null) {
                             keys.forEach(attrsArrayNode::add);
                         }
