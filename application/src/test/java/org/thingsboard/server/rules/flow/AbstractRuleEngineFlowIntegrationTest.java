@@ -191,9 +191,6 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
 
         Assert.assertEquals("serverAttributeValue1", getMetadata(outEvent).get("ss_serverAttributeKey1").asText());
         Assert.assertEquals("serverAttributeValue2", getMetadata(outEvent).get("ss_serverAttributeKey2").asText());
-
-        List<TbMsg> unAckMsgList = Lists.newArrayList(msgQueueService.findUnprocessed(savedTenant.getId(), ruleChain.getId().getId(), 0L));
-        Assert.assertEquals(0, unAckMsgList.size());
     }
 
     @Test
@@ -311,12 +308,6 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
 
         Assert.assertEquals("serverAttributeValue1", getMetadata(outEvent).get("ss_serverAttributeKey1").asText());
         Assert.assertEquals("serverAttributeValue2", getMetadata(outEvent).get("ss_serverAttributeKey2").asText());
-
-        List<TbMsg> unAckMsgList = Lists.newArrayList(msgQueueService.findUnprocessed(savedTenant.getId(), rootRuleChain.getId().getId(), 0L));
-        Assert.assertEquals(0, unAckMsgList.size());
-
-        unAckMsgList = Lists.newArrayList(msgQueueService.findUnprocessed(savedTenant.getId(), secondaryRuleChain.getId().getId(), 0L));
-        Assert.assertEquals(0, unAckMsgList.size());
     }
 
 }

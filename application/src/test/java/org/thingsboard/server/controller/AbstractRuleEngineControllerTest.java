@@ -27,9 +27,7 @@ import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
-import org.thingsboard.server.dao.queue.MsgQueue;
 import org.thingsboard.server.dao.rule.RuleChainService;
-import org.thingsboard.server.service.queue.MsgQueueService;
 
 import java.io.IOException;
 import java.util.function.Predicate;
@@ -41,9 +39,6 @@ public class AbstractRuleEngineControllerTest extends AbstractControllerTest {
 
     @Autowired
     protected RuleChainService ruleChainService;
-
-    @Autowired
-    protected MsgQueueService msgQueueService;
 
     protected RuleChain saveRuleChain(RuleChain ruleChain) throws Exception {
         return doPost("/api/ruleChain", ruleChain, RuleChain.class);

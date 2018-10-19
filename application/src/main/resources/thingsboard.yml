@@ -182,12 +182,6 @@ cassandra:
     permit_max_wait_time: "${PERMIT_MAX_WAIT_TIME:120000}"
     rate_limit_print_interval_ms: "${CASSANDRA_QUERY_RATE_LIMIT_PRINT_MS:30000}"
 
-  queue:
-    msg.ttl: 604800 # 7 days
-    ack.ttl: 604800 # 7 days
-    partitions.ttl: 604800 # 7 days
-    partitioning: "HOURS"
-
 # SQL configuration parameters
 sql:
     # Specify executor service type used to perform timeseries insert tasks: SINGLE FIXED CACHED
@@ -221,13 +215,6 @@ actors:
     node:
       # Errors for particular actor are persisted once per specified amount of milliseconds
       error_persist_frequency: "${ACTORS_RULE_NODE_ERROR_FREQUENCY:3000}"
-    queue:
-      # Message queue type
-      type: "${ACTORS_RULE_QUEUE_TYPE:memory}"
-      # Message queue maximum size (per tenant)
-      max_size: "${ACTORS_RULE_QUEUE_MAX_SIZE:100}"
-      # Message queue cleanup period in seconds
-      cleanup_period: "${ACTORS_RULE_QUEUE_CLEANUP_PERIOD:3600}"
   statistics:
     # Enable/disable actor statistics
     enabled: "${ACTORS_STATISTICS_ENABLED:true}"

@@ -26,7 +26,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
-import org.thingsboard.server.service.queue.MsgQueueService;
 
 import javax.annotation.Nullable;
 import java.util.function.Consumer;
