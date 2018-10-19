@@ -53,6 +53,7 @@
                 <executions>
                     <execution>
                         <id>install node and npm</id>
+                        <phase>generate-sources</phase>
                         <goals>
                             <goal>install-node-and-npm</goal>
                         </goals>
@@ -63,6 +64,7 @@
                     </execution>
                     <execution>
                         <id>npm install</id>
+                        <phase>generate-sources</phase>
                         <goals>
                             <goal>npm</goal>
                         </goals>
@@ -78,7 +80,7 @@
                 <executions>
                     <execution>
                         <id>copy-resource-leaflet-providers</id>
-                        <phase>compile</phase>
+                        <phase>generate-sources</phase>
                         <goals>
                             <goal>copy-resources</goal>
                         </goals>
@@ -98,7 +100,7 @@
                     </execution>
                     <execution>
                         <id>copy-resource-md-color-picker</id>
-                        <phase>compile</phase>
+                        <phase>generate-sources</phase>
                         <goals>
                             <goal>copy-resources</goal>
                         </goals>
@@ -124,7 +126,7 @@
                 <version>1.5.3</version>
                 <executions>
                     <execution>
-                        <phase>package</phase>
+                        <phase>generate-sources</phase>
                         <goals>
                             <goal>replace</goal>
                         </goals>
