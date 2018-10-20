@@ -92,9 +92,6 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
     private CustomerDao customerDao;
 
     @Autowired
-    private AttributesService attributesService;
-
-    @Autowired
     private CacheManager cacheManager;
 
     @Caching(evict = {
@@ -108,6 +105,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
         return savedEntityView;
     }
 
+    @CacheEvict(cacheNames = ENTITY_VIEW_CACHE, key = "{#entityViewId}")
     @Override
     public EntityView assignEntityViewToCustomer(EntityViewId entityViewId, CustomerId customerId) {
         EntityView entityView = findEntityViewById(entityViewId);
