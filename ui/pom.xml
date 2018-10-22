@@ -117,7 +117,28 @@
                                 </resource>
                             </resources>
                         </configuration>
-                    </execution>                    
+                    </execution> 
+                    <execution>
+                        <id>copy-resource-angular-material-data-table</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+
+                        <configuration>
+                            <overwrite>true</overwrite>
+                            <outputDirectory>${basedir}/node_modules/angular-material-data-table/dist</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/resourses/node-modules/angular-material-data-table/dist</directory>
+                                    <includes>
+                                        <include>md-data-table.js</include>
+                                        <include>md-data-table.min.js</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
                </executions>
             </plugin>          
             <plugin>
