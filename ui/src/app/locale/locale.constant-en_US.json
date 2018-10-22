@@ -555,7 +555,12 @@
         "alarm-fields-required": "Alarm fields are required.",
         "function-types": "Function types",
         "function-types-required": "Function types are required.",
-        "maximum-function-types": "Maximum { count, plural, 1 {1 function type is allowed.} other {# function types are allowed} }"
+        "maximum-function-types": "Maximum { count, plural, 1 {1 function type is allowed.} other {# function types are allowed} }",
+        "time-description": "timestamp of the current value;",
+        "value-description": "the current value;",
+        "prev-value-description": "result of the previous function call;",
+        "time-prev-description": "timestamp of the previous value;",
+        "prev-orig-value-description": "original previous value;"
     },
     "datasource": {
         "type": "Datasource type",
