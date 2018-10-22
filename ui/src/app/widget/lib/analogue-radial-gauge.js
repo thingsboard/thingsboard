@@ -242,296 +242,296 @@ export default class TbAnalogueRadialGauge {
         return {
             "schema": {
                 "type": "object",
-                "title": "Settings",
+                "title": "设置",
                 "properties": {
                     "minValue": {
-                        "title": "Minimum value",
+                        "title": "最小值",
                         "type": "number",
                         "default": 0
                     },
                     "maxValue": {
-                        "title": "Maximum value",
+                        "title": "最大值",
                         "type": "number",
                         "default": 100
                     },
                     "unitTitle": {
-                        "title": "Unit title",
+                        "title": "单位",
                         "type": "string",
                         "default": null
                     },
                     "showUnitTitle": {
-                        "title": "Show unit title",
+                        "title": "显示单位",
                         "type": "boolean",
                         "default": true
                     },
                     "majorTicksCount": {
-                        "title": "Major ticks count",
+                        "title": "主刻度个数",
                         "type": "number",
                         "default": null
                     },
                     "minorTicks": {
-                        "title": "Minor ticks count",
+                        "title": "次刻度个数",
                         "type": "number",
                         "default": 2
                     },
                     "valueBox": {
-                        "title": "Show value box",
+                        "title": "显示值框",
                         "type": "boolean",
                         "default": true
                     },
                     "valueInt": {
-                        "title": "Digits count for integer part of value",
+                        "title": "值整数部分的数字位数",
                         "type": "number",
                         "default": 3
                     },
                     "defaultColor": {
-                        "title": "Default color",
+                        "title": "缺省颜色",
                         "type": "string",
                         "default": null
                     },
                     "colorPlate": {
-                        "title": "Plate color",
+                        "title": "表盘颜色",
                         "type": "string",
                         "default": "#fff"
                     },
                     "colorMajorTicks": {
-                        "title": "Major ticks color",
+                        "title": "主刻度颜色",
                         "type": "string",
                         "default": "#444"
                     },
                     "colorMinorTicks": {
-                        "title": "Minor ticks color",
+                        "title": "次刻度颜色",
                         "type": "string",
                         "default": "#666"
                     },
                     "colorNeedle": {
-                        "title": "Needle color",
+                        "title": "指针颜色",
                         "type": "string",
                         "default": null
                     },
                     "colorNeedleEnd": {
-                        "title": "Needle color - end gradient",
+                        "title": "指针颜色 - 渐变到针头",
                         "type": "string",
                         "default": null
                     },
                     "colorNeedleShadowUp": {
-                        "title": "Upper half of the needle shadow color",
+                        "title": "指针阴影上半部分颜色",
                         "type": "string",
                         "default": "rgba(2,255,255,0.2)"
                     },
                     "colorNeedleShadowDown": {
-                        "title": "Drop shadow needle color.",
+                        "title": "指针投影颜色.",
                         "type": "string",
                         "default": "rgba(188,143,143,0.45)"
                     },
                     "colorValueBoxRect": {
-                        "title": "Value box rectangle stroke color",
+                        "title": "值框边框颜色",
                         "type": "string",
                         "default": "#888"
                     },
                     "colorValueBoxRectEnd": {
-                        "title": "Value box rectangle stroke color - end gradient",
+                        "title": "值框边框颜色 - 渐变结束",
                         "type": "string",
                         "default": "#666"
                     },
                     "colorValueBoxBackground": {
-                        "title": "Value box background color",
+                        "title": "值框背景色",
                         "type": "string",
                         "default": "#babab2"
                     },
                     "colorValueBoxShadow": {
-                        "title": "Value box shadow color",
+                        "title": "值框阴影颜色",
                         "type": "string",
                         "default": "rgba(0,0,0,1)"
                     },
                     "highlights": {
-                        "title": "Highlights",
+                        "title": "高亮",
                         "type": "array",
                         "items": {
-                            "title": "Highlight",
+                            "title": "高亮",
                             "type": "object",
                             "properties": {
                                 "from": {
-                                    "title": "From",
+                                    "title": "从",
                                     "type": "number"
                                 },
                                 "to": {
-                                    "title": "To",
+                                    "title": "到",
                                     "type": "number"
                                 },
                                 "color": {
-                                    "title": "Color",
+                                    "title": "颜色",
                                     "type": "string"
                                 }
                             }
                         }
                     },
                     "highlightsWidth": {
-                        "title": "Highlights width",
+                        "title": "高亮宽度",
                         "type": "number",
                         "default": 15
                     },
                     "showBorder": {
-                        "title": "Show border",
+                        "title": "显示边框",
                         "type": "boolean",
                         "default": true
                     },
                     "numbersFont": {
-                        "title": "Tick numbers font",
+                        "title": "刻度数字字体",
                         "type": "object",
                         "properties": {
                             "family": {
-                                "title": "Font family",
+                                "title": "字体",
                                 "type": "string",
                                 "default": "Roboto"
                             },
                             "size": {
-                                "title": "Size",
+                                "title": "大小",
                                 "type": "number",
                                 "default": 18
                             },
                             "style": {
-                                "title": "Style",
+                                "title": "样式",
                                 "type": "string",
                                 "default": "normal"
                             },
                             "weight": {
-                                "title": "Weight",
+                                "title": "权重",
                                 "type": "string",
                                 "default": "500"
                             },
                             "color": {
-                                "title": "color",
+                                "title": "颜色",
                                 "type": "string",
                                 "default": null
                             }
                         }
                     },
                     "titleFont": {
-                        "title": "Title text font",
+                        "title": "标题字体",
                         "type": "object",
                         "properties": {
                             "family": {
-                                "title": "Font family",
+                                "title": "字体",
                                 "type": "string",
                                 "default": "Roboto"
                             },
                             "size": {
-                                "title": "Size",
+                                "title": "大小",
                                 "type": "number",
                                 "default": 24
                             },
                             "style": {
-                                "title": "Style",
+                                "title": "样式",
                                 "type": "string",
                                 "default": "normal"
                             },
                             "weight": {
-                                "title": "Weight",
+                                "title": "权重",
                                 "type": "string",
                                 "default": "500"
                             },
                             "color": {
-                                "title": "color",
+                                "title": "颜色",
                                 "type": "string",
                                 "default": "#888"
                             }
                         }
                     },
                     "unitsFont": {
-                        "title": "Units text font",
+                        "title": "单位字体",
                         "type": "object",
                         "properties": {
                             "family": {
-                                "title": "Font family",
+                                "title": "字体",
                                 "type": "string",
                                 "default": "Roboto"
                             },
                             "size": {
-                                "title": "Size",
+                                "title": "大小",
                                 "type": "number",
                                 "default": 22
                             },
                             "style": {
-                                "title": "Style",
+                                "title": "样式",
                                 "type": "string",
                                 "default": "normal"
                             },
                             "weight": {
-                                "title": "Weight",
+                                "title": "权重",
                                 "type": "string",
                                 "default": "500"
                             },
                             "color": {
-                                "title": "color",
+                                "title": "颜色",
                                 "type": "string",
                                 "default": "#888"
                             }
                         }
                     },
                     "valueFont": {
-                        "title": "Value text font",
+                        "title": "数值字体",
                         "type": "object",
                         "properties": {
                             "family": {
-                                "title": "Font family",
+                                "title": "字体",
                                 "type": "string",
                                 "default": "Roboto"
                             },
                             "size": {
-                                "title": "Size",
+                                "title": "大小",
                                 "type": "number",
                                 "default": 40
                             },
                             "style": {
-                                "title": "Style",
+                                "title": "样式",
                                 "type": "string",
                                 "default": "normal"
                             },
                             "weight": {
-                                "title": "Weight",
+                                "title": "权重",
                                 "type": "string",
                                 "default": "500"
                             },
                             "color": {
-                                "title": "color",
+                                "title": "颜色",
                                 "type": "string",
                                 "default": "#444"
                             },
                             "shadowColor": {
-                                "title": "Shadow color",
+                                "title": "阴影颜色",
                                 "type": "string",
                                 "default": "rgba(0,0,0,0.3)"
                             }
                         }
                     },
                     "animation": {
-                        "title": "Enable animation",
+                        "title": "启用动画",
                         "type": "boolean",
                         "default": true
                     },
                     "animationDuration": {
-                        "title": "Animation duration",
+                        "title": "动画持续毫秒",
                         "type": "number",
                         "default": 500
                     },
                     "animationRule": {
-                        "title": "Animation rule",
+                        "title": "动画规则",
                         "type": "string",
                         "default": "cycle"
                     },
                     "startAngle": {
-                        "title": "Start ticks angle",
+                        "title": "开始刻度角",
                         "type": "number",
                         "default": 45
                     },
                     "ticksAngle": {
-                        "title": "Ticks angle",
+                        "title": "刻度角",
                         "type": "number",
                         "default": 270
                     },
                     "needleCircleSize": {
-                        "title": "Needle circle size",
+                        "title": "指针环大小",
                         "type": "number",
                         "default": 10
                     }
@@ -623,15 +623,15 @@ export default class TbAnalogueRadialGauge {
                             "items": [
                                 {
                                     "value": "normal",
-                                    "label": "Normal"
+                                    "label": "常规"
                                 },
                                 {
                                     "value": "italic",
-                                    "label": "Italic"
+                                    "label": "斜体"
                                 },
                                 {
                                     "value": "oblique",
-                                    "label": "Oblique"
+                                    "label": "仿斜体"
                                 }
                             ]
                         },
@@ -642,19 +642,19 @@ export default class TbAnalogueRadialGauge {
                             "items": [
                                 {
                                     "value": "normal",
-                                    "label": "Normal"
+                                    "label": "常规"
                                 },
                                 {
                                     "value": "bold",
-                                    "label": "Bold"
+                                    "label": "粗体"
                                 },
                                 {
                                     "value": "bolder",
-                                    "label": "Bolder"
+                                    "label": "更粗"
                                 },
                                 {
                                     "value": "lighter",
-                                    "label": "Lighter"
+                                    "label": "更细"
                                 },
                                 {
                                     "value": "100",
@@ -712,15 +712,15 @@ export default class TbAnalogueRadialGauge {
                             "items": [
                                 {
                                     "value": "normal",
-                                    "label": "Normal"
+                                    "label": "常规"
                                 },
                                 {
                                     "value": "italic",
-                                    "label": "Italic"
+                                    "label": "斜体"
                                 },
                                 {
                                     "value": "oblique",
-                                    "label": "Oblique"
+                                    "label": "仿斜体"
                                 }
                             ]
                         },
@@ -731,19 +731,19 @@ export default class TbAnalogueRadialGauge {
                             "items": [
                                 {
                                     "value": "normal",
-                                    "label": "Normal"
+                                    "label": "常规"
                                 },
                                 {
                                     "value": "bold",
-                                    "label": "Bold"
+                                    "label": "粗体"
                                 },
                                 {
                                     "value": "bolder",
-                                    "label": "Bolder"
+                                    "label": "更粗"
                                 },
                                 {
                                     "value": "lighter",
-                                    "label": "Lighter"
+                                    "label": "更细"
                                 },
                                 {
                                     "value": "100",
@@ -801,15 +801,15 @@ export default class TbAnalogueRadialGauge {
                             "items": [
                                 {
                                     "value": "normal",
-                                    "label": "Normal"
+                                    "label": "常规"
                                 },
                                 {
                                     "value": "italic",
-                                    "label": "Italic"
+                                    "label": "斜体"
                                 },
                                 {
                                     "value": "oblique",
-                                    "label": "Oblique"
+                                    "label": "仿斜体"
                                 }
                             ]
                         },
@@ -820,19 +820,19 @@ export default class TbAnalogueRadialGauge {
                             "items": [
                                 {
                                     "value": "normal",
-                                    "label": "Normal"
+                                    "label": "常规"
                                 },
                                 {
                                     "value": "bold",
-                                    "label": "Bold"
+                                    "label": "粗体"
                                 },
                                 {
                                     "value": "bolder",
-                                    "label": "Bolder"
+                                    "label": "更粗"
                                 },
                                 {
                                     "value": "lighter",
-                                    "label": "Lighter"
+                                    "label": "更细"
                                 },
                                 {
                                     "value": "100",
@@ -890,15 +890,15 @@ export default class TbAnalogueRadialGauge {
                             "items": [
                                 {
                                     "value": "normal",
-                                    "label": "Normal"
+                                    "label": "常规"
                                 },
                                 {
                                     "value": "italic",
-                                    "label": "Italic"
+                                    "label": "斜体"
                                 },
                                 {
                                     "value": "oblique",
-                                    "label": "Oblique"
+                                    "label": "仿斜体"
                                 }
                             ]
                         },
@@ -909,19 +909,19 @@ export default class TbAnalogueRadialGauge {
                             "items": [
                                 {
                                     "value": "normal",
-                                    "label": "Normal"
+                                    "label": "常规"
                                 },
                                 {
                                     "value": "bold",
-                                    "label": "Bold"
+                                    "label": "粗体"
                                 },
                                 {
                                     "value": "bolder",
-                                    "label": "Bolder"
+                                    "label": "更粗"
                                 },
                                 {
                                     "value": "lighter",
-                                    "label": "Lighter"
+                                    "label": "更细"
                                 },
                                 {
                                     "value": "100",
@@ -980,47 +980,47 @@ export default class TbAnalogueRadialGauge {
                     "items": [
                         {
                             "value": "linear",
-                            "label": "Linear"
+                            "label": "线性"
                         },
                         {
                             "value": "quad",
-                            "label": "Quad"
+                            "label": "象限"
                         },
                         {
                             "value": "quint",
-                            "label": "Quint"
+                            "label": "五重峰"
                         },
                         {
                             "value": "cycle",
-                            "label": "Cycle"
+                            "label": "循环"
                         },
                         {
                             "value": "bounce",
-                            "label": "Bounce"
+                            "label": "弹跳"
                         },
                         {
                             "value": "elastic",
-                            "label": "Elastic"
+                            "label": "弹簧"
                         },
                         {
                             "value": "dequad",
-                            "label": "Dequad"
+                            "label": "反象限"
                         },
                         {
                             "value": "dequint",
-                            "label": "Dequint"
+                            "label": "反五重峰"
                         },
                         {
                             "value": "decycle",
-                            "label": "Decycle"
+                            "label": "反循环"
                         },
                         {
                             "value": "debounce",
-                            "label": "Debounce"
+                            "label": "反弹跳"
                         },
                         {
                             "value": "delastic",
-                            "label": "Delastic"
+                            "label": "反弹簧"
                         }
                     ]
                 }

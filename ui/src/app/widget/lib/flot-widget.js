@@ -729,56 +729,56 @@ export default class TbFlot {
         return {
             "schema": {
                 "type": "object",
-                "title": "Settings",
+                "title": "设置",
                 "properties": {
                     "radius": {
-                        "title": "Radius",
+                        "title": "半径",
                         "type": "number",
                         "default": 1
                     },
                     "innerRadius": {
-                        "title": "Inner radius",
+                        "title": "内径",
                         "type": "number",
                         "default": 0
                     },
                     "tilt": {
-                        "title": "Tilt",
+                        "title": "倾斜度",
                         "type": "number",
                         "default": 1
                     },
                     "animatedPie": {
-                        "title": "Enable pie animation (experimental)",
+                        "title": "启用动画 (体验)",
                         "type": "boolean",
                         "default": false
                     },
                     "stroke": {
-                        "title": "Stroke",
+                        "title": "边框",
                         "type": "object",
                         "properties": {
                             "color": {
-                                "title": "Color",
+                                "title": "颜色",
                                 "type": "string",
                                 "default": ""
                             },
                             "width": {
-                                "title": "Width (pixels)",
+                                "title": "宽度 (像素)",
                                 "type": "number",
                                 "default": 0
                             }
                         }
                     },
                     "showLabels": {
-                        "title": "Show labels",
+                        "title": "显示标注",
                         "type": "boolean",
                         "default": false
                     },
                     "fontColor": {
-                        "title": "Font color",
+                        "title": "字体颜色",
                         "type": "string",
                         "default": "#545454"
                     },
                     "fontSize": {
-                        "title": "Font size",
+                        "title": "字体大小",
                         "type": "number",
                         "default": 10
                     }
@@ -814,156 +814,156 @@ export default class TbFlot {
         return {
             "schema": {
                 "type": "object",
-                "title": "Settings",
+                "title": "设置",
                 "properties": {
                     "stack": {
-                        "title": "Stacking",
+                        "title": "堆叠",
                         "type": "boolean",
                         "default": false
                     },
                     "smoothLines": {
-                        "title": "Display smooth (curved) lines",
+                        "title": "显示平滑曲线",
                         "type": "boolean",
                         "default": false
                     },
                     "shadowSize": {
-                        "title": "Shadow size",
+                        "title": "阴影大小",
                         "type": "number",
                         "default": 4
                     },
                     "fontColor": {
-                        "title": "Font color",
+                        "title": "字体颜色",
                         "type": "string",
                         "default": "#545454"
                     },
                     "fontSize": {
-                        "title": "Font size",
+                        "title": "字体大小",
                         "type": "number",
                         "default": 10
                     },
                     "tooltipIndividual": {
-                        "title": "Hover individual points",
+                        "title": "显示悬停分隔点",
                         "type": "boolean",
                         "default": false
                     },
                     "tooltipCumulative": {
-                        "title": "Show cumulative values in stacking mode",
+                        "title": "在堆叠模式下显示累积值",
                         "type": "boolean",
                         "default": false
                     },
                     "tooltipValueFormatter": {
-                        "title": "Tooltip value format function, f(value)",
+                        "title": "工具提示信息格式化函数, f(value)",
                         "type": "string",
                         "default": ""
                     },
                     "grid": {
-                        "title": "Grid settings",
+                        "title": "网格设置",
                         "type": "object",
                         "properties": {
                             "color": {
-                                "title": "Primary color",
+                                "title": "主色",
                                 "type": "string",
                                 "default": "#545454"
                             },
                             "backgroundColor": {
-                                "title": "Background color",
+                                "title": "背景色",
                                 "type": "string",
                                 "default": null
                             },
                             "tickColor": {
-                                "title": "Ticks color",
+                                "title": "刻度色",
                                 "type": "string",
                                 "default": "#DDDDDD"
                             },
                             "outlineWidth": {
-                                "title": "Grid outline/border width (px)",
+                                "title": "网格轮廓/边框宽度 (px)",
                                 "type": "number",
                                 "default": 1
                             },
                             "verticalLines": {
-                                "title": "Show vertical lines",
+                                "title": "显示垂直线",
                                 "type": "boolean",
                                 "default": true
                             },
                             "horizontalLines": {
-                                "title": "Show horizontal lines",
+                                "title": "显示水平线",
                                 "type": "boolean",
                                 "default": true
                             }
                         }
                     },
                     "xaxis": {
-                        "title": "X axis settings",
+                        "title": "X轴设置",
                         "type": "object",
                         "properties": {
                             "showLabels": {
-                                "title": "Show labels",
+                                "title": "显示标注",
                                 "type": "boolean",
                                 "default": true
                             },
                             "title": {
-                                "title": "Axis title",
+                                "title": "轴标题",
                                 "type": "string",
                                 "default": null
                             },
                             "titleAngle": {
-                                "title": "Axis title's angle in degrees",
+                                "title": "轴标题的角度",
                                 "type": "number",
                                 "default": 0
                             },
                             "color": {
-                                "title": "Ticks color",
+                                "title": "刻度颜色",
                                 "type": "string",
                                 "default": null
                             }
                         }
                     },
                     "yaxis": {
-                        "title": "Y axis settings",
+                        "title": "Y轴设置",
                         "type": "object",
                         "properties": {
                             "min": {
-                                "title": "Minimum value on the scale",
+                                "title": "比例最小值",
                                 "type": "number",
                                 "default": null
                             },
                             "max": {
-                                "title": "Maximum value on the scale",
+                                "title": "比例最大值",
                                 "type": "number",
                                 "default": null
                             },
                             "showLabels": {
-                                "title": "Show labels",
+                                "title": "显示标注",
                                 "type": "boolean",
                                 "default": true
                             },
                             "title": {
-                                "title": "Axis title",
+                                "title": "轴标题",
                                 "type": "string",
                                 "default": null
                             },
                             "titleAngle": {
-                                "title": "Axis title's angle in degrees",
+                                "title": "轴标题角度",
                                 "type": "number",
                                 "default": 0
                             },
                             "color": {
-                                "title": "Ticks color",
+                                "title": "刻度色",
                                 "type": "string",
                                 "default": null
                             },
                             "ticksFormatter": {
-                                "title": "Ticks formatter function, f(value)",
+                                "title": "刻度格式化函数, f(value)",
                                 "type": "string",
                                 "default": ""
                             },
                             "tickDecimals": {
-                                "title": "The number of decimals to display",
+                                "title": "显示小数位数",
                                 "type": "number",
                                 "default": 0
                             },
                             "tickSize": {
-                                "title": "Step size between ticks",
+                                "title": "刻度步长",
                                 "type": "number",
                                 "default": null
                             }
