@@ -92,9 +92,6 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
     private CustomerDao customerDao;
 
     @Autowired
-    private AttributesService attributesService;
-
-    @Autowired
     private CacheManager cacheManager;
 
     @Caching(evict = {
@@ -105,24 +102,10 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
         log.trace("Executing save entity view [{}]", entityView);
         entityViewValidator.validate(entityView);
         EntityView savedEntityView = entityViewDao.save(entityView);
-
-        List<ListenableFuture<List<Void>>> futures = new ArrayList<>();
-        if (savedEntityView.getKeys() != null) {
-            futures.add(copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.CLIENT_SCOPE, savedEntityView.getKeys().getAttributes().getCs()));
-            futures.add(copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.SERVER_SCOPE, savedEntityView.getKeys().getAttributes().getSs()));
-            futures.add(copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.SHARED_SCOPE, savedEntityView.getKeys().getAttributes().getSh()));
-        }
-        for (ListenableFuture<List<Void>> future : futures) {
-            try {
-                future.get();
-            } catch (InterruptedException | ExecutionException e) {
-                log.error("Failed to copy attributes to entity view", e);
-                throw new RuntimeException("Failed to copy attributes to entity view", e);
-            }
-        }
         return savedEntityView;
     }
 
+    @CacheEvict(cacheNames = ENTITY_VIEW_CACHE, key = "{#entityViewId}")
     @Override
     public EntityView assignEntityViewToCustomer(EntityViewId entityViewId, CustomerId customerId) {
         EntityView entityView = findEntityViewById(entityViewId);
@@ -292,36 +275,6 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
                     entityViewTypes.sort(Comparator.comparing(EntitySubtype::getType));
                     return entityViewTypes;
                 });
-    }
-
-    private ListenableFuture<List<Void>> copyAttributesFromEntityToEntityView(EntityView entityView, String scope, Collection<String> keys) {
-        if (keys != null && !keys.isEmpty()) {
-            ListenableFuture<List<AttributeKvEntry>> getAttrFuture = attributesService.find(entityView.getEntityId(), scope, keys);
-            return Futures.transform(getAttrFuture, attributeKvEntries -> {
-                List<AttributeKvEntry> filteredAttributes = new ArrayList<>();
-                if (attributeKvEntries != null && !attributeKvEntries.isEmpty()) {
-                    filteredAttributes =
-                            attributeKvEntries.stream()
-                                    .filter(attributeKvEntry -> {
-                                        long startTime = entityView.getStartTimeMs();
-                                        long endTime = entityView.getEndTimeMs();
-                                        long lastUpdateTs = attributeKvEntry.getLastUpdateTs();
-                                        return startTime == 0 && endTime == 0 ||
-                                                (endTime == 0 && startTime < lastUpdateTs) ||
-                                                (startTime == 0 && endTime > lastUpdateTs)
-                                                ? true : startTime < lastUpdateTs && endTime > lastUpdateTs;
-                                    }).collect(Collectors.toList());
-                }
-                try {
-                    return attributesService.save(entityView.getId(), scope, filteredAttributes).get();
-                } catch (InterruptedException | ExecutionException e) {
-                    log.error("Failed to copy attributes to entity view", e);
-                    throw new RuntimeException("Failed to copy attributes to entity view", e);
-                }
-            });
-        } else {
-            return Futures.immediateFuture(null);
-        }
     }
 
     private DataValidator<EntityView> entityViewValidator =

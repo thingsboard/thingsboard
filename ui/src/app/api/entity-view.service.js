@@ -27,7 +27,6 @@ function EntityViewService($http, $q, $window, userService, attributeService, cu
         deleteEntityView: deleteEntityView,
         getCustomerEntityViews: getCustomerEntityViews,
         getEntityView: getEntityView,
-        getEntityViews: getEntityViews,
         getTenantEntityViews: getTenantEntityViews,
         saveEntityView: saveEntityView,
         unassignEntityViewFromCustomer: unassignEntityViewFromCustomer,
@@ -120,32 +119,6 @@ function EntityViewService($http, $q, $window, userService, attributeService, cu
         config = Object.assign(config, { ignoreErrors: ignoreErrors });
         $http.get(url, config).then(function success(response) {
             deferred.resolve(response.data);
-        }, function fail(response) {
-            deferred.reject(response.data);
-        });
-        return deferred.promise;
-    }
-
-    function getEntityViews(entityViewIds, config) {
-        var deferred = $q.defer();
-        var ids = '';
-        for (var i=0;i<entityViewIds.length;i++) {
-            if (i>0) {
-                ids += ',';
-            }
-            ids += entityViewIds[i];
-        }
-        var url = '/api/entityViews?entityViewIds=' + ids;
-        $http.get(url, config).then(function success(response) {
-            var entityViews = response.data;
-            entityViews.sort(function (entityView1, entityView2) {
-               var id1 =  entityView1.id.id;
-               var id2 =  entityView2.id.id;
-               var index1 = entityViewIds.indexOf(id1);
-               var index2 = entityViewIds.indexOf(id2);
-               return index1 - index2;
-            });
-            deferred.resolve(entityViews);
         }, function fail(response) {
             deferred.reject(response.data);
         });

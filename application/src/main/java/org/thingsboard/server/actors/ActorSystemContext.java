@@ -31,6 +31,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.actors.service.ActorService;
@@ -63,12 +64,12 @@ import org.thingsboard.server.service.encoding.DataDecodingEncodingService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.executors.ExternalCallExecutorService;
 import org.thingsboard.server.service.mail.MailExecutorService;
-import org.thingsboard.server.service.queue.MsgQueueService;
 import org.thingsboard.server.service.rpc.DeviceRpcService;
 import org.thingsboard.server.service.script.JsExecutorService;
 import org.thingsboard.server.service.script.JsInvokeService;
 import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
+import org.thingsboard.server.service.transport.RuleEngineTransportService;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -198,11 +199,12 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
-    private MsgQueueService msgQueueService;
+    private DeviceStateService deviceStateService;
 
+    @Lazy
     @Autowired
     @Getter
-    private DeviceStateService deviceStateService;
+    private RuleEngineTransportService ruleEngineTransportService;
 
     @Value("${cluster.partition_id}")
     @Getter
@@ -259,10 +261,6 @@ public class ActorSystemContext {
     @Getter
     @Setter
     private ActorRef appActor;
-
-    @Getter
-    @Setter
-    private ActorRef sessionManagerActor;
 
     @Getter
     @Setter

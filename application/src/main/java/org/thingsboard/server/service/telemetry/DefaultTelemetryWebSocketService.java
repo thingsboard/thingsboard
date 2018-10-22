@@ -37,13 +37,18 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.service.security.AccessValidator;
+import org.thingsboard.server.service.security.ValidationCallback;
 import org.thingsboard.server.service.security.ValidationResult;
+import org.thingsboard.server.service.security.ValidationResultCode;
 import org.thingsboard.server.service.telemetry.cmd.AttributesSubscriptionCmd;
 import org.thingsboard.server.service.telemetry.cmd.GetHistoryCmd;
 import org.thingsboard.server.service.telemetry.cmd.SubscriptionCmd;
 import org.thingsboard.server.service.telemetry.cmd.TelemetryPluginCmd;
 import org.thingsboard.server.service.telemetry.cmd.TelemetryPluginCmdsWrapper;
 import org.thingsboard.server.service.telemetry.cmd.TimeseriesSubscriptionCmd;
+import org.thingsboard.server.service.telemetry.exception.AccessDeniedException;
+import org.thingsboard.server.service.telemetry.exception.EntityNotFoundException;
+import org.thingsboard.server.service.telemetry.exception.InternalErrorException;
 import org.thingsboard.server.service.telemetry.exception.UnauthorizedException;
 import org.thingsboard.server.service.telemetry.sub.SubscriptionErrorCode;
 import org.thingsboard.server.service.telemetry.sub.SubscriptionState;
@@ -535,11 +540,16 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
         };
     }
 
-    private FutureCallback<ValidationResult> on(Consumer<ValidationResult> success, Consumer<Throwable> failure) {
+    private FutureCallback<ValidationResult> on(Consumer<Void> success, Consumer<Throwable> failure) {
         return new FutureCallback<ValidationResult>() {
             @Override
             public void onSuccess(@Nullable ValidationResult result) {
-                success.accept(result);
+                ValidationResultCode resultCode = result.getResultCode();
+                if (resultCode == ValidationResultCode.OK) {
+                    success.accept(null);
+                } else {
+                    onFailure(ValidationCallback.getException(result));
+                }
             }
 
             @Override

@@ -36,29 +36,10 @@ public class ValidationCallback<T> implements FutureCallback<ValidationResult> {
 
     @Override
     public void onSuccess(ValidationResult result) {
-        ValidationResultCode resultCode = result.getResultCode();
-        if (resultCode == ValidationResultCode.OK) {
+        if (result.getResultCode() == ValidationResultCode.OK) {
             action.onSuccess(response);
         } else {
-            Exception e;
-            switch (resultCode) {
-                case ENTITY_NOT_FOUND:
-                    e = new EntityNotFoundException(result.getMessage());
-                    break;
-                case UNAUTHORIZED:
-                    e = new UnauthorizedException(result.getMessage());
-                    break;
-                case ACCESS_DENIED:
-                    e = new AccessDeniedException(result.getMessage());
-                    break;
-                case INTERNAL_ERROR:
-                    e = new InternalErrorException(result.getMessage());
-                    break;
-                default:
-                    e = new UnauthorizedException("Permission denied.");
-                    break;
-            }
-            onFailure(e);
+            onFailure(getException(result));
         }
     }
 
@@ -66,4 +47,28 @@ public class ValidationCallback<T> implements FutureCallback<ValidationResult> {
     public void onFailure(Throwable e) {
         action.onFailure(e);
     }
+
+    public static Exception getException(ValidationResult result) {
+        ValidationResultCode resultCode = result.getResultCode();
+        Exception e;
+        switch (resultCode) {
+            case ENTITY_NOT_FOUND:
+                e = new EntityNotFoundException(result.getMessage());
+                break;
+            case UNAUTHORIZED:
+                e = new UnauthorizedException(result.getMessage());
+                break;
+            case ACCESS_DENIED:
+                e = new AccessDeniedException(result.getMessage());
+                break;
+            case INTERNAL_ERROR:
+                e = new InternalErrorException(result.getMessage());
+                break;
+            default:
+                e = new UnauthorizedException("Permission denied.");
+                break;
+        }
+        return e;
+    }
+
 }

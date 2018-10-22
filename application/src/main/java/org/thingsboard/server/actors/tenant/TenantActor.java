@@ -87,7 +87,7 @@ public class TenantActor extends RuleChainManagerActor {
             case DEVICE_ACTOR_TO_RULE_ENGINE_MSG:
                 onDeviceActorToRuleEngineMsg((DeviceActorToRuleEngineMsg) msg);
                 break;
-            case DEVICE_SESSION_TO_DEVICE_ACTOR_MSG:
+            case TRANSPORT_TO_DEVICE_ACTOR_MSG:
             case DEVICE_ATTRIBUTES_UPDATE_TO_DEVICE_ACTOR_MSG:
             case DEVICE_CREDENTIALS_UPDATE_TO_DEVICE_ACTOR_MSG:
             case DEVICE_NAME_OR_TYPE_UPDATE_TO_DEVICE_ACTOR_MSG:

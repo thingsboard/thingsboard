@@ -26,7 +26,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
-import org.thingsboard.server.service.queue.MsgQueueService;
 
 import javax.annotation.Nullable;
 import java.util.function.Consumer;
@@ -35,14 +34,12 @@ public abstract class ComponentMsgProcessor<T extends EntityId> extends Abstract
 
     protected final TenantId tenantId;
     protected final T entityId;
-    protected final MsgQueueService queue;
     protected ComponentLifecycleState state;
 
     protected ComponentMsgProcessor(ActorSystemContext systemContext, LoggingAdapter logger, TenantId tenantId, T id) {
         super(systemContext, logger);
         this.tenantId = tenantId;
         this.entityId = id;
-        this.queue = systemContext.getMsgQueueService();
     }
 
     public abstract void start(ActorContext context) throws Exception;
@@ -82,22 +79,9 @@ public abstract class ComponentMsgProcessor<T extends EntityId> extends Abstract
 
     protected void checkActive() {
         if (state != ComponentLifecycleState.ACTIVE) {
-            throw new IllegalStateException("Rule chain is not active!");
+            logger.warning("Rule chain is not active. Current state [{}] for processor [{}] tenant [{}]", state, tenantId, entityId);
+            throw new IllegalStateException("Rule chain is not active! " + entityId + " - " + tenantId);
         }
     }
 
-    protected void putToQueue(final TbMsg tbMsg, final Consumer<TbMsg> onSuccess) {
-        EntityId entityId = tbMsg.getRuleNodeId() != null ? tbMsg.getRuleNodeId() : tbMsg.getRuleChainId();
-        Futures.addCallback(queue.put(this.tenantId, tbMsg, entityId.getId(), tbMsg.getClusterPartition()), new FutureCallback<Void>() {
-            @Override
-            public void onSuccess(@Nullable Void result) {
-                onSuccess.accept(tbMsg);
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                logger.debug("Failed to push message [{}] to queue due to [{}]", tbMsg, t);
-            }
-        });
-    }
 }
