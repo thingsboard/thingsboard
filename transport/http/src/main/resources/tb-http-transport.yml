@@ -24,6 +24,10 @@ server:
 transport:
   http:
     request_timeout: "${HTTP_REQUEST_TIMEOUT:60000}"
+  rate_limits:
+    enabled: "${TB_TRANSPORT_RATE_LIMITS_ENABLED:false}"
+    tenant: "${TB_TRANSPORT_RATE_LIMITS_TENANT:1000:1,20000:60}"
+    device: "${TB_TRANSPORT_RATE_LIMITS_DEVICE:10:1,300:60}"
 
 #Quota parameters
 quota:
