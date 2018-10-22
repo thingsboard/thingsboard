@@ -62,15 +62,15 @@ public class DeviceCredentialsServiceImpl implements DeviceCredentialsService {
     @Override
     @CacheEvict(cacheNames = DEVICE_CREDENTIALS_CACHE, keyGenerator="previousDeviceCredentialsId", beforeInvocation = true)
     public DeviceCredentials updateDeviceCredentials(DeviceCredentials deviceCredentials) {
-        return saveOrUpdare(deviceCredentials);
+        return saveOrUpdate(deviceCredentials);
     }
 
     @Override
     public DeviceCredentials createDeviceCredentials(DeviceCredentials deviceCredentials) {
-        return saveOrUpdare(deviceCredentials);
+        return saveOrUpdate(deviceCredentials);
     }
 
-    private DeviceCredentials saveOrUpdare(DeviceCredentials deviceCredentials) {
+    private DeviceCredentials saveOrUpdate(DeviceCredentials deviceCredentials) {
         if (deviceCredentials.getCredentialsType() == DeviceCredentialsType.X509_CERTIFICATE) {
             formatCertData(deviceCredentials);
         }
