@@ -1,13 +1,13 @@
 {
   "widgetsBundle": {
     "alias": "gateway_widgets",
-    "title": "Gateway widgets",
+    "title": "网关部件",
     "image": null
   },
   "widgetTypes": [
     {
       "alias": "extension_configuration_widget",
-      "name": "Extensions table",
+      "name": "扩展表",
       "descriptor": {
         "type": "latest",
         "sizeX": 9,

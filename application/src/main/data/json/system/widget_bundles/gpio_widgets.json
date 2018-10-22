@@ -1,13 +1,13 @@
 {
   "widgetsBundle": {
     "alias": "gpio_widgets",
-    "title": "GPIO widgets",
+    "title": "GPIO 部件",
     "image": null
   },
   "widgetTypes": [
     {
       "alias": "basic_gpio_control",
-      "name": "Basic GPIO Control",
+      "name": "基本 GPIO 部件",
       "descriptor": {
         "type": "rpc",
         "sizeX": 4,
@@ -23,7 +23,7 @@
     },
     {
       "alias": "gpio_panel",
-      "name": "Basic GPIO Panel",
+      "name": "基本 GPIO 面板",
       "descriptor": {
         "type": "latest",
         "sizeX": 5,
@@ -39,7 +39,7 @@
     },
     {
       "alias": "raspberry_pi_gpio_control",
-      "name": "Raspberry Pi GPIO Control",
+      "name": "树莓派 GPIO 控制器",
       "descriptor": {
         "type": "rpc",
         "sizeX": 6,
@@ -55,7 +55,7 @@
     },
     {
       "alias": "raspberry_pi_gpio_panel",
-      "name": "Raspberry Pi GPIO Panel",
+      "name": "树莓派 GPIO 面板",
       "descriptor": {
         "type": "latest",
         "sizeX": 7,

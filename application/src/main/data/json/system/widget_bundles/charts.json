@@ -1,13 +1,13 @@
 {
   "widgetsBundle": {
     "alias": "charts",
-    "title": "Charts",
+    "title": "统计图部件",
     "image": null
   },
   "widgetTypes": [
     {
       "alias": "bars",
-      "name": "Bars - Chart.js",
+      "name": "条形图 - Chart.js",
       "descriptor": {
         "type": "latest",
         "sizeX": 7,
@@ -27,7 +27,7 @@
     },
     {
       "alias": "basic_timeseries",
-      "name": "Timeseries - Flot",
+      "name": "时序曲线图 - Flot",
       "descriptor": {
         "type": "timeseries",
         "sizeX": 8,
@@ -43,7 +43,7 @@
     },
     {
       "alias": "doughnut_chart_js",
-      "name": "Doughnut - Chart.js",
+      "name": "甜甜圈图表 - Chart.js",
       "descriptor": {
         "type": "latest",
         "sizeX": 7,
@@ -63,7 +63,7 @@
     },
     {
       "alias": "pie",
-      "name": "Pie - Flot",
+      "name": "饼状图 - Flot",
       "descriptor": {
         "type": "latest",
         "sizeX": 8,
@@ -79,7 +79,7 @@
     },
     {
       "alias": "pie_chart_js",
-      "name": "Pie - Chart.js",
+      "name": "饼状图 - Chart.js",
       "descriptor": {
         "type": "latest",
         "sizeX": 8,
@@ -99,7 +99,7 @@
     },
     {
       "alias": "polar_area_chart_js",
-      "name": "Polar Area - Chart.js",
+      "name": "极线面积图 - Chart.js",
       "descriptor": {
         "type": "latest",
         "sizeX": 7,
@@ -119,7 +119,7 @@
     },
     {
       "alias": "radar_chart_js",
-      "name": "Radar - Chart.js",
+      "name": "雷达图 - Chart.js",
       "descriptor": {
         "type": "latest",
         "sizeX": 7,
@@ -139,7 +139,7 @@
     },
     {
       "alias": "timeseries_bars_flot",
-      "name": "Timeseries Bars - Flot",
+      "name": "时序条形图 - Flot",
       "descriptor": {
         "type": "timeseries",
         "sizeX": 8,
@@ -155,7 +155,7 @@
     },
     {
       "alias": "state_chart",
-      "name": "State Chart",
+      "name": "状态图",
       "descriptor": {
         "type": "timeseries",
         "sizeX": 8,

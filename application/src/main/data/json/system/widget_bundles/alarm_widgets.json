@@ -1,13 +1,13 @@
 {
   "widgetsBundle": {
     "alias": "alarm_widgets",
-    "title": "Alarm widgets",
+    "title": "告警部件",
     "image": null
   },
   "widgetTypes": [
     {
       "alias": "alarms_table",
-      "name": "Alarms table",
+      "name": "告警列表",
       "descriptor": {
         "type": "alarm",
         "sizeX": 10.5,

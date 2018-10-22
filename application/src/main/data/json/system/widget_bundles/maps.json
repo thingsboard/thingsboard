@@ -1,13 +1,13 @@
 {
   "widgetsBundle": {
     "alias": "maps_v2",
-    "title": "Maps",
+    "title": "地图",
     "image": null
   },
   "widgetTypes": [
     {
       "alias": "google_maps",
-      "name": "Google Maps",
+      "name": "谷歌地图",
       "descriptor": {
         "type": "latest",
         "sizeX": 8.5,
@@ -23,7 +23,7 @@
     },
     {
       "alias": "image_map",
-      "name": "Image Map",
+      "name": "示意图",
       "descriptor": {
         "type": "latest",
         "sizeX": 8.5,
@@ -39,7 +39,7 @@
     },
     {
       "alias": "openstreetmap",
-      "name": "OpenStreetMap",
+      "name": "OSM地图",
       "descriptor": {
         "type": "latest",
         "sizeX": 8.5,
@@ -55,7 +55,7 @@
     },
     {
       "alias": "route_map",
-      "name": "Route Map",
+      "name": "路线图",
       "descriptor": {
         "type": "timeseries",
         "sizeX": 8.5,
@@ -71,7 +71,7 @@
     },
     {
       "alias": "route_map_openstreetmap",
-      "name": "Route Map - OpenStreetMap",
+      "name": "路线图 - OSM",
       "descriptor": {
         "type": "timeseries",
         "sizeX": 8.5,
@@ -87,7 +87,7 @@
     },
     {
       "alias": "route_map_tencent_maps",
-      "name": "Route Map - Tencent Maps",
+      "name": "路线图 - 腾讯地图",
       "descriptor": {
         "type": "timeseries",
         "sizeX": 8.5,
@@ -103,7 +103,7 @@
     },
     {
       "alias": "tencent_maps",
-      "name": "Tencent Maps",
+      "name": "腾讯地图",
       "descriptor": {
         "type": "latest",
         "sizeX": 9,

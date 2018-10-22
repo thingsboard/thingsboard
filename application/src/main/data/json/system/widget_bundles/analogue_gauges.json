@@ -1,13 +1,13 @@
 {
   "widgetsBundle": {
     "alias": "analogue_gauges",
-    "title": "Analogue gauges",
+    "title": "模拟仪表",
     "image": null
   },
   "widgetTypes": [
     {
       "alias": "radial_gauge_canvas_gauges",
-      "name": "Radial gauge - Canvas Gauges",
+      "name": "径向仪表",
       "descriptor": {
         "type": "latest",
         "sizeX": 6,
@@ -23,7 +23,7 @@
     },
     {
       "alias": "speed_gauge_canvas_gauges",
-      "name": "Speed gauge - Canvas Gauges",
+      "name": "速度表",
       "descriptor": {
         "type": "latest",
         "sizeX": 7,
@@ -39,7 +39,7 @@
     },
     {
       "alias": "temperature_gauge_canvas_gauges",
-      "name": "Temperature gauge - Canvas Gauges",
+      "name": "温度表",
       "descriptor": {
         "type": "latest",
         "sizeX": 7,
@@ -55,7 +55,7 @@
     },
     {
       "alias": "temperature_radial_gauge_canvas_gauges",
-      "name": "Temperature radial gauge - Canvas Gauges",
+      "name": "温度径向仪表",
       "descriptor": {
         "type": "latest",
         "sizeX": 6,
@@ -71,7 +71,7 @@
     },
     {
       "alias": "analogue_compass",
-      "name": "Analogue Compass",
+      "name": "模拟罗盘",
       "descriptor": {
         "type": "latest",
         "sizeX": 6,

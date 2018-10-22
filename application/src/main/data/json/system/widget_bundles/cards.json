@@ -1,13 +1,13 @@
 {
   "widgetsBundle": {
     "alias": "cards",
-    "title": "Cards",
+    "title": "卡片",
     "image": null
   },
   "widgetTypes": [
     {
       "alias": "attributes_card",
-      "name": "Attributes card",
+      "name": "属性卡",
       "descriptor": {
         "type": "latest",
         "sizeX": 7.5,
@@ -23,7 +23,7 @@
     },
     {
       "alias": "entities_table",
-      "name": "Entities table",
+      "name": "实体表",
       "descriptor": {
         "type": "latest",
         "sizeX": 7.5,
@@ -39,7 +39,7 @@
     },
     {
       "alias": "html_card",
-      "name": "HTML Card",
+      "name": "HTML静态卡片",
       "descriptor": {
         "type": "static",
         "sizeX": 7.5,
@@ -55,7 +55,7 @@
     },
     {
       "alias": "html_value_card",
-      "name": "HTML Value Card",
+      "name": "HTML最新值卡片",
       "descriptor": {
         "type": "latest",
         "sizeX": 7.5,
@@ -71,7 +71,7 @@
     },
     {
       "alias": "label_widget",
-      "name": "Label widget",
+      "name": "标签部件",
       "descriptor": {
         "type": "latest",
         "sizeX": 4.5,
@@ -87,7 +87,7 @@
     },
     {
       "alias": "simple_card",
-      "name": "Simple card",
+      "name": "简单卡片",
       "descriptor": {
         "type": "latest",
         "sizeX": 5,
@@ -103,7 +103,7 @@
     },
     {
       "alias": "timeseries_table",
-      "name": "Timeseries table",
+      "name": "时序表格",
       "descriptor": {
         "type": "timeseries",
         "sizeX": 8,
