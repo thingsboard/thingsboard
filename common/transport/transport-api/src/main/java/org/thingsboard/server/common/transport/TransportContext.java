@@ -20,7 +20,6 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.thingsboard.server.common.transport.quota.host.HostRequestsQuotaService;
 import org.thingsboard.server.kafka.TbNodeIdProvider;
 
 import javax.annotation.PostConstruct;
@@ -42,9 +41,6 @@ public class TransportContext {
 
     @Autowired
     private TbNodeIdProvider nodeIdProvider;
-
-    @Autowired(required = false)
-    private HostRequestsQuotaService quotaService;
 
     @Getter
     private ExecutorService executor;

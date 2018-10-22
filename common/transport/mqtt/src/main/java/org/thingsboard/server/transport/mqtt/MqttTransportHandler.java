@@ -42,7 +42,6 @@ import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
-import org.thingsboard.server.common.transport.quota.QuotaService;
 import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
@@ -92,7 +91,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     private final MqttTransportContext context;
     private final MqttTransportAdaptor adaptor;
     private final TransportService transportService;
-    private final QuotaService quotaService;
     private final SslHandler sslHandler;
     private final ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap;
 
@@ -106,7 +104,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         this.context = context;
         this.transportService = context.getTransportService();
         this.adaptor = context.getAdaptor();
-        this.quotaService = context.getQuotaService();
         this.sslHandler = context.getSslHandler();
         this.mqttQoSMap = new ConcurrentHashMap<>();
         this.deviceSessionCtx = new DeviceSessionCtx(sessionId, mqttQoSMap);
@@ -129,13 +126,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             processDisconnect(ctx);
             return;
         }
-
-        if (quotaService.isQuotaExceeded(address.getHostName())) {
-            log.warn("MQTT Quota exceeded for [{}:{}] . Disconnect", address.getHostName(), address.getPort());
-            processDisconnect(ctx);
-            return;
-        }
-
         deviceSessionCtx.setChannel(ctx);
         switch (msg.fixedHeader().messageType()) {
             case CONNECT:
