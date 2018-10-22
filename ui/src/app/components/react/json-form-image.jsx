@@ -78,7 +78,7 @@ class ThingsboardImage extends React.Component {
         if (this.state.imageUrl) {
             previewComponent = <img className="tb-image-preview" src={this.state.imageUrl} />;
         } else {
-            previewComponent = <div>No image selected</div>;
+            previewComponent = <div>未指定图标</div>;
         }
 
         return (
@@ -87,13 +87,13 @@ class ThingsboardImage extends React.Component {
                 <div className="tb-image-select-container">
                     <div className="tb-image-preview-container">{previewComponent}</div>
                     <div className="tb-image-clear-container">
-                        <IconButton className="tb-image-clear-btn" iconClassName="material-icons" tooltip="Clear" onTouchTap={this.onClear}>clear</IconButton>
+                        <IconButton className="tb-image-clear-btn" iconClassName="material-icons" tooltip="移除" onTouchTap={this.onClear}>clear</IconButton>
                     </div>
                     <Dropzone className="tb-dropzone"
                               onDrop={this.onDrop}
                               multiple={false}
                               accept="image/*">
-                        <div>Drop an image or click to select a file to upload.</div>
+                        <div>拖一个图标文件到这里或单击此处以选择要上传的文件。</div>
                     </Dropzone>
                 </div>
             </div>
