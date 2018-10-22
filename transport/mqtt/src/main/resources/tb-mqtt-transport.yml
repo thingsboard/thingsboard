@@ -25,7 +25,7 @@ transport:
     adaptor: "${MQTT_ADAPTOR_NAME:JsonMqttAdaptor}"
     timeout: "${MQTT_TIMEOUT:10000}"
     netty:
-      leak_detector_level: "${NETTY_LEASK_DETECTOR_LVL:DISABLED}"
+      leak_detector_level: "${NETTY_LEAK_DETECTOR_LVL:DISABLED}"
       boss_group_thread_count: "${NETTY_BOSS_GROUP_THREADS:1}"
       worker_group_thread_count: "${NETTY_WORKER_GROUP_THREADS:12}"
       max_payload_size: "${NETTY_MAX_PAYLOAD_SIZE:65536}"
@@ -43,6 +43,13 @@ transport:
       key_password: "${MQTT_SSL_KEY_PASSWORD:server_key_password}"
       # Type of the key store
       key_store_type: "${MQTT_SSL_KEY_STORE_TYPE:JKS}"
+  sessions:
+    max_per_tenant: "${TB_TRANSPORT_SESSIONS_MAX_PER_TENANT:1000}"
+    max_per_device: "${TB_TRANSPORT_SESSIONS_MAX_PER_DEVICE:2}"
+  rate_limits:
+    enabled: "${TB_TRANSPORT_RATE_LIMITS_ENABLED:false}"
+    tenant: "${TB_TRANSPORT_RATE_LIMITS_TENANT:1000:1,20000:60}"
+    device: "${TB_TRANSPORT_RATE_LIMITS_DEVICE:10:1,300:60}"
 
 #Quota parameters
 quota:

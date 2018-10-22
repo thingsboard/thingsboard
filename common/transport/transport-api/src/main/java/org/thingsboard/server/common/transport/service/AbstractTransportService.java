@@ -16,8 +16,13 @@
 package org.thingsboard.server.common.transport.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportService;
+import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.UUID;
@@ -36,9 +41,20 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public abstract class AbstractTransportService implements TransportService {
 
+    @Value("${transport.rate_limits.enabled}")
+    private boolean rateLimitEnabled;
+    @Value("${transport.rate_limits.tenant}")
+    private String perTenantLimitsConf;
+    @Value("${transport.rate_limits.tenant}")
+    private String perDevicesLimitsConf;
+
     protected ScheduledExecutorService schedulerExecutor;
     protected ExecutorService transportCallbackExecutor;
-    protected ConcurrentMap<UUID, SessionMetaData> sessions = new ConcurrentHashMap<>();
+    private ConcurrentMap<UUID, SessionMetaData> sessions = new ConcurrentHashMap<>();
+
+    //TODO: Implement cleanup of this maps.
+    private ConcurrentMap<TenantId, TbTransportRateLimits> perTenantLimits = new ConcurrentHashMap<>();
+    private ConcurrentMap<DeviceId, TbTransportRateLimits> perDeviceLimits = new ConcurrentHashMap<>();
 
     @Override
     public void registerAsyncSession(TransportProtos.SessionInfoProto sessionInfo, SessionMsgListener listener) {
@@ -53,12 +69,35 @@ public abstract class AbstractTransportService implements TransportService {
             listener.onRemoteSessionCloseCommand(TransportProtos.SessionCloseNotificationProto.getDefaultInstance());
             deregisterSession(sessionInfo);
         }, timeout, TimeUnit.MILLISECONDS);
-
     }
 
     @Override
     public void deregisterSession(TransportProtos.SessionInfoProto sessionInfo) {
         sessions.remove(toId(sessionInfo));
+    }
+
+    @Override
+    public boolean checkLimits(TransportProtos.SessionInfoProto sessionInfo, TransportServiceCallback<Void> callback) {
+        if (!rateLimitEnabled) {
+            return true;
+        }
+        TenantId tenantId = new TenantId(new UUID(sessionInfo.getTenantIdMSB(), sessionInfo.getTenantIdLSB()));
+        TbTransportRateLimits rateLimits = perTenantLimits.computeIfAbsent(tenantId, id -> new TbTransportRateLimits(perTenantLimitsConf));
+        if (!rateLimits.tryConsume()) {
+            if (callback != null) {
+                callback.onError(new TbRateLimitsException(EntityType.TENANT));
+            }
+            return false;
+        }
+        DeviceId deviceId = new DeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
+        rateLimits = perDeviceLimits.computeIfAbsent(deviceId, id -> new TbTransportRateLimits(perDevicesLimitsConf));
+        if (!rateLimits.tryConsume()) {
+            if (callback != null) {
+                callback.onError(new TbRateLimitsException(EntityType.DEVICE));
+            }
+            return false;
+        }
+        return true;
     }
 
     protected void processToTransportMsg(TransportProtos.DeviceActorToTransportMsg toSessionMsg) {
@@ -101,11 +140,20 @@ public abstract class AbstractTransportService implements TransportService {
     }
 
     public void init() {
+        if (rateLimitEnabled) {
+            //Just checking the configuration parameters
+            new TbTransportRateLimits(perTenantLimitsConf);
+            new TbTransportRateLimits(perDevicesLimitsConf);
+        }
         this.schedulerExecutor = Executors.newSingleThreadScheduledExecutor();
         this.transportCallbackExecutor = new ThreadPoolExecutor(0, 20, 60L, TimeUnit.SECONDS, new SynchronousQueue<>());
     }
 
     public void destroy() {
+        if (rateLimitEnabled) {
+            perTenantLimits.clear();
+            perDeviceLimits.clear();
+        }
         if (schedulerExecutor != null) {
             schedulerExecutor.shutdownNow();
         }

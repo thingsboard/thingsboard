@@ -444,7 +444,7 @@ transport:
     bind_port: "${MQTT_BIND_PORT:1883}"
     timeout: "${MQTT_TIMEOUT:10000}"
     netty:
-      leak_detector_level: "${NETTY_LEASK_DETECTOR_LVL:DISABLED}"
+      leak_detector_level: "${NETTY_LEAK_DETECTOR_LVL:DISABLED}"
       boss_group_thread_count: "${NETTY_BOSS_GROUP_THREADS:1}"
       worker_group_thread_count: "${NETTY_WORKER_GROUP_THREADS:12}"
       max_payload_size: "${NETTY_MAX_PAYLOAD_SIZE:65536}"

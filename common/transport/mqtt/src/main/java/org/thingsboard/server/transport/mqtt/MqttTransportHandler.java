@@ -249,7 +249,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             @Override
             public void onError(Throwable e) {
                 log.trace("[{}] Failed to publish msg: {}", sessionId, msg, e);
-                ctx.close();
+                processDisconnect(ctx);
             }
         };
     }

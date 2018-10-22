@@ -82,6 +82,7 @@
         <elasticsearch.version>5.0.2</elasticsearch.version>
         <delight-nashorn-sandbox.version>0.1.14</delight-nashorn-sandbox.version>
         <kafka.version>2.0.0</kafka.version>
+        <bucket4j.version>4.1.1</bucket4j.version>
     </properties>
 
     <modules>
@@ -777,6 +778,11 @@
                 <groupId>org.javadelight</groupId>
                 <artifactId>delight-nashorn-sandbox</artifactId>
                 <version>${delight-nashorn-sandbox.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.vladimir-bukhtoyarov</groupId>
+                <artifactId>bucket4j-core</artifactId>
+                <version>${bucket4j.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
