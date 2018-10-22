@@ -66,7 +66,7 @@
         <paho.client.version>1.1.0</paho.client.version>
         <netty.version>4.1.22.Final</netty.version>
         <os-maven-plugin.version>1.5.0</os-maven-plugin.version>
-        <rabbitmq.version>3.6.5</rabbitmq.version>
+        <rabbitmq.version>4.8.0</rabbitmq.version>
         <surfire.version>2.19.1</surfire.version>
         <jar-plugin.version>3.0.2</jar-plugin.version>
         <springfox-swagger.version>2.6.1</springfox-swagger.version>

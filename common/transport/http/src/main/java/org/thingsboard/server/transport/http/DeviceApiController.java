@@ -75,9 +75,6 @@ public class DeviceApiController {
                                                               @RequestParam(value = "sharedKeys", required = false, defaultValue = "") String sharedKeys,
                                                               HttpServletRequest httpRequest) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
-        if (quotaExceeded(httpRequest, responseWriter)) {
-            return responseWriter;
-        }
         transportContext.getTransportService().process(ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
                     GetAttributeRequestMsg.Builder request = GetAttributeRequestMsg.newBuilder().setRequestId(0);
@@ -100,9 +97,6 @@ public class DeviceApiController {
     public DeferredResult<ResponseEntity> postDeviceAttributes(@PathVariable("deviceToken") String deviceToken,
                                                                @RequestBody String json, HttpServletRequest request) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
-        if (quotaExceeded(request, responseWriter)) {
-            return responseWriter;
-        }
         transportContext.getTransportService().process(ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
                     TransportService transportService = transportContext.getTransportService();
@@ -116,9 +110,6 @@ public class DeviceApiController {
     public DeferredResult<ResponseEntity> postTelemetry(@PathVariable("deviceToken") String deviceToken,
                                                         @RequestBody String json, HttpServletRequest request) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<ResponseEntity>();
-        if (quotaExceeded(request, responseWriter)) {
-            return responseWriter;
-        }
         transportContext.getTransportService().process(ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
                     TransportService transportService = transportContext.getTransportService();
@@ -133,9 +124,6 @@ public class DeviceApiController {
                                                               @RequestParam(value = "timeout", required = false, defaultValue = "0") long timeout,
                                                               HttpServletRequest httpRequest) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
-        if (quotaExceeded(httpRequest, responseWriter)) {
-            return responseWriter;
-        }
         transportContext.getTransportService().process(ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
                     TransportService transportService = transportContext.getTransportService();
@@ -153,9 +141,6 @@ public class DeviceApiController {
                                                          @PathVariable("requestId") Integer requestId,
                                                          @RequestBody String json, HttpServletRequest request) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<ResponseEntity>();
-        if (quotaExceeded(request, responseWriter)) {
-            return responseWriter;
-        }
         transportContext.getTransportService().process(ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
                     TransportService transportService = transportContext.getTransportService();
@@ -168,9 +153,6 @@ public class DeviceApiController {
     public DeferredResult<ResponseEntity> postRpcRequest(@PathVariable("deviceToken") String deviceToken,
                                                          @RequestBody String json, HttpServletRequest httpRequest) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<ResponseEntity>();
-        if (quotaExceeded(httpRequest, responseWriter)) {
-            return responseWriter;
-        }
         transportContext.getTransportService().process(ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
                     JsonObject request = new JsonParser().parse(json).getAsJsonObject();
@@ -189,9 +171,6 @@ public class DeviceApiController {
                                                                 @RequestParam(value = "timeout", required = false, defaultValue = "0") long timeout,
                                                                 HttpServletRequest httpRequest) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
-        if (quotaExceeded(httpRequest, responseWriter)) {
-            return responseWriter;
-        }
         transportContext.getTransportService().process(ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
                     TransportService transportService = transportContext.getTransportService();
@@ -202,16 +181,6 @@ public class DeviceApiController {
 
                 }));
         return responseWriter;
-    }
-
-    private boolean quotaExceeded(HttpServletRequest request, DeferredResult<ResponseEntity> responseWriter) {
-        if (transportContext.getQuotaService().isQuotaExceeded(request.getRemoteAddr())) {
-            log.warn("REST Quota exceeded for [{}] . Disconnect", request.getRemoteAddr());
-            responseWriter.setResult(new ResponseEntity<>(HttpStatus.BANDWIDTH_LIMIT_EXCEEDED));
-            return true;
-        } else {
-            return false;
-        }
     }
 
     private static class DeviceAuthCallback implements TransportServiceCallback<ValidateDeviceCredentialsResponseMsg> {

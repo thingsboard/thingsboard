@@ -72,12 +72,6 @@ public class CoapTransportResource extends CoapResource {
 
     @Override
     public void handleGET(CoapExchange exchange) {
-        if (transportContext.getQuotaService().isQuotaExceeded(exchange.getSourceAddress().getHostAddress())) {
-            log.warn("CoAP Quota exceeded for [{}:{}] . Disconnect", exchange.getSourceAddress().getHostAddress(), exchange.getSourcePort());
-            exchange.respond(ResponseCode.BAD_REQUEST);
-            return;
-        }
-
         Optional<FeatureType> featureType = getFeatureType(exchange.advanced().getRequest());
         if (!featureType.isPresent()) {
             log.trace("Missing feature type parameter");
@@ -108,12 +102,6 @@ public class CoapTransportResource extends CoapResource {
 
     @Override
     public void handlePOST(CoapExchange exchange) {
-        if (transportContext.getQuotaService().isQuotaExceeded(exchange.getSourceAddress().getHostAddress())) {
-            log.warn("CoAP Quota exceeded for [{}:{}] . Disconnect", exchange.getSourceAddress().getHostAddress(), exchange.getSourcePort());
-            exchange.respond(ResponseCode.BAD_REQUEST);
-            return;
-        }
-
         Optional<FeatureType> featureType = getFeatureType(exchange.advanced().getRequest());
         if (!featureType.isPresent()) {
             log.trace("Missing feature type parameter");

@@ -24,27 +24,10 @@ server:
 transport:
   http:
     request_timeout: "${HTTP_REQUEST_TIMEOUT:60000}"
-
-#Quota parameters
-quota:
-  host:
-    # Max allowed number of API requests in interval for single host
-    limit: "${QUOTA_HOST_LIMIT:10000}"
-    # Interval duration
-    intervalMs: "${QUOTA_HOST_INTERVAL_MS:60000}"
-    # Maximum silence duration for host after which Host removed from QuotaService. Must be bigger than intervalMs
-    ttlMs: "${QUOTA_HOST_TTL_MS:60000}"
-    # Interval for scheduled task that cleans expired records. TTL is used for expiring
-    cleanPeriodMs: "${QUOTA_HOST_CLEAN_PERIOD_MS:300000}"
-    # Enable Host API Limits
-    enabled: "${QUOTA_HOST_ENABLED:true}"
-    # Array of whitelist hosts
-    whitelist: "${QUOTA_HOST_WHITELIST:localhost,127.0.0.1}"
-    # Array of blacklist hosts
-    blacklist: "${QUOTA_HOST_BLACKLIST:}"
-    log:
-      topSize: 10
-      intervalMin: 2
+  rate_limits:
+    enabled: "${TB_TRANSPORT_RATE_LIMITS_ENABLED:false}"
+    tenant: "${TB_TRANSPORT_RATE_LIMITS_TENANT:1000:1,20000:60}"
+    device: "${TB_TRANSPORT_RATE_LIMITS_DEVICE:10:1,300:60}"
 
 kafka:
   enabled: true

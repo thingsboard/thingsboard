@@ -28,7 +28,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.common.transport.TransportService;
-import org.thingsboard.server.common.transport.quota.host.HostRequestsQuotaService;
 import org.thingsboard.server.kafka.TbNodeIdProvider;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 
