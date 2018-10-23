@@ -329,9 +329,11 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         Set<String> expectedActualAttributesSet =
                 new HashSet<>(Arrays.asList("caKey1", "caKey2", "caKey3", "caKey4"));
         assertTrue(actualAttributesSet.containsAll(expectedActualAttributesSet));
-        Thread.sleep(1000);
 
         EntityView savedView = getNewSavedEntityView("Test entity view");
+
+        Thread.sleep(1000);
+
         List<Map<String, Object>> values = doGetAsync("/api/plugins/telemetry/ENTITY_VIEW/" + savedView.getId().getId().toString() +
                 "/values/attributes?keys=" + String.join(",", actualAttributesSet), List.class);
 
@@ -348,7 +350,6 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
 
         Set<String> expectedActualAttributesSet = new HashSet<>(Arrays.asList("caKey1", "caKey2", "caKey3", "caKey4"));
         assertTrue(actualAttributesSet.containsAll(expectedActualAttributesSet));
-        Thread.sleep(1000);
 
         List<Map<String, Object>> valueTelemetryOfDevices = doGetAsync("/api/plugins/telemetry/DEVICE/" + testDevice.getId().getId().toString() +
                 "/values/attributes?keys=" + String.join(",", actualAttributesSet), List.class);
@@ -362,6 +363,8 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         view.setStartTimeMs((long) getValue(valueTelemetryOfDevices, "lastActivityTime") * 10);
         view.setEndTimeMs((long) getValue(valueTelemetryOfDevices, "lastActivityTime") / 10);
         EntityView savedView = doPost("/api/entityView", view, EntityView.class);
+
+        Thread.sleep(1000);
 
         List<Map<String, Object>> values = doGetAsync("/api/plugins/telemetry/ENTITY_VIEW/" + savedView.getId().getId().toString() +
                 "/values/attributes?keys=" + String.join(",", actualAttributesSet), List.class);
