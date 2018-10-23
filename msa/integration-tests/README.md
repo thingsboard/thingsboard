@@ -15,4 +15,4 @@ As result, in REPOSITORY column, next images should be present:
 
 - Run the integration tests in the [msa/integration-tests](../integration-tests) directory:
 
-        mvn clean install -Dintegrationtests.skip=false
+        mvn clean install -DintegrationTests.skip=false

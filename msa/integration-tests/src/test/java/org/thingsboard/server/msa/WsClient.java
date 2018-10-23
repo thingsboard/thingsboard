@@ -19,16 +19,12 @@ import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 
 import java.net.URI;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 
 public class WsClient extends WebSocketClient {
-    private final BlockingQueue<String> events;
     private String message;
 
     public WsClient(URI serverUri) {
         super(serverUri);
-        events = new ArrayBlockingQueue<>(100);
     }
 
     @Override
@@ -37,13 +33,11 @@ public class WsClient extends WebSocketClient {
 
     @Override
     public void onMessage(String message) {
-        events.add(message);
         this.message = message;
     }
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
-        events.clear();
     }
 
     @Override

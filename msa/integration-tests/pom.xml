@@ -34,9 +34,10 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <main.dir>${basedir}/../..</main.dir>
-        <integrationtests.skip>true</integrationtests.skip>
+        <integrationTests.skip>true</integrationTests.skip>
         <testcontainers.version>1.9.1</testcontainers.version>
         <java-websocket.version>1.3.9</java-websocket.version>
+        <httpclient.version>4.5.6</httpclient.version>
     </properties>
 
     <dependencies>
@@ -49,6 +50,11 @@
             <groupId>org.java-websocket</groupId>
             <artifactId>Java-WebSocket</artifactId>
             <version>${java-websocket.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>${httpclient.version}</version>
         </dependency>
         <dependency>
             <groupId>io.takari.junit</groupId>
@@ -89,7 +95,7 @@
                     <includes>
                         <include>**/*TestSuite.java</include>
                     </includes>
-                    <skipTests>${integrationtests.skip}</skipTests>
+                    <skipTests>${integrationTests.skip}</skipTests>
                 </configuration>
             </plugin>
         </plugins>

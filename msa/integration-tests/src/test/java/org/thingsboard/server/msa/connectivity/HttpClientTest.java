@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.msa.connectivity;
 
+import com.google.common.collect.Sets;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +23,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.msa.AbstractContainerTest;
 import org.thingsboard.server.msa.WsClient;
-import org.thingsboard.server.msa.WsTelemetryResponse;
+import org.thingsboard.server.msa.mapper.WsTelemetryResponse;
 
 import java.util.concurrent.TimeUnit;
 
@@ -35,23 +36,24 @@ public class HttpClientTest extends AbstractContainerTest {
         Device device = createDevice("http_");
         DeviceCredentials deviceCredentials = restClient.getCredentials(device.getId());
 
-        WsClient mWs = subscribeToTelemetryWebSocket(device.getId());
+        WsClient wsClient = subscribeToWebSocket(device.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
         ResponseEntity deviceTelemetryResponse = restClient.getRestTemplate()
-                .postForEntity(httpUrl + "/api/v1/{credentialsId}/telemetry",
+                .postForEntity(HTTPS_URL + "/api/v1/{credentialsId}/telemetry",
                         mapper.readTree(createPayload().toString()),
                         ResponseEntity.class,
                         deviceCredentials.getCredentialsId());
         Assert.assertTrue(deviceTelemetryResponse.getStatusCode().is2xxSuccessful());
         TimeUnit.SECONDS.sleep(1);
-        WsTelemetryResponse actualLatestTelemetry = mapper.readValue(mWs.getLastMessage(), WsTelemetryResponse.class);
+        WsTelemetryResponse actualLatestTelemetry = mapper.readValue(wsClient.getLastMessage(), WsTelemetryResponse.class);
 
-        Assert.assertEquals(getExpectedLatestValues(123456789L).keySet(), actualLatestTelemetry.getLatestValues().keySet());
+        Assert.assertEquals(Sets.newHashSet("booleanKey", "stringKey", "doubleKey", "longKey"),
+                actualLatestTelemetry.getLatestValues().keySet());
 
         Assert.assertTrue(verify(actualLatestTelemetry, "booleanKey", Boolean.TRUE.toString()));
         Assert.assertTrue(verify(actualLatestTelemetry, "stringKey", "value1"));
         Assert.assertTrue(verify(actualLatestTelemetry, "doubleKey", Double.toString(42.0)));
         Assert.assertTrue(verify(actualLatestTelemetry, "longKey", Long.toString(73)));
 
-        restClient.getRestTemplate().delete(httpUrl + "/api/device/" + device.getId());
+        restClient.getRestTemplate().delete(HTTPS_URL + "/api/device/" + device.getId());
     }
 }

@@ -26,12 +26,11 @@ import java.io.File;
 @RunWith(ClasspathSuite.class)
 @ClasspathSuite.ClassnameFilters({"org.thingsboard.server.msa.*"})
 public class ContainerTestSuite {
-    static final int EXPOSED_PORT = 8080;
 
     @ClassRule
     public static DockerComposeContainer composeContainer = new DockerComposeContainer(new File("./../docker/docker-compose.yml"))
             .withPull(false)
             .withLocalCompose(true)
             .withTailChildContainers(true)
-            .withExposedService("tb-web-ui1", EXPOSED_PORT, Wait.forHttp("/login"));
+            .withExposedService("tb-web-ui1", 8080, Wait.forHttp("/login"));
 }
