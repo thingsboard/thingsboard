@@ -27,7 +27,7 @@
       "descriptor": {
         "type": "latest",
         "sizeX": 7.5,
-        "sizeY": 4.5,
+        "sizeY": 6.5,
         "resources": [],
         "templateHtml": "<tb-entities-table-widget \n    table-id=\"tableId\"\n    ctx=\"ctx\">\n</tb-entities-table-widget>",
         "templateCss": "",
