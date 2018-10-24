@@ -58,11 +58,11 @@ $ docker start mytb
 
 In order to update to the latest image, execute the following commands:
 
-`
+```
 $ docker pull thingsboard/tb
 $ docker stop mytb
 $ docker run -it -v ~/.mytb-data:/data --rm thingsboard/tb upgrade-tb.sh
 $ docker start mytb
-` 
+```
 
 **NOTE**: replace host's directory `~/.mytb-data` with directory used during container creation. 
