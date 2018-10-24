@@ -1,5 +1,0 @@
-haproxy/certs.d/**
-haproxy/letsencrypt/**
-tb-node/log/**
-tb-node/db/**
-!.env
