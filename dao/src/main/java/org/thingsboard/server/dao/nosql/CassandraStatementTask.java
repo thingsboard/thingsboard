@@ -18,7 +18,7 @@ package org.thingsboard.server.dao.nosql;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.Statement;
 import lombok.Data;
-import org.thingsboard.server.dao.nosql.tmp.AsyncTask;
+import org.thingsboard.server.dao.util.AsyncTask;
 
 /**
  * Created by ashvayka on 24.10.18.

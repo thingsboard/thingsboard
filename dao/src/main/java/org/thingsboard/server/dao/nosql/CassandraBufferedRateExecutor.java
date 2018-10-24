@@ -22,8 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.dao.nosql.tmp.AbstractBufferedRateExecutor;
-import org.thingsboard.server.dao.nosql.tmp.AsyncTaskContext;
+import org.thingsboard.server.dao.util.AbstractBufferedRateExecutor;
+import org.thingsboard.server.dao.util.AsyncTaskContext;
 import org.thingsboard.server.dao.util.NoSqlAnyDao;
 
 import javax.annotation.PreDestroy;

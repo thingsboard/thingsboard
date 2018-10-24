@@ -13,22 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.nosql.tmp;
-
-import com.google.common.util.concurrent.SettableFuture;
-import lombok.Data;
-
-import java.util.UUID;
+package org.thingsboard.server.dao.util;
 
 /**
  * Created by ashvayka on 24.10.18.
  */
-@Data
-public class AsyncTaskContext<T extends AsyncTask, V> {
-
-    private final UUID id;
-    private final T task;
-    private final SettableFuture<V> future;
-    private final long createTime;
-
+public interface AsyncTask {
 }
