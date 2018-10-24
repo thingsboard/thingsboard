@@ -1,0 +1,7 @@
+haproxy/certs.d/**
+haproxy/letsencrypt/**
+tb-node/log/**
+tb-node/db/**
+tb-node/postgres/**
+tb-node/cassandra/**
+!.env

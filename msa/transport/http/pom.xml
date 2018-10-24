@@ -111,19 +111,72 @@
                         <goals>
                             <goal>build</goal>
                         </goals>
+                        <configuration>
+                            <skip>${dockerfile.skip}</skip>
+                            <repository>${docker.repo}/${docker.name}</repository>
+                            <verbose>true</verbose>
+                            <googleContainerRegistryEnabled>false</googleContainerRegistryEnabled>
+                            <contextDirectory>${project.build.directory}</contextDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>tag-docker-image</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>tag</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${dockerfile.skip}</skip>
+                            <repository>${docker.repo}/${docker.name}</repository>
+                            <tag>${project.version}</tag>
+                        </configuration>
                     </execution>
                 </executions>
-                <configuration>
-                    <skip>${dockerfile.skip}</skip>
-                    <repository>${docker.repo}/${docker.name}</repository>
-                    <tag>${project.version}</tag>
-                    <verbose>true</verbose>
-                    <googleContainerRegistryEnabled>false</googleContainerRegistryEnabled>
-                    <contextDirectory>${project.build.directory}</contextDirectory>
-                </configuration>
             </plugin>
         </plugins>
     </build>
+    <profiles>
+        <profile>
+            <id>push-docker-image</id>
+            <activation>
+                <property>
+                    <name>push-docker-image</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.spotify</groupId>
+                        <artifactId>dockerfile-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>push-latest-docker-image</id>
+                                <phase>pre-integration-test</phase>
+                                <goals>
+                                    <goal>push</goal>
+                                </goals>
+                                <configuration>
+                                    <tag>latest</tag>
+                                    <repository>${docker.repo}/${docker.name}</repository>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>push-version-docker-image</id>
+                                <phase>pre-integration-test</phase>
+                                <goals>
+                                    <goal>push</goal>
+                                </goals>
+                                <configuration>
+                                    <tag>${project.version}</tag>
+                                    <repository>${docker.repo}/${docker.name}</repository>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
     <repositories>
         <repository>
             <id>jenkins</id>

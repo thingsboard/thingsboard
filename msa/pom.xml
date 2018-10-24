@@ -32,11 +32,12 @@
 
     <properties>
         <main.dir>${basedir}/..</main.dir>
-        <docker.repo>local-maven-build</docker.repo>
+        <docker.repo>thingsboard</docker.repo>
         <dockerfile.skip>true</dockerfile.skip>
     </properties>
 
     <modules>
+        <module>tb</module>
         <module>js-executor</module>
         <module>web-ui</module>
         <module>tb-node</module>
