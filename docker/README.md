@@ -45,9 +45,11 @@ In case when database upgrade is needed, execute the following commands:
 `
 $ ./docker-stop-services.sh
 `
+
 `
 $ ./docker-upgrade-tb.sh --fromVersion=[FROM_VERSION]
 `
+
 `
 $ ./docker-start-services.sh
 `
