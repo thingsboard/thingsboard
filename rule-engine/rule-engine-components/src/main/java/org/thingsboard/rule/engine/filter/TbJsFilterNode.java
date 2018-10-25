@@ -26,14 +26,14 @@ import static org.thingsboard.rule.engine.api.util.DonAsynchron.withCallback;
 @Slf4j
 @RuleNode(
         type = ComponentType.FILTER,
-        name = "script", relationTypes = {"True", "False"},
+        name = "脚本", relationTypes = {"True", "False"},
         configClazz = TbJsFilterNodeConfiguration.class,
-        nodeDescription = "Filter incoming messages using JS script",
-        nodeDetails = "Evaluate incoming Message with configured JS condition. " +
-                "If <b>True</b> - send Message via <b>True</b> chain, otherwise <b>False</b> chain is used." +
-                "Message payload can be accessed via <code>msg</code> property. For example <code>msg.temperature < 10;</code><br/>" +
-                "Message metadata can be accessed via <code>metadata</code> property. For example <code>metadata.customerName === 'John';</code><br/>" +
-                "Message type can be accessed via <code>msgType</code> property.",
+        nodeDescription = "使用JS脚本过滤传入的消息",
+        nodeDetails = "使用配置的JS条件评估传入的消息。" +
+                "如果是<b>True</b> - 通过<b>True</b>链发送消息，否则使用<b>False</b>链。" +
+                "可以通过<code>msg</code>属性来访问消息的有效负载，例如<code>msg.temperature < 10;</code><br/>" +
+                "可以通过<code>metadata</code>属性来访问消息的元数据，例如<code>metadata.customerName === 'John';</code><br/>" +
+                "可以通过<code>msgType</code>属性来访问消息类型。",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbFilterNodeScriptConfig")
 

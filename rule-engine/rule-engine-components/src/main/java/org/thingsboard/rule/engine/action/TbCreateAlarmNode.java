@@ -34,15 +34,15 @@ import org.thingsboard.server.common.msg.TbMsg;
 @Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
-        name = "create alarm", relationTypes = {"Created", "Updated", "False"},
+        name = "生成告警", relationTypes = {"Created", "Updated", "False"},
         configClazz = TbCreateAlarmNodeConfiguration.class,
-        nodeDescription = "Create or Update Alarm",
+        nodeDescription = "生成或更新告警",
         nodeDetails =
-                "Details - JS function that creates JSON object based on incoming message. This object will be added into Alarm.details field.\n" +
-                "Node output:\n" +
-                "If alarm was not created, original message is returned. Otherwise new Message returned with type 'ALARM', Alarm object in 'msg' property and 'matadata' will contains one of those properties 'isNewAlarm/isExistingAlarm'. " +
-                "Message payload can be accessed via <code>msg</code> property. For example <code>'temperature = ' + msg.temperature ;</code>. " +
-                "Message metadata can be accessed via <code>metadata</code> property. For example <code>'name = ' + metadata.customerName;</code>.",
+                "详情 - 根据传入消息创建JSON对象的JS函数，JSON对象将被添加到Alarm.details字段。\n" +
+                "节点输出：\n" +
+                "如果未创建告警，则返回原始消息；否则将返回类型为'ALARM'的新消息。Alarm对象的'msg'属性和'matadata'将包含'isNewAlarm/isExistingAlarm'属性中的一个。" +
+                "可以通过<code>msg</code>属性来访问消息的有效负载，例如<code>'temperature = ' + msg.temperature ;</code>。" +
+                "可以通过<code>metadata</code>属性访问消息的元数据，例如<code>'name = ' + metadata.customerName;</code>。",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeCreateAlarmConfig",
         icon = "notifications_active"

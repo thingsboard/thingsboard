@@ -25,11 +25,11 @@ import org.thingsboard.server.common.msg.TbMsg;
 @Slf4j
 @RuleNode(
         type = ComponentType.FILTER,
-        name = "originator type",
+        name = "发起者类型",
         configClazz = TbOriginatorTypeFilterNodeConfiguration.class,
         relationTypes = {"True", "False"},
-        nodeDescription = "Filter incoming messages by message Originator Type",
-        nodeDetails = "If Originator Type of incoming message is expected - send Message via <b>True</b> chain, otherwise <b>False</b> chain is used.",
+        nodeDescription = "根据消息的发起者类型过滤传入的消息",
+        nodeDetails = "如果是期望的传入消息发起者类型 - 通过<b>True</b>链发送消息，否则使用<b>False</b>链。",
         uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
         configDirective = "tbFilterNodeOriginatorTypeConfig")
 public class TbOriginatorTypeFilterNode implements TbNode {

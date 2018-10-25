@@ -31,13 +31,13 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
  */
 @Slf4j
 @RuleNode(type = ComponentType.ENRICHMENT,
-          name = "originator attributes",
+          name = "发起者属性",
           configClazz = TbGetAttributesNodeConfiguration.class,
-          nodeDescription = "Add Message Originator Attributes or Latest Telemetry into Message Metadata",
-          nodeDetails = "If Attributes enrichment configured, <b>CLIENT/SHARED/SERVER</b> attributes are added into Message metadata " +
-                "with specific prefix: <i>cs/shared/ss</i>. Latest telemetry value added into metadata without prefix. " +
-                  "To access those attributes in other nodes this template can be used " +
-                "<code>metadata.cs_temperature</code> or <code>metadata.shared_limit</code> ",
+          nodeDescription = "将消息的发起者属性或最新的遥测数据添加到消息的元数据",
+          nodeDetails = "如果配置了属性丰富，则<b>CLIENT/SHARED/SERVER</b>属性将被添加到具有特定前缀的消息元数据中：" +
+                "<i>cs/shared/ss</i>。最新的遥测值将被添加到没有前缀的元数据中。" +
+                  "要访问其他节点中的这些属性，可以使用此模板" +
+                "<code>metadata.cs_temperature</code>或<code>metadata.shared_limit</code> ",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeOriginatorAttributesConfig")
 public class TbGetAttributesNode extends TbAbstractGetAttributesNode<TbGetAttributesNodeConfiguration, EntityId> {

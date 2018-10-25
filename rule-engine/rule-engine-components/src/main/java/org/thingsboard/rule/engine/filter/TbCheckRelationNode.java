@@ -40,11 +40,11 @@ import static org.thingsboard.rule.engine.api.util.DonAsynchron.withCallback;
 @Slf4j
 @RuleNode(
         type = ComponentType.FILTER,
-        name = "check relation",
+        name = "检查关系",
         configClazz = TbCheckRelationNodeConfiguration.class,
         relationTypes = {"True", "False"},
-        nodeDescription = "Checks the relation from the selected entity to originator of the message by type and direction",
-        nodeDetails = "If relation exists - send Message via <b>True</b> chain, otherwise <b>False</b> chain is used.",
+        nodeDescription = "按类型和方向检查所选实体与消息发起者之间的关系",
+        nodeDetails = "如果存在关系- 通过<b>True</b>连发送消息, 否则使用<b>False</b>链。",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbFilterNodeCheckRelationConfig")
 public class TbCheckRelationNode implements TbNode {

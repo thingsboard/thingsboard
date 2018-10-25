@@ -32,15 +32,15 @@ import org.thingsboard.server.common.msg.TbMsg;
 @Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
-        name = "clear alarm", relationTypes = {"Cleared", "False"},
+        name = "清除告警", relationTypes = {"Cleared", "False"},
         configClazz = TbClearAlarmNodeConfiguration.class,
-        nodeDescription = "Clear Alarm",
+        nodeDescription = "清除告警",
         nodeDetails =
-                "Details - JS function that creates JSON object based on incoming message. This object will be added into Alarm.details field.\n" +
-                        "Node output:\n" +
-                        "If alarm was not cleared, original message is returned. Otherwise new Message returned with type 'ALARM', Alarm object in 'msg' property and 'matadata' will contains 'isClearedAlarm' property. " +
-                        "Message payload can be accessed via <code>msg</code> property. For example <code>'temperature = ' + msg.temperature ;</code>. " +
-                        "Message metadata can be accessed via <code>metadata</code> property. For example <code>'name = ' + metadata.customerName;</code>.",
+                "详情 - 这是一个根据传入消息创建JSON对象的JS函数。JSON对象将被添加到Alarm.details字段。\n" +
+                        "节点输出：\n" +
+                        "如果告警未被清除，则返回原始消息；否则返回类型为'ALARM'的新消息。'msg'属性里面的Alarm对象和'matadata'将包含'isClearedAlarm'属性。" +
+                        "可以通过<code>msg</code>属性来访问消息的有效负载，例如<code>'temperature = ' + msg.temperature ;</code>。" +
+                        "可以通过<code>metadata</code>属性来访问消息的元数据，例如<code>'name = ' + metadata.customerName;</code>。",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeClearAlarmConfig",
         icon = "notifications_off"

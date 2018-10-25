@@ -35,10 +35,10 @@ import java.util.Set;
 @Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
-        name = "save attributes",
+        name = "保存属性",
         configClazz = TbMsgAttributesNodeConfiguration.class,
-        nodeDescription = "Saves attributes data",
-        nodeDetails = "Saves entity attributes based on configurable scope parameter. Expects messages with 'POST_ATTRIBUTES_REQUEST' message type",
+        nodeDescription = "保存属性数据",
+        nodeDetails = "基于可配置范围参数保存实体属性。期望使用'POST_ATTRIBUTES_REQUEST'消息类型的消息。",
         uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
         configDirective = "tbActionNodeAttributesConfig",
         icon = "file_upload"

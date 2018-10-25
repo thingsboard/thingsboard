@@ -517,12 +517,12 @@ export default angular.module('thingsboard.types', [])
             ruleNodeTypeComponentTypes: ["FILTER", "ENRICHMENT", "TRANSFORMATION", "ACTION", "EXTERNAL"],
             ruleChainNodeComponent: {
                 type: 'RULE_CHAIN',
-                name: 'rule chain',
+                name: '规则链',
                 clazz: 'tb.internal.RuleChain',
                 configurationDescriptor: {
                     nodeDefinition: {
                         description: "",
-                        details: "Forwards incoming messages to specified Rule Chain",
+                        details: "将传入的消息转发到指定的规则链",
                         inEnabled: true,
                         outEnabled: false,
                         relationTypes: [],

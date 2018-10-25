@@ -25,13 +25,13 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 
 @RuleNode(
         type = ComponentType.ENRICHMENT,
-        name="customer attributes",
+        name="客户属性",
         configClazz = TbGetEntityAttrNodeConfiguration.class,
-        nodeDescription = "Add Originators Customer Attributes or Latest Telemetry into Message Metadata",
-        nodeDetails = "If Attributes enrichment configured, server scope attributes are added into Message metadata. " +
-                "If Latest Telemetry enrichment configured, latest telemetry added into metadata. " +
-                "To access those attributes in other nodes this template can be used " +
-                "<code>metadata.temperature</code>.",
+        nodeDescription = "将发起者客户属性或最新的遥测添加到消息元数据",
+        nodeDetails = "如果配置了属性丰富，则会将服务器范围属性添加到消息元数据。" +
+                "如果配置了最新遥测丰富，最新的遥测数据将会被添加到元数据。" +
+                "要在其他节点中访问这些属性，可以使用此模板" +
+                "<code>metadata.temperature</code>。",
         uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
         configDirective = "tbEnrichmentNodeCustomerAttributesConfig")
 public class TbGetCustomerAttributeNode extends TbEntityGetAttrNode<CustomerId> {

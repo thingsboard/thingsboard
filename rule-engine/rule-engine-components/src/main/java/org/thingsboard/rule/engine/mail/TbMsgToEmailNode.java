@@ -33,11 +33,11 @@ import static org.thingsboard.rule.engine.mail.TbSendEmailNode.SEND_EMAIL_TYPE;
 @Slf4j
 @RuleNode(
         type = ComponentType.TRANSFORMATION,
-        name = "to email",
+        name = "转换为邮件",
         configClazz = TbMsgToEmailNodeConfiguration.class,
-        nodeDescription = "Transforms message to email message",
-        nodeDetails = "Transforms message to email message by populating email fields using values derived from message metadata. " +
-                      "Set 'SEND_EMAIL' output message type.",
+        nodeDescription = "将消息转换为电子邮件消息",
+        nodeDetails = "通过使用从消息元数据派生的值填充电子邮件字段，将消息转换为电子邮件消息。" +
+                      "设置'SEND_EMAIL'为输出消息类型。",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbTransformationNodeToEmailConfig",
         icon = "email"
