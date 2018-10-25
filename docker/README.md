@@ -36,7 +36,7 @@ Execute the following command to start services:
 $ ./docker-start-services.sh
 ` 
 
-After a while when all services will be successfully started you can open `http://{yor-host-ip}` in you browser (for ex. `http://localhost`).
+After a while when all services will be successfully started you can open `http://{your-host-ip}` in you browser (for ex. `http://localhost`).
 You should see ThingsBoard login page.
 
 Use the following default credentials:
