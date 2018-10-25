@@ -26,15 +26,17 @@ services:
       POSTGRES_DB: thingsboard
     volumes:
       - ./tb-node/postgres:/var/lib/postgresql/data
-  tb:
-    environment:
-      DATABASE_TS_TYPE: sql
-      DATABASE_ENTITIES_TYPE: sql
-      SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.PostgreSQLDialect
-      SPRING_DRIVER_CLASS_NAME: org.postgresql.Driver
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/thingsboard
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
+  tb1:
+    env_file:
+      - tb-node.postgres.env
     depends_on:
       - kafka
+      - redis
+      - postgres
+  tb2:
+    env_file:
+      - tb-node.postgres.env
+    depends_on:
+      - kafka
+      - redis
       - postgres

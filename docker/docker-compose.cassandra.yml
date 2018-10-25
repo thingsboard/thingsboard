@@ -24,11 +24,17 @@ services:
     - "9042"
     volumes:
       - ./tb-node/cassandra:/var/lib/cassandra
-  tb:
-    environment:
-      DATABASE_TS_TYPE: cassandra
-      DATABASE_ENTITIES_TYPE: cassandra
-      CASSANDRA_URL: cassandra:9042
+  tb1:
+    env_file:
+      - tb-node.cassandra.env
     depends_on:
       - kafka
+      - redis
+      - cassandra
+  tb2:
+    env_file:
+      - tb-node.cassandra.env
+    depends_on:
+      - kafka
+      - redis
       - cassandra

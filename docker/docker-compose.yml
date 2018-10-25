@@ -20,7 +20,7 @@ version: '2.2'
 services:
   zookeeper:
     restart: always
-    image: "wurstmeister/zookeeper"
+    image: "zookeeper:3.5"
     ports:
       - "2181"
   kafka:
@@ -28,31 +28,23 @@ services:
     image: "wurstmeister/kafka"
     ports:
       - "9092:9092"
-    environment:
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_LISTENERS: INSIDE://:9093,OUTSIDE://:9092
-      KAFKA_ADVERTISED_LISTENERS: INSIDE://:9093,OUTSIDE://kafka:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
-      KAFKA_CREATE_TOPICS: "${KAFKA_TOPICS}"
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
-      KAFKA_LOG_RETENTION_BYTES: 1073741824
-      KAFKA_LOG_SEGMENT_BYTES: 268435456
-      KAFKA_LOG_RETENTION_MS: 300000
-      KAFKA_LOG_CLEANUP_POLICY: delete
+    env_file:
+      - kafka.env
     depends_on:
       - zookeeper
+  redis:
+    image: redis:4.0
+    ports:
+      - "6379"
   tb-js-executor:
     restart: always
     image: "${DOCKER_REPO}/${JS_EXECUTOR_DOCKER_NAME}:${TB_VERSION}"
     scale: 20
-    environment:
-      TB_KAFKA_SERVERS: kafka:9092
     env_file:
       - tb-js-executor.env
     depends_on:
       - kafka
-  tb:
+  tb1:
     restart: always
     image: "${DOCKER_REPO}/${TB_NODE_DOCKER_NAME}:${TB_VERSION}"
     ports:
@@ -62,28 +54,41 @@ services:
       options:
         max-size: "200m"
         max-file: "30"
+    environment:
+      TB_HOST: tb1
     env_file:
       - tb-node.env
-    environment:
-      ZOOKEEPER_URL: zk:2181
-      TB_KAFKA_SERVERS: kafka:9092
-      JS_EVALUATOR: remote
-      DATABASE_TS_TYPE: sql
-      DATABASE_ENTITIES_TYPE: sql
-      SQL_DATA_FOLDER: /usr/share/thingsboard/data/db
     volumes:
-      - ./tb-node/db:/usr/share/thingsboard/data/db
       - ./tb-node/conf:/config
       - ./tb-node/log:/var/log/thingsboard
     depends_on:
       - kafka
+      - redis
+  tb2:
+    restart: always
+    image: "${DOCKER_REPO}/${TB_NODE_DOCKER_NAME}:${TB_VERSION}"
+    ports:
+      - "8080"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200m"
+        max-file: "30"
+    environment:
+      TB_HOST: tb2
+    env_file:
+      - tb-node.env
+    volumes:
+      - ./tb-node/conf:/config
+      - ./tb-node/log:/var/log/thingsboard
+    depends_on:
+      - kafka
+      - redis
   tb-mqtt-transport1:
     restart: always
     image: "${DOCKER_REPO}/${MQTT_TRANSPORT_DOCKER_NAME}:${TB_VERSION}"
     ports:
       - "1883"
-    environment:
-      TB_KAFKA_SERVERS: kafka:9092
     env_file:
       - tb-mqtt-transport.env
     depends_on:
@@ -93,8 +98,6 @@ services:
     image: "${DOCKER_REPO}/${MQTT_TRANSPORT_DOCKER_NAME}:${TB_VERSION}"
     ports:
       - "1883"
-    environment:
-      TB_KAFKA_SERVERS: kafka:9092
     env_file:
       - tb-mqtt-transport.env
     depends_on:
@@ -104,8 +107,6 @@ services:
     image: "${DOCKER_REPO}/${HTTP_TRANSPORT_DOCKER_NAME}:${TB_VERSION}"
     ports:
       - "8081"
-    environment:
-      TB_KAFKA_SERVERS: kafka:9092
     env_file:
       - tb-http-transport.env
     depends_on:
@@ -115,8 +116,6 @@ services:
     image: "${DOCKER_REPO}/${HTTP_TRANSPORT_DOCKER_NAME}:${TB_VERSION}"
     ports:
       - "8081"
-    environment:
-      TB_KAFKA_SERVERS: kafka:9092
     env_file:
       - tb-http-transport.env
     depends_on:
@@ -126,8 +125,6 @@ services:
     image: "${DOCKER_REPO}/${COAP_TRANSPORT_DOCKER_NAME}:${TB_VERSION}"
     ports:
       - "5683:5683/udp"
-    environment:
-      TB_KAFKA_SERVERS: kafka:9092
     env_file:
       - tb-coap-transport.env
     depends_on:
@@ -138,7 +135,7 @@ services:
     ports:
       - "8080"
     environment:
-      TB_HOST: tb
+      TB_HOST: tb1
       TB_PORT: 8080
     env_file:
       - tb-web-ui.env
@@ -148,7 +145,7 @@ services:
     ports:
       - "8080"
     environment:
-      TB_HOST: tb
+      TB_HOST: tb2
       TB_PORT: 8080
     env_file:
       - tb-web-ui.env

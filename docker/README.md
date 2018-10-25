@@ -12,11 +12,10 @@ Before starting please make sure [Docker CE](https://docs.docker.com/install/) a
 Before performing initial installation you can configure the type of database to be used with ThinsBoard.
 In order to set database type change the value of `DATABASE` variable in `.env` file to one of the following:
 
-- `local` - use local embedded HSQLDB database;
 - `postgres` - use PostgreSQL database;
 - `cassandra` - use Cassandra database;
  
-**NOTE**: In case of `postgres` or `cassandra` corresponding docker service will be deployed (see `docker-compose.postgres.yml`, `docker-compose.cassandra.yml` for details).  
+**NOTE**: According to the database type corresponding docker service will be deployed (see `docker-compose.postgres.yml`, `docker-compose.cassandra.yml` for details).  
 
 Execute the following command to run installation:
 
@@ -52,7 +51,7 @@ In case of any issues you can examine service logs for errors.
 For example to see ThingsBoard node logs execute the following command:
 
 ` 
-$ docker-compose logs -f tb
+$ docker-compose logs -f tb1
 ` 
 
 Or use `docker-compose ps` to see the state of all the containers.
