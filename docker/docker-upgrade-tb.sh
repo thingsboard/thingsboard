@@ -46,6 +46,8 @@ ADDITIONAL_COMPOSE_ARGS=$(additionalComposeArgs) || exit $?
 
 ADDITIONAL_STARTUP_SERVICES=$(additionalStartupServices) || exit $?
 
+docker-compose -f docker-compose.yml $ADDITIONAL_COMPOSE_ARGS pull tb
+
 if [ ! -z "${ADDITIONAL_STARTUP_SERVICES// }" ]; then
     docker-compose -f docker-compose.yml $ADDITIONAL_COMPOSE_ARGS up -d $ADDITIONAL_STARTUP_SERVICES
 fi

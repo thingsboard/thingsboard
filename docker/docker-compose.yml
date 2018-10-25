@@ -171,6 +171,7 @@ services:
       HTTP_PORT: 80
       HTTPS_PORT: 443
       MQTT_PORT: 1883
+      FORCE_HTTPS_REDIRECT: "false"
     links:
         - tb-web-ui1
         - tb-web-ui2
