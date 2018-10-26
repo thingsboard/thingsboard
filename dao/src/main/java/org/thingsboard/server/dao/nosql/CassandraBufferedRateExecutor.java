@@ -48,7 +48,8 @@ public class CassandraBufferedRateExecutor extends AbstractBufferedRateExecutor<
 
     @Scheduled(fixedDelayString = "${cassandra.query.rate_limit_print_interval_ms}")
     public void printStats() {
-        log.info("Permits totalAdded [{}] totalLaunched [{}] totalReleased [{}] totalFailed [{}] totalExpired [{}] totalRejected [{}] currBuffer [{}] ",
+        log.info("Permits queueSize [{}] totalAdded [{}] totalLaunched [{}] totalReleased [{}] totalFailed [{}] totalExpired [{}] totalRejected [{}] currBuffer [{}] ",
+                getQueueSize(),
                 totalAdded.getAndSet(0), totalLaunched.getAndSet(0), totalReleased.getAndSet(0),
                 totalFailed.getAndSet(0), totalExpired.getAndSet(0), totalRejected.getAndSet(0),
                 concurrencyLevel.get());
