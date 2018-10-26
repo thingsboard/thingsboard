@@ -45,7 +45,7 @@ public class RpcManagerActor extends ContextAwareActor {
 
     private final ServerAddress instance;
 
-    public RpcManagerActor(ActorSystemContext systemContext) {
+    RpcManagerActor(ActorSystemContext systemContext) {
         super(systemContext);
         this.sessionActors = new HashMap<>();
         this.pendingMsgs = new HashMap<>();
@@ -55,7 +55,6 @@ public class RpcManagerActor extends ContextAwareActor {
                 .filter(otherServer -> otherServer.getServerAddress().compareTo(instance) > 0)
                 .forEach(otherServer -> onCreateSessionRequest(
                         new RpcSessionCreateRequestMsg(UUID.randomUUID(), otherServer.getServerAddress(), null)));
-
     }
 
     @Override

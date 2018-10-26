@@ -166,4 +166,8 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
             log.debug("[{}] {} task", taskCtx.getId(), action);
         }
     }
+
+    protected int getQueueSize(){
+        return queue.size();
+    }
 }
