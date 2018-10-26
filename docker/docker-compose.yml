@@ -134,9 +134,6 @@ services:
     image: "${DOCKER_REPO}/${WEB_UI_DOCKER_NAME}:${TB_VERSION}"
     ports:
       - "8080"
-    environment:
-      TB_HOST: tb1
-      TB_PORT: 8080
     env_file:
       - tb-web-ui.env
   tb-web-ui2:
@@ -144,12 +141,9 @@ services:
     image: "${DOCKER_REPO}/${WEB_UI_DOCKER_NAME}:${TB_VERSION}"
     ports:
       - "8080"
-    environment:
-      TB_HOST: tb2
-      TB_PORT: 8080
     env_file:
       - tb-web-ui.env
-  web:
+  haproxy:
     restart: always
     container_name: haproxy-certbot
     image: nmarus/haproxy-certbot
@@ -159,6 +153,7 @@ services:
      - ./haproxy/certs.d:/usr/local/etc/haproxy/certs.d
     ports:
      - "80:80"
+     - "8080"
      - "443:443"
      - "1883:1883"
      - "9999:9999"
@@ -168,8 +163,11 @@ services:
       HTTP_PORT: 80
       HTTPS_PORT: 443
       MQTT_PORT: 1883
+      TB_API_PORT: 8080
       FORCE_HTTPS_REDIRECT: "false"
     links:
+        - tb1
+        - tb2
         - tb-web-ui1
         - tb-web-ui2
         - tb-mqtt-transport1
