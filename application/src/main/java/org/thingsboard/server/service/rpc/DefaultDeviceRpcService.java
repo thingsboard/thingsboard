@@ -119,7 +119,7 @@ public class DefaultDeviceRpcService implements DeviceRpcService {
 
     @Override
     public void processRpcResponseFromDevice(FromDeviceRpcResponse response) {
-        log.trace("response to request: [{}]", response.getId());
+        log.trace("[{}] Received device RPC response from server: [{}]", response.getId(), response.getServerAddress());
         if (routingService.getCurrentServer().equals(response.getServerAddress())) {
             UUID requestId = response.getId();
             Consumer<FromDeviceRpcResponse> consumer = localToDeviceRpcRequests.remove(requestId);
@@ -151,7 +151,7 @@ public class DefaultDeviceRpcService implements DeviceRpcService {
             throw new RuntimeException(e);
         }
         RpcError error = proto.getError() > 0 ? RpcError.values()[proto.getError()] : null;
-        FromDeviceRpcResponse response = new FromDeviceRpcResponse(new UUID(proto.getRequestIdMSB(), proto.getRequestIdLSB()), routingService.getCurrentServer(),
+        FromDeviceRpcResponse response = new FromDeviceRpcResponse(new UUID(proto.getRequestIdMSB(), proto.getRequestIdLSB()), serverAddress,
                 proto.getResponse(), error);
         processRpcResponseFromDevice(response);
     }
