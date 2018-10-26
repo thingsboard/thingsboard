@@ -255,6 +255,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                     var historyCommand = {
                         entityType: datasourceSubscription.entityType,
                         entityId: datasourceSubscription.entityId,
+                        scope: types.latestTelemetry.value,
                         keys: tsKeys,
                         startTs: subsTw.fixedWindow.startTimeMs,
                         endTs: subsTw.fixedWindow.endTimeMs,
@@ -315,6 +316,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                     var subscriptionCommand = {
                         entityType: datasourceSubscription.entityType,
                         entityId: datasourceSubscription.entityId,
+                        scope: types.latestTelemetry.value,
                         keys: tsKeys
                     };
 
@@ -402,6 +404,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                 var attrsSubscriptionCommand = {
                     entityType: datasourceSubscription.entityType,
                     entityId: datasourceSubscription.entityId,
+                    scope: '',
                     keys: attrKeys
                 };
 
