@@ -90,7 +90,7 @@ public class DefaultDeviceRpcService implements DeviceRpcService {
 
     @Override
     public void processRestAPIRpcRequestToRuleEngine(ToDeviceRpcRequest request, Consumer<FromDeviceRpcResponse> responseConsumer) {
-        log.trace("[{}] Processing local rpc call to rule engine [{}]", request.getTenantId(), request.getDeviceId());
+        log.trace("[{}][{}] Processing local rpc call to rule engine [{}]", request.getTenantId(), request.getId(), request.getDeviceId());
         UUID requestId = request.getId();
         localToRuleEngineRpcRequests.put(requestId, responseConsumer);
         sendRpcRequestToRuleEngine(request);
@@ -110,7 +110,7 @@ public class DefaultDeviceRpcService implements DeviceRpcService {
 
     @Override
     public void processRpcRequestToDevice(ToDeviceRpcRequest request, Consumer<FromDeviceRpcResponse> responseConsumer) {
-        log.trace("[{}] Processing local rpc call to device [{}]", request.getTenantId(), request.getDeviceId());
+        log.trace("[{}][{}] Processing local rpc call to device [{}]", request.getTenantId(), request.getId(), request.getDeviceId());
         UUID requestId = request.getId();
         localToDeviceRpcRequests.put(requestId, responseConsumer);
         sendRpcRequestToDevice(request);
@@ -119,7 +119,7 @@ public class DefaultDeviceRpcService implements DeviceRpcService {
 
     @Override
     public void processRpcResponseFromDevice(FromDeviceRpcResponse response) {
-        log.trace("[{}] response to request: [{}]", this.hashCode(), response.getId());
+        log.trace("response to request: [{}]", response.getId());
         if (routingService.getCurrentServer().equals(response.getServerAddress())) {
             UUID requestId = response.getId();
             Consumer<FromDeviceRpcResponse> consumer = localToDeviceRpcRequests.remove(requestId);

@@ -26,7 +26,6 @@ import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -46,7 +45,6 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
     private final ExecutorService callbackExecutor;
     private final ScheduledExecutorService timeoutExecutor;
     private final int concurrencyLimit;
-    private volatile boolean stopped;
 
     protected final AtomicInteger concurrencyLevel = new AtomicInteger();
     protected final AtomicInteger totalAdded = new AtomicInteger();
@@ -108,10 +106,7 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
             AsyncTaskContext<T, V> taskCtx = null;
             try {
                 if (curLvl <= concurrencyLimit) {
-                    taskCtx = queue.poll(1, TimeUnit.SECONDS);
-                    if (taskCtx == null) {
-                        continue;
-                    }
+                    taskCtx = queue.take();
                     final AsyncTaskContext<T, V> finalTaskCtx = taskCtx;
                     logTask("Processing", finalTaskCtx);
                     concurrencyLevel.incrementAndGet();
@@ -151,6 +146,8 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
                 } else {
                     Thread.sleep(pollMs);
                 }
+            } catch (InterruptedException e) {
+                break;
             } catch (Throwable e) {
                 if (taskCtx != null) {
                     log.debug("[{}] Failed to execute task: {}", taskCtx.getId(), taskCtx, e);
