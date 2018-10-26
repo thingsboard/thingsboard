@@ -66,10 +66,7 @@ public class DefaultActorService implements ActorService {
     public static final String APP_DISPATCHER_NAME = "app-dispatcher";
     public static final String CORE_DISPATCHER_NAME = "core-dispatcher";
     public static final String SYSTEM_RULE_DISPATCHER_NAME = "system-rule-dispatcher";
-    public static final String SYSTEM_PLUGIN_DISPATCHER_NAME = "system-plugin-dispatcher";
     public static final String TENANT_RULE_DISPATCHER_NAME = "rule-dispatcher";
-    public static final String TENANT_PLUGIN_DISPATCHER_NAME = "plugin-dispatcher";
-    public static final String SESSION_DISPATCHER_NAME = "session-dispatcher";
     public static final String RPC_DISPATCHER_NAME = "rpc-dispatcher";
 
     @Autowired
@@ -186,8 +183,8 @@ public class DefaultActorService implements ActorService {
     @Override
     public void onReceivedMsg(ServerAddress source, ClusterAPIProtos.ClusterMessage msg) {
         ServerAddress serverAddress = new ServerAddress(source.getHost(), source.getPort(), source.getServerType());
-        log.info("Received msg [{}] from [{}]", msg.getMessageType().name(), serverAddress);
         if (log.isDebugEnabled()) {
+            log.info("Received msg [{}] from [{}]", msg.getMessageType().name(), serverAddress);
             log.info("MSG: ", msg);
         }
         switch (msg.getMessageType()) {
