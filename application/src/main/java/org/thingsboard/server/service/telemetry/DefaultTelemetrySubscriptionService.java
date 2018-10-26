@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -166,7 +166,7 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
 
     private SubscriptionState getUpdatedSubscriptionState(EntityId entityId, SubscriptionState sub, EntityView entityView) {
         Map<String, Long> keyStates;
-        if(sub.isAllKeys()) {
+        if (sub.isAllKeys()) {
             keyStates = entityView.getKeys().getTimeseries().stream().collect(Collectors.toMap(k -> k, k -> 0L));
         } else {
             keyStates = sub.getKeyStates().entrySet()
@@ -618,7 +618,9 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
         builder.setEntityId(sub.getEntityId().getId().toString());
         builder.setType(sub.getType().name());
         builder.setAllKeys(sub.isAllKeys());
-        builder.setScope(sub.getScope());
+        if (sub.getScope() != null) {
+            builder.setScope(sub.getScope());
+        }
         sub.getKeyStates().entrySet().forEach(e -> builder.addKeyStates(
                 ClusterAPIProtos.SubscriptionKetStateProto.newBuilder().setKey(e.getKey()).setTs(e.getValue()).build()));
         rpcService.tell(address, ClusterAPIProtos.MessageType.CLUSTER_TELEMETRY_SUBSCRIPTION_CREATE_MESSAGE, builder.build().toByteArray());
