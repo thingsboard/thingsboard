@@ -146,7 +146,7 @@ services:
   haproxy:
     restart: always
     container_name: haproxy-certbot
-    image: nmarus/haproxy-certbot
+    image: xalauc/haproxy-certbot:1.7.9
     volumes:
      - ./haproxy/config:/config
      - ./haproxy/letsencrypt:/etc/letsencrypt
