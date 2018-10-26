@@ -162,9 +162,9 @@ public class RpcManagerActor extends ContextAwareActor {
     }
 
     private void onSessionClose(boolean reconnect, ServerAddress remoteAddress) {
-        log.debug("[{}] session closed. Should reconnect: {}", remoteAddress, reconnect);
+        log.info("[{}] session closed. Should reconnect: {}", remoteAddress, reconnect);
         SessionActorInfo sessionRef = sessionActors.get(remoteAddress);
-        if (context().sender() != null && context().sender().equals(sessionRef.actor)) {
+        if (sessionRef != null && context().sender() != null && context().sender().equals(sessionRef.actor)) {
             sessionActors.remove(remoteAddress);
             pendingMsgs.remove(remoteAddress);
             if (reconnect) {
@@ -182,18 +182,18 @@ public class RpcManagerActor extends ContextAwareActor {
 
     private void register(ServerAddress remoteAddress, UUID uuid, ActorRef sender) {
         sessionActors.put(remoteAddress, new SessionActorInfo(uuid, sender));
-        log.debug("[{}][{}] Registering session actor.", remoteAddress, uuid);
+        log.info("[{}][{}] Registering session actor.", remoteAddress, uuid);
         Queue<ClusterAPIProtos.ClusterMessage> data = pendingMsgs.remove(remoteAddress);
         if (data != null) {
-            log.debug("[{}][{}] Forwarding {} pending messages.", remoteAddress, uuid, data.size());
+            log.info("[{}][{}] Forwarding {} pending messages.", remoteAddress, uuid, data.size());
             data.forEach(msg -> sender.tell(new RpcSessionTellMsg(msg), ActorRef.noSender()));
         } else {
-            log.debug("[{}][{}] No pending messages to forward.", remoteAddress, uuid);
+            log.info("[{}][{}] No pending messages to forward.", remoteAddress, uuid);
         }
     }
 
     private ActorRef createSessionActor(RpcSessionCreateRequestMsg msg) {
-        log.debug("[{}] Creating session actor.", msg.getMsgUid());
+        log.info("[{}] Creating session actor.", msg.getMsgUid());
         ActorRef actor = context().actorOf(
                 Props.create(new RpcSessionActor.ActorCreator(systemContext, msg.getMsgUid())).withDispatcher(DefaultActorService.RPC_DISPATCHER_NAME));
         actor.tell(msg, context().self());
