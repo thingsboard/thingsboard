@@ -222,7 +222,7 @@ redis:
 updates:
   # Enable/disable updates checking.
   enabled: "${UPDATES_ENABLED:true}"
-  
+
 # spring CORS configuration
 spring.mvc.cors:
    mappings:
@@ -322,8 +322,8 @@ audit_log:
     password: "${AUDIT_LOG_SINK_PASSWORD:}"
 
 state:
-  defaultInactivityTimeoutInSec: 10
-  defaultStateCheckIntervalInSec: 10
+  defaultInactivityTimeoutInSec: "${DEFAULT_INACTIVITY_TIMEOUT:10}"
+  defaultStateCheckIntervalInSec: "${DEFAULT_STATE_CHECK_INTERVAL:10}"
 
 kafka:
   enabled: true

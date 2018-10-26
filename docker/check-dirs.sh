@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-dirsArray=("./haproxy/certs.d" "./haproxy/letsencrypt" "./tb-node/db" "./tb-node/postgres" "./tb-node/cassandra" "./tb-node/log")
+dirsArray=("./haproxy/certs.d" "./haproxy/letsencrypt" "./tb-node/postgres" "./tb-node/cassandra" "./tb-node/log/tb1" "./tb-node/log/tb2")
 
 for dir in ${dirsArray[@]}
 do

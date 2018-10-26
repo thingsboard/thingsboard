@@ -8,6 +8,7 @@ This project provides the build for the ThingsBoard single docker images.
 
 ## Running
 
+In this example `thingsboard/tb` image will be used. You can choose any other images with different databases (see above).
 Execute the following command to run this docker directly:
 
 ` 
@@ -23,9 +24,9 @@ Where:
 - `-p 5683:5683`            - connect local port 5683 to exposed internal COAP port 5683 
 - `-v ~/.mytb-data:/data`   - mounts the host's dir `~/.mytb-data` to ThingsBoard DataBase data directory
 - `--name mytb`             - friendly local name of this machine
-- `thingsboard/tb`          - docker image
+- `thingsboard/tb`          - docker image, can be also `thingsboard/tb-postgres` or `thingsboard/tb-cassandra`
     
-After executing this command you can open `http://{yor-host-ip}:9090` in you browser. You should see ThingsBoard login page.
+After executing this command you can open `http://{your-host-ip}:9090` in you browser (for ex. `http://localhost:9090`). You should see ThingsBoard login page.
 Use the following default credentials:
 
 - **Systen Administrator**: sysadmin@thingsboard.org / sysadmin
@@ -65,4 +66,6 @@ $ docker run -it -v ~/.mytb-data:/data --rm thingsboard/tb upgrade-tb.sh
 $ docker start mytb
 ```
 
+**NOTE**: if you use different database change image name in all commands from `thingsboard/tb` to `thingsboard/tb-postgres` or `thingsboard/tb-cassandra` correspondingly.
+ 
 **NOTE**: replace host's directory `~/.mytb-data` with directory used during container creation. 
