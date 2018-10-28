@@ -90,7 +90,7 @@ public class DefaultDeviceRpcService implements DeviceRpcService {
 
     @Override
     public void processRestAPIRpcRequestToRuleEngine(ToDeviceRpcRequest request, Consumer<FromDeviceRpcResponse> responseConsumer) {
-        log.trace("[{}][{}] Processing local rpc call to rule engine [{}]", request.getTenantId(), request.getId(), request.getDeviceId());
+        log.trace("[{}][{}] Processing REST API call to rule engine [{}]", request.getTenantId(), request.getId(), request.getDeviceId());
         UUID requestId = request.getId();
         localToRuleEngineRpcRequests.put(requestId, responseConsumer);
         sendRpcRequestToRuleEngine(request);
@@ -98,31 +98,11 @@ public class DefaultDeviceRpcService implements DeviceRpcService {
     }
 
     @Override
-    public void processRestAPIRpcResponseFromRuleEngine(FromDeviceRpcResponse response) {
-        UUID requestId = response.getId();
-        Consumer<FromDeviceRpcResponse> consumer = localToRuleEngineRpcRequests.remove(requestId);
-        if (consumer != null) {
-            consumer.accept(response);
-        } else {
-            log.trace("[{}] Unknown or stale rpc response received [{}]", requestId, response);
-        }
-    }
-
-    @Override
-    public void processRpcRequestToDevice(ToDeviceRpcRequest request, Consumer<FromDeviceRpcResponse> responseConsumer) {
-        log.trace("[{}][{}] Processing local rpc call to device [{}]", request.getTenantId(), request.getId(), request.getDeviceId());
-        UUID requestId = request.getId();
-        localToDeviceRpcRequests.put(requestId, responseConsumer);
-        sendRpcRequestToDevice(request);
-        scheduleTimeout(request, requestId, localToDeviceRpcRequests);
-    }
-
-    @Override
-    public void processRpcResponseFromDevice(FromDeviceRpcResponse response) {
-        log.trace("[{}] Received device RPC response from server: [{}]", response.getId(), response.getServerAddress());
-        if (routingService.getCurrentServer().equals(response.getServerAddress())) {
+    public void processResponseToServerSideRPCRequestFromRuleEngine(ServerAddress requestOriginAddress, FromDeviceRpcResponse response) {
+        log.trace("[{}] Received response to server-side RPC request from rule engine: [{}]", response.getId(), requestOriginAddress);
+        if (routingService.getCurrentServer().equals(requestOriginAddress)) {
             UUID requestId = response.getId();
-            Consumer<FromDeviceRpcResponse> consumer = localToDeviceRpcRequests.remove(requestId);
+            Consumer<FromDeviceRpcResponse> consumer = localToRuleEngineRpcRequests.remove(requestId);
             if (consumer != null) {
                 consumer.accept(response);
             } else {
@@ -138,12 +118,33 @@ public class DefaultDeviceRpcService implements DeviceRpcService {
             } else {
                 builder.setError(-1);
             }
-            rpcService.tell(response.getServerAddress(), ClusterAPIProtos.MessageType.CLUSTER_RPC_FROM_DEVICE_RESPONSE_MESSAGE, builder.build().toByteArray());
+            rpcService.tell(requestOriginAddress, ClusterAPIProtos.MessageType.CLUSTER_RPC_FROM_DEVICE_RESPONSE_MESSAGE, builder.build().toByteArray());
         }
     }
 
     @Override
-    public void processRemoteResponseFromDevice(ServerAddress serverAddress, byte[] data) {
+    public void forwardServerSideRPCRequestToDeviceActor(ToDeviceRpcRequest request, Consumer<FromDeviceRpcResponse> responseConsumer) {
+        log.trace("[{}][{}] Processing local rpc call to device actor [{}]", request.getTenantId(), request.getId(), request.getDeviceId());
+        UUID requestId = request.getId();
+        localToDeviceRpcRequests.put(requestId, responseConsumer);
+        sendRpcRequestToDevice(request);
+        scheduleTimeout(request, requestId, localToDeviceRpcRequests);
+    }
+
+    @Override
+    public void processResponseToServerSideRPCRequestFromDeviceActor(FromDeviceRpcResponse response) {
+        log.trace("[{}] Received response to server-side RPC request from device actor.", response.getId());
+        UUID requestId = response.getId();
+        Consumer<FromDeviceRpcResponse> consumer = localToDeviceRpcRequests.remove(requestId);
+        if (consumer != null) {
+            consumer.accept(response);
+        } else {
+            log.trace("[{}] Unknown or stale rpc response received [{}]", requestId, response);
+        }
+    }
+
+    @Override
+    public void processResponseToServerSideRPCRequestFromRemoteServer(ServerAddress serverAddress, byte[] data) {
         ClusterAPIProtos.FromDeviceRPCResponseProto proto;
         try {
             proto = ClusterAPIProtos.FromDeviceRPCResponseProto.parseFrom(data);
@@ -151,13 +152,12 @@ public class DefaultDeviceRpcService implements DeviceRpcService {
             throw new RuntimeException(e);
         }
         RpcError error = proto.getError() > 0 ? RpcError.values()[proto.getError()] : null;
-        FromDeviceRpcResponse response = new FromDeviceRpcResponse(new UUID(proto.getRequestIdMSB(), proto.getRequestIdLSB()), serverAddress,
-                proto.getResponse(), error);
-        processRpcResponseFromDevice(response);
+        FromDeviceRpcResponse response = new FromDeviceRpcResponse(new UUID(proto.getRequestIdMSB(), proto.getRequestIdLSB()), proto.getResponse(), error);
+        processResponseToServerSideRPCRequestFromRuleEngine(routingService.getCurrentServer(), response);
     }
 
     @Override
-    public void sendRpcReplyToDevice(TenantId tenantId, DeviceId deviceId, int requestId, String body) {
+    public void sendReplyToRpcCallFromDevice(TenantId tenantId, DeviceId deviceId, int requestId, String body) {
         ToServerRpcResponseActorMsg rpcMsg = new ToServerRpcResponseActorMsg(tenantId, deviceId, new ToServerRpcResponseMsg(requestId, body));
         forward(deviceId, rpcMsg);
     }
@@ -166,6 +166,8 @@ public class DefaultDeviceRpcService implements DeviceRpcService {
         ObjectNode entityNode = json.createObjectNode();
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("requestUUID", msg.getId().toString());
+        metaData.putValue("originHost", routingService.getCurrentServer().getHost());
+        metaData.putValue("originPort", Integer.toString(routingService.getCurrentServer().getPort()));
         metaData.putValue("expirationTime", Long.toString(msg.getExpirationTime()));
         metaData.putValue("oneway", Boolean.toString(msg.isOneway()));
 
@@ -176,7 +178,7 @@ public class DefaultDeviceRpcService implements DeviceRpcService {
             TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), DataConstants.RPC_CALL_FROM_SERVER_TO_DEVICE, msg.getDeviceId(), metaData, TbMsgDataType.JSON
                     , json.writeValueAsString(entityNode)
                     , null, null, 0L);
-            actorService.onMsg(new ServiceToRuleEngineMsg(msg.getTenantId(), tbMsg));
+            actorService.onMsg(new SendToClusterMsg(msg.getDeviceId(), new ServiceToRuleEngineMsg(msg.getTenantId(), tbMsg)));
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
@@ -199,7 +201,7 @@ public class DefaultDeviceRpcService implements DeviceRpcService {
             log.trace("[{}] timeout the request: [{}]", this.hashCode(), requestId);
             Consumer<FromDeviceRpcResponse> consumer = requestsMap.remove(requestId);
             if (consumer != null) {
-                consumer.accept(new FromDeviceRpcResponse(requestId, null, null, RpcError.TIMEOUT));
+                consumer.accept(new FromDeviceRpcResponse(requestId, null, RpcError.TIMEOUT));
             }
         }, timeout, TimeUnit.MILLISECONDS);
     }

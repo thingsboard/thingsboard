@@ -42,7 +42,6 @@ import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.cluster.ToAllNodesMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
-import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
 import org.thingsboard.server.service.cluster.discovery.DiscoveryService;
 import org.thingsboard.server.service.cluster.discovery.ServerInstance;
@@ -159,11 +158,6 @@ public class DefaultActorService implements ActorService {
         appActor.tell(new SendToClusterMsg(deviceId, msg), ActorRef.noSender());
     }
 
-    @Override
-    public void onMsg(ServiceToRuleEngineMsg msg) {
-        appActor.tell(msg, ActorRef.noSender());
-    }
-
     public void broadcast(ToAllNodesMsg msg) {
         actorContext.getEncodingService().encode(msg);
         rpcService.broadcast(new RpcBroadcastMsg(ClusterAPIProtos.ClusterMessage
@@ -185,7 +179,7 @@ public class DefaultActorService implements ActorService {
         ServerAddress serverAddress = new ServerAddress(source.getHost(), source.getPort(), source.getServerType());
         if (log.isDebugEnabled()) {
             log.info("Received msg [{}] from [{}]", msg.getMessageType().name(), serverAddress);
-            log.info("MSG: ", msg);
+            log.info("MSG: {}", msg);
         }
         switch (msg.getMessageType()) {
             case CLUSTER_ACTOR_MESSAGE:
@@ -219,7 +213,7 @@ public class DefaultActorService implements ActorService {
                 actorContext.getTsSubService().onRemoteTsUpdate(serverAddress, msg.getPayload().toByteArray());
                 break;
             case CLUSTER_RPC_FROM_DEVICE_RESPONSE_MESSAGE:
-                actorContext.getDeviceRpcService().processRemoteResponseFromDevice(serverAddress, msg.getPayload().toByteArray());
+                actorContext.getDeviceRpcService().processResponseToServerSideRPCRequestFromRemoteServer(serverAddress, msg.getPayload().toByteArray());
                 break;
             case CLUSTER_DEVICE_STATE_SERVICE_MESSAGE:
                 actorContext.getDeviceStateService().onRemoteMsg(serverAddress, msg.getPayload().toByteArray());

@@ -23,7 +23,6 @@
         <version>2.2.0-SNAPSHOT</version>
         <artifactId>thingsboard</artifactId>
     </parent>
-    <groupId>org.thingsboard</groupId>
     <artifactId>msa</artifactId>
     <packaging>pom</packaging>
 
