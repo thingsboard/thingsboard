@@ -371,19 +371,25 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
                     content = strContent;
                 }
             } else {
-                content = defaultContent(key, value);
+                let decimals;
+                let units;
+
+                if (angular.isDefined(key.decimals) && key.decimals !== null) {
+                    decimals = key.decimals;
+                } else if (angular.isDefined(vm.ctx.decimals) && vm.ctx.decimals !== null) {
+                    decimals = vm.ctx.decimals;
+                }
+                if (angular.isDefined(key.units) && key.units !== null) {
+                    units = key.units;
+                } else if (angular.isDefined(vm.ctx.units) && vm.ctx.units !== null) {
+                    units = vm.ctx.units;
+                }
+
+                content = vm.ctx.utils.formatValue(value, decimals, units);
             }
             return content;
         } else {
             return strContent;
-        }
-    }
-
-    function defaultContent(key, value) {
-        if (angular.isDefined(value)) {
-            return value;
-        } else {
-            return '';
         }
     }
 
@@ -396,7 +402,7 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
     );
 
     function getEntityValue(entity, key) {
-        return getDescendantProp(entity, key.name);
+        return getDescendantProp(entity, key.name + "-" + key.label);
     }
 
     function updateEntitiesData(data) {
@@ -409,9 +415,9 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
                     var keyData = data[index].data;
                     if (keyData && keyData.length && keyData[0].length > 1) {
                         var value = keyData[0][1];
-                        entity[dataKey.name] = value;
+                        entity[dataKey.name + "-" + dataKey.label] = value;
                     } else {
-                        entity[dataKey.name] = '';
+                        entity[dataKey.name + "-" + dataKey.label] = '';
                     }
                 }
             }
@@ -560,19 +566,19 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
             var entity = {
                 id: {}
             };
-            entity.entityName = datasource.entityName;
+            entity["entityName-entityName"] = datasource.entityName;
             if (datasource.entityId) {
                 entity.id.id = datasource.entityId;
             }
             if (datasource.entityType) {
                 entity.id.entityType = datasource.entityType;
-                entity.entityType = $translate.instant(types.entityTypeTranslations[datasource.entityType].type) + '';
+                entity["entityType-entityType"] = $translate.instant(types.entityTypeTranslations[datasource.entityType].type) + '';
             } else {
-                entity.entityType = '';
+                entity["entityType-entityType"] = '';
             }
             for (d = 0; d < vm.dataKeys.length; d++) {
                 dataKey = vm.dataKeys[d];
-                entity[dataKey.name] = '';
+                entity[dataKey.name + "-" + dataKey.label] = '';
             }
             vm.allEntities.push(entity);
         }
