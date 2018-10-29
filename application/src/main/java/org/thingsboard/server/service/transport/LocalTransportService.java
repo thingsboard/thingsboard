@@ -161,6 +161,13 @@ public class LocalTransportService extends AbstractTransportService implements R
     }
 
     @Override
+    public void process(SessionInfoProto sessionInfo, TransportProtos.SubscriptionInfoProto msg, TransportServiceCallback<Void> callback) {
+        if (checkLimits(sessionInfo, callback)) {
+            forwardToDeviceActor(TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo).setSubscriptionInfo(msg).build(), callback);
+        }
+    }
+
+    @Override
     public void process(SessionInfoProto sessionInfo, SubscribeToAttributeUpdatesMsg msg, TransportServiceCallback<Void> callback) {
         if (checkLimits(sessionInfo, callback)) {
             forwardToDeviceActor(TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo).setSubscribeToAttributes(msg).build(), callback);

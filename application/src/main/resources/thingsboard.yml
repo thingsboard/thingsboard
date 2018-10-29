@@ -202,6 +202,9 @@ caffeine:
     devices:
       timeToLiveInMinutes: 1440
       maxSize: 100000
+    sessions:
+      timeToLiveInMinutes: 1440
+      maxSize: 100000
     assets:
       timeToLiveInMinutes: 1440
       maxSize: 100000
@@ -392,6 +395,9 @@ transport:
       auto_commit_interval: "${TB_RULE_ENGINE_AUTO_COMMIT_INTERVAL_MS:100}"
     notifications:
       topic: "${TB_TRANSPORT_NOTIFICATIONS_TOPIC:tb.transport.notifications}"
+  sessions:
+    inactivity_timeout: "${TB_TRANSPORT_SESSIONS_INACTIVITY_TIMEOUT:300000}"
+    report_timeout: "${TB_TRANSPORT_SESSIONS_REPORT_TIMEOUT:30000}"
   rate_limits:
     enabled: "${TB_TRANSPORT_RATE_LIMITS_ENABLED:false}"
     tenant: "${TB_TRANSPORT_RATE_LIMITS_TENANT:1000:1,20000:60}"

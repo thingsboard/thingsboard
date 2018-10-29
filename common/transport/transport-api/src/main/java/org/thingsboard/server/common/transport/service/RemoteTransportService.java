@@ -228,6 +228,17 @@ public class RemoteTransportService extends AbstractTransportService {
     }
 
     @Override
+    public void process(SessionInfoProto sessionInfo, SubscriptionInfoProto msg, TransportServiceCallback<Void> callback) {
+        if (checkLimits(sessionInfo, callback)) {
+            ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
+                    TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
+                            .setSubscriptionInfo(msg).build()
+            ).build();
+            send(sessionInfo, toRuleEngineMsg, callback);
+        }
+    }
+
+    @Override
     public void process(SessionInfoProto sessionInfo, PostTelemetryMsg msg, TransportServiceCallback<Void> callback) {
         if (checkLimits(sessionInfo, callback)) {
             ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(

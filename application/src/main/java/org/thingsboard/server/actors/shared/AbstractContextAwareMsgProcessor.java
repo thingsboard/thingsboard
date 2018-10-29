@@ -40,43 +40,31 @@ public abstract class AbstractContextAwareMsgProcessor {
         this.logger = logger;
     }
 
-    protected ActorRef getAppActor() {
-        return systemContext.getAppActor();
-    }
-
-    protected Scheduler getScheduler() {
+    private Scheduler getScheduler() {
         return systemContext.getScheduler();
     }
 
-    protected ExecutionContextExecutor getSystemDispatcher() {
+    private ExecutionContextExecutor getSystemDispatcher() {
         return systemContext.getActorSystem().dispatcher();
     }
 
     protected void schedulePeriodicMsgWithDelay(ActorContext ctx, Object msg, long delayInMs, long periodInMs) {
-        schedulePeriodicMsgWithDelay(ctx, msg, delayInMs, periodInMs, ctx.self());
+        schedulePeriodicMsgWithDelay(msg, delayInMs, periodInMs, ctx.self());
     }
 
-    protected void schedulePeriodicMsgWithDelay(ActorContext ctx, Object msg, long delayInMs, long periodInMs, ActorRef target) {
+    private void schedulePeriodicMsgWithDelay(Object msg, long delayInMs, long periodInMs, ActorRef target) {
         logger.debug("Scheduling periodic msg {} every {} ms with delay {} ms", msg, periodInMs, delayInMs);
         getScheduler().schedule(Duration.create(delayInMs, TimeUnit.MILLISECONDS), Duration.create(periodInMs, TimeUnit.MILLISECONDS), target, msg, getSystemDispatcher(), null);
     }
 
-
     protected void scheduleMsgWithDelay(ActorContext ctx, Object msg, long delayInMs) {
-        scheduleMsgWithDelay(ctx, msg, delayInMs, ctx.self());
+        scheduleMsgWithDelay(msg, delayInMs, ctx.self());
     }
 
-    protected void scheduleMsgWithDelay(ActorContext ctx, Object msg, long delayInMs, ActorRef target) {
+    private void scheduleMsgWithDelay(Object msg, long delayInMs, ActorRef target) {
         logger.debug("Scheduling msg {} with delay {} ms", msg, delayInMs);
         getScheduler().scheduleOnce(Duration.create(delayInMs, TimeUnit.MILLISECONDS), target, msg, getSystemDispatcher(), null);
     }
 
-    @Data
-    @AllArgsConstructor
-    private static class ComponentConfiguration {
-        private final String clazz;
-        private final String name;
-        private final String configuration;
-    }
 
 }

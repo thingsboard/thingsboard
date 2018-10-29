@@ -127,7 +127,6 @@ public class TenantActor extends RuleChainManagerActor {
         ruleChainManager.getOrCreateActor(context(), msg.getRuleChainId()).tell(msg, self());
     }
 
-
     private void onToDeviceActorMsg(DeviceAwareMsg msg) {
         getOrCreateDeviceActor(msg.getDeviceId()).tell(msg, ActorRef.noSender());
     }

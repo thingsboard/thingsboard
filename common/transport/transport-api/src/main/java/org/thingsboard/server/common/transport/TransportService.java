@@ -61,9 +61,13 @@ public interface TransportService {
 
     void process(SessionInfoProto sessionInfo, ToServerRpcRequestMsg msg, TransportServiceCallback<Void> callback);
 
+    void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.SubscriptionInfoProto msg, TransportServiceCallback<Void> callback);
+
     void registerAsyncSession(SessionInfoProto sessionInfo, SessionMsgListener listener);
 
     void registerSyncSession(SessionInfoProto sessionInfo, SessionMsgListener listener, long timeout);
+
+    void reportActivity(SessionInfoProto sessionInfo);
 
     void deregisterSession(SessionInfoProto sessionInfo);
 

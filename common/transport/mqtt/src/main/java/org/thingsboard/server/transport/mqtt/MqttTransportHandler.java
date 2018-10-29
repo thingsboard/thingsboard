@@ -43,10 +43,10 @@ import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.msg.EncryptionUtil;
+import org.thingsboard.server.common.transport.service.AbstractTransportService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionEvent;
-import org.thingsboard.server.gen.transport.TransportProtos.SessionEventMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
@@ -141,9 +141,12 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 processUnsubscribe(ctx, (MqttUnsubscribeMessage) msg);
                 break;
             case PINGREQ:
-                //TODO: should we push the notification to the rule engine?
                 if (checkConnected(ctx)) {
                     ctx.writeAndFlush(new MqttMessage(new MqttFixedHeader(PINGRESP, false, AT_MOST_ONCE, false, 0)));
+                    transportService.reportActivity(sessionInfo);
+                    if (gatewaySessionHandler != null) {
+                        gatewaySessionHandler.reportActivity();
+                    }
                 }
                 break;
             case DISCONNECT:
@@ -394,7 +397,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     private void processDisconnect(ChannelHandlerContext ctx) {
         ctx.close();
         if (deviceSessionCtx.isConnected()) {
-            transportService.process(sessionInfo, getSessionEventMsg(SessionEvent.CLOSED), null);
+            transportService.process(sessionInfo, AbstractTransportService.getSessionEventMsg(SessionEvent.CLOSED), null);
             transportService.deregisterSession(sessionInfo);
             if (gatewaySessionHandler != null) {
                 gatewaySessionHandler.onGatewayDisconnect();
@@ -466,16 +469,10 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
     }
 
-    public static SessionEventMsg getSessionEventMsg(SessionEvent event) {
-        return SessionEventMsg.newBuilder()
-                .setSessionType(TransportProtos.SessionType.ASYNC)
-                .setEvent(event).build();
-    }
-
     @Override
     public void operationComplete(Future<? super Void> future) throws Exception {
         if (deviceSessionCtx.isConnected()) {
-            transportService.process(sessionInfo, getSessionEventMsg(SessionEvent.CLOSED), null);
+            transportService.process(sessionInfo, AbstractTransportService.getSessionEventMsg(SessionEvent.CLOSED), null);
             transportService.deregisterSession(sessionInfo);
         }
     }
@@ -495,7 +492,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     .setTenantIdMSB(msg.getDeviceInfo().getTenantIdMSB())
                     .setTenantIdLSB(msg.getDeviceInfo().getTenantIdLSB())
                     .build();
-            transportService.process(sessionInfo, getSessionEventMsg(SessionEvent.OPEN), null);
+            transportService.process(sessionInfo, AbstractTransportService.getSessionEventMsg(SessionEvent.OPEN), null);
             transportService.registerAsyncSession(sessionInfo, this);
             checkGatewaySession();
             ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_ACCEPTED));

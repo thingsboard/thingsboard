@@ -13,13 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.actors.device;
 
-public class CacheConstants {
-    public static final String DEVICE_CREDENTIALS_CACHE = "deviceCredentials";
-    public static final String RELATIONS_CACHE = "relations";
-    public static final String DEVICE_CACHE = "devices";
-    public static final String SESSIONS_CACHE = "sessions";
-    public static final String ASSET_CACHE = "assets";
-    public static final String ENTITY_VIEW_CACHE = "entityViews";
+import org.thingsboard.server.common.msg.MsgType;
+import org.thingsboard.server.common.msg.TbActorMsg;
+
+/**
+ * Created by ashvayka on 29.10.18.
+ */
+public class SessionTimeoutCheckMsg implements TbActorMsg {
+
+    private static final SessionTimeoutCheckMsg INSTANCE = new SessionTimeoutCheckMsg();
+
+    private SessionTimeoutCheckMsg() {
+    }
+
+    public static SessionTimeoutCheckMsg instance() {
+        return INSTANCE;
+    }
+
+    @Override
+    public MsgType getMsgType() {
+        return MsgType.SESSION_TIMEOUT_MSG;
+    }
 }
