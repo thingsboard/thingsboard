@@ -721,7 +721,7 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
                 }
             },
             parent: angular.element($document[0].body),
-            skipHide: true,
+            multiple: true,
             fullscreen: true,
             targetEvent: $event
         }).then(function (updatedEntityAliases) {
@@ -796,7 +796,7 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
                 importFileLabel: importFileLabel
             },
             parent: angular.element($document[0].body),
-            skipHide: true,
+            multiple: true,
             fullscreen: true,
             targetEvent: $event
         }).then(function (importData) {

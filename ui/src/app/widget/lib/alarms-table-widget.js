@@ -402,7 +402,7 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
                 parent: angular.element($document[0].body),
                 targetEvent: $event,
                 fullscreen: true,
-                skipHide: true,
+                multiple: true,
                 onShowing: function(scope, element) {
                     onShowingCallback.onShowing(scope, element);
                 }

@@ -79,7 +79,7 @@ export default function EventRowDirective($compile, $templateCache, $mdDialog, $
                 parent: angular.element($document[0].body),
                 fullscreen: true,
                 targetEvent: $event,
-                skipHide: true,
+                multiple: true,
                 onShowing: function(scope, element) {
                     onShowingCallback.onShowing(scope, element);
                 }

@@ -121,7 +121,7 @@ export default function NodeScriptTest($q, $mdDialog, $document, ruleChainServic
                 onShowingCallback: onShowingCallback
             },
             fullscreen: true,
-            skipHide: true,
+            multiple: true,
             targetEvent: $event,
             onComplete: () => {
                 onShowingCallback.onShowed();
