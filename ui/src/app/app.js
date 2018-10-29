@@ -31,6 +31,7 @@ import 'angular-translate-interpolation-messageformat';
 import 'md-color-picker';
 import mdPickers from 'mdPickers';
 import ngSanitize from 'angular-sanitize';
+import FBAngular from 'angular-fullscreen';
 import vAccordion from 'v-accordion';
 import ngAnimate from 'angular-animate';
 import 'angular-websocket';
@@ -65,6 +66,7 @@ import 'angular-material-expansion-panel/dist/md-expansion-panel.min.css';
 import 'ngFlowchart/dist/flowchart.css';
 import '../scss/main.scss';
 
+import thingsboardThirdpartyFix from './common/thirdparty-fix';
 import thingsboardTranslateHandler from './locale/translate-handler';
 import thingsboardLogin from './login';
 import thingsboardDialogs from './components/datakey-config-dialog.controller';
@@ -105,6 +107,7 @@ angular.module('thingsboard', [
     'mdColorPicker',
     mdPickers,
     ngSanitize,
+    FBAngular.name,
     vAccordion,
     ngAnimate,
     'ngWebSocket',
@@ -118,6 +121,7 @@ angular.module('thingsboard', [
     react.name,
     'flow',
     'flowchart',
+    thingsboardThirdpartyFix,
     thingsboardTranslateHandler,
     thingsboardLogin,
     thingsboardDialogs,

@@ -67,7 +67,7 @@ function MaterialIconSelect($compile, $templateCache, $document, $mdDialog) {
                 templateUrl: materialIconsDialogTemplate,
                 parent: angular.element($document[0].body),
                 locals: {icon: scope.icon},
-                skipHide: true,
+                multiple: true,
                 fullscreen: true,
                 targetEvent: $event
             }).then(function (icon) {

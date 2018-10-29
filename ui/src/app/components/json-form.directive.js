@@ -96,7 +96,7 @@ function JsonForm($compile, $templateCache, $mdColorPicker) {
                 random: tinycolor.random(),
                 clickOutsideToClose: false,
                 hasBackdrop: false,
-                skipHide: true,
+                multiple: true,
                 preserveScope: false,
 
                 mdColorAlphaChannel: true,
