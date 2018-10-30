@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM openjdk:8-jre
+FROM openjdk:8-jdk
 
 RUN apt-get update
 RUN apt-get install -y postgresql postgresql-contrib
