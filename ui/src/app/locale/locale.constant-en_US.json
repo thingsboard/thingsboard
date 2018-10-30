@@ -774,6 +774,7 @@
     },
     "entity-view": {
         "entity-view": "Entity View",
+        "entity-view-required": "Entity view is required.",
         "entity-views": "Entity Views",
         "management": "Entity View management",
         "view-entity-views": "View Entity Views",

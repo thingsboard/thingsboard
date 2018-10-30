@@ -98,8 +98,8 @@ export default function EntityViewDirective($q, $compile, $templateCache, $filte
                 if (newDate.getTime() > scope.maxStartTimeMs) {
                     scope.startTimeMs = angular.copy(scope.maxStartTimeMs);
                 }
-                updateMinMaxDates();
             }
+            updateMinMaxDates();
         });
 
         scope.$watch('endTimeMs', function (newDate) {
@@ -107,18 +107,24 @@ export default function EntityViewDirective($q, $compile, $templateCache, $filte
                 if (newDate.getTime() < scope.minEndTimeMs) {
                     scope.endTimeMs = angular.copy(scope.minEndTimeMs);
                 }
-                updateMinMaxDates();
             }
+            updateMinMaxDates();
         });
 
         function updateMinMaxDates() {
-            if (scope.endTimeMs) {
-                scope.maxStartTimeMs = angular.copy(new Date(scope.endTimeMs.getTime()));
-                scope.entityView.endTimeMs = scope.endTimeMs.getTime();
-            }
-            if (scope.startTimeMs) {
-                scope.minEndTimeMs = angular.copy(new Date(scope.startTimeMs.getTime()));
-                scope.entityView.startTimeMs = scope.startTimeMs.getTime();
+            if (scope.entityView) {
+                if (scope.endTimeMs) {
+                    scope.maxStartTimeMs = angular.copy(new Date(scope.endTimeMs.getTime()));
+                    scope.entityView.endTimeMs = scope.endTimeMs.getTime();
+                } else {
+                    scope.entityView.endTimeMs = 0;
+                }
+                if (scope.startTimeMs) {
+                    scope.minEndTimeMs = angular.copy(new Date(scope.startTimeMs.getTime()));
+                    scope.entityView.startTimeMs = scope.startTimeMs.getTime();
+                } else {
+                    scope.entityView.startTimeMs = 0;
+                }
             }
         }
 
