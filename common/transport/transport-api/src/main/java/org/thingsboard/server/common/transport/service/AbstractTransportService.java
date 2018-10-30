@@ -68,50 +68,90 @@ public abstract class AbstractTransportService implements TransportService {
 
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.SessionEventMsg msg, TransportServiceCallback<Void> callback) {
-        reportActivityInternal(sessionInfo);
+        if (checkLimits(sessionInfo, callback)) {
+            reportActivityInternal(sessionInfo);
+            doProcess(sessionInfo, msg, callback);
+        }
     }
 
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.PostTelemetryMsg msg, TransportServiceCallback<Void> callback) {
-        reportActivityInternal(sessionInfo);
+        if (checkLimits(sessionInfo, callback)) {
+            reportActivityInternal(sessionInfo);
+            doProcess(sessionInfo, msg, callback);
+        }
     }
 
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.PostAttributeMsg msg, TransportServiceCallback<Void> callback) {
-        reportActivityInternal(sessionInfo);
+        if (checkLimits(sessionInfo, callback)) {
+            reportActivityInternal(sessionInfo);
+            doProcess(sessionInfo, msg, callback);
+        }
     }
 
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.GetAttributeRequestMsg msg, TransportServiceCallback<Void> callback) {
-        reportActivityInternal(sessionInfo);
+        if (checkLimits(sessionInfo, callback)) {
+            reportActivityInternal(sessionInfo);
+            doProcess(sessionInfo, msg, callback);
+        }
     }
 
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.SubscribeToAttributeUpdatesMsg msg, TransportServiceCallback<Void> callback) {
-        SessionMetaData sessionMetaData = reportActivityInternal(sessionInfo);
-        sessionMetaData.setSubscribedToAttributes(!msg.getUnsubscribe());
+        if (checkLimits(sessionInfo, callback)) {
+            SessionMetaData sessionMetaData = reportActivityInternal(sessionInfo);
+            sessionMetaData.setSubscribedToAttributes(!msg.getUnsubscribe());
+            doProcess(sessionInfo, msg, callback);
+        }
     }
 
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.SubscribeToRPCMsg msg, TransportServiceCallback<Void> callback) {
-        SessionMetaData sessionMetaData = reportActivityInternal(sessionInfo);
-        sessionMetaData.setSubscribedToRPC(!msg.getUnsubscribe());
+        if (checkLimits(sessionInfo, callback)) {
+            SessionMetaData sessionMetaData = reportActivityInternal(sessionInfo);
+            sessionMetaData.setSubscribedToRPC(!msg.getUnsubscribe());
+            doProcess(sessionInfo, msg, callback);
+        }
     }
 
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ToDeviceRpcResponseMsg msg, TransportServiceCallback<Void> callback) {
-        reportActivityInternal(sessionInfo);
+        if (checkLimits(sessionInfo, callback)) {
+            reportActivityInternal(sessionInfo);
+            doProcess(sessionInfo, msg, callback);
+        }
     }
 
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ToServerRpcRequestMsg msg, TransportServiceCallback<Void> callback) {
-        reportActivityInternal(sessionInfo);
+        if (checkLimits(sessionInfo, callback)) {
+            reportActivityInternal(sessionInfo);
+            doProcess(sessionInfo, msg, callback);
+        }
     }
 
     @Override
     public void reportActivity(TransportProtos.SessionInfoProto sessionInfo) {
         reportActivityInternal(sessionInfo);
     }
+
+    protected abstract void doProcess(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.SessionEventMsg msg, TransportServiceCallback<Void> callback);
+
+    protected abstract void doProcess(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.PostTelemetryMsg msg, TransportServiceCallback<Void> callback);
+
+    protected abstract void doProcess(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.PostAttributeMsg msg, TransportServiceCallback<Void> callback);
+
+    protected abstract void doProcess(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.GetAttributeRequestMsg msg, TransportServiceCallback<Void> callback);
+
+    protected abstract void doProcess(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.SubscribeToAttributeUpdatesMsg msg, TransportServiceCallback<Void> callback);
+
+    protected abstract void doProcess(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.SubscribeToRPCMsg msg, TransportServiceCallback<Void> callback);
+
+    protected abstract void doProcess(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ToDeviceRpcResponseMsg msg, TransportServiceCallback<Void> callback);
+
+    protected abstract void doProcess(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ToServerRpcRequestMsg msg, TransportServiceCallback<Void> callback);
 
     private SessionMetaData reportActivityInternal(TransportProtos.SessionInfoProto sessionInfo) {
         UUID sessionId = toId(sessionInfo);

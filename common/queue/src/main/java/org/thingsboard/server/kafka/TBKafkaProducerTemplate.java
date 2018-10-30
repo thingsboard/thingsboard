@@ -26,6 +26,7 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.PartitionInfo;
+import org.apache.kafka.common.errors.TopicExistsException;
 import org.apache.kafka.common.header.Header;
 
 import java.util.List;
@@ -75,7 +76,11 @@ public class TBKafkaProducerTemplate<T> {
             CreateTopicsResult result = admin.createTopic(new NewTopic(defaultTopic, 100, (short) 1));
             result.all().get();
         } catch (Exception e) {
-            log.trace("Failed to create topic: {}", e.getMessage(), e);
+            if ((e instanceof TopicExistsException) || (e.getCause() != null && e.getCause() instanceof TopicExistsException)) {
+                log.trace("[{}] Topic already exists: ", defaultTopic);
+            } else {
+                log.trace("[{}] Failed to create topic: {}", defaultTopic, e.getMessage(), e);
+            }
         }
         //Maybe this should not be cached, but we don't plan to change size of partitions
         this.partitionInfoMap = new ConcurrentHashMap<>();

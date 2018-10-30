@@ -32,7 +32,7 @@ public class BasicRpcSessionListener implements GrpcSessionListener {
     private final ActorRef manager;
     private final ActorRef self;
 
-    public BasicRpcSessionListener(ActorService service, ActorRef manager, ActorRef self) {
+    BasicRpcSessionListener(ActorService service, ActorRef manager, ActorRef self) {
         this.service = service;
         this.manager = manager;
         this.self = self;

@@ -103,10 +103,10 @@ public class RpcManagerActor extends ContextAwareActor {
             ServerAddress address = new ServerAddress(msg.getServerAddress().getHost(), msg.getServerAddress().getPort(), ServerType.CORE);
             SessionActorInfo session = sessionActors.get(address);
             if (session != null) {
-                log.debug("{} Forwarding msg to session actor", address);
+                log.debug("{} Forwarding msg to session actor: {}", address, msg);
                 session.getActor().tell(msg, ActorRef.noSender());
             } else {
-                log.debug("{} Storing msg to pending queue", address);
+                log.debug("{} Storing msg to pending queue: {}", address, msg);
                 Queue<ClusterAPIProtos.ClusterMessage> queue = pendingMsgs.get(address);
                 if (queue == null) {
                     queue = new LinkedList<>();
@@ -116,7 +116,7 @@ public class RpcManagerActor extends ContextAwareActor {
                 queue.add(msg);
             }
         } else {
-            logger.warning("Cluster msg doesn't have set Server Address [{}]", msg);
+            logger.warning("Cluster msg doesn't have server address [{}]", msg);
         }
     }
 

@@ -40,7 +40,7 @@
         </encoder>
     </appender>
 
-    <logger name="org.thingsboard.server" level="INFO" />
+    <logger name="org.thingsboard.server" level="TRACE" />
     <logger name="akka" level="INFO" />
 
     <root level="INFO">

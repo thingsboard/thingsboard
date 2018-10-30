@@ -217,102 +217,84 @@ public class RemoteTransportService extends AbstractTransportService {
     }
 
     @Override
-    public void process(SessionInfoProto sessionInfo, SessionEventMsg msg, TransportServiceCallback<Void> callback) {
-        if (checkLimits(sessionInfo, callback)) {
-            ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
-                    TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
-                            .setSessionEvent(msg).build()
-            ).build();
-            send(sessionInfo, toRuleEngineMsg, callback);
-        }
-    }
-
-    @Override
     public void process(SessionInfoProto sessionInfo, SubscriptionInfoProto msg, TransportServiceCallback<Void> callback) {
-        if (checkLimits(sessionInfo, callback)) {
-            ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
-                    TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
-                            .setSubscriptionInfo(msg).build()
-            ).build();
-            send(sessionInfo, toRuleEngineMsg, callback);
-        }
+        ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
+                TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
+                        .setSubscriptionInfo(msg).build()
+        ).build();
+        send(sessionInfo, toRuleEngineMsg, callback);
     }
 
     @Override
-    public void process(SessionInfoProto sessionInfo, PostTelemetryMsg msg, TransportServiceCallback<Void> callback) {
-        if (checkLimits(sessionInfo, callback)) {
-            ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
-                    TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
-                            .setPostTelemetry(msg).build()
-            ).build();
-            send(sessionInfo, toRuleEngineMsg, callback);
-        }
+    protected void doProcess(SessionInfoProto sessionInfo, SessionEventMsg msg, TransportServiceCallback<Void> callback) {
+        ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
+                TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
+                        .setSessionEvent(msg).build()
+        ).build();
+        send(sessionInfo, toRuleEngineMsg, callback);
     }
 
     @Override
-    public void process(SessionInfoProto sessionInfo, PostAttributeMsg msg, TransportServiceCallback<Void> callback) {
-        if (checkLimits(sessionInfo, callback)) {
-            ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
-                    TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
-                            .setPostAttributes(msg).build()
-            ).build();
-            send(sessionInfo, toRuleEngineMsg, callback);
-        }
+    protected void doProcess(SessionInfoProto sessionInfo, PostTelemetryMsg msg, TransportServiceCallback<Void> callback) {
+        ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
+                TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
+                        .setPostTelemetry(msg).build()
+        ).build();
+        send(sessionInfo, toRuleEngineMsg, callback);
     }
 
     @Override
-    public void process(SessionInfoProto sessionInfo, GetAttributeRequestMsg msg, TransportServiceCallback<Void> callback) {
-        if (checkLimits(sessionInfo, callback)) {
-            ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
-                    TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
-                            .setGetAttributes(msg).build()
-            ).build();
-            send(sessionInfo, toRuleEngineMsg, callback);
-        }
+    protected void doProcess(SessionInfoProto sessionInfo, PostAttributeMsg msg, TransportServiceCallback<Void> callback) {
+        ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
+                TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
+                        .setPostAttributes(msg).build()
+        ).build();
+        send(sessionInfo, toRuleEngineMsg, callback);
     }
 
     @Override
-    public void process(SessionInfoProto sessionInfo, SubscribeToAttributeUpdatesMsg msg, TransportServiceCallback<Void> callback) {
-        if (checkLimits(sessionInfo, callback)) {
-            ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
-                    TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
-                            .setSubscribeToAttributes(msg).build()
-            ).build();
-            send(sessionInfo, toRuleEngineMsg, callback);
-        }
+    protected void doProcess(SessionInfoProto sessionInfo, GetAttributeRequestMsg msg, TransportServiceCallback<Void> callback) {
+        ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
+                TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
+                        .setGetAttributes(msg).build()
+        ).build();
+        send(sessionInfo, toRuleEngineMsg, callback);
     }
 
     @Override
-    public void process(SessionInfoProto sessionInfo, SubscribeToRPCMsg msg, TransportServiceCallback<Void> callback) {
-        if (checkLimits(sessionInfo, callback)) {
-            ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
-                    TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
-                            .setSubscribeToRPC(msg).build()
-            ).build();
-            send(sessionInfo, toRuleEngineMsg, callback);
-        }
+    protected void doProcess(SessionInfoProto sessionInfo, SubscribeToAttributeUpdatesMsg msg, TransportServiceCallback<Void> callback) {
+        ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
+                TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
+                        .setSubscribeToAttributes(msg).build()
+        ).build();
+        send(sessionInfo, toRuleEngineMsg, callback);
     }
 
     @Override
-    public void process(SessionInfoProto sessionInfo, ToDeviceRpcResponseMsg msg, TransportServiceCallback<Void> callback) {
-        if (checkLimits(sessionInfo, callback)) {
-            ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
-                    TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
-                            .setToDeviceRPCCallResponse(msg).build()
-            ).build();
-            send(sessionInfo, toRuleEngineMsg, callback);
-        }
+    protected void doProcess(SessionInfoProto sessionInfo, SubscribeToRPCMsg msg, TransportServiceCallback<Void> callback) {
+        ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
+                TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
+                        .setSubscribeToRPC(msg).build()
+        ).build();
+        send(sessionInfo, toRuleEngineMsg, callback);
     }
 
     @Override
-    public void process(SessionInfoProto sessionInfo, ToServerRpcRequestMsg msg, TransportServiceCallback<Void> callback) {
-        if (checkLimits(sessionInfo, callback)) {
-            ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
-                    TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
-                            .setToServerRPCCallRequest(msg).build()
-            ).build();
-            send(sessionInfo, toRuleEngineMsg, callback);
-        }
+    protected void doProcess(SessionInfoProto sessionInfo, ToDeviceRpcResponseMsg msg, TransportServiceCallback<Void> callback) {
+        ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
+                TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
+                        .setToDeviceRPCCallResponse(msg).build()
+        ).build();
+        send(sessionInfo, toRuleEngineMsg, callback);
+    }
+
+    @Override
+    protected void doProcess(SessionInfoProto sessionInfo, ToServerRpcRequestMsg msg, TransportServiceCallback<Void> callback) {
+        ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
+                TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
+                        .setToServerRPCCallRequest(msg).build()
+        ).build();
+        send(sessionInfo, toRuleEngineMsg, callback);
     }
 
     private static class TransportCallbackAdaptor implements Callback {

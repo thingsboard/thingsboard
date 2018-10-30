@@ -201,7 +201,6 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
 
     private Consumer<Map.Entry<Integer, ToDeviceRpcRequestMetadata>> processPendingRpc(ActorContext context, UUID sessionId, String nodeId, Set<Integer> sentOneWayIds) {
         return entry -> {
-            ToDeviceRpcRequestActorMsg requestActorMsg = entry.getValue().getMsg();
             ToDeviceRpcRequest request = entry.getValue().getMsg().getMsg();
             ToDeviceRpcRequestBody body = request.getBody();
             if (request.isOneway()) {
@@ -486,6 +485,12 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             sessionMD.setLastActivityTime(subscriptionInfo.getLastActivityTime());
             sessionMD.setSubscribedToAttributes(subscriptionInfo.getAttributeSubscription());
             sessionMD.setSubscribedToRPC(subscriptionInfo.getRpcSubscription());
+            if (subscriptionInfo.getAttributeSubscription()) {
+                attributeSubscriptions.putIfAbsent(sessionId, sessionMD.getSessionInfo());
+            }
+            if (subscriptionInfo.getRpcSubscription()) {
+                rpcSubscriptions.putIfAbsent(sessionId, sessionMD.getSessionInfo());
+            }
         }
         dumpSessions();
     }
@@ -618,8 +623,10 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     }
 
     private void restoreSessions() {
+        logger.debug("[{}] Restoring sessions from cache", deviceId);
         TransportProtos.DeviceSessionsCacheEntry sessionsDump = systemContext.getDeviceSessionCacheService().get(deviceId);
         if (sessionsDump.getSerializedSize() == 0) {
+            logger.debug("[{}] No session information found", deviceId);
             return;
         }
         for (TransportProtos.SessionSubscriptionInfoProto sessionSubscriptionInfoProto : sessionsDump.getSessionsList()) {
@@ -627,18 +634,23 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             UUID sessionId = getSessionId(sessionInfoProto);
             SessionInfo sessionInfo = new SessionInfo(TransportProtos.SessionType.ASYNC, sessionInfoProto.getNodeId());
             TransportProtos.SubscriptionInfoProto subInfo = sessionSubscriptionInfoProto.getSubscriptionInfo();
-            SessionInfoMetaData sessionInfoMetaData = new SessionInfoMetaData(sessionInfo, subInfo.getLastActivityTime());
-            sessions.put(sessionId, sessionInfoMetaData);
-            if (subInfo.getAttributeSubscription()) {
-                rpcSubscriptions.put(sessionId, sessionInfo);
-            }
+            SessionInfoMetaData sessionMD = new SessionInfoMetaData(sessionInfo, subInfo.getLastActivityTime());
+            sessions.put(sessionId, sessionMD);
             if (subInfo.getAttributeSubscription()) {
                 attributeSubscriptions.put(sessionId, sessionInfo);
+                sessionMD.setSubscribedToAttributes(true);
             }
+            if (subInfo.getRpcSubscription()) {
+                rpcSubscriptions.put(sessionId, sessionInfo);
+                sessionMD.setSubscribedToRPC(true);
+            }
+            logger.debug("[{}] Restored session: {}", deviceId, sessionMD);
         }
+        logger.debug("[{}] Restored sessions: {}, rpc subscriptions: {}, attribute subscriptions: {}", deviceId, sessions.size(), rpcSubscriptions.size(), attributeSubscriptions.size());
     }
 
     private void dumpSessions() {
+        logger.debug("[{}] Dumping sessions: {}, rpc subscriptions: {}, attribute subscriptions: {} to cache", deviceId, sessions.size(), rpcSubscriptions.size(), attributeSubscriptions.size());
         List<TransportProtos.SessionSubscriptionInfoProto> sessionsList = new ArrayList<>(sessions.size());
         sessions.forEach((uuid, sessionMD) -> {
             if (sessionMD.getSessionInfo().getType() == TransportProtos.SessionType.SYNC) {
@@ -656,6 +668,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             sessionsList.add(TransportProtos.SessionSubscriptionInfoProto.newBuilder()
                     .setSessionInfo(sessionInfoProto)
                     .setSubscriptionInfo(subscriptionInfoProto).build());
+            logger.debug("[{}] Dumping session: {}", deviceId, sessionMD);
         });
         systemContext.getDeviceSessionCacheService()
                 .put(deviceId, TransportProtos.DeviceSessionsCacheEntry.newBuilder()
