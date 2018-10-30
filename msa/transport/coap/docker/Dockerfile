@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM openjdk:8-jre
+FROM openjdk:8-jdk
 
 COPY logback.xml ${pkg.name}.conf start-tb-coap-transport.sh ${pkg.name}.deb /tmp/
 
