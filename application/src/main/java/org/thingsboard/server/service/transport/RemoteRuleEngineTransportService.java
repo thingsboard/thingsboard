@@ -142,6 +142,7 @@ public class RemoteRuleEngineTransportService implements RuleEngineTransportServ
                     if (recordsCount > 0) {
                         while (!blockingPollRateBucket.tryConsume(recordsCount, TimeUnit.SECONDS.toNanos(5))) {
                             log.info("Rule Engine consumer is busy. Required tokens: [{}]. Available tokens: [{}].", recordsCount, pollRateBucket.getAvailableTokens());
+                            Thread.sleep(TimeUnit.SECONDS.toMillis(1));
                         }
                         log.trace("Processing {} records", recordsCount);
                     }
