@@ -97,6 +97,11 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
                     log.trace("Can't initialize component {}, due to {}", def.getBeanClassName(), e.getMessage(), e);
                     cause = e;
                     retryCount++;
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e1) {
+                        throw new RuntimeException(e1);
+                    }
                 }
             }
             if (cause != null && retryCount == MAX_OPTIMISITC_RETRIES) {

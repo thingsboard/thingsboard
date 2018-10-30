@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS attribute_kv (
 CREATE TABLE IF NOT EXISTS component_descriptor (
     id varchar(31) NOT NULL CONSTRAINT component_descriptor_pkey PRIMARY KEY,
     actions varchar(255),
-    clazz varchar,
+    clazz varchar UNIQUE,
     configuration_descriptor varchar,
     name varchar(255),
     scope varchar(255),

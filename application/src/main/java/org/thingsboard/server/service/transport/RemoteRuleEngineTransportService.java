@@ -75,7 +75,7 @@ public class RemoteRuleEngineTransportService implements RuleEngineTransportServ
     private int autoCommitInterval;
 
     @Value("${transport.remote.rule_engine.poll_records_pack_size}")
-    private long pollRecordsPackSize;
+    private int pollRecordsPackSize;
     @Value("${transport.remote.rule_engine.max_poll_records_per_second}")
     private long pollRecordsPerSecond;
     @Value("${transport.remote.rule_engine.max_poll_records_per_minute}")
