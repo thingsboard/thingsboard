@@ -1055,7 +1055,7 @@
         "to-entity-type": "下游实体类型",
         "to-entity-name": "下游实体名称",
         "from-entity-type": "上游实体类型",
-        "from-entity-name": "上游实体类型",
+        "from-entity-name": "上游实体名称",
         "to-entity": "下游实体",
         "from-entity": "上游实体",
         "delete": "删除关联",

@@ -25,9 +25,9 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 
 @RuleNode(
         type = ComponentType.ENRICHMENT,
-        name="客户属性",
+        name="管控机构属性",
         configClazz = TbGetEntityAttrNodeConfiguration.class,
-        nodeDescription = "将发起者客户属性或最新的遥测添加到消息元数据",
+        nodeDescription = "将发起者管控机构属性或最新的遥测添加到消息元数据",
         nodeDetails = "如果配置了属性丰富，则会将服务器范围属性添加到消息元数据。" +
                 "如果配置了最新遥测丰富，最新的遥测数据将会被添加到元数据。" +
                 "要在其他节点中访问这些属性，可以使用此模板" +
