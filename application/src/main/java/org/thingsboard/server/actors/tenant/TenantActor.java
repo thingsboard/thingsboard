@@ -108,7 +108,7 @@ public class TenantActor extends RuleChainManagerActor {
     @Override
     protected void broadcast(Object msg) {
         super.broadcast(msg);
-        deviceActors.values().forEach(actorRef -> actorRef.tell(msg, ActorRef.noSender()));
+//        deviceActors.values().forEach(actorRef -> actorRef.tell(msg, ActorRef.noSender()));
     }
 
     private void onServiceToRuleEngineMsg(ServiceToRuleEngineMsg msg) {
