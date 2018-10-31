@@ -25,20 +25,18 @@ Where:
 - `-v ~/.mytb-data:/data`   - mounts the host's dir `~/.mytb-data` to ThingsBoard DataBase data directory
 - `--name mytb`             - friendly local name of this machine
 - `thingsboard/tb`          - docker image, can be also `thingsboard/tb-postgres` or `thingsboard/tb-cassandra`
-- **NOTE**: **Windows** users should use docker managed volume instead of host's dir. Create docker volume (for ex. `mytb-data`) before executing `docker run` command:
 
-  ```
-  $ docker create volume mytb-data
-  ```   
-
-  After you can execute docker run command using `mytb-data` volume instead of `~/.mytb-data`.
-  
-  In order to get access to necessary resources from external IP/Host on **Windows** machine, please execute the following commands:
-  ```
-  $ VBoxManage controlvm "default" natpf1 "tcp-port9090,tcp,,9090,,9090"  
-  $ VBoxManage controlvm "default" natpf1 "tcp-port1883,tcp,,1883,,1883"
-  $ VBoxManage controlvm "default" natpf1 "tcp-port5683,tcp,,5683,,5683"
-  ```
+> **NOTE**: **Windows** users should use docker managed volume instead of host's dir. Create docker volume (for ex. `mytb-data`) before executing `docker run` command:
+> ```
+> $ docker create volume mytb-data
+> ```
+> After you can execute docker run command using `mytb-data` volume instead of `~/.mytb-data`.
+> In order to get access to necessary resources from external IP/Host on **Windows** machine, please execute the following commands:
+> ```
+> $ VBoxManage controlvm "default" natpf1 "tcp-port9090,tcp,,9090,,9090"  
+> $ VBoxManage controlvm "default" natpf1 "tcp-port1883,tcp,,1883,,1883"
+> $ VBoxManage controlvm "default" natpf1 "tcp-port5683,tcp,,5683,,5683"
+> ```
 
 After executing `docker run` command you can open `http://{your-host-ip}:9090` in you browser (for ex. `http://localhost:9090`). You should see ThingsBoard login page.
 Use the following default credentials:
