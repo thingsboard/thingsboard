@@ -25,12 +25,10 @@ import org.thingsboard.server.msa.AbstractContainerTest;
 import org.thingsboard.server.msa.WsClient;
 import org.thingsboard.server.msa.mapper.WsTelemetryResponse;
 
-import java.util.concurrent.TimeUnit;
-
 public class HttpClientTest extends AbstractContainerTest {
 
     @Test
-    public void telemetryUpdate() throws Exception {
+    public void telemetryUpload() throws Exception {
         restClient.login("tenant@thingsboard.org", "tenant");
 
         Device device = createDevice("http_");
@@ -43,8 +41,8 @@ public class HttpClientTest extends AbstractContainerTest {
                         ResponseEntity.class,
                         deviceCredentials.getCredentialsId());
         Assert.assertTrue(deviceTelemetryResponse.getStatusCode().is2xxSuccessful());
-        TimeUnit.SECONDS.sleep(1);
-        WsTelemetryResponse actualLatestTelemetry = mapper.readValue(wsClient.getLastMessage(), WsTelemetryResponse.class);
+        WsTelemetryResponse actualLatestTelemetry = wsClient.getLastMessage();
+        wsClient.closeBlocking();
 
         Assert.assertEquals(Sets.newHashSet("booleanKey", "stringKey", "doubleKey", "longKey"),
                 actualLatestTelemetry.getLatestValues().keySet());

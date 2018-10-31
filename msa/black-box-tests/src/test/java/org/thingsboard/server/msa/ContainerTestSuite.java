@@ -22,15 +22,18 @@ import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
 import java.io.File;
+import java.time.Duration;
 
 @RunWith(ClasspathSuite.class)
-@ClasspathSuite.ClassnameFilters({"org.thingsboard.server.msa.*"})
+@ClasspathSuite.ClassnameFilters({"org.thingsboard.server.msa.*Test"})
 public class ContainerTestSuite {
 
     @ClassRule
-    public static DockerComposeContainer composeContainer = new DockerComposeContainer(new File("./../docker/docker-compose.yml"))
+    public static DockerComposeContainer composeContainer = new DockerComposeContainer(
+            new File("./../../docker/docker-compose.yml"),
+            new File("./../../docker/docker-compose.postgres.yml"))
             .withPull(false)
             .withLocalCompose(true)
             .withTailChildContainers(true)
-            .withExposedService("tb-web-ui1", 8080, Wait.forHttp("/login"));
+            .withExposedService("tb-web-ui1", 8080, Wait.forHttp("/login").withStartupTimeout(Duration.ofSeconds(120)));
 }

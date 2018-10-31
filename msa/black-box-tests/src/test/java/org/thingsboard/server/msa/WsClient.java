@@ -15,13 +15,23 @@
  */
 package org.thingsboard.server.msa;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
+import org.thingsboard.server.msa.mapper.WsTelemetryResponse;
 
+import java.io.IOException;
 import java.net.URI;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
+@Slf4j
 public class WsClient extends WebSocketClient {
-    private String message;
+    private static final ObjectMapper mapper = new ObjectMapper();
+    private WsTelemetryResponse message;
+
+    private CountDownLatch latch = new CountDownLatch(1);;
 
     public WsClient(URI serverUri) {
         super(serverUri);
@@ -33,11 +43,20 @@ public class WsClient extends WebSocketClient {
 
     @Override
     public void onMessage(String message) {
-        this.message = message;
+        try {
+            WsTelemetryResponse response = mapper.readValue(message, WsTelemetryResponse.class);
+            if (!response.getData().isEmpty()) {
+                this.message = response;
+                latch.countDown();
+            }
+        } catch (IOException e) {
+            log.error("ws message can't be read");
+        }
     }
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
+        log.info("ws is closed, due to [{}]", reason);
     }
 
     @Override
@@ -45,7 +64,13 @@ public class WsClient extends WebSocketClient {
         ex.printStackTrace();
     }
 
-    public String getLastMessage() {
-        return this.message;
+    public WsTelemetryResponse getLastMessage() {
+        try {
+            latch.await(10, TimeUnit.SECONDS);
+            return this.message;
+        } catch (InterruptedException e) {
+            log.error("Timeout, ws message wasn't received");
+        }
+        return null;
     }
 }

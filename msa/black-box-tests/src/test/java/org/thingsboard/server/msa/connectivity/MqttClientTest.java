@@ -23,7 +23,9 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.JsonObject;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.*;
 import org.springframework.core.ParameterizedTypeReference;
@@ -50,6 +52,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.*;
 
+@Slf4j
 public class MqttClientTest extends AbstractContainerTest {
 
     @Test
@@ -61,8 +64,8 @@ public class MqttClientTest extends AbstractContainerTest {
         WsClient wsClient = subscribeToWebSocket(device.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
         MqttClient mqttClient = getMqttClient(deviceCredentials, null);
         mqttClient.publish("v1/devices/me/telemetry", Unpooled.wrappedBuffer(createPayload().toString().getBytes()));
-        TimeUnit.SECONDS.sleep(1);
-        WsTelemetryResponse actualLatestTelemetry = mapper.readValue(wsClient.getLastMessage(), WsTelemetryResponse.class);
+        WsTelemetryResponse actualLatestTelemetry = wsClient.getLastMessage();
+        wsClient.closeBlocking();
 
         Assert.assertEquals(4, actualLatestTelemetry.getData().size());
         Assert.assertEquals(Sets.newHashSet("booleanKey", "stringKey", "doubleKey", "longKey"),
@@ -87,8 +90,8 @@ public class MqttClientTest extends AbstractContainerTest {
         WsClient wsClient = subscribeToWebSocket(device.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
         MqttClient mqttClient = getMqttClient(deviceCredentials, null);
         mqttClient.publish("v1/devices/me/telemetry", Unpooled.wrappedBuffer(createPayload(ts).toString().getBytes()));
-        TimeUnit.SECONDS.sleep(1);
-        WsTelemetryResponse actualLatestTelemetry = mapper.readValue(wsClient.getLastMessage(), WsTelemetryResponse.class);
+        WsTelemetryResponse actualLatestTelemetry = wsClient.getLastMessage();
+        wsClient.closeBlocking();
 
         Assert.assertEquals(4, actualLatestTelemetry.getData().size());
         Assert.assertEquals(getExpectedLatestValues(ts), actualLatestTelemetry.getLatestValues());
@@ -116,8 +119,8 @@ public class MqttClientTest extends AbstractContainerTest {
         clientAttributes.addProperty("attr3", 42.0);
         clientAttributes.addProperty("attr4", 73);
         mqttClient.publish("v1/devices/me/attributes", Unpooled.wrappedBuffer(clientAttributes.toString().getBytes()));
-        TimeUnit.SECONDS.sleep(1);
-        WsTelemetryResponse actualLatestTelemetry = mapper.readValue(wsClient.getLastMessage(), WsTelemetryResponse.class);
+        WsTelemetryResponse actualLatestTelemetry = wsClient.getLastMessage();
+        wsClient.closeBlocking();
 
         Assert.assertEquals(4, actualLatestTelemetry.getData().size());
         Assert.assertEquals(Sets.newHashSet("attr1", "attr2", "attr3", "attr4"),
@@ -157,7 +160,7 @@ public class MqttClientTest extends AbstractContainerTest {
         Assert.assertTrue(sharedAttributesResponse.getStatusCode().is2xxSuccessful());
 
         // Subscribe to attributes response
-        mqttClient.on("v1/devices/me/attributes/response/+", listener);
+        mqttClient.on("v1/devices/me/attributes/response/+", listener, MqttQoS.AT_LEAST_ONCE);
         // Request attributes
         JsonObject request = new JsonObject();
         request.addProperty("clientKeys", "clientAttr");
@@ -183,7 +186,7 @@ public class MqttClientTest extends AbstractContainerTest {
 
         MqttMessageListener listener = new MqttMessageListener();
         MqttClient mqttClient = getMqttClient(deviceCredentials, listener);
-        mqttClient.on("v1/devices/me/attributes", listener);
+        mqttClient.on("v1/devices/me/attributes", listener, MqttQoS.AT_LEAST_ONCE);
 
         String sharedAttributeName = "sharedAttr";
 
@@ -226,13 +229,12 @@ public class MqttClientTest extends AbstractContainerTest {
 
         MqttMessageListener listener = new MqttMessageListener();
         MqttClient mqttClient = getMqttClient(deviceCredentials, listener);
-        mqttClient.on("v1/devices/me/rpc/request/+", listener);
+        mqttClient.on("v1/devices/me/rpc/request/+", listener, MqttQoS.AT_LEAST_ONCE);
 
         // Send an RPC from the server
         JsonObject serverRpcPayload = new JsonObject();
         serverRpcPayload.addProperty("method", "getValue");
         serverRpcPayload.addProperty("params", true);
-        serverRpcPayload.addProperty("timeout", 1000);
         ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
         ListenableFuture<ResponseEntity> future = service.submit(() -> {
             try {
@@ -271,7 +273,7 @@ public class MqttClientTest extends AbstractContainerTest {
 
         MqttMessageListener listener = new MqttMessageListener();
         MqttClient mqttClient = getMqttClient(deviceCredentials, listener);
-        mqttClient.on("v1/devices/me/rpc/request/+", listener);
+        mqttClient.on("v1/devices/me/rpc/request/+", listener, MqttQoS.AT_LEAST_ONCE);
 
         // Get the default rule chain id to make it root again after test finished
         RuleChainId defaultRuleChainId = getDefaultRuleChainId();
@@ -377,6 +379,7 @@ public class MqttClientTest extends AbstractContainerTest {
 
         @Override
         public void onMessage(String topic, ByteBuf message) {
+            log.info("MQTT message [{}], topic [{}]", message.toString(StandardCharsets.UTF_8), topic);
             events.add(new MqttEvent(topic, message.toString(StandardCharsets.UTF_8)));
         }
     }

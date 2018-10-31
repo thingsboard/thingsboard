@@ -25,16 +25,16 @@
         <artifactId>msa</artifactId>
     </parent>
     <groupId>org.thingsboard.msa</groupId>
-    <artifactId>integration-tests</artifactId>
+    <artifactId>black-box-tests</artifactId>
 
-    <name>ThingsBoard Integration Tests</name>
+    <name>ThingsBoard Black Box Tests</name>
     <url>https://thingsboard.io</url>
-    <description>Project for ThingsBoard integration tests with using Docker</description>
+    <description>Project for ThingsBoard black box testing with using Docker</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <main.dir>${basedir}/../..</main.dir>
-        <integrationTests.skip>true</integrationTests.skip>
+        <blackBoxTests.skip>true</blackBoxTests.skip>
         <testcontainers.version>1.9.1</testcontainers.version>
         <java-websocket.version>1.3.9</java-websocket.version>
         <httpclient.version>4.5.6</httpclient.version>
@@ -95,7 +95,7 @@
                     <includes>
                         <include>**/*TestSuite.java</include>
                     </includes>
-                    <skipTests>${integrationTests.skip}</skipTests>
+                    <skipTests>${blackBoxTests.skip}</skipTests>
                 </configuration>
             </plugin>
         </plugins>
