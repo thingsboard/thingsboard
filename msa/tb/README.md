@@ -35,11 +35,8 @@ Where:
   
   In order to get access to necessary resources from external IP/Host on **Windows** machine, please execute the following commands:
   ```
-  # HTTP port
   $ VBoxManage controlvm "default" natpf1 "tcp-port9090,tcp,,9090,,9090"  
-  # MQTT port
   $ VBoxManage controlvm "default" natpf1 "tcp-port1883,tcp,,1883,,1883"
-  # CoAP port
   $ VBoxManage controlvm "default" natpf1 "tcp-port5683,tcp,,5683,,5683"
   ```
 
