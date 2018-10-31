@@ -44,8 +44,8 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     private TbContext defaultCtx;
 
     RuleNodeActorMessageProcessor(TenantId tenantId, RuleChainId ruleChainId, RuleNodeId ruleNodeId, ActorSystemContext systemContext
-            , LoggingAdapter logger, ActorRef parent, ActorRef self) {
-        super(systemContext, logger, tenantId, ruleNodeId);
+            , ActorRef parent, ActorRef self) {
+        super(systemContext, tenantId, ruleNodeId);
         this.parent = parent;
         this.self = self;
         this.service = systemContext.getRuleChainService();

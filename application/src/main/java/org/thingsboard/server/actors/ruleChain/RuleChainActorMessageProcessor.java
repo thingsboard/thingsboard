@@ -23,6 +23,7 @@ import com.datastax.driver.core.utils.UUIDs;
 
 import java.util.Optional;
 
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.device.DeviceActorToRuleEngineMsg;
 import org.thingsboard.server.actors.service.DefaultActorService;
@@ -55,6 +56,7 @@ import java.util.stream.Collectors;
 /**
  * @author Andrew Shvayka
  */
+@Slf4j
 public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleChainId> {
 
     private static final long DEFAULT_CLUSTER_PARTITION = 0L;
@@ -69,8 +71,8 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     private boolean started;
 
     RuleChainActorMessageProcessor(TenantId tenantId, RuleChainId ruleChainId, ActorSystemContext systemContext
-            , LoggingAdapter logger, ActorRef parent, ActorRef self) {
-        super(systemContext, logger, tenantId, ruleChainId);
+            , ActorRef parent, ActorRef self) {
+        super(systemContext, tenantId, ruleChainId);
         this.parent = parent;
         this.self = self;
         this.nodeActors = new HashMap<>();
@@ -216,7 +218,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
 
     private void onRemoteTellNext(ServerAddress serverAddress, RuleNodeToRuleChainTellNextMsg envelope) {
         TbMsg msg = envelope.getMsg();
-        logger.debug("Forwarding [{}] msg to remote server [{}] due to changed originator id: [{}]", msg.getId(), serverAddress, msg.getOriginator());
+        log.debug("Forwarding [{}] msg to remote server [{}] due to changed originator id: [{}]", msg.getId(), serverAddress, msg.getOriginator());
         envelope = new RemoteToRuleChainTellNextMsg(envelope, tenantId, entityId);
         systemContext.getRpcService().tell(systemContext.getEncodingService().convertToProtoDataMessage(serverAddress, envelope));
     }

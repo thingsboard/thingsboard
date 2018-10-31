@@ -19,6 +19,7 @@ import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.service.ContextAwareActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
@@ -35,9 +36,8 @@ import java.util.*;
 /**
  * @author Andrew Shvayka
  */
+@Slf4j
 public class RpcManagerActor extends ContextAwareActor {
-
-    private final LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
     private final Map<ServerAddress, SessionActorInfo> sessionActors;
 
@@ -45,7 +45,7 @@ public class RpcManagerActor extends ContextAwareActor {
 
     private final ServerAddress instance;
 
-    RpcManagerActor(ActorSystemContext systemContext) {
+    private RpcManagerActor(ActorSystemContext systemContext) {
         super(systemContext);
         this.sessionActors = new HashMap<>();
         this.pendingMsgs = new HashMap<>();
@@ -116,7 +116,7 @@ public class RpcManagerActor extends ContextAwareActor {
                 queue.add(msg);
             }
         } else {
-            logger.warning("Cluster msg doesn't have server address [{}]", msg);
+            log.warn("Cluster msg doesn't have server address [{}]", msg);
         }
     }
 
@@ -207,7 +207,7 @@ public class RpcManagerActor extends ContextAwareActor {
         }
 
         @Override
-        public RpcManagerActor create() throws Exception {
+        public RpcManagerActor create() {
             return new RpcManagerActor(context);
         }
     }

@@ -19,6 +19,7 @@ import akka.actor.ActorContext;
 import akka.event.LoggingAdapter;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.stats.StatsPersistTick;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -30,14 +31,15 @@ import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import javax.annotation.Nullable;
 import java.util.function.Consumer;
 
+@Slf4j
 public abstract class ComponentMsgProcessor<T extends EntityId> extends AbstractContextAwareMsgProcessor {
 
     protected final TenantId tenantId;
     protected final T entityId;
     protected ComponentLifecycleState state;
 
-    protected ComponentMsgProcessor(ActorSystemContext systemContext, LoggingAdapter logger, TenantId tenantId, T id) {
-        super(systemContext, logger);
+    protected ComponentMsgProcessor(ActorSystemContext systemContext, TenantId tenantId, T id) {
+        super(systemContext);
         this.tenantId = tenantId;
         this.entityId = id;
     }
@@ -79,7 +81,7 @@ public abstract class ComponentMsgProcessor<T extends EntityId> extends Abstract
 
     protected void checkActive() {
         if (state != ComponentLifecycleState.ACTIVE) {
-            logger.warning("Rule chain is not active. Current state [{}] for processor [{}] tenant [{}]", state, tenantId, entityId);
+            log.warn("Rule chain is not active. Current state [{}] for processor [{}] tenant [{}]", state, tenantId, entityId);
             throw new IllegalStateException("Rule chain is not active! " + entityId + " - " + tenantId);
         }
     }

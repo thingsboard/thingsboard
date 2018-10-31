@@ -22,22 +22,22 @@ import akka.event.LoggingAdapter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
 import scala.concurrent.ExecutionContextExecutor;
 import scala.concurrent.duration.Duration;
 
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 public abstract class AbstractContextAwareMsgProcessor {
 
     protected final ActorSystemContext systemContext;
-    protected final LoggingAdapter logger;
     protected final ObjectMapper mapper = new ObjectMapper();
 
-    protected AbstractContextAwareMsgProcessor(ActorSystemContext systemContext, LoggingAdapter logger) {
+    protected AbstractContextAwareMsgProcessor(ActorSystemContext systemContext) {
         super();
         this.systemContext = systemContext;
-        this.logger = logger;
     }
 
     private Scheduler getScheduler() {
@@ -53,7 +53,7 @@ public abstract class AbstractContextAwareMsgProcessor {
     }
 
     private void schedulePeriodicMsgWithDelay(Object msg, long delayInMs, long periodInMs, ActorRef target) {
-        logger.debug("Scheduling periodic msg {} every {} ms with delay {} ms", msg, periodInMs, delayInMs);
+        log.debug("Scheduling periodic msg {} every {} ms with delay {} ms", msg, periodInMs, delayInMs);
         getScheduler().schedule(Duration.create(delayInMs, TimeUnit.MILLISECONDS), Duration.create(periodInMs, TimeUnit.MILLISECONDS), target, msg, getSystemDispatcher(), null);
     }
 
@@ -62,7 +62,7 @@ public abstract class AbstractContextAwareMsgProcessor {
     }
 
     private void scheduleMsgWithDelay(Object msg, long delayInMs, ActorRef target) {
-        logger.debug("Scheduling msg {} with delay {} ms", msg, delayInMs);
+        log.debug("Scheduling msg {} with delay {} ms", msg, delayInMs);
         getScheduler().scheduleOnce(Duration.create(delayInMs, TimeUnit.MILLISECONDS), target, msg, getSystemDispatcher(), null);
     }
 

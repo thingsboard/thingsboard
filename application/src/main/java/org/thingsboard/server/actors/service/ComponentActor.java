@@ -18,6 +18,7 @@ package org.thingsboard.server.actors.service;
 import akka.actor.ActorRef;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.shared.ComponentMsgProcessor;
 import org.thingsboard.server.actors.stats.StatsPersistMsg;
@@ -30,9 +31,8 @@ import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 /**
  * @author Andrew Shvayka
  */
+@Slf4j
 public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgProcessor<T>> extends ContextAwareActor {
-
-    protected final LoggingAdapter logger = Logging.getLogger(getContext().system(), this);
 
     private long lastPersistedErrorTs = 0L;
     protected final TenantId tenantId;
@@ -60,7 +60,7 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
                 scheduleStatsPersistTick();
             }
         } catch (Exception e) {
-            logger.warning("[{}][{}] Failed to start {} processor: {}", tenantId, id, id.getEntityType(), e);
+            log.warn("[{}][{}] Failed to start {} processor: {}", tenantId, id, id.getEntityType(), e);
             logAndPersist("OnStart", e, true);
             logLifecycleEvent(ComponentLifecycleEvent.STARTED, e);
         }
@@ -70,7 +70,7 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
         try {
             processor.scheduleStatsPersistTick(context(), systemContext.getStatisticsPersistFrequency());
         } catch (Exception e) {
-            logger.error("[{}][{}] Failed to schedule statistics store message. No statistics is going to be stored: {}", tenantId, id, e.getMessage());
+            log.error("[{}][{}] Failed to schedule statistics store message. No statistics is going to be stored: {}", tenantId, id, e.getMessage());
             logAndPersist("onScheduleStatsPersistMsg", e);
         }
     }
@@ -81,7 +81,7 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
             processor.stop(context());
             logLifecycleEvent(ComponentLifecycleEvent.STOPPED);
         } catch (Exception e) {
-            logger.warning("[{}][{}] Failed to stop {} processor: {}", tenantId, id, id.getEntityType(), e.getMessage());
+            log.warn("[{}][{}] Failed to stop {} processor: {}", tenantId, id, id.getEntityType(), e.getMessage());
             logAndPersist("OnStop", e, true);
             logLifecycleEvent(ComponentLifecycleEvent.STOPPED, e);
         }
@@ -148,9 +148,9 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
     private void logAndPersist(String method, Exception e, boolean critical) {
         errorsOccurred++;
         if (critical) {
-            logger.warning("[{}][{}] Failed to process {} msg: {}", id, tenantId, method, e);
+            log.warn("[{}][{}] Failed to process {} msg: {}", id, tenantId, method, e);
         } else {
-            logger.debug("[{}][{}] Failed to process {} msg: {}", id, tenantId, method, e);
+            log.debug("[{}][{}] Failed to process {} msg: {}", id, tenantId, method, e);
         }
         long ts = System.currentTimeMillis();
         if (ts - lastPersistedErrorTs > getErrorPersistFrequency()) {
