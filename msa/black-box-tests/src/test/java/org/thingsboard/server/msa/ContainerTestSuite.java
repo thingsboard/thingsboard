@@ -17,23 +17,43 @@ package org.thingsboard.server.msa;
 
 import org.junit.ClassRule;
 import org.junit.extensions.cpsuite.ClasspathSuite;
+import org.junit.rules.ExternalResource;
 import org.junit.runner.RunWith;
 import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.utility.Base58;
 
 import java.io.File;
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @RunWith(ClasspathSuite.class)
 @ClasspathSuite.ClassnameFilters({"org.thingsboard.server.msa.*Test"})
 public class ContainerTestSuite {
 
+    private static DockerComposeContainer testContainer;
+
     @ClassRule
-    public static DockerComposeContainer composeContainer = new DockerComposeContainer(
-            new File("./../../docker/docker-compose.yml"),
-            new File("./../../docker/docker-compose.postgres.yml"))
-            .withPull(false)
-            .withLocalCompose(true)
-            .withTailChildContainers(true)
-            .withExposedService("tb-web-ui1", 8080, Wait.forHttp("/login").withStartupTimeout(Duration.ofSeconds(120)));
+    public static ThingsBoardDbInstaller installTb = new ThingsBoardDbInstaller();
+
+    @ClassRule
+    public static DockerComposeContainer getTestContainer() {
+        if (testContainer == null) {
+            testContainer = new DockerComposeContainer(
+                    new File("./../../docker/docker-compose.yml"),
+                    new File("./../../docker/docker-compose.postgres.yml"),
+                    new File("./../../docker/docker-compose.postgres.volumes.yml"))
+                    .withPull(false)
+                    .withLocalCompose(true)
+                    .withTailChildContainers(true)
+                    .withEnv("POSTGRES_DATA_VOLUME", installTb.getPostgresDataVolume())
+                    .withEnv("TB_LOG_VOLUME", installTb.getTbLogVolume())
+                    .withEnv("LOAD_BALANCER_NAME", "")
+                    .withExposedService("haproxy", 80, Wait.forHttp("/swagger-ui.html").withStartupTimeout(Duration.ofSeconds(120)));
+        }
+        return testContainer;
+    }
 }

@@ -145,7 +145,7 @@ services:
       - tb-web-ui.env
   haproxy:
     restart: always
-    container_name: haproxy-certbot
+    container_name: "${LOAD_BALANCER_NAME}"
     image: xalauc/haproxy-certbot:1.7.9
     volumes:
      - ./haproxy/config:/config
