@@ -20,11 +20,13 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
@@ -47,8 +49,11 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 @Slf4j
 public class BaseTimeseriesService implements TimeseriesService {
 
-    public static final int INSERTS_PER_ENTRY = 3;
-    public static final int DELETES_PER_ENTRY = INSERTS_PER_ENTRY;
+    private static final int INSERTS_PER_ENTRY = 3;
+    private static final int DELETES_PER_ENTRY = INSERTS_PER_ENTRY;
+
+    @Value("${database.ts_max_intervals}")
+    private long maxTsIntervals;
 
     @Autowired
     private TimeseriesDao timeseriesDao;
@@ -59,7 +64,7 @@ public class BaseTimeseriesService implements TimeseriesService {
     @Override
     public ListenableFuture<List<TsKvEntry>> findAll(EntityId entityId, List<ReadTsKvQuery> queries) {
         validate(entityId);
-        queries.forEach(BaseTimeseriesService::validate);
+        queries.forEach(this::validate);
         if (entityId.getEntityType().equals(EntityType.ENTITY_VIEW)) {
             EntityView entityView = entityViewService.findEntityViewById((EntityViewId) entityId);
             List<ReadTsKvQuery> filteredQueries =
@@ -189,13 +194,21 @@ public class BaseTimeseriesService implements TimeseriesService {
         Validator.validateEntityId(entityId, "Incorrect entityId " + entityId);
     }
 
-    private static void validate(ReadTsKvQuery query) {
+    private void validate(ReadTsKvQuery query) {
         if (query == null) {
             throw new IncorrectParameterException("ReadTsKvQuery can't be null");
         } else if (isBlank(query.getKey())) {
             throw new IncorrectParameterException("Incorrect ReadTsKvQuery. Key can't be empty");
         } else if (query.getAggregation() == null) {
             throw new IncorrectParameterException("Incorrect ReadTsKvQuery. Aggregation can't be empty");
+        }
+        if(!Aggregation.NONE.equals(query.getAggregation())) {
+            long step = Math.max(query.getInterval(), 1000);
+            long intervalCounts = (query.getEndTs() - query.getStartTs()) / step;
+            if (intervalCounts > maxTsIntervals || intervalCounts < 0) {
+                throw new IncorrectParameterException("Incorrect TsKvQuery. Number of intervals is to high - " + intervalCounts + ". " +
+                        "Please increase 'interval' parameter for your query or reduce the time range of the query.");
+            }
         }
     }
 
