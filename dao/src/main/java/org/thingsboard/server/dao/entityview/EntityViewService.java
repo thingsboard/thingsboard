@@ -43,6 +43,8 @@ public interface EntityViewService {
 
     EntityView findEntityViewById(EntityViewId entityViewId);
 
+    EntityView findEntityViewByTenantIdAndName(TenantId tenantId, String name);
+
     TextPageData<EntityView> findEntityViewByTenantId(TenantId tenantId, TextPageLink pageLink);
 
     TextPageData<EntityView> findEntityViewByTenantIdAndType(TenantId tenantId, TextPageLink pageLink, String type);
