@@ -44,8 +44,8 @@ transport:
       # Type of the key store
       key_store_type: "${MQTT_SSL_KEY_STORE_TYPE:JKS}"
   sessions:
-    max_per_tenant: "${TB_TRANSPORT_SESSIONS_MAX_PER_TENANT:1000}"
-    max_per_device: "${TB_TRANSPORT_SESSIONS_MAX_PER_DEVICE:2}"
+    inactivity_timeout: "${TB_TRANSPORT_SESSIONS_INACTIVITY_TIMEOUT:300000}"
+    report_timeout: "${TB_TRANSPORT_SESSIONS_REPORT_TIMEOUT:30000}"
   rate_limits:
     enabled: "${TB_TRANSPORT_RATE_LIMITS_ENABLED:false}"
     tenant: "${TB_TRANSPORT_RATE_LIMITS_TENANT:1000:1,20000:60}"

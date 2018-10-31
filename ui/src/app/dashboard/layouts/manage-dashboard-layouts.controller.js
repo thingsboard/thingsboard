@@ -51,7 +51,7 @@ export default function ManageDashboardLayoutsController($scope, $mdDialog, $doc
                 gridSettings: gridSettings
             },
             parent: angular.element($document[0].body),
-            skipHide: true,
+            multiple: true,
             fullscreen: true,
             targetEvent: $event
         }).then(function (data) {

@@ -47,9 +47,14 @@ public abstract class AbstractTransportService implements TransportService {
     private String perTenantLimitsConf;
     @Value("${transport.rate_limits.tenant}")
     private String perDevicesLimitsConf;
+    @Value("${transport.sessions.inactivity_timeout}")
+    private long sessionInactivityTimeout;
+    @Value("${transport.sessions.report_timeout}")
+    private long sessionReportTimeout;
 
     protected ScheduledExecutorService schedulerExecutor;
     protected ExecutorService transportCallbackExecutor;
+
     private ConcurrentMap<UUID, SessionMetaData> sessions = new ConcurrentHashMap<>();
 
     //TODO: Implement cleanup of this maps.
@@ -59,7 +64,121 @@ public abstract class AbstractTransportService implements TransportService {
     @Override
     public void registerAsyncSession(TransportProtos.SessionInfoProto sessionInfo, SessionMsgListener listener) {
         sessions.putIfAbsent(toId(sessionInfo), new SessionMetaData(sessionInfo, TransportProtos.SessionType.ASYNC, listener));
-        //TODO: monitor sessions periodically: PING REQ/RESP, etc.
+    }
+
+    @Override
+    public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.SessionEventMsg msg, TransportServiceCallback<Void> callback) {
+        if (checkLimits(sessionInfo, callback)) {
+            reportActivityInternal(sessionInfo);
+            doProcess(sessionInfo, msg, callback);
+        }
+    }
+
+    @Override
+    public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.PostTelemetryMsg msg, TransportServiceCallback<Void> callback) {
+        if (checkLimits(sessionInfo, callback)) {
+            reportActivityInternal(sessionInfo);
+            doProcess(sessionInfo, msg, callback);
+        }
+    }
+
+    @Override
+    public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.PostAttributeMsg msg, TransportServiceCallback<Void> callback) {
+        if (checkLimits(sessionInfo, callback)) {
+            reportActivityInternal(sessionInfo);
+            doProcess(sessionInfo, msg, callback);
+        }
+    }
+
+    @Override
+    public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.GetAttributeRequestMsg msg, TransportServiceCallback<Void> callback) {
+        if (checkLimits(sessionInfo, callback)) {
+            reportActivityInternal(sessionInfo);
+            doProcess(sessionInfo, msg, callback);
+        }
+    }
+
+    @Override
+    public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.SubscribeToAttributeUpdatesMsg msg, TransportServiceCallback<Void> callback) {
+        if (checkLimits(sessionInfo, callback)) {
+            SessionMetaData sessionMetaData = reportActivityInternal(sessionInfo);
+            sessionMetaData.setSubscribedToAttributes(!msg.getUnsubscribe());
+            doProcess(sessionInfo, msg, callback);
+        }
+    }
+
+    @Override
+    public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.SubscribeToRPCMsg msg, TransportServiceCallback<Void> callback) {
+        if (checkLimits(sessionInfo, callback)) {
+            SessionMetaData sessionMetaData = reportActivityInternal(sessionInfo);
+            sessionMetaData.setSubscribedToRPC(!msg.getUnsubscribe());
+            doProcess(sessionInfo, msg, callback);
+        }
+    }
+
+    @Override
+    public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ToDeviceRpcResponseMsg msg, TransportServiceCallback<Void> callback) {
+        if (checkLimits(sessionInfo, callback)) {
+            reportActivityInternal(sessionInfo);
+            doProcess(sessionInfo, msg, callback);
+        }
+    }
+
+    @Override
+    public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ToServerRpcRequestMsg msg, TransportServiceCallback<Void> callback) {
+        if (checkLimits(sessionInfo, callback)) {
+            reportActivityInternal(sessionInfo);
+            doProcess(sessionInfo, msg, callback);
+        }
+    }
+
+    @Override
+    public void reportActivity(TransportProtos.SessionInfoProto sessionInfo) {
+        reportActivityInternal(sessionInfo);
+    }
+
+    protected abstract void doProcess(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.SessionEventMsg msg, TransportServiceCallback<Void> callback);
+
+    protected abstract void doProcess(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.PostTelemetryMsg msg, TransportServiceCallback<Void> callback);
+
+    protected abstract void doProcess(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.PostAttributeMsg msg, TransportServiceCallback<Void> callback);
+
+    protected abstract void doProcess(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.GetAttributeRequestMsg msg, TransportServiceCallback<Void> callback);
+
+    protected abstract void doProcess(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.SubscribeToAttributeUpdatesMsg msg, TransportServiceCallback<Void> callback);
+
+    protected abstract void doProcess(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.SubscribeToRPCMsg msg, TransportServiceCallback<Void> callback);
+
+    protected abstract void doProcess(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ToDeviceRpcResponseMsg msg, TransportServiceCallback<Void> callback);
+
+    protected abstract void doProcess(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ToServerRpcRequestMsg msg, TransportServiceCallback<Void> callback);
+
+    private SessionMetaData reportActivityInternal(TransportProtos.SessionInfoProto sessionInfo) {
+        UUID sessionId = toId(sessionInfo);
+        SessionMetaData sessionMetaData = sessions.get(sessionId);
+        if (sessionMetaData != null) {
+            sessionMetaData.updateLastActivityTime();
+        }
+        return sessionMetaData;
+    }
+
+    private void checkInactivityAndReportActivity() {
+        long expTime = System.currentTimeMillis() - sessionInactivityTimeout;
+        sessions.forEach((uuid, sessionMD) -> {
+            if (sessionMD.getLastActivityTime() < expTime) {
+                if (log.isDebugEnabled()) {
+                    log.debug("[{}] Session has expired due to last activity time: {}", toId(sessionMD.getSessionInfo()), sessionMD.getLastActivityTime());
+                }
+                process(sessionMD.getSessionInfo(), getSessionEventMsg(TransportProtos.SessionEvent.CLOSED), null);
+                sessions.remove(uuid);
+                sessionMD.getListener().onRemoteSessionCloseCommand(TransportProtos.SessionCloseNotificationProto.getDefaultInstance());
+            } else {
+                process(sessionMD.getSessionInfo(), TransportProtos.SubscriptionInfoProto.newBuilder()
+                        .setAttributeSubscription(sessionMD.isSubscribedToAttributes())
+                        .setRpcSubscription(sessionMD.isSubscribedToRPC())
+                        .setLastActivityTime(sessionMD.getLastActivityTime()).build(), null);
+            }
+        });
     }
 
     @Override
@@ -131,7 +250,7 @@ public abstract class AbstractTransportService implements TransportService {
         }
     }
 
-    protected UUID toId(TransportProtos.SessionInfoProto sessionInfo) {
+    private UUID toId(TransportProtos.SessionInfoProto sessionInfo) {
         return new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB());
     }
 
@@ -147,6 +266,7 @@ public abstract class AbstractTransportService implements TransportService {
         }
         this.schedulerExecutor = Executors.newSingleThreadScheduledExecutor();
         this.transportCallbackExecutor = new ThreadPoolExecutor(0, 20, 60L, TimeUnit.SECONDS, new SynchronousQueue<>());
+        this.schedulerExecutor.scheduleAtFixedRate(this::checkInactivityAndReportActivity, sessionReportTimeout, sessionReportTimeout, TimeUnit.MILLISECONDS);
     }
 
     public void destroy() {
@@ -160,5 +280,11 @@ public abstract class AbstractTransportService implements TransportService {
         if (transportCallbackExecutor != null) {
             transportCallbackExecutor.shutdownNow();
         }
+    }
+
+    public static TransportProtos.SessionEventMsg getSessionEventMsg(TransportProtos.SessionEvent event) {
+        return TransportProtos.SessionEventMsg.newBuilder()
+                .setSessionType(TransportProtos.SessionType.ASYNC)
+                .setEvent(event).build();
     }
 }

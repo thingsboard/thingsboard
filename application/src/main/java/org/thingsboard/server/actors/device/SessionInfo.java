@@ -25,4 +25,5 @@ import org.thingsboard.server.gen.transport.TransportProtos.SessionType;
 public class SessionInfo {
     private final SessionType type;
     private final String nodeId;
+    private long lastActivityTime;
 }

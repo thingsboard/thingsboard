@@ -44,11 +44,19 @@ public class DeviceActor extends ContextAwareActor {
     }
 
     @Override
+    public void preStart() {
+        logger.debug("[{}][{}] Starting device actor.", processor.tenantId, processor.deviceId);
+        try {
+            processor.initSessionTimeout(context());
+            logger.debug("[{}][{}] Device actor started.", processor.tenantId, processor.deviceId);
+        } catch (Exception e) {
+            logger.error(e, "[{}][{}] Unknown failure", processor.tenantId, processor.deviceId);
+        }
+    }
+
+    @Override
     protected boolean process(TbActorMsg msg) {
         switch (msg.getMsgType()) {
-            case CLUSTER_EVENT_MSG:
-                processor.processClusterEventMsg((ClusterEventMsg) msg);
-                break;
             case TRANSPORT_TO_DEVICE_ACTOR_MSG:
                 processor.process(context(), (TransportToDeviceActorMsgWrapper) msg);
                 break;
@@ -72,6 +80,9 @@ public class DeviceActor extends ContextAwareActor {
                 break;
             case DEVICE_ACTOR_CLIENT_SIDE_RPC_TIMEOUT_MSG:
                 processor.processClientSideRpcTimeout(context(), (DeviceActorClientSideRpcTimeoutMsg) msg);
+                break;
+            case SESSION_TIMEOUT_MSG:
+                processor.checkSessionsTimeout();
                 break;
             default:
                 return false;

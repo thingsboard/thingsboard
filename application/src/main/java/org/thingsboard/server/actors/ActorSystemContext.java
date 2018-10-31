@@ -67,6 +67,7 @@ import org.thingsboard.server.service.mail.MailExecutorService;
 import org.thingsboard.server.service.rpc.DeviceRpcService;
 import org.thingsboard.server.service.script.JsExecutorService;
 import org.thingsboard.server.service.script.JsInvokeService;
+import org.thingsboard.server.service.session.DeviceSessionCacheService;
 import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import org.thingsboard.server.service.transport.RuleEngineTransportService;
@@ -201,6 +202,10 @@ public class ActorSystemContext {
     @Getter
     private DeviceStateService deviceStateService;
 
+    @Autowired
+    @Getter
+    private DeviceSessionCacheService deviceSessionCacheService;
+
     @Lazy
     @Autowired
     @Getter
@@ -253,6 +258,14 @@ public class ActorSystemContext {
     @Value("${actors.rule.allow_system_mail_service}")
     @Getter
     private boolean allowSystemMailService;
+
+    @Value("${transport.sessions.inactivity_timeout}")
+    @Getter
+    private long sessionInactivityTimeout;
+
+    @Value("${transport.sessions.report_timeout}")
+    @Getter
+    private long sessionReportTimeout;
 
     @Getter
     @Setter

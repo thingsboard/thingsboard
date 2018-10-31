@@ -96,13 +96,8 @@ public enum MsgType {
      */
     DEVICE_ACTOR_TO_RULE_ENGINE_MSG,
 
-    /**
-     * Message that is sent from Rule Engine to the Device Actor when message is successfully pushed to queue.
-     */
-    ACTOR_SYSTEM_TO_DEVICE_SESSION_ACTOR_MSG,
-    TRANSPORT_TO_DEVICE_SESSION_ACTOR_MSG,
     SESSION_TIMEOUT_MSG,
-    SESSION_CTRL_MSG,
+
     STATS_PERSIST_TICK_MSG,
 
 

@@ -17,6 +17,11 @@ package org.thingsboard.server.service.transport;
 
 import akka.actor.ActorRef;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.bucket4j.Bandwidth;
+import io.github.bucket4j.BlockingBucket;
+import io.github.bucket4j.Bucket4j;
+import io.github.bucket4j.local.LocalBucket;
+import io.github.bucket4j.local.LocalBucketBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.producer.Callback;
@@ -49,6 +54,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 /**
@@ -67,6 +73,13 @@ public class RemoteRuleEngineTransportService implements RuleEngineTransportServ
     private int pollDuration;
     @Value("${transport.remote.rule_engine.auto_commit_interval}")
     private int autoCommitInterval;
+
+    @Value("${transport.remote.rule_engine.poll_records_pack_size}")
+    private int pollRecordsPackSize;
+    @Value("${transport.remote.rule_engine.max_poll_records_per_second}")
+    private long pollRecordsPerSecond;
+    @Value("${transport.remote.rule_engine.max_poll_records_per_minute}")
+    private long pollRecordsPerMinute;
 
     @Autowired
     private TbKafkaSettings kafkaSettings;
@@ -109,15 +122,30 @@ public class RemoteRuleEngineTransportService implements RuleEngineTransportServ
         ruleEngineConsumerBuilder.groupId("tb-node");
         ruleEngineConsumerBuilder.autoCommit(true);
         ruleEngineConsumerBuilder.autoCommitIntervalMs(autoCommitInterval);
+        ruleEngineConsumerBuilder.maxPollRecords(pollRecordsPackSize);
         ruleEngineConsumerBuilder.decoder(new ToRuleEngineMsgDecoder());
 
         ruleEngineConsumer = ruleEngineConsumerBuilder.build();
         ruleEngineConsumer.subscribe();
 
+        LocalBucketBuilder builder = Bucket4j.builder();
+        builder.addLimit(Bandwidth.simple(pollRecordsPerSecond, Duration.ofSeconds(1)));
+        builder.addLimit(Bandwidth.simple(pollRecordsPerMinute, Duration.ofMinutes(1)));
+        LocalBucket pollRateBucket = builder.build();
+        BlockingBucket blockingPollRateBucket = pollRateBucket.asScheduler();
+
         mainConsumerExecutor.execute(() -> {
             while (!stopped) {
                 try {
                     ConsumerRecords<String, byte[]> records = ruleEngineConsumer.poll(Duration.ofMillis(pollDuration));
+                    int recordsCount = records.count();
+                    if (recordsCount > 0) {
+                        while (!blockingPollRateBucket.tryConsume(recordsCount, TimeUnit.SECONDS.toNanos(5))) {
+                            log.info("Rule Engine consumer is busy. Required tokens: [{}]. Available tokens: [{}].", recordsCount, pollRateBucket.getAvailableTokens());
+                            Thread.sleep(TimeUnit.SECONDS.toMillis(1));
+                        }
+                        log.trace("Processing {} records", recordsCount);
+                    }
                     records.forEach(record -> {
                         try {
                             ToRuleEngineMsg toRuleEngineMsg = ruleEngineConsumer.decode(record);

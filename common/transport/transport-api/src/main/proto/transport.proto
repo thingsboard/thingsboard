@@ -172,6 +172,22 @@ message ToServerRpcResponseMsg {
   string error = 3;
 }
 
+//Used to report session state to tb-node and persist this state in the cache on the tb-node level.
+message SubscriptionInfoProto {
+  int64 lastActivityTime = 1;
+  bool attributeSubscription = 2;
+  bool rpcSubscription = 3;
+}
+
+message SessionSubscriptionInfoProto {
+  SessionInfoProto sessionInfo = 1;
+  SubscriptionInfoProto subscriptionInfo = 2;
+}
+
+message DeviceSessionsCacheEntry {
+  repeated SessionSubscriptionInfoProto sessions = 1;
+}
+
 message TransportToDeviceActorMsg {
   SessionInfoProto sessionInfo = 1;
   SessionEventMsg sessionEvent = 2;
@@ -182,6 +198,7 @@ message TransportToDeviceActorMsg {
   SubscribeToRPCMsg subscribeToRPC = 7;
   ToDeviceRpcResponseMsg toDeviceRPCCallResponse = 8;
   ToServerRpcRequestMsg toServerRPCCallRequest = 9;
+  SubscriptionInfoProto subscriptionInfo = 10;
 }
 
 message DeviceActorToTransportMsg {

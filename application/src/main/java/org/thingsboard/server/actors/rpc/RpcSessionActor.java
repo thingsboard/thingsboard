@@ -18,6 +18,7 @@ package org.thingsboard.server.actors.rpc;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import io.grpc.Channel;
+import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
 import org.thingsboard.server.actors.ActorSystemContext;
@@ -88,8 +89,8 @@ public class RpcSessionActor extends ContextAwareActor {
             systemContext.getRpcService().onSessionCreated(msg.getMsgUid(), session.getInputStream());
         } else {
             // Client session
-            Channel channel = ManagedChannelBuilder.forAddress(remoteServer.getHost(), remoteServer.getPort()).usePlaintext(true).build();
-            session = new GrpcSession(remoteServer, listener);
+            ManagedChannel channel = ManagedChannelBuilder.forAddress(remoteServer.getHost(), remoteServer.getPort()).usePlaintext().build();
+            session = new GrpcSession(remoteServer, listener, channel);
             session.initInputStream();
 
             ClusterRpcServiceGrpc.ClusterRpcServiceStub stub = ClusterRpcServiceGrpc.newStub(channel);

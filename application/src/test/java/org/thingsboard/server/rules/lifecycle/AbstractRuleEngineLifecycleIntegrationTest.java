@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import org.thingsboard.server.controller.AbstractRuleEngineControllerTest;
 import org.thingsboard.server.dao.attributes.AttributesService;
@@ -142,7 +143,7 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
                 new TbMsgMetaData(),
                 "{}",
                 null, null, 0L);
-        actorService.onMsg(new ServiceToRuleEngineMsg(savedTenant.getId(), tbMsg));
+        actorService.onMsg(new SendToClusterMsg(device.getId(), new ServiceToRuleEngineMsg(savedTenant.getId(), tbMsg)));
 
         Thread.sleep(3000);
 

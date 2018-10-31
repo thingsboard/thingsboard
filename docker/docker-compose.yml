@@ -14,40 +14,163 @@
 # limitations under the License.
 #
 
-version: '2'
+
+version: '2.2'
 
 services:
-  tb:
-    image: "thingsboard/application:2.1.0"
-    ports:
-      - "8080:8080"
-      - "1883:1883"
-      - "5683:5683/udp"
-    env_file:
-      - tb.env
-    environment:
-      - ADD_SCHEMA_AND_SYSTEM_DATA=${ADD_SCHEMA_AND_SYSTEM_DATA}
-      - ADD_DEMO_DATA=${ADD_DEMO_DATA}
-    volumes:
-      - "${HSQLDB_DATA_DIR}:/usr/share/thingsboard/data/sql"
-    entrypoint: /run-application.sh
-  cassandra:
-    image: "cassandra:3.11.2"
-    ports:
-      - "9042"
-      - "9160"
-    volumes:
-      - "${CASSANDRA_DATA_DIR}:/var/lib/cassandra"
-  zk:
-    image: "zookeeper:3.4.10"
+  zookeeper:
+    restart: always
+    image: "zookeeper:3.5"
     ports:
       - "2181"
+  kafka:
     restart: always
-  postgres:
-    image: "postgres:9.6"
+    image: "wurstmeister/kafka"
     ports:
-    - "5432"
+      - "9092:9092"
+    env_file:
+      - kafka.env
+    depends_on:
+      - zookeeper
+  redis:
+    image: redis:4.0
+    ports:
+      - "6379"
+  tb-js-executor:
+    restart: always
+    image: "${DOCKER_REPO}/${JS_EXECUTOR_DOCKER_NAME}:${TB_VERSION}"
+    scale: 20
+    env_file:
+      - tb-js-executor.env
+    depends_on:
+      - kafka
+  tb1:
+    restart: always
+    image: "${DOCKER_REPO}/${TB_NODE_DOCKER_NAME}:${TB_VERSION}"
+    ports:
+      - "8080"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200m"
+        max-file: "30"
     environment:
-      - POSTGRES_DB=${POSTGRES_DB}
+      TB_HOST: tb1
+    env_file:
+      - tb-node.env
     volumes:
-      - "${POSTGRES_DATA_DIR}:/var/lib/postgresql/data"
+      - ./tb-node/conf:/config
+      - ./tb-node/log:/var/log/thingsboard
+    depends_on:
+      - kafka
+      - redis
+  tb2:
+    restart: always
+    image: "${DOCKER_REPO}/${TB_NODE_DOCKER_NAME}:${TB_VERSION}"
+    ports:
+      - "8080"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200m"
+        max-file: "30"
+    environment:
+      TB_HOST: tb2
+    env_file:
+      - tb-node.env
+    volumes:
+      - ./tb-node/conf:/config
+      - ./tb-node/log:/var/log/thingsboard
+    depends_on:
+      - kafka
+      - redis
+  tb-mqtt-transport1:
+    restart: always
+    image: "${DOCKER_REPO}/${MQTT_TRANSPORT_DOCKER_NAME}:${TB_VERSION}"
+    ports:
+      - "1883"
+    env_file:
+      - tb-mqtt-transport.env
+    depends_on:
+      - kafka
+  tb-mqtt-transport2:
+    restart: always
+    image: "${DOCKER_REPO}/${MQTT_TRANSPORT_DOCKER_NAME}:${TB_VERSION}"
+    ports:
+      - "1883"
+    env_file:
+      - tb-mqtt-transport.env
+    depends_on:
+      - kafka
+  tb-http-transport1:
+    restart: always
+    image: "${DOCKER_REPO}/${HTTP_TRANSPORT_DOCKER_NAME}:${TB_VERSION}"
+    ports:
+      - "8081"
+    env_file:
+      - tb-http-transport.env
+    depends_on:
+      - kafka
+  tb-http-transport2:
+    restart: always
+    image: "${DOCKER_REPO}/${HTTP_TRANSPORT_DOCKER_NAME}:${TB_VERSION}"
+    ports:
+      - "8081"
+    env_file:
+      - tb-http-transport.env
+    depends_on:
+      - kafka
+  tb-coap-transport:
+    restart: always
+    image: "${DOCKER_REPO}/${COAP_TRANSPORT_DOCKER_NAME}:${TB_VERSION}"
+    ports:
+      - "5683:5683/udp"
+    env_file:
+      - tb-coap-transport.env
+    depends_on:
+      - kafka
+  tb-web-ui1:
+    restart: always
+    image: "${DOCKER_REPO}/${WEB_UI_DOCKER_NAME}:${TB_VERSION}"
+    ports:
+      - "8080"
+    env_file:
+      - tb-web-ui.env
+  tb-web-ui2:
+    restart: always
+    image: "${DOCKER_REPO}/${WEB_UI_DOCKER_NAME}:${TB_VERSION}"
+    ports:
+      - "8080"
+    env_file:
+      - tb-web-ui.env
+  haproxy:
+    restart: always
+    container_name: haproxy-certbot
+    image: xalauc/haproxy-certbot:1.7.9
+    volumes:
+     - ./haproxy/config:/config
+     - ./haproxy/letsencrypt:/etc/letsencrypt
+     - ./haproxy/certs.d:/usr/local/etc/haproxy/certs.d
+    ports:
+     - "80:80"
+     - "8080"
+     - "443:443"
+     - "1883:1883"
+     - "9999:9999"
+    cap_add:
+     - NET_ADMIN
+    environment:
+      HTTP_PORT: 80
+      HTTPS_PORT: 443
+      MQTT_PORT: 1883
+      TB_API_PORT: 8080
+      FORCE_HTTPS_REDIRECT: "false"
+    links:
+        - tb1
+        - tb2
+        - tb-web-ui1
+        - tb-web-ui2
+        - tb-mqtt-transport1
+        - tb-mqtt-transport2
+        - tb-http-transport1
+        - tb-http-transport2

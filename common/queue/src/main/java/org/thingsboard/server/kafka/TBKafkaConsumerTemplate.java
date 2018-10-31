@@ -46,7 +46,8 @@ public class TBKafkaConsumerTemplate<T> {
     private TBKafkaConsumerTemplate(TbKafkaSettings settings, TbKafkaDecoder<T> decoder,
                                     TbKafkaRequestIdExtractor<T> requestIdExtractor,
                                     String clientId, String groupId, String topic,
-                                    boolean autoCommit, int autoCommitIntervalMs) {
+                                    boolean autoCommit, int autoCommitIntervalMs,
+                                    int maxPollRecords) {
         Properties props = settings.toProps();
         props.put(ConsumerConfig.CLIENT_ID_CONFIG, clientId);
         if (groupId != null) {
@@ -56,6 +57,9 @@ public class TBKafkaConsumerTemplate<T> {
         props.put(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, autoCommitIntervalMs);
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArrayDeserializer");
+        if (maxPollRecords > 0) {
+            props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, maxPollRecords);
+        }
         this.consumer = new KafkaConsumer<>(props);
         this.decoder = decoder;
         this.requestIdExtractor = requestIdExtractor;

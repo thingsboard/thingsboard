@@ -48,7 +48,6 @@ import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.nosql.CassandraAbstractAsyncDao;
-import org.thingsboard.server.dao.util.NoSqlDao;
 import org.thingsboard.server.dao.util.NoSqlTsDao;
 
 import javax.annotation.Nullable;
@@ -62,6 +61,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
@@ -434,14 +434,14 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
     public ListenableFuture<Void> removeLatest(EntityId entityId, DeleteTsKvQuery query) {
         ListenableFuture<TsKvEntry> latestEntryFuture = findLatest(entityId, query.getKey());
 
-        ListenableFuture<Boolean> booleanFuture = Futures.transformAsync(latestEntryFuture, latestEntry -> {
+        ListenableFuture<Boolean> booleanFuture = Futures.transform(latestEntryFuture, latestEntry -> {
             long ts = latestEntry.getTs();
-            if (ts >= query.getStartTs() && ts <= query.getEndTs()) {
-                return Futures.immediateFuture(true);
+            if (ts > query.getStartTs() && ts <= query.getEndTs()) {
+                return true;
             } else {
                 log.trace("Won't be deleted latest value for [{}], key - {}", entityId, query.getKey());
             }
-            return Futures.immediateFuture(false);
+            return false;
         }, readResultsProcessingExecutor);
 
         ListenableFuture<Void> removedLatestFuture = Futures.transformAsync(booleanFuture, isRemove -> {
@@ -451,18 +451,34 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
             return Futures.immediateFuture(null);
         }, readResultsProcessingExecutor);
 
-        if (query.getRewriteLatestIfDeleted()) {
-            ListenableFuture<Void> savedLatestFuture = Futures.transformAsync(booleanFuture, isRemove -> {
-                if (isRemove) {
-                    return getNewLatestEntryFuture(entityId, query);
-                }
-                return Futures.immediateFuture(null);
-            }, readResultsProcessingExecutor);
+        final SimpleListenableFuture<Void> resultFuture = new SimpleListenableFuture<>();
+        Futures.addCallback(removedLatestFuture, new FutureCallback<Void>() {
+            @Override
+            public void onSuccess(@Nullable Void result) {
+                if (query.getRewriteLatestIfDeleted()) {
+                    ListenableFuture<Void> savedLatestFuture = Futures.transformAsync(booleanFuture, isRemove -> {
+                        if (isRemove) {
+                            return getNewLatestEntryFuture(entityId, query);
+                        }
+                        return Futures.immediateFuture(null);
+                    }, readResultsProcessingExecutor);
 
-            return Futures.transformAsync(Futures.allAsList(Arrays.asList(savedLatestFuture, removedLatestFuture)),
-                    list -> Futures.immediateFuture(null), readResultsProcessingExecutor);
-        }
-        return removedLatestFuture;
+                    try {
+                        resultFuture.set(savedLatestFuture.get());
+                    } catch (InterruptedException | ExecutionException e) {
+                        log.warn("Could not get latest saved value for [{}], {}", entityId, query.getKey(), e);
+                    }
+                } else {
+                    resultFuture.set(null);
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.warn("[{}] Failed to process remove of the latest value", entityId, t);
+            }
+        });
+        return resultFuture;
     }
 
     private ListenableFuture<Void> getNewLatestEntryFuture(EntityId entityId, DeleteTsKvQuery query) {

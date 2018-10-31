@@ -26,7 +26,6 @@
 		   <section flex layout='column' layout-align="center" style="padding-left: 4px;">
 			   <md-chips flex ng-if="widgetType != types.widgetType.alarm.value"
 						 id="timeseries_datakey_chips"
-						 ng-required="true"
 						 ng-model="timeseriesDataKeys" md-autocomplete-snap
 						 md-transform-chip="transformTimeseriesDataKeyChip($chip)"
 						 md-require-match="false">
@@ -78,7 +77,6 @@
 			   </md-chips>
 			   <md-chips flex ng-if="widgetType === types.widgetType.latest.value"
                          id="attribute_datakey_chips"
-                         ng-required="true"
                          ng-model="attributeDataKeys" md-autocomplete-snap
                          md-transform-chip="transformAttributeDataKeyChip($chip)"
                          md-require-match="false">
