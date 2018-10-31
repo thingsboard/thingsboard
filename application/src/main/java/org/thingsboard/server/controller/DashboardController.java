@@ -52,7 +52,6 @@ public class DashboardController extends BaseController {
     public static final String DASHBOARD_ID = "dashboardId";
 
     @Value("${dashboard.max_datapoints_limit}")
-    @Getter
     private long maxDatapointsLimit;
 
 
