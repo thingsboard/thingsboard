@@ -25,11 +25,28 @@ Where:
 - `-v ~/.mytb-data:/data`   - mounts the host's dir `~/.mytb-data` to ThingsBoard DataBase data directory
 - `--name mytb`             - friendly local name of this machine
 - `thingsboard/tb`          - docker image, can be also `thingsboard/tb-postgres` or `thingsboard/tb-cassandra`
-    
-After executing this command you can open `http://{your-host-ip}:9090` in you browser (for ex. `http://localhost:9090`). You should see ThingsBoard login page.
+- **NOTE**: **Windows** users should use docker managed volume instead of host's dir. Create docker volume (for ex. `mytb-data`) before executing `docker run` command:
+
+  ```
+  $ docker create volume mytb-data
+  ```   
+
+  After you can execute docker run command using `mytb-data` volume instead of `~/.mytb-data`.
+  
+  In order to get access to necessary resources from external IP/Host on **Windows** machine, please execute the following commands:
+  ```
+  # HTTP port
+  $ VBoxManage controlvm "default" natpf1 "tcp-port9090,tcp,,9090,,9090"  
+  # MQTT port
+  $ VBoxManage controlvm "default" natpf1 "tcp-port1883,tcp,,1883,,1883"
+  # CoAP port
+  $ VBoxManage controlvm "default" natpf1 "tcp-port5683,tcp,,5683,,5683"
+  ```
+
+After executing `docker run` command you can open `http://{your-host-ip}:9090` in you browser (for ex. `http://localhost:9090`). You should see ThingsBoard login page.
 Use the following default credentials:
 
-- **Systen Administrator**: sysadmin@thingsboard.org / sysadmin
+- **System Administrator**: sysadmin@thingsboard.org / sysadmin
 - **Tenant Administrator**: tenant@thingsboard.org / tenant
 - **Customer User**: customer@thingsboard.org / customer
     
@@ -39,21 +56,21 @@ You can detach from session terminal with `Ctrl-p` `Ctrl-q` - the container will
 
 To reattach to the terminal (to see ThingsBoard logs) run:
 
-`
+```
 $ docker attach mytb
-`
+```
 
 To stop the container:
 
-`
+```
 $ docker stop mytb
-`
+```
 
 To start the container:
 
-`
+```
 $ docker start mytb
-`
+```
 
 ## Upgrading
 
