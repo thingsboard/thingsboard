@@ -48,7 +48,6 @@ import scala.concurrent.duration.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
-@Slf4j
 public class TenantActor extends RuleChainManagerActor {
 
     private final TenantId tenantId;

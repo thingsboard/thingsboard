@@ -23,6 +23,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.producer.Callback;
+import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.errors.TopicExistsException;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.internals.RecordHeader;
 
@@ -83,7 +86,13 @@ public class TbKafkaRequestTemplate<Request, Response> extends AbstractTbKafkaTe
             CreateTopicsResult result = admin.createTopic(new NewTopic(responseTemplate.getTopic(), 1, (short) 1));
             result.all().get();
         } catch (Exception e) {
-            log.trace("Failed to create topic: {}", e.getMessage(), e);
+            if ((e instanceof TopicExistsException) || (e.getCause() != null && e.getCause() instanceof TopicExistsException)) {
+                log.trace("[{}] Topic already exists. ", responseTemplate.getTopic());
+            } else {
+                log.info("[{}] Failed to create topic: {}", responseTemplate.getTopic(), e.getMessage(), e);
+                throw new RuntimeException(e);
+            }
+
         }
         this.requestTemplate.init();
         tickTs = System.currentTimeMillis();
@@ -96,6 +105,7 @@ public class TbKafkaRequestTemplate<Request, Response> extends AbstractTbKafkaTe
                     log.trace("Polling responses completed, consumer records count [{}]", responses.count());
                 }
                 responses.forEach(response -> {
+                    log.trace("Received response to Kafka Template request: {}", response);
                     Header requestIdHeader = response.headers().lastHeader(TbKafkaSettings.REQUEST_ID_HEADER);
                     Response decodedResponse = null;
                     UUID requestId = null;
@@ -167,7 +177,13 @@ public class TbKafkaRequestTemplate<Request, Response> extends AbstractTbKafkaTe
         pendingRequests.putIfAbsent(requestId, responseMetaData);
         request = requestTemplate.enrich(request, responseTemplate.getTopic(), requestId);
         log.trace("[{}] Sending request, key [{}], expTime [{}]", requestId, key, responseMetaData.expTime);
-        requestTemplate.send(key, request, headers, null);
+        requestTemplate.send(key, request, headers, (metadata, exception) -> {
+            if (exception != null) {
+                log.trace("[{}] Failed to post the request", requestId, exception);
+            } else {
+                log.trace("[{}] Posted the request", requestId, metadata);
+            }
+        });
         return future;
     }
 

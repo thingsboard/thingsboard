@@ -28,6 +28,9 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.*;
+import org.junit.rules.TestRule;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -65,6 +68,7 @@ public class MqttClientTest extends AbstractContainerTest {
         MqttClient mqttClient = getMqttClient(deviceCredentials, null);
         mqttClient.publish("v1/devices/me/telemetry", Unpooled.wrappedBuffer(createPayload().toString().getBytes()));
         WsTelemetryResponse actualLatestTelemetry = wsClient.getLastMessage();
+        log.info("Received telemetry: {}", actualLatestTelemetry);
         wsClient.closeBlocking();
 
         Assert.assertEquals(4, actualLatestTelemetry.getData().size());
@@ -91,6 +95,7 @@ public class MqttClientTest extends AbstractContainerTest {
         MqttClient mqttClient = getMqttClient(deviceCredentials, null);
         mqttClient.publish("v1/devices/me/telemetry", Unpooled.wrappedBuffer(createPayload(ts).toString().getBytes()));
         WsTelemetryResponse actualLatestTelemetry = wsClient.getLastMessage();
+        log.info("Received telemetry: {}", actualLatestTelemetry);
         wsClient.closeBlocking();
 
         Assert.assertEquals(4, actualLatestTelemetry.getData().size());
@@ -120,6 +125,7 @@ public class MqttClientTest extends AbstractContainerTest {
         clientAttributes.addProperty("attr4", 73);
         mqttClient.publish("v1/devices/me/attributes", Unpooled.wrappedBuffer(clientAttributes.toString().getBytes()));
         WsTelemetryResponse actualLatestTelemetry = wsClient.getLastMessage();
+        log.info("Received telemetry: {}", actualLatestTelemetry);
         wsClient.closeBlocking();
 
         Assert.assertEquals(4, actualLatestTelemetry.getData().size());
@@ -168,6 +174,7 @@ public class MqttClientTest extends AbstractContainerTest {
         mqttClient.publish("v1/devices/me/attributes/request/" + new Random().nextInt(100), Unpooled.wrappedBuffer(request.toString().getBytes()));
         MqttEvent event = listener.getEvents().poll(10, TimeUnit.SECONDS);
         AttributesResponse attributes = mapper.readValue(Objects.requireNonNull(event).getMessage(), AttributesResponse.class);
+        log.info("Received telemetry: {}", attributes);
 
         Assert.assertEquals(1, attributes.getClient().size());
         Assert.assertEquals(clientAttributeValue, attributes.getClient().get("clientAttr"));
@@ -281,6 +288,7 @@ public class MqttClientTest extends AbstractContainerTest {
         // Create a new root rule chain
         RuleChainId ruleChainId = createRootRuleChainForRpcResponse();
 
+        TimeUnit.SECONDS.sleep(3);
         // Send the request to the server
         JsonObject clientRequest = new JsonObject();
         clientRequest.addProperty("method", "getResponse");
@@ -360,12 +368,12 @@ public class MqttClientTest extends AbstractContainerTest {
         return defaultRuleChain.get().getId();
     }
 
-    private MqttClient getMqttClient(DeviceCredentials deviceCredentials, MqttMessageListener listener) throws InterruptedException {
+    private MqttClient getMqttClient(DeviceCredentials deviceCredentials, MqttMessageListener listener) throws InterruptedException, ExecutionException {
         MqttClientConfig clientConfig = new MqttClientConfig();
         clientConfig.setClientId("MQTT client from test");
         clientConfig.setUsername(deviceCredentials.getCredentialsId());
         MqttClient mqttClient = MqttClient.create(clientConfig, listener);
-        mqttClient.connect("localhost", 1883).sync();
+        mqttClient.connect("localhost", 1883).get();
         return mqttClient;
     }
 

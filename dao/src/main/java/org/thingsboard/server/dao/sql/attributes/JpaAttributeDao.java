@@ -79,10 +79,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     @Override
     public ListenableFuture<Void> save(EntityId entityId, String attributeType, AttributeKvEntry attribute) {
         AttributeKvEntity entity = new AttributeKvEntity();
-        entity.setEntityType(entityId.getEntityType());
-        entity.setEntityId(fromTimeUUID(entityId.getId()));
-        entity.setAttributeType(attributeType);
-        entity.setAttributeKey(attribute.getKey());
+        entity.setId(new AttributeKvCompositeKey(entityId.getEntityType(), fromTimeUUID(entityId.getId()), attributeType, attribute.getKey()));
         entity.setLastUpdateTs(attribute.getLastUpdateTs());
         entity.setStrValue(attribute.getStrValue().orElse(null));
         entity.setDoubleValue(attribute.getDoubleValue().orElse(null));
@@ -100,10 +97,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
                 .stream()
                 .map(key -> {
                     AttributeKvEntity entityToDelete = new AttributeKvEntity();
-                    entityToDelete.setEntityType(entityId.getEntityType());
-                    entityToDelete.setEntityId(fromTimeUUID(entityId.getId()));
-                    entityToDelete.setAttributeType(attributeType);
-                    entityToDelete.setAttributeKey(key);
+                    entityToDelete.setId(new AttributeKvCompositeKey(entityId.getEntityType(), fromTimeUUID(entityId.getId()), attributeType, key));
                     return entityToDelete;
                 }).collect(Collectors.toList());
 

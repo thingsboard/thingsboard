@@ -348,9 +348,12 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         int requestId = msg.getMsg().getRequestId();
         ToServerRpcRequestMetadata data = toServerRpcPendingMap.remove(requestId);
         if (data != null) {
+            log.debug("[{}] Pushing reply to [{}][{}]!", deviceId, data.getNodeId(), data.getSessionId());
             sendToTransport(TransportProtos.ToServerRpcResponseMsg.newBuilder()
                             .setRequestId(requestId).setPayload(msg.getMsg().getData()).build()
                     , data.getSessionId(), data.getNodeId());
+        } else {
+            log.debug("[{}][{}] Pending RPC request to server not found!", deviceId, requestId);
         }
     }
 

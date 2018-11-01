@@ -36,7 +36,6 @@ import java.util.*;
 /**
  * @author Andrew Shvayka
  */
-@Slf4j
 public class RpcManagerActor extends ContextAwareActor {
 
     private final Map<ServerAddress, SessionActorInfo> sessionActors;

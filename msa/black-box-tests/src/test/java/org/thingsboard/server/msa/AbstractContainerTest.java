@@ -33,6 +33,9 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.SSLContexts;
 import org.junit.*;
+import org.junit.rules.TestRule;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.thingsboard.client.tools.RestClient;
 import org.thingsboard.server.common.data.Device;
@@ -60,6 +63,33 @@ public abstract class AbstractContainerTest {
         restClient.getRestTemplate().setRequestFactory(getRequestFactoryForSelfSignedCert());
     }
 
+    @Rule
+    public TestRule watcher = new TestWatcher() {
+        protected void starting(Description description) {
+            log.info("=================================================");
+            log.info("STARTING TEST: {}" , description.getMethodName());
+            log.info("=================================================");
+        }
+
+        /**
+         * Invoked when a test succeeds
+         */
+        protected void succeeded(Description description) {
+            log.info("=================================================");
+            log.info("SUCCEEDED TEST: {}" , description.getMethodName());
+            log.info("=================================================");
+        }
+
+        /**
+         * Invoked when a test fails
+         */
+        protected void failed(Throwable e, Description description) {
+            log.info("=================================================");
+            log.info("FAILED TEST: {}" , description.getMethodName(), e);
+            log.info("=================================================");
+        }
+    };
+
     protected Device createDevice(String name) {
         return restClient.createDevice(name + RandomStringUtils.randomAlphanumeric(7), "DEFAULT");
     }
@@ -82,6 +112,7 @@ public abstract class AbstractContainerTest {
         JsonObject wsRequest = new JsonObject();
         wsRequest.add(property.toString(), cmd);
         wsClient.send(wsRequest.toString());
+        wsClient.waitForFirstReply();
         return wsClient;
     }
 

@@ -44,6 +44,8 @@ public abstract class ComponentMsgProcessor<T extends EntityId> extends Abstract
         this.entityId = id;
     }
 
+    public abstract String getComponentName();
+
     public abstract void start(ActorContext context) throws Exception;
 
     public abstract void stop(ActorContext context) throws Exception;

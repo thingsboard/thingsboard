@@ -40,7 +40,7 @@ public class BasicRpcSessionListener implements GrpcSessionListener {
 
     @Override
     public void onConnected(GrpcSession session) {
-        log.info("{} session started -> {}", getType(session), session.getRemoteServer());
+        log.info("[{}][{}] session started", session.getRemoteServer(), getType(session));
         if (!session.isClient()) {
             manager.tell(new RpcSessionConnectedMsg(session.getRemoteServer(), session.getSessionId()), self);
         }
@@ -48,21 +48,19 @@ public class BasicRpcSessionListener implements GrpcSessionListener {
 
     @Override
     public void onDisconnected(GrpcSession session) {
-        log.info("{} session closed -> {}", getType(session), session.getRemoteServer());
+        log.info("[{}][{}] session closed", session.getRemoteServer(), getType(session));
         manager.tell(new RpcSessionDisconnectedMsg(session.isClient(), session.getRemoteServer()), self);
     }
 
     @Override
     public void onReceiveClusterGrpcMsg(GrpcSession session, ClusterAPIProtos.ClusterMessage clusterMessage) {
-        log.trace("{} Service [{}] received session actor msg {}", getType(session),
-                session.getRemoteServer(),
-                clusterMessage);
+        log.trace("Received session actor msg from [{}][{}]: {}", session.getRemoteServer(), getType(session), clusterMessage);
         service.onReceivedMsg(session.getRemoteServer(), clusterMessage);
     }
 
     @Override
     public void onError(GrpcSession session, Throwable t) {
-        log.warn("{} session got error -> {}", getType(session), session.getRemoteServer(), t);
+        log.warn("[{}][{}] session got error -> {}", session.getRemoteServer(), getType(session), t);
         manager.tell(new RpcSessionClosedMsg(session.isClient(), session.getRemoteServer()), self);
         session.close();
     }
