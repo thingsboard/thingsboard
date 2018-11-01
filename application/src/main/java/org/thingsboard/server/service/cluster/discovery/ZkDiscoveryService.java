@@ -21,6 +21,7 @@ import org.apache.commons.lang3.SerializationException;
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.framework.imps.CuratorFrameworkState;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
@@ -98,6 +99,8 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
     private PathChildrenCache cache;
     private String nodePath;
 
+    private volatile boolean stopped = false;
+
     @PostConstruct
     public void init() {
         log.info("Initializing...");
@@ -118,6 +121,7 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
             cache.start();
         } catch (Exception e) {
             log.error("Failed to connect to ZK: {}", e.getMessage(), e);
+            CloseableUtils.closeQuietly(cache);
             CloseableUtils.closeQuietly(client);
             throw new RuntimeException(e);
         }
@@ -125,7 +129,9 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
 
     @PreDestroy
     public void destroy() {
+        stopped = true;
         unpublishCurrentServer();
+        CloseableUtils.closeQuietly(cache);
         CloseableUtils.closeQuietly(client);
         log.info("Stopped discovery service");
     }
@@ -228,6 +234,14 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
 
     @Override
     public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
+        if (stopped) {
+            log.debug("Ignoring application ready event. Service is stopped.");
+            return;
+        }
+        if (client.getState() != CuratorFrameworkState.STARTED) {
+            log.debug("Ignoring application ready event, ZK client is not started, ZK client state [{}]", client.getState());
+            return;
+        }
         publishCurrentServer();
         getOtherServers().forEach(
                 server -> log.info("Found active server: [{}:{}]", server.getHost(), server.getPort())
@@ -236,6 +250,14 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
 
     @Override
     public void childEvent(CuratorFramework curatorFramework, PathChildrenCacheEvent pathChildrenCacheEvent) throws Exception {
+        if (stopped) {
+            log.debug("Ignoring {}. Service is stopped.", pathChildrenCacheEvent);
+            return;
+        }
+        if (client.getState() != CuratorFrameworkState.STARTED) {
+            log.debug("Ignoring {}, ZK client is not started, ZK client state [{}]", pathChildrenCacheEvent, client.getState());
+            return;
+        }
         ChildData data = pathChildrenCacheEvent.getData();
         if (data == null) {
             log.debug("Ignoring {} due to empty child data", pathChildrenCacheEvent);

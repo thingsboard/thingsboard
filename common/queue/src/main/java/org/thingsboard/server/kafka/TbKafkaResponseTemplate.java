@@ -18,6 +18,7 @@ package org.thingsboard.server.kafka;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.common.errors.InterruptException;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.internals.RecordHeader;
 
@@ -127,6 +128,10 @@ public class TbKafkaResponseTemplate<Request, Response> extends AbstractTbKafkaT
                             log.warn("[{}] Failed to process the request: {}", requestId, request, e);
                         }
                     });
+                } catch (InterruptException ie) {
+                    if (!stopped) {
+                        log.warn("Fetching data from kafka was interrupted.", ie);
+                    }
                 } catch (Throwable e) {
                     log.warn("Failed to obtain messages from queue.", e);
                     try {

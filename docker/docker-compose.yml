@@ -64,6 +64,7 @@ services:
     depends_on:
       - kafka
       - redis
+      - tb-js-executor
   tb2:
     restart: always
     image: "${DOCKER_REPO}/${TB_NODE_DOCKER_NAME}:${TB_VERSION}"
@@ -84,6 +85,7 @@ services:
     depends_on:
       - kafka
       - redis
+      - tb-js-executor
   tb-mqtt-transport1:
     restart: always
     image: "${DOCKER_REPO}/${MQTT_TRANSPORT_DOCKER_NAME}:${TB_VERSION}"
