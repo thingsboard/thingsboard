@@ -31,7 +31,7 @@ public class WsClient extends WebSocketClient {
     private static final ObjectMapper mapper = new ObjectMapper();
     private WsTelemetryResponse message;
 
-    private CountDownLatch latch = new CountDownLatch(1);;
+    private CountDownLatch latch = new CountDownLatch(1);
 
     public WsClient(URI serverUri) {
         super(serverUri);
@@ -56,7 +56,7 @@ public class WsClient extends WebSocketClient {
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
-        log.info("ws is closed, due to [{}]", reason);
+        log.info("ws is closed, code [{}], reason [{}]", code, reason);
     }
 
     @Override

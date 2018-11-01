@@ -16,6 +16,7 @@
 package org.thingsboard.server.msa.connectivity;
 
 import com.google.common.collect.Sets;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +26,7 @@ import org.thingsboard.server.msa.AbstractContainerTest;
 import org.thingsboard.server.msa.WsClient;
 import org.thingsboard.server.msa.mapper.WsTelemetryResponse;
 
+@Slf4j
 public class HttpClientTest extends AbstractContainerTest {
 
     @Test
@@ -35,6 +37,7 @@ public class HttpClientTest extends AbstractContainerTest {
         DeviceCredentials deviceCredentials = restClient.getCredentials(device.getId());
 
         WsClient wsClient = subscribeToWebSocket(device.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
+        log.info("Subscribed to ws telemetry");
         ResponseEntity deviceTelemetryResponse = restClient.getRestTemplate()
                 .postForEntity(HTTPS_URL + "/api/v1/{credentialsId}/telemetry",
                         mapper.readTree(createPayload().toString()),
@@ -44,6 +47,7 @@ public class HttpClientTest extends AbstractContainerTest {
         WsTelemetryResponse actualLatestTelemetry = wsClient.getLastMessage();
         wsClient.closeBlocking();
 
+        Assert.assertNotNull("Ws client didn't received any message with the data", actualLatestTelemetry);
         Assert.assertEquals(Sets.newHashSet("booleanKey", "stringKey", "doubleKey", "longKey"),
                 actualLatestTelemetry.getLatestValues().keySet());
 

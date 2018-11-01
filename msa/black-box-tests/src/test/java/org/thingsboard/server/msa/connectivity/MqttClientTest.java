@@ -63,10 +63,12 @@ public class MqttClientTest extends AbstractContainerTest {
 
         WsClient wsClient = subscribeToWebSocket(device.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
         MqttClient mqttClient = getMqttClient(deviceCredentials, null);
+        log.info("Before the telemetry post from the MQTT client");
         mqttClient.publish("v1/devices/me/telemetry", Unpooled.wrappedBuffer(createPayload().toString().getBytes()));
         WsTelemetryResponse actualLatestTelemetry = wsClient.getLastMessage();
         wsClient.closeBlocking();
 
+        Assert.assertNotNull("Ws client didn't received any message with the data", actualLatestTelemetry);
         Assert.assertEquals(4, actualLatestTelemetry.getData().size());
         Assert.assertEquals(Sets.newHashSet("booleanKey", "stringKey", "doubleKey", "longKey"),
                 actualLatestTelemetry.getLatestValues().keySet());
@@ -89,10 +91,12 @@ public class MqttClientTest extends AbstractContainerTest {
 
         WsClient wsClient = subscribeToWebSocket(device.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
         MqttClient mqttClient = getMqttClient(deviceCredentials, null);
+        log.info("Before the telemetry post from the MQTT client");
         mqttClient.publish("v1/devices/me/telemetry", Unpooled.wrappedBuffer(createPayload(ts).toString().getBytes()));
         WsTelemetryResponse actualLatestTelemetry = wsClient.getLastMessage();
         wsClient.closeBlocking();
 
+        Assert.assertNotNull("Ws client didn't received any message with the data", actualLatestTelemetry);
         Assert.assertEquals(4, actualLatestTelemetry.getData().size());
         Assert.assertEquals(getExpectedLatestValues(ts), actualLatestTelemetry.getLatestValues());
 
@@ -118,10 +122,12 @@ public class MqttClientTest extends AbstractContainerTest {
         clientAttributes.addProperty("attr2", true);
         clientAttributes.addProperty("attr3", 42.0);
         clientAttributes.addProperty("attr4", 73);
+        log.info("Before the attributes post from the MQTT client");
         mqttClient.publish("v1/devices/me/attributes", Unpooled.wrappedBuffer(clientAttributes.toString().getBytes()));
         WsTelemetryResponse actualLatestTelemetry = wsClient.getLastMessage();
         wsClient.closeBlocking();
 
+        Assert.assertNotNull("Ws client didn't received any message with the data", actualLatestTelemetry);
         Assert.assertEquals(4, actualLatestTelemetry.getData().size());
         Assert.assertEquals(Sets.newHashSet("attr1", "attr2", "attr3", "attr4"),
                 actualLatestTelemetry.getLatestValues().keySet());
@@ -147,6 +153,7 @@ public class MqttClientTest extends AbstractContainerTest {
         JsonObject clientAttributes = new JsonObject();
         String clientAttributeValue = RandomStringUtils.randomAlphanumeric(8);
         clientAttributes.addProperty("clientAttr", clientAttributeValue);
+        log.info("Before the telemetry post from the MQTT client");
         mqttClient.publish("v1/devices/me/attributes", Unpooled.wrappedBuffer(clientAttributes.toString().getBytes()));
 
         // Add a new shared attribute
@@ -165,9 +172,11 @@ public class MqttClientTest extends AbstractContainerTest {
         JsonObject request = new JsonObject();
         request.addProperty("clientKeys", "clientAttr");
         request.addProperty("sharedKeys", "sharedAttr");
+        log.info("Before the publishing attributes request from the MQTT client");
         mqttClient.publish("v1/devices/me/attributes/request/" + new Random().nextInt(100), Unpooled.wrappedBuffer(request.toString().getBytes()));
         MqttEvent event = listener.getEvents().poll(10, TimeUnit.SECONDS);
-        AttributesResponse attributes = mapper.readValue(Objects.requireNonNull(event).getMessage(), AttributesResponse.class);
+        Assert.assertNotNull("MQTT client didn't received any message", event);
+        AttributesResponse attributes = mapper.readValue(event.getMessage(), AttributesResponse.class);
 
         Assert.assertEquals(1, attributes.getClient().size());
         Assert.assertEquals(clientAttributeValue, attributes.getClient().get("clientAttr"));
@@ -194,6 +203,7 @@ public class MqttClientTest extends AbstractContainerTest {
         JsonObject sharedAttributes = new JsonObject();
         String sharedAttributeValue = RandomStringUtils.randomAlphanumeric(8);
         sharedAttributes.addProperty(sharedAttributeName, sharedAttributeValue);
+        log.info("Before add a new shared attribute");
         ResponseEntity sharedAttributesResponse = restClient.getRestTemplate()
                 .postForEntity(HTTPS_URL + "/api/plugins/telemetry/DEVICE/{deviceId}/SHARED_SCOPE",
                         mapper.readTree(sharedAttributes.toString()), ResponseEntity.class,
@@ -201,13 +211,15 @@ public class MqttClientTest extends AbstractContainerTest {
         Assert.assertTrue(sharedAttributesResponse.getStatusCode().is2xxSuccessful());
 
         MqttEvent event = listener.getEvents().poll(10, TimeUnit.SECONDS);
+        Assert.assertNotNull("MQTT client didn't received any message", event);
         Assert.assertEquals(sharedAttributeValue,
-                mapper.readValue(Objects.requireNonNull(event).getMessage(), JsonNode.class).get(sharedAttributeName).asText());
+                mapper.readValue(event.getMessage(), JsonNode.class).get(sharedAttributeName).asText());
 
         // Update the shared attribute value
         JsonObject updatedSharedAttributes = new JsonObject();
         String updatedSharedAttributeValue = RandomStringUtils.randomAlphanumeric(8);
         updatedSharedAttributes.addProperty(sharedAttributeName, updatedSharedAttributeValue);
+        log.info("Before the shared attribute update");
         ResponseEntity updatedSharedAttributesResponse = restClient.getRestTemplate()
                 .postForEntity(HTTPS_URL + "/api/plugins/telemetry/DEVICE/{deviceId}/SHARED_SCOPE",
                         mapper.readTree(updatedSharedAttributes.toString()), ResponseEntity.class,
@@ -215,8 +227,9 @@ public class MqttClientTest extends AbstractContainerTest {
         Assert.assertTrue(updatedSharedAttributesResponse.getStatusCode().is2xxSuccessful());
 
         event = listener.getEvents().poll(10, TimeUnit.SECONDS);
+        Assert.assertNotNull("MQTT client didn't received any message", event);
         Assert.assertEquals(updatedSharedAttributeValue,
-                mapper.readValue(Objects.requireNonNull(event).getMessage(), JsonNode.class).get(sharedAttributeName).asText());
+                mapper.readValue(event.getMessage(), JsonNode.class).get(sharedAttributeName).asText());
 
         restClient.getRestTemplate().delete(HTTPS_URL + "/api/device/" + device.getId());
     }
@@ -238,6 +251,7 @@ public class MqttClientTest extends AbstractContainerTest {
         ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
         ListenableFuture<ResponseEntity> future = service.submit(() -> {
             try {
+                log.info("Before two-way RPC request form the server");
                 return restClient.getRestTemplate()
                         .postForEntity(HTTPS_URL + "/api/plugins/rpc/twoway/{deviceId}",
                                 mapper.readTree(serverRpcPayload.toString()), String.class,
@@ -249,13 +263,14 @@ public class MqttClientTest extends AbstractContainerTest {
 
         // Wait for RPC call from the server and send the response
         MqttEvent requestFromServer = listener.getEvents().poll(10, TimeUnit.SECONDS);
+        Assert.assertNotNull("MQTT client didn't received any message", requestFromServer);
+        Assert.assertEquals("{\"method\":\"getValue\",\"params\":true}", requestFromServer.getMessage());
 
-        Assert.assertEquals("{\"method\":\"getValue\",\"params\":true}", Objects.requireNonNull(requestFromServer).getMessage());
-
-        Integer requestId = Integer.valueOf(Objects.requireNonNull(requestFromServer).getTopic().substring("v1/devices/me/rpc/request/".length()));
+        Integer requestId = Integer.valueOf(requestFromServer.getTopic().substring("v1/devices/me/rpc/request/".length()));
         JsonObject clientResponse = new JsonObject();
         clientResponse.addProperty("response", "someResponse");
         // Send a response to the server's RPC request
+        log.info("Before the publish RPC response from the MQTT device");
         mqttClient.publish("v1/devices/me/rpc/response/" + requestId, Unpooled.wrappedBuffer(clientResponse.toString().getBytes()));
 
         ResponseEntity serverResponse = future.get(5, TimeUnit.SECONDS);
@@ -286,12 +301,13 @@ public class MqttClientTest extends AbstractContainerTest {
         clientRequest.addProperty("method", "getResponse");
         clientRequest.addProperty("params", true);
         Integer requestId = 42;
+        log.info("Before the MQTT client RPC request");
         mqttClient.publish("v1/devices/me/rpc/request/" + requestId, Unpooled.wrappedBuffer(clientRequest.toString().getBytes()));
 
         // Check the response from the server
-        TimeUnit.SECONDS.sleep(1);
-        MqttEvent responseFromServer = listener.getEvents().poll(1, TimeUnit.SECONDS);
-        Integer responseId = Integer.valueOf(Objects.requireNonNull(responseFromServer).getTopic().substring("v1/devices/me/rpc/response/".length()));
+        MqttEvent responseFromServer = listener.getEvents().poll(10, TimeUnit.SECONDS);
+        Assert.assertNotNull("MQTT client didn't received any response from the server", responseFromServer);
+        Integer responseId = Integer.valueOf(responseFromServer.getTopic().substring("v1/devices/me/rpc/response/".length()));
         Assert.assertEquals(requestId, responseId);
         Assert.assertEquals("requestReceived", mapper.readTree(responseFromServer.getMessage()).get("response").asText());
 

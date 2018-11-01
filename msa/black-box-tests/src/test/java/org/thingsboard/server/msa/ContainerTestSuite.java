@@ -17,18 +17,12 @@ package org.thingsboard.server.msa;
 
 import org.junit.ClassRule;
 import org.junit.extensions.cpsuite.ClasspathSuite;
-import org.junit.rules.ExternalResource;
 import org.junit.runner.RunWith;
 import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.utility.Base58;
 
 import java.io.File;
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @RunWith(ClasspathSuite.class)
 @ClasspathSuite.ClassnameFilters({"org.thingsboard.server.msa.*Test"})
