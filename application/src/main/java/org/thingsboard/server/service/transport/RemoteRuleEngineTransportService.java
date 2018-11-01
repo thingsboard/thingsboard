@@ -149,6 +149,7 @@ public class RemoteRuleEngineTransportService implements RuleEngineTransportServ
                     records.forEach(record -> {
                         try {
                             ToRuleEngineMsg toRuleEngineMsg = ruleEngineConsumer.decode(record);
+                            log.trace("Forwarding message to rule engine {}", toRuleEngineMsg);
                             if (toRuleEngineMsg.hasToDeviceActorMsg()) {
                                 forwardToDeviceActor(toRuleEngineMsg.getToDeviceActorMsg());
                             }
@@ -175,18 +176,21 @@ public class RemoteRuleEngineTransportService implements RuleEngineTransportServ
 
     @Override
     public void process(String nodeId, DeviceActorToTransportMsg msg, Runnable onSuccess, Consumer<Throwable> onFailure) {
-        notificationsProducer.send(notificationsTopic + "." + nodeId,
-                new UUID(msg.getSessionIdMSB(), msg.getSessionIdLSB()).toString(),
-                ToTransportMsg.newBuilder().setToDeviceSessionMsg(msg).build()
-                , new QueueCallbackAdaptor(onSuccess, onFailure));
+        String topic = notificationsTopic + "." + nodeId;
+        UUID sessionId = new UUID(msg.getSessionIdMSB(), msg.getSessionIdLSB());
+        ToTransportMsg transportMsg = ToTransportMsg.newBuilder().setToDeviceSessionMsg(msg).build();
+        log.trace("[{}][{}] Pushing session data to topic: {}", topic, sessionId, transportMsg);
+        notificationsProducer.send(topic, sessionId.toString(), transportMsg, new QueueCallbackAdaptor(onSuccess, onFailure));
     }
 
     private void forwardToDeviceActor(TransportToDeviceActorMsg toDeviceActorMsg) {
         TransportToDeviceActorMsgWrapper wrapper = new TransportToDeviceActorMsgWrapper(toDeviceActorMsg);
         Optional<ServerAddress> address = routingService.resolveById(wrapper.getDeviceId());
         if (address.isPresent()) {
+            log.trace("[{}] Pushing message to remote server: {}", address.get(), toDeviceActorMsg);
             rpcService.tell(encodingService.convertToProtoDataMessage(address.get(), wrapper));
         } else {
+            log.trace("Pushing message to local server: {}", toDeviceActorMsg);
             actorContext.getAppActor().tell(wrapper, ActorRef.noSender());
         }
     }

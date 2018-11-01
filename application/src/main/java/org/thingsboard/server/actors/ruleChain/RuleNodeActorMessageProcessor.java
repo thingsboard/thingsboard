@@ -75,7 +75,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     }
 
     @Override
-    public void stop(ActorContext context) throws Exception {
+    public void stop(ActorContext context) {
         if (tbNode != null) {
             tbNode.destroy();
         }
@@ -83,7 +83,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     }
 
     @Override
-    public void onClusterEventMsg(ClusterEventMsg msg) throws Exception {
+    public void onClusterEventMsg(ClusterEventMsg msg) {
 
     }
 
@@ -109,6 +109,11 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
         } catch (Exception e) {
             msg.getCtx().tellFailure(msg.getMsg(), e);
         }
+    }
+
+    @Override
+    public String getComponentName() {
+        return ruleNode.getName();
     }
 
     private TbNode initComponent(RuleNode ruleNode) throws Exception {

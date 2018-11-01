@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.actors.device;
 
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.rule.engine.api.msg.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.actors.ActorSystemContext;
@@ -29,7 +28,6 @@ import org.thingsboard.server.service.rpc.ToDeviceRpcRequestActorMsg;
 import org.thingsboard.server.service.rpc.ToServerRpcResponseActorMsg;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 
-@Slf4j
 public class DeviceActor extends ContextAwareActor {
 
     private final DeviceActorMessageProcessor processor;

@@ -19,3 +19,5 @@ As result, in REPOSITORY column, next images should be present:
 - Run the black box tests in the [msa/black-box-tests](../black-box-tests) directory:
 
         mvn clean install -DblackBoxTests.skip=false
+
+

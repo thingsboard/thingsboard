@@ -31,7 +31,6 @@ import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 /**
  * @author Andrew Shvayka
  */
-@Slf4j
 public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgProcessor<T>> extends ContextAwareActor {
 
     private long lastPersistedErrorTs = 0L;
@@ -54,6 +53,7 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
     @Override
     public void preStart() {
         try {
+            log.debug("[{}][{}][{}] Starting processor.", tenantId, id, id.getEntityType());
             processor.start(context());
             logLifecycleEvent(ComponentLifecycleEvent.STARTED);
             if (systemContext.isStatisticsEnabled()) {
@@ -78,6 +78,7 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
     @Override
     public void postStop() {
         try {
+            log.debug("[{}][{}] Stopping processor.", tenantId, id, id.getEntityType());
             processor.stop(context());
             logLifecycleEvent(ComponentLifecycleEvent.STOPPED);
         } catch (Exception e) {
@@ -88,6 +89,7 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
     }
 
     protected void onComponentLifecycleMsg(ComponentLifecycleMsg msg) {
+        log.debug("[{}][{}][{}] onComponentLifecycleMsg: [{}]", tenantId, id, id.getEntityType(), msg.getEvent());
         try {
             switch (msg.getEvent()) {
                 case CREATED:
@@ -148,9 +150,9 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
     private void logAndPersist(String method, Exception e, boolean critical) {
         errorsOccurred++;
         if (critical) {
-            log.warn("[{}][{}] Failed to process {} msg: {}", id, tenantId, method, e);
+            log.warn("[{}][{}][{}] Failed to process {} msg: {}", id, tenantId, processor.getComponentName(), method, e);
         } else {
-            log.debug("[{}][{}] Failed to process {} msg: {}", id, tenantId, method, e);
+            log.debug("[{}][{}][{}] Failed to process {} msg: {}", id, tenantId, processor.getComponentName(), method, e);
         }
         long ts = System.currentTimeMillis();
         if (ts - lastPersistedErrorTs > getErrorPersistFrequency()) {

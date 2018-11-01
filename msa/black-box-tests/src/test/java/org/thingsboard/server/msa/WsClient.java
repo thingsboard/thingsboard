@@ -31,9 +31,11 @@ public class WsClient extends WebSocketClient {
     private static final ObjectMapper mapper = new ObjectMapper();
     private WsTelemetryResponse message;
 
-    private CountDownLatch latch = new CountDownLatch(1);;
+    private volatile boolean firstReplyReceived;
+    private CountDownLatch firstReply = new CountDownLatch(1);
+    private CountDownLatch latch = new CountDownLatch(1);
 
-    public WsClient(URI serverUri) {
+    WsClient(URI serverUri) {
         super(serverUri);
     }
 
@@ -43,14 +45,19 @@ public class WsClient extends WebSocketClient {
 
     @Override
     public void onMessage(String message) {
-        try {
-            WsTelemetryResponse response = mapper.readValue(message, WsTelemetryResponse.class);
-            if (!response.getData().isEmpty()) {
-                this.message = response;
-                latch.countDown();
+        if (!firstReplyReceived) {
+            firstReplyReceived = true;
+            firstReply.countDown();
+        } else {
+            try {
+                WsTelemetryResponse response = mapper.readValue(message, WsTelemetryResponse.class);
+                if (!response.getData().isEmpty()) {
+                    this.message = response;
+                    latch.countDown();
+                }
+            } catch (IOException e) {
+                log.error("ws message can't be read");
             }
-        } catch (IOException e) {
-            log.error("ws message can't be read");
         }
     }
 
@@ -72,5 +79,14 @@ public class WsClient extends WebSocketClient {
             log.error("Timeout, ws message wasn't received");
         }
         return null;
+    }
+
+    void waitForFirstReply() {
+        try {
+            firstReply.await(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            log.error("Timeout, ws message wasn't received");
+            throw new RuntimeException(e);
+        }
     }
 }

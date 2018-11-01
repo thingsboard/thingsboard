@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.actors.ruleChain;
 
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.service.ComponentActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
@@ -25,7 +24,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 
-@Slf4j
 public class RuleNodeActor extends ComponentActor<RuleNodeId, RuleNodeActorMessageProcessor> {
 
     private final RuleChainId ruleChainId;
@@ -62,7 +60,9 @@ public class RuleNodeActor extends ComponentActor<RuleNodeId, RuleNodeActorMessa
     }
 
     private void onRuleNodeToSelfMsg(RuleNodeToSelfMsg msg) {
-        log.debug("[{}] Going to process rule msg: {}", id, msg.getMsg());
+        if (log.isDebugEnabled()) {
+            log.debug("[{}][{}][{}] Going to process rule msg: {}", ruleChainId, id, processor.getComponentName(), msg.getMsg());
+        }
         try {
             processor.onRuleToSelfMsg(msg);
             increaseMessagesProcessedCount();
@@ -72,7 +72,9 @@ public class RuleNodeActor extends ComponentActor<RuleNodeId, RuleNodeActorMessa
     }
 
     private void onRuleChainToRuleNodeMsg(RuleChainToRuleNodeMsg msg) {
-        log.debug("[{}] Going to process rule msg: {}", id, msg.getMsg());
+        if (log.isDebugEnabled()) {
+            log.debug("[{}][{}][{}] Going to process rule msg: {}", ruleChainId, id, processor.getComponentName(), msg.getMsg());
+        }
         try {
             processor.onRuleChainToRuleNodeMsg(msg);
             increaseMessagesProcessedCount();

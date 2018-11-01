@@ -69,6 +69,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     private RuleNodeId firstId;
     private RuleNodeCtx firstNode;
     private boolean started;
+    private String ruleChainName;
 
     RuleChainActorMessageProcessor(TenantId tenantId, RuleChainId ruleChainId, ActorSystemContext systemContext
             , ActorRef parent, ActorRef self) {
@@ -78,15 +79,24 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         this.nodeActors = new HashMap<>();
         this.nodeRoutes = new HashMap<>();
         this.service = systemContext.getRuleChainService();
+        this.ruleChainName = ruleChainId.toString();
     }
 
     @Override
-    public void start(ActorContext context) throws Exception {
+    public String getComponentName() {
+        return null;
+    }
+
+    @Override
+    public void start(ActorContext context) {
         if (!started) {
             RuleChain ruleChain = service.findRuleChainById(entityId);
+            ruleChainName = ruleChain.getName();
             List<RuleNode> ruleNodeList = service.getRuleChainNodes(entityId);
+            log.trace("[{}][{}] Starting rule chain with {} nodes", tenantId, entityId, ruleNodeList.size());
             // Creating and starting the actors;
             for (RuleNode ruleNode : ruleNodeList) {
+                log.trace("[{}][{}] Creating rule node [{}]: {}", tenantId, entityId, ruleNode.getName(), ruleNode);
                 ActorRef ruleNodeActor = createRuleNodeActor(context, ruleNode);
                 nodeActors.put(ruleNode.getId(), new RuleNodeCtx(tenantId, self, ruleNodeActor, ruleNode));
             }
@@ -98,16 +108,19 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     }
 
     @Override
-    public void onUpdate(ActorContext context) throws Exception {
+    public void onUpdate(ActorContext context) {
         RuleChain ruleChain = service.findRuleChainById(entityId);
+        ruleChainName = ruleChain.getName();
         List<RuleNode> ruleNodeList = service.getRuleChainNodes(entityId);
-
+        log.trace("[{}][{}] Updating rule chain with {} nodes", tenantId, entityId, ruleNodeList.size());
         for (RuleNode ruleNode : ruleNodeList) {
             RuleNodeCtx existing = nodeActors.get(ruleNode.getId());
             if (existing == null) {
+                log.trace("[{}][{}] Creating rule node [{}]: {}", tenantId, entityId, ruleNode.getName(), ruleNode);
                 ActorRef ruleNodeActor = createRuleNodeActor(context, ruleNode);
                 nodeActors.put(ruleNode.getId(), new RuleNodeCtx(tenantId, self, ruleNodeActor, ruleNode));
             } else {
+                log.trace("[{}][{}] Updating rule node [{}]: {}", tenantId, entityId, ruleNode.getName(), ruleNode);
                 existing.setSelf(ruleNode);
                 existing.getSelfActor().tell(new ComponentLifecycleMsg(tenantId, existing.getSelf().getId(), ComponentLifecycleEvent.UPDATED), self);
             }
@@ -116,6 +129,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         Set<RuleNodeId> existingNodes = ruleNodeList.stream().map(RuleNode::getId).collect(Collectors.toSet());
         List<RuleNodeId> removedRules = nodeActors.keySet().stream().filter(node -> !existingNodes.contains(node)).collect(Collectors.toList());
         removedRules.forEach(ruleNodeId -> {
+            log.trace("[{}][{}] Removing rule node [{}]", tenantId, entityId, ruleNodeId);
             RuleNodeCtx removed = nodeActors.remove(ruleNodeId);
             removed.getSelfActor().tell(new ComponentLifecycleMsg(tenantId, removed.getSelf().getId(), ComponentLifecycleEvent.DELETED), self);
         });
@@ -124,7 +138,8 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     }
 
     @Override
-    public void stop(ActorContext context) throws Exception {
+    public void stop(ActorContext context) {
+        log.trace("[{}][{}] Stopping rule chain with {} nodes", tenantId, entityId, nodeActors.size());
         nodeActors.values().stream().map(RuleNodeCtx::getSelfActor).forEach(context::stop);
         nodeActors.clear();
         nodeRoutes.clear();
@@ -133,7 +148,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     }
 
     @Override
-    public void onClusterEventMsg(ClusterEventMsg msg) throws Exception {
+    public void onClusterEventMsg(ClusterEventMsg msg) {
 
     }
 
@@ -150,10 +165,12 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         // Populating the routes map;
         for (RuleNode ruleNode : ruleNodeList) {
             List<EntityRelation> relations = service.getRuleNodeRelations(ruleNode.getId());
+            log.trace("[{}][{}][{}] Processing rule node relations [{}]", tenantId, entityId, ruleNode.getId(), relations.size());
             if (relations.size() == 0) {
                 nodeRoutes.put(ruleNode.getId(), Collections.emptyList());
             } else {
                 for (EntityRelation relation : relations) {
+                    log.trace("[{}][{}][{}] Processing rule node relation [{}]", tenantId, entityId, ruleNode.getId(), relation.getTo());
                     if (relation.getTo().getEntityType() == EntityType.RULE_NODE) {
                         RuleNodeCtx ruleNodeCtx = nodeActors.get(new RuleNodeId(relation.getTo().getId()));
                         if (ruleNodeCtx == null) {
@@ -232,17 +249,20 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         int relationsCount = relations.size();
         EntityId ackId = msg.getRuleNodeId() != null ? msg.getRuleNodeId() : msg.getRuleChainId();
         if (relationsCount == 0) {
+            log.trace("[{}][{}][{}] No outbound relations to process", tenantId, entityId, msg.getId());
             if (ackId != null) {
 //                TODO: Ack this message in Kafka
 //                queue.ack(tenantId, msg, ackId.getId(), msg.getClusterPartition());
             }
         } else if (relationsCount == 1) {
             for (RuleNodeRelation relation : relations) {
+                log.trace("[{}][{}][{}] Pushing message to single target: [{}]", tenantId, entityId, msg.getId(), relation.getOut());
                 pushToTarget(msg, relation.getOut(), relation.getType());
             }
         } else {
             for (RuleNodeRelation relation : relations) {
                 EntityId target = relation.getOut();
+                log.trace("[{}][{}][{}] Pushing message to multiple targets: [{}]", tenantId, entityId, msg.getId(), relation.getOut());
                 switch (target.getEntityType()) {
                     case RULE_NODE:
                         enqueueAndForwardMsgCopyToNode(msg, target, relation.getType());

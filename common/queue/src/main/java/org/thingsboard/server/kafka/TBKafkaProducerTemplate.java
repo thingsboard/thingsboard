@@ -77,9 +77,10 @@ public class TBKafkaProducerTemplate<T> {
             result.all().get();
         } catch (Exception e) {
             if ((e instanceof TopicExistsException) || (e.getCause() != null && e.getCause() instanceof TopicExistsException)) {
-                log.trace("[{}] Topic already exists: ", defaultTopic);
+                log.trace("[{}] Topic already exists.", defaultTopic);
             } else {
-                log.trace("[{}] Failed to create topic: {}", defaultTopic, e.getMessage(), e);
+                log.info("[{}] Failed to create topic: {}", defaultTopic, e.getMessage(), e);
+                throw new RuntimeException(e);
             }
         }
         //Maybe this should not be cached, but we don't plan to change size of partitions
