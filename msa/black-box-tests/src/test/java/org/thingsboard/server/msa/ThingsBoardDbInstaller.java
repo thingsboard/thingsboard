@@ -87,19 +87,23 @@ public class ThingsBoardDbInstaller extends ExternalResource {
 
     @Override
     protected void after() {
-        File tbLogsDir = new File("./target/tb-logs/");
+        copyLogs(tbLogVolume, "./target/tb-logs/");
+
+        dockerCompose.withCommand("volume rm -f " + postgresDataVolume + " " + tbLogVolume);
+        dockerCompose.invokeDocker();
+    }
+
+    private void copyLogs(String volumeName, String targetDir) {
+        File tbLogsDir = new File(targetDir);
         tbLogsDir.mkdirs();
 
-        dockerCompose.withCommand("run -d --rm --name tb-logs-container -v " + tbLogVolume + ":/root alpine tail -f /dev/null");
+        dockerCompose.withCommand("run -d --rm --name tb-logs-container -v " + volumeName + ":/root alpine tail -f /dev/null");
         dockerCompose.invokeDocker();
 
         dockerCompose.withCommand("cp tb-logs-container:/root/. "+tbLogsDir.getAbsolutePath());
         dockerCompose.invokeDocker();
 
         dockerCompose.withCommand("rm -f tb-logs-container");
-        dockerCompose.invokeDocker();
-
-        dockerCompose.withCommand("volume rm -f " + postgresDataVolume + " " + tbLogVolume);
         dockerCompose.invokeDocker();
     }
 

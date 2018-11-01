@@ -136,6 +136,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 .setCompileRequest(jsRequest)
                 .build();
 
+        log.trace("Post compile request for scriptId [{}]", scriptId);
         ListenableFuture<JsInvokeProtos.RemoteJsResponse> future = kafkaTemplate.post(scriptId.toString(), jsRequestWrapper);
         return Futures.transform(future, response -> {
             JsInvokeProtos.JsCompileResponse compilationResult = response.getCompileResponse();
