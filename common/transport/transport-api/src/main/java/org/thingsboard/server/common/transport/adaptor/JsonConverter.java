@@ -59,6 +59,8 @@ public class JsonConverter {
     private static final String CAN_T_PARSE_VALUE = "Can't parse value: ";
     private static final String DEVICE_PROPERTY = "device";
 
+    private static boolean isTypeCastEnabled = true;
+
     public static PostTelemetryMsg convertToTelemetryProto(JsonElement jsonObject) throws JsonSyntaxException {
         long systemTs = System.currentTimeMillis();
         PostTelemetryMsg.Builder builder = PostTelemetryMsg.newBuilder();
@@ -129,10 +131,10 @@ public class JsonConverter {
             if (element.isJsonPrimitive()) {
                 JsonPrimitive value = element.getAsJsonPrimitive();
                 if (value.isString()) {
-                    if(NumberUtils.isParsable(value.getAsString())) {
+                    if(isTypeCastEnabled && NumberUtils.isParsable(value.getAsString())) {
                         try {
                             result.add(buildNumericKeyValueProto(value, valueEntry.getKey()));
-                        } catch (Throwable th) {
+                        } catch (RuntimeException th) {
                             result.add(KeyValueProto.newBuilder().setKey(valueEntry.getKey()).setType(KeyValueType.STRING_V)
                                     .setStringV(value.getAsString()).build());
                         }
@@ -387,10 +389,10 @@ public class JsonConverter {
             if (element.isJsonPrimitive()) {
                 JsonPrimitive value = element.getAsJsonPrimitive();
                 if (value.isString()) {
-                    if(NumberUtils.isParsable(value.getAsString())) {
+                    if(isTypeCastEnabled && NumberUtils.isParsable(value.getAsString())) {
                         try {
                             parseNumericValue(result, valueEntry, value);
-                        } catch (Throwable th) {
+                        } catch (RuntimeException th) {
                             result.add(new StringDataEntry(valueEntry.getKey(), value.getAsString()));
                         }
                     } else {
@@ -451,5 +453,7 @@ public class JsonConverter {
         }
     }
 
-
+    public static void setTypeCastEnabled(boolean enabled) {
+        isTypeCastEnabled = enabled;
+    }
 }
