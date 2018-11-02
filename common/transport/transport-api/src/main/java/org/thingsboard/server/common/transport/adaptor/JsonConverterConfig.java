@@ -23,7 +23,7 @@ import org.springframework.context.annotation.Configuration;
 @Slf4j
 public class JsonConverterConfig {
 
-    @Value("${json.type_cast_enabled}")
+    @Value("${transport.json.type_cast_enabled:true}")
     public void setIsJsonTypeCastEnabled(boolean jsonTypeCastEnabled) {
         JsonConverter.setTypeCastEnabled(jsonTypeCastEnabled);
         log.info("JSON type cast enabled = {}", jsonTypeCastEnabled);

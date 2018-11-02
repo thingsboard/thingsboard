@@ -50,6 +50,9 @@ transport:
     enabled: "${TB_TRANSPORT_RATE_LIMITS_ENABLED:false}"
     tenant: "${TB_TRANSPORT_RATE_LIMITS_TENANT:1000:1,20000:60}"
     device: "${TB_TRANSPORT_RATE_LIMITS_DEVICE:10:1,300:60}"
+  json:
+    # Cast String data types to Numeric if possible when processing Telemetry/Attributes JSON
+    type_cast_enabled: "${JSON_TYPE_CAST_ENABLED:true}"
 
 kafka:
   enabled: true
@@ -72,7 +75,3 @@ kafka:
     topic: "${TB_TRANSPORT_NOTIFICATIONS_TOPIC:tb.transport.notifications}"
     poll_interval: "${TB_TRANSPORT_NOTIFICATIONS_POLL_INTERVAL_MS:25}"
     auto_commit_interval: "${TB_TRANSPORT_NOTIFICATIONS_AUTO_COMMIT_INTERVAL_MS:100}"
-
-json:
-  # Cast String data types to Numeric if possible when processing Telemetry/Attributes JSON
-  type_cast_enabled: "${JSON_TYPE_CAST_ENABLED:true}"

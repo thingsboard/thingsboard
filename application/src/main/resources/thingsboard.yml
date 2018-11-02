@@ -406,6 +406,9 @@ transport:
     enabled: "${TB_TRANSPORT_RATE_LIMITS_ENABLED:false}"
     tenant: "${TB_TRANSPORT_RATE_LIMITS_TENANT:1000:1,20000:60}"
     device: "${TB_TRANSPORT_RATE_LIMITS_DEVICE:10:1,300:60}"
+  json:
+    # Cast String data types to Numeric if possible when processing Telemetry/Attributes JSON
+    type_cast_enabled: "${JSON_TYPE_CAST_ENABLED:true}"
   # Local HTTP transport parameters
   http:
     enabled: "${HTTP_ENABLED:true}"
@@ -443,7 +446,3 @@ transport:
     bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"
     bind_port: "${COAP_BIND_PORT:5683}"
     timeout: "${COAP_TIMEOUT:10000}"
-
-json:
-  # Cast String data types to Numeric if possible when processing Telemetry/Attributes JSON
-  type_cast_enabled: "${JSON_TYPE_CAST_ENABLED:false}"
