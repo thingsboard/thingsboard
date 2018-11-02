@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.actors.ruleChain;
 
+import akka.actor.ActorInitializationException;
 import akka.actor.OneForOneStrategy;
 import akka.actor.SupervisorStrategy;
 import org.thingsboard.server.actors.ActorSystemContext;

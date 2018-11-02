@@ -96,7 +96,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
             log.trace("[{}][{}] Starting rule chain with {} nodes", tenantId, entityId, ruleNodeList.size());
             // Creating and starting the actors;
             for (RuleNode ruleNode : ruleNodeList) {
-                log.trace("[{}][{}] Creating rule node [{}]: {}", tenantId, entityId, ruleNode.getName(), ruleNode);
+                log.trace("[{}][{}] Creating rule node [{}]: {}", entityId, ruleNode.getId(), ruleNode.getName(), ruleNode);
                 ActorRef ruleNodeActor = createRuleNodeActor(context, ruleNode);
                 nodeActors.put(ruleNode.getId(), new RuleNodeCtx(tenantId, self, ruleNodeActor, ruleNode));
             }
@@ -116,11 +116,11 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         for (RuleNode ruleNode : ruleNodeList) {
             RuleNodeCtx existing = nodeActors.get(ruleNode.getId());
             if (existing == null) {
-                log.trace("[{}][{}] Creating rule node [{}]: {}", tenantId, entityId, ruleNode.getName(), ruleNode);
+                log.trace("[{}][{}] Creating rule node [{}]: {}", entityId, ruleNode.getId(), ruleNode.getName(), ruleNode);
                 ActorRef ruleNodeActor = createRuleNodeActor(context, ruleNode);
                 nodeActors.put(ruleNode.getId(), new RuleNodeCtx(tenantId, self, ruleNodeActor, ruleNode));
             } else {
-                log.trace("[{}][{}] Updating rule node [{}]: {}", tenantId, entityId, ruleNode.getName(), ruleNode);
+                log.trace("[{}][{}] Updating rule node [{}]: {}", entityId, ruleNode.getId(), ruleNode.getName(), ruleNode);
                 existing.setSelf(ruleNode);
                 existing.getSelfActor().tell(new ComponentLifecycleMsg(tenantId, existing.getSelf().getId(), ComponentLifecycleEvent.UPDATED), self);
             }
@@ -184,13 +184,15 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         }
 
         firstId = ruleChain.getFirstRuleNodeId();
-        firstNode = nodeActors.get(ruleChain.getFirstRuleNodeId());
+        firstNode = nodeActors.get(firstId);
         state = ComponentLifecycleState.ACTIVE;
     }
 
     void onServiceToRuleEngineMsg(ServiceToRuleEngineMsg envelope) {
+        log.trace("[{}][{}] Processing message [{}]: {}", entityId, firstId, envelope.getTbMsg().getId(), envelope.getTbMsg());
         checkActive();
         if (firstNode != null) {
+            log.trace("[{}][{}] Pushing message to first rule node", entityId, firstId);
             pushMsgToNode(firstNode, enrichWithRuleChainId(envelope.getTbMsg()), "");
         }
     }

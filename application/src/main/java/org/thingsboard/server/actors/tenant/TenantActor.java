@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.aware.DeviceAwareMsg;
@@ -73,6 +74,11 @@ public class TenantActor extends RuleChainManagerActor {
         } catch (Exception e) {
             log.warn("[{}] Unknown failure", tenantId, e);
         }
+    }
+
+    @Override
+    public void postStop() {
+        log.info("[{}] Stopping tenant actor.", tenantId);
     }
 
     @Override

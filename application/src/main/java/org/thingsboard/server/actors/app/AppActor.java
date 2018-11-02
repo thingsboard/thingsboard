@@ -34,9 +34,11 @@ import org.thingsboard.server.actors.service.ContextBasedCreator;
 import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.actors.shared.rulechain.SystemRuleChainManager;
 import org.thingsboard.server.actors.tenant.TenantActor;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.aware.TenantAwareMsg;
 import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
@@ -129,7 +131,7 @@ public class AppActor extends RuleChainManagerActor {
 
     private void onServiceToRuleEngineMsg(ServiceToRuleEngineMsg msg) {
         if (SYSTEM_TENANT.equals(msg.getTenantId())) {
-            log.warn("[{}] Invalid service to rule engine msg called. System messages are not supported yet", SYSTEM_TENANT);
+            log.warn("[{}] Invalid service to rule engine msg called. System messages are not supported yet: {}", SYSTEM_TENANT, msg);
         } else {
             getOrCreateTenantActor(msg.getTenantId()).tell(msg, self());
         }
@@ -142,11 +144,21 @@ public class AppActor extends RuleChainManagerActor {
     }
 
     private void onComponentLifecycleMsg(ComponentLifecycleMsg msg) {
-        ActorRef target;
+        ActorRef target = null;
         if (SYSTEM_TENANT.equals(msg.getTenantId())) {
             target = getEntityActorRef(msg.getEntityId());
         } else {
-            target = getOrCreateTenantActor(msg.getTenantId());
+            if (msg.getEntityId().getEntityType() == EntityType.TENANT
+                    && msg.getEvent() == ComponentLifecycleEvent.DELETED) {
+                log.debug("[{}] Handling tenant deleted notification: {}", msg.getTenantId(), msg);
+                ActorRef tenantActor = tenantActors.remove(new TenantId(msg.getEntityId().getId()));
+                if (tenantActor != null) {
+                    log.debug("[{}] Deleting tenant actor: {}", msg.getTenantId(), tenantActor);
+                    context().stop(tenantActor);
+                }
+            } else {
+                target = getOrCreateTenantActor(msg.getTenantId());
+            }
         }
         if (target != null) {
             target.tell(msg, ActorRef.noSender());
