@@ -19,9 +19,11 @@ import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -152,6 +154,11 @@ public abstract class BaseController {
     @Autowired
     protected AttributesService attributesService;
 
+    @Value("${server.log_controller_error_stack_trace}")
+    @Getter
+    private boolean logControllerErrorStackTrace;
+
+
     @ExceptionHandler(ThingsboardException.class)
     public void handleThingsboardException(ThingsboardException ex, HttpServletResponse response) {
         errorResponseHandler.handle(ex, response);
@@ -162,7 +169,7 @@ public abstract class BaseController {
     }
 
     private ThingsboardException handleException(Exception exception, boolean logException) {
-        if (logException) {
+        if (logException && logControllerErrorStackTrace) {
             log.error("Error [{}]", exception.getMessage(), exception);
         }
 

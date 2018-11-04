@@ -31,6 +31,7 @@ server:
     key-store-type: "${SSL_KEY_STORE_TYPE:PKCS12}"
     # Alias that identifies the key in the key store
     key-alias: "${SSL_KEY_ALIAS:tomcat}"
+  log_controller_error_stack_trace: "${HTTP_LOG_CONTROLLER_ERROR_STACK_TRACE:true}"
 
 # Zookeeper connection parameters. Used for service discovery.
 zk:

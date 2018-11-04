@@ -131,7 +131,8 @@ public class AppActor extends RuleChainManagerActor {
 
     private void onServiceToRuleEngineMsg(ServiceToRuleEngineMsg msg) {
         if (SYSTEM_TENANT.equals(msg.getTenantId())) {
-            log.warn("[{}] Invalid service to rule engine msg called. System messages are not supported yet: {}", SYSTEM_TENANT, msg);
+//            this may be a notification about system entities created.
+//            log.warn("[{}] Invalid service to rule engine msg called. System messages are not supported yet: {}", SYSTEM_TENANT, msg);
         } else {
             getOrCreateTenantActor(msg.getTenantId()).tell(msg, self());
         }
@@ -189,8 +190,6 @@ public class AppActor extends RuleChainManagerActor {
             boolean removed = tenantActors.inverse().remove(terminated) != null;
             if (removed) {
                 log.debug("[{}] Removed actor:", terminated);
-            } else {
-                log.warn("[{}] Removed actor was not found in the tenant map!");
             }
         } else {
             throw new IllegalStateException("Remote actors are not supported!");
