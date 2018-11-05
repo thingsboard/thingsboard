@@ -24,13 +24,12 @@ import java.util.Arrays;
 
 @RunWith(ClasspathSuite.class)
 @ClassnameFilters({
-        "org.thingsboard.server.dao.sql.*THIS_MUST_BE_FIXED_Test"
-})
+        "org.thingsboard.server.dao.sql.*THIS_MUST_BE_FIXED_Test"})
 public class JpaDaoTestSuite {
 
     @ClassRule
     public static CustomSqlUnit sqlUnit = new CustomSqlUnit(
-            Arrays.asList("sql/schema-ts.sql", "sql/schema-entities.sql", "sql/system-data.sql"),
+            Arrays.asList("sql/schema-ts.sql", "sql/schema-entities.sql", "sql/system-data.sql", "sql/schema-attributes.sql"),
             "sql/drop-all-tables.sql",
             "sql-test.properties"
     );
