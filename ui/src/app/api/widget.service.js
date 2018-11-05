@@ -19,6 +19,7 @@ import tinycolor from 'tinycolor2';
 
 import thingsboardLedLight from '../components/led-light.directive';
 import thingsboardTimeseriesTableWidget from '../widget/lib/timeseries-table-widget';
+import thingsboardTimeseriesTotalWidget from '../widget/lib/timeseries-total-widget';
 import thingsboardAlarmsTableWidget from '../widget/lib/alarms-table-widget';
 import thingsboardEntitiesTableWidget from '../widget/lib/entities-table-widget';
 import thingsboardExtensionsTableWidget from '../widget/lib/extensions-table-widget';
@@ -42,7 +43,7 @@ import cssjs from '../../vendor/css.js/css';
 import thingsboardTypes from '../common/types.constant';
 import thingsboardUtils from '../common/utils.service';
 
-export default angular.module('thingsboard.api.widget', ['oc.lazyLoad', thingsboardLedLight, thingsboardTimeseriesTableWidget,
+export default angular.module('thingsboard.api.widget', ['oc.lazyLoad', thingsboardLedLight, thingsboardTimeseriesTableWidget, thingsboardTimeseriesTotalWidget,
     thingsboardAlarmsTableWidget, thingsboardEntitiesTableWidget, thingsboardExtensionsTableWidget, thingsboardRpcWidgets, thingsboardTypes, thingsboardUtils])
     .factory('widgetService', WidgetService)
     .name;
