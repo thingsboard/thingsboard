@@ -26,7 +26,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
-import org.thingsboard.server.dao.EncryptionUtil;
+import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 
@@ -62,15 +62,15 @@ public class DeviceCredentialsServiceImpl implements DeviceCredentialsService {
     @Override
     @CacheEvict(cacheNames = DEVICE_CREDENTIALS_CACHE, keyGenerator="previousDeviceCredentialsId", beforeInvocation = true)
     public DeviceCredentials updateDeviceCredentials(DeviceCredentials deviceCredentials) {
-        return saveOrUpdare(deviceCredentials);
+        return saveOrUpdate(deviceCredentials);
     }
 
     @Override
     public DeviceCredentials createDeviceCredentials(DeviceCredentials deviceCredentials) {
-        return saveOrUpdare(deviceCredentials);
+        return saveOrUpdate(deviceCredentials);
     }
 
-    private DeviceCredentials saveOrUpdare(DeviceCredentials deviceCredentials) {
+    private DeviceCredentials saveOrUpdate(DeviceCredentials deviceCredentials) {
         if (deviceCredentials.getCredentialsType() == DeviceCredentialsType.X509_CERTIFICATE) {
             formatCertData(deviceCredentials);
         }

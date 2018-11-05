@@ -35,7 +35,6 @@ import org.thingsboard.server.dao.model.type.ComponentTypeCodec;
 import org.thingsboard.server.dao.model.type.DeviceCredentialsTypeCodec;
 import org.thingsboard.server.dao.model.type.EntityTypeCodec;
 import org.thingsboard.server.dao.model.type.JsonCodec;
-import org.thingsboard.server.dao.util.BufferedRateLimiter;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -49,7 +48,7 @@ public abstract class CassandraAbstractDao {
     private ConcurrentMap<String, PreparedStatement> preparedStatementMap = new ConcurrentHashMap<>();
 
     @Autowired
-    private BufferedRateLimiter rateLimiter;
+    private CassandraBufferedRateExecutor rateLimiter;
 
     private Session session;
 
@@ -115,12 +114,12 @@ public abstract class CassandraAbstractDao {
         if (statement.getConsistencyLevel() == null) {
             statement.setConsistencyLevel(level);
         }
-        return new RateLimitedResultSetFuture(getSession(), rateLimiter, statement);
+        return rateLimiter.submit(new CassandraStatementTask(getSession(), statement));
     }
 
     private static String statementToString(Statement statement) {
         if (statement instanceof BoundStatement) {
-            return ((BoundStatement)statement).preparedStatement().getQueryString();
+            return ((BoundStatement) statement).preparedStatement().getQueryString();
         } else {
             return statement.toString();
         }

@@ -15,10 +15,13 @@
  */
 package org.thingsboard.server.service.cluster.rpc;
 
+import io.grpc.Channel;
+import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
+import org.thingsboard.server.common.msg.cluster.ServerType;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
 
 import java.io.Closeable;
@@ -33,6 +36,7 @@ public final class GrpcSession implements Closeable {
     private final UUID sessionId;
     private final boolean client;
     private final GrpcSessionListener listener;
+    private final ManagedChannel channel;
     private StreamObserver<ClusterAPIProtos.ClusterMessage> inputStream;
     private StreamObserver<ClusterAPIProtos.ClusterMessage> outputStream;
 
@@ -40,10 +44,10 @@ public final class GrpcSession implements Closeable {
     private ServerAddress remoteServer;
 
     public GrpcSession(GrpcSessionListener listener) {
-        this(null, listener);
+        this(null, listener, null);
     }
 
-    public GrpcSession(ServerAddress remoteServer, GrpcSessionListener listener) {
+    public GrpcSession(ServerAddress remoteServer, GrpcSessionListener listener, ManagedChannel channel) {
         this.sessionId = UUID.randomUUID();
         this.listener = listener;
         if (remoteServer != null) {
@@ -53,6 +57,7 @@ public final class GrpcSession implements Closeable {
         } else {
             this.client = false;
         }
+        this.channel = channel;
     }
 
     public void initInputStream() {
@@ -61,8 +66,8 @@ public final class GrpcSession implements Closeable {
             public void onNext(ClusterAPIProtos.ClusterMessage clusterMessage) {
                 if (!connected && clusterMessage.getMessageType() == ClusterAPIProtos.MessageType.CONNECT_RPC_MESSAGE) {
                     connected = true;
-                    ServerAddress rpcAddress = new ServerAddress(clusterMessage.getServerAddress().getHost(), clusterMessage.getServerAddress().getPort());
-                    remoteServer = new ServerAddress(rpcAddress.getHost(), rpcAddress.getPort());
+                    ServerAddress rpcAddress = new ServerAddress(clusterMessage.getServerAddress().getHost(), clusterMessage.getServerAddress().getPort(), ServerType.CORE);
+                    remoteServer = new ServerAddress(rpcAddress.getHost(), rpcAddress.getPort(), ServerType.CORE);
                     listener.onConnected(GrpcSession.this);
                 }
                 if (connected) {
@@ -103,6 +108,9 @@ public final class GrpcSession implements Closeable {
             outputStream.onCompleted();
         } catch (IllegalStateException e) {
             log.debug("[{}] Failed to close output stream: {}", sessionId, e.getMessage());
+        }
+        if (channel != null) {
+            channel.shutdownNow();
         }
     }
 }

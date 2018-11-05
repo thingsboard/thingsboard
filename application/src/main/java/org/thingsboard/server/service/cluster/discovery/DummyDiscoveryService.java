@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.cluster.discovery;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.DependsOn;
@@ -62,13 +63,5 @@ public class DummyDiscoveryService implements DiscoveryService {
         return Collections.emptyList();
     }
 
-    @Override
-    public boolean addListener(DiscoveryServiceListener listener) {
-        return false;
-    }
 
-    @Override
-    public boolean removeListener(DiscoveryServiceListener listener) {
-        return false;
-    }
 }

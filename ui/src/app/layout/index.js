@@ -17,7 +17,6 @@ import './home.scss';
 
 import uiRouter from 'angular-ui-router';
 import ngSanitize from 'angular-sanitize';
-import FBAngular from 'angular-fullscreen';
 import 'angular-breadcrumb';
 
 import thingsboardMenu from '../services/menu.service';
@@ -48,6 +47,7 @@ import thingsboardAdmin from '../admin';
 import thingsboardProfile from '../profile';
 import thingsboardAsset from '../asset';
 import thingsboardDevice from '../device';
+import thingsboardEntityView from '../entity-view';
 import thingsboardWidgetLibrary from '../widget';
 import thingsboardDashboard from '../dashboard';
 import thingsboardRuleChain from '../rulechain';
@@ -62,7 +62,6 @@ import BreadcrumbIcon from './breadcrumb-icon.filter';
 export default angular.module('thingsboard.home', [
     uiRouter,
     ngSanitize,
-    FBAngular.name,
     'ncy-angular-breadcrumb',
     thingsboardMenu,
     thingsboardHomeLinks,
@@ -79,6 +78,7 @@ export default angular.module('thingsboard.home', [
     thingsboardProfile,
     thingsboardAsset,
     thingsboardDevice,
+    thingsboardEntityView,
     thingsboardWidgetLibrary,
     thingsboardDashboard,
     thingsboardRuleChain,

@@ -21,23 +21,30 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.rule.engine.api.ScriptEngine;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import javax.script.ScriptException;
-
+import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
 
 public class RuleNodeJsScriptEngineTest {
 
     private ScriptEngine scriptEngine;
-    private TestNashornJsSandboxService jsSandboxService;
+    private TestNashornJsInvokeService jsSandboxService;
+
+    private EntityId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
 
     @Before
     public void beforeTest() throws Exception {
-        jsSandboxService = new TestNashornJsSandboxService(false, 1, 100, 3);
+        jsSandboxService = new TestNashornJsInvokeService(false, 1, 100, 3);
     }
 
     @After
@@ -48,7 +55,7 @@ public class RuleNodeJsScriptEngineTest {
     @Test
     public void msgCanBeUpdated() throws ScriptException {
         String function = "metadata.temp = metadata.temp * 10; return {metadata: metadata};";
-        scriptEngine = new RuleNodeJsScriptEngine(jsSandboxService, function);
+        scriptEngine = new RuleNodeJsScriptEngine(jsSandboxService, ruleNodeId, function);
 
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "7");
@@ -65,7 +72,7 @@ public class RuleNodeJsScriptEngineTest {
     @Test
     public void newAttributesCanBeAddedInMsg() throws ScriptException {
         String function = "metadata.newAttr = metadata.humidity - msg.passed; return {metadata: metadata};";
-        scriptEngine = new RuleNodeJsScriptEngine(jsSandboxService, function);
+        scriptEngine = new RuleNodeJsScriptEngine(jsSandboxService, ruleNodeId, function);
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "7");
         metaData.putValue("humidity", "99");
@@ -81,7 +88,7 @@ public class RuleNodeJsScriptEngineTest {
     @Test
     public void payloadCanBeUpdated() throws ScriptException {
         String function = "msg.passed = msg.passed * metadata.temp; msg.bigObj.newProp = 'Ukraine'; return {msg: msg};";
-        scriptEngine = new RuleNodeJsScriptEngine(jsSandboxService, function);
+        scriptEngine = new RuleNodeJsScriptEngine(jsSandboxService, ruleNodeId, function);
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "7");
         metaData.putValue("humidity", "99");
@@ -99,7 +106,7 @@ public class RuleNodeJsScriptEngineTest {
     @Test
     public void metadataAccessibleForFilter() throws ScriptException {
         String function = "return metadata.humidity < 15;";
-        scriptEngine = new RuleNodeJsScriptEngine(jsSandboxService, function);
+        scriptEngine = new RuleNodeJsScriptEngine(jsSandboxService, ruleNodeId, function);
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "7");
         metaData.putValue("humidity", "99");
@@ -113,7 +120,7 @@ public class RuleNodeJsScriptEngineTest {
     @Test
     public void dataAccessibleForFilter() throws ScriptException {
         String function = "return msg.passed < 15 && msg.name === 'Vit' && metadata.temp == 7 && msg.bigObj.prop == 42;";
-        scriptEngine = new RuleNodeJsScriptEngine(jsSandboxService, function);
+        scriptEngine = new RuleNodeJsScriptEngine(jsSandboxService, ruleNodeId, function);
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "7");
         metaData.putValue("humidity", "99");
@@ -134,7 +141,7 @@ public class RuleNodeJsScriptEngineTest {
                 "};\n" +
                 "\n" +
                 "return nextRelation(metadata, msg);";
-        scriptEngine = new RuleNodeJsScriptEngine(jsSandboxService, jsCode);
+        scriptEngine = new RuleNodeJsScriptEngine(jsSandboxService, ruleNodeId, jsCode);
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "10");
         metaData.putValue("humidity", "99");
@@ -156,7 +163,7 @@ public class RuleNodeJsScriptEngineTest {
                 "};\n" +
                 "\n" +
                 "return nextRelation(metadata, msg);";
-        scriptEngine = new RuleNodeJsScriptEngine(jsSandboxService, jsCode);
+        scriptEngine = new RuleNodeJsScriptEngine(jsSandboxService, ruleNodeId, jsCode);
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "10");
         metaData.putValue("humidity", "99");
@@ -166,6 +173,77 @@ public class RuleNodeJsScriptEngineTest {
         Set<String> actual = scriptEngine.executeSwitch(msg);
         assertEquals(Sets.newHashSet("one", "three"), actual);
         scriptEngine.destroy();
+    }
+
+    @Test
+    public void concurrentReleasedCorrectly() throws InterruptedException, ExecutionException {
+        String code = "metadata.temp = metadata.temp * 10; return {metadata: metadata};";
+
+        int repeat = 1000;
+        ExecutorService service = Executors.newFixedThreadPool(repeat);
+        Map<UUID, Object> scriptIds = new ConcurrentHashMap<>();
+        CountDownLatch startLatch = new CountDownLatch(repeat);
+        CountDownLatch finishLatch = new CountDownLatch(repeat);
+        AtomicInteger failedCount = new AtomicInteger(0);
+
+        for (int i = 0; i < repeat; i++) {
+            service.submit(() -> runScript(startLatch, finishLatch, failedCount, scriptIds, code));
+        }
+
+        finishLatch.await();
+        assertTrue(scriptIds.size() == 1);
+        assertTrue(failedCount.get() == 0);
+
+        CountDownLatch nextStart = new CountDownLatch(repeat);
+        CountDownLatch nextFinish = new CountDownLatch(repeat);
+        for (int i = 0; i < repeat; i++) {
+            service.submit(() -> runScript(nextStart, nextFinish, failedCount, scriptIds, code));
+        }
+
+        nextFinish.await();
+        assertTrue(scriptIds.size() == 1);
+        assertTrue(failedCount.get() == 0);
+        service.shutdownNow();
+    }
+
+    @Test
+    public void concurrentFailedEvaluationShouldThrowException() throws InterruptedException {
+        String code = "metadata.temp = metadata.temp * 10; urn {metadata: metadata};";
+
+        int repeat = 10000;
+        ExecutorService service = Executors.newFixedThreadPool(repeat);
+        Map<UUID, Object> scriptIds = new ConcurrentHashMap<>();
+        CountDownLatch startLatch = new CountDownLatch(repeat);
+        CountDownLatch finishLatch = new CountDownLatch(repeat);
+        AtomicInteger failedCount = new AtomicInteger(0);
+        for (int i = 0; i < repeat; i++) {
+            service.submit(() -> {
+                service.submit(() -> runScript(startLatch, finishLatch, failedCount, scriptIds, code));
+            });
+        }
+
+        finishLatch.await();
+        assertTrue(scriptIds.isEmpty());
+        assertEquals(repeat, failedCount.get());
+        service.shutdownNow();
+    }
+
+    private void runScript(CountDownLatch startLatch, CountDownLatch finishLatch, AtomicInteger failedCount,
+                           Map<UUID, Object> scriptIds, String code) {
+        try {
+            for (int k = 0; k < 10; k++) {
+                startLatch.countDown();
+                startLatch.await();
+                UUID scriptId = jsSandboxService.eval(JsScriptType.RULE_NODE_SCRIPT, code).get();
+                scriptIds.put(scriptId, new Object());
+                jsSandboxService.invokeFunction(scriptId, "{}", "{}", "TEXT").get();
+                jsSandboxService.release(scriptId).get();
+            }
+        } catch (Throwable th) {
+            failedCount.incrementAndGet();
+        } finally {
+            finishLatch.countDown();
+        }
     }
 
 }

@@ -22,7 +22,7 @@ import entitySubtypeAutocompleteTemplate from './entity-subtype-autocomplete.tpl
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function EntitySubtypeAutocomplete($compile, $templateCache, $q, $filter, assetService, deviceService, types) {
+export default function EntitySubtypeAutocomplete($compile, $templateCache, $q, $filter, assetService, deviceService, entityViewService, types) {
 
     var linker = function (scope, element, attrs, ngModelCtrl) {
         var template = $templateCache.get(entitySubtypeAutocompleteTemplate);
@@ -96,6 +96,8 @@ export default function EntitySubtypeAutocomplete($compile, $templateCache, $q, 
                     entitySubtypesPromise = assetService.getAssetTypes({ignoreLoading: true});
                 } else if (scope.entityType == types.entityType.device) {
                     entitySubtypesPromise = deviceService.getDeviceTypes({ignoreLoading: true});
+                } else if (scope.entityType == types.entityType.entityView) {
+                    entitySubtypesPromise = entityViewService.getEntityViewTypes({ignoreLoading: true});
                 }
                 if (entitySubtypesPromise) {
                     entitySubtypesPromise.then(
@@ -132,6 +134,13 @@ export default function EntitySubtypeAutocomplete($compile, $templateCache, $q, 
                 scope.entitySubtypeText = 'device.device-type';
                 scope.entitySubtypeRequiredText = 'device.device-type-required';
                 scope.$on('deviceSaved', function() {
+                    scope.entitySubtypes = null;
+                });
+            } else if (scope.entityType == types.entityType.entityView) {
+                scope.selectEntitySubtypeText = 'entity-view.select-entity-view-type';
+                scope.entitySubtypeText = 'entity-view.entity-view-type';
+                scope.entitySubtypeRequiredText = 'entity-view.entity-view-type-required';
+                scope.$on('entityViewSaved', function() {
                     scope.entitySubtypes = null;
                 });
             }

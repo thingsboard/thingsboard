@@ -22,6 +22,7 @@ option java_outer_classname = "ClusterAPIProtos";
 service ClusterRpcService {
   rpc handleMsgs(stream ClusterMessage) returns (stream ClusterMessage) {}
 }
+
 message ClusterMessage {
   MessageType messageType = 1;
   MessageMataInfo messageMetaInfo = 2;

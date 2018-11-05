@@ -168,6 +168,12 @@ function Menu(userService, $state, $rootScope) {
                             icon: 'devices_other'
                         },
                         {
+                            name: 'entity-view.entity-views',
+                            type: 'link',
+                            state: 'home.entityViews',
+                            icon: 'view_quilt'
+                        },
+                        {
                             name: 'widget.widget-library',
                             type: 'link',
                             state: 'home.widgets-bundles',
@@ -228,6 +234,16 @@ function Menu(userService, $state, $rootScope) {
                                 ]
                             },
                             {
+                                name: 'entity-view.management',
+                                places: [
+                                    {
+                                        name: 'entity-view.entity-views',
+                                        icon: 'view_quilt',
+                                        state: 'home.entityViews'
+                                    }
+                                ]
+                            },
+                            {
                                 name: 'dashboard.management',
                                 places: [
                                     {
@@ -274,6 +290,12 @@ function Menu(userService, $state, $rootScope) {
                             icon: 'devices_other'
                         },
                         {
+                            name: 'entity-view.entity-views',
+                            type: 'link',
+                            state: 'home.entityViews',
+                            icon: 'view_quilt'
+                        },
+                        {
                             name: 'dashboard.dashboards',
                             type: 'link',
                             state: 'home.dashboards',
@@ -301,16 +323,26 @@ function Menu(userService, $state, $rootScope) {
                                 }
                             ]
                         },
-                            {
-                                name: 'dashboard.view-dashboards',
-                                places: [
-                                    {
-                                        name: 'dashboard.dashboards',
-                                        icon: 'dashboard',
-                                        state: 'home.dashboards'
-                                    }
-                                ]
-                            }];
+                        {
+                            name: 'entity-view.management',
+                            places: [
+                                {
+                                    name: 'entity-view.entity-views',
+                                    icon: 'view_quilt',
+                                    state: 'home.entityViews'
+                                }
+                            ]
+                        },
+                        {
+                            name: 'dashboard.view-dashboards',
+                            places: [
+                                {
+                                    name: 'dashboard.dashboards',
+                                    icon: 'dashboard',
+                                    state: 'home.dashboards'
+                                }
+                            ]
+                        }];
                 }
             }
         }

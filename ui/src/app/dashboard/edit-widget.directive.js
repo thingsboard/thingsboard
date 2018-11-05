@@ -131,7 +131,7 @@ export default function EditWidgetDirective($compile, $templateCache, types, wid
                 },
                 parent: angular.element($document[0].body),
                 fullscreen: true,
-                skipHide: true,
+                multiple: true,
                 targetEvent: event
             }).then(function (singleEntityAlias) {
                 scope.dashboard.configuration.entityAliases[singleEntityAlias.id] = singleEntityAlias;

@@ -60,19 +60,22 @@
 							</md-option>
 						</md-select>
 					</md-input-container>
-					<md-slider-container ng-show="vm.showLimit()">
+					<md-slider-container ng-if="vm.showLimit()">
 						<span translate>aggregation.limit</span>
-						<md-slider flex min="10" max="500" ng-model="vm.timewindow.aggregation.limit" aria-label="limit" id="limit-slider">
+						<md-slider flex min="{{vm.minDatapointsLimit()}}" max="{{vm.maxDatapointsLimit()}}" step="1"
+                                   ng-model="vm.timewindow.aggregation.limit" aria-label="limit" id="limit-slider">
 						</md-slider>
-						<md-input-container>
-							<input flex type="number" ng-model="vm.timewindow.aggregation.limit" aria-label="limit" aria-controls="limit-slider">
+						<md-input-container style="max-width: 80px;">
+							<input flex type="number" step="1"
+                                   min="{{vm.minDatapointsLimit()}}" max="{{vm.maxDatapointsLimit()}}"
+                                   ng-model="vm.timewindow.aggregation.limit" aria-label="limit" aria-controls="limit-slider">
 						</md-input-container>
 					</md-slider-container>
-					<tb-timeinterval ng-show="vm.showRealtimeAggInterval()" min="vm.minRealtimeAggInterval()" max="vm.maxRealtimeAggInterval()"
+					<tb-timeinterval ng-if="vm.showRealtimeAggInterval()" min="vm.minRealtimeAggInterval()" max="vm.maxRealtimeAggInterval()"
 									 predefined-name="'aggregation.group-interval'"
 									 ng-model="vm.timewindow.realtime.interval">
 					</tb-timeinterval>
-					<tb-timeinterval ng-show="vm.showHistoryAggInterval()" min="vm.minHistoryAggInterval()" max="vm.maxHistoryAggInterval()"
+					<tb-timeinterval ng-if="vm.showHistoryAggInterval()" min="vm.minHistoryAggInterval()" max="vm.maxHistoryAggInterval()"
 									 predefined-name="'aggregation.group-interval'"
 									 ng-model="vm.timewindow.history.interval">
 					</tb-timeinterval>

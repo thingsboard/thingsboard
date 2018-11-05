@@ -100,7 +100,7 @@ export default function AddUserController($scope, $mdDialog, $state, $stateParam
             },
             parent: angular.element($document[0].body),
             fullscreen: true,
-            skipHide: true,
+            multiple: true,
             targetEvent: $event
         }).then(function () {
             deferred.resolve();

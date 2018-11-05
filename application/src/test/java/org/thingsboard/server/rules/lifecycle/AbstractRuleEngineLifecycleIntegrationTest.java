@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import org.thingsboard.server.controller.AbstractRuleEngineControllerTest;
 import org.thingsboard.server.dao.attributes.AttributesService;
@@ -142,76 +143,7 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
                 new TbMsgMetaData(),
                 "{}",
                 null, null, 0L);
-        actorService.onMsg(new ServiceToRuleEngineMsg(savedTenant.getId(), tbMsg));
-
-        Thread.sleep(3000);
-
-        TimePageData<Event> eventsPage = getDebugEvents(savedTenant.getId(), ruleChain.getFirstRuleNodeId(), 1000);
-        List<Event> events = eventsPage.getData().stream().filter(filterByCustomEvent()).collect(Collectors.toList());
-
-        Assert.assertEquals(2, events.size());
-
-        Event inEvent = events.stream().filter(e -> e.getBody().get("type").asText().equals(DataConstants.IN)).findFirst().get();
-        Assert.assertEquals(ruleChain.getFirstRuleNodeId(), inEvent.getEntityId());
-        Assert.assertEquals(device.getId().getId().toString(), inEvent.getBody().get("entityId").asText());
-
-        Event outEvent = events.stream().filter(e -> e.getBody().get("type").asText().equals(DataConstants.OUT)).findFirst().get();
-        Assert.assertEquals(ruleChain.getFirstRuleNodeId(), outEvent.getEntityId());
-        Assert.assertEquals(device.getId().getId().toString(), outEvent.getBody().get("entityId").asText());
-
-        Assert.assertEquals("serverAttributeValue", getMetadata(outEvent).get("ss_serverAttributeKey").asText());
-    }
-
-    @Test
-    public void testRuleChainWithOneRuleAndMsgFromQueue() throws Exception {
-        // Creating Rule Chain
-        RuleChain ruleChain = new RuleChain();
-        ruleChain.setName("Simple Rule Chain");
-        ruleChain.setTenantId(savedTenant.getId());
-        ruleChain.setRoot(true);
-        ruleChain.setDebugMode(true);
-        ruleChain = saveRuleChain(ruleChain);
-        Assert.assertNull(ruleChain.getFirstRuleNodeId());
-
-        // Saving the device
-        Device device = new Device();
-        device.setName("My device");
-        device.setType("default");
-        device = doPost("/api/device", device, Device.class);
-
-        attributesService.save(device.getId(), DataConstants.SERVER_SCOPE,
-                Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry("serverAttributeKey", "serverAttributeValue"), System.currentTimeMillis())));
-
-        // Pushing Message to the system
-        TbMsg tbMsg = new TbMsg(UUIDs.timeBased(),
-                "CUSTOM",
-                device.getId(),
-                new TbMsgMetaData(),
-                "{}",
-                ruleChain.getId(), null, 0L);
-        msgQueueService.put(device.getTenantId(), tbMsg, ruleChain.getId().getId(), 0L);
-
-        Thread.sleep(1000);
-
-        RuleChainMetaData metaData = new RuleChainMetaData();
-        metaData.setRuleChainId(ruleChain.getId());
-
-        RuleNode ruleNode = new RuleNode();
-        ruleNode.setName("Simple Rule Node");
-        ruleNode.setType(org.thingsboard.rule.engine.metadata.TbGetAttributesNode.class.getName());
-        ruleNode.setDebugMode(true);
-        TbGetAttributesNodeConfiguration configuration = new TbGetAttributesNodeConfiguration();
-        configuration.setServerAttributeNames(Collections.singletonList("serverAttributeKey"));
-        ruleNode.setConfiguration(mapper.valueToTree(configuration));
-
-        metaData.setNodes(Collections.singletonList(ruleNode));
-        metaData.setFirstNodeIndex(0);
-
-        metaData = saveRuleChainMetaData(metaData);
-        Assert.assertNotNull(metaData);
-
-        ruleChain = getRuleChain(ruleChain.getId());
-        Assert.assertNotNull(ruleChain.getFirstRuleNodeId());
+        actorService.onMsg(new SendToClusterMsg(device.getId(), new ServiceToRuleEngineMsg(savedTenant.getId(), tbMsg)));
 
         Thread.sleep(3000);
 

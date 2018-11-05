@@ -20,16 +20,25 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.kv.Aggregation;
+import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.Validator;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
@@ -40,16 +49,30 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 @Slf4j
 public class BaseTimeseriesService implements TimeseriesService {
 
-    public static final int INSERTS_PER_ENTRY = 3;
-    public static final int DELETES_PER_ENTRY = INSERTS_PER_ENTRY;
+    private static final int INSERTS_PER_ENTRY = 3;
+    private static final int DELETES_PER_ENTRY = INSERTS_PER_ENTRY;
+
+    @Value("${database.ts_max_intervals}")
+    private long maxTsIntervals;
 
     @Autowired
     private TimeseriesDao timeseriesDao;
 
+    @Autowired
+    private EntityViewService entityViewService;
+
     @Override
     public ListenableFuture<List<TsKvEntry>> findAll(EntityId entityId, List<ReadTsKvQuery> queries) {
         validate(entityId);
-        queries.forEach(BaseTimeseriesService::validate);
+        queries.forEach(this::validate);
+        if (entityId.getEntityType().equals(EntityType.ENTITY_VIEW)) {
+            EntityView entityView = entityViewService.findEntityViewById((EntityViewId) entityId);
+            List<ReadTsKvQuery> filteredQueries =
+                    queries.stream()
+                            .filter(query -> entityView.getKeys().getTimeseries().isEmpty() || entityView.getKeys().getTimeseries().contains(query.getKey()))
+                            .collect(Collectors.toList());
+            return timeseriesDao.findAllAsync(entityView.getEntityId(), updateQueriesForEntityView(entityView, filteredQueries));
+        }
         return timeseriesDao.findAllAsync(entityId, queries);
     }
 
@@ -58,6 +81,27 @@ public class BaseTimeseriesService implements TimeseriesService {
         validate(entityId);
         List<ListenableFuture<TsKvEntry>> futures = Lists.newArrayListWithExpectedSize(keys.size());
         keys.forEach(key -> Validator.validateString(key, "Incorrect key " + key));
+        if (entityId.getEntityType().equals(EntityType.ENTITY_VIEW)) {
+            EntityView entityView = entityViewService.findEntityViewById((EntityViewId) entityId);
+            List<String> filteredKeys = new ArrayList<>(keys);
+            if (entityView.getKeys() != null && entityView.getKeys().getTimeseries() != null &&
+                    !entityView.getKeys().getTimeseries().isEmpty()) {
+                filteredKeys.retainAll(entityView.getKeys().getTimeseries());
+            }
+            List<ReadTsKvQuery> queries =
+                    filteredKeys.stream()
+                            .map(key -> {
+                                long endTs = entityView.getEndTimeMs() != 0 ? entityView.getEndTimeMs() : Long.MAX_VALUE;
+                                return new BaseReadTsKvQuery(key, entityView.getStartTimeMs(), endTs, 1, "DESC");
+                            })
+                            .collect(Collectors.toList());
+
+            if (queries.size() > 0) {
+                return timeseriesDao.findAllAsync(entityView.getEntityId(), queries);
+            } else {
+                return Futures.immediateFuture(new ArrayList<>());
+            }
+        }
         keys.forEach(key -> futures.add(timeseriesDao.findLatest(entityId, key)));
         return Futures.allAsList(futures);
     }
@@ -65,7 +109,17 @@ public class BaseTimeseriesService implements TimeseriesService {
     @Override
     public ListenableFuture<List<TsKvEntry>> findAllLatest(EntityId entityId) {
         validate(entityId);
-        return timeseriesDao.findAllLatest(entityId);
+        if (entityId.getEntityType().equals(EntityType.ENTITY_VIEW)) {
+            EntityView entityView = entityViewService.findEntityViewById((EntityViewId) entityId);
+            if (entityView.getKeys() != null && entityView.getKeys().getTimeseries() != null &&
+                    !entityView.getKeys().getTimeseries().isEmpty()) {
+                return findLatest(entityId, entityView.getKeys().getTimeseries());
+            } else {
+                return Futures.immediateFuture(new ArrayList<>());
+            }
+        } else {
+            return timeseriesDao.findAllLatest(entityId);
+        }
     }
 
     @Override
@@ -92,9 +146,31 @@ public class BaseTimeseriesService implements TimeseriesService {
     }
 
     private void saveAndRegisterFutures(List<ListenableFuture<Void>> futures, EntityId entityId, TsKvEntry tsKvEntry, long ttl) {
+        if (entityId.getEntityType().equals(EntityType.ENTITY_VIEW)) {
+            throw new IncorrectParameterException("Telemetry data can't be stored for entity view. Only read only");
+        }
         futures.add(timeseriesDao.savePartition(entityId, tsKvEntry.getTs(), tsKvEntry.getKey(), ttl));
         futures.add(timeseriesDao.saveLatest(entityId, tsKvEntry));
         futures.add(timeseriesDao.save(entityId, tsKvEntry, ttl));
+    }
+
+    private List<ReadTsKvQuery> updateQueriesForEntityView(EntityView entityView, List<ReadTsKvQuery> queries) {
+        return queries.stream().map(query -> {
+            long startTs;
+            if (entityView.getStartTimeMs() != 0 && entityView.getStartTimeMs() > query.getStartTs()) {
+                startTs = entityView.getStartTimeMs();
+            } else {
+                startTs = query.getStartTs();
+            }
+
+            long endTs;
+            if (entityView.getEndTimeMs() != 0 && entityView.getEndTimeMs() < query.getEndTs()) {
+                endTs = entityView.getEndTimeMs();
+            } else {
+                endTs = query.getEndTs();
+            }
+            return new BaseReadTsKvQuery(query.getKey(), startTs, endTs, query.getInterval(), query.getLimit(), query.getAggregation());
+        }).collect(Collectors.toList());
     }
 
     @Override
@@ -118,13 +194,21 @@ public class BaseTimeseriesService implements TimeseriesService {
         Validator.validateEntityId(entityId, "Incorrect entityId " + entityId);
     }
 
-    private static void validate(ReadTsKvQuery query) {
+    private void validate(ReadTsKvQuery query) {
         if (query == null) {
             throw new IncorrectParameterException("ReadTsKvQuery can't be null");
         } else if (isBlank(query.getKey())) {
             throw new IncorrectParameterException("Incorrect ReadTsKvQuery. Key can't be empty");
         } else if (query.getAggregation() == null) {
             throw new IncorrectParameterException("Incorrect ReadTsKvQuery. Aggregation can't be empty");
+        }
+        if(!Aggregation.NONE.equals(query.getAggregation())) {
+            long step = Math.max(query.getInterval(), 1000);
+            long intervalCounts = (query.getEndTs() - query.getStartTs()) / step;
+            if (intervalCounts > maxTsIntervals || intervalCounts < 0) {
+                throw new IncorrectParameterException("Incorrect TsKvQuery. Number of intervals is to high - " + intervalCounts + ". " +
+                        "Please increase 'interval' parameter for your query or reduce the time range of the query.");
+            }
         }
     }
 

@@ -31,14 +31,24 @@ import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 
+import static org.thingsboard.server.service.install.DatabaseHelper.ADDITIONAL_INFO;
 import static org.thingsboard.server.service.install.DatabaseHelper.ASSIGNED_CUSTOMERS;
 import static org.thingsboard.server.service.install.DatabaseHelper.CONFIGURATION;
 import static org.thingsboard.server.service.install.DatabaseHelper.CUSTOMER_ID;
 import static org.thingsboard.server.service.install.DatabaseHelper.DASHBOARD;
+import static org.thingsboard.server.service.install.DatabaseHelper.END_TS;
+import static org.thingsboard.server.service.install.DatabaseHelper.ENTITY_ID;
+import static org.thingsboard.server.service.install.DatabaseHelper.ENTITY_TYPE;
+import static org.thingsboard.server.service.install.DatabaseHelper.ENTITY_VIEW;
+import static org.thingsboard.server.service.install.DatabaseHelper.ENTITY_VIEWS;
 import static org.thingsboard.server.service.install.DatabaseHelper.ID;
+import static org.thingsboard.server.service.install.DatabaseHelper.KEYS;
+import static org.thingsboard.server.service.install.DatabaseHelper.NAME;
 import static org.thingsboard.server.service.install.DatabaseHelper.SEARCH_TEXT;
+import static org.thingsboard.server.service.install.DatabaseHelper.START_TS;
 import static org.thingsboard.server.service.install.DatabaseHelper.TENANT_ID;
 import static org.thingsboard.server.service.install.DatabaseHelper.TITLE;
+import static org.thingsboard.server.service.install.DatabaseHelper.TYPE;
 
 @Service
 @Profile("install")
@@ -103,6 +113,46 @@ public class SqlDatabaseUpgradeService implements DatabaseUpgradeService {
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
                     log.info("Updating schema ...");
                     schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "2.0.0", SCHEMA_UPDATE_SQL);
+                    loadSql(schemaUpdateFile, conn);
+                    log.info("Schema updated.");
+                }
+                break;
+            case "2.0.0":
+                try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+                    log.info("Updating schema ...");
+                    schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "2.1.1", SCHEMA_UPDATE_SQL);
+                    loadSql(schemaUpdateFile, conn);
+                    log.info("Schema updated.");
+                }
+                break;
+            case "2.1.1":
+                try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+
+                    log.info("Dumping entity views ...");
+                    Path entityViewsDump = SqlDbHelper.dumpTableIfExists(conn, ENTITY_VIEWS,
+                            new String[]{ID, ENTITY_ID, ENTITY_TYPE, TENANT_ID, CUSTOMER_ID, TYPE, NAME, KEYS, START_TS, END_TS, SEARCH_TEXT, ADDITIONAL_INFO},
+                            new String[]{"", "", "", "", "", "default", "", "", "0", "0", "", ""},
+                            "tb-entity-views", true);
+                    log.info("Entity views dumped.");
+
+                    log.info("Updating schema ...");
+                    schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "2.1.2", SCHEMA_UPDATE_SQL);
+                    loadSql(schemaUpdateFile, conn);
+                    log.info("Schema updated.");
+
+                    log.info("Restoring entity views ...");
+                    if (entityViewsDump != null) {
+                        SqlDbHelper.loadTable(conn, ENTITY_VIEW,
+                                new String[]{ID, ENTITY_ID, ENTITY_TYPE, TENANT_ID, CUSTOMER_ID, TYPE, NAME, KEYS, START_TS, END_TS, SEARCH_TEXT, ADDITIONAL_INFO}, entityViewsDump, true);
+                        Files.deleteIfExists(entityViewsDump);
+                    }
+                    log.info("Entity views restored.");
+                }
+                break;
+            case "2.1.3":
+                try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+                    log.info("Updating schema ...");
+                    schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "2.2.0", SCHEMA_UPDATE_SQL);
                     loadSql(schemaUpdateFile, conn);
                     log.info("Schema updated.");
                 }

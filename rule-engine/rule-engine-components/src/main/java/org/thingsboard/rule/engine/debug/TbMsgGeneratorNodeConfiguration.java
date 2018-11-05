@@ -37,7 +37,7 @@ public class TbMsgGeneratorNodeConfiguration implements NodeConfiguration<TbMsgG
         configuration.setPeriodInSeconds(1);
         configuration.setJsScript("var msg = { temp: 42, humidity: 77 };\n" +
                 "var metadata = { data: 40 };\n" +
-                "var msgType = \"DebugMsg\";\n\n" +
+                "var msgType = \"POST_TELEMETRY_REQUEST\";\n\n" +
                 "return { msg: msg, metadata: metadata, msgType: msgType };");
         return configuration;
     }

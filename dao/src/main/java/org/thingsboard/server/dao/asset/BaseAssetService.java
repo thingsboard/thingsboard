@@ -30,6 +30,7 @@ import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetSearchQuery;
@@ -43,6 +44,7 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -52,6 +54,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.CacheConstants.ASSET_CACHE;
@@ -75,6 +78,9 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
 
     @Autowired
     private CustomerDao customerDao;
+
+    @Autowired
+    private EntityViewService entityViewService;
 
     @Autowired
     private CacheManager cacheManager;
@@ -130,11 +136,21 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
         validateId(assetId, INCORRECT_ASSET_ID + assetId);
         deleteEntityRelations(assetId);
 
-        Cache cache = cacheManager.getCache(ASSET_CACHE);
         Asset asset = assetDao.findById(assetId.getId());
+        try {
+            List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndEntityIdAsync(asset.getTenantId(), assetId).get();
+            if (entityViews != null && !entityViews.isEmpty()) {
+                throw new DataValidationException("Can't delete asset that is assigned to entity views!");
+            }
+        } catch (ExecutionException | InterruptedException e) {
+            log.error("Exception while finding entity views for assetId [{}]", assetId, e);
+            throw new RuntimeException("Exception while finding entity views for assetId [" + assetId + "]", e);
+        }
+
         List<Object> list = new ArrayList<>();
         list.add(asset.getTenantId());
         list.add(asset.getName());
+        Cache cache = cacheManager.getCache(ASSET_CACHE);
         cache.evict(list);
 
         assetDao.removeById(assetId.getId());

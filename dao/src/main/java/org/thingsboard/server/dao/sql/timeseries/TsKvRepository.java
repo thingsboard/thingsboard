@@ -35,7 +35,7 @@ public interface TsKvRepository extends CrudRepository<TsKvEntity, TsKvComposite
 
     @Query("SELECT tskv FROM TsKvEntity tskv WHERE tskv.entityId = :entityId " +
             "AND tskv.entityType = :entityType AND tskv.key = :entityKey " +
-            "AND tskv.ts > :startTs AND tskv.ts < :endTs ORDER BY tskv.ts DESC")
+            "AND tskv.ts > :startTs AND tskv.ts < :endTs")
     List<TsKvEntity> findAllWithLimit(@Param("entityId") String entityId,
                                       @Param("entityType") EntityType entityType,
                                       @Param("entityKey") String key,
@@ -47,7 +47,7 @@ public interface TsKvRepository extends CrudRepository<TsKvEntity, TsKvComposite
     @Modifying
     @Query("DELETE FROM TsKvEntity tskv WHERE tskv.entityId = :entityId " +
             "AND tskv.entityType = :entityType AND tskv.key = :entityKey " +
-            "AND tskv.ts > :startTs AND tskv.ts < :endTs")
+            "AND tskv.ts > :startTs AND tskv.ts <= :endTs")
     void delete(@Param("entityId") String entityId,
                 @Param("entityType") EntityType entityType,
                 @Param("entityKey") String key,

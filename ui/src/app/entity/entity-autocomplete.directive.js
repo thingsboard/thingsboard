@@ -131,6 +131,12 @@ export default function EntityAutocomplete($compile, $templateCache, $q, $filter
                     scope.noEntitiesMatchingText = 'device.no-devices-matching';
                     scope.entityRequiredText = 'device.device-required';
                     break;
+                case types.entityType.entityView:
+                    scope.selectEntityText = 'entity-view.select-entity-view';
+                    scope.entityText = 'entity-view.entity-view';
+                    scope.noEntitiesMatchingText = 'entity-view.no-entity-views-matching';
+                    scope.entityRequiredText = 'entity-view.entity-view-required';
+                    break;
                 case types.entityType.rulechain:
                     scope.selectEntityText = 'rulechain.select-rulechain';
                     scope.entityText = 'rulechain.rulechain';

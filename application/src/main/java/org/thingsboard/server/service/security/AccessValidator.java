@@ -26,6 +26,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -34,6 +35,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -44,6 +46,7 @@ import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserService;
@@ -66,6 +69,7 @@ public class AccessValidator {
     public static final String CUSTOMER_USER_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION = "Customer user is not allowed to perform this operation!";
     public static final String SYSTEM_ADMINISTRATOR_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION = "System administrator is not allowed to perform this operation!";
     public static final String DEVICE_WITH_REQUESTED_ID_NOT_FOUND = "Device with requested id wasn't found!";
+    public static final String ENTITY_VIEW_WITH_REQUESTED_ID_NOT_FOUND = "Entity-view with requested id wasn't found!";
 
     @Autowired
     protected TenantService tenantService;
@@ -87,6 +91,9 @@ public class AccessValidator {
 
     @Autowired
     protected RuleChainService ruleChainService;
+
+    @Autowired
+    protected EntityViewService entityViewService;
 
     private ExecutorService executor;
 
@@ -157,6 +164,9 @@ public class AccessValidator {
                 return;
             case TENANT:
                 validateTenant(currentUser, entityId, callback);
+                return;
+            case ENTITY_VIEW:
+                validateEntityView(currentUser, entityId, callback);
                 return;
             default:
                 //TODO: add support of other entities
@@ -288,6 +298,27 @@ public class AccessValidator {
                     return ValidationResult.accessDenied("Tenant doesn't relate to the currently authorized user!");
                 } else {
                     return ValidationResult.ok(tenant);
+                }
+            }), executor);
+        }
+    }
+
+    private void validateEntityView(final SecurityUser currentUser, EntityId entityId, FutureCallback<ValidationResult> callback) {
+        if (currentUser.isSystemAdmin()) {
+            callback.onSuccess(ValidationResult.accessDenied(SYSTEM_ADMINISTRATOR_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION));
+        } else {
+            ListenableFuture<EntityView> entityViewFuture = entityViewService.findEntityViewByIdAsync(new EntityViewId(entityId.getId()));
+            Futures.addCallback(entityViewFuture, getCallback(callback, entityView -> {
+                if (entityView == null) {
+                    return ValidationResult.entityNotFound(ENTITY_VIEW_WITH_REQUESTED_ID_NOT_FOUND);
+                } else {
+                    if (!entityView.getTenantId().equals(currentUser.getTenantId())) {
+                        return ValidationResult.accessDenied("Entity-view doesn't belong to the current Tenant!");
+                    } else if (currentUser.isCustomerUser() && !entityView.getCustomerId().equals(currentUser.getCustomerId())) {
+                        return ValidationResult.accessDenied("Entity-view doesn't belong to the current Customer!");
+                    } else {
+                        return ValidationResult.ok(entityView);
+                    }
                 }
             }), executor);
         }

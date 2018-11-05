@@ -29,6 +29,7 @@ public class ServerAddress implements Comparable<ServerAddress>, Serializable {
 
     private final String host;
     private final int port;
+    private final ServerType serverType;
 
     @Override
     public int compareTo(ServerAddress o) {

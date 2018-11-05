@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.controller;
 
+import lombok.Getter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -49,11 +51,22 @@ public class DashboardController extends BaseController {
 
     public static final String DASHBOARD_ID = "dashboardId";
 
+    @Value("${dashboard.max_datapoints_limit}")
+    private long maxDatapointsLimit;
+
+
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/dashboard/serverTime", method = RequestMethod.GET)
     @ResponseBody
     public long getServerTime() throws ThingsboardException {
         return System.currentTimeMillis();
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/dashboard/maxDatapointsLimit", method = RequestMethod.GET)
+    @ResponseBody
+    public long getMaxDatapointsLimit() throws ThingsboardException {
+        return maxDatapointsLimit;
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")

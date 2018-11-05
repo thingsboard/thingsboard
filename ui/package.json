@@ -1,8 +1,8 @@
 {
   "name": "thingsboard",
   "private": true,
-  "version": "2.1.1",
-  "description": "Thingsboard UI",
+  "version": "2.2.0",
+  "description": "ThingsBoard UI",
   "licenses": [
     {
       "type": "Apache-2.0",
@@ -26,7 +26,7 @@
     "angular-gridster": "^0.13.14",
     "angular-hotkeys": "^1.7.0",
     "angular-jwt": "^0.1.6",
-    "angular-material": "1.1.1",
+    "angular-material": "1.1.9",
     "angular-material-data-table": "^0.10.9",
     "angular-material-icons": "^0.7.1",
     "angular-material-expansion-panel": "^0.7.2",
@@ -63,7 +63,7 @@
     "leaflet-providers": "^1.1.17",
     "material-ui": "^0.16.1",
     "material-ui-number-input": "^5.0.16",
-    "md-color-picker": "^0.2.6",
+    "md-color-picker": "0.2.6",
     "mdPickers": "git://github.com/alenaksu/mdPickers.git#0.7.5",
     "moment": "^2.15.0",
     "ngclipboard": "^1.1.1",
@@ -119,7 +119,7 @@
     "ng-annotate-loader": "^0.1.1",
     "ngtemplate-loader": "^1.3.1",
     "node-sass": "^4.5.3",
-    "postcss-loader": "^0.13.0",
+    "postcss-loader": "^3.0.0",
     "raw-loader": "^0.5.1",
     "react-hot-loader": "^3.0.0-beta.6",
     "sass-loader": "^4.0.2",
@@ -145,5 +145,19 @@
       "node_modules",
       "target"
     ]
+  },
+  "browserslist": [
+    "> 0.5%",
+    "last 2 versions",
+    "Firefox ESR",
+    "not ie <= 10",
+    "not ie_mob <= 10",
+    "not bb <= 10",
+    "not op_mob <= 12.1"
+  ],
+  "postcss": {
+    "plugins": {
+      "autoprefixer": true
+    }
   }
 }

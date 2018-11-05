@@ -49,9 +49,11 @@ import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.AttributeKey;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BaseDeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
+import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
@@ -59,14 +61,11 @@ import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
-import org.thingsboard.server.common.msg.core.TelemetryUploadRequest;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
-import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.telemetry.AttributeData;
-import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import org.thingsboard.server.service.telemetry.TsData;
 import org.thingsboard.server.service.telemetry.exception.InvalidParametersException;
 import org.thingsboard.server.service.telemetry.exception.UncheckedApiException;
@@ -94,13 +93,7 @@ import java.util.stream.Collectors;
 public class TelemetryController extends BaseController {
 
     @Autowired
-    private AttributesService attributesService;
-
-    @Autowired
     private TimeseriesService tsService;
-
-    @Autowired
-    private TelemetrySubscriptionService tsSubService;
 
     @Autowired
     private AccessValidator accessValidator;
@@ -257,6 +250,60 @@ public class TelemetryController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/{entityType}/{entityId}/timeseries/delete", method = RequestMethod.DELETE)
+    @ResponseBody
+    public DeferredResult<ResponseEntity> deleteEntityTimeseries(@PathVariable("entityType") String entityType, @PathVariable("entityId") String entityIdStr,
+                                                                 @RequestParam(name = "keys") String keysStr,
+                                                                 @RequestParam(name = "deleteAllDataForKeys", defaultValue = "false") boolean deleteAllDataForKeys,
+                                                                 @RequestParam(name = "startTs", required = false) Long startTs,
+                                                                 @RequestParam(name = "endTs", required = false) Long endTs,
+                                                                 @RequestParam(name = "rewriteLatestIfDeleted", defaultValue = "false") boolean rewriteLatestIfDeleted) throws ThingsboardException {
+        EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
+        return deleteTimeseries(entityId, keysStr, deleteAllDataForKeys, startTs, endTs, rewriteLatestIfDeleted);
+    }
+
+    private DeferredResult<ResponseEntity> deleteTimeseries(EntityId entityIdStr, String keysStr, boolean deleteAllDataForKeys,
+                                                            Long startTs, Long endTs, boolean rewriteLatestIfDeleted) throws ThingsboardException {
+        List<String> keys = toKeysList(keysStr);
+        if (keys.isEmpty()) {
+            return getImmediateDeferredResult("Empty keys: " + keysStr, HttpStatus.BAD_REQUEST);
+        }
+        SecurityUser user = getCurrentUser();
+
+        long deleteFromTs;
+        long deleteToTs;
+        if (deleteAllDataForKeys) {
+            deleteFromTs = 0L;
+            deleteToTs = System.currentTimeMillis();
+        } else {
+            deleteFromTs = startTs;
+            deleteToTs = endTs;
+        }
+
+        return accessValidator.validateEntityAndCallback(user, entityIdStr, (result, entityId) -> {
+            List<DeleteTsKvQuery> deleteTsKvQueries = new ArrayList<>();
+            for (String key : keys) {
+                deleteTsKvQueries.add(new BaseDeleteTsKvQuery(key, deleteFromTs, deleteToTs, rewriteLatestIfDeleted));
+            }
+
+            ListenableFuture<List<Void>> future = tsService.remove(entityId, deleteTsKvQueries);
+            Futures.addCallback(future, new FutureCallback<List<Void>>() {
+                @Override
+                public void onSuccess(@Nullable List<Void> tmp) {
+                    logTimeseriesDeleted(user, entityId, keys, null);
+                    result.setResult(new ResponseEntity<>(HttpStatus.OK));
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    logTimeseriesDeleted(user, entityId, keys, t);
+                    result.setResult(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
+                }
+            }, executor);
+        });
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{deviceId}/{scope}", method = RequestMethod.DELETE)
     @ResponseBody
     public DeferredResult<ResponseEntity> deleteEntityAttributes(@PathVariable("deviceId") String deviceIdStr,
@@ -352,7 +399,7 @@ public class TelemetryController extends BaseController {
     }
 
     private DeferredResult<ResponseEntity> saveTelemetry(EntityId entityIdSrc, String requestBody, long ttl) throws ThingsboardException {
-        TelemetryUploadRequest telemetryRequest;
+        Map<Long, List<KvEntry>> telemetryRequest;
         JsonElement telemetryJson;
         try {
             telemetryJson = new JsonParser().parse(requestBody);
@@ -360,12 +407,12 @@ public class TelemetryController extends BaseController {
             return getImmediateDeferredResult("Unable to parse timeseries payload: Invalid JSON body!", HttpStatus.BAD_REQUEST);
         }
         try {
-            telemetryRequest = JsonConverter.convertToTelemetry(telemetryJson);
+            telemetryRequest = JsonConverter.convertToTelemetry(telemetryJson, System.currentTimeMillis());
         } catch (Exception e) {
             return getImmediateDeferredResult("Unable to parse timeseries payload. Invalid JSON body: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
         List<TsKvEntry> entries = new ArrayList<>();
-        for (Map.Entry<Long, List<KvEntry>> entry : telemetryRequest.getData().entrySet()) {
+        for (Map.Entry<Long, List<KvEntry>> entry : telemetryRequest.entrySet()) {
             for (KvEntry kv : entry.getValue()) {
                 entries.add(new BasicTsKvEntry(entry.getKey(), kv));
             }
@@ -511,6 +558,15 @@ public class TelemetryController extends BaseController {
                 AccessValidator.handleError(e, response, HttpStatus.INTERNAL_SERVER_ERROR);
             }
         };
+    }
+
+    private void logTimeseriesDeleted(SecurityUser user, EntityId entityId, List<String> keys, Throwable e) {
+        try {
+            logEntityAction(user, (UUIDBased & EntityId) entityId, null, null, ActionType.TIMESERIES_DELETED, toException(e),
+                    keys);
+        } catch (ThingsboardException te) {
+            log.warn("Failed to log timeseries delete", te);
+        }
     }
 
     private void logAttributesDeleted(SecurityUser user, EntityId entityId, String scope, List<String> keys, Throwable e) {

@@ -25,21 +25,24 @@ import akka.actor.Terminated;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.Function;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.ruleChain.RuleChainManagerActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
 import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.actors.shared.rulechain.SystemRuleChainManager;
 import org.thingsboard.server.actors.tenant.TenantActor;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.aware.TenantAwareMsg;
 import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
-import org.thingsboard.server.common.msg.core.BasicActorSystemToDeviceSessionActorMsg;
-import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -52,16 +55,14 @@ import java.util.Optional;
 
 public class AppActor extends RuleChainManagerActor {
 
-    private final LoggingAdapter logger = Logging.getLogger(getContext().system(), this);
-
-    public static final TenantId SYSTEM_TENANT = new TenantId(ModelConstants.NULL_UUID);
+    private static final TenantId SYSTEM_TENANT = new TenantId(ModelConstants.NULL_UUID);
     private final TenantService tenantService;
-    private final Map<TenantId, ActorRef> tenantActors;
+    private final BiMap<TenantId, ActorRef> tenantActors;
 
     private AppActor(ActorSystemContext systemContext) {
         super(systemContext, new SystemRuleChainManager(systemContext));
         this.tenantService = systemContext.getTenantService();
-        this.tenantActors = new HashMap<>();
+        this.tenantActors = HashBiMap.create();
     }
 
     @Override
@@ -71,22 +72,20 @@ public class AppActor extends RuleChainManagerActor {
 
     @Override
     public void preStart() {
-        logger.info("Starting main system actor.");
+        log.info("Starting main system actor.");
         try {
             initRuleChains();
-
             if (systemContext.isTenantComponentsInitEnabled()) {
                 PageDataIterable<Tenant> tenantIterator = new PageDataIterable<>(tenantService::findTenants, ENTITY_PACK_LIMIT);
                 for (Tenant tenant : tenantIterator) {
-                    logger.debug("[{}] Creating tenant actor", tenant.getId());
+                    log.debug("[{}] Creating tenant actor", tenant.getId());
                     getOrCreateTenantActor(tenant.getId());
-                    logger.debug("Tenant actor created.");
+                    log.debug("Tenant actor created.");
                 }
             }
-
-            logger.info("Main system actor started.");
+            log.info("Main system actor started.");
         } catch (Exception e) {
-            logger.error(e, "Unknown failure");
+            log.warn("Unknown failure", e);
         }
     }
 
@@ -105,7 +104,7 @@ public class AppActor extends RuleChainManagerActor {
             case SERVICE_TO_RULE_ENGINE_MSG:
                 onServiceToRuleEngineMsg((ServiceToRuleEngineMsg) msg);
                 break;
-            case DEVICE_SESSION_TO_DEVICE_ACTOR_MSG:
+            case TRANSPORT_TO_DEVICE_ACTOR_MSG:
             case DEVICE_ATTRIBUTES_UPDATE_TO_DEVICE_ACTOR_MSG:
             case DEVICE_CREDENTIALS_UPDATE_TO_DEVICE_ACTOR_MSG:
             case DEVICE_NAME_OR_TYPE_UPDATE_TO_DEVICE_ACTOR_MSG:
@@ -114,17 +113,10 @@ public class AppActor extends RuleChainManagerActor {
             case REMOTE_TO_RULE_CHAIN_TELL_NEXT_MSG:
                 onToDeviceActorMsg((TenantAwareMsg) msg);
                 break;
-            case ACTOR_SYSTEM_TO_DEVICE_SESSION_ACTOR_MSG:
-                onToDeviceSessionMsg((BasicActorSystemToDeviceSessionActorMsg) msg);
-                break;
             default:
                 return false;
         }
         return true;
-    }
-
-    private void onToDeviceSessionMsg(BasicActorSystemToDeviceSessionActorMsg msg) {
-        systemContext.getSessionManagerActor().tell(msg, self());
     }
 
     private void onPossibleClusterMsg(SendToClusterMsg msg) {
@@ -139,7 +131,8 @@ public class AppActor extends RuleChainManagerActor {
 
     private void onServiceToRuleEngineMsg(ServiceToRuleEngineMsg msg) {
         if (SYSTEM_TENANT.equals(msg.getTenantId())) {
-            //TODO: ashvayka handle this.
+//            this may be a notification about system entities created.
+//            log.warn("[{}] Invalid service to rule engine msg called. System messages are not supported yet: {}", SYSTEM_TENANT, msg);
         } else {
             getOrCreateTenantActor(msg.getTenantId()).tell(msg, self());
         }
@@ -152,16 +145,26 @@ public class AppActor extends RuleChainManagerActor {
     }
 
     private void onComponentLifecycleMsg(ComponentLifecycleMsg msg) {
-        ActorRef target;
+        ActorRef target = null;
         if (SYSTEM_TENANT.equals(msg.getTenantId())) {
             target = getEntityActorRef(msg.getEntityId());
         } else {
-            target = getOrCreateTenantActor(msg.getTenantId());
+            if (msg.getEntityId().getEntityType() == EntityType.TENANT
+                    && msg.getEvent() == ComponentLifecycleEvent.DELETED) {
+                log.debug("[{}] Handling tenant deleted notification: {}", msg.getTenantId(), msg);
+                ActorRef tenantActor = tenantActors.remove(new TenantId(msg.getEntityId().getId()));
+                if (tenantActor != null) {
+                    log.debug("[{}] Deleting tenant actor: {}", msg.getTenantId(), tenantActor);
+                    context().stop(tenantActor);
+                }
+            } else {
+                target = getOrCreateTenantActor(msg.getTenantId());
+            }
         }
         if (target != null) {
             target.tell(msg, ActorRef.noSender());
         } else {
-            logger.debug("Invalid component lifecycle msg: {}", msg);
+            log.debug("[{}] Invalid component lifecycle msg: {}", msg.getTenantId(), msg);
         }
     }
 
@@ -169,25 +172,25 @@ public class AppActor extends RuleChainManagerActor {
         getOrCreateTenantActor(msg.getTenantId()).tell(msg, ActorRef.noSender());
     }
 
-    private void processDeviceMsg(DeviceToDeviceActorMsg deviceToDeviceActorMsg) {
-        TenantId tenantId = deviceToDeviceActorMsg.getTenantId();
-        ActorRef tenantActor = getOrCreateTenantActor(tenantId);
-        if (deviceToDeviceActorMsg.getPayload().getMsgType().requiresRulesProcessing()) {
-//            tenantActor.tell(new RuleChainDeviceMsg(deviceToDeviceActorMsg, ruleManager.getRuleChain(this.context())), context().self());
-        } else {
-            tenantActor.tell(deviceToDeviceActorMsg, context().self());
-        }
-    }
-
     private ActorRef getOrCreateTenantActor(TenantId tenantId) {
-        return tenantActors.computeIfAbsent(tenantId, k -> context().actorOf(Props.create(new TenantActor.ActorCreator(systemContext, tenantId))
-                .withDispatcher(DefaultActorService.CORE_DISPATCHER_NAME), tenantId.toString()));
+        return tenantActors.computeIfAbsent(tenantId, k -> {
+            log.debug("[{}] Creating tenant actor.", tenantId);
+            ActorRef tenantActor = context().actorOf(Props.create(new TenantActor.ActorCreator(systemContext, tenantId))
+                    .withDispatcher(DefaultActorService.CORE_DISPATCHER_NAME), tenantId.toString());
+            context().watch(tenantActor);
+            log.debug("[{}] Created tenant actor: {}.", tenantId, tenantActor);
+            return tenantActor;
+        });
     }
 
-    private void processTermination(Terminated message) {
+    @Override
+    protected void processTermination(Terminated message) {
         ActorRef terminated = message.actor();
         if (terminated instanceof LocalActorRef) {
-            logger.debug("Removed actor: {}", terminated);
+            boolean removed = tenantActors.inverse().remove(terminated) != null;
+            if (removed) {
+                log.debug("[{}] Removed actor:", terminated);
+            }
         } else {
             throw new IllegalStateException("Remote actors are not supported!");
         }
@@ -201,20 +204,17 @@ public class AppActor extends RuleChainManagerActor {
         }
 
         @Override
-        public AppActor create() throws Exception {
+        public AppActor create() {
             return new AppActor(context);
         }
     }
 
-    private final SupervisorStrategy strategy = new OneForOneStrategy(3, Duration.create("1 minute"), new Function<Throwable, Directive>() {
-        @Override
-        public Directive apply(Throwable t) {
-            logger.error(t, "Unknown failure");
-            if (t instanceof RuntimeException) {
-                return SupervisorStrategy.restart();
-            } else {
-                return SupervisorStrategy.stop();
-            }
+    private final SupervisorStrategy strategy = new OneForOneStrategy(3, Duration.create("1 minute"), t -> {
+        log.warn("Unknown failure", t);
+        if (t instanceof RuntimeException) {
+            return SupervisorStrategy.restart();
+        } else {
+            return SupervisorStrategy.stop();
         }
     });
 }

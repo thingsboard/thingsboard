@@ -30,7 +30,6 @@ import org.thingsboard.server.actors.app.AppActor;
 import org.thingsboard.server.actors.rpc.RpcBroadcastMsg;
 import org.thingsboard.server.actors.rpc.RpcManagerActor;
 import org.thingsboard.server.actors.rpc.RpcSessionCreateRequestMsg;
-import org.thingsboard.server.actors.session.SessionManagerActor;
 import org.thingsboard.server.actors.stats.StatsActor;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -38,13 +37,11 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbActorMsg;
-import org.thingsboard.server.common.msg.aware.SessionAwareMsg;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.cluster.ToAllNodesMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
-import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
 import org.thingsboard.server.service.cluster.discovery.DiscoveryService;
 import org.thingsboard.server.service.cluster.discovery.ServerInstance;
@@ -68,10 +65,7 @@ public class DefaultActorService implements ActorService {
     public static final String APP_DISPATCHER_NAME = "app-dispatcher";
     public static final String CORE_DISPATCHER_NAME = "core-dispatcher";
     public static final String SYSTEM_RULE_DISPATCHER_NAME = "system-rule-dispatcher";
-    public static final String SYSTEM_PLUGIN_DISPATCHER_NAME = "system-plugin-dispatcher";
     public static final String TENANT_RULE_DISPATCHER_NAME = "rule-dispatcher";
-    public static final String TENANT_PLUGIN_DISPATCHER_NAME = "plugin-dispatcher";
-    public static final String SESSION_DISPATCHER_NAME = "session-dispatcher";
     public static final String RPC_DISPATCHER_NAME = "rpc-dispatcher";
 
     @Autowired
@@ -90,8 +84,6 @@ public class DefaultActorService implements ActorService {
 
     private ActorRef appActor;
 
-    private ActorRef sessionManagerActor;
-
     private ActorRef rpcManagerActor;
 
     @PostConstruct
@@ -104,10 +96,6 @@ public class DefaultActorService implements ActorService {
         appActor = system.actorOf(Props.create(new AppActor.ActorCreator(actorContext)).withDispatcher(APP_DISPATCHER_NAME), "appActor");
         actorContext.setAppActor(appActor);
 
-        sessionManagerActor = system.actorOf(Props.create(new SessionManagerActor.ActorCreator(actorContext)).withDispatcher(CORE_DISPATCHER_NAME),
-                "sessionManagerActor");
-        actorContext.setSessionManagerActor(sessionManagerActor);
-
         rpcManagerActor = system.actorOf(Props.create(new RpcManagerActor.ActorCreator(actorContext)).withDispatcher(CORE_DISPATCHER_NAME),
                 "rpcManagerActor");
 
@@ -115,8 +103,6 @@ public class DefaultActorService implements ActorService {
         actorContext.setStatsActor(statsActor);
 
         rpcService.init(this);
-
-        discoveryService.addListener(this);
         log.info("Actor system initialized.");
     }
 
@@ -134,12 +120,6 @@ public class DefaultActorService implements ActorService {
     @Override
     public void onMsg(SendToClusterMsg msg) {
         appActor.tell(msg, ActorRef.noSender());
-    }
-
-    @Override
-    public void process(SessionAwareMsg msg) {
-        log.debug("Processing session aware msg: {}", msg);
-        sessionManagerActor.tell(msg, ActorRef.noSender());
     }
 
     @Override
@@ -178,11 +158,6 @@ public class DefaultActorService implements ActorService {
         appActor.tell(new SendToClusterMsg(deviceId, msg), ActorRef.noSender());
     }
 
-    @Override
-    public void onMsg(ServiceToRuleEngineMsg msg) {
-        appActor.tell(msg, ActorRef.noSender());
-    }
-
     public void broadcast(ToAllNodesMsg msg) {
         actorContext.getEncodingService().encode(msg);
         rpcService.broadcast(new RpcBroadcastMsg(ClusterAPIProtos.ClusterMessage
@@ -196,16 +171,15 @@ public class DefaultActorService implements ActorService {
 
     private void broadcast(ClusterEventMsg msg) {
         this.appActor.tell(msg, ActorRef.noSender());
-        this.sessionManagerActor.tell(msg, ActorRef.noSender());
         this.rpcManagerActor.tell(msg, ActorRef.noSender());
     }
 
     @Override
     public void onReceivedMsg(ServerAddress source, ClusterAPIProtos.ClusterMessage msg) {
-        ServerAddress serverAddress = new ServerAddress(source.getHost(), source.getPort());
-        log.info("Received msg [{}] from [{}]", msg.getMessageType().name(), serverAddress);
+        ServerAddress serverAddress = new ServerAddress(source.getHost(), source.getPort(), source.getServerType());
         if (log.isDebugEnabled()) {
-            log.info("MSG: ", msg);
+            log.info("Received msg [{}] from [{}]", msg.getMessageType().name(), serverAddress);
+            log.info("MSG: {}", msg);
         }
         switch (msg.getMessageType()) {
             case CLUSTER_ACTOR_MESSAGE:
@@ -239,7 +213,7 @@ public class DefaultActorService implements ActorService {
                 actorContext.getTsSubService().onRemoteTsUpdate(serverAddress, msg.getPayload().toByteArray());
                 break;
             case CLUSTER_RPC_FROM_DEVICE_RESPONSE_MESSAGE:
-                actorContext.getDeviceRpcService().processRemoteResponseFromDevice(serverAddress, msg.getPayload().toByteArray());
+                actorContext.getDeviceRpcService().processResponseToServerSideRPCRequestFromRemoteServer(serverAddress, msg.getPayload().toByteArray());
                 break;
             case CLUSTER_DEVICE_STATE_SERVICE_MESSAGE:
                 actorContext.getDeviceStateService().onRemoteMsg(serverAddress, msg.getPayload().toByteArray());

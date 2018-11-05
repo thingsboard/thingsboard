@@ -53,7 +53,7 @@ export default function AddWidgetToDashboardDialogController($scope, $mdDialog, 
                     states: states
                 },
                 fullscreen: true,
-                skipHide: true,
+                multiple: true,
                 targetEvent: $event
             }).then(
                 function success(stateId) {
@@ -81,7 +81,7 @@ export default function AddWidgetToDashboardDialogController($scope, $mdDialog, 
                 templateUrl: selectTargetLayoutTemplate,
                 parent: angular.element($document[0].body),
                 fullscreen: true,
-                skipHide: true,
+                multiple: true,
                 targetEvent: $event
             }).then(
                 function success(layoutId) {

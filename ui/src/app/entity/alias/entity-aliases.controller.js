@@ -126,7 +126,7 @@ export default function EntityAliasesController(utils, entityService, toast, $sc
             },
             parent: angular.element($document[0].body),
             fullscreen: true,
-            skipHide: true,
+            multiple: true,
             targetEvent: $event
         }).then(function (alias) {
             if (isAdd) {
@@ -158,7 +158,7 @@ export default function EntityAliasesController(utils, entityService, toast, $sc
                     .ariaLabel($translate.instant('entity.unable-delete-entity-alias-title'))
                     .ok($translate.instant('action.close'))
                     .targetEvent($event);
-                alert._options.skipHide = true;
+                alert._options.multiple = true;
                 alert._options.fullscreen = true;
 
                 $mdDialog.show(alert);

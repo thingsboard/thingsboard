@@ -1,0 +1,58 @@
+#
+# Copyright © 2016-2018 The Thingsboard Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+server:
+  # Server bind address
+  address: "${HTTP_BIND_ADDRESS:0.0.0.0}"
+  # Server bind port
+  port: "${HTTP_BIND_PORT:8081}"
+
+# HTTP server parameters
+transport:
+  http:
+    request_timeout: "${HTTP_REQUEST_TIMEOUT:60000}"
+  sessions:
+    inactivity_timeout: "${TB_TRANSPORT_SESSIONS_INACTIVITY_TIMEOUT:300000}"
+    report_timeout: "${TB_TRANSPORT_SESSIONS_REPORT_TIMEOUT:30000}"
+  rate_limits:
+    enabled: "${TB_TRANSPORT_RATE_LIMITS_ENABLED:false}"
+    tenant: "${TB_TRANSPORT_RATE_LIMITS_TENANT:1000:1,20000:60}"
+    device: "${TB_TRANSPORT_RATE_LIMITS_DEVICE:10:1,300:60}"
+  json:
+    # Cast String data types to Numeric if possible when processing Telemetry/Attributes JSON
+    type_cast_enabled: "${JSON_TYPE_CAST_ENABLED:true}"
+
+kafka:
+  enabled: true
+  bootstrap.servers: "${TB_KAFKA_SERVERS:localhost:9092}"
+  acks: "${TB_KAFKA_ACKS:all}"
+  retries: "${TB_KAFKA_RETRIES:1}"
+  batch.size: "${TB_KAFKA_BATCH_SIZE:16384}"
+  linger.ms: "${TB_KAFKA_LINGER_MS:1}"
+  buffer.memory: "${TB_BUFFER_MEMORY:33554432}"
+  transport_api:
+    requests_topic: "${TB_TRANSPORT_API_REQUEST_TOPIC:tb.transport.api.requests}"
+    responses_topic: "${TB_TRANSPORT_API_RESPONSE_TOPIC:tb.transport.api.responses}"
+    max_pending_requests: "${TB_TRANSPORT_MAX_PENDING_REQUESTS:10000}"
+    max_requests_timeout: "${TB_TRANSPORT_MAX_REQUEST_TIMEOUT:10000}"
+    response_poll_interval: "${TB_TRANSPORT_RESPONSE_POLL_INTERVAL_MS:25}"
+    response_auto_commit_interval: "${TB_TRANSPORT_RESPONSE_AUTO_COMMIT_INTERVAL_MS:100}"
+  rule_engine:
+    topic: "${TB_RULE_ENGINE_TOPIC:tb.rule-engine}"
+  notifications:
+    topic: "${TB_TRANSPORT_NOTIFICATIONS_TOPIC:tb.transport.notifications}"
+    poll_interval: "${TB_TRANSPORT_NOTIFICATIONS_POLL_INTERVAL_MS:25}"
+    auto_commit_interval: "${TB_TRANSPORT_NOTIFICATIONS_AUTO_COMMIT_INTERVAL_MS:100}"
