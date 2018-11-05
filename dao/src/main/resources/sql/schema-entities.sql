@@ -62,19 +62,6 @@ CREATE TABLE IF NOT EXISTS audit_log (
     action_failure_details varchar(1000000)
 );
 
-CREATE TABLE IF NOT EXISTS attribute_kv (
-  entity_type varchar(255),
-  entity_id varchar(31),
-  attribute_type varchar(255),
-  attribute_key varchar(255),
-  bool_v boolean,
-  str_v varchar(10000000),
-  long_v bigint,
-  dbl_v double precision,
-  last_update_ts bigint,
-  CONSTRAINT attribute_kv_unq_key UNIQUE (entity_type, entity_id, attribute_type, attribute_key)
-);
-
 CREATE TABLE IF NOT EXISTS component_descriptor (
     id varchar(31) NOT NULL CONSTRAINT component_descriptor_pkey PRIMARY KEY,
     actions varchar(255),

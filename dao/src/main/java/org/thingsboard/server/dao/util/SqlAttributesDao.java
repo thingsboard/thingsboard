@@ -15,8 +15,8 @@
  */
 package org.thingsboard.server.dao.util;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
-@ConditionalOnExpression("'${database.ts.type}'=='cassandra' || '${database.entities.type}'=='cassandra' || '${database.attributes.type}'=='cassandra'")
-public @interface NoSqlAnyDao {
+@ConditionalOnProperty(prefix = "database.attributes", value = "type", havingValue = "sql")
+public @interface SqlAttributesDao {
 }

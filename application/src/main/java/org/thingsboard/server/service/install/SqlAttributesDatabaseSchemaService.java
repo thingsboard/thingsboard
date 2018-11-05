@@ -13,10 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.util;
+package org.thingsboard.server.service.install;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+import org.thingsboard.server.dao.util.SqlAttributesDao;
 
-@ConditionalOnExpression("'${database.ts.type}'=='cassandra' || '${database.entities.type}'=='cassandra' || '${database.attributes.type}'=='cassandra'")
-public @interface NoSqlAnyDao {
+@Service
+@SqlAttributesDao
+@Profile("install")
+public class SqlAttributesDatabaseSchemaService extends SqlAbstractDatabaseSchemaService
+        implements AttributesDatabaseSchemaService {
+    public SqlAttributesDatabaseSchemaService() {
+        super("schema-attributes.sql");
+    }
 }
