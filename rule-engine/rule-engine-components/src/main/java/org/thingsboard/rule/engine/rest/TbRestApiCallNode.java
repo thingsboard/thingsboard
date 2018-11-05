@@ -122,7 +122,7 @@ public class TbRestApiCallNode implements TbNode {
         metaData.putValue(STATUS, response.getStatusCode().name());
         metaData.putValue(STATUS_CODE, response.getStatusCode().value()+"");
         metaData.putValue(STATUS_REASON, response.getStatusCode().getReasonPhrase());
-        response.getHeaders().toSingleValueMap().forEach((k,v) -> metaData.putValue(k,v) );
+        response.getHeaders().toSingleValueMap().forEach(metaData::putValue);
         return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, response.getBody());
     }
 
