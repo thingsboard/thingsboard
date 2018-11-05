@@ -20,7 +20,6 @@ import org.junit.ClassRule;
 import org.junit.extensions.cpsuite.ClasspathSuite;
 import org.junit.runner.RunWith;
 import org.thingsboard.server.dao.CustomCassandraCQLUnit;
-import org.thingsboard.server.dao.CustomSqlUnit;
 
 import java.util.Arrays;
 
@@ -37,7 +36,8 @@ public class RuleEngineNoSqlTestSuite {
                     Arrays.asList(
                             new ClassPathCQLDataSet("cassandra/schema-ts.cql", false, false),
                             new ClassPathCQLDataSet("cassandra/schema-entities.cql", false, false),
+                            new ClassPathCQLDataSet("cassandra/schema-attributes.cql", false, false),
                             new ClassPathCQLDataSet("cassandra/system-data.cql", false, false)),
-                    "cassandra-test.yaml", 30000l);
+                    "cassandra-test.yaml", 30000L);
 
 }

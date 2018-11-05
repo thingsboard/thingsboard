@@ -37,6 +37,7 @@ public class NoSqlDaoServiceTestSuite {
                     Arrays.asList(
                             new ClassPathCQLDataSet("cassandra/schema-ts.cql", false, false),
                             new ClassPathCQLDataSet("cassandra/schema-entities.cql", false, false),
+                            new ClassPathCQLDataSet("cassandra/schema-attributes.cql", false, false),
                             new ClassPathCQLDataSet("cassandra/system-data.cql", false, false),
                             new ClassPathCQLDataSet("cassandra/system-test.cql", false, false)),
                     "cassandra-test.yaml", 30000L);

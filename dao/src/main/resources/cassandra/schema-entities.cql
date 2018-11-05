@@ -398,19 +398,6 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.dashboard_by_tenant_and_searc
 	PRIMARY KEY ( tenant_id, search_text, id )
 	WITH CLUSTERING ORDER BY ( search_text ASC, id DESC );
 
-CREATE TABLE IF NOT EXISTS thingsboard.attributes_kv_cf (
-    entity_type text, // (DEVICE, CUSTOMER, TENANT)
-    entity_id timeuuid,
-    attribute_type text, // (CLIENT_SIDE, SHARED, SERVER_SIDE)
-    attribute_key text,
-    bool_v boolean,
-    str_v text,
-    long_v bigint,
-    dbl_v double,
-    last_update_ts bigint,
-    PRIMARY KEY ((entity_type, entity_id, attribute_type), attribute_key)
-) WITH compaction = { 'class' :  'LeveledCompactionStrategy'  };
-
 CREATE TABLE IF NOT EXISTS  thingsboard.component_descriptor (
     id timeuuid,
     type text,

@@ -33,7 +33,7 @@ import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.nosql.CassandraAbstractAsyncDao;
 import org.thingsboard.server.dao.timeseries.CassandraBaseTimeseriesDao;
-import org.thingsboard.server.dao.util.NoSqlDao;
+import org.thingsboard.server.dao.util.NoSqlAttributesDao;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -57,7 +57,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.LAST_UPDATE_TS_COL
  */
 @Component
 @Slf4j
-@NoSqlDao
+@NoSqlAttributesDao
 public class CassandraBaseAttributesDao extends CassandraAbstractAsyncDao implements AttributesDao {
 
     private PreparedStatement saveStmt;
