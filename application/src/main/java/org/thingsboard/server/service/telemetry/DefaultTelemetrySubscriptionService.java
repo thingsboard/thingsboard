@@ -40,7 +40,6 @@ import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
 import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
@@ -57,7 +56,6 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -328,9 +326,9 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
             Set<Subscription> subscriptions = e.getValue();
             Optional<ServerAddress> newAddressOptional = routingService.resolveById(e.getKey());
             if (newAddressOptional.isPresent()) {
-                newAddressOptional.ifPresent(serverAddress -> checkSubsciptionsNewAddress(serverAddress, subscriptions));
+                newAddressOptional.ifPresent(serverAddress -> checkSubscriptionsNewAddress(serverAddress, subscriptions));
             } else {
-                checkSubsciptionsPrevAddress(subscriptions);
+                checkSubscriptionsPrevAddress(subscriptions);
             }
             if (subscriptions.size() == 0) {
                 log.trace("[{}] No more subscriptions for this device on current server.", e.getKey());
@@ -339,7 +337,7 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
         }
     }
 
-    private void checkSubsciptionsNewAddress(ServerAddress newAddress, Set<Subscription> subscriptions) {
+    private void checkSubscriptionsNewAddress(ServerAddress newAddress, Set<Subscription> subscriptions) {
         Iterator<Subscription> subscriptionIterator = subscriptions.iterator();
         while (subscriptionIterator.hasNext()) {
             Subscription s = subscriptionIterator.next();
@@ -357,7 +355,7 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
         }
     }
 
-    private void checkSubsciptionsPrevAddress(Set<Subscription> subscriptions) {
+    private void checkSubscriptionsPrevAddress(Set<Subscription> subscriptions) {
         for (Subscription s : subscriptions) {
             if (s.isLocal() && s.getServer() != null) {
                 log.trace("[{}] Local subscription is no longer handled on remote server address [{}]", s.getWsSessionId(), s.getServer());
