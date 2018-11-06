@@ -13,18 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.session;
+package org.thingsboard.server.actors.app;
 
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.gen.transport.TransportProtos.DeviceSessionsCacheEntry;
+import org.thingsboard.server.common.msg.MsgType;
+import org.thingsboard.server.common.msg.TbActorMsg;
 
-/**
- * Created by ashvayka on 29.10.18.
- */
-public interface DeviceSessionCacheService {
+public class AppInitMsg implements TbActorMsg {
 
-    byte[] get(DeviceId deviceId);
-
-    byte[] put(DeviceId deviceId, byte[] sessions);
-
+    @Override
+    public MsgType getMsgType() {
+        return MsgType.APP_INIT_MSG;
+    }
 }

@@ -24,6 +24,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RpcError;
 import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
@@ -483,19 +484,19 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         }
     }
 
-    private void handleSessionActivity(ActorContext context, SessionInfoProto sessionInfo, TransportProtos.SubscriptionInfoProto subscriptionInfo) {
-        UUID sessionId = getSessionId(sessionInfo);
-        SessionInfoMetaData sessionMD = sessions.get(sessionId);
-        if (sessionMD != null) {
-            sessionMD.setLastActivityTime(subscriptionInfo.getLastActivityTime());
-            sessionMD.setSubscribedToAttributes(subscriptionInfo.getAttributeSubscription());
-            sessionMD.setSubscribedToRPC(subscriptionInfo.getRpcSubscription());
-            if (subscriptionInfo.getAttributeSubscription()) {
-                attributeSubscriptions.putIfAbsent(sessionId, sessionMD.getSessionInfo());
-            }
-            if (subscriptionInfo.getRpcSubscription()) {
-                rpcSubscriptions.putIfAbsent(sessionId, sessionMD.getSessionInfo());
-            }
+    private void handleSessionActivity(ActorContext context, SessionInfoProto sessionInfoProto, TransportProtos.SubscriptionInfoProto subscriptionInfo) {
+        UUID sessionId = getSessionId(sessionInfoProto);
+        SessionInfoMetaData sessionMD = sessions.computeIfAbsent(sessionId,
+                id -> new SessionInfoMetaData(new SessionInfo(TransportProtos.SessionType.ASYNC, sessionInfoProto.getNodeId()), 0L));
+
+        sessionMD.setLastActivityTime(subscriptionInfo.getLastActivityTime());
+        sessionMD.setSubscribedToAttributes(subscriptionInfo.getAttributeSubscription());
+        sessionMD.setSubscribedToRPC(subscriptionInfo.getRpcSubscription());
+        if (subscriptionInfo.getAttributeSubscription()) {
+            attributeSubscriptions.putIfAbsent(sessionId, sessionMD.getSessionInfo());
+        }
+        if (subscriptionInfo.getRpcSubscription()) {
+            rpcSubscriptions.putIfAbsent(sessionId, sessionMD.getSessionInfo());
         }
         dumpSessions();
     }
@@ -629,8 +630,14 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
 
     private void restoreSessions() {
         log.debug("[{}] Restoring sessions from cache", deviceId);
-        TransportProtos.DeviceSessionsCacheEntry sessionsDump = systemContext.getDeviceSessionCacheService().get(deviceId);
-        if (sessionsDump.getSerializedSize() == 0) {
+        TransportProtos.DeviceSessionsCacheEntry sessionsDump = null;
+        try {
+            sessionsDump = TransportProtos.DeviceSessionsCacheEntry.parseFrom(systemContext.getDeviceSessionCacheService().get(deviceId));
+        } catch (InvalidProtocolBufferException e) {
+            log.warn("[{}] Failed to decode device sessions from cache", deviceId);
+            return;
+        }
+        if (sessionsDump.getSessionsCount() == 0) {
             log.debug("[{}] No session information found", deviceId);
             return;
         }
@@ -677,7 +684,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         });
         systemContext.getDeviceSessionCacheService()
                 .put(deviceId, TransportProtos.DeviceSessionsCacheEntry.newBuilder()
-                        .addAllSessions(sessionsList).build());
+                        .addAllSessions(sessionsList).build().toByteArray());
     }
 
     void initSessionTimeout(ActorContext context) {

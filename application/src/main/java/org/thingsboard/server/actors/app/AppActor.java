@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.aware.TenantAwareMsg;
 import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
@@ -58,6 +59,7 @@ public class AppActor extends RuleChainManagerActor {
     private static final TenantId SYSTEM_TENANT = new TenantId(ModelConstants.NULL_UUID);
     private final TenantService tenantService;
     private final BiMap<TenantId, ActorRef> tenantActors;
+    private boolean ruleChainsInitialized;
 
     private AppActor(ActorSystemContext systemContext) {
         super(systemContext, new SystemRuleChainManager(systemContext));
@@ -72,26 +74,20 @@ public class AppActor extends RuleChainManagerActor {
 
     @Override
     public void preStart() {
-        log.info("Starting main system actor.");
-        try {
-            initRuleChains();
-            if (systemContext.isTenantComponentsInitEnabled()) {
-                PageDataIterable<Tenant> tenantIterator = new PageDataIterable<>(tenantService::findTenants, ENTITY_PACK_LIMIT);
-                for (Tenant tenant : tenantIterator) {
-                    log.debug("[{}] Creating tenant actor", tenant.getId());
-                    getOrCreateTenantActor(tenant.getId());
-                    log.debug("Tenant actor created.");
-                }
-            }
-            log.info("Main system actor started.");
-        } catch (Exception e) {
-            log.warn("Unknown failure", e);
-        }
     }
 
     @Override
     protected boolean process(TbActorMsg msg) {
+        if (!ruleChainsInitialized) {
+            initRuleChainsAndTenantActors();
+            ruleChainsInitialized = true;
+            if (msg.getMsgType() != MsgType.APP_INIT_MSG) {
+                log.warn("Rule Chains initialized by unexpected message: {}", msg);
+            }
+        }
         switch (msg.getMsgType()) {
+            case APP_INIT_MSG:
+                break;
             case SEND_TO_CLUSTER_MSG:
                 onPossibleClusterMsg((SendToClusterMsg) msg);
                 break;
@@ -117,6 +113,24 @@ public class AppActor extends RuleChainManagerActor {
                 return false;
         }
         return true;
+    }
+
+    private void initRuleChainsAndTenantActors() {
+        log.info("Starting main system actor.");
+        try {
+            initRuleChains();
+            if (systemContext.isTenantComponentsInitEnabled()) {
+                PageDataIterable<Tenant> tenantIterator = new PageDataIterable<>(tenantService::findTenants, ENTITY_PACK_LIMIT);
+                for (Tenant tenant : tenantIterator) {
+                    log.debug("[{}] Creating tenant actor", tenant.getId());
+                    getOrCreateTenantActor(tenant.getId());
+                    log.debug("Tenant actor created.");
+                }
+            }
+            log.info("Main system actor started.");
+        } catch (Exception e) {
+            log.warn("Unknown failure", e);
+        }
     }
 
     private void onPossibleClusterMsg(SendToClusterMsg msg) {
