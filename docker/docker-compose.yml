@@ -91,8 +91,13 @@ services:
     image: "${DOCKER_REPO}/${MQTT_TRANSPORT_DOCKER_NAME}:${TB_VERSION}"
     ports:
       - "1883"
+    environment:
+      TB_HOST: tb-mqtt-transport1
     env_file:
       - tb-mqtt-transport.env
+    volumes:
+      - ./tb-transports/mqtt/conf:/config
+      - ./tb-transports/mqtt/log:/var/log/tb-mqtt-transport
     depends_on:
       - kafka
   tb-mqtt-transport2:
@@ -100,8 +105,13 @@ services:
     image: "${DOCKER_REPO}/${MQTT_TRANSPORT_DOCKER_NAME}:${TB_VERSION}"
     ports:
       - "1883"
+    environment:
+      TB_HOST: tb-mqtt-transport2
     env_file:
       - tb-mqtt-transport.env
+    volumes:
+      - ./tb-transports/mqtt/conf:/config
+      - ./tb-transports/mqtt/log:/var/log/tb-mqtt-transport
     depends_on:
       - kafka
   tb-http-transport1:
@@ -109,8 +119,13 @@ services:
     image: "${DOCKER_REPO}/${HTTP_TRANSPORT_DOCKER_NAME}:${TB_VERSION}"
     ports:
       - "8081"
+    environment:
+      TB_HOST: tb-http-transport1
     env_file:
       - tb-http-transport.env
+    volumes:
+      - ./tb-transports/http/conf:/config
+      - ./tb-transports/http/log:/var/log/tb-http-transport
     depends_on:
       - kafka
   tb-http-transport2:
@@ -118,8 +133,13 @@ services:
     image: "${DOCKER_REPO}/${HTTP_TRANSPORT_DOCKER_NAME}:${TB_VERSION}"
     ports:
       - "8081"
+    environment:
+      TB_HOST: tb-http-transport2
     env_file:
       - tb-http-transport.env
+    volumes:
+      - ./tb-transports/http/conf:/config
+      - ./tb-transports/http/log:/var/log/tb-http-transport
     depends_on:
       - kafka
   tb-coap-transport:
@@ -127,8 +147,13 @@ services:
     image: "${DOCKER_REPO}/${COAP_TRANSPORT_DOCKER_NAME}:${TB_VERSION}"
     ports:
       - "5683:5683/udp"
+    environment:
+      TB_HOST: tb-coap-transport
     env_file:
       - tb-coap-transport.env
+    volumes:
+      - ./tb-transports/coap/conf:/config
+      - ./tb-transports/coap/log:/var/log/tb-coap-transport
     depends_on:
       - kafka
   tb-web-ui1:
@@ -156,6 +181,7 @@ services:
     ports:
      - "80:80"
      - "8080"
+     - "8090"
      - "443:443"
      - "1883:1883"
      - "9999:9999"
@@ -165,7 +191,7 @@ services:
       HTTP_PORT: 80
       HTTPS_PORT: 443
       MQTT_PORT: 1883
-      TB_API_PORT: 8080
+      TB_API_PORT: 8090
       FORCE_HTTPS_REDIRECT: "false"
     links:
         - tb1

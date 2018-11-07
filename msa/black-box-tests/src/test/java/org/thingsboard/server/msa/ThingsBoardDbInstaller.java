@@ -28,11 +28,18 @@ public class ThingsBoardDbInstaller extends ExternalResource {
 
     private final static String POSTGRES_DATA_VOLUME = "tb-postgres-test-data-volume";
     private final static String TB_LOG_VOLUME = "tb-log-test-volume";
+    private final static String TB_COAP_TRANSPORT_LOG_VOLUME = "tb-coap-transport-log-test-volume";
+    private final static String TB_HTTP_TRANSPORT_LOG_VOLUME = "tb-http-transport-log-test-volume";
+    private final static String TB_MQTT_TRANSPORT_LOG_VOLUME = "tb-mqtt-transport-log-test-volume";
 
     private final DockerComposeExecutor dockerCompose;
 
     private final String postgresDataVolume;
     private final String tbLogVolume;
+    private final String tbCoapTransportLogVolume;
+    private final String tbHttpTransportLogVolume;
+    private final String tbMqttTransportLogVolume;
+    private final Map<String, String> env;
 
     public ThingsBoardDbInstaller() {
         List<File> composeFiles = Arrays.asList(new File("./../../docker/docker-compose.yml"),
@@ -44,21 +51,23 @@ public class ThingsBoardDbInstaller extends ExternalResource {
 
         postgresDataVolume = project + "_" + POSTGRES_DATA_VOLUME;
         tbLogVolume = project + "_" + TB_LOG_VOLUME;
+        tbCoapTransportLogVolume = project + "_" + TB_COAP_TRANSPORT_LOG_VOLUME;
+        tbHttpTransportLogVolume = project + "_" + TB_HTTP_TRANSPORT_LOG_VOLUME;
+        tbMqttTransportLogVolume = project + "_" + TB_MQTT_TRANSPORT_LOG_VOLUME;
 
         dockerCompose = new DockerComposeExecutor(composeFiles, project);
 
-        Map<String, String> env = new HashMap<>();
+        env = new HashMap<>();
         env.put("POSTGRES_DATA_VOLUME", postgresDataVolume);
         env.put("TB_LOG_VOLUME", tbLogVolume);
+        env.put("TB_COAP_TRANSPORT_LOG_VOLUME", tbCoapTransportLogVolume);
+        env.put("TB_HTTP_TRANSPORT_LOG_VOLUME", tbHttpTransportLogVolume);
+        env.put("TB_MQTT_TRANSPORT_LOG_VOLUME", tbMqttTransportLogVolume);
         dockerCompose.withEnv(env);
     }
 
-    public String getPostgresDataVolume() {
-        return postgresDataVolume;
-    }
-
-    public String getTbLogVolume() {
-        return tbLogVolume;
+    public Map<String, String> getEnv() {
+        return env;
     }
 
     @Override
@@ -69,6 +78,15 @@ public class ThingsBoardDbInstaller extends ExternalResource {
             dockerCompose.invokeDocker();
 
             dockerCompose.withCommand("volume create " + tbLogVolume);
+            dockerCompose.invokeDocker();
+
+            dockerCompose.withCommand("volume create " + tbCoapTransportLogVolume);
+            dockerCompose.invokeDocker();
+
+            dockerCompose.withCommand("volume create " + tbHttpTransportLogVolume);
+            dockerCompose.invokeDocker();
+
+            dockerCompose.withCommand("volume create " + tbMqttTransportLogVolume);
             dockerCompose.invokeDocker();
 
             dockerCompose.withCommand("up -d redis postgres");
@@ -88,8 +106,12 @@ public class ThingsBoardDbInstaller extends ExternalResource {
     @Override
     protected void after() {
         copyLogs(tbLogVolume, "./target/tb-logs/");
+        copyLogs(tbCoapTransportLogVolume, "./target/tb-coap-transport-logs/");
+        copyLogs(tbHttpTransportLogVolume, "./target/tb-http-transport-logs/");
+        copyLogs(tbMqttTransportLogVolume, "./target/tb-mqtt-transport-logs/");
 
-        dockerCompose.withCommand("volume rm -f " + postgresDataVolume + " " + tbLogVolume);
+        dockerCompose.withCommand("volume rm -f " + postgresDataVolume + " " + tbLogVolume +
+                " " + tbCoapTransportLogVolume + " " + tbHttpTransportLogVolume + " " + tbMqttTransportLogVolume);
         dockerCompose.invokeDocker();
     }
 

@@ -49,8 +49,7 @@ public class ContainerTestSuite {
                     .withPull(false)
                     .withLocalCompose(true)
                     .withTailChildContainers(true)
-                    .withEnv("POSTGRES_DATA_VOLUME", installTb.getPostgresDataVolume())
-                    .withEnv("TB_LOG_VOLUME", installTb.getTbLogVolume())
+                    .withEnv(installTb.getEnv())
                     .withEnv("LOAD_BALANCER_NAME", "")
                     .withExposedService("haproxy", 80, Wait.forHttp("/swagger-ui.html").withStartupTimeout(Duration.ofSeconds(120)));
         }
