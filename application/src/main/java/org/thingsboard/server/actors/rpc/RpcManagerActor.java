@@ -16,7 +16,9 @@
 package org.thingsboard.server.actors.rpc;
 
 import akka.actor.ActorRef;
+import akka.actor.OneForOneStrategy;
 import akka.actor.Props;
+import akka.actor.SupervisorStrategy;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +32,7 @@ import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.cluster.ServerType;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
 import org.thingsboard.server.service.cluster.discovery.ServerInstance;
+import scala.concurrent.duration.Duration;
 
 import java.util.*;
 
@@ -39,9 +42,7 @@ import java.util.*;
 public class RpcManagerActor extends ContextAwareActor {
 
     private final Map<ServerAddress, SessionActorInfo> sessionActors;
-
     private final Map<ServerAddress, Queue<ClusterAPIProtos.ClusterMessage>> pendingMsgs;
-
     private final ServerAddress instance;
 
     private RpcManagerActor(ActorSystemContext systemContext) {
@@ -63,7 +64,7 @@ public class RpcManagerActor extends ContextAwareActor {
     }
 
     @Override
-    public void onReceive(Object msg) throws Exception {
+    public void onReceive(Object msg) {
         if (msg instanceof ClusterAPIProtos.ClusterMessage) {
             onMsg((ClusterAPIProtos.ClusterMessage) msg);
         } else if (msg instanceof RpcBroadcastMsg) {
@@ -163,6 +164,7 @@ public class RpcManagerActor extends ContextAwareActor {
         log.info("[{}] session closed. Should reconnect: {}", remoteAddress, reconnect);
         SessionActorInfo sessionRef = sessionActors.get(remoteAddress);
         if (sessionRef != null && context().sender() != null && context().sender().equals(sessionRef.actor)) {
+            context().stop(sessionRef.actor);
             sessionActors.remove(remoteAddress);
             pendingMsgs.remove(remoteAddress);
             if (reconnect) {
@@ -172,9 +174,13 @@ public class RpcManagerActor extends ContextAwareActor {
     }
 
     private void onCreateSessionRequest(RpcSessionCreateRequestMsg msg) {
-        ActorRef actorRef = createSessionActor(msg);
         if (msg.getRemoteAddress() != null) {
-            register(msg.getRemoteAddress(), msg.getMsgUid(), actorRef);
+            if (!sessionActors.containsKey(msg.getRemoteAddress())) {
+                ActorRef actorRef = createSessionActor(msg);
+                register(msg.getRemoteAddress(), msg.getMsgUid(), actorRef);
+            }
+        } else {
+            createSessionActor(msg);
         }
     }
 
@@ -193,7 +199,8 @@ public class RpcManagerActor extends ContextAwareActor {
     private ActorRef createSessionActor(RpcSessionCreateRequestMsg msg) {
         log.info("[{}] Creating session actor.", msg.getMsgUid());
         ActorRef actor = context().actorOf(
-                Props.create(new RpcSessionActor.ActorCreator(systemContext, msg.getMsgUid())).withDispatcher(DefaultActorService.RPC_DISPATCHER_NAME));
+                Props.create(new RpcSessionActor.ActorCreator(systemContext, msg.getMsgUid()))
+                        .withDispatcher(DefaultActorService.RPC_DISPATCHER_NAME));
         actor.tell(msg, context().self());
         return actor;
     }
@@ -210,4 +217,14 @@ public class RpcManagerActor extends ContextAwareActor {
             return new RpcManagerActor(context);
         }
     }
+
+    @Override
+    public SupervisorStrategy supervisorStrategy() {
+        return strategy;
+    }
+
+    private final SupervisorStrategy strategy = new OneForOneStrategy(3, Duration.create("1 minute"), t -> {
+        log.warn("Unknown failure", t);
+        return SupervisorStrategy.resume();
+    });
 }

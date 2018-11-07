@@ -37,7 +37,7 @@ public abstract class ContextAwareActor extends UntypedActor {
     }
 
     @Override
-    public void onReceive(Object msg) throws Exception {
+    public void onReceive(Object msg) {
         if (log.isDebugEnabled()) {
             log.debug("Processing msg: {}", msg);
         }

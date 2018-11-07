@@ -15,12 +15,10 @@
  */
 package org.thingsboard.server.actors.rpc;
 
-import akka.event.Logging;
-import akka.event.LoggingAdapter;
-import io.grpc.Channel;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.service.ContextAwareActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
@@ -38,15 +36,15 @@ import static org.thingsboard.server.gen.cluster.ClusterAPIProtos.MessageType.CO
 /**
  * @author Andrew Shvayka
  */
+@Slf4j
 public class RpcSessionActor extends ContextAwareActor {
 
-    private final LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
     private final UUID sessionId;
     private GrpcSession session;
     private GrpcSessionListener listener;
 
-    public RpcSessionActor(ActorSystemContext systemContext, UUID sessionId) {
+    private RpcSessionActor(ActorSystemContext systemContext, UUID sessionId) {
         super(systemContext);
         this.sessionId = sessionId;
     }
@@ -58,7 +56,7 @@ public class RpcSessionActor extends ContextAwareActor {
     }
 
     @Override
-    public void onReceive(Object msg) throws Exception {
+    public void onReceive(Object msg) {
         if (msg instanceof ClusterAPIProtos.ClusterMessage) {
             tell((ClusterAPIProtos.ClusterMessage) msg);
         } else if (msg instanceof RpcSessionCreateRequestMsg) {
@@ -67,19 +65,29 @@ public class RpcSessionActor extends ContextAwareActor {
     }
 
     private void tell(ClusterAPIProtos.ClusterMessage msg) {
-        session.sendMsg(msg);
+        if (session != null) {
+            session.sendMsg(msg);
+        } else {
+            log.trace("Failed to send message due to missing session!");
+        }
     }
 
     @Override
     public void postStop() {
-        log.info("Closing session -> {}", session.getRemoteServer());
-        session.close();
+        if (session != null) {
+            log.info("Closing session -> {}", session.getRemoteServer());
+            try {
+                session.close();
+            } catch (RuntimeException e) {
+                log.trace("Failed to close session!", e);
+            }
+        }
     }
 
     private void initSession(RpcSessionCreateRequestMsg msg) {
         log.info("[{}] Initializing session", context().self());
         ServerAddress remoteServer = msg.getRemoteAddress();
-        listener = new BasicRpcSessionListener(systemContext.getActorService(), context().parent(), context().self());
+        listener = new BasicRpcSessionListener(systemContext, context().parent(), context().self());
         if (msg.getRemoteAddress() == null) {
             // Server session
             session = new GrpcSession(listener);
@@ -113,7 +121,7 @@ public class RpcSessionActor extends ContextAwareActor {
         }
 
         @Override
-        public RpcSessionActor create() throws Exception {
+        public RpcSessionActor create() {
             return new RpcSessionActor(context, sessionId);
         }
     }
