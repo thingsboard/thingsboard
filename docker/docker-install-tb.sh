@@ -15,8 +15,6 @@
 # limitations under the License.
 #
 
-./check-dirs.sh
-
 while [[ $# -gt 0 ]]
 do
 key="$1"

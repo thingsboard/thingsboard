@@ -15,8 +15,6 @@
 # limitations under the License.
 #
 
-./check-dirs.sh
-
 for i in "$@"
 do
 case $i in
