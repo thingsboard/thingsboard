@@ -15,8 +15,6 @@
 # limitations under the License.
 #
 
-./check-dirs.sh
-
 set -e
 
 source compose-utils.sh

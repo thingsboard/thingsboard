@@ -43,7 +43,7 @@ public interface TransportService {
     void process(TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg msg,
                  TransportServiceCallback<TransportProtos.GetOrCreateDeviceFromGatewayResponseMsg> callback);
 
-    boolean checkLimits(SessionInfoProto sessionInfo, TransportServiceCallback<Void> callback);
+    boolean checkLimits(SessionInfoProto sessionInfo, Object msg, TransportServiceCallback<Void> callback);
 
     void process(SessionInfoProto sessionInfo, SessionEventMsg msg, TransportServiceCallback<Void> callback);
 

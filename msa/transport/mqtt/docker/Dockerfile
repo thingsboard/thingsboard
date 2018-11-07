@@ -16,7 +16,7 @@
 
 FROM openjdk:8-jdk
 
-COPY logback.xml ${pkg.name}.conf start-tb-mqtt-transport.sh ${pkg.name}.deb /tmp/
+COPY start-tb-mqtt-transport.sh ${pkg.name}.deb /tmp/
 
 RUN chmod a+x /tmp/*.sh \
     && mv /tmp/start-tb-mqtt-transport.sh /usr/bin
@@ -24,8 +24,5 @@ RUN chmod a+x /tmp/*.sh \
 RUN dpkg -i /tmp/${pkg.name}.deb
 
 RUN update-rc.d ${pkg.name} disable
-
-RUN mv /tmp/logback.xml ${pkg.installFolder}/conf \
-    && mv /tmp/${pkg.name}.conf ${pkg.installFolder}/conf
 
 CMD ["start-tb-mqtt-transport.sh"]

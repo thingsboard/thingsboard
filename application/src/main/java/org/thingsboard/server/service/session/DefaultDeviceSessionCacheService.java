@@ -22,8 +22,8 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceSessionsCacheEntry;
 
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.UUID;
 
 import static org.thingsboard.server.common.data.CacheConstants.SESSIONS_CACHE;
 
@@ -35,16 +35,23 @@ import static org.thingsboard.server.common.data.CacheConstants.SESSIONS_CACHE;
 public class DefaultDeviceSessionCacheService implements DeviceSessionCacheService {
 
     @Override
-    @Cacheable(cacheNames = SESSIONS_CACHE, key = "#deviceId")
-    public DeviceSessionsCacheEntry get(DeviceId deviceId) {
+    @Cacheable(cacheNames = SESSIONS_CACHE, key = "#deviceId.toString()")
+    public byte[] get(DeviceId deviceId) {
         log.debug("[{}] Fetching session data from cache", deviceId);
-        return DeviceSessionsCacheEntry.newBuilder().addAllSessions(Collections.emptyList()).build();
+        return DeviceSessionsCacheEntry.newBuilder().addAllSessions(Collections.emptyList()).build().toByteArray();
     }
 
     @Override
-    @CachePut(cacheNames = SESSIONS_CACHE, key = "#deviceId")
-    public DeviceSessionsCacheEntry put(DeviceId deviceId, DeviceSessionsCacheEntry sessions) {
-        log.debug("[{}] Pushing session data from cache: {}", deviceId, sessions);
+    @CachePut(cacheNames = SESSIONS_CACHE, key = "#deviceId.toString()")
+    public byte[] put(DeviceId deviceId, byte[] sessions) {
+        log.debug("[{}] Pushing session data to cache: {}", deviceId, sessions);
         return sessions;
     }
+
+    public static void main (String[] args){
+        UUID uuid = UUID.fromString("d5db434e-9cd2-4903-8b3b-421b2d93664d");
+        System.out.println(uuid.getMostSignificantBits());
+        System.out.println(uuid.getLeastSignificantBits());
+    }
+
 }

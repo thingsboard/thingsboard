@@ -197,6 +197,7 @@ public class RemoteTransportService extends AbstractTransportService {
 
     @Override
     public void process(ValidateDeviceTokenRequestMsg msg, TransportServiceCallback<ValidateDeviceCredentialsResponseMsg> callback) {
+        log.trace("Processing msg: {}", msg);
         AsyncCallbackTemplate.withCallback(transportApiTemplate.post(msg.getToken(),
                 TransportApiRequestMsg.newBuilder().setValidateTokenRequestMsg(msg).build()),
                 response -> callback.onSuccess(response.getValidateTokenResponseMsg()), callback::onError, transportCallbackExecutor);
@@ -204,6 +205,7 @@ public class RemoteTransportService extends AbstractTransportService {
 
     @Override
     public void process(ValidateDeviceX509CertRequestMsg msg, TransportServiceCallback<ValidateDeviceCredentialsResponseMsg> callback) {
+        log.trace("Processing msg: {}", msg);
         AsyncCallbackTemplate.withCallback(transportApiTemplate.post(msg.getHash(),
                 TransportApiRequestMsg.newBuilder().setValidateX509CertRequestMsg(msg).build()),
                 response -> callback.onSuccess(response.getValidateTokenResponseMsg()), callback::onError, transportCallbackExecutor);
@@ -211,6 +213,7 @@ public class RemoteTransportService extends AbstractTransportService {
 
     @Override
     public void process(GetOrCreateDeviceFromGatewayRequestMsg msg, TransportServiceCallback<GetOrCreateDeviceFromGatewayResponseMsg> callback) {
+        log.trace("Processing msg: {}", msg);
         AsyncCallbackTemplate.withCallback(transportApiTemplate.post(msg.getDeviceName(),
                 TransportApiRequestMsg.newBuilder().setGetOrCreateDeviceRequestMsg(msg).build()),
                 response -> callback.onSuccess(response.getGetOrCreateDeviceResponseMsg()), callback::onError, transportCallbackExecutor);
@@ -218,6 +221,9 @@ public class RemoteTransportService extends AbstractTransportService {
 
     @Override
     public void process(SessionInfoProto sessionInfo, SubscriptionInfoProto msg, TransportServiceCallback<Void> callback) {
+        if (log.isTraceEnabled()) {
+            log.trace("[{}] Processing msg: {}", toId(sessionInfo), msg);
+        }
         ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
                 TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
                         .setSubscriptionInfo(msg).build()

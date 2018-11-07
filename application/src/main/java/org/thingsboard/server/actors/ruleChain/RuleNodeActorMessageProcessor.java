@@ -44,8 +44,8 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     private TbContext defaultCtx;
 
     RuleNodeActorMessageProcessor(TenantId tenantId, RuleChainId ruleChainId, RuleNodeId ruleNodeId, ActorSystemContext systemContext
-            , LoggingAdapter logger, ActorRef parent, ActorRef self) {
-        super(systemContext, logger, tenantId, ruleNodeId);
+            , ActorRef parent, ActorRef self) {
+        super(systemContext, tenantId, ruleNodeId);
         this.parent = parent;
         this.self = self;
         this.service = systemContext.getRuleChainService();
@@ -75,7 +75,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     }
 
     @Override
-    public void stop(ActorContext context) throws Exception {
+    public void stop(ActorContext context) {
         if (tbNode != null) {
             tbNode.destroy();
         }
@@ -83,7 +83,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     }
 
     @Override
-    public void onClusterEventMsg(ClusterEventMsg msg) throws Exception {
+    public void onClusterEventMsg(ClusterEventMsg msg) {
 
     }
 
@@ -109,6 +109,11 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
         } catch (Exception e) {
             msg.getCtx().tellFailure(msg.getMsg(), e);
         }
+    }
+
+    @Override
+    public String getComponentName() {
+        return ruleNode.getName();
     }
 
     private TbNode initComponent(RuleNode ruleNode) throws Exception {

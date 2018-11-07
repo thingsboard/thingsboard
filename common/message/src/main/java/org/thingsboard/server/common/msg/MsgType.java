@@ -28,6 +28,8 @@ public enum MsgType {
      */
     CLUSTER_EVENT_MSG,
 
+    APP_INIT_MSG,
+
     /**
      * All messages, could be send  to cluster
     */

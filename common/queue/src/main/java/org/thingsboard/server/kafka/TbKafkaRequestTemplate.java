@@ -23,6 +23,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.producer.Callback;
+import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.errors.TopicExistsException;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.internals.RecordHeader;
 
@@ -83,7 +86,13 @@ public class TbKafkaRequestTemplate<Request, Response> extends AbstractTbKafkaTe
             CreateTopicsResult result = admin.createTopic(new NewTopic(responseTemplate.getTopic(), 1, (short) 1));
             result.all().get();
         } catch (Exception e) {
-            log.trace("Failed to create topic: {}", e.getMessage(), e);
+            if ((e instanceof TopicExistsException) || (e.getCause() != null && e.getCause() instanceof TopicExistsException)) {
+                log.trace("[{}] Topic already exists. ", responseTemplate.getTopic());
+            } else {
+                log.info("[{}] Failed to create topic: {}", responseTemplate.getTopic(), e.getMessage(), e);
+                throw new RuntimeException(e);
+            }
+
         }
         this.requestTemplate.init();
         tickTs = System.currentTimeMillis();
@@ -92,7 +101,11 @@ public class TbKafkaRequestTemplate<Request, Response> extends AbstractTbKafkaTe
             long nextCleanupMs = 0L;
             while (!stopped) {
                 ConsumerRecords<String, byte[]> responses = responseTemplate.poll(Duration.ofMillis(pollInterval));
+                if (responses.count() > 0) {
+                    log.trace("Polling responses completed, consumer records count [{}]", responses.count());
+                }
                 responses.forEach(response -> {
+                    log.trace("Received response to Kafka Template request: {}", response);
                     Header requestIdHeader = response.headers().lastHeader(TbKafkaSettings.REQUEST_ID_HEADER);
                     Response decodedResponse = null;
                     UUID requestId = null;
@@ -109,6 +122,7 @@ public class TbKafkaRequestTemplate<Request, Response> extends AbstractTbKafkaTe
                     if (requestId == null) {
                         log.error("[{}] Missing requestId in header and body", response);
                     } else {
+                        log.trace("[{}] Response received", requestId);
                         ResponseMetaData<Response> expectedResponse = pendingRequests.remove(requestId);
                         if (expectedResponse == null) {
                             log.trace("[{}] Invalid or stale request", requestId);
@@ -132,6 +146,7 @@ public class TbKafkaRequestTemplate<Request, Response> extends AbstractTbKafkaTe
                         if (kv.getValue().expTime < tickTs) {
                             ResponseMetaData<Response> staleRequest = pendingRequests.remove(kv.getKey());
                             if (staleRequest != null) {
+                                log.trace("[{}] Request timeout detected, expTime [{}], tickTs [{}]", kv.getKey(), staleRequest.expTime, tickTs);
                                 staleRequest.future.setException(new TimeoutException());
                             }
                         }
@@ -158,9 +173,17 @@ public class TbKafkaRequestTemplate<Request, Response> extends AbstractTbKafkaTe
         headers.add(new RecordHeader(TbKafkaSettings.REQUEST_ID_HEADER, uuidToBytes(requestId)));
         headers.add(new RecordHeader(TbKafkaSettings.RESPONSE_TOPIC_HEADER, stringToBytes(responseTemplate.getTopic())));
         SettableFuture<Response> future = SettableFuture.create();
-        pendingRequests.putIfAbsent(requestId, new ResponseMetaData<>(tickTs + maxRequestTimeout, future));
+        ResponseMetaData<Response> responseMetaData = new ResponseMetaData<>(tickTs + maxRequestTimeout, future);
+        pendingRequests.putIfAbsent(requestId, responseMetaData);
         request = requestTemplate.enrich(request, responseTemplate.getTopic(), requestId);
-        requestTemplate.send(key, request, headers, null);
+        log.trace("[{}] Sending request, key [{}], expTime [{}]", requestId, key, responseMetaData.expTime);
+        requestTemplate.send(key, request, headers, (metadata, exception) -> {
+            if (exception != null) {
+                log.trace("[{}] Failed to post the request", requestId, exception);
+            } else {
+                log.trace("[{}] Posted the request", requestId, metadata);
+            }
+        });
         return future;
     }
 

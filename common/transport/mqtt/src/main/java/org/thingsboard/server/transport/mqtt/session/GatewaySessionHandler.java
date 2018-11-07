@@ -119,10 +119,10 @@ public class GatewaySessionHandler {
                             GatewayDeviceSessionCtx deviceSessionCtx = new GatewayDeviceSessionCtx(GatewaySessionHandler.this, msg.getDeviceInfo(), mqttQoSMap);
                             if (devices.putIfAbsent(deviceName, deviceSessionCtx) == null) {
                                 SessionInfoProto deviceSessionInfo = deviceSessionCtx.getSessionInfo();
+                                transportService.registerAsyncSession(deviceSessionInfo, deviceSessionCtx);
                                 transportService.process(deviceSessionInfo, AbstractTransportService.getSessionEventMsg(TransportProtos.SessionEvent.OPEN), null);
                                 transportService.process(deviceSessionInfo, TransportProtos.SubscribeToRPCMsg.getDefaultInstance(), null);
                                 transportService.process(deviceSessionInfo, TransportProtos.SubscribeToAttributeUpdatesMsg.getDefaultInstance(), null);
-                                transportService.registerAsyncSession(deviceSessionInfo, deviceSessionCtx);
                             }
                             future.set(devices.get(deviceName));
                         }

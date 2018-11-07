@@ -29,6 +29,9 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.service.ActorService;
@@ -127,7 +130,11 @@ public class RemoteRuleEngineTransportService implements RuleEngineTransportServ
 
         ruleEngineConsumer = ruleEngineConsumerBuilder.build();
         ruleEngineConsumer.subscribe();
+    }
 
+    @EventListener(ApplicationReadyEvent.class)
+    public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
+        log.info("Received application ready event. Starting polling for events.");
         LocalBucketBuilder builder = Bucket4j.builder();
         builder.addLimit(Bandwidth.simple(pollRecordsPerSecond, Duration.ofSeconds(1)));
         builder.addLimit(Bandwidth.simple(pollRecordsPerMinute, Duration.ofMinutes(1)));
@@ -149,6 +156,7 @@ public class RemoteRuleEngineTransportService implements RuleEngineTransportServ
                     records.forEach(record -> {
                         try {
                             ToRuleEngineMsg toRuleEngineMsg = ruleEngineConsumer.decode(record);
+                            log.trace("Forwarding message to rule engine {}", toRuleEngineMsg);
                             if (toRuleEngineMsg.hasToDeviceActorMsg()) {
                                 forwardToDeviceActor(toRuleEngineMsg.getToDeviceActorMsg());
                             }
@@ -175,18 +183,21 @@ public class RemoteRuleEngineTransportService implements RuleEngineTransportServ
 
     @Override
     public void process(String nodeId, DeviceActorToTransportMsg msg, Runnable onSuccess, Consumer<Throwable> onFailure) {
-        notificationsProducer.send(notificationsTopic + "." + nodeId,
-                new UUID(msg.getSessionIdMSB(), msg.getSessionIdLSB()).toString(),
-                ToTransportMsg.newBuilder().setToDeviceSessionMsg(msg).build()
-                , new QueueCallbackAdaptor(onSuccess, onFailure));
+        String topic = notificationsTopic + "." + nodeId;
+        UUID sessionId = new UUID(msg.getSessionIdMSB(), msg.getSessionIdLSB());
+        ToTransportMsg transportMsg = ToTransportMsg.newBuilder().setToDeviceSessionMsg(msg).build();
+        log.trace("[{}][{}] Pushing session data to topic: {}", topic, sessionId, transportMsg);
+        notificationsProducer.send(topic, sessionId.toString(), transportMsg, new QueueCallbackAdaptor(onSuccess, onFailure));
     }
 
     private void forwardToDeviceActor(TransportToDeviceActorMsg toDeviceActorMsg) {
         TransportToDeviceActorMsgWrapper wrapper = new TransportToDeviceActorMsgWrapper(toDeviceActorMsg);
         Optional<ServerAddress> address = routingService.resolveById(wrapper.getDeviceId());
         if (address.isPresent()) {
+            log.trace("[{}] Pushing message to remote server: {}", address.get(), toDeviceActorMsg);
             rpcService.tell(encodingService.convertToProtoDataMessage(address.get(), wrapper));
         } else {
+            log.trace("Pushing message to local server: {}", toDeviceActorMsg);
             actorContext.getAppActor().tell(wrapper, ActorRef.noSender());
         }
     }

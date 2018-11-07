@@ -45,7 +45,6 @@ public abstract class DeviceAwareSessionContext implements SessionContext {
         this.deviceId = new DeviceId(new UUID(deviceInfo.getDeviceIdMSB(), deviceInfo.getDeviceIdLSB()));
     }
 
-
     public boolean isConnected() {
         return deviceInfo != null;
     }

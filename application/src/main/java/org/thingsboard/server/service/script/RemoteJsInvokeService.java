@@ -71,7 +71,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
     private int maxErrors;
 
     private TbKafkaRequestTemplate<JsInvokeProtos.RemoteJsRequest, JsInvokeProtos.RemoteJsResponse> kafkaTemplate;
-    protected Map<UUID, String> scriptIdToBodysMap = new ConcurrentHashMap<>();
+    private Map<UUID, String> scriptIdToBodysMap = new ConcurrentHashMap<>();
 
     @PostConstruct
     public void init() {
@@ -100,7 +100,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
         responseBuilder.settings(kafkaSettings);
         responseBuilder.topic(responseTopicPrefix + "." + nodeIdProvider.getNodeId());
         responseBuilder.clientId("js-" + nodeIdProvider.getNodeId());
-        responseBuilder.groupId("rule-engine-node");
+        responseBuilder.groupId("rule-engine-node-" + nodeIdProvider.getNodeId());
         responseBuilder.autoCommit(true);
         responseBuilder.autoCommitIntervalMs(autoCommitInterval);
         responseBuilder.decoder(new RemoteJsResponseDecoder());
@@ -136,6 +136,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 .setCompileRequest(jsRequest)
                 .build();
 
+        log.trace("Post compile request for scriptId [{}]", scriptId);
         ListenableFuture<JsInvokeProtos.RemoteJsResponse> future = kafkaTemplate.post(scriptId.toString(), jsRequestWrapper);
         return Futures.transform(future, response -> {
             JsInvokeProtos.JsCompileResponse compilationResult = response.getCompileResponse();

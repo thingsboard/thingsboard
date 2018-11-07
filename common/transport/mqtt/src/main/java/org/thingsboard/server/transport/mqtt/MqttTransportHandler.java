@@ -141,7 +141,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 processUnsubscribe(ctx, (MqttUnsubscribeMessage) msg);
                 break;
             case PINGREQ:
-                if (checkConnected(ctx)) {
+                if (checkConnected(ctx, msg)) {
                     ctx.writeAndFlush(new MqttMessage(new MqttFixedHeader(PINGRESP, false, AT_MOST_ONCE, false, 0)));
                     transportService.reportActivity(sessionInfo);
                     if (gatewaySessionHandler != null) {
@@ -150,7 +150,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 }
                 break;
             case DISCONNECT:
-                if (checkConnected(ctx)) {
+                if (checkConnected(ctx, msg)) {
                     processDisconnect(ctx);
                 }
                 break;
@@ -161,12 +161,12 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     }
 
     private void processPublish(ChannelHandlerContext ctx, MqttPublishMessage mqttMsg) {
-        if (!checkConnected(ctx)) {
+        if (!checkConnected(ctx, mqttMsg)) {
             return;
         }
         String topicName = mqttMsg.variableHeader().topicName();
         int msgId = mqttMsg.variableHeader().packetId();
-        log.trace("[{}] Processing publish msg [{}][{}]!", sessionId, topicName, msgId);
+        log.trace("[{}][{}] Processing publish msg [{}][{}]!", sessionId, deviceSessionCtx.getDeviceId(), topicName, msgId);
 
         if (topicName.startsWith(MqttTopics.BASE_GATEWAY_API_TOPIC)) {
             if (gatewaySessionHandler != null) {
@@ -248,7 +248,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     }
 
     private void processSubscribe(ChannelHandlerContext ctx, MqttSubscribeMessage mqttMsg) {
-        if (!checkConnected(ctx)) {
+        if (!checkConnected(ctx, mqttMsg)) {
             return;
         }
         log.trace("[{}] Processing subscription [{}]!", sessionId, mqttMsg.variableHeader().messageId());
@@ -293,7 +293,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     }
 
     private void processUnsubscribe(ChannelHandlerContext ctx, MqttUnsubscribeMessage mqttMsg) {
-        if (!checkConnected(ctx)) {
+        if (!checkConnected(ctx, mqttMsg)) {
             return;
         }
         log.trace("[{}] Processing subscription [{}]!", sessionId, mqttMsg.variableHeader().messageId());
@@ -336,6 +336,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     private void processAuthTokenConnect(ChannelHandlerContext ctx, MqttConnectMessage msg) {
         String userName = msg.payload().userName();
+        log.info("[{}] Processing connect msg for client with user name: {}!", sessionId, userName);
         if (StringUtils.isEmpty(userName)) {
             ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_REFUSED_BAD_USER_NAME_OR_PASSWORD));
             ctx.close();
@@ -444,11 +445,11 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         return new MqttPubAckMessage(mqttFixedHeader, mqttMsgIdVariableHeader);
     }
 
-    private boolean checkConnected(ChannelHandlerContext ctx) {
+    private boolean checkConnected(ChannelHandlerContext ctx, MqttMessage msg) {
         if (deviceSessionCtx.isConnected()) {
             return true;
         } else {
-            log.info("[{}] Closing current session due to invalid msg order [{}][{}]", sessionId);
+            log.info("[{}] Closing current session due to invalid msg order: {}", sessionId, msg);
             ctx.close();
             return false;
         }
@@ -496,6 +497,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             transportService.registerAsyncSession(sessionInfo, this);
             checkGatewaySession();
             ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_ACCEPTED));
+            log.info("[{}] Client connected!", sessionId);
         }
     }
 

@@ -22,6 +22,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.kv.AttributeKey;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -57,6 +58,8 @@ public class JsonConverter {
     private static final Gson GSON = new Gson();
     private static final String CAN_T_PARSE_VALUE = "Can't parse value: ";
     private static final String DEVICE_PROPERTY = "device";
+
+    private static boolean isTypeCastEnabled = true;
 
     public static PostTelemetryMsg convertToTelemetryProto(JsonElement jsonObject) throws JsonSyntaxException {
         long systemTs = System.currentTimeMillis();
@@ -128,24 +131,22 @@ public class JsonConverter {
             if (element.isJsonPrimitive()) {
                 JsonPrimitive value = element.getAsJsonPrimitive();
                 if (value.isString()) {
-                    result.add(KeyValueProto.newBuilder().setKey(valueEntry.getKey()).setType(KeyValueType.STRING_V)
-                            .setStringV(value.getAsString()).build());
+                    if(isTypeCastEnabled && NumberUtils.isParsable(value.getAsString())) {
+                        try {
+                            result.add(buildNumericKeyValueProto(value, valueEntry.getKey()));
+                        } catch (RuntimeException th) {
+                            result.add(KeyValueProto.newBuilder().setKey(valueEntry.getKey()).setType(KeyValueType.STRING_V)
+                                    .setStringV(value.getAsString()).build());
+                        }
+                    } else {
+                        result.add(KeyValueProto.newBuilder().setKey(valueEntry.getKey()).setType(KeyValueType.STRING_V)
+                                .setStringV(value.getAsString()).build());
+                    }
                 } else if (value.isBoolean()) {
                     result.add(KeyValueProto.newBuilder().setKey(valueEntry.getKey()).setType(KeyValueType.BOOLEAN_V)
                             .setBoolV(value.getAsBoolean()).build());
                 } else if (value.isNumber()) {
-                    if (value.getAsString().contains(".")) {
-                        result.add(KeyValueProto.newBuilder().setKey(valueEntry.getKey()).setType(KeyValueType.DOUBLE_V)
-                                .setDoubleV(value.getAsDouble()).build());
-                    } else {
-                        try {
-                            long longValue = Long.parseLong(value.getAsString());
-                            result.add(KeyValueProto.newBuilder().setKey(valueEntry.getKey()).setType(KeyValueType.LONG_V)
-                                    .setLongV(longValue).build());
-                        } catch (NumberFormatException e) {
-                            throw new JsonSyntaxException("Big integer values are not supported!");
-                        }
-                    }
+                    result.add(buildNumericKeyValueProto(value, valueEntry.getKey()));
                 } else {
                     throw new JsonSyntaxException(CAN_T_PARSE_VALUE + value);
                 }
@@ -154,6 +155,24 @@ public class JsonConverter {
             }
         }
         return result;
+    }
+
+    private static KeyValueProto buildNumericKeyValueProto(JsonPrimitive value, String key) {
+        if (value.getAsString().contains(".")) {
+            return KeyValueProto.newBuilder()
+                    .setKey(key)
+                    .setType(KeyValueType.DOUBLE_V)
+                    .setDoubleV(value.getAsDouble())
+                    .build();
+        } else {
+            try {
+                long longValue = Long.parseLong(value.getAsString());
+                return KeyValueProto.newBuilder().setKey(key).setType(KeyValueType.LONG_V)
+                        .setLongV(longValue).build();
+            } catch (NumberFormatException e) {
+                throw new JsonSyntaxException("Big integer values are not supported!");
+            }
+        }
     }
 
     public static TransportProtos.ToServerRpcRequestMsg convertToServerRpcRequest(JsonElement json, int requestId) throws JsonSyntaxException {
@@ -370,7 +389,15 @@ public class JsonConverter {
             if (element.isJsonPrimitive()) {
                 JsonPrimitive value = element.getAsJsonPrimitive();
                 if (value.isString()) {
-                    result.add(new StringDataEntry(valueEntry.getKey(), value.getAsString()));
+                    if(isTypeCastEnabled && NumberUtils.isParsable(value.getAsString())) {
+                        try {
+                            parseNumericValue(result, valueEntry, value);
+                        } catch (RuntimeException th) {
+                            result.add(new StringDataEntry(valueEntry.getKey(), value.getAsString()));
+                        }
+                    } else {
+                        result.add(new StringDataEntry(valueEntry.getKey(), value.getAsString()));
+                    }
                 } else if (value.isBoolean()) {
                     result.add(new BooleanDataEntry(valueEntry.getKey(), value.getAsBoolean()));
                 } else if (value.isNumber()) {
@@ -426,5 +453,7 @@ public class JsonConverter {
         }
     }
 
-
+    public static void setTypeCastEnabled(boolean enabled) {
+        isTypeCastEnabled = enabled;
+    }
 }

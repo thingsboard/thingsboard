@@ -118,16 +118,16 @@ public class TbRestApiCallNode implements TbNode {
     }
 
     private TbMsg processResponse(TbContext ctx, TbMsg origMsg, ResponseEntity<String> response) {
-        TbMsgMetaData metaData = new TbMsgMetaData();
+        TbMsgMetaData metaData = origMsg.getMetaData();
         metaData.putValue(STATUS, response.getStatusCode().name());
         metaData.putValue(STATUS_CODE, response.getStatusCode().value()+"");
         metaData.putValue(STATUS_REASON, response.getStatusCode().getReasonPhrase());
-        response.getHeaders().toSingleValueMap().forEach((k,v) -> metaData.putValue(k,v) );
+        response.getHeaders().toSingleValueMap().forEach(metaData::putValue);
         return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, response.getBody());
     }
 
     private TbMsg processFailureResponse(TbContext ctx, TbMsg origMsg, ResponseEntity<String> response) {
-        TbMsgMetaData metaData = origMsg.getMetaData().copy();
+        TbMsgMetaData metaData = origMsg.getMetaData();
         metaData.putValue(STATUS, response.getStatusCode().name());
         metaData.putValue(STATUS_CODE, response.getStatusCode().value()+"");
         metaData.putValue(STATUS_REASON, response.getStatusCode().getReasonPhrase());
@@ -136,7 +136,7 @@ public class TbRestApiCallNode implements TbNode {
     }
 
     private TbMsg processException(TbContext ctx, TbMsg origMsg, Throwable e) {
-        TbMsgMetaData metaData = origMsg.getMetaData().copy();
+        TbMsgMetaData metaData = origMsg.getMetaData();
         metaData.putValue(ERROR, e.getClass() + ": " + e.getMessage());
         if (e instanceof HttpClientErrorException) {
             HttpClientErrorException httpClientErrorException = (HttpClientErrorException)e;

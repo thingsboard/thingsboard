@@ -21,6 +21,7 @@ import org.apache.commons.lang3.SerializationException;
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.framework.imps.CuratorFrameworkState;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
@@ -30,12 +31,14 @@ import org.apache.curator.framework.state.ConnectionStateListener;
 import org.apache.curator.retry.RetryForever;
 import org.apache.curator.utils.CloseableUtils;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.thingsboard.server.actors.service.ActorService;
@@ -51,13 +54,15 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
+import static org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent.Type.CHILD_REMOVED;
+
 /**
  * @author Andrew Shvayka
  */
 @Service
 @ConditionalOnProperty(prefix = "zk", value = "enabled", havingValue = "true", matchIfMissing = false)
 @Slf4j
-public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheListener, ApplicationListener<ApplicationReadyEvent> {
+public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheListener {
 
     @Value("${zk.url}")
     private String zkUrl;
@@ -95,6 +100,8 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
     private PathChildrenCache cache;
     private String nodePath;
 
+    private volatile boolean stopped = false;
+
     @PostConstruct
     public void init() {
         log.info("Initializing...");
@@ -115,6 +122,7 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
             cache.start();
         } catch (Exception e) {
             log.error("Failed to connect to ZK: {}", e.getMessage(), e);
+            CloseableUtils.closeQuietly(cache);
             CloseableUtils.closeQuietly(client);
             throw new RuntimeException(e);
         }
@@ -122,25 +130,50 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
 
     @PreDestroy
     public void destroy() {
+        stopped = true;
         unpublishCurrentServer();
+        CloseableUtils.closeQuietly(cache);
         CloseableUtils.closeQuietly(client);
         log.info("Stopped discovery service");
     }
 
     @Override
-    public void publishCurrentServer() {
+    public synchronized void publishCurrentServer() {
+        ServerInstance self = this.serverInstance.getSelf();
+        if (currentServerExists()) {
+            log.info("[{}:{}] ZK node for current instance already exists, NOT created new one: {}", self.getHost(), self.getPort(), nodePath);
+        } else {
+            try {
+                log.info("[{}:{}] Creating ZK node for current instance", self.getHost(), self.getPort());
+                nodePath = client.create()
+                        .creatingParentsIfNeeded()
+                        .withMode(CreateMode.EPHEMERAL_SEQUENTIAL).forPath(zkNodesDir + "/", SerializationUtils.serialize(self.getServerAddress()));
+                log.info("[{}:{}] Created ZK node for current instance: {}", self.getHost(), self.getPort(), nodePath);
+                client.getConnectionStateListenable().addListener(checkReconnect(self));
+            } catch (Exception e) {
+                log.error("Failed to create ZK node", e);
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    private boolean currentServerExists() {
+        if (nodePath == null) {
+            return false;
+        }
         try {
             ServerInstance self = this.serverInstance.getSelf();
-            log.info("[{}:{}] Creating ZK node for current instance", self.getHost(), self.getPort());
-            nodePath = client.create()
-                    .creatingParentsIfNeeded()
-                    .withMode(CreateMode.EPHEMERAL_SEQUENTIAL).forPath(zkNodesDir + "/", SerializationUtils.serialize(self.getServerAddress()));
-            log.info("[{}:{}] Created ZK node for current instance: {}", self.getHost(), self.getPort(), nodePath);
-            client.getConnectionStateListenable().addListener(checkReconnect(self));
+            ServerAddress registeredServerAdress = null;
+            registeredServerAdress = SerializationUtils.deserialize(client.getData().forPath(nodePath));
+            if (self.getServerAddress() != null && self.getServerAddress().equals(registeredServerAdress)) {
+                return true;
+            }
+        } catch (KeeperException.NoNodeException e) {
+            log.info("ZK node does not exist: {}", nodePath);
         } catch (Exception e) {
-            log.error("Failed to create ZK node", e);
-            throw new RuntimeException(e);
+            log.error("Couldn't check if ZK node exists", e);
         }
+        return false;
     }
 
     private ConnectionStateListener checkReconnect(ServerInstance self) {
@@ -200,8 +233,17 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
                 .collect(Collectors.toList());
     }
 
-    @Override
+    @EventListener(ApplicationReadyEvent.class)
     public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
+        log.info("Received application ready event. Starting current ZK node.");
+        if (stopped) {
+            log.debug("Ignoring application ready event. Service is stopped.");
+            return;
+        }
+        if (client.getState() != CuratorFrameworkState.STARTED) {
+            log.debug("Ignoring application ready event, ZK client is not started, ZK client state [{}]", client.getState());
+            return;
+        }
         publishCurrentServer();
         getOtherServers().forEach(
                 server -> log.info("Found active server: [{}:{}]", server.getHost(), server.getPort())
@@ -210,6 +252,14 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
 
     @Override
     public void childEvent(CuratorFramework curatorFramework, PathChildrenCacheEvent pathChildrenCacheEvent) throws Exception {
+        if (stopped) {
+            log.debug("Ignoring {}. Service is stopped.", pathChildrenCacheEvent);
+            return;
+        }
+        if (client.getState() != CuratorFrameworkState.STARTED) {
+            log.debug("Ignoring {}, ZK client is not started, ZK client state [{}]", pathChildrenCacheEvent, client.getState());
+            return;
+        }
         ChildData data = pathChildrenCacheEvent.getData();
         if (data == null) {
             log.debug("Ignoring {} due to empty child data", pathChildrenCacheEvent);
@@ -218,6 +268,10 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
             log.debug("Ignoring {} due to empty child's data", pathChildrenCacheEvent);
             return;
         } else if (nodePath != null && nodePath.equals(data.getPath())) {
+            if (pathChildrenCacheEvent.getType() == CHILD_REMOVED) {
+                log.info("ZK node for current instance is somehow deleted.");
+                publishCurrentServer();
+            }
             log.debug("Ignoring event about current server {}", pathChildrenCacheEvent);
             return;
         }

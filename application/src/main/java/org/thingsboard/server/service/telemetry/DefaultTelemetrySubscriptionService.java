@@ -35,23 +35,11 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
-import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
-import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
-import org.thingsboard.server.common.data.kv.BooleanDataEntry;
-import org.thingsboard.server.common.data.kv.DataType;
-import org.thingsboard.server.common.data.kv.DoubleDataEntry;
-import org.thingsboard.server.common.data.kv.KvEntry;
-import org.thingsboard.server.common.data.kv.LongDataEntry;
-import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
-import org.thingsboard.server.common.data.kv.StringDataEntry;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
 import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
@@ -68,7 +56,6 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -339,9 +326,9 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
             Set<Subscription> subscriptions = e.getValue();
             Optional<ServerAddress> newAddressOptional = routingService.resolveById(e.getKey());
             if (newAddressOptional.isPresent()) {
-                newAddressOptional.ifPresent(serverAddress -> checkSubsciptionsNewAddress(serverAddress, subscriptions));
+                newAddressOptional.ifPresent(serverAddress -> checkSubscriptionsNewAddress(serverAddress, subscriptions));
             } else {
-                checkSubsciptionsPrevAddress(subscriptions);
+                checkSubscriptionsPrevAddress(subscriptions);
             }
             if (subscriptions.size() == 0) {
                 log.trace("[{}] No more subscriptions for this device on current server.", e.getKey());
@@ -350,7 +337,7 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
         }
     }
 
-    private void checkSubsciptionsNewAddress(ServerAddress newAddress, Set<Subscription> subscriptions) {
+    private void checkSubscriptionsNewAddress(ServerAddress newAddress, Set<Subscription> subscriptions) {
         Iterator<Subscription> subscriptionIterator = subscriptions.iterator();
         while (subscriptionIterator.hasNext()) {
             Subscription s = subscriptionIterator.next();
@@ -368,7 +355,7 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
         }
     }
 
-    private void checkSubsciptionsPrevAddress(Set<Subscription> subscriptions) {
+    private void checkSubscriptionsPrevAddress(Set<Subscription> subscriptions) {
         for (Subscription s : subscriptions) {
             if (s.isLocal() && s.getServer() != null) {
                 log.trace("[{}] Local subscription is no longer handled on remote server address [{}]", s.getWsSessionId(), s.getServer());
@@ -381,7 +368,7 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
 
     private void addRemoteWsSubscription(ServerAddress address, String sessionId, Subscription subscription) {
         EntityId entityId = subscription.getEntityId();
-        log.trace("[{}] Registering remote subscription [{}] for device [{}] to [{}]", sessionId, subscription.getSubscriptionId(), entityId, address);
+        log.trace("[{}] Registering remote subscription [{}] for entity [{}] to [{}]", sessionId, subscription.getSubscriptionId(), entityId, address);
         registerSubscription(sessionId, entityId, subscription);
         if (subscription.getType() == TelemetryFeature.ATTRIBUTES) {
             final Map<String, Long> keyStates = subscription.getKeyStates();
@@ -401,17 +388,22 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
             long curTs = System.currentTimeMillis();
             List<ReadTsKvQuery> queries = new ArrayList<>();
             subscription.getKeyStates().entrySet().forEach(e -> {
-                queries.add(new BaseReadTsKvQuery(e.getKey(), e.getValue() + 1L, curTs));
+                if (curTs > e.getValue()) {
+                    queries.add(new BaseReadTsKvQuery(e.getKey(), e.getValue() + 1L, curTs, 0, 1000, Aggregation.NONE));
+                } else {
+                    log.debug("[{}] Invalid subscription [{}], entityId [{}] curTs [{}]", sessionId, subscription, entityId, curTs);
+                }
             });
-
-            DonAsynchron.withCallback(tsService.findAll(entityId, queries),
-                    missedUpdates -> {
-                        if (missedUpdates != null && !missedUpdates.isEmpty()) {
-                            tellRemoteSubUpdate(address, sessionId, new SubscriptionUpdate(subscription.getSubscriptionId(), missedUpdates));
-                        }
-                    },
-                    e -> log.error("Failed to fetch missed updates.", e),
-                    tsCallBackExecutor);
+            if (!queries.isEmpty()) {
+                DonAsynchron.withCallback(tsService.findAll(entityId, queries),
+                        missedUpdates -> {
+                            if (missedUpdates != null && !missedUpdates.isEmpty()) {
+                                tellRemoteSubUpdate(address, sessionId, new SubscriptionUpdate(subscription.getSubscriptionId(), missedUpdates));
+                            }
+                        },
+                        e -> log.error("Failed to fetch missed updates.", e),
+                        tsCallBackExecutor);
+            }
         }
     }
 
