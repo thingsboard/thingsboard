@@ -7,4 +7,6 @@ jdk:
  - oraclejdk8
 language: java
 sudo: required
-script: mvn clean verify
+services:
+  - docker
+script: mvn clean verify -Ddockerfile.skip=false -DblackBoxTests.skip=false
