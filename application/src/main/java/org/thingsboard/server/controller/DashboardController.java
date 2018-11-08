@@ -124,7 +124,7 @@ public class DashboardController extends BaseController {
         try {
             DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
             Dashboard dashboard = checkDashboardId(dashboardId);
-            dashboardService.deleteDashboard(dashboardId);
+            dashboardService.deleteDashboard(getCurrentUser().getTenantId(), dashboardId);
 
             logEntityAction(dashboardId, dashboard,
                     null,
@@ -155,7 +155,7 @@ public class DashboardController extends BaseController {
             DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
             checkDashboardId(dashboardId);
             
-            Dashboard savedDashboard = checkNotNull(dashboardService.assignDashboardToCustomer(dashboardId, customerId));
+            Dashboard savedDashboard = checkNotNull(dashboardService.assignDashboardToCustomer(getCurrentUser().getTenantId(), dashboardId, customerId));
 
             logEntityAction(dashboardId, savedDashboard,
                     customerId,
@@ -186,7 +186,7 @@ public class DashboardController extends BaseController {
             DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
             Dashboard dashboard = checkDashboardId(dashboardId);
 
-            Dashboard savedDashboard = checkNotNull(dashboardService.unassignDashboardFromCustomer(dashboardId, customerId));
+            Dashboard savedDashboard = checkNotNull(dashboardService.unassignDashboardFromCustomer(getCurrentUser().getTenantId(), dashboardId, customerId));
 
             logEntityAction(dashboardId, dashboard,
                     customerId,
@@ -242,7 +242,7 @@ public class DashboardController extends BaseController {
             } else {
                 Dashboard savedDashboard = null;
                 for (CustomerId customerId : addedCustomerIds) {
-                    savedDashboard = checkNotNull(dashboardService.assignDashboardToCustomer(dashboardId, customerId));
+                    savedDashboard = checkNotNull(dashboardService.assignDashboardToCustomer(getCurrentUser().getTenantId(), dashboardId, customerId));
                     ShortCustomerInfo customerInfo = savedDashboard.getAssignedCustomerInfo(customerId);
                     logEntityAction(dashboardId, savedDashboard,
                             customerId,
@@ -250,7 +250,7 @@ public class DashboardController extends BaseController {
                 }
                 for (CustomerId customerId : removedCustomerIds) {
                     ShortCustomerInfo customerInfo = dashboard.getAssignedCustomerInfo(customerId);
-                    savedDashboard = checkNotNull(dashboardService.unassignDashboardFromCustomer(dashboardId, customerId));
+                    savedDashboard = checkNotNull(dashboardService.unassignDashboardFromCustomer(getCurrentUser().getTenantId(), dashboardId, customerId));
                     logEntityAction(dashboardId, dashboard,
                             customerId,
                             ActionType.UNASSIGNED_FROM_CUSTOMER, null, strDashboardId, customerId.toString(), customerInfo.getTitle());
@@ -293,7 +293,7 @@ public class DashboardController extends BaseController {
             } else {
                 Dashboard savedDashboard = null;
                 for (CustomerId customerId : customerIds) {
-                    savedDashboard = checkNotNull(dashboardService.assignDashboardToCustomer(dashboardId, customerId));
+                    savedDashboard = checkNotNull(dashboardService.assignDashboardToCustomer(getCurrentUser().getTenantId(), dashboardId, customerId));
                     ShortCustomerInfo customerInfo = savedDashboard.getAssignedCustomerInfo(customerId);
                     logEntityAction(dashboardId, savedDashboard,
                             customerId,
@@ -337,7 +337,7 @@ public class DashboardController extends BaseController {
                 Dashboard savedDashboard = null;
                 for (CustomerId customerId : customerIds) {
                     ShortCustomerInfo customerInfo = dashboard.getAssignedCustomerInfo(customerId);
-                    savedDashboard = checkNotNull(dashboardService.unassignDashboardFromCustomer(dashboardId, customerId));
+                    savedDashboard = checkNotNull(dashboardService.unassignDashboardFromCustomer(getCurrentUser().getTenantId(), dashboardId, customerId));
                     logEntityAction(dashboardId, dashboard,
                             customerId,
                             ActionType.UNASSIGNED_FROM_CUSTOMER, null, strDashboardId, customerId.toString(), customerInfo.getTitle());
@@ -364,7 +364,7 @@ public class DashboardController extends BaseController {
             DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
             Dashboard dashboard = checkDashboardId(dashboardId);
             Customer publicCustomer = customerService.findOrCreatePublicCustomer(dashboard.getTenantId());
-            Dashboard savedDashboard = checkNotNull(dashboardService.assignDashboardToCustomer(dashboardId, publicCustomer.getId()));
+            Dashboard savedDashboard = checkNotNull(dashboardService.assignDashboardToCustomer(getCurrentUser().getTenantId(), dashboardId, publicCustomer.getId()));
 
             logEntityAction(dashboardId, savedDashboard,
                     publicCustomer.getId(),
@@ -391,7 +391,7 @@ public class DashboardController extends BaseController {
             Dashboard dashboard = checkDashboardId(dashboardId);
             Customer publicCustomer = customerService.findOrCreatePublicCustomer(dashboard.getTenantId());
 
-            Dashboard savedDashboard = checkNotNull(dashboardService.unassignDashboardFromCustomer(dashboardId, publicCustomer.getId()));
+            Dashboard savedDashboard = checkNotNull(dashboardService.unassignDashboardFromCustomer(getCurrentUser().getTenantId(), dashboardId, publicCustomer.getId()));
 
             logEntityAction(dashboardId, dashboard,
                     publicCustomer.getId(),

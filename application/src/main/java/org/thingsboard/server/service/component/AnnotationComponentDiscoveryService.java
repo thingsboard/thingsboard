@@ -30,6 +30,7 @@ import org.thingsboard.rule.engine.api.NodeConfiguration;
 import org.thingsboard.rule.engine.api.NodeDefinition;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbRelationTypes;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.dao.component.ComponentDescriptorService;
@@ -159,18 +160,18 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
             log.error("Can't initialize component {}, due to {}", def.getBeanClassName(), e.getMessage(), e);
             throw new RuntimeException(e);
         }
-        ComponentDescriptor persistedComponent = componentDescriptorService.findByClazz(clazzName);
+        ComponentDescriptor persistedComponent = componentDescriptorService.findByClazz(TenantId.SYS_TENANT_ID, clazzName);
         if (persistedComponent == null) {
             log.info("Persisting new component: {}", scannedComponent);
-            scannedComponent = componentDescriptorService.saveComponent(scannedComponent);
+            scannedComponent = componentDescriptorService.saveComponent(TenantId.SYS_TENANT_ID, scannedComponent);
         } else if (scannedComponent.equals(persistedComponent)) {
             log.info("Component is already persisted: {}", persistedComponent);
             scannedComponent = persistedComponent;
         } else {
             log.info("Component {} will be updated to {}", persistedComponent, scannedComponent);
-            componentDescriptorService.deleteByClazz(persistedComponent.getClazz());
+            componentDescriptorService.deleteByClazz(TenantId.SYS_TENANT_ID, persistedComponent.getClazz());
             scannedComponent.setId(persistedComponent.getId());
-            scannedComponent = componentDescriptorService.saveComponent(scannedComponent);
+            scannedComponent = componentDescriptorService.saveComponent(TenantId.SYS_TENANT_ID, scannedComponent);
         }
         return scannedComponent;
     }

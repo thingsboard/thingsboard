@@ -36,7 +36,7 @@ public class EntitiesRelatedEntityIdAsyncLoader {
                                                              RelationsQuery relationsQuery) {
         RelationService relationService = ctx.getRelationService();
         EntityRelationsQuery query = buildQuery(originator, relationsQuery);
-        ListenableFuture<List<EntityRelation>> asyncRelation = relationService.findByQuery(query);
+        ListenableFuture<List<EntityRelation>> asyncRelation = relationService.findByQuery(ctx.getTenantId(), query);
         if (relationsQuery.getDirection() == EntitySearchDirection.FROM) {
             return Futures.transformAsync(asyncRelation, r -> CollectionUtils.isNotEmpty(r) ? Futures.immediateFuture(r.get(0).getTo())
                     : Futures.immediateFuture(null));

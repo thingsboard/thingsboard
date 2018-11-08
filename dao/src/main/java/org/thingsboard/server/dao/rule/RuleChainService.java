@@ -36,29 +36,29 @@ public interface RuleChainService {
 
     RuleChain saveRuleChain(RuleChain ruleChain);
 
-    boolean setRootRuleChain(RuleChainId ruleChainId);
+    boolean setRootRuleChain(TenantId tenantId, RuleChainId ruleChainId);
 
-    RuleChainMetaData saveRuleChainMetaData(RuleChainMetaData ruleChainMetaData);
+    RuleChainMetaData saveRuleChainMetaData(TenantId tenantId, RuleChainMetaData ruleChainMetaData);
 
-    RuleChainMetaData loadRuleChainMetaData(RuleChainId ruleChainId);
+    RuleChainMetaData loadRuleChainMetaData(TenantId tenantId, RuleChainId ruleChainId);
 
-    RuleChain findRuleChainById(RuleChainId ruleChainId);
+    RuleChain findRuleChainById(TenantId tenantId, RuleChainId ruleChainId);
 
-    RuleNode findRuleNodeById(RuleNodeId ruleNodeId);
+    RuleNode findRuleNodeById(TenantId tenantId, RuleNodeId ruleNodeId);
 
-    ListenableFuture<RuleChain> findRuleChainByIdAsync(RuleChainId ruleChainId);
+    ListenableFuture<RuleChain> findRuleChainByIdAsync(TenantId tenantId, RuleChainId ruleChainId);
 
-    ListenableFuture<RuleNode> findRuleNodeByIdAsync(RuleNodeId ruleNodeId);
+    ListenableFuture<RuleNode> findRuleNodeByIdAsync(TenantId tenantId, RuleNodeId ruleNodeId);
 
     RuleChain getRootTenantRuleChain(TenantId tenantId);
 
-    List<RuleNode> getRuleChainNodes(RuleChainId ruleChainId);
+    List<RuleNode> getRuleChainNodes(TenantId tenantId, RuleChainId ruleChainId);
 
-    List<EntityRelation> getRuleNodeRelations(RuleNodeId ruleNodeId);
+    List<EntityRelation> getRuleNodeRelations(TenantId tenantId, RuleNodeId ruleNodeId);
 
     TextPageData<RuleChain> findTenantRuleChains(TenantId tenantId, TextPageLink pageLink);
 
-    void deleteRuleChainById(RuleChainId ruleChainId);
+    void deleteRuleChainById(TenantId tenantId, RuleChainId ruleChainId);
 
     void deleteRuleChainsByTenantId(TenantId tenantId);
 

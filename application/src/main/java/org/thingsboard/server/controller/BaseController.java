@@ -275,7 +275,7 @@ public abstract class BaseController {
                         ThingsboardErrorCode.PERMISSION_DENIED);
             }
             if (customerId != null && !customerId.isNullUid()) {
-                Customer customer = customerService.findCustomerById(customerId);
+                Customer customer = customerService.findCustomerById(authUser.getTenantId(), customerId);
                 checkCustomer(customer);
                 return customer;
             } else {
@@ -294,7 +294,7 @@ public abstract class BaseController {
     User checkUserId(UserId userId) throws ThingsboardException {
         try {
             validateId(userId, "Incorrect userId " + userId);
-            User user = userService.findUserById(userId);
+            User user = userService.findUserById(getCurrentUser().getTenantId(), userId);
             checkUser(user);
             return user;
         } catch (Exception e) {
@@ -314,9 +314,10 @@ public abstract class BaseController {
         try {
             checkNotNull(entityId);
             validateId(entityId.getId(), "Incorrect entityId " + entityId);
+            SecurityUser authUser = getCurrentUser();
             switch (entityId.getEntityType()) {
                 case DEVICE:
-                    checkDevice(deviceService.findDeviceById(new DeviceId(entityId.getId())));
+                    checkDevice(deviceService.findDeviceById(authUser.getTenantId(), new DeviceId(entityId.getId())));
                     return;
                 case CUSTOMER:
                     checkCustomerId(new CustomerId(entityId.getId()));
@@ -328,7 +329,7 @@ public abstract class BaseController {
                     checkRuleChain(new RuleChainId(entityId.getId()));
                     return;
                 case ASSET:
-                    checkAsset(assetService.findAssetById(new AssetId(entityId.getId())));
+                    checkAsset(assetService.findAssetById(authUser.getTenantId(), new AssetId(entityId.getId())));
                     return;
                 case DASHBOARD:
                     checkDashboardId(new DashboardId(entityId.getId()));
@@ -350,7 +351,7 @@ public abstract class BaseController {
     Device checkDeviceId(DeviceId deviceId) throws ThingsboardException {
         try {
             validateId(deviceId, "Incorrect deviceId " + deviceId);
-            Device device = deviceService.findDeviceById(deviceId);
+            Device device = deviceService.findDeviceById(getCurrentUser().getTenantId(), deviceId);
             checkDevice(device);
             return device;
         } catch (Exception e) {
@@ -367,7 +368,7 @@ public abstract class BaseController {
     protected EntityView checkEntityViewId(EntityViewId entityViewId) throws ThingsboardException {
         try {
             validateId(entityViewId, "Incorrect entityViewId " + entityViewId);
-            EntityView entityView = entityViewService.findEntityViewById(entityViewId);
+            EntityView entityView = entityViewService.findEntityViewById(getCurrentUser().getTenantId(), entityViewId);
             checkEntityView(entityView);
             return entityView;
         } catch (Exception e) {
@@ -384,7 +385,7 @@ public abstract class BaseController {
     Asset checkAssetId(AssetId assetId) throws ThingsboardException {
         try {
             validateId(assetId, "Incorrect assetId " + assetId);
-            Asset asset = assetService.findAssetById(assetId);
+            Asset asset = assetService.findAssetById(getCurrentUser().getTenantId(), assetId);
             checkAsset(asset);
             return asset;
         } catch (Exception e) {
@@ -401,7 +402,7 @@ public abstract class BaseController {
     Alarm checkAlarmId(AlarmId alarmId) throws ThingsboardException {
         try {
             validateId(alarmId, "Incorrect alarmId " + alarmId);
-            Alarm alarm = alarmService.findAlarmByIdAsync(alarmId).get();
+            Alarm alarm = alarmService.findAlarmByIdAsync(getCurrentUser().getTenantId(), alarmId).get();
             checkAlarm(alarm);
             return alarm;
         } catch (Exception e) {
@@ -412,7 +413,7 @@ public abstract class BaseController {
     AlarmInfo checkAlarmInfoId(AlarmId alarmId) throws ThingsboardException {
         try {
             validateId(alarmId, "Incorrect alarmId " + alarmId);
-            AlarmInfo alarmInfo = alarmService.findAlarmInfoByIdAsync(alarmId).get();
+            AlarmInfo alarmInfo = alarmService.findAlarmInfoByIdAsync(getCurrentUser().getTenantId(), alarmId).get();
             checkAlarm(alarmInfo);
             return alarmInfo;
         } catch (Exception e) {
@@ -428,7 +429,7 @@ public abstract class BaseController {
     WidgetsBundle checkWidgetsBundleId(WidgetsBundleId widgetsBundleId, boolean modify) throws ThingsboardException {
         try {
             validateId(widgetsBundleId, "Incorrect widgetsBundleId " + widgetsBundleId);
-            WidgetsBundle widgetsBundle = widgetsBundleService.findWidgetsBundleById(widgetsBundleId);
+            WidgetsBundle widgetsBundle = widgetsBundleService.findWidgetsBundleById(getCurrentUser().getTenantId(), widgetsBundleId);
             checkWidgetsBundle(widgetsBundle, modify);
             return widgetsBundle;
         } catch (Exception e) {
@@ -449,7 +450,7 @@ public abstract class BaseController {
     WidgetType checkWidgetTypeId(WidgetTypeId widgetTypeId, boolean modify) throws ThingsboardException {
         try {
             validateId(widgetTypeId, "Incorrect widgetTypeId " + widgetTypeId);
-            WidgetType widgetType = widgetTypeService.findWidgetTypeById(widgetTypeId);
+            WidgetType widgetType = widgetTypeService.findWidgetTypeById(getCurrentUser().getTenantId(), widgetTypeId);
             checkWidgetType(widgetType, modify);
             return widgetType;
         } catch (Exception e) {
@@ -470,7 +471,7 @@ public abstract class BaseController {
     Dashboard checkDashboardId(DashboardId dashboardId) throws ThingsboardException {
         try {
             validateId(dashboardId, "Incorrect dashboardId " + dashboardId);
-            Dashboard dashboard = dashboardService.findDashboardById(dashboardId);
+            Dashboard dashboard = dashboardService.findDashboardById(getCurrentUser().getTenantId(), dashboardId);
             checkDashboard(dashboard);
             return dashboard;
         } catch (Exception e) {
@@ -481,7 +482,7 @@ public abstract class BaseController {
     DashboardInfo checkDashboardInfoId(DashboardId dashboardId) throws ThingsboardException {
         try {
             validateId(dashboardId, "Incorrect dashboardId " + dashboardId);
-            DashboardInfo dashboardInfo = dashboardService.findDashboardInfoById(dashboardId);
+            DashboardInfo dashboardInfo = dashboardService.findDashboardInfoById(getCurrentUser().getTenantId(), dashboardId);
             checkDashboard(dashboardInfo);
             return dashboardInfo;
         } catch (Exception e) {
@@ -530,7 +531,7 @@ public abstract class BaseController {
 
     protected RuleChain checkRuleChain(RuleChainId ruleChainId) throws ThingsboardException {
         checkNotNull(ruleChainId);
-        return checkRuleChain(ruleChainService.findRuleChainById(ruleChainId));
+        return checkRuleChain(ruleChainService.findRuleChainById(getCurrentUser().getTenantId(), ruleChainId));
     }
 
     protected RuleChain checkRuleChain(RuleChain ruleChain) throws ThingsboardException {

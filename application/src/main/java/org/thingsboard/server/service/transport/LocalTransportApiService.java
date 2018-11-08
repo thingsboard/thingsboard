@@ -26,6 +26,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
@@ -107,7 +108,7 @@ public class LocalTransportApiService implements TransportApiService {
 
     private ListenableFuture<TransportApiResponseMsg> handle(GetOrCreateDeviceFromGatewayRequestMsg requestMsg) {
         DeviceId gatewayId = new DeviceId(new UUID(requestMsg.getGatewayIdMSB(), requestMsg.getGatewayIdLSB()));
-        ListenableFuture<Device> gatewayFuture = deviceService.findDeviceByIdAsync(gatewayId);
+        ListenableFuture<Device> gatewayFuture = deviceService.findDeviceByIdAsync(TenantId.SYS_TENANT_ID, gatewayId);
         return Futures.transform(gatewayFuture, gateway -> {
             deviceCreationLock.lock();
             try {
@@ -119,7 +120,7 @@ public class LocalTransportApiService implements TransportApiService {
                     device.setType(requestMsg.getDeviceType());
                     device.setCustomerId(gateway.getCustomerId());
                     device = deviceService.saveDevice(device);
-                    relationService.saveRelationAsync(new EntityRelation(gateway.getId(), device.getId(), "Created"));
+                    relationService.saveRelationAsync(TenantId.SYS_TENANT_ID, new EntityRelation(gateway.getId(), device.getId(), "Created"));
                     deviceStateService.onDeviceAdded(device);
                 }
                 return TransportApiResponseMsg.newBuilder()
@@ -135,7 +136,7 @@ public class LocalTransportApiService implements TransportApiService {
 
 
     private ListenableFuture<TransportApiResponseMsg> getDeviceInfo(DeviceId deviceId) {
-        return Futures.transform(deviceService.findDeviceByIdAsync(deviceId), device -> {
+        return Futures.transform(deviceService.findDeviceByIdAsync(TenantId.SYS_TENANT_ID, deviceId), device -> {
             if (device == null) {
                 log.trace("[{}] Failed to lookup device by id", deviceId);
                 return getEmptyTransportApiResponse();

@@ -110,24 +110,24 @@ public class AccessValidator {
     }
 
     public DeferredResult<ResponseEntity> validateEntityAndCallback(SecurityUser currentUser, String entityType, String entityIdStr,
-                                                                    BiConsumer<DeferredResult<ResponseEntity>, EntityId> onSuccess) throws ThingsboardException {
+                                                                    ThreeConsumer<DeferredResult<ResponseEntity>, TenantId, EntityId> onSuccess) throws ThingsboardException {
         return validateEntityAndCallback(currentUser, entityType, entityIdStr, onSuccess, (result, t) -> handleError(t, result, HttpStatus.INTERNAL_SERVER_ERROR));
     }
 
     public DeferredResult<ResponseEntity> validateEntityAndCallback(SecurityUser currentUser, String entityType, String entityIdStr,
-                                                                    BiConsumer<DeferredResult<ResponseEntity>, EntityId> onSuccess,
+                                                                    ThreeConsumer<DeferredResult<ResponseEntity>, TenantId, EntityId> onSuccess,
                                                                     BiConsumer<DeferredResult<ResponseEntity>, Throwable> onFailure) throws ThingsboardException {
         return validateEntityAndCallback(currentUser, EntityIdFactory.getByTypeAndId(entityType, entityIdStr),
                 onSuccess, onFailure);
     }
 
     public DeferredResult<ResponseEntity> validateEntityAndCallback(SecurityUser currentUser, EntityId entityId,
-                                                                    BiConsumer<DeferredResult<ResponseEntity>, EntityId> onSuccess) throws ThingsboardException {
+                                                                    ThreeConsumer<DeferredResult<ResponseEntity>, TenantId, EntityId> onSuccess) throws ThingsboardException {
         return validateEntityAndCallback(currentUser, entityId, onSuccess, (result, t) -> handleError(t, result, HttpStatus.INTERNAL_SERVER_ERROR));
     }
 
     public DeferredResult<ResponseEntity> validateEntityAndCallback(SecurityUser currentUser, EntityId entityId,
-                                                                    BiConsumer<DeferredResult<ResponseEntity>, EntityId> onSuccess,
+                                                                    ThreeConsumer<DeferredResult<ResponseEntity>, TenantId, EntityId> onSuccess,
                                                                     BiConsumer<DeferredResult<ResponseEntity>, Throwable> onFailure) throws ThingsboardException {
 
         final DeferredResult<ResponseEntity> response = new DeferredResult<>();
@@ -136,7 +136,7 @@ public class AccessValidator {
                 new FutureCallback<DeferredResult<ResponseEntity>>() {
                     @Override
                     public void onSuccess(@Nullable DeferredResult<ResponseEntity> result) {
-                        onSuccess.accept(response, entityId);
+                        onSuccess.accept(response, currentUser.getTenantId(), entityId);
                     }
 
                     @Override
@@ -178,7 +178,7 @@ public class AccessValidator {
         if (currentUser.isSystemAdmin()) {
             callback.onSuccess(ValidationResult.accessDenied(SYSTEM_ADMINISTRATOR_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION));
         } else {
-            ListenableFuture<Device> deviceFuture = deviceService.findDeviceByIdAsync(new DeviceId(entityId.getId()));
+            ListenableFuture<Device> deviceFuture = deviceService.findDeviceByIdAsync(currentUser.getTenantId(), new DeviceId(entityId.getId()));
             Futures.addCallback(deviceFuture, getCallback(callback, device -> {
                 if (device == null) {
                     return ValidationResult.entityNotFound(DEVICE_WITH_REQUESTED_ID_NOT_FOUND);
@@ -199,7 +199,7 @@ public class AccessValidator {
         if (currentUser.isSystemAdmin()) {
             callback.onSuccess(ValidationResult.accessDenied(SYSTEM_ADMINISTRATOR_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION));
         } else {
-            ListenableFuture<Asset> assetFuture = assetService.findAssetByIdAsync(new AssetId(entityId.getId()));
+            ListenableFuture<Asset> assetFuture = assetService.findAssetByIdAsync(currentUser.getTenantId(), new AssetId(entityId.getId()));
             Futures.addCallback(assetFuture, getCallback(callback, asset -> {
                 if (asset == null) {
                     return ValidationResult.entityNotFound("Asset with requested id wasn't found!");
@@ -220,7 +220,7 @@ public class AccessValidator {
         if (currentUser.isCustomerUser()) {
             callback.onSuccess(ValidationResult.accessDenied(CUSTOMER_USER_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION));
         } else {
-            ListenableFuture<RuleChain> ruleChainFuture = ruleChainService.findRuleChainByIdAsync(new RuleChainId(entityId.getId()));
+            ListenableFuture<RuleChain> ruleChainFuture = ruleChainService.findRuleChainByIdAsync(currentUser.getTenantId(), new RuleChainId(entityId.getId()));
             Futures.addCallback(ruleChainFuture, getCallback(callback, ruleChain -> {
                 if (ruleChain == null) {
                     return ValidationResult.entityNotFound("Rule chain with requested id wasn't found!");
@@ -241,7 +241,7 @@ public class AccessValidator {
         if (currentUser.isCustomerUser()) {
             callback.onSuccess(ValidationResult.accessDenied(CUSTOMER_USER_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION));
         } else {
-            ListenableFuture<RuleNode> ruleNodeFuture = ruleChainService.findRuleNodeByIdAsync(new RuleNodeId(entityId.getId()));
+            ListenableFuture<RuleNode> ruleNodeFuture = ruleChainService.findRuleNodeByIdAsync(currentUser.getTenantId(), new RuleNodeId(entityId.getId()));
             Futures.addCallback(ruleNodeFuture, getCallback(callback, ruleNodeTmp -> {
                 RuleNode ruleNode = ruleNodeTmp;
                 if (ruleNode == null) {
@@ -250,7 +250,7 @@ public class AccessValidator {
                     return ValidationResult.entityNotFound("Rule chain with requested node id wasn't found!");
                 } else {
                     //TODO: make async
-                    RuleChain ruleChain = ruleChainService.findRuleChainById(ruleNode.getRuleChainId());
+                    RuleChain ruleChain = ruleChainService.findRuleChainById(currentUser.getTenantId(), ruleNode.getRuleChainId());
                     if (currentUser.isTenantAdmin() && !ruleChain.getTenantId().equals(currentUser.getTenantId())) {
                         return ValidationResult.accessDenied("Rule chain doesn't belong to the current Tenant!");
                     } else if (currentUser.isSystemAdmin() && !ruleChain.getTenantId().isNullUid()) {
@@ -267,7 +267,7 @@ public class AccessValidator {
         if (currentUser.isSystemAdmin()) {
             callback.onSuccess(ValidationResult.accessDenied(SYSTEM_ADMINISTRATOR_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION));
         } else {
-            ListenableFuture<Customer> customerFuture = customerService.findCustomerByIdAsync(new CustomerId(entityId.getId()));
+            ListenableFuture<Customer> customerFuture = customerService.findCustomerByIdAsync(currentUser.getTenantId(), new CustomerId(entityId.getId()));
             Futures.addCallback(customerFuture, getCallback(callback, customer -> {
                 if (customer == null) {
                     return ValidationResult.entityNotFound("Customer with requested id wasn't found!");
@@ -290,7 +290,7 @@ public class AccessValidator {
         } else if (currentUser.isSystemAdmin()) {
             callback.onSuccess(ValidationResult.ok(null));
         } else {
-            ListenableFuture<Tenant> tenantFuture = tenantService.findTenantByIdAsync(new TenantId(entityId.getId()));
+            ListenableFuture<Tenant> tenantFuture = tenantService.findTenantByIdAsync(currentUser.getTenantId(), new TenantId(entityId.getId()));
             Futures.addCallback(tenantFuture, getCallback(callback, tenant -> {
                 if (tenant == null) {
                     return ValidationResult.entityNotFound("Tenant with requested id wasn't found!");
@@ -307,7 +307,7 @@ public class AccessValidator {
         if (currentUser.isSystemAdmin()) {
             callback.onSuccess(ValidationResult.accessDenied(SYSTEM_ADMINISTRATOR_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION));
         } else {
-            ListenableFuture<EntityView> entityViewFuture = entityViewService.findEntityViewByIdAsync(new EntityViewId(entityId.getId()));
+            ListenableFuture<EntityView> entityViewFuture = entityViewService.findEntityViewByIdAsync(currentUser.getTenantId(), new EntityViewId(entityId.getId()));
             Futures.addCallback(entityViewFuture, getCallback(callback, entityView -> {
                 if (entityView == null) {
                     return ValidationResult.entityNotFound(ENTITY_VIEW_WITH_REQUESTED_ID_NOT_FOUND);
@@ -348,5 +348,9 @@ public class AccessValidator {
             responseEntity = new ResponseEntity<>(defaultErrorStatus);
         }
         response.setResult(responseEntity);
+    }
+
+    public interface ThreeConsumer<A, B, C> {
+        void accept(A a, B b, C c);
     }
 }

@@ -22,11 +22,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.tools.TbRateLimits;
 import org.thingsboard.server.dao.util.AbstractBufferedRateExecutor;
 import org.thingsboard.server.dao.util.AsyncTaskContext;
 import org.thingsboard.server.dao.util.NoSqlAnyDao;
 
 import javax.annotation.PreDestroy;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Created by ashvayka on 24.10.18.
@@ -42,17 +47,19 @@ public class CassandraBufferedRateExecutor extends AbstractBufferedRateExecutor<
             @Value("${cassandra.query.permit_max_wait_time}") long maxWaitTime,
             @Value("${cassandra.query.dispatcher_threads:2}") int dispatcherThreads,
             @Value("${cassandra.query.callback_threads:2}") int callbackThreads,
-            @Value("${cassandra.query.poll_ms:50}") long pollMs) {
-        super(queueLimit, concurrencyLimit, maxWaitTime, dispatcherThreads, callbackThreads, pollMs);
+            @Value("${cassandra.query.poll_ms:50}") long pollMs,
+            @Value("${cassandra.query.tenant_rate_limits.enabled}") boolean tenantRateLimitsEnabled,
+            @Value("${cassandra.query.tenant_rate_limits.configuration}") String tenantRateLimitsConfiguration) {
+        super(queueLimit, concurrencyLimit, maxWaitTime, dispatcherThreads, callbackThreads, pollMs, tenantRateLimitsEnabled, tenantRateLimitsConfiguration);
     }
 
     @Scheduled(fixedDelayString = "${cassandra.query.rate_limit_print_interval_ms}")
     public void printStats() {
-        log.info("Permits queueSize [{}] totalAdded [{}] totalLaunched [{}] totalReleased [{}] totalFailed [{}] totalExpired [{}] totalRejected [{}] currBuffer [{}] ",
+        log.info("Permits queueSize [{}] totalAdded [{}] totalLaunched [{}] totalReleased [{}] totalFailed [{}] totalExpired [{}] totalRejected [{}] totalRateLimited [{}] currBuffer [{}] ",
                 getQueueSize(),
                 totalAdded.getAndSet(0), totalLaunched.getAndSet(0), totalReleased.getAndSet(0),
                 totalFailed.getAndSet(0), totalExpired.getAndSet(0), totalRejected.getAndSet(0),
-                concurrencyLevel.get());
+                totalRateLimited.getAndSet(0), concurrencyLevel.get());
     }
 
     @PreDestroy

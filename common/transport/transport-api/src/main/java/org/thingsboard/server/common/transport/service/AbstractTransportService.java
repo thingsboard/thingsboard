@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.tools.TbRateLimits;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
@@ -58,8 +59,8 @@ public abstract class AbstractTransportService implements TransportService {
     private ConcurrentMap<UUID, SessionMetaData> sessions = new ConcurrentHashMap<>();
 
     //TODO: Implement cleanup of this maps.
-    private ConcurrentMap<TenantId, TbTransportRateLimits> perTenantLimits = new ConcurrentHashMap<>();
-    private ConcurrentMap<DeviceId, TbTransportRateLimits> perDeviceLimits = new ConcurrentHashMap<>();
+    private ConcurrentMap<TenantId, TbRateLimits> perTenantLimits = new ConcurrentHashMap<>();
+    private ConcurrentMap<DeviceId, TbRateLimits> perDeviceLimits = new ConcurrentHashMap<>();
 
     @Override
     public void registerAsyncSession(TransportProtos.SessionInfoProto sessionInfo, SessionMsgListener listener) {
@@ -204,7 +205,7 @@ public abstract class AbstractTransportService implements TransportService {
             return true;
         }
         TenantId tenantId = new TenantId(new UUID(sessionInfo.getTenantIdMSB(), sessionInfo.getTenantIdLSB()));
-        TbTransportRateLimits rateLimits = perTenantLimits.computeIfAbsent(tenantId, id -> new TbTransportRateLimits(perTenantLimitsConf));
+        TbRateLimits rateLimits = perTenantLimits.computeIfAbsent(tenantId, id -> new TbRateLimits(perTenantLimitsConf));
         if (!rateLimits.tryConsume()) {
             if (callback != null) {
                 callback.onError(new TbRateLimitsException(EntityType.TENANT));
@@ -215,7 +216,7 @@ public abstract class AbstractTransportService implements TransportService {
             return false;
         }
         DeviceId deviceId = new DeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
-        rateLimits = perDeviceLimits.computeIfAbsent(deviceId, id -> new TbTransportRateLimits(perDevicesLimitsConf));
+        rateLimits = perDeviceLimits.computeIfAbsent(deviceId, id -> new TbRateLimits(perDevicesLimitsConf));
         if (!rateLimits.tryConsume()) {
             if (callback != null) {
                 callback.onError(new TbRateLimitsException(EntityType.DEVICE));
@@ -271,8 +272,8 @@ public abstract class AbstractTransportService implements TransportService {
     public void init() {
         if (rateLimitEnabled) {
             //Just checking the configuration parameters
-            new TbTransportRateLimits(perTenantLimitsConf);
-            new TbTransportRateLimits(perDevicesLimitsConf);
+            new TbRateLimits(perTenantLimitsConf);
+            new TbRateLimits(perDevicesLimitsConf);
         }
         this.schedulerExecutor = Executors.newSingleThreadScheduledExecutor();
         this.transportCallbackExecutor = new ThreadPoolExecutor(0, 20, 60L, TimeUnit.SECONDS, new SynchronousQueue<>());

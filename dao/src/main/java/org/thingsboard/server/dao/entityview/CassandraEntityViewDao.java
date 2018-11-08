@@ -28,6 +28,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.EntitySubtypeEntity;
@@ -82,12 +83,12 @@ public class CassandraEntityViewDao extends CassandraAbstractSearchTextDao<Entit
     }
 
     @Override
-    public EntityView save(EntityView domain) {
-        EntityView savedEntityView = super.save(domain);
+    public EntityView save(TenantId tenantId, EntityView domain) {
+        EntityView savedEntityView = super.save(domain.getTenantId(), domain);
         EntitySubtype entitySubtype = new EntitySubtype(savedEntityView.getTenantId(), EntityType.ENTITY_VIEW, savedEntityView.getType());
         EntitySubtypeEntity entitySubtypeEntity = new EntitySubtypeEntity(entitySubtype);
         Statement saveStatement = cluster.getMapper(EntitySubtypeEntity.class).saveQuery(entitySubtypeEntity);
-        executeWrite(saveStatement);
+        executeWrite(tenantId, saveStatement);
         return savedEntityView;
     }
 
@@ -95,7 +96,7 @@ public class CassandraEntityViewDao extends CassandraAbstractSearchTextDao<Entit
     public List<EntityView> findEntityViewsByTenantId(UUID tenantId, TextPageLink pageLink) {
         log.debug("Try to find entity views by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
         List<EntityViewEntity> entityViewEntities =
-                findPageWithTextSearch(ENTITY_VIEW_BY_TENANT_AND_SEARCH_TEXT_CF,
+                findPageWithTextSearch(new TenantId(tenantId), ENTITY_VIEW_BY_TENANT_AND_SEARCH_TEXT_CF,
                 Collections.singletonList(eq(TENANT_ID_PROPERTY, tenantId)), pageLink);
         log.trace("Found entity views [{}] by tenantId [{}] and pageLink [{}]",
                 entityViewEntities, tenantId, pageLink);
@@ -106,7 +107,7 @@ public class CassandraEntityViewDao extends CassandraAbstractSearchTextDao<Entit
     public List<EntityView> findEntityViewsByTenantIdAndType(UUID tenantId, String type, TextPageLink pageLink) {
         log.debug("Try to find entity views by tenantId [{}], type [{}] and pageLink [{}]", tenantId, type, pageLink);
         List<EntityViewEntity> entityViewEntities =
-                findPageWithTextSearch(ENTITY_VIEW_BY_TENANT_BY_TYPE_AND_SEARCH_TEXT_CF,
+                findPageWithTextSearch(new TenantId(tenantId), ENTITY_VIEW_BY_TENANT_BY_TYPE_AND_SEARCH_TEXT_CF,
                         Arrays.asList(eq(ENTITY_VIEW_TYPE_PROPERTY, type),
                                 eq(TENANT_ID_PROPERTY, tenantId)), pageLink);
         log.trace("Found entity views [{}] by tenantId [{}], type [{}] and pageLink [{}]",
@@ -119,14 +120,14 @@ public class CassandraEntityViewDao extends CassandraAbstractSearchTextDao<Entit
         Select.Where query = select().from(ENTITY_VIEW_BY_TENANT_AND_NAME).where();
         query.and(eq(ENTITY_VIEW_TENANT_ID_PROPERTY, tenantId));
         query.and(eq(ENTITY_VIEW_NAME_PROPERTY, name));
-        return Optional.ofNullable(DaoUtil.getData(findOneByStatement(query)));
+        return Optional.ofNullable(DaoUtil.getData(findOneByStatement(new TenantId(tenantId), query)));
     }
 
     @Override
     public List<EntityView> findEntityViewsByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TextPageLink pageLink) {
         log.debug("Try to find entity views by tenantId [{}], customerId[{}] and pageLink [{}]",
                 tenantId, customerId, pageLink);
-        List<EntityViewEntity> entityViewEntities = findPageWithTextSearch(
+        List<EntityViewEntity> entityViewEntities = findPageWithTextSearch(new TenantId(tenantId),
                 ENTITY_VIEW_BY_TENANT_AND_CUSTOMER_CF,
                 Arrays.asList(eq(CUSTOMER_ID_PROPERTY, customerId), eq(TENANT_ID_PROPERTY, tenantId)),
                 pageLink);
@@ -139,7 +140,7 @@ public class CassandraEntityViewDao extends CassandraAbstractSearchTextDao<Entit
     public List<EntityView> findEntityViewsByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, TextPageLink pageLink) {
         log.debug("Try to find entity views by tenantId [{}], customerId[{}], type [{}] and pageLink [{}]",
                 tenantId, customerId, type, pageLink);
-        List<EntityViewEntity> entityViewEntities = findPageWithTextSearch(
+        List<EntityViewEntity> entityViewEntities = findPageWithTextSearch(new TenantId(tenantId),
                 ENTITY_VIEW_BY_TENANT_AND_CUSTOMER_AND_TYPE_CF,
                 Arrays.asList(eq(DEVICE_TYPE_PROPERTY, type), eq(CUSTOMER_ID_PROPERTY, customerId), eq(TENANT_ID_PROPERTY, tenantId)),
                 pageLink);
@@ -154,7 +155,7 @@ public class CassandraEntityViewDao extends CassandraAbstractSearchTextDao<Entit
         Select.Where query = select().from(ENTITY_VIEW_BY_TENANT_AND_ENTITY_ID_CF).where();
         query.and(eq(TENANT_ID_PROPERTY, tenantId));
         query.and(eq(ENTITY_ID_COLUMN, entityId));
-        return findListByStatementAsync(query);
+        return findListByStatementAsync(new TenantId(tenantId), query);
     }
 
     @Override
@@ -164,7 +165,7 @@ public class CassandraEntityViewDao extends CassandraAbstractSearchTextDao<Entit
         query.and(eq(ENTITY_SUBTYPE_TENANT_ID_PROPERTY, tenantId));
         query.and(eq(ENTITY_SUBTYPE_ENTITY_TYPE_PROPERTY, EntityType.ENTITY_VIEW));
         query.setConsistencyLevel(cluster.getDefaultReadConsistencyLevel());
-        ResultSetFuture resultSetFuture = executeAsyncRead(query);
+        ResultSetFuture resultSetFuture = executeAsyncRead(new TenantId(tenantId), query);
         return Futures.transform(resultSetFuture, new Function<ResultSet, List<EntitySubtype>>() {
             @Nullable
             @Override

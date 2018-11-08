@@ -96,7 +96,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         ObjectNode node = objectMapper.createObjectNode();
         node.put("baseUrl", "http://localhost:8080");
         generalSettings.setJsonValue(node);
-        adminSettingsService.saveAdminSettings(generalSettings);
+        adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, generalSettings);
 
         AdminSettings mailSettings = new AdminSettings();
         mailSettings.setKey("mail");
@@ -110,7 +110,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         node.put("username", "");
         node.put("password", ""); //NOSONAR, key used to identify password field (not password value itself)
         mailSettings.setJsonValue(node);
-        adminSettingsService.saveAdminSettings(mailSettings);
+        adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, mailSettings);
     }
 
     @Override
@@ -158,7 +158,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     public void deleteSystemWidgetBundle(String bundleAlias) throws Exception {
         WidgetsBundle widgetsBundle = widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(new TenantId(ModelConstants.NULL_UUID), bundleAlias);
         if (widgetsBundle != null) {
-            widgetsBundleService.deleteWidgetsBundle(widgetsBundle.getId());
+            widgetsBundleService.deleteWidgetsBundle(TenantId.SYS_TENANT_ID, widgetsBundle.getId());
         }
     }
 
@@ -178,11 +178,11 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         user.setTenantId(tenantId);
         user.setCustomerId(customerId);
         user = userService.saveUser(user);
-        UserCredentials userCredentials = userService.findUserCredentialsByUserId(user.getId());
+        UserCredentials userCredentials = userService.findUserCredentialsByUserId(TenantId.SYS_TENANT_ID, user.getId());
         userCredentials.setPassword(passwordEncoder.encode(password));
         userCredentials.setEnabled(true);
         userCredentials.setActivateToken(null);
-        userService.saveUserCredentials(userCredentials);
+        userService.saveUserCredentials(TenantId.SYS_TENANT_ID, userCredentials);
         return user;
     }
 
@@ -203,9 +203,9 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
             device.setAdditionalInfo(additionalInfo);
         }
         device = deviceService.saveDevice(device);
-        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getId());
+        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(TenantId.SYS_TENANT_ID, device.getId());
         deviceCredentials.setCredentialsId(accessToken);
-        deviceCredentialsService.updateDeviceCredentials(deviceCredentials);
+        deviceCredentialsService.updateDeviceCredentials(TenantId.SYS_TENANT_ID, deviceCredentials);
         return device;
     }
 

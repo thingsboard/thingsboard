@@ -25,6 +25,4 @@ public interface DeviceAuthService {
 
     DeviceAuthResult process(DeviceCredentialsFilter credentials);
 
-    Optional<Device> findDeviceById(DeviceId deviceId);
-
 }

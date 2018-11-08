@@ -142,9 +142,9 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         device.setType("default");
         device = doPost("/api/device", device, Device.class);
 
-        attributesService.save(device.getId(), DataConstants.SERVER_SCOPE,
+        attributesService.save(device.getTenantId(), device.getId(), DataConstants.SERVER_SCOPE,
                 Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry("serverAttributeKey1", "serverAttributeValue1"), System.currentTimeMillis())));
-        attributesService.save(device.getId(), DataConstants.SERVER_SCOPE,
+        attributesService.save(device.getTenantId(), device.getId(), DataConstants.SERVER_SCOPE,
                 Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry("serverAttributeKey2", "serverAttributeValue2"), System.currentTimeMillis())));
 
 
@@ -257,9 +257,9 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         device.setType("default");
         device = doPost("/api/device", device, Device.class);
 
-        attributesService.save(device.getId(), DataConstants.SERVER_SCOPE,
+        attributesService.save(device.getTenantId(), device.getId(), DataConstants.SERVER_SCOPE,
                 Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry("serverAttributeKey1", "serverAttributeValue1"), System.currentTimeMillis())));
-        attributesService.save(device.getId(), DataConstants.SERVER_SCOPE,
+        attributesService.save(device.getTenantId(), device.getId(), DataConstants.SERVER_SCOPE,
                 Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry("serverAttributeKey2", "serverAttributeValue2"), System.currentTimeMillis())));
 
 

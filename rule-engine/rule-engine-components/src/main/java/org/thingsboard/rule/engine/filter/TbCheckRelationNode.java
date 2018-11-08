@@ -67,7 +67,7 @@ public class TbCheckRelationNode implements TbNode {
             to = EntityIdFactory.getByTypeAndId(config.getEntityType(), config.getEntityId());
             from = msg.getOriginator();
         }
-        withCallback(ctx.getRelationService().checkRelation(from, to, config.getRelationType(), RelationTypeGroup.COMMON),
+        withCallback(ctx.getRelationService().checkRelation(ctx.getTenantId(), from, to, config.getRelationType(), RelationTypeGroup.COMMON),
                 filterResult -> ctx.tellNext(msg, filterResult ? "True" : "False"), t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
     }
 

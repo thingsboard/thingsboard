@@ -20,10 +20,15 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.tools.TbRateLimits;
 
 import javax.annotation.Nullable;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -45,6 +50,9 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
     private final ExecutorService callbackExecutor;
     private final ScheduledExecutorService timeoutExecutor;
     private final int concurrencyLimit;
+    private final boolean perTenantLimitsEnabled;
+    private final String perTenantLimitsConfiguration;
+    private final ConcurrentMap<TenantId, TbRateLimits> perTenantLimits = new ConcurrentHashMap<>();
 
     protected final AtomicInteger concurrencyLevel = new AtomicInteger();
     protected final AtomicInteger totalAdded = new AtomicInteger();
@@ -53,8 +61,10 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
     protected final AtomicInteger totalFailed = new AtomicInteger();
     protected final AtomicInteger totalExpired = new AtomicInteger();
     protected final AtomicInteger totalRejected = new AtomicInteger();
+    protected final AtomicInteger totalRateLimited = new AtomicInteger();
 
-    public AbstractBufferedRateExecutor(int queueLimit, int concurrencyLimit, long maxWaitTime, int dispatcherThreads, int callbackThreads, long pollMs) {
+    public AbstractBufferedRateExecutor(int queueLimit, int concurrencyLimit, long maxWaitTime, int dispatcherThreads, int callbackThreads, long pollMs,
+                                        boolean perTenantLimitsEnabled, String perTenantLimitsConfiguration) {
         this.maxWaitTime = maxWaitTime;
         this.pollMs = pollMs;
         this.concurrencyLimit = concurrencyLimit;
@@ -62,6 +72,8 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
         this.dispatcherExecutor = Executors.newFixedThreadPool(dispatcherThreads);
         this.callbackExecutor = Executors.newFixedThreadPool(callbackThreads);
         this.timeoutExecutor = Executors.newSingleThreadScheduledExecutor();
+        this.perTenantLimitsEnabled = perTenantLimitsEnabled;
+        this.perTenantLimitsConfiguration = perTenantLimitsConfiguration;
         for (int i = 0; i < dispatcherThreads; i++) {
             dispatcherExecutor.submit(this::dispatch);
         }
@@ -71,12 +83,27 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
     public F submit(T task) {
         SettableFuture<V> settableFuture = create();
         F result = wrap(task, settableFuture);
-        try {
-            totalAdded.incrementAndGet();
-            queue.add(new AsyncTaskContext<>(UUID.randomUUID(), task, settableFuture, System.currentTimeMillis()));
-        } catch (IllegalStateException e) {
-            totalRejected.incrementAndGet();
-            settableFuture.setException(e);
+        boolean perTenantLimitReached = false;
+        if (perTenantLimitsEnabled) {
+            if (task.getTenantId() == null) {
+                log.info("Invalid task received: {}", task);
+            } else if (!task.getTenantId().isNullUid()) {
+                TbRateLimits rateLimits = perTenantLimits.computeIfAbsent(task.getTenantId(), id -> new TbRateLimits(perTenantLimitsConfiguration));
+                if (!rateLimits.tryConsume()) {
+                    totalRateLimited.incrementAndGet();
+                    settableFuture.setException(new TenantRateLimitException());
+                    perTenantLimitReached = true;
+                }
+            }
+        }
+        if (!perTenantLimitReached) {
+            try {
+                totalAdded.incrementAndGet();
+                queue.add(new AsyncTaskContext<>(UUID.randomUUID(), task, settableFuture, System.currentTimeMillis()));
+            } catch (IllegalStateException e) {
+                totalRejected.incrementAndGet();
+                settableFuture.setException(e);
+            }
         }
         return result;
     }

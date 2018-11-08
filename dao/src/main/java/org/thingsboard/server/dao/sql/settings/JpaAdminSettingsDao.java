@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.AdminSettingsEntity;
 import org.thingsboard.server.dao.settings.AdminSettingsDao;
@@ -45,7 +46,7 @@ public class JpaAdminSettingsDao extends JpaAbstractDao<AdminSettingsEntity, Adm
     }
 
     @Override
-    public AdminSettings findByKey(String key) {
+    public AdminSettings findByKey(TenantId tenantId, String key) {
         return DaoUtil.getData(adminSettingsRepository.findByKey(key));
     }
 }

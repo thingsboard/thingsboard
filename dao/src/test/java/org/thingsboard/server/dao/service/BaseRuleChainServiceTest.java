@@ -78,10 +78,10 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         savedRuleChain.setName("My new RuleChain");
 
         ruleChainService.saveRuleChain(savedRuleChain);
-        RuleChain foundRuleChain = ruleChainService.findRuleChainById(savedRuleChain.getId());
+        RuleChain foundRuleChain = ruleChainService.findRuleChainById(tenantId, savedRuleChain.getId());
         Assert.assertEquals(foundRuleChain.getName(), savedRuleChain.getName());
 
-        ruleChainService.deleteRuleChainById(savedRuleChain.getId());
+        ruleChainService.deleteRuleChainById(tenantId, savedRuleChain.getId());
     }
 
     @Test(expected = DataValidationException.class)
@@ -105,10 +105,10 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         ruleChain.setTenantId(tenantId);
         ruleChain.setName("My RuleChain");
         RuleChain savedRuleChain = ruleChainService.saveRuleChain(ruleChain);
-        RuleChain foundRuleChain = ruleChainService.findRuleChainById(savedRuleChain.getId());
+        RuleChain foundRuleChain = ruleChainService.findRuleChainById(tenantId, savedRuleChain.getId());
         Assert.assertNotNull(foundRuleChain);
         Assert.assertEquals(savedRuleChain, foundRuleChain);
-        ruleChainService.deleteRuleChainById(savedRuleChain.getId());
+        ruleChainService.deleteRuleChainById(tenantId, savedRuleChain.getId());
     }
 
     @Test
@@ -117,10 +117,10 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         ruleChain.setTenantId(tenantId);
         ruleChain.setName("My RuleChain");
         RuleChain savedRuleChain = ruleChainService.saveRuleChain(ruleChain);
-        RuleChain foundRuleChain = ruleChainService.findRuleChainById(savedRuleChain.getId());
+        RuleChain foundRuleChain = ruleChainService.findRuleChainById(tenantId, savedRuleChain.getId());
         Assert.assertNotNull(foundRuleChain);
-        ruleChainService.deleteRuleChainById(savedRuleChain.getId());
-        foundRuleChain = ruleChainService.findRuleChainById(savedRuleChain.getId());
+        ruleChainService.deleteRuleChainById(tenantId, savedRuleChain.getId());
+        foundRuleChain = ruleChainService.findRuleChainById(tenantId, savedRuleChain.getId());
         Assert.assertNull(foundRuleChain);
     }
 
@@ -223,7 +223,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         Assert.assertEquals(ruleChainsName2, loadedRuleChainsName2);
 
         for (RuleChain ruleChain : loadedRuleChainsName1) {
-            ruleChainService.deleteRuleChainById(ruleChain.getId());
+            ruleChainService.deleteRuleChainById(tenantId, ruleChain.getId());
         }
 
         pageLink = new TextPageLink(4, name1);
@@ -232,7 +232,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         Assert.assertEquals(0, pageData.getData().size());
 
         for (RuleChain ruleChain : loadedRuleChainsName2) {
-            ruleChainService.deleteRuleChainById(ruleChain.getId());
+            ruleChainService.deleteRuleChainById(tenantId, ruleChain.getId());
         }
 
         pageLink = new TextPageLink(4, name2);
@@ -251,7 +251,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
 
         for (RuleNode ruleNode : savedRuleChainMetaData.getNodes()) {
             Assert.assertNotNull(ruleNode.getId());
-            List<EntityRelation> relations = ruleChainService.getRuleNodeRelations(ruleNode.getId());
+            List<EntityRelation> relations = ruleChainService.getRuleNodeRelations(tenantId, ruleNode.getId());
             if ("name1".equals(ruleNode.getName())) {
                 Assert.assertEquals(2, relations.size());
             } else if ("name2".equals(ruleNode.getName())) {
@@ -261,14 +261,14 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
             }
         }
 
-        List<RuleNode> loadedRuleNodes = ruleChainService.getRuleChainNodes(savedRuleChainMetaData.getRuleChainId());
+        List<RuleNode> loadedRuleNodes = ruleChainService.getRuleChainNodes(tenantId, savedRuleChainMetaData.getRuleChainId());
 
         Collections.sort(savedRuleChainMetaData.getNodes(), ruleNodeIdComparator);
         Collections.sort(loadedRuleNodes, ruleNodeIdComparator);
 
         Assert.assertEquals(savedRuleChainMetaData.getNodes(), loadedRuleNodes);
 
-        ruleChainService.deleteRuleChainById(savedRuleChainMetaData.getRuleChainId());
+        ruleChainService.deleteRuleChainById(tenantId, savedRuleChainMetaData.getRuleChainId());
     }
 
     @Test
@@ -291,14 +291,14 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
 
         ruleNodes.set(name3Index, ruleNode4);
 
-        RuleChainMetaData updatedRuleChainMetaData = ruleChainService.saveRuleChainMetaData(savedRuleChainMetaData);
+        RuleChainMetaData updatedRuleChainMetaData = ruleChainService.saveRuleChainMetaData(tenantId, savedRuleChainMetaData);
 
         Assert.assertEquals(3, updatedRuleChainMetaData.getNodes().size());
         Assert.assertEquals(3, updatedRuleChainMetaData.getConnections().size());
 
         for (RuleNode ruleNode : updatedRuleChainMetaData.getNodes()) {
             Assert.assertNotNull(ruleNode.getId());
-            List<EntityRelation> relations = ruleChainService.getRuleNodeRelations(ruleNode.getId());
+            List<EntityRelation> relations = ruleChainService.getRuleNodeRelations(tenantId, ruleNode.getId());
             if ("name1".equals(ruleNode.getName())) {
                 Assert.assertEquals(2, relations.size());
             } else if ("name2".equals(ruleNode.getName())) {
@@ -308,14 +308,14 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
             }
         }
 
-        List<RuleNode> loadedRuleNodes = ruleChainService.getRuleChainNodes(savedRuleChainMetaData.getRuleChainId());
+        List<RuleNode> loadedRuleNodes = ruleChainService.getRuleChainNodes(tenantId, savedRuleChainMetaData.getRuleChainId());
 
         Collections.sort(updatedRuleChainMetaData.getNodes(), ruleNodeIdComparator);
         Collections.sort(loadedRuleNodes, ruleNodeIdComparator);
 
         Assert.assertEquals(updatedRuleChainMetaData.getNodes(), loadedRuleNodes);
 
-        ruleChainService.deleteRuleChainById(savedRuleChainMetaData.getRuleChainId());
+        ruleChainService.deleteRuleChainById(tenantId, savedRuleChainMetaData.getRuleChainId());
     }
 
     private RuleChainMetaData createRuleChainMetadata() throws Exception {
@@ -355,7 +355,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         ruleChainMetaData.addConnectionInfo(0,2,"fail");
         ruleChainMetaData.addConnectionInfo(1,2,"success");
 
-        return ruleChainService.saveRuleChainMetaData(ruleChainMetaData);
+        return ruleChainService.saveRuleChainMetaData(tenantId, ruleChainMetaData);
     }
 
 

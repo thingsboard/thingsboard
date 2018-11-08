@@ -48,24 +48,24 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
     private WidgetsBundleDao widgetsBundleService;
 
     @Override
-    public WidgetType findWidgetTypeById(WidgetTypeId widgetTypeId) {
+    public WidgetType findWidgetTypeById(TenantId tenantId, WidgetTypeId widgetTypeId) {
         log.trace("Executing findWidgetTypeById [{}]", widgetTypeId);
         Validator.validateId(widgetTypeId, "Incorrect widgetTypeId " + widgetTypeId);
-        return widgetTypeDao.findById(widgetTypeId.getId());
+        return widgetTypeDao.findById(tenantId, widgetTypeId.getId());
     }
 
     @Override
     public WidgetType saveWidgetType(WidgetType widgetType) {
         log.trace("Executing saveWidgetType [{}]", widgetType);
-        widgetTypeValidator.validate(widgetType);
-        return widgetTypeDao.save(widgetType);
+        widgetTypeValidator.validate(widgetType, WidgetType::getTenantId);
+        return widgetTypeDao.save(widgetType.getTenantId(), widgetType);
     }
 
     @Override
-    public void deleteWidgetType(WidgetTypeId widgetTypeId) {
+    public void deleteWidgetType(TenantId tenantId, WidgetTypeId widgetTypeId) {
         log.trace("Executing deleteWidgetType [{}]", widgetTypeId);
         Validator.validateId(widgetTypeId, "Incorrect widgetTypeId " + widgetTypeId);
-        widgetTypeDao.removeById(widgetTypeId.getId());
+        widgetTypeDao.removeById(tenantId, widgetTypeId.getId());
     }
 
     @Override
@@ -92,14 +92,14 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
         Validator.validateString(bundleAlias, INCORRECT_BUNDLE_ALIAS + bundleAlias);
         List<WidgetType> widgetTypes = widgetTypeDao.findWidgetTypesByTenantIdAndBundleAlias(tenantId.getId(), bundleAlias);
         for (WidgetType widgetType : widgetTypes) {
-            deleteWidgetType(new WidgetTypeId(widgetType.getUuidId()));
+            deleteWidgetType(tenantId, new WidgetTypeId(widgetType.getUuidId()));
         }
     }
 
     private DataValidator<WidgetType> widgetTypeValidator =
             new DataValidator<WidgetType>() {
                 @Override
-                protected void validateDataImpl(WidgetType widgetType) {
+                protected void validateDataImpl(TenantId tenantId, WidgetType widgetType) {
                     if (StringUtils.isEmpty(widgetType.getName())) {
                         throw new DataValidationException("Widgets type name should be specified!");
                     }
@@ -113,7 +113,7 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
                         widgetType.setTenantId(new TenantId(ModelConstants.NULL_UUID));
                     }
                     if (!widgetType.getTenantId().getId().equals(ModelConstants.NULL_UUID)) {
-                        Tenant tenant = tenantDao.findById(widgetType.getTenantId().getId());
+                        Tenant tenant = tenantDao.findById(tenantId, widgetType.getTenantId().getId());
                         if (tenant == null) {
                             throw new DataValidationException("Widget type is referencing to non-existent tenant!");
                         }
@@ -121,7 +121,7 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
                 }
 
                 @Override
-                protected void validateCreate(WidgetType widgetType) {
+                protected void validateCreate(TenantId tenantId, WidgetType widgetType) {
                     WidgetsBundle widgetsBundle = widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(widgetType.getTenantId().getId(), widgetType.getBundleAlias());
                     if (widgetsBundle == null) {
                         throw new DataValidationException("Widget type is referencing to non-existent widgets bundle!");
@@ -138,13 +138,13 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
                         if (withSameAlias != null) {
                             alias = originalAlias + (++c);
                         }
-                    } while(withSameAlias != null);
+                    } while (withSameAlias != null);
                     widgetType.setAlias(alias);
                 }
 
                 @Override
-                protected void validateUpdate(WidgetType widgetType) {
-                    WidgetType storedWidgetType = widgetTypeDao.findById(widgetType.getId().getId());
+                protected void validateUpdate(TenantId tenantId, WidgetType widgetType) {
+                    WidgetType storedWidgetType = widgetTypeDao.findById(tenantId, widgetType.getId().getId());
                     if (!storedWidgetType.getTenantId().getId().equals(widgetType.getTenantId().getId())) {
                         throw new DataValidationException("Can't move existing widget type to different tenant!");
                     }

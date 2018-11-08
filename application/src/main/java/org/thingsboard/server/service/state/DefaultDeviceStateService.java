@@ -207,7 +207,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
         if (proto.getDeleted()) {
             queueExecutor.submit(() -> onDeviceDeleted(tenantId, deviceId));
         } else {
-            Device device = deviceService.findDeviceById(deviceId);
+            Device device = deviceService.findDeviceById(TenantId.SYS_TENANT_ID, deviceId);
             if (device != null) {
                 if (proto.getAdded()) {
                     onDeviceAdded(device);
@@ -320,7 +320,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
         DeviceStateData deviceStateData = deviceStates.get(deviceId);
         if (deviceStateData == null) {
             if (!routingService.resolveById(deviceId).isPresent()) {
-                Device device = deviceService.findDeviceById(deviceId);
+                Device device = deviceService.findDeviceById(TenantId.SYS_TENANT_ID, deviceId);
                 if (device != null) {
                     try {
                         deviceStateData = fetchDeviceState(device).get();
@@ -414,7 +414,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
     }
 
     private ListenableFuture<DeviceStateData> fetchDeviceState(Device device) {
-        ListenableFuture<List<AttributeKvEntry>> attributes = attributesService.find(device.getId(), DataConstants.SERVER_SCOPE, PERSISTENT_ATTRIBUTES);
+        ListenableFuture<List<AttributeKvEntry>> attributes = attributesService.find(TenantId.SYS_TENANT_ID, device.getId(), DataConstants.SERVER_SCOPE, PERSISTENT_ATTRIBUTES);
         return Futures.transform(attributes, new Function<List<AttributeKvEntry>, DeviceStateData>() {
             @Nullable
             @Override
@@ -465,11 +465,11 @@ public class DefaultDeviceStateService implements DeviceStateService {
     }
 
     private void saveAttribute(DeviceId deviceId, String key, long value) {
-        tsSubService.saveAttrAndNotify(deviceId, DataConstants.SERVER_SCOPE, key, value, new AttributeSaveCallback(deviceId, key, value));
+        tsSubService.saveAttrAndNotify(TenantId.SYS_TENANT_ID, deviceId, DataConstants.SERVER_SCOPE, key, value, new AttributeSaveCallback(deviceId, key, value));
     }
 
     private void saveAttribute(DeviceId deviceId, String key, boolean value) {
-        tsSubService.saveAttrAndNotify(deviceId, DataConstants.SERVER_SCOPE, key, value, new AttributeSaveCallback(deviceId, key, value));
+        tsSubService.saveAttrAndNotify(TenantId.SYS_TENANT_ID, deviceId, DataConstants.SERVER_SCOPE, key, value, new AttributeSaveCallback(deviceId, key, value));
     }
 
     private class AttributeSaveCallback implements FutureCallback<Void> {

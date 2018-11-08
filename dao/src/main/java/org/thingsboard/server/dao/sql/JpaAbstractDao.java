@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.transaction.annotation.Transactional;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.BaseEntity;
@@ -46,7 +47,7 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
 
     @Override
     @Transactional
-    public D save(D domain) {
+    public D save(TenantId tenantId, D domain) {
         E entity;
         try {
             entity = getEntityClass().getConstructor(domain.getClass()).newInstance(domain);
@@ -64,21 +65,21 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
     }
 
     @Override
-    public D findById(UUID key) {
+    public D findById(TenantId tenantId, UUID key) {
         log.debug("Get entity by key {}", key);
         E entity = getCrudRepository().findOne(fromTimeUUID(key));
         return DaoUtil.getData(entity);
     }
 
     @Override
-    public ListenableFuture<D> findByIdAsync(UUID key) {
+    public ListenableFuture<D> findByIdAsync(TenantId tenantId, UUID key) {
         log.debug("Get entity by key async {}", key);
         return service.submit(() -> DaoUtil.getData(getCrudRepository().findOne(fromTimeUUID(key))));
     }
 
     @Override
     @Transactional
-    public boolean removeById(UUID id) {
+    public boolean removeById(TenantId tenantId, UUID id) {
         String key = fromTimeUUID(id);
         getCrudRepository().delete(key);
         log.debug("Remove request: {}", key);
@@ -86,7 +87,7 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
     }
 
     @Override
-    public List<D> find() {
+    public List<D> find(TenantId tenantId) {
         List<E> entities = Lists.newArrayList(getCrudRepository().findAll());
         return DaoUtil.convertDataList(entities);
     }

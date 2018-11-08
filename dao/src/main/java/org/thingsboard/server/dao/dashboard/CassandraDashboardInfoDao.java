@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -64,7 +65,7 @@ public class CassandraDashboardInfoDao extends CassandraAbstractSearchTextDao<Da
     @Override
     public List<DashboardInfo> findDashboardsByTenantId(UUID tenantId, TextPageLink pageLink) {
         log.debug("Try to find dashboards by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
-        List<DashboardInfoEntity> dashboardEntities = findPageWithTextSearch(DASHBOARD_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
+        List<DashboardInfoEntity> dashboardEntities = findPageWithTextSearch(new TenantId(tenantId), DASHBOARD_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
                 Collections.singletonList(eq(DASHBOARD_TENANT_ID_PROPERTY, tenantId)),
                 pageLink);
 
@@ -76,12 +77,12 @@ public class CassandraDashboardInfoDao extends CassandraAbstractSearchTextDao<Da
     public ListenableFuture<List<DashboardInfo>> findDashboardsByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TimePageLink pageLink) {
         log.debug("Try to find dashboards by tenantId [{}], customerId[{}] and pageLink [{}]", tenantId, customerId, pageLink);
 
-        ListenableFuture<List<EntityRelation>> relations = relationDao.findRelations(new CustomerId(customerId), EntityRelation.CONTAINS_TYPE, RelationTypeGroup.DASHBOARD, EntityType.DASHBOARD, pageLink);
+        ListenableFuture<List<EntityRelation>> relations = relationDao.findRelations(new TenantId(tenantId), new CustomerId(customerId), EntityRelation.CONTAINS_TYPE, RelationTypeGroup.DASHBOARD, EntityType.DASHBOARD, pageLink);
 
         return Futures.transformAsync(relations, input -> {
             List<ListenableFuture<DashboardInfo>> dashboardFutures = new ArrayList<>(input.size());
             for (EntityRelation relation : input) {
-                dashboardFutures.add(findByIdAsync(relation.getTo().getId()));
+                dashboardFutures.add(findByIdAsync(new TenantId(tenantId), relation.getTo().getId()));
             }
             return Futures.successfulAsList(dashboardFutures);
         });

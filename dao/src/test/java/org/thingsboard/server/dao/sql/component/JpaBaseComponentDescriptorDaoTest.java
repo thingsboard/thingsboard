@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.plugin.ComponentScope;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import org.thingsboard.server.dao.component.ComponentDescriptorDao;
+import org.thingsboard.server.dao.service.AbstractServiceTest;
 
 import java.util.List;
 
@@ -46,11 +47,11 @@ public class JpaBaseComponentDescriptorDaoTest extends AbstractJpaDaoTest {
         }
 
         TextPageLink pageLink1 = new TextPageLink(15, "COMPONENT_");
-        List<ComponentDescriptor> components1 = componentDescriptorDao.findByTypeAndPageLink(ComponentType.FILTER, pageLink1);
+        List<ComponentDescriptor> components1 = componentDescriptorDao.findByTypeAndPageLink(AbstractServiceTest.SYSTEM_TENANT_ID, ComponentType.FILTER, pageLink1);
         assertEquals(15, components1.size());
 
         TextPageLink pageLink2 = new TextPageLink(15, "COMPONENT_", components1.get(14).getId().getId(), null);
-        List<ComponentDescriptor> components2 = componentDescriptorDao.findByTypeAndPageLink(ComponentType.FILTER, pageLink2);
+        List<ComponentDescriptor> components2 = componentDescriptorDao.findByTypeAndPageLink(AbstractServiceTest.SYSTEM_TENANT_ID,ComponentType.FILTER, pageLink2);
         assertEquals(5, components2.size());
     }
 
@@ -63,12 +64,12 @@ public class JpaBaseComponentDescriptorDaoTest extends AbstractJpaDaoTest {
         }
 
         TextPageLink pageLink1 = new TextPageLink(15, "COMPONENT_");
-        List<ComponentDescriptor> components1 = componentDescriptorDao.findByScopeAndTypeAndPageLink(
+        List<ComponentDescriptor> components1 = componentDescriptorDao.findByScopeAndTypeAndPageLink(AbstractServiceTest.SYSTEM_TENANT_ID,
                 ComponentScope.SYSTEM, ComponentType.FILTER, pageLink1);
         assertEquals(15, components1.size());
 
         TextPageLink pageLink2 = new TextPageLink(15, "COMPONENT_", components1.get(14).getId().getId(), null);
-        List<ComponentDescriptor> components2 = componentDescriptorDao.findByScopeAndTypeAndPageLink(
+        List<ComponentDescriptor> components2 = componentDescriptorDao.findByScopeAndTypeAndPageLink(AbstractServiceTest.SYSTEM_TENANT_ID,
                 ComponentScope.SYSTEM, ComponentType.FILTER, pageLink2);
         assertEquals(5, components2.size());
     }
@@ -79,7 +80,7 @@ public class JpaBaseComponentDescriptorDaoTest extends AbstractJpaDaoTest {
         component.setType(type);
         component.setScope(scope);
         component.setName("COMPONENT_" + index);
-        componentDescriptorDao.save(component);
+        componentDescriptorDao.save(AbstractServiceTest.SYSTEM_TENANT_ID,component);
     }
 
 }

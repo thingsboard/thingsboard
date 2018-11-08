@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
+import org.thingsboard.server.dao.service.AbstractServiceTest;
 import org.thingsboard.server.dao.user.UserDao;
 
 import java.io.IOException;
@@ -49,14 +50,14 @@ public class JpaUserDaoTest extends AbstractJpaDaoTest {
     @Test
     @DatabaseSetup("classpath:dbunit/user.xml")
     public void testFindAll() {
-        List<User> users = userDao.find();
+        List<User> users = userDao.find(AbstractServiceTest.SYSTEM_TENANT_ID);
         assertEquals(users.size(), 5);
     }
 
     @Test
     @DatabaseSetup("classpath:dbunit/user.xml")
     public void testFindByEmail() {
-        User user = userDao.findByEmail("sysadm@thingsboard.org");
+        User user = userDao.findByEmail(AbstractServiceTest.SYSTEM_TENANT_ID,"sysadm@thingsboard.org");
         assertNotNull("User is expected to be not null", user);
         assertEquals("9cb58ba0-27c1-11e7-93ae-92361f002671", user.getId().toString());
         assertEquals("c97ea14e-27c1-11e7-93ae-92361f002671", user.getTenantId().toString());
@@ -112,9 +113,9 @@ public class JpaUserDaoTest extends AbstractJpaDaoTest {
         String additionalInfo = "{\"key\":\"value-100\"}";
         JsonNode jsonNode = mapper.readTree(additionalInfo);
         user.setAdditionalInfo(jsonNode);
-        userDao.save(user);
-        assertEquals(6, userDao.find().size());
-        User savedUser = userDao.findByEmail("user@thingsboard.org");
+        userDao.save(AbstractServiceTest.SYSTEM_TENANT_ID,user);
+        assertEquals(6, userDao.find(AbstractServiceTest.SYSTEM_TENANT_ID).size());
+        User savedUser = userDao.findByEmail(AbstractServiceTest.SYSTEM_TENANT_ID,"user@thingsboard.org");
         assertNotNull(savedUser);
         assertEquals(additionalInfo, savedUser.getAdditionalInfo().toString());
     }
@@ -142,6 +143,6 @@ public class JpaUserDaoTest extends AbstractJpaDaoTest {
         String idString = id.toString();
         String email = idString.substring(0, idString.indexOf('-')) + "@thingsboard.org";
         user.setEmail(email);
-        userDao.save(user);
+        userDao.save(AbstractServiceTest.SYSTEM_TENANT_ID,user);
     }
 }

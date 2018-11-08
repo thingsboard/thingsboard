@@ -123,7 +123,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     }
 
     private void initAttributes() {
-        Device device = systemContext.getDeviceService().findDeviceById(deviceId);
+        Device device = systemContext.getDeviceService().findDeviceById(tenantId, deviceId);
         this.deviceName = device.getName();
         this.deviceType = device.getType();
         this.defaultMetaData = new TbMsgMetaData();
@@ -290,9 +290,9 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     private ListenableFuture<List<AttributeKvEntry>> getAttributeKvEntries(DeviceId deviceId, String scope, Optional<Set<String>> names) {
         if (names.isPresent()) {
             if (!names.get().isEmpty()) {
-                return systemContext.getAttributesService().find(deviceId, scope, names.get());
+                return systemContext.getAttributesService().find(tenantId, deviceId, scope, names.get());
             } else {
-                return systemContext.getAttributesService().findAll(deviceId, scope);
+                return systemContext.getAttributesService().findAll(tenantId, deviceId, scope);
             }
         } else {
             return Futures.immediateFuture(Collections.emptyList());

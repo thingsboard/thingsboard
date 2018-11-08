@@ -25,6 +25,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.ComponentDescriptorId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
@@ -49,50 +51,50 @@ public class BaseComponentDescriptorService implements ComponentDescriptorServic
     private ComponentDescriptorDao componentDescriptorDao;
 
     @Override
-    public ComponentDescriptor saveComponent(ComponentDescriptor component) {
-        componentValidator.validate(component);
-        Optional<ComponentDescriptor> result = componentDescriptorDao.saveIfNotExist(component);
+    public ComponentDescriptor saveComponent(TenantId tenantId, ComponentDescriptor component) {
+        componentValidator.validate(component, data -> new TenantId(EntityId.NULL_UUID));
+        Optional<ComponentDescriptor> result = componentDescriptorDao.saveIfNotExist(tenantId, component);
         if (result.isPresent()) {
             return result.get();
         } else {
-            return componentDescriptorDao.findByClazz(component.getClazz());
+            return componentDescriptorDao.findByClazz(tenantId, component.getClazz());
         }
     }
 
     @Override
-    public ComponentDescriptor findById(ComponentDescriptorId componentId) {
+    public ComponentDescriptor findById(TenantId tenantId, ComponentDescriptorId componentId) {
         Validator.validateId(componentId, "Incorrect component id for search request.");
-        return componentDescriptorDao.findById(componentId);
+        return componentDescriptorDao.findById(tenantId, componentId);
     }
 
     @Override
-    public ComponentDescriptor findByClazz(String clazz) {
+    public ComponentDescriptor findByClazz(TenantId tenantId, String clazz) {
         Validator.validateString(clazz, "Incorrect clazz for search request.");
-        return componentDescriptorDao.findByClazz(clazz);
+        return componentDescriptorDao.findByClazz(tenantId, clazz);
     }
 
     @Override
-    public TextPageData<ComponentDescriptor> findByTypeAndPageLink(ComponentType type, TextPageLink pageLink) {
+    public TextPageData<ComponentDescriptor> findByTypeAndPageLink(TenantId tenantId, ComponentType type, TextPageLink pageLink) {
         Validator.validatePageLink(pageLink, "Incorrect PageLink object for search plugin components request.");
-        List<ComponentDescriptor> components = componentDescriptorDao.findByTypeAndPageLink(type, pageLink);
+        List<ComponentDescriptor> components = componentDescriptorDao.findByTypeAndPageLink(tenantId, type, pageLink);
         return new TextPageData<>(components, pageLink);
     }
 
     @Override
-    public TextPageData<ComponentDescriptor> findByScopeAndTypeAndPageLink(ComponentScope scope, ComponentType type, TextPageLink pageLink) {
+    public TextPageData<ComponentDescriptor> findByScopeAndTypeAndPageLink(TenantId tenantId, ComponentScope scope, ComponentType type, TextPageLink pageLink) {
         Validator.validatePageLink(pageLink, "Incorrect PageLink object for search plugin components request.");
-        List<ComponentDescriptor> components = componentDescriptorDao.findByScopeAndTypeAndPageLink(scope, type, pageLink);
+        List<ComponentDescriptor> components = componentDescriptorDao.findByScopeAndTypeAndPageLink(tenantId, scope, type, pageLink);
         return new TextPageData<>(components, pageLink);
     }
 
     @Override
-    public void deleteByClazz(String clazz) {
+    public void deleteByClazz(TenantId tenantId, String clazz) {
         Validator.validateString(clazz, "Incorrect clazz for delete request.");
-        componentDescriptorDao.deleteByClazz(clazz);
+        componentDescriptorDao.deleteByClazz(tenantId, clazz);
     }
 
     @Override
-    public boolean validate(ComponentDescriptor component, JsonNode configuration) {
+    public boolean validate(TenantId tenantId, ComponentDescriptor component, JsonNode configuration) {
         JsonValidator validator = JsonSchemaFactory.byDefault().getValidator();
         try {
             if (!component.getConfigurationDescriptor().has("schema")) {
@@ -109,7 +111,7 @@ public class BaseComponentDescriptorService implements ComponentDescriptorServic
     private DataValidator<ComponentDescriptor> componentValidator =
             new DataValidator<ComponentDescriptor>() {
                 @Override
-                protected void validateDataImpl(ComponentDescriptor plugin) {
+                protected void validateDataImpl(TenantId tenantId, ComponentDescriptor plugin) {
                     if (plugin.getType() == null) {
                         throw new DataValidationException("Component type should be specified!.");
                     }

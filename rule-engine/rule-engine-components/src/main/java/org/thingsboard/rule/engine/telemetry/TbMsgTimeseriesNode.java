@@ -86,7 +86,7 @@ public class TbMsgTimeseriesNode implements TbNode {
         }
         String ttlValue = msg.getMetaData().getValue("TTL");
         long ttl = !StringUtils.isEmpty(ttlValue) ? Long.valueOf(ttlValue) : config.getDefaultTTL();
-        ctx.getTelemetryService().saveAndNotify(msg.getOriginator(), tsKvEntryList, ttl, new TelemetryNodeCallback(ctx, msg));
+        ctx.getTelemetryService().saveAndNotify(ctx.getTenantId(), msg.getOriginator(), tsKvEntryList, ttl, new TelemetryNodeCallback(ctx, msg));
     }
 
     @Override

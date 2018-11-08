@@ -19,6 +19,7 @@ import com.datastax.driver.core.querybuilder.Select.Where;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.DaoUtil;
@@ -50,11 +51,11 @@ public class CassandraUserDao extends CassandraAbstractSearchTextDao<UserEntity,
     }
 
     @Override
-    public User findByEmail(String email) {
+    public User findByEmail(TenantId tenantId, String email) {
         log.debug("Try to find user by email [{}] ", email);
         Where query = select().from(ModelConstants.USER_BY_EMAIL_COLUMN_FAMILY_NAME).where(eq(ModelConstants.USER_EMAIL_PROPERTY, email));
         log.trace("Execute query {}", query);
-        UserEntity userEntity = findOneByStatement(query);
+        UserEntity userEntity = findOneByStatement(tenantId, query);
         log.trace("Found user [{}] by email [{}]", userEntity, email);
         return DaoUtil.getData(userEntity);
     }
@@ -62,7 +63,8 @@ public class CassandraUserDao extends CassandraAbstractSearchTextDao<UserEntity,
     @Override
     public List<User> findTenantAdmins(UUID tenantId, TextPageLink pageLink) {
         log.debug("Try to find tenant admin users by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
-        List<UserEntity> userEntities = findPageWithTextSearch(ModelConstants.USER_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
+        List<UserEntity> userEntities = findPageWithTextSearch(new TenantId(tenantId),
+                ModelConstants.USER_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
                 Arrays.asList(eq(ModelConstants.USER_TENANT_ID_PROPERTY, tenantId),
                               eq(ModelConstants.USER_CUSTOMER_ID_PROPERTY, ModelConstants.NULL_UUID),
                               eq(ModelConstants.USER_AUTHORITY_PROPERTY, Authority.TENANT_ADMIN.name())),
@@ -74,7 +76,8 @@ public class CassandraUserDao extends CassandraAbstractSearchTextDao<UserEntity,
     @Override
     public List<User> findCustomerUsers(UUID tenantId, UUID customerId, TextPageLink pageLink) {
         log.debug("Try to find customer users by tenantId [{}], customerId [{}] and pageLink [{}]", tenantId, customerId, pageLink);
-        List<UserEntity> userEntities = findPageWithTextSearch(ModelConstants.USER_BY_CUSTOMER_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
+        List<UserEntity> userEntities = findPageWithTextSearch(new TenantId(tenantId),
+                ModelConstants.USER_BY_CUSTOMER_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
                 Arrays.asList(eq(ModelConstants.USER_TENANT_ID_PROPERTY, tenantId),
                               eq(ModelConstants.USER_CUSTOMER_ID_PROPERTY, customerId),
                               eq(ModelConstants.USER_AUTHORITY_PROPERTY, Authority.CUSTOMER_USER.name())),

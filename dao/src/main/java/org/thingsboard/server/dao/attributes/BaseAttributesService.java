@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.Validator;
@@ -39,40 +40,40 @@ public class BaseAttributesService implements AttributesService {
     private AttributesDao attributesDao;
 
     @Override
-    public ListenableFuture<Optional<AttributeKvEntry>> find(EntityId entityId, String scope, String attributeKey) {
+    public ListenableFuture<Optional<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String scope, String attributeKey) {
         validate(entityId, scope);
         Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey);
-        return attributesDao.find(entityId, scope, attributeKey);
+        return attributesDao.find(tenantId, entityId, scope, attributeKey);
     }
 
     @Override
-    public ListenableFuture<List<AttributeKvEntry>> find(EntityId entityId, String scope, Collection<String> attributeKeys) {
+    public ListenableFuture<List<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String scope, Collection<String> attributeKeys) {
         validate(entityId, scope);
         attributeKeys.forEach(attributeKey -> Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey));
-        return attributesDao.find(entityId, scope, attributeKeys);
+        return attributesDao.find(tenantId, entityId, scope, attributeKeys);
     }
 
     @Override
-    public ListenableFuture<List<AttributeKvEntry>> findAll(EntityId entityId, String scope) {
+    public ListenableFuture<List<AttributeKvEntry>> findAll(TenantId tenantId, EntityId entityId, String scope) {
         validate(entityId, scope);
-        return attributesDao.findAll(entityId, scope);
+        return attributesDao.findAll(tenantId, entityId, scope);
     }
 
     @Override
-    public ListenableFuture<List<Void>> save(EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
+    public ListenableFuture<List<Void>> save(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
         validate(entityId, scope);
         attributes.forEach(attribute -> validate(attribute));
         List<ListenableFuture<Void>> futures = Lists.newArrayListWithExpectedSize(attributes.size());
         for (AttributeKvEntry attribute : attributes) {
-            futures.add(attributesDao.save(entityId, scope, attribute));
+            futures.add(attributesDao.save(tenantId, entityId, scope, attribute));
         }
         return Futures.allAsList(futures);
     }
 
     @Override
-    public ListenableFuture<List<Void>> removeAll(EntityId entityId, String scope, List<String> keys) {
+    public ListenableFuture<List<Void>> removeAll(TenantId tenantId, EntityId entityId, String scope, List<String> keys) {
         validate(entityId, scope);
-        return attributesDao.removeAll(entityId, scope, keys);
+        return attributesDao.removeAll(tenantId, entityId, scope, keys);
     }
 
     private static void validate(EntityId id, String scope) {

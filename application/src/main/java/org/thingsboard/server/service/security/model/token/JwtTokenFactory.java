@@ -21,6 +21,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -69,7 +70,7 @@ public class JwtTokenFactory {
         UserPrincipal principal = securityUser.getUserPrincipal();
         String subject = principal.getValue();
         Claims claims = Jwts.claims().setSubject(subject);
-        claims.put(SCOPES, securityUser.getAuthorities().stream().map(s -> s.getAuthority()).collect(Collectors.toList()));
+        claims.put(SCOPES, securityUser.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()));
         claims.put(USER_ID, securityUser.getId().getId().toString());
         claims.put(FIRST_NAME, securityUser.getFirstName());
         claims.put(LAST_NAME, securityUser.getLastName());
