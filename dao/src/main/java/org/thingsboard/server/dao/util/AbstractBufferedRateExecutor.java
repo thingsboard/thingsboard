@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.tools.TbRateLimits;
 
 import javax.annotation.Nullable;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,6 +37,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by ashvayka on 24.10.18.
@@ -53,6 +55,7 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
     private final boolean perTenantLimitsEnabled;
     private final String perTenantLimitsConfiguration;
     private final ConcurrentMap<TenantId, TbRateLimits> perTenantLimits = new ConcurrentHashMap<>();
+    protected final ConcurrentMap<TenantId, AtomicInteger> rateLimitedTenants = new ConcurrentHashMap<>();
 
     protected final AtomicInteger concurrencyLevel = new AtomicInteger();
     protected final AtomicInteger totalAdded = new AtomicInteger();
@@ -90,6 +93,7 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
             } else if (!task.getTenantId().isNullUid()) {
                 TbRateLimits rateLimits = perTenantLimits.computeIfAbsent(task.getTenantId(), id -> new TbRateLimits(perTenantLimitsConfiguration));
                 if (!rateLimits.tryConsume()) {
+                    rateLimitedTenants.computeIfAbsent(task.getTenantId(), tId -> new AtomicInteger(0)).incrementAndGet();
                     totalRateLimited.incrementAndGet();
                     settableFuture.setException(new TenantRateLimitException());
                     perTenantLimitReached = true;
