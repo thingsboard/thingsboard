@@ -28,21 +28,21 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 
 public interface DashboardService {
     
-    Dashboard findDashboardById(DashboardId dashboardId);
+    Dashboard findDashboardById(TenantId tenantId, DashboardId dashboardId);
 
-    ListenableFuture<Dashboard> findDashboardByIdAsync(DashboardId dashboardId);
+    ListenableFuture<Dashboard> findDashboardByIdAsync(TenantId tenantId, DashboardId dashboardId);
 
-    DashboardInfo findDashboardInfoById(DashboardId dashboardId);
+    DashboardInfo findDashboardInfoById(TenantId tenantId, DashboardId dashboardId);
 
-    ListenableFuture<DashboardInfo> findDashboardInfoByIdAsync(DashboardId dashboardId);
+    ListenableFuture<DashboardInfo> findDashboardInfoByIdAsync(TenantId tenantId, DashboardId dashboardId);
 
     Dashboard saveDashboard(Dashboard dashboard);
 
-    Dashboard assignDashboardToCustomer(DashboardId dashboardId, CustomerId customerId);
+    Dashboard assignDashboardToCustomer(TenantId tenantId, DashboardId dashboardId, CustomerId customerId);
 
-    Dashboard unassignDashboardFromCustomer(DashboardId dashboardId, CustomerId customerId);
+    Dashboard unassignDashboardFromCustomer(TenantId tenantId, DashboardId dashboardId, CustomerId customerId);
 
-    void deleteDashboard(DashboardId dashboardId);
+    void deleteDashboard(TenantId tenantId, DashboardId dashboardId);
 
     TextPageData<DashboardInfo> findDashboardsByTenantId(TenantId tenantId, TextPageLink pageLink);
 
@@ -50,8 +50,8 @@ public interface DashboardService {
 
     ListenableFuture<TimePageData<DashboardInfo>> findDashboardsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, TimePageLink pageLink);
 
-    void unassignCustomerDashboards(CustomerId customerId);
+    void unassignCustomerDashboards(TenantId tenantId, CustomerId customerId);
 
-    void updateCustomerDashboards(CustomerId customerId);
+    void updateCustomerDashboards(TenantId tenantId, CustomerId customerId);
 
 }

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.user;
 
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.Dao;
 
@@ -31,7 +32,7 @@ public interface UserCredentialsDao extends Dao<UserCredentials> {
      * @param userCredentials the user credentials object
      * @return saved user credentials object
      */
-    UserCredentials save(UserCredentials userCredentials);
+    UserCredentials save(TenantId tenantId, UserCredentials userCredentials);
 
     /**
      * Find user credentials by user id.
@@ -39,7 +40,7 @@ public interface UserCredentialsDao extends Dao<UserCredentials> {
      * @param userId the user id
      * @return the user credentials object
      */
-    UserCredentials findByUserId(UUID userId);
+    UserCredentials findByUserId(TenantId tenantId, UUID userId);
 
     /**
      * Find user credentials by activate token.
@@ -47,7 +48,7 @@ public interface UserCredentialsDao extends Dao<UserCredentials> {
      * @param activateToken the activate token
      * @return the user credentials object
      */
-    UserCredentials findByActivateToken(String activateToken);
+    UserCredentials findByActivateToken(TenantId tenantId, String activateToken);
 
     /**
      * Find user credentials by reset token.
@@ -55,6 +56,6 @@ public interface UserCredentialsDao extends Dao<UserCredentials> {
      * @param resetToken the reset token
      * @return the user credentials object
      */
-    UserCredentials findByResetToken(String resetToken);
+    UserCredentials findByResetToken(TenantId tenantId, String resetToken);
 
 }

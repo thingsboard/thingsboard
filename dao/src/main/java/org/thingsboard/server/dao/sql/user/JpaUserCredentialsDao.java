@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.UUIDConverter;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.UserCredentialsEntity;
@@ -49,17 +50,17 @@ public class JpaUserCredentialsDao extends JpaAbstractDao<UserCredentialsEntity,
     }
 
     @Override
-    public UserCredentials findByUserId(UUID userId) {
+    public UserCredentials findByUserId(TenantId tenantId, UUID userId) {
         return DaoUtil.getData(userCredentialsRepository.findByUserId(UUIDConverter.fromTimeUUID(userId)));
     }
 
     @Override
-    public UserCredentials findByActivateToken(String activateToken) {
+    public UserCredentials findByActivateToken(TenantId tenantId, String activateToken) {
         return DaoUtil.getData(userCredentialsRepository.findByActivateToken(activateToken));
     }
 
     @Override
-    public UserCredentials findByResetToken(String resetToken) {
+    public UserCredentials findByResetToken(TenantId tenantId, String resetToken) {
         return DaoUtil.getData(userCredentialsRepository.findByResetToken(resetToken));
     }
 }

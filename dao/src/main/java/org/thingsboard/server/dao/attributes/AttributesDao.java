@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.attributes;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 
 import java.util.Collection;
@@ -28,13 +29,13 @@ import java.util.Optional;
  */
 public interface AttributesDao {
 
-    ListenableFuture<Optional<AttributeKvEntry>> find(EntityId entityId, String attributeType, String attributeKey);
+    ListenableFuture<Optional<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String attributeType, String attributeKey);
 
-    ListenableFuture<List<AttributeKvEntry>> find(EntityId entityId, String attributeType, Collection<String> attributeKey);
+    ListenableFuture<List<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String attributeType, Collection<String> attributeKey);
 
-    ListenableFuture<List<AttributeKvEntry>> findAll(EntityId entityId, String attributeType);
+    ListenableFuture<List<AttributeKvEntry>> findAll(TenantId tenantId, EntityId entityId, String attributeType);
 
-    ListenableFuture<Void> save(EntityId entityId, String attributeType, AttributeKvEntry attribute);
+    ListenableFuture<Void> save(TenantId tenantId, EntityId entityId, String attributeType, AttributeKvEntry attribute);
 
-    ListenableFuture<List<Void>> removeAll(EntityId entityId, String attributeType, List<String> keys);
+    ListenableFuture<List<Void>> removeAll(TenantId tenantId, EntityId entityId, String attributeType, List<String> keys);
 }

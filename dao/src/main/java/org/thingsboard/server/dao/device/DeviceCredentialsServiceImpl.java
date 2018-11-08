@@ -24,6 +24,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.msg.EncryptionUtil;
@@ -45,38 +47,38 @@ public class DeviceCredentialsServiceImpl implements DeviceCredentialsService {
     private DeviceService deviceService;
 
     @Override
-    public DeviceCredentials findDeviceCredentialsByDeviceId(DeviceId deviceId) {
+    public DeviceCredentials findDeviceCredentialsByDeviceId(TenantId tenantId, DeviceId deviceId) {
         log.trace("Executing findDeviceCredentialsByDeviceId [{}]", deviceId);
         validateId(deviceId, "Incorrect deviceId " + deviceId);
-        return deviceCredentialsDao.findByDeviceId(deviceId.getId());
+        return deviceCredentialsDao.findByDeviceId(tenantId, deviceId.getId());
     }
 
     @Override
-    @Cacheable(cacheNames = DEVICE_CREDENTIALS_CACHE, unless="#result == null")
+    @Cacheable(cacheNames = DEVICE_CREDENTIALS_CACHE, unless = "#result == null")
     public DeviceCredentials findDeviceCredentialsByCredentialsId(String credentialsId) {
         log.trace("Executing findDeviceCredentialsByCredentialsId [{}]", credentialsId);
         validateString(credentialsId, "Incorrect credentialsId " + credentialsId);
-        return deviceCredentialsDao.findByCredentialsId(credentialsId);
+        return deviceCredentialsDao.findByCredentialsId(new TenantId(EntityId.NULL_UUID), credentialsId);
     }
 
     @Override
-    @CacheEvict(cacheNames = DEVICE_CREDENTIALS_CACHE, keyGenerator="previousDeviceCredentialsId", beforeInvocation = true)
-    public DeviceCredentials updateDeviceCredentials(DeviceCredentials deviceCredentials) {
-        return saveOrUpdate(deviceCredentials);
+    @CacheEvict(cacheNames = DEVICE_CREDENTIALS_CACHE, keyGenerator = "previousDeviceCredentialsId", beforeInvocation = true)
+    public DeviceCredentials updateDeviceCredentials(TenantId tenantId, DeviceCredentials deviceCredentials) {
+        return saveOrUpdate(tenantId, deviceCredentials);
     }
 
     @Override
-    public DeviceCredentials createDeviceCredentials(DeviceCredentials deviceCredentials) {
-        return saveOrUpdate(deviceCredentials);
+    public DeviceCredentials createDeviceCredentials(TenantId tenantId, DeviceCredentials deviceCredentials) {
+        return saveOrUpdate(tenantId, deviceCredentials);
     }
 
-    private DeviceCredentials saveOrUpdate(DeviceCredentials deviceCredentials) {
+    private DeviceCredentials saveOrUpdate(TenantId tenantId, DeviceCredentials deviceCredentials) {
         if (deviceCredentials.getCredentialsType() == DeviceCredentialsType.X509_CERTIFICATE) {
             formatCertData(deviceCredentials);
         }
         log.trace("Executing updateDeviceCredentials [{}]", deviceCredentials);
-        credentialsValidator.validate(deviceCredentials);
-        return deviceCredentialsDao.save(deviceCredentials);
+        credentialsValidator.validate(deviceCredentials, id -> tenantId);
+        return deviceCredentialsDao.save(tenantId, deviceCredentials);
     }
 
     private void formatCertData(DeviceCredentials deviceCredentials) {
@@ -87,37 +89,37 @@ public class DeviceCredentialsServiceImpl implements DeviceCredentialsService {
     }
 
     @Override
-    @CacheEvict(cacheNames = DEVICE_CREDENTIALS_CACHE, key="#deviceCredentials.credentialsId")
-    public void deleteDeviceCredentials(DeviceCredentials deviceCredentials) {
+    @CacheEvict(cacheNames = DEVICE_CREDENTIALS_CACHE, key = "#deviceCredentials.credentialsId")
+    public void deleteDeviceCredentials(TenantId tenantId, DeviceCredentials deviceCredentials) {
         log.trace("Executing deleteDeviceCredentials [{}]", deviceCredentials);
-        deviceCredentialsDao.removeById(deviceCredentials.getUuidId());
+        deviceCredentialsDao.removeById(tenantId, deviceCredentials.getUuidId());
     }
 
     private DataValidator<DeviceCredentials> credentialsValidator =
             new DataValidator<DeviceCredentials>() {
 
                 @Override
-                protected void validateCreate(DeviceCredentials deviceCredentials) {
-                    DeviceCredentials existingCredentialsEntity = deviceCredentialsDao.findByCredentialsId(deviceCredentials.getCredentialsId());
+                protected void validateCreate(TenantId tenantId, DeviceCredentials deviceCredentials) {
+                    DeviceCredentials existingCredentialsEntity = deviceCredentialsDao.findByCredentialsId(tenantId, deviceCredentials.getCredentialsId());
                     if (existingCredentialsEntity != null) {
                         throw new DataValidationException("Create of existent device credentials!");
                     }
                 }
 
                 @Override
-                protected void validateUpdate(DeviceCredentials deviceCredentials) {
-                    DeviceCredentials existingCredentials = deviceCredentialsDao.findById(deviceCredentials.getUuidId());
+                protected void validateUpdate(TenantId tenantId, DeviceCredentials deviceCredentials) {
+                    DeviceCredentials existingCredentials = deviceCredentialsDao.findById(tenantId, deviceCredentials.getUuidId());
                     if (existingCredentials == null) {
                         throw new DataValidationException("Unable to update non-existent device credentials!");
                     }
-                    DeviceCredentials sameCredentialsId = deviceCredentialsDao.findByCredentialsId(deviceCredentials.getCredentialsId());
+                    DeviceCredentials sameCredentialsId = deviceCredentialsDao.findByCredentialsId(tenantId, deviceCredentials.getCredentialsId());
                     if (sameCredentialsId != null && !sameCredentialsId.getUuidId().equals(deviceCredentials.getUuidId())) {
                         throw new DataValidationException("Specified credentials are already registered!");
                     }
                 }
 
                 @Override
-                protected void validateDataImpl(DeviceCredentials deviceCredentials) {
+                protected void validateDataImpl(TenantId tenantId, DeviceCredentials deviceCredentials) {
                     if (deviceCredentials.getDeviceId() == null) {
                         throw new DataValidationException("Device credentials should be assigned to device!");
                     }
@@ -127,7 +129,7 @@ public class DeviceCredentialsServiceImpl implements DeviceCredentialsService {
                     if (StringUtils.isEmpty(deviceCredentials.getCredentialsId())) {
                         throw new DataValidationException("Device credentials id should be specified!");
                     }
-                    Device device = deviceService.findDeviceById(deviceCredentials.getDeviceId());
+                    Device device = deviceService.findDeviceById(tenantId, deviceCredentials.getDeviceId());
                     if (device == null) {
                         throw new DataValidationException("Can't assign device credentials to non-existent device!");
                     }

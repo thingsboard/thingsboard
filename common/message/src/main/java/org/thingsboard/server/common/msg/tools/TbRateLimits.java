@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport.service;
+package org.thingsboard.server.common.msg.tools;
 
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket4j;
@@ -25,10 +25,10 @@ import java.time.Duration;
 /**
  * Created by ashvayka on 22.10.18.
  */
-class TbTransportRateLimits {
+public class TbRateLimits {
     private final LocalBucket bucket;
 
-    public TbTransportRateLimits(String limitsConfiguration) {
+    public TbRateLimits(String limitsConfiguration) {
         LocalBucketBuilder builder = Bucket4j.builder();
         boolean initialized = false;
         for (String limitSrc : limitsConfiguration.split(",")) {
@@ -46,7 +46,7 @@ class TbTransportRateLimits {
 
     }
 
-    boolean tryConsume() {
+    public boolean tryConsume() {
         return bucket.tryConsume(1);
     }
 

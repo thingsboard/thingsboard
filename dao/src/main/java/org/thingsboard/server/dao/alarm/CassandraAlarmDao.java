@@ -73,9 +73,9 @@ public class CassandraAlarmDao extends CassandraAbstractModelDao<AlarmEntity, Al
     }
 
     @Override
-    public Alarm save(Alarm alarm) {
+    public Alarm save(TenantId tenantId, Alarm alarm) {
         log.debug("Save asset [{}] ", alarm);
-        return super.save(alarm);
+        return super.save(tenantId, alarm);
     }
 
     @Override
@@ -88,11 +88,11 @@ public class CassandraAlarmDao extends CassandraAbstractModelDao<AlarmEntity, Al
         query.and(eq(ALARM_TYPE_PROPERTY, type));
         query.limit(1);
         query.orderBy(QueryBuilder.asc(ModelConstants.ALARM_TYPE_PROPERTY), QueryBuilder.desc(ModelConstants.ID_PROPERTY));
-        return findOneByStatementAsync(query);
+        return findOneByStatementAsync(tenantId, query);
     }
 
     @Override
-    public ListenableFuture<List<AlarmInfo>> findAlarms(AlarmQuery query) {
+    public ListenableFuture<List<AlarmInfo>> findAlarms(TenantId tenantId, AlarmQuery query) {
         log.trace("Try to find alarms by entity [{}], searchStatus [{}], status [{}] and pageLink [{}]", query.getAffectedEntityId(), query.getSearchStatus(), query.getStatus(), query.getPageLink());
         EntityId affectedEntity = query.getAffectedEntityId();
         String searchStatusName;
@@ -104,12 +104,12 @@ public class CassandraAlarmDao extends CassandraAbstractModelDao<AlarmEntity, Al
             searchStatusName = query.getStatus().name();
         }
         String relationType = BaseAlarmService.ALARM_RELATION_PREFIX + searchStatusName;
-        ListenableFuture<List<EntityRelation>> relations = relationDao.findRelations(affectedEntity, relationType, RelationTypeGroup.ALARM, EntityType.ALARM, query.getPageLink());
+        ListenableFuture<List<EntityRelation>> relations = relationDao.findRelations(tenantId, affectedEntity, relationType, RelationTypeGroup.ALARM, EntityType.ALARM, query.getPageLink());
         return Futures.transformAsync(relations, input -> {
             List<ListenableFuture<AlarmInfo>> alarmFutures = new ArrayList<>(input.size());
             for (EntityRelation relation : input) {
                 alarmFutures.add(Futures.transform(
-                        findAlarmByIdAsync(relation.getTo().getId()),
+                        findAlarmByIdAsync(tenantId, relation.getTo().getId()),
                         AlarmInfo::new));
             }
             return Futures.successfulAsList(alarmFutures);
@@ -117,11 +117,11 @@ public class CassandraAlarmDao extends CassandraAbstractModelDao<AlarmEntity, Al
     }
 
     @Override
-    public ListenableFuture<Alarm> findAlarmByIdAsync(UUID key) {
+    public ListenableFuture<Alarm> findAlarmByIdAsync(TenantId tenantId, UUID key) {
         log.debug("Get alarm by id {}", key);
         Select.Where query = select().from(ALARM_BY_ID_VIEW_NAME).where(eq(ModelConstants.ID_PROPERTY, key));
         query.limit(1);
         log.trace("Execute query {}", query);
-        return findOneByStatementAsync(query);
+        return findOneByStatementAsync(tenantId, query);
     }
 }

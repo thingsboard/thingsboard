@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.cache;
 
 import org.springframework.cache.interceptor.KeyGenerator;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 
@@ -28,9 +29,10 @@ public class PreviousDeviceCredentialsIdKeyGenerator implements KeyGenerator {
     @Override
     public Object generate(Object o, Method method, Object... objects) {
         DeviceCredentialsService deviceCredentialsService = (DeviceCredentialsService) o;
-        DeviceCredentials deviceCredentials = (DeviceCredentials) objects[0];
+        TenantId tenantId = (TenantId) objects[0];
+        DeviceCredentials deviceCredentials = (DeviceCredentials) objects[1];
         if (deviceCredentials.getDeviceId() != null) {
-            DeviceCredentials oldDeviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(deviceCredentials.getDeviceId());
+            DeviceCredentials oldDeviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, deviceCredentials.getDeviceId());
             if (oldDeviceCredentials != null) {
                 return oldDeviceCredentials.getCredentialsId();
             }

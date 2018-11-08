@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.asset;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.Dao;
 
@@ -37,7 +38,7 @@ public interface AssetDao extends Dao<Asset> {
      * @param asset the asset object
      * @return saved asset object
      */
-    Asset save(Asset asset);
+    Asset save(TenantId tenantId, Asset asset);
 
     /**
      * Find assets by tenantId and page link.

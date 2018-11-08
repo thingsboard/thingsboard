@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.attributes.AttributesDao;
@@ -47,7 +48,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     private AttributeKvRepository attributeKvRepository;
 
     @Override
-    public ListenableFuture<Optional<AttributeKvEntry>> find(EntityId entityId, String attributeType, String attributeKey) {
+    public ListenableFuture<Optional<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String attributeType, String attributeKey) {
         AttributeKvCompositeKey compositeKey =
                 getAttributeKvCompositeKey(entityId, attributeType, attributeKey);
         return Futures.immediateFuture(
@@ -55,7 +56,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     }
 
     @Override
-    public ListenableFuture<List<AttributeKvEntry>> find(EntityId entityId, String attributeType, Collection<String> attributeKeys) {
+    public ListenableFuture<List<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String attributeType, Collection<String> attributeKeys) {
         List<AttributeKvCompositeKey> compositeKeys =
                 attributeKeys
                         .stream()
@@ -67,7 +68,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     }
 
     @Override
-    public ListenableFuture<List<AttributeKvEntry>> findAll(EntityId entityId, String attributeType) {
+    public ListenableFuture<List<AttributeKvEntry>> findAll(TenantId tenantId, EntityId entityId, String attributeType) {
         return Futures.immediateFuture(
                 DaoUtil.convertDataList(Lists.newArrayList(
                         attributeKvRepository.findAllByEntityTypeAndEntityIdAndAttributeType(
@@ -77,7 +78,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     }
 
     @Override
-    public ListenableFuture<Void> save(EntityId entityId, String attributeType, AttributeKvEntry attribute) {
+    public ListenableFuture<Void> save(TenantId tenantId, EntityId entityId, String attributeType, AttributeKvEntry attribute) {
         AttributeKvEntity entity = new AttributeKvEntity();
         entity.setId(new AttributeKvCompositeKey(entityId.getEntityType(), fromTimeUUID(entityId.getId()), attributeType, attribute.getKey()));
         entity.setLastUpdateTs(attribute.getLastUpdateTs());
@@ -92,7 +93,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     }
 
     @Override
-    public ListenableFuture<List<Void>> removeAll(EntityId entityId, String attributeType, List<String> keys) {
+    public ListenableFuture<List<Void>> removeAll(TenantId tenantId, EntityId entityId, String attributeType, List<String> keys) {
         List<AttributeKvEntity> entitiesToDelete = keys
                 .stream()
                 .map(key -> {

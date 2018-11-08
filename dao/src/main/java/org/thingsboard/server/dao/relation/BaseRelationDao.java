@@ -29,6 +29,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
@@ -83,45 +84,45 @@ public class BaseRelationDao extends CassandraAbstractAsyncDao implements Relati
     }
 
     @Override
-    public ListenableFuture<List<EntityRelation>> findAllByFrom(EntityId from, RelationTypeGroup typeGroup) {
+    public ListenableFuture<List<EntityRelation>> findAllByFrom(TenantId tenantId, EntityId from, RelationTypeGroup typeGroup) {
         BoundStatement stmt = getFindAllByFromStmt().bind()
                 .setUUID(0, from.getId())
                 .setString(1, from.getEntityType().name())
                 .set(2, typeGroup, relationTypeGroupCodec);
-        return executeAsyncRead(from, stmt);
+        return executeAsyncRead(tenantId, from, stmt);
     }
 
     @Override
-    public ListenableFuture<List<EntityRelation>> findAllByFromAndType(EntityId from, String relationType, RelationTypeGroup typeGroup) {
+    public ListenableFuture<List<EntityRelation>> findAllByFromAndType(TenantId tenantId, EntityId from, String relationType, RelationTypeGroup typeGroup) {
         BoundStatement stmt = getFindAllByFromAndTypeStmt().bind()
                 .setUUID(0, from.getId())
                 .setString(1, from.getEntityType().name())
                 .set(2, typeGroup, relationTypeGroupCodec)
                 .setString(3, relationType);
-        return executeAsyncRead(from, stmt);
+        return executeAsyncRead(tenantId, from, stmt);
     }
 
     @Override
-    public ListenableFuture<List<EntityRelation>> findAllByTo(EntityId to, RelationTypeGroup typeGroup) {
+    public ListenableFuture<List<EntityRelation>> findAllByTo(TenantId tenantId, EntityId to, RelationTypeGroup typeGroup) {
         BoundStatement stmt = getFindAllByToStmt().bind()
                 .setUUID(0, to.getId())
                 .setString(1, to.getEntityType().name())
                 .set(2, typeGroup, relationTypeGroupCodec);
-        return executeAsyncRead(to, stmt);
+        return executeAsyncRead(tenantId, to, stmt);
     }
 
     @Override
-    public ListenableFuture<List<EntityRelation>> findAllByToAndType(EntityId to, String relationType, RelationTypeGroup typeGroup) {
+    public ListenableFuture<List<EntityRelation>> findAllByToAndType(TenantId tenantId, EntityId to, String relationType, RelationTypeGroup typeGroup) {
         BoundStatement stmt = getFindAllByToAndTypeStmt().bind()
                 .setUUID(0, to.getId())
                 .setString(1, to.getEntityType().name())
                 .set(2, typeGroup, relationTypeGroupCodec)
                 .setString(3, relationType);
-        return executeAsyncRead(to, stmt);
+        return executeAsyncRead(tenantId, to, stmt);
     }
 
     @Override
-    public ListenableFuture<Boolean> checkRelation(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
+    public ListenableFuture<Boolean> checkRelation(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
         BoundStatement stmt = getCheckRelationStmt().bind()
                 .setUUID(0, from.getId())
                 .setString(1, from.getEntityType().name())
@@ -129,11 +130,11 @@ public class BaseRelationDao extends CassandraAbstractAsyncDao implements Relati
                 .setString(3, to.getEntityType().name())
                 .set(4, typeGroup, relationTypeGroupCodec)
                 .setString(5, relationType);
-        return getFuture(executeAsyncRead(stmt), rs -> rs != null ? rs.one() != null : false);
+        return getFuture(executeAsyncRead(tenantId, stmt), rs -> rs != null ? rs.one() != null : false);
     }
 
     @Override
-    public ListenableFuture<EntityRelation> getRelation(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
+    public ListenableFuture<EntityRelation> getRelation(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
         BoundStatement stmt = getCheckRelationStmt().bind()
                 .setUUID(0, from.getId())
                 .setString(1, from.getEntityType().name())
@@ -141,24 +142,24 @@ public class BaseRelationDao extends CassandraAbstractAsyncDao implements Relati
                 .setString(3, to.getEntityType().name())
                 .set(4, typeGroup, relationTypeGroupCodec)
                 .setString(5, relationType);
-        return getFuture(executeAsyncRead(stmt), rs -> rs != null ? getEntityRelation(rs.one()) : null);
+        return getFuture(executeAsyncRead(tenantId, stmt), rs -> rs != null ? getEntityRelation(rs.one()) : null);
     }
 
     @Override
-    public boolean saveRelation(EntityRelation relation) {
-        BoundStatement stmt = getSaveRelationStatement(relation);
-        ResultSet rs = executeWrite(stmt);
+    public boolean saveRelation(TenantId tenantId, EntityRelation relation) {
+        BoundStatement stmt = getSaveRelationStatement(tenantId, relation);
+        ResultSet rs = executeWrite(tenantId, stmt);
         return rs.wasApplied();
     }
 
     @Override
-    public ListenableFuture<Boolean> saveRelationAsync(EntityRelation relation) {
-        BoundStatement stmt = getSaveRelationStatement(relation);
-        ResultSetFuture future = executeAsyncWrite(stmt);
+    public ListenableFuture<Boolean> saveRelationAsync(TenantId tenantId, EntityRelation relation) {
+        BoundStatement stmt = getSaveRelationStatement(tenantId, relation);
+        ResultSetFuture future = executeAsyncWrite(tenantId, stmt);
         return getBooleanListenableFuture(future);
     }
 
-    private BoundStatement getSaveRelationStatement(EntityRelation relation) {
+    private BoundStatement getSaveRelationStatement(TenantId tenantId, EntityRelation relation) {
         BoundStatement stmt = getSaveStmt().bind()
                 .setUUID(0, relation.getFrom().getId())
                 .setString(1, relation.getFrom().getEntityType().name())
@@ -171,30 +172,30 @@ public class BaseRelationDao extends CassandraAbstractAsyncDao implements Relati
     }
 
     @Override
-    public boolean deleteRelation(EntityRelation relation) {
-        return deleteRelation(relation.getFrom(), relation.getTo(), relation.getType(), relation.getTypeGroup());
+    public boolean deleteRelation(TenantId tenantId, EntityRelation relation) {
+        return deleteRelation(tenantId, relation.getFrom(), relation.getTo(), relation.getType(), relation.getTypeGroup());
     }
 
     @Override
-    public ListenableFuture<Boolean> deleteRelationAsync(EntityRelation relation) {
-        return deleteRelationAsync(relation.getFrom(), relation.getTo(), relation.getType(), relation.getTypeGroup());
+    public ListenableFuture<Boolean> deleteRelationAsync(TenantId tenantId, EntityRelation relation) {
+        return deleteRelationAsync(tenantId, relation.getFrom(), relation.getTo(), relation.getType(), relation.getTypeGroup());
     }
 
     @Override
-    public boolean deleteRelation(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
-        BoundStatement stmt = getDeleteRelationStatement(from, to, relationType, typeGroup);
-        ResultSet rs = executeWrite(stmt);
+    public boolean deleteRelation(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
+        BoundStatement stmt = getDeleteRelationStatement(tenantId, from, to, relationType, typeGroup);
+        ResultSet rs = executeWrite(tenantId, stmt);
         return rs.wasApplied();
     }
 
     @Override
-    public ListenableFuture<Boolean> deleteRelationAsync(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
-        BoundStatement stmt = getDeleteRelationStatement(from, to, relationType, typeGroup);
-        ResultSetFuture future = executeAsyncWrite(stmt);
+    public ListenableFuture<Boolean> deleteRelationAsync(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
+        BoundStatement stmt = getDeleteRelationStatement(tenantId, from, to, relationType, typeGroup);
+        ResultSetFuture future = executeAsyncWrite(tenantId, stmt);
         return getBooleanListenableFuture(future);
     }
 
-    private BoundStatement getDeleteRelationStatement(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
+    private BoundStatement getDeleteRelationStatement(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
         BoundStatement stmt = getDeleteStmt().bind()
                 .setUUID(0, from.getId())
                 .setString(1, from.getEntityType().name())
@@ -206,26 +207,26 @@ public class BaseRelationDao extends CassandraAbstractAsyncDao implements Relati
     }
 
     @Override
-    public boolean deleteOutboundRelations(EntityId entity) {
+    public boolean deleteOutboundRelations(TenantId tenantId, EntityId entity) {
         BoundStatement stmt = getDeleteAllByEntityStmt().bind()
                 .setUUID(0, entity.getId())
                 .setString(1, entity.getEntityType().name());
-        ResultSet rs = executeWrite(stmt);
+        ResultSet rs = executeWrite(tenantId, stmt);
         return rs.wasApplied();
     }
 
 
     @Override
-    public ListenableFuture<Boolean> deleteOutboundRelationsAsync(EntityId entity) {
+    public ListenableFuture<Boolean> deleteOutboundRelationsAsync(TenantId tenantId, EntityId entity) {
         BoundStatement stmt = getDeleteAllByEntityStmt().bind()
                 .setUUID(0, entity.getId())
                 .setString(1, entity.getEntityType().name());
-        ResultSetFuture future = executeAsyncWrite(stmt);
+        ResultSetFuture future = executeAsyncWrite(tenantId, stmt);
         return getBooleanListenableFuture(future);
     }
 
     @Override
-    public ListenableFuture<List<EntityRelation>> findRelations(EntityId from, String relationType, RelationTypeGroup typeGroup, EntityType childType, TimePageLink pageLink) {
+    public ListenableFuture<List<EntityRelation>> findRelations(TenantId tenantId, EntityId from, String relationType, RelationTypeGroup typeGroup, EntityType childType, TimePageLink pageLink) {
         Select.Where query = CassandraAbstractSearchTimeDao.buildQuery(ModelConstants.RELATION_BY_TYPE_AND_CHILD_TYPE_VIEW_NAME,
                 Arrays.asList(eq(ModelConstants.RELATION_FROM_ID_PROPERTY, from.getId()),
                         eq(ModelConstants.RELATION_FROM_TYPE_PROPERTY, from.getEntityType().name()),
@@ -241,7 +242,7 @@ public class BaseRelationDao extends CassandraAbstractAsyncDao implements Relati
                                 QueryBuilder.asc(ModelConstants.RELATION_TO_TYPE_PROPERTY)
                 ),
                 pageLink, ModelConstants.RELATION_TO_ID_PROPERTY);
-        return getFuture(executeAsyncRead(query), this::getEntityRelations);
+        return getFuture(executeAsyncRead(tenantId, query), this::getEntityRelations);
     }
 
     private PreparedStatement getSaveStmt() {
@@ -347,9 +348,9 @@ public class BaseRelationDao extends CassandraAbstractAsyncDao implements Relati
         return EntityIdFactory.getByTypeAndUuid(row.getString(typeColumn), row.getUUID(uuidColumn));
     }
 
-    private ListenableFuture<List<EntityRelation>> executeAsyncRead(EntityId from, BoundStatement stmt) {
+    private ListenableFuture<List<EntityRelation>> executeAsyncRead(TenantId tenantId, EntityId from, BoundStatement stmt) {
         log.debug("Generated query [{}] for entity {}", stmt, from);
-        return getFuture(executeAsyncRead(stmt), rs -> getEntityRelations(rs));
+        return getFuture(executeAsyncRead(tenantId, stmt), rs -> getEntityRelations(rs));
     }
 
     private ListenableFuture<Boolean> getBooleanListenableFuture(ResultSetFuture rsFuture) {

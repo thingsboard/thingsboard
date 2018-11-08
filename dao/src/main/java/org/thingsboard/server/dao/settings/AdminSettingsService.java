@@ -17,13 +17,14 @@ package org.thingsboard.server.dao.settings;
 
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.id.AdminSettingsId;
+import org.thingsboard.server.common.data.id.TenantId;
 
 public interface AdminSettingsService {
 
-    AdminSettings findAdminSettingsById(AdminSettingsId adminSettingsId);
+    AdminSettings findAdminSettingsById(TenantId tenantId, AdminSettingsId adminSettingsId);
 
-    AdminSettings findAdminSettingsByKey(String key);
+    AdminSettings findAdminSettingsByKey(TenantId tenantId, String key);
     
-    AdminSettings saveAdminSettings(AdminSettings adminSettings);
+    AdminSettings saveAdminSettings(TenantId tenantId, AdminSettings adminSettings);
     
 }
