@@ -75,7 +75,7 @@ public class WidgetTypeController extends BaseController {
         try {
             WidgetTypeId widgetTypeId = new WidgetTypeId(toUUID(strWidgetTypeId));
             checkWidgetTypeId(widgetTypeId, true);
-            widgetTypeService.deleteWidgetType(widgetTypeId);
+            widgetTypeService.deleteWidgetType(getCurrentUser().getTenantId(), widgetTypeId);
         } catch (Exception e) {
             throw handleException(e);
         }

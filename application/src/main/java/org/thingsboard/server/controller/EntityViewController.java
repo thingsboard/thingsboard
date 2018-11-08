@@ -114,7 +114,7 @@ public class EntityViewController extends BaseController {
     private ListenableFuture<List<Void>> copyAttributesFromEntityToEntityView(EntityView entityView, String scope, Collection<String> keys, SecurityUser user) throws ThingsboardException {
         EntityViewId entityId = entityView.getId();
         if (keys != null && !keys.isEmpty()) {
-            ListenableFuture<List<AttributeKvEntry>> getAttrFuture = attributesService.find(entityView.getEntityId(), scope, keys);
+            ListenableFuture<List<AttributeKvEntry>> getAttrFuture = attributesService.find(getTenantId(), entityView.getEntityId(), scope, keys);
             return Futures.transform(getAttrFuture, attributeKvEntries -> {
                 List<AttributeKvEntry> attributes;
                 if (attributeKvEntries != null && !attributeKvEntries.isEmpty()) {
@@ -129,7 +129,7 @@ public class EntityViewController extends BaseController {
                                                 (startTime == 0 && endTime > lastUpdateTs)
                                                 ? true : startTime < lastUpdateTs && endTime > lastUpdateTs;
                                     }).collect(Collectors.toList());
-                    tsSubService.saveAndNotify(entityId, scope, attributes, new FutureCallback<Void>() {
+                    tsSubService.saveAndNotify(entityView.getTenantId(), entityId, scope, attributes, new FutureCallback<Void>() {
                         @Override
                         public void onSuccess(@Nullable Void tmp) {
                             try {
@@ -169,7 +169,7 @@ public class EntityViewController extends BaseController {
         try {
             EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
             EntityView entityView = checkEntityViewId(entityViewId);
-            entityViewService.deleteEntityView(entityViewId);
+            entityViewService.deleteEntityView(getTenantId(), entityViewId);
             logEntityAction(entityViewId, entityView, entityView.getCustomerId(),
                     ActionType.DELETED, null, strEntityViewId);
         } catch (Exception e) {
@@ -208,7 +208,7 @@ public class EntityViewController extends BaseController {
             EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
             checkEntityViewId(entityViewId);
 
-            EntityView savedEntityView = checkNotNull(entityViewService.assignEntityViewToCustomer(entityViewId, customerId));
+            EntityView savedEntityView = checkNotNull(entityViewService.assignEntityViewToCustomer(getTenantId(), entityViewId, customerId));
             logEntityAction(entityViewId, savedEntityView,
                     savedEntityView.getCustomerId(),
                     ActionType.ASSIGNED_TO_CUSTOMER, null, strEntityViewId, strCustomerId, customer.getName());
@@ -233,7 +233,7 @@ public class EntityViewController extends BaseController {
                 throw new IncorrectParameterException("Entity View isn't assigned to any customer!");
             }
             Customer customer = checkCustomerId(entityView.getCustomerId());
-            EntityView savedEntityView = checkNotNull(entityViewService.unassignEntityViewFromCustomer(entityViewId));
+            EntityView savedEntityView = checkNotNull(entityViewService.unassignEntityViewFromCustomer(getTenantId(), entityViewId));
             logEntityAction(entityViewId, entityView,
                     entityView.getCustomerId(),
                     ActionType.UNASSIGNED_FROM_CUSTOMER, null, strEntityViewId, customer.getId().toString(), customer.getName());
@@ -305,7 +305,7 @@ public class EntityViewController extends BaseController {
         checkNotNull(query.getEntityViewTypes());
         checkEntityId(query.getParameters().getEntityId());
         try {
-            List<EntityView> entityViews = checkNotNull(entityViewService.findEntityViewsByQuery(query).get());
+            List<EntityView> entityViews = checkNotNull(entityViewService.findEntityViewsByQuery(getTenantId(), query).get());
             entityViews = entityViews.stream().filter(entityView -> {
                 try {
                     checkEntityView(entityView);

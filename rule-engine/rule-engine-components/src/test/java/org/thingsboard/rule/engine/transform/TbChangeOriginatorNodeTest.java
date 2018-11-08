@@ -42,6 +42,8 @@ import org.thingsboard.server.dao.asset.AssetService;
 import java.util.concurrent.Callable;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -92,7 +94,7 @@ public class TbChangeOriginatorNodeTest {
         TbMsg msg = new TbMsg(UUIDs.timeBased(), "ASSET", assetId, new TbMsgMetaData(), "{}", ruleChainId, ruleNodeId, 0L);
 
         when(ctx.getAssetService()).thenReturn(assetService);
-        when(assetService.findAssetByIdAsync(assetId)).thenReturn(Futures.immediateFuture(asset));
+        when(assetService.findAssetByIdAsync(any(),eq( assetId))).thenReturn(Futures.immediateFuture(asset));
 
         node.onMsg(ctx, msg);
 
@@ -120,7 +122,7 @@ public class TbChangeOriginatorNodeTest {
         TbMsg msg = new TbMsg(UUIDs.timeBased(), "ASSET", assetId, new TbMsgMetaData(), "{}", ruleChainId, ruleNodeId, 0L);
 
         when(ctx.getAssetService()).thenReturn(assetService);
-        when(assetService.findAssetByIdAsync(assetId)).thenReturn(Futures.immediateFuture(asset));
+        when(assetService.findAssetByIdAsync(any(), eq(assetId))).thenReturn(Futures.immediateFuture(asset));
 
         node.onMsg(ctx, msg);
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
@@ -147,7 +149,7 @@ public class TbChangeOriginatorNodeTest {
         TbMsg msg = new TbMsg(UUIDs.timeBased(), "ASSET", assetId, new TbMsgMetaData(), "{}", ruleChainId, ruleNodeId, 0L);
 
         when(ctx.getAssetService()).thenReturn(assetService);
-        when(assetService.findAssetByIdAsync(assetId)).thenReturn(Futures.immediateFuture(null));
+        when(assetService.findAssetByIdAsync(any(), eq(assetId))).thenReturn(Futures.immediateFuture(null));
 
         node.onMsg(ctx, msg);
         verify(ctx).tellNext(same(msg), same(FAILURE));

@@ -17,6 +17,7 @@ package org.thingsboard.server.service.telemetry;
 
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.service.telemetry.sub.SubscriptionState;
 

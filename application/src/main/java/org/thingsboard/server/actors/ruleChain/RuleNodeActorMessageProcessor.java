@@ -49,7 +49,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
         this.parent = parent;
         this.self = self;
         this.service = systemContext.getRuleChainService();
-        this.ruleNode = systemContext.getRuleChainService().findRuleNodeById(entityId);
+        this.ruleNode = systemContext.getRuleChainService().findRuleNodeById(tenantId, entityId);
         this.defaultCtx = new DefaultTbContext(systemContext, new RuleNodeCtx(tenantId, parent, self, ruleNode));
     }
 
@@ -61,7 +61,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
 
     @Override
     public void onUpdate(ActorContext context) throws Exception {
-        RuleNode newRuleNode = systemContext.getRuleChainService().findRuleNodeById(entityId);
+        RuleNode newRuleNode = systemContext.getRuleChainService().findRuleNodeById(tenantId, entityId);
         boolean restartRequired = !(ruleNode.getType().equals(newRuleNode.getType())
                 && ruleNode.getConfiguration().equals(newRuleNode.getConfiguration()));
         this.ruleNode = newRuleNode;

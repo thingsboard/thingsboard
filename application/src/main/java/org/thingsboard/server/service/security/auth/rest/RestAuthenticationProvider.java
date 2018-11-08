@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
@@ -76,12 +77,12 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
     }
 
     private Authentication authenticateByUsernameAndPassword(UserPrincipal userPrincipal, String username, String password) {
-        User user = userService.findUserByEmail(username);
+        User user = userService.findUserByEmail(TenantId.SYS_TENANT_ID, username);
         if (user == null) {
             throw new UsernameNotFoundException("User not found: " + username);
         }
 
-        UserCredentials userCredentials = userService.findUserCredentialsByUserId(user.getId());
+        UserCredentials userCredentials = userService.findUserCredentialsByUserId(TenantId.SYS_TENANT_ID, user.getId());
         if (userCredentials == null) {
             throw new UsernameNotFoundException("User credentials not found");
         }
@@ -108,7 +109,7 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
         } catch (Exception e) {
             throw new BadCredentialsException("Authentication Failed. Public Id is not valid.");
         }
-        Customer publicCustomer = customerService.findCustomerById(customerId);
+        Customer publicCustomer = customerService.findCustomerById(TenantId.SYS_TENANT_ID, customerId);
         if (publicCustomer == null) {
             throw new UsernameNotFoundException("Public entity not found: " + publicId);
         }

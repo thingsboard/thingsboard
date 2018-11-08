@@ -143,7 +143,7 @@ public class TenantActor extends RuleChainManagerActor {
         if (target != null) {
             if (msg.getEntityId().getEntityType() == EntityType.RULE_CHAIN) {
                 RuleChain ruleChain = systemContext.getRuleChainService().
-                        findRuleChainById(new RuleChainId(msg.getEntityId().getId()));
+                        findRuleChainById(tenantId, new RuleChainId(msg.getEntityId().getId()));
                 ruleChainManager.visit(ruleChain, target);
             }
             target.tell(msg, ActorRef.noSender());

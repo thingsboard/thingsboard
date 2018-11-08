@@ -131,7 +131,7 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
         device.setType("default");
         device = doPost("/api/device", device, Device.class);
 
-        attributesService.save(device.getId(), DataConstants.SERVER_SCOPE,
+        attributesService.save(device.getTenantId(), device.getId(), DataConstants.SERVER_SCOPE,
                 Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry("serverAttributeKey", "serverAttributeValue"), System.currentTimeMillis())));
 
         Thread.sleep(1000);

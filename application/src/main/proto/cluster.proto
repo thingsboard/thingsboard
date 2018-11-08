@@ -67,11 +67,12 @@ message SubscriptionProto {
   string sessionId = 1;
   int32 subscriptionId = 2;
   string entityType = 3;
-  string entityId = 4;
-  string type = 5;
-  bool allKeys = 6;
-  repeated SubscriptionKetStateProto keyStates = 7;
-  string scope = 8;
+  string tenantId = 4;
+  string entityId = 5;
+  string type = 6;
+  bool allKeys = 7;
+  repeated SubscriptionKetStateProto keyStates = 8;
+  string scope = 9;
 }
 
 message SubscriptionUpdateProto {

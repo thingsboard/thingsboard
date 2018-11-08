@@ -77,7 +77,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
         if (CollectionUtils.isEmpty(keys)) {
             return Futures.immediateFuture(null);
         }
-        ListenableFuture<List<AttributeKvEntry>> latest = ctx.getAttributesService().find(entityId, scope, keys);
+        ListenableFuture<List<AttributeKvEntry>> latest = ctx.getAttributesService().find(ctx.getTenantId(), entityId, scope, keys);
         return Futures.transform(latest, l -> {
             l.forEach(r -> {
                 if (r.getValue() != null) {
@@ -94,7 +94,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
         if (CollectionUtils.isEmpty(keys)) {
             return Futures.immediateFuture(null);
         }
-        ListenableFuture<List<TsKvEntry>> latest = ctx.getTimeseriesService().findLatest(entityId, keys);
+        ListenableFuture<List<TsKvEntry>> latest = ctx.getTimeseriesService().findLatest(ctx.getTenantId(), entityId, keys);
         return Futures.transform(latest, l -> {
             l.forEach(r -> {
                 if (r.getValue() != null) {

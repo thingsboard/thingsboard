@@ -24,6 +24,9 @@ import org.thingsboard.server.common.data.EntityType;
 
 public final class TenantId extends UUIDBased implements EntityId {
 
+    @JsonIgnore
+    public static final TenantId SYS_TENANT_ID = new TenantId(EntityId.NULL_UUID);
+
     private static final long serialVersionUID = 1L;
 
     @JsonCreator

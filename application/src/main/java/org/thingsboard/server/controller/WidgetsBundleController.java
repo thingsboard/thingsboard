@@ -77,7 +77,7 @@ public class WidgetsBundleController extends BaseController {
         try {
             WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
             checkWidgetsBundleId(widgetsBundleId, true);
-            widgetsBundleService.deleteWidgetsBundle(widgetsBundleId);
+            widgetsBundleService.deleteWidgetsBundle(getTenantId(), widgetsBundleId);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -94,7 +94,7 @@ public class WidgetsBundleController extends BaseController {
         try {
             TextPageLink pageLink = createPageLink(limit, textSearch, idOffset, textOffset);
             if (getCurrentUser().getAuthority() == Authority.SYS_ADMIN) {
-                return checkNotNull(widgetsBundleService.findSystemWidgetsBundlesByPageLink(pageLink));
+                return checkNotNull(widgetsBundleService.findSystemWidgetsBundlesByPageLink(getTenantId(), pageLink));
             } else {
                 TenantId tenantId = getCurrentUser().getTenantId();
                 return checkNotNull(widgetsBundleService.findAllTenantWidgetsBundlesByTenantIdAndPageLink(tenantId, pageLink));
@@ -110,7 +110,7 @@ public class WidgetsBundleController extends BaseController {
     public List<WidgetsBundle> getWidgetsBundles() throws ThingsboardException {
         try {
             if (getCurrentUser().getAuthority() == Authority.SYS_ADMIN) {
-                return checkNotNull(widgetsBundleService.findSystemWidgetsBundles());
+                return checkNotNull(widgetsBundleService.findSystemWidgetsBundles(getTenantId()));
             } else {
                 TenantId tenantId = getCurrentUser().getTenantId();
                 return checkNotNull(widgetsBundleService.findAllTenantWidgetsBundlesByTenantId(tenantId));

@@ -63,6 +63,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -131,7 +132,7 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
         long startTime = 0L;
         long endTime = 0L;
         if (entityId.getEntityType().equals(EntityType.ENTITY_VIEW) && TelemetryFeature.TIMESERIES.equals(sub.getType())) {
-            EntityView entityView = entityViewService.findEntityViewById(new EntityViewId(entityId.getId()));
+            EntityView entityView = entityViewService.findEntityViewById(TenantId.SYS_TENANT_ID, new EntityViewId(entityId.getId()));
             entityId = entityView.getEntityId();
             startTime = entityView.getStartTimeMs();
             endTime = entityView.getEndTimeMs();
@@ -160,7 +161,7 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
                     .stream().filter(entry -> entityView.getKeys().getTimeseries().contains(entry.getKey()))
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         }
-        return new SubscriptionState(sub.getWsSessionId(), sub.getSubscriptionId(), entityId, sub.getType(), false, keyStates, sub.getScope());
+        return new SubscriptionState(sub.getWsSessionId(), sub.getSubscriptionId(), sub.getTenantId(), entityId, sub.getType(), false, keyStates, sub.getScope());
     }
 
     @Override
@@ -185,45 +186,45 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
     }
 
     @Override
-    public void saveAndNotify(EntityId entityId, List<TsKvEntry> ts, FutureCallback<Void> callback) {
-        saveAndNotify(entityId, ts, 0L, callback);
+    public void saveAndNotify(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, FutureCallback<Void> callback) {
+        saveAndNotify(tenantId, entityId, ts, 0L, callback);
     }
 
     @Override
-    public void saveAndNotify(EntityId entityId, List<TsKvEntry> ts, long ttl, FutureCallback<Void> callback) {
-        ListenableFuture<List<Void>> saveFuture = tsService.save(entityId, ts, ttl);
+    public void saveAndNotify(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, long ttl, FutureCallback<Void> callback) {
+        ListenableFuture<List<Void>> saveFuture = tsService.save(tenantId, entityId, ts, ttl);
         addMainCallback(saveFuture, callback);
         addWsCallback(saveFuture, success -> onTimeseriesUpdate(entityId, ts));
     }
 
     @Override
-    public void saveAndNotify(EntityId entityId, String scope, List<AttributeKvEntry> attributes, FutureCallback<Void> callback) {
-        ListenableFuture<List<Void>> saveFuture = attrService.save(entityId, scope, attributes);
+    public void saveAndNotify(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, FutureCallback<Void> callback) {
+        ListenableFuture<List<Void>> saveFuture = attrService.save(tenantId, entityId, scope, attributes);
         addMainCallback(saveFuture, callback);
         addWsCallback(saveFuture, success -> onAttributesUpdate(entityId, scope, attributes));
     }
 
     @Override
-    public void saveAttrAndNotify(EntityId entityId, String scope, String key, long value, FutureCallback<Void> callback) {
-        saveAndNotify(entityId, scope, Collections.singletonList(new BaseAttributeKvEntry(new LongDataEntry(key, value)
+    public void saveAttrAndNotify(TenantId tenantId, EntityId entityId, String scope, String key, long value, FutureCallback<Void> callback) {
+        saveAndNotify(tenantId, entityId, scope, Collections.singletonList(new BaseAttributeKvEntry(new LongDataEntry(key, value)
                 , System.currentTimeMillis())), callback);
     }
 
     @Override
-    public void saveAttrAndNotify(EntityId entityId, String scope, String key, String value, FutureCallback<Void> callback) {
-        saveAndNotify(entityId, scope, Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry(key, value)
+    public void saveAttrAndNotify(TenantId tenantId, EntityId entityId, String scope, String key, String value, FutureCallback<Void> callback) {
+        saveAndNotify(tenantId, entityId, scope, Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry(key, value)
                 , System.currentTimeMillis())), callback);
     }
 
     @Override
-    public void saveAttrAndNotify(EntityId entityId, String scope, String key, double value, FutureCallback<Void> callback) {
-        saveAndNotify(entityId, scope, Collections.singletonList(new BaseAttributeKvEntry(new DoubleDataEntry(key, value)
+    public void saveAttrAndNotify(TenantId tenantId, EntityId entityId, String scope, String key, double value, FutureCallback<Void> callback) {
+        saveAndNotify(tenantId, entityId, scope, Collections.singletonList(new BaseAttributeKvEntry(new DoubleDataEntry(key, value)
                 , System.currentTimeMillis())), callback);
     }
 
     @Override
-    public void saveAttrAndNotify(EntityId entityId, String scope, String key, boolean value, FutureCallback<Void> callback) {
-        saveAndNotify(entityId, scope, Collections.singletonList(new BaseAttributeKvEntry(new BooleanDataEntry(key, value)
+    public void saveAttrAndNotify(TenantId tenantId, EntityId entityId, String scope, String key, boolean value, FutureCallback<Void> callback) {
+        saveAndNotify(tenantId, entityId, scope, Collections.singletonList(new BaseAttributeKvEntry(new BooleanDataEntry(key, value)
                 , System.currentTimeMillis())), callback);
     }
 
@@ -246,6 +247,7 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
                 Collectors.toMap(ClusterAPIProtos.SubscriptionKetStateProto::getKey, ClusterAPIProtos.SubscriptionKetStateProto::getTs));
         Subscription subscription = new Subscription(
                 new SubscriptionState(proto.getSessionId(), proto.getSubscriptionId(),
+                        new TenantId(UUID.fromString(proto.getTenantId())),
                         EntityIdFactory.getByTypeAndId(proto.getEntityType(), proto.getEntityId()),
                         TelemetryFeature.valueOf(proto.getType()), proto.getAllKeys(), statesMap, proto.getScope()),
                 false, new ServerAddress(serverAddress.getHost(), serverAddress.getPort(), serverAddress.getServerType()));
@@ -372,7 +374,7 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
         registerSubscription(sessionId, entityId, subscription);
         if (subscription.getType() == TelemetryFeature.ATTRIBUTES) {
             final Map<String, Long> keyStates = subscription.getKeyStates();
-            DonAsynchron.withCallback(attrService.find(entityId, DataConstants.CLIENT_SCOPE, keyStates.keySet()), values -> {
+            DonAsynchron.withCallback(attrService.find(subscription.getSub().getTenantId(), entityId, DataConstants.CLIENT_SCOPE, keyStates.keySet()), values -> {
                         List<TsKvEntry> missedUpdates = new ArrayList<>();
                         values.forEach(latestEntry -> {
                             if (latestEntry.getLastUpdateTs() > keyStates.get(latestEntry.getKey())) {
@@ -395,7 +397,7 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
                 }
             });
             if (!queries.isEmpty()) {
-                DonAsynchron.withCallback(tsService.findAll(entityId, queries),
+                DonAsynchron.withCallback(tsService.findAll(subscription.getSub().getTenantId(), entityId, queries),
                         missedUpdates -> {
                             if (missedUpdates != null && !missedUpdates.isEmpty()) {
                                 tellRemoteSubUpdate(address, sessionId, new SubscriptionUpdate(subscription.getSubscriptionId(), missedUpdates));
@@ -606,6 +608,7 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
         ClusterAPIProtos.SubscriptionProto.Builder builder = ClusterAPIProtos.SubscriptionProto.newBuilder();
         builder.setSessionId(sessionId);
         builder.setSubscriptionId(sub.getSubscriptionId());
+        builder.setTenantId(sub.getSub().getTenantId().getId().toString());
         builder.setEntityType(sub.getEntityId().getEntityType().name());
         builder.setEntityId(sub.getEntityId().getId().toString());
         builder.setType(sub.getType().name());

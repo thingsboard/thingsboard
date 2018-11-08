@@ -90,9 +90,9 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     @Override
     public void start(ActorContext context) {
         if (!started) {
-            RuleChain ruleChain = service.findRuleChainById(entityId);
+            RuleChain ruleChain = service.findRuleChainById(tenantId, entityId);
             ruleChainName = ruleChain.getName();
-            List<RuleNode> ruleNodeList = service.getRuleChainNodes(entityId);
+            List<RuleNode> ruleNodeList = service.getRuleChainNodes(tenantId, entityId);
             log.trace("[{}][{}] Starting rule chain with {} nodes", tenantId, entityId, ruleNodeList.size());
             // Creating and starting the actors;
             for (RuleNode ruleNode : ruleNodeList) {
@@ -109,9 +109,9 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
 
     @Override
     public void onUpdate(ActorContext context) {
-        RuleChain ruleChain = service.findRuleChainById(entityId);
+        RuleChain ruleChain = service.findRuleChainById(tenantId, entityId);
         ruleChainName = ruleChain.getName();
-        List<RuleNode> ruleNodeList = service.getRuleChainNodes(entityId);
+        List<RuleNode> ruleNodeList = service.getRuleChainNodes(tenantId, entityId);
         log.trace("[{}][{}] Updating rule chain with {} nodes", tenantId, entityId, ruleNodeList.size());
         for (RuleNode ruleNode : ruleNodeList) {
             RuleNodeCtx existing = nodeActors.get(ruleNode.getId());
@@ -164,7 +164,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         nodeRoutes.clear();
         // Populating the routes map;
         for (RuleNode ruleNode : ruleNodeList) {
-            List<EntityRelation> relations = service.getRuleNodeRelations(ruleNode.getId());
+            List<EntityRelation> relations = service.getRuleNodeRelations(TenantId.SYS_TENANT_ID, ruleNode.getId());
             log.trace("[{}][{}][{}] Processing rule node relations [{}]", tenantId, entityId, ruleNode.getId(), relations.size());
             if (relations.size() == 0) {
                 nodeRoutes.put(ruleNode.getId(), Collections.emptyList());

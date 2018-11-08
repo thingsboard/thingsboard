@@ -37,26 +37,26 @@ public class EntitiesFieldsAsyncLoader {
     public static ListenableFuture<EntityFieldsData> findAsync(TbContext ctx, EntityId original) {
         switch (original.getEntityType()) {
             case TENANT:
-                return getAsync(ctx.getTenantService().findTenantByIdAsync((TenantId) original),
-                        t -> new EntityFieldsData(t));
+                return getAsync(ctx.getTenantService().findTenantByIdAsync(ctx.getTenantId(), (TenantId) original),
+                        EntityFieldsData::new);
             case CUSTOMER:
-                return getAsync(ctx.getCustomerService().findCustomerByIdAsync((CustomerId) original),
-                        t -> new EntityFieldsData(t));
+                return getAsync(ctx.getCustomerService().findCustomerByIdAsync(ctx.getTenantId(), (CustomerId) original),
+                        EntityFieldsData::new);
             case USER:
-                return getAsync(ctx.getUserService().findUserByIdAsync((UserId) original),
-                        t -> new EntityFieldsData(t));
+                return getAsync(ctx.getUserService().findUserByIdAsync(ctx.getTenantId(), (UserId) original),
+                        EntityFieldsData::new);
             case ASSET:
-                return getAsync(ctx.getAssetService().findAssetByIdAsync((AssetId) original),
-                        t -> new EntityFieldsData(t));
+                return getAsync(ctx.getAssetService().findAssetByIdAsync(ctx.getTenantId(), (AssetId) original),
+                        EntityFieldsData::new);
             case DEVICE:
-                return getAsync(ctx.getDeviceService().findDeviceByIdAsync((DeviceId) original),
-                        t -> new EntityFieldsData(t));
+                return getAsync(ctx.getDeviceService().findDeviceByIdAsync(ctx.getTenantId(), (DeviceId) original),
+                        EntityFieldsData::new);
             case ALARM:
-                return getAsync(ctx.getAlarmService().findAlarmByIdAsync((AlarmId) original),
-                        t -> new EntityFieldsData(t));
+                return getAsync(ctx.getAlarmService().findAlarmByIdAsync(ctx.getTenantId(), (AlarmId) original),
+                        EntityFieldsData::new);
             case RULE_CHAIN:
-                return getAsync(ctx.getRuleChainService().findRuleChainByIdAsync((RuleChainId) original),
-                        t -> new EntityFieldsData(t));
+                return getAsync(ctx.getRuleChainService().findRuleChainByIdAsync(ctx.getTenantId(), (RuleChainId) original),
+                        EntityFieldsData::new);
             default:
                 return Futures.immediateFailedFuture(new TbNodeException("Unexpected original EntityType " + original));
         }

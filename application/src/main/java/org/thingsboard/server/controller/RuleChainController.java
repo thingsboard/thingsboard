@@ -94,7 +94,7 @@ public class RuleChainController extends BaseController {
         try {
             RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
             checkRuleChain(ruleChainId);
-            return ruleChainService.loadRuleChainMetaData(ruleChainId);
+            return ruleChainService.loadRuleChainMetaData(getTenantId(), ruleChainId);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -137,9 +137,9 @@ public class RuleChainController extends BaseController {
             RuleChain ruleChain = checkRuleChain(ruleChainId);
             TenantId tenantId = getCurrentUser().getTenantId();
             RuleChain previousRootRuleChain = ruleChainService.getRootTenantRuleChain(tenantId);
-            if (ruleChainService.setRootRuleChain(ruleChainId)) {
+            if (ruleChainService.setRootRuleChain(getTenantId(), ruleChainId)) {
 
-                previousRootRuleChain = ruleChainService.findRuleChainById(previousRootRuleChain.getId());
+                previousRootRuleChain = ruleChainService.findRuleChainById(getTenantId(), previousRootRuleChain.getId());
 
                 actorService.onEntityStateChange(previousRootRuleChain.getTenantId(), previousRootRuleChain.getId(),
                         ComponentLifecycleEvent.UPDATED);
@@ -147,7 +147,7 @@ public class RuleChainController extends BaseController {
                 logEntityAction(previousRootRuleChain.getId(), previousRootRuleChain,
                         null, ActionType.UPDATED, null);
 
-                ruleChain = ruleChainService.findRuleChainById(ruleChainId);
+                ruleChain = ruleChainService.findRuleChainById(getTenantId(), ruleChainId);
 
                 actorService.onEntityStateChange(ruleChain.getTenantId(), ruleChain.getId(),
                         ComponentLifecycleEvent.UPDATED);
@@ -172,7 +172,7 @@ public class RuleChainController extends BaseController {
     public RuleChainMetaData saveRuleChainMetaData(@RequestBody RuleChainMetaData ruleChainMetaData) throws ThingsboardException {
         try {
             RuleChain ruleChain = checkRuleChain(ruleChainMetaData.getRuleChainId());
-            RuleChainMetaData savedRuleChainMetaData = checkNotNull(ruleChainService.saveRuleChainMetaData(ruleChainMetaData));
+            RuleChainMetaData savedRuleChainMetaData = checkNotNull(ruleChainService.saveRuleChainMetaData(getTenantId(), ruleChainMetaData));
 
             actorService.onEntityStateChange(ruleChain.getTenantId(), ruleChain.getId(), ComponentLifecycleEvent.UPDATED);
 
@@ -216,7 +216,7 @@ public class RuleChainController extends BaseController {
             RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
             RuleChain ruleChain = checkRuleChain(ruleChainId);
 
-            ruleChainService.deleteRuleChainById(ruleChainId);
+            ruleChainService.deleteRuleChainById(getTenantId(), ruleChainId);
 
             actorService.onEntityStateChange(ruleChain.getTenantId(), ruleChain.getId(), ComponentLifecycleEvent.DELETED);
 
