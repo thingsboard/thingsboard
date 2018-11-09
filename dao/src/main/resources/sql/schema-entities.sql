@@ -236,7 +236,7 @@ CREATE TABLE IF NOT EXISTS entity_view (
     customer_id varchar(31),
     type varchar(255),
     name varchar(255),
-    keys varchar(255),
+    keys varchar(10000000),
     start_ts bigint,
     end_ts bigint,
     search_text varchar(255),
