@@ -51,7 +51,7 @@ public class ContainerTestSuite {
                     .withTailChildContainers(true)
                     .withEnv(installTb.getEnv())
                     .withEnv("LOAD_BALANCER_NAME", "")
-                    .withExposedService("haproxy", 80, Wait.forHttp("/swagger-ui.html").withStartupTimeout(Duration.ofSeconds(120)));
+                    .withExposedService("haproxy", 80, Wait.forHttp("/swagger-ui.html").withStartupTimeout(Duration.ofSeconds(400)));
         }
         return testContainer;
     }
