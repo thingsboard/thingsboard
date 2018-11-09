@@ -124,13 +124,6 @@ export default function AppRun($rootScope, $window, $injector, $location, $log, 
                         reloadUserFromPublicId();
                     } else if (to.module === 'private') {
                         evt.preventDefault();
-                        /*
-                        if (to.url === '/home' || to.url === '/') {
-                            $state.go('login', params);
-                        } else {
-                            showUnauthorizedDialog();
-                        }
-                        */
                         var redirectParams = {};
                         redirectParams.toName = to.name;
                         redirectParams.params = params;
