@@ -110,24 +110,34 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, time
         lastPublicDashboardId = null;
         userTokenAccessEnabled = false;
         allowedDashboardIds = [];
+        var deferred = $q.defer();
         if (!jwtToken) {
             clearTokenData();
             if (notify) {
                 $rootScope.$broadcast('unauthenticated', doLogout);
+                deferred.reject();
             }
+            deferred.resolve();
         } else {
             updateAndValidateToken(jwtToken, 'jwt_token', true);
             updateAndValidateToken(refreshToken, 'refresh_token', true);
             if (notify) {
                 loadUser(false).then(function success() {
                     $rootScope.$broadcast('authenticated');
+                    deferred.resolve();
                 }, function fail() {
                     $rootScope.$broadcast('unauthenticated');
+                    deferred.reject();
                 });
             } else {
-                loadUser(false);
+                loadUser(false).then(function success() {
+                    deferred.resolve();
+                }, function fail() {
+                    deferred.reject();
+                });
             }
         }
+        return deferred.promise;
     }
 
     function isAuthenticated() {

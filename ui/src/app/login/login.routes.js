@@ -27,6 +27,10 @@ export default function LoginRoutes($stateProvider) {
     $stateProvider.state('login', {
         url: '/login',
         module: 'public',
+        params: {
+            params: null,
+            toName: null
+        },
         views: {
             "@": {
                 controller: 'LoginController',
