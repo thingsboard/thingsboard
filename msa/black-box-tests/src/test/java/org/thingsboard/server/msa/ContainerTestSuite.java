@@ -42,13 +42,14 @@ public class ContainerTestSuite {
     @ClassRule
     public static DockerComposeContainer getTestContainer() {
         if (testContainer == null) {
+            boolean skipTailChildContainers = Boolean.valueOf(System.getProperty("blackBoxTests.skipTailChildContainers"));
             testContainer = new DockerComposeContainer(
                     new File("./../../docker/docker-compose.yml"),
                     new File("./../../docker/docker-compose.postgres.yml"),
                     new File("./../../docker/docker-compose.postgres.volumes.yml"))
                     .withPull(false)
                     .withLocalCompose(true)
-                    .withTailChildContainers(true)
+                    .withTailChildContainers(!skipTailChildContainers)
                     .withEnv(installTb.getEnv())
                     .withEnv("LOAD_BALANCER_NAME", "")
                     .withExposedService("haproxy", 80, Wait.forHttp("/swagger-ui.html").withStartupTimeout(Duration.ofSeconds(400)));
