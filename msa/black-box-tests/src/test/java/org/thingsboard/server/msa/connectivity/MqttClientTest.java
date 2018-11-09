@@ -66,7 +66,7 @@ public class MqttClientTest extends AbstractContainerTest {
 
         WsClient wsClient = subscribeToWebSocket(device.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
         MqttClient mqttClient = getMqttClient(deviceCredentials, null);
-        mqttClient.publish("v1/devices/me/telemetry", Unpooled.wrappedBuffer(createPayload().toString().getBytes()));
+        mqttClient.publish("v1/devices/me/telemetry", Unpooled.wrappedBuffer(createPayload().toString().getBytes())).get();
         WsTelemetryResponse actualLatestTelemetry = wsClient.getLastMessage();
         log.info("Received telemetry: {}", actualLatestTelemetry);
         wsClient.closeBlocking();
@@ -93,7 +93,7 @@ public class MqttClientTest extends AbstractContainerTest {
 
         WsClient wsClient = subscribeToWebSocket(device.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
         MqttClient mqttClient = getMqttClient(deviceCredentials, null);
-        mqttClient.publish("v1/devices/me/telemetry", Unpooled.wrappedBuffer(createPayload(ts).toString().getBytes()));
+        mqttClient.publish("v1/devices/me/telemetry", Unpooled.wrappedBuffer(createPayload(ts).toString().getBytes())).get();
         WsTelemetryResponse actualLatestTelemetry = wsClient.getLastMessage();
         log.info("Received telemetry: {}", actualLatestTelemetry);
         wsClient.closeBlocking();
@@ -123,7 +123,7 @@ public class MqttClientTest extends AbstractContainerTest {
         clientAttributes.addProperty("attr2", true);
         clientAttributes.addProperty("attr3", 42.0);
         clientAttributes.addProperty("attr4", 73);
-        mqttClient.publish("v1/devices/me/attributes", Unpooled.wrappedBuffer(clientAttributes.toString().getBytes()));
+        mqttClient.publish("v1/devices/me/attributes", Unpooled.wrappedBuffer(clientAttributes.toString().getBytes())).get();
         WsTelemetryResponse actualLatestTelemetry = wsClient.getLastMessage();
         log.info("Received telemetry: {}", actualLatestTelemetry);
         wsClient.closeBlocking();
@@ -146,6 +146,7 @@ public class MqttClientTest extends AbstractContainerTest {
         Device device = createDevice("mqtt_");
         DeviceCredentials deviceCredentials = restClient.getCredentials(device.getId());
 
+        WsClient wsClient = subscribeToWebSocket(device.getId(), "CLIENT_SCOPE", CmdsType.ATTR_SUB_CMDS);
         MqttMessageListener listener = new MqttMessageListener();
         MqttClient mqttClient = getMqttClient(deviceCredentials, listener);
 
@@ -153,7 +154,17 @@ public class MqttClientTest extends AbstractContainerTest {
         JsonObject clientAttributes = new JsonObject();
         String clientAttributeValue = RandomStringUtils.randomAlphanumeric(8);
         clientAttributes.addProperty("clientAttr", clientAttributeValue);
-        mqttClient.publish("v1/devices/me/attributes", Unpooled.wrappedBuffer(clientAttributes.toString().getBytes()));
+        mqttClient.publish("v1/devices/me/attributes", Unpooled.wrappedBuffer(clientAttributes.toString().getBytes())).get();
+
+        WsTelemetryResponse actualLatestTelemetry = wsClient.getLastMessage();
+        log.info("Received ws telemetry: {}", actualLatestTelemetry);
+        wsClient.closeBlocking();
+
+        Assert.assertEquals(1, actualLatestTelemetry.getData().size());
+        Assert.assertEquals(Sets.newHashSet("clientAttr"),
+                actualLatestTelemetry.getLatestValues().keySet());
+
+        Assert.assertTrue(verify(actualLatestTelemetry, "clientAttr", clientAttributeValue));
 
         // Add a new shared attribute
         JsonObject sharedAttributes = new JsonObject();
@@ -166,12 +177,16 @@ public class MqttClientTest extends AbstractContainerTest {
         Assert.assertTrue(sharedAttributesResponse.getStatusCode().is2xxSuccessful());
 
         // Subscribe to attributes response
-        mqttClient.on("v1/devices/me/attributes/response/+", listener, MqttQoS.AT_LEAST_ONCE);
+        mqttClient.on("v1/devices/me/attributes/response/+", listener, MqttQoS.AT_LEAST_ONCE).get();
+
+        // Wait until subscription is processed
+        TimeUnit.SECONDS.sleep(3);
+
         // Request attributes
         JsonObject request = new JsonObject();
         request.addProperty("clientKeys", "clientAttr");
         request.addProperty("sharedKeys", "sharedAttr");
-        mqttClient.publish("v1/devices/me/attributes/request/" + new Random().nextInt(100), Unpooled.wrappedBuffer(request.toString().getBytes()));
+        mqttClient.publish("v1/devices/me/attributes/request/" + new Random().nextInt(100), Unpooled.wrappedBuffer(request.toString().getBytes())).get();
         MqttEvent event = listener.getEvents().poll(10, TimeUnit.SECONDS);
         AttributesResponse attributes = mapper.readValue(Objects.requireNonNull(event).getMessage(), AttributesResponse.class);
         log.info("Received telemetry: {}", attributes);
@@ -193,7 +208,10 @@ public class MqttClientTest extends AbstractContainerTest {
 
         MqttMessageListener listener = new MqttMessageListener();
         MqttClient mqttClient = getMqttClient(deviceCredentials, listener);
-        mqttClient.on("v1/devices/me/attributes", listener, MqttQoS.AT_LEAST_ONCE);
+        mqttClient.on("v1/devices/me/attributes", listener, MqttQoS.AT_LEAST_ONCE).get();
+
+        // Wait until subscription is processed
+        TimeUnit.SECONDS.sleep(3);
 
         String sharedAttributeName = "sharedAttr";
 
@@ -236,7 +254,10 @@ public class MqttClientTest extends AbstractContainerTest {
 
         MqttMessageListener listener = new MqttMessageListener();
         MqttClient mqttClient = getMqttClient(deviceCredentials, listener);
-        mqttClient.on("v1/devices/me/rpc/request/+", listener, MqttQoS.AT_LEAST_ONCE);
+        mqttClient.on("v1/devices/me/rpc/request/+", listener, MqttQoS.AT_LEAST_ONCE).get();
+
+        // Wait until subscription is processed
+        TimeUnit.SECONDS.sleep(3);
 
         // Send an RPC from the server
         JsonObject serverRpcPayload = new JsonObject();
@@ -263,7 +284,7 @@ public class MqttClientTest extends AbstractContainerTest {
         JsonObject clientResponse = new JsonObject();
         clientResponse.addProperty("response", "someResponse");
         // Send a response to the server's RPC request
-        mqttClient.publish("v1/devices/me/rpc/response/" + requestId, Unpooled.wrappedBuffer(clientResponse.toString().getBytes()));
+        mqttClient.publish("v1/devices/me/rpc/response/" + requestId, Unpooled.wrappedBuffer(clientResponse.toString().getBytes())).get();
 
         ResponseEntity serverResponse = future.get(5, TimeUnit.SECONDS);
         Assert.assertTrue(serverResponse.getStatusCode().is2xxSuccessful());
@@ -280,7 +301,7 @@ public class MqttClientTest extends AbstractContainerTest {
 
         MqttMessageListener listener = new MqttMessageListener();
         MqttClient mqttClient = getMqttClient(deviceCredentials, listener);
-        mqttClient.on("v1/devices/me/rpc/request/+", listener, MqttQoS.AT_LEAST_ONCE);
+        mqttClient.on("v1/devices/me/rpc/request/+", listener, MqttQoS.AT_LEAST_ONCE).get();
 
         // Get the default rule chain id to make it root again after test finished
         RuleChainId defaultRuleChainId = getDefaultRuleChainId();
@@ -294,7 +315,7 @@ public class MqttClientTest extends AbstractContainerTest {
         clientRequest.addProperty("method", "getResponse");
         clientRequest.addProperty("params", true);
         Integer requestId = 42;
-        mqttClient.publish("v1/devices/me/rpc/request/" + requestId, Unpooled.wrappedBuffer(clientRequest.toString().getBytes()));
+        mqttClient.publish("v1/devices/me/rpc/request/" + requestId, Unpooled.wrappedBuffer(clientRequest.toString().getBytes())).get();
 
         // Check the response from the server
         TimeUnit.SECONDS.sleep(1);

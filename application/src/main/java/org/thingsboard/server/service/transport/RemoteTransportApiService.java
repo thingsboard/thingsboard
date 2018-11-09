@@ -43,8 +43,6 @@ public class RemoteTransportApiService {
 
     @Value("${transport.remote.transport_api.requests_topic}")
     private String transportApiRequestsTopic;
-    @Value("${transport.remote.transport_api.responses_topic}")
-    private String transportApiResponsesTopic;
     @Value("${transport.remote.transport_api.max_pending_requests}")
     private int maxPendingRequests;
     @Value("${transport.remote.transport_api.request_timeout}")
@@ -73,7 +71,6 @@ public class RemoteTransportApiService {
 
         TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<TransportApiResponseMsg> responseBuilder = TBKafkaProducerTemplate.builder();
         responseBuilder.settings(kafkaSettings);
-        responseBuilder.defaultTopic(transportApiResponsesTopic);
         responseBuilder.encoder(new TransportApiResponseEncoder());
 
         TBKafkaConsumerTemplate.TBKafkaConsumerTemplateBuilder<TransportApiRequestMsg> requestBuilder = TBKafkaConsumerTemplate.builder();
