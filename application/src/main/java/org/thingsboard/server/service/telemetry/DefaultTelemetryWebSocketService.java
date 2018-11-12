@@ -72,6 +72,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -85,8 +86,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class DefaultTelemetryWebSocketService implements TelemetryWebSocketService {
 
-    public static final int DEFAULT_LIMIT = 100;
-    public static final Aggregation DEFAULT_AGGREGATION = Aggregation.NONE;
+    private static final int DEFAULT_LIMIT = 100;
+    private static final Aggregation DEFAULT_AGGREGATION = Aggregation.NONE;
     private static final int UNKNOWN_SUBSCRIPTION_ID = 0;
     private static final String PROCESSING_MSG = "[{}] Processing: {}";
     private static final ObjectMapper jsonMapper = new ObjectMapper();
@@ -115,7 +116,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
 
     @PostConstruct
     public void initExecutor() {
-        executor = new ThreadPoolExecutor(0, 50, 60L, TimeUnit.SECONDS, new SynchronousQueue<>());
+        executor = new ThreadPoolExecutor(0, 50, 60L, TimeUnit.SECONDS,  new LinkedBlockingQueue<>());
     }
 
     @PreDestroy
