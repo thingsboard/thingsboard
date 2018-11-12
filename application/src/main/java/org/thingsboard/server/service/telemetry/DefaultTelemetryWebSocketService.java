@@ -72,6 +72,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -112,7 +115,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
 
     @PostConstruct
     public void initExecutor() {
-        executor = Executors.newSingleThreadExecutor();
+        executor = new ThreadPoolExecutor(0, 50, 60L, TimeUnit.SECONDS, new SynchronousQueue<>());
     }
 
     @PreDestroy
