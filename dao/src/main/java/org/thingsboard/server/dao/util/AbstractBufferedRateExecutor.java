@@ -20,12 +20,10 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.tools.TbRateLimits;
 
 import javax.annotation.Nullable;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,7 +35,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by ashvayka on 24.10.18.

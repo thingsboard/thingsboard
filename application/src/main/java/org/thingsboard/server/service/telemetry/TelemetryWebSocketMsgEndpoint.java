@@ -24,9 +24,7 @@ import java.io.IOException;
  */
 public interface TelemetryWebSocketMsgEndpoint {
 
-    void send(TelemetryWebSocketSessionRef sessionRef, String msg) throws IOException;
-
-    void close(TelemetryWebSocketSessionRef sessionRef) throws IOException;
+    void send(TelemetryWebSocketSessionRef sessionRef, int subscriptionId, String msg) throws IOException;
 
     void close(TelemetryWebSocketSessionRef sessionRef, CloseStatus withReason) throws IOException;
 }

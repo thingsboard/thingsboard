@@ -582,7 +582,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
 
     private void sendWsMsg(TelemetryWebSocketSessionRef sessionRef, SubscriptionUpdate update) {
         try {
-            msgEndpoint.send(sessionRef, jsonMapper.writeValueAsString(update));
+            msgEndpoint.send(sessionRef, update.getSubscriptionId(), jsonMapper.writeValueAsString(update));
         } catch (JsonProcessingException e) {
             log.warn("[{}] Failed to encode reply: {}", sessionRef.getSessionId(), update, e);
         } catch (IOException e) {

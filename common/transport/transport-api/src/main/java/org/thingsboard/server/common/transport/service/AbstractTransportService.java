@@ -21,6 +21,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.tools.TbRateLimits;
+import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;

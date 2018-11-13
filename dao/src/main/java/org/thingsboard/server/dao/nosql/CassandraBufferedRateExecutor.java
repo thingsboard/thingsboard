@@ -17,7 +17,6 @@ package org.thingsboard.server.dao.nosql;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +25,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.entity.EntityService;
-import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.util.AbstractBufferedRateExecutor;
 import org.thingsboard.server.dao.util.AsyncTaskContext;
 import org.thingsboard.server.dao.util.NoSqlAnyDao;
@@ -34,7 +32,6 @@ import org.thingsboard.server.dao.util.NoSqlAnyDao;
 import javax.annotation.PreDestroy;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Created by ashvayka on 24.10.18.

@@ -19,15 +19,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.BeanCreationNotAllowedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.msg.tools.TbRateLimits;
 import org.thingsboard.server.config.WebSocketConfiguration;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
@@ -63,11 +65,17 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
     @Value("${server.ws.limits.max_sessions_per_public_user:0}")
     private int maxSessionsPerPublicUser;
 
+    @Value("${server.ws.limits.max_updates_per_session:}")
+    private String perSessionUpdatesConfiguration;
+
+    private ConcurrentMap<String, TelemetryWebSocketSessionRef> blacklistedSessions = new ConcurrentHashMap<>();
+    private ConcurrentMap<String, TbRateLimits> perSessionUpdateLimits = new ConcurrentHashMap<>();
+
     private ConcurrentMap<TenantId, Set<String>> tenantSessionsMap = new ConcurrentHashMap<>();
     private ConcurrentMap<CustomerId, Set<String>> customerSessionsMap = new ConcurrentHashMap<>();
     private ConcurrentMap<UserId, Set<String>> regularUserSessionsMap = new ConcurrentHashMap<>();
     private ConcurrentMap<UserId, Set<String>> publicUserSessionsMap = new ConcurrentHashMap<>();
-    
+
     @Override
     public void handleTextMessage(WebSocketSession session, TextMessage message) {
         try {
@@ -168,13 +176,29 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
     }
 
     @Override
-    public void send(TelemetryWebSocketSessionRef sessionRef, String msg) throws IOException {
+    public void send(TelemetryWebSocketSessionRef sessionRef, int subscriptionId, String msg) throws IOException {
         String externalId = sessionRef.getSessionId();
         log.debug("[{}] Processing {}", externalId, msg);
         String internalId = externalSessionMap.get(externalId);
         if (internalId != null) {
             SessionMetaData sessionMd = internalSessionMap.get(internalId);
             if (sessionMd != null) {
+                if (!StringUtils.isEmpty(perSessionUpdatesConfiguration)) {
+                    TbRateLimits rateLimits = perSessionUpdateLimits.computeIfAbsent(sessionRef.getSessionId(), sid -> new TbRateLimits(perSessionUpdatesConfiguration));
+                    if (!rateLimits.tryConsume()) {
+                        if (blacklistedSessions.putIfAbsent(externalId, sessionRef) == null) {
+                            log.info("[{}][{}][{}] Failed to process session update. Max session updates limit reached"
+                                    , sessionRef.getSecurityCtx().getTenantId(), sessionRef.getSecurityCtx().getId(), externalId);
+                            synchronized (sessionMd) {
+                                sessionMd.session.sendMessage(new TextMessage("{\"subscriptionId\":" + subscriptionId + ", \"errorCode\":" + ThingsboardErrorCode.TOO_MANY_UPDATES.getErrorCode() + ", \"errorMsg\":\"Too many updates!\"}"));
+                            }
+                        }
+                        return;
+                    } else {
+                        log.debug("[{}][{}][{}] Session is no longer blacklisted.", sessionRef.getSecurityCtx().getTenantId(), sessionRef.getSecurityCtx().getId(), externalId);
+                        blacklistedSessions.remove(externalId);
+                    }
+                }
                 synchronized (sessionMd) {
                     sessionMd.session.sendMessage(new TextMessage(msg));
                 }
@@ -184,12 +208,6 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
         } else {
             log.warn("[{}] Failed to find session by external id", externalId);
         }
-    }
-
-
-    @Override
-    public void close(TelemetryWebSocketSessionRef sessionRef) throws IOException {
-        close(sessionRef, CloseStatus.NORMAL);
     }
 
     @Override
@@ -271,6 +289,8 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
 
     private void cleanupLimits(WebSocketSession session, TelemetryWebSocketSessionRef sessionRef) {
         String sessionId = session.getId();
+        perSessionUpdateLimits.remove(sessionRef.getSessionId());
+        blacklistedSessions.remove(sessionRef.getSessionId());
         if (maxSessionsPerTenant > 0) {
             Set<String> tenantSessions = tenantSessionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getTenantId(), id -> ConcurrentHashMap.newKeySet());
             synchronized (tenantSessions) {
