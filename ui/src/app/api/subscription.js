@@ -267,6 +267,14 @@ export default class Subscription {
         } else {
             this.startWatchingTimewindow();
         }
+        registration = this.ctx.$scope.$watch(function () {
+            return subscription.alarmSearchStatus;
+        }, function (newAlarmSearchStatus, prevAlarmSearchStatus) {
+            if (!angular.equals(newAlarmSearchStatus, prevAlarmSearchStatus)) {
+                subscription.update();
+            }
+        }, true);
+        this.registrations.push(registration);
     }
 
     initDataSubscription() {

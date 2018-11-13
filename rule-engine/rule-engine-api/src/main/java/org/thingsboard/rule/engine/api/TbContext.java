@@ -26,6 +26,7 @@ import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
@@ -82,6 +83,8 @@ public interface TbContext {
     TimeseriesService getTimeseriesService();
 
     RelationService getRelationService();
+
+    EntityViewService getEntityViewService();
 
     ListeningExecutor getJsExecutor();
 

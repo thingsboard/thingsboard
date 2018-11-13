@@ -39,10 +39,12 @@ import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.common.transport.auth.DeviceAuthService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.transport.mqtt.MqttTopicMatcher;
 import org.thingsboard.server.transport.mqtt.MqttTransportHandler;
 import org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor.validateJsonPayload;
@@ -63,6 +65,7 @@ public class GatewaySessionCtx {
     private final DeviceAuthService authService;
     private final RelationService relationService;
     private final Map<String, GatewayDeviceSessionCtx> devices;
+    private final ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap;
     private ChannelHandlerContext channel;
 
     public GatewaySessionCtx(SessionMsgProcessor processor, DeviceService deviceService, DeviceAuthService authService, RelationService relationService, DeviceSessionCtx gatewaySessionCtx) {
@@ -73,6 +76,7 @@ public class GatewaySessionCtx {
         this.gateway = gatewaySessionCtx.getDevice();
         this.gatewaySessionId = gatewaySessionCtx.getSessionId();
         this.devices = new HashMap<>();
+        this.mqttQoSMap = gatewaySessionCtx.getMqttQoSMap();
     }
 
     public void onDeviceConnect(MqttPublishMessage msg) throws AdaptorException {
@@ -96,7 +100,7 @@ public class GatewaySessionCtx {
                 relationService.saveRelationAsync(new EntityRelation(gateway.getId(), device.getId(), "Created"));
                 processor.onDeviceAdded(device);
             }
-            GatewayDeviceSessionCtx ctx = new GatewayDeviceSessionCtx(this, device);
+            GatewayDeviceSessionCtx ctx = new GatewayDeviceSessionCtx(this, device, mqttQoSMap);
             devices.put(deviceName, ctx);
             log.debug("[{}] Added device [{}] to the gateway session", gatewaySessionId, deviceName);
             processor.process(new BasicTransportToDeviceSessionActorMsg(device, new BasicAdaptorToSessionActorMsg(ctx, new AttributesSubscribeMsg())));

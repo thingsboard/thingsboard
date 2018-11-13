@@ -57,6 +57,9 @@ public class RuleChainActor extends ComponentActor<RuleChainId, RuleChainActorMe
                 break;
             case CLUSTER_EVENT_MSG:
                 break;
+            case STATS_PERSIST_TICK_MSG:
+                onStatsPersistTick(id);
+                break;
             default:
                 return false;
         }

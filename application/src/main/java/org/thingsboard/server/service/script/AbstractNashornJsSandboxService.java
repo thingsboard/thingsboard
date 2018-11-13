@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.thingsboard.server.service.script;
 
 import com.google.common.util.concurrent.Futures;
@@ -21,7 +20,12 @@ import com.google.common.util.concurrent.ListenableFuture;
 import delight.nashornsandbox.NashornSandbox;
 import delight.nashornsandbox.NashornSandboxes;
 import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.id.EntityId;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -42,9 +46,11 @@ public abstract class AbstractNashornJsSandboxService implements JsSandboxServic
     private ScriptEngine engine;
     private ExecutorService monitorExecutorService;
 
-    private Map<UUID, String> functionsMap = new ConcurrentHashMap<>();
+    private final Map<UUID, String> functionsMap = new ConcurrentHashMap<>();
+    private final Map<BlackListKey, BlackListInfo> blackListedFunctions = new ConcurrentHashMap<>();
 
-    private Map<UUID,AtomicInteger> blackListedFunctions = new ConcurrentHashMap<>();
+    private final Map<String, ScriptInfo> scriptKeyToInfo = new ConcurrentHashMap<>();
+    private final Map<UUID, ScriptInfo> scriptIdToInfo = new ConcurrentHashMap<>();
 
     @PostConstruct
     public void init() {
@@ -63,7 +69,7 @@ public abstract class AbstractNashornJsSandboxService implements JsSandboxServic
 
     @PreDestroy
     public void stop() {
-        if  (monitorExecutorService != null) {
+        if (monitorExecutorService != null) {
             monitorExecutorService.shutdownNow();
         }
     }
@@ -78,75 +84,107 @@ public abstract class AbstractNashornJsSandboxService implements JsSandboxServic
 
     @Override
     public ListenableFuture<UUID> eval(JsScriptType scriptType, String scriptBody, String... argNames) {
-        UUID scriptId = UUID.randomUUID();
-        String functionName = "invokeInternal_" + scriptId.toString().replace('-','_');
-        String jsScript = generateJsScript(scriptType, functionName, scriptBody, argNames);
-        try {
-            if (useJsSandbox()) {
-                sandbox.eval(jsScript);
+        ScriptInfo scriptInfo = deduplicate(scriptType, scriptBody);
+        UUID scriptId = scriptInfo.getId();
+        AtomicInteger duplicateCount = scriptInfo.getCount();
+
+        synchronized (scriptInfo.getLock()) {
+            if (duplicateCount.compareAndSet(0, 1)) {
+                try {
+                    evaluate(scriptId, scriptType, scriptBody, argNames);
+                } catch (Exception e) {
+                    duplicateCount.decrementAndGet();
+                    log.warn("Failed to compile JS script: {}", e.getMessage(), e);
+                    return Futures.immediateFailedFuture(e);
+                }
             } else {
-                engine.eval(jsScript);
+                duplicateCount.incrementAndGet();
             }
-            functionsMap.put(scriptId, functionName);
-        } catch (Exception e) {
-            log.warn("Failed to compile JS script: {}", e.getMessage(), e);
-            return Futures.immediateFailedFuture(e);
         }
         return Futures.immediateFuture(scriptId);
     }
 
-    @Override
-    public ListenableFuture<Object> invokeFunction(UUID scriptId, Object... args) {
-        String functionName = functionsMap.get(scriptId);
-        if (functionName == null) {
-            return Futures.immediateFailedFuture(new RuntimeException("No compiled script found for scriptId: [" + scriptId + "]!"));
-        }
-        if (!isBlackListed(scriptId)) {
-            try {
-                Object result;
-                if (useJsSandbox()) {
-                    result = sandbox.getSandboxedInvocable().invokeFunction(functionName, args);
-                } else {
-                    result = ((Invocable)engine).invokeFunction(functionName, args);
-                }
-                return Futures.immediateFuture(result);
-            } catch (Exception e) {
-                blackListedFunctions.computeIfAbsent(scriptId, key -> new AtomicInteger(0)).incrementAndGet();
-                return Futures.immediateFailedFuture(e);
-            }
+    private void evaluate(UUID scriptId, JsScriptType scriptType, String scriptBody, String... argNames) throws ScriptException {
+        String functionName = "invokeInternal_" + scriptId.toString().replace('-', '_');
+        String jsScript = generateJsScript(scriptType, functionName, scriptBody, argNames);
+        if (useJsSandbox()) {
+            sandbox.eval(jsScript);
         } else {
-            return Futures.immediateFailedFuture(
-                    new RuntimeException("Script is blacklisted due to maximum error count " + getMaxErrors() + "!"));
+            engine.eval(jsScript);
         }
+        functionsMap.put(scriptId, functionName);
     }
 
     @Override
-    public ListenableFuture<Void> release(UUID scriptId) {
+    public ListenableFuture<Object> invokeFunction(UUID scriptId, EntityId entityId, Object... args) {
         String functionName = functionsMap.get(scriptId);
-        if (functionName != null) {
-            try {
-                if (useJsSandbox()) {
-                    sandbox.eval(functionName + " = undefined;");
-                } else {
-                    engine.eval(functionName + " = undefined;");
+        if (functionName == null) {
+            String message = "No compiled script found for scriptId: [" + scriptId + "]!";
+            log.warn(message);
+            return Futures.immediateFailedFuture(new RuntimeException(message));
+        }
+
+        BlackListInfo blackListInfo = blackListedFunctions.get(new BlackListKey(scriptId, entityId));
+        if (blackListInfo != null && blackListInfo.getCount() >= getMaxErrors()) {
+            RuntimeException throwable = new RuntimeException("Script is blacklisted due to maximum error count " + getMaxErrors() + "!", blackListInfo.getCause());
+            throwable.printStackTrace();
+            return Futures.immediateFailedFuture(throwable);
+        }
+
+        try {
+            return invoke(functionName, args);
+        } catch (Exception e) {
+            BlackListKey blackListKey = new BlackListKey(scriptId, entityId);
+            blackListedFunctions.computeIfAbsent(blackListKey, key -> new BlackListInfo()).incrementWithReason(e);
+            return Futures.immediateFailedFuture(e);
+        }
+    }
+
+    private ListenableFuture<Object> invoke(String functionName, Object... args) throws ScriptException, NoSuchMethodException {
+        Object result;
+        if (useJsSandbox()) {
+            result = sandbox.getSandboxedInvocable().invokeFunction(functionName, args);
+        } else {
+            result = ((Invocable) engine).invokeFunction(functionName, args);
+        }
+        return Futures.immediateFuture(result);
+    }
+
+    @Override
+    public ListenableFuture<Void> release(UUID scriptId, EntityId entityId) {
+        ScriptInfo scriptInfo = scriptIdToInfo.get(scriptId);
+        if (scriptInfo == null) {
+            log.warn("Script release called for not existing script id [{}]", scriptId);
+            return Futures.immediateFuture(null);
+        }
+
+        synchronized (scriptInfo.getLock()) {
+            int remainingDuplicates = scriptInfo.getCount().decrementAndGet();
+            if (remainingDuplicates > 0) {
+                return Futures.immediateFuture(null);
+            }
+
+            String functionName = functionsMap.get(scriptId);
+            if (functionName != null) {
+                try {
+                    if (useJsSandbox()) {
+                        sandbox.eval(functionName + " = undefined;");
+                    } else {
+                        engine.eval(functionName + " = undefined;");
+                    }
+                    functionsMap.remove(scriptId);
+                    blackListedFunctions.remove(new BlackListKey(scriptId, entityId));
+                } catch (ScriptException e) {
+                    log.error("Could not release script [{}] [{}]", scriptId, remainingDuplicates);
+                    return Futures.immediateFailedFuture(e);
                 }
-                functionsMap.remove(scriptId);
-                blackListedFunctions.remove(scriptId);
-            } catch (ScriptException e) {
-                return Futures.immediateFailedFuture(e);
+            } else {
+                log.warn("Function name do not exist for script [{}] [{}]", scriptId, remainingDuplicates);
             }
         }
         return Futures.immediateFuture(null);
     }
 
-    private boolean isBlackListed(UUID scriptId) {
-        if (blackListedFunctions.containsKey(scriptId)) {
-            AtomicInteger errorCount = blackListedFunctions.get(scriptId);
-            return errorCount.get() >= getMaxErrors();
-        } else {
-            return false;
-        }
-    }
 
     private String generateJsScript(JsScriptType scriptType, String functionName, String scriptBody, String... argNames) {
         switch (scriptType) {
@@ -154,6 +192,69 @@ public abstract class AbstractNashornJsSandboxService implements JsSandboxServic
                 return RuleNodeScriptFactory.generateRuleNodeScript(functionName, scriptBody, argNames);
             default:
                 throw new RuntimeException("No script factory implemented for scriptType: " + scriptType);
+        }
+    }
+
+    private ScriptInfo deduplicate(JsScriptType scriptType, String scriptBody) {
+        ScriptInfo meta = ScriptInfo.preInit();
+        String key = deduplicateKey(scriptType, scriptBody);
+        ScriptInfo latestMeta = scriptKeyToInfo.computeIfAbsent(key, i -> meta);
+        return scriptIdToInfo.computeIfAbsent(latestMeta.getId(), i -> latestMeta);
+    }
+
+    private String deduplicateKey(JsScriptType scriptType, String scriptBody) {
+        return scriptType + "_" + scriptBody;
+    }
+
+    @Getter
+    private static class ScriptInfo {
+        private final UUID id;
+        private final Object lock;
+        private final AtomicInteger count;
+
+        ScriptInfo(UUID id, Object lock, AtomicInteger count) {
+            this.id = id;
+            this.lock = lock;
+            this.count = count;
+        }
+
+        static ScriptInfo preInit() {
+            UUID preId = UUID.randomUUID();
+            AtomicInteger preCount = new AtomicInteger();
+            Object preLock = new Object();
+            return new ScriptInfo(preId, preLock, preCount);
+        }
+    }
+
+    @EqualsAndHashCode
+    @Getter
+    @RequiredArgsConstructor
+    private static class BlackListKey {
+        private final UUID scriptId;
+        private final EntityId entityId;
+
+    }
+
+    @Data
+    private static class BlackListInfo {
+        private final AtomicInteger count;
+        private Exception ex;
+
+        BlackListInfo() {
+            this.count = new AtomicInteger(0);
+        }
+
+        void incrementWithReason(Exception e) {
+            count.incrementAndGet();
+            ex = e;
+        }
+
+        int getCount() {
+            return count.get();
+        }
+
+        Exception getCause() {
+            return ex;
         }
     }
 }

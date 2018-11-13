@@ -29,6 +29,7 @@ import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserService;
@@ -45,6 +46,9 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
 
     @Autowired
     private DeviceService deviceService;
+
+    @Autowired
+    private EntityViewService entityViewService;
 
     @Autowired
     private TenantService tenantService;
@@ -80,6 +84,9 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
                 break;
             case DEVICE:
                 hasName = deviceService.findDeviceByIdAsync(new DeviceId(entityId.getId()));
+                break;
+            case ENTITY_VIEW:
+                hasName = entityViewService.findEntityViewByIdAsync(new EntityViewId(entityId.getId()));
                 break;
             case TENANT:
                 hasName = tenantService.findTenantByIdAsync(new TenantId(entityId.getId()));

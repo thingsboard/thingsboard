@@ -217,7 +217,9 @@ function TimeseriesTableWidgetController($element, $scope, $filter, $timeout) {
                     content = strContent;
                 }
             } else {
-                content = vm.ctx.utils.formatValue(value, contentInfo.decimals, contentInfo.units);
+                var decimals = (contentInfo.decimals || contentInfo.decimals === 0) ? contentInfo.decimals : vm.widgetConfig.decimals;
+                var units = contentInfo.units || vm.widgetConfig.units;
+                content = vm.ctx.utils.formatValue(value, decimals, units, true);
             }
             return content;
         }

@@ -17,7 +17,7 @@
 
 -->
 <!DOCTYPE configuration>
-<configuration>
+<configuration scan="true" scanPeriod="10 seconds">
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>

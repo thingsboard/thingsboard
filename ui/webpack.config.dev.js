@@ -18,6 +18,8 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const StyleLintPlugin = require('stylelint-webpack-plugin')
+
 const webpack = require('webpack');
 const path = require('path');
 const dirTree = require('directory-tree');
@@ -80,6 +82,7 @@ module.exports = {
             title: '天融物联',
             inject: 'body',
         }),
+        new StyleLintPlugin(),
         new webpack.optimize.OccurrenceOrderPlugin(),
         new webpack.NoErrorsPlugin(),
         new ExtractTextPlugin('style.[contentHash].css', {

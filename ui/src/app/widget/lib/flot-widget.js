@@ -333,6 +333,7 @@ export default class TbFlot {
                         lineWidth: 0,
                         fill: 0.9
                 }
+                ctx.defaultBarWidth = settings.defaultBarWidth || 600;
             }
 
             if (this.chartType === 'state') {
@@ -476,7 +477,11 @@ export default class TbFlot {
         this.options.yaxes = angular.copy(this.yaxes);
         if (this.chartType === 'line' || this.chartType === 'bar' || this.chartType === 'state') {
             if (this.chartType === 'bar') {
-                this.options.series.bars.barWidth = this.subscription.timeWindow.interval * 0.6;
+                if (this.subscription.timeWindowConfig.aggregation && this.subscription.timeWindowConfig.aggregation.type === 'NONE') {
+                    this.options.series.bars.barWidth = this.ctx.defaultBarWidth;
+                } else {
+                    this.options.series.bars.barWidth = this.subscription.timeWindow.interval * 0.6;
+                }
             }
             this.options.xaxis.min = this.subscription.timeWindow.minTime;
             this.options.xaxis.max = this.subscription.timeWindow.maxTime;
@@ -594,7 +599,11 @@ export default class TbFlot {
                     this.options.xaxis.min = this.subscription.timeWindow.minTime;
                     this.options.xaxis.max = this.subscription.timeWindow.maxTime;
                     if (this.chartType === 'bar') {
-                        this.options.series.bars.barWidth = this.subscription.timeWindow.interval * 0.6;
+                        if (this.subscription.timeWindowConfig.aggregation && this.subscription.timeWindowConfig.aggregation.type === 'NONE') {
+                            this.options.series.bars.barWidth = this.ctx.defaultBarWidth;
+                        } else {
+                            this.options.series.bars.barWidth = this.subscription.timeWindow.interval * 0.6;
+                        }
                     }
 
                     if (axisVisibilityChanged) {
@@ -603,7 +612,11 @@ export default class TbFlot {
                         this.ctx.plot.getOptions().xaxes[0].min = this.subscription.timeWindow.minTime;
                         this.ctx.plot.getOptions().xaxes[0].max = this.subscription.timeWindow.maxTime;
                         if (this.chartType === 'bar') {
-                            this.ctx.plot.getOptions().series.bars.barWidth = this.subscription.timeWindow.interval * 0.6;
+                            if (this.subscription.timeWindowConfig.aggregation && this.subscription.timeWindowConfig.aggregation.type === 'NONE') {
+                                this.ctx.plot.getOptions().series.bars.barWidth = this.ctx.defaultBarWidth;
+                            } else {
+                                this.ctx.plot.getOptions().series.bars.barWidth = this.subscription.timeWindow.interval * 0.6;
+                            }
                         }
                         this.updateData();
                     }
@@ -729,56 +742,56 @@ export default class TbFlot {
         return {
             "schema": {
                 "type": "object",
-                "title": "设置",
+                "title": "Settings",
                 "properties": {
                     "radius": {
-                        "title": "半径",
+                        "title": "Radius",
                         "type": "number",
                         "default": 1
                     },
                     "innerRadius": {
-                        "title": "内径",
+                        "title": "Inner radius",
                         "type": "number",
                         "default": 0
                     },
                     "tilt": {
-                        "title": "倾斜度",
+                        "title": "Tilt",
                         "type": "number",
                         "default": 1
                     },
                     "animatedPie": {
-                        "title": "启用动画 (体验)",
+                        "title": "Enable pie animation (experimental)",
                         "type": "boolean",
                         "default": false
                     },
                     "stroke": {
-                        "title": "边框",
+                        "title": "Stroke",
                         "type": "object",
                         "properties": {
                             "color": {
-                                "title": "颜色",
+                                "title": "Color",
                                 "type": "string",
                                 "default": ""
                             },
                             "width": {
-                                "title": "宽度 (像素)",
+                                "title": "Width (pixels)",
                                 "type": "number",
                                 "default": 0
                             }
                         }
                     },
                     "showLabels": {
-                        "title": "显示标注",
+                        "title": "Show labels",
                         "type": "boolean",
                         "default": false
                     },
                     "fontColor": {
-                        "title": "字体颜色",
+                        "title": "Font color",
                         "type": "string",
                         "default": "#545454"
                     },
                     "fontSize": {
-                        "title": "字体大小",
+                        "title": "Font size",
                         "type": "number",
                         "default": 10
                     }
@@ -810,238 +823,257 @@ export default class TbFlot {
         }
     }
 
-    static get settingsSchema() {
-        return {
+    static settingsSchema(chartType) {
+
+        var schema = {
             "schema": {
                 "type": "object",
-                "title": "设置",
+                "title": "Settings",
                 "properties": {
-                    "stack": {
-                        "title": "堆叠",
-                        "type": "boolean",
-                        "default": false
-                    },
-                    "smoothLines": {
-                        "title": "显示平滑曲线",
-                        "type": "boolean",
-                        "default": false
-                    },
-                    "shadowSize": {
-                        "title": "阴影大小",
-                        "type": "number",
-                        "default": 4
-                    },
-                    "fontColor": {
-                        "title": "字体颜色",
+                }
+            }
+        };
+
+        var properties = schema["schema"]["properties"];
+        properties["stack"] = {
+            "title": "Stacking",
+            "type": "boolean",
+            "default": false
+        };
+        if (chartType === 'graph') {
+            properties["smoothLines"] = {
+                "title": "Display smooth (curved) lines",
+                "type": "boolean",
+                "default": false
+            };
+        }
+        if (chartType === 'bar') {
+            properties["defaultBarWidth"] = {
+                "title": "Default bar width for non-aggregated data (milliseconds)",
+                "type": "number",
+                "default": 600
+            };
+        }
+        properties["shadowSize"] = {
+            "title": "Shadow size",
+            "type": "number",
+            "default": 4
+        };
+        properties["fontColor"] =  {
+            "title": "Font color",
+            "type": "string",
+            "default": "#545454"
+        };
+        properties["fontSize"] = {
+            "title": "Font size",
+            "type": "number",
+            "default": 10
+        };
+        properties["tooltipIndividual"] = {
+            "title": "Hover individual points",
+            "type": "boolean",
+            "default": false
+        };
+        properties["tooltipCumulative"] = {
+            "title": "Show cumulative values in stacking mode",
+            "type": "boolean",
+            "default": false
+        };
+        properties["tooltipValueFormatter"] = {
+            "title": "Tooltip value format function, f(value)",
+            "type": "string",
+            "default": ""
+        };
+
+        properties["grid"] = {
+            "title": "Grid settings",
+                "type": "object",
+                "properties": {
+                "color": {
+                    "title": "Primary color",
                         "type": "string",
                         "default": "#545454"
-                    },
-                    "fontSize": {
-                        "title": "字体大小",
-                        "type": "number",
-                        "default": 10
-                    },
-                    "tooltipIndividual": {
-                        "title": "显示悬停分隔点",
-                        "type": "boolean",
-                        "default": false
-                    },
-                    "tooltipCumulative": {
-                        "title": "在堆叠模式下显示累积值",
-                        "type": "boolean",
-                        "default": false
-                    },
-                    "tooltipValueFormatter": {
-                        "title": "工具提示信息格式化函数, f(value)",
-                        "type": "string",
-                        "default": ""
-                    },
-                    "grid": {
-                        "title": "网格设置",
-                        "type": "object",
-                        "properties": {
-                            "color": {
-                                "title": "主色",
-                                "type": "string",
-                                "default": "#545454"
-                            },
-                            "backgroundColor": {
-                                "title": "背景色",
-                                "type": "string",
-                                "default": null
-                            },
-                            "tickColor": {
-                                "title": "刻度色",
-                                "type": "string",
-                                "default": "#DDDDDD"
-                            },
-                            "outlineWidth": {
-                                "title": "网格轮廓/边框宽度 (px)",
-                                "type": "number",
-                                "default": 1
-                            },
-                            "verticalLines": {
-                                "title": "显示垂直线",
-                                "type": "boolean",
-                                "default": true
-                            },
-                            "horizontalLines": {
-                                "title": "显示水平线",
-                                "type": "boolean",
-                                "default": true
-                            }
-                        }
-                    },
-                    "xaxis": {
-                        "title": "X轴设置",
-                        "type": "object",
-                        "properties": {
-                            "showLabels": {
-                                "title": "显示标注",
-                                "type": "boolean",
-                                "default": true
-                            },
-                            "title": {
-                                "title": "轴标题",
-                                "type": "string",
-                                "default": null
-                            },
-                            "titleAngle": {
-                                "title": "轴标题的角度",
-                                "type": "number",
-                                "default": 0
-                            },
-                            "color": {
-                                "title": "刻度颜色",
-                                "type": "string",
-                                "default": null
-                            }
-                        }
-                    },
-                    "yaxis": {
-                        "title": "Y轴设置",
-                        "type": "object",
-                        "properties": {
-                            "min": {
-                                "title": "比例最小值",
-                                "type": "number",
-                                "default": null
-                            },
-                            "max": {
-                                "title": "比例最大值",
-                                "type": "number",
-                                "default": null
-                            },
-                            "showLabels": {
-                                "title": "显示标注",
-                                "type": "boolean",
-                                "default": true
-                            },
-                            "title": {
-                                "title": "轴标题",
-                                "type": "string",
-                                "default": null
-                            },
-                            "titleAngle": {
-                                "title": "轴标题角度",
-                                "type": "number",
-                                "default": 0
-                            },
-                            "color": {
-                                "title": "刻度色",
-                                "type": "string",
-                                "default": null
-                            },
-                            "ticksFormatter": {
-                                "title": "刻度格式化函数, f(value)",
-                                "type": "string",
-                                "default": ""
-                            },
-                            "tickDecimals": {
-                                "title": "显示小数位数",
-                                "type": "number",
-                                "default": 0
-                            },
-                            "tickSize": {
-                                "title": "刻度步长",
-                                "type": "number",
-                                "default": null
-                            }
-                        }
-                    }
                 },
-                "required": []
-            },
-            "form": [
-                "stack",
-                "smoothLines",
-                "shadowSize",
+                "backgroundColor": {
+                    "title": "Background color",
+                        "type": "string",
+                        "default": null
+                },
+                "tickColor": {
+                    "title": "Ticks color",
+                        "type": "string",
+                        "default": "#DDDDDD"
+                },
+                "outlineWidth": {
+                    "title": "Grid outline/border width (px)",
+                        "type": "number",
+                        "default": 1
+                },
+                "verticalLines": {
+                    "title": "Show vertical lines",
+                        "type": "boolean",
+                        "default": true
+                },
+                "horizontalLines": {
+                    "title": "Show horizontal lines",
+                        "type": "boolean",
+                        "default": true
+                }
+            }
+        };
+
+        properties["xaxis"] = {
+            "title": "X axis settings",
+            "type": "object",
+            "properties": {
+                "showLabels": {
+                    "title": "Show labels",
+                    "type": "boolean",
+                    "default": true
+                },
+                "title": {
+                    "title": "Axis title",
+                    "type": "string",
+                    "default": null
+                },
+                "titleAngle": {
+                    "title": "Axis title's angle in degrees",
+                    "type": "number",
+                    "default": 0
+                },
+                "color": {
+                    "title": "Ticks color",
+                    "type": "string",
+                    "default": null
+                }
+            }
+        };
+
+        properties["yaxis"] = {
+            "title": "Y axis settings",
+            "type": "object",
+            "properties": {
+                "min": {
+                    "title": "Minimum value on the scale",
+                    "type": "number",
+                    "default": null
+                },
+                "max": {
+                    "title": "Maximum value on the scale",
+                    "type": "number",
+                    "default": null
+                },
+                "showLabels": {
+                    "title": "Show labels",
+                    "type": "boolean",
+                    "default": true
+                },
+                "title": {
+                    "title": "Axis title",
+                    "type": "string",
+                    "default": null
+                },
+                "titleAngle": {
+                    "title": "Axis title's angle in degrees",
+                    "type": "number",
+                    "default": 0
+                },
+                "color": {
+                    "title": "Ticks color",
+                    "type": "string",
+                    "default": null
+                },
+                "ticksFormatter": {
+                    "title": "Ticks formatter function, f(value)",
+                    "type": "string",
+                    "default": ""
+                },
+                "tickDecimals": {
+                    "title": "The number of decimals to display",
+                    "type": "number",
+                    "default": 0
+                },
+                "tickSize": {
+                    "title": "Step size between ticks",
+                    "type": "number",
+                    "default": null
+                }
+            }
+        };
+
+        schema["schema"]["required"] = [];
+        schema["form"] = ["stack"];
+        if (chartType === 'graph') {
+            schema["form"].push("smoothLines");
+        }
+        if (chartType === 'bar') {
+            schema["form"].push("defaultBarWidth");
+        }
+        schema["form"].push("shadowSize");
+        schema["form"].push({
+            "key": "fontColor",
+            "type": "color"
+        });
+        schema["form"].push("fontSize");
+        schema["form"].push("tooltipIndividual");
+        schema["form"].push("tooltipCumulative");
+        schema["form"].push({
+            "key": "tooltipValueFormatter",
+            "type": "javascript"
+        });
+        schema["form"].push({
+            "key": "grid",
+            "items": [
                 {
-                    "key": "fontColor",
+                    "key": "grid.color",
                     "type": "color"
                 },
-                "fontSize",
-                "tooltipIndividual",
-                "tooltipCumulative",
                 {
-                    "key": "tooltipValueFormatter",
-                    "type": "javascript"
+                    "key": "grid.backgroundColor",
+                    "type": "color"
                 },
                 {
-                    "key": "grid",
-                    "items": [
-                        {
-                            "key": "grid.color",
-                            "type": "color"
-                        },
-                        {
-                            "key": "grid.backgroundColor",
-                            "type": "color"
-                        },
-                        {
-                            "key": "grid.tickColor",
-                            "type": "color"
-                        },
-                        "grid.outlineWidth",
-                        "grid.verticalLines",
-                        "grid.horizontalLines"
-                    ]
+                    "key": "grid.tickColor",
+                    "type": "color"
                 },
-                {
-                    "key": "xaxis",
-                    "items": [
-                        "xaxis.showLabels",
-                        "xaxis.title",
-                        "xaxis.titleAngle",
-                        {
-                            "key": "xaxis.color",
-                            "type": "color"
-                        }
-                    ]
-                },
-                {
-                    "key": "yaxis",
-                    "items": [
-                        "yaxis.min",
-                        "yaxis.max",
-                        "yaxis.tickDecimals",
-                        "yaxis.tickSize",
-                        "yaxis.showLabels",
-                        "yaxis.title",
-                        "yaxis.titleAngle",
-                        {
-                            "key": "yaxis.color",
-                            "type": "color"
-                        },
-                        {
-                            "key": "yaxis.ticksFormatter",
-                            "type": "javascript"
-                        }
-                    ]
-                }
-
+                "grid.outlineWidth",
+                "grid.verticalLines",
+                "grid.horizontalLines"
             ]
-        }
+        });
+        schema["form"].push({
+            "key": "xaxis",
+            "items": [
+                "xaxis.showLabels",
+                "xaxis.title",
+                "xaxis.titleAngle",
+                {
+                    "key": "xaxis.color",
+                    "type": "color"
+                }
+            ]
+        });
+        schema["form"].push({
+            "key": "yaxis",
+            "items": [
+                "yaxis.min",
+                "yaxis.max",
+                "yaxis.tickDecimals",
+                "yaxis.tickSize",
+                "yaxis.showLabels",
+                "yaxis.title",
+                "yaxis.titleAngle",
+                {
+                    "key": "yaxis.color",
+                    "type": "color"
+                },
+                {
+                    "key": "yaxis.ticksFormatter",
+                    "type": "javascript"
+                }
+            ]
+        });
+        return schema;
     }
 
     static get pieDatakeySettingsSchema() {

@@ -16,7 +16,10 @@
 package org.thingsboard.server.transport.mqtt.session;
 
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.mqtt.*;
+import io.netty.handler.codec.mqtt.MqttFixedHeader;
+import io.netty.handler.codec.mqtt.MqttMessage;
+import io.netty.handler.codec.mqtt.MqttMessageType;
+import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.SessionId;
 import org.thingsboard.server.common.msg.session.SessionActorToAdaptorMsg;
@@ -27,16 +30,17 @@ import org.thingsboard.server.common.msg.session.ex.SessionException;
 import org.thingsboard.server.common.transport.SessionMsgProcessor;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.auth.DeviceAuthService;
-import org.thingsboard.server.common.transport.session.DeviceAwareSessionContext;
+import org.thingsboard.server.transport.mqtt.MqttTopicMatcher;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Andrew Shvayka
  */
 @Slf4j
-public class DeviceSessionCtx extends DeviceAwareSessionContext {
+public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
 
     private final MqttTransportAdaptor adaptor;
     private final MqttSessionId sessionId;
@@ -44,8 +48,8 @@ public class DeviceSessionCtx extends DeviceAwareSessionContext {
     private volatile boolean allowAttributeResponses;
     private AtomicInteger msgIdSeq = new AtomicInteger(0);
 
-    public DeviceSessionCtx(SessionMsgProcessor processor, DeviceAuthService authService, MqttTransportAdaptor adaptor) {
-        super(processor, authService);
+    public DeviceSessionCtx(SessionMsgProcessor processor, DeviceAuthService authService, MqttTransportAdaptor adaptor, ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap) {
+        super(processor, authService, mqttQoSMap);
         this.adaptor = adaptor;
         this.sessionId = new MqttSessionId();
     }

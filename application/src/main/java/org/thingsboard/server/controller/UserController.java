@@ -15,7 +15,12 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,7 +44,11 @@ import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
+import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.model.UserPrincipal;
+import org.thingsboard.server.service.security.model.token.JwtToken;
+import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -50,8 +59,20 @@ public class UserController extends BaseController {
     public static final String USER_ID = "userId";
     public static final String YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION = "You don't have permission to perform this operation!";
     public static final String ACTIVATE_URL_PATTERN = "%s/api/noauth/activate?activateToken=%s";
+
+    @Value("${security.user_token_access_enabled}")
+    @Getter
+    private boolean userTokenAccessEnabled;
+
     @Autowired
     private MailService mailService;
+
+    @Autowired
+    private JwtTokenFactory tokenFactory;
+
+    @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
+
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/user/{userId}", method = RequestMethod.GET)
@@ -66,6 +87,42 @@ public class UserController extends BaseController {
                         ThingsboardErrorCode.PERMISSION_DENIED);
             }
             return checkUserId(userId);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/user/tokenAccessEnabled", method = RequestMethod.GET)
+    @ResponseBody
+    public boolean isUserTokenAccessEnabled() {
+        return userTokenAccessEnabled;
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/user/{userId}/token", method = RequestMethod.GET)
+    @ResponseBody
+    public JsonNode getUserToken(@PathVariable(USER_ID) String strUserId) throws ThingsboardException {
+        checkParameter(USER_ID, strUserId);
+        try {
+            UserId userId = new UserId(toUUID(strUserId));
+            SecurityUser authUser = getCurrentUser();
+            User user = userService.findUserById(userId);
+            if (!userTokenAccessEnabled || (authUser.getAuthority() == Authority.SYS_ADMIN && user.getAuthority() != Authority.TENANT_ADMIN)
+                    || (authUser.getAuthority() == Authority.TENANT_ADMIN && !authUser.getTenantId().equals(user.getTenantId()))) {
+                throw new ThingsboardException(YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION,
+                        ThingsboardErrorCode.PERMISSION_DENIED);
+            }
+            UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail());
+            UserCredentials credentials = userService.findUserCredentialsByUserId(userId);
+            SecurityUser securityUser = new SecurityUser(user, credentials.isEnabled(), principal);
+            JwtToken accessToken = tokenFactory.createAccessJwtToken(securityUser);
+            JwtToken refreshToken = refreshTokenRepository.requestRefreshToken(securityUser);
+            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectNode tokenObject = objectMapper.createObjectNode();
+            tokenObject.put("token", accessToken.getToken());
+            tokenObject.put("refreshToken", refreshToken.getToken());
+            return tokenObject;
         } catch (Exception e) {
             throw handleException(e);
         }

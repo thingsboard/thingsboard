@@ -15,13 +15,17 @@
  */
 package org.thingsboard.server.actors.session;
 
+import akka.actor.ActorInitializationException;
 import akka.actor.ActorRef;
 import akka.actor.InvalidActorNameException;
 import akka.actor.LocalActorRef;
+import akka.actor.OneForOneStrategy;
 import akka.actor.Props;
+import akka.actor.SupervisorStrategy;
 import akka.actor.Terminated;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
+import akka.japi.Function;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.service.ContextAwareActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
@@ -34,6 +38,7 @@ import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.core.ActorSystemToDeviceSessionActorMsg;
 import org.thingsboard.server.common.msg.core.SessionCloseMsg;
 import org.thingsboard.server.common.msg.session.SessionCtrlMsg;
+import scala.concurrent.duration.Duration;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -46,9 +51,14 @@ public class SessionManagerActor extends ContextAwareActor {
 
     private final Map<String, ActorRef> sessionActors;
 
-    public SessionManagerActor(ActorSystemContext systemContext) {
+    SessionManagerActor(ActorSystemContext systemContext) {
         super(systemContext);
         this.sessionActors = new HashMap<>(INITIAL_SESSION_MAP_SIZE);
+    }
+
+    @Override
+    public SupervisorStrategy supervisorStrategy() {
+        return strategy;
     }
 
     @Override
@@ -160,4 +170,11 @@ public class SessionManagerActor extends ContextAwareActor {
         }
     }
 
+    private final SupervisorStrategy strategy = new OneForOneStrategy(3, Duration.create("1 minute"), new Function<Throwable, SupervisorStrategy.Directive>() {
+        @Override
+        public SupervisorStrategy.Directive apply(Throwable t) {
+            logger.error(t, "Unknown failure");
+            return SupervisorStrategy.stop();
+        }
+    });
 }

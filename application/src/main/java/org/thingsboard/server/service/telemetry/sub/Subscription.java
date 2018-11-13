@@ -30,9 +30,11 @@ public class Subscription {
     private final SubscriptionState sub;
     private final boolean local;
     private ServerAddress server;
+    private long startTime;
+    private long endTime;
 
-    public Subscription(SubscriptionState sub, boolean local) {
-        this(sub, local, null);
+    public Subscription(SubscriptionState sub, boolean local, ServerAddress server) {
+        this(sub, local, server, 0L, 0L);
     }
 
     public String getWsSessionId() {

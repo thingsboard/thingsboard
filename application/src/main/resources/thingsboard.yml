@@ -66,12 +66,21 @@ plugins:
   # Comma seperated package list used during classpath scanning for plugins
   scan_packages: "${PLUGINS_SCAN_PACKAGES:org.thingsboard.server.extensions,org.thingsboard.rule.engine}"
 
-# JWT Token parameters
-security.jwt:
-  tokenExpirationTime: "${JWT_TOKEN_EXPIRATION_TIME:900}" # Number of seconds (15 mins)
-  refreshTokenExpTime: "${JWT_REFRESH_TOKEN_EXPIRATION_TIME:3600}" # Seconds (1 hour)
-  tokenIssuer: "${JWT_TOKEN_ISSUER:thingsboard.io}"
-  tokenSigningKey: "${JWT_TOKEN_SIGNING_KEY:thingsboardDefaultSigningKey}"
+# Security parameters
+security:
+  # JWT Token parameters
+  jwt:
+    tokenExpirationTime: "${JWT_TOKEN_EXPIRATION_TIME:900}" # Number of seconds (15 mins)
+    refreshTokenExpTime: "${JWT_REFRESH_TOKEN_EXPIRATION_TIME:3600}" # Seconds (1 hour)
+    tokenIssuer: "${JWT_TOKEN_ISSUER:thingsboard.io}"
+    tokenSigningKey: "${JWT_TOKEN_SIGNING_KEY:thingsboardDefaultSigningKey}"
+  # Enable/disable access to Tenant Administrators JWT token by System Administrator or Customer Users JWT token by Tenant Administrator
+  user_token_access_enabled: "${SECURITY_USER_TOKEN_ACCESS_ENABLED:true}"
+
+# Dashboard parameters
+dashboard:
+  # Maximum allowed datapoints fetched by widgets
+  max_datapoints_limit: "${DASHBOARD_MAX_DATAPOINTS_LIMIT:50000}"
 
 # Device communication protocol parameters
 http:
@@ -155,7 +164,11 @@ quota:
         intervalMin: 2
 
 database:
-  type: "${DATABASE_TYPE:sql}" # cassandra OR sql
+  entities:
+    type: "${DATABASE_ENTITIES_TYPE:sql}" # cassandra OR sql
+  ts:
+    type: "${DATABASE_TS_TYPE:sql}" # cassandra OR sql (for hybrid mode, only this value should be cassandra)
+
 
 # Cassandra driver configuration parameters
 cassandra:
@@ -201,8 +214,8 @@ cassandra:
     read_consistency_level: "${CASSANDRA_READ_CONSISTENCY_LEVEL:ONE}"
     write_consistency_level: "${CASSANDRA_WRITE_CONSISTENCY_LEVEL:ONE}"
     default_fetch_size: "${CASSANDRA_DEFAULT_FETCH_SIZE:2000}"
-    # Specify partitioning size for timestamp key-value storage. Example MINUTES, HOURS, DAYS, MONTHS
-    ts_key_value_partitioning: "${TS_KV_PARTITIONING:MONTHS}"
+    # Specify partitioning size for timestamp key-value storage. Example MINUTES, HOURS, DAYS, MONTHS,INDEFINITE
+    ts_key_value_partitioning: "${TS_KV_PARTITIONING:INDEFINITE}"
     ts_key_value_ttl: "${TS_KV_TTL:0}"
     buffer_size: "${CASSANDRA_QUERY_BUFFER_SIZE:200000}"
     concurrent_limit: "${CASSANDRA_QUERY_CONCURRENT_LIMIT:1000}"
@@ -291,6 +304,12 @@ caffeine:
     devices:
       timeToLiveInMinutes: 1440
       maxSize: 100000
+    assets:
+      timeToLiveInMinutes: 1440
+      maxSize: 100000
+    entityViews:
+      timeToLiveInMinutes: 1440
+      maxSize: 100000
 
 redis:
   # standalone or cluster
@@ -352,7 +371,7 @@ spring:
     password: "${SPRING_DATASOURCE_PASSWORD:}"
 
 # PostgreSQL DAO Configuration
-#spring:
+# spring:
 #  data:
 #    sql:
 #      repositories:
@@ -386,6 +405,7 @@ audit_log:
       "user": "${AUDIT_LOG_MASK_USER:W}"
       "rule_chain": "${AUDIT_LOG_MASK_RULE_CHAIN:W}"
       "alarm": "${AUDIT_LOG_MASK_ALARM:W}"
+      "entity_view": "${AUDIT_LOG_MASK_RULE_CHAIN:W}"
   sink:
     # Type of external sink. possible options: none, elasticsearch
     type: "${AUDIT_LOG_SINK_TYPE:none}"

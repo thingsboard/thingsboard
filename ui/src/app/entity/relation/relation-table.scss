@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import '../../../scss/constants';
+@import "../../../scss/constants";
 
-$md-light: rgba(255, 255, 255, 100%);
+$md-light: rgba(255, 255, 255, 100%) !default;
 
 .tb-relation-table {
   md-toolbar.md-table-toolbar.alternate {

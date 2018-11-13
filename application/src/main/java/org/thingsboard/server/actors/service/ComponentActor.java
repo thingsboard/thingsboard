@@ -159,11 +159,11 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
         }
     }
 
-    protected void logLifecycleEvent(ComponentLifecycleEvent event) {
+    private void logLifecycleEvent(ComponentLifecycleEvent event) {
         logLifecycleEvent(event, null);
     }
 
-    protected void logLifecycleEvent(ComponentLifecycleEvent event, Exception e) {
+    private void logLifecycleEvent(ComponentLifecycleEvent event, Exception e) {
         systemContext.persistLifecycleEvent(tenantId, id, event, e);
     }
 

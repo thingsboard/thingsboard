@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 tb-datetime-period {
   md-input-container {
-    margin-bottom: 0px;
+    margin-bottom: 0;
+
     .md-errors-spacer {
-      min-height: 0px;
+      min-height: 0;
     }
   }
+
   mdp-date-picker {
     .md-input {
       width: 150px !important;
