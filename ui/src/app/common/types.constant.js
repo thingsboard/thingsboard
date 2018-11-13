@@ -23,7 +23,9 @@ export default angular.module('thingsboard.types', [])
                 permissionDenied: 20,
                 invalidArguments: 30,
                 badRequestParams: 31,
-                itemNotFound: 32
+                itemNotFound: 32,
+                tooManyRequests: 33,
+                tooManyUpdates: 34
             },
             entryPoints: {
                 login: "/api/auth/login",
