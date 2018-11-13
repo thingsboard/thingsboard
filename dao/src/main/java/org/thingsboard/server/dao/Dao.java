@@ -16,20 +16,21 @@
 package org.thingsboard.server.dao;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.List;
 import java.util.UUID;
 
 public interface Dao<T> {
 
-    List<T> find();
+    List<T> find(TenantId tenantId);
 
-    T findById(UUID id);
+    T findById(TenantId tenantId, UUID id);
 
-    ListenableFuture<T> findByIdAsync(UUID id);
+    ListenableFuture<T> findByIdAsync(TenantId tenantId, UUID id);
 
-    T save(T t);
+    T save(TenantId tenantId, T t);
 
-    boolean removeById(UUID id);
+    boolean removeById(TenantId tenantId, UUID id);
 
 }

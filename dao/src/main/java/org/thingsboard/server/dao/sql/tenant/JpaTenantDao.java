@@ -21,6 +21,7 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.UUIDConverter;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.TenantEntity;
@@ -54,7 +55,7 @@ public class JpaTenantDao extends JpaAbstractSearchTextDao<TenantEntity, Tenant>
     }
 
     @Override
-    public List<Tenant> findTenantsByRegion(String region, TextPageLink pageLink) {
+    public List<Tenant> findTenantsByRegion(TenantId tenantId, String region, TextPageLink pageLink) {
         return DaoUtil.convertDataList(tenantRepository
                 .findByRegionNextPage(
                         region,

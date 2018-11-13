@@ -77,6 +77,6 @@ public class JpaCustomerDaoTest extends AbstractJpaDaoTest {
         customer.setId(new CustomerId(UUIDs.timeBased()));
         customer.setTenantId(new TenantId(tenantId));
         customer.setTitle("CUSTOMER_" + index);
-        customerDao.save(customer);
+        customerDao.save(new TenantId(tenantId), customer);
     }
 }

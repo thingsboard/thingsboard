@@ -31,6 +31,8 @@ public final class RuleEngineDeviceRpcRequest {
     private final DeviceId deviceId;
     private final int requestId;
     private final UUID requestUUID;
+    private final String originHost;
+    private final int originPort;
     private final boolean oneway;
     private final String method;
     private final String body;

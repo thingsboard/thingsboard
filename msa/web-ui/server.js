@@ -31,13 +31,18 @@ var server;
         const bindAddress = config.get('server.address');
         const bindPort = config.get('server.port');
 
+        const thingsboardEnableProxy = config.get('thingsboard.enableProxy');
+
         const thingsboardHost = config.get('thingsboard.host');
         const thingsboardPort = config.get('thingsboard.port');
 
         logger.info('Bind address: %s', bindAddress);
         logger.info('Bind port: %s', bindPort);
+        logger.info('ThingsBoard Enable Proxy: %s', thingsboardEnableProxy);
         logger.info('ThingsBoard host: %s', thingsboardHost);
         logger.info('ThingsBoard port: %s', thingsboardPort);
+
+        const useApiProxy = thingsboardEnableProxy === "true";
 
         var webDir = path.join(__dirname, 'web');
 
@@ -49,47 +54,51 @@ var server;
         const app = express();
         server = http.createServer(app);
 
-        const apiProxy = httpProxy.createProxyServer({
-            target: {
-                host: thingsboardHost,
-                port: thingsboardPort
-            }
-        });
+        if (useApiProxy) {
+            const apiProxy = httpProxy.createProxyServer({
+                target: {
+                    host: thingsboardHost,
+                    port: thingsboardPort
+                }
+            });
 
-        apiProxy.on('error', function (err, req, res) {
-            logger.warn('API proxy error: %s', err.message);
-            res.writeHead(500);
-            if (err.code && err.code === 'ECONNREFUSED') {
-                res.end('Unable to connect to ThingsBoard server.');
-            } else {
-                res.end('Thingsboard server connection error: ' + err.code ? err.code : '');
-            }
-        });
+            apiProxy.on('error', function (err, req, res) {
+                logger.warn('API proxy error: %s', err.message);
+                res.writeHead(500);
+                if (err.code && err.code === 'ECONNREFUSED') {
+                    res.end('Unable to connect to ThingsBoard server.');
+                } else {
+                    res.end('Thingsboard server connection error: ' + err.code ? err.code : '');
+                }
+            });
+        }
 
-        const root = path.join(webDir, 'public');
+        if (useApiProxy) {
+            app.all('/api/*', (req, res) => {
+                logger.debug(req.method + ' ' + req.originalUrl);
+                apiProxy.web(req, res);
+            });
 
-        const staticDir = path.join(root, 'static');
-
-        app.all('/api/*', (req, res) => {
-            logger.debug(req.method + ' ' + req.originalUrl);
-            apiProxy.web(req, res);
-        });
-
-        app.all('/static/rulenode/*', (req, res) => {
-            apiProxy.web(req, res);
-        });
+            app.all('/static/rulenode/*', (req, res) => {
+                apiProxy.web(req, res);
+            });
+        }
 
         app.use(historyApiFallback());
 
-        app.use('/static', express.static(staticDir));
+        const root = path.join(webDir, 'public');
 
-        app.get('*', (req, res) => {
-            apiProxy.web(req, res);
-        });
+        app.use(express.static(root));
 
-        server.on('upgrade', (req, socket, head) => {
-            apiProxy.ws(req, socket, head);
-        });
+        if (useApiProxy) {
+            app.get('*', (req, res) => {
+                apiProxy.web(req, res);
+            });
+
+            server.on('upgrade', (req, socket, head) => {
+                apiProxy.ws(req, socket, head);
+            });
+        }
 
         server.listen(bindPort, bindAddress, (error) => {
             if (error) {

@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
+import org.thingsboard.server.dao.service.AbstractServiceTest;
 import org.thingsboard.server.dao.widget.WidgetsBundleDao;
 
 import java.util.List;
@@ -46,7 +47,7 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
     @DatabaseSetup(value = "classpath:dbunit/widgets_bundle.xml",type= DatabaseOperation.CLEAN_INSERT)
     @DatabaseTearDown(value = "classpath:dbunit/widgets_bundle.xml", type= DatabaseOperation.DELETE_ALL)
     public void testFindAll() {
-        assertEquals(7, widgetsBundleDao.find().size());
+        assertEquals(7, widgetsBundleDao.find(AbstractServiceTest.SYSTEM_TENANT_ID).size());
     }
 
     @Test
@@ -62,14 +63,14 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
     @DatabaseSetup(value = "classpath:dbunit/widgets_bundle.xml", type= DatabaseOperation.DELETE_ALL)
     public void testFindSystemWidgetsBundles() {
         createSystemWidgetBundles(30, "WB_");
-        assertEquals(30, widgetsBundleDao.find().size());
+        assertEquals(30, widgetsBundleDao.find(AbstractServiceTest.SYSTEM_TENANT_ID).size());
         // Get first page
         TextPageLink textPageLink1 = new TextPageLink(10, "WB");
-        List<WidgetsBundle> widgetsBundles1 = widgetsBundleDao.findSystemWidgetsBundles(textPageLink1);
+        List<WidgetsBundle> widgetsBundles1 = widgetsBundleDao.findSystemWidgetsBundles(AbstractServiceTest.SYSTEM_TENANT_ID, textPageLink1);
         assertEquals(10, widgetsBundles1.size());
         // Get next page
         TextPageLink textPageLink2 = new TextPageLink(10, "WB", widgetsBundles1.get(9).getId().getId(), null);
-        List<WidgetsBundle> widgetsBundles2 = widgetsBundleDao.findSystemWidgetsBundles(textPageLink2);
+        List<WidgetsBundle> widgetsBundles2 = widgetsBundleDao.findSystemWidgetsBundles(AbstractServiceTest.SYSTEM_TENANT_ID, textPageLink2);
         assertEquals(10, widgetsBundles2.size());
     }
 
@@ -84,7 +85,7 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
             createWidgetBundles(5, tenantId2, "WB2_");
             createSystemWidgetBundles(10, "WB_SYS_");
         }
-        assertEquals(180, widgetsBundleDao.find().size());
+        assertEquals(180, widgetsBundleDao.find(AbstractServiceTest.SYSTEM_TENANT_ID).size());
 
         TextPageLink textPageLink1 = new TextPageLink(40, "WB");
         List<WidgetsBundle> widgetsBundles1 = widgetsBundleDao.findTenantWidgetsBundlesByTenantId(tenantId1, textPageLink1);
@@ -153,7 +154,7 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
             widgetsBundle.setTitle(prefix + i);
             widgetsBundle.setId(new WidgetsBundleId(UUIDs.timeBased()));
             widgetsBundle.setTenantId(new TenantId(tenantId));
-            widgetsBundleDao.save(widgetsBundle);
+            widgetsBundleDao.save(AbstractServiceTest.SYSTEM_TENANT_ID, widgetsBundle);
         }
     }
     private void createSystemWidgetBundles(int count, String prefix) {
@@ -163,7 +164,7 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
             widgetsBundle.setTitle(prefix + i);
             widgetsBundle.setTenantId(new TenantId(NULL_UUID));
             widgetsBundle.setId(new WidgetsBundleId(UUIDs.timeBased()));
-            widgetsBundleDao.save(widgetsBundle);
+            widgetsBundleDao.save(AbstractServiceTest.SYSTEM_TENANT_ID, widgetsBundle);
         }
     }
 }

@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.rule;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.dao.DaoUtil;
@@ -51,7 +52,7 @@ public class CassandraRuleChainDao extends CassandraAbstractSearchTextDao<RuleCh
     @Override
     public List<RuleChain> findRuleChainsByTenantId(UUID tenantId, TextPageLink pageLink) {
         log.debug("Try to find rule chains by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
-        List<RuleChainEntity> ruleChainEntities = findPageWithTextSearch(RULE_CHAIN_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
+        List<RuleChainEntity> ruleChainEntities = findPageWithTextSearch(new TenantId(tenantId), RULE_CHAIN_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
                 Collections.singletonList(eq(RULE_CHAIN_TENANT_ID_PROPERTY, tenantId)),
                 pageLink);
 

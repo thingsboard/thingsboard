@@ -186,7 +186,7 @@ export default function UserController(userService, toast, $scope, $mdDialog, $d
             },
             parent: angular.element($document[0].body),
             fullscreen: true,
-            skipHide: true,
+            multiple: true,
             targetEvent: event
         });
     }

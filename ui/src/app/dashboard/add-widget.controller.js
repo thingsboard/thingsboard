@@ -166,7 +166,7 @@ export default function AddWidgetController($scope, widgetService, entityService
             },
             parent: angular.element($document[0].body),
             fullscreen: true,
-            skipHide: true,
+            multiple: true,
             targetEvent: event
         }).then(function (singleEntityAlias) {
             vm.dashboard.configuration.entityAliases[singleEntityAlias.id] = singleEntityAlias;

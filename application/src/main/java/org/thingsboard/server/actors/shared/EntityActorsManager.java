@@ -20,6 +20,8 @@ import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
 import akka.japi.Creator;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.service.ContextAwareActor;
@@ -39,11 +41,11 @@ import java.util.Map;
 public abstract class EntityActorsManager<T extends EntityId, A extends UntypedActor, M extends SearchTextBased<? extends UUIDBased>> {
 
     protected final ActorSystemContext systemContext;
-    protected final Map<T, ActorRef> actors;
+    protected final BiMap<T, ActorRef> actors;
 
     public EntityActorsManager(ActorSystemContext systemContext) {
         this.systemContext = systemContext;
-        this.actors = new HashMap<>();
+        this.actors = HashBiMap.create();
     }
 
     protected abstract TenantId getTenantId();
@@ -65,7 +67,8 @@ public abstract class EntityActorsManager<T extends EntityId, A extends UntypedA
         }
     }
 
-    public void visit(M entity, ActorRef actorRef) {}
+    public void visit(M entity, ActorRef actorRef) {
+    }
 
     public ActorRef getOrCreateActor(ActorContext context, T entityId) {
         return actors.computeIfAbsent(entityId, eId ->

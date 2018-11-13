@@ -17,7 +17,9 @@ package org.thingsboard.server.dao.entityview;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.Dao;
 
@@ -36,7 +38,7 @@ public interface EntityViewDao extends Dao<EntityView> {
      * @param entityView the entity-view object
      * @return saved entity-view object
      */
-    EntityView save(EntityView entityView);
+    EntityView save(TenantId tenantId, EntityView entityView);
 
     /**
      * Find entity views by tenantId and page link.
@@ -46,6 +48,16 @@ public interface EntityViewDao extends Dao<EntityView> {
      * @return the list of entity view objects
      */
     List<EntityView> findEntityViewsByTenantId(UUID tenantId, TextPageLink pageLink);
+
+    /**
+     * Find entity views by tenantId, type and page link.
+     *
+     * @param tenantId the tenantId
+     * @param type the type
+     * @param pageLink the page link
+     * @return the list of entity view objects
+     */
+    List<EntityView> findEntityViewsByTenantIdAndType(UUID tenantId, String type, TextPageLink pageLink);
 
     /**
      * Find entity views by tenantId and entity view name.
@@ -68,6 +80,27 @@ public interface EntityViewDao extends Dao<EntityView> {
                                                             UUID customerId,
                                                             TextPageLink pageLink);
 
+    /**
+     * Find entity views by tenantId, customerId, type and page link.
+     *
+     * @param tenantId the tenantId
+     * @param customerId the customerId
+     * @param type the type
+     * @param pageLink the page link
+     * @return the list of entity view objects
+     */
+    List<EntityView> findEntityViewsByTenantIdAndCustomerIdAndType(UUID tenantId,
+                                                                   UUID customerId,
+                                                                   String type,
+                                                                   TextPageLink pageLink);
 
     ListenableFuture<List<EntityView>> findEntityViewsByTenantIdAndEntityIdAsync(UUID tenantId, UUID entityId);
+
+    /**
+     * Find tenants entity view types.
+     *
+     * @return the list of tenant entity view type objects
+     */
+    ListenableFuture<List<EntitySubtype>> findTenantEntityViewTypesAsync(UUID tenantId);
+
 }

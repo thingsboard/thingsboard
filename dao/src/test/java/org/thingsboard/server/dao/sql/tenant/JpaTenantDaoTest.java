@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
+import org.thingsboard.server.dao.service.AbstractServiceTest;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
 import java.util.List;
@@ -41,13 +42,13 @@ public class JpaTenantDaoTest extends AbstractJpaDaoTest {
     @DatabaseSetup("classpath:dbunit/empty_dataset.xml")
     public void testFindTenantsByRegion() {
         createTenants();
-        assertEquals(60, tenantDao.find().size());
-        List<Tenant> tenants1 = tenantDao.findTenantsByRegion("REGION_1", new TextPageLink(20,"title"));
+        assertEquals(60, tenantDao.find(AbstractServiceTest.SYSTEM_TENANT_ID).size());
+        List<Tenant> tenants1 = tenantDao.findTenantsByRegion(AbstractServiceTest.SYSTEM_TENANT_ID, "REGION_1", new TextPageLink(20,"title"));
         assertEquals(20, tenants1.size());
-        List<Tenant> tenants2 = tenantDao.findTenantsByRegion("REGION_1",
+        List<Tenant> tenants2 = tenantDao.findTenantsByRegion(AbstractServiceTest.SYSTEM_TENANT_ID,"REGION_1",
                 new TextPageLink(20,"title", tenants1.get(19).getId().getId(), null));
         assertEquals(10, tenants2.size());
-        List<Tenant> tenants3 = tenantDao.findTenantsByRegion("REGION_1",
+        List<Tenant> tenants3 = tenantDao.findTenantsByRegion(AbstractServiceTest.SYSTEM_TENANT_ID,"REGION_1",
                 new TextPageLink(20,"title", tenants2.get(9).getId().getId(), null));
         assertEquals(0, tenants3.size());
     }
@@ -64,7 +65,7 @@ public class JpaTenantDaoTest extends AbstractJpaDaoTest {
         tenant.setId(new TenantId(UUIDs.timeBased()));
         tenant.setRegion(region);
         tenant.setTitle(title + "_" + index);
-        tenantDao.save(tenant);
+        tenantDao.save(AbstractServiceTest.SYSTEM_TENANT_ID, tenant);
     }
 
 }

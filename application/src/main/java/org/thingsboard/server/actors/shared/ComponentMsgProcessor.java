@@ -19,6 +19,7 @@ import akka.actor.ActorContext;
 import akka.event.LoggingAdapter;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.stats.StatsPersistTick;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -26,24 +27,24 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
-import org.thingsboard.server.service.queue.MsgQueueService;
 
 import javax.annotation.Nullable;
 import java.util.function.Consumer;
 
+@Slf4j
 public abstract class ComponentMsgProcessor<T extends EntityId> extends AbstractContextAwareMsgProcessor {
 
     protected final TenantId tenantId;
     protected final T entityId;
-    protected final MsgQueueService queue;
     protected ComponentLifecycleState state;
 
-    protected ComponentMsgProcessor(ActorSystemContext systemContext, LoggingAdapter logger, TenantId tenantId, T id) {
-        super(systemContext, logger);
+    protected ComponentMsgProcessor(ActorSystemContext systemContext, TenantId tenantId, T id) {
+        super(systemContext);
         this.tenantId = tenantId;
         this.entityId = id;
-        this.queue = systemContext.getMsgQueueService();
     }
+
+    public abstract String getComponentName();
 
     public abstract void start(ActorContext context) throws Exception;
 
@@ -82,22 +83,9 @@ public abstract class ComponentMsgProcessor<T extends EntityId> extends Abstract
 
     protected void checkActive() {
         if (state != ComponentLifecycleState.ACTIVE) {
-            throw new IllegalStateException("Rule chain is not active!");
+            log.warn("Rule chain is not active. Current state [{}] for processor [{}] tenant [{}]", state, tenantId, entityId);
+            throw new IllegalStateException("Rule chain is not active! " + entityId + " - " + tenantId);
         }
     }
 
-    protected void putToQueue(final TbMsg tbMsg, final Consumer<TbMsg> onSuccess) {
-        EntityId entityId = tbMsg.getRuleNodeId() != null ? tbMsg.getRuleNodeId() : tbMsg.getRuleChainId();
-        Futures.addCallback(queue.put(this.tenantId, tbMsg, entityId.getId(), tbMsg.getClusterPartition()), new FutureCallback<Void>() {
-            @Override
-            public void onSuccess(@Nullable Void result) {
-                onSuccess.accept(tbMsg);
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                logger.debug("Failed to push message [{}] to queue due to [{}]", tbMsg, t);
-            }
-        });
-    }
 }

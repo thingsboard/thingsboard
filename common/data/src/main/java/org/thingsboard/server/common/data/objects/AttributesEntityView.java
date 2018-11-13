@@ -18,6 +18,7 @@ package org.thingsboard.server.common.data.objects;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,7 +27,7 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class AttributesEntityView {
+public class AttributesEntityView implements Serializable {
 
     private List<String> cs = new ArrayList<>();
     private List<String> ss = new ArrayList<>();

@@ -77,10 +77,10 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
     private DashboardService dashboardService;
 
     @Override
-    public Customer findCustomerById(CustomerId customerId) {
+    public Customer findCustomerById(TenantId tenantId, CustomerId customerId) {
         log.trace("Executing findCustomerById [{}]", customerId);
         Validator.validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
-        return customerDao.findById(customerId.getId());
+        return customerDao.findById(tenantId, customerId.getId());
     }
 
     @Override
@@ -91,36 +91,36 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
     }
 
     @Override
-    public ListenableFuture<Customer> findCustomerByIdAsync(CustomerId customerId) {
+    public ListenableFuture<Customer> findCustomerByIdAsync(TenantId tenantId, CustomerId customerId) {
         log.trace("Executing findCustomerByIdAsync [{}]", customerId);
         validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
-        return customerDao.findByIdAsync(customerId.getId());
+        return customerDao.findByIdAsync(tenantId, customerId.getId());
     }
 
     @Override
     public Customer saveCustomer(Customer customer) {
         log.trace("Executing saveCustomer [{}]", customer);
-        customerValidator.validate(customer);
-        Customer savedCustomer = customerDao.save(customer);
-        dashboardService.updateCustomerDashboards(savedCustomer.getId());
+        customerValidator.validate(customer, Customer::getTenantId);
+        Customer savedCustomer = customerDao.save(customer.getTenantId(), customer);
+        dashboardService.updateCustomerDashboards(savedCustomer.getTenantId(), savedCustomer.getId());
         return savedCustomer;
     }
 
     @Override
-    public void deleteCustomer(CustomerId customerId) {
+    public void deleteCustomer(TenantId tenantId, CustomerId customerId) {
         log.trace("Executing deleteCustomer [{}]", customerId);
         Validator.validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
-        Customer customer = findCustomerById(customerId);
+        Customer customer = findCustomerById(tenantId, customerId);
         if (customer == null) {
             throw new IncorrectParameterException("Unable to delete non-existent customer.");
         }
-        dashboardService.unassignCustomerDashboards(customerId);
+        dashboardService.unassignCustomerDashboards(tenantId, customerId);
         entityViewService.unassignCustomerEntityViews(customer.getTenantId(), customerId);
         assetService.unassignCustomerAssets(customer.getTenantId(), customerId);
         deviceService.unassignCustomerDevices(customer.getTenantId(), customerId);
         userService.deleteCustomerUsers(customer.getTenantId(), customerId);
-        deleteEntityRelations(customerId);
-        customerDao.removeById(customerId.getId());
+        deleteEntityRelations(tenantId, customerId);
+        customerDao.removeById(tenantId, customerId.getId());
     }
 
     @Override
@@ -139,7 +139,7 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
             } catch (IOException e) {
                 throw new IncorrectParameterException("Unable to create public customer.", e);
             }
-            return customerDao.save(publicCustomer);
+            return customerDao.save(tenantId, publicCustomer);
         }
     }
 
@@ -156,14 +156,14 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
     public void deleteCustomersByTenantId(TenantId tenantId) {
         log.trace("Executing deleteCustomersByTenantId, tenantId [{}]", tenantId);
         Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
-        customersByTenantRemover.removeEntities(tenantId);
+        customersByTenantRemover.removeEntities(tenantId, tenantId);
     }
 
     private DataValidator<Customer> customerValidator =
             new DataValidator<Customer>() {
 
                 @Override
-                protected void validateCreate(Customer customer) {
+                protected void validateCreate(TenantId tenantId, Customer customer) {
                     customerDao.findCustomersByTenantIdAndTitle(customer.getTenantId().getId(), customer.getTitle()).ifPresent(
                             c -> {
                                 throw new DataValidationException("Customer with such title already exists!");
@@ -172,7 +172,7 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
                 }
 
                 @Override
-                protected void validateUpdate(Customer customer) {
+                protected void validateUpdate(TenantId tenantId, Customer customer) {
                     customerDao.findCustomersByTenantIdAndTitle(customer.getTenantId().getId(), customer.getTitle()).ifPresent(
                             c -> {
                                 if (!c.getId().equals(customer.getId())) {
@@ -183,7 +183,7 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
                 }
 
                 @Override
-                protected void validateDataImpl(Customer customer) {
+                protected void validateDataImpl(TenantId tenantId, Customer customer) {
                     if (StringUtils.isEmpty(customer.getTitle())) {
                         throw new DataValidationException("Customer title should be specified!");
                     }
@@ -196,7 +196,7 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
                     if (customer.getTenantId() == null) {
                         throw new DataValidationException("Customer should be assigned to tenant!");
                     } else {
-                        Tenant tenant = tenantDao.findById(customer.getTenantId().getId());
+                        Tenant tenant = tenantDao.findById(tenantId, customer.getTenantId().getId());
                         if (tenant == null) {
                             throw new DataValidationException("Customer is referencing to non-existent tenant!");
                         }
@@ -208,13 +208,13 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
             new PaginatedRemover<TenantId, Customer>() {
 
                 @Override
-                protected List<Customer> findEntities(TenantId id, TextPageLink pageLink) {
+                protected List<Customer> findEntities(TenantId tenantId, TenantId id, TextPageLink pageLink) {
                     return customerDao.findCustomersByTenantId(id.getId(), pageLink);
                 }
 
                 @Override
-                protected void removeEntity(Customer entity) {
-                    deleteCustomer(new CustomerId(entity.getUuidId()));
+                protected void removeEntity(TenantId tenantId, Customer entity) {
+                    deleteCustomer(tenantId, new CustomerId(entity.getUuidId()));
                 }
             };
 }

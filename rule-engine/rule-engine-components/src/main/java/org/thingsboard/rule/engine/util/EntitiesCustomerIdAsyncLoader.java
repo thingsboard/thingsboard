@@ -32,11 +32,11 @@ public class EntitiesCustomerIdAsyncLoader {
             case CUSTOMER:
                 return Futures.immediateFuture((CustomerId) original);
             case USER:
-                return getCustomerAsync(ctx.getUserService().findUserByIdAsync((UserId) original));
+                return getCustomerAsync(ctx.getUserService().findUserByIdAsync(ctx.getTenantId(), (UserId) original));
             case ASSET:
-                return getCustomerAsync(ctx.getAssetService().findAssetByIdAsync((AssetId) original));
+                return getCustomerAsync(ctx.getAssetService().findAssetByIdAsync(ctx.getTenantId(), (AssetId) original));
             case DEVICE:
-                return getCustomerAsync(ctx.getDeviceService().findDeviceByIdAsync((DeviceId) original));
+                return getCustomerAsync(ctx.getDeviceService().findDeviceByIdAsync(ctx.getTenantId(), (DeviceId) original));
             default:
                 return Futures.immediateFailedFuture(new TbNodeException("Unexpected original EntityType " + original));
         }

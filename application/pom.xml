@@ -57,20 +57,20 @@
             <artifactId>rule-engine-components</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.thingsboard.common</groupId>
-            <artifactId>transport</artifactId>
+            <groupId>org.thingsboard.common.transport</groupId>
+            <artifactId>transport-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.thingsboard.transport</groupId>
+            <groupId>org.thingsboard.common.transport</groupId>
+            <artifactId>mqtt</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common.transport</groupId>
             <artifactId>http</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.thingsboard.transport</groupId>
+            <groupId>org.thingsboard.common.transport</groupId>
             <artifactId>coap</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.thingsboard.transport</groupId>
-            <artifactId>mqtt</artifactId>
         </dependency>
         <dependency>
             <groupId>org.thingsboard</groupId>
@@ -542,7 +542,8 @@
                     <args>
                         <arg>-PprojectBuildDir=${project.build.directory}</arg>
                         <arg>-PprojectVersion=${project.version}</arg>
-                        <arg>-PmainJar=${project.build.directory}/${project.build.finalName}-boot.${project.packaging}</arg>
+                        <arg>-PmainJar=${project.build.directory}/${project.build.finalName}-boot.${project.packaging}
+                        </arg>
                         <arg>-PpkgName=${pkg.name}</arg>
                         <arg>-PpkgInstallFolder=${pkg.installFolder}</arg>
                         <arg>-PpkgLogFolder=${pkg.unixLogFolder}</arg>

@@ -23,24 +23,29 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.errors.InterruptException;
+import org.apache.kafka.common.errors.TopicExistsException;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.internals.RecordHeader;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Created by ashvayka on 25.09.18.
  */
 @Slf4j
-public class TbKafkaRequestTemplate<Request, Response> {
+public class TbKafkaRequestTemplate<Request, Response> extends AbstractTbKafkaTemplate {
 
     private final TBKafkaProducerTemplate<Request> requestTemplate;
     private final TBKafkaConsumerTemplate<Response> responseTemplate;
@@ -82,7 +87,13 @@ public class TbKafkaRequestTemplate<Request, Response> {
             CreateTopicsResult result = admin.createTopic(new NewTopic(responseTemplate.getTopic(), 1, (short) 1));
             result.all().get();
         } catch (Exception e) {
-            log.trace("Failed to create topic: {}", e.getMessage(), e);
+            if ((e instanceof TopicExistsException) || (e.getCause() != null && e.getCause() instanceof TopicExistsException)) {
+                log.trace("[{}] Topic already exists. ", responseTemplate.getTopic());
+            } else {
+                log.info("[{}] Failed to create topic: {}", responseTemplate.getTopic(), e.getMessage(), e);
+                throw new RuntimeException(e);
+            }
+
         }
         this.requestTemplate.init();
         tickTs = System.currentTimeMillis();
@@ -90,53 +101,71 @@ public class TbKafkaRequestTemplate<Request, Response> {
         executor.submit(() -> {
             long nextCleanupMs = 0L;
             while (!stopped) {
-                ConsumerRecords<String, byte[]> responses = responseTemplate.poll(Duration.ofMillis(pollInterval));
-                responses.forEach(response -> {
-                    Header requestIdHeader = response.headers().lastHeader(TbKafkaSettings.REQUEST_ID_HEADER);
-                    Response decocedResponse = null;
-                    UUID requestId = null;
-                    if (requestIdHeader == null) {
-                        try {
-                            decocedResponse = responseTemplate.decode(response);
-                            requestId = responseTemplate.extractRequestId(decocedResponse);
-
-                        } catch (IOException e) {
-                            log.error("Failed to decode response", e);
-                        }
-                    } else {
-                        requestId = bytesToUuid(requestIdHeader.value());
+                try {
+                    ConsumerRecords<String, byte[]> responses = responseTemplate.poll(Duration.ofMillis(pollInterval));
+                    if (responses.count() > 0) {
+                        log.trace("Polling responses completed, consumer records count [{}]", responses.count());
                     }
-                    if (requestId == null) {
-                        log.error("[{}] Missing requestId in header and response", response);
-                    } else {
-                        ResponseMetaData<Response> expectedResponse = pendingRequests.remove(requestId);
-                        if (expectedResponse == null) {
-                            log.trace("[{}] Invalid or stale request", requestId);
-                        } else {
+                    responses.forEach(response -> {
+                        log.trace("Received response to Kafka Template request: {}", response);
+                        Header requestIdHeader = response.headers().lastHeader(TbKafkaSettings.REQUEST_ID_HEADER);
+                        Response decodedResponse = null;
+                        UUID requestId = null;
+                        if (requestIdHeader == null) {
                             try {
-                                if (decocedResponse == null) {
-                                    decocedResponse = responseTemplate.decode(response);
-                                }
-                                expectedResponse.future.set(decocedResponse);
+                                decodedResponse = responseTemplate.decode(response);
+                                requestId = responseTemplate.extractRequestId(decodedResponse);
                             } catch (IOException e) {
-                                expectedResponse.future.setException(e);
+                                log.error("Failed to decode response", e);
                             }
+                        } else {
+                            requestId = bytesToUuid(requestIdHeader.value());
                         }
-                    }
-                });
-                tickTs = System.currentTimeMillis();
-                tickSize = pendingRequests.size();
-                if (nextCleanupMs < tickTs) {
-                    //cleanup;
-                    pendingRequests.entrySet().forEach(kv -> {
-                        if (kv.getValue().expTime < tickTs) {
-                            ResponseMetaData<Response> staleRequest = pendingRequests.remove(kv.getKey());
-                            if (staleRequest != null) {
-                                staleRequest.future.setException(new TimeoutException());
+                        if (requestId == null) {
+                            log.error("[{}] Missing requestId in header and body", response);
+                        } else {
+                            log.trace("[{}] Response received", requestId);
+                            ResponseMetaData<Response> expectedResponse = pendingRequests.remove(requestId);
+                            if (expectedResponse == null) {
+                                log.trace("[{}] Invalid or stale request", requestId);
+                            } else {
+                                try {
+                                    if (decodedResponse == null) {
+                                        decodedResponse = responseTemplate.decode(response);
+                                    }
+                                    expectedResponse.future.set(decodedResponse);
+                                } catch (IOException e) {
+                                    expectedResponse.future.setException(e);
+                                }
                             }
                         }
                     });
-                    nextCleanupMs = tickTs + maxRequestTimeout;
+                    tickTs = System.currentTimeMillis();
+                    tickSize = pendingRequests.size();
+                    if (nextCleanupMs < tickTs) {
+                        //cleanup;
+                        pendingRequests.entrySet().forEach(kv -> {
+                            if (kv.getValue().expTime < tickTs) {
+                                ResponseMetaData<Response> staleRequest = pendingRequests.remove(kv.getKey());
+                                if (staleRequest != null) {
+                                    log.trace("[{}] Request timeout detected, expTime [{}], tickTs [{}]", kv.getKey(), staleRequest.expTime, tickTs);
+                                    staleRequest.future.setException(new TimeoutException());
+                                }
+                            }
+                        });
+                        nextCleanupMs = tickTs + maxRequestTimeout;
+                    }
+                } catch (InterruptException ie) {
+                    if (!stopped) {
+                        log.warn("Fetching data from kafka was interrupted.", ie);
+                    }
+                } catch (Throwable e) {
+                    log.warn("Failed to obtain responses from queue.", e);
+                    try {
+                        Thread.sleep(pollInterval);
+                    } catch (InterruptedException e2) {
+                        log.trace("Failed to wait until the server has capacity to handle new responses", e2);
+                    }
                 }
             }
         });
@@ -158,28 +187,18 @@ public class TbKafkaRequestTemplate<Request, Response> {
         headers.add(new RecordHeader(TbKafkaSettings.REQUEST_ID_HEADER, uuidToBytes(requestId)));
         headers.add(new RecordHeader(TbKafkaSettings.RESPONSE_TOPIC_HEADER, stringToBytes(responseTemplate.getTopic())));
         SettableFuture<Response> future = SettableFuture.create();
-        pendingRequests.putIfAbsent(requestId, new ResponseMetaData<>(tickTs + maxRequestTimeout, future));
+        ResponseMetaData<Response> responseMetaData = new ResponseMetaData<>(tickTs + maxRequestTimeout, future);
+        pendingRequests.putIfAbsent(requestId, responseMetaData);
         request = requestTemplate.enrich(request, responseTemplate.getTopic(), requestId);
-        requestTemplate.send(key, request, headers);
+        log.trace("[{}] Sending request, key [{}], expTime [{}]", requestId, key, responseMetaData.expTime);
+        requestTemplate.send(key, request, headers, (metadata, exception) -> {
+            if (exception != null) {
+                log.trace("[{}] Failed to post the request", requestId, exception);
+            } else {
+                log.trace("[{}] Posted the request", requestId, metadata);
+            }
+        });
         return future;
-    }
-
-    private byte[] uuidToBytes(UUID uuid) {
-        ByteBuffer buf = ByteBuffer.allocate(16);
-        buf.putLong(uuid.getMostSignificantBits());
-        buf.putLong(uuid.getLeastSignificantBits());
-        return buf.array();
-    }
-
-    private static UUID bytesToUuid(byte[] bytes) {
-        ByteBuffer bb = ByteBuffer.wrap(bytes);
-        long firstLong = bb.getLong();
-        long secondLong = bb.getLong();
-        return new UUID(firstLong, secondLong);
-    }
-
-    private byte[] stringToBytes(String string) {
-        return string.getBytes(StandardCharsets.UTF_8);
     }
 
     private static class ResponseMetaData<T> {

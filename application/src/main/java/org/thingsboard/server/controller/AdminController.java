@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.service.update.UpdateService;
 import org.thingsboard.server.service.update.model.UpdateMessage;
@@ -48,7 +49,7 @@ public class AdminController extends BaseController {
     @ResponseBody
     public AdminSettings getAdminSettings(@PathVariable("key") String key) throws ThingsboardException {
         try {
-            return checkNotNull(adminSettingsService.findAdminSettingsByKey(key));
+            return checkNotNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, key));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -59,7 +60,7 @@ public class AdminController extends BaseController {
     @ResponseBody 
     public AdminSettings saveAdminSettings(@RequestBody AdminSettings adminSettings) throws ThingsboardException {
         try {
-            adminSettings = checkNotNull(adminSettingsService.saveAdminSettings(adminSettings));
+            adminSettings = checkNotNull(adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, adminSettings));
             if (adminSettings.getKey().equals("mail")) {
                 mailService.updateMailConfiguration();
             }

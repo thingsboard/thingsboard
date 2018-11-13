@@ -25,17 +25,17 @@ import java.util.List;
 
 public interface WidgetsBundleService {
 
-    WidgetsBundle findWidgetsBundleById(WidgetsBundleId widgetsBundleId);
+    WidgetsBundle findWidgetsBundleById(TenantId tenantId, WidgetsBundleId widgetsBundleId);
 
     WidgetsBundle saveWidgetsBundle(WidgetsBundle widgetsBundle);
 
-    void deleteWidgetsBundle(WidgetsBundleId widgetsBundleId);
+    void deleteWidgetsBundle(TenantId tenantId, WidgetsBundleId widgetsBundleId);
 
     WidgetsBundle findWidgetsBundleByTenantIdAndAlias(TenantId tenantId, String alias);
 
-    TextPageData<WidgetsBundle> findSystemWidgetsBundlesByPageLink(TextPageLink pageLink);
+    TextPageData<WidgetsBundle> findSystemWidgetsBundlesByPageLink(TenantId tenantId, TextPageLink pageLink);
 
-    List<WidgetsBundle> findSystemWidgetsBundles();
+    List<WidgetsBundle> findSystemWidgetsBundles(TenantId tenantId);
 
     TextPageData<WidgetsBundle> findTenantWidgetsBundlesByTenantId(TenantId tenantId, TextPageLink pageLink);
 

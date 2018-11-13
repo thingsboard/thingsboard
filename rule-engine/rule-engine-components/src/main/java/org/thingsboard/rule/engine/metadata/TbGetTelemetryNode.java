@@ -83,7 +83,7 @@ public class TbGetTelemetryNode implements TbNode {
         } else {
             try {
                 List<ReadTsKvQuery> queries = buildQueries();
-                ListenableFuture<List<TsKvEntry>> list = ctx.getTimeseriesService().findAll(msg.getOriginator(), queries);
+                ListenableFuture<List<TsKvEntry>> list = ctx.getTimeseriesService().findAll(ctx.getTenantId(), msg.getOriginator(), queries);
                 DonAsynchron.withCallback(list, data -> {
                     process(data, msg);
                     TbMsg newMsg = ctx.newMsg(msg.getType(), msg.getOriginator(), msg.getMetaData(), msg.getData());

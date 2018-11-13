@@ -44,7 +44,7 @@ export default class TbGoogleMap {
         function initGoogleMap() {
 
             tbMap.map = new google.maps.Map($containerElement[0], { // eslint-disable-line no-undef
-                scrollwheel: false,
+                scrollwheel: true,
                 mapTypeId: getGoogleMapTypeId(tbMap.defaultMapType),
                 zoom: tbMap.defaultZoomLevel || 8
             });

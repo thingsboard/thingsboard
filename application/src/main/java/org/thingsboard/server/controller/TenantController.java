@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.service.install.InstallScripts;
 
@@ -84,6 +85,8 @@ public class TenantController extends BaseController {
         try {
             TenantId tenantId = new TenantId(toUUID(strTenantId));
             tenantService.deleteTenant(tenantId);
+
+            actorService.onEntityStateChange(tenantId, tenantId, ComponentLifecycleEvent.DELETED);
         } catch (Exception e) {
             throw handleException(e);
         }

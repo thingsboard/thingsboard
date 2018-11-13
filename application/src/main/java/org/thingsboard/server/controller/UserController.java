@@ -107,14 +107,14 @@ public class UserController extends BaseController {
         try {
             UserId userId = new UserId(toUUID(strUserId));
             SecurityUser authUser = getCurrentUser();
-            User user = userService.findUserById(userId);
+            User user = userService.findUserById(authUser.getTenantId(), userId);
             if (!userTokenAccessEnabled || (authUser.getAuthority() == Authority.SYS_ADMIN && user.getAuthority() != Authority.TENANT_ADMIN)
                     || (authUser.getAuthority() == Authority.TENANT_ADMIN && !authUser.getTenantId().equals(user.getTenantId()))) {
                 throw new ThingsboardException(YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION,
                         ThingsboardErrorCode.PERMISSION_DENIED);
             }
             UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail());
-            UserCredentials credentials = userService.findUserCredentialsByUserId(userId);
+            UserCredentials credentials = userService.findUserCredentialsByUserId(authUser.getTenantId(), userId);
             SecurityUser securityUser = new SecurityUser(user, credentials.isEnabled(), principal);
             JwtToken accessToken = tokenFactory.createAccessJwtToken(securityUser);
             JwtToken refreshToken = refreshTokenRepository.requestRefreshToken(securityUser);
@@ -146,7 +146,7 @@ public class UserController extends BaseController {
             }
             User savedUser = checkNotNull(userService.saveUser(user));
             if (sendEmail) {
-                UserCredentials userCredentials = userService.findUserCredentialsByUserId(savedUser.getId());
+                UserCredentials userCredentials = userService.findUserCredentialsByUserId(authUser.getTenantId(), savedUser.getId());
                 String baseUrl = constructBaseUrl(request);
                 String activateUrl = String.format(ACTIVATE_URL_PATTERN, baseUrl,
                         userCredentials.getActivateToken());
@@ -154,7 +154,7 @@ public class UserController extends BaseController {
                 try {
                     mailService.sendActivationEmail(activateUrl, email);
                 } catch (ThingsboardException e) {
-                    userService.deleteUser(savedUser.getId());
+                    userService.deleteUser(authUser.getTenantId(), savedUser.getId());
                     throw e;
                 }
             }
@@ -180,8 +180,8 @@ public class UserController extends BaseController {
             @RequestParam(value = "email") String email,
             HttpServletRequest request) throws ThingsboardException {
         try {
-            User user = checkNotNull(userService.findUserByEmail(email));
-            UserCredentials userCredentials = userService.findUserCredentialsByUserId(user.getId());
+            User user = checkNotNull(userService.findUserByEmail(getCurrentUser().getTenantId(), email));
+            UserCredentials userCredentials = userService.findUserCredentialsByUserId(getCurrentUser().getTenantId(), user.getId());
             if (!userCredentials.isEnabled()) {
                 String baseUrl = constructBaseUrl(request);
                 String activateUrl = String.format(ACTIVATE_URL_PATTERN, baseUrl,
@@ -210,7 +210,7 @@ public class UserController extends BaseController {
                         ThingsboardErrorCode.PERMISSION_DENIED);
             }
             User user = checkUserId(userId);
-            UserCredentials userCredentials = userService.findUserCredentialsByUserId(user.getId());
+            UserCredentials userCredentials = userService.findUserCredentialsByUserId(getCurrentUser().getTenantId(), user.getId());
             if (!userCredentials.isEnabled()) {
                 String baseUrl = constructBaseUrl(request);
                 String activateUrl = String.format(ACTIVATE_URL_PATTERN, baseUrl,
@@ -232,7 +232,7 @@ public class UserController extends BaseController {
         try {
             UserId userId = new UserId(toUUID(strUserId));
             User user = checkUserId(userId);
-            userService.deleteUser(userId);
+            userService.deleteUser(getCurrentUser().getTenantId(), userId);
 
             logEntityAction(userId, user,
                     user.getCustomerId(),

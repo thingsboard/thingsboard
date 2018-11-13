@@ -97,6 +97,15 @@ public class ThingsboardInstallService {
 
                         databaseUpgradeService.upgradeDatabase("2.0.0");
 
+                    case "2.1.1":
+                        log.info("Upgrading ThingsBoard from version 2.1.1 to 2.1.2 ...");
+
+                        databaseUpgradeService.upgradeDatabase("2.1.1");
+                    case "2.1.3":
+                        log.info("Upgrading ThingsBoard from version 2.1.3 to 2.2.0 ...");
+
+                        databaseUpgradeService.upgradeDatabase("2.1.3");
+
                         log.info("Updating system data...");
 
                         systemDataLoaderService.deleteSystemWidgetBundle("charts");
@@ -109,6 +118,7 @@ public class ThingsboardInstallService {
                         systemDataLoaderService.deleteSystemWidgetBundle("control_widgets");
                         systemDataLoaderService.deleteSystemWidgetBundle("maps_v2");
                         systemDataLoaderService.deleteSystemWidgetBundle("gateway_widgets");
+                        systemDataLoaderService.deleteSystemWidgetBundle("input_widgets");
 
                         systemDataLoaderService.loadSystemWidgets();
 

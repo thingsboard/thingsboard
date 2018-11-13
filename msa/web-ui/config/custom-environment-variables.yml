@@ -20,6 +20,7 @@ server:
   # Server bind port
   port: "HTTP_BIND_PORT"
 thingsboard:
+  enableProxy: "TB_ENABLE_PROXY"
   # ThingsBoard node host
   host: "TB_HOST"
   # ThingsBoard node port

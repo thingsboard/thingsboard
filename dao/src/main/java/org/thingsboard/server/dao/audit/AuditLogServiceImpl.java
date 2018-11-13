@@ -128,7 +128,7 @@ public class AuditLogServiceImpl implements AuditLogService {
                 entityName = entity.getName();
             } else {
                 try {
-                    entityName = entityService.fetchEntityNameAsync(entityId).get();
+                    entityName = entityService.fetchEntityNameAsync(tenantId, entityId).get();
                 } catch (Exception ex) {}
             }
             if (e != null) {
@@ -315,7 +315,7 @@ public class AuditLogServiceImpl implements AuditLogService {
         AuditLog auditLogEntry = createAuditLogEntry(tenantId, entityId, entityName, customerId, userId, userName,
                 actionType, actionData, actionStatus, actionFailureDetails);
         log.trace("Executing logAction [{}]", auditLogEntry);
-        auditLogValidator.validate(auditLogEntry);
+        auditLogValidator.validate(auditLogEntry, AuditLog::getTenantId);
         List<ListenableFuture<Void>> futures = Lists.newArrayListWithExpectedSize(INSERTS_PER_ENTRY);
         futures.add(auditLogDao.savePartitionsByTenantId(auditLogEntry));
         futures.add(auditLogDao.saveByTenantId(auditLogEntry));
@@ -331,7 +331,7 @@ public class AuditLogServiceImpl implements AuditLogService {
     private DataValidator<AuditLog> auditLogValidator =
             new DataValidator<AuditLog>() {
                 @Override
-                protected void validateDataImpl(AuditLog auditLog) {
+                protected void validateDataImpl(TenantId tenantId, AuditLog auditLog) {
                     if (auditLog.getEntityId() == null) {
                         throw new DataValidationException("Entity Id should be specified!");
                     }

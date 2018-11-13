@@ -32,17 +32,17 @@ public class EntitiesTenantIdAsyncLoader {
             case TENANT:
                 return Futures.immediateFuture((TenantId) original);
             case CUSTOMER:
-                return getTenantAsync(ctx.getCustomerService().findCustomerByIdAsync((CustomerId) original));
+                return getTenantAsync(ctx.getCustomerService().findCustomerByIdAsync(ctx.getTenantId(), (CustomerId) original));
             case USER:
-                return getTenantAsync(ctx.getUserService().findUserByIdAsync((UserId) original));
+                return getTenantAsync(ctx.getUserService().findUserByIdAsync(ctx.getTenantId(), (UserId) original));
             case ASSET:
-                return getTenantAsync(ctx.getAssetService().findAssetByIdAsync((AssetId) original));
+                return getTenantAsync(ctx.getAssetService().findAssetByIdAsync(ctx.getTenantId(), (AssetId) original));
             case DEVICE:
-                return getTenantAsync(ctx.getDeviceService().findDeviceByIdAsync((DeviceId) original));
+                return getTenantAsync(ctx.getDeviceService().findDeviceByIdAsync(ctx.getTenantId(), (DeviceId) original));
             case ALARM:
-                return getTenantAsync(ctx.getAlarmService().findAlarmByIdAsync((AlarmId) original));
+                return getTenantAsync(ctx.getAlarmService().findAlarmByIdAsync(ctx.getTenantId(), (AlarmId) original));
             case RULE_CHAIN:
-                return getTenantAsync(ctx.getRuleChainService().findRuleChainByIdAsync((RuleChainId) original));
+                return getTenantAsync(ctx.getRuleChainService().findRuleChainByIdAsync(ctx.getTenantId(), (RuleChainId) original));
             default:
                 return Futures.immediateFailedFuture(new TbNodeException("Unexpected original EntityType " + original));
         }

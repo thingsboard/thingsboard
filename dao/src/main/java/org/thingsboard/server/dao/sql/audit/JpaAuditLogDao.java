@@ -75,7 +75,7 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
     @Override
     public ListenableFuture<Void> saveByTenantId(AuditLog auditLog) {
         return insertService.submit(() -> {
-            save(auditLog);
+            save(auditLog.getTenantId(), auditLog);
             return null;
         });
     }

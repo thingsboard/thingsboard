@@ -48,7 +48,7 @@ export default function AuditLogRowDirective($compile, $templateCache, types, $m
                 parent: angular.element($document[0].body),
                 targetEvent: $event,
                 fullscreen: true,
-                skipHide: true,
+                multiple: true,
                 onShowing: function(scope, element) {
                     onShowingCallback.onShowing(scope, element);
                 }

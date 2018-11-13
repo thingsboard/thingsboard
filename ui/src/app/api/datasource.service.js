@@ -104,6 +104,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
     var listeners = [];
     var datasourceType = datasourceSubscription.datasourceType;
     var datasourceData = {};
+    var dataSourceOrigData = {};
     var dataKeys = {};
     var subscribers = [];
     var history = datasourceSubscription.subscriptionTimewindow &&
@@ -140,7 +141,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                 }
             } else {
                 if (dataKey.postFuncBody && !dataKey.postFunc) {
-                    dataKey.postFunc = new Function("time", "value", "prevValue", dataKey.postFuncBody);
+                    dataKey.postFunc = new Function("time", "value", "prevValue", "timePrev", "prevOrigValue", dataKey.postFuncBody);
                 }
             }
             if (datasourceType === types.datasourceType.entity || datasourceSubscription.type === types.widgetType.timeseries.value) {
@@ -165,6 +166,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                 };
                 dataKeys[key] = dataKey;
             }
+            dataSourceOrigData = angular.copy(datasourceData);
             dataKey.key = key;
         }
         if (datasourceType === types.datasourceType.function) {
@@ -678,27 +680,36 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                     var dataKey = dataKeyList[keyIndex];
                     var data = [];
                     var prevSeries;
+                    var prevOrigSeries;
                     var datasourceKeyData;
+                    var datasourceOrigKeyData;
                     var update = false;
                     if (realtime) {
                         datasourceKeyData = [];
+                        datasourceOrigKeyData = [];
                     } else {
                         datasourceKeyData = datasourceData[datasourceKey].data;
+                        datasourceOrigKeyData = dataSourceOrigData[datasourceKey].data;
                     }
                     if (datasourceKeyData.length > 0) {
                         prevSeries = datasourceKeyData[datasourceKeyData.length - 1];
+                        prevOrigSeries = datasourceOrigKeyData[datasourceOrigKeyData.length -1];
                     } else {
                         prevSeries = [0, 0];
+                        prevOrigSeries = [0, 0];
                     }
+                    dataSourceOrigData[datasourceKey].data = [];
                     if (datasourceSubscription.type === types.widgetType.timeseries.value) {
                         var series, time, value;
                         for (var i = 0; i < keyData.length; i++) {
                             series = keyData[i];
                             time = series[0];
+                            dataSourceOrigData[datasourceKey].data.push(series);
                             value = convertValue(series[1]);
                             if (dataKey.postFunc) {
-                                value = dataKey.postFunc(time, value, prevSeries[1]);
+                                value = dataKey.postFunc(time, value, prevSeries[1], prevOrigSeries[0], prevOrigSeries[1]);
                             }
+                            prevOrigSeries = series;
                             series = [time, value];
                             data.push(series);
                             prevSeries = series;
@@ -708,9 +719,10 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                         if (keyData.length > 0) {
                             series = keyData[0];
                             time = series[0];
+                            dataSourceOrigData[datasourceKey].data.push(series);
                             value = convertValue(series[1]);
                             if (dataKey.postFunc) {
-                                value = dataKey.postFunc(time, value, prevSeries[1]);
+                                value = dataKey.postFunc(time, value, prevSeries[1], prevOrigSeries[0], prevOrigSeries[1]);
                             }
                             series = [time, value];
                             data.push(series);

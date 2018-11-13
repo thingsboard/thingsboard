@@ -19,6 +19,7 @@ import com.datastax.driver.core.querybuilder.Select;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -36,6 +37,7 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 import static org.thingsboard.server.dao.model.ModelConstants.CUSTOMER_BY_TENANT_AND_TITLE_VIEW_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.CUSTOMER_TENANT_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.CUSTOMER_TITLE_PROPERTY;
+
 @Component
 @Slf4j
 @NoSqlDao
@@ -54,9 +56,9 @@ public class CassandraCustomerDao extends CassandraAbstractSearchTextDao<Custome
     @Override
     public List<Customer> findCustomersByTenantId(UUID tenantId, TextPageLink pageLink) {
         log.debug("Try to find customers by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
-        List<CustomerEntity> customerEntities = findPageWithTextSearch(ModelConstants.CUSTOMER_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
+        List<CustomerEntity> customerEntities = findPageWithTextSearch(new TenantId(tenantId), ModelConstants.CUSTOMER_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
                 Arrays.asList(eq(ModelConstants.CUSTOMER_TENANT_ID_PROPERTY, tenantId)),
-                pageLink); 
+                pageLink);
         log.trace("Found customers [{}] by tenantId [{}] and pageLink [{}]", customerEntities, tenantId, pageLink);
         return DaoUtil.convertDataList(customerEntities);
     }
@@ -67,7 +69,7 @@ public class CassandraCustomerDao extends CassandraAbstractSearchTextDao<Custome
         Select.Where query = select.where();
         query.and(eq(CUSTOMER_TENANT_ID_PROPERTY, tenantId));
         query.and(eq(CUSTOMER_TITLE_PROPERTY, title));
-        CustomerEntity customerEntity = findOneByStatement(query);
+        CustomerEntity customerEntity = findOneByStatement(new TenantId(tenantId), query);
         Customer customer = DaoUtil.getData(customerEntity);
         return Optional.ofNullable(customer);
     }

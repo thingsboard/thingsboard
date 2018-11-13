@@ -51,9 +51,9 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
     @Override
     public void handleTextMessage(WebSocketSession session, TextMessage message) {
         try {
-            log.info("[{}] Processing {}", session.getId(), message);
             SessionMetaData sessionMd = internalSessionMap.get(session.getId());
             if (sessionMd != null) {
+                log.info("[{}][{}] Processing {}", sessionMd.sessionRef.getSecurityCtx().getTenantId(), session.getId(), message);
                 webSocketService.handleWebSocketMsg(sessionMd.sessionRef, message.getPayload());
             } else {
                 log.warn("[{}] Failed to find session", session.getId());
@@ -74,7 +74,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
             internalSessionMap.put(internalSessionId, new SessionMetaData(session, sessionRef));
             externalSessionMap.put(externalSessionId, internalSessionId);
             processInWebSocketService(sessionRef, SessionEvent.onEstablished());
-            log.info("[{}][{}] Session is started", externalSessionId, session.getId());
+            log.info("[{}][{}][{}] Session is opened", sessionRef.getSecurityCtx().getTenantId(), externalSessionId, session.getId());
         } catch (InvalidParameterException e) {
             log.warn("[[{}] Failed to start session", session.getId(), e);
             session.close(CloseStatus.BAD_DATA.withReason(e.getMessage()));

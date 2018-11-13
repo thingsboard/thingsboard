@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.device;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.Dao;
 
@@ -37,7 +38,7 @@ public interface DeviceDao extends Dao<Device> {
      * @param device the device object
      * @return saved device object
      */
-    Device save(Device device);
+    Device save(TenantId tenantId, Device device);
 
     /**
      * Find devices by tenantId and page link.

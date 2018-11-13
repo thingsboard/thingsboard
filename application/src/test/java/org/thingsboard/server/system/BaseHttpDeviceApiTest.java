@@ -57,7 +57,7 @@ public abstract class BaseHttpDeviceApiTest extends AbstractControllerTest {
     @Test
     public void testGetAttributes() throws Exception {
         doGetAsync("/api/v1/" + "WRONG_TOKEN" + "/attributes?clientKeys=keyA,keyB,keyC").andExpect(status().isUnauthorized());
-        doGetAsync("/api/v1/" + deviceCredentials.getCredentialsId() + "/attributes?clientKeys=keyA,keyB,keyC").andExpect(status().isNotFound());
+        doGetAsync("/api/v1/" + deviceCredentials.getCredentialsId() + "/attributes?clientKeys=keyA,keyB,keyC").andExpect(status().isOk());
 
         Map<String, String> attrMap = new HashMap<>();
         attrMap.put("keyA", "valueA");

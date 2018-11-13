@@ -19,9 +19,11 @@ import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -48,9 +50,11 @@ import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
+import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
@@ -70,6 +74,7 @@ import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.state.DeviceStateService;
+import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import javax.mail.MessagingException;
 import javax.servlet.http.HttpServletRequest;
@@ -143,6 +148,17 @@ public abstract class BaseController {
     @Autowired
     protected EntityViewService entityViewService;
 
+    @Autowired
+    protected TelemetrySubscriptionService tsSubService;
+
+    @Autowired
+    protected AttributesService attributesService;
+
+    @Value("${server.log_controller_error_stack_trace}")
+    @Getter
+    private boolean logControllerErrorStackTrace;
+
+
     @ExceptionHandler(ThingsboardException.class)
     public void handleThingsboardException(ThingsboardException ex, HttpServletResponse response) {
         errorResponseHandler.handle(ex, response);
@@ -153,7 +169,7 @@ public abstract class BaseController {
     }
 
     private ThingsboardException handleException(Exception exception, boolean logException) {
-        if (logException) {
+        if (logException && logControllerErrorStackTrace) {
             log.error("Error [{}]", exception.getMessage(), exception);
         }
 
@@ -251,7 +267,6 @@ public abstract class BaseController {
 
     Customer checkCustomerId(CustomerId customerId) throws ThingsboardException {
         try {
-            validateId(customerId, "Incorrect customerId " + customerId);
             SecurityUser authUser = getCurrentUser();
             if (authUser.getAuthority() == Authority.SYS_ADMIN ||
                     (authUser.getAuthority() != Authority.TENANT_ADMIN &&
@@ -259,9 +274,13 @@ public abstract class BaseController {
                 throw new ThingsboardException(YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION,
                         ThingsboardErrorCode.PERMISSION_DENIED);
             }
-            Customer customer = customerService.findCustomerById(customerId);
-            checkCustomer(customer);
-            return customer;
+            if (customerId != null && !customerId.isNullUid()) {
+                Customer customer = customerService.findCustomerById(authUser.getTenantId(), customerId);
+                checkCustomer(customer);
+                return customer;
+            } else {
+                return null;
+            }
         } catch (Exception e) {
             throw handleException(e, false);
         }
@@ -275,7 +294,7 @@ public abstract class BaseController {
     User checkUserId(UserId userId) throws ThingsboardException {
         try {
             validateId(userId, "Incorrect userId " + userId);
-            User user = userService.findUserById(userId);
+            User user = userService.findUserById(getCurrentUser().getTenantId(), userId);
             checkUser(user);
             return user;
         } catch (Exception e) {
@@ -295,9 +314,10 @@ public abstract class BaseController {
         try {
             checkNotNull(entityId);
             validateId(entityId.getId(), "Incorrect entityId " + entityId);
+            SecurityUser authUser = getCurrentUser();
             switch (entityId.getEntityType()) {
                 case DEVICE:
-                    checkDevice(deviceService.findDeviceById(new DeviceId(entityId.getId())));
+                    checkDevice(deviceService.findDeviceById(authUser.getTenantId(), new DeviceId(entityId.getId())));
                     return;
                 case CUSTOMER:
                     checkCustomerId(new CustomerId(entityId.getId()));
@@ -309,7 +329,7 @@ public abstract class BaseController {
                     checkRuleChain(new RuleChainId(entityId.getId()));
                     return;
                 case ASSET:
-                    checkAsset(assetService.findAssetById(new AssetId(entityId.getId())));
+                    checkAsset(assetService.findAssetById(authUser.getTenantId(), new AssetId(entityId.getId())));
                     return;
                 case DASHBOARD:
                     checkDashboardId(new DashboardId(entityId.getId()));
@@ -331,7 +351,7 @@ public abstract class BaseController {
     Device checkDeviceId(DeviceId deviceId) throws ThingsboardException {
         try {
             validateId(deviceId, "Incorrect deviceId " + deviceId);
-            Device device = deviceService.findDeviceById(deviceId);
+            Device device = deviceService.findDeviceById(getCurrentUser().getTenantId(), deviceId);
             checkDevice(device);
             return device;
         } catch (Exception e) {
@@ -342,15 +362,13 @@ public abstract class BaseController {
     protected void checkDevice(Device device) throws ThingsboardException {
         checkNotNull(device);
         checkTenantId(device.getTenantId());
-        if (device.getCustomerId() != null && !device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
-            checkCustomerId(device.getCustomerId());
-        }
+        checkCustomerId(device.getCustomerId());
     }
 
     protected EntityView checkEntityViewId(EntityViewId entityViewId) throws ThingsboardException {
         try {
             validateId(entityViewId, "Incorrect entityViewId " + entityViewId);
-            EntityView entityView = entityViewService.findEntityViewById(entityViewId);
+            EntityView entityView = entityViewService.findEntityViewById(getCurrentUser().getTenantId(), entityViewId);
             checkEntityView(entityView);
             return entityView;
         } catch (Exception e) {
@@ -361,15 +379,13 @@ public abstract class BaseController {
     protected void checkEntityView(EntityView entityView) throws ThingsboardException {
         checkNotNull(entityView);
         checkTenantId(entityView.getTenantId());
-        if (entityView.getCustomerId() != null && !entityView.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
-            checkCustomerId(entityView.getCustomerId());
-        }
+        checkCustomerId(entityView.getCustomerId());
     }
 
     Asset checkAssetId(AssetId assetId) throws ThingsboardException {
         try {
             validateId(assetId, "Incorrect assetId " + assetId);
-            Asset asset = assetService.findAssetById(assetId);
+            Asset asset = assetService.findAssetById(getCurrentUser().getTenantId(), assetId);
             checkAsset(asset);
             return asset;
         } catch (Exception e) {
@@ -380,15 +396,13 @@ public abstract class BaseController {
     protected void checkAsset(Asset asset) throws ThingsboardException {
         checkNotNull(asset);
         checkTenantId(asset.getTenantId());
-        if (asset.getCustomerId() != null && !asset.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
-            checkCustomerId(asset.getCustomerId());
-        }
+        checkCustomerId(asset.getCustomerId());
     }
 
     Alarm checkAlarmId(AlarmId alarmId) throws ThingsboardException {
         try {
             validateId(alarmId, "Incorrect alarmId " + alarmId);
-            Alarm alarm = alarmService.findAlarmByIdAsync(alarmId).get();
+            Alarm alarm = alarmService.findAlarmByIdAsync(getCurrentUser().getTenantId(), alarmId).get();
             checkAlarm(alarm);
             return alarm;
         } catch (Exception e) {
@@ -399,7 +413,7 @@ public abstract class BaseController {
     AlarmInfo checkAlarmInfoId(AlarmId alarmId) throws ThingsboardException {
         try {
             validateId(alarmId, "Incorrect alarmId " + alarmId);
-            AlarmInfo alarmInfo = alarmService.findAlarmInfoByIdAsync(alarmId).get();
+            AlarmInfo alarmInfo = alarmService.findAlarmInfoByIdAsync(getCurrentUser().getTenantId(), alarmId).get();
             checkAlarm(alarmInfo);
             return alarmInfo;
         } catch (Exception e) {
@@ -415,7 +429,7 @@ public abstract class BaseController {
     WidgetsBundle checkWidgetsBundleId(WidgetsBundleId widgetsBundleId, boolean modify) throws ThingsboardException {
         try {
             validateId(widgetsBundleId, "Incorrect widgetsBundleId " + widgetsBundleId);
-            WidgetsBundle widgetsBundle = widgetsBundleService.findWidgetsBundleById(widgetsBundleId);
+            WidgetsBundle widgetsBundle = widgetsBundleService.findWidgetsBundleById(getCurrentUser().getTenantId(), widgetsBundleId);
             checkWidgetsBundle(widgetsBundle, modify);
             return widgetsBundle;
         } catch (Exception e) {
@@ -436,7 +450,7 @@ public abstract class BaseController {
     WidgetType checkWidgetTypeId(WidgetTypeId widgetTypeId, boolean modify) throws ThingsboardException {
         try {
             validateId(widgetTypeId, "Incorrect widgetTypeId " + widgetTypeId);
-            WidgetType widgetType = widgetTypeService.findWidgetTypeById(widgetTypeId);
+            WidgetType widgetType = widgetTypeService.findWidgetTypeById(getCurrentUser().getTenantId(), widgetTypeId);
             checkWidgetType(widgetType, modify);
             return widgetType;
         } catch (Exception e) {
@@ -457,7 +471,7 @@ public abstract class BaseController {
     Dashboard checkDashboardId(DashboardId dashboardId) throws ThingsboardException {
         try {
             validateId(dashboardId, "Incorrect dashboardId " + dashboardId);
-            Dashboard dashboard = dashboardService.findDashboardById(dashboardId);
+            Dashboard dashboard = dashboardService.findDashboardById(getCurrentUser().getTenantId(), dashboardId);
             checkDashboard(dashboard);
             return dashboard;
         } catch (Exception e) {
@@ -468,7 +482,7 @@ public abstract class BaseController {
     DashboardInfo checkDashboardInfoId(DashboardId dashboardId) throws ThingsboardException {
         try {
             validateId(dashboardId, "Incorrect dashboardId " + dashboardId);
-            DashboardInfo dashboardInfo = dashboardService.findDashboardInfoById(dashboardId);
+            DashboardInfo dashboardInfo = dashboardService.findDashboardInfoById(getCurrentUser().getTenantId(), dashboardId);
             checkDashboard(dashboardInfo);
             return dashboardInfo;
         } catch (Exception e) {
@@ -491,8 +505,7 @@ public abstract class BaseController {
     ComponentDescriptor checkComponentDescriptorByClazz(String clazz) throws ThingsboardException {
         try {
             log.debug("[{}] Lookup component descriptor", clazz);
-            ComponentDescriptor componentDescriptor = checkNotNull(componentDescriptorService.getComponent(clazz));
-            return componentDescriptor;
+            return checkNotNull(componentDescriptorService.getComponent(clazz));
         } catch (Exception e) {
             throw handleException(e, false);
         }
@@ -518,7 +531,7 @@ public abstract class BaseController {
 
     protected RuleChain checkRuleChain(RuleChainId ruleChainId) throws ThingsboardException {
         checkNotNull(ruleChainId);
-        return checkRuleChain(ruleChainService.findRuleChainById(ruleChainId));
+        return checkRuleChain(ruleChainService.findRuleChainById(getCurrentUser().getTenantId(), ruleChainId));
     }
 
     protected RuleChain checkRuleChain(RuleChain ruleChain) throws ThingsboardException {
@@ -556,16 +569,16 @@ public abstract class BaseController {
     }
 
     protected <I extends EntityId> I emptyId(EntityType entityType) {
-        return (I)EntityIdFactory.getByTypeAndUuid(entityType, ModelConstants.NULL_UUID);
+        return (I) EntityIdFactory.getByTypeAndUuid(entityType, ModelConstants.NULL_UUID);
     }
 
     protected <E extends HasName, I extends EntityId> void logEntityAction(I entityId, E entity, CustomerId customerId,
-                                                                 ActionType actionType, Exception e, Object... additionalInfo) throws ThingsboardException {
+                                                                           ActionType actionType, Exception e, Object... additionalInfo) throws ThingsboardException {
         logEntityAction(getCurrentUser(), entityId, entity, customerId, actionType, e, additionalInfo);
     }
 
     protected <E extends HasName, I extends EntityId> void logEntityAction(User user, I entityId, E entity, CustomerId customerId,
-                                                                 ActionType actionType, Exception e, Object... additionalInfo) throws ThingsboardException {
+                                                                           ActionType actionType, Exception e, Object... additionalInfo) throws ThingsboardException {
         if (customerId == null || customerId.isNullUid()) {
             customerId = user.getCustomerId();
         }
@@ -581,7 +594,7 @@ public abstract class BaseController {
     }
 
     private <E extends HasName, I extends EntityId> void pushEntityActionToRuleEngine(I entityId, E entity, User user, CustomerId customerId,
-                                                                         ActionType actionType, Object... additionalInfo) {
+                                                                                      ActionType actionType, Object... additionalInfo) {
         String msgType = null;
         switch (actionType) {
             case ADDED:
@@ -604,6 +617,12 @@ public abstract class BaseController {
                 break;
             case ATTRIBUTES_DELETED:
                 msgType = DataConstants.ATTRIBUTES_DELETED;
+                break;
+            case ALARM_ACK:
+                msgType = DataConstants.ALARM_ACK;
+                break;
+            case ALARM_CLEAR:
+                msgType = DataConstants.ALARM_CLEAR;
                 break;
         }
         if (!StringUtils.isEmpty(msgType)) {
@@ -654,7 +673,7 @@ public abstract class BaseController {
                         String scope = extractParameter(String.class, 0, additionalInfo);
                         List<String> keys = extractParameter(List.class, 1, additionalInfo);
                         metaData.putValue("scope", scope);
-                        ArrayNode attrsArrayNode =  entityNode.putArray("attributes");
+                        ArrayNode attrsArrayNode = entityNode.putArray("attributes");
                         if (keys != null) {
                             keys.forEach(attrsArrayNode::add);
                         }
@@ -663,7 +682,7 @@ public abstract class BaseController {
                 TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), msgType, entityId, metaData, TbMsgDataType.JSON
                         , json.writeValueAsString(entityNode)
                         , null, null, 0L);
-                actorService.onMsg(new ServiceToRuleEngineMsg(user.getTenantId(), tbMsg));
+                actorService.onMsg(new SendToClusterMsg(entityId, new ServiceToRuleEngineMsg(user.getTenantId(), tbMsg)));
             } catch (Exception e) {
                 log.warn("[{}] Failed to push entity action to rule engine: {}", entityId, actionType, e);
             }

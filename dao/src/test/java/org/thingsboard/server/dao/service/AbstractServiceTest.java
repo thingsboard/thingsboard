@@ -45,6 +45,7 @@ import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
@@ -70,6 +71,8 @@ public abstract class AbstractServiceTest {
 
     protected ObjectMapper mapper = new ObjectMapper();
 
+    public static final TenantId SYSTEM_TENANT_ID = new TenantId(EntityId.NULL_UUID);
+
     @Autowired
     protected UserService userService;
 
@@ -87,6 +90,9 @@ public abstract class AbstractServiceTest {
 
     @Autowired
     protected AssetService assetService;
+
+    @Autowired
+    protected EntityViewService entityViewService;
 
     @Autowired
     protected DeviceCredentialsService deviceCredentialsService;
@@ -138,25 +144,25 @@ public abstract class AbstractServiceTest {
         event.setBody(readFromResource("TestJsonData.json"));
         return event;
     }
-
-    private ComponentDescriptor getOrCreateDescriptor(ComponentScope scope, ComponentType type, String clazz, String configurationDescriptorResource) throws IOException {
-        return getOrCreateDescriptor(scope, type, clazz, configurationDescriptorResource, null);
-    }
-
-    private ComponentDescriptor getOrCreateDescriptor(ComponentScope scope, ComponentType type, String clazz, String configurationDescriptorResource, String actions) throws IOException {
-        ComponentDescriptor descriptor = componentDescriptorService.findByClazz(clazz);
-        if (descriptor == null) {
-            descriptor = new ComponentDescriptor();
-            descriptor.setName("test");
-            descriptor.setClazz(clazz);
-            descriptor.setScope(scope);
-            descriptor.setType(type);
-            descriptor.setActions(actions);
-            descriptor.setConfigurationDescriptor(readFromResource(configurationDescriptorResource));
-            componentDescriptorService.saveComponent(descriptor);
-        }
-        return descriptor;
-    }
+//
+//    private ComponentDescriptor getOrCreateDescriptor(ComponentScope scope, ComponentType type, String clazz, String configurationDescriptorResource) throws IOException {
+//        return getOrCreateDescriptor(scope, type, clazz, configurationDescriptorResource, null);
+//    }
+//
+//    private ComponentDescriptor getOrCreateDescriptor(ComponentScope scope, ComponentType type, String clazz, String configurationDescriptorResource, String actions) throws IOException {
+//        ComponentDescriptor descriptor = componentDescriptorService.findByClazz(clazz);
+//        if (descriptor == null) {
+//            descriptor = new ComponentDescriptor();
+//            descriptor.setName("test");
+//            descriptor.setClazz(clazz);
+//            descriptor.setScope(scope);
+//            descriptor.setType(type);
+//            descriptor.setActions(actions);
+//            descriptor.setConfigurationDescriptor(readFromResource(configurationDescriptorResource));
+//            componentDescriptorService.saveComponent(descriptor);
+//        }
+//        return descriptor;
+//    }
 
     public JsonNode readFromResource(String resourceName) throws IOException {
         return mapper.readTree(this.getClass().getClassLoader().getResourceAsStream(resourceName));

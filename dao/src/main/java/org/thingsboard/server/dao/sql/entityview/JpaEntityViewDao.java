@@ -24,7 +24,6 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.UUIDConverter;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.DaoUtil;
@@ -41,7 +40,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
-import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUIDs;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID_STR;
 
 /**
@@ -76,6 +74,17 @@ public class JpaEntityViewDao extends JpaAbstractSearchTextDao<EntityViewEntity,
     }
 
     @Override
+    public List<EntityView> findEntityViewsByTenantIdAndType(UUID tenantId, String type, TextPageLink pageLink) {
+        return DaoUtil.convertDataList(
+                entityViewRepository.findByTenantIdAndType(
+                        fromTimeUUID(tenantId),
+                        type,
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
+                        new PageRequest(0, pageLink.getLimit())));
+    }
+
+    @Override
     public Optional<EntityView> findEntityViewByTenantIdAndName(UUID tenantId, String name) {
         return Optional.ofNullable(
                 DaoUtil.getData(entityViewRepository.findByTenantIdAndName(fromTimeUUID(tenantId), name)));
@@ -96,8 +105,37 @@ public class JpaEntityViewDao extends JpaAbstractSearchTextDao<EntityViewEntity,
     }
 
     @Override
+    public List<EntityView> findEntityViewsByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, TextPageLink pageLink) {
+        return DaoUtil.convertDataList(
+                entityViewRepository.findByTenantIdAndCustomerIdAndType(
+                        fromTimeUUID(tenantId),
+                        fromTimeUUID(customerId),
+                        type,
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
+                        new PageRequest(0, pageLink.getLimit())
+                ));
+    }
+
+    @Override
     public ListenableFuture<List<EntityView>> findEntityViewsByTenantIdAndEntityIdAsync(UUID tenantId, UUID entityId) {
         return service.submit(() -> DaoUtil.convertDataList(
                 entityViewRepository.findAllByTenantIdAndEntityId(UUIDConverter.fromTimeUUID(tenantId), UUIDConverter.fromTimeUUID(entityId))));
+    }
+
+    @Override
+    public ListenableFuture<List<EntitySubtype>> findTenantEntityViewTypesAsync(UUID tenantId) {
+        return service.submit(() -> convertTenantEntityViewTypesToDto(tenantId, entityViewRepository.findTenantEntityViewTypes(fromTimeUUID(tenantId))));
+    }
+
+    private List<EntitySubtype> convertTenantEntityViewTypesToDto(UUID tenantId, List<String> types) {
+        List<EntitySubtype> list = Collections.emptyList();
+        if (types != null && !types.isEmpty()) {
+            list = new ArrayList<>();
+            for (String type : types) {
+                list.add(new EntitySubtype(new TenantId(tenantId), EntityType.ENTITY_VIEW, type));
+            }
+        }
+        return list;
     }
 }

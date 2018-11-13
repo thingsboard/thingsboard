@@ -463,7 +463,7 @@ export default function DashboardController(types, utils, dashboardUtils, widget
                 }
             },
             parent: angular.element($document[0].body),
-            skipHide: true,
+            multiple: true,
             fullscreen: true,
             targetEvent: $event
         }).then(function (entityAliases) {
@@ -488,7 +488,7 @@ export default function DashboardController(types, utils, dashboardUtils, widget
                 gridSettings: gridSettings
             },
             parent: angular.element($document[0].body),
-            skipHide: true,
+            multiple: true,
             fullscreen: true,
             targetEvent: $event
         }).then(function (data) {
@@ -510,7 +510,7 @@ export default function DashboardController(types, utils, dashboardUtils, widget
                 layouts: angular.copy(vm.dashboard.configuration.states[vm.dashboardCtx.state].layouts)
             },
             parent: angular.element($document[0].body),
-            skipHide: true,
+            multiple: true,
             fullscreen: true,
             targetEvent: $event
         }).then(function (layouts) {
@@ -531,7 +531,7 @@ export default function DashboardController(types, utils, dashboardUtils, widget
                 states: states
             },
             parent: angular.element($document[0].body),
-            skipHide: true,
+            multiple: true,
             fullscreen: true,
             targetEvent: $event
         }).then(function (states) {
@@ -873,7 +873,7 @@ export default function DashboardController(types, utils, dashboardUtils, widget
                 templateUrl: selectTargetLayoutTemplate,
                 parent: angular.element($document[0].body),
                 fullscreen: true,
-                skipHide: true,
+                multiple: true,
                 targetEvent: $event
             }).then(
                 function success(layoutId) {
@@ -941,7 +941,7 @@ export default function DashboardController(types, utils, dashboardUtils, widget
                         },
                         parent: angular.element($document[0].body),
                         fullscreen: true,
-                        skipHide: true,
+                        multiple: true,
                         targetEvent: event,
                         onComplete: function () {
                             var w = angular.element($window);
