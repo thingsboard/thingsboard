@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.service.telemetry;
 
+import org.springframework.web.socket.CloseStatus;
+
 import java.io.IOException;
 
 /**
@@ -26,4 +28,5 @@ public interface TelemetryWebSocketMsgEndpoint {
 
     void close(TelemetryWebSocketSessionRef sessionRef) throws IOException;
 
+    void close(TelemetryWebSocketSessionRef sessionRef, CloseStatus withReason) throws IOException;
 }
