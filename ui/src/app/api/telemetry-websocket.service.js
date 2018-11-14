@@ -141,7 +141,7 @@ function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, $m
     }
 
     function onClose (closeEvent) {
-        if (closeEvent && closeEvent.code > 1000) {
+        if (closeEvent && closeEvent.code > 1000 && closeEvent.code !== 1006) {
             showWsError(closeEvent.code, closeEvent.reason);
         }
         isOpening = false;
