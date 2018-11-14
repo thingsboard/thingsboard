@@ -26,7 +26,7 @@ const WS_IDLE_TIMEOUT = 90000;
 const MAX_PUBLISH_COMMANDS = 10;
 
 /*@ngInject*/
-function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, toast, types, userService) {
+function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, $mdUtil, toast, types, userService) {
 
     var isOpening = false,
         isOpened = false,
@@ -111,7 +111,10 @@ function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, to
         }
     }
 
-    function onError (/*message*/) {
+    function onError (errorEvent) {
+        if (errorEvent) {
+            showWsError(0, errorEvent);
+        }
         isOpening = false;
     }
 
@@ -137,7 +140,10 @@ function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, to
         }
     }
 
-    function onClose () {
+    function onClose (closeEvent) {
+        if (closeEvent && closeEvent.code > 1000) {
+            showWsError(closeEvent.code, closeEvent.reason);
+        }
         isOpening = false;
         isOpened = false;
         if (isActive) {
@@ -191,7 +197,9 @@ function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, to
         } else {
             message += "error code - " + errorCode + ".";
         }
-        toast.showError(message);
+        $mdUtil.nextTick(function () {
+            toast.showError(message);
+        });
     }
 
     function fetchKeys(subscriptionId) {
