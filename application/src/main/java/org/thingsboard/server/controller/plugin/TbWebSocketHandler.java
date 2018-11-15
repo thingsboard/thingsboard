@@ -263,7 +263,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
                     if (regularUserSessions.size() < maxSessionsPerRegularUser) {
                         regularUserSessions.add(sessionId);
                     } else {
-                        log.info("[{}][{}][{}] Failed to start session. Max user sessions limit reached"
+                        log.info("[{}][{}][{}] Failed to start session. Max regular user sessions limit reached"
                                 , sessionRef.getSecurityCtx().getTenantId(), sessionRef.getSecurityCtx().getId(), sessionId);
                         session.close(CloseStatus.POLICY_VIOLATION.withReason("Max regular user sessions limit reached"));
                         return false;
@@ -276,7 +276,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
                     if (publicUserSessions.size() < maxSessionsPerPublicUser) {
                         publicUserSessions.add(sessionId);
                     } else {
-                        log.info("[{}][{}][{}] Failed to start session. Max user sessions limit reached"
+                        log.info("[{}][{}][{}] Failed to start session. Max public user sessions limit reached"
                                 , sessionRef.getSecurityCtx().getTenantId(), sessionRef.getSecurityCtx().getId(), sessionId);
                         session.close(CloseStatus.POLICY_VIOLATION.withReason("Max public user sessions limit reached"));
                         return false;

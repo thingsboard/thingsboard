@@ -26,7 +26,7 @@ const WS_IDLE_TIMEOUT = 90000;
 const MAX_PUBLISH_COMMANDS = 10;
 
 /*@ngInject*/
-function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, types, userService) {
+function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, $mdUtil, toast, types, userService) {
 
     var isOpening = false,
         isOpened = false,
@@ -111,7 +111,10 @@ function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, ty
         }
     }
 
-    function onError (/*message*/) {
+    function onError (errorEvent) {
+        if (errorEvent) {
+            showWsError(0, errorEvent);
+        }
         isOpening = false;
     }
 
@@ -137,7 +140,10 @@ function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, ty
         }
     }
 
-    function onClose () {
+    function onClose (closeEvent) {
+        if (closeEvent && closeEvent.code > 1000 && closeEvent.code !== 1006) {
+            showWsError(closeEvent.code, closeEvent.reason);
+        }
         isOpening = false;
         isOpened = false;
         if (isActive) {
@@ -162,7 +168,9 @@ function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, ty
     function onMessage (message) {
         if (message.data) {
             var data = angular.fromJson(message.data);
-            if (data.subscriptionId) {
+            if (data.errorCode) {
+                showWsError(data.errorCode, data.errorMsg);
+            } else if (data.subscriptionId) {
                 var subscriber = subscribers[data.subscriptionId];
                 if (subscriber && data) {
                     var keys = fetchKeys(data.subscriptionId);
@@ -180,6 +188,18 @@ function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, ty
             }
         }
         checkToClose();
+    }
+
+    function showWsError(errorCode, errorMsg) {
+        var message = 'WebSocket Error: ';
+        if (errorMsg) {
+            message += errorMsg;
+        } else {
+            message += "error code - " + errorCode + ".";
+        }
+        $mdUtil.nextTick(function () {
+            toast.showError(message);
+        });
     }
 
     function fetchKeys(subscriptionId) {

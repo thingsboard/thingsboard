@@ -99,7 +99,7 @@ public class DefaultActorService implements ActorService {
 
     @PostConstruct
     public void initActorSystem() {
-        log.info("Initializing Actor system. {}", actorContext.getRuleChainService());
+        log.info("Initializing Actor system.");
         actorContext.setActorService(this);
         system = ActorSystem.create(ACTOR_SYSTEM_NAME, actorContext.getConfig());
         actorContext.setActorSystem(system);
