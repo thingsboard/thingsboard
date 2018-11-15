@@ -13,17 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport.service;
+package org.thingsboard.rule.engine.action;
 
-import org.thingsboard.server.common.data.EntityType;
+import lombok.Data;
+import org.thingsboard.rule.engine.api.NodeConfiguration;
 
-/**
- * Created by ashvayka on 22.10.18.
- */
-public class TbRateLimitsException extends Exception {
-    private final EntityType entityType;
+@Data
+public class TbMsgCountNodeConfiguration implements NodeConfiguration<TbMsgCountNodeConfiguration> {
 
-    TbRateLimitsException(EntityType entityType) {
-        this.entityType = entityType;
+    private String telemetryPrefix;
+    private int interval;
+
+    @Override
+    public TbMsgCountNodeConfiguration defaultConfiguration() {
+        TbMsgCountNodeConfiguration configuration = new TbMsgCountNodeConfiguration();
+        configuration.setInterval(1);
+        configuration.setTelemetryPrefix("messageCount");
+        return configuration;
     }
 }

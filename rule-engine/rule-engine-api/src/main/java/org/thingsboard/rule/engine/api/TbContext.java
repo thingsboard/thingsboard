@@ -34,6 +34,7 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
 
 import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * Created by ashvayka on 13.01.18.
@@ -98,4 +99,5 @@ public interface TbContext {
 
     ScriptEngine createJsScriptEngine(String script, String... argNames);
 
+    String getNodeId();
 }

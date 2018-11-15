@@ -25,8 +25,10 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.service.security.exception.AuthMethodNotSupportedException;
 import org.thingsboard.server.service.security.exception.JwtExpiredTokenException;
 
@@ -34,6 +36,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+
 @Component
 @Slf4j
 public class ThingsboardErrorResponseHandler implements AccessDeniedHandler {
@@ -62,6 +65,8 @@ public class ThingsboardErrorResponseHandler implements AccessDeniedHandler {
 
                 if (exception instanceof ThingsboardException) {
                     handleThingsboardException((ThingsboardException) exception, response);
+                } else if (exception instanceof TbRateLimitsException) {
+                    handleRateLimitException(response, (TbRateLimitsException) exception);
                 } else if (exception instanceof AccessDeniedException) {
                     handleAccessDeniedException(response);
                 } else if (exception instanceof AuthenticationException) {
@@ -76,6 +81,7 @@ public class ThingsboardErrorResponseHandler implements AccessDeniedHandler {
             }
         }
     }
+
 
     private void handleThingsboardException(ThingsboardException thingsboardException, HttpServletResponse response) throws IOException {
 
@@ -109,6 +115,15 @@ public class ThingsboardErrorResponseHandler implements AccessDeniedHandler {
         response.setStatus(status.value());
         mapper.writeValue(response.getWriter(), ThingsboardErrorResponse.of(thingsboardException.getMessage(), errorCode, status));
     }
+
+    private void handleRateLimitException(HttpServletResponse response, TbRateLimitsException exception) throws IOException {
+        response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+        String message = "Too many requests for current " + exception.getEntityType().name().toLowerCase() + "!";
+        mapper.writeValue(response.getWriter(),
+                ThingsboardErrorResponse.of(message,
+                        ThingsboardErrorCode.TOO_MANY_REQUESTS, HttpStatus.TOO_MANY_REQUESTS));
+    }
+
 
     private void handleAccessDeniedException(HttpServletResponse response) throws IOException {
         response.setStatus(HttpStatus.FORBIDDEN.value());

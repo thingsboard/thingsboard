@@ -214,7 +214,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         if (customer == null) {
             throw new DataValidationException("Can't unassign dashboards from non-existent customer!");
         }
-        new CustomerDashboardsUnassigner(customer).removeEntities(customer);
+        new CustomerDashboardsUnassigner(customer).removeEntities(tenantId, customer);
     }
 
     @Override
@@ -225,7 +225,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         if (customer == null) {
             throw new DataValidationException("Can't update dashboards for non-existent customer!");
         }
-        new CustomerDashboardsUpdater(customer).removeEntities(customer);
+        new CustomerDashboardsUpdater(customer).removeEntities(tenantId, customer);
     }
 
     private DataValidator<Dashboard> dashboardValidator =
@@ -269,7 +269,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         }
 
         @Override
-        protected List<DashboardInfo> findEntities(Customer customer, TimePageLink pageLink) {
+        protected List<DashboardInfo> findEntities(TenantId tenantId, Customer customer, TimePageLink pageLink) {
             try {
                 return dashboardInfoDao.findDashboardsByTenantIdAndCustomerId(customer.getTenantId().getId(), customer.getId().getId(), pageLink).get();
             } catch (InterruptedException | ExecutionException e) {
@@ -279,7 +279,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         }
 
         @Override
-        protected void removeEntity(DashboardInfo entity) {
+        protected void removeEntity(TenantId tenantId, DashboardInfo entity) {
             unassignDashboardFromCustomer(customer.getTenantId(), new DashboardId(entity.getUuidId()), this.customer.getId());
         }
         
@@ -294,7 +294,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         }
 
         @Override
-        protected List<DashboardInfo> findEntities(Customer customer, TimePageLink pageLink) {
+        protected List<DashboardInfo> findEntities(TenantId tenantId, Customer customer, TimePageLink pageLink) {
             try {
                 return dashboardInfoDao.findDashboardsByTenantIdAndCustomerId(customer.getTenantId().getId(), customer.getId().getId(), pageLink).get();
             } catch (InterruptedException | ExecutionException e) {
@@ -304,7 +304,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         }
 
         @Override
-        protected void removeEntity(DashboardInfo entity) {
+        protected void removeEntity(TenantId tenantId, DashboardInfo entity) {
             updateAssignedCustomer(customer.getTenantId(), new DashboardId(entity.getUuidId()), this.customer);
         }
 

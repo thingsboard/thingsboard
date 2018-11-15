@@ -13,31 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.exception;
+package org.thingsboard.server.common.msg.tools;
 
-import com.fasterxml.jackson.annotation.JsonValue;
+import lombok.Getter;
+import org.thingsboard.server.common.data.EntityType;
 
-public enum ThingsboardErrorCode {
+/**
+ * Created by ashvayka on 22.10.18.
+ */
+public class TbRateLimitsException extends RuntimeException {
+    @Getter
+    private final EntityType entityType;
 
-    GENERAL(2),
-    AUTHENTICATION(10),
-    JWT_TOKEN_EXPIRED(11),
-    PERMISSION_DENIED(20),
-    INVALID_ARGUMENTS(30),
-    BAD_REQUEST_PARAMS(31),
-    ITEM_NOT_FOUND(32),
-    TOO_MANY_REQUESTS(33),
-    TOO_MANY_UPDATES(34);
-
-    private int errorCode;
-
-    ThingsboardErrorCode(int errorCode) {
-        this.errorCode = errorCode;
+    public TbRateLimitsException(EntityType entityType) {
+        this.entityType = entityType;
     }
-
-    @JsonValue
-    public int getErrorCode() {
-        return errorCode;
-    }
-
 }

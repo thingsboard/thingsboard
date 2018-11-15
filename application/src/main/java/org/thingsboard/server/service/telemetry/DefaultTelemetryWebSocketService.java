@@ -23,12 +23,17 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.socket.CloseStatus;
+import org.springframework.web.socket.WebSocketSession;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
@@ -42,6 +47,7 @@ import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.ValidationCallback;
 import org.thingsboard.server.service.security.ValidationResult;
 import org.thingsboard.server.service.security.ValidationResultCode;
+import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.telemetry.cmd.AttributesSubscriptionCmd;
 import org.thingsboard.server.service.telemetry.cmd.GetHistoryCmd;
 import org.thingsboard.server.service.telemetry.cmd.SubscriptionCmd;
@@ -64,6 +70,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -72,6 +79,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -82,8 +93,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class DefaultTelemetryWebSocketService implements TelemetryWebSocketService {
 
-    public static final int DEFAULT_LIMIT = 100;
-    public static final Aggregation DEFAULT_AGGREGATION = Aggregation.NONE;
+    private static final int DEFAULT_LIMIT = 100;
+    private static final Aggregation DEFAULT_AGGREGATION = Aggregation.NONE;
     private static final int UNKNOWN_SUBSCRIPTION_ID = 0;
     private static final String PROCESSING_MSG = "[{}] Processing: {}";
     private static final ObjectMapper jsonMapper = new ObjectMapper();
@@ -108,11 +119,25 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
     @Autowired
     private TimeseriesService tsService;
 
+    @Value("${server.ws.limits.max_subscriptions_per_tenant:0}")
+    private int maxSubscriptionsPerTenant;
+    @Value("${server.ws.limits.max_subscriptions_per_customer:0}")
+    private int maxSubscriptionsPerCustomer;
+    @Value("${server.ws.limits.max_subscriptions_per_regular_user:0}")
+    private int maxSubscriptionsPerRegularUser;
+    @Value("${server.ws.limits.max_subscriptions_per_public_user:0}")
+    private int maxSubscriptionsPerPublicUser;
+
+    private ConcurrentMap<TenantId, Set<String>> tenantSubscriptionsMap = new ConcurrentHashMap<>();
+    private ConcurrentMap<CustomerId, Set<String>> customerSubscriptionsMap = new ConcurrentHashMap<>();
+    private ConcurrentMap<UserId, Set<String>> regularUserSubscriptionsMap = new ConcurrentHashMap<>();
+    private ConcurrentMap<UserId, Set<String>> publicUserSubscriptionsMap = new ConcurrentHashMap<>();
+
     private ExecutorService executor;
 
     @PostConstruct
     public void initExecutor() {
-        executor = Executors.newSingleThreadExecutor();
+        executor = new ThreadPoolExecutor(0, 50, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
     }
 
     @PreDestroy
@@ -136,6 +161,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
             case CLOSED:
                 wsSessionsMap.remove(sessionId);
                 subscriptionManager.cleanupLocalWsSessionSubscriptions(sessionRef, sessionId);
+                processSessionClose(sessionRef);
                 break;
         }
     }
@@ -150,10 +176,18 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
             TelemetryPluginCmdsWrapper cmdsWrapper = jsonMapper.readValue(msg, TelemetryPluginCmdsWrapper.class);
             if (cmdsWrapper != null) {
                 if (cmdsWrapper.getAttrSubCmds() != null) {
-                    cmdsWrapper.getAttrSubCmds().forEach(cmd -> handleWsAttributesSubscriptionCmd(sessionRef, cmd));
+                    cmdsWrapper.getAttrSubCmds().forEach(cmd -> {
+                        if (processSubscription(sessionRef, cmd)) {
+                            handleWsAttributesSubscriptionCmd(sessionRef, cmd);
+                        }
+                    });
                 }
                 if (cmdsWrapper.getTsSubCmds() != null) {
-                    cmdsWrapper.getTsSubCmds().forEach(cmd -> handleWsTimeseriesSubscriptionCmd(sessionRef, cmd));
+                    cmdsWrapper.getTsSubCmds().forEach(cmd -> {
+                        if (processSubscription(sessionRef, cmd)) {
+                            handleWsTimeseriesSubscriptionCmd(sessionRef, cmd);
+                        }
+                    });
                 }
                 if (cmdsWrapper.getHistoryCmds() != null) {
                     cmdsWrapper.getHistoryCmds().forEach(cmd -> handleWsHistoryCmd(sessionRef, cmd));
@@ -172,6 +206,105 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
         if (md != null) {
             sendWsMsg(md.getSessionRef(), update);
         }
+    }
+
+    private void processSessionClose(TelemetryWebSocketSessionRef sessionRef) {
+        String sessionId = "[" + sessionRef.getSessionId() + "]";
+        if (maxSubscriptionsPerTenant > 0) {
+            Set<String> tenantSubscriptions = tenantSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getTenantId(), id -> ConcurrentHashMap.newKeySet());
+            synchronized (tenantSubscriptions) {
+                tenantSubscriptions.removeIf(subId -> subId.startsWith(sessionId));
+            }
+        }
+        if (sessionRef.getSecurityCtx().isCustomerUser()) {
+            if (maxSubscriptionsPerCustomer > 0) {
+                Set<String> customerSessions = customerSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getCustomerId(), id -> ConcurrentHashMap.newKeySet());
+                synchronized (customerSessions) {
+                    customerSessions.removeIf(subId -> subId.startsWith(sessionId));
+                }
+            }
+            if (maxSubscriptionsPerRegularUser > 0 && UserPrincipal.Type.USER_NAME.equals(sessionRef.getSecurityCtx().getUserPrincipal().getType())) {
+                Set<String> regularUserSessions = regularUserSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getId(), id -> ConcurrentHashMap.newKeySet());
+                synchronized (regularUserSessions) {
+                    regularUserSessions.removeIf(subId -> subId.startsWith(sessionId));
+                }
+            }
+            if (maxSubscriptionsPerPublicUser > 0 && UserPrincipal.Type.PUBLIC_ID.equals(sessionRef.getSecurityCtx().getUserPrincipal().getType())) {
+                Set<String> publicUserSessions = publicUserSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getId(), id -> ConcurrentHashMap.newKeySet());
+                synchronized (publicUserSessions) {
+                    publicUserSessions.removeIf(subId -> subId.startsWith(sessionId));
+                }
+            }
+        }
+    }
+
+    private boolean processSubscription(TelemetryWebSocketSessionRef sessionRef, SubscriptionCmd cmd) {
+        String subId = "[" + sessionRef.getSessionId() + "]:[" + cmd.getCmdId() + "]";
+        try {
+            if (maxSubscriptionsPerTenant > 0) {
+                Set<String> tenantSubscriptions = tenantSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getTenantId(), id -> ConcurrentHashMap.newKeySet());
+                synchronized (tenantSubscriptions) {
+                    if (cmd.isUnsubscribe()) {
+                        tenantSubscriptions.remove(subId);
+                    } else if (tenantSubscriptions.size() < maxSubscriptionsPerTenant) {
+                        tenantSubscriptions.add(subId);
+                    } else {
+                        log.info("[{}][{}][{}] Failed to start subscription. Max tenant subscriptions limit reached"
+                                , sessionRef.getSecurityCtx().getTenantId(), sessionRef.getSecurityCtx().getId(), subId);
+                        msgEndpoint.close(sessionRef, CloseStatus.POLICY_VIOLATION.withReason("Max tenant subscriptions limit reached!"));
+                        return false;
+                    }
+                }
+            }
+
+            if (sessionRef.getSecurityCtx().isCustomerUser()) {
+                if (maxSubscriptionsPerCustomer > 0) {
+                    Set<String> customerSessions = customerSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getCustomerId(), id -> ConcurrentHashMap.newKeySet());
+                    synchronized (customerSessions) {
+                        if (cmd.isUnsubscribe()) {
+                            customerSessions.remove(subId);
+                        } else if (customerSessions.size() < maxSubscriptionsPerCustomer) {
+                            customerSessions.add(subId);
+                        } else {
+                            log.info("[{}][{}][{}] Failed to start subscription. Max customer subscriptions limit reached"
+                                    , sessionRef.getSecurityCtx().getTenantId(), sessionRef.getSecurityCtx().getId(), subId);
+                            msgEndpoint.close(sessionRef, CloseStatus.POLICY_VIOLATION.withReason("Max customer subscriptions limit reached"));
+                            return false;
+                        }
+                    }
+                }
+                if (maxSubscriptionsPerRegularUser > 0 && UserPrincipal.Type.USER_NAME.equals(sessionRef.getSecurityCtx().getUserPrincipal().getType())) {
+                    Set<String> regularUserSessions = regularUserSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getId(), id -> ConcurrentHashMap.newKeySet());
+                    synchronized (regularUserSessions) {
+                        if (regularUserSessions.size() < maxSubscriptionsPerRegularUser) {
+                            regularUserSessions.add(subId);
+                        } else {
+                            log.info("[{}][{}][{}] Failed to start subscription. Max regular user subscriptions limit reached"
+                                    , sessionRef.getSecurityCtx().getTenantId(), sessionRef.getSecurityCtx().getId(), subId);
+                            msgEndpoint.close(sessionRef, CloseStatus.POLICY_VIOLATION.withReason("Max regular user subscriptions limit reached"));
+                            return false;
+                        }
+                    }
+                }
+                if (maxSubscriptionsPerPublicUser > 0 && UserPrincipal.Type.PUBLIC_ID.equals(sessionRef.getSecurityCtx().getUserPrincipal().getType())) {
+                    Set<String> publicUserSessions = publicUserSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getId(), id -> ConcurrentHashMap.newKeySet());
+                    synchronized (publicUserSessions) {
+                        if (publicUserSessions.size() < maxSubscriptionsPerPublicUser) {
+                            publicUserSessions.add(subId);
+                        } else {
+                            log.info("[{}][{}][{}] Failed to start subscription. Max public user subscriptions limit reached"
+                                    , sessionRef.getSecurityCtx().getTenantId(), sessionRef.getSecurityCtx().getId(), subId);
+                            msgEndpoint.close(sessionRef, CloseStatus.POLICY_VIOLATION.withReason("Max public user subscriptions limit reached"));
+                            return false;
+                        }
+                    }
+                }
+            }
+        } catch (IOException e) {
+            log.warn("[{}] Failed to send session close: {}", sessionRef.getSessionId(), e);
+            return false;
+        }
+        return true;
     }
 
     private void handleWsAttributesSubscriptionCmd(TelemetryWebSocketSessionRef sessionRef, AttributesSubscriptionCmd cmd) {
@@ -216,7 +349,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
             public void onFailure(Throwable e) {
                 log.error(FAILED_TO_FETCH_ATTRIBUTES, e);
                 SubscriptionUpdate update;
-                if (UnauthorizedException.class.isInstance(e)) {
+                if (e instanceof UnauthorizedException) {
                     update = new SubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.UNAUTHORIZED,
                             SubscriptionErrorCode.UNAUTHORIZED.getDefaultMsg());
                 } else {
@@ -449,7 +582,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
 
     private void sendWsMsg(TelemetryWebSocketSessionRef sessionRef, SubscriptionUpdate update) {
         try {
-            msgEndpoint.send(sessionRef, jsonMapper.writeValueAsString(update));
+            msgEndpoint.send(sessionRef, update.getSubscriptionId(), jsonMapper.writeValueAsString(update));
         } catch (JsonProcessingException e) {
             log.warn("[{}] Failed to encode reply: {}", sessionRef.getSessionId(), update, e);
         } catch (IOException e) {
