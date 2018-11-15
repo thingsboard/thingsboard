@@ -744,8 +744,9 @@ section.tb-footer-buttons {
 /***********************
 * CUSTOM
 ***********************/
-.md-button.md-default-theme.md-primary.md-raised, .md-button.md-primary.md-raised, .md-button.md-default-theme.md-primary.md-fab, .md-button.md-primary.md-fab {
-  color: rgba(255,255,255,0.87);
-  background-color: rgb(48,86,128);
+
+.md-button.md-primary.md-raised {
+  color: rgba(255, 255, 255, .87);
+  background-color: rgb(48, 86, 128);
   border-radius: 20px;
 }
