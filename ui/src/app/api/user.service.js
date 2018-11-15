@@ -27,6 +27,7 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, time
         currentUserDetails = null,
         lastPublicDashboardId = null,
         allowedDashboardIds = [],
+        redirectParams = null,
         userTokenAccessEnabled = false,
         userLoaded = false;
 
@@ -56,6 +57,7 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, time
         refreshTokenPending: refreshTokenPending,
         updateAuthorizationHeader: updateAuthorizationHeader,
         setAuthorizationRequestHeader: setAuthorizationRequestHeader,
+        setRedirectParams: setRedirectParams,
         gotoDefaultPlace: gotoDefaultPlace,
         forceDefaultPlace: forceDefaultPlace,
         updateLastPublicDashboardId: updateLastPublicDashboardId,
@@ -110,34 +112,24 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, time
         lastPublicDashboardId = null;
         userTokenAccessEnabled = false;
         allowedDashboardIds = [];
-        var deferred = $q.defer();
         if (!jwtToken) {
             clearTokenData();
             if (notify) {
                 $rootScope.$broadcast('unauthenticated', doLogout);
-                deferred.reject();
             }
-            deferred.resolve();
         } else {
             updateAndValidateToken(jwtToken, 'jwt_token', true);
             updateAndValidateToken(refreshToken, 'refresh_token', true);
             if (notify) {
                 loadUser(false).then(function success() {
                     $rootScope.$broadcast('authenticated');
-                    deferred.resolve();
                 }, function fail() {
                     $rootScope.$broadcast('unauthenticated');
-                    deferred.reject();
                 });
             } else {
-                loadUser(false).then(function success() {
-                    deferred.resolve();
-                }, function fail() {
-                    deferred.reject();
-                });
+                loadUser(false);
             }
         }
-        return deferred.promise;
     }
 
     function isAuthenticated() {
@@ -551,9 +543,15 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, time
         return false;
     }
 
+    function setRedirectParams(params) {
+        redirectParams = params;
+    }
+
     function gotoDefaultPlace(params) {
         if (currentUser && isAuthenticated()) {
-            var place = 'home.links';
+            var place = redirectParams ? redirectParams.toName : 'home.links';
+            params = redirectParams ? redirectParams.params : params;
+            redirectParams = null;
             if (currentUser.authority === 'TENANT_ADMIN' || currentUser.authority === 'CUSTOMER_USER') {
                 if (userHasDefaultDashboard()) {
                     place = $rootScope.forceFullscreen ? 'dashboard' : 'home.dashboards.dashboard';

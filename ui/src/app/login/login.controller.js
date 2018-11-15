@@ -20,7 +20,7 @@ import logoSvg from '../../svg/logo_title_white.svg';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function LoginController(toast, loginService, userService, $state, $stateParams, $rootScope) {
+export default function LoginController(toast, loginService, userService) {
     var vm = this;
 
     vm.logoSvg = logoSvg;
@@ -30,22 +30,14 @@ export default function LoginController(toast, loginService, userService, $state
         password: ''
     };
 
-    vm.params = $stateParams;
+   // vm.params = $stateParams;
     vm.login = login;
 
     function doLogin() {
         loginService.login(vm.user).then(function success(response) {
             var token = response.data.token;
             var refreshToken = response.data.refreshToken;
-            userService.setUserFromJwtToken(token, refreshToken, true).then(function() {
-                if (vm.params.toName && vm.params.toName !== 'login') {
-                    if (vm.params.toName == 'home.dashboards.dashboard' && $rootScope.forceFullscreen) {
-                        $state.go('dashboard', vm.params.params)
-                    } else {
-                        $state.go(vm.params.toName, vm.params.params)
-                    }
-                }
-            });
+            userService.setUserFromJwtToken(token, refreshToken, true);
         }, function fail(/*response*/) {
             /*if (response && response.data && response.data.message) {
                 toast.showError(response.data.message);

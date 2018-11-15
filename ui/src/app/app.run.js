@@ -127,7 +127,8 @@ export default function AppRun($rootScope, $window, $injector, $location, $log, 
                         var redirectParams = {};
                         redirectParams.toName = to.name;
                         redirectParams.params = params;
-                        $state.go('login', redirectParams);
+                        userService.setRedirectParams(redirectParams);
+                        $state.go('login', params);
                     }
                 }
             } else {
