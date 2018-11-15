@@ -55,7 +55,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     public static final String INCORRECT_USER_ID = "Incorrect userId ";
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
 
-    @Value("${security.user_login_case_sensitive}")
+    @Value("${security.user_login_case_sensitive:true}")
     private boolean userLoginCaseSensitive;
 
     @Autowired
