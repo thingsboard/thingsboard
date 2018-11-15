@@ -48,12 +48,12 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 @Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
-        name = "copy to view",
+        name = "复制到实体视图",
         configClazz = EmptyNodeConfiguration.class,
-        nodeDescription = "Copy attributes from asset/device to entity view and changes message originator to related entity view",
-        nodeDetails = "Copy attributes from asset/device to related entity view according to entity view configuration. \n " +
-                "Copy will be done only for attributes that are between start and end dates and according to attribute keys configuration. \n" +
-                "Changes message originator to related entity view and produces new messages according to count of updated entity views",
+        nodeDescription = "从设施/设备复制属性到实体视图并修改消息发起者为相应的实体视图",
+        nodeDetails = "按照实体视图的配置从设施/设备复制属性到实体视图. \n " +
+                "复制只针对在开始日期和结束日期之间的属性，并根据属性键配置进行。. \n" +
+                "将消息发起者更改为相关实体视图，并根据更新的实体视图的计数生成新消息",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbNodeEmptyConfig",
         icon = "content_copy"
