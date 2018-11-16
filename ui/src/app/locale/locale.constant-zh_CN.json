@@ -1578,7 +1578,9 @@
         "activation-link-text": "使用该链接 <a href='{{activationLink}}' target='_blank'>激活</a> 激活用户:",
         "copy-activation-link": "复制用户激活链接",
         "activation-link-copied-message": "用户激活链接已经复制到粘贴板",
-        "details": "详细信息"
+        "details": "详细信息",
+        "login-as-tenant-admin": "以租户管理员身份登录",
+        "login-as-customer-user": "以公开机构用户身份登录"
     },
     "value": {
         "type": "值类型",
