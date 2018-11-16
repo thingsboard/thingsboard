@@ -200,7 +200,12 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
                     }
                 }
                 synchronized (sessionMd) {
+                    long start = System.currentTimeMillis();
                     sessionMd.session.sendMessage(new TextMessage(msg));
+                    long took = System.currentTimeMillis() - start;
+                    if (took >= 1000) {
+                        log.info("[{}][{}] Sending message took more than 1 second [{}ms] {}", sessionRef.getSecurityCtx().getTenantId(), externalId, took, msg);
+                    }
                 }
             } else {
                 log.warn("[{}][{}] Failed to find session by internal id", externalId, internalId);

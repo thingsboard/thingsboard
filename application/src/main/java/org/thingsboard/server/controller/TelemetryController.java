@@ -24,6 +24,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -98,6 +99,9 @@ public class TelemetryController extends BaseController {
 
     @Autowired
     private AccessValidator accessValidator;
+
+    @Value("${transport.json.max_string_value_length:0}")
+    private int maxStringValueLength;
 
     private ExecutorService executor;
 
@@ -628,6 +632,10 @@ public class TelemetryController extends BaseController {
             String key = entry.getKey();
             JsonNode value = entry.getValue();
             if (entry.getValue().isTextual()) {
+                if (maxStringValueLength > 0 && entry.getValue().textValue().length() > maxStringValueLength) {
+                    String message = String.format("String value length [%d] for key [%s] is greater than maximum allowed [%d]", entry.getValue().textValue().length(), key, maxStringValueLength);
+                    throw new UncheckedApiException(new InvalidParametersException(message));
+                }
                 attributes.add(new BaseAttributeKvEntry(new StringDataEntry(key, value.textValue()), ts));
             } else if (entry.getValue().isBoolean()) {
                 attributes.add(new BaseAttributeKvEntry(new BooleanDataEntry(key, value.booleanValue()), ts));

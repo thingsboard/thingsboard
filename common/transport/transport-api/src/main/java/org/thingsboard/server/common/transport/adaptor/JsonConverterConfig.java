@@ -28,4 +28,10 @@ public class JsonConverterConfig {
         JsonConverter.setTypeCastEnabled(jsonTypeCastEnabled);
         log.info("JSON type cast enabled = {}", jsonTypeCastEnabled);
     }
+
+    @Value("${transport.json.max_string_value_length:0}")
+    public void setMaxStringValueLength(int maxStringValueLength) {
+        JsonConverter.setMaxStringValueLength(maxStringValueLength);
+        log.info("JSON max string value length = {}", maxStringValueLength);
+    }
 }
