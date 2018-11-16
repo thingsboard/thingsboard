@@ -13,9 +13,6 @@ ThingsBoard documentation is hosted on [thingsboard.io](https://thingsboard.io/d
 ## IoT use cases
 
 
-[**Smart metering**]
-[![Smart metering](http://114.115.156.64:81/files/IOT/flj2.gif "Smart metering")](https://thingsboard.io/smart-metering/)
-
 [**Smart metering**](https://thingsboard.io/smart-metering/)
 [![Smart metering](https://user-images.githubusercontent.com/8308069/31455788-6888a948-aec1-11e7-9819-410e0ba785e0.gif "Smart metering")](https://thingsboard.io/smart-metering/)
 
