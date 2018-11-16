@@ -18,6 +18,8 @@ package org.thingsboard.server.dao.widget;
 import com.datastax.driver.core.querybuilder.Select;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.DaoUtil;
@@ -62,16 +64,16 @@ public class CassandraWidgetsBundleDao extends CassandraAbstractSearchTextDao<Wi
                 .and(eq(WIDGETS_BUNDLE_TENANT_ID_PROPERTY, tenantId))
                 .and(eq(WIDGETS_BUNDLE_ALIAS_PROPERTY, alias));
         log.trace("Execute query {}", query);
-        WidgetsBundleEntity widgetsBundleEntity = findOneByStatement(query);
+        WidgetsBundleEntity widgetsBundleEntity = findOneByStatement(new TenantId(tenantId), query);
         log.trace("Found widgets bundle [{}] by tenantId [{}] and alias [{}]",
                 widgetsBundleEntity, tenantId, alias);
         return DaoUtil.getData(widgetsBundleEntity);
     }
 
     @Override
-    public List<WidgetsBundle> findSystemWidgetsBundles(TextPageLink pageLink) {
+    public List<WidgetsBundle> findSystemWidgetsBundles(TenantId tenantId, TextPageLink pageLink) {
         log.debug("Try to find system widgets bundles by pageLink [{}]", pageLink);
-        List<WidgetsBundleEntity> widgetsBundlesEntities = findPageWithTextSearch(WIDGETS_BUNDLE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
+        List<WidgetsBundleEntity> widgetsBundlesEntities = findPageWithTextSearch(tenantId, WIDGETS_BUNDLE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
                 Arrays.asList(eq(WIDGETS_BUNDLE_TENANT_ID_PROPERTY, NULL_UUID)),
                 pageLink);
         log.trace("Found system widgets bundles [{}] by pageLink [{}]", widgetsBundlesEntities, pageLink);
@@ -81,7 +83,7 @@ public class CassandraWidgetsBundleDao extends CassandraAbstractSearchTextDao<Wi
     @Override
     public List<WidgetsBundle> findTenantWidgetsBundlesByTenantId(UUID tenantId, TextPageLink pageLink) {
         log.debug("Try to find tenant widgets bundles by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
-        List<WidgetsBundleEntity> widgetsBundlesEntities = findPageWithTextSearch(WIDGETS_BUNDLE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
+        List<WidgetsBundleEntity> widgetsBundlesEntities = findPageWithTextSearch(new TenantId(tenantId), WIDGETS_BUNDLE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
                 Arrays.asList(eq(WIDGETS_BUNDLE_TENANT_ID_PROPERTY, tenantId)),
                 pageLink);
         log.trace("Found tenant widgets bundles [{}] by tenantId [{}] and pageLink [{}]", widgetsBundlesEntities, tenantId, pageLink);
@@ -91,7 +93,7 @@ public class CassandraWidgetsBundleDao extends CassandraAbstractSearchTextDao<Wi
     @Override
     public List<WidgetsBundle> findAllTenantWidgetsBundlesByTenantId(UUID tenantId, TextPageLink pageLink) {
         log.debug("Try to find all tenant widgets bundles by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
-        List<WidgetsBundleEntity> widgetsBundlesEntities = findPageWithTextSearch(WIDGETS_BUNDLE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
+        List<WidgetsBundleEntity> widgetsBundlesEntities = findPageWithTextSearch(new TenantId(tenantId), WIDGETS_BUNDLE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
                 Arrays.asList(in(WIDGETS_BUNDLE_TENANT_ID_PROPERTY, Arrays.asList(NULL_UUID, tenantId))),
                 pageLink);
         log.trace("Found all tenant widgets bundles [{}] by tenantId [{}] and pageLink [{}]", widgetsBundlesEntities, tenantId, pageLink);

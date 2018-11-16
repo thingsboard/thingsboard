@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import org.thingsboard.server.dao.dashboard.DashboardInfoDao;
+import org.thingsboard.server.dao.service.AbstractServiceTest;
 
 import java.util.List;
 import java.util.UUID;
@@ -61,6 +62,6 @@ public class JpaDashboardInfoDaoTest extends AbstractJpaDaoTest {
         dashboardInfo.setId(new DashboardId(UUIDs.timeBased()));
         dashboardInfo.setTenantId(new TenantId(tenantId));
         dashboardInfo.setTitle("DASHBOARD_" + index);
-        dashboardInfoDao.save(dashboardInfo);
+        dashboardInfoDao.save(AbstractServiceTest.SYSTEM_TENANT_ID, dashboardInfo);
     }
 }

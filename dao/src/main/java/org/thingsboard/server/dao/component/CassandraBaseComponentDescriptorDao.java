@@ -23,6 +23,7 @@ import com.datastax.driver.core.utils.UUIDs;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.ComponentDescriptorId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentScope;
@@ -62,10 +63,10 @@ public class CassandraBaseComponentDescriptorDao extends CassandraAbstractSearch
     }
 
     @Override
-    public Optional<ComponentDescriptor> saveIfNotExist(ComponentDescriptor component) {
+    public Optional<ComponentDescriptor> saveIfNotExist(TenantId tenantId, ComponentDescriptor component) {
         ComponentDescriptorEntity entity = new ComponentDescriptorEntity(component);
         log.debug("Save component entity [{}]", entity);
-        Optional<ComponentDescriptor> result = saveIfNotExist(entity);
+        Optional<ComponentDescriptor> result = saveIfNotExist(tenantId, entity);
         if (log.isTraceEnabled()) {
             log.trace("Saved result: [{}] for component entity [{}]", result.isPresent(), result.orElse(null));
         } else {
@@ -75,9 +76,9 @@ public class CassandraBaseComponentDescriptorDao extends CassandraAbstractSearch
     }
 
     @Override
-    public ComponentDescriptor findById(ComponentDescriptorId componentId) {
+    public ComponentDescriptor findById(TenantId tenantId, ComponentDescriptorId componentId) {
         log.debug("Search component entity by id [{}]", componentId);
-        ComponentDescriptor componentDescriptor = super.findById(componentId.getId());
+        ComponentDescriptor componentDescriptor = super.findById(tenantId, componentId.getId());
         if (log.isTraceEnabled()) {
             log.trace("Search result: [{}] for component entity [{}]", componentDescriptor != null, componentDescriptor);
         } else {
@@ -87,11 +88,11 @@ public class CassandraBaseComponentDescriptorDao extends CassandraAbstractSearch
     }
 
     @Override
-    public ComponentDescriptor findByClazz(String clazz) {
+    public ComponentDescriptor findByClazz(TenantId tenantId, String clazz) {
         log.debug("Search component entity by clazz [{}]", clazz);
         Select.Where query = select().from(getColumnFamilyName()).where(eq(ModelConstants.COMPONENT_DESCRIPTOR_CLASS_PROPERTY, clazz));
         log.trace("Execute query [{}]", query);
-        ComponentDescriptorEntity entity = findOneByStatement(query);
+        ComponentDescriptorEntity entity = findOneByStatement(tenantId, query);
         if (log.isTraceEnabled()) {
             log.trace("Search result: [{}] for component entity [{}]", entity != null, entity);
         } else {
@@ -101,9 +102,9 @@ public class CassandraBaseComponentDescriptorDao extends CassandraAbstractSearch
     }
 
     @Override
-    public List<ComponentDescriptor> findByTypeAndPageLink(ComponentType type, TextPageLink pageLink) {
+    public List<ComponentDescriptor> findByTypeAndPageLink(TenantId tenantId, ComponentType type, TextPageLink pageLink) {
         log.debug("Try to find component by type [{}] and pageLink [{}]", type, pageLink);
-        List<ComponentDescriptorEntity> entities = findPageWithTextSearch(ModelConstants.COMPONENT_DESCRIPTOR_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
+        List<ComponentDescriptorEntity> entities = findPageWithTextSearch(tenantId, ModelConstants.COMPONENT_DESCRIPTOR_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
                 Arrays.asList(eq(ModelConstants.COMPONENT_DESCRIPTOR_TYPE_PROPERTY, type)), pageLink);
         if (log.isTraceEnabled()) {
             log.trace(SEARCH_RESULT, Arrays.toString(entities.toArray()));
@@ -114,9 +115,9 @@ public class CassandraBaseComponentDescriptorDao extends CassandraAbstractSearch
     }
 
     @Override
-    public List<ComponentDescriptor> findByScopeAndTypeAndPageLink(ComponentScope scope, ComponentType type, TextPageLink pageLink) {
+    public List<ComponentDescriptor> findByScopeAndTypeAndPageLink(TenantId tenantId, ComponentScope scope, ComponentType type, TextPageLink pageLink) {
         log.debug("Try to find component by scope [{}] and type [{}] and pageLink [{}]", scope, type, pageLink);
-        List<ComponentDescriptorEntity> entities = findPageWithTextSearch(ModelConstants.COMPONENT_DESCRIPTOR_BY_SCOPE_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
+        List<ComponentDescriptorEntity> entities = findPageWithTextSearch(tenantId, ModelConstants.COMPONENT_DESCRIPTOR_BY_SCOPE_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
                 Arrays.asList(eq(ModelConstants.COMPONENT_DESCRIPTOR_TYPE_PROPERTY, type),
                         eq(ModelConstants.COMPONENT_DESCRIPTOR_SCOPE_PROPERTY, scope.name())), pageLink);
         if (log.isTraceEnabled()) {
@@ -127,34 +128,34 @@ public class CassandraBaseComponentDescriptorDao extends CassandraAbstractSearch
         return DaoUtil.convertDataList(entities);
     }
 
-    public boolean removeById(UUID key) {
+    public boolean removeById(TenantId tenantId, UUID key) {
         Statement delete = QueryBuilder.delete().all().from(ModelConstants.COMPONENT_DESCRIPTOR_BY_ID).where(eq(ModelConstants.ID_PROPERTY, key));
         log.debug("Remove request: {}", delete.toString());
-        return executeWrite(delete).wasApplied();
+        return executeWrite(tenantId, delete).wasApplied();
     }
 
     @Override
-    public void deleteById(ComponentDescriptorId id) {
+    public void deleteById(TenantId tenantId, ComponentDescriptorId id) {
         log.debug("Delete plugin meta-data entity by id [{}]", id);
-        boolean result = removeById(id.getId());
+        boolean result = removeById(tenantId, id.getId());
         log.debug("Delete result: [{}]", result);
     }
 
     @Override
-    public void deleteByClazz(String clazz) {
+    public void deleteByClazz(TenantId tenantId, String clazz) {
         log.debug("Delete plugin meta-data entity by id [{}]", clazz);
         Statement delete = QueryBuilder.delete().all().from(getColumnFamilyName()).where(eq(ModelConstants.COMPONENT_DESCRIPTOR_CLASS_PROPERTY, clazz));
         log.debug("Remove request: {}", delete.toString());
-        ResultSet resultSet = executeWrite(delete);
+        ResultSet resultSet = executeWrite(tenantId, delete);
         log.debug("Delete result: [{}]", resultSet.wasApplied());
     }
 
-    private Optional<ComponentDescriptor> saveIfNotExist(ComponentDescriptorEntity entity) {
+    private Optional<ComponentDescriptor> saveIfNotExist(TenantId tenantId, ComponentDescriptorEntity entity) {
         if (entity.getId() == null) {
             entity.setId(UUIDs.timeBased());
         }
 
-        ResultSet rs = executeRead(QueryBuilder.insertInto(getColumnFamilyName())
+        ResultSet rs = executeRead(tenantId, QueryBuilder.insertInto(getColumnFamilyName())
                 .value(ModelConstants.ID_PROPERTY, entity.getId())
                 .value(ModelConstants.COMPONENT_DESCRIPTOR_NAME_PROPERTY, entity.getName())
                 .value(ModelConstants.COMPONENT_DESCRIPTOR_CLASS_PROPERTY, entity.getClazz())

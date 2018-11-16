@@ -15,43 +15,44 @@
  */
 package org.thingsboard.server.actors.device;
 
-import akka.event.Logging;
-import akka.event.LoggingAdapter;
 import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.rule.engine.api.msg.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.service.ContextAwareActor;
-import org.thingsboard.server.actors.service.ContextBasedCreator;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbActorMsg;
-import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
-import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
 import org.thingsboard.server.common.msg.timeout.DeviceActorClientSideRpcTimeoutMsg;
-import org.thingsboard.server.common.msg.timeout.DeviceActorQueueTimeoutMsg;
 import org.thingsboard.server.common.msg.timeout.DeviceActorServerSideRpcTimeoutMsg;
 import org.thingsboard.server.service.rpc.ToDeviceRpcRequestActorMsg;
 import org.thingsboard.server.service.rpc.ToServerRpcResponseActorMsg;
+import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 
 public class DeviceActor extends ContextAwareActor {
 
-    private final LoggingAdapter logger = Logging.getLogger(getContext().system(), this);
-
     private final DeviceActorMessageProcessor processor;
 
-    private DeviceActor(ActorSystemContext systemContext, TenantId tenantId, DeviceId deviceId) {
+    DeviceActor(ActorSystemContext systemContext, TenantId tenantId, DeviceId deviceId) {
         super(systemContext);
-        this.processor = new DeviceActorMessageProcessor(systemContext, logger, tenantId, deviceId);
+        this.processor = new DeviceActorMessageProcessor(systemContext, tenantId, deviceId);
+    }
+
+    @Override
+    public void preStart() {
+        log.debug("[{}][{}] Starting device actor.", processor.tenantId, processor.deviceId);
+        try {
+            processor.initSessionTimeout(context());
+            log.debug("[{}][{}] Device actor started.", processor.tenantId, processor.deviceId);
+        } catch (Exception e) {
+            log.warn("[{}][{}] Unknown failure", processor.tenantId, processor.deviceId, e);
+        }
     }
 
     @Override
     protected boolean process(TbActorMsg msg) {
         switch (msg.getMsgType()) {
-            case CLUSTER_EVENT_MSG:
-                processor.processClusterEventMsg((ClusterEventMsg) msg);
-                break;
-            case DEVICE_SESSION_TO_DEVICE_ACTOR_MSG:
-                processor.process(context(), (DeviceToDeviceActorMsg) msg);
+            case TRANSPORT_TO_DEVICE_ACTOR_MSG:
+                processor.process(context(), (TransportToDeviceActorMsgWrapper) msg);
                 break;
             case DEVICE_ATTRIBUTES_UPDATE_TO_DEVICE_ACTOR_MSG:
                 processor.processAttributesUpdate(context(), (DeviceAttributesEventNotificationMsg) msg);
@@ -74,34 +75,13 @@ public class DeviceActor extends ContextAwareActor {
             case DEVICE_ACTOR_CLIENT_SIDE_RPC_TIMEOUT_MSG:
                 processor.processClientSideRpcTimeout(context(), (DeviceActorClientSideRpcTimeoutMsg) msg);
                 break;
-            case DEVICE_ACTOR_QUEUE_TIMEOUT_MSG:
-                processor.processQueueTimeout(context(), (DeviceActorQueueTimeoutMsg) msg);
-                break;
-            case RULE_ENGINE_QUEUE_PUT_ACK_MSG:
-                processor.processQueueAck(context(), (RuleEngineQueuePutAckMsg) msg);
+            case SESSION_TIMEOUT_MSG:
+                processor.checkSessionsTimeout();
                 break;
             default:
                 return false;
         }
         return true;
-    }
-
-    public static class ActorCreator extends ContextBasedCreator<DeviceActor> {
-        private static final long serialVersionUID = 1L;
-
-        private final TenantId tenantId;
-        private final DeviceId deviceId;
-
-        public ActorCreator(ActorSystemContext context, TenantId tenantId, DeviceId deviceId) {
-            super(context);
-            this.tenantId = tenantId;
-            this.deviceId = deviceId;
-        }
-
-        @Override
-        public DeviceActor create() throws Exception {
-            return new DeviceActor(context, tenantId, deviceId);
-        }
     }
 
 }

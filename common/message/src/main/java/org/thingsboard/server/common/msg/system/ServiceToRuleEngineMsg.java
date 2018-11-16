@@ -21,11 +21,13 @@ import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbMsg;
 
+import java.io.Serializable;
+
 /**
  * Created by ashvayka on 15.03.18.
  */
 @Data
-public final class ServiceToRuleEngineMsg implements TbActorMsg {
+public final class ServiceToRuleEngineMsg implements TbActorMsg, Serializable {
 
     private final TenantId tenantId;
     private final TbMsg tbMsg;

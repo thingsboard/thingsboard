@@ -29,13 +29,13 @@ public interface DeviceRpcService {
 
     void processRestAPIRpcRequestToRuleEngine(ToDeviceRpcRequest request, Consumer<FromDeviceRpcResponse> responseConsumer);
 
-    void processRestAPIRpcResponseFromRuleEngine(FromDeviceRpcResponse response);
+    void processResponseToServerSideRPCRequestFromRuleEngine(ServerAddress requestOriginAddress, FromDeviceRpcResponse response);
 
-    void processRpcRequestToDevice(ToDeviceRpcRequest request, Consumer<FromDeviceRpcResponse> responseConsumer);
+    void forwardServerSideRPCRequestToDeviceActor(ToDeviceRpcRequest request, Consumer<FromDeviceRpcResponse> responseConsumer);
 
-    void processRpcResponseFromDevice(FromDeviceRpcResponse response);
+    void processResponseToServerSideRPCRequestFromDeviceActor(FromDeviceRpcResponse response);
 
-    void sendRpcReplyToDevice(TenantId tenantId, DeviceId deviceId, int requestId, String body);
+    void processResponseToServerSideRPCRequestFromRemoteServer(ServerAddress serverAddress, byte[] data);
 
-    void processRemoteResponseFromDevice(ServerAddress serverAddress, byte[] bytes);
+    void sendReplyToRpcCallFromDevice(TenantId tenantId, DeviceId deviceId, int requestId, String body);
 }

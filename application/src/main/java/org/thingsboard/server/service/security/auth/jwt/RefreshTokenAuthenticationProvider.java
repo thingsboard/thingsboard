@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
@@ -72,12 +73,13 @@ public class RefreshTokenAuthenticationProvider implements AuthenticationProvide
     }
 
     private SecurityUser authenticateByUserId(UserId userId) {
-        User user = userService.findUserById(userId);
+        TenantId systemId = new TenantId(EntityId.NULL_UUID);
+        User user = userService.findUserById(systemId, userId);
         if (user == null) {
             throw new UsernameNotFoundException("User not found by refresh token");
         }
 
-        UserCredentials userCredentials = userService.findUserCredentialsByUserId(user.getId());
+        UserCredentials userCredentials = userService.findUserCredentialsByUserId(systemId, user.getId());
         if (userCredentials == null) {
             throw new UsernameNotFoundException("User credentials not found");
         }
@@ -96,13 +98,14 @@ public class RefreshTokenAuthenticationProvider implements AuthenticationProvide
     }
 
     private SecurityUser authenticateByPublicId(String publicId) {
+        TenantId systemId = new TenantId(EntityId.NULL_UUID);
         CustomerId customerId;
         try {
             customerId = new CustomerId(UUID.fromString(publicId));
         } catch (Exception e) {
             throw new BadCredentialsException("Refresh token is not valid");
         }
-        Customer publicCustomer = customerService.findCustomerById(customerId);
+        Customer publicCustomer = customerService.findCustomerById(systemId, customerId);
         if (publicCustomer == null) {
             throw new UsernameNotFoundException("Public entity not found by refresh token");
         }

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.device;
 
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.Dao;
 
@@ -28,10 +29,11 @@ public interface DeviceCredentialsDao extends Dao<DeviceCredentials> {
     /**
      * Save or update device credentials object
      *
+     * @param tenantId the device tenant id
      * @param deviceCredentials the device credentials object
      * @return saved device credentials object
      */
-    DeviceCredentials save(DeviceCredentials deviceCredentials);
+    DeviceCredentials save(TenantId tenantId, DeviceCredentials deviceCredentials);
 
     /**
      * Find device credentials by device id.
@@ -39,7 +41,7 @@ public interface DeviceCredentialsDao extends Dao<DeviceCredentials> {
      * @param deviceId the device id
      * @return the device credentials object
      */
-    DeviceCredentials findByDeviceId(UUID deviceId);
+    DeviceCredentials findByDeviceId(TenantId tenantId, UUID deviceId);
 
     /**
      * Find device credentials by credentials id.
@@ -47,6 +49,6 @@ public interface DeviceCredentialsDao extends Dao<DeviceCredentials> {
      * @param credentialsId the credentials id
      * @return the device credentials object
      */
-    DeviceCredentials findByCredentialsId(String credentialsId);
+    DeviceCredentials findByCredentialsId(TenantId tenantId, String credentialsId);
 
 }

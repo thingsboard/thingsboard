@@ -251,7 +251,8 @@ public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
                 log.info("Entity views restored.");
 
                 break;
-
+            case "2.1.3":
+                break;
             default:
                 throw new RuntimeException("Unable to upgrade Cassandra database, unsupported fromVersion: " + fromVersion);
         }

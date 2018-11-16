@@ -28,6 +28,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.EntitySubtypeEntity;
@@ -77,19 +78,19 @@ public class CassandraAssetDao extends CassandraAbstractSearchTextDao<AssetEntit
     }
 
     @Override
-    public Asset save(Asset domain) {
-        Asset savedAsset = super.save(domain);
+    public Asset save(TenantId tenantId, Asset domain) {
+        Asset savedAsset = super.save(tenantId, domain);
         EntitySubtype entitySubtype = new EntitySubtype(savedAsset.getTenantId(), EntityType.ASSET, savedAsset.getType());
         EntitySubtypeEntity entitySubtypeEntity = new EntitySubtypeEntity(entitySubtype);
         Statement saveStatement = cluster.getMapper(EntitySubtypeEntity.class).saveQuery(entitySubtypeEntity);
-        executeWrite(saveStatement);
+        executeWrite(tenantId, saveStatement);
         return savedAsset;
     }
 
     @Override
     public List<Asset> findAssetsByTenantId(UUID tenantId, TextPageLink pageLink) {
         log.debug("Try to find assets by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
-        List<AssetEntity> assetEntities = findPageWithTextSearch(ASSET_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
+        List<AssetEntity> assetEntities = findPageWithTextSearch(new TenantId(tenantId), ASSET_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
                 Collections.singletonList(eq(ASSET_TENANT_ID_PROPERTY, tenantId)), pageLink);
 
         log.trace("Found assets [{}] by tenantId [{}] and pageLink [{}]", assetEntities, tenantId, pageLink);
@@ -99,7 +100,7 @@ public class CassandraAssetDao extends CassandraAbstractSearchTextDao<AssetEntit
     @Override
     public List<Asset> findAssetsByTenantIdAndType(UUID tenantId, String type, TextPageLink pageLink) {
         log.debug("Try to find assets by tenantId [{}], type [{}] and pageLink [{}]", tenantId, type, pageLink);
-        List<AssetEntity> assetEntities = findPageWithTextSearch(ASSET_BY_TENANT_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
+        List<AssetEntity> assetEntities = findPageWithTextSearch(new TenantId(tenantId), ASSET_BY_TENANT_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
                 Arrays.asList(eq(ASSET_TYPE_PROPERTY, type),
                         eq(ASSET_TENANT_ID_PROPERTY, tenantId)), pageLink);
         log.trace("Found assets [{}] by tenantId [{}], type [{}] and pageLink [{}]", assetEntities, tenantId, type, pageLink);
@@ -112,13 +113,13 @@ public class CassandraAssetDao extends CassandraAbstractSearchTextDao<AssetEntit
         Select.Where query = select.where();
         query.and(eq(ASSET_TENANT_ID_PROPERTY, tenantId));
         query.and(in(ID_PROPERTY, assetIds));
-        return findListByStatementAsync(query);
+        return findListByStatementAsync(new TenantId(tenantId), query);
     }
 
     @Override
     public List<Asset> findAssetsByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TextPageLink pageLink) {
         log.debug("Try to find assets by tenantId [{}], customerId[{}] and pageLink [{}]", tenantId, customerId, pageLink);
-        List<AssetEntity> assetEntities = findPageWithTextSearch(ASSET_BY_CUSTOMER_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
+        List<AssetEntity> assetEntities = findPageWithTextSearch(new TenantId(tenantId), ASSET_BY_CUSTOMER_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
                 Arrays.asList(eq(ASSET_CUSTOMER_ID_PROPERTY, customerId),
                         eq(ASSET_TENANT_ID_PROPERTY, tenantId)),
                 pageLink);
@@ -130,7 +131,7 @@ public class CassandraAssetDao extends CassandraAbstractSearchTextDao<AssetEntit
     @Override
     public List<Asset> findAssetsByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, TextPageLink pageLink) {
         log.debug("Try to find assets by tenantId [{}], customerId [{}], type [{}] and pageLink [{}]", tenantId, customerId, type, pageLink);
-        List<AssetEntity> assetEntities = findPageWithTextSearch(ASSET_BY_CUSTOMER_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
+        List<AssetEntity> assetEntities = findPageWithTextSearch(new TenantId(tenantId), ASSET_BY_CUSTOMER_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
                 Arrays.asList(eq(ASSET_TYPE_PROPERTY, type),
                         eq(ASSET_CUSTOMER_ID_PROPERTY, customerId),
                         eq(ASSET_TENANT_ID_PROPERTY, tenantId)),
@@ -148,7 +149,7 @@ public class CassandraAssetDao extends CassandraAbstractSearchTextDao<AssetEntit
         query.and(eq(ASSET_TENANT_ID_PROPERTY, tenantId));
         query.and(eq(ASSET_CUSTOMER_ID_PROPERTY, customerId));
         query.and(in(ID_PROPERTY, assetIds));
-        return findListByStatementAsync(query);
+        return findListByStatementAsync(new TenantId(tenantId), query);
     }
 
     @Override
@@ -157,7 +158,7 @@ public class CassandraAssetDao extends CassandraAbstractSearchTextDao<AssetEntit
         Select.Where query = select.where();
         query.and(eq(ASSET_TENANT_ID_PROPERTY, tenantId));
         query.and(eq(ASSET_NAME_PROPERTY, assetName));
-        AssetEntity assetEntity = (AssetEntity) findOneByStatement(query);
+        AssetEntity assetEntity = (AssetEntity) findOneByStatement(new TenantId(tenantId), query);
         return Optional.ofNullable(DaoUtil.getData(assetEntity));
     }
 
@@ -168,7 +169,7 @@ public class CassandraAssetDao extends CassandraAbstractSearchTextDao<AssetEntit
         query.and(eq(ENTITY_SUBTYPE_TENANT_ID_PROPERTY, tenantId));
         query.and(eq(ENTITY_SUBTYPE_ENTITY_TYPE_PROPERTY, EntityType.ASSET));
         query.setConsistencyLevel(cluster.getDefaultReadConsistencyLevel());
-        ResultSetFuture resultSetFuture = executeAsyncRead(query);
+        ResultSetFuture resultSetFuture = executeAsyncRead(new TenantId(tenantId), query);
         return Futures.transform(resultSetFuture, new Function<ResultSet, List<EntitySubtype>>() {
             @Nullable
             @Override

@@ -1,0 +1,59 @@
+{
+  "firstNodeIndex": 0,
+  "nodes": [
+    {
+      "additionalInfo": {
+        "layoutX": 325,
+        "layoutY": 150
+      },
+      "type": "org.thingsboard.rule.engine.filter.TbMsgTypeSwitchNode",
+      "name": "msgTypeSwitch",
+      "debugMode": true,
+      "configuration": {
+        "version": 0
+      }
+    },
+    {
+      "additionalInfo": {
+        "layoutX": 60,
+        "layoutY": 300
+      },
+      "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+      "name": "formResponse",
+      "debugMode": true,
+      "configuration": {
+        "jsScript": "if (msg.method == \"getResponse\") {\n    return {msg: {\"response\": \"requestReceived\"}, metadata: metadata, msgType: msgType};\n}\n\nreturn {msg: msg, metadata: metadata, msgType: msgType};"
+      }
+    },
+    {
+      "additionalInfo": {
+        "layoutX": 450,
+        "layoutY": 300
+      },
+      "type": "org.thingsboard.rule.engine.rpc.TbSendRPCReplyNode",
+      "name": "rpcReply",
+      "debugMode": true,
+      "configuration": {
+        "requestIdMetaDataAttribute": "requestId"
+      }
+    }
+  ],
+  "connections": [
+    {
+      "fromIndex": 0,
+      "toIndex": 1,
+      "type": "RPC Request from Device"
+    },
+    {
+      "fromIndex": 1,
+      "toIndex": 2,
+      "type": "Success"
+    },
+    {
+      "fromIndex": 1,
+      "toIndex": 2,
+      "type": "Failure"
+    }
+  ],
+  "ruleChainConnections": null
+}

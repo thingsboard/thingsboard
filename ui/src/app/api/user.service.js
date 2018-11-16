@@ -27,6 +27,7 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, time
         currentUserDetails = null,
         lastPublicDashboardId = null,
         allowedDashboardIds = [],
+        redirectParams = null,
         userTokenAccessEnabled = false,
         userLoaded = false;
 
@@ -56,6 +57,7 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, time
         refreshTokenPending: refreshTokenPending,
         updateAuthorizationHeader: updateAuthorizationHeader,
         setAuthorizationRequestHeader: setAuthorizationRequestHeader,
+        setRedirectParams: setRedirectParams,
         gotoDefaultPlace: gotoDefaultPlace,
         forceDefaultPlace: forceDefaultPlace,
         updateLastPublicDashboardId: updateLastPublicDashboardId,
@@ -541,9 +543,15 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, time
         return false;
     }
 
+    function setRedirectParams(params) {
+        redirectParams = params;
+    }
+
     function gotoDefaultPlace(params) {
         if (currentUser && isAuthenticated()) {
-            var place = 'home.links';
+            var place = redirectParams ? redirectParams.toName : 'home.links';
+            params = redirectParams ? redirectParams.params : params;
+            redirectParams = null;
             if (currentUser.authority === 'TENANT_ADMIN' || currentUser.authority === 'CUSTOMER_USER') {
                 if (userHasDefaultDashboard()) {
                     place = $rootScope.forceFullscreen ? 'dashboard' : 'home.dashboards.dashboard';

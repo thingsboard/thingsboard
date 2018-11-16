@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import './entity-view.scss';
+
 /* eslint-disable import/no-unresolved, import/default */
 
 import entityViewFieldsetTemplate from './entity-view-fieldset.tpl.html';
@@ -20,11 +23,15 @@ import entityViewFieldsetTemplate from './entity-view-fieldset.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function EntityViewDirective($compile, $templateCache, $filter, toast, $translate, $mdConstant,
-                                            types, clipboardService, entityViewService, customerService) {
+export default function EntityViewDirective($q, $compile, $templateCache, $filter, toast, $translate, $mdConstant, $mdExpansionPanel,
+                                            types, clipboardService, entityViewService, customerService, entityService) {
     var linker = function (scope, element) {
         var template = $templateCache.get(entityViewFieldsetTemplate);
         element.html(template);
+
+        scope.attributesPanelId = (Math.random()*1000).toFixed(0);
+        scope.timeseriesPanelId = (Math.random()*1000).toFixed(0);
+        scope.$mdExpansionPanel = $mdExpansionPanel;
 
         scope.types = types;
         scope.isAssignedToCustomer = false;
@@ -53,9 +60,13 @@ export default function EntityViewDirective($compile, $templateCache, $filter, t
                 }
                 if (scope.entityView.startTimeMs > 0) {
                     scope.startTimeMs = new Date(scope.entityView.startTimeMs);
+                } else {
+                    scope.startTimeMs = null;
                 }
                 if (scope.entityView.endTimeMs > 0) {
                     scope.endTimeMs = new Date(scope.entityView.endTimeMs);
+                } else {
+                    scope.endTimeMs = null;
                 }
                 if (!scope.entityView.keys) {
                     scope.entityView.keys = {};
@@ -68,14 +79,27 @@ export default function EntityViewDirective($compile, $templateCache, $filter, t
             }
         });
 
+        scope.dataKeysSearch = function (searchText, type) {
+            var deferred = $q.defer();
+            entityService.getEntityKeys(scope.entityView.entityId.entityType, scope.entityView.entityId.id, searchText, type, {ignoreLoading: true}).then(
+                function success(keys) {
+                    deferred.resolve(keys);
+                },
+                function fail() {
+                    deferred.resolve([]);
+                }
+            );
+            return deferred.promise;
+
+        };
 
         scope.$watch('startTimeMs', function (newDate) {
             if (newDate) {
                 if (newDate.getTime() > scope.maxStartTimeMs) {
                     scope.startTimeMs = angular.copy(scope.maxStartTimeMs);
                 }
-                updateMinMaxDates();
             }
+            updateMinMaxDates();
         });
 
         scope.$watch('endTimeMs', function (newDate) {
@@ -83,18 +107,24 @@ export default function EntityViewDirective($compile, $templateCache, $filter, t
                 if (newDate.getTime() < scope.minEndTimeMs) {
                     scope.endTimeMs = angular.copy(scope.minEndTimeMs);
                 }
-                updateMinMaxDates();
             }
+            updateMinMaxDates();
         });
 
         function updateMinMaxDates() {
-            if (scope.endTimeMs) {
-                scope.maxStartTimeMs = angular.copy(new Date(scope.endTimeMs.getTime()));
-                scope.entityView.endTimeMs = scope.endTimeMs.getTime();
-            }
-            if (scope.startTimeMs) {
-                scope.minEndTimeMs = angular.copy(new Date(scope.startTimeMs.getTime()));
-                scope.entityView.startTimeMs = scope.startTimeMs.getTime();
+            if (scope.entityView) {
+                if (scope.endTimeMs) {
+                    scope.maxStartTimeMs = angular.copy(new Date(scope.endTimeMs.getTime()));
+                    scope.entityView.endTimeMs = scope.endTimeMs.getTime();
+                } else {
+                    scope.entityView.endTimeMs = 0;
+                }
+                if (scope.startTimeMs) {
+                    scope.minEndTimeMs = angular.copy(new Date(scope.startTimeMs.getTime()));
+                    scope.entityView.startTimeMs = scope.startTimeMs.getTime();
+                } else {
+                    scope.entityView.startTimeMs = 0;
+                }
             }
         }
 

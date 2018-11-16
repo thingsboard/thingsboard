@@ -32,3 +32,4 @@ pom.xml.versionsBackup
 **/Californium.properties
 **/.env
 .instance_id
+rebuild-docker.sh

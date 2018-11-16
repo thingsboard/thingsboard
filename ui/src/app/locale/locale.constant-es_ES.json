@@ -839,7 +839,7 @@
         "client-attributes": "Client attributes",
         "shared-attributes": "Shared attributes",
         "server-attributes": "Server attributes",
-        "latest-timeseries": "Latest timeseries"
+        "timeseries": "Timeseries"
     },
     "event": {
         "event-type": "Tipo de evento",
@@ -1552,7 +1552,7 @@
             "ru_RU": "Ruso",
             "es_ES": "Español",
             "ja_JA": "Japonés",
-            "TR": "Turco"
+            "tr_TR": "Turco"
         }
     }
 }

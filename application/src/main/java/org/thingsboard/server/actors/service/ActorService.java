@@ -35,5 +35,4 @@ public interface ActorService extends SessionMsgProcessor, RpcMsgListener, Disco
 
     void onDeviceNameOrTypeUpdate(TenantId tenantId, DeviceId deviceId, String deviceName, String deviceType);
 
-    void onMsg(ServiceToRuleEngineMsg serviceToRuleEngineMsg);
 }

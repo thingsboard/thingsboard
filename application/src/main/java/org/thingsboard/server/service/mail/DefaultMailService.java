@@ -31,6 +31,8 @@ import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 
@@ -70,7 +72,7 @@ public class DefaultMailService implements MailService {
 
     @Override
     public void updateMailConfiguration() {
-        AdminSettings settings = adminSettingsService.findAdminSettingsByKey("mail");
+        AdminSettings settings = adminSettingsService.findAdminSettingsByKey(new TenantId(EntityId.NULL_UUID), "mail");
         if (settings != null) {
             JsonNode jsonConfig = settings.getJsonValue();
             mailSender = createMailSender(jsonConfig);

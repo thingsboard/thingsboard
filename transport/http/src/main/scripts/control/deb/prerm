@@ -1,0 +1,5 @@
+#!/bin/sh
+
+if [ -e /var/run/${pkg.name}/${pkg.name}.pid ]; then
+    service ${pkg.name} stop
+fi

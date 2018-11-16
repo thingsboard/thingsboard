@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.widget;
 
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.dao.Dao;
 
@@ -32,7 +33,7 @@ public interface WidgetTypeDao extends Dao<WidgetType> {
      * @param widgetType the widget type object
      * @return saved widget type object
      */
-    WidgetType save(WidgetType widgetType);
+    WidgetType save(TenantId tenantId, WidgetType widgetType);
 
     /**
      * Find widget types by tenantId and bundleAlias.

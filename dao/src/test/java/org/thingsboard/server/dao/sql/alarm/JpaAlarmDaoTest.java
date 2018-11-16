@@ -53,7 +53,7 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
         saveAlarm(alarm1Id, tenantId, originator1Id, "TEST_ALARM");
         saveAlarm(alarm2Id, tenantId, originator1Id, "TEST_ALARM");
         saveAlarm(alarm3Id, tenantId, originator2Id, "TEST_ALARM");
-        assertEquals(3, alarmDao.find().size());
+        assertEquals(3, alarmDao.find(new TenantId(tenantId)).size());
         ListenableFuture<Alarm> future = alarmDao
                 .findLatestByOriginatorAndType(new TenantId(tenantId), new DeviceId(originator1Id), "TEST_ALARM");
         Alarm alarm = future.get();
@@ -71,6 +71,6 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
         alarm.setStartTs(System.currentTimeMillis());
         alarm.setEndTs(System.currentTimeMillis());
         alarm.setStatus(AlarmStatus.ACTIVE_UNACK);
-        alarmDao.save(alarm);
+        alarmDao.save(new TenantId(tenantId), alarm);
     }
 }

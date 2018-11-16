@@ -30,7 +30,7 @@ import org.thingsboard.rule.engine.api.NodeConfiguration;
 import org.thingsboard.rule.engine.api.NodeDefinition;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbRelationTypes;
-import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.dao.component.ComponentDescriptorService;
@@ -52,6 +52,7 @@ import java.util.Set;
 @Slf4j
 public class AnnotationComponentDiscoveryService implements ComponentDiscoveryService {
 
+    public static final int MAX_OPTIMISITC_RETRIES = 3;
     @Value("${plugins.scan_packages}")
     private String[] scanPackages;
 
@@ -81,17 +82,32 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
     private void registerRuleNodeComponents() {
         Set<BeanDefinition> ruleNodeBeanDefinitions = getBeanDefinitions(RuleNode.class);
         for (BeanDefinition def : ruleNodeBeanDefinitions) {
-            try {
-                String clazzName = def.getBeanClassName();
-                Class<?> clazz = Class.forName(clazzName);
-                RuleNode ruleNodeAnnotation = clazz.getAnnotation(RuleNode.class);
-                ComponentType type = ruleNodeAnnotation.type();
-                ComponentDescriptor component = scanAndPersistComponent(def, type);
-                components.put(component.getClazz(), component);
-                componentsMap.computeIfAbsent(type, k -> new ArrayList<>()).add(component);
-            } catch (Exception e) {
-                log.error("Can't initialize component {}, due to {}", def.getBeanClassName(), e.getMessage(), e);
-                throw new RuntimeException(e);
+            int retryCount = 0;
+            Exception cause = null;
+            while (retryCount < MAX_OPTIMISITC_RETRIES) {
+                try {
+                    String clazzName = def.getBeanClassName();
+                    Class<?> clazz = Class.forName(clazzName);
+                    RuleNode ruleNodeAnnotation = clazz.getAnnotation(RuleNode.class);
+                    ComponentType type = ruleNodeAnnotation.type();
+                    ComponentDescriptor component = scanAndPersistComponent(def, type);
+                    components.put(component.getClazz(), component);
+                    componentsMap.computeIfAbsent(type, k -> new ArrayList<>()).add(component);
+                    break;
+                } catch (Exception e) {
+                    log.trace("Can't initialize component {}, due to {}", def.getBeanClassName(), e.getMessage(), e);
+                    cause = e;
+                    retryCount++;
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e1) {
+                        throw new RuntimeException(e1);
+                    }
+                }
+            }
+            if (cause != null && retryCount == MAX_OPTIMISITC_RETRIES) {
+                log.error("Can't initialize component {}, due to {}", def.getBeanClassName(), cause.getMessage(), cause);
+                throw new RuntimeException(cause);
             }
         }
     }
@@ -144,18 +160,18 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
             log.error("Can't initialize component {}, due to {}", def.getBeanClassName(), e.getMessage(), e);
             throw new RuntimeException(e);
         }
-        ComponentDescriptor persistedComponent = componentDescriptorService.findByClazz(clazzName);
+        ComponentDescriptor persistedComponent = componentDescriptorService.findByClazz(TenantId.SYS_TENANT_ID, clazzName);
         if (persistedComponent == null) {
             log.info("Persisting new component: {}", scannedComponent);
-            scannedComponent = componentDescriptorService.saveComponent(scannedComponent);
+            scannedComponent = componentDescriptorService.saveComponent(TenantId.SYS_TENANT_ID, scannedComponent);
         } else if (scannedComponent.equals(persistedComponent)) {
             log.info("Component is already persisted: {}", persistedComponent);
             scannedComponent = persistedComponent;
         } else {
             log.info("Component {} will be updated to {}", persistedComponent, scannedComponent);
-            componentDescriptorService.deleteByClazz(persistedComponent.getClazz());
+            componentDescriptorService.deleteByClazz(TenantId.SYS_TENANT_ID, persistedComponent.getClazz());
             scannedComponent.setId(persistedComponent.getId());
-            scannedComponent = componentDescriptorService.saveComponent(scannedComponent);
+            scannedComponent = componentDescriptorService.saveComponent(TenantId.SYS_TENANT_ID, scannedComponent);
         }
         return scannedComponent;
     }

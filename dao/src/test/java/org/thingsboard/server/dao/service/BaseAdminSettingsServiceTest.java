@@ -26,63 +26,63 @@ public abstract class BaseAdminSettingsServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindAdminSettingsByKey() {
-        AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey("general");
+        AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey(SYSTEM_TENANT_ID, "general");
         Assert.assertNotNull(adminSettings);
-        adminSettings = adminSettingsService.findAdminSettingsByKey("mail");
+        adminSettings = adminSettingsService.findAdminSettingsByKey(SYSTEM_TENANT_ID, "mail");
         Assert.assertNotNull(adminSettings);
-        adminSettings = adminSettingsService.findAdminSettingsByKey("unknown");
+        adminSettings = adminSettingsService.findAdminSettingsByKey(SYSTEM_TENANT_ID, "unknown");
         Assert.assertNull(adminSettings);
     }
     
     @Test
     public void testFindAdminSettingsById() {
-        AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey("general");
-        AdminSettings foundAdminSettings = adminSettingsService.findAdminSettingsById(adminSettings.getId());
+        AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey(SYSTEM_TENANT_ID, "general");
+        AdminSettings foundAdminSettings = adminSettingsService.findAdminSettingsById(SYSTEM_TENANT_ID, adminSettings.getId());
         Assert.assertNotNull(foundAdminSettings);
         Assert.assertEquals(adminSettings, foundAdminSettings);
     }
     
     @Test
-    public void testSaveAdminSettings() throws Exception {
-        AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey("general");
+    public void testSaveAdminSettings() {
+        AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey(SYSTEM_TENANT_ID, "general");
         JsonNode json = adminSettings.getJsonValue();
         ((ObjectNode) json).put("baseUrl", "http://myhost.org");
         adminSettings.setJsonValue(json);
-        adminSettingsService.saveAdminSettings(adminSettings);
-        AdminSettings savedAdminSettings = adminSettingsService.findAdminSettingsByKey("general");
+        adminSettingsService.saveAdminSettings(SYSTEM_TENANT_ID, adminSettings);
+        AdminSettings savedAdminSettings = adminSettingsService.findAdminSettingsByKey(SYSTEM_TENANT_ID, "general");
         Assert.assertNotNull(savedAdminSettings);
         Assert.assertEquals(adminSettings.getJsonValue(), savedAdminSettings.getJsonValue());
     }
     
     @Test(expected = DataValidationException.class)
     public void testSaveAdminSettingsWithEmptyKey() {
-        AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey("mail");
+        AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey(SYSTEM_TENANT_ID, "mail");
         adminSettings.setKey(null);
-        adminSettingsService.saveAdminSettings(adminSettings);
+        adminSettingsService.saveAdminSettings(SYSTEM_TENANT_ID, adminSettings);
     }
     
     @Test(expected = DataValidationException.class)
     public void testChangeAdminSettingsKey() {
-        AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey("mail");
+        AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey(SYSTEM_TENANT_ID, "mail");
         adminSettings.setKey("newKey");
-        adminSettingsService.saveAdminSettings(adminSettings);
+        adminSettingsService.saveAdminSettings(SYSTEM_TENANT_ID, adminSettings);
     }
     
     @Test(expected = DataValidationException.class)
-    public void testSaveAdminSettingsWithNewJsonStructure() throws Exception {
-        AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey("mail");
+    public void testSaveAdminSettingsWithNewJsonStructure() {
+        AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey(SYSTEM_TENANT_ID, "mail");
         JsonNode json = adminSettings.getJsonValue();
         ((ObjectNode) json).put("newKey", "my new value");
         adminSettings.setJsonValue(json);
-        adminSettingsService.saveAdminSettings(adminSettings);
+        adminSettingsService.saveAdminSettings(SYSTEM_TENANT_ID, adminSettings);
     }
     
     @Test(expected = DataValidationException.class)
-    public void testSaveAdminSettingsWithNonTextValue() throws Exception {
-        AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey("mail");
+    public void testSaveAdminSettingsWithNonTextValue() {
+        AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey(SYSTEM_TENANT_ID, "mail");
         JsonNode json = adminSettings.getJsonValue();
         ((ObjectNode) json).put("timeout", 10000L);
         adminSettings.setJsonValue(json);
-        adminSettingsService.saveAdminSettings(adminSettings);
+        adminSettingsService.saveAdminSettings(SYSTEM_TENANT_ID, adminSettings);
     }
 }

@@ -16,25 +16,16 @@
 package org.thingsboard.server.common.msg.core;
 
 import lombok.Data;
-import org.thingsboard.server.common.msg.session.FromDeviceMsg;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
-import org.thingsboard.server.common.msg.session.ToDeviceMsg;
 
 /**
  * @author Andrew Shvayka
  */
 @Data
-public class ToServerRpcResponseMsg implements ToDeviceMsg {
+public class ToServerRpcResponseMsg {
 
     private final int requestId;
     private final String data;
 
-    public SessionMsgType getSessionMsgType() {
-        return SessionMsgType.TO_SERVER_RPC_RESPONSE;
-    }
-
-    @Override
     public boolean isSuccess() {
         return true;
     }

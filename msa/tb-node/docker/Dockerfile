@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM openjdk:8-jre
+FROM openjdk:8-jdk
 
 COPY start-tb-node.sh ${pkg.name}.deb /tmp/
 

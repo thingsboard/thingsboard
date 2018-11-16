@@ -29,19 +29,19 @@ import java.util.List;
 
 public interface DeviceService {
     
-    Device findDeviceById(DeviceId deviceId);
+    Device findDeviceById(TenantId tenantId, DeviceId deviceId);
 
-    ListenableFuture<Device> findDeviceByIdAsync(DeviceId deviceId);
+    ListenableFuture<Device> findDeviceByIdAsync(TenantId tenantId, DeviceId deviceId);
 
     Device findDeviceByTenantIdAndName(TenantId tenantId, String name);
 
     Device saveDevice(Device device);
 
-    Device assignDeviceToCustomer(DeviceId deviceId, CustomerId customerId);
+    Device assignDeviceToCustomer(TenantId tenantId, DeviceId deviceId, CustomerId customerId);
 
-    Device unassignDeviceFromCustomer(DeviceId deviceId);
+    Device unassignDeviceFromCustomer(TenantId tenantId, DeviceId deviceId);
 
-    void deleteDevice(DeviceId deviceId);
+    void deleteDevice(TenantId tenantId, DeviceId deviceId);
 
     TextPageData<Device> findDevicesByTenantId(TenantId tenantId, TextPageLink pageLink);
 
@@ -59,7 +59,7 @@ public interface DeviceService {
 
     void unassignCustomerDevices(TenantId tenantId, CustomerId customerId);
 
-    ListenableFuture<List<Device>> findDevicesByQuery(DeviceSearchQuery query);
+    ListenableFuture<List<Device>> findDevicesByQuery(TenantId tenantId, DeviceSearchQuery query);
 
     ListenableFuture<List<EntitySubtype>> findDeviceTypesByTenantId(TenantId tenantId);
 

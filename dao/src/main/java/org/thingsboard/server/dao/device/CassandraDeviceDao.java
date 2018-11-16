@@ -28,6 +28,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.EntitySubtypeEntity;
@@ -77,19 +78,19 @@ public class CassandraDeviceDao extends CassandraAbstractSearchTextDao<DeviceEnt
     }
 
     @Override
-    public Device save(Device domain) {
-        Device savedDevice = super.save(domain);
+    public Device save(TenantId tenantId, Device domain) {
+        Device savedDevice = super.save(tenantId, domain);
         EntitySubtype entitySubtype = new EntitySubtype(savedDevice.getTenantId(), EntityType.DEVICE, savedDevice.getType());
         EntitySubtypeEntity entitySubtypeEntity = new EntitySubtypeEntity(entitySubtype);
         Statement saveStatement = cluster.getMapper(EntitySubtypeEntity.class).saveQuery(entitySubtypeEntity);
-        executeWrite(saveStatement);
+        executeWrite(tenantId, saveStatement);
         return savedDevice;
     }
 
     @Override
     public List<Device> findDevicesByTenantId(UUID tenantId, TextPageLink pageLink) {
         log.debug("Try to find devices by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
-        List<DeviceEntity> deviceEntities = findPageWithTextSearch(DEVICE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
+        List<DeviceEntity> deviceEntities = findPageWithTextSearch(new TenantId(tenantId), DEVICE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
                 Collections.singletonList(eq(DEVICE_TENANT_ID_PROPERTY, tenantId)), pageLink);
 
         log.trace("Found devices [{}] by tenantId [{}] and pageLink [{}]", deviceEntities, tenantId, pageLink);
@@ -99,7 +100,7 @@ public class CassandraDeviceDao extends CassandraAbstractSearchTextDao<DeviceEnt
     @Override
     public List<Device> findDevicesByTenantIdAndType(UUID tenantId, String type, TextPageLink pageLink) {
         log.debug("Try to find devices by tenantId [{}], type [{}] and pageLink [{}]", tenantId, type, pageLink);
-        List<DeviceEntity> deviceEntities = findPageWithTextSearch(DEVICE_BY_TENANT_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
+        List<DeviceEntity> deviceEntities = findPageWithTextSearch(new TenantId(tenantId), DEVICE_BY_TENANT_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
                 Arrays.asList(eq(DEVICE_TYPE_PROPERTY, type),
                         eq(DEVICE_TENANT_ID_PROPERTY, tenantId)), pageLink);
         log.trace("Found devices [{}] by tenantId [{}], type [{}] and pageLink [{}]", deviceEntities, tenantId, type, pageLink);
@@ -113,13 +114,13 @@ public class CassandraDeviceDao extends CassandraAbstractSearchTextDao<DeviceEnt
         Select.Where query = select.where();
         query.and(eq(DEVICE_TENANT_ID_PROPERTY, tenantId));
         query.and(in(ID_PROPERTY, deviceIds));
-        return findListByStatementAsync(query);
+        return findListByStatementAsync(new TenantId(tenantId), query);
     }
 
     @Override
     public List<Device> findDevicesByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TextPageLink pageLink) {
         log.debug("Try to find devices by tenantId [{}], customerId[{}] and pageLink [{}]", tenantId, customerId, pageLink);
-        List<DeviceEntity> deviceEntities = findPageWithTextSearch(DEVICE_BY_CUSTOMER_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
+        List<DeviceEntity> deviceEntities = findPageWithTextSearch(new TenantId(tenantId), DEVICE_BY_CUSTOMER_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
                 Arrays.asList(eq(DEVICE_CUSTOMER_ID_PROPERTY, customerId),
                         eq(DEVICE_TENANT_ID_PROPERTY, tenantId)),
                 pageLink);
@@ -131,7 +132,7 @@ public class CassandraDeviceDao extends CassandraAbstractSearchTextDao<DeviceEnt
     @Override
     public List<Device> findDevicesByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, TextPageLink pageLink) {
         log.debug("Try to find devices by tenantId [{}], customerId [{}], type [{}] and pageLink [{}]", tenantId, customerId, type, pageLink);
-        List<DeviceEntity> deviceEntities = findPageWithTextSearch(DEVICE_BY_CUSTOMER_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
+        List<DeviceEntity> deviceEntities = findPageWithTextSearch(new TenantId(tenantId), DEVICE_BY_CUSTOMER_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
                 Arrays.asList(eq(DEVICE_TYPE_PROPERTY, type),
                         eq(DEVICE_CUSTOMER_ID_PROPERTY, customerId),
                         eq(DEVICE_TENANT_ID_PROPERTY, tenantId)),
@@ -149,7 +150,7 @@ public class CassandraDeviceDao extends CassandraAbstractSearchTextDao<DeviceEnt
         query.and(eq(DEVICE_TENANT_ID_PROPERTY, tenantId));
         query.and(eq(DEVICE_CUSTOMER_ID_PROPERTY, customerId));
         query.and(in(ID_PROPERTY, deviceIds));
-        return findListByStatementAsync(query);
+        return findListByStatementAsync(new TenantId(tenantId), query);
     }
 
     @Override
@@ -158,7 +159,7 @@ public class CassandraDeviceDao extends CassandraAbstractSearchTextDao<DeviceEnt
         Select.Where query = select.where();
         query.and(eq(DEVICE_TENANT_ID_PROPERTY, tenantId));
         query.and(eq(DEVICE_NAME_PROPERTY, deviceName));
-        return Optional.ofNullable(DaoUtil.getData(findOneByStatement(query)));
+        return Optional.ofNullable(DaoUtil.getData(findOneByStatement(new TenantId(tenantId), query)));
     }
 
     @Override
@@ -168,7 +169,7 @@ public class CassandraDeviceDao extends CassandraAbstractSearchTextDao<DeviceEnt
         query.and(eq(ENTITY_SUBTYPE_TENANT_ID_PROPERTY, tenantId));
         query.and(eq(ENTITY_SUBTYPE_ENTITY_TYPE_PROPERTY, EntityType.DEVICE));
         query.setConsistencyLevel(cluster.getDefaultReadConsistencyLevel());
-        ResultSetFuture resultSetFuture = executeAsyncRead(query);
+        ResultSetFuture resultSetFuture = executeAsyncRead(new TenantId(tenantId), query);
         return Futures.transform(resultSetFuture, new Function<ResultSet, List<EntitySubtype>>() {
             @Nullable
             @Override

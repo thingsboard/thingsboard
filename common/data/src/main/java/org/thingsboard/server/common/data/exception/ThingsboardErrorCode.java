@@ -25,7 +25,9 @@ public enum ThingsboardErrorCode {
     PERMISSION_DENIED(20),
     INVALID_ARGUMENTS(30),
     BAD_REQUEST_PARAMS(31),
-    ITEM_NOT_FOUND(32);
+    ITEM_NOT_FOUND(32),
+    TOO_MANY_REQUESTS(33),
+    TOO_MANY_UPDATES(34);
 
     private int errorCode;
 

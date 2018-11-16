@@ -40,19 +40,19 @@ public class BaseEventService implements EventService {
 
     @Override
     public Event save(Event event) {
-        eventValidator.validate(event);
-        return eventDao.save(event);
+        eventValidator.validate(event, Event::getTenantId);
+        return eventDao.save(event.getTenantId(), event);
     }
 
     @Override
     public ListenableFuture<Event> saveAsync(Event event) {
-        eventValidator.validate(event);
+        eventValidator.validate(event, Event::getTenantId);
         return eventDao.saveAsync(event);
     }
 
     @Override
     public Optional<Event> saveIfNotExists(Event event) {
-        eventValidator.validate(event);
+        eventValidator.validate(event, Event::getTenantId);
         if (StringUtils.isEmpty(event.getUid())) {
             throw new DataValidationException("Event uid should be specified!.");
         }
@@ -97,7 +97,7 @@ public class BaseEventService implements EventService {
     private DataValidator<Event> eventValidator =
             new DataValidator<Event>() {
                 @Override
-                protected void validateDataImpl(Event event) {
+                protected void validateDataImpl(TenantId tenantId, Event event) {
                     if (event.getEntityId() == null) {
                         throw new DataValidationException("Entity id should be specified!.");
                     }

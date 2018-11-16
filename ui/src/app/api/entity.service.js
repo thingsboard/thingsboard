@@ -135,6 +135,10 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
             case types.entityType.asset:
                 promise = assetService.getAssets(entityIds, config);
                 break;
+            case types.entityType.entityView:
+                promise = getEntitiesByIdsPromise(
+                    (id) => entityViewService.getEntityView(id, config), entityIds);
+                break;
             case types.entityType.tenant:
                 promise = getEntitiesByIdsPromise(
                     (id) => tenantService.getTenant(id, config), entityIds);

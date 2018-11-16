@@ -29,8 +29,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
@@ -40,12 +38,10 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
-import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -56,15 +52,13 @@ import org.thingsboard.server.dao.tenant.TenantDao;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.CacheConstants.ENTITY_VIEW_CACHE;
-import static org.thingsboard.server.common.data.CacheConstants.RELATIONS_CACHE;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
@@ -92,48 +86,32 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
     private CustomerDao customerDao;
 
     @Autowired
-    private AttributesService attributesService;
-
-    @Autowired
     private CacheManager cacheManager;
 
     @Caching(evict = {
             @CacheEvict(cacheNames = ENTITY_VIEW_CACHE, key = "{#entityView.tenantId, #entityView.entityId}"),
+            @CacheEvict(cacheNames = ENTITY_VIEW_CACHE, key = "{#entityView.tenantId, #entityView.name}"),
             @CacheEvict(cacheNames = ENTITY_VIEW_CACHE, key = "{#entityView.id}")})
     @Override
     public EntityView saveEntityView(EntityView entityView) {
         log.trace("Executing save entity view [{}]", entityView);
-        entityViewValidator.validate(entityView);
-        EntityView savedEntityView = entityViewDao.save(entityView);
-
-        List<ListenableFuture<List<Void>>> futures = new ArrayList<>();
-        if (savedEntityView.getKeys() != null) {
-            futures.add(copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.CLIENT_SCOPE, savedEntityView.getKeys().getAttributes().getCs()));
-            futures.add(copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.SERVER_SCOPE, savedEntityView.getKeys().getAttributes().getSs()));
-            futures.add(copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.SHARED_SCOPE, savedEntityView.getKeys().getAttributes().getSh()));
-        }
-        for (ListenableFuture<List<Void>> future : futures) {
-            try {
-                future.get();
-            } catch (InterruptedException | ExecutionException e) {
-                log.error("Failed to copy attributes to entity view", e);
-                throw new RuntimeException("Failed to copy attributes to entity view", e);
-            }
-        }
+        entityViewValidator.validate(entityView, EntityView::getTenantId);
+        EntityView savedEntityView = entityViewDao.save(entityView.getTenantId(), entityView);
         return savedEntityView;
     }
 
+    @CacheEvict(cacheNames = ENTITY_VIEW_CACHE, key = "{#entityViewId}")
     @Override
-    public EntityView assignEntityViewToCustomer(EntityViewId entityViewId, CustomerId customerId) {
-        EntityView entityView = findEntityViewById(entityViewId);
+    public EntityView assignEntityViewToCustomer(TenantId tenantId, EntityViewId entityViewId, CustomerId customerId) {
+        EntityView entityView = findEntityViewById(tenantId, entityViewId);
         entityView.setCustomerId(customerId);
         return saveEntityView(entityView);
     }
 
     @CacheEvict(cacheNames = ENTITY_VIEW_CACHE, key = "{#entityViewId}")
     @Override
-    public EntityView unassignEntityViewFromCustomer(EntityViewId entityViewId) {
-        EntityView entityView = findEntityViewById(entityViewId);
+    public EntityView unassignEntityViewFromCustomer(TenantId tenantId, EntityViewId entityViewId) {
+        EntityView entityView = findEntityViewById(tenantId, entityViewId);
         entityView.setCustomerId(null);
         return saveEntityView(entityView);
     }
@@ -143,15 +121,24 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
         log.trace("Executing unassignCustomerEntityViews, tenantId [{}], customerId [{}]", tenantId, customerId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
-        new CustomerEntityViewsUnAssigner(tenantId).removeEntities(customerId);
+        customerEntityViewsUnAssigner.removeEntities(tenantId, customerId);
     }
 
     @Cacheable(cacheNames = ENTITY_VIEW_CACHE, key = "{#entityViewId}")
     @Override
-    public EntityView findEntityViewById(EntityViewId entityViewId) {
+    public EntityView findEntityViewById(TenantId tenantId, EntityViewId entityViewId) {
         log.trace("Executing findEntityViewById [{}]", entityViewId);
         validateId(entityViewId, INCORRECT_ENTITY_VIEW_ID + entityViewId);
-        return entityViewDao.findById(entityViewId.getId());
+        return entityViewDao.findById(tenantId, entityViewId.getId());
+    }
+
+    @Cacheable(cacheNames = ENTITY_VIEW_CACHE, key = "{#tenantId, #name}")
+    @Override
+    public EntityView findEntityViewByTenantIdAndName(TenantId tenantId, String name) {
+        log.trace("Executing findEntityViewByTenantIdAndName [{}][{}]", tenantId, name);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        Optional<EntityView> entityViewOpt = entityViewDao.findEntityViewByTenantIdAndName(tenantId.getId(), name);
+        return entityViewOpt.orElse(null);
     }
 
     @Override
@@ -200,15 +187,15 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
     }
 
     @Override
-    public ListenableFuture<List<EntityView>> findEntityViewsByQuery(EntityViewSearchQuery query) {
-        ListenableFuture<List<EntityRelation>> relations = relationService.findByQuery(query.toEntitySearchQuery());
+    public ListenableFuture<List<EntityView>> findEntityViewsByQuery(TenantId tenantId, EntityViewSearchQuery query) {
+        ListenableFuture<List<EntityRelation>> relations = relationService.findByQuery(tenantId, query.toEntitySearchQuery());
         ListenableFuture<List<EntityView>> entityViews = Futures.transformAsync(relations, r -> {
             EntitySearchDirection direction = query.toEntitySearchQuery().getParameters().getDirection();
             List<ListenableFuture<EntityView>> futures = new ArrayList<>();
             for (EntityRelation relation : r) {
                 EntityId entityId = direction == EntitySearchDirection.FROM ? relation.getTo() : relation.getFrom();
                 if (entityId.getEntityType() == EntityType.ENTITY_VIEW) {
-                    futures.add(findEntityViewByIdAsync(new EntityViewId(entityId.getId())));
+                    futures.add(findEntityViewByIdAsync(tenantId, new EntityViewId(entityId.getId())));
                 }
             }
             return Futures.successfulAsList(futures);
@@ -226,10 +213,10 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
     }
 
     @Override
-    public ListenableFuture<EntityView> findEntityViewByIdAsync(EntityViewId entityViewId) {
+    public ListenableFuture<EntityView> findEntityViewByIdAsync(TenantId tenantId, EntityViewId entityViewId) {
         log.trace("Executing findEntityViewById [{}]", entityViewId);
         validateId(entityViewId, INCORRECT_ENTITY_VIEW_ID + entityViewId);
-        return entityViewDao.findByIdAsync(entityViewId.getId());
+        return entityViewDao.findByIdAsync(tenantId, entityViewId.getId());
     }
 
     @Override
@@ -266,20 +253,21 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
 
     @CacheEvict(cacheNames = ENTITY_VIEW_CACHE, key = "{#entityViewId}")
     @Override
-    public void deleteEntityView(EntityViewId entityViewId) {
+    public void deleteEntityView(TenantId tenantId, EntityViewId entityViewId) {
         log.trace("Executing deleteEntityView [{}]", entityViewId);
         validateId(entityViewId, INCORRECT_ENTITY_VIEW_ID + entityViewId);
-        deleteEntityRelations(entityViewId);
-        EntityView entityView = entityViewDao.findById(entityViewId.getId());
+        deleteEntityRelations(tenantId, entityViewId);
+        EntityView entityView = entityViewDao.findById(tenantId, entityViewId.getId());
         cacheManager.getCache(ENTITY_VIEW_CACHE).evict(Arrays.asList(entityView.getTenantId(), entityView.getEntityId()));
-        entityViewDao.removeById(entityViewId.getId());
+        cacheManager.getCache(ENTITY_VIEW_CACHE).evict(Arrays.asList(entityView.getTenantId(), entityView.getName()));
+        entityViewDao.removeById(tenantId, entityViewId.getId());
     }
 
     @Override
     public void deleteEntityViewsByTenantId(TenantId tenantId) {
         log.trace("Executing deleteEntityViewsByTenantId, tenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        tenantEntityViewRemover.removeEntities(tenantId);
+        tenantEntityViewRemover.removeEntities(tenantId, tenantId);
     }
 
     @Override
@@ -294,41 +282,11 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
                 });
     }
 
-    private ListenableFuture<List<Void>> copyAttributesFromEntityToEntityView(EntityView entityView, String scope, Collection<String> keys) {
-        if (keys != null && !keys.isEmpty()) {
-            ListenableFuture<List<AttributeKvEntry>> getAttrFuture = attributesService.find(entityView.getEntityId(), scope, keys);
-            return Futures.transform(getAttrFuture, attributeKvEntries -> {
-                List<AttributeKvEntry> filteredAttributes = new ArrayList<>();
-                if (attributeKvEntries != null && !attributeKvEntries.isEmpty()) {
-                    filteredAttributes =
-                            attributeKvEntries.stream()
-                                    .filter(attributeKvEntry -> {
-                                        long startTime = entityView.getStartTimeMs();
-                                        long endTime = entityView.getEndTimeMs();
-                                        long lastUpdateTs = attributeKvEntry.getLastUpdateTs();
-                                        return startTime == 0 && endTime == 0 ||
-                                                (endTime == 0 && startTime < lastUpdateTs) ||
-                                                (startTime == 0 && endTime > lastUpdateTs)
-                                                ? true : startTime < lastUpdateTs && endTime > lastUpdateTs;
-                                    }).collect(Collectors.toList());
-                }
-                try {
-                    return attributesService.save(entityView.getId(), scope, filteredAttributes).get();
-                } catch (InterruptedException | ExecutionException e) {
-                    log.error("Failed to copy attributes to entity view", e);
-                    throw new RuntimeException("Failed to copy attributes to entity view", e);
-                }
-            });
-        } else {
-            return Futures.immediateFuture(null);
-        }
-    }
-
     private DataValidator<EntityView> entityViewValidator =
             new DataValidator<EntityView>() {
 
                 @Override
-                protected void validateCreate(EntityView entityView) {
+                protected void validateCreate(TenantId tenantId, EntityView entityView) {
                     entityViewDao.findEntityViewByTenantIdAndName(entityView.getTenantId().getId(), entityView.getName())
                             .ifPresent(e -> {
                                 throw new DataValidationException("Entity view with such name already exists!");
@@ -336,7 +294,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
                 }
 
                 @Override
-                protected void validateUpdate(EntityView entityView) {
+                protected void validateUpdate(TenantId tenantId, EntityView entityView) {
                     entityViewDao.findEntityViewByTenantIdAndName(entityView.getTenantId().getId(), entityView.getName())
                             .ifPresent(e -> {
                                 if (!e.getUuidId().equals(entityView.getUuidId())) {
@@ -346,7 +304,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
                 }
 
                 @Override
-                protected void validateDataImpl(EntityView entityView) {
+                protected void validateDataImpl(TenantId tenantId, EntityView entityView) {
                     if (StringUtils.isEmpty(entityView.getType())) {
                         throw new DataValidationException("Entity View type should be specified!");
                     }
@@ -356,7 +314,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
                     if (entityView.getTenantId() == null) {
                         throw new DataValidationException("Entity view should be assigned to tenant!");
                     } else {
-                        Tenant tenant = tenantDao.findById(entityView.getTenantId().getId());
+                        Tenant tenant = tenantDao.findById(tenantId, entityView.getTenantId().getId());
                         if (tenant == null) {
                             throw new DataValidationException("Entity view is referencing to non-existent tenant!");
                         }
@@ -364,7 +322,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
                     if (entityView.getCustomerId() == null) {
                         entityView.setCustomerId(new CustomerId(NULL_UUID));
                     } else if (!entityView.getCustomerId().getId().equals(NULL_UUID)) {
-                        Customer customer = customerDao.findById(entityView.getCustomerId().getId());
+                        Customer customer = customerDao.findById(tenantId, entityView.getCustomerId().getId());
                         if (customer == null) {
                             throw new DataValidationException("Can't assign entity view to non-existent customer!");
                         }
@@ -375,36 +333,27 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
                 }
             };
 
-    private PaginatedRemover<TenantId, EntityView> tenantEntityViewRemover =
-            new PaginatedRemover<TenantId, EntityView>() {
-
-                @Override
-                protected List<EntityView> findEntities(TenantId id, TextPageLink pageLink) {
-                    return entityViewDao.findEntityViewsByTenantId(id.getId(), pageLink);
-                }
-
-                @Override
-                protected void removeEntity(EntityView entity) {
-                    deleteEntityView(new EntityViewId(entity.getUuidId()));
-                }
-            };
-
-    private class CustomerEntityViewsUnAssigner extends PaginatedRemover<CustomerId, EntityView> {
-
-        private TenantId tenantId;
-
-        CustomerEntityViewsUnAssigner(TenantId tenantId) {
-            this.tenantId = tenantId;
+    private PaginatedRemover<TenantId, EntityView> tenantEntityViewRemover = new PaginatedRemover<TenantId, EntityView>() {
+        @Override
+        protected List<EntityView> findEntities(TenantId tenantId, TenantId id, TextPageLink pageLink) {
+            return entityViewDao.findEntityViewsByTenantId(id.getId(), pageLink);
         }
 
         @Override
-        protected List<EntityView> findEntities(CustomerId id, TextPageLink pageLink) {
+        protected void removeEntity(TenantId tenantId, EntityView entity) {
+            deleteEntityView(tenantId, new EntityViewId(entity.getUuidId()));
+        }
+    };
+
+    private PaginatedRemover<CustomerId, EntityView> customerEntityViewsUnAssigner = new PaginatedRemover<CustomerId, EntityView>() {
+        @Override
+        protected List<EntityView> findEntities(TenantId tenantId, CustomerId id, TextPageLink pageLink) {
             return entityViewDao.findEntityViewsByTenantIdAndCustomerId(tenantId.getId(), id.getId(), pageLink);
         }
 
         @Override
-        protected void removeEntity(EntityView entity) {
-            unassignEntityViewFromCustomer(new EntityViewId(entity.getUuidId()));
+        protected void removeEntity(TenantId tenantId, EntityView entity) {
+            unassignEntityViewFromCustomer(tenantId, new EntityViewId(entity.getUuidId()));
         }
-    }
+    };
 }

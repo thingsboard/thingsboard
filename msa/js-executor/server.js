@@ -45,6 +45,24 @@ var kafkaClient;
             kafkaRequestTopic
         );
 
+        consumer.on('error', (err) => {
+            logger.error('Unexpected kafka consumer error: %s', err.message);
+            logger.error(err.stack);
+        });
+
+        consumer.on('offsetOutOfRange', (err) => {
+            logger.error('Offset out of range error: %s', err.message);
+            logger.error(err.stack);
+        });
+
+        consumer.on('rebalancing', () => {
+            logger.info('Rebalancing event received.');
+        })
+
+        consumer.on('rebalanced', () => {
+            logger.info('Rebalanced event received.');
+        });
+
         var producer = new Producer(kafkaClient);
         producer.on('error', (err) => {
             logger.error('Unexpected kafka producer error: %s', err.message);
