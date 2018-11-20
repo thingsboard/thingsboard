@@ -23,6 +23,9 @@ services:
     image: "zookeeper:3.5"
     ports:
       - "2181"
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_SERVERS: server.1=zookeeper:2888:3888;zookeeper:2181
   kafka:
     restart: always
     image: "wurstmeister/kafka"
