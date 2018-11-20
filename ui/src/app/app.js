@@ -39,6 +39,7 @@ import uiRouter from 'angular-ui-router';
 import angularJwt from 'angular-jwt';
 import 'angular-drag-and-drop-lists';
 import mdDataTable from 'angular-material-data-table';
+import fixedTableHeader from 'angular-fixed-table-header';
 import 'angular-material-expansion-panel';
 import ngTouch from 'angular-touch';
 import 'angular-carousel';
@@ -114,6 +115,7 @@ angular.module('thingsboard', [
     angularJwt,
     'dndLists',
     mdDataTable,
+    fixedTableHeader,
     'material.components.expansionPanels',
     ngTouch,
     'angular-carousel',

@@ -43,7 +43,7 @@
             <md-tab ng-repeat="source in vm.sources" label="{{ source.datasource.name }}">
                 <md-table-container class="flex">
                     <table md-table>
-                        <thead md-head md-order="source.query.order" md-on-reorder="vm.onReorder(source)">
+                        <thead fix-head md-head md-order="source.query.order" md-on-reorder="vm.onReorder(source)">
                             <tr md-row>
                                 <th ng-show="vm.showTimestamp"
                                     md-column md-order-by="0"

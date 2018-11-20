@@ -111,7 +111,7 @@
 
         <md-table-container flex>
             <table md-table md-row-select multiple="" ng-model="vm.selectedExtensions" md-progress="vm.extensionsDeferred.promise">
-                <thead md-head md-order="vm.query.order" md-on-reorder="vm.onReorder">
+                <thead fix-head md-head md-order="vm.query.order" md-on-reorder="vm.onReorder">
                     <tr md-row>
                         <th md-column md-order-by="id"><span translate>extension.id</span></th>
                         <th md-column md-order-by="type"><span translate>extension.type</span></th>
