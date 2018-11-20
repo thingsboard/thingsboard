@@ -21,10 +21,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.springframework.web.socket.CloseStatus;
-import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketSession;
-import org.springframework.web.socket.handler.TextWebSocketHandler;
+import org.springframework.web.reactive.socket.CloseStatus;
+import org.springframework.web.reactive.socket.WebSocketHandler;
+import org.springframework.web.reactive.socket.WebSocketSession;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -37,10 +36,13 @@ import org.thingsboard.server.service.telemetry.SessionEvent;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketMsgEndpoint;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketService;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketSessionRef;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.net.URI;
 import java.security.InvalidParameterException;
+import java.security.Principal;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -48,12 +50,12 @@ import java.util.concurrent.ConcurrentMap;
 
 @Service
 @Slf4j
-public class TbWebSocketHandler extends TextWebSocketHandler implements TelemetryWebSocketMsgEndpoint {
+public class TbWebSocketHandler implements WebSocketHandler, TelemetryWebSocketMsgEndpoint {
 
-    private static final ConcurrentMap<String, SessionMetaData> internalSessionMap = new ConcurrentHashMap<>();
-    private static final ConcurrentMap<String, String> externalSessionMap = new ConcurrentHashMap<>();
+    //private static final ConcurrentMap<String, SessionMetaData> internalSessionMap = new ConcurrentHashMap<>();
+   // private static final ConcurrentMap<String, String> externalSessionMap = new ConcurrentHashMap<>();
 
-    @Autowired
+  /*  @Autowired
     private TelemetryWebSocketService webSocketService;
 
     @Value("${server.ws.limits.max_sessions_per_tenant:0}")
@@ -90,8 +92,26 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
         } catch (IOException e) {
             log.warn("IO error", e);
         }
+    }*/
+
+    @Override
+    public Mono<Void> handle(WebSocketSession session) {
+        return session.receive()
+                .doOnNext(message -> {
+                    Principal principal = session.getHandshakeInfo().getPrincipal().block();
+                    if (principal instanceof SecurityUser) {
+                        SecurityUser currentUser = (SecurityUser) principal;
+                        log.info("[{}][{}] Processing {}", currentUser.getTenantId(), session.getId(), message.getPayloadAsText());
+                    } else {
+                        log.info("[{}] Principal {}", session.getId(), principal);
+                        log.info("[{}] Processing {}", session.getId(), message.getPayloadAsText());
+                    }
+                })
+                .then();
     }
 
+
+/*
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         super.afterConnectionEstablished(session);
@@ -173,11 +193,11 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
             this.session = session;
             this.sessionRef = sessionRef;
         }
-    }
+    }*/
 
     @Override
     public void send(TelemetryWebSocketSessionRef sessionRef, int subscriptionId, String msg) throws IOException {
-        String externalId = sessionRef.getSessionId();
+  /*      String externalId = sessionRef.getSessionId();
         log.debug("[{}] Processing {}", externalId, msg);
         String internalId = externalSessionMap.get(externalId);
         if (internalId != null) {
@@ -212,12 +232,12 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
             }
         } else {
             log.warn("[{}] Failed to find session by external id", externalId);
-        }
+        }*/
     }
 
     @Override
     public void close(TelemetryWebSocketSessionRef sessionRef, CloseStatus reason) throws IOException {
-        String externalId = sessionRef.getSessionId();
+       /* String externalId = sessionRef.getSessionId();
         log.debug("[{}] Processing close request", externalId);
         String internalId = externalSessionMap.get(externalId);
         if (internalId != null) {
@@ -229,10 +249,10 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
             }
         } else {
             log.warn("[{}] Failed to find session by external id", externalId);
-        }
+        }*/
     }
 
-    private boolean checkLimits(WebSocketSession session, TelemetryWebSocketSessionRef sessionRef) throws Exception {
+    /*private boolean checkLimits(WebSocketSession session, TelemetryWebSocketSessionRef sessionRef) throws Exception {
         String sessionId = session.getId();
         if (maxSessionsPerTenant > 0) {
             Set<String> tenantSessions = tenantSessionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getTenantId(), id -> ConcurrentHashMap.newKeySet());
@@ -322,6 +342,6 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
                 }
             }
         }
-    }
+    }*/
 
 }

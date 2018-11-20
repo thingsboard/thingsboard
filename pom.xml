@@ -29,10 +29,10 @@
 
     <properties>
         <main.dir>${basedir}</main.dir>
-        <spring-boot.version>1.4.3.RELEASE</spring-boot.version>
-        <spring.version>4.3.4.RELEASE</spring.version>
-        <spring-security.version>4.2.0.RELEASE</spring-security.version>
-        <spring-data-redis.version>1.8.10.RELEASE</spring-data-redis.version>
+        <spring-boot.version>2.1.0.RELEASE</spring-boot.version>
+        <spring.version>5.1.2.RELEASE</spring.version>
+        <spring-security.version>5.1.1.RELEASE</spring-security.version>
+        <spring-data-redis.version>2.1.2.RELEASE</spring-data-redis.version>
         <jedis.version>2.9.0</jedis.version>
         <jjwt.version>0.7.0</jjwt.version>
         <json-path.version>2.2.0</json-path.version>
@@ -41,8 +41,8 @@
         <logback.version>1.2.3</logback.version>
         <mockito.version>1.9.5</mockito.version>
         <rat.version>0.10</rat.version>
-        <cassandra.version>3.5.0</cassandra.version>
-        <cassandra-unit.version>3.3.0.2</cassandra-unit.version>
+        <cassandra.version>3.6.0</cassandra.version>
+        <cassandra-unit.version>3.5.0.1</cassandra-unit.version>
         <takari-cpsuite.version>1.2.7</takari-cpsuite.version>
         <guava.version>21.0</guava.version>
         <caffeine.version>2.6.1</caffeine.version>
@@ -50,7 +50,7 @@
         <commons-validator.version>1.5.0</commons-validator.version>
         <commons-io.version>2.5</commons-io.version>
         <commons-csv.version>1.4</commons-csv.version>
-        <jackson.version>2.8.11.1</jackson.version>
+        <jackson.version>2.9.7</jackson.version>
         <json-schema-validator.version>2.2.6</json-schema-validator.version>
         <scala.version>2.11</scala.version>
         <akka.version>2.4.2</akka.version>
@@ -58,13 +58,15 @@
         <gson.version>2.6.2</gson.version>
         <velocity.version>1.7</velocity.version>
         <velocity-tools.version>2.0</velocity-tools.version>
+        <antlr.version>2.7.7</antlr.version>
+        <snakeyaml.version>1.23</snakeyaml.version>
         <mail.version>1.4.3</mail.version>
         <curator.version>4.0.1</curator.version>
-        <protobuf.version>3.0.2</protobuf.version>
-        <grpc.version>1.12.0</grpc.version>
+        <protobuf.version>3.6.1</protobuf.version>
+        <grpc.version>1.16.1</grpc.version>
         <lombok.version>1.16.18</lombok.version>
         <paho.client.version>1.1.0</paho.client.version>
-        <netty.version>4.1.22.Final</netty.version>
+        <netty.version>4.1.30.Final</netty.version>
         <os-maven-plugin.version>1.5.0</os-maven-plugin.version>
         <rabbitmq.version>4.8.0</rabbitmq.version>
         <surfire.version>2.19.1</surfire.version>
@@ -410,7 +412,7 @@
             </dependency>
             <dependency>
                 <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter-websocket</artifactId>
+                <artifactId>spring-boot-starter-webflux</artifactId>
                 <version>${spring-boot.version}</version>
             </dependency>
             <dependency>
@@ -485,20 +487,16 @@
                 <groupId>org.apache.velocity</groupId>
                 <artifactId>velocity-tools</artifactId>
                 <version>${velocity-tools.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>javax.servlet</groupId>
-                        <artifactId>servlet-api</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>dom4j</groupId>
-                        <artifactId>dom4j</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>antlr</groupId>
-                        <artifactId>antlr</artifactId>
-                    </exclusion>
-                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>antlr</groupId>
+                <artifactId>antlr</artifactId>
+                <version>${antlr.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.yaml</groupId>
+                <artifactId>snakeyaml</artifactId>
+                <version>${snakeyaml.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.rabbitmq</groupId>

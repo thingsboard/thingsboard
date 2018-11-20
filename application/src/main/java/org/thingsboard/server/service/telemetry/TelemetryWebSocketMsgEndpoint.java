@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.service.telemetry;
 
-import org.springframework.web.socket.CloseStatus;
+import org.springframework.web.reactive.socket.CloseStatus;
 
 import java.io.IOException;
 

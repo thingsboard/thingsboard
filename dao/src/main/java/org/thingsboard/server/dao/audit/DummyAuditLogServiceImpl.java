@@ -33,7 +33,7 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import java.util.List;
 
 @Service
-@ConditionalOnProperty(prefix = "audit_log", value = "enabled", havingValue = "false")
+@ConditionalOnProperty(prefix = "audit-log", value = "enabled", havingValue = "false")
 public class DummyAuditLogServiceImpl implements AuditLogService {
 
     @Override

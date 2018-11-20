@@ -88,11 +88,11 @@ public class CassandraAuditLogDao extends CassandraAbstractSearchTimeDao<AuditLo
 
     protected ExecutorService readResultsProcessingExecutor;
 
-    @Value("${audit_log.by_tenant_partitioning}")
+    @Value("${audit-log.by_tenant_partitioning}")
     private String partitioning;
     private TsPartitionDate tsFormat;
 
-    @Value("${audit_log.default_query_period}")
+    @Value("${audit-log.default_query_period}")
     private Integer defaultQueryPeriodInDays;
 
     private PreparedStatement partitionInsertStmt;

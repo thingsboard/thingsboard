@@ -60,7 +60,7 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Slf4j
 @Service
-@ConditionalOnProperty(prefix = "audit_log", value = "enabled", havingValue = "true")
+@ConditionalOnProperty(prefix = "audit-log", value = "enabled", havingValue = "true")
 public class AuditLogServiceImpl implements AuditLogService {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
