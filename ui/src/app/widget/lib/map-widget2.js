@@ -210,13 +210,29 @@ export default class TbMapWidgetV2 {
 
         var tbMap = this;
 
-        function updateLocationLabel(location) {
-            if (location.settings.showLabel && location.settings.labelReplaceInfo.variables.length) {
-                location.settings.labelText = fillPattern(location.settings.label,
-                    location.settings.labelReplaceInfo, tbMap.subscription.data);
+        function updateLocationLabel(location, dataMap) {
+            if (location.settings.showLabel) {
+                if (location.settings.useLabelFunction && location.settings.labelFunction) {
+                    try {
+                        location.settings.label = location.settings.labelFunction(dataMap.dataMap, dataMap.dsDataMap, location.dsIndex);
+                    } catch (e) {
+                        location.settings.label = null;
+                    }
+                    if (location.settings.label) {
+                        var datasources = tbMap.subscription.datasources;
+                        location.settings.label = tbMap.utils.createLabelFromDatasource(datasources[location.dsIndex], location.settings.label);
+                        location.settings.labelReplaceInfo = processPattern(location.settings.label, datasources, location.dsIndex);
+                        location.settings.labelText = location.settings.label;
+                    }
+                }
+                if (location.settings.labelReplaceInfo.variables.length) {
+                    location.settings.labelText = fillPattern(location.settings.label,
+                        location.settings.labelReplaceInfo, tbMap.subscription.data);
+                }
                 tbMap.map.updateMarkerLabel(location.marker, location.settings);
             }
         }
+
 
         function calculateLocationColor(location, dataMap) {
             if (location.settings.useColorFunction && location.settings.colorFunction) {
@@ -267,7 +283,7 @@ export default class TbMapWidgetV2 {
         }
 
         function updateLocationStyle(location, dataMap) {
-            updateLocationLabel(location);
+            updateLocationLabel(location, dataMap);
             var color = calculateLocationColor(location, dataMap);
             var image = calculateLocationMarkerImage(location, dataMap);
             updateLocationColor(location, color, image);
@@ -281,7 +297,7 @@ export default class TbMapWidgetV2 {
                 if (image && (!location.settings.currentImage || !angular.equals(location.settings.currentImage, image))) {
                     location.settings.currentImage = image;
                 }
-                location.marker = tbMap.map.createMarker(markerLocation, location.settings,
+                location.marker = tbMap.map.createMarker(markerLocation, location.dsIndex, location.settings,
                     function (event) {
                         tbMap.callbacks.onLocationClick(location);
                         locationRowClick(event, location);
@@ -401,25 +417,11 @@ export default class TbMapWidgetV2 {
                         settings: angular.copy(tbMap.locationSettings)
                     };
                     if (location.settings.showLabel) {
-                        if (location.settings.useLabelFunction && location.settings.labelFunction) {
-                            try {
-                                location.settings.label = location.settings.labelFunction(dataMap.dataMap, dataMap.dsDataMap, location.dsIndex);
-                            } catch (e) {
-                                location.settings.label = null;
-                            }
-                        }
                         location.settings.label = tbMap.utils.createLabelFromDatasource(currentDatasource, location.settings.label);
                         location.settings.labelReplaceInfo = processPattern(location.settings.label, datasources, currentDatasourceIndex);
                         location.settings.labelText = location.settings.label;
                     }
                     if (location.settings.displayTooltip) {
-                        if (location.settings.useTooltipFunction && location.settings.tooltipFunction) {
-                            try {
-                                location.settings.tooltipPattern = location.settings.tooltipFunction(dataMap.dataMap, dataMap.dsDataMap, location.dsIndex);
-                            } catch (e) {
-                                location.settings.tooltipPattern = null;
-                            }
-                        }
                         location.settings.tooltipPattern = tbMap.utils.createLabelFromDatasource(currentDatasource, location.settings.tooltipPattern);
                         location.settings.tooltipReplaceInfo = processPattern(location.settings.tooltipPattern, datasources, currentDatasourceIndex);
                     }
@@ -457,6 +459,25 @@ export default class TbMapWidgetV2 {
             }
         }
 
+        function createTooltipContent(tooltip, data, datasources) {
+            var content;
+            var settings = tooltip.locationSettings;
+            if (settings.useTooltipFunction && settings.tooltipFunction) {
+                var dataMap = toLabelValueMap(data, datasources);
+                try {
+                    settings.tooltipPattern = settings.tooltipFunction(dataMap.dataMap, dataMap.dsDataMap, tooltip.dsIndex);
+                } catch (e) {
+                    settings.tooltipPattern = null;
+                }
+                if (settings.tooltipPattern) {
+                    settings.tooltipPattern = tbMap.utils.createLabelFromDatasource(datasources[tooltip.dsIndex], settings.tooltipPattern);
+                    settings.tooltipReplaceInfo = processPattern(settings.tooltipPattern, datasources, tooltip.dsIndex);
+                }
+            }
+            content = fillPattern(settings.tooltipPattern, settings.tooltipReplaceInfo, data);
+            return fillPatternWithActions(content, 'onTooltipAction', tooltip.markerArgs);
+        }
+
         if (this.map && this.map.inited() && this.subscription) {
             if (this.subscription.data) {
                 if (!this.locations) {
@@ -465,10 +486,9 @@ export default class TbMapWidgetV2 {
                     updateLocations(this.subscription.data, this.subscription.datasources);
                 }
                 var tooltips = this.map.getTooltips();
-                for (var t=0; t < tooltips.length; t++) {
+                for (var t = 0; t < tooltips.length; t++) {
                     var tooltip = tooltips[t];
-                    var text = fillPattern(tooltip.pattern, tooltip.replaceInfo, this.subscription.data);
-                    text = fillPatternWithActions(text, 'onTooltipAction', tooltip.markerArgs);
+                    var text = createTooltipContent(tooltip, this.subscription.data, this.subscription.datasources);
                     tooltip.popup.setContent(text);
                 }
             }
