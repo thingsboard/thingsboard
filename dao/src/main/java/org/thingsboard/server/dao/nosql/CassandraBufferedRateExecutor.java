@@ -52,7 +52,7 @@ public class CassandraBufferedRateExecutor extends AbstractBufferedRateExecutor<
             @Value("${cassandra.query.concurrent_limit}") int concurrencyLimit,
             @Value("${cassandra.query.permit_max_wait_time}") long maxWaitTime,
             @Value("${cassandra.query.dispatcher_threads:2}") int dispatcherThreads,
-            @Value("${cassandra.query.callback_threads:2}") int callbackThreads,
+            @Value("${cassandra.query.callback_threads:4}") int callbackThreads,
             @Value("${cassandra.query.poll_ms:50}") long pollMs,
             @Value("${cassandra.query.tenant_rate_limits.enabled}") boolean tenantRateLimitsEnabled,
             @Value("${cassandra.query.tenant_rate_limits.configuration}") String tenantRateLimitsConfiguration,
