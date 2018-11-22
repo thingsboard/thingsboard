@@ -19,15 +19,12 @@ import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 
 @Data
-public class TbAssignToCustomerNodeConfiguration extends TbAbstractCustomerActionNodeConfiguration implements NodeConfiguration<TbAssignToCustomerNodeConfiguration> {
-
-    private boolean createCustomerIfNotExists;
+public class TbUnassignFromCustomerNodeConfiguration extends TbAbstractCustomerActionNodeConfiguration implements NodeConfiguration<TbUnassignFromCustomerNodeConfiguration> {
 
     @Override
-    public TbAssignToCustomerNodeConfiguration defaultConfiguration() {
-        TbAssignToCustomerNodeConfiguration configuration = new TbAssignToCustomerNodeConfiguration();
+    public TbUnassignFromCustomerNodeConfiguration defaultConfiguration() {
+        TbUnassignFromCustomerNodeConfiguration configuration = new TbUnassignFromCustomerNodeConfiguration();
         configuration.setCustomerNamePattern("");
-        configuration.setCreateCustomerIfNotExists(false);
         configuration.setCustomerCacheExpiration(300);
         return configuration;
     }
