@@ -201,8 +201,12 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
             if (isSending) {
                 try {
                     msgQueue.add(msg);
-                } catch (RuntimeException e){
-                    log.trace("[{}] Session closed due to queue error", session.getId(), e);
+                } catch (RuntimeException e) {
+                    if (log.isTraceEnabled()) {
+                        log.trace("[{}][{}] Session closed due to queue error", sessionRef.getSecurityCtx().getTenantId(), session.getId(), e);
+                    } else {
+                        log.info("[{}][{}] Session closed due to queue error", sessionRef.getSecurityCtx().getTenantId(), session.getId());
+                    }
                     try {
                         close(sessionRef, CloseStatus.POLICY_VIOLATION.withReason("Max pending updates limit reached!"));
                     } catch (IOException ioe) {
@@ -221,7 +225,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
             } catch (Exception e) {
                 log.trace("[{}] Failed to send msg", session.getId(), e);
                 try {
-                    close(this.sessionRef, CloseStatus.SERVER_ERROR);
+                    close(this.sessionRef, CloseStatus.SESSION_NOT_RELIABLE);
                 } catch (IOException ioe) {
                     log.trace("[{}] Session transport error", session.getId(), ioe);
                 }
@@ -233,7 +237,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
             if (!result.isOK()) {
                 log.trace("[{}] Failed to send msg", session.getId(), result.getException());
                 try {
-                    close(this.sessionRef, CloseStatus.SERVER_ERROR);
+                    close(this.sessionRef, CloseStatus.SESSION_NOT_RELIABLE);
                 } catch (IOException ioe) {
                     log.trace("[{}] Session transport error", session.getId(), ioe);
                 }
