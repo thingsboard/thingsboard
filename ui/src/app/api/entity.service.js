@@ -344,17 +344,21 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
     }
 
     function entityToEntityInfo(entity) {
-        return { name: entity.name, entityType: entity.id.entityType, id: entity.id.id, entityDescription: entity.additionalInfo?entity.additionalInfo.description:"" };
+        return { origEntity: entity, name: entity.name, entityType: entity.id.entityType, id: entity.id.id, entityDescription: entity.additionalInfo?entity.additionalInfo.description:"" };
     }
 
     function entityRelationInfoToEntityInfo(entityRelationInfo, direction) {
+        var deferred = $q.defer();
         var entityId = direction == types.entitySearchDirection.from ? entityRelationInfo.to : entityRelationInfo.from;
-        var name = direction == types.entitySearchDirection.from ? entityRelationInfo.toName : entityRelationInfo.fromName;
-        return {
-            name: name,
-            entityType: entityId.entityType,
-            id: entityId.id
-        };
+        getEntity(entityId.entityType, entityId.id, {ignoreLoading: true}).then(
+            function success(entity) {
+                deferred.resolve(entityToEntityInfo(entity));
+            },
+            function fail() {
+                deferred.reject();
+            }
+        );
+        return deferred.promise;
     }
 
     function entitiesToEntitiesInfo(entities) {
@@ -368,13 +372,22 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
     }
 
     function entityRelationInfosToEntitiesInfo(entityRelations, direction) {
-        var entitiesInfo = [];
+        var deferred = $q.defer();
+        var entitiesInfoTaks = [];
         if (entityRelations) {
             for (var d = 0; d < entityRelations.length; d++) {
-                entitiesInfo.push(entityRelationInfoToEntityInfo(entityRelations[d], direction));
+                entitiesInfoTaks.push(entityRelationInfoToEntityInfo(entityRelations[d], direction));
             }
         }
-        return entitiesInfo;
+        $q.all(entitiesInfoTaks).then(
+            function success(entitiesInfo) {
+                deferred.resolve(entitiesInfo);
+            },
+            function fail() {
+                deferred.reject();
+            }
+        );
+        return deferred.promise;
     }
 
 
@@ -581,8 +594,15 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                                     var limit = Math.min(allRelations.length, maxItems);
                                     allRelations.length = limit;
                                 }
-                                result.entities = entityRelationInfosToEntitiesInfo(allRelations, filter.direction);
-                                deferred.resolve(result);
+                                entityRelationInfosToEntitiesInfo(allRelations, filter.direction).then(
+                                    function success(entities) {
+                                        result.entities = entities;
+                                        deferred.resolve(result);
+                                    },
+                                    function fail() {
+                                        deferred.reject();
+                                    }
+                                );
                             } else {
                                 deferred.reject();
                             }
