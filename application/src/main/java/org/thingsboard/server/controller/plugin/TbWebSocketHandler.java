@@ -40,10 +40,7 @@ import org.thingsboard.server.service.telemetry.TelemetryWebSocketMsgEndpoint;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketService;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketSessionRef;
 
-import javax.websocket.RemoteEndpoint;
-import javax.websocket.SendHandler;
-import javax.websocket.SendResult;
-import javax.websocket.Session;
+import javax.websocket.*;
 import java.io.IOException;
 import java.net.URI;
 import java.security.InvalidParameterException;
@@ -222,20 +219,31 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
             try {
                 this.asyncRemote.sendText(msg, this);
             } catch (Exception e) {
-                log.error("[{}] Failed to send msg", session.getId(), e);
+                log.trace("[{}] Failed to send msg", session.getId(), e);
+                try {
+                    close(this.sessionRef, CloseStatus.SERVER_ERROR);
+                } catch (IOException ioe) {
+                    log.trace("[{}] Session transport error", session.getId(), ioe);
+                }
             }
         }
 
         @Override
         public void onResult(SendResult result) {
             if (!result.isOK()) {
-                log.error("[{}] Failed to send msg", session.getId(), result.getException());
-            }
-            String msg = msgQueue.poll();
-            if (msg != null) {
-                sendMsgInternal(msg);
+                log.trace("[{}] Failed to send msg", session.getId(), result.getException());
+                try {
+                    close(this.sessionRef, CloseStatus.SERVER_ERROR);
+                } catch (IOException ioe) {
+                    log.trace("[{}] Session transport error", session.getId(), ioe);
+                }
             } else {
-                isSending = false;
+                String msg = msgQueue.poll();
+                if (msg != null) {
+                    sendMsgInternal(msg);
+                } else {
+                    isSending = false;
+                }
             }
         }
     }
