@@ -53,7 +53,7 @@
     "compass-sass-mixins": "^0.12.7",
     "event-source-polyfill": "0.0.9",
     "flot": "git://github.com/thingsboard/flot.git#0.9-work",
-    "flot-curvedlines": "git://github.com/MichaelZinsmaier/CurvedLines.git#master",
+    "flot.curvedlines": "git://github.com/MichaelZinsmaier/CurvedLines.git#master",
     "font-awesome": "^4.6.3",
     "javascript-detect-element-resize": "^0.5.3",
     "jquery": "^3.1.0",
