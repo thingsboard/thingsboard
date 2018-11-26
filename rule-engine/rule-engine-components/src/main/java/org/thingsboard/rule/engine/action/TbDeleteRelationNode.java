@@ -25,48 +25,45 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.util.EntityContainer;
 import org.thingsboard.server.common.data.plugin.ComponentType;
-import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.msg.TbMsg;
 
 @Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
-        name = "create relation",
-        configClazz = TbCreateRelationNodeConfiguration.class,
-        nodeDescription = "Create the relation from the selected entity to originator of the message by type and direction",
-        nodeDetails = "If the relation already exists or successfully created -  Message send via <b>Success</b> chain, otherwise <b>Failure</b> chain will be used.",
+        name = "delete relation",
+        configClazz = TbDeleteRelationNodeConfiguration.class,
+        nodeDescription = "Delete the relation from the selected entity to originator of the message by type and direction",
+        nodeDetails = "If the relation successfully deleted -  Message send via <b>Success</b> chain, otherwise <b>Failure</b> chain will be used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeRelationConfig",
-        icon = "add_circle"
+        icon = "remove_circle"
 )
-public class TbCreateRelationNode extends TbAbstractRelationActionNode<TbCreateRelationNodeConfiguration> {
+public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteRelationNodeConfiguration> {
 
     @Override
-    protected TbCreateRelationNodeConfiguration loadEntityNodeActionConfig(TbNodeConfiguration configuration) throws TbNodeException {
-        return TbNodeUtils.convert(configuration, TbCreateRelationNodeConfiguration.class);
+    protected TbDeleteRelationNodeConfiguration loadEntityNodeActionConfig(TbNodeConfiguration configuration) throws TbNodeException {
+        return TbNodeUtils.convert(configuration, TbDeleteRelationNodeConfiguration.class);
     }
 
     @Override
-    protected ListenableFuture<Boolean> doProcessEntityRelationAction(TbContext ctx, TbMsg msg, EntityContainer entity) {
-        return createIfAbsent(ctx, msg, entity);
+    protected ListenableFuture<Boolean> doProcessEntityRelationAction(TbContext ctx, TbMsg msg, EntityContainer entityContainer) {
+        return deleteIfExist(ctx, msg, entityContainer);
     }
 
-    private ListenableFuture<Boolean> createIfAbsent(TbContext ctx, TbMsg msg, EntityContainer entityContainer) {
+    private ListenableFuture<Boolean> deleteIfExist(TbContext ctx, TbMsg msg, EntityContainer entityContainer) {
         processSearchDirection(msg, entityContainer);
         return Futures.transformAsync(ctx.getRelationService().checkRelation(ctx.getTenantId(), fromId, toId, config.getRelationType(), RelationTypeGroup.COMMON),
                 result -> {
-                    if (!result) {
-                        return processCreateRelation(ctx);
+                    if (result) {
+                        return processDeleteRelation(ctx);
                     }
                     return Futures.immediateFuture(true);
                 });
     }
 
-    private ListenableFuture<Boolean> processCreateRelation(TbContext ctx) {
-        EntityRelation entityRelation = new EntityRelation(fromId, toId, config.getRelationType(), RelationTypeGroup.COMMON);
-        return ctx.getRelationService().saveRelationAsync(ctx.getTenantId(), entityRelation);
+    private ListenableFuture<Boolean> processDeleteRelation(TbContext ctx) {
+        return ctx.getRelationService().deleteRelationAsync(ctx.getTenantId(), fromId, toId, config.getRelationType(), RelationTypeGroup.COMMON);
     }
-
 
 }

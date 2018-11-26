@@ -31,15 +31,19 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.util.EntityContainer;
 import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.page.TextPageData;
+import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
+import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
@@ -50,9 +54,10 @@ import static org.thingsboard.rule.engine.api.util.DonAsynchron.withCallback;
 public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationActionNodeConfiguration> implements TbNode {
 
     protected C config;
+    protected EntityId fromId;
+    protected EntityId toId;
 
     private LoadingCache<Entitykey, EntityContainer> entityIdCache;
-    private ExecutorService executorService;
 
 
     @Override
@@ -63,10 +68,9 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
             cacheBuilder.expireAfterWrite(this.config.getEntityCacheExpiration(), TimeUnit.SECONDS);
         }
         entityIdCache = cacheBuilder
-                .build(new EntityCacheLoader(ctx, createEntityIfNotExists()));
+                .build(new EntityCacheLoader(ctx));
     }
 
-    protected abstract boolean createEntityIfNotExists();
 
     protected abstract C loadEntityNodeActionConfig(TbNodeConfiguration configuration) throws TbNodeException;
 
@@ -95,9 +99,18 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
         });
     }
 
+    protected void processSearchDirection(TbMsg msg, EntityContainer entityContainer) {
+        if (EntitySearchDirection.FROM.name().equals(config.getDirection())) {
+            fromId = EntityIdFactory.getByTypeAndId(entityContainer.getEntityType().name(), entityContainer.getEntityId().toString());
+            toId = msg.getOriginator();
+        } else {
+            toId = EntityIdFactory.getByTypeAndId(entityContainer.getEntityType().name(), entityContainer.getEntityId().toString());
+            fromId = msg.getOriginator();
+        }
+    }
+
     @Override
     public void destroy() {
-        executorService.shutdownNow();
     }
 
     @Data
@@ -110,11 +123,9 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
     private static class EntityCacheLoader extends CacheLoader<Entitykey, EntityContainer> {
 
         private final TbContext ctx;
-        private final boolean createIfNotExists;
 
-        private EntityCacheLoader(TbContext ctx, boolean createIfNotExists) {
+        private EntityCacheLoader(TbContext ctx) {
             this.ctx = ctx;
-            this.createIfNotExists = createIfNotExists;
         }
 
         @Override
@@ -122,7 +133,6 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
             return loadEntity(key);
         }
 
-        // TODO: 23.11.18 bug fix
         private EntityContainer loadEntity(Entitykey entitykey) {
             EntityType type = entitykey.getEntityType();
             EntityContainer targetEntity = new EntityContainer();
@@ -132,11 +142,6 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                     Device device = deviceService.findDeviceByTenantIdAndName(ctx.getTenantId(), entitykey.getEntityName());
                     if (device != null) {
                         targetEntity.setEntityId(device.getId());
-                    } else if (createIfNotExists) {
-                        Device newDevice = new Device();
-                        newDevice.setName(entitykey.getEntityName());
-                        newDevice.setType("defaut");
-                        newDevice.setTenantId(ctx.getTenantId());
                     }
                     break;
                 case ASSET:
@@ -144,11 +149,6 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                     Asset asset = assetService.findAssetByTenantIdAndName(ctx.getTenantId(), entitykey.getEntityName());
                     if (asset != null) {
                         targetEntity.setEntityId(asset.getId());
-                    } else if (createIfNotExists) {
-                        Asset newAsset = new Asset();
-                        newAsset.setName(entitykey.getEntityName());
-                        newAsset.setType("defaut");
-                        newAsset.setTenantId(ctx.getTenantId());
                     }
                     break;
                 case ENTITY_VIEW:
@@ -156,12 +156,6 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                     EntityView entityView = entityViewService.findEntityViewByTenantIdAndName(ctx.getTenantId(), entitykey.getEntityName());
                     if (entityView != null) {
                         targetEntity.setEntityId(entityView.getId());
-                    }  else if (createIfNotExists) {
-                        EntityView newEntityView = new EntityView();
-                        newEntityView.setName(entitykey.getEntityName());
-                        newEntityView.setType("default");
-                        newEntityView.setEntityId();
-
                     }
                     break;
                 case TENANT:
@@ -169,21 +163,17 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                     break;
                 case CUSTOMER:
                     CustomerService customerService = ctx.getCustomerService();
-                    Optional<Customer> customerOptional =
-                            customerService.findCustomerByTenantIdAndTitle(ctx.getTenantId(), entitykey.getEntityName());
-                    if (customerOptional.isPresent()) {
-                        targetEntity.setEntityId(customerOptional.get().getId());
-                    } else if (createIfNotExists) {
-                        Customer newCustomer = new Customer();
-                        newCustomer.setTitle(entitykey.getEntityName());
-                        newCustomer.setTenantId(ctx.getTenantId());
-                        Customer savedCustomer = customerService.saveCustomer(newCustomer);
-                        targetEntity.setEntityId(savedCustomer.getId());
-                    }
+                    Optional<Customer> customerOptional = customerService.findCustomerByTenantIdAndTitle(ctx.getTenantId(), entitykey.getEntityName());
+                    customerOptional.ifPresent(customer -> targetEntity.setEntityId(customer.getId()));
                     break;
                 case DASHBOARD:
-                    /*DashboardService dashboardService = ctx.getDashboardService();
-                    Dashboard dashboard = dashboardService.f*/
+                    DashboardService dashboardService = ctx.getDashboardService();
+                    TextPageData<DashboardInfo> dashboardInfoTextPageData = dashboardService.findDashboardsByTenantId(ctx.getTenantId(), new TextPageLink(200, entitykey.getEntityName()));
+                    for (DashboardInfo dashboardInfo : dashboardInfoTextPageData.getData()) {
+                        if (dashboardInfo.getTitle().equals(entitykey.getEntityName())) {
+                            targetEntity.setEntityId(dashboardInfo.getId());
+                        }
+                    }
                     break;
                 default:
                     return targetEntity;
@@ -194,7 +184,6 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
 
 
     }
-
 
 
 }

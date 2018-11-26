@@ -20,12 +20,12 @@ import org.thingsboard.rule.engine.api.NodeConfiguration;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 
 @Data
-public class TbCreateRelationNodeConfiguration extends TbAbstractRelationActionNodeConfiguration implements NodeConfiguration<TbCreateRelationNodeConfiguration> {
+public class TbDeleteRelationNodeConfiguration extends TbAbstractRelationActionNodeConfiguration implements NodeConfiguration<TbDeleteRelationNodeConfiguration> {
 
 
     @Override
-    public TbCreateRelationNodeConfiguration defaultConfiguration() {
-        TbCreateRelationNodeConfiguration configuration = new TbCreateRelationNodeConfiguration();
+    public TbDeleteRelationNodeConfiguration defaultConfiguration() {
+        TbDeleteRelationNodeConfiguration configuration = new TbDeleteRelationNodeConfiguration();
         configuration.setDirection(EntitySearchDirection.FROM.name());
         configuration.setRelationType("Contains");
         configuration.setEntityNamePattern("");
