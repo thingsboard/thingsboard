@@ -34,6 +34,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.MailService;
+import org.thingsboard.rule.engine.api.RuleChainTransactionService;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Event;
@@ -221,6 +222,11 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private RuleEngineTransportService ruleEngineTransportService;
+
+    @Lazy
+    @Autowired
+    @Getter
+    private RuleChainTransactionService ruleChainTransactionService;
 
     @Value("${cluster.partition_id}")
     @Getter
