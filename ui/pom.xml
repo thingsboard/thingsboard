@@ -58,7 +58,7 @@
                         </goals>
                         <configuration>
                             <nodeVersion>v6.9.1</nodeVersion>
-                            <npmVersion>3.10.8</npmVersion>
+                            <npmVersion>6.4.1</npmVersion>
                         </configuration>
                     </execution>
                     <execution>

@@ -16,7 +16,6 @@
 package org.thingsboard.server.controller.plugin;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.tomcat.websocket.Constants;
 import org.springframework.beans.factory.BeanCreationNotAllowedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,14 +40,16 @@ import org.thingsboard.server.service.telemetry.TelemetryWebSocketMsgEndpoint;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketService;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketSessionRef;
 
-import javax.websocket.Session;
+import javax.websocket.*;
 import java.io.IOException;
 import java.net.URI;
 import java.security.InvalidParameterException;
+import java.util.Queue;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.LinkedBlockingQueue;
 
 @Service
 @Slf4j
@@ -60,8 +61,8 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
     @Autowired
     private TelemetryWebSocketService webSocketService;
 
-    @Value("${server.ws.blocking_send_timeout:5000}")
-    private long blockingSendTimeout;
+    @Value("${server.ws.send_timeout:5000}")
+    private long sendTimeout;
 
     @Value("${server.ws.limits.max_sessions_per_tenant:0}")
     private int maxSessionsPerTenant;
@@ -71,6 +72,8 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
     private int maxSessionsPerRegularUser;
     @Value("${server.ws.limits.max_sessions_per_public_user:0}")
     private int maxSessionsPerPublicUser;
+    @Value("${server.ws.limits.max_queue_per_ws_session:1000}")
+    private int maxMsgQueuePerSession;
 
     @Value("${server.ws.limits.max_updates_per_session:}")
     private String perSessionUpdatesConfiguration;
@@ -104,9 +107,9 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
         super.afterConnectionEstablished(session);
         try {
             if (session instanceof NativeWebSocketSession) {
-                Session nativeSession = ((NativeWebSocketSession)session).getNativeSession(Session.class);
+                Session nativeSession = ((NativeWebSocketSession) session).getNativeSession(Session.class);
                 if (nativeSession != null) {
-                    nativeSession.getUserProperties().put(Constants.BLOCKING_SEND_TIMEOUT_PROPERTY, new Long(blockingSendTimeout));
+                    nativeSession.getAsyncRemote().setSendTimeout(sendTimeout);
                 }
             }
             String internalSessionId = session.getId();
@@ -115,7 +118,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
             if (!checkLimits(session, sessionRef)) {
                 return;
             }
-            internalSessionMap.put(internalSessionId, new SessionMetaData(session, sessionRef));
+            internalSessionMap.put(internalSessionId, new SessionMetaData(session, sessionRef, maxMsgQueuePerSession));
             externalSessionMap.put(externalSessionId, internalSessionId);
             processInWebSocketService(sessionRef, SessionEvent.onEstablished());
             log.info("[{}][{}][{}] Session is opened", sessionRef.getSecurityCtx().getTenantId(), externalSessionId, session.getId());
@@ -172,19 +175,80 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
         if (!"telemetry".equalsIgnoreCase(serviceToken)) {
             throw new InvalidParameterException("Can't find plugin with specified token!");
         } else {
-            SecurityUser currentUser = (SecurityUser) ((Authentication)session.getPrincipal()).getPrincipal();
+            SecurityUser currentUser = (SecurityUser) ((Authentication) session.getPrincipal()).getPrincipal();
             return new TelemetryWebSocketSessionRef(UUID.randomUUID().toString(), currentUser, session.getLocalAddress(), session.getRemoteAddress());
         }
     }
 
-    private static class SessionMetaData {
+    private class SessionMetaData implements SendHandler {
         private final WebSocketSession session;
+        private final RemoteEndpoint.Async asyncRemote;
         private final TelemetryWebSocketSessionRef sessionRef;
 
-        SessionMetaData(WebSocketSession session, TelemetryWebSocketSessionRef sessionRef) {
+        private volatile boolean isSending = false;
+        private final Queue<String> msgQueue;
+
+        SessionMetaData(WebSocketSession session, TelemetryWebSocketSessionRef sessionRef, int maxMsgQueuePerSession) {
             super();
             this.session = session;
+            Session nativeSession = ((NativeWebSocketSession) session).getNativeSession(Session.class);
+            this.asyncRemote = nativeSession.getAsyncRemote();
             this.sessionRef = sessionRef;
+            this.msgQueue = new LinkedBlockingQueue<>(maxMsgQueuePerSession);
+        }
+
+        synchronized void sendMsg(String msg) {
+            if (isSending) {
+                try {
+                    msgQueue.add(msg);
+                } catch (RuntimeException e) {
+                    if (log.isTraceEnabled()) {
+                        log.trace("[{}][{}] Session closed due to queue error", sessionRef.getSecurityCtx().getTenantId(), session.getId(), e);
+                    } else {
+                        log.info("[{}][{}] Session closed due to queue error", sessionRef.getSecurityCtx().getTenantId(), session.getId());
+                    }
+                    try {
+                        close(sessionRef, CloseStatus.POLICY_VIOLATION.withReason("Max pending updates limit reached!"));
+                    } catch (IOException ioe) {
+                        log.trace("[{}] Session transport error", session.getId(), ioe);
+                    }
+                }
+            } else {
+                isSending = true;
+                sendMsgInternal(msg);
+            }
+        }
+
+        private void sendMsgInternal(String msg) {
+            try {
+                this.asyncRemote.sendText(msg, this);
+            } catch (Exception e) {
+                log.trace("[{}] Failed to send msg", session.getId(), e);
+                try {
+                    close(this.sessionRef, CloseStatus.SESSION_NOT_RELIABLE);
+                } catch (IOException ioe) {
+                    log.trace("[{}] Session transport error", session.getId(), ioe);
+                }
+            }
+        }
+
+        @Override
+        public void onResult(SendResult result) {
+            if (!result.isOK()) {
+                log.trace("[{}] Failed to send msg", session.getId(), result.getException());
+                try {
+                    close(this.sessionRef, CloseStatus.SESSION_NOT_RELIABLE);
+                } catch (IOException ioe) {
+                    log.trace("[{}] Session transport error", session.getId(), ioe);
+                }
+            } else {
+                String msg = msgQueue.poll();
+                if (msg != null) {
+                    sendMsgInternal(msg);
+                } else {
+                    isSending = false;
+                }
+            }
         }
     }
 
@@ -202,9 +266,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
                         if (blacklistedSessions.putIfAbsent(externalId, sessionRef) == null) {
                             log.info("[{}][{}][{}] Failed to process session update. Max session updates limit reached"
                                     , sessionRef.getSecurityCtx().getTenantId(), sessionRef.getSecurityCtx().getId(), externalId);
-                            synchronized (sessionMd) {
-                                sessionMd.session.sendMessage(new TextMessage("{\"subscriptionId\":" + subscriptionId + ", \"errorCode\":" + ThingsboardErrorCode.TOO_MANY_UPDATES.getErrorCode() + ", \"errorMsg\":\"Too many updates!\"}"));
-                            }
+                            sessionMd.sendMsg("{\"subscriptionId\":" + subscriptionId + ", \"errorCode\":" + ThingsboardErrorCode.TOO_MANY_UPDATES.getErrorCode() + ", \"errorMsg\":\"Too many updates!\"}");
                         }
                         return;
                     } else {
@@ -212,14 +274,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
                         blacklistedSessions.remove(externalId);
                     }
                 }
-                synchronized (sessionMd) {
-                    long start = System.currentTimeMillis();
-                    sessionMd.session.sendMessage(new TextMessage(msg));
-                    long took = System.currentTimeMillis() - start;
-                    if (took >= 1000) {
-                        log.info("[{}][{}] Sending message took more than 1 second [{}ms] {}", sessionRef.getSecurityCtx().getTenantId(), externalId, took, msg);
-                    }
-                }
+                sessionMd.sendMsg(msg);
             } else {
                 log.warn("[{}][{}] Failed to find session by internal id", externalId, internalId);
             }
