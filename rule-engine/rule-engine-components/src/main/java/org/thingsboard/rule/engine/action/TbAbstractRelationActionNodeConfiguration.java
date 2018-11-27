@@ -18,9 +18,14 @@ package org.thingsboard.rule.engine.action;
 import lombok.Data;
 
 @Data
-public abstract class TbAbstractCustomerActionNodeConfiguration {
+public abstract class TbAbstractRelationActionNodeConfiguration {
 
-    private String customerNamePattern;
-    private long customerCacheExpiration;
+    private String direction;
+    private String relationType;
+
+    private String entityType;
+    private String entityNamePattern;
+
+    private long entityCacheExpiration;
 
 }

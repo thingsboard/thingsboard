@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.action;
+package org.thingsboard.rule.engine.util;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.EntityId;
 
 @Data
-public abstract class TbAbstractCustomerActionNodeConfiguration {
+public class EntityContainer {
 
-    private String customerNamePattern;
-    private long customerCacheExpiration;
+    private EntityId entityId;
+    private EntityType entityType;
 
 }
