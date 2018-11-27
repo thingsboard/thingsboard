@@ -403,7 +403,7 @@ export default class TbMapWidget {
                 if (image && (!location.settings.currentImage || !angular.equals(location.settings.currentImage, image))) {
                     location.settings.currentImage = image;
                 }
-                location.marker = tbMap.map.createMarker(markerLocation, location.settings,
+                location.marker = tbMap.map.createMarker(markerLocation, location.dsIndex, location.settings,
                     function() {
                         tbMap.callbacks.onLocationClick(location);
                     }
@@ -563,8 +563,9 @@ export default class TbMapWidget {
                 var tooltips = this.map.getTooltips();
                 for (var t=0; t < tooltips.length; t++) {
                     var tooltip = tooltips[t];
-                    var text = tooltip.pattern;
-                    var replaceInfo = tooltip.replaceInfo;
+                    var settings = tooltip.locationSettings;
+                    var text = settings.tooltipPattern;
+                    var replaceInfo = settings.tooltipReplaceInfo;
                     for (var v = 0; v < replaceInfo.variables.length; v++) {
                         var variableInfo = replaceInfo.variables[v];
                         var txtVal = '';
