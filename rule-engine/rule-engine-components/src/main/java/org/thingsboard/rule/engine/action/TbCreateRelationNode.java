@@ -34,7 +34,7 @@ import org.thingsboard.server.common.msg.TbMsg;
         type = ComponentType.ACTION,
         name = "create relation",
         configClazz = TbCreateRelationNodeConfiguration.class,
-        nodeDescription = "Create the relation from the selected entity to originator of the message by type and direction",
+        nodeDescription = "Create the relation from the selected entity to originator of the message by type and direction.",
         nodeDetails = "If the relation already exists or successfully created -  Message send via <b>Success</b> chain, otherwise <b>Failure</b> chain will be used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeRelationConfig",

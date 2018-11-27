@@ -33,7 +33,7 @@ import org.thingsboard.server.common.msg.TbMsg;
         type = ComponentType.ACTION,
         name = "delete relation",
         configClazz = TbDeleteRelationNodeConfiguration.class,
-        nodeDescription = "Delete the relation from the selected entity to originator of the message by type and direction",
+        nodeDescription = "Delete the relation from the selected entity to originator of the message by type and direction.",
         nodeDetails = "If the relation successfully deleted -  Message send via <b>Success</b> chain, otherwise <b>Failure</b> chain will be used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeRelationConfig",
