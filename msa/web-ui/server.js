@@ -17,6 +17,7 @@
 const config = require('config'),
       logger = require('./config/logger')('main'),
       express = require('express'),
+      compression = require('compression'),
       http = require('http'),
       httpProxy = require('http-proxy'),
       path = require('path'),
@@ -54,8 +55,9 @@ var server;
         const app = express();
         server = http.createServer(app);
 
+        var apiProxy;
         if (useApiProxy) {
-            const apiProxy = httpProxy.createProxyServer({
+            apiProxy = httpProxy.createProxyServer({
                 target: {
                     host: thingsboardHost,
                     port: thingsboardPort
@@ -85,6 +87,7 @@ var server;
         }
 
         app.use(historyApiFallback());
+        app.use(compression());
 
         const root = path.join(webDir, 'public');
 
