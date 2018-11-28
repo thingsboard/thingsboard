@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,6 @@
  */
 package org.thingsboard.rule.engine.transaction;
 
-import com.google.common.util.concurrent.FutureCallback;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.EmptyNodeConfiguration;
 import org.thingsboard.rule.engine.api.RuleNode;
@@ -26,8 +25,13 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgDataType;
+import org.thingsboard.server.common.msg.TbMsgTransactionData;
 
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+
+import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 
 @Slf4j
 @RuleNode(
@@ -50,9 +54,21 @@ public class TbTransactionBeginNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        FutureCallback<Void> callback = null;
+        log.info("Msg in - [{}] [{}]", msg.getId(), msg.getType());
 
-        ctx.getRuleChainTransactionService().beginTransaction(msg.getOriginator(), callback);
+        TbMsgTransactionData transactionData = new TbMsgTransactionData(UUID.randomUUID(), msg.getOriginator());
+
+        TbMsg tbMsg = new TbMsg(msg.getId(), msg.getType(), msg.getOriginator(), msg.getMetaData(), TbMsgDataType.JSON,
+                msg.getData(), transactionData, msg.getRuleChainId(), msg.getRuleNodeId(), msg.getClusterPartition());
+
+        ctx.getRuleChainTransactionService().beginTransaction(ctx, tbMsg, onStart -> {
+                    log.info("Transaction starting... [{}] [{}]", tbMsg.getId(), tbMsg.getType());
+                    ctx.tellNext(tbMsg, SUCCESS);
+                }, onEnd -> log.info("Transaction ended successfully... [{}] [{}]", tbMsg.getId(), tbMsg.getType()),
+                throwable -> {
+                    log.error("Transaction failed due to queue size restriction! [{}] [{}]", tbMsg.getId(), tbMsg.getType(), throwable);
+                    ctx.tellFailure(tbMsg, throwable);
+                });
     }
 
     @Override

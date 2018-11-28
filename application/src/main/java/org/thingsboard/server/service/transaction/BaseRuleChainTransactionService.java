@@ -15,40 +15,92 @@
  */
 package org.thingsboard.server.service.transaction;
 
-import com.google.common.util.concurrent.FutureCallback;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.RuleChainTransactionService;
+import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.msg.TbMsg;
 
-import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 
 @Service
 @Slf4j
 public class BaseRuleChainTransactionService implements RuleChainTransactionService {
 
     @Value("${actors.rule.transaction.queue_size}")
-    private int queueSize;
+    private int finalQueueSize;
 
-    private final ConcurrentMap<EntityId, Queue<TbMsg>> transactionMap = new ConcurrentHashMap<>();
+    private final Lock transactionLock = new ReentrantLock();
+    private final ConcurrentMap<EntityId, BlockingQueue<TbTransactionTask>> transactionMap = new ConcurrentHashMap<>();
+
+    //TODO: add delete on timeout from queue -> onFailure accept
 
     @Override
-    public void beginTransaction(EntityId entityId, FutureCallback<Void> callback) {
+    public void beginTransaction(TbContext ctx, TbMsg msg, Consumer<TbMsg> onStart, Consumer<TbMsg> onEnd, Consumer<Throwable> onFailure) {
+        BlockingQueue<TbTransactionTask> queue = transactionMap.computeIfAbsent(msg.getTransactionData().getOriginatorId(), id ->
+                new LinkedBlockingQueue<>(finalQueueSize));
+        transactionLock.lock();
+        try {
+            TbTransactionTask task = new TbTransactionTask(msg, onStart, onEnd, onFailure);
+            int queueSize = queue.size();
+            if (queueSize >= finalQueueSize) {
+                onFailure.accept(new RuntimeException("Queue has no space!"));
+            } else {
+                addMsgToQueue(queue, task, onFailure);
+                if (queueSize == 0) {
+                    onStart.accept(msg);
+                } else {
+                    log.info("Msg [{}] [{}] is waiting to start transaction!", msg.getId(), msg.getType());
+                }
+            }
+        } finally {
+            transactionLock.unlock();
+        }
+    }
 
-
-        transactionMap.computeIfAbsent(entityId, id -> new LinkedBlockingQueue<>(queueSize));
-
-        log.info("[{}]", queueSize);
-
+    private void addMsgToQueue(BlockingQueue<TbTransactionTask> queue, TbTransactionTask task, Consumer<Throwable> onFailure) {
+        try {
+            queue.add(task);
+            log.info("Added msg to queue, size: [{}]", queue.size());
+        } catch (Exception e) {
+            log.error("Error when trying to add msg [{}] to the queue", task.getMsg(), e);
+            onFailure.accept(e);
+        }
     }
 
     @Override
-    public void endTransaction() {
+    public boolean endTransaction(TbContext ctx, TbMsg msg, Consumer<Throwable> onFailure) {
+        transactionLock.lock();
+        try {
+            BlockingQueue<TbTransactionTask> queue = transactionMap.get(msg.getTransactionData().getOriginatorId());
+            try {
+                TbTransactionTask currentTask = queue.element();
+                if (currentTask.getMsg().getTransactionData().getTransactionId().equals(msg.getTransactionData().getTransactionId())) {
+                    queue.remove();
+                    log.info("Removed msg from queue, size [{}]", queue.size());
+                    currentTask.getOnEnd().accept(currentTask.getMsg());
 
+                    TbTransactionTask nextTask = queue.peek();
+                    if (nextTask != null) {
+                        nextTask.getOnStart().accept(nextTask.getMsg());
+                    }
+                }
+            } catch (Exception e) {
+                log.error("Queue is empty!", queue);
+                onFailure.accept(e);
+                return true;
+            }
+        } finally {
+            transactionLock.unlock();
+        }
+        return false;
     }
 }

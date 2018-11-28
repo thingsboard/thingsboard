@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api;
+package org.thingsboard.server.common.msg;
 
-import org.thingsboard.server.common.msg.TbMsg;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.EntityId;
 
-import java.util.concurrent.Callable;
-import java.util.function.Consumer;
+import java.io.Serializable;
+import java.util.UUID;
 
-public interface RuleChainTransactionService {
+@Data
+public final class TbMsgTransactionData implements Serializable {
 
-    void beginTransaction(TbContext ctx, TbMsg msg, Consumer<TbMsg> onStart, Consumer<TbMsg> onEnd, Consumer<Throwable> onFailure);
-
-    boolean endTransaction(TbContext ctx, TbMsg msg, Consumer<Throwable> onFailure);
+    private final UUID transactionId;
+    private final EntityId originatorId;
 
 }
