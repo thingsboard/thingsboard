@@ -279,18 +279,14 @@ public class TelemetryController extends BaseController {
             deleteFromTs = 0L;
             deleteToTs = System.currentTimeMillis();
         } else {
-            if(startTs == null) {
-                deleteFromTs = 0L;
+            if (startTs == null || endTs == null) {
+                return getImmediateDeferredResult("When deleteAllDataForKeys is false, start and end timestamp values shouldn't be empty", HttpStatus.BAD_REQUEST);
             }
-            else {
+            else{
                 deleteFromTs = startTs;
-            }
-            if(endTs == null) {
-                deleteToTs = System.currentTimeMillis();
-            }
-            else {
                 deleteToTs = endTs;
             }
+
         }
 
         return accessValidator.validateEntityAndCallback(user, entityIdStr, (result, tenantId, entityId) -> {
