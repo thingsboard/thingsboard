@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 @Data
 public class TbCreateRelationNodeConfiguration extends TbAbstractRelationActionNodeConfiguration implements NodeConfiguration<TbCreateRelationNodeConfiguration> {
 
+    private boolean createEntityIfNotExists;
 
     @Override
     public TbCreateRelationNodeConfiguration defaultConfiguration() {
@@ -30,6 +31,7 @@ public class TbCreateRelationNodeConfiguration extends TbAbstractRelationActionN
         configuration.setRelationType("Contains");
         configuration.setEntityNamePattern("");
         configuration.setEntityCacheExpiration(300);
+        configuration.setCreateEntityIfNotExists(false);
         return configuration;
     }
 }

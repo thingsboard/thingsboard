@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,6 +31,7 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.util.EntityContainer;
 import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.page.TextPageData;
@@ -59,7 +60,6 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
 
     private LoadingCache<Entitykey, EntityContainer> entityIdCache;
 
-
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = loadEntityNodeActionConfig(configuration);
@@ -68,11 +68,8 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
             cacheBuilder.expireAfterWrite(this.config.getEntityCacheExpiration(), TimeUnit.SECONDS);
         }
         entityIdCache = cacheBuilder
-                .build(new EntityCacheLoader(ctx));
+                .build(new EntityCacheLoader(ctx, createEntityIfNotExists()));
     }
-
-
-    protected abstract C loadEntityNodeActionConfig(TbNodeConfiguration configuration) throws TbNodeException;
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
@@ -80,11 +77,20 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                 filterResult -> ctx.tellNext(msg, filterResult ? SUCCESS : FAILURE), t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
     }
 
+    @Override
+    public void destroy() {
+    }
+
+
     private ListenableFuture<Boolean> processEntityRelationAction(TbContext ctx, TbMsg msg) {
         return Futures.transformAsync(getEntity(ctx, msg), entityContainer -> doProcessEntityRelationAction(ctx, msg, entityContainer));
     }
 
+    protected abstract boolean createEntityIfNotExists();
+
     protected abstract ListenableFuture<Boolean> doProcessEntityRelationAction(TbContext ctx, TbMsg msg, EntityContainer entityContainer);
+
+    protected abstract C loadEntityNodeActionConfig(TbNodeConfiguration configuration) throws TbNodeException;
 
     protected ListenableFuture<EntityContainer> getEntity(TbContext ctx, TbMsg msg) {
         String entityName = TbNodeUtils.processPattern(this.config.getEntityNamePattern(), msg.getMetaData());
@@ -109,10 +115,6 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
         }
     }
 
-    @Override
-    public void destroy() {
-    }
-
     @Data
     @AllArgsConstructor
     private static class Entitykey {
@@ -123,9 +125,11 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
     private static class EntityCacheLoader extends CacheLoader<Entitykey, EntityContainer> {
 
         private final TbContext ctx;
+        private final boolean createIfNotExists;
 
-        private EntityCacheLoader(TbContext ctx) {
+        private EntityCacheLoader(TbContext ctx, boolean createIfNotExists) {
             this.ctx = ctx;
+            this.createIfNotExists = createIfNotExists;
         }
 
         @Override
@@ -136,12 +140,20 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
         private EntityContainer loadEntity(Entitykey entitykey) {
             EntityType type = entitykey.getEntityType();
             EntityContainer targetEntity = new EntityContainer();
+            targetEntity.setEntityType(type);
             switch (type) {
                 case DEVICE:
                     DeviceService deviceService = ctx.getDeviceService();
                     Device device = deviceService.findDeviceByTenantIdAndName(ctx.getTenantId(), entitykey.getEntityName());
                     if (device != null) {
                         targetEntity.setEntityId(device.getId());
+                    } else if (createIfNotExists) {
+                        Device newDevice = new Device();
+                        newDevice.setName(entitykey.getEntityName());
+                        newDevice.setType("default");
+                        newDevice.setTenantId(ctx.getTenantId());
+                        Device savedDevice = deviceService.saveDevice(newDevice);
+                        targetEntity.setEntityId(savedDevice.getId());
                     }
                     break;
                 case ASSET:
@@ -149,7 +161,30 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                     Asset asset = assetService.findAssetByTenantIdAndName(ctx.getTenantId(), entitykey.getEntityName());
                     if (asset != null) {
                         targetEntity.setEntityId(asset.getId());
+                    } else if (createIfNotExists) {
+                        Asset newAsset = new Asset();
+                        newAsset.setName(entitykey.getEntityName());
+                        newAsset.setType("default");
+                        newAsset.setTenantId(ctx.getTenantId());
+                        Asset savedAsset = assetService.saveAsset(newAsset);
+                        targetEntity.setEntityId(savedAsset.getId());
                     }
+                    break;
+                case CUSTOMER:
+                    CustomerService customerService = ctx.getCustomerService();
+                    Optional<Customer> customerOptional = customerService.findCustomerByTenantIdAndTitle(ctx.getTenantId(), entitykey.getEntityName());
+                    if (customerOptional.isPresent()) {
+                        targetEntity.setEntityId(customerOptional.get().getId());
+                    } else if (createIfNotExists) {
+                        Customer newCustomer = new Customer();
+                        newCustomer.setTitle(entitykey.getEntityName());
+                        newCustomer.setTenantId(ctx.getTenantId());
+                        Customer savedCustomer = customerService.saveCustomer(newCustomer);
+                        targetEntity.setEntityId(savedCustomer.getId());
+                    }
+                    break;
+                case TENANT:
+                    targetEntity.setEntityId(ctx.getTenantId());
                     break;
                 case ENTITY_VIEW:
                     EntityViewService entityViewService = ctx.getEntityViewService();
@@ -157,14 +192,6 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                     if (entityView != null) {
                         targetEntity.setEntityId(entityView.getId());
                     }
-                    break;
-                case TENANT:
-                    targetEntity.setEntityId(ctx.getTenantId());
-                    break;
-                case CUSTOMER:
-                    CustomerService customerService = ctx.getCustomerService();
-                    Optional<Customer> customerOptional = customerService.findCustomerByTenantIdAndTitle(ctx.getTenantId(), entitykey.getEntityName());
-                    customerOptional.ifPresent(customer -> targetEntity.setEntityId(customer.getId()));
                     break;
                 case DASHBOARD:
                     DashboardService dashboardService = ctx.getDashboardService();
@@ -178,7 +205,6 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                 default:
                     return targetEntity;
             }
-            targetEntity.setEntityType(type);
             return targetEntity;
         }
 

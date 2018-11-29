@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,10 +34,11 @@ import org.thingsboard.server.common.msg.TbMsg;
         type = ComponentType.ACTION,
         name = "create relation",
         configClazz = TbCreateRelationNodeConfiguration.class,
-        nodeDescription = "Create the relation from the selected entity to originator of the message by type and direction.",
+        nodeDescription = "Finds target Entity by entity name pattern and then create a relation to Originator Entity by type and direction." +
+                " If Selected entity type: Asset, Device or Customer will create new Entity if it doesn't exist and 'Create new entity if not exists' is set to true.",
         nodeDetails = "If the relation already exists or successfully created -  Message send via <b>Success</b> chain, otherwise <b>Failure</b> chain will be used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbActionNodeRelationConfig",
+        configDirective = "tbActionNodeCreateRelationConfig",
         icon = "add_circle"
 )
 public class TbCreateRelationNode extends TbAbstractRelationActionNode<TbCreateRelationNodeConfiguration> {
@@ -45,6 +46,11 @@ public class TbCreateRelationNode extends TbAbstractRelationActionNode<TbCreateR
     @Override
     protected TbCreateRelationNodeConfiguration loadEntityNodeActionConfig(TbNodeConfiguration configuration) throws TbNodeException {
         return TbNodeUtils.convert(configuration, TbCreateRelationNodeConfiguration.class);
+    }
+
+    @Override
+    protected boolean createEntityIfNotExists() {
+        return config.isCreateEntityIfNotExists();
     }
 
     @Override

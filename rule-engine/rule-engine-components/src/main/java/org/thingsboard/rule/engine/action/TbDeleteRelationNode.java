@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,10 +33,10 @@ import org.thingsboard.server.common.msg.TbMsg;
         type = ComponentType.ACTION,
         name = "delete relation",
         configClazz = TbDeleteRelationNodeConfiguration.class,
-        nodeDescription = "Delete the relation from the selected entity to originator of the message by type and direction.",
+        nodeDescription = "Finds target Entity by entity name pattern and then delete a relation to Originator Entity by type and direction.",
         nodeDetails = "If the relation successfully deleted -  Message send via <b>Success</b> chain, otherwise <b>Failure</b> chain will be used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbActionNodeRelationConfig",
+        configDirective = "tbActionNodeDeleteRelationConfig",
         icon = "remove_circle"
 )
 public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteRelationNodeConfiguration> {
@@ -44,6 +44,11 @@ public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteR
     @Override
     protected TbDeleteRelationNodeConfiguration loadEntityNodeActionConfig(TbNodeConfiguration configuration) throws TbNodeException {
         return TbNodeUtils.convert(configuration, TbDeleteRelationNodeConfiguration.class);
+    }
+
+    @Override
+    protected boolean createEntityIfNotExists() {
+        return false;
     }
 
     @Override
