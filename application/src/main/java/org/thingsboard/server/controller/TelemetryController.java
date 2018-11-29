@@ -279,8 +279,18 @@ public class TelemetryController extends BaseController {
             deleteFromTs = 0L;
             deleteToTs = System.currentTimeMillis();
         } else {
-            deleteFromTs = startTs;
-            deleteToTs = endTs;
+            if(startTs == null) {
+                deleteFromTs = 0L;
+            }
+            else {
+                deleteFromTs = startTs;
+            }
+            if(endTs == null) {
+                deleteToTs = System.currentTimeMillis();
+            }
+            else {
+                deleteToTs = endTs;
+            }
         }
 
         return accessValidator.validateEntityAndCallback(user, entityIdStr, (result, tenantId, entityId) -> {
