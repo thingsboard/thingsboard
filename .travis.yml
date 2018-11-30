@@ -7,3 +7,15 @@ jdk:
 language: java
 sudo: required
 script: mvn clean verify
+before_deploy:
+  - export RELEASE_PKG_FILE='application/target/thingsboard.deb'
+  - echo "deploying $RELEASE_PKG_FILE to GitHub releases"
+deploy:
+  skip_cleanup: true
+  api_key:
+    secure: "uE4yDlbqK6cs3pP5ZrtfiD+RsYIfEM7TK8sP0+DyVXqeL+0cFRXSwyk88JFz24CSSVFSLQtsXbCHwR+OxIGGzosdQ0EZlUAtx23w6+okarJpb3scNh/6COpu7g+T1d+jq48b+X8d4qk4UlIuq5ZugKxva+yg8a6bvXK4fm+CHiHjbllxFJoU9bEprV+tJPVsaJg0/uTO58PV7ZFx3XJrtqJbBctNMVaYZ3ts+K0CI7nlBk0MJICqhTt1CwbL8fULLaSMXoClV9Nhv04Ow8Y12do0+siwXhJvVStMax2GzfxrSs9mXfIeDmEhxQnBIUazcwYbZbMdXRy2v/I2xRsO8dn5jKBa4BU6OjZBqxvJq2jgk/xVxX/dtbTKBcP6RNHOb2pm9/80I2MRN7pAkk/k2wX5ltsbXJoTRbaYOeWYPnOHDvxvBetsSVFle9rbBx1SvTL3a4piLL/9ao2Kze+XItPjlW3bhXwJRapusytAR0d7AOK+teF/euq2+CRJeL24aDdgrzxMUXyYx8LJV7I8PbCvLt7/fkE2eYBpSMTJ3QWYSXRAvqg3UgzfwsnlVYYcgNpWxmacG7Iw+tZr0JIs0h0akqHfBiTeWhdGQTA4UmVB9PBDiGDRzLgxH6pF4bnti8GOhTd9foG8uZ0Jc7sfOF3CuUgvpDxS09Vl7szCTQ0="
+  provider: releases
+  file: "*/application/target/*.deb"
+  file_glob: true
+  on:
+    tags: true
