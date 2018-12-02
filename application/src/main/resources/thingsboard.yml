@@ -215,6 +215,8 @@ actors:
     transaction:
       # Size of queues which store messages for transaction rule nodes
       queue_size: "${ACTORS_RULE_TRANSACTION_QUEUE_SIZE:10}"
+      # Time in milliseconds for transaction to complete
+      duration: "${ACTORS_RULE_TRANSACTION_DURATION:10000}"
   statistics:
     # Enable/disable actor statistics
     enabled: "${ACTORS_STATISTICS_ENABLED:true}"
