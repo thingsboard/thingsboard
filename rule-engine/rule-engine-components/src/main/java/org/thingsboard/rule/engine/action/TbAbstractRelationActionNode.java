@@ -31,7 +31,6 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.util.EntityContainer;
 import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.page.TextPageData;
@@ -94,8 +93,9 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
 
     protected ListenableFuture<EntityContainer> getEntity(TbContext ctx, TbMsg msg) {
         String entityName = TbNodeUtils.processPattern(this.config.getEntityNamePattern(), msg.getMetaData());
+        String type = TbNodeUtils.processPattern(this.config.getEntityTypePattern(), msg.getMetaData());
         EntityType entityType = EntityType.valueOf(this.config.getEntityType());
-        Entitykey key = new Entitykey(entityName, entityType);
+        Entitykey key = new Entitykey(entityName, type, entityType);
         return ctx.getDbCallbackExecutor().executeAsync(() -> {
             EntityContainer entityContainer = entityIdCache.get(key);
             if (entityContainer.getEntityId() == null) {
@@ -119,7 +119,9 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
     @AllArgsConstructor
     private static class Entitykey {
         private String entityName;
+        private String type;
         private EntityType entityType;
+
     }
 
     private static class EntityCacheLoader extends CacheLoader<Entitykey, EntityContainer> {
@@ -150,7 +152,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                     } else if (createIfNotExists) {
                         Device newDevice = new Device();
                         newDevice.setName(entitykey.getEntityName());
-                        newDevice.setType("default");
+                        newDevice.setType(entitykey.getType());
                         newDevice.setTenantId(ctx.getTenantId());
                         Device savedDevice = deviceService.saveDevice(newDevice);
                         targetEntity.setEntityId(savedDevice.getId());
@@ -164,7 +166,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                     } else if (createIfNotExists) {
                         Asset newAsset = new Asset();
                         newAsset.setName(entitykey.getEntityName());
-                        newAsset.setType("default");
+                        newAsset.setType(entitykey.getType());
                         newAsset.setTenantId(ctx.getTenantId());
                         Asset savedAsset = assetService.saveAsset(newAsset);
                         targetEntity.setEntityId(savedAsset.getId());

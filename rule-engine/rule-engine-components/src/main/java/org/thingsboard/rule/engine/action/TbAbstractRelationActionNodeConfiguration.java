@@ -25,6 +25,7 @@ public abstract class TbAbstractRelationActionNodeConfiguration {
 
     private String entityType;
     private String entityNamePattern;
+    private String entityTypePattern;
 
     private long entityCacheExpiration;
 
