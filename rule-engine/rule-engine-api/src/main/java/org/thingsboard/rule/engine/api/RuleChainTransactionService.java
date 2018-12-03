@@ -15,9 +15,11 @@
  */
 package org.thingsboard.rule.engine.api;
 
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.cluster.ServerAddress;
 
-import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
 public interface RuleChainTransactionService {
@@ -25,5 +27,9 @@ public interface RuleChainTransactionService {
     void beginTransaction(TbContext ctx, TbMsg msg, Consumer<TbMsg> onStart, Consumer<TbMsg> onEnd, Consumer<Throwable> onFailure);
 
     boolean endTransaction(TbContext ctx, TbMsg msg, Consumer<Throwable> onFailure);
+
+    void onRemoteTransactionMsg(ServerAddress serverAddress, byte[] bytes);
+
+    void onTransactionEnd(TenantId tenantId, EntityId entityId);
 
 }

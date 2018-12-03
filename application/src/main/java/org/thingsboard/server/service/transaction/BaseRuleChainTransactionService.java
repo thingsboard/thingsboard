@@ -15,17 +15,29 @@
  */
 package org.thingsboard.server.service.transaction;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.RuleChainTransactionService;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.cluster.ServerAddress;
+import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
+import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
+import org.thingsboard.server.service.cluster.rpc.ClusterRpcService;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.util.Optional;
 import java.util.Queue;
+import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -42,6 +54,12 @@ import java.util.function.Consumer;
 @Slf4j
 public class BaseRuleChainTransactionService implements RuleChainTransactionService {
 
+    @Autowired
+    private ClusterRoutingService routingService;
+
+    @Autowired
+    private ClusterRpcService clusterRpcService;
+
     @Value("${actors.rule.transaction.queue_size}")
     private int finalQueueSize;
     @Value("${actors.rule.transaction.duration}")
@@ -52,10 +70,12 @@ public class BaseRuleChainTransactionService implements RuleChainTransactionServ
     private final Queue<TbTransactionTask> timeoutQueue = new ConcurrentLinkedQueue<>();
 
     private ExecutorService timeoutExecutor;
+    private ExecutorService executor;
 
     @PostConstruct
     public void init() {
         timeoutExecutor = Executors.newSingleThreadExecutor();
+        executor = Executors.newSingleThreadExecutor();
         executeOnTimeout();
     }
 
@@ -63,6 +83,9 @@ public class BaseRuleChainTransactionService implements RuleChainTransactionServ
     public void destroy() {
         if (timeoutExecutor != null) {
             timeoutExecutor.shutdownNow();
+        }
+        if (executor != null) {
+            executor.shutdownNow();
         }
     }
 
@@ -126,7 +149,7 @@ public class BaseRuleChainTransactionService implements RuleChainTransactionServ
     }
 
     private void executeOnTimeout() {
-        timeoutExecutor.execute(() -> {
+        timeoutExecutor.submit(() -> {
             while (true) {
                 TbTransactionTask task = timeoutQueue.peek();
                 if (task != null) {
@@ -170,5 +193,46 @@ public class BaseRuleChainTransactionService implements RuleChainTransactionServ
         task.setIsCompleted(false);
         task.setExpirationTime(System.currentTimeMillis() + duration);
         task.getOnStart().accept(task.getMsg());
+    }
+
+    @Override
+    public void onRemoteTransactionMsg(ServerAddress serverAddress, byte[] data) {
+        ClusterAPIProtos.TransactionServiceMsgProto proto;
+        try {
+            proto = ClusterAPIProtos.TransactionServiceMsgProto.parseFrom(data);
+        } catch (InvalidProtocolBufferException e) {
+            throw new RuntimeException(e);
+        }
+        TenantId tenantId = new TenantId(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB()));
+
+        String entityTypeStr = proto.getEntityType();
+        EntityId entityId;
+        if (entityTypeStr.equals(EntityType.ASSET.name())) {
+            entityId = new AssetId(new UUID(proto.getOriginatorIdMSB(), proto.getOriginatorIdLSB()));
+        } else {
+            entityId = new DeviceId(new UUID(proto.getOriginatorIdMSB(), proto.getOriginatorIdLSB()));
+        }
+        onTransactionEnd(tenantId, entityId);
+    }
+
+    @Override
+    public void onTransactionEnd(TenantId tenantId, EntityId entityId) {
+        executor.submit(() -> onTransactionEndSync(tenantId, entityId));
+    }
+
+    private void onTransactionEndSync(TenantId tenantId, EntityId entityId) {
+        Optional<ServerAddress> address = routingService.resolveById(entityId);
+        address.ifPresent(serverAddress -> sendTransactionEvent(tenantId, entityId, serverAddress));
+    }
+
+    private void sendTransactionEvent(TenantId tenantId, EntityId entityId, ServerAddress address) {
+        log.trace("[{}][{}] Originator is monitored on other server: {}", tenantId, entityId, address);
+        ClusterAPIProtos.TransactionServiceMsgProto.Builder builder = ClusterAPIProtos.TransactionServiceMsgProto.newBuilder();
+        builder.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
+        builder.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
+        builder.setEntityType(entityId.getEntityType().name());
+        builder.setOriginatorIdMSB(entityId.getId().getMostSignificantBits());
+        builder.setOriginatorIdLSB(entityId.getId().getLeastSignificantBits());
+        clusterRpcService.tell(address, ClusterAPIProtos.MessageType.CLUSTER_TRANSACTION_SERVICE_MESSAGE, builder.build().toByteArray());
     }
 }

@@ -19,8 +19,6 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 
-import java.util.Optional;
-
 /**
  * Created by ashvayka on 01.05.18.
  */

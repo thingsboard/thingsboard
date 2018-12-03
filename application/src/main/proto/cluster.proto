@@ -60,6 +60,7 @@ enum MessageType {
   CLUSTER_RPC_FROM_DEVICE_RESPONSE_MESSAGE = 12;
 
   CLUSTER_DEVICE_STATE_SERVICE_MESSAGE = 13;
+  CLUSTER_TRANSACTION_SERVICE_MESSAGE = 14;
 }
 
 // Messages related to CLUSTER_TELEMETRY_MESSAGE
@@ -141,4 +142,12 @@ message DeviceStateServiceMsgProto {
     bool added = 5;
     bool updated = 6;
     bool deleted = 7;
+}
+
+message TransactionServiceMsgProto {
+    int64 tenantIdMSB = 1;
+    int64 tenantIdLSB = 2;
+    string entityType = 3;
+    int64 originatorIdMSB = 4;
+    int64 originatorIdLSB = 5;
 }
