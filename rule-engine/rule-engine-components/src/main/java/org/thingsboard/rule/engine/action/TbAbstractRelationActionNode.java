@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -80,7 +81,6 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
     public void destroy() {
     }
 
-
     private ListenableFuture<Boolean> processEntityRelationAction(TbContext ctx, TbMsg msg) {
         return Futures.transformAsync(getEntity(ctx, msg), entityContainer -> doProcessEntityRelationAction(ctx, msg, entityContainer));
     }
@@ -93,9 +93,19 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
 
     protected ListenableFuture<EntityContainer> getEntity(TbContext ctx, TbMsg msg) {
         String entityName = TbNodeUtils.processPattern(this.config.getEntityNamePattern(), msg.getMetaData());
-        String type = TbNodeUtils.processPattern(this.config.getEntityTypePattern(), msg.getMetaData());
+        String type = null;
+        if (this.config.getEntityTypePattern() != null) {
+            type = TbNodeUtils.processPattern(this.config.getEntityTypePattern(), msg.getMetaData());
+        }
         EntityType entityType = EntityType.valueOf(this.config.getEntityType());
-        Entitykey key = new Entitykey(entityName, type, entityType);
+        Entitykey key;
+        if (type == null) {
+            key = new Entitykey();
+            key.setEntityName(entityName);
+            key.setEntityType(entityType);
+        } else {
+            key = new Entitykey(entityName, type, entityType);
+        }
         return ctx.getDbCallbackExecutor().executeAsync(() -> {
             EntityContainer entityContainer = entityIdCache.get(key);
             if (entityContainer.getEntityId() == null) {
@@ -117,6 +127,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
 
     @Data
     @AllArgsConstructor
+    @NoArgsConstructor
     private static class Entitykey {
         private String entityName;
         private String type;
