@@ -139,7 +139,9 @@ export function toLabelValueMap(data, datasources) {
     var dataMap = {};
     var dsDataMap = [];
     for (var d=0;d<datasources.length;d++) {
-        dsDataMap[d] = {};
+        dsDataMap[d] = {
+            $datasource: datasources[d]
+        };
     }
     for (var i = 0; i < data.length; i++) {
         var dataKey = data[i].dataKey;

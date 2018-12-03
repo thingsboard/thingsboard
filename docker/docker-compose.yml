@@ -36,6 +36,7 @@ services:
     depends_on:
       - zookeeper
   redis:
+    restart: always
     image: redis:4.0
     ports:
       - "6379"

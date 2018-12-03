@@ -40,10 +40,7 @@ import org.thingsboard.server.service.telemetry.TelemetryWebSocketMsgEndpoint;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketService;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketSessionRef;
 
-import javax.websocket.RemoteEndpoint;
-import javax.websocket.SendHandler;
-import javax.websocket.SendResult;
-import javax.websocket.Session;
+import javax.websocket.*;
 import java.io.IOException;
 import java.net.URI;
 import java.security.InvalidParameterException;
@@ -75,6 +72,8 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
     private int maxSessionsPerRegularUser;
     @Value("${server.ws.limits.max_sessions_per_public_user:0}")
     private int maxSessionsPerPublicUser;
+    @Value("${server.ws.limits.max_queue_per_ws_session:1000}")
+    private int maxMsgQueuePerSession;
 
     @Value("${server.ws.limits.max_updates_per_session:}")
     private String perSessionUpdatesConfiguration;
@@ -108,7 +107,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
         super.afterConnectionEstablished(session);
         try {
             if (session instanceof NativeWebSocketSession) {
-                Session nativeSession = ((NativeWebSocketSession)session).getNativeSession(Session.class);
+                Session nativeSession = ((NativeWebSocketSession) session).getNativeSession(Session.class);
                 if (nativeSession != null) {
                     nativeSession.getAsyncRemote().setSendTimeout(sendTimeout);
                 }
@@ -119,7 +118,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
             if (!checkLimits(session, sessionRef)) {
                 return;
             }
-            internalSessionMap.put(internalSessionId, new SessionMetaData(session, sessionRef));
+            internalSessionMap.put(internalSessionId, new SessionMetaData(session, sessionRef, maxMsgQueuePerSession));
             externalSessionMap.put(externalSessionId, internalSessionId);
             processInWebSocketService(sessionRef, SessionEvent.onEstablished());
             log.info("[{}][{}][{}] Session is opened", sessionRef.getSecurityCtx().getTenantId(), externalSessionId, session.getId());
@@ -176,31 +175,44 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
         if (!"telemetry".equalsIgnoreCase(serviceToken)) {
             throw new InvalidParameterException("Can't find plugin with specified token!");
         } else {
-            SecurityUser currentUser = (SecurityUser) ((Authentication)session.getPrincipal()).getPrincipal();
+            SecurityUser currentUser = (SecurityUser) ((Authentication) session.getPrincipal()).getPrincipal();
             return new TelemetryWebSocketSessionRef(UUID.randomUUID().toString(), currentUser, session.getLocalAddress(), session.getRemoteAddress());
         }
     }
 
-    private static class SessionMetaData implements SendHandler {
+    private class SessionMetaData implements SendHandler {
         private final WebSocketSession session;
         private final RemoteEndpoint.Async asyncRemote;
         private final TelemetryWebSocketSessionRef sessionRef;
 
         private volatile boolean isSending = false;
+        private final Queue<String> msgQueue;
 
-        private Queue<String> msgQueue = new LinkedBlockingQueue<>();
-
-        SessionMetaData(WebSocketSession session, TelemetryWebSocketSessionRef sessionRef) {
+        SessionMetaData(WebSocketSession session, TelemetryWebSocketSessionRef sessionRef, int maxMsgQueuePerSession) {
             super();
             this.session = session;
-            Session nativeSession = ((NativeWebSocketSession)session).getNativeSession(Session.class);
+            Session nativeSession = ((NativeWebSocketSession) session).getNativeSession(Session.class);
             this.asyncRemote = nativeSession.getAsyncRemote();
             this.sessionRef = sessionRef;
+            this.msgQueue = new LinkedBlockingQueue<>(maxMsgQueuePerSession);
         }
 
-        public synchronized void sendMsg(String msg) {
+        synchronized void sendMsg(String msg) {
             if (isSending) {
-                msgQueue.add(msg);
+                try {
+                    msgQueue.add(msg);
+                } catch (RuntimeException e) {
+                    if (log.isTraceEnabled()) {
+                        log.trace("[{}][{}] Session closed due to queue error", sessionRef.getSecurityCtx().getTenantId(), session.getId(), e);
+                    } else {
+                        log.info("[{}][{}] Session closed due to queue error", sessionRef.getSecurityCtx().getTenantId(), session.getId());
+                    }
+                    try {
+                        close(sessionRef, CloseStatus.POLICY_VIOLATION.withReason("Max pending updates limit reached!"));
+                    } catch (IOException ioe) {
+                        log.trace("[{}] Session transport error", session.getId(), ioe);
+                    }
+                }
             } else {
                 isSending = true;
                 sendMsgInternal(msg);
@@ -211,20 +223,31 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
             try {
                 this.asyncRemote.sendText(msg, this);
             } catch (Exception e) {
-                log.error("[{}] Failed to send msg", session.getId(), e);
+                log.trace("[{}] Failed to send msg", session.getId(), e);
+                try {
+                    close(this.sessionRef, CloseStatus.SESSION_NOT_RELIABLE);
+                } catch (IOException ioe) {
+                    log.trace("[{}] Session transport error", session.getId(), ioe);
+                }
             }
         }
 
         @Override
         public void onResult(SendResult result) {
             if (!result.isOK()) {
-                log.error("[{}] Failed to send msg", session.getId(), result.getException());
-            }
-            String msg = msgQueue.poll();
-            if (msg != null) {
-                sendMsgInternal(msg);
+                log.trace("[{}] Failed to send msg", session.getId(), result.getException());
+                try {
+                    close(this.sessionRef, CloseStatus.SESSION_NOT_RELIABLE);
+                } catch (IOException ioe) {
+                    log.trace("[{}] Session transport error", session.getId(), ioe);
+                }
             } else {
-                isSending = false;
+                String msg = msgQueue.poll();
+                if (msg != null) {
+                    sendMsgInternal(msg);
+                } else {
+                    isSending = false;
+                }
             }
         }
     }

@@ -138,6 +138,24 @@ export default class TbMapWidgetV2 {
         this.locationSettings.label = this.ctx.settings.label || "${entityName}";
         this.locationSettings.color = this.ctx.settings.color ? tinycolor(this.ctx.settings.color).toHexString() : "#FE7569";
 
+        this.locationSettings.useLabelFunction = this.ctx.settings.useLabelFunction === true;
+        if (angular.isDefined(this.ctx.settings.labelFunction) && this.ctx.settings.labelFunction.length > 0) {
+            try {
+                this.locationSettings.labelFunction = new Function('data, dsData, dsIndex', this.ctx.settings.labelFunction);
+            } catch (e) {
+                this.locationSettings.labelFunction = null;
+            }
+        }
+
+        this.locationSettings.useTooltipFunction = this.ctx.settings.useTooltipFunction === true;
+        if (angular.isDefined(this.ctx.settings.tooltipFunction) && this.ctx.settings.tooltipFunction.length > 0) {
+            try {
+                this.locationSettings.tooltipFunction = new Function('data, dsData, dsIndex', this.ctx.settings.tooltipFunction);
+            } catch (e) {
+                this.locationSettings.tooltipFunction = null;
+            }
+        }
+
         this.locationSettings.useColorFunction = this.ctx.settings.useColorFunction === true;
         if (angular.isDefined(this.ctx.settings.colorFunction) && this.ctx.settings.colorFunction.length > 0) {
             try {
@@ -192,13 +210,29 @@ export default class TbMapWidgetV2 {
 
         var tbMap = this;
 
-        function updateLocationLabel(location) {
-            if (location.settings.showLabel && location.settings.labelReplaceInfo.variables.length) {
-                location.settings.labelText = fillPattern(location.settings.label,
-                    location.settings.labelReplaceInfo, tbMap.subscription.data);
+        function updateLocationLabel(location, dataMap) {
+            if (location.settings.showLabel) {
+                if (location.settings.useLabelFunction && location.settings.labelFunction) {
+                    try {
+                        location.settings.label = location.settings.labelFunction(dataMap.dataMap, dataMap.dsDataMap, location.dsIndex);
+                    } catch (e) {
+                        location.settings.label = null;
+                    }
+                    if (location.settings.label) {
+                        var datasources = tbMap.subscription.datasources;
+                        location.settings.label = tbMap.utils.createLabelFromDatasource(datasources[location.dsIndex], location.settings.label);
+                        location.settings.labelReplaceInfo = processPattern(location.settings.label, datasources, location.dsIndex);
+                        location.settings.labelText = location.settings.label;
+                    }
+                }
+                if (location.settings.labelReplaceInfo.variables.length) {
+                    location.settings.labelText = fillPattern(location.settings.label,
+                        location.settings.labelReplaceInfo, tbMap.subscription.data);
+                }
                 tbMap.map.updateMarkerLabel(location.marker, location.settings);
             }
         }
+
 
         function calculateLocationColor(location, dataMap) {
             if (location.settings.useColorFunction && location.settings.colorFunction) {
@@ -249,7 +283,7 @@ export default class TbMapWidgetV2 {
         }
 
         function updateLocationStyle(location, dataMap) {
-            updateLocationLabel(location);
+            updateLocationLabel(location, dataMap);
             var color = calculateLocationColor(location, dataMap);
             var image = calculateLocationMarkerImage(location, dataMap);
             updateLocationColor(location, color, image);
@@ -263,7 +297,7 @@ export default class TbMapWidgetV2 {
                 if (image && (!location.settings.currentImage || !angular.equals(location.settings.currentImage, image))) {
                     location.settings.currentImage = image;
                 }
-                location.marker = tbMap.map.createMarker(markerLocation, location.settings,
+                location.marker = tbMap.map.createMarker(markerLocation, location.dsIndex, location.settings,
                     function (event) {
                         tbMap.callbacks.onLocationClick(location);
                         locationRowClick(event, location);
@@ -425,6 +459,25 @@ export default class TbMapWidgetV2 {
             }
         }
 
+        function createTooltipContent(tooltip, data, datasources) {
+            var content;
+            var settings = tooltip.locationSettings;
+            if (settings.useTooltipFunction && settings.tooltipFunction) {
+                var dataMap = toLabelValueMap(data, datasources);
+                try {
+                    settings.tooltipPattern = settings.tooltipFunction(dataMap.dataMap, dataMap.dsDataMap, tooltip.dsIndex);
+                } catch (e) {
+                    settings.tooltipPattern = null;
+                }
+                if (settings.tooltipPattern) {
+                    settings.tooltipPattern = tbMap.utils.createLabelFromDatasource(datasources[tooltip.dsIndex], settings.tooltipPattern);
+                    settings.tooltipReplaceInfo = processPattern(settings.tooltipPattern, datasources, tooltip.dsIndex);
+                }
+            }
+            content = fillPattern(settings.tooltipPattern, settings.tooltipReplaceInfo, data);
+            return fillPatternWithActions(content, 'onTooltipAction', tooltip.markerArgs);
+        }
+
         if (this.map && this.map.inited() && this.subscription) {
             if (this.subscription.data) {
                 if (!this.locations) {
@@ -433,10 +486,9 @@ export default class TbMapWidgetV2 {
                     updateLocations(this.subscription.data, this.subscription.datasources);
                 }
                 var tooltips = this.map.getTooltips();
-                for (var t=0; t < tooltips.length; t++) {
+                for (var t = 0; t < tooltips.length; t++) {
                     var tooltip = tooltips[t];
-                    var text = fillPattern(tooltip.pattern, tooltip.replaceInfo, this.subscription.data);
-                    text = fillPatternWithActions(text, 'onTooltipAction', tooltip.markerArgs);
+                    var text = createTooltipContent(tooltip, this.subscription.data, this.subscription.datasources);
                     tooltip.popup.setContent(text);
                 }
             }
@@ -683,6 +735,15 @@ const commonMapSettingsSchema =
                     "type":"string",
                     "default":"${entityName}"
                 },
+                "useLabelFunction": {
+                    "title":"Use label function",
+                    "type":"boolean",
+                    "default":false
+                },
+                "labelFunction":{
+                    "title":"Label function: f(data, dsData, dsIndex)",
+                    "type":"string"
+                },
                 "showTooltip": {
                     "title": "Show tooltip",
                     "type":"boolean",
@@ -697,6 +758,15 @@ const commonMapSettingsSchema =
                     "title":"Tooltip (for ex. 'Text ${keyName} units.' or <link-act name='my-action'>Link text</link-act>')",
                     "type":"string",
                     "default":"<b>${entityName}</b><br/><br/><b>Latitude:</b> ${latitude:7}<br/><b>Longitude:</b> ${longitude:7}"
+                },
+                "useTooltipFunction": {
+                    "title":"Use tooltip function",
+                    "type":"boolean",
+                    "default":false
+                },
+                "tooltipFunction":{
+                    "title":"Tooltip function: f(data, dsData, dsIndex)",
+                    "type":"string"
                 },
                 "color":{
                     "title":"Color",
@@ -747,11 +817,21 @@ const commonMapSettingsSchema =
             "lngKeyName",
             "showLabel",
             "label",
+            "useLabelFunction",
+            {
+                "key":"labelFunction",
+                "type":"javascript"
+            },
             "showTooltip",
             "autocloseTooltip",
             {
                 "key": "tooltipPattern",
                 "type": "textarea"
+            },
+            "useTooltipFunction",
+            {
+                "key":"tooltipFunction",
+                "type":"javascript"
             },
             {
                 "key":"color",
@@ -851,6 +931,15 @@ const imageMapSettingsSchema =
                 "type":"string",
                 "default":"${entityName}"
             },
+            "useLabelFunction": {
+                "title":"Use label function",
+                "type":"boolean",
+                "default":false
+            },
+            "labelFunction":{
+                "title":"Label function: f(data, dsData, dsIndex)",
+                "type":"string"
+            },
             "showTooltip": {
                 "title": "Show tooltip",
                 "type":"boolean",
@@ -865,6 +954,15 @@ const imageMapSettingsSchema =
                 "title":"Tooltip (for ex. 'Text ${keyName} units.' or <link-act name='my-action'>Link text</link-act>')",
                 "type":"string",
                 "default":"<b>${entityName}</b><br/><br/><b>X Pos:</b> ${xPos:2}<br/><b>Y Pos:</b> ${yPos:2}"
+            },
+            "useTooltipFunction": {
+                "title":"Use tooltip function",
+                "type":"boolean",
+                "default":false
+            },
+            "tooltipFunction":{
+                "title":"Tooltip function: f(data, dsData, dsIndex)",
+                "type":"string"
             },
             "color":{
                 "title":"Color",
@@ -934,11 +1032,21 @@ const imageMapSettingsSchema =
         "yPosKeyName",
         "showLabel",
         "label",
+        "useLabelFunction",
+        {
+            "key":"labelFunction",
+            "type":"javascript"
+        },
         "showTooltip",
         "autocloseTooltip",
         {
             "key": "tooltipPattern",
             "type": "textarea"
+        },
+        "useTooltipFunction",
+        {
+            "key":"tooltipFunction",
+            "type":"javascript"
         },
         {
             "key":"color",
