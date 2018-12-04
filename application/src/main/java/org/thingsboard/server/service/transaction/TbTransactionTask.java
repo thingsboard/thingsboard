@@ -29,15 +29,16 @@ public final class TbTransactionTask {
     private final Consumer<TbMsg> onStart;
     private final Consumer<TbMsg> onEnd;
     private final Consumer<Throwable> onFailure;
+    private final long expirationTime;
 
-    private Boolean isCompleted;
-    private Long expirationTime;
+    private boolean isCompleted;
 
-    public TbTransactionTask(TbMsg msg, Consumer<TbMsg> onStart, Consumer<TbMsg> onEnd, Consumer<Throwable> onFailure) {
+    public TbTransactionTask(TbMsg msg, Consumer<TbMsg> onStart, Consumer<TbMsg> onEnd, Consumer<Throwable> onFailure, long expirationTime) {
         this.msg = msg;
         this.onStart = onStart;
         this.onEnd = onEnd;
         this.onFailure = onFailure;
+        this.expirationTime = expirationTime;
         this.isCompleted = false;
     }
 }

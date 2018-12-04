@@ -28,7 +28,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgTransactionData;
 
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
@@ -54,19 +53,18 @@ public class TbTransactionBeginNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        log.trace("Msg enters transaction - [{}] [{}]", msg.getId(), msg.getType());
+        log.trace("Msg enters transaction - [{}][{}]", msg.getId(), msg.getType());
 
         TbMsgTransactionData transactionData = new TbMsgTransactionData(msg.getId(), msg.getOriginator());
-
         TbMsg tbMsg = new TbMsg(msg.getId(), msg.getType(), msg.getOriginator(), msg.getMetaData(), TbMsgDataType.JSON,
                 msg.getData(), transactionData, msg.getRuleChainId(), msg.getRuleNodeId(), msg.getClusterPartition());
 
-        ctx.getRuleChainTransactionService().beginTransaction(ctx, tbMsg, onStart -> {
-                    log.trace("Transaction starting... [{}] [{}]", tbMsg.getId(), tbMsg.getType());
-                    ctx.tellNext(tbMsg, SUCCESS);
-                }, onEnd -> log.trace("Transaction ended successfully... [{}] [{}]", tbMsg.getId(), tbMsg.getType()),
+        ctx.getRuleChainTransactionService().beginTransaction(ctx, tbMsg, startMsg -> {
+                    log.trace("Transaction starting... [{}][{}]", startMsg.getId(), startMsg.getType());
+                    ctx.tellNext(startMsg, SUCCESS);
+                }, endMsg -> log.trace("Transaction ended successfully... [{}][{}]", endMsg.getId(), endMsg.getType()),
                 throwable -> {
-                    log.error("Transaction failed! [{}] [{}]", tbMsg.getId(), tbMsg.getType(), throwable);
+                    log.error("Transaction failed! [{}][{}]", tbMsg.getId(), tbMsg.getType(), throwable);
                     ctx.tellFailure(tbMsg, throwable);
                 });
     }
