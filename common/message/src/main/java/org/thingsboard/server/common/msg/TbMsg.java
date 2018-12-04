@@ -56,7 +56,7 @@ public final class TbMsg implements Serializable {
         this.metaData = metaData;
         this.data = data;
         this.dataType = TbMsgDataType.JSON;
-        this.transactionData = null;
+        this.transactionData = new TbMsgTransactionData(id, originator);
         this.ruleChainId = ruleChainId;
         this.ruleNodeId = ruleNodeId;
         this.clusterPartition = clusterPartition;
@@ -64,7 +64,7 @@ public final class TbMsg implements Serializable {
 
     public TbMsg(UUID id, String type, EntityId originator, TbMsgMetaData metaData, TbMsgDataType dataType, String data,
                  RuleChainId ruleChainId, RuleNodeId ruleNodeId, long clusterPartition) {
-        this(id, type, originator, metaData, dataType, data, null, ruleChainId, ruleNodeId, clusterPartition);
+        this(id, type, originator, metaData, dataType, data, new TbMsgTransactionData(id, originator), ruleChainId, ruleNodeId, clusterPartition);
     }
 
     public static ByteBuffer toBytes(TbMsg msg) {
