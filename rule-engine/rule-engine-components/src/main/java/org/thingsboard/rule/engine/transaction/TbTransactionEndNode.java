@@ -56,7 +56,7 @@ public class TbTransactionEndNode implements TbNode {
         if (!isFailed) {
             ctx.tellNext(msg, SUCCESS);
         }
-        log.trace("Msg out - [{}] [{}]", msg.getId(), msg.getType());
+        log.trace("Msg left transaction - [{}] [{}]", msg.getId(), msg.getType());
     }
 
     @Override
