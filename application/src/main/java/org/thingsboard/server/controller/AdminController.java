@@ -28,6 +28,8 @@ import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
+import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.update.UpdateService;
 import org.thingsboard.server.service.update.model.UpdateMessage;
 
@@ -49,6 +51,7 @@ public class AdminController extends BaseController {
     @ResponseBody
     public AdminSettings getAdminSettings(@PathVariable("key") String key) throws ThingsboardException {
         try {
+            accessControlService.checkPermission(getCurrentUser(), TenantId.SYS_TENANT_ID, Resource.ADMIN_SETTINGS, Operation.READ);
             return checkNotNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, key));
         } catch (Exception e) {
             throw handleException(e);
@@ -60,6 +63,7 @@ public class AdminController extends BaseController {
     @ResponseBody 
     public AdminSettings saveAdminSettings(@RequestBody AdminSettings adminSettings) throws ThingsboardException {
         try {
+            accessControlService.checkPermission(getCurrentUser(), TenantId.SYS_TENANT_ID, Resource.ADMIN_SETTINGS, Operation.WRITE);
             adminSettings = checkNotNull(adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, adminSettings));
             if (adminSettings.getKey().equals("mail")) {
                 mailService.updateMailConfiguration();
@@ -74,6 +78,7 @@ public class AdminController extends BaseController {
     @RequestMapping(value = "/settings/testMail", method = RequestMethod.POST)
     public void sendTestMail(@RequestBody AdminSettings adminSettings) throws ThingsboardException {
         try {
+            accessControlService.checkPermission(getCurrentUser(), TenantId.SYS_TENANT_ID, Resource.ADMIN_SETTINGS, Operation.READ);
             adminSettings = checkNotNull(adminSettings);
             if (adminSettings.getKey().equals("mail")) {
                String email = getCurrentUser().getEmail();

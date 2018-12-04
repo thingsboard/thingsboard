@@ -20,7 +20,15 @@ import org.thingsboard.server.common.data.EntityType;
 import java.util.Optional;
 
 public enum Resource {
-    DEVICE(EntityType.DEVICE);
+    ADMIN_SETTINGS(),
+    ALARM(EntityType.ALARM),
+    DEVICE(EntityType.DEVICE),
+    ASSET(EntityType.ASSET),
+    CUSTOMER(EntityType.CUSTOMER),
+    DASHBOARD(EntityType.DASHBOARD),
+    ENTITY_VIEW(EntityType.ENTITY_VIEW),
+    TENANT(EntityType.TENANT),
+    RULE_CHAIN(EntityType.RULE_CHAIN);
 
     private final EntityType entityType;
 

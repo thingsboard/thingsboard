@@ -17,6 +17,6 @@ package org.thingsboard.server.service.security.permission;
 
 public enum Operation {
 
-    ALL, CREATE, READ, WRITE, DELETE
+    ALL, CREATE, READ, WRITE, DELETE, ASSIGN_TO_CUSTOMER, UNASSIGN_FROM_CUSTOMER
 
 }
