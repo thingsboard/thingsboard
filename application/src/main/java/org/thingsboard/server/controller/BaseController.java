@@ -74,6 +74,9 @@ import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.permission.AccessControlService;
+import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
@@ -97,6 +100,9 @@ public abstract class BaseController {
 
     @Autowired
     private ThingsboardErrorResponseHandler errorResponseHandler;
+
+    @Autowired
+    protected AccessControlService accessControlService;
 
     @Autowired
     protected TenantService tenantService;
@@ -353,7 +359,8 @@ public abstract class BaseController {
         try {
             validateId(deviceId, "Incorrect deviceId " + deviceId);
             Device device = deviceService.findDeviceById(getCurrentUser().getTenantId(), deviceId);
-            checkDevice(device);
+//            checkDevice(device);
+            accessControlService.checkPermission(getCurrentUser(), Resource.DEVICE, Operation.READ, deviceId, device);
             return device;
         } catch (Exception e) {
             throw handleException(e, false);
