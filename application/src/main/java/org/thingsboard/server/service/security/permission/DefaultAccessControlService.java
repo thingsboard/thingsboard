@@ -18,6 +18,7 @@ package org.thingsboard.server.service.security.permission;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
@@ -43,11 +44,15 @@ public class DefaultAccessControlService implements AccessControlService {
     private static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     private static final String YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION = "You don't have permission to perform this operation!";
 
-    private final Map<Authority, Map<Resource, PermissionChecker>> authorityPermissions = new HashMap<>();
-    {
-        authorityPermissions.put(Authority.SYS_ADMIN, new SysAdminPermissions());
-        authorityPermissions.put(Authority.TENANT_ADMIN, new TenantAdminPermissions());
-        authorityPermissions.put(Authority.CUSTOMER_USER, new CustomerUserPremissions());
+    private final Map<Authority, Permissions> authorityPermissions = new HashMap<>();
+
+    public DefaultAccessControlService(
+            @Qualifier("sysAdminPermissions") Permissions sysAdminPermissions,
+            @Qualifier("tenantAdminPermissions") Permissions tenantAdminPermissions,
+            @Qualifier("customerUserPermissions") Permissions customerUserPermissions) {
+        authorityPermissions.put(Authority.SYS_ADMIN, sysAdminPermissions);
+        authorityPermissions.put(Authority.TENANT_ADMIN, tenantAdminPermissions);
+        authorityPermissions.put(Authority.CUSTOMER_USER, customerUserPermissions);
     }
 
     @Override
@@ -76,15 +81,15 @@ public class DefaultAccessControlService implements AccessControlService {
     }
 
     private PermissionChecker getPermissionChecker(Authority authority, Resource resource) throws ThingsboardException {
-        Map<Resource, PermissionChecker> permissions = authorityPermissions.get(authority);
+        Permissions permissions = authorityPermissions.get(authority);
         if (permissions == null) {
             permissionDenied();
         }
-        PermissionChecker permissionChecker = permissions.get(resource);
-        if (permissionChecker == null) {
+        Optional<PermissionChecker> permissionChecker = permissions.getPermissionChecker(resource);
+        if (!permissionChecker.isPresent()) {
             permissionDenied();
         }
-        return permissionChecker;
+        return permissionChecker.get();
     }
 
     private void permissionDenied() throws ThingsboardException {

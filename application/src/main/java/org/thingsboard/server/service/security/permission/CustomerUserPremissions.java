@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.security.permission;
 
+import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -25,7 +26,8 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.HashMap;
 
-public class CustomerUserPremissions extends HashMap<Resource, PermissionChecker> {
+@Component(value="customerUserPermissions")
+public class CustomerUserPremissions extends AbstractPermissions {
 
     public CustomerUserPremissions() {
         super();

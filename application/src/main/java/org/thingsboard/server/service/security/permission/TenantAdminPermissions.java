@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.security.permission;
 
+import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -25,7 +26,8 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.HashMap;
 
-public class TenantAdminPermissions extends HashMap<Resource, PermissionChecker> {
+@Component(value="tenantAdminPermissions")
+public class TenantAdminPermissions extends AbstractPermissions {
 
     public TenantAdminPermissions() {
         super();

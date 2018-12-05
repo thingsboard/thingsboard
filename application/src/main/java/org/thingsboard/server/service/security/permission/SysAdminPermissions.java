@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.security.permission;
 
+import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -24,8 +25,10 @@ import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.HashMap;
+import java.util.Optional;
 
-public class SysAdminPermissions extends HashMap<Resource, PermissionChecker> {
+@Component(value="sysAdminPermissions")
+public class SysAdminPermissions extends AbstractPermissions {
 
     public SysAdminPermissions() {
         super();
