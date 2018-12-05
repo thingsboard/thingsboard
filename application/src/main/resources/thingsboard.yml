@@ -310,7 +310,7 @@ spring:
     password: "${SPRING_DATASOURCE_PASSWORD:}"
 
 # PostgreSQL DAO Configuration
-# spring:
+#spring:
 #  data:
 #    sql:
 #      repositories:
