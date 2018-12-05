@@ -121,7 +121,9 @@ public class BaseRuleChainTransactionService implements RuleChainTransactionServ
     public void endTransaction(TbContext ctx, TbMsg msg, Consumer<TbMsg> onSuccess, Consumer<Throwable> onFailure) {
         EntityId originatorId = msg.getTransactionData().getOriginatorId();
 
-        if (!onRemoteTransactionEndSync(ctx.getTenantId(), originatorId)) {
+        if (onRemoteTransactionEndSync(ctx.getTenantId(), originatorId)) {
+            executeOnSuccess(onSuccess, msg);
+        } else {
             transactionLock.lock();
             try {
                 BlockingQueue<TbTransactionTask> queue = transactionMap.computeIfAbsent(originatorId, id ->
@@ -160,12 +162,12 @@ public class BaseRuleChainTransactionService implements RuleChainTransactionServ
             while (true) {
                 TbTransactionTask transactionTask = timeoutQueue.peek();
                 if (transactionTask != null) {
-                    if (transactionTask.isCompleted()) {
-                        timeoutQueue.poll();
-                    } else {
-                        if (System.currentTimeMillis() > transactionTask.getExpirationTime()) {
-                            transactionLock.lock();
-                            try {
+                    transactionLock.lock();
+                    try {
+                        if (transactionTask.isCompleted()) {
+                            timeoutQueue.poll();
+                        } else {
+                            if (System.currentTimeMillis() > transactionTask.getExpirationTime()) {
                                 log.trace("Task has expired! Deleting it...[{}][{}]", transactionTask.getMsg().getId(), transactionTask.getMsg().getType());
                                 timeoutQueue.poll();
                                 executeOnFailure(transactionTask.getOnFailure(), "Task has expired!");
@@ -178,17 +180,17 @@ public class BaseRuleChainTransactionService implements RuleChainTransactionServ
                                         executeOnSuccess(nextTransactionTask.getOnStart(), nextTransactionTask.getMsg());
                                     }
                                 }
-                            } finally {
-                                transactionLock.unlock();
-                            }
-                        } else {
-                            try {
-                                log.trace("Task has not expired! Continue executing...[{}][{}]", transactionTask.getMsg().getId(), transactionTask.getMsg().getType());
-                                TimeUnit.MILLISECONDS.sleep(duration);
-                            } catch (InterruptedException e) {
-                                throw new IllegalStateException("Thread interrupted", e);
+                            } else {
+                                try {
+                                    log.trace("Task has not expired! Continue executing...[{}][{}]", transactionTask.getMsg().getId(), transactionTask.getMsg().getType());
+                                    TimeUnit.MILLISECONDS.sleep(duration);
+                                } catch (InterruptedException e) {
+                                    throw new IllegalStateException("Thread interrupted", e);
+                                }
                             }
                         }
+                    } finally {
+                        transactionLock.unlock();
                     }
                 } else {
                     try {
