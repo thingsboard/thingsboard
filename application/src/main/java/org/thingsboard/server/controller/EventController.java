@@ -63,7 +63,7 @@ public class EventController extends BaseController {
             TenantId tenantId = new TenantId(toUUID(strTenantId));
 
             EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
-            checkEntityId(entityId);
+            checkEntityId(entityId, Operation.READ);
 
             TimePageLink pageLink = createPageLink(limit, startTime, endTime, ascOrder, offset);
             return checkNotNull(eventService.findEvents(tenantId, entityId, eventType, pageLink));
@@ -91,7 +91,7 @@ public class EventController extends BaseController {
             TenantId tenantId = new TenantId(toUUID(strTenantId));
 
             EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
-            checkEntityId(entityId);
+            checkEntityId(entityId, Operation.READ);
 
             TimePageLink pageLink = createPageLink(limit, startTime, endTime, ascOrder, offset);
             return checkNotNull(eventService.findEvents(tenantId, entityId, pageLink));

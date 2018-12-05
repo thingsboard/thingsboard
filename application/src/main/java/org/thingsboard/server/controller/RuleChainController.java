@@ -52,6 +52,8 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.service.script.JsInvokeService;
 import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
+import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.List;
 import java.util.Map;
@@ -80,7 +82,7 @@ public class RuleChainController extends BaseController {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
         try {
             RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
-            return checkRuleChain(ruleChainId);
+            return checkRuleChain(ruleChainId, Operation.READ);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -93,7 +95,7 @@ public class RuleChainController extends BaseController {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
         try {
             RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
-            checkRuleChain(ruleChainId);
+            checkRuleChain(ruleChainId, Operation.READ);
             return ruleChainService.loadRuleChainMetaData(getTenantId(), ruleChainId);
         } catch (Exception e) {
             throw handleException(e);
@@ -108,6 +110,12 @@ public class RuleChainController extends BaseController {
         try {
             boolean created = ruleChain.getId() == null;
             ruleChain.setTenantId(getCurrentUser().getTenantId());
+
+            Operation operation = created ? Operation.CREATE : Operation.WRITE;
+
+            accessControlService.checkPermission(getCurrentUser(), Resource.RULE_CHAIN, operation,
+                    ruleChain.getId(), ruleChain);
+
             RuleChain savedRuleChain = checkNotNull(ruleChainService.saveRuleChain(ruleChain));
 
             actorService.onEntityStateChange(ruleChain.getTenantId(), savedRuleChain.getId(),
@@ -134,7 +142,7 @@ public class RuleChainController extends BaseController {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
         try {
             RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
-            RuleChain ruleChain = checkRuleChain(ruleChainId);
+            RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.WRITE);
             TenantId tenantId = getCurrentUser().getTenantId();
             RuleChain previousRootRuleChain = ruleChainService.getRootTenantRuleChain(tenantId);
             if (ruleChainService.setRootRuleChain(getTenantId(), ruleChainId)) {
@@ -171,7 +179,7 @@ public class RuleChainController extends BaseController {
     @ResponseBody
     public RuleChainMetaData saveRuleChainMetaData(@RequestBody RuleChainMetaData ruleChainMetaData) throws ThingsboardException {
         try {
-            RuleChain ruleChain = checkRuleChain(ruleChainMetaData.getRuleChainId());
+            RuleChain ruleChain = checkRuleChain(ruleChainMetaData.getRuleChainId(), Operation.WRITE);
             RuleChainMetaData savedRuleChainMetaData = checkNotNull(ruleChainService.saveRuleChainMetaData(getTenantId(), ruleChainMetaData));
 
             actorService.onEntityStateChange(ruleChain.getTenantId(), ruleChain.getId(), ComponentLifecycleEvent.UPDATED);
@@ -214,7 +222,7 @@ public class RuleChainController extends BaseController {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
         try {
             RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
-            RuleChain ruleChain = checkRuleChain(ruleChainId);
+            RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.DELETE);
 
             ruleChainService.deleteRuleChainById(getTenantId(), ruleChainId);
 
@@ -240,6 +248,7 @@ public class RuleChainController extends BaseController {
         checkParameter(RULE_NODE_ID, strRuleNodeId);
         try {
             RuleNodeId ruleNodeId = new RuleNodeId(toUUID(strRuleNodeId));
+            checkRuleNode(ruleNodeId, Operation.READ);
             TenantId tenantId = getCurrentUser().getTenantId();
             List<Event> events = eventService.findLatestEvents(tenantId, ruleNodeId, DataConstants.DEBUG_RULE_NODE, 2);
             JsonNode result = null;

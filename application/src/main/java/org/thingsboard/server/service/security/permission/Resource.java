@@ -28,7 +28,10 @@ public enum Resource {
     DASHBOARD(EntityType.DASHBOARD),
     ENTITY_VIEW(EntityType.ENTITY_VIEW),
     TENANT(EntityType.TENANT),
-    RULE_CHAIN(EntityType.RULE_CHAIN);
+    RULE_CHAIN(EntityType.RULE_CHAIN),
+    USER(EntityType.USER),
+    WIDGETS_BUNDLE(EntityType.WIDGETS_BUNDLE),
+    WIDGET_TYPE(EntityType.WIDGET_TYPE);
 
     private final EntityType entityType;
 

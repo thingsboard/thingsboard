@@ -427,7 +427,7 @@ public class DashboardController extends BaseController {
             @RequestParam(required = false) String textOffset) throws ThingsboardException {
         try {
             TenantId tenantId = new TenantId(toUUID(strTenantId));
-            checkTenantId(tenantId);
+            checkTenantId(tenantId, Operation.READ);
             TextPageLink pageLink = createPageLink(limit, textSearch, idOffset, textOffset);
             return checkNotNull(dashboardService.findDashboardsByTenantId(tenantId, pageLink));
         } catch (Exception e) {

@@ -300,12 +300,11 @@ public class AssetController extends BaseController {
         checkNotNull(query);
         checkNotNull(query.getParameters());
         checkNotNull(query.getAssetTypes());
-        checkEntityId(query.getParameters().getEntityId());
+        checkEntityId(query.getParameters().getEntityId(), Operation.READ);
         try {
             List<Asset> assets = checkNotNull(assetService.findAssetsByQuery(getTenantId(), query).get());
             assets = assets.stream().filter(asset -> {
                 try {
-                    //checkAsset(asset);
                     accessControlService.checkPermission(getCurrentUser(), Resource.ASSET, Operation.READ, asset.getId(), asset);
                     return true;
                 } catch (ThingsboardException e) {

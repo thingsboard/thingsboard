@@ -311,12 +311,11 @@ public class EntityViewController extends BaseController {
         checkNotNull(query);
         checkNotNull(query.getParameters());
         checkNotNull(query.getEntityViewTypes());
-        checkEntityId(query.getParameters().getEntityId());
+        checkEntityId(query.getParameters().getEntityId(), Operation.READ);
         try {
             List<EntityView> entityViews = checkNotNull(entityViewService.findEntityViewsByQuery(getTenantId(), query).get());
             entityViews = entityViews.stream().filter(entityView -> {
                 try {
-                    //checkEntityView(entityView);
                     accessControlService.checkPermission(getCurrentUser(), Resource.ENTITY_VIEW, Operation.READ, entityView.getId(), entityView);
                     return true;
                 } catch (ThingsboardException e) {

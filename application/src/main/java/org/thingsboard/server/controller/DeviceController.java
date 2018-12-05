@@ -349,12 +349,11 @@ public class DeviceController extends BaseController {
         checkNotNull(query);
         checkNotNull(query.getParameters());
         checkNotNull(query.getDeviceTypes());
-        checkEntityId(query.getParameters().getEntityId());
+        checkEntityId(query.getParameters().getEntityId(), Operation.READ);
         try {
             List<Device> devices = checkNotNull(deviceService.findDevicesByQuery(getCurrentUser().getTenantId(), query).get());
             devices = devices.stream().filter(device -> {
                 try {
-                    //checkDevice(device);
                     accessControlService.checkPermission(getCurrentUser(), Resource.DEVICE, Operation.READ, device.getId(), device);
                     return true;
                 } catch (ThingsboardException e) {
