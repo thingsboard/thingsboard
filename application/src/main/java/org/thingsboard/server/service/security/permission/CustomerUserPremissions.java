@@ -42,7 +42,7 @@ public class CustomerUserPremissions extends AbstractPermissions {
         put(Resource.WIDGET_TYPE, widgetsPermissionChecker);
     }
 
-    public static final PermissionChecker customerEntityPermissionChecker =
+    private static final PermissionChecker customerEntityPermissionChecker =
             new PermissionChecker.GenericPermissionChecker(Operation.READ, Operation.READ_ATTRIBUTES, Operation.READ_TELEMETRY) {
 
         @Override
@@ -68,8 +68,8 @@ public class CustomerUserPremissions extends AbstractPermissions {
             new PermissionChecker.GenericPermissionChecker(Operation.READ, Operation.READ_ATTRIBUTES, Operation.READ_TELEMETRY) {
 
                 @Override
-                public boolean hasPermission(SecurityUser user, TenantId tenantId, Operation operation, EntityId entityId) {
-                    if (!super.hasPermission(user, tenantId, operation, entityId)) {
+                public boolean hasPermission(SecurityUser user, Operation operation, EntityId entityId, HasTenantId entity) {
+                    if (!super.hasPermission(user, operation, entityId, entity)) {
                         return false;
                     }
                     if (!user.getCustomerId().equals(entityId)) {
@@ -81,7 +81,7 @@ public class CustomerUserPremissions extends AbstractPermissions {
             };
 
     private static final PermissionChecker customerDashboardPermissionChecker =
-            new PermissionChecker.GenericPermissionChecker<DashboardInfo, DashboardId>(Operation.READ, Operation.READ_ATTRIBUTES, Operation.READ_TELEMETRY) {
+            new PermissionChecker.GenericPermissionChecker<DashboardId, DashboardInfo>(Operation.READ, Operation.READ_ATTRIBUTES, Operation.READ_TELEMETRY) {
 
                 @Override
                 public boolean hasPermission(SecurityUser user, Operation operation, DashboardId dashboardId, DashboardInfo dashboard) {
@@ -100,7 +100,7 @@ public class CustomerUserPremissions extends AbstractPermissions {
 
             };
 
-    private static final PermissionChecker userPermissionChecker = new PermissionChecker<User, UserId>() {
+    private static final PermissionChecker userPermissionChecker = new PermissionChecker<UserId, User>() {
 
         @Override
         public boolean hasPermission(SecurityUser user, Operation operation, UserId userId, User userEntity) {
@@ -122,8 +122,11 @@ public class CustomerUserPremissions extends AbstractPermissions {
             if (!super.hasPermission(user, operation, entityId, entity)) {
                 return false;
             }
-            if (entity.getTenantId() == null || entity.getTenantId().isNullUid() || user.getTenantId().equals(entity.getTenantId())) {
+            if (entity.getTenantId() == null || entity.getTenantId().isNullUid()) {
                 return true;
+            }
+            if (!user.getTenantId().equals(entity.getTenantId())) {
+                return false;
             }
             return true;
         }

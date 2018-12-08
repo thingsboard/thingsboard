@@ -44,15 +44,7 @@ public class TenantAdminPermissions extends AbstractPermissions {
         put(Resource.WIDGET_TYPE, widgetsPermissionChecker);
     }
 
-    public static final PermissionChecker tenantEntityPermissionChecker = new PermissionChecker<HasTenantId, EntityId>() {
-
-        @Override
-        public boolean hasPermission(SecurityUser user, TenantId tenantId, Operation operation, EntityId entityId) {
-            if (!user.getTenantId().equals(tenantId)) {
-                return false;
-            }
-            return true;
-        }
+    public static final PermissionChecker tenantEntityPermissionChecker = new PermissionChecker() {
 
         @Override
         public boolean hasPermission(SecurityUser user, Operation operation, EntityId entityId, HasTenantId entity) {
@@ -64,12 +56,12 @@ public class TenantAdminPermissions extends AbstractPermissions {
         }
     };
 
-    public static final PermissionChecker tenantPermissionChecker =
-            new PermissionChecker.GenericPermissionChecker(Operation.READ) {
+    private static final PermissionChecker tenantPermissionChecker =
+            new PermissionChecker.GenericPermissionChecker(Operation.READ, Operation.READ_ATTRIBUTES, Operation.READ_TELEMETRY) {
 
                 @Override
-                public boolean hasPermission(SecurityUser user, TenantId tenantId, Operation operation, EntityId entityId) {
-                    if (!super.hasPermission(user, tenantId, operation, entityId)) {
+                public boolean hasPermission(SecurityUser user, Operation operation, EntityId entityId, HasTenantId entity) {
+                    if (!super.hasPermission(user, operation, entityId, entity)) {
                         return false;
                     }
                     if (!user.getTenantId().equals(entityId)) {
@@ -80,7 +72,7 @@ public class TenantAdminPermissions extends AbstractPermissions {
 
             };
 
-    private static final PermissionChecker userPermissionChecker = new PermissionChecker<User, UserId>() {
+    private static final PermissionChecker userPermissionChecker = new PermissionChecker<UserId, User>() {
 
         @Override
         public boolean hasPermission(SecurityUser user, Operation operation, UserId userId, User userEntity) {
@@ -95,7 +87,7 @@ public class TenantAdminPermissions extends AbstractPermissions {
 
     };
 
-    private static final PermissionChecker widgetsPermissionChecker = new PermissionChecker<HasTenantId, EntityId>() {
+    private static final PermissionChecker widgetsPermissionChecker = new PermissionChecker() {
 
         @Override
         public boolean hasPermission(SecurityUser user, Operation operation, EntityId entityId, HasTenantId entity) {

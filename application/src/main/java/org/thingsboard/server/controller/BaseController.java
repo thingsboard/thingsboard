@@ -259,9 +259,16 @@ public abstract class BaseController {
         }
     }
 
-    void checkTenantId(TenantId tenantId, Operation operation) throws ThingsboardException {
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        accessControlService.checkPermission(getCurrentUser(), tenantId, Resource.TENANT, operation, tenantId);
+    Tenant checkTenantId(TenantId tenantId, Operation operation) throws ThingsboardException {
+        try {
+            validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+            Tenant tenant = tenantService.findTenantById(tenantId);
+            checkNotNull(tenant);
+            accessControlService.checkPermission(getCurrentUser(), Resource.TENANT, operation, tenantId, tenant);
+            return tenant;
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
     }
 
     protected TenantId getTenantId() throws ThingsboardException {
@@ -270,16 +277,11 @@ public abstract class BaseController {
 
     Customer checkCustomerId(CustomerId customerId, Operation operation) throws ThingsboardException {
         try {
-            accessControlService.checkPermission(getCurrentUser(), getCurrentUser().getTenantId(), Resource.CUSTOMER, operation, customerId);
-
-            if (customerId != null && !customerId.isNullUid()) {
-                Customer customer = customerService.findCustomerById(getTenantId(), customerId);
-                checkNotNull(customer);
-                accessControlService.checkPermission(getCurrentUser(), Resource.CUSTOMER, operation, customerId, customer);
-                return customer;
-            } else {
-                return null;
-            }
+            validateId(customerId, "Incorrect customerId " + customerId);
+            Customer customer = customerService.findCustomerById(getTenantId(), customerId);
+            checkNotNull(customer);
+            accessControlService.checkPermission(getCurrentUser(), Resource.CUSTOMER, operation, customerId, customer);
+            return customer;
         } catch (Exception e) {
             throw handleException(e, false);
         }

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -22,7 +23,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import com.fasterxml.jackson.databind.JsonNode;
 
 @EqualsAndHashCode(callSuper = true)
-public class Tenant extends ContactBased<TenantId> implements HasName {
+public class Tenant extends ContactBased<TenantId> implements HasName, HasTenantId {
 
     private static final long serialVersionUID = 8057243243859922101L;
     
@@ -49,6 +50,12 @@ public class Tenant extends ContactBased<TenantId> implements HasName {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    @Override
+    @JsonIgnore
+    public TenantId getTenantId() {
+        return getId();
     }
 
     @Override

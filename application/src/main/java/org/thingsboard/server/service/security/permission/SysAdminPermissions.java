@@ -41,15 +41,7 @@ public class SysAdminPermissions extends AbstractPermissions {
         put(Resource.WIDGET_TYPE, systemEntityPermissionChecker);
     }
 
-    private static final PermissionChecker systemEntityPermissionChecker = new PermissionChecker<HasTenantId, EntityId>() {
-
-        @Override
-        public boolean hasPermission(SecurityUser user, TenantId tenantId, Operation operation, EntityId entityId) {
-            if (tenantId != null && !tenantId.isNullUid()) {
-                return false;
-            }
-            return true;
-        }
+    private static final PermissionChecker systemEntityPermissionChecker = new PermissionChecker() {
 
         @Override
         public boolean hasPermission(SecurityUser user, Operation operation, EntityId entityId, HasTenantId entity) {
@@ -61,7 +53,7 @@ public class SysAdminPermissions extends AbstractPermissions {
         }
     };
 
-    private static final PermissionChecker userPermissionChecker = new PermissionChecker<User, UserId>() {
+    private static final PermissionChecker userPermissionChecker = new PermissionChecker<UserId, User>() {
 
         @Override
         public boolean hasPermission(SecurityUser user, Operation operation, UserId userId, User userEntity) {

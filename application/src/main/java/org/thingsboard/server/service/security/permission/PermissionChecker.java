@@ -25,13 +25,9 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public interface PermissionChecker<T extends HasTenantId, I extends EntityId> {
+public interface PermissionChecker<I extends EntityId, T extends HasTenantId> {
 
-    default boolean hasPermission(SecurityUser user, TenantId tenantId, Operation operation) {
-        return false;
-    }
-
-    default boolean hasPermission(SecurityUser user, TenantId tenantId, Operation operation, EntityId entityId) {
+    default boolean hasPermission(SecurityUser user, Operation operation) {
         return false;
     }
 
@@ -39,7 +35,7 @@ public interface PermissionChecker<T extends HasTenantId, I extends EntityId> {
         return false;
     }
 
-    public class GenericPermissionChecker<T extends HasTenantId, I extends EntityId> implements PermissionChecker<T, I> {
+    public class GenericPermissionChecker<I extends EntityId, T extends HasTenantId> implements PermissionChecker<I,T> {
 
         private final Set<Operation> allowedOperations;
 
@@ -48,12 +44,7 @@ public interface PermissionChecker<T extends HasTenantId, I extends EntityId> {
         }
 
         @Override
-        public boolean hasPermission(SecurityUser user, TenantId tenantId, Operation operation) {
-            return allowedOperations.contains(Operation.ALL) || allowedOperations.contains(operation);
-        }
-
-        @Override
-        public boolean hasPermission(SecurityUser user, TenantId tenantId, Operation operation, EntityId entityId) {
+        public boolean hasPermission(SecurityUser user, Operation operation) {
             return allowedOperations.contains(Operation.ALL) || allowedOperations.contains(operation);
         }
 
@@ -65,15 +56,10 @@ public interface PermissionChecker<T extends HasTenantId, I extends EntityId> {
 
     public static PermissionChecker denyAllPermissionChecker = new PermissionChecker() {};
 
-    public static PermissionChecker allowAllPermissionChecker = new PermissionChecker<HasTenantId, EntityId>() {
+    public static PermissionChecker allowAllPermissionChecker = new PermissionChecker<EntityId, HasTenantId>() {
 
         @Override
-        public boolean hasPermission(SecurityUser user, TenantId tenantId, Operation operation) {
-            return true;
-        }
-
-        @Override
-        public boolean hasPermission(SecurityUser user, TenantId tenantId, Operation operation, EntityId entityId) {
+        public boolean hasPermission(SecurityUser user, Operation operation) {
             return true;
         }
 
