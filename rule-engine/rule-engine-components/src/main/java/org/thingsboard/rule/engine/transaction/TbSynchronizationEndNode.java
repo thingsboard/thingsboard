@@ -33,14 +33,14 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 @Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
-        name = "transaction end",
+        name = "synchronization end",
         configClazz = EmptyNodeConfiguration.class,
-        nodeDescription = "",
+        nodeDescription = "Stops synchronization of message processing based on message originator",
         nodeDetails = "",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = ("tbNodeEmptyConfig")
 )
-public class TbTransactionEndNode implements TbNode {
+public class TbSynchronizationEndNode implements TbNode {
 
     private EmptyNodeConfiguration config;
 
@@ -50,7 +50,7 @@ public class TbTransactionEndNode implements TbNode {
     }
 
     @Override
-    public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
+    public void onMsg(TbContext ctx, TbMsg msg) {
         ctx.getRuleChainTransactionService().endTransaction(msg,
                 successMsg -> ctx.tellNext(successMsg, SUCCESS),
                 throwable -> ctx.tellFailure(msg, throwable));
