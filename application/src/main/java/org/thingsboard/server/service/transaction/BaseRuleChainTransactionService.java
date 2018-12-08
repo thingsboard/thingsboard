@@ -21,10 +21,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.RuleChainTransactionService;
-import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
@@ -88,7 +86,7 @@ public class BaseRuleChainTransactionService implements RuleChainTransactionServ
     }
 
     @Override
-    public void beginTransaction(TbContext ctx, TbMsg msg, Consumer<TbMsg> onStart, Consumer<TbMsg> onEnd, Consumer<Throwable> onFailure) {
+    public void beginTransaction(TbMsg msg, Consumer<TbMsg> onStart, Consumer<TbMsg> onEnd, Consumer<Throwable> onFailure) {
         transactionLock.lock();
         try {
             BlockingQueue<TbTransactionTask> queue = transactionMap.computeIfAbsent(msg.getTransactionData().getOriginatorId(), id ->
@@ -111,49 +109,71 @@ public class BaseRuleChainTransactionService implements RuleChainTransactionServ
         }
     }
 
+    @Override
+    public void endTransaction(TbMsg msg, Consumer<TbMsg> onSuccess, Consumer<Throwable> onFailure) {
+        EntityId originatorId = msg.getTransactionData().getOriginatorId();
+        UUID transactionId = msg.getTransactionData().getTransactionId();
+
+        Optional<ServerAddress> address = routingService.resolveById(originatorId);
+        if (address.isPresent()) {
+            sendTransactionEventToRemoteServer(originatorId, transactionId, address.get());
+            executeOnSuccess(onSuccess, msg);
+        } else {
+            endLocalTransaction(transactionId, originatorId, onSuccess, onFailure);
+        }
+    }
+
+    @Override
+    public void onRemoteTransactionMsg(ServerAddress serverAddress, byte[] data) {
+        ClusterAPIProtos.TransactionEndServiceMsgProto proto;
+        try {
+            proto = ClusterAPIProtos.TransactionEndServiceMsgProto.parseFrom(data);
+        } catch (InvalidProtocolBufferException e) {
+            throw new RuntimeException(e);
+        }
+        EntityId originatorId = EntityIdFactory.getByTypeAndUuid(proto.getEntityType(), new UUID(proto.getOriginatorIdMSB(), proto.getOriginatorIdLSB()));
+        UUID transactionId = new UUID(proto.getTransactionIdMSB(), proto.getTransactionIdLSB());
+        endLocalTransaction(transactionId, originatorId, msg -> {
+        }, error -> {
+        });
+    }
+
     private void addMsgToQueues(BlockingQueue<TbTransactionTask> queue, TbTransactionTask transactionTask) {
         queue.offer(transactionTask);
         timeoutQueue.offer(transactionTask);
         log.trace("Added msg to queue, size: [{}]", queue.size());
     }
 
-    @Override
-    public void endTransaction(TbContext ctx, TbMsg msg, Consumer<TbMsg> onSuccess, Consumer<Throwable> onFailure) {
-        EntityId originatorId = msg.getTransactionData().getOriginatorId();
+    private void endLocalTransaction(UUID transactionId, EntityId originatorId, Consumer<TbMsg> onSuccess, Consumer<Throwable> onFailure) {
+        transactionLock.lock();
+        try {
+            BlockingQueue<TbTransactionTask> queue = transactionMap.computeIfAbsent(originatorId, id ->
+                    new LinkedBlockingQueue<>(finalQueueSize));
 
-        if (onRemoteTransactionEndSync(ctx.getTenantId(), originatorId)) {
-            executeOnSuccess(onSuccess, msg);
-        } else {
-            transactionLock.lock();
-            try {
-                BlockingQueue<TbTransactionTask> queue = transactionMap.computeIfAbsent(originatorId, id ->
-                        new LinkedBlockingQueue<>(finalQueueSize));
+            TbTransactionTask currentTransactionTask = queue.peek();
+            if (currentTransactionTask != null) {
+                if (currentTransactionTask.getMsg().getTransactionData().getTransactionId().equals(transactionId)) {
+                    currentTransactionTask.setCompleted(true);
+                    queue.poll();
+                    log.trace("Removed msg from queue, size [{}]", queue.size());
 
-                TbTransactionTask currentTransactionTask = queue.peek();
-                if (currentTransactionTask != null) {
-                    if (currentTransactionTask.getMsg().getTransactionData().getTransactionId().equals(msg.getTransactionData().getTransactionId())) {
-                        currentTransactionTask.setCompleted(true);
-                        queue.poll();
-                        log.trace("Removed msg from queue, size [{}]", queue.size());
+                    executeOnSuccess(currentTransactionTask.getOnEnd(), currentTransactionTask.getMsg());
+                    executeOnSuccess(onSuccess, currentTransactionTask.getMsg());
 
-                        executeOnSuccess(currentTransactionTask.getOnEnd(), currentTransactionTask.getMsg());
-                        executeOnSuccess(onSuccess, currentTransactionTask.getMsg());
-
-                        TbTransactionTask nextTransactionTask = queue.peek();
-                        if (nextTransactionTask != null) {
-                            executeOnSuccess(nextTransactionTask.getOnStart(), nextTransactionTask.getMsg());
-                        }
-                    } else {
-                        log.trace("Task has expired!");
-                        executeOnFailure(onFailure, "Task has expired!");
+                    TbTransactionTask nextTransactionTask = queue.peek();
+                    if (nextTransactionTask != null) {
+                        executeOnSuccess(nextTransactionTask.getOnStart(), nextTransactionTask.getMsg());
                     }
                 } else {
-                    log.trace("Queue is empty, previous task has expired!");
-                    executeOnFailure(onFailure, "Queue is empty, previous task has expired!");
+                    log.trace("Task has expired!");
+                    executeOnFailure(onFailure, "Task has expired!");
                 }
-            } finally {
-                transactionLock.unlock();
+            } else {
+                log.trace("Queue is empty, previous task has expired!");
+                executeOnFailure(onFailure, "Queue is empty, previous task has expired!");
             }
+        } finally {
+            transactionLock.unlock();
         }
     }
 
@@ -222,40 +242,14 @@ public class BaseRuleChainTransactionService implements RuleChainTransactionServ
         callbackExecutor.executeAsync(task);
     }
 
-    @Override
-    public void onRemoteTransactionMsg(ServerAddress serverAddress, byte[] data) {
-        ClusterAPIProtos.TransactionServiceMsgProto proto;
-        try {
-            proto = ClusterAPIProtos.TransactionServiceMsgProto.parseFrom(data);
-        } catch (InvalidProtocolBufferException e) {
-            throw new RuntimeException(e);
-        }
-        TenantId tenantId = new TenantId(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB()));
-        EntityId entityId = EntityIdFactory.getByTypeAndUuid(proto.getEntityType(), new UUID(proto.getOriginatorIdMSB(), proto.getOriginatorIdLSB()));
-        onTransactionEnd(tenantId, entityId);
-    }
-
-    private void onTransactionEnd(TenantId tenantId, EntityId entityId) {
-        callbackExecutor.executeAsync(() -> onRemoteTransactionEndSync(tenantId, entityId));
-    }
-
-    private boolean onRemoteTransactionEndSync(TenantId tenantId, EntityId entityId) {
-        Optional<ServerAddress> address = routingService.resolveById(entityId);
-        if (address.isPresent()) {
-            sendTransactionEvent(tenantId, entityId, address.get());
-            return true;
-        }
-        return false;
-    }
-
-    private void sendTransactionEvent(TenantId tenantId, EntityId entityId, ServerAddress address) {
-        log.trace("[{}][{}] Originator is monitored on other server: {}", tenantId, entityId, address);
-        ClusterAPIProtos.TransactionServiceMsgProto.Builder builder = ClusterAPIProtos.TransactionServiceMsgProto.newBuilder();
-        builder.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
-        builder.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
+    private void sendTransactionEventToRemoteServer(EntityId entityId, UUID transactionId, ServerAddress address) {
+        log.trace("[{}][{}] Originator is monitored on other server: {}", entityId, transactionId, address);
+        ClusterAPIProtos.TransactionEndServiceMsgProto.Builder builder = ClusterAPIProtos.TransactionEndServiceMsgProto.newBuilder();
         builder.setEntityType(entityId.getEntityType().name());
         builder.setOriginatorIdMSB(entityId.getId().getMostSignificantBits());
         builder.setOriginatorIdLSB(entityId.getId().getLeastSignificantBits());
+        builder.setTransactionIdMSB(transactionId.getMostSignificantBits());
+        builder.setTransactionIdLSB(transactionId.getLeastSignificantBits());
         clusterRpcService.tell(address, ClusterAPIProtos.MessageType.CLUSTER_TRANSACTION_SERVICE_MESSAGE, builder.build().toByteArray());
     }
 }

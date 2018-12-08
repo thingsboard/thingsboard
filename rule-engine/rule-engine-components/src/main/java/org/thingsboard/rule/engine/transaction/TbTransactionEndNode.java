@@ -35,8 +35,8 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
         type = ComponentType.ACTION,
         name = "transaction end",
         configClazz = EmptyNodeConfiguration.class,
-        nodeDescription = "Something",
-        nodeDetails = "Something more",
+        nodeDescription = "",
+        nodeDetails = "",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = ("tbNodeEmptyConfig")
 )
@@ -51,7 +51,7 @@ public class TbTransactionEndNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        ctx.getRuleChainTransactionService().endTransaction(ctx, msg,
+        ctx.getRuleChainTransactionService().endTransaction(msg,
                 successMsg -> ctx.tellNext(successMsg, SUCCESS),
                 throwable -> ctx.tellFailure(msg, throwable));
         log.trace("Msg left transaction - [{}][{}]", msg.getId(), msg.getType());

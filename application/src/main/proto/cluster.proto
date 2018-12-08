@@ -144,10 +144,10 @@ message DeviceStateServiceMsgProto {
     bool deleted = 7;
 }
 
-message TransactionServiceMsgProto {
-    int64 tenantIdMSB = 1;
-    int64 tenantIdLSB = 2;
-    string entityType = 3;
-    int64 originatorIdMSB = 4;
-    int64 originatorIdLSB = 5;
+message TransactionEndServiceMsgProto {
+    string entityType = 1;
+    int64 originatorIdMSB = 2;
+    int64 originatorIdLSB = 3;
+    int64 transactionIdMSB = 4;
+    int64 transactionIdLSB = 5;
 }

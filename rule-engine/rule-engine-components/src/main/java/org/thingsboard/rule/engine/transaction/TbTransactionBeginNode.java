@@ -16,13 +16,13 @@
 package org.thingsboard.rule.engine.transaction;
 
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.rule.engine.api.EmptyNodeConfiguration;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
@@ -36,38 +36,32 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 @RuleNode(
         type = ComponentType.ACTION,
         name = "transaction start",
-        configClazz = TbTransactionBeginNodeConfiguration.class,
-        nodeDescription = "Something",
-        nodeDetails = "Something more",
+        configClazz = EmptyNodeConfiguration.class,
+        nodeDescription = "",
+        nodeDetails = "",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbActionNodeTransactionBeginConfig")
+        configDirective = "tbNodeEmptyConfig")
 public class TbTransactionBeginNode implements TbNode {
 
-    private TbTransactionBeginNodeConfiguration config;
+    private EmptyNodeConfiguration config;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbTransactionBeginNodeConfiguration.class);
+        this.config = TbNodeUtils.convert(configuration, EmptyNodeConfiguration.class);
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
         log.trace("Msg enters transaction - [{}][{}]", msg.getId(), msg.getType());
 
-        EntityId entityId;
-        if (config.getTransactionEntity().equals("Originator")) {
-            entityId = msg.getOriginator();
-        } else {
-            entityId = ctx.getTenantId();
-        }
-        TbMsgTransactionData transactionData = new TbMsgTransactionData(msg.getId(), entityId);
+        TbMsgTransactionData transactionData = new TbMsgTransactionData(msg.getId(), msg.getOriginator());
         TbMsg tbMsg = new TbMsg(msg.getId(), msg.getType(), msg.getOriginator(), msg.getMetaData(), TbMsgDataType.JSON,
                 msg.getData(), transactionData, msg.getRuleChainId(), msg.getRuleNodeId(), msg.getClusterPartition());
 
-        ctx.getRuleChainTransactionService().beginTransaction(ctx, tbMsg, startMsg -> {
-                    log.trace("Transaction starting... [{}][{}]", startMsg.getId(), startMsg.getType());
+        ctx.getRuleChainTransactionService().beginTransaction(tbMsg, startMsg -> {
+                    log.trace("Transaction starting...[{}][{}]", startMsg.getId(), startMsg.getType());
                     ctx.tellNext(startMsg, SUCCESS);
-                }, endMsg -> log.trace("Transaction ended successfully... [{}][{}]", endMsg.getId(), endMsg.getType()),
+                }, endMsg -> log.trace("Transaction ended successfully...[{}][{}]", endMsg.getId(), endMsg.getType()),
                 throwable -> {
                     log.error("Transaction failed! [{}][{}]", tbMsg.getId(), tbMsg.getType(), throwable);
                     ctx.tellFailure(tbMsg, throwable);
