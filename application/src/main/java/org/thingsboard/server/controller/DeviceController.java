@@ -220,7 +220,7 @@ public class DeviceController extends BaseController {
         checkParameter(DEVICE_ID, strDeviceId);
         try {
             DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
-            Device device = checkDeviceId(deviceId, Operation.READ);
+            Device device = checkDeviceId(deviceId, Operation.READ_CREDENTIALS);
             DeviceCredentials deviceCredentials = checkNotNull(deviceCredentialsService.findDeviceCredentialsByDeviceId(getCurrentUser().getTenantId(), deviceId));
             logEntityAction(deviceId, device,
                     device.getCustomerId(),
@@ -240,7 +240,7 @@ public class DeviceController extends BaseController {
     public DeviceCredentials saveDeviceCredentials(@RequestBody DeviceCredentials deviceCredentials) throws ThingsboardException {
         checkNotNull(deviceCredentials);
         try {
-            Device device = checkDeviceId(deviceCredentials.getDeviceId(), Operation.WRITE);
+            Device device = checkDeviceId(deviceCredentials.getDeviceId(), Operation.WRITE_CREDENTIALS);
             DeviceCredentials result = checkNotNull(deviceCredentialsService.updateDeviceCredentials(getCurrentUser().getTenantId(), deviceCredentials));
             actorService.onCredentialsUpdate(getCurrentUser().getTenantId(), deviceCredentials.getDeviceId());
             logEntityAction(device.getId(), device,

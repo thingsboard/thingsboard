@@ -43,7 +43,7 @@ public class CustomerUserPremissions extends AbstractPermissions {
     }
 
     private static final PermissionChecker customerEntityPermissionChecker =
-            new PermissionChecker.GenericPermissionChecker(Operation.READ, Operation.READ_ATTRIBUTES, Operation.READ_TELEMETRY) {
+            new PermissionChecker.GenericPermissionChecker(Operation.READ, Operation.READ_CREDENTIALS, Operation.READ_ATTRIBUTES, Operation.READ_TELEMETRY) {
 
         @Override
         public boolean hasPermission(SecurityUser user, Operation operation, EntityId entityId, HasTenantId entity) {
