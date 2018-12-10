@@ -103,4 +103,6 @@ public interface TbContext {
     ScriptEngine createJsScriptEngine(String script, String... argNames);
 
     String getNodeId();
+
+    RuleChainTransactionService getRuleChainTransactionService();
 }
