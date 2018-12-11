@@ -22,7 +22,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -30,7 +29,11 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.util.EntityContainer;
-import org.thingsboard.server.common.data.*;
+import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.DashboardInfo;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -98,14 +101,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
             type = TbNodeUtils.processPattern(this.config.getEntityTypePattern(), msg.getMetaData());
         }
         EntityType entityType = EntityType.valueOf(this.config.getEntityType());
-        Entitykey key;
-        if (type == null) {
-            key = new Entitykey();
-            key.setEntityName(entityName);
-            key.setEntityType(entityType);
-        } else {
-            key = new Entitykey(entityName, type, entityType);
-        }
+        Entitykey key = new Entitykey(entityName, type, entityType);
         return ctx.getDbCallbackExecutor().executeAsync(() -> {
             EntityContainer entityContainer = entityIdCache.get(key);
             if (entityContainer.getEntityId() == null) {
@@ -127,12 +123,10 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
 
     @Data
     @AllArgsConstructor
-    @NoArgsConstructor
     private static class Entitykey {
         private String entityName;
         private String type;
         private EntityType entityType;
-
     }
 
     private static class EntityCacheLoader extends CacheLoader<Entitykey, EntityContainer> {
