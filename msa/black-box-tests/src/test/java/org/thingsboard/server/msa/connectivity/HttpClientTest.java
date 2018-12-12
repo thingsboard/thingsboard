@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.msa.connectivity;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Sets;
 import org.junit.Assert;
 import org.junit.Test;
@@ -24,6 +25,15 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.msa.AbstractContainerTest;
 import org.thingsboard.server.msa.WsClient;
 import org.thingsboard.server.msa.mapper.WsTelemetryResponse;
+
+
+import java.util.Optional;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.thingsboard.server.common.data.DataConstants.DEVICE;
+import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
 
 public class HttpClientTest extends AbstractContainerTest {
 
@@ -52,6 +62,53 @@ public class HttpClientTest extends AbstractContainerTest {
         Assert.assertTrue(verify(actualLatestTelemetry, "doubleKey", Double.toString(42.0)));
         Assert.assertTrue(verify(actualLatestTelemetry, "longKey", Long.toString(73)));
 
-        restClient.getRestTemplate().delete(HTTPS_URL + "/api/device/" + device.getId());
+        restClient.deleteDevice(device.getId());
+    }
+
+    @Test
+    public void getAttributes() throws Exception {
+        restClient.login("tenant@thingsboard.org", "tenant");
+        TB_TOKEN = restClient.getToken();
+
+        Device device = createDevice("test");
+        String accessToken = restClient.getCredentials(device.getId()).getCredentialsId();
+        assertNotNull(accessToken);
+
+        ResponseEntity deviceSharedAttributes = restClient.getRestTemplate()
+                .postForEntity(HTTPS_URL + "/api/plugins/telemetry/" + DEVICE + "/" + device.getId().toString() + "/attributes/" + SHARED_SCOPE, mapper.readTree(createPayload().toString()),
+                        ResponseEntity.class,
+                        accessToken);
+
+        ResponseEntity deviceClientsAttributes = restClient.getRestTemplate()
+                .postForEntity(HTTPS_URL + "/api/v1/" + accessToken + "/attributes/", mapper.readTree(createPayload().toString()),
+                        ResponseEntity.class,
+                        accessToken);
+
+        Assert.assertTrue(deviceSharedAttributes.getStatusCode().is2xxSuccessful());
+        Assert.assertTrue(deviceClientsAttributes.getStatusCode().is2xxSuccessful());
+
+        Optional<JsonNode> allOptional = restClient.getAttributes(accessToken, null, null);
+        assertTrue(allOptional.isPresent());
+
+        JsonNode all = allOptional.get();
+        assertEquals(all.get("shared"), mapper.readTree(createPayload().toString()));
+        assertEquals(all.get("client"), mapper.readTree(createPayload().toString()));
+
+        Optional<JsonNode> sharedOptional = restClient.getAttributes(accessToken, null, "stringKey");
+        assertTrue(sharedOptional.isPresent());
+
+        JsonNode shared = sharedOptional.get();
+        assertEquals(shared.get("shared").get("stringKey"), mapper.readTree(createPayload().get("stringKey").toString()));
+        assertEquals(shared.get("client"), mapper.readTree(createPayload().toString()));
+
+        Optional<JsonNode> clientOptional = restClient.getAttributes(accessToken, "longKey,stringKey", null);
+        assertTrue(clientOptional.isPresent());
+
+        JsonNode client = clientOptional.get();
+        assertEquals(client.get("shared"), mapper.readTree(createPayload().toString()));
+        assertEquals(client.get("client").get("longKey"), mapper.readTree(createPayload().get("longKey").toString()));
+        assertEquals(client.get("client").get("stringKey"), mapper.readTree(createPayload().get("stringKey").toString()));
+
+        restClient.deleteDevice(device.getId());
     }
 }

@@ -16,7 +16,6 @@
 package org.thingsboard.server.actors.device;
 
 import akka.actor.ActorContext;
-import akka.event.LoggingAdapter;
 import com.datastax.driver.core.utils.UUIDs;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -42,7 +41,6 @@ import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.msg.timeout.DeviceActorClientSideRpcTimeoutMsg;
@@ -295,7 +293,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                 return systemContext.getAttributesService().findAll(tenantId, deviceId, scope);
             }
         } else {
-            return Futures.immediateFuture(Collections.emptyList());
+            return systemContext.getAttributesService().findAll(tenantId, deviceId, scope);
         }
     }
 

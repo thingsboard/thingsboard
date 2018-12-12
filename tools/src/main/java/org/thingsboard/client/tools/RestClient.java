@@ -107,6 +107,27 @@ public class RestClient implements ClientHttpRequestInterceptor {
         }
     }
 
+    public Optional<JsonNode> getAttributes(String accessToken, String clientKeys, String sharedKeys) {
+        Map<String, String> params = new HashMap<>();
+        params.put("accessToken", accessToken);
+        params.put("clientKeys", clientKeys);
+        params.put("sharedKeys", sharedKeys);
+        try {
+            ResponseEntity<JsonNode> telemetryEntity = restTemplate.getForEntity(baseURL + "/api/v1/{accessToken}/attributes?clientKeys={clientKeys}&sharedKeys={sharedKeys}", JsonNode.class, params);
+            return Optional.of(telemetryEntity.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Customer createCustomer(Customer customer) {
+        return restTemplate.postForEntity(baseURL + "/api/customer", customer, Customer.class).getBody();
+    }
+
     public Customer createCustomer(String title) {
         Customer customer = new Customer();
         customer.setTitle(title);
@@ -120,6 +141,14 @@ public class RestClient implements ClientHttpRequestInterceptor {
         return restTemplate.postForEntity(baseURL + "/api/device", device, Device.class).getBody();
     }
 
+    public Device createDevice(Device device) {
+        return restTemplate.postForEntity(baseURL + "/api/device", device, Device.class).getBody();
+    }
+
+    public Asset createAsset(Asset asset) {
+        return restTemplate.postForEntity(baseURL + "/api/asset", asset, Asset.class).getBody();
+    }
+
     public Asset createAsset(String name, String type) {
         Asset asset = new Asset();
         asset.setName(name);
@@ -129,6 +158,18 @@ public class RestClient implements ClientHttpRequestInterceptor {
 
     public Alarm createAlarm(Alarm alarm) {
         return restTemplate.postForEntity(baseURL + "/api/alarm", alarm, Alarm.class).getBody();
+    }
+
+    public void deleteCustomer(CustomerId customerId) {
+        restTemplate.delete(baseURL + "/api/customer/{customerId}", customerId);
+    }
+
+    public void deleteDevice(DeviceId deviceId) {
+        restTemplate.delete(baseURL + "/api/device/{deviceId}", deviceId);
+    }
+
+    public void deleteAsset(AssetId assetId) {
+        restTemplate.delete(baseURL + "/api/asset/{assetId}", assetId);
     }
 
     public Device assignDevice(CustomerId customerId, DeviceId deviceId) {
