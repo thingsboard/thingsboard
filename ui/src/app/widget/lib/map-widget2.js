@@ -63,7 +63,7 @@ export default class TbMapWidgetV2 {
 
         var initCallback = function() {
             tbMap.update();
-            tbMap.resize();
+            tbMap.resize();              
         };
 
         this.ctx.$scope.onTooltipAction = function(event, actionName, dsIndex) {
@@ -90,6 +90,22 @@ export default class TbMapWidgetV2 {
         } else if (mapProvider === 'tencent-map') {
             this.map = new TbTencentMap($element,this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.tmApiKey, settings.tmDefaultMapType);
         }
+        if (this.mapProvider === 'openstreet-map-local'){
+            //创建图层控制
+            tbMap.map.makeToolBar(this.ctx);  
+            tbMap.map.showLayerControl(this.ctx.settings.showLayerControl);
+            tbMap.map.showDrawToolBar(this.ctx.settings.showDrawToolBar);   
+            //创建地理围栏
+            if (this.locationSettings.geoJsonLayers) {
+                var thisMap = this.map;
+                this.locationSettings.geoJsonLayers.forEach(function (geoJsonLayer) {
+                    thisMap.createDefence(angular.fromJson(geoJsonLayer));
+                });
+            }              
+        }
+              
+ 
+        
     }
 
     setCallbacks(callbacks) {
@@ -121,6 +137,13 @@ export default class TbMapWidgetV2 {
     }
 
     configureLocationsSettings() {
+        this.locationSettings.geoJsonLayers = angular.fromJson(this.ctx.settings.geoJsonLayers) || [];
+
+        // var tbMap = this;
+        if (this.map && this.mapProvider === 'openstreet-map-local') {
+            this.map.showLayerControl(this.locationSettings.showLayerControl);
+            this.map.showDrawToolBar(this.locationSettings.showDrawToolBar);
+        }        
 
         if (this.mapProvider  == 'image-map') {
             this.locationSettings.latKeyName = this.ctx.settings.xPosKeyName || 'xPos';
@@ -194,7 +217,6 @@ export default class TbMapWidgetV2 {
     update() {
 
         var tbMap = this;
-
         function updateLocationLabel(location) {
             if (location.settings.showLabel && location.settings.labelReplaceInfo.variables.length) {
                 location.settings.labelText = fillPattern(location.settings.label,
@@ -663,7 +685,25 @@ const openstreetMapLocalSettingsSchema =
                     "title":"地图服务提供者",
                     "type":"string",
                     "default":"OpenStreetMapLocal.Bright"
-                }
+                },
+                "showLayerControl": {
+                    "title": "地图上显示图层控制",
+                    "type": "boolean",
+                    "default": false
+                }, 
+                "showDrawToolBar": {
+                    "title": "地图上显示标图工具条",
+                    "type": "boolean",
+                    "default": false
+                },                              
+                "geoJsonLayers": {
+                    "title": "添加GeoJson多边形",
+                    "type": "array",
+                    "items": {
+                        "title": "多边形",
+                        "type": "string"
+                    }
+                }   
             },
             "required":[
             ]
@@ -691,7 +731,18 @@ const openstreetMapLocalSettingsSchema =
                         "label":"青灰风格"
                     }
                 ]
-            }
+            },
+            "showLayerControl",
+            "showDrawToolBar",
+            {
+                "key": "geoJsonLayers",
+                "items": [
+                    {
+                        "key": "geoJsonLayers[]",
+                        "type": "textarea"
+                    }
+                ]
+            } 
         ]
     };    
 
@@ -711,7 +762,7 @@ const commonMapSettingsSchema =
                     "default":true
                 },
                 "latKeyName":{
-                    "title":"维度属性名称",
+                    "title":"纬度属性名称",
                     "type":"string",
                     "default":"latitude"
                 },
@@ -743,7 +794,7 @@ const commonMapSettingsSchema =
                 "tooltipPattern":{
                     "title":"信息提示框 (例如. '文本 ${keyName} 单位.' 或 <link-act name='my-action'>详细信息</link-act>')",
                     "type":"string",
-                    "default":"<b>${entityName}</b><br/><br/><b>维度:</b> ${latitude:7}<br/><b>经度:</b> ${longitude:7}"
+                    "default":"<b>${entityName}</b><br/><br/><b>纬度:</b> ${latitude:7}<br/><b>经度:</b> ${longitude:7}"
                 },
                 "color":{
                     "title":"颜色",
@@ -783,7 +834,7 @@ const commonMapSettingsSchema =
                         "title":"图像",
                         "type":"string"
                     }
-                }
+                }             
             },
             "required":[]
         },
@@ -827,7 +878,7 @@ const commonMapSettingsSchema =
                         "type":"image"
                     }
                 ]
-            }
+            }           
         ]
 };
 
