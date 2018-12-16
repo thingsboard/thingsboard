@@ -351,7 +351,8 @@
         "aknowledge-alarms-title": "确认 { count, plural, 1 {1 个警告} other {# 个警告} }",
         "aknowledge-alarms-text": "确定要确认 { count, plural, 1 {1 个警告} other {# 个警告} }?",
         "clear-alarms-title": "清除 { count, plural, 1 {1 个警告} other {# 个警告} }",
-        "clear-alarms-text": "确定要清除 { count, plural, 1 {1 个警告} other {# 个警告} }?"
+        "clear-alarms-text": "确定要清除 { count, plural, 1 {1 个警告} other {# 个警告} }?",
+        "alarm-status-filter":"告警状态过滤器"
     },
     "alias": {
         "add": "添加别名",
