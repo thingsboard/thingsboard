@@ -119,6 +119,23 @@
                         </configuration>
                     </execution> 
                     <execution>
+                        <id>copy-resource-leaflet-draw-locals</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+
+                        <configuration>
+                            <overwrite>true</overwrite>
+                            <outputDirectory>${basedir}/node_modules/leaflet-draw-locales</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/resourses/node-modules/leaflet-draw-locales</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>                     
+                    <execution>
                         <id>copy-resource-angular-material-data-table</id>
                         <phase>generate-sources</phase>
                         <goals>

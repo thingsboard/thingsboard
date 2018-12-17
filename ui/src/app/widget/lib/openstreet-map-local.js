@@ -7,6 +7,7 @@ import * as L from 'leaflet';
 import 'leaflet-providers';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import 'leaflet-draw';
+import drawLocals from 'leaflet-draw-locales';
 
 export default class TbOpenStreetMapLocal {
 
@@ -65,6 +66,11 @@ export default class TbOpenStreetMapLocal {
      */
     makeToolBar(ctx){
         if (ctx){
+            // var drawLocales = require('leaflet-draw-locales')
+
+            // // Automatically defines Leaflet.draw to the specified language
+            // drawLocales('zh')
+
             this.layerControl = L.control.layers({}, {}, { hideSingleBase: true }); //创建图层控制工具条，但未添加到地图上
                                                                                     //是否在地图上显示图层控制工具条，由用户在dashboard界面地图部件的高级设置中的开关来调用使用上面的的showLayerControl方法来控制。
 
@@ -79,6 +85,8 @@ export default class TbOpenStreetMapLocal {
                     iconUrl: 'static/images/leaflet/marker.png'
                 }
             });
+
+            drawLocals('zh');
 
             this.drawControl = new L.Control.Draw({       //创建工具条并自定义定义绘图工具条中的工具。注意：工具条尚未加到地图上。是否在地图上显示绘图工具条，由用户在dashboard界面地图部件的高级设置中的开关来调用使用上面的showDrawToolBar方法来控制。
                 position: 'topright',
