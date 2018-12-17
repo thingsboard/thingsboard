@@ -119,6 +119,23 @@
                         </configuration>
                     </execution> 
                     <execution>
+                        <id>copy-resource-splitjs</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+
+                        <configuration>
+                            <overwrite>true</overwrite>
+                            <outputDirectory>${basedir}/node_modules/split.js</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/resourses/node-modules/split.js</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>                    
+                    <execution>
                         <id>copy-resource-leaflet-draw-locals</id>
                         <phase>generate-sources</phase>
                         <goals>
