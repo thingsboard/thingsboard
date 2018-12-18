@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -52,13 +53,11 @@ import static org.thingsboard.server.common.data.kv.Aggregation.NONE;
                 "If selected fetch mode <b>ALL</b> Telemetry will be added like array into Message Metadata where <b>key</b> is Timestamp and <b>value</b> is value of Telemetry. " +
                 "If selected fetch mode <b>FIRST</b> or <b>LAST</b> Telemetry will be added like string without Timestamp",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbEnrichmentNodeGetTelemetryFromDatabase")
+        configDirective = "")//"tbEnrichmentNodeGetTelemetryFromDatabase")
 public class TbGetTelemetryNode implements TbNode {
 
     private TbGetTelemetryNodeConfiguration config;
     private List<String> tsKeyNames;
-    private long startTsOffset;
-    private long endTsOffset;
     private int limit;
     private ObjectMapper mapper;
     private String fetchMode;
@@ -67,8 +66,6 @@ public class TbGetTelemetryNode implements TbNode {
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbGetTelemetryNodeConfiguration.class);
         tsKeyNames = config.getLatestTsKeyNames();
-        startTsOffset = TimeUnit.valueOf(config.getStartIntervalTimeUnit()).toMillis(config.getStartInterval());
-        endTsOffset = TimeUnit.valueOf(config.getEndIntervalTimeUnit()).toMillis(config.getEndInterval());
         limit = config.getFetchMode().equals(FETCH_MODE_ALL) ? MAX_FETCH_SIZE : 1;
         fetchMode = config.getFetchMode();
         mapper = new ObjectMapper();
@@ -82,7 +79,7 @@ public class TbGetTelemetryNode implements TbNode {
             ctx.tellFailure(msg, new IllegalStateException("Telemetry is not selected!"));
         } else {
             try {
-                List<ReadTsKvQuery> queries = buildQueries();
+                List<ReadTsKvQuery> queries = buildQueries(msg);
                 ListenableFuture<List<TsKvEntry>> list = ctx.getTimeseriesService().findAll(ctx.getTenantId(), msg.getOriginator(), queries);
                 DonAsynchron.withCallback(list, data -> {
                     process(data, msg);
@@ -95,10 +92,24 @@ public class TbGetTelemetryNode implements TbNode {
         }
     }
 
-    private List<ReadTsKvQuery> buildQueries() {
-        long ts = System.currentTimeMillis();
-        long startTs = ts - startTsOffset;
-        long endTs = ts - endTsOffset;
+    private List<Long> getInterval(TbMsg msg) {
+        List<Long> longList = new ArrayList<>();
+        long startTs;
+        long endTs;
+        if (config.isUseMetadataIntervalPatterns()) {
+            startTs = Long.parseLong(TbNodeUtils.processPattern(config.getStartIntervalTs(), msg.getMetaData()));
+            endTs = Long.parseLong(TbNodeUtils.processPattern(config.getEndIntervalTs(), msg.getMetaData()));
+        } else {
+            long ts = System.currentTimeMillis();
+            startTs = ts - TimeUnit.valueOf(config.getStartIntervalTimeUnit()).toMillis(config.getStartInterval());
+            endTs = ts - TimeUnit.valueOf(config.getEndIntervalTimeUnit()).toMillis(config.getEndInterval());
+        }
+        longList.add(0, startTs);
+        longList.add(1, endTs);
+        return longList;
+    }
+
+    private List<ReadTsKvQuery> buildQueries(TbMsg msg) {
         String orderBy;
         if (fetchMode.equals(FETCH_MODE_FIRST) || fetchMode.equals(FETCH_MODE_ALL)) {
             orderBy = "ASC";
@@ -106,7 +117,7 @@ public class TbGetTelemetryNode implements TbNode {
             orderBy = "DESC";
         }
         return tsKeyNames.stream()
-                .map(key -> new BaseReadTsKvQuery(key, startTs, endTs, 1, limit, NONE, orderBy))
+                .map(key -> new BaseReadTsKvQuery(key, getInterval(msg).get(0), getInterval(msg).get(1), 1, limit, NONE, orderBy))
                 .collect(Collectors.toList());
     }
 
