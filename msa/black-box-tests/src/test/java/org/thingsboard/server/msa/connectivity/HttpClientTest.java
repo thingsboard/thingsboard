@@ -28,8 +28,10 @@ import org.thingsboard.server.msa.mapper.WsTelemetryResponse;
 
 
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.thingsboard.server.common.data.DataConstants.DEVICE;
@@ -79,34 +81,39 @@ public class HttpClientTest extends AbstractContainerTest {
                         ResponseEntity.class,
                         accessToken);
 
+        Assert.assertTrue(deviceSharedAttributes.getStatusCode().is2xxSuccessful());
+
         ResponseEntity deviceClientsAttributes = restClient.getRestTemplate()
                 .postForEntity(HTTPS_URL + "/api/v1/" + accessToken + "/attributes/", mapper.readTree(createPayload().toString()),
                         ResponseEntity.class,
                         accessToken);
 
-        Assert.assertTrue(deviceSharedAttributes.getStatusCode().is2xxSuccessful());
         Assert.assertTrue(deviceClientsAttributes.getStatusCode().is2xxSuccessful());
+
+        TimeUnit.SECONDS.sleep(3);
 
         Optional<JsonNode> allOptional = restClient.getAttributes(accessToken, null, null);
         assertTrue(allOptional.isPresent());
 
+
         JsonNode all = allOptional.get();
-        assertEquals(all.get("shared"), mapper.readTree(createPayload().toString()));
-        assertEquals(all.get("client"), mapper.readTree(createPayload().toString()));
+        assertEquals(2, all.size());
+        assertEquals(mapper.readTree(createPayload().toString()), all.get("shared"));
+        assertEquals(mapper.readTree(createPayload().toString()), all.get("client"));
 
         Optional<JsonNode> sharedOptional = restClient.getAttributes(accessToken, null, "stringKey");
         assertTrue(sharedOptional.isPresent());
 
         JsonNode shared = sharedOptional.get();
         assertEquals(shared.get("shared").get("stringKey"), mapper.readTree(createPayload().get("stringKey").toString()));
-        assertEquals(shared.get("client"), mapper.readTree(createPayload().toString()));
+        assertFalse(shared.has("client"));
 
         Optional<JsonNode> clientOptional = restClient.getAttributes(accessToken, "longKey,stringKey", null);
         assertTrue(clientOptional.isPresent());
 
         JsonNode client = clientOptional.get();
-        assertEquals(client.get("shared"), mapper.readTree(createPayload().toString()));
-        assertEquals(client.get("client").get("longKey"), mapper.readTree(createPayload().get("longKey").toString()));
+        assertFalse(client.has("shared"));
+        assertEquals(mapper.readTree(createPayload().get("longKey").toString()), client.get("client").get("longKey"));
         assertEquals(client.get("client").get("stringKey"), mapper.readTree(createPayload().get("stringKey").toString()));
 
         restClient.deleteDevice(device.getId());
