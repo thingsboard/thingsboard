@@ -80,7 +80,15 @@ export default class TbMapWidgetV2 {
         } else if (mapProvider === 'openstreet-map') {
             this.map = new TbOpenStreetMap($element, this.utils,  initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.mapProvider);
         } else if (mapProvider === 'openstreet-map-local') {
-            this.map = new TbOpenStreetMapLocal($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.mapProvider);
+            var makeClusterOptions = {   //配置聚类标记
+                animateAddingMarkers: this.ctx.settings.animateAddingMarkers,
+                spiderfyOnMaxZoom: this.ctx.settings.spiderfyOnMaxZoom,
+                showCoverageOnHover: this.ctx.settings.showCoverageOnHover,
+                maxClusterRadius: this.ctx.settings.maxClusterRadius || 80,
+                zoomToBoundsOnClick: this.ctx.settings.zoomToBoundsOnClick,
+                removeOutsideVisibleBounds: this.ctx.settings.removeOutsideVisibleBounds
+            };
+            this.map = new TbOpenStreetMapLocal($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.mapProvider, makeClusterOptions);
         } else if (mapProvider === 'image-map') {
             this.map = new TbImageMap(this.ctx, $element, this.utils, initCallback,
                 settings.mapImageUrl,
@@ -103,9 +111,6 @@ export default class TbMapWidgetV2 {
                 });
             }              
         }
-              
- 
-        
     }
 
     setCallbacks(callbacks) {
@@ -139,10 +144,9 @@ export default class TbMapWidgetV2 {
     configureLocationsSettings() {
         this.locationSettings.geoJsonLayers = angular.fromJson(this.ctx.settings.geoJsonLayers) || [];
 
-        // var tbMap = this;
         if (this.map && this.mapProvider === 'openstreet-map-local') {
-            this.map.showLayerControl(this.locationSettings.showLayerControl);
-            this.map.showDrawToolBar(this.locationSettings.showDrawToolBar);
+            this.map.showLayerControl(this.locationSettings.showLayerControl);           //定制是否显示图层控制工具条
+            this.map.showDrawToolBar(this.locationSettings.showDrawToolBar);             //定制是否显示标图工具条
         }        
 
         if (this.mapProvider  == 'image-map') {
@@ -695,7 +699,37 @@ const openstreetMapLocalSettingsSchema =
                     "title": "地图上显示标图工具条",
                     "type": "boolean",
                     "default": false
-                },                              
+                },   
+                "animateAddingMarkers": {
+                    "title": "添加标记时显示动画",
+                    "type": "boolean",
+                    "default": true
+                }, 
+                "showCoverageOnHover": {
+                    "title": "鼠标移到标记聚类上显示覆盖范围",
+                    "type": "boolean",
+                    "default": true
+                }, 
+                "zoomToBoundsOnClick": {
+                    "title": "点击标记聚类时放大到覆盖范围边界",
+                    "type": "boolean",
+                    "default": false
+                }, 
+                "removeOutsideVisibleBounds": {
+                    "title": "移除可见范围之外的聚类(标记很多时可提升显示性能)",
+                    "type": "boolean",
+                    "default": false
+                }, 
+                "spiderfyOnMaxZoom": {
+                    "title": "缩放级别到最大时，点击聚类后也蜘蛛化散开布局",
+                    "type": "boolean",
+                    "default": false
+                }, 
+                "maxClusterRadius": {
+                    "title": "标记聚类半径(像素)",
+                    "type": "number",
+                    "default": 80
+                },                                                                                                
                 "geoJsonLayers": {
                     "title": "添加GeoJson多边形",
                     "type": "array",
@@ -734,6 +768,12 @@ const openstreetMapLocalSettingsSchema =
             },
             "showLayerControl",
             "showDrawToolBar",
+            "animateAddingMarkers",
+            "showCoverageOnHover",
+            "zoomToBoundsOnClick",
+            "removeOutsideVisibleBounds",
+            "spiderfyOnMaxZoom",
+            "maxClusterRadius",              
             {
                 "key": "geoJsonLayers",
                 "items": [

@@ -3,15 +3,18 @@
  *
  */
 import 'leaflet/dist/leaflet.css';
-import * as L from 'leaflet';
+import  L from 'leaflet';
 import 'leaflet-providers';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import 'leaflet-draw';
 import drawLocals from 'leaflet-draw-locales';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
+import 'leaflet.markercluster/dist/leaflet.markercluster';
 
 export default class TbOpenStreetMapLocal {
 
-    constructor($containerElement, utils, initCallback, defaultZoomLevel, dontFitMapBounds, minZoomLevel, mapProvider) {
+    constructor($containerElement, utils, initCallback, defaultZoomLevel, dontFitMapBounds, minZoomLevel, mapProvider, makeClusterOptions) {
 
         this.utils = utils;
         this.defaultZoomLevel = defaultZoomLevel;
@@ -29,6 +32,13 @@ export default class TbOpenStreetMapLocal {
 
         tileLayer.addTo(this.map);
 
+        //使用自定义半径及图标创建函数创建一个标注组来统一管理标注（点要素）
+        this.markerClusterGroup = L.markerClusterGroup(makeClusterOptions);
+        this.map.addLayer(this.markerClusterGroup);
+        this.markerClusterGroup.on('clusterclick', function (a) {
+            a.layer.spiderfy();
+        });          
+
         if (initCallback) {
             setTimeout(initCallback, 0); //eslint-disable-line
         }
@@ -38,6 +48,7 @@ export default class TbOpenStreetMapLocal {
     inited() {
         return angular.isDefined(this.map);
     }
+    
     /**
      * 是否在地图上显示图层控制工具条，由用户在dashboard界面地图部件的高级设置中的开关来调用使用上面的的showLayerControl方法来控制。
      * 该方法在map_widget2组件中创建工具条之后和修改设置方法中调用
@@ -66,11 +77,7 @@ export default class TbOpenStreetMapLocal {
      */
     makeToolBar(ctx){
         if (ctx){
-            // var drawLocales = require('leaflet-draw-locales')
-
-            // // Automatically defines Leaflet.draw to the specified language
-            // drawLocales('zh')
-
+            drawLocals('zh');
             this.layerControl = L.control.layers({}, {}, { hideSingleBase: true }); //创建图层控制工具条，但未添加到地图上
                                                                                     //是否在地图上显示图层控制工具条，由用户在dashboard界面地图部件的高级设置中的开关来调用使用上面的的showLayerControl方法来控制。
 
@@ -85,8 +92,6 @@ export default class TbOpenStreetMapLocal {
                     iconUrl: 'static/images/leaflet/marker.png'
                 }
             });
-
-            drawLocals('zh');
 
             this.drawControl = new L.Control.Draw({       //创建工具条并自定义定义绘图工具条中的工具。注意：工具条尚未加到地图上。是否在地图上显示绘图工具条，由用户在dashboard界面地图部件的高级设置中的开关来调用使用上面的showDrawToolBar方法来控制。
                 position: 'topright',
@@ -119,19 +124,21 @@ export default class TbOpenStreetMapLocal {
                 }
             });
 
-            var localLayerControl = this.layerControl;            //为了在下面的事件函数中使用实例变量，因为事件函数中不能使用this访问实例变量
+            var opMap = this;  //为了在下面的事件函数中使用实例变量，因为事件函数中不能使用this访问实例变量
             this.map.on("draw:created", function (e) {            //处理绘图完成事件
                 var type = e.layerType,
                     layer = e.layer;
 
                 if (type === 'marker') {                                 
                     layer.bindPopup('坐标: ' + layer.toGeoJSON().geometry.coordinates[0] + ' , ' + layer.toGeoJSON().geometry.coordinates[1]); //添加点击后弹出窗口
-                    layer.bindTooltip('经度: ' + layer.toGeoJSON().geometry.coordinates[0] + '<br/>维度: ' + layer.toGeoJSON().geometry.coordinates[1]);   
+                    layer.bindTooltip('经度: ' + layer.toGeoJSON().geometry.coordinates[0] + '<br/>维度: ' + layer.toGeoJSON().geometry.coordinates[1]);  
+                    opMap.markerClusterGroup.addLayer(layer);
+                }else{
+                    drawnItems.addLayer(layer);                       //把绘制的图层添加到标图组中,以便使用图层控制来统一管理
                 }
-                drawnItems.addLayer(layer);                       //把绘制的图层添加到标图组中,以便使用图层控制来统一管理
 
                 if (drawnItems.getLayers().length == 1){          //仅在初始会绘制时，才添加
-                    localLayerControl.addOverlay(drawnItems, "手工标图");          //在图层控制工具条上添加标图图层组控制复选框
+                    opMap.layerControl.addOverlay(drawnItems, "手工标图");          //在图层控制工具条上添加标图图层组控制复选框
                 }
 
                 // //=================================================尝试自动更新地理围栏配置参数，仅作实验用， 
@@ -179,6 +186,35 @@ export default class TbOpenStreetMapLocal {
                 // }
                 // localSettings = ctx.settings;                          
                 //=================================================实验代码结束
+
+
+                //================================================尝试自定义工具条开始
+                // var customControl = L.Control.extend({
+
+                //     options: {
+                //         position: 'topleft'
+                //     },
+
+                //     onAdd: function (map) {
+                //         var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
+
+                //         container.style.backgroundColor = 'white';
+                //         container.style.backgroundImage = "url(https://t1.gstatic.com/images?q=tbn:ANd9GcR6FCUMW5bPn8C4PbKak2BJQQsmC-K9-mbYBeFZm1ZM2w2GRy40Ew)";
+                //         container.style.backgroundSize = "30px 30px";
+                //         container.style.width = '30px';
+                //         container.style.height = '30px';
+
+                //         container.onclick = function () {
+                //             //console.log('buttonClicked');
+                //             map.stop();
+                //         }
+
+                //         return container;
+                //     }
+                // })
+
+                // this.map.addControl(new customControl());
+                //================================================尝试自定义工具条代码结束
             }); 
         }    
     }
@@ -270,8 +306,8 @@ export default class TbOpenStreetMapLocal {
                 marker.tooltipOffset = [0, -iconInfo.size[1] + 10];
                 marker.bindTooltip('<div style="color: '+ settings.labelColor +';"><b>'+settings.labelText+'</b></div>',
                     { className: 'tb-marker-label', permanent: true, direction: 'top', offset: marker.tooltipOffset });
-            }
-            marker.addTo(opMap.map);
+            }            
+            opMap.markerClusterGroup.addLayer(marker);  //marker.addTo(opMap.map);  //使用markerClusterGroup来统一管理marker
         });
 
         if (settings.displayTooltip) {
@@ -285,8 +321,8 @@ export default class TbOpenStreetMapLocal {
         return marker;
     }
 
-    removeMarker(marker) {
-        this.map.removeLayer(marker);
+    removeMarker(marker) {        
+        this.markerClusterGroup.removeLayer(marker);  //this.map.removeLayer(marker);  //使用markerClusterGroup来统一管理marker
     }
 
     createTooltip(marker, pattern, replaceInfo, autoClose, markerArgs) {
