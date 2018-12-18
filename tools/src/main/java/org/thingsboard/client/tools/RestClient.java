@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -139,6 +140,17 @@ public class RestClient implements ClientHttpRequestInterceptor {
         device.setName(name);
         device.setType(type);
         return restTemplate.postForEntity(baseURL + "/api/device", device, Device.class).getBody();
+    }
+
+    public DeviceCredentials updateDeviceCredentials(DeviceId deviceId, String token) {
+        DeviceCredentials deviceCredentials = getCredentials(deviceId);
+        deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
+        deviceCredentials.setCredentialsId(token);
+        return saveDeviceCredentials(deviceCredentials);
+    }
+
+    public DeviceCredentials saveDeviceCredentials(DeviceCredentials deviceCredentials) {
+        return restTemplate.postForEntity(baseURL + "/api/device/credentials", deviceCredentials, DeviceCredentials.class).getBody();
     }
 
     public Device createDevice(Device device) {
