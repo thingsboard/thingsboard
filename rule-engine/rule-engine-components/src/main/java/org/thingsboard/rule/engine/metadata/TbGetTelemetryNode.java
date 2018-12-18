@@ -53,7 +53,7 @@ import static org.thingsboard.server.common.data.kv.Aggregation.NONE;
                 "If selected fetch mode <b>ALL</b> Telemetry will be added like array into Message Metadata where <b>key</b> is Timestamp and <b>value</b> is value of Telemetry. " +
                 "If selected fetch mode <b>FIRST</b> or <b>LAST</b> Telemetry will be added like string without Timestamp",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "")//"tbEnrichmentNodeGetTelemetryFromDatabase")
+        configDirective = "tbEnrichmentNodeGetTelemetryFromDatabase")
 public class TbGetTelemetryNode implements TbNode {
 
     private TbGetTelemetryNodeConfiguration config;
@@ -93,20 +93,20 @@ public class TbGetTelemetryNode implements TbNode {
     }
 
     private List<Long> getInterval(TbMsg msg) {
-        List<Long> longList = new ArrayList<>();
+        List<Long> intrvalsList = new ArrayList<>();
         long startTs;
         long endTs;
         if (config.isUseMetadataIntervalPatterns()) {
-            startTs = Long.parseLong(TbNodeUtils.processPattern(config.getStartIntervalTs(), msg.getMetaData()));
-            endTs = Long.parseLong(TbNodeUtils.processPattern(config.getEndIntervalTs(), msg.getMetaData()));
+            startTs = Long.parseLong(TbNodeUtils.processPattern(config.getStartIntervalPattern(), msg.getMetaData()));
+            endTs = Long.parseLong(TbNodeUtils.processPattern(config.getEndIntervalPattern(), msg.getMetaData()));
         } else {
             long ts = System.currentTimeMillis();
             startTs = ts - TimeUnit.valueOf(config.getStartIntervalTimeUnit()).toMillis(config.getStartInterval());
             endTs = ts - TimeUnit.valueOf(config.getEndIntervalTimeUnit()).toMillis(config.getEndInterval());
         }
-        longList.add(0, startTs);
-        longList.add(1, endTs);
-        return longList;
+        intrvalsList.add(0, startTs);
+        intrvalsList.add(1, endTs);
+        return intrvalsList;
     }
 
     private List<ReadTsKvQuery> buildQueries(TbMsg msg) {
