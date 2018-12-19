@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,10 +21,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.rule.engine.api.util.DonAsynchron;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
@@ -92,8 +95,7 @@ public class TbGetTelemetryNode implements TbNode {
         }
     }
 
-    private List<Long> getInterval(TbMsg msg) {
-        List<Long> intrvalsList = new ArrayList<>();
+    private Interval getInterval(TbMsg msg) {
         long startTs;
         long endTs;
         if (config.isUseMetadataIntervalPatterns()) {
@@ -104,9 +106,7 @@ public class TbGetTelemetryNode implements TbNode {
             startTs = ts - TimeUnit.valueOf(config.getStartIntervalTimeUnit()).toMillis(config.getStartInterval());
             endTs = ts - TimeUnit.valueOf(config.getEndIntervalTimeUnit()).toMillis(config.getEndInterval());
         }
-        intrvalsList.add(0, startTs);
-        intrvalsList.add(1, endTs);
-        return intrvalsList;
+        return new Interval(startTs, endTs);
     }
 
     private List<ReadTsKvQuery> buildQueries(TbMsg msg) {
@@ -117,7 +117,7 @@ public class TbGetTelemetryNode implements TbNode {
             orderBy = "DESC";
         }
         return tsKeyNames.stream()
-                .map(key -> new BaseReadTsKvQuery(key, getInterval(msg).get(0), getInterval(msg).get(1), 1, limit, NONE, orderBy))
+                .map(key -> new BaseReadTsKvQuery(key, getInterval(msg).getStartTs(), getInterval(msg).getEndTs(), 1, limit, NONE, orderBy))
                 .collect(Collectors.toList());
     }
 
@@ -177,4 +177,12 @@ public class TbGetTelemetryNode implements TbNode {
     public void destroy() {
 
     }
+
+    @Data
+    @AllArgsConstructor
+    private static class Interval {
+        private Long startTs;
+        private Long endTs;
+    }
+
 }
