@@ -25,6 +25,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.thingsboard.rule.engine.api.RpcError;
 import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.rule.engine.api.msg.DeviceNameOrTypeUpdateMsg;
@@ -287,13 +288,13 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     private ListenableFuture<List<List<AttributeKvEntry>>> getAttributesKvEntries(GetAttributeRequestMsg request) {
         ListenableFuture<List<AttributeKvEntry>> clientAttributesFuture;
         ListenableFuture<List<AttributeKvEntry>> sharedAttributesFuture;
-        if (listIsEmpty(request.getClientAttributeNamesList()) && listIsEmpty(request.getSharedAttributeNamesList())) {
+        if (CollectionUtils.isEmpty(request.getClientAttributeNamesList()) && CollectionUtils.isEmpty(request.getSharedAttributeNamesList())) {
             clientAttributesFuture = findAllAttributesByScope(CLIENT_SCOPE);
             sharedAttributesFuture = findAllAttributesByScope(SHARED_SCOPE);
-        } else if (!listIsEmpty(request.getClientAttributeNamesList()) && !listIsEmpty(request.getSharedAttributeNamesList())) {
+        } else if (!CollectionUtils.isEmpty(request.getClientAttributeNamesList()) && !CollectionUtils.isEmpty(request.getSharedAttributeNamesList())) {
             clientAttributesFuture = findAttributesByScope(toSet(request.getClientAttributeNamesList()), CLIENT_SCOPE);
             sharedAttributesFuture = findAttributesByScope(toSet(request.getSharedAttributeNamesList()), SHARED_SCOPE);
-        } else if (listIsEmpty(request.getClientAttributeNamesList()) && !listIsEmpty(request.getSharedAttributeNamesList())) {
+        } else if (CollectionUtils.isEmpty(request.getClientAttributeNamesList()) && !CollectionUtils.isEmpty(request.getSharedAttributeNamesList())) {
             clientAttributesFuture = Futures.immediateFuture(Collections.emptyList());
             sharedAttributesFuture = findAttributesByScope(toSet(request.getSharedAttributeNamesList()), SHARED_SCOPE);
         } else {
@@ -313,10 +314,6 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
 
     private Set<String> toSet(List<String> strings) {
         return new HashSet<>(strings);
-    }
-
-    private boolean listIsEmpty(List<String> strings) {
-        return strings == null || strings.isEmpty();
     }
 
     private void handlePostAttributesRequest(ActorContext context, SessionInfoProto sessionInfo, PostAttributeMsg postAttributes) {
