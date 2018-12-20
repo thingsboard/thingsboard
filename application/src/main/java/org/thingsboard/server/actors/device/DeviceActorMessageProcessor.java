@@ -78,7 +78,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -288,73 +287,36 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     private ListenableFuture<List<List<AttributeKvEntry>>> getAttributesKvEntries(GetAttributeRequestMsg request) {
         ListenableFuture<List<AttributeKvEntry>> clientAttributesFuture;
         ListenableFuture<List<AttributeKvEntry>> sharedAttributesFuture;
-        if (!clientIsPresent(request) && !sharedIsPresent(request)) {
-            clientAttributesFuture = findAllClientAttributes();
-            sharedAttributesFuture = findAllSharedAttributes();
-        } else if (clientIsPresent(request) && sharedIsPresent(request)) {
-            if (clientIsNotEmpty(request) && sharedIsNotEmpty(request)) {
-                clientAttributesFuture = findClientAttributes(request);
-                sharedAttributesFuture = findSharedAttributes(request);
-            } else {
-                clientAttributesFuture = findAllClientAttributes();
-                sharedAttributesFuture = findAllSharedAttributes();
-            }
-        } else if (clientIsPresent(request) && !sharedIsPresent(request)) {
-            if (clientIsNotEmpty(request)) {
-                clientAttributesFuture = findClientAttributes(request);
-            } else {
-                clientAttributesFuture = findAllClientAttributes();
-            }
-            sharedAttributesFuture = Futures.immediateFuture(Collections.emptyList());
-        } else {
-            if (sharedIsNotEmpty(request)) {
-                sharedAttributesFuture = findSharedAttributes(request);
-            } else {
-                sharedAttributesFuture = findAllSharedAttributes();
-            }
+        if (listIsEmpty(request.getClientAttributeNamesList()) && listIsEmpty(request.getSharedAttributeNamesList())) {
+            clientAttributesFuture = findAllAttributesByScope(CLIENT_SCOPE);
+            sharedAttributesFuture = findAllAttributesByScope(SHARED_SCOPE);
+        } else if (!listIsEmpty(request.getClientAttributeNamesList()) && !listIsEmpty(request.getSharedAttributeNamesList())) {
+            clientAttributesFuture = findAttributesByScope(toSet(request.getClientAttributeNamesList()), CLIENT_SCOPE);
+            sharedAttributesFuture = findAttributesByScope(toSet(request.getSharedAttributeNamesList()), SHARED_SCOPE);
+        } else if (listIsEmpty(request.getClientAttributeNamesList()) && !listIsEmpty(request.getSharedAttributeNamesList())) {
             clientAttributesFuture = Futures.immediateFuture(Collections.emptyList());
+            sharedAttributesFuture = findAttributesByScope(toSet(request.getSharedAttributeNamesList()), SHARED_SCOPE);
+        } else {
+            sharedAttributesFuture = Futures.immediateFuture(Collections.emptyList());
+            clientAttributesFuture = findAttributesByScope(toSet(request.getClientAttributeNamesList()), CLIENT_SCOPE);
         }
         return Futures.allAsList(Arrays.asList(clientAttributesFuture, sharedAttributesFuture));
     }
 
-    private ListenableFuture<List<AttributeKvEntry>> findAllSharedAttributes() {
-        return systemContext.getAttributesService().findAll(tenantId, deviceId, SHARED_SCOPE);
+    private ListenableFuture<List<AttributeKvEntry>> findAllAttributesByScope(String scope) {
+        return systemContext.getAttributesService().findAll(tenantId, deviceId, scope);
     }
 
-    private ListenableFuture<List<AttributeKvEntry>> findAllClientAttributes() {
-        return systemContext.getAttributesService().findAll(tenantId, deviceId, CLIENT_SCOPE);
+    private ListenableFuture<List<AttributeKvEntry>> findAttributesByScope(Set<String> attributesSet, String scope) {
+        return systemContext.getAttributesService().find(tenantId, deviceId, scope, attributesSet);
     }
 
-    private ListenableFuture<List<AttributeKvEntry>> findSharedAttributes(GetAttributeRequestMsg request) {
-        return systemContext.getAttributesService().find(tenantId, deviceId, SHARED_SCOPE, getSharedAttributesSet(request));
+    private Set<String> toSet(List<String> strings) {
+        return new HashSet<>(strings);
     }
 
-    private ListenableFuture<List<AttributeKvEntry>> findClientAttributes(GetAttributeRequestMsg request) {
-        return systemContext.getAttributesService().find(tenantId, deviceId, CLIENT_SCOPE, getClientAttributesSet(request));
-    }
-
-    private boolean clientIsNotEmpty(GetAttributeRequestMsg request) {
-        return !getClientAttributesSet(request).isEmpty();
-    }
-
-    private boolean sharedIsNotEmpty(GetAttributeRequestMsg request) {
-        return !getSharedAttributesSet(request).isEmpty();
-    }
-
-    private Set<String> getSharedAttributesSet(GetAttributeRequestMsg request) {
-        return toOptionalSet(request.getSharedAttributeNamesList()).get();
-    }
-
-    private Set<String> getClientAttributesSet(GetAttributeRequestMsg request) {
-        return toOptionalSet(request.getClientAttributeNamesList()).get();
-    }
-
-    private boolean sharedIsPresent(GetAttributeRequestMsg request) {
-        return toOptionalSet(request.getSharedAttributeNamesList()).isPresent();
-    }
-
-    private boolean clientIsPresent(GetAttributeRequestMsg request) {
-        return toOptionalSet(request.getClientAttributeNamesList()).isPresent();
+    private boolean listIsEmpty(List<String> strings) {
+        return strings == null || strings.isEmpty();
     }
 
     private void handlePostAttributesRequest(ActorContext context, SessionInfoProto sessionInfo, PostAttributeMsg postAttributes) {
@@ -601,14 +563,6 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             }
         }
         return json;
-    }
-
-    private Optional<Set<String>> toOptionalSet(List<String> strings) {
-        if (strings == null || strings.isEmpty()) {
-            return Optional.empty();
-        } else {
-            return Optional.of(new HashSet<>(strings));
-        }
     }
 
     private void sendToTransport(GetAttributeResponseMsg responseMsg, SessionInfoProto sessionInfo) {
