@@ -32,7 +32,8 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.SSLContexts;
-import org.junit.*;
+import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
@@ -43,7 +44,10 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.msa.mapper.WsTelemetryResponse;
 
-import javax.net.ssl.*;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.SSLSocket;
 import java.net.URI;
 import java.security.cert.X509Certificate;
 import java.util.List;
@@ -54,6 +58,7 @@ import java.util.Random;
 public abstract class AbstractContainerTest {
     protected static final String HTTPS_URL = "https://localhost";
     protected static final String WSS_URL = "wss://localhost";
+    protected static String TB_TOKEN;
     protected static RestClient restClient;
     protected ObjectMapper mapper = new ObjectMapper();
 
