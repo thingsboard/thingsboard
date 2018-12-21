@@ -21,9 +21,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
-import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -86,8 +87,8 @@ public class TbGetTelemetryNode implements TbNode {
             ctx.tellFailure(msg, new IllegalStateException("Telemetry is not selected!"));
         } else {
             try {
-                List<ReadTsKvQuery> queries = buildQueries(msg);
-                ListenableFuture<List<TsKvEntry>> list = ctx.getTimeseriesService().findAll(ctx.getTenantId(), msg.getOriginator(), queries);
+                checkMetadataKeyPatterns(msg);
+                ListenableFuture<List<TsKvEntry>> list = ctx.getTimeseriesService().findAll(ctx.getTenantId(), msg.getOriginator(), buildQueries(msg));
                 DonAsynchron.withCallback(list, data -> {
                     process(data, msg);
                     TbMsg newMsg = ctx.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), msg.getData());
@@ -99,18 +100,9 @@ public class TbGetTelemetryNode implements TbNode {
         }
     }
 
-    private Interval getInterval(TbMsg msg) {
-        long startTs;
-        long endTs;
-        if (config.isUseMetadataIntervalPatterns()) {
-            startTs = Long.parseLong(TbNodeUtils.processPattern(config.getStartIntervalPattern(), msg.getMetaData()));
-            endTs = Long.parseLong(TbNodeUtils.processPattern(config.getEndIntervalPattern(), msg.getMetaData()));
-        } else {
-            long ts = System.currentTimeMillis();
-            startTs = ts - TimeUnit.valueOf(config.getStartIntervalTimeUnit()).toMillis(config.getStartInterval());
-            endTs = ts - TimeUnit.valueOf(config.getEndIntervalTimeUnit()).toMillis(config.getEndInterval());
-        }
-        return new Interval(startTs, endTs);
+    @Override
+    public void destroy() {
+
     }
 
     private List<ReadTsKvQuery> buildQueries(TbMsg msg) {
@@ -177,13 +169,76 @@ public class TbGetTelemetryNode implements TbNode {
         return obj;
     }
 
-    @Override
-    public void destroy() {
+    private Interval getInterval(TbMsg msg) {
+        Interval interval = new Interval();
+        if (config.isUseMetadataIntervalPatterns()) {
+            if (isParsable(msg, config.getStartIntervalPattern())) {
+                interval.setStartTs(Long.parseLong(TbNodeUtils.processPattern(config.getStartIntervalPattern(), msg.getMetaData())));
+            }
+            if (isParsable(msg, config.getEndIntervalPattern())) {
+                interval.setEndTs(Long.parseLong(TbNodeUtils.processPattern(config.getEndIntervalPattern(), msg.getMetaData())));
+            }
+        } else {
+            long ts = System.currentTimeMillis();
+            interval.setStartTs(ts - TimeUnit.valueOf(config.getStartIntervalTimeUnit()).toMillis(config.getStartInterval()));
+            interval.setEndTs(ts - TimeUnit.valueOf(config.getEndIntervalTimeUnit()).toMillis(config.getEndInterval()));
+        }
+        return interval;
+    }
 
+    private boolean isParsable(TbMsg msg, String pattern) {
+        return NumberUtils.isParsable(TbNodeUtils.processPattern(pattern, msg.getMetaData()));
+    }
+
+    private void checkMetadataKeyPatterns(TbMsg msg) {
+        isUndefined(msg, config.getStartIntervalPattern(), config.getEndIntervalPattern());
+        isInvalid(msg, config.getStartIntervalPattern(), config.getEndIntervalPattern());
+    }
+
+    private void isUndefined(TbMsg msg, String startIntervalPattern, String endIntervalPattern) {
+        if (getMetadataValue(msg, startIntervalPattern) == null && getMetadataValue(msg, endIntervalPattern) == null) {
+            throw new IllegalArgumentException("Message metadata values: '" +
+                    replaceRegex(startIntervalPattern) + "' and '" +
+                    replaceRegex(endIntervalPattern) + "' are undefined");
+        } else {
+            if (getMetadataValue(msg, startIntervalPattern) == null) {
+                throw new IllegalArgumentException("Message metadata value: '" +
+                        replaceRegex(startIntervalPattern) + "' is undefined");
+            }
+            if (getMetadataValue(msg, endIntervalPattern) == null) {
+                throw new IllegalArgumentException("Message metadata value: '" +
+                        replaceRegex(endIntervalPattern) + "' is undefined");
+            }
+        }
+    }
+
+    private void isInvalid(TbMsg msg, String startIntervalPattern, String endIntervalPattern) {
+        if (getInterval(msg).getStartTs() == null && getInterval(msg).getEndTs() == null) {
+            throw new IllegalArgumentException("Message metadata values: '" +
+                    replaceRegex(startIntervalPattern) + "' and '" +
+                    replaceRegex(endIntervalPattern) + "' have invalid format");
+        } else {
+            if (getInterval(msg).getStartTs() == null) {
+                throw new IllegalArgumentException("Message metadata value: '" +
+                        replaceRegex(startIntervalPattern) + "' has invalid format");
+            }
+            if (getInterval(msg).getEndTs() == null) {
+                throw new IllegalArgumentException("Message metadata value:: '" +
+                        replaceRegex(endIntervalPattern) + "' has invalid format");
+            }
+        }
+    }
+
+    private String getMetadataValue(TbMsg msg, String pattern) {
+        return msg.getMetaData().getValue(replaceRegex(pattern));
+    }
+
+    private String replaceRegex(String pattern) {
+        return pattern.replaceAll("[${}]", "");
     }
 
     @Data
-    @AllArgsConstructor
+    @NoArgsConstructor
     private static class Interval {
         private Long startTs;
         private Long endTs;
