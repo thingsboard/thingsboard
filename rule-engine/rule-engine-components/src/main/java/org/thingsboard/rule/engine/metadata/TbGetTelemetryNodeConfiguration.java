@@ -35,6 +35,12 @@ public class TbGetTelemetryNodeConfiguration implements NodeConfiguration<TbGetT
 
     private int startInterval;
     private int endInterval;
+
+    private String startIntervalPattern;
+    private String endIntervalPattern;
+
+    private boolean useMetadataIntervalPatterns;
+
     private String startIntervalTimeUnit;
     private String endIntervalTimeUnit;
     private String fetchMode; //FIRST, LAST, LATEST
@@ -52,6 +58,9 @@ public class TbGetTelemetryNodeConfiguration implements NodeConfiguration<TbGetT
         configuration.setStartInterval(2);
         configuration.setEndIntervalTimeUnit(TimeUnit.MINUTES.name());
         configuration.setEndInterval(1);
+        configuration.setUseMetadataIntervalPatterns(false);
+        configuration.setStartIntervalPattern("");
+        configuration.setEndIntervalPattern("");
         return configuration;
     }
 }

@@ -21,8 +21,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.rule.engine.api.*;
+import org.thingsboard.rule.engine.api.RuleNode;
+import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
+import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.DonAsynchron;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
@@ -37,7 +43,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
-import static org.thingsboard.rule.engine.metadata.TbGetTelemetryNodeConfiguration.*;
+import static org.thingsboard.rule.engine.metadata.TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL;
+import static org.thingsboard.rule.engine.metadata.TbGetTelemetryNodeConfiguration.FETCH_MODE_FIRST;
+import static org.thingsboard.rule.engine.metadata.TbGetTelemetryNodeConfiguration.MAX_FETCH_SIZE;
 import static org.thingsboard.server.common.data.kv.Aggregation.NONE;
 
 /**
@@ -57,8 +65,6 @@ public class TbGetTelemetryNode implements TbNode {
 
     private TbGetTelemetryNodeConfiguration config;
     private List<String> tsKeyNames;
-    private long startTsOffset;
-    private long endTsOffset;
     private int limit;
     private ObjectMapper mapper;
     private String fetchMode;
@@ -67,8 +73,6 @@ public class TbGetTelemetryNode implements TbNode {
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbGetTelemetryNodeConfiguration.class);
         tsKeyNames = config.getLatestTsKeyNames();
-        startTsOffset = TimeUnit.valueOf(config.getStartIntervalTimeUnit()).toMillis(config.getStartInterval());
-        endTsOffset = TimeUnit.valueOf(config.getEndIntervalTimeUnit()).toMillis(config.getEndInterval());
         limit = config.getFetchMode().equals(FETCH_MODE_ALL) ? MAX_FETCH_SIZE : 1;
         fetchMode = config.getFetchMode();
         mapper = new ObjectMapper();
@@ -82,7 +86,7 @@ public class TbGetTelemetryNode implements TbNode {
             ctx.tellFailure(msg, new IllegalStateException("Telemetry is not selected!"));
         } else {
             try {
-                List<ReadTsKvQuery> queries = buildQueries();
+                List<ReadTsKvQuery> queries = buildQueries(msg);
                 ListenableFuture<List<TsKvEntry>> list = ctx.getTimeseriesService().findAll(ctx.getTenantId(), msg.getOriginator(), queries);
                 DonAsynchron.withCallback(list, data -> {
                     process(data, msg);
@@ -95,10 +99,21 @@ public class TbGetTelemetryNode implements TbNode {
         }
     }
 
-    private List<ReadTsKvQuery> buildQueries() {
-        long ts = System.currentTimeMillis();
-        long startTs = ts - startTsOffset;
-        long endTs = ts - endTsOffset;
+    private Interval getInterval(TbMsg msg) {
+        long startTs;
+        long endTs;
+        if (config.isUseMetadataIntervalPatterns()) {
+            startTs = Long.parseLong(TbNodeUtils.processPattern(config.getStartIntervalPattern(), msg.getMetaData()));
+            endTs = Long.parseLong(TbNodeUtils.processPattern(config.getEndIntervalPattern(), msg.getMetaData()));
+        } else {
+            long ts = System.currentTimeMillis();
+            startTs = ts - TimeUnit.valueOf(config.getStartIntervalTimeUnit()).toMillis(config.getStartInterval());
+            endTs = ts - TimeUnit.valueOf(config.getEndIntervalTimeUnit()).toMillis(config.getEndInterval());
+        }
+        return new Interval(startTs, endTs);
+    }
+
+    private List<ReadTsKvQuery> buildQueries(TbMsg msg) {
         String orderBy;
         if (fetchMode.equals(FETCH_MODE_FIRST) || fetchMode.equals(FETCH_MODE_ALL)) {
             orderBy = "ASC";
@@ -106,7 +121,7 @@ public class TbGetTelemetryNode implements TbNode {
             orderBy = "DESC";
         }
         return tsKeyNames.stream()
-                .map(key -> new BaseReadTsKvQuery(key, startTs, endTs, 1, limit, NONE, orderBy))
+                .map(key -> new BaseReadTsKvQuery(key, getInterval(msg).getStartTs(), getInterval(msg).getEndTs(), 1, limit, NONE, orderBy))
                 .collect(Collectors.toList());
     }
 
@@ -166,4 +181,12 @@ public class TbGetTelemetryNode implements TbNode {
     public void destroy() {
 
     }
+
+    @Data
+    @AllArgsConstructor
+    private static class Interval {
+        private Long startTs;
+        private Long endTs;
+    }
+
 }
