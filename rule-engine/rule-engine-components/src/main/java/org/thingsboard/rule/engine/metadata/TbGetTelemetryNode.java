@@ -223,7 +223,7 @@ public class TbGetTelemetryNode implements TbNode {
                         replaceRegex(startIntervalPattern) + "' has invalid format");
             }
             if (getInterval(msg).getEndTs() == null) {
-                throw new IllegalArgumentException("Message metadata value:: '" +
+                throw new IllegalArgumentException("Message metadata value: '" +
                         replaceRegex(endIntervalPattern) + "' has invalid format");
             }
         }
