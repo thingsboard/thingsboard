@@ -555,7 +555,7 @@
         "alarm-fields-required": "Параметры оповещения обязательны.",
         "function-types": "Тип функции",
         "function-types-required": "Тип функции обязателен.",
-        "maximum-function-types": "Максимальное количество типов функции равно {{count}}"
+        "maximum-function-types": "Максимальное количество типов функции равно {{count}}",
         "time-description": "время текущего значения;",
         "value-description": "текущее значение;",
         "prev-value-description": "результат предыдущего вызова функции;",
@@ -664,7 +664,7 @@
         "unable-delete-device-alias-text": "Не удалось удалить псевдоним '{{deviceAlias}}' устройства, т.к. он используется следующими виджетами:<br/>{{widgetsList}}",
         "is-gateway": "Гейтвей",
         "public": "Общедоступный",
-        "device-public": "Устройство общедоступно"
+        "device-public": "Устройство общедоступно",
         "select-device": "Выбрать устройство"
     },
     "dialog": {
@@ -1310,7 +1310,7 @@
         "delete-tenants-text": "Внимание, после подтверждения выбранные Владельцы и все связанные с ними данные будут безвозвратно утеряны.",
         "title": "Имя",
         "title-required": "Имя обязательно.",
-        "description": "Описание"
+        "description": "Описание",
         "details": "Подробности",
         "events": "События",
         "copyId": "Копировать ИД владельца",
@@ -1522,7 +1522,7 @@
         "datasource-parameters": "Параметры",
         "remove-datasource": "Удалить источник данных",
         "add-datasource": "Добавить источник данных",
-        "target-device": "Целевое устройство"
+        "target-device": "Целевое устройство",
         "alarm-source": "Источник оповещения",
         "actions": "Действия",
         "action": "Действие",
