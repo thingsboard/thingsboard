@@ -31,17 +31,38 @@ export default function ExtensionFormModbusDirective($compile, $templateCache, $
 
     var linker = function(scope, element) {
 
-
-        function Server() {
-            this.transport = {
-                "type": "tcp",
-                "host": "localhost",
-                "port": 502,
-                "timeout": 3000
-            };
-            this.devices = []
+        function TcpTransport() {
+            this.type = "tcp",
+            this.host = "localhost",
+            this.port = 502,
+            this.timeout = 5000,
+            this.reconnect = true,
+            this.rtuOverTcp = false
         }
 
+        function UdpTransport() {
+            this.type = "udp",
+            this.host = "localhost",
+            this.port = 502,
+            this.timeout = 5000
+        }
+
+        function RtuTransport() {
+            this.type = "rtu",
+            this.portName = "COM1",
+            this.encoding = "ascii",
+            this.timeout = 5000,
+            this.baudRate = 115200,
+            this.dataBits = 7,
+            this.stopBits = 1,
+            this.parity ="even"
+        }
+
+        function Server() {
+            this.transport = new TcpTransport();
+            this.devices = []
+        }
+		
         function Device() {
             this.unitId = 1;
             this.deviceName = "";
@@ -105,9 +126,13 @@ export default function ExtensionFormModbusDirective($compile, $templateCache, $
         scope.onTransportChanged = function(server) {
             var type = server.transport.type;
 
-            server.transport = {};
-            server.transport.type = type;
-            server.transport.timeout = 3000;
+            if (type === "tcp") {
+                server.transport = new TcpTransport();
+            } else if (type === "udp") {
+                server.transport = new UdpTransport();
+            } else if (type === "rtu") {
+                server.transport = new RtuTransport();
+            }
 
             scope.theForm.$setDirty();
         };

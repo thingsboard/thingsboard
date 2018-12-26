@@ -21,8 +21,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.rule.engine.api.*;
+import org.apache.commons.lang3.math.NumberUtils;
+import org.thingsboard.rule.engine.api.RuleNode;
+import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
+import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.DonAsynchron;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
@@ -37,7 +44,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
-import static org.thingsboard.rule.engine.metadata.TbGetTelemetryNodeConfiguration.*;
+import static org.thingsboard.rule.engine.metadata.TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL;
+import static org.thingsboard.rule.engine.metadata.TbGetTelemetryNodeConfiguration.FETCH_MODE_FIRST;
+import static org.thingsboard.rule.engine.metadata.TbGetTelemetryNodeConfiguration.MAX_FETCH_SIZE;
 import static org.thingsboard.server.common.data.kv.Aggregation.NONE;
 
 /**
@@ -57,8 +66,6 @@ public class TbGetTelemetryNode implements TbNode {
 
     private TbGetTelemetryNodeConfiguration config;
     private List<String> tsKeyNames;
-    private long startTsOffset;
-    private long endTsOffset;
     private int limit;
     private ObjectMapper mapper;
     private String fetchMode;
@@ -67,8 +74,6 @@ public class TbGetTelemetryNode implements TbNode {
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbGetTelemetryNodeConfiguration.class);
         tsKeyNames = config.getLatestTsKeyNames();
-        startTsOffset = TimeUnit.valueOf(config.getStartIntervalTimeUnit()).toMillis(config.getStartInterval());
-        endTsOffset = TimeUnit.valueOf(config.getEndIntervalTimeUnit()).toMillis(config.getEndInterval());
         limit = config.getFetchMode().equals(FETCH_MODE_ALL) ? MAX_FETCH_SIZE : 1;
         fetchMode = config.getFetchMode();
         mapper = new ObjectMapper();
@@ -82,8 +87,8 @@ public class TbGetTelemetryNode implements TbNode {
             ctx.tellFailure(msg, new IllegalStateException("Telemetry is not selected!"));
         } else {
             try {
-                List<ReadTsKvQuery> queries = buildQueries();
-                ListenableFuture<List<TsKvEntry>> list = ctx.getTimeseriesService().findAll(ctx.getTenantId(), msg.getOriginator(), queries);
+                checkMetadataKeyPatterns(msg);
+                ListenableFuture<List<TsKvEntry>> list = ctx.getTimeseriesService().findAll(ctx.getTenantId(), msg.getOriginator(), buildQueries(msg));
                 DonAsynchron.withCallback(list, data -> {
                     process(data, msg);
                     TbMsg newMsg = ctx.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), msg.getData());
@@ -95,10 +100,12 @@ public class TbGetTelemetryNode implements TbNode {
         }
     }
 
-    private List<ReadTsKvQuery> buildQueries() {
-        long ts = System.currentTimeMillis();
-        long startTs = ts - startTsOffset;
-        long endTs = ts - endTsOffset;
+    @Override
+    public void destroy() {
+
+    }
+
+    private List<ReadTsKvQuery> buildQueries(TbMsg msg) {
         String orderBy;
         if (fetchMode.equals(FETCH_MODE_FIRST) || fetchMode.equals(FETCH_MODE_ALL)) {
             orderBy = "ASC";
@@ -106,7 +113,7 @@ public class TbGetTelemetryNode implements TbNode {
             orderBy = "DESC";
         }
         return tsKeyNames.stream()
-                .map(key -> new BaseReadTsKvQuery(key, startTs, endTs, 1, limit, NONE, orderBy))
+                .map(key -> new BaseReadTsKvQuery(key, getInterval(msg).getStartTs(), getInterval(msg).getEndTs(), 1, limit, NONE, orderBy))
                 .collect(Collectors.toList());
     }
 
@@ -162,8 +169,79 @@ public class TbGetTelemetryNode implements TbNode {
         return obj;
     }
 
-    @Override
-    public void destroy() {
-
+    private Interval getInterval(TbMsg msg) {
+        Interval interval = new Interval();
+        if (config.isUseMetadataIntervalPatterns()) {
+            if (isParsable(msg, config.getStartIntervalPattern())) {
+                interval.setStartTs(Long.parseLong(TbNodeUtils.processPattern(config.getStartIntervalPattern(), msg.getMetaData())));
+            }
+            if (isParsable(msg, config.getEndIntervalPattern())) {
+                interval.setEndTs(Long.parseLong(TbNodeUtils.processPattern(config.getEndIntervalPattern(), msg.getMetaData())));
+            }
+        } else {
+            long ts = System.currentTimeMillis();
+            interval.setStartTs(ts - TimeUnit.valueOf(config.getStartIntervalTimeUnit()).toMillis(config.getStartInterval()));
+            interval.setEndTs(ts - TimeUnit.valueOf(config.getEndIntervalTimeUnit()).toMillis(config.getEndInterval()));
+        }
+        return interval;
     }
+
+    private boolean isParsable(TbMsg msg, String pattern) {
+        return NumberUtils.isParsable(TbNodeUtils.processPattern(pattern, msg.getMetaData()));
+    }
+
+    private void checkMetadataKeyPatterns(TbMsg msg) {
+        isUndefined(msg, config.getStartIntervalPattern(), config.getEndIntervalPattern());
+        isInvalid(msg, config.getStartIntervalPattern(), config.getEndIntervalPattern());
+    }
+
+    private void isUndefined(TbMsg msg, String startIntervalPattern, String endIntervalPattern) {
+        if (getMetadataValue(msg, startIntervalPattern) == null && getMetadataValue(msg, endIntervalPattern) == null) {
+            throw new IllegalArgumentException("Message metadata values: '" +
+                    replaceRegex(startIntervalPattern) + "' and '" +
+                    replaceRegex(endIntervalPattern) + "' are undefined");
+        } else {
+            if (getMetadataValue(msg, startIntervalPattern) == null) {
+                throw new IllegalArgumentException("Message metadata value: '" +
+                        replaceRegex(startIntervalPattern) + "' is undefined");
+            }
+            if (getMetadataValue(msg, endIntervalPattern) == null) {
+                throw new IllegalArgumentException("Message metadata value: '" +
+                        replaceRegex(endIntervalPattern) + "' is undefined");
+            }
+        }
+    }
+
+    private void isInvalid(TbMsg msg, String startIntervalPattern, String endIntervalPattern) {
+        if (getInterval(msg).getStartTs() == null && getInterval(msg).getEndTs() == null) {
+            throw new IllegalArgumentException("Message metadata values: '" +
+                    replaceRegex(startIntervalPattern) + "' and '" +
+                    replaceRegex(endIntervalPattern) + "' have invalid format");
+        } else {
+            if (getInterval(msg).getStartTs() == null) {
+                throw new IllegalArgumentException("Message metadata value: '" +
+                        replaceRegex(startIntervalPattern) + "' has invalid format");
+            }
+            if (getInterval(msg).getEndTs() == null) {
+                throw new IllegalArgumentException("Message metadata value: '" +
+                        replaceRegex(endIntervalPattern) + "' has invalid format");
+            }
+        }
+    }
+
+    private String getMetadataValue(TbMsg msg, String pattern) {
+        return msg.getMetaData().getValue(replaceRegex(pattern));
+    }
+
+    private String replaceRegex(String pattern) {
+        return pattern.replaceAll("[${}]", "");
+    }
+
+    @Data
+    @NoArgsConstructor
+    private static class Interval {
+        private Long startTs;
+        private Long endTs;
+    }
+
 }
