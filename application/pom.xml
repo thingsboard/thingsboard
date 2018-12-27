@@ -267,7 +267,7 @@
         <dependency>
             <groupId>io.springfox.ui</groupId>
             <artifactId>springfox-swagger-ui-rfc6570</artifactId>
-            <version>${springfox-swagger-ui-rfc6570.version}</version>
+            <version>1.0.0</version>
         </dependency>
     </dependencies>
 
