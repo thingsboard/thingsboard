@@ -100,7 +100,7 @@ public class LocalTransportApiService implements TransportApiService {
         //TODO: Make async and enable caching
         DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(credentialsId);
         if (credentials != null && credentials.getCredentialsType() == credentialsType) {
-            return getDeviceInfo(credentials.getDeviceId());
+            return getDeviceInfo(credentials.getDeviceId(), credentials);
         } else {
             return getEmptyTransportApiResponseFuture();
         }
@@ -135,7 +135,7 @@ public class LocalTransportApiService implements TransportApiService {
     }
 
 
-    private ListenableFuture<TransportApiResponseMsg> getDeviceInfo(DeviceId deviceId) {
+    private ListenableFuture<TransportApiResponseMsg> getDeviceInfo(DeviceId deviceId, DeviceCredentials credentials) {
         return Futures.transform(deviceService.findDeviceByIdAsync(TenantId.SYS_TENANT_ID, deviceId), device -> {
             if (device == null) {
                 log.trace("[{}] Failed to lookup device by id", deviceId);
@@ -143,7 +143,7 @@ public class LocalTransportApiService implements TransportApiService {
             }
             try {
                 return TransportApiResponseMsg.newBuilder()
-                        .setValidateTokenResponseMsg(ValidateDeviceCredentialsResponseMsg.newBuilder().setDeviceInfo(getDeviceInfoProto(device)).build()).build();
+                        .setValidateTokenResponseMsg(ValidateDeviceCredentialsResponseMsg.newBuilder().setDeviceInfo(getDeviceInfoProto(device)).setCredentialsBody(credentials.getCredentialsValue()).build()).build();
             } catch (JsonProcessingException e) {
                 log.warn("[{}] Failed to lookup device by id", deviceId, e);
                 return getEmptyTransportApiResponse();

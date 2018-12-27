@@ -54,18 +54,18 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Component("MqttSslHandlerProvider")
 @ConditionalOnExpression("'${transport.type:null}'=='null' || ('${transport.type}'=='local' && '${transport.http.enabled}'=='true')")
-@ConditionalOnProperty(prefix = "mqtt.ssl", value = "enabled", havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(prefix = "transport.mqtt.ssl", value = "enabled", havingValue = "true", matchIfMissing = false)
 public class MqttSslHandlerProvider {
 
-    @Value("${mqtt.ssl.protocol}")
+    @Value("${transport.mqtt.ssl.protocol}")
     private String sslProtocol;
-    @Value("${mqtt.ssl.key_store}")
+    @Value("${transport.mqtt.ssl.key_store}")
     private String keyStoreFile;
-    @Value("${mqtt.ssl.key_store_password}")
+    @Value("${transport.mqtt.ssl.key_store_password}")
     private String keyStorePassword;
-    @Value("${mqtt.ssl.key_password}")
+    @Value("${transport.mqtt.ssl.key_password}")
     private String keyPassword;
-    @Value("${mqtt.ssl.key_store_type}")
+    @Value("${transport.mqtt.ssl.key_store_type}")
     private String keyStoreType;
 
     @Autowired
