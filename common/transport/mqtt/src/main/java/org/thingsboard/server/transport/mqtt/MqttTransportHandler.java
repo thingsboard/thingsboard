@@ -271,6 +271,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     case MqttTopics.DEVICE_RPC_RESPONSE_SUB_TOPIC:
                     case MqttTopics.GATEWAY_ATTRIBUTES_TOPIC:
                     case MqttTopics.GATEWAY_RPC_TOPIC:
+                    case MqttTopics.GATEWAY_ATTRIBUTES_RESPONSE_TOPIC:
                     case MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_TOPIC:
                         registerSubQoS(topic, grantedQoSList, reqQoS);
                         break;
