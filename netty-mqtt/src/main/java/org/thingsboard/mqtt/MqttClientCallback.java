@@ -15,8 +15,6 @@
  */
 package org.thingsboard.mqtt;
 
-import io.netty.channel.ChannelId;
-
 /**
  * Created by Valerii Sosliuk on 12/30/2017.
  */
