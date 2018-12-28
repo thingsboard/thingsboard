@@ -264,11 +264,11 @@
             <groupId>org.javadelight</groupId>
             <artifactId>delight-nashorn-sandbox</artifactId>
         </dependency>
-        <!--<dependency>-->
-            <!--<groupId>io.springfox.ui</groupId>-->
-            <!--<artifactId>springfox-swagger-ui-rfc6570</artifactId>-->
-            <!--<version>1.0.0</version>-->
-        <!--</dependency>-->
+        <dependency>
+            <groupId>io.springfox.ui</groupId>
+            <artifactId>springfox-swagger-ui-rfc6570</artifactId>
+            <version>${springfox-swagger-ui-rfc6570.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

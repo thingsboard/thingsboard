@@ -64,8 +64,8 @@ public class SwaggerConfiguration {
                     .paths(apiPaths())
                     .build()
                     .securitySchemes(newArrayList(jwtTokenKey()))
-                    .securityContexts(newArrayList(securityContext()));
-                    //.enableUrlTemplating(true);
+                    .securityContexts(newArrayList(securityContext()))
+                    .enableUrlTemplating(true);
       }
 
       private ApiKey jwtTokenKey() {
