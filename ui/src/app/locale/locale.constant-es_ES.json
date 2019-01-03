@@ -1038,10 +1038,10 @@
     },
     "grid": {
         "delete-item-title": "¿Está seguro de que desea eliminar este ítem?",
-        "delete-item-text": "Tener cuidado, después de la confirmación, este ítem y todos los datos relacionados se volverán irrecuperables.",
+        "delete-item-text": "¡Cuiado! Después de la confirmación, este ítem y todos los datos relacionados serán irrecuperables.",
         "delete-items-title": "¿Está seguro de que desea eliminar { count, plural, 1 {1 item} other {# items} }?",
         "delete-items-action-title": "Eliminar { count, plural, 1 {1 item} other {# items} }",
-        "delete-items-text": "Tener cuidado, después de la confirmación se eliminarán todos los ítems seleccionados y todos los datos relacionados se volverán irrecuperables.",
+        "delete-items-text": "¡Cuidado! Después de la confirmación se eliminarán todos los ítems seleccionados y todos los datos relacionados serán irrecuperables.",
         "add-item-text": "Agregar nuevo ítem",
         "no-items-text": "Ítems no encontrados",
         "item-details": "Detalles del ítem",
