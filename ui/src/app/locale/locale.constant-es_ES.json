@@ -68,7 +68,7 @@
         "outgoing-mail": "Servidor de correo",
         "outgoing-mail-settings": "Configuración del servidor de correo de salida",
         "system-settings": "Configuración del sistema",
-        "test-mail-sent": "Correo de prueba fue enviado exitosamente!",
+        "test-mail-sent": "¡El correo de prueba fue enviado correctamente!",
         "base-url": "URL base",
         "base-url-required": "URL base es requerida.",
         "mail-from": "Correo desde",
