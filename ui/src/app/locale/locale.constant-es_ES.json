@@ -327,9 +327,9 @@
     "common": {
         "username": "Nombre de usuario",
         "password": "Contraseña",
-        "enter-username": "Ingresar nombre de usuario",
-        "enter-password": "Ingresar contraseña",
-        "enter-search": "Ingresar búsqueda"
+        "enter-username": "Introduzca nombre de usuario",
+        "enter-password": "Introduzca contraseña",
+        "enter-search": "Introduzca búsqueda"
     },
     "content-type": {
         "json": "Json",
