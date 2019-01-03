@@ -2,9 +2,9 @@
     "access": {
         "unauthorized": "No autorizado",
         "unauthorized-access": "Acceso no autorizado",
-        "unauthorized-access-text": "Debe registrarse para tener acceso a este recurso!",
+        "unauthorized-access-text": "¡Debe registrarse para tener acceso a este recurso!",
         "access-forbidden": "Acceso Prohibido",
-        "access-forbidden-text": "No tiene derechos para acceder a esta ubicación!<br/>Intente registrarse con otro usuario si aún desea acceder a esta ubicación.",
+        "access-forbidden-text": "No tiene permisos para acceder a esta ubicación!<br/>Intente registrarse con otro usuario si aún desea acceder a esta ubicación.",
         "refresh-token-expired": "La sesión ha expirado",
         "refresh-token-failed": "No se puede actualizar la sesión"
     },
