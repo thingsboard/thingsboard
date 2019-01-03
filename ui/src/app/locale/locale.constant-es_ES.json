@@ -1530,7 +1530,7 @@
     "icon": {
         "icon": "Icono",
         "select-icon": "Seleccionar icono",
-        "material-icons": "Iconos de maerial",
+        "material-icons": "Iconos de material design",
         "show-all": "Mostrar todos los iconos"
     },
     "custom": {
