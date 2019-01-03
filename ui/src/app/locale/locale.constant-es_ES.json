@@ -35,7 +35,7 @@
         "close": "Cerrar",
         "back": "Atras",
         "run": "Ejecutar",
-        "sign-in": "Registrarse!",
+        "sign-in": "¡Registrarse!",
         "edit": "Editar",
         "view": "Ver",
         "create": "Crear",
@@ -48,7 +48,7 @@
         "paste-reference": "Pegar referencia",
         "import": "Importar",
         "export": "Exportar",
-        "share-via": "Share via {{provider}}"
+        "share-via": "Compartir via {{provider}}"
     },
     "aggregation": {
         "aggregation": "Agregación",
