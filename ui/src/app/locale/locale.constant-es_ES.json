@@ -1258,7 +1258,7 @@
         "type-unknown-details": "Regla de nodo no resuelta",
         "directive-is-not-loaded": "La directiva de configuración definida '{{directiveName}}' no está disponible.",
         "ui-resources-load-error": "Error al cargar los recursos de configuración ui.",
-        "invalid-target-rulechain": "No se puede resolver la cadena de reglas objetivo!",
+        "invalid-target-rulechain": "¡No se puede resolver la cadena de reglas objetivo!",
         "test-script-function": "Probar función script",
         "message": "Mensaje",
         "message-type": "Tipo de mensaje",
