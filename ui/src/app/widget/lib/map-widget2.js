@@ -60,6 +60,8 @@ export default class TbMapWidgetV2 {
 
         var minZoomLevel = this.drawRoutes ? 18 : 15;
 
+        this.initBounds = true;
+
         var initCallback = function() {
             tbMap.update();
             tbMap.resize();
@@ -454,9 +456,10 @@ export default class TbMapWidgetV2 {
                     tbMap.map.extendBoundsWithMarker(bounds, location.marker);
                 }
             }
-            if (locationsChanged) {
-                tbMap.map.fitBounds(bounds);
-            }
+             if (locationsChanged && tbMap.initBounds) {
+                 tbMap.map.fitBounds(bounds);
+                 tbMap.initBounds = false;
+             }
         }
 
         function createTooltipContent(tooltip, data, datasources) {
