@@ -865,8 +865,8 @@
         "data": "Datos",
         "event": "Evento",
         "status": "Estado",
-        "success": "Éxito",
-        "failed": "Falla",
+        "success": "Correcto",
+        "failed": "Erróneo",
         "messages-processed": "Mensajes procesados",
         "errors-occurred": "Errores ocurridos"
     },
