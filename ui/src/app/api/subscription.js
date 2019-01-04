@@ -648,6 +648,12 @@ export default class Subscription {
     }
 
     dataUpdated(sourceData, datasourceIndex, dataKeyIndex, apply) {
+        for (var x = 0; x < this.datasourceListeners.length; x++) {
+            this.datasources[x].dataReceived = this.datasources[x].dataReceived === true;
+            if (this.datasourceListeners[x].datasourceIndex === datasourceIndex && sourceData.data.length > 0) {
+                this.datasources[x].dataReceived = true;
+            }
+        }
         this.notifyDataLoaded();
         var update = true;
         var currentData;
