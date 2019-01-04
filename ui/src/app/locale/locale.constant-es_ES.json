@@ -158,12 +158,17 @@
         "filter-type-device-type": "Tipo de dispositivo",
         "filter-type-device-type-description": "Dispositivos de tipo '{{deviceType}}'",
         "filter-type-device-type-and-name-description": "Dispositivos del tipo '{{deviceType}}' y  su nombre empieza con '{{prefix}}'",
+        "filter-type-entity-view-type": "Entity View type",
+        "filter-type-entity-view-type-description": "Entity Views of type '{{entityView}}'",
+        "filter-type-entity-view-type-and-name-description": "Entity Views of type '{{entityView}}' and with name starting with '{{prefix}}'",
         "filter-type-relations-query": "Consulta de relaciones",
         "filter-type-relations-query-description": "{{entities}} que tienen {{relationType}} relación {{direction}} {{rootEntity}}",
         "filter-type-asset-search-query": "Consultar búsqueda de activos",
         "filter-type-asset-search-query-description": "Activos con tipos {{assetTypes}} que tienen {{relationType}} relación {{direction}} {{rootEntity}}",
         "filter-type-device-search-query": "Consultar búqueda de dispositivos",
         "filter-type-device-search-query-description": "Dispositivos con tipos {{deviceTypes}} que tienen {{relationType}} relación {{direction}} {{rootEntity}}",
+        "filter-type-entity-view-search-query": "Entity view search query",
+        "filter-type-entity-view-search-query-description": "Entity views with types {{entityViewTypes}} that have {{relationType}} relation {{direction}} {{rootEntity}}",
         "entity-filter": "Filtro de entidad",
         "resolve-multiple": "Resolver como entidades múltiples",
         "filter-type": "Tipo de filtro",
@@ -550,7 +555,12 @@
         "alarm-fields-required": "Campos de alarma son requeridos.",
         "function-types": "Tipos de funciones",
         "function-types-required": "Tipos de funciones son requeridos.",
-        "maximum-function-types": "Máximo { count, plural, 1 {1 function type is allowed.} other {# function types are allowed} }"
+        "maximum-function-types": "Máximo { count, plural, 1 {1 function type is allowed.} other {# function types are allowed} }",
+        "time-description": "timestamp of the current value;",
+        "value-description": "the current value;",
+        "prev-value-description": "result of the previous function call;",
+        "time-prev-description": "timestamp of the previous value;",
+        "prev-orig-value-description": "original previous value;"
     },
     "datasource": {
         "type": "Tipo de fuente de datos",
@@ -558,8 +568,8 @@
         "add-datasource-prompt": "Por favor agregue fuente de datos"
     },
     "details": {
-        "details": "Detalles",
-        "edit-mode": "Modo de edición"
+        "edit-mode": "Modo de edición",
+        "toggle-edit-mode": "Cambiar mode de edición"
     },
     "device": {
         "device": "Dispositivo",
@@ -764,6 +774,7 @@
     },
     "entity-view": {
         "entity-view": "Entity View",
+        "entity-view-required": "Entity view is required.",
         "entity-views": "Entity Views",
         "management": "Entity View management",
         "view-entity-views": "View Entity Views",
@@ -833,13 +844,24 @@
         "unable-entity-view-device-alias-text": "Device alias '{{entityViewAlias}}' can't be deleted as it used by the following widget(s):<br/>{{widgetsList}}",
         "select-entity-view": "Select entity view",
         "make-public": "Make entity view public",
+        "start-date": "Start date",
         "start-ts": "Start time",
+        "end-date": "End date",
         "end-ts": "End time",
         "date-limits": "Date limits",
         "client-attributes": "Client attributes",
         "shared-attributes": "Shared attributes",
         "server-attributes": "Server attributes",
-        "timeseries": "Timeseries"
+        "timeseries": "Timeseries",
+        "client-attributes-placeholder": "Client attributes",
+        "shared-attributes-placeholder": "Shared attributes",
+        "server-attributes-placeholder": "Server attributes",
+        "timeseries-placeholder": "Timeseries",
+        "target-entity": "Target entity",
+        "attributes-propagation": "Attributes propagation",
+        "attributes-propagation-hint": "Entity View will automatically copy specified attributes from Target Entity each time you save or update this entity view. For performance reasons target entity attributes are not propagated to entity view on each attribute change. You can enable automatic propagation by configuring \"copy to view\" rule node in your rule chain and linking \"Post attributes\" and \"Attributes Updated\" messages to the new rule node.",
+        "timeseries-data": "Timeseries data",
+        "timeseries-data-hint": "Configure timeseries data keys of the target entity that will be accessible to the entity view. This timeseries data is read-only."
     },
     "event": {
         "event-type": "Tipo de evento",
@@ -986,6 +1008,8 @@
         "modbus-add-server": "Agregar servidor/esclavo",
         "modbus-add-server-prompt": "Por favor agregar servidor/esclavo",
         "modbus-transport": "Transporte",
+        "modbus-tcp-reconnect": "Automatically reconnect",
+        "modbus-rtu-over-tcp": "RTU over TCP",
         "modbus-port-name": "Nombre del puerto serial",
         "modbus-encoding": "Codificación",
         "modbus-parity": "Paridad",
