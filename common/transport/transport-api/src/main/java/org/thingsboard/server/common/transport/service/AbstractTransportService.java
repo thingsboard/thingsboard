@@ -40,7 +40,7 @@ public abstract class AbstractTransportService implements TransportService {
     private boolean rateLimitEnabled;
     @Value("${transport.rate_limits.tenant}")
     private String perTenantLimitsConf;
-    @Value("${transport.rate_limits.tenant}")
+    @Value("${transport.rate_limits.device}")
     private String perDevicesLimitsConf;
     @Value("${transport.sessions.inactivity_timeout}")
     private long sessionInactivityTimeout;
