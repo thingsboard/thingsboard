@@ -83,7 +83,7 @@ public class TbGetTelemetryNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-t         if (tsKeyNames.isEmpty()) {
+        if (tsKeyNames.isEmpty()) {
             ctx.tellFailure(msg, new IllegalStateException("Telemetry is not selected!"));
         } else {
             try {
