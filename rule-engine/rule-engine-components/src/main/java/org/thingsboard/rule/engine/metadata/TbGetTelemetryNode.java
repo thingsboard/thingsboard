@@ -88,7 +88,9 @@ public class TbGetTelemetryNode implements TbNode {
             ctx.tellFailure(msg, new IllegalStateException("Telemetry is not selected!"));
         } else {
             try {
-                checkMetadataKeyPatterns(msg);
+                if (config.isUseMetadataIntervalPatterns()) {
+                    checkMetadataKeyPatterns(msg);
+                }
                 ListenableFuture<List<TsKvEntry>> list = ctx.getTimeseriesService().findAll(ctx.getTenantId(), msg.getOriginator(), buildQueries(msg));
                 DonAsynchron.withCallback(list, data -> {
                     process(data, msg);
