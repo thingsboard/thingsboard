@@ -24,7 +24,7 @@ server:
     # Enable/disable SSL support
     enabled: "${SSL_ENABLED:false}"
     # Path to the key store that holds the SSL certificate
-    key-store: "${SSL_KEY_STORE:classpath:keystore/keystore.p12}"
+    key-store: "${SSL_KEY_STORE:keystore/keystore.p12}"
     # Password used to access the key store
     key-store-password: "${SSL_KEY_STORE_PASSWORD:thingsboard}"
     # Type of the key store
