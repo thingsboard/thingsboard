@@ -60,6 +60,9 @@ export default class TbMapWidgetV2 {
 
         var minZoomLevel = this.drawRoutes ? 18 : 15;
 
+
+
+
         var initCallback = function() {
             tbMap.update();
             tbMap.resize();
@@ -87,6 +90,9 @@ export default class TbMapWidgetV2 {
         } else if (mapProvider === 'tencent-map') {
             this.map = new TbTencentMap($element,this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.tmApiKey, settings.tmDefaultMapType);
         }
+
+
+        tbMap.initBounds = true;
     }
 
     setCallbacks(callbacks) {
@@ -442,6 +448,7 @@ export default class TbMapWidgetV2 {
         }
 
         function updateLocations(data, datasources) {
+
             var locationsChanged = false;
             var bounds = tbMap.map.createBounds();
             var dataMap = toLabelValueMap(data, datasources);
@@ -454,9 +461,13 @@ export default class TbMapWidgetV2 {
                     tbMap.map.extendBoundsWithMarker(bounds, location.marker);
                 }
             }
-            if (locationsChanged) {
+             if (locationsChanged && tbMap.initBounds) {
+                tbMap.initBounds = !datasources.every(
+                    function (ds) {
+                        return ds.dataReceived === true;
+                    });
                 tbMap.map.fitBounds(bounds);
-            }
+             }
         }
 
         function createTooltipContent(tooltip, data, datasources) {
@@ -477,7 +488,6 @@ export default class TbMapWidgetV2 {
             content = fillPattern(settings.tooltipPattern, settings.tooltipReplaceInfo, data);
             return fillPatternWithActions(content, 'onTooltipAction', tooltip.markerArgs);
         }
-
         if (this.map && this.map.inited() && this.subscription) {
             if (this.subscription.data) {
                 if (!this.locations) {

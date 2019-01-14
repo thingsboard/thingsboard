@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -142,8 +143,13 @@ public class LocalTransportApiService implements TransportApiService {
                 return getEmptyTransportApiResponse();
             }
             try {
+                ValidateDeviceCredentialsResponseMsg.Builder builder = ValidateDeviceCredentialsResponseMsg.newBuilder();
+                builder.setDeviceInfo(getDeviceInfoProto(device));
+                if(!StringUtils.isEmpty(credentials.getCredentialsValue())){
+                    builder.setCredentialsBody(credentials.getCredentialsValue());
+                }
                 return TransportApiResponseMsg.newBuilder()
-                        .setValidateTokenResponseMsg(ValidateDeviceCredentialsResponseMsg.newBuilder().setDeviceInfo(getDeviceInfoProto(device)).setCredentialsBody(credentials.getCredentialsValue()).build()).build();
+                        .setValidateTokenResponseMsg(builder.build()).build();
             } catch (JsonProcessingException e) {
                 log.warn("[{}] Failed to lookup device by id", deviceId, e);
                 return getEmptyTransportApiResponse();

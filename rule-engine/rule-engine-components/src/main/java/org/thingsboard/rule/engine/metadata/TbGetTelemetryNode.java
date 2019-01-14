@@ -59,6 +59,7 @@ import static org.thingsboard.server.common.data.kv.Aggregation.NONE;
         nodeDescription = "Add Message Originator Telemetry for selected time range into Message Metadata\n",
         nodeDetails = "The node allows you to select fetch mode <b>FIRST/LAST/ALL</b> to fetch telemetry of certain time range that are added into Message metadata without any prefix. " +
                 "If selected fetch mode <b>ALL</b> Telemetry will be added like array into Message Metadata where <b>key</b> is Timestamp and <b>value</b> is value of Telemetry. " +
+                "<b>Note</b>: The maximum size of the fetched array is 1000 records. " +
                 "If selected fetch mode <b>FIRST</b> or <b>LAST</b> Telemetry will be added like string without Timestamp",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeGetTelemetryFromDatabase")
@@ -87,7 +88,9 @@ public class TbGetTelemetryNode implements TbNode {
             ctx.tellFailure(msg, new IllegalStateException("Telemetry is not selected!"));
         } else {
             try {
-                checkMetadataKeyPatterns(msg);
+                if (config.isUseMetadataIntervalPatterns()) {
+                    checkMetadataKeyPatterns(msg);
+                }
                 ListenableFuture<List<TsKvEntry>> list = ctx.getTimeseriesService().findAll(ctx.getTenantId(), msg.getOriginator(), buildQueries(msg));
                 DonAsynchron.withCallback(list, data -> {
                     process(data, msg);
