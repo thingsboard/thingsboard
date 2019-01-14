@@ -185,10 +185,6 @@
             <artifactId>curator-recipes</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.apache.zookeeper</groupId>
-            <artifactId>zookeeper</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
         </dependency>
@@ -536,16 +532,6 @@
                 </configuration>
                 <executions>
                     <execution>
-                        <id>boot</id>
-                        <goals>
-                            <goal>repackage</goal>
-                        </goals>
-                        <!--<configuration>-->
-                            <!--<classifier>axians-custom</classifier>-->
-                        <!--</configuration>-->
-                    </execution>
-                    <execution>
-                        <id>custom</id>
                         <goals>
                             <goal>repackage</goal>
                         </goals>
