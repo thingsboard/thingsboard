@@ -52,7 +52,7 @@ import java.io.IOException;
 )
 public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConfiguration> {
 
-    private ObjectMapper mapper = new ObjectMapper();
+    private static ObjectMapper mapper = new ObjectMapper();
 
     @Override
     protected TbCreateAlarmNodeConfiguration loadAlarmNodeConfig(TbNodeConfiguration configuration) throws TbNodeException {
@@ -79,11 +79,11 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
         }
 
         ListenableFuture<Alarm> latest = ctx.getAlarmService().findLatestByOriginatorAndType(ctx.getTenantId(), msg.getOriginator(), alarmType);
-        return Futures.transformAsync(latest, a -> {
-            if (a == null || a.getStatus().isCleared()) {
+        return Futures.transformAsync(latest, existingAlarm -> {
+            if (existingAlarm == null || existingAlarm.getStatus().isCleared()) {
                 return createNewAlarm(ctx, msg, msgAlarm);
             } else {
-                return updateAlarm(ctx, msg, a);
+                return updateAlarm(ctx, msg, existingAlarm);
             }
         }, ctx.getDbCallbackExecutor());
 
@@ -93,14 +93,12 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
         ListenableFuture<Alarm> asyncAlarm;
         if (msgAlarm != null ) {
             asyncAlarm = Futures.immediateCheckedFuture(msgAlarm);
-
         } else {
             asyncAlarm = Futures.transform(buildAlarmDetails(ctx, msg, null),
                     details -> buildAlarm(msg, details, ctx.getTenantId()));
         }
         ListenableFuture<Alarm> asyncCreated = Futures.transform(asyncAlarm,
                 alarm -> ctx.getAlarmService().createOrUpdateAlarm(alarm), ctx.getDbCallbackExecutor());
-
         return Futures.transform(asyncCreated, alarm -> new AlarmResult(true, false, false, alarm));
     }
 
