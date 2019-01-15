@@ -83,7 +83,7 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
             if (existingAlarm == null || existingAlarm.getStatus().isCleared()) {
                 return createNewAlarm(ctx, msg, msgAlarm);
             } else {
-                return updateAlarm(ctx, msg, existingAlarm);
+                return updateAlarm(ctx, msg, existingAlarm, msgAlarm);
             }
         }, ctx.getDbCallbackExecutor());
 
@@ -102,13 +102,18 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
         return Futures.transform(asyncCreated, alarm -> new AlarmResult(true, false, false, alarm));
     }
 
-    private ListenableFuture<AlarmResult> updateAlarm(TbContext ctx, TbMsg msg, Alarm alarm) {
-        ListenableFuture<Alarm> asyncUpdated = Futures.transform(buildAlarmDetails(ctx, msg, alarm.getDetails()), (Function<JsonNode, Alarm>) details -> {
-            alarm.setSeverity(config.getSeverity());
-            alarm.setPropagate(config.isPropagate());
-            alarm.setDetails(details);
-            alarm.setEndTs(System.currentTimeMillis());
-            return ctx.getAlarmService().createOrUpdateAlarm(alarm);
+    private ListenableFuture<AlarmResult> updateAlarm(TbContext ctx, TbMsg msg, Alarm existingAlarm, Alarm msgAlarm) {
+        ListenableFuture<Alarm> asyncUpdated = Futures.transform(buildAlarmDetails(ctx, msg, existingAlarm.getDetails()), (Function<JsonNode, Alarm>) details -> {
+            if (msgAlarm != null) {
+                existingAlarm.setSeverity(msgAlarm.getSeverity());
+                existingAlarm.setPropagate(msgAlarm.isPropagate());
+            } else {
+                existingAlarm.setSeverity(config.getSeverity());
+                existingAlarm.setPropagate(config.isPropagate());
+            }
+            existingAlarm.setDetails(details);
+            existingAlarm.setEndTs(System.currentTimeMillis());
+            return ctx.getAlarmService().createOrUpdateAlarm(existingAlarm);
         }, ctx.getDbCallbackExecutor());
 
         return Futures.transform(asyncUpdated, a -> new AlarmResult(false, true, false, a));
