@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.action;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -30,6 +31,8 @@ import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
+
+import java.io.IOException;
 
 @Slf4j
 @RuleNode(
@@ -49,6 +52,8 @@ import org.thingsboard.server.common.msg.TbMsg;
 )
 public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConfiguration> {
 
+    private ObjectMapper mapper = new ObjectMapper();
+
     @Override
     protected TbCreateAlarmNodeConfiguration loadAlarmNodeConfig(TbNodeConfiguration configuration) throws TbNodeException {
         return TbNodeUtils.convert(configuration, TbCreateAlarmNodeConfiguration.class);
@@ -56,10 +61,27 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
 
     @Override
     protected ListenableFuture<AlarmResult> processAlarm(TbContext ctx, TbMsg msg) {
-        ListenableFuture<Alarm> latest = ctx.getAlarmService().findLatestByOriginatorAndType(ctx.getTenantId(), msg.getOriginator(), config.getAlarmType());
+        String alarmType;
+        final Alarm msgAlarm;
+
+        if (!config.isUseMessageAlarmData()) {
+            alarmType = config.getAlarmType();
+            msgAlarm = null;
+        } else {
+            try {
+                msgAlarm = mapper.readValue(msg.getData(), Alarm.class);
+                msgAlarm.setTenantId(ctx.getTenantId());
+                alarmType = msgAlarm.getType();
+            } catch (IOException e) {
+                ctx.tellFailure(msg, e);
+                return null;
+            }
+        }
+
+        ListenableFuture<Alarm> latest = ctx.getAlarmService().findLatestByOriginatorAndType(ctx.getTenantId(), msg.getOriginator(), alarmType);
         return Futures.transformAsync(latest, a -> {
             if (a == null || a.getStatus().isCleared()) {
-                return createNewAlarm(ctx, msg);
+                return createNewAlarm(ctx, msg, msgAlarm);
             } else {
                 return updateAlarm(ctx, msg, a);
             }
@@ -67,11 +89,18 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
 
     }
 
-    private ListenableFuture<AlarmResult> createNewAlarm(TbContext ctx, TbMsg msg) {
-        ListenableFuture<Alarm> asyncAlarm = Futures.transform(buildAlarmDetails(ctx, msg, null),
-                details -> buildAlarm(msg, details, ctx.getTenantId()));
+    private ListenableFuture<AlarmResult> createNewAlarm(TbContext ctx, TbMsg msg, Alarm msgAlarm) {
+        ListenableFuture<Alarm> asyncAlarm;
+        if (msgAlarm != null ) {
+            asyncAlarm = Futures.immediateCheckedFuture(msgAlarm);
+
+        } else {
+            asyncAlarm = Futures.transform(buildAlarmDetails(ctx, msg, null),
+                    details -> buildAlarm(msg, details, ctx.getTenantId()));
+        }
         ListenableFuture<Alarm> asyncCreated = Futures.transform(asyncAlarm,
                 alarm -> ctx.getAlarmService().createOrUpdateAlarm(alarm), ctx.getDbCallbackExecutor());
+
         return Futures.transform(asyncCreated, alarm -> new AlarmResult(true, false, false, alarm));
     }
 
