@@ -15,8 +15,9 @@
  */
 export default class AliasController {
 
-    constructor($scope, $q, $filter, utils, types, entityService, stateController, entityAliases) {
+    constructor($scope, $rootScope, $q, $filter, utils, types, entityService, stateController, entityAliases) {
         this.$scope = $scope;
+        this.$rootScope = $rootScope;
         this.$q = $q;
         this.$filter = $filter;
         this.utils = utils;
@@ -65,6 +66,13 @@ export default class AliasController {
         if (changedAliasIds.length) {
             this.$scope.$broadcast('entityAliasesChanged', changedAliasIds);
         }
+    }
+
+    refreshAlias(aliasId) {
+        this.setAliasUnresolved(aliasId);
+        this.getAliasInfo(aliasId).then(function success() {
+            this.$rootScope.$broadcast('entityAliasesChanged', aliasId);
+        });
     }
 
     setAliasUnresolved(aliasId) {
