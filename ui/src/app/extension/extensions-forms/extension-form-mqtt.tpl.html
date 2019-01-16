@@ -261,7 +261,7 @@
                                                                                 </md-input-container>
                                                                                 <md-input-container flex="60" class="md-block" md-is-error="theForm['mqttFilterExpression' + brokerIndex + mapIndex].$touched && theForm['mqttFilterExpression' + brokerIndex + mapIndex].$invalid">
                                                                                     <label translate>extension.filter-expression</label>
-                                                                                    <input required name="mqttFilterExpression{{brokerIndex}}{{mapIndex}}" ng-model="map.converter.filterExpression">
+                                                                                    <input name="mqttFilterExpression{{brokerIndex}}{{mapIndex}}" ng-model="map.converter.filterExpression">
                                                                                     <div ng-messages="theForm['mqttFilterExpression' + brokerIndex + mapIndex].$error">
                                                                                         <div translate ng-message="required">extension.field-required</div>
                                                                                     </div>
