@@ -13,23 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.mqtt;
+package org.thingsboard.rule.engine.action;
 
-/**
- * Created by Valerii Sosliuk on 12/30/2017.
- */
-public interface MqttClientCallback {
+import lombok.Data;
 
-    /**
-     * This method is called when the connection to the server is lost.
-     *
-     * @param cause the reason behind the loss of connection.
-     */
-    void connectionLost(Throwable cause);
+@Data
+public abstract class TbAbstractRelationActionNodeConfiguration {
 
-    /**
-     * This method is called when the connection to the server is recovered.
-     *
-     */
-    void onSuccessfulReconnect();
+    private String direction;
+    private String relationType;
+
+    private String entityType;
+    private String entityNamePattern;
+    private String entityTypePattern;
+
+    private long entityCacheExpiration;
+
 }

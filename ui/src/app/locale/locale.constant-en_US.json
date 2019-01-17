@@ -1008,6 +1008,8 @@
         "modbus-add-server": "Add server/slave",
         "modbus-add-server-prompt": "Please add server/slave",
         "modbus-transport": "Transport",
+        "modbus-tcp-reconnect": "Automatically reconnect",
+        "modbus-rtu-over-tcp": "RTU over TCP",
         "modbus-port-name": "Serial port name",
         "modbus-encoding": "Encoding",
         "modbus-parity": "Parity",

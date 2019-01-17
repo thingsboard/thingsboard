@@ -52,6 +52,10 @@ public class TbAssignToCustomerNode extends TbAbstractCustomerActionNode<TbAssig
 
     @Override
     protected void doProcessCustomerAction(TbContext ctx, TbMsg msg, CustomerId customerId) {
+        processAssign(ctx, msg, customerId);
+    }
+
+    private void processAssign(TbContext ctx, TbMsg msg, CustomerId customerId) {
         EntityType originatorType = msg.getOriginator().getEntityType();
         switch (originatorType) {
             case DEVICE:
