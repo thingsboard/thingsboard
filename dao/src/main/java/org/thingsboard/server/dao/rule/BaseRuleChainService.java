@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -274,14 +275,43 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     public List<RuleNode> getRuleChainNodes(TenantId tenantId, RuleChainId ruleChainId) {
         Validator.validateId(ruleChainId, "Incorrect rule chain id for search request.");
         List<EntityRelation> relations = getRuleChainToNodeRelations(tenantId, ruleChainId);
-        List<RuleNode> ruleNodes = relations.stream().map(relation -> ruleNodeDao.findById(tenantId, relation.getTo().getId())).collect(Collectors.toList());
+        List<RuleNode> ruleNodes = new ArrayList<>();
+        for (EntityRelation relation : relations) {
+            RuleNode ruleNode = ruleNodeDao.findById(tenantId, relation.getTo().getId());
+            if (ruleNode != null) {
+                ruleNodes.add(ruleNode);
+            } else {
+                relationService.deleteRelation(tenantId, relation);
+            }
+        }
         return ruleNodes;
     }
 
     @Override
     public List<EntityRelation> getRuleNodeRelations(TenantId tenantId, RuleNodeId ruleNodeId) {
         Validator.validateId(ruleNodeId, "Incorrect rule node id for search request.");
-        return relationService.findByFrom(tenantId, ruleNodeId, RelationTypeGroup.RULE_NODE);
+        List<EntityRelation> relations = relationService.findByFrom(tenantId, ruleNodeId, RelationTypeGroup.RULE_NODE);
+        List<EntityRelation> validRelations = new ArrayList<>();
+        for (EntityRelation relation : relations) {
+            boolean valid = true;
+            EntityType toType = relation.getTo().getEntityType();
+            if (toType == EntityType.RULE_NODE || toType == EntityType.RULE_CHAIN) {
+                BaseData entity;
+                if (relation.getTo().getEntityType() == EntityType.RULE_NODE) {
+                    entity = ruleNodeDao.findById(tenantId, relation.getTo().getId());
+                } else {
+                    entity = ruleChainDao.findById(tenantId, relation.getTo().getId());
+                }
+                if (entity == null) {
+                    relationService.deleteRelation(tenantId, relation);
+                    valid = false;
+                }
+            }
+            if (valid) {
+                validRelations.add(relation);
+            }
+        }
+        return validRelations;
     }
 
     @Override
