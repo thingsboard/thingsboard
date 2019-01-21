@@ -916,7 +916,6 @@
             "last-sync-time": "最后同步时间",
             "not-available": "无法使用"
         },
-
         "export-extensions-configuration": "导出扩展配置",
         "import-extensions-configuration": "导入扩展配置",
         "import-extensions": "导入扩展",
@@ -1299,7 +1298,6 @@
         "saveAs": "部件另存为",
         "save-widget-type-as": "部件类型另存为",
         "save-widget-type-as-text": "请输入新的部件标题或选择目标部件包",
-
         "toggle-fullscreen": "切换全屏",
         "run": "运行部件",
         "title": "部件标题",
@@ -1437,8 +1435,9 @@
     "language": {
         "language": "语言",
         "locales": {
+            "de_DE": "德语",
             "en_US": "英语",
-			"fr_FR": "法国",
+            "fr_FR": "法国",
             "ko_KR": "韩语",
             "zh_CN": "汉语",
             "ru_RU": "俄语",
