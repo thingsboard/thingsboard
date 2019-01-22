@@ -60,12 +60,17 @@ public class TbCreateRelationNode extends TbAbstractRelationActionNode<TbCreateR
     }
 
     @Override
+    protected ListenableFuture<Boolean> doProcessEntityRelationAction(TbContext ctx, TbMsg msg) {
+        return null;
+    }
+
+    @Override
     protected ListenableFuture<Boolean> doProcessEntityRelationAction(TbContext ctx, TbMsg msg, EntityContainer entity) {
         return createIfAbsent(ctx, msg, entity);
     }
 
     private ListenableFuture<Boolean> createIfAbsent(TbContext ctx, TbMsg msg, EntityContainer entityContainer) {
-        processSearchDirection(msg, entityContainer);
+        processSingleSearchDirection(msg, entityContainer);
         return Futures.transformAsync(ctx.getRelationService().checkRelation(ctx.getTenantId(), fromId, toId, config.getRelationType(), RelationTypeGroup.COMMON),
                 result -> {
                     if (!result) {
