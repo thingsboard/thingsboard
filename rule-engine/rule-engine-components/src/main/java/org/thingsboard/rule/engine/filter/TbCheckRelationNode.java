@@ -64,16 +64,9 @@ public class TbCheckRelationNode implements TbNode {
         if (config.isCheckForSingleEntity()) {
             checkRelationFuture = processSingle(ctx, msg);
         } else {
-            if (EntitySearchDirection.FROM.name().equals(config.getDirection())) {
-                checkRelationFuture = Futures.transformAsync(ctx.getRelationService()
-                        .findByToAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), config.getRelationType(), RelationTypeGroup.COMMON), this::isEmptyList);
-            } else {
-                checkRelationFuture = Futures.transformAsync(ctx.getRelationService()
-                        .findByFromAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), config.getRelationType(), RelationTypeGroup.COMMON), this::isEmptyList);
-            }
+            checkRelationFuture = processList(ctx, msg);
         }
         withCallback(checkRelationFuture, filterResult -> ctx.tellNext(msg, filterResult ? "True" : "False"), t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
-
     }
 
     private ListenableFuture<Boolean> processSingle(TbContext ctx, TbMsg msg) {
@@ -87,6 +80,16 @@ public class TbCheckRelationNode implements TbNode {
             from = msg.getOriginator();
         }
         return ctx.getRelationService().checkRelation(ctx.getTenantId(), from, to, config.getRelationType(), RelationTypeGroup.COMMON);
+    }
+
+    private ListenableFuture<Boolean> processList(TbContext ctx, TbMsg msg) {
+        if (EntitySearchDirection.FROM.name().equals(config.getDirection())) {
+            return Futures.transformAsync(ctx.getRelationService()
+                    .findByToAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), config.getRelationType(), RelationTypeGroup.COMMON), this::isEmptyList);
+        } else {
+            return Futures.transformAsync(ctx.getRelationService()
+                    .findByFromAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), config.getRelationType(), RelationTypeGroup.COMMON), this::isEmptyList);
+        }
     }
 
     private ListenableFuture<Boolean> isEmptyList(List<EntityRelation> entityRelations) {
