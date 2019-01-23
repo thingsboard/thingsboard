@@ -45,8 +45,10 @@ import static org.thingsboard.rule.engine.api.util.DonAsynchron.withCallback;
         name = "check relation",
         configClazz = TbCheckRelationNodeConfiguration.class,
         relationTypes = {"True", "False"},
-        nodeDescription = "Checks the relation from the selected entity to originator of the message by type and direction",
-        nodeDetails = "If relation exists - send Message via <b>True</b> chain, otherwise <b>False</b> chain is used.",
+        nodeDescription = "Checks the relation from the selected entity to the originator of the message by type and direction" +
+                " if 'Check for single entity' is set to true, otherwise rule node will check if exist" +
+                " any relation to the originator of the message by type and direction.",
+        nodeDetails = "If at least one relation exists - send Message via <b>True</b> chain, otherwise <b>False</b> chain is used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbFilterNodeCheckRelationConfig")
 public class TbCheckRelationNode implements TbNode {

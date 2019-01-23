@@ -38,10 +38,11 @@ import java.util.List;
         type = ComponentType.ACTION,
         name = "delete relation",
         configClazz = TbDeleteRelationNodeConfiguration.class,
-        nodeDescription = "Finds target Entity by entity name pattern and then delete a relation to Originator Entity by type and direction.",
-        nodeDetails = "If the relation successfully deleted -  Message send via <b>Success</b> chain, otherwise <b>Failure</b> chain will be used.",
+        nodeDescription = "Finds target Entity by entity name pattern and then delete a relation to Originator Entity by type and direction" +
+                " if 'Delete single entity' is set to true, otherwise rule node will delete all relations to the originator of the message by type and direction.",
+        nodeDetails = "If the relation(s) successfully deleted -  Message send via <b>Success</b> chain, otherwise <b>Failure</b> chain will be used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective ="", //"tbActionNodeDeleteRelationConfig",
+        configDirective ="tbActionNodeDeleteRelationConfig",
         icon = "remove_circle"
 )
 public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteRelationNodeConfiguration> {
