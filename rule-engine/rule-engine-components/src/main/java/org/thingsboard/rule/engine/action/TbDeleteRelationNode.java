@@ -57,18 +57,18 @@ public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteR
     }
 
     private ListenableFuture<Boolean> deleteIfExist(TbContext ctx, TbMsg msg, EntityContainer entityContainer) {
-        processSearchDirection(msg, entityContainer);
-        return Futures.transformAsync(ctx.getRelationService().checkRelation(ctx.getTenantId(), fromId, toId, config.getRelationType(), RelationTypeGroup.COMMON),
+        SearchDirectionIds sdId = processSearchDirection(msg, entityContainer);
+        return Futures.transformAsync(ctx.getRelationService().checkRelation(ctx.getTenantId(), sdId.getFromId(), sdId.getToId(), config.getRelationType(), RelationTypeGroup.COMMON),
                 result -> {
                     if (result) {
-                        return processDeleteRelation(ctx);
+                        return processDeleteRelation(ctx, sdId);
                     }
                     return Futures.immediateFuture(true);
                 });
     }
 
-    private ListenableFuture<Boolean> processDeleteRelation(TbContext ctx) {
-        return ctx.getRelationService().deleteRelationAsync(ctx.getTenantId(), fromId, toId, config.getRelationType(), RelationTypeGroup.COMMON);
+    private ListenableFuture<Boolean> processDeleteRelation(TbContext ctx, SearchDirectionIds sdId) {
+        return ctx.getRelationService().deleteRelationAsync(ctx.getTenantId(), sdId.getFromId(), sdId.getToId(), config.getRelationType(), RelationTypeGroup.COMMON);
     }
 
 }
