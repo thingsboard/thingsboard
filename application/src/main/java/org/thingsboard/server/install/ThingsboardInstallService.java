@@ -23,7 +23,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
-import org.thingsboard.server.service.install.DataUpdateService;
+import org.thingsboard.server.service.install.update.DataUpdateService;
 import org.thingsboard.server.service.install.DatabaseUpgradeService;
 import org.thingsboard.server.service.install.EntityDatabaseSchemaService;
 import org.thingsboard.server.service.install.SystemDataLoaderService;
