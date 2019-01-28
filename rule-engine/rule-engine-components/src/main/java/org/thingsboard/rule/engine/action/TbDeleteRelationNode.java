@@ -62,13 +62,8 @@ public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteR
         if(config.isDeleteForSingleEntity()){
             return Futures.transformAsync(getEntity(ctx, msg), entityContainer -> doProcessEntityRelationAction(ctx, msg, entityContainer));
         } else {
-            return doProcessEntityRelationAction(ctx, msg);
+            return processList(ctx, msg);
         }
-    }
-
-    @Override
-    protected ListenableFuture<Boolean> doProcessEntityRelationAction(TbContext ctx, TbMsg msg) {
-        return processList(ctx, msg);
     }
 
     @Override

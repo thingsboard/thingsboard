@@ -95,8 +95,6 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
 
     protected abstract ListenableFuture<Boolean> doProcessEntityRelationAction(TbContext ctx, TbMsg msg, EntityContainer entityContainer);
 
-    protected abstract ListenableFuture<Boolean> doProcessEntityRelationAction(TbContext ctx, TbMsg msg);
-
     protected abstract C loadEntityNodeActionConfig(TbNodeConfiguration configuration) throws TbNodeException;
 
     protected ListenableFuture<EntityContainer> getEntity(TbContext ctx, TbMsg msg) {

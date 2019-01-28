@@ -60,11 +60,6 @@ public class TbCreateRelationNode extends TbAbstractRelationActionNode<TbCreateR
     }
 
     @Override
-    protected ListenableFuture<Boolean> doProcessEntityRelationAction(TbContext ctx, TbMsg msg) {
-        return null;
-    }
-
-    @Override
     protected ListenableFuture<Boolean> doProcessEntityRelationAction(TbContext ctx, TbMsg msg, EntityContainer entity) {
         return createIfAbsent(ctx, msg, entity);
     }
