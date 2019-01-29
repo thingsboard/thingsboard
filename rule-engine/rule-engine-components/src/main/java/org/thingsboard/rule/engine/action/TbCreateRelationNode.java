@@ -65,92 +65,91 @@ public class TbCreateRelationNode extends TbAbstractRelationActionNode<TbCreateR
     }
 
     private ListenableFuture<Boolean> createIfAbsent(TbContext ctx, TbMsg msg, EntityContainer entityContainer) {
-        processSingleSearchDirection(msg, entityContainer);
-        return Futures.transformAsync(ctx.getRelationService().checkRelation(ctx.getTenantId(), fromId, toId, config.getRelationType(), RelationTypeGroup.COMMON),
+        SearchDirectionIds sdId = processSingleSearchDirection(msg, entityContainer);
+        return Futures.transformAsync(ctx.getRelationService().checkRelation(ctx.getTenantId(), sdId.getFromId(), sdId.getToId(), config.getRelationType(), RelationTypeGroup.COMMON),
                 result -> {
                     if (!result) {
-                        return processCreateRelation(ctx, entityContainer);
+                        return processCreateRelation(ctx, entityContainer, sdId);
                     }
                     return Futures.immediateFuture(true);
                 });
     }
 
-    private ListenableFuture<Boolean> processCreateRelation(TbContext ctx, EntityContainer entityContainer) {
+    private ListenableFuture<Boolean> processCreateRelation(TbContext ctx, EntityContainer entityContainer, SearchDirectionIds sdId) {
         switch (entityContainer.getEntityType()) {
             case ASSET:
-                return processAsset(ctx, entityContainer);
+                return processAsset(ctx, entityContainer, sdId);
             case DEVICE:
-                return processDevice(ctx, entityContainer);
+                return processDevice(ctx, entityContainer, sdId);
             case CUSTOMER:
-                return processCustomer(ctx, entityContainer);
+                return processCustomer(ctx, entityContainer, sdId);
             case DASHBOARD:
-                return processDashboard(ctx, entityContainer);
+                return processDashboard(ctx, entityContainer, sdId);
             case ENTITY_VIEW:
-                return processView(ctx, entityContainer);
+                return processView(ctx, entityContainer, sdId);
             case TENANT:
-                return processTenant(ctx, entityContainer);
+                return processTenant(ctx, entityContainer, sdId);
         }
         return Futures.immediateFuture(true);
     }
 
-    private ListenableFuture<Boolean> processView(TbContext ctx, EntityContainer entityContainer) {
+    private ListenableFuture<Boolean> processView(TbContext ctx, EntityContainer entityContainer, SearchDirectionIds sdId) {
         return Futures.transformAsync(ctx.getEntityViewService().findEntityViewByIdAsync(ctx.getTenantId(), new EntityViewId(entityContainer.getEntityId().getId())), entityView -> {
             if (entityView != null) {
-                return ctx.getRelationService().saveRelationAsync(ctx.getTenantId(), new EntityRelation(fromId, toId, config.getRelationType(), RelationTypeGroup.COMMON));
+                return ctx.getRelationService().saveRelationAsync(ctx.getTenantId(), new EntityRelation(sdId.getFromId(), sdId.getToId(), config.getRelationType(), RelationTypeGroup.COMMON));
             } else {
                 return Futures.immediateFuture(true);
             }
         });
     }
 
-    private ListenableFuture<Boolean> processDevice(TbContext ctx, EntityContainer entityContainer) {
+    private ListenableFuture<Boolean> processDevice(TbContext ctx, EntityContainer entityContainer, SearchDirectionIds sdId) {
         return Futures.transformAsync(ctx.getDeviceService().findDeviceByIdAsync(ctx.getTenantId(), new DeviceId(entityContainer.getEntityId().getId())), device -> {
             if (device != null) {
-                return ctx.getRelationService().saveRelationAsync(ctx.getTenantId(), new EntityRelation(fromId, toId, config.getRelationType(), RelationTypeGroup.COMMON));
+                return ctx.getRelationService().saveRelationAsync(ctx.getTenantId(), new EntityRelation(sdId.getFromId(), sdId.getToId(), config.getRelationType(), RelationTypeGroup.COMMON));
             } else {
                 return Futures.immediateFuture(true);
             }
         });
     }
 
-    private ListenableFuture<Boolean> processAsset(TbContext ctx, EntityContainer entityContainer) {
+    private ListenableFuture<Boolean> processAsset(TbContext ctx, EntityContainer entityContainer, SearchDirectionIds sdId) {
         return Futures.transformAsync(ctx.getAssetService().findAssetByIdAsync(ctx.getTenantId(), new AssetId(entityContainer.getEntityId().getId())), asset -> {
             if (asset != null) {
-                return ctx.getRelationService().saveRelationAsync(ctx.getTenantId(), new EntityRelation(fromId, toId, config.getRelationType(), RelationTypeGroup.COMMON));
+                return ctx.getRelationService().saveRelationAsync(ctx.getTenantId(), new EntityRelation(sdId.getFromId(), sdId.getToId(), config.getRelationType(), RelationTypeGroup.COMMON));
             } else {
                 return Futures.immediateFuture(true);
             }
         });
     }
 
-    private ListenableFuture<Boolean> processCustomer(TbContext ctx, EntityContainer entityContainer) {
+    private ListenableFuture<Boolean> processCustomer(TbContext ctx, EntityContainer entityContainer, SearchDirectionIds sdId) {
         return Futures.transformAsync(ctx.getCustomerService().findCustomerByIdAsync(ctx.getTenantId(), new CustomerId(entityContainer.getEntityId().getId())), customer -> {
             if (customer != null) {
-                return ctx.getRelationService().saveRelationAsync(ctx.getTenantId(), new EntityRelation(fromId, toId, config.getRelationType(), RelationTypeGroup.COMMON));
+                return ctx.getRelationService().saveRelationAsync(ctx.getTenantId(), new EntityRelation(sdId.getFromId(), sdId.getToId(), config.getRelationType(), RelationTypeGroup.COMMON));
             } else {
                 return Futures.immediateFuture(true);
             }
         });
     }
 
-    private ListenableFuture<Boolean> processDashboard(TbContext ctx, EntityContainer entityContainer) {
+    private ListenableFuture<Boolean> processDashboard(TbContext ctx, EntityContainer entityContainer, SearchDirectionIds sdId) {
         return Futures.transformAsync(ctx.getDashboardService().findDashboardByIdAsync(ctx.getTenantId(), new DashboardId(entityContainer.getEntityId().getId())), dashboard -> {
             if (dashboard != null) {
-                return ctx.getRelationService().saveRelationAsync(ctx.getTenantId(), new EntityRelation(fromId, toId, config.getRelationType(), RelationTypeGroup.COMMON));
+                return ctx.getRelationService().saveRelationAsync(ctx.getTenantId(), new EntityRelation(sdId.getFromId(), sdId.getToId(), config.getRelationType(), RelationTypeGroup.COMMON));
             } else {
                 return Futures.immediateFuture(true);
             }
         });
     }
 
-    private ListenableFuture<Boolean> processTenant(TbContext ctx, EntityContainer entityContainer) {
+    private ListenableFuture<Boolean> processTenant(TbContext ctx, EntityContainer entityContainer, SearchDirectionIds sdId) {
         return Futures.transformAsync(ctx.getTenantService().findTenantByIdAsync(ctx.getTenantId(), new TenantId(entityContainer.getEntityId().getId())), tenant -> {
             if (tenant != null) {
-                return ctx.getRelationService().saveRelationAsync(ctx.getTenantId(), new EntityRelation(fromId, toId, config.getRelationType(), RelationTypeGroup.COMMON));
+                return ctx.getRelationService().saveRelationAsync(ctx.getTenantId(), new EntityRelation(sdId.getFromId(), sdId.getToId(), config.getRelationType(), RelationTypeGroup.COMMON));
             } else {
                 return Futures.immediateFuture(true);
             }
         });
     }
-
 }
