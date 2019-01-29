@@ -65,7 +65,7 @@ public class TbCreateRelationNode extends TbAbstractRelationActionNode<TbCreateR
     }
 
     private ListenableFuture<Boolean> createIfAbsent(TbContext ctx, TbMsg msg, EntityContainer entityContainer) {
-        SearchDirectionIds sdId = processSearchDirection(msg, entityContainer);
+        SearchDirectionIds sdId = processSingleSearchDirection(msg, entityContainer);
         return Futures.transformAsync(ctx.getRelationService().checkRelation(ctx.getTenantId(), sdId.getFromId(), sdId.getToId(), config.getRelationType(), RelationTypeGroup.COMMON),
                 result -> {
                     if (!result) {

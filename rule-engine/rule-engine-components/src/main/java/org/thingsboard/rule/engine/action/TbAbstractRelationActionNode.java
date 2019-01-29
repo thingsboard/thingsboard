@@ -39,7 +39,9 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
@@ -47,6 +49,7 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -82,7 +85,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
     public void destroy() {
     }
 
-    private ListenableFuture<Boolean> processEntityRelationAction(TbContext ctx, TbMsg msg) {
+    protected ListenableFuture<Boolean> processEntityRelationAction(TbContext ctx, TbMsg msg) {
         return Futures.transformAsync(getEntity(ctx, msg), entityContainer -> doProcessEntityRelationAction(ctx, msg, entityContainer));
     }
 
@@ -111,7 +114,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
         });
     }
 
-    protected SearchDirectionIds processSearchDirection(TbMsg msg, EntityContainer entityContainer) {
+    protected SearchDirectionIds processSingleSearchDirection(TbMsg msg, EntityContainer entityContainer) {
         SearchDirectionIds searchDirectionIds = new SearchDirectionIds();
         if (EntitySearchDirection.FROM.name().equals(config.getDirection())) {
             searchDirectionIds.setFromId(EntityIdFactory.getByTypeAndId(entityContainer.getEntityType().name(), entityContainer.getEntityId().toString()));
@@ -121,6 +124,14 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
             searchDirectionIds.setFromId(msg.getOriginator());
         }
         return searchDirectionIds;
+    }
+
+    protected ListenableFuture<List<EntityRelation>> processListSearchDirection(TbContext ctx, TbMsg msg) {
+        if (EntitySearchDirection.FROM.name().equals(config.getDirection())) {
+            return ctx.getRelationService().findByToAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), config.getRelationType(), RelationTypeGroup.COMMON);
+        } else {
+            return ctx.getRelationService().findByFromAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), config.getRelationType(), RelationTypeGroup.COMMON);
+        }
     }
 
     @Data
