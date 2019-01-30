@@ -314,6 +314,48 @@ export default class TbGoogleMap {
         polyline.setMap(null);
     }
 
+
+	createPolygon(latLangs, settings) {
+		let polygon = new google.maps.Polygon({
+			map: this.map,
+			paths: latLangs,
+			strokeColor: settings.polygonStrokeColor,
+			strokeOpacity: settings.polygonStrokeColor,
+			fillColor: settings.polygonColor,
+			fillOpacity: settings.polygonOpacity,
+			strokeWeight: settings.polygonStrokeWeight
+		});
+		return polygon;
+	}
+	/* eslint-disable no-undef */
+
+	removePolygon (polygon) {
+		polygon.setMap(null);
+	}
+
+	/* eslint-disable no-undef,no-unused-vars */
+	updatePolygonColor (polygon, settings, color) {
+		let options = {
+			paths: polygon.getPaths(),
+			map: this.map,
+			strokeColor: color,
+			fillColor: color,
+			strokeWeight: settings.polygonStrokeWeight
+		}
+
+	}
+	/* eslint-disable no-undef ,no-unused-vars*/
+
+
+	getPolygonLatLngs(polygon) {
+		return polygon.getPaths().getArray();
+	}
+
+	setPolygonLatLngs(polygon, latLngs) {
+		polygon.setPaths(latLngs);
+	}
+
+
     /* eslint-disable no-undef */
     fitBounds(bounds) {
         if (this.dontFitMapBounds && this.defaultZoomLevel) {

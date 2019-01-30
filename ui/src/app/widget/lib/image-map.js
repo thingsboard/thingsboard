@@ -369,6 +369,21 @@ export default class TbImageMap {
     removePolyline(/*polyline*/) {
     }
 
+	createPolygon(/*latLangs, settings*/) {
+	}
+
+	removePolygon(/*latLangs, settings*/) {
+	}
+
+	updatePolygonColor(/*latLangs, settings*/) {
+	}
+
+	getPolygonLatLngs(/*latLangs, settings*/) {
+	}
+
+	setPolygonLatLngs(/*latLangs, settings*/) {
+	}
+
     fitBounds() {
     }
 
