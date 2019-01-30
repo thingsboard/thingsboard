@@ -28,7 +28,7 @@ export LOADER_PATH=${BASE}/conf,${BASE}/extensions
 export SQL_DATA_FOLDER=${SQL_DATA_FOLDER:-/tmp}
 
 
-run_user=thingsboard
+run_user="$USER"
 
 sudo -u "$run_user" -s /bin/sh -c "java -cp ${jarfile} $JAVA_OPTS -Dloader.main=org.thingsboard.server.ThingsboardInstallApplication \
                     -Dinstall.data_dir=${installDir} \

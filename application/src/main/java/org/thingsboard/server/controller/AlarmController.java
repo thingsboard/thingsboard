@@ -97,6 +97,19 @@ public class AlarmController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/alarm/{alarmId}", method = RequestMethod.DELETE)
+    @ResponseBody
+    public Boolean deleteAlarm(@PathVariable(ALARM_ID) String strAlarmId) throws ThingsboardException {
+        checkParameter(ALARM_ID, strAlarmId);
+        try {
+            AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
+            return alarmService.deleteAlarm(getTenantId(), alarmId);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/alarm/{alarmId}/ack", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
     public void ackAlarm(@PathVariable(ALARM_ID) String strAlarmId) throws ThingsboardException {

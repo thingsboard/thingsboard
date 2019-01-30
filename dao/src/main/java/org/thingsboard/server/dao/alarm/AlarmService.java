@@ -35,6 +35,8 @@ public interface AlarmService {
 
     Alarm createOrUpdateAlarm(Alarm alarm);
 
+    Boolean deleteAlarm(TenantId tenantId, AlarmId alarmId);
+
     ListenableFuture<Boolean> ackAlarm(TenantId tenantId, AlarmId alarmId, long ackTs);
 
     ListenableFuture<Boolean> clearAlarm(TenantId tenantId, AlarmId alarmId, JsonNode details, long ackTs);
