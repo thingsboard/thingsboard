@@ -127,7 +127,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
             if (alarm == null) {
                 return false;
             }
-            deleteAlarmRelations(tenantId, alarm);
+            deleteEntityRelations(tenantId, alarm.getId());
             return alarmDao.deleteAlarm(tenantId, alarm);
         } catch (ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
@@ -139,13 +139,6 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         Alarm saved = alarmDao.save(alarm.getTenantId(), alarm);
         createAlarmRelations(saved);
         return saved;
-    }
-
-    private void deleteAlarmRelations(TenantId tenantId, Alarm alarm) throws InterruptedException, ExecutionException {
-        List<EntityRelation> relations = relationService.findByTo(tenantId, alarm.getId(), RelationTypeGroup.ALARM);
-        for (EntityRelation relation : relations) {
-            relationService.deleteRelation(tenantId, relation);
-        }
     }
 
     private void createAlarmRelations(Alarm alarm) throws InterruptedException, ExecutionException {
