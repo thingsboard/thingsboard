@@ -84,6 +84,7 @@
         <delight-nashorn-sandbox.version>0.1.14</delight-nashorn-sandbox.version>
         <kafka.version>2.0.0</kafka.version>
         <bucket4j.version>4.1.1</bucket4j.version>
+        <fst.version>2.57</fst.version>
     </properties>
 
     <modules>
@@ -788,6 +789,11 @@
                 <groupId>com.github.vladimir-bukhtoyarov</groupId>
                 <artifactId>bucket4j-core</artifactId>
                 <version>${bucket4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>de.ruedigermoeller</groupId>
+                <artifactId>fst</artifactId>
+                <version>${fst.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.springfox.ui</groupId>
