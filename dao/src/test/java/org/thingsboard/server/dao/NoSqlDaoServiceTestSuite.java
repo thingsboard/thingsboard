@@ -25,9 +25,7 @@ import java.util.Arrays;
 
 @RunWith(ClasspathSuite.class)
 @ClassnameFilters({
-        "org.thingsboard.server.dao.service.*ServiceNoSqlTest",
-        "org.thingsboard.server.dao.service.queue.cassandra.*.*.*Test",
-        "org.thingsboard.server.dao.service.queue.cassandra.*Test"
+        "org.thingsboard.server.dao.service.*ServiceNoSqlTest"
 })
 public class NoSqlDaoServiceTestSuite {
 
