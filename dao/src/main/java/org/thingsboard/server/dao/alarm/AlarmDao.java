@@ -31,6 +31,8 @@ import java.util.UUID;
  */
 public interface AlarmDao extends Dao<Alarm> {
 
+    Boolean deleteAlarm(TenantId tenantId, Alarm alarm);
+
     ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
 
     ListenableFuture<Alarm> findAlarmByIdAsync(TenantId tenantId, UUID key);

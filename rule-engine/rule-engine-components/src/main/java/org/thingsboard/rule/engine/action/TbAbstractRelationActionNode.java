@@ -61,10 +61,8 @@ import static org.thingsboard.rule.engine.api.util.DonAsynchron.withCallback;
 public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationActionNodeConfiguration> implements TbNode {
 
     protected C config;
-    protected EntityId fromId;
-    protected EntityId toId;
 
-    private LoadingCache<Entitykey, EntityContainer> entityIdCache;
+    private LoadingCache<EntityKey, EntityContainer> entityIdCache;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -99,29 +97,33 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
 
     protected ListenableFuture<EntityContainer> getEntity(TbContext ctx, TbMsg msg) {
         String entityName = TbNodeUtils.processPattern(this.config.getEntityNamePattern(), msg.getMetaData());
-        String type = null;
+        String type;
         if (this.config.getEntityTypePattern() != null) {
             type = TbNodeUtils.processPattern(this.config.getEntityTypePattern(), msg.getMetaData());
+        } else {
+            type = null;
         }
         EntityType entityType = EntityType.valueOf(this.config.getEntityType());
-        Entitykey key = new Entitykey(entityName, type, entityType);
+        EntityKey key = new EntityKey(entityName, type, entityType);
         return ctx.getDbCallbackExecutor().executeAsync(() -> {
             EntityContainer entityContainer = entityIdCache.get(key);
             if (entityContainer.getEntityId() == null) {
-                throw new RuntimeException("No entity found with type '" + key.getEntityType() + " ' and name '" + key.getEntityName() + "'.");
+                throw new RuntimeException("No entity found with type '" + key.getEntityType() + "' and name '" + key.getEntityName() + "'.");
             }
             return entityContainer;
         });
     }
 
-    protected void processSingleSearchDirection(TbMsg msg, EntityContainer entityContainer) {
+    protected SearchDirectionIds processSingleSearchDirection(TbMsg msg, EntityContainer entityContainer) {
+        SearchDirectionIds searchDirectionIds = new SearchDirectionIds();
         if (EntitySearchDirection.FROM.name().equals(config.getDirection())) {
-            fromId = EntityIdFactory.getByTypeAndId(entityContainer.getEntityType().name(), entityContainer.getEntityId().toString());
-            toId = msg.getOriginator();
+            searchDirectionIds.setFromId(EntityIdFactory.getByTypeAndId(entityContainer.getEntityType().name(), entityContainer.getEntityId().toString()));
+            searchDirectionIds.setToId(msg.getOriginator());
         } else {
-            toId = EntityIdFactory.getByTypeAndId(entityContainer.getEntityType().name(), entityContainer.getEntityId().toString());
-            fromId = msg.getOriginator();
+            searchDirectionIds.setToId(EntityIdFactory.getByTypeAndId(entityContainer.getEntityType().name(), entityContainer.getEntityId().toString()));
+            searchDirectionIds.setFromId(msg.getOriginator());
         }
+        return searchDirectionIds;
     }
 
     protected ListenableFuture<List<EntityRelation>> processListSearchDirection(TbContext ctx, TbMsg msg) {
@@ -134,13 +136,19 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
 
     @Data
     @AllArgsConstructor
-    private static class Entitykey {
+    private static class EntityKey {
         private String entityName;
         private String type;
         private EntityType entityType;
     }
 
-    private static class EntityCacheLoader extends CacheLoader<Entitykey, EntityContainer> {
+    @Data
+    protected static class SearchDirectionIds {
+        private EntityId fromId;
+        private EntityId toId;
+    }
+
+    private static class EntityCacheLoader extends CacheLoader<EntityKey, EntityContainer> {
 
         private final TbContext ctx;
         private final boolean createIfNotExists;
@@ -151,11 +159,11 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
         }
 
         @Override
-        public EntityContainer load(Entitykey key) {
+        public EntityContainer load(EntityKey key) {
             return loadEntity(key);
         }
 
-        private EntityContainer loadEntity(Entitykey entitykey) {
+        private EntityContainer loadEntity(EntityKey entitykey) {
             EntityType type = entitykey.getEntityType();
             EntityContainer targetEntity = new EntityContainer();
             targetEntity.setEntityType(type);
