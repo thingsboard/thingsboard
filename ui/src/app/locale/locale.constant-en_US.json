@@ -1008,6 +1008,8 @@
         "modbus-add-server": "Add server/slave",
         "modbus-add-server-prompt": "Please add server/slave",
         "modbus-transport": "Transport",
+        "modbus-tcp-reconnect": "Automatically reconnect",
+        "modbus-rtu-over-tcp": "RTU over TCP",
         "modbus-port-name": "Serial port name",
         "modbus-encoding": "Encoding",
         "modbus-parity": "Parity",
@@ -1032,7 +1034,6 @@
         "modbus-register-count": "Register count",
         "modbus-register-count-range": "Register count should be a positive value.",
         "modbus-byte-order": "Byte order",
-
         "sync": {
             "status": "Status",
             "sync": "Sync",
@@ -1040,7 +1041,6 @@
             "last-sync-time": "Last sync time",
             "not-available": "Not available"
         },
-
         "export-extensions-configuration": "Export extensions configuration",
         "import-extensions-configuration": "Import extensions configuration",
         "import-extensions": "Import extensions",
@@ -1566,7 +1566,8 @@
     "language": {
         "language": "Language",
         "locales": {
-			"fr_FR": "French",
+            "de_DE": "German",
+            "fr_FR": "French",
             "zh_CN": "Chinese",
             "en_US": "English",
             "it_IT": "Italian",

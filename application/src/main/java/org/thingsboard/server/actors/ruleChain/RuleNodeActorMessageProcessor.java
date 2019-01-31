@@ -17,7 +17,6 @@ package org.thingsboard.server.actors.ruleChain;
 
 import akka.actor.ActorContext;
 import akka.actor.ActorRef;
-import akka.event.LoggingAdapter;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;

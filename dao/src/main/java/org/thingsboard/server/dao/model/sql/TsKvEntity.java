@@ -52,22 +52,33 @@ public final class TsKvEntity implements ToData<TsKvEntry> {
     public TsKvEntity() {
     }
 
-    public TsKvEntity(Double avgLongValue, Double avgDoubleValue) {
-        if(avgLongValue != null) {
-            this.longValue = avgLongValue.longValue();
+    public TsKvEntity(Long longSumValue, Double doubleSumValue, Long longCountValue, Long doubleCountValue) {
+        double sum = 0.0;
+        if (longSumValue != null) {
+            sum += longSumValue;
         }
-        this.doubleValue = avgDoubleValue;
+        if (doubleSumValue != null) {
+            sum += doubleSumValue;
+        }
+        this.doubleValue = sum / (longCountValue + doubleCountValue);
     }
 
     public TsKvEntity(Long sumLongValue, Double sumDoubleValue) {
-        this.longValue = sumLongValue;
-        this.doubleValue = sumDoubleValue;
+        if (sumDoubleValue != null) {
+            this.doubleValue = sumDoubleValue + (sumLongValue != null ? sumLongValue.doubleValue() : 0.0);
+        } else {
+            this.longValue = sumLongValue;
+        }
     }
 
-    public TsKvEntity(String strValue, Long longValue, Double doubleValue) {
+    public TsKvEntity(String strValue, Long longValue, Double doubleValue, boolean max) {
         this.strValue = strValue;
-        this.longValue = longValue;
-        this.doubleValue = doubleValue;
+        if (longValue != null && doubleValue != null) {
+            this.doubleValue = max ? Math.max(doubleValue, longValue.doubleValue()) : Math.min(doubleValue, longValue.doubleValue());
+        } else {
+            this.longValue = longValue;
+            this.doubleValue = doubleValue;
+        }
     }
 
     public TsKvEntity(Long booleanValueCount, Long strValueCount, Long longValueCount, Long doubleValueCount) {
@@ -75,10 +86,8 @@ public final class TsKvEntity implements ToData<TsKvEntry> {
             this.longValue = booleanValueCount;
         } else if (strValueCount != 0) {
             this.longValue = strValueCount;
-        } else if (longValueCount != 0) {
-            this.longValue = longValueCount;
-        } else if (doubleValueCount != 0) {
-            this.longValue = doubleValueCount;
+        } else {
+            this.longValue = longValueCount + doubleValueCount;
         }
     }
 

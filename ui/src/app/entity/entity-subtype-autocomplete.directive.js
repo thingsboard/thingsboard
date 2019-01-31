@@ -62,6 +62,7 @@ export default function EntitySubtypeAutocomplete($compile, $templateCache, $q, 
         }
 
         scope.subTypeSearchTextChanged = function() {
+            scope.subType = scope.subTypeSearchText;
         }
 
         scope.updateView = function () {

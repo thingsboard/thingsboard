@@ -1003,6 +1003,7 @@
     "language": {
         "language": "Language",
         "locales": {
+            "de_DE": "Allemand",
             "en_US": "Anglais",
             "fr_FR": "Français",
             "es_ES": "Espagnol",

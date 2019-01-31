@@ -25,18 +25,24 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.util.EntityContainer;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.msg.TbMsg;
+
+import java.util.ArrayList;
+import java.util.List;
+
 
 @Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
         name = "delete relation",
         configClazz = TbDeleteRelationNodeConfiguration.class,
-        nodeDescription = "Finds target Entity by entity name pattern and then delete a relation to Originator Entity by type and direction.",
-        nodeDetails = "If the relation successfully deleted -  Message send via <b>Success</b> chain, otherwise <b>Failure</b> chain will be used.",
+        nodeDescription = "Finds target Entity by entity name pattern and then delete a relation to Originator Entity by type and direction" +
+                " if 'Delete single entity' is set to true, otherwise rule node will delete all relations to the originator of the message by type and direction.",
+        nodeDetails = "If the relation(s) successfully deleted -  Message send via <b>Success</b> chain, otherwise <b>Failure</b> chain will be used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbActionNodeDeleteRelationConfig",
+        configDirective ="tbActionNodeDeleteRelationConfig",
         icon = "remove_circle"
 )
 public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteRelationNodeConfiguration> {
@@ -52,23 +58,54 @@ public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteR
     }
 
     @Override
-    protected ListenableFuture<Boolean> doProcessEntityRelationAction(TbContext ctx, TbMsg msg, EntityContainer entityContainer) {
-        return deleteIfExist(ctx, msg, entityContainer);
+    protected ListenableFuture<Boolean> processEntityRelationAction(TbContext ctx, TbMsg msg) {
+        if(config.isDeleteForSingleEntity()){
+            return Futures.transformAsync(getEntity(ctx, msg), entityContainer -> doProcessEntityRelationAction(ctx, msg, entityContainer));
+        } else {
+            return processList(ctx, msg);
+        }
     }
 
-    private ListenableFuture<Boolean> deleteIfExist(TbContext ctx, TbMsg msg, EntityContainer entityContainer) {
-        processSearchDirection(msg, entityContainer);
-        return Futures.transformAsync(ctx.getRelationService().checkRelation(ctx.getTenantId(), fromId, toId, config.getRelationType(), RelationTypeGroup.COMMON),
+    @Override
+    protected ListenableFuture<Boolean> doProcessEntityRelationAction(TbContext ctx, TbMsg msg, EntityContainer entityContainer) {
+        return processSingle(ctx, msg, entityContainer);
+    }
+
+    private ListenableFuture<Boolean> processList(TbContext ctx, TbMsg msg) {
+        return Futures.transformAsync(processListSearchDirection(ctx, msg), entityRelations -> {
+            if(entityRelations.isEmpty()){
+                return Futures.immediateFuture(true);
+            } else {
+                List<ListenableFuture<Boolean>> listenableFutureList = new ArrayList<>();
+                for (EntityRelation entityRelation: entityRelations) {
+                    listenableFutureList.add(ctx.getRelationService().deleteRelationAsync(ctx.getTenantId(), entityRelation));
+                }
+                return Futures.transformAsync(Futures.allAsList(listenableFutureList), booleans -> {
+                   for (Boolean bool :  booleans) {
+                       if (!bool) {
+                           return Futures.immediateFuture(false);
+                       }
+                   }
+                   return Futures.immediateFuture(true);
+                });
+            }
+        });
+    }
+
+    private ListenableFuture<Boolean> processSingle(TbContext ctx, TbMsg msg, EntityContainer entityContainer) {
+        SearchDirectionIds sdId = processSingleSearchDirection(msg, entityContainer);
+        return Futures.transformAsync(ctx.getRelationService().checkRelation(ctx.getTenantId(), sdId.getFromId(), sdId.getToId(), config.getRelationType(), RelationTypeGroup.COMMON),
+
                 result -> {
                     if (result) {
-                        return processDeleteRelation(ctx);
+                        return processSingleDeleteRelation(ctx, sdId);
                     }
                     return Futures.immediateFuture(true);
                 });
     }
 
-    private ListenableFuture<Boolean> processDeleteRelation(TbContext ctx) {
-        return ctx.getRelationService().deleteRelationAsync(ctx.getTenantId(), fromId, toId, config.getRelationType(), RelationTypeGroup.COMMON);
+    private ListenableFuture<Boolean> processSingleDeleteRelation(TbContext ctx, SearchDirectionIds sdId) {
+        return ctx.getRelationService().deleteRelationAsync(ctx.getTenantId(), sdId.getFromId(), sdId.getToId(), config.getRelationType(), RelationTypeGroup.COMMON);
     }
 
 }

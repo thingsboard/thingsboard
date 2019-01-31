@@ -98,6 +98,10 @@ public class AggregatePartitionsFunction implements com.google.common.base.Funct
                 curLValue = getLongValue(row);
             }
             if (doubleCount > 0) {
+<<<<<<< HEAD
+=======
+                aggResult.hasDouble = true;
+>>>>>>> upstream/master
                 aggResult.dataType = DataType.DOUBLE;
                 curCount += doubleCount;
                 curDValue = getDoubleValue(row);
@@ -222,17 +226,36 @@ public class AggregatePartitionsFunction implements com.google.common.base.Funct
         if (aggResult.count == 0 || (aggResult.dataType == DataType.DOUBLE && aggResult.dValue == null) || (aggResult.dataType == DataType.LONG && aggResult.lValue == null)) {
             return Optional.empty();
         } else if (aggResult.dataType == DataType.DOUBLE || aggResult.dataType == DataType.LONG) {
+<<<<<<< HEAD
             double sum = Optional.ofNullable(aggResult.dValue).orElse(0.0d) + Optional.ofNullable(aggResult.lValue).orElse(0L);
             return Optional.of(new BasicTsKvEntry(ts, new DoubleDataEntry(key, aggregation == Aggregation.SUM ? sum : (sum / aggResult.count))));
+=======
+            if(aggregation == Aggregation.AVG || aggResult.hasDouble) {
+                double sum = Optional.ofNullable(aggResult.dValue).orElse(0.0d) + Optional.ofNullable(aggResult.lValue).orElse(0L);
+                return Optional.of(new BasicTsKvEntry(ts, new DoubleDataEntry(key, aggregation == Aggregation.SUM ? sum : (sum / aggResult.count))));
+            } else {
+                return Optional.of(new BasicTsKvEntry(ts, new LongDataEntry(key, aggregation == Aggregation.SUM ? aggResult.lValue : (aggResult.lValue / aggResult.count))));
+            }
+>>>>>>> upstream/master
         }
         return Optional.empty();
     }
 
     private Optional<TsKvEntry> processMinOrMaxResult(AggregationResult aggResult) {
         if (aggResult.dataType == DataType.DOUBLE || aggResult.dataType == DataType.LONG) {
+<<<<<<< HEAD
             double currentD = aggregation == Aggregation.MIN ? Optional.ofNullable(aggResult.dValue).orElse(Double.MAX_VALUE) : Optional.ofNullable(aggResult.dValue).orElse(Double.MIN_VALUE);
             double currentL = aggregation == Aggregation.MIN ? Optional.ofNullable(aggResult.lValue).orElse(Long.MAX_VALUE) : Optional.ofNullable(aggResult.lValue).orElse(Long.MIN_VALUE);
             return Optional.of(new BasicTsKvEntry(ts, new DoubleDataEntry(key, aggregation == Aggregation.MIN ? Math.min(currentD, currentL) : Math.max(currentD, currentL))));
+=======
+            if(aggResult.hasDouble) {
+                double currentD = aggregation == Aggregation.MIN ? Optional.ofNullable(aggResult.dValue).orElse(Double.MAX_VALUE) : Optional.ofNullable(aggResult.dValue).orElse(Double.MIN_VALUE);
+                double currentL = aggregation == Aggregation.MIN ? Optional.ofNullable(aggResult.lValue).orElse(Long.MAX_VALUE) : Optional.ofNullable(aggResult.lValue).orElse(Long.MIN_VALUE);
+                return Optional.of(new BasicTsKvEntry(ts, new DoubleDataEntry(key, aggregation == Aggregation.MIN ? Math.min(currentD, currentL) : Math.max(currentD, currentL))));
+            } else {
+                return Optional.of(new BasicTsKvEntry(ts, new LongDataEntry(key, aggResult.lValue)));
+            }
+>>>>>>> upstream/master
         }  else if (aggResult.dataType == DataType.STRING) {
             return Optional.of(new BasicTsKvEntry(ts, new StringDataEntry(key, aggResult.sValue)));
         } else {
@@ -247,5 +270,6 @@ public class AggregatePartitionsFunction implements com.google.common.base.Funct
         Double dValue = null;
         Long lValue = null;
         long count = 0;
+        boolean hasDouble = false;
     }
 }
