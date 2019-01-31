@@ -25,7 +25,6 @@ const path = require('path');
 const dirTree = require('directory-tree');
 const jsonminify = require("jsonminify");
 
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const HappyPack = require('happypack');
 
 const PUBLIC_RESOURCE_PATH = '/';
@@ -98,10 +97,6 @@ module.exports = {
             },
             PUBLIC_PATH: JSON.stringify(PUBLIC_RESOURCE_PATH),
             SUPPORTED_LANGS: JSON.stringify(langs)
-        }),
-        new UglifyJsPlugin({
-            cache: true,
-            parallel: true
         }),
         new HappyPack({
             threadPool: happyThreadPool,
