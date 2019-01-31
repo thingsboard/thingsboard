@@ -1,12 +1,12 @@
 /**
- * Copyright © 2018 The Thingsboard Authors
- * <p>
+ * Copyright © 2016-2018 The Thingsboard Authors
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,6 @@
  */
 package org.thingsboard.rule.engine.filter;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
@@ -29,20 +28,22 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RuleNode(
         type = ComponentType.FILTER,
-        name = "check key",
+        name = "has Hobotok",
         relationTypes = {"True", "False"},
         configClazz = TbCheckMessageNodeConfiguration.class,
-        nodeDescription = "Checks the existence of the selected key in the message payload.",
-        nodeDetails = "If the selected key  exists - send Message via <b>True</b> chain, otherwise <b>False</b> chain is used.",
-        uiResources = {"static/rulenode/custom-nodes-config.js"},
-        configDirective = "tbFilterNodeCheckKeyConfig")
+        nodeDescription = "Checks the existence of the selected keys from message data and metadata.",
+        nodeDetails = "If selected checkbox 'Check that all selected keys are present'\" and all keys in message data and metadata are exist - send Message via <b>True</b> chain, otherwise <b>False</b> chain is used.\n" +
+                "Else if the checkbox is not selected, and at least one of the keys from data or metadata of the message exists - send Message via <b>True</b> chain, otherwise, <b>False</b> chain is used. ",
+        uiResources = {"static/rulenode/rulenode-core-config.js"},
+        configDirective = "tbFilterNodeCheckMessageConfig")
 public class TbCheckMessageNode implements TbNode {
 
-    private static final Gson gson = new Gson();
+    private static final JsonParser parser = new JsonParser();
 
     private TbCheckMessageNodeConfiguration config;
     private List<String> messageNamesList;
@@ -57,42 +58,72 @@ public class TbCheckMessageNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        JsonObject data = new JsonParser().parse(msg.getData()).getAsJsonObject();
-        JsonObject metadata = gson.toJsonTree(msg.getMetaData().getData()).getAsJsonObject();
         try {
-            ctx.tellNext(msg, processAllMessageData(data) && processAllMessageMetadata(metadata) ? "True" : "False");
+            if (config.isCheckAllKeys()) {
+                ctx.tellNext(msg, allDataKeysExist(msg) && allMetadataKeysExist(msg) ? "True" : "False");
+            } else {
+                ctx.tellNext(msg, atLeastOneDataKeyExist(msg) || atLeastOneMetadataKeyExist(msg) ? "True" : "False");
+            }
         } catch (Exception e) {
             ctx.tellFailure(msg, e);
         }
     }
 
-    @Override
-    public void destroy() {
-    }
-
-    private boolean processAllMessageData(JsonObject data) {
-        if (config.isCheckMessageData()) {
-            return process(data, messageNamesList);
-        } else {
-            return true;
-        }
-    }
-
-    private boolean processAllMessageMetadata(JsonObject metadata) {
-        if (config.isCheckMessageMetadata()) {
-            return process(metadata, metadataNamesList);
-        } else {
-            return true;
-        }
-    }
-
-    private boolean process(JsonObject object, List<String> fieldsList) {
-        for (String field : fieldsList) {
-            if (!object.has(field)) {
-                return false;
+    private boolean allDataKeysExist(TbMsg msg) {
+        if (!messageNamesList.isEmpty()) {
+            JsonObject data = parser.parse(msg.getData()).getAsJsonObject();
+            for (String field : messageNamesList) {
+                if (!data.has(field)) {
+                    return false;
+                }
             }
+            return true;
         }
         return true;
+    }
+
+    private boolean atLeastOneDataKeyExist(TbMsg msg) {
+        if (!messageNamesList.isEmpty()) {
+            JsonObject data = parser.parse(msg.getData()).getAsJsonObject();
+            for (String field : messageNamesList) {
+                if (data.has(field)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        return false;
+    }
+
+    private boolean allMetadataKeysExist(TbMsg msg) {
+        if (!metadataNamesList.isEmpty()) {
+            Map<String, String> metadata = msg.getMetaData().getData();
+            for (String field : metadataNamesList) {
+                if (!metadata.containsKey(field)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return true;
+    }
+
+    private boolean atLeastOneMetadataKeyExist(TbMsg msg) {
+        if (!metadataNamesList.isEmpty()) {
+            Map<String, String> metadata = msg.getMetaData().getData();
+            for (String field : metadataNamesList) {
+                if (metadata.containsKey(field)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        return false;
+    }
+
+    @Override
+    public void destroy() {
+
     }
 
 }
