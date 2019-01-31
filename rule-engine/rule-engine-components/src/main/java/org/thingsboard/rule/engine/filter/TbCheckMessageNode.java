@@ -33,7 +33,7 @@ import java.util.Map;
 @Slf4j
 @RuleNode(
         type = ComponentType.FILTER,
-        name = "has Hobotok",
+        name = "check existence fields",
         relationTypes = {"True", "False"},
         configClazz = TbCheckMessageNodeConfiguration.class,
         nodeDescription = "Checks the existence of the selected keys from message data and metadata.",
@@ -71,9 +71,8 @@ public class TbCheckMessageNode implements TbNode {
 
     private boolean allDataKeysExist(TbMsg msg) {
         if (!messageNamesList.isEmpty()) {
-            JsonObject data = parser.parse(msg.getData()).getAsJsonObject();
             for (String field : messageNamesList) {
-                if (!data.has(field)) {
+                if (!toJson(msg).has(field)) {
                     return false;
                 }
             }
@@ -84,9 +83,8 @@ public class TbCheckMessageNode implements TbNode {
 
     private boolean atLeastOneDataKeyExist(TbMsg msg) {
         if (!messageNamesList.isEmpty()) {
-            JsonObject data = parser.parse(msg.getData()).getAsJsonObject();
             for (String field : messageNamesList) {
-                if (data.has(field)) {
+                if (toJson(msg).has(field)) {
                     return true;
                 }
             }
@@ -97,9 +95,8 @@ public class TbCheckMessageNode implements TbNode {
 
     private boolean allMetadataKeysExist(TbMsg msg) {
         if (!metadataNamesList.isEmpty()) {
-            Map<String, String> metadata = msg.getMetaData().getData();
             for (String field : metadataNamesList) {
-                if (!metadata.containsKey(field)) {
+                if (!toMap(msg).containsKey(field)) {
                     return false;
                 }
             }
@@ -110,15 +107,22 @@ public class TbCheckMessageNode implements TbNode {
 
     private boolean atLeastOneMetadataKeyExist(TbMsg msg) {
         if (!metadataNamesList.isEmpty()) {
-            Map<String, String> metadata = msg.getMetaData().getData();
             for (String field : metadataNamesList) {
-                if (metadata.containsKey(field)) {
+                if (toMap(msg).containsKey(field)) {
                     return true;
                 }
             }
             return false;
         }
         return false;
+    }
+
+    private Map<String, String> toMap(TbMsg msg) {
+        return msg.getMetaData().getData();
+    }
+
+    private JsonObject toJson(TbMsg msg) {
+        return parser.parse(msg.getData()).getAsJsonObject();
     }
 
     @Override
