@@ -49,35 +49,52 @@ import static org.thingsboard.server.dao.model.ModelConstants.TS_COLUMN;
 @IdClass(TsKvCompositeKey.class)
 public final class TsKvEntity implements ToData<TsKvEntry> {
 
+    private static final String SUM = "SUM";
+    private static final String AVG = "AVG";
+    private static final String MIN = "MIN";
+    private static final String MAX = "MAX";
+
     public TsKvEntity() {
     }
 
-    public TsKvEntity(Long longSumValue, Double doubleSumValue, Long longCountValue, Long doubleCountValue) {
-        double sum = 0.0;
-        if (longSumValue != null) {
-            sum += longSumValue;
-        }
-        if (doubleSumValue != null) {
-            sum += doubleSumValue;
-        }
-        this.doubleValue = sum / (longCountValue + doubleCountValue);
-    }
-
-    public TsKvEntity(Long sumLongValue, Double sumDoubleValue) {
-        if (sumDoubleValue != null) {
-            this.doubleValue = sumDoubleValue + (sumLongValue != null ? sumLongValue.doubleValue() : 0.0);
-        } else {
-            this.longValue = sumLongValue;
-        }
-    }
-
-    public TsKvEntity(String strValue, Long longValue, Double doubleValue, boolean max) {
+    public TsKvEntity(String strValue) {
         this.strValue = strValue;
-        if (longValue != null && doubleValue != null) {
-            this.doubleValue = max ? Math.max(doubleValue, longValue.doubleValue()) : Math.min(doubleValue, longValue.doubleValue());
-        } else {
-            this.longValue = longValue;
-            this.doubleValue = doubleValue;
+    }
+
+    public TsKvEntity(Long longValue, Double doubleValue, Long longCountValue, Long doubleCountValue, String aggType) {
+        switch (aggType) {
+            case AVG:
+                double sum = 0.0;
+                if (longValue != null) {
+                    sum += longValue;
+                }
+                if (doubleValue != null) {
+                    sum += doubleValue;
+                }
+                long totalCount = longCountValue + doubleCountValue;
+                if (totalCount > 0) {
+                    this.doubleValue = sum / (longCountValue + doubleCountValue);
+                } else {
+                    this.doubleValue = 0.0;
+                }
+                break;
+            case SUM:
+                if (doubleCountValue > 0) {
+                    this.doubleValue = doubleValue + (longValue != null ? longValue.doubleValue() : 0.0);
+                } else {
+                    this.longValue = longValue;
+                }
+                break;
+            case MIN:
+            case MAX:
+                if (longCountValue > 0 && doubleCountValue > 0) {
+                    this.doubleValue = MAX.equals(aggType) ? Math.max(doubleValue, longValue.doubleValue()) : Math.min(doubleValue, longValue.doubleValue());
+                } else if (doubleCountValue > 0) {
+                    this.doubleValue = doubleValue;
+                } else if (longCountValue > 0) {
+                    this.longValue = longValue;
+                }
+                break;
         }
     }
 
