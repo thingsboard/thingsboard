@@ -55,7 +55,7 @@ public interface TsKvRepository extends CrudRepository<TsKvEntity, TsKvComposite
                 @Param("endTs") long endTs);
 
     @Async
-    @Query("SELECT new TsKvEntity(MAX(tskv.strValue), MAX(tskv.longValue), MAX(tskv.doubleValue)) FROM TsKvEntity tskv " +
+    @Query("SELECT new TsKvEntity(MAX(tskv.strValue), MAX(tskv.longValue), MAX(tskv.doubleValue), true) FROM TsKvEntity tskv " +
             "WHERE tskv.entityId = :entityId AND tskv.entityType = :entityType " +
             "AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts < :endTs")
     CompletableFuture<TsKvEntity> findMax(@Param("entityId") String entityId,
@@ -65,7 +65,7 @@ public interface TsKvRepository extends CrudRepository<TsKvEntity, TsKvComposite
                                           @Param("endTs") long endTs);
 
     @Async
-    @Query("SELECT new TsKvEntity(MIN(tskv.strValue), MIN(tskv.longValue), MIN(tskv.doubleValue)) FROM TsKvEntity tskv " +
+    @Query("SELECT new TsKvEntity(MIN(tskv.strValue), MIN(tskv.longValue), MIN(tskv.doubleValue), false) FROM TsKvEntity tskv " +
             "WHERE tskv.entityId = :entityId AND tskv.entityType = :entityType " +
             "AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts < :endTs")
     CompletableFuture<TsKvEntity> findMin(@Param("entityId") String entityId,
@@ -85,7 +85,7 @@ public interface TsKvRepository extends CrudRepository<TsKvEntity, TsKvComposite
                                             @Param("endTs") long endTs);
 
     @Async
-    @Query("SELECT new TsKvEntity(AVG(tskv.longValue), AVG(tskv.doubleValue)) FROM TsKvEntity tskv " +
+    @Query("SELECT new TsKvEntity(SUM(tskv.longValue), SUM(tskv.doubleValue), COUNT(tskv.longValue), COUNT(tskv.doubleValue)) FROM TsKvEntity tskv " +
             "WHERE tskv.entityId = :entityId AND tskv.entityType = :entityType " +
             "AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts < :endTs")
     CompletableFuture<TsKvEntity> findAvg(@Param("entityId") String entityId,
