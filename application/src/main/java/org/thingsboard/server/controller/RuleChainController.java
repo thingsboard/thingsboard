@@ -47,6 +47,7 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
+import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.event.EventService;
@@ -55,9 +56,11 @@ import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -224,7 +227,16 @@ public class RuleChainController extends BaseController {
             RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
             RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.DELETE);
 
+            List<RuleNode> referencingRuleNodes = ruleChainService.getReferencingRuleChainNodes(getTenantId(), ruleChainId);
+
+            Set<RuleChainId> referencingRuleChainIds = referencingRuleNodes.stream().map(RuleNode::getRuleChainId).collect(Collectors.toSet());
+
             ruleChainService.deleteRuleChainById(getTenantId(), ruleChainId);
+
+            referencingRuleChainIds.remove(ruleChain.getId());
+
+            referencingRuleChainIds.forEach(referencingRuleChainId ->
+                actorService.onEntityStateChange(ruleChain.getTenantId(), referencingRuleChainId, ComponentLifecycleEvent.UPDATED));
 
             actorService.onEntityStateChange(ruleChain.getTenantId(), ruleChain.getId(), ComponentLifecycleEvent.DELETED);
 
