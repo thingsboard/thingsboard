@@ -15,8 +15,7 @@
  */
 package org.thingsboard.rule.engine.filter;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -43,7 +42,7 @@ import java.util.Map;
         configDirective = "tbFilterNodeCheckMessageConfig")
 public class TbCheckMessageNode implements TbNode {
 
-    private static final JsonParser parser = new JsonParser();
+    private static final Gson gson = new Gson();
 
     private TbCheckMessageNodeConfiguration config;
     private List<String> messageNamesList;
@@ -59,20 +58,22 @@ public class TbCheckMessageNode implements TbNode {
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
         try {
+            Map<String, String> dataMap = dataToMap(msg);
+            Map<String, String> metadataMap = metadataToMap(msg);
             if (config.isCheckAllKeys()) {
-                ctx.tellNext(msg, allDataKeysExist(msg) && allMetadataKeysExist(msg) ? "True" : "False");
+                ctx.tellNext(msg, allKeysExist(messageNamesList, dataMap) && allKeysExist(metadataNamesList, metadataMap) ? "True" : "False");
             } else {
-                ctx.tellNext(msg, atLeastOneDataKeyExist(msg) || atLeastOneMetadataKeyExist(msg) ? "True" : "False");
+                ctx.tellNext(msg, atLeastOneKeyExist(messageNamesList, dataMap) || atLeastOneKeyExist(metadataNamesList, metadataMap) ? "True" : "False");
             }
         } catch (Exception e) {
             ctx.tellFailure(msg, e);
         }
     }
 
-    private boolean allDataKeysExist(TbMsg msg) {
-        if (!messageNamesList.isEmpty()) {
-            for (String field : messageNamesList) {
-                if (!toJson(msg).has(field)) {
+    private boolean allKeysExist(List<String> data, Map<String, String> map) {
+        if (!data.isEmpty()) {
+            for (String field : data) {
+                if (!map.containsKey(field)) {
                     return false;
                 }
             }
@@ -81,10 +82,10 @@ public class TbCheckMessageNode implements TbNode {
         return true;
     }
 
-    private boolean atLeastOneDataKeyExist(TbMsg msg) {
-        if (!messageNamesList.isEmpty()) {
-            for (String field : messageNamesList) {
-                if (toJson(msg).has(field)) {
+    private boolean atLeastOneKeyExist(List<String> data, Map<String, String> map) {
+        if (!data.isEmpty()) {
+            for (String field : data) {
+                if (map.containsKey(field)) {
                     return true;
                 }
             }
@@ -93,36 +94,13 @@ public class TbCheckMessageNode implements TbNode {
         return false;
     }
 
-    private boolean allMetadataKeysExist(TbMsg msg) {
-        if (!metadataNamesList.isEmpty()) {
-            for (String field : metadataNamesList) {
-                if (!toMap(msg).containsKey(field)) {
-                    return false;
-                }
-            }
-            return true;
-        }
-        return true;
-    }
-
-    private boolean atLeastOneMetadataKeyExist(TbMsg msg) {
-        if (!metadataNamesList.isEmpty()) {
-            for (String field : metadataNamesList) {
-                if (toMap(msg).containsKey(field)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-        return false;
-    }
-
-    private Map<String, String> toMap(TbMsg msg) {
+    private Map<String, String> metadataToMap(TbMsg msg) {
         return msg.getMetaData().getData();
     }
 
-    private JsonObject toJson(TbMsg msg) {
-        return parser.parse(msg.getData()).getAsJsonObject();
+    @SuppressWarnings("unchecked")
+    private Map<String, String> dataToMap(TbMsg msg) { ;
+        return (Map<String,String>) gson.fromJson(msg.getData(), Map.class);
     }
 
     @Override
