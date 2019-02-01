@@ -349,7 +349,7 @@ public class EntityViewController extends BaseController {
         checkParameter(ENTITY_VIEW_ID, strEntityViewId);
         try {
             EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
-            EntityView entityView = checkEntityViewId(entityViewId);
+            EntityView entityView = checkEntityViewId(entityViewId, Operation.ASSIGN_TO_CUSTOMER);
             Customer publicCustomer = customerService.findOrCreatePublicCustomer(entityView.getTenantId());
             EntityView savedEntityView = checkNotNull(entityViewService.assignEntityViewToCustomer(getCurrentUser().getTenantId(), entityViewId, publicCustomer.getId()));
 
