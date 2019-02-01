@@ -539,10 +539,14 @@ export default class TbMapWidgetV2 {
 				}
 			}
 			if (locationsChanged && tbMap.initBounds) {
-				tbMap.initBounds = !datasources.every(
+				let dataReceived = datasources.every(
 					function (ds) {
 						return ds.dataReceived === true;
 					});
+				let dataValid = dataReceived && dataMap.dsDataMap.every(function (ds) {
+					return !(!ds[tbMap.locationSettings.latKeyName] && !ds[tbMap.locationSettings.lngKeyName]);
+				});
+				tbMap.initBounds = !dataValid;
 				tbMap.map.fitBounds(bounds);
 			}
 		}
