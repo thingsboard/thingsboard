@@ -58,38 +58,66 @@ public class TbCheckMessageNode implements TbNode {
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
         try {
-            Map<String, String> dataMap = dataToMap(msg);
-            Map<String, String> metadataMap = metadataToMap(msg);
             if (config.isCheckAllKeys()) {
-                ctx.tellNext(msg, allKeysExist(messageNamesList, dataMap) && allKeysExist(metadataNamesList, metadataMap) ? "True" : "False");
+                ctx.tellNext(msg, allKeysData(msg) && allKeysMetadata(msg) ? "True" : "False");
             } else {
-                ctx.tellNext(msg, atLeastOneKeyExist(messageNamesList, dataMap) || atLeastOneKeyExist(metadataNamesList, metadataMap) ? "True" : "False");
+                ctx.tellNext(msg, atLeastOneData(msg) || atLeastOneMetadata(msg) ? "True" : "False");
             }
         } catch (Exception e) {
             ctx.tellFailure(msg, e);
         }
     }
 
-    private boolean allKeysExist(List<String> data, Map<String, String> map) {
-        if (!data.isEmpty()) {
-            for (String field : data) {
-                if (!map.containsKey(field)) {
-                    return false;
-                }
-            }
-            return true;
+    @Override
+    public void destroy() {
+    }
+
+    private boolean allKeysData(TbMsg msg) {
+        if (!messageNamesList.isEmpty()) {
+            Map<String, String> dataMap = dataToMap(msg);
+            return processAllKeys(messageNamesList, dataMap);
         }
         return true;
     }
 
-    private boolean atLeastOneKeyExist(List<String> data, Map<String, String> map) {
-        if (!data.isEmpty()) {
-            for (String field : data) {
-                if (map.containsKey(field)) {
-                    return true;
-                }
+    private boolean allKeysMetadata(TbMsg msg) {
+        if (!metadataNamesList.isEmpty()) {
+            Map<String, String> metadataMap = metadataToMap(msg);
+            return processAllKeys(metadataNamesList, metadataMap);
+        }
+        return true;
+    }
+
+    private boolean atLeastOneData(TbMsg msg) {
+        if (!messageNamesList.isEmpty()) {
+            Map<String, String> dataMap = dataToMap(msg);
+            return processAtLeastOne(messageNamesList, dataMap);
+        }
+        return false;
+    }
+
+    private boolean atLeastOneMetadata(TbMsg msg) {
+        if (!metadataNamesList.isEmpty()) {
+            Map<String, String> metadataMap = metadataToMap(msg);
+            return processAtLeastOne(metadataNamesList, metadataMap);
+        }
+        return false;
+    }
+
+    private boolean processAllKeys(List<String> data, Map<String, String> map) {
+        for (String field : data) {
+            if (!map.containsKey(field)) {
+                return false;
             }
-            return false;
+        }
+        return true;
+    }
+
+    private boolean processAtLeastOne(List<String> data, Map<String, String> map) {
+        for (String field : data) {
+            if (map.containsKey(field)) {
+                return true;
+            }
         }
         return false;
     }
@@ -99,13 +127,9 @@ public class TbCheckMessageNode implements TbNode {
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String, String> dataToMap(TbMsg msg) { ;
-        return (Map<String,String>) gson.fromJson(msg.getData(), Map.class);
-    }
-
-    @Override
-    public void destroy() {
-
+    private Map<String, String> dataToMap(TbMsg msg) {
+        ;
+        return (Map<String, String>) gson.fromJson(msg.getData(), Map.class);
     }
 
 }
