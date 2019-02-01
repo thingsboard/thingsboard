@@ -53,6 +53,19 @@
             return result;
         };
     }
+    if (!String.prototype.includes) {
+        String.prototype.includes = function(search, start) {
+            if (angular.isNumber(start)) {
+                start = 0;
+            }
+
+            if (start + search.length > this.length) {
+                return false;
+            } else {
+                return this.indexOf(search, start) !== -1;
+            }
+        };
+    }
 
     (function (arr) {
         arr.forEach(function (item) {
