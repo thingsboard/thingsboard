@@ -140,6 +140,18 @@ export function EntityViewController($rootScope, userService, entityViewService,
                 return {"topIndex": vm.topIndex};
             };
 
+            entityViewActionsList.push({
+                onAction: function ($event, item) {
+                    makePublic($event, item);
+                },
+                name: function() { return $translate.instant('action.share') },
+                details: function() { return $translate.instant('entity-view.make-public') },
+                icon: "share",
+                isEnabled: function(entityView) {
+                    return entityView && (!entityView.customerId || entityView.customerId.id === types.id.nullUid);
+                }
+            });
+
             entityViewActionsList.push(
                 {
                     onAction: function ($event, item) {

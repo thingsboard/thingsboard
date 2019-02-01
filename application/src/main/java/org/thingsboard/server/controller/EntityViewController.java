@@ -333,4 +333,28 @@ public class EntityViewController extends BaseController {
             throw handleException(e);
         }
     }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/customer/public/entityView/{entityViewId}", method = RequestMethod.POST)
+    @ResponseBody
+    public EntityView assignEntityViewToPublicCustomer(@PathVariable(ENTITY_VIEW_ID) String strEntityViewId) throws ThingsboardException {
+        checkParameter(ENTITY_VIEW_ID, strEntityViewId);
+        try {
+            EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
+            EntityView entityView = checkEntityViewId(entityViewId);
+            Customer publicCustomer = customerService.findOrCreatePublicCustomer(entityView.getTenantId());
+            EntityView savedEntityView = checkNotNull(entityViewService.assignEntityViewToCustomer(getCurrentUser().getTenantId(), entityViewId, publicCustomer.getId()));
+
+            logEntityAction(entityViewId, savedEntityView,
+                    savedEntityView.getCustomerId(),
+                    ActionType.ASSIGNED_TO_CUSTOMER, null, strEntityViewId, publicCustomer.getId().toString(), publicCustomer.getName());
+
+            return savedEntityView;
+        } catch (Exception e) {
+            logEntityAction(emptyId(EntityType.ENTITY_VIEW), null,
+                    null,
+                    ActionType.ASSIGNED_TO_CUSTOMER, e, strEntityViewId);
+            throw handleException(e);
+        }
+    }
 }
