@@ -1225,16 +1225,23 @@ export default class TbFlot {
 
                     if (tooltipHtml) {
                         tbFlot.ctx.tooltip.html(tooltipHtml)
-                            .css({top: pageY+5, left: 0})
+                            .css({top: 0, left: 0})
                             .fadeIn(200);
 
                         var windowWidth = $( window ).width();  //eslint-disable-line
+                        var windowHeight = $( window ).height();  //eslint-disable-line
                         var tooltipWidth = tbFlot.ctx.tooltip.width();
+                        var tooltipHeight = tbFlot.ctx.tooltip.height();
                         var left = pageX+5;
+                        var top = pageY+5;
                         if (windowWidth - pageX < tooltipWidth + 50) {
                             left = pageX - tooltipWidth - 10;
                         }
+                        if (windowHeight - pageY < tooltipHeight + 20) {
+                            top = pageY - tooltipHeight - 10;
+                        }
                         tbFlot.ctx.tooltip.css({
+                            top: top,
                             left: left
                         });
 
