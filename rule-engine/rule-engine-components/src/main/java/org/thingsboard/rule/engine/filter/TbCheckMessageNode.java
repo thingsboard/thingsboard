@@ -128,7 +128,6 @@ public class TbCheckMessageNode implements TbNode {
 
     @SuppressWarnings("unchecked")
     private Map<String, String> dataToMap(TbMsg msg) {
-        ;
         return (Map<String, String>) gson.fromJson(msg.getData(), Map.class);
     }
 
