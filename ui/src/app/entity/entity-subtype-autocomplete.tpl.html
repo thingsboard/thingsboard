@@ -29,6 +29,8 @@
                  placeholder="{{ selectEntitySubtypeText | translate }}"
                  md-floating-label="{{ entitySubtypeText | translate }}"
                  md-select-on-match="false"
+                 md-autoselect="true"
+                 ng-blur="subType = subTypeSearchText"
                  md-menu-class="tb-entity-subtype-autocomplete">
     <md-item-template>
         <div class="tb-entity-subtype-item">
