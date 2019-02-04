@@ -42,7 +42,7 @@ import java.util.List;
                 " if 'Delete single entity' is set to true, otherwise rule node will delete all relations to the originator of the message by type and direction.",
         nodeDetails = "If the relation(s) successfully deleted -  Message send via <b>Success</b> chain, otherwise <b>Failure</b> chain will be used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective ="tbActionNodeDeleteRelationConfig",
+        configDirective = "tbActionNodeDeleteRelationConfig",
         icon = "remove_circle"
 )
 public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteRelationNodeConfiguration> {
@@ -58,35 +58,39 @@ public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteR
     }
 
     @Override
-    protected ListenableFuture<Boolean> processEntityRelationAction(TbContext ctx, TbMsg msg) {
-        if(config.isDeleteForSingleEntity()){
+    protected ListenableFuture<RelationContainer> processEntityRelationAction(TbContext ctx, TbMsg msg) {
+        return getRelationContainerListenableFuture(ctx, msg);
+    }
+
+    private ListenableFuture<RelationContainer> getRelationContainerListenableFuture(TbContext ctx, TbMsg msg) {
+        if (config.isDeleteForSingleEntity()) {
             return Futures.transformAsync(getEntity(ctx, msg), entityContainer -> doProcessEntityRelationAction(ctx, msg, entityContainer));
         } else {
-            return processList(ctx, msg);
+            return Futures.transform(processList(ctx, msg), result -> new RelationContainer(msg, result));
         }
     }
 
     @Override
-    protected ListenableFuture<Boolean> doProcessEntityRelationAction(TbContext ctx, TbMsg msg, EntityContainer entityContainer) {
-        return processSingle(ctx, msg, entityContainer);
+    protected ListenableFuture<RelationContainer> doProcessEntityRelationAction(TbContext ctx, TbMsg msg, EntityContainer entityContainer) {
+        return Futures.transform(processSingle(ctx, msg, entityContainer), result -> new RelationContainer(msg, result));
     }
 
     private ListenableFuture<Boolean> processList(TbContext ctx, TbMsg msg) {
         return Futures.transformAsync(processListSearchDirection(ctx, msg), entityRelations -> {
-            if(entityRelations.isEmpty()){
+            if (entityRelations.isEmpty()) {
                 return Futures.immediateFuture(true);
             } else {
                 List<ListenableFuture<Boolean>> listenableFutureList = new ArrayList<>();
-                for (EntityRelation entityRelation: entityRelations) {
+                for (EntityRelation entityRelation : entityRelations) {
                     listenableFutureList.add(ctx.getRelationService().deleteRelationAsync(ctx.getTenantId(), entityRelation));
                 }
                 return Futures.transformAsync(Futures.allAsList(listenableFutureList), booleans -> {
-                   for (Boolean bool :  booleans) {
-                       if (!bool) {
-                           return Futures.immediateFuture(false);
-                       }
-                   }
-                   return Futures.immediateFuture(true);
+                    for (Boolean bool : booleans) {
+                        if (!bool) {
+                            return Futures.immediateFuture(false);
+                        }
+                    }
+                    return Futures.immediateFuture(true);
                 });
             }
         });

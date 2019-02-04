@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -78,20 +79,20 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
         withCallback(processEntityRelationAction(ctx, msg),
-                filterResult -> ctx.tellNext(msg, filterResult ? SUCCESS : FAILURE), t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
+                filterResult -> ctx.tellNext(filterResult.getMsg(), filterResult.isResult() ? SUCCESS : FAILURE), t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
     }
 
     @Override
     public void destroy() {
     }
 
-    protected ListenableFuture<Boolean> processEntityRelationAction(TbContext ctx, TbMsg msg) {
+    protected ListenableFuture<RelationContainer> processEntityRelationAction(TbContext ctx, TbMsg msg) {
         return Futures.transformAsync(getEntity(ctx, msg), entityContainer -> doProcessEntityRelationAction(ctx, msg, entityContainer));
     }
 
     protected abstract boolean createEntityIfNotExists();
 
-    protected abstract ListenableFuture<Boolean> doProcessEntityRelationAction(TbContext ctx, TbMsg msg, EntityContainer entityContainer);
+    protected abstract ListenableFuture<RelationContainer> doProcessEntityRelationAction(TbContext ctx, TbMsg msg, EntityContainer entityContainer);
 
     protected abstract C loadEntityNodeActionConfig(TbNodeConfiguration configuration) throws TbNodeException;
 
@@ -119,9 +120,11 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
         if (EntitySearchDirection.FROM.name().equals(config.getDirection())) {
             searchDirectionIds.setFromId(EntityIdFactory.getByTypeAndId(entityContainer.getEntityType().name(), entityContainer.getEntityId().toString()));
             searchDirectionIds.setToId(msg.getOriginator());
+            searchDirectionIds.setOrignatorDirectionFrom(false);
         } else {
             searchDirectionIds.setToId(EntityIdFactory.getByTypeAndId(entityContainer.getEntityType().name(), entityContainer.getEntityId().toString()));
             searchDirectionIds.setFromId(msg.getOriginator());
+            searchDirectionIds.setOrignatorDirectionFrom(true);
         }
         return searchDirectionIds;
     }
@@ -146,6 +149,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
     protected static class SearchDirectionIds {
         private EntityId fromId;
         private EntityId toId;
+        private boolean orignatorDirectionFrom;
     }
 
     private static class EntityCacheLoader extends CacheLoader<EntityKey, EntityContainer> {
@@ -233,7 +237,15 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
             }
             return targetEntity;
         }
+    }
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    protected static class RelationContainer {
+
+        private TbMsg msg;
+        private boolean result;
 
     }
 
