@@ -44,7 +44,11 @@ import java.util.List;
         name = "create relation",
         configClazz = TbCreateRelationNodeConfiguration.class,
         nodeDescription = "Finds target Entity by entity name pattern and (entity type pattern for Asset, Device) and then create a relation to Originator Entity by type and direction." +
-                " If Selected entity type: Asset, Device or Customer will create new Entity if it doesn't exist and 'Create new entity if not exists' is set to true.",
+                " If Selected entity type: Asset, Device or Customer will create new Entity if it doesn't exist and selected checkbox 'Create new entity if not exists'" +
+                " In case that relation from the message originator to the selected entity not exist and  If selected checkbox 'Remove current relations'," +
+                " before creating the new relation all existed relations to message originator by type and direction will be removed." +
+                " If relation from the message originator to the selected entity created and If selected checkbox 'Change originator to related entity'," +
+                " outbound message will be processed as a message from this entity.",
         nodeDetails = "If the relation already exists or successfully created -  Message send via <b>Success</b> chain, otherwise <b>Failure</b> chain will be used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeCreateRelationConfig",
