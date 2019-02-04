@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package org.thingsboard.server.service.encoding;
 
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
+import org.nustaq.serialization.FSTConfiguration;
 import org.springframework.stereotype.Service;
-import org.springframework.util.SerializationUtils;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
@@ -30,13 +30,14 @@ import static org.thingsboard.server.gen.cluster.ClusterAPIProtos.MessageType.CL
 
 @Slf4j
 @Service
-public class ProtoWithJavaSerializationDecodingEncodingService implements DataDecodingEncodingService {
+public class ProtoWithFSTService implements DataDecodingEncodingService {
 
 
+    private final FSTConfiguration config = FSTConfiguration.createDefaultConfiguration();
     @Override
     public Optional<TbActorMsg> decode(byte[] byteArray) {
         try {
-            TbActorMsg msg = (TbActorMsg) SerializationUtils.deserialize(byteArray);
+            TbActorMsg msg = (TbActorMsg) config.asObject(byteArray);
             return Optional.of(msg);
 
         } catch (IllegalArgumentException e) {
@@ -47,7 +48,7 @@ public class ProtoWithJavaSerializationDecodingEncodingService implements DataDe
 
     @Override
     public byte[] encode(TbActorMsg msq) {
-        return SerializationUtils.serialize(msq);
+        return config.asByteArray(msq);
     }
 
     @Override

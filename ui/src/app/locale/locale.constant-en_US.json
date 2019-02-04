@@ -844,6 +844,7 @@
         "unable-entity-view-device-alias-text": "Device alias '{{entityViewAlias}}' can't be deleted as it used by the following widget(s):<br/>{{widgetsList}}",
         "select-entity-view": "Select entity view",
         "make-public": "Make entity view public",
+        "make-private": "Make entity view private",
         "start-date": "Start date",
         "start-ts": "Start time",
         "end-date": "End date",
@@ -861,7 +862,11 @@
         "attributes-propagation": "Attributes propagation",
         "attributes-propagation-hint": "Entity View will automatically copy specified attributes from Target Entity each time you save or update this entity view. For performance reasons target entity attributes are not propagated to entity view on each attribute change. You can enable automatic propagation by configuring \"copy to view\" rule node in your rule chain and linking \"Post attributes\" and \"Attributes Updated\" messages to the new rule node.",
         "timeseries-data": "Timeseries data",
-        "timeseries-data-hint": "Configure timeseries data keys of the target entity that will be accessible to the entity view. This timeseries data is read-only."
+        "timeseries-data-hint": "Configure timeseries data keys of the target entity that will be accessible to the entity view. This timeseries data is read-only.",
+        "make-public-entity-view-title": "Are you sure you want to make the entity view '{{entityViewName}}' public?",
+        "make-public-entity-view-text": "After the confirmation the entity view and all its data will be made public and accessible by others.",
+        "make-private-entity-view-title": "Are you sure you want to make the entity view '{{entityViewName}}' private?",
+        "make-private-entity-view-text": "After the confirmation the entity view and all its data will be made private and won't be accessible by others."
     },
     "event": {
         "event-type": "Event type",
@@ -1034,7 +1039,6 @@
         "modbus-register-count": "Register count",
         "modbus-register-count-range": "Register count should be a positive value.",
         "modbus-byte-order": "Byte order",
-
         "sync": {
             "status": "Status",
             "sync": "Sync",
@@ -1042,7 +1046,6 @@
             "last-sync-time": "Last sync time",
             "not-available": "Not available"
         },
-
         "export-extensions-configuration": "Export extensions configuration",
         "import-extensions-configuration": "Import extensions configuration",
         "import-extensions": "Import extensions",
@@ -1568,7 +1571,8 @@
     "language": {
         "language": "Language",
         "locales": {
-			"fr_FR": "French",
+            "de_DE": "German",
+            "fr_FR": "French",
             "zh_CN": "Chinese",
             "en_US": "English",
             "it_IT": "Italian",
@@ -1576,7 +1580,8 @@
             "ru_RU": "Russian",
             "es_ES": "Spanish",
             "ja_JA": "Japanese",
-            "tr_TR": "Turkish"
+            "tr_TR": "Turkish",
+            "fa_IR": "Persian"
         }
     }
 }

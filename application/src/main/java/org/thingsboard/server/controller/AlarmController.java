@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,6 +88,19 @@ public class AlarmController extends BaseController {
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.ALARM), alarm,
                     null, alarm.getId() == null ? ActionType.ADDED : ActionType.UPDATED, e);
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/alarm/{alarmId}", method = RequestMethod.DELETE)
+    @ResponseBody
+    public Boolean deleteAlarm(@PathVariable(ALARM_ID) String strAlarmId) throws ThingsboardException {
+        checkParameter(ALARM_ID, strAlarmId);
+        try {
+            AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
+            return alarmService.deleteAlarm(getTenantId(), alarmId);
+        } catch (Exception e) {
             throw handleException(e);
         }
     }

@@ -100,7 +100,7 @@
             "UNACK": "Non riconosciuto"
         },
         "display-status": {
-            "ACTIVE_UNACK": "Active Unacknowledged", 
+            "ACTIVE_UNACK": "Active Unacknowledged",
             "ACTIVE_ACK": "Active Acknowledged",
             "CLEARED_UNACK": "Cleared Unacknowledged",
             "CLEARED_ACK": "Cleared Acknowledged"
@@ -109,8 +109,8 @@
         "created-time": "Orario di creazione",
         "type": "Tipo",
         "severity": "Livello di gravità",
-        "originator": "Origine", 
-        "originator-type": "Tipo origine", 
+        "originator": "Origine",
+        "originator-type": "Tipo origine",
         "details": "Dettagli",
         "status": "Stato",
         "alarm-details": "Dettagli allarme",
@@ -132,9 +132,9 @@
         "polling-interval-required": "Intervallo di polling Allarmi richiesto.",
         "min-polling-interval-message": "L'intervallo di polling deve essere di almeno 1 sec.",
         "aknowledge-alarms-title": "Conferma { count, plural, 1 {1 allarme} other {# allarmi} }",
-        "aknowledge-alarms-text": "Sei sicuro di voler confermare { count, plural, 1 {1 allarme} other {# allarmi} }?", 
+        "aknowledge-alarms-text": "Sei sicuro di voler confermare { count, plural, 1 {1 allarme} other {# allarmi} }?",
         "clear-alarms-title": "Elimina { count, plural, 1 {1 allarme} other {# allarmi} }",
-        "clear-alarms-text": "Sei sicuro di voler eliminare { count, plural, 1 {1 allarme} other {# allarmi} }?" 
+        "clear-alarms-text": "Sei sicuro di voler eliminare { count, plural, 1 {1 allarme} other {# allarmi} }?"
     },
     "alias": {
         "add": "Aggiungi alias",
@@ -910,7 +910,6 @@
         "modbus-register-count": "Register count",
         "modbus-register-count-range": "Register count should be a positive value.",
         "modbus-byte-order": "Byte order",
-
         "sync": {
             "status": "Stato",
             "sync": "Sincronizzato",
@@ -918,7 +917,6 @@
             "last-sync-time": "Ultima sincronizzazione",
             "not-available": "Non disponibile"
         },
-
         "export-extensions-configuration": "Esporta configurazione estensioni",
         "import-extensions-configuration": "Importa configurazione estensioni",
         "import-extensions": "Importa estensione",
@@ -1414,7 +1412,7 @@
         "export": "Esporta un tipo di widget",
         "export-failed-error": "Impossibile esportare il tipo di widget: {{error}}",
         "create-new-widget-type": "Crea un nuovo tipo di widget",
-        "widget-type-file": "Widget type file", 
+        "widget-type-file": "Widget type file",
         "invalid-widget-type-file-error": "Impossibile importare un tipo di widget: struttura dati del widget non valida."
     },
     "icon": {
@@ -1424,7 +1422,7 @@
         "show-all": "Mostra tutte le icone"
     },
     "custom": {
-        "widget-action": { 
+        "widget-action": {
             "action-cell-button": "Action cell button",
             "row-click": "On row click",
             "marker-click": "On marker click",
@@ -1434,7 +1432,8 @@
     "language": {
         "language": "Lingua",
         "locales": {
-			"fr_FR": "Francese",
+            "de_DE": "Tedesco",
+            "fr_FR": "Francese",
             "zh_CN": "Cinese",
             "ko_KR": "Coreano",
             "en_US": "Inglese",
@@ -1442,7 +1441,8 @@
             "ru_RU": "Russo",
             "es_ES": "Spagnolo",
             "ja_JA": "Giapponese",
-            "tr_TR": "Turco"
+            "tr_TR": "Turco",
+            "fa_IR": "Persiana"
         }
     }
 }
