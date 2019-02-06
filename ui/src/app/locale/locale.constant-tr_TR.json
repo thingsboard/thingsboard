@@ -1524,7 +1524,8 @@
         "widget-action": {
             "action-cell-button": "Eylem hücre butonu",
             "row-click": "Satır tıklama eylemi",
-            "marker-click": "İşaretçi tıklama eylemi",
+            "polygon-click": "Satır tıklama eylemi",
+            "marker-click": "Çokgen tıklama eylemi",
             "tooltip-tag-action": "İpucu etiket eylemi"
         }
     },
