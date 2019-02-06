@@ -1442,6 +1442,7 @@
 		"widget-action": {
 			"action-cell-button": "アクションセルボタン",
 			"row-click": "行のクリック",
+			"polygon-click": "ポリゴンクリック",
 			"marker-click": "マーカークリック",
 			"tooltip-tag-action": "ツールチップのタグアクション"
 		}

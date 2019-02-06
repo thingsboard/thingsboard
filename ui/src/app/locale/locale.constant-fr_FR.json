@@ -336,6 +336,7 @@
             "action-cell-button": "Action cell button",
             "marker-click": "On marker click",
             "row-click": "On row click",
+            "polygon-click": "On polygon click",
             "tooltip-tag-action": "Tooltip tag action"
         }
     },
