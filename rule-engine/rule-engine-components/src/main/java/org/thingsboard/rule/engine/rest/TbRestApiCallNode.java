@@ -71,10 +71,14 @@ public class TbRestApiCallNode implements TbNode {
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         try {
             this.config = TbNodeUtils.convert(configuration, TbRestApiCallNodeConfiguration.class);
-            this.eventLoopGroup = new NioEventLoopGroup();
-            Netty4ClientHttpRequestFactory nettyFactory = new Netty4ClientHttpRequestFactory(this.eventLoopGroup);
-            nettyFactory.setSslContext(SslContextBuilder.forClient().build());
-            httpClient = new AsyncRestTemplate(nettyFactory);
+            if (this.config.isUseSimpleClientHttpFactory()) {
+                httpClient = new AsyncRestTemplate();
+            } else {
+                this.eventLoopGroup = new NioEventLoopGroup();
+                Netty4ClientHttpRequestFactory nettyFactory = new Netty4ClientHttpRequestFactory(this.eventLoopGroup);
+                nettyFactory.setSslContext(SslContextBuilder.forClient().build());
+                httpClient = new AsyncRestTemplate(nettyFactory);
+            }
         } catch (SSLException e) {
             throw new TbNodeException(e);
         }
