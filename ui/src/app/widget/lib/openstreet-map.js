@@ -190,7 +190,7 @@ export default class TbOpenStreetMap {
 		this.map.removeLayer(polyline);
 	}
 
-	createPolygon(latLangs, settings) {
+	createPolygon(latLangs, settings, location,  onClickListener, markerArgs) {
 		let polygon = L.polygon(latLangs, {
 			fill: true,
 			fillColor: settings.polygonColor,
@@ -199,6 +199,13 @@ export default class TbOpenStreetMap {
 			fillOpacity: settings.polygonOpacity,
 			opacity: settings.polygonStrokeOpacity
 		}).addTo(this.map);
+
+		if (settings.displayTooltip) {
+			this.createTooltip(polygon, location.dsIndex, settings, markerArgs);
+		}
+		if (onClickListener) {
+			polygon.on('click', onClickListener);
+		}
 		return polygon;
 	}
 
@@ -224,6 +231,7 @@ export default class TbOpenStreetMap {
 
 	setPolygonLatLngs(polygon, latLngs) {
 		polygon.setLatLngs(latLngs);
+		polygon.redraw();
 	}
 
 	fitBounds(bounds) {
@@ -272,7 +280,7 @@ export default class TbOpenStreetMap {
 	}
 
 	extendBounds(bounds, polyline) {
-		if (polyline && polyline.getLatLngs()) {
+		if (polyline && polyline.getLatLngs() && polyline.getBounds()) {
 			bounds.extend(polyline.getBounds());
 		}
 	}

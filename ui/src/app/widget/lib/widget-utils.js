@@ -73,22 +73,24 @@ export function processPattern(pattern, datasources, dsIndex) {
 
 export function fillPattern(pattern, replaceInfo, data) {
     var text = angular.copy(pattern);
-    for (var v = 0; v < replaceInfo.variables.length; v++) {
-        var variableInfo = replaceInfo.variables[v];
-        var txtVal = '';
-        if (variableInfo.dataKeyIndex > -1 && data[variableInfo.dataKeyIndex]) {
-            var varData = data[variableInfo.dataKeyIndex].data;
-            if (varData.length > 0) {
-                var val = varData[varData.length - 1][1];
-                if (isNumber(val)) {
-                    txtVal = padValue(val, variableInfo.valDec, 0);
-                } else {
-                    txtVal = val;
-                }
-            }
-        }
-        text = text.split(variableInfo.variable).join(txtVal);
-    }
+    if (replaceInfo) {
+		for (var v = 0; v < replaceInfo.variables.length; v++) {
+			var variableInfo = replaceInfo.variables[v];
+			var txtVal = '';
+			if (variableInfo.dataKeyIndex > -1 && data[variableInfo.dataKeyIndex]) {
+				var varData = data[variableInfo.dataKeyIndex].data;
+				if (varData.length > 0) {
+					var val = varData[varData.length - 1][1];
+					if (isNumber(val)) {
+						txtVal = padValue(val, variableInfo.valDec, 0);
+					} else {
+						txtVal = val;
+					}
+				}
+			}
+			text = text.split(variableInfo.variable).join(txtVal);
+		}
+	}
     return text;
 }
 

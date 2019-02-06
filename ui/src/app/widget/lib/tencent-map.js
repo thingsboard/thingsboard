@@ -331,7 +331,7 @@ export default class TbTencentMap {
 	}
 
 	/* eslint-disable no-undef */
-	createPolygon(latLangs, settings) {
+	createPolygon(latLangs, settings, location,  onClickListener, markerArgs) {
 		let polygon = new qq.maps.Polygon({
 			map: this.map,
 			path: latLangs,
@@ -339,8 +339,31 @@ export default class TbTencentMap {
 			fillColor: settings.polygonColor,
 			strokeWeight: settings.polygonStrokeWeight
 		});
+		//initialize-tooltip
+		let popup = new qq.maps.InfoWindow({
+			content: ''
+		});
+		if (!this.tooltips) this.tooltips = [];
+		this.tooltips.push({
+			markerArgs: markerArgs,
+			popup: popup,
+			locationSettings: settings,
+			dsIndex: location.dsIndex
+		});
+
+		if (onClickListener) {
+			qq.maps.event.addListener(polygon, 'click', function (event) {
+				if (settings.displayTooltip) {
+					popup.setMap(this.map);
+					popup.setPosition(event.latLng);
+					popup.open();
+				}
+				onClickListener();
+			});
+		}
 		return polygon;
 	}
+
 	/* eslint-disable no-undef */
 
 	removePolygon (polygon) {

@@ -233,7 +233,6 @@ export default class TbMapWidgetV2 {
 	}
 
 	update() {
-
 		var tbMap = this;
 
 
@@ -381,6 +380,17 @@ export default class TbMapWidgetV2 {
 				tbMap.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName);
 			}
 		}
+		function locationPolygonClick($event, location) {
+			var descriptors = tbMap.ctx.actionsApi.getActionDescriptors('polygonClick');
+			if (descriptors.length) {
+				var datasource = tbMap.subscription.datasources[location.dsIndex];
+				var entityId = {};
+				entityId.id = datasource.entityId;
+				entityId.entityType = datasource.entityType;
+				var entityName = datasource.entityName;
+				tbMap.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName);
+			}
+		}
 
 		function updateLocation(location, data, dataMap) {
 			var locationChanged = false;
@@ -427,21 +437,6 @@ export default class TbMapWidgetV2 {
 								locationChanged = true;
 							}
 						}
-
-
-						if (location.settings.showPolygon && dataMap.dsDataMap[location.dsIndex][location.settings.polygonKeyName] !== null) {
-							let polygonLatLngsRaw = angular.fromJson(dataMap.dsDataMap[location.dsIndex][location.settings.polygonKeyName]);
-							let polygonLatLngs = !polygonLatLngsRaw || mapPolygonArray(polygonLatLngsRaw);
-							if (!location.polygon && polygonLatLngs.length > 0) {
-								location.polygon = tbMap.map.createPolygon(polygonLatLngs, location.settings);
-								tbMap.polygons.push(location.polygon);
-							} else if (polygonLatLngs.length > 0) {
-								let prevPolygonArr = tbMap.map.getPolygonLatLngs(location.polygon);
-								if (!prevPolygonArr || !arraysEqual(prevPolygonArr, polygonLatLngs)) {
-									tbMap.map.setPolygonLatLngs(location.polygon, polygonLatLngs);
-								}
-							}
-						}
 					}
 					if (location.marker) {
 						updateLocationStyle(location, dataMap);
@@ -449,6 +444,25 @@ export default class TbMapWidgetV2 {
 				}
 			}
 			return locationChanged;
+		}
+
+		function createUpdatePolygon(location, dataMap) {
+			if (location.settings.showPolygon && dataMap.dsDataMap[location.dsIndex][location.settings.polygonKeyName] !== null) {
+				let polygonLatLngsRaw = angular.fromJson(dataMap.dsDataMap[location.dsIndex][location.settings.polygonKeyName]);
+				let polygonLatLngs = !polygonLatLngsRaw || mapPolygonArray(polygonLatLngsRaw);
+				if (!location.polygon && polygonLatLngs.length > 0) {
+					location.polygon = tbMap.map.createPolygon(polygonLatLngs, location.settings, location, function (event) {
+						tbMap.callbacks.onLocationClick(location);
+						locationPolygonClick(event, location);
+					}, [location.dsIndex]);
+					tbMap.polygons.push(location.polygon);
+				} else if (polygonLatLngs.length > 0) {
+					let prevPolygonArr = tbMap.map.getPolygonLatLngs(location.polygon);
+					if (!prevPolygonArr || !arraysEqual(prevPolygonArr, polygonLatLngs)) {
+						tbMap.map.setPolygonLatLngs(location.polygon, polygonLatLngs);
+					}
+				}
+			}
 		}
 
 		function loadLocations(data, datasources) {
@@ -459,7 +473,6 @@ export default class TbMapWidgetV2 {
 			var currentDatasourceIndex = -1;
 			var latIndex = -1;
 			var lngIndex = -1;
-
 			for (var i = 0; i < data.length; i++) {
 				var dataKeyData = data[i];
 				var dataKey = dataKeyData.dataKey;
@@ -480,7 +493,6 @@ export default class TbMapWidgetV2 {
 				} else if (nameToCheck === tbMap.locationSettings.lngKeyName) {
 					lngIndex = i;
 				}
-
 				if (latIndex > -1 && lngIndex > -1) {
 					var location = {
 						latIndex: latIndex,
@@ -499,6 +511,7 @@ export default class TbMapWidgetV2 {
 					}
 					tbMap.locations.push(location);
 					updateLocation(location, data, dataMap);
+
 					if (location.polyline) {
 						tbMap.map.extendBounds(bounds, location.polyline);
 					} else if (location.marker) {
@@ -507,8 +520,28 @@ export default class TbMapWidgetV2 {
 					latIndex = -1;
 					lngIndex = -1;
 				}
-
 			}
+			data.forEach(function (dataEl, index) {
+				let nameToCheck;
+				if (dataEl.dataKey.locationAttrName) {
+					nameToCheck = dataEl.dataKey.locationAttrName;
+				} else {
+					nameToCheck = dataEl.dataKey.label;
+				}
+				if (nameToCheck === tbMap.locationSettings.polygonKeyName) {
+					let location = {
+						polIndex: index,
+						settings: angular.copy(tbMap.locationSettings)
+					};
+					location.dsIndex = datasources.findIndex(function (ds) {
+						return dataEl.datasource.entityId === ds.entityId;
+					});
+					tbMap.locations.push(location);
+					createUpdatePolygon(location, dataMap);
+					tbMap.map.extendBounds(bounds, location.polygon);
+				}
+			});
+
 			tbMap.map.fitBounds(bounds);
 		}
 
@@ -532,10 +565,13 @@ export default class TbMapWidgetV2 {
 			for (var p = 0; p < tbMap.locations.length; p++) {
 				var location = tbMap.locations[p];
 				locationsChanged |= updateLocation(location, data, dataMap);
+				createUpdatePolygon(location, dataMap);
 				if (location.polyline) {
 					tbMap.map.extendBounds(bounds, location.polyline);
 				} else if (location.marker) {
 					tbMap.map.extendBoundsWithMarker(bounds, location.marker);
+				} else if (location.polygon) {
+					tbMap.map.extendBounds(bounds, location.polygon);
 				}
 			}
 			if (locationsChanged && tbMap.initBounds) {
@@ -581,23 +617,30 @@ export default class TbMapWidgetV2 {
 				}
 			}
 		}
-
 	}
 
 	resize() {
 		if (this.map && this.map.inited()) {
-			this.map.invalidateSize();
+			let map = this.map;
 			if (this.locations && this.locations.length > 0) {
-				var bounds = this.map.createBounds();
-				for (var m = 0; m < this.markers.length; m++) {
-					this.map.extendBoundsWithMarker(bounds, this.markers[m]);
+				map.invalidateSize();
+				var bounds = map.createBounds();
+				if (this.markers && this.markers.length>0) {
+					this.markers.forEach(function (marker) {
+						map.extendBoundsWithMarker(bounds, marker);
+					});
 				}
-				if (this.polylines) {
-					for (var p = 0; p < this.polylines.length; p++) {
-						this.map.extendBounds(bounds, this.polylines[p]);
-					}
+				if (this.polylines && this.polylines.length>0) {
+					this.polylines.forEach(function (polyline) {
+						map.extendBounds(bounds, polyline);
+					})
 				}
-				this.map.fitBounds(bounds);
+				if (this.polygons && this.polygons.length > 0) {
+					this.polygons.forEach(function (polygon) {
+						map.extendBounds(bounds, polygon);
+					})
+				}
+				map.fitBounds(bounds);
 			}
 		}
 	}
@@ -632,6 +675,10 @@ export default class TbMapWidgetV2 {
 		return {
 			'markerClick': {
 				name: 'widget-action.marker-click',
+				multiple: false
+			},
+			'polygonClick': {
+				name: 'widget-action.polygon-click',
 				multiple: false
 			},
 			'tooltipAction': {

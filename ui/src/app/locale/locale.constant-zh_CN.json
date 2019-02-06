@@ -1429,6 +1429,7 @@
             "action-cell-button": "动作单元格按钮",
             "row-click": "点击行",
             "marker-click": "点击标记",
+            "polygon-click": "单击多边形",
             "tooltip-tag-action": "提示标签动作"
         }
     },
