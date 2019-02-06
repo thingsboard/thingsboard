@@ -97,10 +97,10 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
     protected abstract C loadEntityNodeActionConfig(TbNodeConfiguration configuration) throws TbNodeException;
 
     protected ListenableFuture<EntityContainer> getEntity(TbContext ctx, TbMsg msg) {
-        String entityName = TbNodeUtils.processPattern(this.config.getEntityNamePattern(), msg.getMetaData());
+        String entityName = processPattern(msg, this.config.getEntityNamePattern());
         String type;
         if (this.config.getEntityTypePattern() != null) {
-            type = TbNodeUtils.processPattern(this.config.getEntityTypePattern(), msg.getMetaData());
+            type = processPattern(msg, this.config.getEntityTypePattern());
         } else {
             type = null;
         }
@@ -117,7 +117,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
 
     protected SearchDirectionIds processSingleSearchDirection(TbMsg msg, EntityContainer entityContainer) {
         SearchDirectionIds searchDirectionIds = new SearchDirectionIds();
-        if (EntitySearchDirection.FROM.name().equals(config.getDirection())) {
+        if (EntitySearchDirection.FROM.name().equals(this.config.getDirection())) {
             searchDirectionIds.setFromId(EntityIdFactory.getByTypeAndId(entityContainer.getEntityType().name(), entityContainer.getEntityId().toString()));
             searchDirectionIds.setToId(msg.getOriginator());
             searchDirectionIds.setOrignatorDirectionFrom(false);
@@ -130,11 +130,15 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
     }
 
     protected ListenableFuture<List<EntityRelation>> processListSearchDirection(TbContext ctx, TbMsg msg) {
-        if (EntitySearchDirection.FROM.name().equals(config.getDirection())) {
-            return ctx.getRelationService().findByToAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), config.getRelationType(), RelationTypeGroup.COMMON);
+        if (EntitySearchDirection.FROM.name().equals(this.config.getDirection())) {
+            return ctx.getRelationService().findByToAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), processPattern(msg, this.config.getRelationTypePattern()), RelationTypeGroup.COMMON);
         } else {
-            return ctx.getRelationService().findByFromAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), config.getRelationType(), RelationTypeGroup.COMMON);
+            return ctx.getRelationService().findByFromAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), processPattern(msg, this.config.getRelationTypePattern()), RelationTypeGroup.COMMON);
         }
+    }
+
+    protected String processPattern(TbMsg msg, String pattern){
+        return TbNodeUtils.processPattern(pattern, msg.getMetaData());
     }
 
     @Data

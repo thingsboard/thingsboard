@@ -29,7 +29,7 @@ public class TbDeleteRelationNodeConfiguration extends TbAbstractRelationActionN
         TbDeleteRelationNodeConfiguration configuration = new TbDeleteRelationNodeConfiguration();
         configuration.setDeleteForSingleEntity(true);
         configuration.setDirection(EntitySearchDirection.FROM.name());
-        configuration.setRelationType("Contains");
+        configuration.setRelationTypePattern("Contains");
         configuration.setEntityNamePattern("");
         configuration.setEntityCacheExpiration(300);
         return configuration;
