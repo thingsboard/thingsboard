@@ -21,7 +21,7 @@ import lombok.Data;
 public abstract class TbAbstractRelationActionNodeConfiguration {
 
     private String direction;
-    private String relationType;
+    private String relationTypePattern;
 
     private String entityType;
     private String entityNamePattern;
