@@ -41,6 +41,8 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.security.permission.Resource;
 
 @RestController
 @RequestMapping("/api")
@@ -55,7 +57,7 @@ public class AlarmController extends BaseController {
         checkParameter(ALARM_ID, strAlarmId);
         try {
             AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
-            return checkAlarmId(alarmId);
+            return checkAlarmId(alarmId, Operation.READ);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -68,7 +70,7 @@ public class AlarmController extends BaseController {
         checkParameter(ALARM_ID, strAlarmId);
         try {
             AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
-            return checkAlarmInfoId(alarmId);
+            return checkAlarmInfoId(alarmId, Operation.READ);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -80,6 +82,8 @@ public class AlarmController extends BaseController {
     public Alarm saveAlarm(@RequestBody Alarm alarm) throws ThingsboardException {
         try {
             alarm.setTenantId(getCurrentUser().getTenantId());
+            Operation operation = alarm.getId() == null ? Operation.CREATE : Operation.WRITE;
+            accessControlService.checkPermission(getCurrentUser(), Resource.ALARM, operation, alarm.getId(), alarm);
             Alarm savedAlarm = checkNotNull(alarmService.createOrUpdateAlarm(alarm));
             logEntityAction(savedAlarm.getId(), savedAlarm,
                     getCurrentUser().getCustomerId(),
@@ -112,7 +116,7 @@ public class AlarmController extends BaseController {
         checkParameter(ALARM_ID, strAlarmId);
         try {
             AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
-            Alarm alarm = checkAlarmId(alarmId);
+            Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
             alarmService.ackAlarm(getCurrentUser().getTenantId(), alarmId, System.currentTimeMillis()).get();
             logEntityAction(alarmId, alarm, getCurrentUser().getCustomerId(), ActionType.ALARM_ACK, null);
         } catch (Exception e) {
@@ -127,7 +131,7 @@ public class AlarmController extends BaseController {
         checkParameter(ALARM_ID, strAlarmId);
         try {
             AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
-            Alarm alarm = checkAlarmId(alarmId);
+            Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
             alarmService.clearAlarm(getCurrentUser().getTenantId(), alarmId, null, System.currentTimeMillis()).get();
             logEntityAction(alarmId, alarm, getCurrentUser().getCustomerId(), ActionType.ALARM_CLEAR, null);
         } catch (Exception e) {
@@ -159,7 +163,7 @@ public class AlarmController extends BaseController {
             throw new ThingsboardException("Invalid alarms search query: Both parameters 'searchStatus' " +
                     "and 'status' can't be specified at the same time!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
-        checkEntityId(entityId);
+        checkEntityId(entityId, Operation.READ);
         try {
             TimePageLink pageLink = createPageLink(limit, startTime, endTime, ascOrder, offset);
             return checkNotNull(alarmService.findAlarms(getCurrentUser().getTenantId(), new AlarmQuery(entityId, pageLink, alarmSearchStatus, alarmStatus, fetchOriginator)).get());
@@ -186,7 +190,7 @@ public class AlarmController extends BaseController {
             throw new ThingsboardException("Invalid alarms search query: Both parameters 'searchStatus' " +
                     "and 'status' can't be specified at the same time!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
-        checkEntityId(entityId);
+        checkEntityId(entityId, Operation.READ);
         try {
             return alarmService.findHighestAlarmSeverity(getCurrentUser().getTenantId(), entityId, alarmSearchStatus, alarmStatus);
         } catch (Exception e) {

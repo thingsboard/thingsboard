@@ -315,7 +315,7 @@ export default class TbGoogleMap {
     }
 
 
-	createPolygon(latLangs, settings) {
+	createPolygon(latLangs, settings, location,  onClickListener, markerArgs) {
 		let polygon = new google.maps.Polygon({
 			map: this.map,
 			paths: latLangs,
@@ -325,6 +325,32 @@ export default class TbGoogleMap {
 			fillOpacity: settings.polygonOpacity,
 			strokeWeight: settings.polygonStrokeWeight
 		});
+
+		//initialize-tooltip
+
+		let popup = new google.maps.InfoWindow({
+			content: ''
+		});
+		if (!this.tooltips) this.tooltips = [];
+		this.tooltips.push({
+			markerArgs: markerArgs,
+			popup: popup,
+			locationSettings: settings,
+			dsIndex: location.dsIndex
+		});
+
+		if (onClickListener) {
+			google.maps.event.addListener(polygon, 'click', function (event) {
+				if (settings.displayTooltip) {
+					if (!polygon.anchor) {
+						polygon.anchor = new google.maps.MVCObject();
+					}
+					polygon.anchor.set("position", event.latLng);
+					popup.open(this.map, polygon.anchor);
+				}
+				onClickListener();
+			});
+		}
 		return polygon;
 	}
 	/* eslint-disable no-undef */

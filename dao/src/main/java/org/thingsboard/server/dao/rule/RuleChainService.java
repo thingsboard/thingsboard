@@ -53,6 +53,8 @@ public interface RuleChainService {
 
     List<RuleNode> getRuleChainNodes(TenantId tenantId, RuleChainId ruleChainId);
 
+    List<RuleNode> getReferencingRuleChainNodes(TenantId tenantId, RuleChainId ruleChainId);
+
     List<EntityRelation> getRuleNodeRelations(TenantId tenantId, RuleNodeId ruleNodeId);
 
     TextPageData<RuleChain> findTenantRuleChains(TenantId tenantId, TextPageLink pageLink);
