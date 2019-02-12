@@ -58,6 +58,7 @@ function TimeseriesTableWidgetController($element, $scope, $filter, $timeout) {
 
     vm.enterFilterMode = enterFilterMode;
     vm.exitFilterMode = exitFilterMode;
+    vm.updateCurrentStateEntity = updateCurrentStateEntity;
 
     function enterFilterMode () {
         vm.query.search = '';
@@ -381,4 +382,11 @@ function TimeseriesTableWidgetController($element, $scope, $filter, $timeout) {
         updatePage(source);
     }
 
+    function updateCurrentStateEntity(source) {
+        var params = {
+            entityId: source.datasource.entity.id,
+            entityName: source.datasource.entityName
+        };
+        vm.ctx.stateController.updateState(null, params);
+    }
 }
