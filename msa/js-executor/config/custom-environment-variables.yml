@@ -23,3 +23,6 @@ logger:
   level: "LOGGER_LEVEL"
   path: "LOG_FOLDER"
   filename: "LOGGER_FILENAME"
+
+script:
+  script_body_trace_frequency: "SCRIPT_BODY_TRACE_FREQUENCY"
