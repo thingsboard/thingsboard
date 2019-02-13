@@ -24,3 +24,6 @@ logger:
   level: "info"
   path: "logs"
   filename: "tb-js-executor-%DATE%.log"
+
+script:
+  script_body_trace_frequency: "1000"
