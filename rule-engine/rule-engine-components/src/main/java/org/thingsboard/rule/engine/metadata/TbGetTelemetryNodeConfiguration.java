@@ -44,10 +44,9 @@ public class TbGetTelemetryNodeConfiguration implements NodeConfiguration<TbGetT
     private String startIntervalTimeUnit;
     private String endIntervalTimeUnit;
     private String fetchMode; //FIRST, LAST, LATEST
+    private String orderBy; //ASC, DESC,
 
     private List<String> latestTsKeyNames;
-
-
 
     @Override
     public TbGetTelemetryNodeConfiguration defaultConfiguration() {
@@ -61,6 +60,7 @@ public class TbGetTelemetryNodeConfiguration implements NodeConfiguration<TbGetT
         configuration.setUseMetadataIntervalPatterns(false);
         configuration.setStartIntervalPattern("");
         configuration.setEndIntervalPattern("");
+        configuration.setOrderBy("ASC");
         return configuration;
     }
 }

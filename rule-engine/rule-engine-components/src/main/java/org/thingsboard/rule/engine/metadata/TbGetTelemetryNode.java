@@ -70,6 +70,7 @@ public class TbGetTelemetryNode implements TbNode {
     private int limit;
     private ObjectMapper mapper;
     private String fetchMode;
+    private String orderBy;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -77,6 +78,7 @@ public class TbGetTelemetryNode implements TbNode {
         tsKeyNames = config.getLatestTsKeyNames();
         limit = config.getFetchMode().equals(FETCH_MODE_ALL) ? MAX_FETCH_SIZE : 1;
         fetchMode = config.getFetchMode();
+        orderBy = config.getOrderBy();
         mapper = new ObjectMapper();
         mapper.configure(JsonGenerator.Feature.QUOTE_FIELD_NAMES, false);
         mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
@@ -104,17 +106,9 @@ public class TbGetTelemetryNode implements TbNode {
     }
 
     @Override
-    public void destroy() {
-
-    }
+    public void destroy() { }
 
     private List<ReadTsKvQuery> buildQueries(TbMsg msg) {
-        String orderBy;
-        if (fetchMode.equals(FETCH_MODE_FIRST) || fetchMode.equals(FETCH_MODE_ALL)) {
-            orderBy = "ASC";
-        } else {
-            orderBy = "DESC";
-        }
         return tsKeyNames.stream()
                 .map(key -> new BaseReadTsKvQuery(key, getInterval(msg).getStartTs(), getInterval(msg).getEndTs(), 1, limit, NONE, orderBy))
                 .collect(Collectors.toList());
