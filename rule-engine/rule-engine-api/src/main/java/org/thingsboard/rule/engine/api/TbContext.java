@@ -51,6 +51,8 @@ public interface TbContext {
 
     void tellSelf(TbMsg msg, long delayMs);
 
+    boolean isLocalEntity(EntityId entityId);
+
     void tellFailure(TbMsg msg, Throwable th);
 
     void updateSelf(RuleNode self);
