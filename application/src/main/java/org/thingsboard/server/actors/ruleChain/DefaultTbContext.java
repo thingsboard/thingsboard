@@ -17,6 +17,7 @@ package org.thingsboard.server.actors.ruleChain;
 
 import akka.actor.ActorRef;
 import com.datastax.driver.core.utils.UUIDs;
+import io.netty.channel.EventLoopGroup;
 import org.springframework.util.StringUtils;
 import org.thingsboard.rule.engine.api.ListeningExecutor;
 import org.thingsboard.rule.engine.api.MailService;
@@ -236,6 +237,11 @@ class DefaultTbContext implements TbContext {
     @Override
     public RuleChainTransactionService getRuleChainTransactionService() {
         return mainCtx.getRuleChainTransactionService();
+    }
+
+    @Override
+    public EventLoopGroup getSharedEventLoop() {
+        return mainCtx.getSharedEventLoopGroupService().getSharedEventLoopGroup();
     }
 
     @Override
