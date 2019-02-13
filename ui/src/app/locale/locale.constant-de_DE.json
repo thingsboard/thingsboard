@@ -1559,6 +1559,7 @@
     "widget-action": {
       "action-cell-button": "Aktionszellenschaltfläche",
       "row-click": "Klick auf Zeile",
+      "polygon-click": "Klick auf Polygon",
       "marker-click": "Klick auf Marker",
       "tooltip-tag-action": "Tooltip-Tag-Aktion"
     }

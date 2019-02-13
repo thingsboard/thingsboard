@@ -18,11 +18,12 @@ package org.thingsboard.server.common.data.widget;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 
 @EqualsAndHashCode(callSuper = true)
-public class WidgetType extends BaseData<WidgetTypeId> {
+public class WidgetType extends BaseData<WidgetTypeId> implements HasTenantId {
 
     private static final long serialVersionUID = 8388684344603660756L;
 

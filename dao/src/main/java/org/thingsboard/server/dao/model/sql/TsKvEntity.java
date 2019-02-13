@@ -62,49 +62,53 @@ public final class TsKvEntity implements ToData<TsKvEntry> {
     }
 
     public TsKvEntity(Long longValue, Double doubleValue, Long longCountValue, Long doubleCountValue, String aggType) {
-        switch (aggType) {
-            case AVG:
-                double sum = 0.0;
-                if (longValue != null) {
-                    sum += longValue;
-                }
-                if (doubleValue != null) {
-                    sum += doubleValue;
-                }
-                long totalCount = longCountValue + doubleCountValue;
-                if (totalCount > 0) {
-                    this.doubleValue = sum / (longCountValue + doubleCountValue);
-                } else {
-                    this.doubleValue = 0.0;
-                }
-                break;
-            case SUM:
-                if (doubleCountValue > 0) {
-                    this.doubleValue = doubleValue + (longValue != null ? longValue.doubleValue() : 0.0);
-                } else {
-                    this.longValue = longValue;
-                }
-                break;
-            case MIN:
-            case MAX:
-                if (longCountValue > 0 && doubleCountValue > 0) {
-                    this.doubleValue = MAX.equals(aggType) ? Math.max(doubleValue, longValue.doubleValue()) : Math.min(doubleValue, longValue.doubleValue());
-                } else if (doubleCountValue > 0) {
-                    this.doubleValue = doubleValue;
-                } else if (longCountValue > 0) {
-                    this.longValue = longValue;
-                }
-                break;
+        if(!isAllNull(longValue, doubleValue, longCountValue, doubleCountValue)) {
+            switch (aggType) {
+                case AVG:
+                    double sum = 0.0;
+                    if (longValue != null) {
+                        sum += longValue;
+                    }
+                    if (doubleValue != null) {
+                        sum += doubleValue;
+                    }
+                    long totalCount = longCountValue + doubleCountValue;
+                    if (totalCount > 0) {
+                        this.doubleValue = sum / (longCountValue + doubleCountValue);
+                    } else {
+                        this.doubleValue = 0.0;
+                    }
+                    break;
+                case SUM:
+                    if (doubleCountValue > 0) {
+                        this.doubleValue = doubleValue + (longValue != null ? longValue.doubleValue() : 0.0);
+                    } else {
+                        this.longValue = longValue;
+                    }
+                    break;
+                case MIN:
+                case MAX:
+                    if (longCountValue > 0 && doubleCountValue > 0) {
+                        this.doubleValue = MAX.equals(aggType) ? Math.max(doubleValue, longValue.doubleValue()) : Math.min(doubleValue, longValue.doubleValue());
+                    } else if (doubleCountValue > 0) {
+                        this.doubleValue = doubleValue;
+                    } else if (longCountValue > 0) {
+                        this.longValue = longValue;
+                    }
+                    break;
+            }
         }
     }
 
     public TsKvEntity(Long booleanValueCount, Long strValueCount, Long longValueCount, Long doubleValueCount) {
-        if (booleanValueCount != 0) {
-            this.longValue = booleanValueCount;
-        } else if (strValueCount != 0) {
-            this.longValue = strValueCount;
-        } else {
-            this.longValue = longValueCount + doubleValueCount;
+        if(!isAllNull(booleanValueCount, strValueCount, longValueCount, doubleValueCount)) {
+            if (booleanValueCount != 0) {
+                this.longValue = booleanValueCount;
+            } else if (strValueCount != 0) {
+                this.longValue = strValueCount;
+            } else {
+                this.longValue = longValueCount + doubleValueCount;
+            }
         }
     }
 
@@ -154,5 +158,14 @@ public final class TsKvEntity implements ToData<TsKvEntry> {
 
     public boolean isNotEmpty() {
         return strValue != null || longValue != null || doubleValue != null || booleanValue != null;
+    }
+
+    private static boolean isAllNull(Object... args) {
+        for (Object arg : args) {
+            if(arg != null) {
+                return false;
+            }
+        }
+        return true;
     }
 }

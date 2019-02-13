@@ -13,10 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.install;
+package org.thingsboard.server.service.security.permission;
 
-public interface DataUpdateService {
+import java.util.HashMap;
+import java.util.Optional;
 
-    void updateData(String fromVersion) throws Exception;
+public abstract class AbstractPermissions extends HashMap<Resource, PermissionChecker> implements Permissions {
 
+    public AbstractPermissions() {
+        super();
+    }
+
+    @Override
+    public Optional<PermissionChecker> getPermissionChecker(Resource resource) {
+        PermissionChecker permissionChecker = this.get(resource);
+        return Optional.ofNullable(permissionChecker);
+    }
 }

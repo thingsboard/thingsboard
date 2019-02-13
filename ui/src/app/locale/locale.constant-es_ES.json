@@ -1559,7 +1559,8 @@
         "widget-action": {
             "action-cell-button": "Botón de acción de celda",
             "row-click": "Clic en la fila",
-            "marker-click": "Clic en el marcador",
+            "polygon-click": "Clic en la fila",
+            "marker-click": "Clic en el polígono",
             "tooltip-tag-action": "Acción de etiqueta para globo de ayuda"
         }
     },
