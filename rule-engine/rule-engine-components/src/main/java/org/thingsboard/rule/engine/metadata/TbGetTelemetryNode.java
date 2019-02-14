@@ -24,6 +24,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -66,6 +67,8 @@ import static org.thingsboard.server.common.data.kv.Aggregation.NONE;
         configDirective = "tbEnrichmentNodeGetTelemetryFromDatabase")
 public class TbGetTelemetryNode implements TbNode {
 
+    private static final String DESC_ORDER = "DESC";
+
     private TbGetTelemetryNodeConfiguration config;
     private List<String> tsKeyNames;
     private int limit;
@@ -80,6 +83,9 @@ public class TbGetTelemetryNode implements TbNode {
         limit = config.getFetchMode().equals(FETCH_MODE_ALL) ? MAX_FETCH_SIZE : 1;
         fetchMode = config.getFetchMode();
         orderBy = config.getOrderBy();
+        if (StringUtils.isEmpty(orderBy)) {
+            orderBy = DESC_ORDER;
+        }
         mapper = new ObjectMapper();
         mapper.configure(JsonGenerator.Feature.QUOTE_FIELD_NAMES, false);
         mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
