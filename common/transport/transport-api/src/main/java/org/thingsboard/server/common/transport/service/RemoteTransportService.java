@@ -104,6 +104,7 @@ public class RemoteTransportService extends AbstractTransportService {
 
         TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<TransportApiRequestMsg> requestBuilder = TBKafkaProducerTemplate.builder();
         requestBuilder.settings(kafkaSettings);
+        requestBuilder.clientId("producer-transport-api-request-" + nodeIdProvider.getNodeId());
         requestBuilder.defaultTopic(transportApiRequestsTopic);
         requestBuilder.encoder(new TransportApiRequestEncoder());
 
@@ -128,6 +129,7 @@ public class RemoteTransportService extends AbstractTransportService {
 
         TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<ToRuleEngineMsg> ruleEngineProducerBuilder = TBKafkaProducerTemplate.builder();
         ruleEngineProducerBuilder.settings(kafkaSettings);
+        ruleEngineProducerBuilder.clientId("producer-rule-engine-request-" + nodeIdProvider.getNodeId());
         ruleEngineProducerBuilder.defaultTopic(ruleEngineTopic);
         ruleEngineProducerBuilder.encoder(new ToRuleEngineMsgEncoder());
         ruleEngineProducer = ruleEngineProducerBuilder.build();

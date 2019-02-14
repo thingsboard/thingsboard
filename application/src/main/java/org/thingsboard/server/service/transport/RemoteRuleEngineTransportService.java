@@ -112,6 +112,7 @@ public class RemoteRuleEngineTransportService implements RuleEngineTransportServ
     public void init() {
         TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<ToTransportMsg> notificationsProducerBuilder = TBKafkaProducerTemplate.builder();
         notificationsProducerBuilder.settings(kafkaSettings);
+        notificationsProducerBuilder.clientId("producer-transport-notification-" + nodeIdProvider.getNodeId());
         notificationsProducerBuilder.encoder(new ToTransportMsgEncoder());
 
         notificationsProducer = notificationsProducerBuilder.build();
