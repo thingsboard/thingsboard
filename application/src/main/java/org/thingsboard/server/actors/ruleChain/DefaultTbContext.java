@@ -57,6 +57,7 @@ import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 import scala.concurrent.duration.Duration;
 
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -100,6 +101,12 @@ class DefaultTbContext implements TbContext {
     public void tellSelf(TbMsg msg, long delayMs) {
         //TODO: add persistence layer
         scheduleMsgWithDelay(new RuleNodeToSelfMsg(msg), delayMs, nodeCtx.getSelfActor());
+    }
+
+    @Override
+    public boolean isLocalEntity(EntityId entityId) {
+        Optional<ServerAddress> address = mainCtx.getRoutingService().resolveById(entityId);
+        return !address.isPresent();
     }
 
     private void scheduleMsgWithDelay(Object msg, long delayInMs, ActorRef target) {

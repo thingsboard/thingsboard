@@ -57,6 +57,7 @@ import javax.annotation.PreDestroy;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -175,7 +176,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
     }
 
     public boolean isFixedPartitioning() {
-        return tsFormat.getTruncateUnit().equals(TsPartitionDate.EPOCH_START);
+        return tsFormat.getTruncateUnit().equals(ChronoUnit.FOREVER);
     }
 
     private ListenableFuture<List<Long>> getPartitionsFuture(TenantId tenantId, ReadTsKvQuery query, EntityId entityId, long minPartition, long maxPartition) {
