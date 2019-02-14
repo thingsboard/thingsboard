@@ -68,13 +68,14 @@ import static org.thingsboard.server.common.data.kv.Aggregation.NONE;
 public class TbGetTelemetryNode implements TbNode {
 
     private static final String DESC_ORDER = "DESC";
+    private static final String ASC_ORDER = "ASC";
 
     private TbGetTelemetryNodeConfiguration config;
     private List<String> tsKeyNames;
     private int limit;
     private ObjectMapper mapper;
     private String fetchMode;
-    private String orderBy;
+    private String orderByFetchAll;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -82,9 +83,9 @@ public class TbGetTelemetryNode implements TbNode {
         tsKeyNames = config.getLatestTsKeyNames();
         limit = config.getFetchMode().equals(FETCH_MODE_ALL) ? MAX_FETCH_SIZE : 1;
         fetchMode = config.getFetchMode();
-        orderBy = config.getOrderBy();
-        if (StringUtils.isEmpty(orderBy)) {
-            orderBy = DESC_ORDER;
+        orderByFetchAll = config.getOrderBy();
+        if (StringUtils.isEmpty(orderByFetchAll)) {
+            orderByFetchAll = ASC_ORDER;
         }
         mapper = new ObjectMapper();
         mapper.configure(JsonGenerator.Feature.QUOTE_FIELD_NAMES, false);
@@ -113,12 +114,24 @@ public class TbGetTelemetryNode implements TbNode {
     }
 
     @Override
-    public void destroy() { }
+    public void destroy() {
+    }
 
     private List<ReadTsKvQuery> buildQueries(TbMsg msg) {
         return tsKeyNames.stream()
-                .map(key -> new BaseReadTsKvQuery(key, getInterval(msg).getStartTs(), getInterval(msg).getEndTs(), 1, limit, NONE, orderBy))
+                .map(key -> new BaseReadTsKvQuery(key, getInterval(msg).getStartTs(), getInterval(msg).getEndTs(), 1, limit, NONE, getOrderBy()))
                 .collect(Collectors.toList());
+    }
+
+    private String getOrderBy() {
+        switch (fetchMode) {
+            case FETCH_MODE_ALL:
+                return orderByFetchAll;
+            case FETCH_MODE_FIRST:
+                return ASC_ORDER;
+            default:
+                return DESC_ORDER;
+        }
     }
 
     private void process(List<TsKvEntry> entries, TbMsg msg) {

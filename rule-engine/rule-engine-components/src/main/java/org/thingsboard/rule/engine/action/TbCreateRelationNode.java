@@ -92,6 +92,7 @@ public class TbCreateRelationNode extends TbAbstractRelationActionNode<TbCreateR
                 if (config.isRemoveCurrentRelations()) {
                     return processDeleteRelations(ctx, processFindRelations(ctx, msg, sdId));
                 }
+                return Futures.immediateFuture(false);
             }
             return Futures.immediateFuture(true);
         }, ctx.getDbCallbackExecutor());
