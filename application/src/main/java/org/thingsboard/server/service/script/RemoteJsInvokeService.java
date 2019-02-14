@@ -77,6 +77,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
     public void init() {
         TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<JsInvokeProtos.RemoteJsRequest> requestBuilder = TBKafkaProducerTemplate.builder();
         requestBuilder.settings(kafkaSettings);
+        requestBuilder.clientId("producer-js-invoke-" + nodeIdProvider.getNodeId());
         requestBuilder.defaultTopic(requestTopic);
         requestBuilder.encoder(new RemoteJsRequestEncoder());
         requestBuilder.enricher((request, responseTopic, requestId) -> {
