@@ -24,6 +24,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -57,19 +58,24 @@ import static org.thingsboard.server.common.data.kv.Aggregation.NONE;
         name = "originator telemetry",
         configClazz = TbGetTelemetryNodeConfiguration.class,
         nodeDescription = "Add Message Originator Telemetry for selected time range into Message Metadata\n",
-        nodeDetails = "The node allows you to select fetch mode <b>FIRST/LAST/ALL</b> to fetch telemetry of certain time range that are added into Message metadata without any prefix. " +
-                "If selected fetch mode <b>ALL</b> Telemetry will be added like array into Message Metadata where <b>key</b> is Timestamp and <b>value</b> is value of Telemetry. " +
-                "<b>Note</b>: The maximum size of the fetched array is 1000 records. " +
-                "If selected fetch mode <b>FIRST</b> or <b>LAST</b> Telemetry will be added like string without Timestamp",
+        nodeDetails = "The node allows you to select fetch mode: <b>FIRST/LAST/ALL</b> to fetch telemetry of certain time range that are added into Message metadata without any prefix. " +
+                "If selected fetch mode <b>ALL</b> Telemetry will be added like array into Message Metadata where <b>key</b> is Timestamp and <b>value</b> is value of Telemetry.</br>" +
+                "If selected fetch mode <b>FIRST</b> or <b>LAST</b> Telemetry will be added like string without Timestamp.</br>" +
+                "Also, the rule node allows you to select telemetry sampling order: <b>ASC</b> or <b>DESC</b>. </br>" +
+                "<b>Note</b>: The maximum size of the fetched array is 1000 records.\n ",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeGetTelemetryFromDatabase")
 public class TbGetTelemetryNode implements TbNode {
+
+    private static final String DESC_ORDER = "DESC";
+    private static final String ASC_ORDER = "ASC";
 
     private TbGetTelemetryNodeConfiguration config;
     private List<String> tsKeyNames;
     private int limit;
     private ObjectMapper mapper;
     private String fetchMode;
+    private String orderByFetchAll;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -77,6 +83,10 @@ public class TbGetTelemetryNode implements TbNode {
         tsKeyNames = config.getLatestTsKeyNames();
         limit = config.getFetchMode().equals(FETCH_MODE_ALL) ? MAX_FETCH_SIZE : 1;
         fetchMode = config.getFetchMode();
+        orderByFetchAll = config.getOrderBy();
+        if (StringUtils.isEmpty(orderByFetchAll)) {
+            orderByFetchAll = ASC_ORDER;
+        }
         mapper = new ObjectMapper();
         mapper.configure(JsonGenerator.Feature.QUOTE_FIELD_NAMES, false);
         mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
@@ -105,19 +115,23 @@ public class TbGetTelemetryNode implements TbNode {
 
     @Override
     public void destroy() {
-
     }
 
     private List<ReadTsKvQuery> buildQueries(TbMsg msg) {
-        String orderBy;
-        if (fetchMode.equals(FETCH_MODE_FIRST) || fetchMode.equals(FETCH_MODE_ALL)) {
-            orderBy = "ASC";
-        } else {
-            orderBy = "DESC";
-        }
         return tsKeyNames.stream()
-                .map(key -> new BaseReadTsKvQuery(key, getInterval(msg).getStartTs(), getInterval(msg).getEndTs(), 1, limit, NONE, orderBy))
+                .map(key -> new BaseReadTsKvQuery(key, getInterval(msg).getStartTs(), getInterval(msg).getEndTs(), 1, limit, NONE, getOrderBy()))
                 .collect(Collectors.toList());
+    }
+
+    private String getOrderBy() {
+        switch (fetchMode) {
+            case FETCH_MODE_ALL:
+                return orderByFetchAll;
+            case FETCH_MODE_FIRST:
+                return ASC_ORDER;
+            default:
+                return DESC_ORDER;
+        }
     }
 
     private void process(List<TsKvEntry> entries, TbMsg msg) {

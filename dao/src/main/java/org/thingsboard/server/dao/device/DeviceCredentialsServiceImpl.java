@@ -54,7 +54,7 @@ public class DeviceCredentialsServiceImpl implements DeviceCredentialsService {
     }
 
     @Override
-    @Cacheable(cacheNames = DEVICE_CREDENTIALS_CACHE, unless = "#result == null")
+    @Cacheable(cacheNames = DEVICE_CREDENTIALS_CACHE, key = "'deviceCredentials_' + #credentialsId", unless = "#result == null")
     public DeviceCredentials findDeviceCredentialsByCredentialsId(String credentialsId) {
         log.trace("Executing findDeviceCredentialsByCredentialsId [{}]", credentialsId);
         validateString(credentialsId, "Incorrect credentialsId " + credentialsId);
@@ -89,7 +89,7 @@ public class DeviceCredentialsServiceImpl implements DeviceCredentialsService {
     }
 
     @Override
-    @CacheEvict(cacheNames = DEVICE_CREDENTIALS_CACHE, key = "#deviceCredentials.credentialsId")
+    @CacheEvict(cacheNames = DEVICE_CREDENTIALS_CACHE, key = "'deviceCredentials_' + #deviceCredentials.credentialsId")
     public void deleteDeviceCredentials(TenantId tenantId, DeviceCredentials deviceCredentials) {
         log.trace("Executing deleteDeviceCredentials [{}]", deviceCredentials);
         deviceCredentialsDao.removeById(tenantId, deviceCredentials.getUuidId());

@@ -253,6 +253,8 @@ public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
                 break;
             case "2.1.3":
                 break;
+            case "2.3.0":
+                break;
             default:
                 throw new RuntimeException("Unable to upgrade Cassandra database, unsupported fromVersion: " + fromVersion);
         }

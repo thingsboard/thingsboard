@@ -31,6 +31,7 @@ public class TbGetTelemetryNodeConfiguration implements NodeConfiguration<TbGetT
     public static final String FETCH_MODE_FIRST = "FIRST";
     public static final String FETCH_MODE_LAST = "LAST";
     public static final String FETCH_MODE_ALL = "ALL";
+
     public static final int MAX_FETCH_SIZE = 1000;
 
     private int startInterval;
@@ -43,11 +44,10 @@ public class TbGetTelemetryNodeConfiguration implements NodeConfiguration<TbGetT
 
     private String startIntervalTimeUnit;
     private String endIntervalTimeUnit;
-    private String fetchMode; //FIRST, LAST, LATEST
+    private String fetchMode; //FIRST, LAST, ALL
+    private String orderBy; //ASC, DESC,
 
     private List<String> latestTsKeyNames;
-
-
 
     @Override
     public TbGetTelemetryNodeConfiguration defaultConfiguration() {
@@ -61,6 +61,7 @@ public class TbGetTelemetryNodeConfiguration implements NodeConfiguration<TbGetT
         configuration.setUseMetadataIntervalPatterns(false);
         configuration.setStartIntervalPattern("");
         configuration.setEndIntervalPattern("");
+        configuration.setOrderBy("ASC");
         return configuration;
     }
 }
