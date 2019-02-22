@@ -58,7 +58,7 @@
         <gson.version>2.6.2</gson.version>
         <velocity.version>1.7</velocity.version>
         <velocity-tools.version>2.0</velocity-tools.version>
-        <antlr.version>2.7.7</antlr.version>
+        <antlr.version>3.5.2</antlr.version>
         <snakeyaml.version>1.23</snakeyaml.version>
         <mail.version>1.4.3</mail.version>
         <curator.version>4.0.1</curator.version>
