@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.install;
+package org.thingsboard.server.dao.service.sql;
 
-public interface DataUpdateService {
+import org.thingsboard.server.dao.service.BaseDeviceCredentialsCacheTest;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 
-    void updateData(String fromVersion) throws Exception;
-
+@DaoSqlTest
+public class DeviceCredentialsCacheServiceSqlTest extends BaseDeviceCredentialsCacheTest {
 }

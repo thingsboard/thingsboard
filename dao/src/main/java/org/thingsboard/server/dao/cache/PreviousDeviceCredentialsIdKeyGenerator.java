@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,11 @@ import org.thingsboard.server.dao.device.DeviceCredentialsService;
 
 import java.lang.reflect.Method;
 
+import static org.thingsboard.server.common.data.CacheConstants.DEVICE_CREDENTIALS_CACHE;
+
 public class PreviousDeviceCredentialsIdKeyGenerator implements KeyGenerator {
 
-    private static final String NOT_VALID_DEVICE = "notValidDeviceCredentialsId";
+    private static final String NOT_VALID_DEVICE = DEVICE_CREDENTIALS_CACHE + "_notValidDeviceCredentialsId";
 
     @Override
     public Object generate(Object o, Method method, Object... objects) {
@@ -34,7 +36,7 @@ public class PreviousDeviceCredentialsIdKeyGenerator implements KeyGenerator {
         if (deviceCredentials.getDeviceId() != null) {
             DeviceCredentials oldDeviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, deviceCredentials.getDeviceId());
             if (oldDeviceCredentials != null) {
-                return oldDeviceCredentials.getCredentialsId();
+                return DEVICE_CREDENTIALS_CACHE + "_" + oldDeviceCredentials.getCredentialsId();
             }
         }
         return NOT_VALID_DEVICE;

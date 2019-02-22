@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,6 +139,18 @@ export function EntityViewController($rootScope, userService, entityViewService,
             refreshEntityViewsParamsFunction = function() {
                 return {"topIndex": vm.topIndex};
             };
+
+            entityViewActionsList.push({
+                onAction: function ($event, item) {
+                    makePublic($event, item);
+                },
+                name: function() { return $translate.instant('action.share') },
+                details: function() { return $translate.instant('entity-view.make-public') },
+                icon: "share",
+                isEnabled: function(entityView) {
+                    return entityView && (!entityView.customerId || entityView.customerId.id === types.id.nullUid);
+                }
+            });
 
             entityViewActionsList.push(
                 {

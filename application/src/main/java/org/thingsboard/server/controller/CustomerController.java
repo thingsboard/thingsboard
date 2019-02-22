@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,8 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.security.permission.Resource;
 
 @RestController
 @RequestMapping("/api")
@@ -51,7 +53,7 @@ public class CustomerController extends BaseController {
         checkParameter(CUSTOMER_ID, strCustomerId);
         try {
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
-            return checkCustomerId(customerId);
+            return checkCustomerId(customerId, Operation.READ);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -64,7 +66,7 @@ public class CustomerController extends BaseController {
         checkParameter(CUSTOMER_ID, strCustomerId);
         try {
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
-            Customer customer = checkCustomerId(customerId);
+            Customer customer = checkCustomerId(customerId, Operation.READ);
             ObjectMapper objectMapper = new ObjectMapper();
             ObjectNode infoObject = objectMapper.createObjectNode();
             infoObject.put("title", customer.getTitle());
@@ -82,7 +84,7 @@ public class CustomerController extends BaseController {
         checkParameter(CUSTOMER_ID, strCustomerId);
         try {
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
-            Customer customer = checkCustomerId(customerId);
+            Customer customer = checkCustomerId(customerId, Operation.READ);
             return customer.getTitle();
         } catch (Exception e) {
             throw handleException(e);
@@ -95,6 +97,10 @@ public class CustomerController extends BaseController {
     public Customer saveCustomer(@RequestBody Customer customer) throws ThingsboardException {
         try {
             customer.setTenantId(getCurrentUser().getTenantId());
+
+            Operation operation = customer.getId() == null ? Operation.CREATE : Operation.WRITE;
+            accessControlService.checkPermission(getCurrentUser(), Resource.CUSTOMER, operation, customer.getId(), customer);
+
             Customer savedCustomer = checkNotNull(customerService.saveCustomer(customer));
 
             logEntityAction(savedCustomer.getId(), savedCustomer,
@@ -118,7 +124,7 @@ public class CustomerController extends BaseController {
         checkParameter(CUSTOMER_ID, strCustomerId);
         try {
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
-            Customer customer = checkCustomerId(customerId);
+            Customer customer = checkCustomerId(customerId, Operation.DELETE);
             customerService.deleteCustomer(getTenantId(), customerId);
 
             logEntityAction(customerId, customer,

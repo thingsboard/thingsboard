@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmId;
@@ -118,6 +119,21 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         return alarmDao.findLatestByOriginatorAndType(tenantId, originator, type);
     }
 
+    @Override
+    public Boolean deleteAlarm(TenantId tenantId, AlarmId alarmId) {
+        try {
+            log.debug("Deleting Alarm Id: {}", alarmId);
+            Alarm alarm = alarmDao.findAlarmByIdAsync(tenantId, alarmId.getId()).get();
+            if (alarm == null) {
+                return false;
+            }
+            deleteEntityRelations(tenantId, alarm.getId());
+            return alarmDao.deleteAlarm(tenantId, alarm);
+        } catch (ExecutionException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private Alarm createAlarm(Alarm alarm) throws InterruptedException, ExecutionException {
         log.debug("New Alarm : {}", alarm);
         Alarm saved = alarmDao.save(alarm.getTenantId(), alarm);
@@ -127,14 +143,18 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
 
     private void createAlarmRelations(Alarm alarm) throws InterruptedException, ExecutionException {
         if (alarm.isPropagate()) {
-            EntityRelationsQuery query = new EntityRelationsQuery();
-            query.setParameters(new RelationsSearchParameters(alarm.getOriginator(), EntitySearchDirection.TO, Integer.MAX_VALUE));
-            List<EntityId> parentEntities = relationService.findByQuery(alarm.getTenantId(), query).get().stream().map(EntityRelation::getFrom).collect(Collectors.toList());
+            List<EntityId> parentEntities = getParentEntities(alarm);
             for (EntityId parentId : parentEntities) {
                 createAlarmRelation(alarm.getTenantId(), parentId, alarm.getId(), alarm.getStatus(), true);
             }
         }
         createAlarmRelation(alarm.getTenantId(), alarm.getOriginator(), alarm.getId(), alarm.getStatus(), true);
+    }
+
+    private List<EntityId> getParentEntities(Alarm alarm) throws InterruptedException, ExecutionException {
+        EntityRelationsQuery query = new EntityRelationsQuery();
+        query.setParameters(new RelationsSearchParameters(alarm.getOriginator(), EntitySearchDirection.TO, Integer.MAX_VALUE));
+        return relationService.findByQuery(alarm.getTenantId(), query).get().stream().map(EntityRelation::getFrom).collect(Collectors.toList());
     }
 
     private ListenableFuture<Alarm> updateAlarm(Alarm update) {

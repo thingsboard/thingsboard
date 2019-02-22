@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,8 @@ import java.util.UUID;
  * Created by ashvayka on 11.05.17.
  */
 public interface AlarmDao extends Dao<Alarm> {
+
+    Boolean deleteAlarm(TenantId tenantId, Alarm alarm);
 
     ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
 

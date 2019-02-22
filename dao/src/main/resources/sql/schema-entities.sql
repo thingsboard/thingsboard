@@ -1,5 +1,5 @@
 --
--- Copyright © 2016-2018 The Thingsboard Authors
+-- Copyright © 2016-2019 The Thingsboard Authors
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS attribute_kv (
   long_v bigint,
   dbl_v double precision,
   last_update_ts bigint,
-  CONSTRAINT attribute_kv_unq_key UNIQUE (entity_type, entity_id, attribute_type, attribute_key)
+  CONSTRAINT attribute_kv_pkey PRIMARY KEY (entity_type, entity_id, attribute_type, attribute_key)
 );
 
 CREATE TABLE IF NOT EXISTS component_descriptor (
@@ -131,7 +131,7 @@ CREATE TABLE IF NOT EXISTS device_credentials (
 
 CREATE TABLE IF NOT EXISTS event (
     id varchar(31) NOT NULL CONSTRAINT event_pkey PRIMARY KEY,
-    body varchar,
+    body varchar(10000000),
     entity_id varchar(31),
     entity_type varchar(255),
     event_type varchar(255),
@@ -148,7 +148,7 @@ CREATE TABLE IF NOT EXISTS relation (
     relation_type_group varchar(255),
     relation_type varchar(255),
     additional_info varchar,
-    CONSTRAINT relation_unq_key UNIQUE (from_id, from_type, relation_type_group, relation_type, to_id, to_type)
+    CONSTRAINT relation_pkey PRIMARY KEY (from_id, from_type, relation_type_group, relation_type, to_id, to_type)
 );
 
 CREATE TABLE IF NOT EXISTS tb_user (

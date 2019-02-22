@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -648,6 +648,12 @@ export default class Subscription {
     }
 
     dataUpdated(sourceData, datasourceIndex, dataKeyIndex, apply) {
+        for (var x = 0; x < this.datasourceListeners.length; x++) {
+            this.datasources[x].dataReceived = this.datasources[x].dataReceived === true;
+            if (this.datasourceListeners[x].datasourceIndex === datasourceIndex && sourceData.data.length > 0) {
+                this.datasources[x].dataReceived = true;
+            }
+        }
         this.notifyDataLoaded();
         var update = true;
         var currentData;

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2018 The Thingsboard Authors
+    Copyright © 2016-2019 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -73,49 +73,69 @@
                                             
                                         </div>
                                         
-                                        <div layout="row" ng-if="server.transport.type == 'tcp' || server.transport.type == 'udp'">
-                                            <md-input-container flex="33" class="md-block">
-                                                <label translate>extension.host</label>
-                                                <input required name="transportHost_{{serverIndex}}" ng-model="server.transport.host">
-                                                <div ng-messages="theForm['transportHost_' + serverIndex].$error">
-                                                    <div translate ng-message="required">extension.field-required</div>
-                                                </div>
-                                            </md-input-container>
+                                        <div ng-if="server.transport.type == 'tcp' || server.transport.type == 'udp'">
+                                            <div layout="row">
+                                                <md-input-container flex="33" class="md-block">
+                                                    <label translate>extension.host</label>
+                                                    <input required name="transportHost_{{serverIndex}}" ng-model="server.transport.host">
+                                                    <div ng-messages="theForm['transportHost_' + serverIndex].$error">
+                                                        <div translate ng-message="required">extension.field-required</div>
+                                                    </div>
+                                                </md-input-container>
 
-                                            <md-input-container flex="33" class="md-block">
-                                                <label translate>extension.port</label>
-                                                <input type="number"
-                                                       required
-                                                       name="transportPort_{{serverIndex}}"
-                                                       ng-model="server.transport.port"
-                                                       min="1"
-                                                       max="65535"
-                                                >
-                                                <div ng-messages="theForm['transportPort_' + serverIndex].$error">
-                                                    <div translate
-                                                         ng-message="required"
-                                                    >extension.field-required</div>
-                                                    <div translate
-                                                         ng-message="min"
-                                                    >extension.port-range</div>
-                                                    <div translate
-                                                         ng-message="max"
-                                                    >extension.port-range</div>
-                                                </div>
-                                            </md-input-container>
-                                            
-                                            <md-input-container flex="33" class="md-block">
-                                                <label translate>extension.timeout</label>
-                                                <input type="number"
-                                                       required name="transportTimeout_{{serverIndex}}"
-                                                       ng-model="server.transport.timeout"
-                                                >
-                                                <div ng-messages="theForm['transportTimeout_' + serverIndex].$error">
-                                                    <div translate
-                                                         ng-message="required"
-                                                    >extension.field-required</div>
-                                                </div>
-                                            </md-input-container>
+                                                <md-input-container flex="33" class="md-block">
+                                                    <label translate>extension.port</label>
+                                                    <input type="number"
+                                                           required
+                                                           name="transportPort_{{serverIndex}}"
+                                                           ng-model="server.transport.port"
+                                                           min="1"
+                                                           max="65535"
+                                                    >
+                                                    <div ng-messages="theForm['transportPort_' + serverIndex].$error">
+                                                        <div translate
+                                                             ng-message="required"
+                                                        >extension.field-required</div>
+                                                        <div translate
+                                                             ng-message="min"
+                                                        >extension.port-range</div>
+                                                        <div translate
+                                                             ng-message="max"
+                                                        >extension.port-range</div>
+                                                    </div>
+                                                </md-input-container>
+                                                
+                                                <md-input-container flex="33" class="md-block">
+                                                    <label translate>extension.timeout</label>
+                                                    <input type="number"
+                                                           required name="transportTimeout_{{serverIndex}}"
+                                                           ng-model="server.transport.timeout"
+                                                    >
+                                                    <div ng-messages="theForm['transportTimeout_' + serverIndex].$error">
+                                                        <div translate
+                                                             ng-message="required"
+                                                        >extension.field-required</div>
+                                                    </div>
+                                                </md-input-container>
+                                            </div>
+
+                                            <div layout="row" ng-if="server.transport.type == 'tcp'">
+                                                <md-input-container flex="50" class="md-block">
+                                                    <md-checkbox aria-label="{{ 'extension.modbus-tcp-reconnect' | translate }}"
+                                                                 ng-checked="server.transport.reconnect"
+                                                                 name="transportTcpReconnect_{{serverIndex}}"
+                                                                 ng-model="server.transport.reconnect">{{ 'extension.modbus-tcp-reconnect' | translate }}
+                                                    </md-checkbox>
+                                                </md-input-container>
+
+                                                <md-input-container flex="50" class="md-block">
+                                                    <md-checkbox aria-label="{{ 'extension.modbus-rtu-over-tcp' | translate }}"
+                                                                 ng-checked="server.transport.rtuOverTcp"
+                                                                 name="transportRtuOverTcp_{{serverIndex}}"
+                                                                 ng-model="server.transport.rtuOverTcp">{{ 'extension.modbus-rtu-over-tcp' | translate }}
+                                                    </md-checkbox>
+                                                </md-input-container>
+                                            </div>
                                         </div>
                                         
                                         <div ng-if="server.transport.type == 'rtu'">

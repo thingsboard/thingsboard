@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ public abstract class AbstractListeningExecutor implements ListeningExecutor {
 
     @PostConstruct
     public void init() {
-        this.service = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(getThreadPollSize()));
+        this.service = MoreExecutors.listeningDecorator(Executors.newWorkStealingPool(getThreadPollSize()));
     }
 
     @PreDestroy

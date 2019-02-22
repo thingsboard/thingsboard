@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -222,6 +222,9 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
 
     private void handlePuback(MqttPubAckMessage message) {
         MqttPendingPublish pendingPublish = this.client.getPendingPublishes().get(message.variableHeader().messageId());
+        if (pendingPublish == null) {
+            return;
+        }
         pendingPublish.getFuture().setSuccess(null);
         pendingPublish.onPubackReceived();
         this.client.getPendingPublishes().remove(message.variableHeader().messageId());

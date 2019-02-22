@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -56,6 +57,7 @@ public class TbMsgGeneratorNode implements TbNode {
     private EntityId originatorId;
     private UUID nextTickId;
     private TbMsg prevMsg;
+    private volatile boolean initialized;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -66,21 +68,42 @@ public class TbMsgGeneratorNode implements TbNode {
         } else {
             originatorId = ctx.getSelfId();
         }
-        this.jsEngine = ctx.createJsScriptEngine(config.getJsScript(), "prevMsg", "prevMetadata", "prevMsgType");
-        scheduleTickMsg(ctx);
+        updateGeneratorState(ctx);
+    }
+
+    @Override
+    public void onClusterEventMsg(TbContext ctx, ClusterEventMsg msg) {
+        updateGeneratorState(ctx);
+    }
+
+    private void updateGeneratorState(TbContext ctx) {
+        if (ctx.isLocalEntity(originatorId)) {
+            if (!initialized) {
+                initialized = true;
+                this.jsEngine = ctx.createJsScriptEngine(config.getJsScript(), "prevMsg", "prevMetadata", "prevMsgType");
+                scheduleTickMsg(ctx);
+            }
+        } else if (initialized) {
+            initialized = false;
+            destroy();
+        }
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        if (msg.getType().equals(TB_MSG_GENERATOR_NODE_MSG) && msg.getId().equals(nextTickId)) {
+        if (initialized && msg.getType().equals(TB_MSG_GENERATOR_NODE_MSG) && msg.getId().equals(nextTickId)) {
             withCallback(generate(ctx),
                     m -> {
-                        ctx.tellNext(m, SUCCESS);
-                        scheduleTickMsg(ctx);
+                        if (initialized) {
+                            ctx.tellNext(m, SUCCESS);
+                            scheduleTickMsg(ctx);
+                        }
                     },
                     t -> {
-                        ctx.tellFailure(msg, t);
-                        scheduleTickMsg(ctx);
+                        if (initialized) {
+                            ctx.tellFailure(msg, t);
+                            scheduleTickMsg(ctx);
+                        }
                     });
         }
     }
@@ -102,8 +125,10 @@ public class TbMsgGeneratorNode implements TbNode {
             if (prevMsg == null) {
                 prevMsg = ctx.newMsg("", originatorId, new TbMsgMetaData(), "{}");
             }
-            TbMsg generated = jsEngine.executeGenerate(prevMsg);
-            prevMsg = ctx.newMsg(generated.getType(), originatorId, generated.getMetaData(), generated.getData());
+            if (initialized) {
+                TbMsg generated = jsEngine.executeGenerate(prevMsg);
+                prevMsg = ctx.newMsg(generated.getType(), originatorId, generated.getMetaData(), generated.getData());
+            }
             return prevMsg;
         });
     }
@@ -113,6 +138,7 @@ public class TbMsgGeneratorNode implements TbNode {
         prevMsg = null;
         if (jsEngine != null) {
             jsEngine.destroy();
+            jsEngine = null;
         }
     }
 }

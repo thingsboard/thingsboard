@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,11 @@ package org.thingsboard.server.actors.ruleChain;
 
 import akka.actor.ActorRef;
 import com.datastax.driver.core.utils.UUIDs;
+import io.netty.channel.EventLoopGroup;
 import org.springframework.util.StringUtils;
 import org.thingsboard.rule.engine.api.ListeningExecutor;
 import org.thingsboard.rule.engine.api.MailService;
+import org.thingsboard.rule.engine.api.RuleChainTransactionService;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceRpcRequest;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceRpcResponse;
 import org.thingsboard.rule.engine.api.RuleEngineRpcService;
@@ -43,6 +45,7 @@ import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.customer.CustomerService;
+import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.relation.RelationService;
@@ -54,6 +57,7 @@ import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 import scala.concurrent.duration.Duration;
 
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -99,6 +103,12 @@ class DefaultTbContext implements TbContext {
         scheduleMsgWithDelay(new RuleNodeToSelfMsg(msg), delayMs, nodeCtx.getSelfActor());
     }
 
+    @Override
+    public boolean isLocalEntity(EntityId entityId) {
+        Optional<ServerAddress> address = mainCtx.getRoutingService().resolveById(entityId);
+        return !address.isPresent();
+    }
+
     private void scheduleMsgWithDelay(Object msg, long delayInMs, ActorRef target) {
         mainCtx.getScheduler().scheduleOnce(Duration.create(delayInMs, TimeUnit.MILLISECONDS), target, msg, mainCtx.getActorSystem().dispatcher(), nodeCtx.getSelfActor());
     }
@@ -123,7 +133,7 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public TbMsg transformMsg(TbMsg origMsg, String type, EntityId originator, TbMsgMetaData metaData, String data) {
-        return new TbMsg(origMsg.getId(), type, originator, metaData.copy(), data, origMsg.getRuleChainId(), origMsg.getRuleNodeId(), mainCtx.getQueuePartitionId());
+        return new TbMsg(origMsg.getId(), type, originator, metaData.copy(), origMsg.getDataType(), data, origMsg.getTransactionData(), origMsg.getRuleChainId(), origMsg.getRuleNodeId(), mainCtx.getQueuePartitionId());
     }
 
     @Override
@@ -197,6 +207,11 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
+    public DashboardService getDashboardService() {
+        return mainCtx.getDashboardService();
+    }
+
+    @Override
     public AlarmService getAlarmService() {
         return mainCtx.getAlarmService();
     }
@@ -224,6 +239,16 @@ class DefaultTbContext implements TbContext {
     @Override
     public EntityViewService getEntityViewService() {
         return mainCtx.getEntityViewService();
+    }
+
+    @Override
+    public RuleChainTransactionService getRuleChainTransactionService() {
+        return mainCtx.getRuleChainTransactionService();
+    }
+
+    @Override
+    public EventLoopGroup getSharedEventLoop() {
+        return mainCtx.getSharedEventLoopGroupService().getSharedEventLoopGroup();
     }
 
     @Override

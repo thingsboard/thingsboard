@@ -288,11 +288,11 @@
 		"type-suspended": "一時停止中",
 		"type-credentials-read": "信用証明書を読む",
 		"type-attributes-read": "読み取られた属性",
-        "type-relation-add-or-update": "関係が更新されました",
-        "type-relation-delete": "関係が削除されました",
-        "type-relations-delete": "すべてのリレーションを削除",
-        "type-alarm-ack": "承認された",
-        "type-alarm-clear": "クリアされた",													  
+		"type-relation-add-or-update": "関係が更新されました",
+		"type-relation-delete": "関係が削除されました",
+		"type-relations-delete": "すべてのリレーションを削除",
+		"type-alarm-ack": "承認された",
+		"type-alarm-clear": "クリアされた",
 		"status-success": "成功",
 		"status-failure": "失敗",
 		"audit-log-details": "監査ログの詳細",
@@ -322,7 +322,7 @@
 	"common": {
 		"username": "ユーザー名",
 		"password": "パスワード",
-        "enter-username": "ユーザーネームを入力してください",
+		"enter-username": "ユーザーネームを入力してください",
 		"enter-password": "パスワードを入力する",
 		"enter-search": "検索を入力"
 	},
@@ -919,7 +919,6 @@
 		"modbus-register-count": "レジスタ数",
 		"modbus-register-count-range": "レジスタ数は正の値でなければなりません。",
 		"modbus-byte-order": "バイト順",
-
 		"sync": {
 			"status": "状態",
 			"sync": "同期",
@@ -927,7 +926,6 @@
 			"last-sync-time": "前回の同期時間",
 			"not-available": "利用不可"
 		},
-
 		"export-extensions-configuration": "エクステンション設定のエクスポート",
 		"import-extensions-configuration": "エクステンション設定のインポート",
 		"import-extensions": "拡張機能のインポート",
@@ -1417,7 +1415,7 @@
 		"action-source-required": "アクションソースが必要です。",
 		"action-name": "名",
 		"action-name-required": "アクション名は必須です。",
-        "action-name-not-unique": "同じ名前の別のアクションがすでに存在します。<br/>アクション名は、同じアクションソース内で一意である必要があります。",
+		"action-name-not-unique": "同じ名前の別のアクションがすでに存在します。<br/>アクション名は、同じアクションソース内で一意である必要があります。",
 		"action-icon": "アイコン",
 		"action-type": "タイプ",
 		"action-type-required": "アクションタイプが必要です。",
@@ -1427,7 +1425,7 @@
 		"delete-action-text": "'{{actionName}}'?"
 	},
 	"widget-type": {
-        "import": "インポートウィジェットタイプ",
+		"import": "インポートウィジェットタイプ",
 		"export": "ウィジェットのタイプをエクスポートする",
 		"export-failed-error": "{{error}}",
 		"create-new-widget-type": "新しいウィジェットタイプを作成する",
@@ -1444,6 +1442,7 @@
 		"widget-action": {
 			"action-cell-button": "アクションセルボタン",
 			"row-click": "行のクリック",
+			"polygon-click": "ポリゴンクリック",
 			"marker-click": "マーカークリック",
 			"tooltip-tag-action": "ツールチップのタグアクション"
 		}
@@ -1451,6 +1450,8 @@
 	"language": {
 		"language": "言語",
 		"locales": {
+			"de_DE": "ドイツ語",
+            "fr_FR": "フランス語",
 			"en_US": "英語",
 			"ko_KR": "韓国語",
 			"it_IT": "イタリアの",
@@ -1458,7 +1459,8 @@
 			"ru_RU": "ロシア",
 			"es_ES": "スペイン語",
 			"ja_JA": "日本語",
-			"tr_TR": "トルコ語"
+			"tr_TR": "トルコ語",
+            "fa_IR": "ペルシャ語"
 		}
 	}
 }

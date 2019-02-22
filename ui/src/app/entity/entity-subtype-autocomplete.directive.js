@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ export default function EntitySubtypeAutocomplete($compile, $templateCache, $q, 
             if ((actual === null) || (expected === null)) {
                 return actual === expected;
             }
-            return actual.indexOf(expected) !== -1;
+            return actual.startsWith(expected);
         };
 
         scope.fetchSubTypes = function(searchText) {
@@ -49,6 +49,10 @@ export default function EntitySubtypeAutocomplete($compile, $templateCache, $q, 
                 function success(subTypes) {
                     var result = $filter('filter')(subTypes, {'$': searchText}, comparator);
                     if (result && result.length) {
+                        if (searchText && searchText.length && result.indexOf(searchText) === -1) {
+                            result.push(searchText);
+                        }
+                        result.sort();
                         deferred.resolve(result);
                     } else {
                         deferred.resolve([searchText]);
@@ -62,6 +66,7 @@ export default function EntitySubtypeAutocomplete($compile, $templateCache, $q, 
         }
 
         scope.subTypeSearchTextChanged = function() {
+            //scope.subType = scope.subTypeSearchText;
         }
 
         scope.updateView = function () {

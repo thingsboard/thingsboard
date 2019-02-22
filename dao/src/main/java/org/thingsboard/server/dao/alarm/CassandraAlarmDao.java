@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.alarm;
 
+import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 import com.google.common.util.concurrent.Futures;
@@ -76,6 +77,17 @@ public class CassandraAlarmDao extends CassandraAbstractModelDao<AlarmEntity, Al
     public Alarm save(TenantId tenantId, Alarm alarm) {
         log.debug("Save asset [{}] ", alarm);
         return super.save(tenantId, alarm);
+    }
+
+    @Override
+    public Boolean deleteAlarm(TenantId tenantId, Alarm alarm) {
+        Statement delete = QueryBuilder.delete().all().from(getColumnFamilyName()).where(eq(ModelConstants.ID_PROPERTY, alarm.getId().getId()))
+            .and(eq(ALARM_TENANT_ID_PROPERTY, tenantId.getId()))
+            .and(eq(ALARM_ORIGINATOR_ID_PROPERTY, alarm.getOriginator().getId()))
+            .and(eq(ALARM_ORIGINATOR_TYPE_PROPERTY, alarm.getOriginator().getEntityType()))
+            .and(eq(ALARM_TYPE_PROPERTY, alarm.getType()));
+        log.debug("Remove request: {}", delete.toString());
+        return executeWrite(tenantId, delete).wasApplied();
     }
 
     @Override

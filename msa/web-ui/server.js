@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 const config = require('config'),
       logger = require('./config/logger')('main'),
       express = require('express'),
+      compression = require('compression'),
       http = require('http'),
       httpProxy = require('http-proxy'),
       path = require('path'),
@@ -54,8 +54,9 @@ var server;
         const app = express();
         server = http.createServer(app);
 
+        var apiProxy;
         if (useApiProxy) {
-            const apiProxy = httpProxy.createProxyServer({
+            apiProxy = httpProxy.createProxyServer({
                 target: {
                     host: thingsboardHost,
                     port: thingsboardPort
@@ -85,6 +86,7 @@ var server;
         }
 
         app.use(historyApiFallback());
+        app.use(compression());
 
         const root = path.join(webDir, 'public');
 

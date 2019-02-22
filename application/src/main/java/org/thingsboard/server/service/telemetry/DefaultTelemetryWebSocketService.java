@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ import org.thingsboard.server.service.security.ValidationCallback;
 import org.thingsboard.server.service.security.ValidationResult;
 import org.thingsboard.server.service.security.ValidationResultCode;
 import org.thingsboard.server.service.security.model.UserPrincipal;
+import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.telemetry.cmd.AttributesSubscriptionCmd;
 import org.thingsboard.server.service.telemetry.cmd.GetHistoryCmd;
 import org.thingsboard.server.service.telemetry.cmd.SubscriptionCmd;
@@ -74,14 +75,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -136,7 +130,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
 
     @PostConstruct
     public void initExecutor() {
-        executor = new ThreadPoolExecutor(0, 50, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
+        executor = Executors.newWorkStealingPool(50);
     }
 
     @PreDestroy
@@ -360,9 +354,9 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
         };
 
         if (StringUtils.isEmpty(cmd.getScope())) {
-            accessValidator.validate(sessionRef.getSecurityCtx(), entityId, getAttributesFetchCallback(sessionRef.getSecurityCtx().getTenantId(), entityId, keys, callback));
+            accessValidator.validate(sessionRef.getSecurityCtx(), Operation.READ_ATTRIBUTES, entityId, getAttributesFetchCallback(sessionRef.getSecurityCtx().getTenantId(), entityId, keys, callback));
         } else {
-            accessValidator.validate(sessionRef.getSecurityCtx(), entityId, getAttributesFetchCallback(sessionRef.getSecurityCtx().getTenantId(), entityId, cmd.getScope(), keys, callback));
+            accessValidator.validate(sessionRef.getSecurityCtx(), Operation.READ_ATTRIBUTES, entityId, getAttributesFetchCallback(sessionRef.getSecurityCtx().getTenantId(), entityId, cmd.getScope(), keys, callback));
         }
     }
 
@@ -412,7 +406,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
                 sendWsMsg(sessionRef, update);
             }
         };
-        accessValidator.validate(sessionRef.getSecurityCtx(), entityId,
+        accessValidator.validate(sessionRef.getSecurityCtx(), Operation.READ_TELEMETRY, entityId,
                 on(r -> Futures.addCallback(tsService.findAll(sessionRef.getSecurityCtx().getTenantId(), entityId, queries), callback, executor), callback::onFailure));
     }
 
@@ -442,9 +436,9 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
 
 
         if (StringUtils.isEmpty(cmd.getScope())) {
-            accessValidator.validate(sessionRef.getSecurityCtx(), entityId, getAttributesFetchCallback(sessionRef.getSecurityCtx().getTenantId(), entityId, callback));
+            accessValidator.validate(sessionRef.getSecurityCtx(), Operation.READ_ATTRIBUTES, entityId, getAttributesFetchCallback(sessionRef.getSecurityCtx().getTenantId(), entityId, callback));
         } else {
-            accessValidator.validate(sessionRef.getSecurityCtx(), entityId, getAttributesFetchCallback(sessionRef.getSecurityCtx().getTenantId(), entityId, cmd.getScope(), callback));
+            accessValidator.validate(sessionRef.getSecurityCtx(), Operation.READ_ATTRIBUTES, entityId, getAttributesFetchCallback(sessionRef.getSecurityCtx().getTenantId(), entityId, cmd.getScope(), callback));
         }
     }
 
@@ -480,14 +474,14 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
                     getLimit(cmd.getLimit()), getAggregation(cmd.getAgg()))).collect(Collectors.toList());
 
             final FutureCallback<List<TsKvEntry>> callback = getSubscriptionCallback(sessionRef, cmd, sessionId, entityId, startTs, keys);
-            accessValidator.validate(sessionRef.getSecurityCtx(), entityId,
+            accessValidator.validate(sessionRef.getSecurityCtx(), Operation.READ_TELEMETRY, entityId,
                     on(r -> Futures.addCallback(tsService.findAll(sessionRef.getSecurityCtx().getTenantId(), entityId, queries), callback, executor), callback::onFailure));
         } else {
             List<String> keys = new ArrayList<>(getKeys(cmd).orElse(Collections.emptySet()));
             startTs = System.currentTimeMillis();
             log.debug("[{}] fetching latest timeseries data for keys: ({}) for device : {}", sessionId, cmd.getKeys(), entityId);
             final FutureCallback<List<TsKvEntry>> callback = getSubscriptionCallback(sessionRef, cmd, sessionId, entityId, startTs, keys);
-            accessValidator.validate(sessionRef.getSecurityCtx(), entityId,
+            accessValidator.validate(sessionRef.getSecurityCtx(), Operation.READ_TELEMETRY, entityId,
                     on(r -> Futures.addCallback(tsService.findLatest(sessionRef.getSecurityCtx().getTenantId(), entityId, keys), callback, executor), callback::onFailure));
         }
     }
@@ -517,7 +511,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
                 sendWsMsg(sessionRef, update);
             }
         };
-        accessValidator.validate(sessionRef.getSecurityCtx(), entityId,
+        accessValidator.validate(sessionRef.getSecurityCtx(), Operation.READ_TELEMETRY, entityId,
                 on(r -> Futures.addCallback(tsService.findAllLatest(sessionRef.getSecurityCtx().getTenantId(), entityId), callback, executor), callback::onFailure));
     }
 

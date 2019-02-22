@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ const webpack = require('webpack');
 const path = require('path');
 const dirTree = require('directory-tree');
 const jsonminify = require("jsonminify");
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+const HappyPack = require('happypack');
 
 const PUBLIC_RESOURCE_PATH = '/static/';
 
@@ -32,6 +34,8 @@ dirTree('./src/app/locale/', {extensions:/\.json$/}, (item) => {
     /* 'locale.constant-LANG_CODE[_REGION_CODE].json', e.g. locale.constant-es.json or locale.constant-zh_CN.json*/
     langs.push(item.name.slice(item.name.lastIndexOf('-') + 1, -5));
 });
+
+var happyThreadPool = HappyPack.ThreadPool({ size: 3 });
 
 module.exports = {
     devtool: 'source-map',
@@ -92,9 +96,28 @@ module.exports = {
         new CompressionPlugin({
             asset: "[path].gz[query]",
             algorithm: "gzip",
-            test: /\.js$|\.css$|\.svg$|\.ttf$|\.woff$|\.woff2|\.eot$\.json$/,
+            test: /\.js$|\.css$|\.svg$|\.ttf$|\.woff$|\.woff2$|\.eot$|\.json$/,
             threshold: 10240,
             minRatio: 0.8
+        }),
+        new UglifyJsPlugin({
+            cache: true,
+            parallel: true
+        }),
+        new HappyPack({
+            threadPool: happyThreadPool,
+            id: 'cached-babel',
+            loaders: ["babel-loader?cacheDirectory=true"]
+        }),
+        new HappyPack({
+            threadPool: happyThreadPool,
+            id: 'eslint',
+            loaders: ["eslint-loader?{parser: 'babel-eslint'}"]
+        }),
+        new HappyPack({
+            threadPool: happyThreadPool,
+            id: 'ng-annotate-and-cached-babel-loader',
+            loaders: ['ng-annotate', 'babel-loader?cacheDirectory=true']
         })
     ],
     node: {
@@ -105,19 +128,20 @@ module.exports = {
         loaders: [
             {
                 test: /\.jsx$/,
-                loader: 'babel',
+                loader: 'happypack/loader?id=cached-babel',
                 exclude: /node_modules/,
                 include: __dirname,
             },
             {
                 test: /\.js$/,
-                loaders: ['ng-annotate', 'babel'],
+                loaders: ['happypack/loader?id=ng-annotate-and-cached-babel-loader'],
                 exclude: /node_modules/,
                 include: __dirname,
             },
             {
                 test: /\.js$/,
-                loader: "eslint-loader?{parser: 'babel-eslint'}",
+                loaders: ['happypack/loader?id=eslint'],
+                // loader: "eslint-loader?{parser: 'babel-eslint'}",
                 exclude: /node_modules|vendor/,
                 include: __dirname,
             },

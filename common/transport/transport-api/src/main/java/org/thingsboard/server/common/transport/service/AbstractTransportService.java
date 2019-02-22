@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,15 +28,7 @@ import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * Created by ashvayka on 17.10.18.
@@ -48,7 +40,7 @@ public abstract class AbstractTransportService implements TransportService {
     private boolean rateLimitEnabled;
     @Value("${transport.rate_limits.tenant}")
     private String perTenantLimitsConf;
-    @Value("${transport.rate_limits.tenant}")
+    @Value("${transport.rate_limits.device}")
     private String perDevicesLimitsConf;
     @Value("${transport.sessions.inactivity_timeout}")
     private long sessionInactivityTimeout;
@@ -278,7 +270,7 @@ public abstract class AbstractTransportService implements TransportService {
             new TbRateLimits(perDevicesLimitsConf);
         }
         this.schedulerExecutor = Executors.newSingleThreadScheduledExecutor();
-        this.transportCallbackExecutor = new ThreadPoolExecutor(0, 20, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
+        this.transportCallbackExecutor = Executors.newWorkStealingPool(20);
         this.schedulerExecutor.scheduleAtFixedRate(this::checkInactivityAndReportActivity, sessionReportTimeout, sessionReportTimeout, TimeUnit.MILLISECONDS);
     }
 

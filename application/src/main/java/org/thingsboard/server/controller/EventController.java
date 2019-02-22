@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +26,15 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.security.permission.Resource;
 
 @RestController
 @RequestMapping("/api")
@@ -58,13 +61,12 @@ public class EventController extends BaseController {
         checkParameter("EntityType", strEntityType);
         try {
             TenantId tenantId = new TenantId(toUUID(strTenantId));
-            if (!tenantId.getId().equals(ModelConstants.NULL_UUID) &&
-                    !tenantId.equals(getCurrentUser().getTenantId())) {
-                throw new ThingsboardException("You don't have permission to perform this operation!",
-                        ThingsboardErrorCode.PERMISSION_DENIED);
-            }
+
+            EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
+            checkEntityId(entityId, Operation.READ);
+
             TimePageLink pageLink = createPageLink(limit, startTime, endTime, ascOrder, offset);
-            return checkNotNull(eventService.findEvents(tenantId, EntityIdFactory.getByTypeAndId(strEntityType, strEntityId), eventType, pageLink));
+            return checkNotNull(eventService.findEvents(tenantId, entityId, eventType, pageLink));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -87,13 +89,12 @@ public class EventController extends BaseController {
         checkParameter("EntityType", strEntityType);
         try {
             TenantId tenantId = new TenantId(toUUID(strTenantId));
-            if (!tenantId.getId().equals(ModelConstants.NULL_UUID) &&
-                    !tenantId.equals(getCurrentUser().getTenantId())) {
-                throw new ThingsboardException("You don't have permission to perform this operation!",
-                        ThingsboardErrorCode.PERMISSION_DENIED);
-            }
+
+            EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
+            checkEntityId(entityId, Operation.READ);
+
             TimePageLink pageLink = createPageLink(limit, startTime, endTime, ascOrder, offset);
-            return checkNotNull(eventService.findEvents(tenantId, EntityIdFactory.getByTypeAndId(strEntityType, strEntityId), pageLink));
+            return checkNotNull(eventService.findEvents(tenantId, entityId, pageLink));
         } catch (Exception e) {
             throw handleException(e);
         }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,6 +67,7 @@ import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.telemetry.AttributeData;
 import org.thingsboard.server.service.telemetry.TsData;
 import org.thingsboard.server.service.telemetry.exception.InvalidParametersException;
@@ -122,7 +123,7 @@ public class TelemetryController extends BaseController {
     @ResponseBody
     public DeferredResult<ResponseEntity> getAttributeKeys(
             @PathVariable("entityType") String entityType, @PathVariable("entityId") String entityIdStr) throws ThingsboardException {
-        return accessValidator.validateEntityAndCallback(getCurrentUser(), entityType, entityIdStr, this::getAttributeKeysCallback);
+        return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_ATTRIBUTES, entityType, entityIdStr, this::getAttributeKeysCallback);
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
@@ -131,7 +132,7 @@ public class TelemetryController extends BaseController {
     public DeferredResult<ResponseEntity> getAttributeKeysByScope(
             @PathVariable("entityType") String entityType, @PathVariable("entityId") String entityIdStr
             , @PathVariable("scope") String scope) throws ThingsboardException {
-        return accessValidator.validateEntityAndCallback(getCurrentUser(), entityType, entityIdStr,
+        return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_ATTRIBUTES, entityType, entityIdStr,
                 (result, tenantId, entityId) -> getAttributeKeysCallback(result, tenantId, entityId, scope));
     }
 
@@ -142,7 +143,7 @@ public class TelemetryController extends BaseController {
             @PathVariable("entityType") String entityType, @PathVariable("entityId") String entityIdStr,
             @RequestParam(name = "keys", required = false) String keysStr) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
-        return accessValidator.validateEntityAndCallback(getCurrentUser(), entityType, entityIdStr,
+        return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_ATTRIBUTES, entityType, entityIdStr,
                 (result, tenantId, entityId) -> getAttributeValuesCallback(result, user, entityId, null, keysStr));
     }
 
@@ -154,7 +155,7 @@ public class TelemetryController extends BaseController {
             @PathVariable("scope") String scope,
             @RequestParam(name = "keys", required = false) String keysStr) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
-        return accessValidator.validateEntityAndCallback(getCurrentUser(), entityType, entityIdStr,
+        return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_ATTRIBUTES, entityType, entityIdStr,
                 (result, tenantId, entityId) -> getAttributeValuesCallback(result, user, entityId, scope, keysStr));
     }
 
@@ -163,7 +164,7 @@ public class TelemetryController extends BaseController {
     @ResponseBody
     public DeferredResult<ResponseEntity> getTimeseriesKeys(
             @PathVariable("entityType") String entityType, @PathVariable("entityId") String entityIdStr) throws ThingsboardException {
-        return accessValidator.validateEntityAndCallback(getCurrentUser(), entityType, entityIdStr,
+        return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_TELEMETRY, entityType, entityIdStr,
                 (result, tenantId, entityId) -> Futures.addCallback(tsService.findAllLatest(tenantId, entityId), getTsKeysToResponseCallback(result)));
     }
 
@@ -175,7 +176,7 @@ public class TelemetryController extends BaseController {
             @RequestParam(name = "keys", required = false) String keysStr) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
 
-        return accessValidator.validateEntityAndCallback(getCurrentUser(), entityType, entityIdStr,
+        return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_TELEMETRY, entityType, entityIdStr,
                 (result, tenantId, entityId) -> getLatestTimeseriesValuesCallback(result, user, entityId, keysStr));
     }
 
@@ -192,7 +193,7 @@ public class TelemetryController extends BaseController {
             @RequestParam(name = "limit", defaultValue = "100") Integer limit,
             @RequestParam(name = "agg", defaultValue = "NONE") String aggStr
     ) throws ThingsboardException {
-        return accessValidator.validateEntityAndCallback(getCurrentUser(), entityType, entityIdStr,
+        return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_TELEMETRY, entityType, entityIdStr,
                 (result, tenantId, entityId) -> {
                     // If interval is 0, convert this to a NONE aggregation, which is probably what the user really wanted
                     Aggregation agg = interval == 0L ? Aggregation.valueOf(Aggregation.NONE.name()) : Aggregation.valueOf(aggStr);
@@ -279,11 +280,17 @@ public class TelemetryController extends BaseController {
             deleteFromTs = 0L;
             deleteToTs = System.currentTimeMillis();
         } else {
-            deleteFromTs = startTs;
-            deleteToTs = endTs;
+            if (startTs == null || endTs == null) {
+                deleteToTs = endTs;
+                return getImmediateDeferredResult("When deleteAllDataForKeys is false, start and end timestamp values shouldn't be empty", HttpStatus.BAD_REQUEST);
+            }
+            else{
+                deleteFromTs = startTs;
+                deleteToTs = endTs;
+            }
         }
 
-        return accessValidator.validateEntityAndCallback(user, entityIdStr, (result, tenantId, entityId) -> {
+        return accessValidator.validateEntityAndCallback(user, Operation.WRITE_TELEMETRY, entityIdStr, (result, tenantId, entityId) -> {
             List<DeleteTsKvQuery> deleteTsKvQueries = new ArrayList<>();
             for (String key : keys) {
                 deleteTsKvQueries.add(new BaseDeleteTsKvQuery(key, deleteFromTs, deleteToTs, rewriteLatestIfDeleted));
@@ -336,7 +343,7 @@ public class TelemetryController extends BaseController {
         if (DataConstants.SERVER_SCOPE.equals(scope) ||
                 DataConstants.SHARED_SCOPE.equals(scope) ||
                 DataConstants.CLIENT_SCOPE.equals(scope)) {
-            return accessValidator.validateEntityAndCallback(getCurrentUser(), entityIdStr, (result, tenantId, entityId) -> {
+            return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.WRITE_ATTRIBUTES, entityIdStr, (result, tenantId, entityId) -> {
                 ListenableFuture<List<Void>> future = attributesService.removeAll(user.getTenantId(), entityId, scope, keys);
                 Futures.addCallback(future, new FutureCallback<List<Void>>() {
                     @Override
@@ -375,7 +382,7 @@ public class TelemetryController extends BaseController {
                 return getImmediateDeferredResult("No attributes data found in request body!", HttpStatus.BAD_REQUEST);
             }
             SecurityUser user = getCurrentUser();
-            return accessValidator.validateEntityAndCallback(getCurrentUser(), entityIdSrc, (result, tenantId, entityId) -> {
+            return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.WRITE_ATTRIBUTES, entityIdSrc, (result, tenantId, entityId) -> {
                 tsSubService.saveAndNotify(tenantId, entityId, scope, attributes, new FutureCallback<Void>() {
                     @Override
                     public void onSuccess(@Nullable Void tmp) {
@@ -424,7 +431,7 @@ public class TelemetryController extends BaseController {
             return getImmediateDeferredResult("No timeseries data found in request body!", HttpStatus.BAD_REQUEST);
         }
         SecurityUser user = getCurrentUser();
-        return accessValidator.validateEntityAndCallback(getCurrentUser(), entityIdSrc, (result, tenantId, entityId) -> {
+        return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.WRITE_TELEMETRY, entityIdSrc, (result, tenantId, entityId) -> {
             tsSubService.saveAndNotify(tenantId, entityId, entries, ttl, new FutureCallback<Void>() {
                 @Override
                 public void onSuccess(@Nullable Void tmp) {

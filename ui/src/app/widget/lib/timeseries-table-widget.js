@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ function TimeseriesTableWidget() {
 }
 
 /*@ngInject*/
-function TimeseriesTableWidgetController($element, $scope, $filter, $timeout) {
+function TimeseriesTableWidgetController($element, $scope, $filter, $timeout, types) {
     var vm = this;
     let dateFormatFilter = 'yyyy-MM-dd HH:mm:ss';
 
@@ -228,8 +228,28 @@ function TimeseriesTableWidgetController($element, $scope, $filter, $timeout) {
     $scope.$watch('vm.sourceIndex', function(newIndex, oldIndex) {
         if (newIndex != oldIndex) {
             updateSourceData(vm.sources[vm.sourceIndex]);
+            updateActiveEntityInfo();
         }
     });
+
+    function updateActiveEntityInfo() {
+        var source = vm.sources[vm.sourceIndex];
+        var activeEntityInfo = null;
+        if (source) {
+            var datasource = source.datasource;
+            if (datasource.type === types.datasourceType.entity &&
+                datasource.entityType && datasource.entityId) {
+                activeEntityInfo = {
+                    entityId: {
+                        entityType: datasource.entityType,
+                        id: datasource.entityId
+                    },
+                    entityName: datasource.entityName
+                };
+            }
+        }
+        vm.ctx.activeEntityInfo = activeEntityInfo;
+    }
 
     function updateDatasources() {
         vm.sources = [];
@@ -314,6 +334,7 @@ function TimeseriesTableWidgetController($element, $scope, $filter, $timeout) {
                 vm.sources.push(source);
             }
         }
+        updateActiveEntityInfo();
     }
 
     function updatePage(source) {

@@ -336,6 +336,7 @@
             "action-cell-button": "Action cell button",
             "marker-click": "On marker click",
             "row-click": "On row click",
+            "polygon-click": "On polygon click",
             "tooltip-tag-action": "Tooltip tag action"
         }
     },
@@ -1003,6 +1004,7 @@
     "language": {
         "language": "Language",
         "locales": {
+            "de_DE": "Allemand",
             "en_US": "Anglais",
             "fr_FR": "Français",
             "es_ES": "Espagnol",
@@ -1010,7 +1012,9 @@
             "ko_KR": "Coréen",
             "ru_RU": "Russe",
             "zh_CN": "Chinois",
-            "tr_TR": "Turc"
+            "ja_JA": "Japonaise",
+            "tr_TR": "Turc",
+            "fa_IR": "Persane"
         }
     },
     "layout": {

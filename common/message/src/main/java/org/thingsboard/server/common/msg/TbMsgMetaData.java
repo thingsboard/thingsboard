@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ public final class TbMsgMetaData implements Serializable {
     private final Map<String, String> data = new ConcurrentHashMap<>();
 
     public TbMsgMetaData(Map<String, String> data) {
-        this.data.putAll(data);
+        data.forEach((key, val) -> putValue(key, val));
     }
 
     public String getValue(String key) {
@@ -42,7 +42,9 @@ public final class TbMsgMetaData implements Serializable {
     }
 
     public void putValue(String key, String value) {
-        data.put(key, value);
+        if (key != null && value != null) {
+            data.put(key, value);
+        }
     }
 
     public Map<String, String> values() {

@@ -28,5 +28,4 @@ pom.xml.versionsBackup
 **/target
 **/.env
 node_modules
-package-lock.json
 api/*.proto.js

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,6 @@
 package org.thingsboard.server.actors.service;
 
 import akka.actor.ActorRef;
-import akka.event.Logging;
-import akka.event.LoggingAdapter;
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.shared.ComponentMsgProcessor;
 import org.thingsboard.server.actors.stats.StatsPersistMsg;
@@ -60,7 +57,8 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
                 scheduleStatsPersistTick();
             }
         } catch (Exception e) {
-            log.warn("[{}][{}] Failed to start {} processor: {}", tenantId, id, id.getEntityType(), e);
+            log.warn("[{}][{}] Failed to start {} processor.", tenantId, id, id.getEntityType());
+            log.warn("Error:", e);
             logAndPersist("OnStart", e, true);
             logLifecycleEvent(ComponentLifecycleEvent.STARTED, e);
         }
@@ -149,10 +147,13 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
 
     private void logAndPersist(String method, Exception e, boolean critical) {
         errorsOccurred++;
+        String componentName = processor != null ? processor.getComponentName() : "Unknown";
         if (critical) {
-            log.warn("[{}][{}][{}] Failed to process {} msg: {}", id, tenantId, processor.getComponentName(), method, e);
+            log.warn("[{}][{}][{}] Failed to process {} msg: {}", id, tenantId, componentName, method);
+            log.warn("Critical Error: ", e);
         } else {
-            log.debug("[{}][{}][{}] Failed to process {} msg: {}", id, tenantId, processor.getComponentName(), method, e);
+            log.debug("[{}][{}][{}] Failed to process {} msg: {}", id, tenantId, componentName, method);
+            log.debug("Debug Error: ", e);
         }
         long ts = System.currentTimeMillis();
         if (ts - lastPersistedErrorTs > getErrorPersistFrequency()) {

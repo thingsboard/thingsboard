@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,8 @@ function EntityViewService($http, $q, $window, userService, attributeService, cu
         subscribeForEntityViewAttributes: subscribeForEntityViewAttributes,
         unsubscribeForEntityViewAttributes: unsubscribeForEntityViewAttributes,
         findByQuery: findByQuery,
-        getEntityViewTypes: getEntityViewTypes
+        getEntityViewTypes: getEntityViewTypes,
+        makeEntityViewPublic: makeEntityViewPublic
     }
 
     return service;
@@ -207,5 +208,17 @@ function EntityViewService($http, $q, $window, userService, attributeService, cu
         });
         return deferred.promise;
     }
+
+    function makeEntityViewPublic(entityViewId) {
+        var deferred = $q.defer();
+        var url = '/api/customer/public/entityView/' + entityViewId;
+        $http.post(url, null).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
 
 }

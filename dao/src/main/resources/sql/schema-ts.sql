@@ -1,5 +1,5 @@
 --
--- Copyright © 2016-2018 The Thingsboard Authors
+-- Copyright © 2016-2019 The Thingsboard Authors
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS ts_kv (
     str_v varchar(10000000),
     long_v bigint,
     dbl_v double precision,
-    CONSTRAINT ts_kv_unq_key UNIQUE (entity_type, entity_id, key, ts)
+    CONSTRAINT ts_kv_pkey PRIMARY KEY (entity_type, entity_id, key, ts)
 );
 
 CREATE TABLE IF NOT EXISTS ts_kv_latest (
@@ -35,5 +35,5 @@ CREATE TABLE IF NOT EXISTS ts_kv_latest (
     str_v varchar(10000000),
     long_v bigint,
     dbl_v double precision,
-    CONSTRAINT ts_kv_latest_unq_key UNIQUE (entity_type, entity_id, key)
+    CONSTRAINT ts_kv_latest_pkey PRIMARY KEY (entity_type, entity_id, key)
 );

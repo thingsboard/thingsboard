@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,47 +16,56 @@
 package org.thingsboard.server.controller.plugin;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.BeanCreationNotAllowedException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.socket.CloseStatus;
 import org.springframework.web.reactive.socket.WebSocketHandler;
 import org.springframework.web.reactive.socket.WebSocketSession;
-import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.msg.tools.TbRateLimits;
-import org.thingsboard.server.config.WebSocketConfiguration;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.security.model.UserPrincipal;
-import org.thingsboard.server.service.telemetry.SessionEvent;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketMsgEndpoint;
-import org.thingsboard.server.service.telemetry.TelemetryWebSocketService;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketSessionRef;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
-import java.net.URI;
-import java.security.InvalidParameterException;
 import java.security.Principal;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 @Service
 @Slf4j
 public class TbWebSocketHandler implements WebSocketHandler, TelemetryWebSocketMsgEndpoint {
 
-    //private static final ConcurrentMap<String, SessionMetaData> internalSessionMap = new ConcurrentHashMap<>();
-   // private static final ConcurrentMap<String, String> externalSessionMap = new ConcurrentHashMap<>();
+    @Override
+    public Mono<Void> handle(WebSocketSession session) {
+        return session.receive()
+                .doOnNext(message -> {
+                    Principal principal = session.getHandshakeInfo().getPrincipal().block();
+                    if (principal instanceof SecurityUser) {
+                        SecurityUser currentUser = (SecurityUser) principal;
+                        log.info("[{}][{}] Processing {}", currentUser.getTenantId(), session.getId(), message.getPayloadAsText());
+                    } else {
+                        log.info("[{}] Principal {}", session.getId(), principal);
+                        log.info("[{}] Processing {}", session.getId(), message.getPayloadAsText());
+                    }
+                })
+                .then();
+    }
 
-  /*  @Autowired
+    @Override
+    public void send(TelemetryWebSocketSessionRef sessionRef, int subscriptionId, String msg) throws IOException {
+
+    }
+
+    @Override
+    public void close(TelemetryWebSocketSessionRef sessionRef, CloseStatus withReason) throws IOException {
+
+    }
+
+//    private static final ConcurrentMap<String, SessionMetaData> internalSessionMap = new ConcurrentHashMap<>();
+//    private static final ConcurrentMap<String, String> externalSessionMap = new ConcurrentHashMap<>();
+/*
+    @Autowired
     private TelemetryWebSocketService webSocketService;
+
+    @Value("${server.ws.send_timeout:5000}")
+    private long sendTimeout;
 
     @Value("${server.ws.limits.max_sessions_per_tenant:0}")
     private int maxSessionsPerTenant;
@@ -66,6 +75,8 @@ public class TbWebSocketHandler implements WebSocketHandler, TelemetryWebSocketM
     private int maxSessionsPerRegularUser;
     @Value("${server.ws.limits.max_sessions_per_public_user:0}")
     private int maxSessionsPerPublicUser;
+    @Value("${server.ws.limits.max_queue_per_ws_session:1000}")
+    private int maxMsgQueuePerSession;
 
     @Value("${server.ws.limits.max_updates_per_session:}")
     private String perSessionUpdatesConfiguration;
@@ -92,7 +103,7 @@ public class TbWebSocketHandler implements WebSocketHandler, TelemetryWebSocketM
         } catch (IOException e) {
             log.warn("IO error", e);
         }
-    }*/
+    }
 
     @Override
     public Mono<Void> handle(WebSocketSession session) {
@@ -110,19 +121,23 @@ public class TbWebSocketHandler implements WebSocketHandler, TelemetryWebSocketM
                 .then();
     }
 
-
-/*
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         super.afterConnectionEstablished(session);
         try {
+            if (session instanceof NativeWebSocketSession) {
+                Session nativeSession = ((NativeWebSocketSession) session).getNativeSession(Session.class);
+                if (nativeSession != null) {
+                    nativeSession.getAsyncRemote().setSendTimeout(sendTimeout);
+                }
+            }
             String internalSessionId = session.getId();
             TelemetryWebSocketSessionRef sessionRef = toRef(session);
             String externalSessionId = sessionRef.getSessionId();
             if (!checkLimits(session, sessionRef)) {
                 return;
             }
-            internalSessionMap.put(internalSessionId, new SessionMetaData(session, sessionRef));
+            internalSessionMap.put(internalSessionId, new SessionMetaData(session, sessionRef, maxMsgQueuePerSession));
             externalSessionMap.put(externalSessionId, internalSessionId);
             processInWebSocketService(sessionRef, SessionEvent.onEstablished());
             log.info("[{}][{}][{}] Session is opened", sessionRef.getSecurityCtx().getTenantId(), externalSessionId, session.getId());
@@ -179,25 +194,86 @@ public class TbWebSocketHandler implements WebSocketHandler, TelemetryWebSocketM
         if (!"telemetry".equalsIgnoreCase(serviceToken)) {
             throw new InvalidParameterException("Can't find plugin with specified token!");
         } else {
-            SecurityUser currentUser = (SecurityUser) session.getAttributes().get(WebSocketConfiguration.WS_SECURITY_USER_ATTRIBUTE);
+            SecurityUser currentUser = (SecurityUser) ((Authentication) session.getPrincipal()).getPrincipal();
             return new TelemetryWebSocketSessionRef(UUID.randomUUID().toString(), currentUser, session.getLocalAddress(), session.getRemoteAddress());
         }
     }
 
-    private static class SessionMetaData {
+    private class SessionMetaData implements SendHandler {
         private final WebSocketSession session;
+        private final RemoteEndpoint.Async asyncRemote;
         private final TelemetryWebSocketSessionRef sessionRef;
 
-        SessionMetaData(WebSocketSession session, TelemetryWebSocketSessionRef sessionRef) {
+        private volatile boolean isSending = false;
+        private final Queue<String> msgQueue;
+
+        SessionMetaData(WebSocketSession session, TelemetryWebSocketSessionRef sessionRef, int maxMsgQueuePerSession) {
             super();
             this.session = session;
+            Session nativeSession = ((NativeWebSocketSession) session).getNativeSession(Session.class);
+            this.asyncRemote = nativeSession.getAsyncRemote();
             this.sessionRef = sessionRef;
+            this.msgQueue = new LinkedBlockingQueue<>(maxMsgQueuePerSession);
         }
-    }*/
+
+        synchronized void sendMsg(String msg) {
+            if (isSending) {
+                try {
+                    msgQueue.add(msg);
+                } catch (RuntimeException e) {
+                    if (log.isTraceEnabled()) {
+                        log.trace("[{}][{}] Session closed due to queue error", sessionRef.getSecurityCtx().getTenantId(), session.getId(), e);
+                    } else {
+                        log.info("[{}][{}] Session closed due to queue error", sessionRef.getSecurityCtx().getTenantId(), session.getId());
+                    }
+                    try {
+                        close(sessionRef, CloseStatus.POLICY_VIOLATION.withReason("Max pending updates limit reached!"));
+                    } catch (IOException ioe) {
+                        log.trace("[{}] Session transport error", session.getId(), ioe);
+                    }
+                }
+            } else {
+                isSending = true;
+                sendMsgInternal(msg);
+            }
+        }
+
+        private void sendMsgInternal(String msg) {
+            try {
+                this.asyncRemote.sendText(msg, this);
+            } catch (Exception e) {
+                log.trace("[{}] Failed to send msg", session.getId(), e);
+                try {
+                    close(this.sessionRef, CloseStatus.SESSION_NOT_RELIABLE);
+                } catch (IOException ioe) {
+                    log.trace("[{}] Session transport error", session.getId(), ioe);
+                }
+            }
+        }
+
+        @Override
+        public void onResult(SendResult result) {
+            if (!result.isOK()) {
+                log.trace("[{}] Failed to send msg", session.getId(), result.getException());
+                try {
+                    close(this.sessionRef, CloseStatus.SESSION_NOT_RELIABLE);
+                } catch (IOException ioe) {
+                    log.trace("[{}] Session transport error", session.getId(), ioe);
+                }
+            } else {
+                String msg = msgQueue.poll();
+                if (msg != null) {
+                    sendMsgInternal(msg);
+                } else {
+                    isSending = false;
+                }
+            }
+        }
+    }
 
     @Override
     public void send(TelemetryWebSocketSessionRef sessionRef, int subscriptionId, String msg) throws IOException {
-  /*      String externalId = sessionRef.getSessionId();
+        String externalId = sessionRef.getSessionId();
         log.debug("[{}] Processing {}", externalId, msg);
         String internalId = externalSessionMap.get(externalId);
         if (internalId != null) {
@@ -209,9 +285,7 @@ public class TbWebSocketHandler implements WebSocketHandler, TelemetryWebSocketM
                         if (blacklistedSessions.putIfAbsent(externalId, sessionRef) == null) {
                             log.info("[{}][{}][{}] Failed to process session update. Max session updates limit reached"
                                     , sessionRef.getSecurityCtx().getTenantId(), sessionRef.getSecurityCtx().getId(), externalId);
-                            synchronized (sessionMd) {
-                                sessionMd.session.sendMessage(new TextMessage("{\"subscriptionId\":" + subscriptionId + ", \"errorCode\":" + ThingsboardErrorCode.TOO_MANY_UPDATES.getErrorCode() + ", \"errorMsg\":\"Too many updates!\"}"));
-                            }
+                            sessionMd.sendMsg("{\"subscriptionId\":" + subscriptionId + ", \"errorCode\":" + ThingsboardErrorCode.TOO_MANY_UPDATES.getErrorCode() + ", \"errorMsg\":\"Too many updates!\"}");
                         }
                         return;
                     } else {
@@ -219,25 +293,18 @@ public class TbWebSocketHandler implements WebSocketHandler, TelemetryWebSocketM
                         blacklistedSessions.remove(externalId);
                     }
                 }
-                synchronized (sessionMd) {
-                    long start = System.currentTimeMillis();
-                    sessionMd.session.sendMessage(new TextMessage(msg));
-                    long took = System.currentTimeMillis() - start;
-                    if (took >= 1000) {
-                        log.info("[{}][{}] Sending message took more than 1 second [{}ms] {}", sessionRef.getSecurityCtx().getTenantId(), externalId, took, msg);
-                    }
-                }
+                sessionMd.sendMsg(msg);
             } else {
                 log.warn("[{}][{}] Failed to find session by internal id", externalId, internalId);
             }
         } else {
             log.warn("[{}] Failed to find session by external id", externalId);
-        }*/
+        }
     }
 
     @Override
     public void close(TelemetryWebSocketSessionRef sessionRef, CloseStatus reason) throws IOException {
-       /* String externalId = sessionRef.getSessionId();
+        String externalId = sessionRef.getSessionId();
         log.debug("[{}] Processing close request", externalId);
         String internalId = externalSessionMap.get(externalId);
         if (internalId != null) {
@@ -249,10 +316,10 @@ public class TbWebSocketHandler implements WebSocketHandler, TelemetryWebSocketM
             }
         } else {
             log.warn("[{}] Failed to find session by external id", externalId);
-        }*/
+        }
     }
 
-    /*private boolean checkLimits(WebSocketSession session, TelemetryWebSocketSessionRef sessionRef) throws Exception {
+    private boolean checkLimits(WebSocketSession session, TelemetryWebSocketSessionRef sessionRef) throws Exception {
         String sessionId = session.getId();
         if (maxSessionsPerTenant > 0) {
             Set<String> tenantSessions = tenantSessionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getTenantId(), id -> ConcurrentHashMap.newKeySet());
@@ -342,6 +409,6 @@ public class TbWebSocketHandler implements WebSocketHandler, TelemetryWebSocketM
                 }
             }
         }
-    }*/
-
+    }
+    */
 }

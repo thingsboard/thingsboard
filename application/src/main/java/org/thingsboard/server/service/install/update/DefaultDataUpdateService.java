@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.install;
+package org.thingsboard.server.service.install.update;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.service.install.InstallScripts;
 
 @Service
 @Profile("install")
@@ -74,30 +75,5 @@ public class DefaultDataUpdateService implements DataUpdateService {
                     }
                 }
             };
-
-    public abstract class PaginatedUpdater<I, D extends SearchTextBased<? extends UUIDBased>> {
-
-        private static final int DEFAULT_LIMIT = 100;
-
-        public void updateEntities(I id) {
-            TextPageLink pageLink = new TextPageLink(DEFAULT_LIMIT);
-            boolean hasNext = true;
-            while (hasNext) {
-                TextPageData<D> entities = findEntities(id, pageLink);
-                for (D entity : entities.getData()) {
-                    updateEntity(entity);
-                }
-                hasNext = entities.hasNext();
-                if (hasNext) {
-                    pageLink = entities.getNextPageLink();
-                }
-            }
-        }
-
-        protected abstract TextPageData<D> findEntities(I id, TextPageLink pageLink);
-
-        protected abstract void updateEntity(D entity);
-
-    }
 
 }

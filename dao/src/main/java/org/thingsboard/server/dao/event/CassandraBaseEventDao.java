@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -43,7 +44,9 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.in;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.ttl;
 import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Component
@@ -62,6 +65,9 @@ public class CassandraBaseEventDao extends CassandraAbstractSearchTimeDao<EventE
     protected String getColumnFamilyName() {
         return EVENT_COLUMN_FAMILY_NAME;
     }
+
+    @Value("${cassandra.query.events_ttl:0}")
+    private int eventsTtl;
 
     @Override
     public Event save(TenantId tenantId, Event event) {
@@ -85,7 +91,7 @@ public class CassandraBaseEventDao extends CassandraAbstractSearchTimeDao<EventE
         if (StringUtils.isEmpty(event.getUid())) {
             event.setUid(event.getId().toString());
         }
-        ListenableFuture<Optional<Event>> optionalSave = saveAsync(event.getTenantId(), new EventEntity(event), false);
+        ListenableFuture<Optional<Event>> optionalSave = saveAsync(event.getTenantId(), new EventEntity(event), false, eventsTtl);
         return Futures.transform(optionalSave, opt -> opt.orElse(null));
     }
 
@@ -98,7 +104,7 @@ public class CassandraBaseEventDao extends CassandraAbstractSearchTimeDao<EventE
         if (event.getId() == null) {
             event.setId(new EventId(UUIDs.timeBased()));
         }
-        return save(event.getTenantId(), new EventEntity(event), true);
+        return save(event.getTenantId(), new EventEntity(event), true, eventsTtl);
     }
 
     @Override
@@ -162,15 +168,15 @@ public class CassandraBaseEventDao extends CassandraAbstractSearchTimeDao<EventE
         return DaoUtil.convertDataList(entities);
     }
 
-    private Optional<Event> save(TenantId tenantId, EventEntity entity, boolean ifNotExists) {
+    private Optional<Event> save(TenantId tenantId, EventEntity entity, boolean ifNotExists, int ttl) {
         try {
-            return saveAsync(tenantId, entity, ifNotExists).get();
+            return saveAsync(tenantId, entity, ifNotExists, ttl).get();
         } catch (InterruptedException | ExecutionException e) {
             throw new IllegalStateException("Could not save EventEntity", e);
         }
     }
 
-    private ListenableFuture<Optional<Event>> saveAsync(TenantId tenantId, EventEntity entity, boolean ifNotExists) {
+    private ListenableFuture<Optional<Event>> saveAsync(TenantId tenantId, EventEntity entity, boolean ifNotExists, int ttl) {
         if (entity.getId() == null) {
             entity.setId(UUIDs.timeBased());
         }
@@ -184,6 +190,9 @@ public class CassandraBaseEventDao extends CassandraAbstractSearchTimeDao<EventE
                 .value(ModelConstants.EVENT_BODY_PROPERTY, entity.getBody());
         if (ifNotExists) {
             insert = insert.ifNotExists();
+        }
+        if(ttl > 0){
+            insert.using(ttl(ttl));
         }
         ResultSetFuture resultSetFuture = executeAsyncWrite(tenantId, insert);
         return Futures.transform(resultSetFuture, rs -> {
