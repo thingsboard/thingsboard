@@ -298,6 +298,8 @@ spring.resources.chain:
     content:
       enabled: "true"
 
+spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation: "true"
+
 # HSQLDB DAO Configuration
 spring:
   data:
