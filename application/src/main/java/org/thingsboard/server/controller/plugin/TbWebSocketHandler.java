@@ -16,51 +16,48 @@
 package org.thingsboard.server.controller.plugin;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.BeanCreationNotAllowedException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.socket.CloseStatus;
-import org.springframework.web.reactive.socket.WebSocketHandler;
-import org.springframework.web.reactive.socket.WebSocketSession;
+import org.springframework.util.StringUtils;
+import org.springframework.web.socket.CloseStatus;
+import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketSession;
+import org.springframework.web.socket.adapter.NativeWebSocketSession;
+import org.springframework.web.socket.handler.TextWebSocketHandler;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.msg.tools.TbRateLimits;
+import org.thingsboard.server.config.WebSocketConfiguration;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.model.UserPrincipal;
+import org.thingsboard.server.service.telemetry.SessionEvent;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketMsgEndpoint;
+import org.thingsboard.server.service.telemetry.TelemetryWebSocketService;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketSessionRef;
-import reactor.core.publisher.Mono;
 
+import javax.websocket.*;
 import java.io.IOException;
-import java.security.Principal;
+import java.net.URI;
+import java.security.InvalidParameterException;
+import java.util.Queue;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.LinkedBlockingQueue;
 
 @Service
 @Slf4j
-public class TbWebSocketHandler implements WebSocketHandler, TelemetryWebSocketMsgEndpoint {
+public class TbWebSocketHandler extends TextWebSocketHandler implements TelemetryWebSocketMsgEndpoint {
 
-    @Override
-    public Mono<Void> handle(WebSocketSession session) {
-        return session.receive()
-                .doOnNext(message -> {
-                    Principal principal = session.getHandshakeInfo().getPrincipal().block();
-                    if (principal instanceof SecurityUser) {
-                        SecurityUser currentUser = (SecurityUser) principal;
-                        log.info("[{}][{}] Processing {}", currentUser.getTenantId(), session.getId(), message.getPayloadAsText());
-                    } else {
-                        log.info("[{}] Principal {}", session.getId(), principal);
-                        log.info("[{}] Processing {}", session.getId(), message.getPayloadAsText());
-                    }
-                })
-                .then();
-    }
+    private static final ConcurrentMap<String, SessionMetaData> internalSessionMap = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<String, String> externalSessionMap = new ConcurrentHashMap<>();
 
-    @Override
-    public void send(TelemetryWebSocketSessionRef sessionRef, int subscriptionId, String msg) throws IOException {
-
-    }
-
-    @Override
-    public void close(TelemetryWebSocketSessionRef sessionRef, CloseStatus withReason) throws IOException {
-
-    }
-
-//    private static final ConcurrentMap<String, SessionMetaData> internalSessionMap = new ConcurrentHashMap<>();
-//    private static final ConcurrentMap<String, String> externalSessionMap = new ConcurrentHashMap<>();
-/*
     @Autowired
     private TelemetryWebSocketService webSocketService;
 
@@ -103,22 +100,6 @@ public class TbWebSocketHandler implements WebSocketHandler, TelemetryWebSocketM
         } catch (IOException e) {
             log.warn("IO error", e);
         }
-    }
-
-    @Override
-    public Mono<Void> handle(WebSocketSession session) {
-        return session.receive()
-                .doOnNext(message -> {
-                    Principal principal = session.getHandshakeInfo().getPrincipal().block();
-                    if (principal instanceof SecurityUser) {
-                        SecurityUser currentUser = (SecurityUser) principal;
-                        log.info("[{}][{}] Processing {}", currentUser.getTenantId(), session.getId(), message.getPayloadAsText());
-                    } else {
-                        log.info("[{}] Principal {}", session.getId(), principal);
-                        log.info("[{}] Processing {}", session.getId(), message.getPayloadAsText());
-                    }
-                })
-                .then();
     }
 
     @Override
@@ -410,5 +391,5 @@ public class TbWebSocketHandler implements WebSocketHandler, TelemetryWebSocketM
             }
         }
     }
-    */
+
 }
