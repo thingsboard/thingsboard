@@ -103,6 +103,7 @@ public class AlarmController extends BaseController {
         checkParameter(ALARM_ID, strAlarmId);
         try {
             AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
+            checkAlarmId(alarmId, Operation.WRITE);
             return alarmService.deleteAlarm(getTenantId(), alarmId);
         } catch (Exception e) {
             throw handleException(e);
