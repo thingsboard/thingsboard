@@ -85,6 +85,8 @@
         <kafka.version>2.0.0</kafka.version>
         <bucket4j.version>4.1.1</bucket4j.version>
         <fst.version>2.57</fst.version>
+        <antlr.version>2.7.7</antlr.version>
+        <snakeyaml.version>1.23</snakeyaml.version>
     </properties>
 
     <modules>
@@ -517,6 +519,16 @@
                         <artifactId>antlr</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.yaml</groupId>
+                <artifactId>snakeyaml</artifactId>
+                <version>${snakeyaml.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>antlr</groupId>
+                <artifactId>antlr</artifactId>
+                <version>${antlr.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.rabbitmq</groupId>
