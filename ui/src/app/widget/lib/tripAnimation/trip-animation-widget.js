@@ -562,7 +562,7 @@ function tripAnimationController($document, $scope, $http, $timeout, $filter, $l
 				});
 
 				if (tripIndex > -1) {
-					createNormalizedValue(data.data, data.dataKey.name, vm.trips[tripIndex].timeRange);
+					createNormalizedValue(data.data, data.dataKey.label, vm.trips[tripIndex].timeRange);
 				}
 			})
 		}
