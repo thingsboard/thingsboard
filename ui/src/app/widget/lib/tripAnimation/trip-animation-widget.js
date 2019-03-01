@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import './trip-animation-widget.scss';
 import template from "./trip-animation-widget.tpl.html";
 import TbOpenStreetMap from '../openstreet-map';
