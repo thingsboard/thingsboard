@@ -367,8 +367,8 @@ export default class TbGoogleMap {
 			strokeColor: color,
 			fillColor: color,
 			strokeWeight: settings.polygonStrokeWeight
-		}
-
+		};
+		polygon.setOptions(options);
 	}
 	/* eslint-disable no-undef ,no-unused-vars*/
 
