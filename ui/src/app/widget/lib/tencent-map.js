@@ -379,7 +379,7 @@ export default class TbTencentMap {
 			fillColor: color,
 			strokeWeight: settings.polygonStrokeWeight
 		}
-
+		polygon.setOptions(options);
 	}
 	/* eslint-disable no-undef ,no-unused-vars*/
 

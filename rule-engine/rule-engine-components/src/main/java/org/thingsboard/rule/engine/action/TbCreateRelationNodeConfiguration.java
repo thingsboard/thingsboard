@@ -30,7 +30,7 @@ public class TbCreateRelationNodeConfiguration extends TbAbstractRelationActionN
     public TbCreateRelationNodeConfiguration defaultConfiguration() {
         TbCreateRelationNodeConfiguration configuration = new TbCreateRelationNodeConfiguration();
         configuration.setDirection(EntitySearchDirection.FROM.name());
-        configuration.setRelationTypePattern("Contains");
+        configuration.setRelationType("Contains");
         configuration.setEntityNamePattern("");
         configuration.setEntityCacheExpiration(300);
         configuration.setCreateEntityIfNotExists(false);
