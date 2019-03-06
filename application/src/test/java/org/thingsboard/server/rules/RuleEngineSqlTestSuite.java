@@ -28,14 +28,6 @@ import java.util.Arrays;
         "org.thingsboard.server.rules.lifecycle.sql.*Test"})
 public class RuleEngineSqlTestSuite {
 
-    static {
-        SecurityManager appsm = System.getSecurityManager();
-        System.out.println("SECURITY MANAGER = " + appsm);
-        if (appsm != null) {
-            System.out.println("SECURITY MANAGER CLASS = " + appsm.getClass());
-        }
-    }
-
     @ClassRule
     public static CustomSqlUnit sqlUnit = new CustomSqlUnit(
             Arrays.asList("sql/schema-ts.sql", "sql/schema-entities.sql", "sql/system-data.sql"),
