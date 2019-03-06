@@ -29,15 +29,6 @@ import java.util.Arrays;
 @ClasspathSuite.ClassnameFilters({"org.thingsboard.server.system.sql.*SqlTest"})
 public class SystemSqlTestSuite {
 
-    static {
-        //ThreadAwareSecurityManager.install();
-        SecurityManager appsm = System.getSecurityManager();
-        System.out.println("SECURITY MANAGER = " + appsm);
-        if (appsm != null) {
-            System.out.println("SECURITY MANAGER CLASS = " + appsm.getClass());
-        }
-    }
-
     @ClassRule
     public static CustomSqlUnit sqlUnit = new CustomSqlUnit(
             Arrays.asList("sql/schema-ts.sql", "sql/schema-entities.sql", "sql/system-data.sql"),
