@@ -256,11 +256,9 @@ function TimeService($translate, $http, $q, types) {
         return timewindow;
     }
 
-    function toHistoryTimewindow(timewindow, startTimeMs, endTimeMs) {
-
-        var interval = 0;
+    function toHistoryTimewindow(timewindow, startTimeMs, endTimeMs, interval = 0) {
         if (timewindow.history) {
-            interval = timewindow.history.interval;
+            interval = angular.isDefined(interval) ? interval : timewindow.history.interval;
         } else if (timewindow.realtime) {
             interval = timewindow.realtime.interval;
         }
