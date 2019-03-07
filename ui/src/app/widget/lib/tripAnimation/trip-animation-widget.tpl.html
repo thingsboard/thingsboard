@@ -15,7 +15,8 @@
     limitations under the License.
 
 -->
-<div class="heat-map-widget tracking-widget" layout="column" layout-align="center start">
+<div class="heat-map-widget tracking-widget" layout="column" layout-align="center start"
+     ng-style="{'padding-top' : (!vm.widgetConfig.showTitle && vm.ctx.settings.showLabel) ? '5px' : '0px'}">
     <div ng-show="vm.ctx.settings.showLabel">
         {{vm.trips[vm.activeTripIndex].settings.labelText}}
     </div>
@@ -32,7 +33,7 @@
             <md-button aria-label="Stop playing" ng-click="vm.stopPlay()">
                 <ng-md-icon icon="pause_circle_outline"></ng-md-icon>
             </md-button>
-            <div class="panel-timer">{{vm.trips[0].timeRange[vm.index].ts | date:'medium'}}
+            <div class="panel-timer">{{vm.trips[vm.activeTripIndex].timeRange[vm.index].ts | date:'medium'}}
             </div>
         </md-slider-container>
     </div>
