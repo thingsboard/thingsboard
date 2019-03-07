@@ -293,10 +293,12 @@ spring.mvc.cors:
 
 # spring serve gzip compressed static resources
 spring.resources.chain:
-  gzipped: "true"
+  compressed: "true"
   strategy:
     content:
       enabled: "true"
+
+spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation: "true"
 
 # HSQLDB DAO Configuration
 spring:
@@ -331,7 +333,7 @@ spring:
 #    password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
 
 # Audit log parameters
-audit_log:
+audit-log:
   # Enable/disable audit log functionality.
   enabled: "${AUDIT_LOG_ENABLED:true}"
   # Specify partitioning size for audit log by tenant id storage. Example MINUTES, HOURS, DAYS, MONTHS
@@ -340,7 +342,7 @@ audit_log:
   default_query_period: "${AUDIT_LOG_DEFAULT_QUERY_PERIOD:30}"
   # Logging levels per each entity type.
   # Allowed values: OFF (disable), W (log write operations), RW (log read and write operations)
-  logging_level:
+  logging-level:
     mask:
       "device": "${AUDIT_LOG_MASK_DEVICE:W}"
       "asset": "${AUDIT_LOG_MASK_ASSET:W}"
