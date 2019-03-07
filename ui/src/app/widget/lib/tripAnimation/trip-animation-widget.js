@@ -18,8 +18,6 @@ import template from "./trip-animation-widget.tpl.html";
 import TbOpenStreetMap from '../openstreet-map';
 import L from 'leaflet';
 //import tinycolor from 'tinycolor2';
-import MultiOptionsPolyline from '../../../../vendor/leaflet-multi-options-polyline/Leaflet.MultiOptionsPolyline';
-import GeometryUtil from '../../../../vendor/leaflet-geometryutil/leaflet-geometryutil';
 import tinycolor from "tinycolor2";
 import {fillPatternWithActions, isNumber, padValue, processPattern} from "../widget-utils";
 //import {fillPatternWithActions, isNumber, padValue, processPattern, fillPattern} from "../widget-utils";
@@ -146,12 +144,6 @@ function tripAnimationController($document, $scope, $http, $timeout, $filter, $l
 
 	vm.showHideTooltip = showHideTooltip;
 	vm.recalculateTrips = recalculateTrips;
-
-	L.MultiOptionsPolyline = MultiOptionsPolyline;
-	L.GeometryUtil = GeometryUtil;
-	L.multiOptionsPolyline = function (latlngs, options) {
-		return new MultiOptionsPolyline(latlngs, options);
-	};
 
 	$scope.$watch('vm.ctx', function () {
 		if (vm.ctx) {
