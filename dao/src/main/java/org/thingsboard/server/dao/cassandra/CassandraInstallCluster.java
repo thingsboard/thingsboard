@@ -21,7 +21,7 @@ import org.thingsboard.server.dao.util.NoSqlAnyDao;
 
 import javax.annotation.PostConstruct;
 
-@Component
+@Component("CassandraInstallCluster")
 @NoSqlAnyDao
 @Profile("install")
 public class CassandraInstallCluster extends AbstractCassandraCluster {

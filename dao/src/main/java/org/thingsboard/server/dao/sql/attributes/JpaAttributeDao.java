@@ -52,7 +52,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
         AttributeKvCompositeKey compositeKey =
                 getAttributeKvCompositeKey(entityId, attributeType, attributeKey);
         return Futures.immediateFuture(
-                Optional.ofNullable(DaoUtil.getData(attributeKvRepository.findOne(compositeKey))));
+                Optional.ofNullable(DaoUtil.getData(attributeKvRepository.findById(compositeKey))));
     }
 
     @Override
@@ -64,7 +64,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
                                 getAttributeKvCompositeKey(entityId, attributeType, attributeKey))
                         .collect(Collectors.toList());
         return Futures.immediateFuture(
-                DaoUtil.convertDataList(Lists.newArrayList(attributeKvRepository.findAll(compositeKeys))));
+                DaoUtil.convertDataList(Lists.newArrayList(attributeKvRepository.findAllById(compositeKeys))));
     }
 
     @Override
@@ -103,7 +103,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
                 }).collect(Collectors.toList());
 
         return service.submit(() -> {
-            attributeKvRepository.delete(entitiesToDelete);
+            attributeKvRepository.deleteAll(entitiesToDelete);
             return null;
         });
     }
