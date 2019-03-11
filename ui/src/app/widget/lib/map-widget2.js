@@ -546,7 +546,13 @@ export default class TbMapWidgetV2 {
 		function mapPolygonArray (rawArray) {
 			let latLngArray = rawArray.map(function (el) {
 				if (el.length === 2) {
-					return tbMap.map.createLatLng(el[0], el[1]);
+					if (!angular.isNumber(el[0]) && !angular.isNumber(el[1])) {
+						return el.map(function (subEl) {
+							return mapPolygonArray(subEl);
+						})
+					} else {
+						return tbMap.map.createLatLng(el[0], el[1]);
+					}
 				} else if (el.length > 2) {
 					return mapPolygonArray(el);
 				} else {
