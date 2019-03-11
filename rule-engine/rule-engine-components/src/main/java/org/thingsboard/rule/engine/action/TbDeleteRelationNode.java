@@ -70,7 +70,7 @@ public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteR
     }
 
     private ListenableFuture<RelationContainer> getRelationContainerListenableFuture(TbContext ctx, TbMsg msg) {
-        relationType = processPattern(msg, config.getRelationTypePattern());
+        relationType = processPattern(msg, config.getRelationType());
         if (config.isDeleteForSingleEntity()) {
             return Futures.transformAsync(getEntity(ctx, msg), entityContainer -> doProcessEntityRelationAction(ctx, msg, entityContainer));
         } else {

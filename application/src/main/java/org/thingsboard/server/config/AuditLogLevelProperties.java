@@ -22,7 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
-@ConfigurationProperties(prefix = "audit_log.logging_level")
+@ConfigurationProperties(prefix = "audit-log.logging-level")
 public class AuditLogLevelProperties {
 
     private Map<String, String> mask = new HashMap<>();

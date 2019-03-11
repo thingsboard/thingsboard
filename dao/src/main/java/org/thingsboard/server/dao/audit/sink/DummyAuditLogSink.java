@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.audit.AuditLog;
 
 @Component
-@ConditionalOnProperty(prefix = "audit_log.sink", value = "type", havingValue = "none")
+@ConditionalOnProperty(prefix = "audit-log.sink", value = "type", havingValue = "none")
 public class DummyAuditLogSink implements AuditLogSink {
 
     @Override

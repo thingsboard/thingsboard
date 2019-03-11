@@ -284,10 +284,10 @@ public class JpaTimeseriesDao extends JpaAbstractDaoListeningExecutorService imp
                         entityId.getEntityType(),
                         fromTimeUUID(entityId.getId()),
                         key);
-        TsKvLatestEntity entry = tsKvLatestRepository.findOne(compositeKey);
+        Optional<TsKvLatestEntity> entry = tsKvLatestRepository.findById(compositeKey);
         TsKvEntry result;
-        if (entry != null) {
-            result = DaoUtil.getData(entry);
+        if (entry.isPresent()) {
+            result = DaoUtil.getData(entry.get());
         } else {
             result = new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry(key, null));
         }
