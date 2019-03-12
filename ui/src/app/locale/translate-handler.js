@@ -18,7 +18,7 @@
                        .name;
 
 /*@ngInject*/
-function ThingsboardMissingTranslateHandler($log, types) {
+function ThingsboardMissingTranslateHandler(/*$log, types*/) {
 
     return function (translationId) {
         /*if (translationId && !translationId.startsWith(types.translate.customTranslationsPrefix)) {
