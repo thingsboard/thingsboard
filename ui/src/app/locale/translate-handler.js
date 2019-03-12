@@ -20,7 +20,7 @@
 /*@ngInject*/
 function ThingsboardMissingTranslateHandler(/*$log, types*/) {
 
-    return function (translationId) {
+    return function (/*translationId*/) {
         /*if (translationId && !translationId.startsWith(types.translate.customTranslationsPrefix)) {
             $log.warn('Translation for ' + translationId + ' doesn\'t exist');
         }*/
