@@ -46,4 +46,5 @@ export default function AliasesEntitySelectPanelController(mdPanelRef, $scope, $
         }
     }
 
+  vm.searchTerms = {};
 }
