@@ -27,6 +27,7 @@ import thingsboardApiUser from '../api/user.service';
 import thingsboardNoAnimate from '../components/no-animate.directive';
 import thingsboardOnFinishRender from '../components/finish-render.directive';
 import thingsboardSideMenu from '../components/side-menu.directive';
+import thingsboardNavTree from '../components/nav-tree.directive';
 import thingsboardDashboardAutocomplete from '../components/dashboard-autocomplete.directive';
 import thingsboardKvMap from '../components/kv-map.directive';
 import thingsboardJsonObjectEdit from '../components/json-object-edit.directive';
@@ -89,6 +90,7 @@ export default angular.module('thingsboard.home', [
     thingsboardNoAnimate,
     thingsboardOnFinishRender,
     thingsboardSideMenu,
+    thingsboardNavTree,
     thingsboardDashboardAutocomplete,
     thingsboardKvMap,
     thingsboardJsonObjectEdit,
