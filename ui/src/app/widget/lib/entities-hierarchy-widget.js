@@ -54,6 +54,25 @@ function EntitiesHierarchyWidgetController($element, $scope, $q, $timeout, toast
     vm.nodesMap = {};
     vm.pendingUpdateNodeTasks = {};
 
+    vm.query = {
+        search: null
+    };
+
+    vm.searchAction = {
+        name: 'action.search',
+        show: true,
+        onAction: function() {
+            vm.enterFilterMode();
+        },
+        icon: 'search'
+    };
+
+    vm.onNodesInserted = onNodesInserted;
+    vm.onNodeSelected = onNodeSelected;
+    vm.enterFilterMode = enterFilterMode;
+    vm.exitFilterMode = exitFilterMode;
+    vm.searchCallback = searchCallback;
+
     $scope.$watch('vm.ctx', function() {
         if (vm.ctx && vm.ctx.defaultSubscription) {
             vm.settings = vm.ctx.settings;
@@ -65,6 +84,12 @@ function EntitiesHierarchyWidgetController($element, $scope, $q, $timeout, toast
         }
     });
 
+    $scope.$watch("vm.query.search", function(newVal, prevVal) {
+        if (!angular.equals(newVal, prevVal) && vm.query.search != null) {
+            updateSearchNodes();
+        }
+    });
+
     $scope.$on('entities-hierarchy-data-updated', function(event, hierarchyId) {
         if (vm.hierarchyId == hierarchyId) {
             if (vm.subscription) {
@@ -73,11 +98,9 @@ function EntitiesHierarchyWidgetController($element, $scope, $q, $timeout, toast
         }
     });
 
-    vm.onNodesInserted = onNodesInserted;
-
-    vm.onNodeSelected = onNodeSelected;
-
     function initializeConfig() {
+
+        vm.ctx.widgetActions = [ vm.searchAction ];
 
         var testNodeCtx = {
             entity: {
@@ -98,6 +121,7 @@ function EntitiesHierarchyWidgetController($element, $scope, $q, $timeout, toast
         var nodeIconFunction = loadNodeCtxFunction(vm.settings.nodeIconFunction, 'nodeCtx', testNodeCtx);
         var nodeTextFunction = loadNodeCtxFunction(vm.settings.nodeTextFunction, 'nodeCtx', testNodeCtx);
         var nodeDisabledFunction = loadNodeCtxFunction(vm.settings.nodeDisabledFunction, 'nodeCtx', testNodeCtx);
+        var nodeOpenedFunction = loadNodeCtxFunction(vm.settings.nodeOpenedFunction, 'nodeCtx', testNodeCtx);
         var nodeHasChildrenFunction = loadNodeCtxFunction(vm.settings.nodeHasChildrenFunction, 'nodeCtx', testNodeCtx);
 
         var testNodeCtx2 = angular.copy(testNodeCtx);
@@ -109,6 +133,7 @@ function EntitiesHierarchyWidgetController($element, $scope, $q, $timeout, toast
         vm.nodeIconFunction = nodeIconFunction || defaultNodeIconFunction;
         vm.nodeTextFunction = nodeTextFunction || ((nodeCtx) => nodeCtx.entity.name);
         vm.nodeDisabledFunction = nodeDisabledFunction || (() => false);
+        vm.nodeOpenedFunction = nodeOpenedFunction || defaultNodeOpenedFunction;
         vm.nodeHasChildrenFunction = nodeHasChildrenFunction || (() => true);
         vm.nodesSortFunction = nodesSortFunction || defaultSortFunction;
     }
@@ -129,8 +154,38 @@ function EntitiesHierarchyWidgetController($element, $scope, $q, $timeout, toast
         return nodeCtxFunction;
     }
 
+    function enterFilterMode () {
+        vm.query.search = '';
+        vm.ctx.hideTitlePanel = true;
+        $timeout(()=>{
+            angular.element(vm.ctx.$container).find('.searchInput').focus();
+        })
+    }
+
+    function exitFilterMode () {
+        vm.query.search = null;
+        updateSearchNodes();
+        vm.ctx.hideTitlePanel = false;
+    }
+
+    function searchCallback (searchText, node) {
+        var theNode = vm.nodesMap[node.id];
+        if (theNode && theNode.data.searchText) {
+            return theNode.data.searchText.includes(searchText.toLowerCase());
+        }
+        return false;
+    }
+
     function updateDatasources() {
         vm.loadNodes = loadNodes;
+    }
+
+    function updateSearchNodes() {
+        if (vm.query.search != null) {
+            vm.nodeEditCallbacks.search(vm.query.search);
+        } else {
+            vm.nodeEditCallbacks.clearSearch();
+        }
     }
 
     function onNodesInserted(nodes/*, parent*/) {
@@ -222,6 +277,7 @@ function EntitiesHierarchyWidgetController($element, $scope, $q, $timeout, toast
     function prepareNodeText(node) {
         var nodeIcon = prepareNodeIcon(node.data.nodeCtx);
         var nodeText = vm.nodeTextFunction(node.data.nodeCtx);
+        node.data.searchText = nodeText ? nodeText.replace(/<[^>]+>/g, '').toLowerCase() : "";
         return nodeIcon + nodeText;
     }
 
@@ -298,7 +354,8 @@ function EntitiesHierarchyWidgetController($element, $scope, $q, $timeout, toast
                         nodeCtx: nodeCtx
                     };
                     node.state = {
-                        disabled: vm.nodeDisabledFunction(node.data.nodeCtx)
+                        disabled: vm.nodeDisabledFunction(node.data.nodeCtx),
+                        opened: vm.nodeOpenedFunction(node.data.nodeCtx)
                     };
                     node.text = prepareNodeText(node);
                     node.children = vm.nodeHasChildrenFunction(node.data.nodeCtx);
@@ -457,6 +514,10 @@ function EntitiesHierarchyWidgetController($element, $scope, $q, $timeout, toast
         return {
             materialIcon: materialIcon
         };
+    }
+
+    function defaultNodeOpenedFunction(nodeCtx) {
+        return nodeCtx.level <= 4;
     }
 
     function defaultSortFunction(nodeCtx1, nodeCtx2) {

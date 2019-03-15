@@ -33,8 +33,10 @@ function NavTree() {
         bindToController: {
             loadNodes: '=',
             editCallbacks: '=',
+            enableSearch: '@?',
             onNodeSelected: '&',
-            onNodesInserted: '&'
+            onNodesInserted: '&',
+            searchCallback: '&?'
         },
         controller: NavTreeController,
         controllerAs: 'vm',
@@ -55,17 +57,30 @@ function NavTreeController($scope, $element, types) {
     });
 
     function initTree() {
+        var config = {
+            core: {
+                multiple: false,
+                check_callback: true,
+                themes: { name: 'proton', responsive: true },
+                data: vm.loadNodes
+            }
+        };
+
+        if (vm.enableSearch) {
+            config.plugins = ["search"];
+            config.search = {
+                case_sensitive: false,
+                show_only_matches: true,
+                show_only_matches_children: false,
+                search_leaves_only: false
+            };
+            if (vm.searchCallback) {
+                config.search.search_callback = (searchText, node) => vm.searchCallback({searchText: searchText, node: node});
+            }
+        }
+
         vm.treeElement = angular.element('.tb-nav-tree-container', $element)
-            .jstree(
-                {
-                    core: {
-                        multiple: false,
-                        check_callback: true,
-                        themes: { name: 'proton', responsive: true },
-                        data: vm.loadNodes
-                    }
-                }
-            );
+            .jstree(config);
 
         vm.treeElement.on("changed.jstree", function (e, data) {
             if (vm.onNodeSelected) {
@@ -179,6 +194,12 @@ function NavTreeController($scope, $element, types) {
                         vm.treeElement.jstree('redraw');
                     }
                 }
+            };
+            vm.editCallbacks.search = (searchText) => {
+                vm.treeElement.jstree('search', searchText);
+            };
+            vm.editCallbacks.clearSearch = () => {
+                vm.treeElement.jstree('clear_search');
             };
         }
     }

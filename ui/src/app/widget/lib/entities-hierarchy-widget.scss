@@ -14,7 +14,21 @@
  * limitations under the License.
  */
 
+.tb-has-timewindow {
+  .tb-entities-hierarchy {
+    md-toolbar {
+      min-height: 60px;
+      max-height: 60px;
+    }
+  }
+}
+
 .tb-entities-hierarchy {
+  md-toolbar {
+    min-height: 39px;
+    max-height: 39px;
+  }
+
   .tb-entities-nav-tree-panel {
     overflow-x: auto;
     overflow-y: auto;
