@@ -697,6 +697,4 @@ function tripAnimationController($document, $scope, $http, $timeout, $filter, $l
 		}
 		if (trip && vm.activeTripIndex !== trip.dSIndex) vm.activeTripIndex = trip.dSIndex;
 	}
-
-	$log.log(vm);
 }
