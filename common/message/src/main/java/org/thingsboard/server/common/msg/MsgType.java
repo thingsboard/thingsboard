@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ public enum MsgType {
      * See {@link org.thingsboard.server.common.msg.cluster.ClusterEventMsg}
      */
     CLUSTER_EVENT_MSG,
+
+    APP_INIT_MSG,
 
     /**
      * All messages, could be send  to cluster

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.thingsboard.server.service.telemetry.sub;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.service.telemetry.TelemetryFeature;
 
 import java.util.Map;
@@ -30,6 +31,7 @@ public class SubscriptionState {
 
     @Getter private final String wsSessionId;
     @Getter private final int subscriptionId;
+    @Getter private final TenantId tenantId;
     @Getter private final EntityId entityId;
     @Getter private final TelemetryFeature type;
     @Getter private final boolean allKeys;

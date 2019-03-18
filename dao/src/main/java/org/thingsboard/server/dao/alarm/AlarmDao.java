@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,11 +31,13 @@ import java.util.UUID;
  */
 public interface AlarmDao extends Dao<Alarm> {
 
+    Boolean deleteAlarm(TenantId tenantId, Alarm alarm);
+
     ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
 
-    ListenableFuture<Alarm> findAlarmByIdAsync(UUID key);
+    ListenableFuture<Alarm> findAlarmByIdAsync(TenantId tenantId, UUID key);
 
-    Alarm save(Alarm alarm);
+    Alarm save(TenantId tenantId, Alarm alarm);
 
-    ListenableFuture<List<AlarmInfo>> findAlarms(AlarmQuery query);
+    ListenableFuture<List<AlarmInfo>> findAlarms(TenantId tenantId, AlarmQuery query);
 }

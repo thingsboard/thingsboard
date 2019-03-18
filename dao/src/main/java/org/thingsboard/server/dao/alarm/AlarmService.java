@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,17 +35,19 @@ public interface AlarmService {
 
     Alarm createOrUpdateAlarm(Alarm alarm);
 
-    ListenableFuture<Boolean> ackAlarm(AlarmId alarmId, long ackTs);
+    Boolean deleteAlarm(TenantId tenantId, AlarmId alarmId);
 
-    ListenableFuture<Boolean> clearAlarm(AlarmId alarmId, JsonNode details, long ackTs);
+    ListenableFuture<Boolean> ackAlarm(TenantId tenantId, AlarmId alarmId, long ackTs);
 
-    ListenableFuture<Alarm> findAlarmByIdAsync(AlarmId alarmId);
+    ListenableFuture<Boolean> clearAlarm(TenantId tenantId, AlarmId alarmId, JsonNode details, long ackTs);
 
-    ListenableFuture<AlarmInfo> findAlarmInfoByIdAsync(AlarmId alarmId);
+    ListenableFuture<Alarm> findAlarmByIdAsync(TenantId tenantId, AlarmId alarmId);
 
-    ListenableFuture<TimePageData<AlarmInfo>> findAlarms(AlarmQuery query);
+    ListenableFuture<AlarmInfo> findAlarmInfoByIdAsync(TenantId tenantId, AlarmId alarmId);
 
-    AlarmSeverity findHighestAlarmSeverity(EntityId entityId, AlarmSearchStatus alarmSearchStatus,
+    ListenableFuture<TimePageData<AlarmInfo>> findAlarms(TenantId tenantId, AlarmQuery query);
+
+    AlarmSeverity findHighestAlarmSeverity(TenantId tenantId, EntityId entityId, AlarmSearchStatus alarmSearchStatus,
                                            AlarmStatus alarmStatus);
 
     ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type);

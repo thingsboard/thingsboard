@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -138,7 +138,7 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
         headerAction.icon = descriptor.icon;
         headerAction.descriptor = descriptor;
         headerAction.onAction = function($event) {
-            var entityInfo = getFirstEntityInfo();
+            var entityInfo = getActiveEntityInfo();
             var entityId = entityInfo ? entityInfo.entityId : null;
             var entityName = entityInfo ? entityInfo.entityName : null;
             handleWidgetAction($event, this.descriptor, entityId, entityName);
@@ -502,13 +502,15 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
         }
     }
 
-    function getFirstEntityInfo() {
-        var entityInfo;
-        for (var id in widgetContext.subscriptions) {
-            var subscription = widgetContext.subscriptions[id];
-            entityInfo = subscription.getFirstEntityInfo();
-            if (entityInfo) {
-                break;
+    function getActiveEntityInfo() {
+        var entityInfo = widgetContext.activeEntityInfo;
+        if (!entityInfo) {
+            for (var id in widgetContext.subscriptions) {
+                var subscription = widgetContext.subscriptions[id];
+                entityInfo = subscription.getFirstEntityInfo();
+                if (entityInfo) {
+                    break;
+                }
             }
         }
         return entityInfo;

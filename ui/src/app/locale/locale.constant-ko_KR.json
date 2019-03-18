@@ -85,7 +85,6 @@
         "enable-tls": "TLS 사용",
         "send-test-mail": "테스트 메일 보내기"
     },
-
     "alarm": {
         "alarm": "Alarm",
         "alarms": "Alarms",
@@ -831,7 +830,6 @@
         "modbus-register-count": "Register count",
         "modbus-register-count-range": "Register count should be a positive value.",
         "modbus-byte-order": "Byte order",
-
         "sync": {
             "status": "Status",
             "sync": "Sync",
@@ -839,7 +837,6 @@
             "last-sync-time": "Last sync time",
             "not-available": "Not available"
         },
-
         "export-extensions-configuration": "Export extensions configuration",
         "import-extensions-configuration": "Import extensions configuration",
         "import-extensions": "Import extensions",
@@ -1321,6 +1318,7 @@
         "widget-action": {
             "action-cell-button": "Action cell button",
             "row-click": "On row click",
+            "polygon-click": "On polygon click",
             "marker-click": "On marker click",
             "tooltip-tag-action": "Tooltip tag action"
         }
@@ -1328,15 +1326,17 @@
     "language": {
         "language": "언어",
         "locales": {
+            "de_DE": "독일어",
             "en_US": "영어",
-			"fr_FR": "프랑스의",
+            "fr_FR": "프랑스의",
             "ko_KR": "한글",
             "zh_CN": "중국어",
             "ru_RU": "러시아어",
             "es_ES": "스페인어",
             "it_IT": "이탈리아 사람",
             "ja_JA": "일본어",
-            "tr_TR": "터키어"
+            "tr_TR": "터키어",
+            "fa_IR": "페르시아 인"
         }
     }
 }

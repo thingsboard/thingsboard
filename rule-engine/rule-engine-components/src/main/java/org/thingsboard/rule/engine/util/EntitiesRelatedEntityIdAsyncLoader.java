@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public class EntitiesRelatedEntityIdAsyncLoader {
                                                              RelationsQuery relationsQuery) {
         RelationService relationService = ctx.getRelationService();
         EntityRelationsQuery query = buildQuery(originator, relationsQuery);
-        ListenableFuture<List<EntityRelation>> asyncRelation = relationService.findByQuery(query);
+        ListenableFuture<List<EntityRelation>> asyncRelation = relationService.findByQuery(ctx.getTenantId(), query);
         if (relationsQuery.getDirection() == EntitySearchDirection.FROM) {
             return Futures.transformAsync(asyncRelation, r -> CollectionUtils.isNotEmpty(r) ? Futures.immediateFuture(r.get(0).getTo())
                     : Futures.immediateFuture(null));

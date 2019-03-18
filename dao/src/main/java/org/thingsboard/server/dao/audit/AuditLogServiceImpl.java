@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Slf4j
 @Service
-@ConditionalOnProperty(prefix = "audit_log", value = "enabled", havingValue = "true")
+@ConditionalOnProperty(prefix = "audit-log", value = "enabled", havingValue = "true")
 public class AuditLogServiceImpl implements AuditLogService {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
@@ -128,7 +128,7 @@ public class AuditLogServiceImpl implements AuditLogService {
                 entityName = entity.getName();
             } else {
                 try {
-                    entityName = entityService.fetchEntityNameAsync(entityId).get();
+                    entityName = entityService.fetchEntityNameAsync(tenantId, entityId).get();
                 } catch (Exception ex) {}
             }
             if (e != null) {
@@ -315,7 +315,7 @@ public class AuditLogServiceImpl implements AuditLogService {
         AuditLog auditLogEntry = createAuditLogEntry(tenantId, entityId, entityName, customerId, userId, userName,
                 actionType, actionData, actionStatus, actionFailureDetails);
         log.trace("Executing logAction [{}]", auditLogEntry);
-        auditLogValidator.validate(auditLogEntry);
+        auditLogValidator.validate(auditLogEntry, AuditLog::getTenantId);
         List<ListenableFuture<Void>> futures = Lists.newArrayListWithExpectedSize(INSERTS_PER_ENTRY);
         futures.add(auditLogDao.savePartitionsByTenantId(auditLogEntry));
         futures.add(auditLogDao.saveByTenantId(auditLogEntry));
@@ -331,7 +331,7 @@ public class AuditLogServiceImpl implements AuditLogService {
     private DataValidator<AuditLog> auditLogValidator =
             new DataValidator<AuditLog>() {
                 @Override
-                protected void validateDataImpl(AuditLog auditLog) {
+                protected void validateDataImpl(TenantId tenantId, AuditLog auditLog) {
                     if (auditLog.getEntityId() == null) {
                         throw new DataValidationException("Entity Id should be specified!");
                     }

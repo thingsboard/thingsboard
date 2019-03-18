@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,19 +30,19 @@ import java.util.Optional;
 
 public interface AssetService {
 
-    Asset findAssetById(AssetId assetId);
+    Asset findAssetById(TenantId tenantId, AssetId assetId);
 
-    ListenableFuture<Asset> findAssetByIdAsync(AssetId assetId);
+    ListenableFuture<Asset> findAssetByIdAsync(TenantId tenantId, AssetId assetId);
 
     Asset findAssetByTenantIdAndName(TenantId tenantId, String name);
 
     Asset saveAsset(Asset asset);
 
-    Asset assignAssetToCustomer(AssetId assetId, CustomerId customerId);
+    Asset assignAssetToCustomer(TenantId tenantId, AssetId assetId, CustomerId customerId);
 
-    Asset unassignAssetFromCustomer(AssetId assetId);
+    Asset unassignAssetFromCustomer(TenantId tenantId, AssetId assetId);
 
-    void deleteAsset(AssetId assetId);
+    void deleteAsset(TenantId tenantId, AssetId assetId);
 
     TextPageData<Asset> findAssetsByTenantId(TenantId tenantId, TextPageLink pageLink);
 
@@ -60,7 +60,7 @@ public interface AssetService {
 
     void unassignCustomerAssets(TenantId tenantId, CustomerId customerId);
 
-    ListenableFuture<List<Asset>> findAssetsByQuery(AssetSearchQuery query);
+    ListenableFuture<List<Asset>> findAssetsByQuery(TenantId tenantId, AssetSearchQuery query);
 
     ListenableFuture<List<EntitySubtype>> findAssetTypesByTenantId(TenantId tenantId);
 }

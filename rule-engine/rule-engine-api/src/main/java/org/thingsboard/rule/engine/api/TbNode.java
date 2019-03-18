@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.api;
 
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 
 import java.util.concurrent.ExecutionException;
 
@@ -29,5 +30,7 @@ public interface TbNode {
     void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException;
 
     void destroy();
+
+    default void onClusterEventMsg(TbContext ctx, ClusterEventMsg msg) {}
 
 }

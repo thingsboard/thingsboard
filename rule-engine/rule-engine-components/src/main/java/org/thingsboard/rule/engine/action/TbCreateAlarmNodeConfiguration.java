@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ public class TbCreateAlarmNodeConfiguration extends TbAbstractAlarmNodeConfigura
 
     private AlarmSeverity severity;
     private boolean propagate;
+    private boolean useMessageAlarmData;
 
     @Override
     public TbCreateAlarmNodeConfiguration defaultConfiguration() {
@@ -36,6 +37,7 @@ public class TbCreateAlarmNodeConfiguration extends TbAbstractAlarmNodeConfigura
         configuration.setAlarmType("General Alarm");
         configuration.setSeverity(AlarmSeverity.CRITICAL);
         configuration.setPropagate(false);
+        configuration.setUseMessageAlarmData(false);
         return configuration;
     }
 }

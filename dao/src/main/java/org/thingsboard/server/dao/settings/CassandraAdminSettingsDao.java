@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.datastax.driver.core.querybuilder.Select.Where;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.nosql.AdminSettingsEntity;
 import org.thingsboard.server.dao.nosql.CassandraAbstractModelDao;
@@ -46,11 +47,11 @@ public class CassandraAdminSettingsDao extends CassandraAbstractModelDao<AdminSe
     }
 
     @Override
-    public AdminSettings findByKey(String key) {
+    public AdminSettings findByKey(TenantId tenantId, String key) {
         log.debug("Try to find admin settings by key [{}] ", key);
         Where query = select().from(ADMIN_SETTINGS_BY_KEY_COLUMN_FAMILY_NAME).where(eq(ADMIN_SETTINGS_KEY_PROPERTY, key));
         log.trace("Execute query {}", query);
-        AdminSettingsEntity adminSettingsEntity = findOneByStatement(query);
+        AdminSettingsEntity adminSettingsEntity = findOneByStatement(tenantId, query);
         log.trace("Found admin settings [{}] by key [{}]", adminSettingsEntity, key);
         return DaoUtil.getData(adminSettingsEntity);
     }

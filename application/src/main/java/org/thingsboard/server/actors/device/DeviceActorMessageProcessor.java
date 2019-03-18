@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.thingsboard.server.actors.device;
 
 import akka.actor.ActorContext;
-import akka.event.LoggingAdapter;
 import com.datastax.driver.core.utils.UUIDs;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -24,13 +23,14 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.thingsboard.rule.engine.api.RpcError;
 import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.rule.engine.api.msg.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.shared.AbstractContextAwareMsgProcessor;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -41,7 +41,6 @@ import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.msg.timeout.DeviceActorClientSideRpcTimeoutMsg;
@@ -80,11 +79,13 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+
+import static org.thingsboard.server.common.data.DataConstants.CLIENT_SCOPE;
+import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
 
 /**
  * @author Andrew Shvayka
@@ -117,17 +118,23 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         this.rpcSubscriptions = new HashMap<>();
         this.toDeviceRpcPendingMap = new HashMap<>();
         this.toServerRpcPendingMap = new HashMap<>();
-        initAttributes();
-        restoreSessions();
+        if (initAttributes()) {
+            restoreSessions();
+        }
     }
 
-    private void initAttributes() {
-        Device device = systemContext.getDeviceService().findDeviceById(deviceId);
-        this.deviceName = device.getName();
-        this.deviceType = device.getType();
-        this.defaultMetaData = new TbMsgMetaData();
-        this.defaultMetaData.putValue("deviceName", deviceName);
-        this.defaultMetaData.putValue("deviceType", deviceType);
+    private boolean initAttributes() {
+        Device device = systemContext.getDeviceService().findDeviceById(tenantId, deviceId);
+        if (device != null) {
+            this.deviceName = device.getName();
+            this.deviceType = device.getType();
+            this.defaultMetaData = new TbMsgMetaData();
+            this.defaultMetaData.putValue("deviceName", deviceName);
+            this.defaultMetaData.putValue("deviceType", deviceType);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     void processRpcRequest(ActorContext context, ToDeviceRpcRequestActorMsg msg) {
@@ -262,10 +269,8 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     }
 
     private void handleGetAttributesRequest(ActorContext context, SessionInfoProto sessionInfo, GetAttributeRequestMsg request) {
-        ListenableFuture<List<AttributeKvEntry>> clientAttributesFuture = getAttributeKvEntries(deviceId, DataConstants.CLIENT_SCOPE, toOptionalSet(request.getClientAttributeNamesList()));
-        ListenableFuture<List<AttributeKvEntry>> sharedAttributesFuture = getAttributeKvEntries(deviceId, DataConstants.SHARED_SCOPE, toOptionalSet(request.getSharedAttributeNamesList()));
         int requestId = request.getRequestId();
-        Futures.addCallback(Futures.allAsList(Arrays.asList(clientAttributesFuture, sharedAttributesFuture)), new FutureCallback<List<List<AttributeKvEntry>>>() {
+        Futures.addCallback(getAttributesKvEntries(request), new FutureCallback<List<List<AttributeKvEntry>>>() {
             @Override
             public void onSuccess(@Nullable List<List<AttributeKvEntry>> result) {
                 GetAttributeResponseMsg responseMsg = GetAttributeResponseMsg.newBuilder()
@@ -286,16 +291,35 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         });
     }
 
-    private ListenableFuture<List<AttributeKvEntry>> getAttributeKvEntries(DeviceId deviceId, String scope, Optional<Set<String>> names) {
-        if (names.isPresent()) {
-            if (!names.get().isEmpty()) {
-                return systemContext.getAttributesService().find(deviceId, scope, names.get());
-            } else {
-                return systemContext.getAttributesService().findAll(deviceId, scope);
-            }
+    private ListenableFuture<List<List<AttributeKvEntry>>> getAttributesKvEntries(GetAttributeRequestMsg request) {
+        ListenableFuture<List<AttributeKvEntry>> clientAttributesFuture;
+        ListenableFuture<List<AttributeKvEntry>> sharedAttributesFuture;
+        if (CollectionUtils.isEmpty(request.getClientAttributeNamesList()) && CollectionUtils.isEmpty(request.getSharedAttributeNamesList())) {
+            clientAttributesFuture = findAllAttributesByScope(CLIENT_SCOPE);
+            sharedAttributesFuture = findAllAttributesByScope(SHARED_SCOPE);
+        } else if (!CollectionUtils.isEmpty(request.getClientAttributeNamesList()) && !CollectionUtils.isEmpty(request.getSharedAttributeNamesList())) {
+            clientAttributesFuture = findAttributesByScope(toSet(request.getClientAttributeNamesList()), CLIENT_SCOPE);
+            sharedAttributesFuture = findAttributesByScope(toSet(request.getSharedAttributeNamesList()), SHARED_SCOPE);
+        } else if (CollectionUtils.isEmpty(request.getClientAttributeNamesList()) && !CollectionUtils.isEmpty(request.getSharedAttributeNamesList())) {
+            clientAttributesFuture = Futures.immediateFuture(Collections.emptyList());
+            sharedAttributesFuture = findAttributesByScope(toSet(request.getSharedAttributeNamesList()), SHARED_SCOPE);
         } else {
-            return Futures.immediateFuture(Collections.emptyList());
+            sharedAttributesFuture = Futures.immediateFuture(Collections.emptyList());
+            clientAttributesFuture = findAttributesByScope(toSet(request.getClientAttributeNamesList()), CLIENT_SCOPE);
         }
+        return Futures.allAsList(Arrays.asList(clientAttributesFuture, sharedAttributesFuture));
+    }
+
+    private ListenableFuture<List<AttributeKvEntry>> findAllAttributesByScope(String scope) {
+        return systemContext.getAttributesService().findAll(tenantId, deviceId, scope);
+    }
+
+    private ListenableFuture<List<AttributeKvEntry>> findAttributesByScope(Set<String> attributesSet, String scope) {
+        return systemContext.getAttributesService().find(tenantId, deviceId, scope, attributesSet);
+    }
+
+    private Set<String> toSet(List<String> strings) {
+        return new HashSet<>(strings);
     }
 
     private void handlePostAttributesRequest(ActorContext context, SessionInfoProto sessionInfo, PostAttributeMsg postAttributes) {
@@ -367,7 +391,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             AttributeUpdateNotificationMsg.Builder notification = AttributeUpdateNotificationMsg.newBuilder();
             if (msg.isDeleted()) {
                 List<String> sharedKeys = msg.getDeletedKeys().stream()
-                        .filter(key -> DataConstants.SHARED_SCOPE.equals(key.getScope()))
+                        .filter(key -> SHARED_SCOPE.equals(key.getScope()))
                         .map(AttributeKey::getAttributeKey)
                         .collect(Collectors.toList());
                 if (!sharedKeys.isEmpty()) {
@@ -375,7 +399,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                     hasNotificationData = true;
                 }
             } else {
-                if (DataConstants.SHARED_SCOPE.equals(msg.getScope())) {
+                if (SHARED_SCOPE.equals(msg.getScope())) {
                     List<AttributeKvEntry> attributes = new ArrayList<>(msg.getValues());
                     if (attributes.size() > 0) {
                         List<TsKvProto> sharedUpdated = msg.getValues().stream().map(this::toTsKvProto)
@@ -483,19 +507,19 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         }
     }
 
-    private void handleSessionActivity(ActorContext context, SessionInfoProto sessionInfo, TransportProtos.SubscriptionInfoProto subscriptionInfo) {
-        UUID sessionId = getSessionId(sessionInfo);
-        SessionInfoMetaData sessionMD = sessions.get(sessionId);
-        if (sessionMD != null) {
-            sessionMD.setLastActivityTime(subscriptionInfo.getLastActivityTime());
-            sessionMD.setSubscribedToAttributes(subscriptionInfo.getAttributeSubscription());
-            sessionMD.setSubscribedToRPC(subscriptionInfo.getRpcSubscription());
-            if (subscriptionInfo.getAttributeSubscription()) {
-                attributeSubscriptions.putIfAbsent(sessionId, sessionMD.getSessionInfo());
-            }
-            if (subscriptionInfo.getRpcSubscription()) {
-                rpcSubscriptions.putIfAbsent(sessionId, sessionMD.getSessionInfo());
-            }
+    private void handleSessionActivity(ActorContext context, SessionInfoProto sessionInfoProto, TransportProtos.SubscriptionInfoProto subscriptionInfo) {
+        UUID sessionId = getSessionId(sessionInfoProto);
+        SessionInfoMetaData sessionMD = sessions.computeIfAbsent(sessionId,
+                id -> new SessionInfoMetaData(new SessionInfo(TransportProtos.SessionType.ASYNC, sessionInfoProto.getNodeId()), 0L));
+
+        sessionMD.setLastActivityTime(subscriptionInfo.getLastActivityTime());
+        sessionMD.setSubscribedToAttributes(subscriptionInfo.getAttributeSubscription());
+        sessionMD.setSubscribedToRPC(subscriptionInfo.getRpcSubscription());
+        if (subscriptionInfo.getAttributeSubscription()) {
+            attributeSubscriptions.putIfAbsent(sessionId, sessionMD.getSessionInfo());
+        }
+        if (subscriptionInfo.getRpcSubscription()) {
+            rpcSubscriptions.putIfAbsent(sessionId, sessionMD.getSessionInfo());
         }
         dumpSessions();
     }
@@ -542,14 +566,6 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             }
         }
         return json;
-    }
-
-    private Optional<Set<String>> toOptionalSet(List<String> strings) {
-        if (strings == null || strings.isEmpty()) {
-            return Optional.empty();
-        } else {
-            return Optional.of(new HashSet<>(strings));
-        }
     }
 
     private void sendToTransport(GetAttributeResponseMsg responseMsg, SessionInfoProto sessionInfo) {
@@ -629,8 +645,14 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
 
     private void restoreSessions() {
         log.debug("[{}] Restoring sessions from cache", deviceId);
-        TransportProtos.DeviceSessionsCacheEntry sessionsDump = systemContext.getDeviceSessionCacheService().get(deviceId);
-        if (sessionsDump.getSerializedSize() == 0) {
+        TransportProtos.DeviceSessionsCacheEntry sessionsDump = null;
+        try {
+            sessionsDump = TransportProtos.DeviceSessionsCacheEntry.parseFrom(systemContext.getDeviceSessionCacheService().get(deviceId));
+        } catch (InvalidProtocolBufferException e) {
+            log.warn("[{}] Failed to decode device sessions from cache", deviceId);
+            return;
+        }
+        if (sessionsDump.getSessionsCount() == 0) {
             log.debug("[{}] No session information found", deviceId);
             return;
         }
@@ -677,7 +699,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         });
         systemContext.getDeviceSessionCacheService()
                 .put(deviceId, TransportProtos.DeviceSessionsCacheEntry.newBuilder()
-                        .addAllSessions(sessionsList).build());
+                        .addAllSessions(sessionsList).build().toByteArray());
     }
 
     void initSessionTimeout(ActorContext context) {

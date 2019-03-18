@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.dashboard;
 
 import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.Dao;
 
 /**
@@ -29,6 +30,6 @@ public interface DashboardDao extends Dao<Dashboard> {
      * @param dashboard the dashboard object
      * @return saved dashboard object
      */
-    Dashboard save(Dashboard dashboard);
+    Dashboard save(TenantId tenantId, Dashboard dashboard);
 
 }

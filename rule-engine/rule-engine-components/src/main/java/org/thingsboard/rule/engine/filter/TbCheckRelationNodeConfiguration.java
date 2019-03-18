@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,6 @@ package org.thingsboard.rule.engine.filter;
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
-
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Created by ashvayka on 19.01.18.
@@ -33,12 +29,14 @@ public class TbCheckRelationNodeConfiguration implements NodeConfiguration<TbChe
     private String entityId;
     private String entityType;
     private String relationType;
+    private boolean checkForSingleEntity;
 
     @Override
     public TbCheckRelationNodeConfiguration defaultConfiguration() {
         TbCheckRelationNodeConfiguration configuration = new TbCheckRelationNodeConfiguration();
         configuration.setDirection(EntitySearchDirection.FROM.name());
         configuration.setRelationType("Contains");
+        configuration.setCheckForSingleEntity(true);
         return configuration;
     }
 }

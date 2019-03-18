@@ -1175,7 +1175,7 @@
         "delete-rulechains-action-title": "{ count, plural, 1 {1 kuralı} other {# kuralı} } sil",
         "delete-rulechains-text": "UYARI: Onaylandıktan sonra seçili tüm kurallar ve ilişkili tüm veriler geri yüklenemez şekilde silinecektir.",
         "add-rulechain-text": "Yeni kural ekle",
-        "no-rulechains-text":"Hiçbir kural bulunamadı",
+        "no-rulechains-text": "Hiçbir kural bulunamadı",
         "rulechain-details": "Kural detayları",
         "details": "Detaylar",
         "events": "Olaylar",
@@ -1524,13 +1524,15 @@
         "widget-action": {
             "action-cell-button": "Eylem hücre butonu",
             "row-click": "Satır tıklama eylemi",
-            "marker-click": "İşaretçi tıklama eylemi",
+            "polygon-click": "Satır tıklama eylemi",
+            "marker-click": "Çokgen tıklama eylemi",
             "tooltip-tag-action": "İpucu etiket eylemi"
         }
     },
     "language": {
         "language": "Dil",
         "locales": {
+            "de_DE": "Almanca",
             "fr_FR": "Fransızca",
             "zh_CN": "Çince",
             "en_US": "İngilizce",
@@ -1539,7 +1541,8 @@
             "ru_RU": "Rusça",
             "es_ES": "İspanyol",
             "ja_JA": "Japonca",
-            "tr_TR": "Türkçe"
+            "tr_TR": "Türkçe",
+            "fa_IR": "Farsça"
         }
     }
 }

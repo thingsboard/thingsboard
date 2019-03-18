@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ public class JpaAssetDaoTest extends AbstractJpaDaoTest {
             UUID customerId = i % 2 == 0 ? customerId1 : customerId2;
             saveAsset(assetId, tenantId, customerId, "ASSET_" + i, "TYPE_1");
         }
-        assertEquals(60, assetDao.find().size());
+        assertEquals(60, assetDao.find(new TenantId(tenantId1)).size());
 
         TextPageLink pageLink1 = new TextPageLink(20, "ASSET_");
         List<Asset> assets1 = assetDao.findAssetsByTenantId(tenantId1, pageLink1);
@@ -216,6 +216,6 @@ public class JpaAssetDaoTest extends AbstractJpaDaoTest {
         asset.setCustomerId(new CustomerId(customerId));
         asset.setName(name);
         asset.setType(type);
-        assetDao.save(asset);
+        assetDao.save(new TenantId(tenantId), asset);
     }
 }

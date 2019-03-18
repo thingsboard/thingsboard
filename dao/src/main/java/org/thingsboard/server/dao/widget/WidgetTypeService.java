@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,11 @@ import java.util.List;
 
 public interface WidgetTypeService {
 
-    WidgetType findWidgetTypeById(WidgetTypeId widgetTypeId);
+    WidgetType findWidgetTypeById(TenantId tenantId, WidgetTypeId widgetTypeId);
 
     WidgetType saveWidgetType(WidgetType widgetType);
 
-    void deleteWidgetType(WidgetTypeId widgetTypeId);
+    void deleteWidgetType(TenantId tenantId, WidgetTypeId widgetTypeId);
 
     List<WidgetType> findWidgetTypesByTenantIdAndBundleAlias(TenantId tenantId, String bundleAlias);
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,8 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.security.permission.Resource;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -74,7 +76,7 @@ public class EntityViewController extends BaseController {
     public EntityView getEntityViewById(@PathVariable(ENTITY_VIEW_ID) String strEntityViewId) throws ThingsboardException {
         checkParameter(ENTITY_VIEW_ID, strEntityViewId);
         try {
-            return checkEntityViewId(new EntityViewId(toUUID(strEntityViewId)));
+            return checkEntityViewId(new EntityViewId(toUUID(strEntityViewId)), Operation.READ);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -86,6 +88,12 @@ public class EntityViewController extends BaseController {
     public EntityView saveEntityView(@RequestBody EntityView entityView) throws ThingsboardException {
         try {
             entityView.setTenantId(getCurrentUser().getTenantId());
+
+            Operation operation = entityView.getId() == null ? Operation.CREATE : Operation.WRITE;
+
+            accessControlService.checkPermission(getCurrentUser(), Resource.ENTITY_VIEW, operation,
+                    entityView.getId(), entityView);
+
             EntityView savedEntityView = checkNotNull(entityViewService.saveEntityView(entityView));
             List<ListenableFuture<List<Void>>> futures = new ArrayList<>();
             if (savedEntityView.getKeys() != null && savedEntityView.getKeys().getAttributes() != null) {
@@ -114,7 +122,7 @@ public class EntityViewController extends BaseController {
     private ListenableFuture<List<Void>> copyAttributesFromEntityToEntityView(EntityView entityView, String scope, Collection<String> keys, SecurityUser user) throws ThingsboardException {
         EntityViewId entityId = entityView.getId();
         if (keys != null && !keys.isEmpty()) {
-            ListenableFuture<List<AttributeKvEntry>> getAttrFuture = attributesService.find(entityView.getEntityId(), scope, keys);
+            ListenableFuture<List<AttributeKvEntry>> getAttrFuture = attributesService.find(getTenantId(), entityView.getEntityId(), scope, keys);
             return Futures.transform(getAttrFuture, attributeKvEntries -> {
                 List<AttributeKvEntry> attributes;
                 if (attributeKvEntries != null && !attributeKvEntries.isEmpty()) {
@@ -129,7 +137,7 @@ public class EntityViewController extends BaseController {
                                                 (startTime == 0 && endTime > lastUpdateTs)
                                                 ? true : startTime < lastUpdateTs && endTime > lastUpdateTs;
                                     }).collect(Collectors.toList());
-                    tsSubService.saveAndNotify(entityId, scope, attributes, new FutureCallback<Void>() {
+                    tsSubService.saveAndNotify(entityView.getTenantId(), entityId, scope, attributes, new FutureCallback<Void>() {
                         @Override
                         public void onSuccess(@Nullable Void tmp) {
                             try {
@@ -168,8 +176,8 @@ public class EntityViewController extends BaseController {
         checkParameter(ENTITY_VIEW_ID, strEntityViewId);
         try {
             EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
-            EntityView entityView = checkEntityViewId(entityViewId);
-            entityViewService.deleteEntityView(entityViewId);
+            EntityView entityView = checkEntityViewId(entityViewId, Operation.DELETE);
+            entityViewService.deleteEntityView(getTenantId(), entityViewId);
             logEntityAction(entityViewId, entityView, entityView.getCustomerId(),
                     ActionType.DELETED, null, strEntityViewId);
         } catch (Exception e) {
@@ -203,12 +211,12 @@ public class EntityViewController extends BaseController {
         checkParameter(ENTITY_VIEW_ID, strEntityViewId);
         try {
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
-            Customer customer = checkCustomerId(customerId);
+            Customer customer = checkCustomerId(customerId, Operation.READ);
 
             EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
-            checkEntityViewId(entityViewId);
+            checkEntityViewId(entityViewId, Operation.ASSIGN_TO_CUSTOMER);
 
-            EntityView savedEntityView = checkNotNull(entityViewService.assignEntityViewToCustomer(entityViewId, customerId));
+            EntityView savedEntityView = checkNotNull(entityViewService.assignEntityViewToCustomer(getTenantId(), entityViewId, customerId));
             logEntityAction(entityViewId, savedEntityView,
                     savedEntityView.getCustomerId(),
                     ActionType.ASSIGNED_TO_CUSTOMER, null, strEntityViewId, strCustomerId, customer.getName());
@@ -228,12 +236,12 @@ public class EntityViewController extends BaseController {
         checkParameter(ENTITY_VIEW_ID, strEntityViewId);
         try {
             EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
-            EntityView entityView = checkEntityViewId(entityViewId);
+            EntityView entityView = checkEntityViewId(entityViewId, Operation.UNASSIGN_FROM_CUSTOMER);
             if (entityView.getCustomerId() == null || entityView.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
                 throw new IncorrectParameterException("Entity View isn't assigned to any customer!");
             }
-            Customer customer = checkCustomerId(entityView.getCustomerId());
-            EntityView savedEntityView = checkNotNull(entityViewService.unassignEntityViewFromCustomer(entityViewId));
+            Customer customer = checkCustomerId(entityView.getCustomerId(), Operation.READ);
+            EntityView savedEntityView = checkNotNull(entityViewService.unassignEntityViewFromCustomer(getTenantId(), entityViewId));
             logEntityAction(entityViewId, entityView,
                     entityView.getCustomerId(),
                     ActionType.UNASSIGNED_FROM_CUSTOMER, null, strEntityViewId, customer.getId().toString(), customer.getName());
@@ -261,7 +269,7 @@ public class EntityViewController extends BaseController {
         try {
             TenantId tenantId = getCurrentUser().getTenantId();
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
-            checkCustomerId(customerId);
+            checkCustomerId(customerId, Operation.READ);
             TextPageLink pageLink = createPageLink(limit, textSearch, idOffset, textOffset);
             if (type != null && type.trim().length() > 0) {
                 return checkNotNull(entityViewService.findEntityViewsByTenantIdAndCustomerIdAndType(tenantId, customerId, pageLink, type));
@@ -303,12 +311,12 @@ public class EntityViewController extends BaseController {
         checkNotNull(query);
         checkNotNull(query.getParameters());
         checkNotNull(query.getEntityViewTypes());
-        checkEntityId(query.getParameters().getEntityId());
+        checkEntityId(query.getParameters().getEntityId(), Operation.READ);
         try {
-            List<EntityView> entityViews = checkNotNull(entityViewService.findEntityViewsByQuery(query).get());
+            List<EntityView> entityViews = checkNotNull(entityViewService.findEntityViewsByQuery(getTenantId(), query).get());
             entityViews = entityViews.stream().filter(entityView -> {
                 try {
-                    checkEntityView(entityView);
+                    accessControlService.checkPermission(getCurrentUser(), Resource.ENTITY_VIEW, Operation.READ, entityView.getId(), entityView);
                     return true;
                 } catch (ThingsboardException e) {
                     return false;
@@ -330,6 +338,30 @@ public class EntityViewController extends BaseController {
             ListenableFuture<List<EntitySubtype>> entityViewTypes = entityViewService.findEntityViewTypesByTenantId(tenantId);
             return checkNotNull(entityViewTypes.get());
         } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/customer/public/entityView/{entityViewId}", method = RequestMethod.POST)
+    @ResponseBody
+    public EntityView assignEntityViewToPublicCustomer(@PathVariable(ENTITY_VIEW_ID) String strEntityViewId) throws ThingsboardException {
+        checkParameter(ENTITY_VIEW_ID, strEntityViewId);
+        try {
+            EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
+            EntityView entityView = checkEntityViewId(entityViewId, Operation.ASSIGN_TO_CUSTOMER);
+            Customer publicCustomer = customerService.findOrCreatePublicCustomer(entityView.getTenantId());
+            EntityView savedEntityView = checkNotNull(entityViewService.assignEntityViewToCustomer(getCurrentUser().getTenantId(), entityViewId, publicCustomer.getId()));
+
+            logEntityAction(entityViewId, savedEntityView,
+                    savedEntityView.getCustomerId(),
+                    ActionType.ASSIGNED_TO_CUSTOMER, null, strEntityViewId, publicCustomer.getId().toString(), publicCustomer.getName());
+
+            return savedEntityView;
+        } catch (Exception e) {
+            logEntityAction(emptyId(EntityType.ENTITY_VIEW), null,
+                    null,
+                    ActionType.ASSIGNED_TO_CUSTOMER, e, strEntityViewId);
             throw handleException(e);
         }
     }

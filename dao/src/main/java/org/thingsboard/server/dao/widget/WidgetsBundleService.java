@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,17 +25,17 @@ import java.util.List;
 
 public interface WidgetsBundleService {
 
-    WidgetsBundle findWidgetsBundleById(WidgetsBundleId widgetsBundleId);
+    WidgetsBundle findWidgetsBundleById(TenantId tenantId, WidgetsBundleId widgetsBundleId);
 
     WidgetsBundle saveWidgetsBundle(WidgetsBundle widgetsBundle);
 
-    void deleteWidgetsBundle(WidgetsBundleId widgetsBundleId);
+    void deleteWidgetsBundle(TenantId tenantId, WidgetsBundleId widgetsBundleId);
 
     WidgetsBundle findWidgetsBundleByTenantIdAndAlias(TenantId tenantId, String alias);
 
-    TextPageData<WidgetsBundle> findSystemWidgetsBundlesByPageLink(TextPageLink pageLink);
+    TextPageData<WidgetsBundle> findSystemWidgetsBundlesByPageLink(TenantId tenantId, TextPageLink pageLink);
 
-    List<WidgetsBundle> findSystemWidgetsBundles();
+    List<WidgetsBundle> findSystemWidgetsBundles(TenantId tenantId);
 
     TextPageData<WidgetsBundle> findTenantWidgetsBundlesByTenantId(TenantId tenantId, TextPageLink pageLink);
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
@@ -99,7 +101,7 @@ public class LocalTransportApiService implements TransportApiService {
         //TODO: Make async and enable caching
         DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(credentialsId);
         if (credentials != null && credentials.getCredentialsType() == credentialsType) {
-            return getDeviceInfo(credentials.getDeviceId());
+            return getDeviceInfo(credentials.getDeviceId(), credentials);
         } else {
             return getEmptyTransportApiResponseFuture();
         }
@@ -107,7 +109,7 @@ public class LocalTransportApiService implements TransportApiService {
 
     private ListenableFuture<TransportApiResponseMsg> handle(GetOrCreateDeviceFromGatewayRequestMsg requestMsg) {
         DeviceId gatewayId = new DeviceId(new UUID(requestMsg.getGatewayIdMSB(), requestMsg.getGatewayIdLSB()));
-        ListenableFuture<Device> gatewayFuture = deviceService.findDeviceByIdAsync(gatewayId);
+        ListenableFuture<Device> gatewayFuture = deviceService.findDeviceByIdAsync(TenantId.SYS_TENANT_ID, gatewayId);
         return Futures.transform(gatewayFuture, gateway -> {
             deviceCreationLock.lock();
             try {
@@ -119,7 +121,7 @@ public class LocalTransportApiService implements TransportApiService {
                     device.setType(requestMsg.getDeviceType());
                     device.setCustomerId(gateway.getCustomerId());
                     device = deviceService.saveDevice(device);
-                    relationService.saveRelationAsync(new EntityRelation(gateway.getId(), device.getId(), "Created"));
+                    relationService.saveRelationAsync(TenantId.SYS_TENANT_ID, new EntityRelation(gateway.getId(), device.getId(), "Created"));
                     deviceStateService.onDeviceAdded(device);
                 }
                 return TransportApiResponseMsg.newBuilder()
@@ -134,15 +136,20 @@ public class LocalTransportApiService implements TransportApiService {
     }
 
 
-    private ListenableFuture<TransportApiResponseMsg> getDeviceInfo(DeviceId deviceId) {
-        return Futures.transform(deviceService.findDeviceByIdAsync(deviceId), device -> {
+    private ListenableFuture<TransportApiResponseMsg> getDeviceInfo(DeviceId deviceId, DeviceCredentials credentials) {
+        return Futures.transform(deviceService.findDeviceByIdAsync(TenantId.SYS_TENANT_ID, deviceId), device -> {
             if (device == null) {
                 log.trace("[{}] Failed to lookup device by id", deviceId);
                 return getEmptyTransportApiResponse();
             }
             try {
+                ValidateDeviceCredentialsResponseMsg.Builder builder = ValidateDeviceCredentialsResponseMsg.newBuilder();
+                builder.setDeviceInfo(getDeviceInfoProto(device));
+                if(!StringUtils.isEmpty(credentials.getCredentialsValue())){
+                    builder.setCredentialsBody(credentials.getCredentialsValue());
+                }
                 return TransportApiResponseMsg.newBuilder()
-                        .setValidateTokenResponseMsg(ValidateDeviceCredentialsResponseMsg.newBuilder().setDeviceInfo(getDeviceInfoProto(device)).build()).build();
+                        .setValidateTokenResponseMsg(builder.build()).build();
             } catch (JsonProcessingException e) {
                 log.warn("[{}] Failed to lookup device by id", deviceId, e);
                 return getEmptyTransportApiResponse();

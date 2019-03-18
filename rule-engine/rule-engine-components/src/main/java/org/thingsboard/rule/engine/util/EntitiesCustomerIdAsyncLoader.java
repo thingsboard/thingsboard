@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,11 +32,11 @@ public class EntitiesCustomerIdAsyncLoader {
             case CUSTOMER:
                 return Futures.immediateFuture((CustomerId) original);
             case USER:
-                return getCustomerAsync(ctx.getUserService().findUserByIdAsync((UserId) original));
+                return getCustomerAsync(ctx.getUserService().findUserByIdAsync(ctx.getTenantId(), (UserId) original));
             case ASSET:
-                return getCustomerAsync(ctx.getAssetService().findAssetByIdAsync((AssetId) original));
+                return getCustomerAsync(ctx.getAssetService().findAssetByIdAsync(ctx.getTenantId(), (AssetId) original));
             case DEVICE:
-                return getCustomerAsync(ctx.getDeviceService().findDeviceByIdAsync((DeviceId) original));
+                return getCustomerAsync(ctx.getDeviceService().findDeviceByIdAsync(ctx.getTenantId(), (DeviceId) original));
             default:
                 return Futures.immediateFailedFuture(new TbNodeException("Unexpected original EntityType " + original));
         }

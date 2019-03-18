@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,10 +60,6 @@ public class EntityViewEntity implements SearchTextEntity<EntityView> {
     @Column(name = ID_PROPERTY)
     private UUID id;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = ENTITY_TYPE_PROPERTY)
-    private EntityType entityType;
-
     @PartitionKey(value = 1)
     @Column(name = ModelConstants.ENTITY_VIEW_TENANT_ID_PROPERTY)
     private UUID tenantId;
@@ -75,6 +71,10 @@ public class EntityViewEntity implements SearchTextEntity<EntityView> {
     @PartitionKey(value = 3)
     @Column(name = DEVICE_TYPE_PROPERTY)
     private String type;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = ENTITY_TYPE_PROPERTY)
+    private EntityType entityType;
 
     @Column(name = ModelConstants.ENTITY_VIEW_ENTITY_ID_PROPERTY)
     private UUID entityId;

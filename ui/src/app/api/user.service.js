@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, time
         currentUserDetails = null,
         lastPublicDashboardId = null,
         allowedDashboardIds = [],
+        redirectParams = null,
         userTokenAccessEnabled = false,
         userLoaded = false;
 
@@ -56,6 +57,7 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, time
         refreshTokenPending: refreshTokenPending,
         updateAuthorizationHeader: updateAuthorizationHeader,
         setAuthorizationRequestHeader: setAuthorizationRequestHeader,
+        setRedirectParams: setRedirectParams,
         gotoDefaultPlace: gotoDefaultPlace,
         forceDefaultPlace: forceDefaultPlace,
         updateLastPublicDashboardId: updateLastPublicDashboardId,
@@ -360,6 +362,25 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, time
                     $location.search('publicId', null);
                     deferred.reject();
                 });
+            } else if (locationSearch.accessToken) {
+                var token = locationSearch.accessToken;
+                var refreshToken = locationSearch.refreshToken;
+                $location.search('accessToken', null);
+                if (refreshToken) {
+                    $location.search('refreshToken', null);
+                }
+                try {
+                    updateAndValidateToken(token, 'jwt_token', false);
+                    if (refreshToken) {
+                        updateAndValidateToken(refreshToken, 'refresh_token', false);
+                    } else {
+                        store.remove('refresh_token');
+                        store.remove('refresh_token_expiration');
+                    }
+                } catch (e) {
+                    deferred.reject();
+                }
+                procceedJwtTokenValidate();
             } else {
                 procceedJwtTokenValidate();
             }
@@ -541,9 +562,15 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, time
         return false;
     }
 
+    function setRedirectParams(params) {
+        redirectParams = params;
+    }
+
     function gotoDefaultPlace(params) {
         if (currentUser && isAuthenticated()) {
-            var place = 'home.links';
+            var place = redirectParams ? redirectParams.toName : 'home.links';
+            params = redirectParams ? redirectParams.params : params;
+            redirectParams = null;
             if (currentUser.authority === 'TENANT_ADMIN' || currentUser.authority === 'CUSTOMER_USER') {
                 if (userHasDefaultDashboard()) {
                     place = $rootScope.forceFullscreen ? 'dashboard' : 'home.dashboards.dashboard';

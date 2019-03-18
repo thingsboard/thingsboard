@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.MailService;
+import org.thingsboard.rule.engine.api.RuleChainTransactionService;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Event;
@@ -48,6 +49,7 @@ import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.customer.CustomerService;
+import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.event.EventService;
@@ -56,13 +58,16 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.kafka.TbNodeIdProvider;
 import org.thingsboard.server.service.cluster.discovery.DiscoveryService;
 import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
 import org.thingsboard.server.service.cluster.rpc.ClusterRpcService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.encoding.DataDecodingEncodingService;
+import org.thingsboard.server.service.executors.ClusterRpcCallbackExecutorService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.executors.ExternalCallExecutorService;
+import org.thingsboard.server.service.executors.SharedEventLoopGroupService;
 import org.thingsboard.server.service.mail.MailExecutorService;
 import org.thingsboard.server.service.rpc.DeviceRpcService;
 import org.thingsboard.server.service.script.JsExecutorService;
@@ -121,6 +126,10 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private AssetService assetService;
+
+    @Autowired
+    @Getter
+    private DashboardService dashboardService;
 
     @Autowired
     @Getter
@@ -188,11 +197,19 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
+    private ClusterRpcCallbackExecutorService clusterRpcCallbackExecutor;
+
+    @Autowired
+    @Getter
     private DbCallbackExecutorService dbCallbackExecutor;
 
     @Autowired
     @Getter
     private ExternalCallExecutorService externalCallExecutorService;
+
+    @Autowired
+    @Getter
+    private SharedEventLoopGroupService sharedEventLoopGroupService;
 
     @Autowired
     @Getter
@@ -210,6 +227,11 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private RuleEngineTransportService ruleEngineTransportService;
+
+    @Lazy
+    @Autowired
+    @Getter
+    private RuleChainTransactionService ruleChainTransactionService;
 
     @Value("${cluster.partition_id}")
     @Getter
@@ -270,6 +292,10 @@ public class ActorSystemContext {
     @Getter
     @Setter
     private ActorSystem actorSystem;
+
+    @Autowired
+    @Getter
+    private TbNodeIdProvider nodeIdProvider;
 
     @Getter
     @Setter

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,18 +90,20 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     @Override
     public void start(ActorContext context) {
         if (!started) {
-            RuleChain ruleChain = service.findRuleChainById(entityId);
-            ruleChainName = ruleChain.getName();
-            List<RuleNode> ruleNodeList = service.getRuleChainNodes(entityId);
-            log.trace("[{}][{}] Starting rule chain with {} nodes", tenantId, entityId, ruleNodeList.size());
-            // Creating and starting the actors;
-            for (RuleNode ruleNode : ruleNodeList) {
-                log.trace("[{}][{}] Creating rule node [{}]: {}", entityId, ruleNode.getId(), ruleNode.getName(), ruleNode);
-                ActorRef ruleNodeActor = createRuleNodeActor(context, ruleNode);
-                nodeActors.put(ruleNode.getId(), new RuleNodeCtx(tenantId, self, ruleNodeActor, ruleNode));
+            RuleChain ruleChain = service.findRuleChainById(tenantId, entityId);
+            if (ruleChain != null) {
+                ruleChainName = ruleChain.getName();
+                List<RuleNode> ruleNodeList = service.getRuleChainNodes(tenantId, entityId);
+                log.trace("[{}][{}] Starting rule chain with {} nodes", tenantId, entityId, ruleNodeList.size());
+                // Creating and starting the actors;
+                for (RuleNode ruleNode : ruleNodeList) {
+                    log.trace("[{}][{}] Creating rule node [{}]: {}", entityId, ruleNode.getId(), ruleNode.getName(), ruleNode);
+                    ActorRef ruleNodeActor = createRuleNodeActor(context, ruleNode);
+                    nodeActors.put(ruleNode.getId(), new RuleNodeCtx(tenantId, self, ruleNodeActor, ruleNode));
+                }
+                initRoutes(ruleChain, ruleNodeList);
+                started = true;
             }
-            initRoutes(ruleChain, ruleNodeList);
-            started = true;
         } else {
             onUpdate(context);
         }
@@ -109,32 +111,34 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
 
     @Override
     public void onUpdate(ActorContext context) {
-        RuleChain ruleChain = service.findRuleChainById(entityId);
-        ruleChainName = ruleChain.getName();
-        List<RuleNode> ruleNodeList = service.getRuleChainNodes(entityId);
-        log.trace("[{}][{}] Updating rule chain with {} nodes", tenantId, entityId, ruleNodeList.size());
-        for (RuleNode ruleNode : ruleNodeList) {
-            RuleNodeCtx existing = nodeActors.get(ruleNode.getId());
-            if (existing == null) {
-                log.trace("[{}][{}] Creating rule node [{}]: {}", entityId, ruleNode.getId(), ruleNode.getName(), ruleNode);
-                ActorRef ruleNodeActor = createRuleNodeActor(context, ruleNode);
-                nodeActors.put(ruleNode.getId(), new RuleNodeCtx(tenantId, self, ruleNodeActor, ruleNode));
-            } else {
-                log.trace("[{}][{}] Updating rule node [{}]: {}", entityId, ruleNode.getId(), ruleNode.getName(), ruleNode);
-                existing.setSelf(ruleNode);
-                existing.getSelfActor().tell(new ComponentLifecycleMsg(tenantId, existing.getSelf().getId(), ComponentLifecycleEvent.UPDATED), self);
+        RuleChain ruleChain = service.findRuleChainById(tenantId, entityId);
+        if (ruleChain != null) {
+            ruleChainName = ruleChain.getName();
+            List<RuleNode> ruleNodeList = service.getRuleChainNodes(tenantId, entityId);
+            log.trace("[{}][{}] Updating rule chain with {} nodes", tenantId, entityId, ruleNodeList.size());
+            for (RuleNode ruleNode : ruleNodeList) {
+                RuleNodeCtx existing = nodeActors.get(ruleNode.getId());
+                if (existing == null) {
+                    log.trace("[{}][{}] Creating rule node [{}]: {}", entityId, ruleNode.getId(), ruleNode.getName(), ruleNode);
+                    ActorRef ruleNodeActor = createRuleNodeActor(context, ruleNode);
+                    nodeActors.put(ruleNode.getId(), new RuleNodeCtx(tenantId, self, ruleNodeActor, ruleNode));
+                } else {
+                    log.trace("[{}][{}] Updating rule node [{}]: {}", entityId, ruleNode.getId(), ruleNode.getName(), ruleNode);
+                    existing.setSelf(ruleNode);
+                    existing.getSelfActor().tell(new ComponentLifecycleMsg(tenantId, existing.getSelf().getId(), ComponentLifecycleEvent.UPDATED), self);
+                }
             }
+
+            Set<RuleNodeId> existingNodes = ruleNodeList.stream().map(RuleNode::getId).collect(Collectors.toSet());
+            List<RuleNodeId> removedRules = nodeActors.keySet().stream().filter(node -> !existingNodes.contains(node)).collect(Collectors.toList());
+            removedRules.forEach(ruleNodeId -> {
+                log.trace("[{}][{}] Removing rule node [{}]", tenantId, entityId, ruleNodeId);
+                RuleNodeCtx removed = nodeActors.remove(ruleNodeId);
+                removed.getSelfActor().tell(new ComponentLifecycleMsg(tenantId, removed.getSelf().getId(), ComponentLifecycleEvent.DELETED), self);
+            });
+
+            initRoutes(ruleChain, ruleNodeList);
         }
-
-        Set<RuleNodeId> existingNodes = ruleNodeList.stream().map(RuleNode::getId).collect(Collectors.toSet());
-        List<RuleNodeId> removedRules = nodeActors.keySet().stream().filter(node -> !existingNodes.contains(node)).collect(Collectors.toList());
-        removedRules.forEach(ruleNodeId -> {
-            log.trace("[{}][{}] Removing rule node [{}]", tenantId, entityId, ruleNodeId);
-            RuleNodeCtx removed = nodeActors.remove(ruleNodeId);
-            removed.getSelfActor().tell(new ComponentLifecycleMsg(tenantId, removed.getSelf().getId(), ComponentLifecycleEvent.DELETED), self);
-        });
-
-        initRoutes(ruleChain, ruleNodeList);
     }
 
     @Override
@@ -164,7 +168,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         nodeRoutes.clear();
         // Populating the routes map;
         for (RuleNode ruleNode : ruleNodeList) {
-            List<EntityRelation> relations = service.getRuleNodeRelations(ruleNode.getId());
+            List<EntityRelation> relations = service.getRuleNodeRelations(TenantId.SYS_TENANT_ID, ruleNode.getId());
             log.trace("[{}][{}][{}] Processing rule node relations [{}]", tenantId, entityId, ruleNode.getId(), relations.size());
             if (relations.size() == 0) {
                 nodeRoutes.put(ruleNode.getId(), Collections.emptyList());

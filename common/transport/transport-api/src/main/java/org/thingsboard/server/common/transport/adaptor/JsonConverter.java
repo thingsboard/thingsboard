@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,8 @@ public class JsonConverter {
     private static final String DEVICE_PROPERTY = "device";
 
     private static boolean isTypeCastEnabled = true;
+
+    private static int maxStringValueLength = 0;
 
     public static PostTelemetryMsg convertToTelemetryProto(JsonElement jsonObject) throws JsonSyntaxException {
         long systemTs = System.currentTimeMillis();
@@ -131,6 +133,10 @@ public class JsonConverter {
             if (element.isJsonPrimitive()) {
                 JsonPrimitive value = element.getAsJsonPrimitive();
                 if (value.isString()) {
+                    if (maxStringValueLength > 0 && value.getAsString().length() > maxStringValueLength) {
+                        String message = String.format("String value length [%d] for key [%s] is greater than maximum allowed [%d]", value.getAsString().length(), valueEntry.getKey(), maxStringValueLength);
+                        throw new JsonSyntaxException(message);
+                    }
                     if(isTypeCastEnabled && NumberUtils.isParsable(value.getAsString())) {
                         try {
                             result.add(buildNumericKeyValueProto(value, valueEntry.getKey()));
@@ -389,6 +395,10 @@ public class JsonConverter {
             if (element.isJsonPrimitive()) {
                 JsonPrimitive value = element.getAsJsonPrimitive();
                 if (value.isString()) {
+                    if (maxStringValueLength > 0 && value.getAsString().length() > maxStringValueLength) {
+                        String message = String.format("String value length [%d] for key [%s] is greater than maximum allowed [%d]", value.getAsString().length(), valueEntry.getKey(), maxStringValueLength);
+                        throw new JsonSyntaxException(message);
+                    }
                     if(isTypeCastEnabled && NumberUtils.isParsable(value.getAsString())) {
                         try {
                             parseNumericValue(result, valueEntry, value);
@@ -456,4 +466,9 @@ public class JsonConverter {
     public static void setTypeCastEnabled(boolean enabled) {
         isTypeCastEnabled = enabled;
     }
+
+    public static void setMaxStringValueLength(int length) {
+        maxStringValueLength = length;
+    }
+
 }

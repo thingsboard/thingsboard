@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.exceptions.CodecNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
 import org.thingsboard.server.dao.model.type.AuthorityCodec;
 import org.thingsboard.server.dao.model.type.ComponentLifecycleStateCodec;
@@ -43,6 +45,7 @@ import java.util.concurrent.ConcurrentMap;
 public abstract class CassandraAbstractDao {
 
     @Autowired
+    @Qualifier("CassandraCluster")
     protected CassandraCluster cluster;
 
     private ConcurrentMap<String, PreparedStatement> preparedStatementMap = new ConcurrentHashMap<>();
@@ -84,37 +87,37 @@ public abstract class CassandraAbstractDao {
         }
     }
 
-    protected ResultSet executeRead(Statement statement) {
-        return execute(statement, defaultReadLevel);
+    protected ResultSet executeRead(TenantId tenantId, Statement statement) {
+        return execute(tenantId, statement, defaultReadLevel);
     }
 
-    protected ResultSet executeWrite(Statement statement) {
-        return execute(statement, defaultWriteLevel);
+    protected ResultSet executeWrite(TenantId tenantId, Statement statement) {
+        return execute(tenantId, statement, defaultWriteLevel);
     }
 
-    protected ResultSetFuture executeAsyncRead(Statement statement) {
-        return executeAsync(statement, defaultReadLevel);
+    protected ResultSetFuture executeAsyncRead(TenantId tenantId, Statement statement) {
+        return executeAsync(tenantId, statement, defaultReadLevel);
     }
 
-    protected ResultSetFuture executeAsyncWrite(Statement statement) {
-        return executeAsync(statement, defaultWriteLevel);
+    protected ResultSetFuture executeAsyncWrite(TenantId tenantId, Statement statement) {
+        return executeAsync(tenantId, statement, defaultWriteLevel);
     }
 
-    private ResultSet execute(Statement statement, ConsistencyLevel level) {
+    private ResultSet execute(TenantId tenantId, Statement statement, ConsistencyLevel level) {
         if (log.isDebugEnabled()) {
             log.debug("Execute cassandra statement {}", statementToString(statement));
         }
-        return executeAsync(statement, level).getUninterruptibly();
+        return executeAsync(tenantId, statement, level).getUninterruptibly();
     }
 
-    private ResultSetFuture executeAsync(Statement statement, ConsistencyLevel level) {
+    private ResultSetFuture executeAsync(TenantId tenantId, Statement statement, ConsistencyLevel level) {
         if (log.isDebugEnabled()) {
             log.debug("Execute cassandra async statement {}", statementToString(statement));
         }
         if (statement.getConsistencyLevel() == null) {
             statement.setConsistencyLevel(level);
         }
-        return rateLimiter.submit(new CassandraStatementTask(getSession(), statement));
+        return rateLimiter.submit(new CassandraStatementTask(tenantId, getSession(), statement));
     }
 
     private static String statementToString(Statement statement) {

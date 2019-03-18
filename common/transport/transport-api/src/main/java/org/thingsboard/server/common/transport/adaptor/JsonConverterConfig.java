@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,5 +27,11 @@ public class JsonConverterConfig {
     public void setIsJsonTypeCastEnabled(boolean jsonTypeCastEnabled) {
         JsonConverter.setTypeCastEnabled(jsonTypeCastEnabled);
         log.info("JSON type cast enabled = {}", jsonTypeCastEnabled);
+    }
+
+    @Value("${transport.json.max_string_value_length:0}")
+    public void setMaxStringValueLength(int maxStringValueLength) {
+        JsonConverter.setMaxStringValueLength(maxStringValueLength);
+        log.info("JSON max string value length = {}", maxStringValueLength);
     }
 }

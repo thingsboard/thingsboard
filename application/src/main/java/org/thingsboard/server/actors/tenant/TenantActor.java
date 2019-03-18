@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,7 +143,7 @@ public class TenantActor extends RuleChainManagerActor {
         if (target != null) {
             if (msg.getEntityId().getEntityType() == EntityType.RULE_CHAIN) {
                 RuleChain ruleChain = systemContext.getRuleChainService().
-                        findRuleChainById(new RuleChainId(msg.getEntityId().getId()));
+                        findRuleChainById(tenantId, new RuleChainId(msg.getEntityId().getId()));
                 ruleChainManager.visit(ruleChain, target);
             }
             target.tell(msg, ActorRef.noSender());

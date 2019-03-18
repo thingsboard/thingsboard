@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 'use strict';
 
-const logger = require('../config/logger')('JsInvokeMessageProcessor'),
+const config = require('config'),
+      logger = require('../config/logger')('JsInvokeMessageProcessor'),
       Utils = require('./utils'),
       js = require('./jsinvoke.proto').js,
       KeyedMessage = require('kafka-node').KeyedMessage,
       JsExecutor = require('./jsExecutor');
 
+const scriptBodyTraceFrequency = Number(config.get('script.script_body_trace_frequency'));
+
 function JsInvokeMessageProcessor(producer) {
     this.producer = producer;
     this.executor = new JsExecutor();
     this.scriptMap = {};
+    this.executedScriptsCounter = 0;
 }
 
 JsInvokeMessageProcessor.prototype.onJsInvokeMessage = function(message) {
@@ -75,6 +78,13 @@ JsInvokeMessageProcessor.prototype.processCompileRequest = function(requestId, r
 JsInvokeMessageProcessor.prototype.processInvokeRequest = function(requestId, responseTopic, invokeRequest) {
     var scriptId = getScriptId(invokeRequest);
     logger.debug('[%s] Processing invoke request, scriptId: [%s]', requestId, scriptId);
+    this.executedScriptsCounter++;
+    if ( this.executedScriptsCounter >= scriptBodyTraceFrequency ) {
+        this.executedScriptsCounter = 0;
+        if (logger.levels[logger.level] >= logger.levels['debug']) {
+            logger.debug('[%s] Executing script body: [%s]', scriptId, invokeRequest.scriptBody);
+        }
+    }
     this.getOrCompileScript(scriptId, invokeRequest.scriptBody).then(
         (script) => {
             this.executor.executeScript(script, invokeRequest.args, invokeRequest.timeout).then(

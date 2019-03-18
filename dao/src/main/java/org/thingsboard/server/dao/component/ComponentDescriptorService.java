@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.component;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.thingsboard.server.common.data.id.ComponentDescriptorId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
@@ -28,18 +29,18 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
  */
 public interface ComponentDescriptorService {
 
-    ComponentDescriptor saveComponent(ComponentDescriptor component);
+    ComponentDescriptor saveComponent(TenantId tenantId, ComponentDescriptor component);
 
-    ComponentDescriptor findById(ComponentDescriptorId componentId);
+    ComponentDescriptor findById(TenantId tenantId, ComponentDescriptorId componentId);
 
-    ComponentDescriptor findByClazz(String clazz);
+    ComponentDescriptor findByClazz(TenantId tenantId, String clazz);
 
-    TextPageData<ComponentDescriptor> findByTypeAndPageLink(ComponentType type, TextPageLink pageLink);
+    TextPageData<ComponentDescriptor> findByTypeAndPageLink(TenantId tenantId, ComponentType type, TextPageLink pageLink);
 
-    TextPageData<ComponentDescriptor> findByScopeAndTypeAndPageLink(ComponentScope scope, ComponentType type, TextPageLink pageLink);
+    TextPageData<ComponentDescriptor> findByScopeAndTypeAndPageLink(TenantId tenantId, ComponentScope scope, ComponentType type, TextPageLink pageLink);
 
-    boolean validate(ComponentDescriptor component, JsonNode configuration);
+    boolean validate(TenantId tenantId, ComponentDescriptor component, JsonNode configuration);
 
-    void deleteByClazz(String clazz);
+    void deleteByClazz(TenantId tenantId, String clazz);
 
 }

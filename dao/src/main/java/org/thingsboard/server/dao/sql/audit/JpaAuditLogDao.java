@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
     @Override
     public ListenableFuture<Void> saveByTenantId(AuditLog auditLog) {
         return insertService.submit(() -> {
-            save(auditLog);
+            save(auditLog.getTenantId(), auditLog);
             return null;
         });
     }

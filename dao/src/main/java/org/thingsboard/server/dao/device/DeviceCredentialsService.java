@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,18 @@
 package org.thingsboard.server.dao.device;
 
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 
 public interface DeviceCredentialsService {
 
-    DeviceCredentials findDeviceCredentialsByDeviceId(DeviceId deviceId);
+    DeviceCredentials findDeviceCredentialsByDeviceId(TenantId tenantId, DeviceId deviceId);
 
     DeviceCredentials findDeviceCredentialsByCredentialsId(String credentialsId);
 
-    DeviceCredentials updateDeviceCredentials(DeviceCredentials deviceCredentials);
+    DeviceCredentials updateDeviceCredentials(TenantId tenantId, DeviceCredentials deviceCredentials);
 
-    DeviceCredentials createDeviceCredentials(DeviceCredentials deviceCredentials);
+    DeviceCredentials createDeviceCredentials(TenantId tenantId, DeviceCredentials deviceCredentials);
 
-    void deleteDeviceCredentials(DeviceCredentials deviceCredentials);
+    void deleteDeviceCredentials(TenantId tenantId, DeviceCredentials deviceCredentials);
 }

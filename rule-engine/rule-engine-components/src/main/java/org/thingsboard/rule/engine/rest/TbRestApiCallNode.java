@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,10 +71,14 @@ public class TbRestApiCallNode implements TbNode {
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         try {
             this.config = TbNodeUtils.convert(configuration, TbRestApiCallNodeConfiguration.class);
-            this.eventLoopGroup = new NioEventLoopGroup();
-            Netty4ClientHttpRequestFactory nettyFactory = new Netty4ClientHttpRequestFactory(this.eventLoopGroup);
-            nettyFactory.setSslContext(SslContextBuilder.forClient().build());
-            httpClient = new AsyncRestTemplate(nettyFactory);
+            if (this.config.isUseSimpleClientHttpFactory()) {
+                httpClient = new AsyncRestTemplate();
+            } else {
+                this.eventLoopGroup = new NioEventLoopGroup();
+                Netty4ClientHttpRequestFactory nettyFactory = new Netty4ClientHttpRequestFactory(this.eventLoopGroup);
+                nettyFactory.setSslContext(SslContextBuilder.forClient().build());
+                httpClient = new AsyncRestTemplate(nettyFactory);
+            }
         } catch (SSLException e) {
             throw new TbNodeException(e);
         }
@@ -118,16 +122,16 @@ public class TbRestApiCallNode implements TbNode {
     }
 
     private TbMsg processResponse(TbContext ctx, TbMsg origMsg, ResponseEntity<String> response) {
-        TbMsgMetaData metaData = new TbMsgMetaData();
+        TbMsgMetaData metaData = origMsg.getMetaData();
         metaData.putValue(STATUS, response.getStatusCode().name());
         metaData.putValue(STATUS_CODE, response.getStatusCode().value()+"");
         metaData.putValue(STATUS_REASON, response.getStatusCode().getReasonPhrase());
-        response.getHeaders().toSingleValueMap().forEach((k,v) -> metaData.putValue(k,v) );
+        response.getHeaders().toSingleValueMap().forEach(metaData::putValue);
         return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, response.getBody());
     }
 
     private TbMsg processFailureResponse(TbContext ctx, TbMsg origMsg, ResponseEntity<String> response) {
-        TbMsgMetaData metaData = origMsg.getMetaData().copy();
+        TbMsgMetaData metaData = origMsg.getMetaData();
         metaData.putValue(STATUS, response.getStatusCode().name());
         metaData.putValue(STATUS_CODE, response.getStatusCode().value()+"");
         metaData.putValue(STATUS_REASON, response.getStatusCode().getReasonPhrase());
@@ -136,7 +140,7 @@ public class TbRestApiCallNode implements TbNode {
     }
 
     private TbMsg processException(TbContext ctx, TbMsg origMsg, Throwable e) {
-        TbMsgMetaData metaData = origMsg.getMetaData().copy();
+        TbMsgMetaData metaData = origMsg.getMetaData();
         metaData.putValue(ERROR, e.getClass() + ": " + e.getMessage());
         if (e instanceof HttpClientErrorException) {
             HttpClientErrorException httpClientErrorException = (HttpClientErrorException)e;

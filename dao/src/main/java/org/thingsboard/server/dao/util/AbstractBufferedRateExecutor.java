@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,19 @@
  */
 package org.thingsboard.server.dao.util;
 
+import com.datastax.driver.core.*;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.tools.TbRateLimits;
+import org.thingsboard.server.dao.nosql.CassandraStatementTask;
 
 import javax.annotation.Nullable;
 import java.util.UUID;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -45,6 +43,10 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
     private final ExecutorService callbackExecutor;
     private final ScheduledExecutorService timeoutExecutor;
     private final int concurrencyLimit;
+    private final boolean perTenantLimitsEnabled;
+    private final String perTenantLimitsConfiguration;
+    private final ConcurrentMap<TenantId, TbRateLimits> perTenantLimits = new ConcurrentHashMap<>();
+    protected final ConcurrentMap<TenantId, AtomicInteger> rateLimitedTenants = new ConcurrentHashMap<>();
 
     protected final AtomicInteger concurrencyLevel = new AtomicInteger();
     protected final AtomicInteger totalAdded = new AtomicInteger();
@@ -53,15 +55,19 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
     protected final AtomicInteger totalFailed = new AtomicInteger();
     protected final AtomicInteger totalExpired = new AtomicInteger();
     protected final AtomicInteger totalRejected = new AtomicInteger();
+    protected final AtomicInteger totalRateLimited = new AtomicInteger();
 
-    public AbstractBufferedRateExecutor(int queueLimit, int concurrencyLimit, long maxWaitTime, int dispatcherThreads, int callbackThreads, long pollMs) {
+    public AbstractBufferedRateExecutor(int queueLimit, int concurrencyLimit, long maxWaitTime, int dispatcherThreads, int callbackThreads, long pollMs,
+                                        boolean perTenantLimitsEnabled, String perTenantLimitsConfiguration) {
         this.maxWaitTime = maxWaitTime;
         this.pollMs = pollMs;
         this.concurrencyLimit = concurrencyLimit;
         this.queue = new LinkedBlockingDeque<>(queueLimit);
         this.dispatcherExecutor = Executors.newFixedThreadPool(dispatcherThreads);
-        this.callbackExecutor = Executors.newFixedThreadPool(callbackThreads);
+        this.callbackExecutor = Executors.newWorkStealingPool(callbackThreads);
         this.timeoutExecutor = Executors.newSingleThreadScheduledExecutor();
+        this.perTenantLimitsEnabled = perTenantLimitsEnabled;
+        this.perTenantLimitsConfiguration = perTenantLimitsConfiguration;
         for (int i = 0; i < dispatcherThreads; i++) {
             dispatcherExecutor.submit(this::dispatch);
         }
@@ -71,12 +77,28 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
     public F submit(T task) {
         SettableFuture<V> settableFuture = create();
         F result = wrap(task, settableFuture);
-        try {
-            totalAdded.incrementAndGet();
-            queue.add(new AsyncTaskContext<>(UUID.randomUUID(), task, settableFuture, System.currentTimeMillis()));
-        } catch (IllegalStateException e) {
-            totalRejected.incrementAndGet();
-            settableFuture.setException(e);
+        boolean perTenantLimitReached = false;
+        if (perTenantLimitsEnabled) {
+            if (task.getTenantId() == null) {
+                log.info("Invalid task received: {}", task);
+            } else if (!task.getTenantId().isNullUid()) {
+                TbRateLimits rateLimits = perTenantLimits.computeIfAbsent(task.getTenantId(), id -> new TbRateLimits(perTenantLimitsConfiguration));
+                if (!rateLimits.tryConsume()) {
+                    rateLimitedTenants.computeIfAbsent(task.getTenantId(), tId -> new AtomicInteger(0)).incrementAndGet();
+                    totalRateLimited.incrementAndGet();
+                    settableFuture.setException(new TenantRateLimitException());
+                    perTenantLimitReached = true;
+                }
+            }
+        }
+        if (!perTenantLimitReached) {
+            try {
+                totalAdded.incrementAndGet();
+                queue.add(new AsyncTaskContext<>(UUID.randomUUID(), task, settableFuture, System.currentTimeMillis()));
+            } catch (IllegalStateException e) {
+                totalRejected.incrementAndGet();
+                settableFuture.setException(e);
+            }
         }
         return result;
     }
@@ -163,10 +185,37 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
 
     private void logTask(String action, AsyncTaskContext<T, V> taskCtx) {
         if (log.isTraceEnabled()) {
-            log.trace("[{}] {} task: {}", taskCtx.getId(), action, taskCtx);
+            if (taskCtx.getTask() instanceof CassandraStatementTask) {
+                CassandraStatementTask cassStmtTask = (CassandraStatementTask) taskCtx.getTask();
+                if (cassStmtTask.getStatement() instanceof BoundStatement) {
+                    BoundStatement stmt = (BoundStatement) cassStmtTask.getStatement();
+                    String query = toStringWithValues(stmt, ProtocolVersion.V5);
+                    log.trace("[{}] {} task: {}, BoundStatement query: {}", taskCtx.getId(), action, taskCtx, query);
+                }
+            } else {
+                log.trace("[{}] {} task: {}", taskCtx.getId(), action, taskCtx);
+            }
         } else {
             log.debug("[{}] {} task", taskCtx.getId(), action);
         }
+    }
+
+    private static String toStringWithValues(BoundStatement boundStatement, ProtocolVersion protocolVersion) {
+        CodecRegistry codecRegistry = boundStatement.preparedStatement().getCodecRegistry();
+        PreparedStatement preparedStatement = boundStatement.preparedStatement();
+        String query = preparedStatement.getQueryString();
+        ColumnDefinitions defs = preparedStatement.getVariables();
+        int index = 0;
+        for (ColumnDefinitions.Definition def : defs) {
+            DataType type = def.getType();
+            TypeCodec<Object> codec = codecRegistry.codecFor(type);
+            if (boundStatement.getBytesUnsafe(index) != null) {
+                Object value = codec.deserialize(boundStatement.getBytesUnsafe(index), protocolVersion);
+                query = query.replaceFirst("\\?", codec.format(value));
+            }
+            index++;
+        }
+        return query;
     }
 
     protected int getQueueSize() {

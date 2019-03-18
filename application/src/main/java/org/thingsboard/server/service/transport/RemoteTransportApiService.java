@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
@@ -26,10 +28,7 @@ import org.thingsboard.server.kafka.*;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * Created by ashvayka on 05.10.18.
@@ -41,8 +40,6 @@ public class RemoteTransportApiService {
 
     @Value("${transport.remote.transport_api.requests_topic}")
     private String transportApiRequestsTopic;
-    @Value("${transport.remote.transport_api.responses_topic}")
-    private String transportApiResponsesTopic;
     @Value("${transport.remote.transport_api.max_pending_requests}")
     private int maxPendingRequests;
     @Value("${transport.remote.transport_api.request_timeout}")
@@ -67,11 +64,11 @@ public class RemoteTransportApiService {
 
     @PostConstruct
     public void init() {
-        this.transportCallbackExecutor = new ThreadPoolExecutor(0, 100, 60L, TimeUnit.SECONDS, new SynchronousQueue<>());
+        this.transportCallbackExecutor = Executors.newWorkStealingPool(100);
 
         TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<TransportApiResponseMsg> responseBuilder = TBKafkaProducerTemplate.builder();
         responseBuilder.settings(kafkaSettings);
-        responseBuilder.defaultTopic(transportApiResponsesTopic);
+        responseBuilder.clientId("producer-transport-api-response-" + nodeIdProvider.getNodeId());
         responseBuilder.encoder(new TransportApiResponseEncoder());
 
         TBKafkaConsumerTemplate.TBKafkaConsumerTemplateBuilder<TransportApiRequestMsg> requestBuilder = TBKafkaConsumerTemplate.builder();
@@ -93,6 +90,11 @@ public class RemoteTransportApiService {
         builder.executor(transportCallbackExecutor);
         builder.handler(transportApiService);
         transportApiTemplate = builder.build();
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
+        log.info("Received application ready event. Starting polling for events.");
         transportApiTemplate.init();
     }
 
