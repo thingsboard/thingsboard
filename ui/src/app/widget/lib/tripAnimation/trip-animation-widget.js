@@ -121,7 +121,7 @@ function tripAnimationWidget() {
 }
 
 /*@ngInject*/
-function tripAnimationController($document, $scope, $http, $timeout, $filter, $log) {
+function tripAnimationController($document, $scope, $http, $timeout, $filter) {
 	let vm = this;
 	//const varsRegex = /\$\{([^\}]*)\}/g;
 	//let icon;
