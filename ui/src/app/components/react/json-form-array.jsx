@@ -131,7 +131,7 @@ class ThingsboardArray extends React.Component {
             }
             let forms = this.props.form.items.map(function(form, index){
                 var copy = this.copyWithIndex(form, i);
-                return this.props.builder(copy, this.props.model, index, this.props.onChange, this.props.onColorClick, this.props.mapper, this.props.builder);
+                return this.props.builder(copy, this.props.model, index, this.props.onChange, this.props.onColorClick, this.props.onToggleFullscreen, this.props.mapper, this.props.builder);
             }.bind(this));
             arrays.push(
             <li key={keys[i]} className="list-group-item">

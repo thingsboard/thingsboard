@@ -34,8 +34,10 @@ class ThingsboardAceEditor extends React.Component {
         this.onFocus = this.onFocus.bind(this);
         this.onTidy = this.onTidy.bind(this);
         this.onLoad = this.onLoad.bind(this);
+        this.onToggleFull = this.onToggleFull.bind(this);
         var value = props.value ? props.value + '' : '';
         this.state = {
+            isFull: false,
             value: value,
             focused: false
         };
@@ -76,7 +78,24 @@ class ThingsboardAceEditor extends React.Component {
     }
 
     onLoad(editor) {
+        this.aceEditor = editor;
         fixAceEditor(editor);
+    }
+
+    onToggleFull() {
+        this.setState({ isFull: !this.state.isFull });
+        this.props.onToggleFullscreen();
+        this.updateAceEditorSize = true;
+    }
+
+    componentDidUpdate() {
+        if (this.updateAceEditorSize) {
+            if (this.aceEditor) {
+                this.aceEditor.resize();
+                this.aceEditor.renderer.updateFull();
+            }
+            this.updateAceEditorSize = false;
+        }
     }
 
     render() {
@@ -108,18 +127,23 @@ class ThingsboardAceEditor extends React.Component {
         if (this.state.focused) {
             labelClass += " tb-focused";
         }
-
+        var containerClass = "tb-container";
+        var style = this.props.form.style || {width: '100%'};
+        if (this.state.isFull) {
+            containerClass += " fullscreen-form-field";
+        }
         return (
-            <div className="tb-container">
+            <div className={containerClass}>
                 <label className={labelClass}>{this.props.form.title}</label>
                 <div className="json-form-ace-editor">
                     <div className="title-panel">
                         <label>{this.props.mode}</label>
                         <FlatButton style={ styles.tidyButtonStyle } className="tidy-button" label={'Tidy'} onTouchTap={this.onTidy}/>
+                        <FlatButton style={ styles.tidyButtonStyle } className="tidy-button" label={this.state.isFull ? 'Exit fullscreen' : 'Fullscreen'} onTouchTap={this.onToggleFull}/>
                     </div>
                     <AceEditor mode={this.props.mode}
-                               height="150px"
-                               width="300px"
+                               height={this.state.isFull ? "100%" : "150px"}
+                               width={this.state.isFull ? "100%" : "300px"}
                                theme="github"
                                onChange={this.onValueChanged}
                                onFocus={this.onFocus}
@@ -132,10 +156,10 @@ class ThingsboardAceEditor extends React.Component {
                                enableBasicAutocompletion={true}
                                enableSnippets={true}
                                enableLiveAutocompletion={true}
-                               style={this.props.form.style || {width: '100%'}}/>
+                               style={style}/>
                 </div>
                 <div className="json-form-error"
-                    style={{opacity: this.props.valid ? '0' : '1'}}>{this.props.error}</div>
+                     style={{opacity: this.props.valid ? '0' : '1'}}>{this.props.error}</div>
             </div>
         );
     }

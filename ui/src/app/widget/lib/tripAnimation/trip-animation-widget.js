@@ -121,7 +121,7 @@ function tripAnimationWidget() {
 }
 
 /*@ngInject*/
-function tripAnimationController($document, $scope, $http, $timeout, $filter, $log) {
+function tripAnimationController($document, $scope, $http, $timeout, $filter) {
 	let vm = this;
 	//const varsRegex = /\$\{([^\}]*)\}/g;
 	//let icon;
@@ -697,6 +697,4 @@ function tripAnimationController($document, $scope, $http, $timeout, $filter, $l
 		}
 		if (trip && vm.activeTripIndex !== trip.dSIndex) vm.activeTripIndex = trip.dSIndex;
 	}
-
-	$log.log(vm);
 }
