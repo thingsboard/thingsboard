@@ -44,7 +44,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 
 @Component
-@ConditionalOnProperty(prefix = "audit_log.sink", value = "type", havingValue = "elasticsearch")
+@ConditionalOnProperty(prefix = "audit-log.sink", value = "type", havingValue = "elasticsearch")
 @Slf4j
 public class ElasticsearchAuditLogSink implements AuditLogSink {
 
@@ -54,19 +54,19 @@ public class ElasticsearchAuditLogSink implements AuditLogSink {
 
     private final ObjectMapper mapper = new ObjectMapper();
 
-    @Value("${audit_log.sink.index_pattern}")
+    @Value("${audit-log.sink.index_pattern}")
     private String indexPattern;
-    @Value("${audit_log.sink.scheme_name}")
+    @Value("${audit-log.sink.scheme_name}")
     private String schemeName;
-    @Value("${audit_log.sink.host}")
+    @Value("${audit-log.sink.host}")
     private String host;
-    @Value("${audit_log.sink.port}")
+    @Value("${audit-log.sink.port}")
     private int port;
-    @Value("${audit_log.sink.user_name}")
+    @Value("${audit-log.sink.user_name}")
     private String userName;
-    @Value("${audit_log.sink.password}")
+    @Value("${audit-log.sink.password}")
     private String password;
-    @Value("${audit_log.sink.date_format}")
+    @Value("${audit-log.sink.date_format}")
     private String dateFormat;
 
     private RestClient restClient;

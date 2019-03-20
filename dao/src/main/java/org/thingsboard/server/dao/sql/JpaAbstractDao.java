@@ -27,6 +27,7 @@ import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.BaseEntity;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
@@ -67,23 +68,23 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
     @Override
     public D findById(TenantId tenantId, UUID key) {
         log.debug("Get entity by key {}", key);
-        E entity = getCrudRepository().findOne(fromTimeUUID(key));
+        Optional<E> entity = getCrudRepository().findById(fromTimeUUID(key));
         return DaoUtil.getData(entity);
     }
 
     @Override
     public ListenableFuture<D> findByIdAsync(TenantId tenantId, UUID key) {
         log.debug("Get entity by key async {}", key);
-        return service.submit(() -> DaoUtil.getData(getCrudRepository().findOne(fromTimeUUID(key))));
+        return service.submit(() -> DaoUtil.getData(getCrudRepository().findById(fromTimeUUID(key))));
     }
 
     @Override
     @Transactional
     public boolean removeById(TenantId tenantId, UUID id) {
         String key = fromTimeUUID(id);
-        getCrudRepository().delete(key);
+        getCrudRepository().deleteById(key);
         log.debug("Remove request: {}", key);
-        return getCrudRepository().findOne(key) == null;
+        return !getCrudRepository().existsById(key);
     }
 
     @Override

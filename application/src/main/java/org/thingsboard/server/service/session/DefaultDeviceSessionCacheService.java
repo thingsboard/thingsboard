@@ -47,11 +47,4 @@ public class DefaultDeviceSessionCacheService implements DeviceSessionCacheServi
         log.debug("[{}] Pushing session data to cache: {}", deviceId, sessions);
         return sessions;
     }
-
-    public static void main (String[] args){
-        UUID uuid = UUID.fromString("d5db434e-9cd2-4903-8b3b-421b2d93664d");
-        System.out.println(uuid.getMostSignificantBits());
-        System.out.println(uuid.getLeastSignificantBits());
-    }
-
 }

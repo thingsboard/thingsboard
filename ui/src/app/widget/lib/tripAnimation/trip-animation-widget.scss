@@ -1,0 +1,106 @@
+/**
+ * Copyright © 2016-2019 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.heat-map-widget {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.heat-map-info-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+  background-color: rgba(0, 0, 0, .3);
+  border-bottom-left-radius: 5px;
+
+  .md-button {
+    min-width: auto;
+  }
+}
+
+.heat-map-tooltip {
+  position: absolute;
+  top: 47px;
+  right: 0;
+  z-index: 2;
+  padding: 10px;
+  background-color: #fff;
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+  transition: .3s ease-in-out;
+
+  &-hidden {
+    transform: translateX(100%);
+  }
+}
+
+.heat-map-title {
+  padding: 10px;
+}
+
+.heat-map-control-panel {
+  position: absolute;
+  bottom: 0;
+  z-index: 2;
+  box-sizing: border-box;
+  width: 100%;
+  padding-right: 70px;
+  padding-left: 20px;
+  background: rgba(0, 0, 0, .3);
+
+  md-slider-container {
+    button {
+      max-width: none;
+
+      ng-md-icon {
+        width: 36px;
+        height: 36px;
+
+        svg {
+          width: inherit;
+          height: inherit;
+        }
+      }
+    }
+
+    .panel-timer {
+      max-width: none;
+      font-size: 20px;
+      font-weight: 600;
+    }
+  }
+}
+
+.heat-map-container {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  width: 100%;
+}
+
+#heat-map {
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+
+  .pointsLayerMarkerIcon {
+    border-radius: 50%;
+  }
+}

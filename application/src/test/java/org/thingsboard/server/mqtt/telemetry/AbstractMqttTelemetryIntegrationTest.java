@@ -111,7 +111,7 @@ public abstract class AbstractMqttTelemetryIntegrationTest extends AbstractContr
         client.subscribe("v1/devices/me/attributes", MqttQoS.AT_MOST_ONCE.value());
         String payload = "{\"key\":\"value\"}";
         String result = doPostAsync("/api/plugins/telemetry/" + savedDevice.getId() + "/SHARED_SCOPE", payload, String.class, status().isOk());
-        latch.await(3, TimeUnit.SECONDS);
+        latch.await(10, TimeUnit.SECONDS);
         assertEquals(payload, callback.getPayload());
         assertEquals(MqttQoS.AT_MOST_ONCE.value(), callback.getQoS());
     }
