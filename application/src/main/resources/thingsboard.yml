@@ -273,7 +273,7 @@ updates:
 spring.mvc.cors:
    mappings:
      # Intercept path
-      "/api/auth/**":
+      "[/api/auth/**]":
          #Comma-separated list of origins to allow. '*' allows all origins. When not set,CORS support is disabled.
          allowed-origins: "*"
          #Comma-separated list of methods to allow. '*' allows all methods.
@@ -284,7 +284,7 @@ spring.mvc.cors:
          max-age: "1800"
          #Set whether credentials are supported. When not set, credentials are not supported.
          allow-credentials: "true"
-      "/api/v1/**":
+      "[/api/v1/**]":
          allowed-origins: "*"
          allowed-methods: "*"
          allowed-headers: "*"
