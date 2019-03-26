@@ -41,7 +41,7 @@ import org.thingsboard.server.common.msg.TbMsg;
         nodeDescription = "",
         nodeDetails = "",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "")
+        configDirective = "tbEnrichmentNodeEntityDetailsConfig")
 public class TbGetCustomerDetailsNode extends TbAbstractGetEntityDetailsNode<TbGetCustomerDetailsNodeConfiguration> {
 
     private static final String CUSTOMER_PREFIX = "customer_";

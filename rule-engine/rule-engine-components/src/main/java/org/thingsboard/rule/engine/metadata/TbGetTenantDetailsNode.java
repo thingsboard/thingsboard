@@ -35,7 +35,7 @@ import org.thingsboard.server.common.msg.TbMsg;
         nodeDescription = "",
         nodeDetails = "",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "")
+        configDirective = "tbEnrichmentNodeEntityDetailsConfig")
 public class TbGetTenantDetailsNode extends TbAbstractGetEntityDetailsNode<TbGetTenantDetailsNodeConfiguration> {
 
 
