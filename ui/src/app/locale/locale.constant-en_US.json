@@ -1295,7 +1295,8 @@
         "metadata-required": "Metadata entries can't be empty.",
         "output": "Output",
         "test": "Test",
-        "help": "Help"
+        "help": "Help",
+        "reset-debug-mode": "Reset debug mode in all nodes"
     },
     "tenant": {
         "tenant": "Tenant",
