@@ -1217,7 +1217,7 @@ export default class TbFlot {
                         var hoverInfo = tbFlot.getHoverInfo(tbFlot.ctx.plot.getData(), pos);
                         if (angular.isNumber(hoverInfo.time)) {
                             hoverInfo.seriesHover.sort(function (a, b) {
-                                return b.value - a.value;
+								return a.value - b.value;
                             });
                             tooltipHtml = tbFlot.ctx.tooltipFormatter(hoverInfo, item ? item.seriesIndex : -1);
                         }
