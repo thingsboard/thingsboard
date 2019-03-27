@@ -137,9 +137,11 @@ export default class TbFlot {
                 });
                 content += dateDiv.prop('outerHTML');
                 if (tbFlot.ctx.tooltipIndividual) {
-                    var seriesHoverInfo = hoverInfo.seriesHover[seriesIndex];
-                    if (seriesHoverInfo) {
-                        content += seriesInfoDivFromInfo(seriesHoverInfo, seriesIndex);
+                    var found = hoverInfo.seriesHover.filter((seriesHover) => {
+                        return seriesHover.index === seriesIndex;
+                    });
+                    if (found && found.length) {
+                        content += seriesInfoDivFromInfo(found[0], seriesIndex);
                     }
                 } else {
                     var seriesDiv = $('<div></div>');
@@ -161,7 +163,7 @@ export default class TbFlot {
                             if (i == hoverInfo.seriesHover.length) {
                                 break;
                             }
-                            seriesHoverInfo = hoverInfo.seriesHover[i];
+                            var seriesHoverInfo = hoverInfo.seriesHover[i];
                             columnContent += seriesInfoDivFromInfo(seriesHoverInfo, seriesIndex);
                         }
                         columnDiv.html(columnContent);

@@ -50,7 +50,7 @@
         <commons-validator.version>1.5.0</commons-validator.version>
         <commons-io.version>2.5</commons-io.version>
         <commons-csv.version>1.4</commons-csv.version>
-        <jackson.version>2.9.7</jackson.version>
+        <jackson.version>2.9.8</jackson.version>
         <json-schema-validator.version>2.2.6</json-schema-validator.version>
         <scala.version>2.11</scala.version>
         <akka.version>2.4.2</akka.version>
@@ -59,7 +59,7 @@
         <velocity.version>1.7</velocity.version>
         <velocity-tools.version>2.0</velocity-tools.version>
         <mail.version>1.4.3</mail.version>
-        <curator.version>4.0.1</curator.version>
+        <curator.version>4.2.0</curator.version>
         <protobuf.version>3.6.1</protobuf.version>
         <grpc.version>1.16.1</grpc.version>
         <lombok.version>1.16.18</lombok.version>
