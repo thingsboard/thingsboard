@@ -71,6 +71,8 @@
         <jar-plugin.version>3.0.2</jar-plugin.version>
         <springfox-swagger.version>2.6.1</springfox-swagger.version>
         <springfox-swagger-ui-rfc6570.version>1.0.0</springfox-swagger-ui-rfc6570.version>
+        <spatial4j.version>0.7</spatial4j.version>
+        <jts.version>1.15.0</jts.version>
         <bouncycastle.version>1.56</bouncycastle.version>
         <winsw.version>2.0.1</winsw.version>
         <hsqldb.version>2.4.0</hsqldb.version>
@@ -827,6 +829,16 @@
                 <groupId>io.springfox.ui</groupId>
                 <artifactId>springfox-swagger-ui-rfc6570</artifactId>
                 <version>${springfox-swagger-ui-rfc6570.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.locationtech.spatial4j</groupId>
+                <artifactId>spatial4j</artifactId>
+                <version>${spatial4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.locationtech.jts</groupId>
+                <artifactId>jts-core</artifactId>
+                <version>${jts.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
