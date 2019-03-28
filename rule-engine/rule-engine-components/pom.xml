@@ -98,6 +98,14 @@
             <artifactId>bcpkix-jdk15on</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.locationtech.spatial4j</groupId>
+            <artifactId>spatial4j</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.locationtech.jts</groupId>
+            <artifactId>jts-core</artifactId>
+        </dependency>
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>${junit.version}</version>
@@ -142,10 +150,10 @@
                     <executable>true</executable>
                     <excludeDevtools>true</excludeDevtools>
                     <!--<embeddedLaunchScriptProperties>-->
-                        <!--<confFolder>${pkg.installFolder}/conf</confFolder>-->
-                        <!--<logFolder>${pkg.unixLogFolder}</logFolder>-->
-                        <!--<logFilename>${pkg.name}.out</logFilename>-->
-                        <!--<initInfoProvides>${pkg.name}</initInfoProvides>-->
+                    <!--<confFolder>${pkg.installFolder}/conf</confFolder>-->
+                    <!--<logFolder>${pkg.unixLogFolder}</logFolder>-->
+                    <!--<logFilename>${pkg.name}.out</logFilename>-->
+                    <!--<initInfoProvides>${pkg.name}</initInfoProvides>-->
                     <!--</embeddedLaunchScriptProperties>-->
                 </configuration>
                 <executions>
