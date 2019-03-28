@@ -14,93 +14,123 @@
  * limitations under the License.
  */
 
-.heat-map-widget {
+.trip-animation-widget {
+
   position: relative;
   width: 100%;
   height: 100%;
   font-size: 16px;
   line-height: 24px;
-}
 
-.heat-map-info-panel {
-  position: absolute;
-  top: 0;
-  right: 0;
-  z-index: 2;
-  background-color: rgba(0, 0, 0, .3);
-  border-bottom-left-radius: 5px;
-
-  .md-button {
-    min-width: auto;
+  .trip-animation-label-container {
+    height: 24px;
   }
-}
 
-.heat-map-tooltip {
-  position: absolute;
-  top: 47px;
-  right: 0;
-  z-index: 2;
-  padding: 10px;
-  background-color: #fff;
-  border-top-left-radius: 10px;
-  border-bottom-left-radius: 10px;
-  transition: .3s ease-in-out;
+  .trip-animation-container {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    width: 100%;
 
-  &-hidden {
-    transform: translateX(100%);
-  }
-}
+    #trip-animation-map {
+      z-index: 1;
+      width: 100%;
+      height: 100%;
 
-.heat-map-title {
-  padding: 10px;
-}
+      .pointsLayerMarkerIcon {
+        border-radius: 50%;
+      }
+    }
 
-.heat-map-control-panel {
-  position: absolute;
-  bottom: 0;
-  z-index: 2;
-  box-sizing: border-box;
-  width: 100%;
-  padding-right: 70px;
-  padding-left: 20px;
-  background: rgba(0, 0, 0, .3);
+    .trip-animation-info-panel {
+      position: absolute;
+      top: 0;
+      right: 0;
+      z-index: 2;
+      pointer-events: none;
 
-  md-slider-container {
-    button {
-      max-width: none;
+      .md-button {
+        top: 0;
+        left: 0;
+        width: 32px;
+        min-width: 32px;
+        height: 32px;
+        min-height: 32px;
+        padding: 0 0 2px;
+        margin: 2px;
+        line-height: 24px;
 
-      ng-md-icon {
-        width: 36px;
-        height: 36px;
+        ng-md-icon {
+          width: 24px;
+          height: 24px;
 
-        svg {
-          width: inherit;
-          height: inherit;
+          svg {
+            width: inherit;
+            height: inherit;
+          }
         }
+      }
+    }
+
+    .trip-animation-tooltip {
+      position: absolute;
+      top: 38px;
+      right: 0;
+      z-index: 2;
+      padding: 10px;
+      background-color: #fff;
+      transition: .3s ease-in-out;
+
+      &-hidden {
+        transform: translateX(110%);
+      }
+    }
+  }
+
+  .trip-animation-control-panel {
+    position: relative;
+    box-sizing: border-box;
+    width: 100%;
+    padding-left: 10px;
+
+    md-slider-container {
+      md-slider {
+        min-width: 80px;
+      }
+
+      button.md-button.md-icon-button {
+        width: 44px;
+        min-width: 44px;
+        height: 44px;
+        min-height: 44px;
+        margin: 0;
+        line-height: 28px;
+
+        md-icon {
+          width: 28px;
+          height: 28px;
+          font-size: 28px;
+
+          svg {
+            width: inherit;
+            height: inherit;
+          }
+        }
+      }
+
+      md-select {
+        margin: 0;
       }
     }
 
     .panel-timer {
       max-width: none;
-      font-size: 20px;
-      font-weight: 600;
+      padding-right: 250px;
+      padding-left: 90px;
+      margin-top: -20px;
+      font-size: 12px;
+      font-weight: 500;
+      text-align: center;
     }
-  }
-}
-
-.heat-map-container {
-  position: relative;
-  z-index: 1;
-  flex: 1;
-  width: 100%;
-}
-
-#heat-map {
-  z-index: 1;
-  width: 100%;
-  height: 100%;
-
-  .pointsLayerMarkerIcon {
-    border-radius: 50%;
   }
 }
