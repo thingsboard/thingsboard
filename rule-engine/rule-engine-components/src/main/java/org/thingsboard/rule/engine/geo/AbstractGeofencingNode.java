@@ -97,7 +97,14 @@ public abstract class AbstractGeofencingNode<T extends TbGpsGeofencingFilterNode
                 throw new TbNodeException("Missing perimeter definition!");
             }
         } else {
-            return config.getPerimeters();
+            Perimeter perimeter = new Perimeter();
+            perimeter.setPerimeterType(config.getPerimeterType());
+            perimeter.setCenterLatitude(config.getCenterLatitude());
+            perimeter.setCenterLongitude(config.getCenterLongitude());
+            perimeter.setRange(config.getRange());
+            perimeter.setRangeUnit(config.getRangeUnit());
+            perimeter.setPolygonsDefinition(config.getPolygonsDefinition());
+            return Collections.singletonList(perimeter);
         }
     }
 
@@ -116,5 +123,9 @@ public abstract class AbstractGeofencingNode<T extends TbGpsGeofencingFilterNode
         return value;
     }
 
+    @Override
+    public void destroy() {
+
+    }
 
 }

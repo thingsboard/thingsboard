@@ -46,8 +46,8 @@ import java.util.concurrent.TimeoutException;
 @RuleNode(
         type = ComponentType.ACTION,
         name = "gps geofencing events",
-        configClazz = TbGpsGeofencingFilterNodeConfiguration.class,
-        relationTypes = {"Entered", "Left", "Stays Inside", "Stays Outside"},
+        configClazz = TbGpsGeofencingActionNodeConfiguration.class,
+        relationTypes = {"Entered", "Left", "Inside", "Outside"},
         nodeDescription = "Produces incoming messages using GPS based geofencing",
         nodeDetails = "Extracts latitude and longitude parameters from incoming message and returns different events based on configuration parameters")
 public class TbGpsGeofencingActionNode extends AbstractGeofencingNode<TbGpsGeofencingActionNodeConfiguration> {
@@ -68,7 +68,7 @@ public class TbGpsGeofencingActionNode extends AbstractGeofencingNode<TbGpsGeofe
                         .get(1, TimeUnit.MINUTES);
                 if (entry.isPresent()) {
                     JsonObject element = parser.parse(entry.get().getValueAsString()).getAsJsonObject();
-                    return new EntityGeofencingState(element.get("inside").getAsBoolean(), element.get("stateSwitchTime").getAsLong(), element.get("staid").getAsBoolean());
+                    return new EntityGeofencingState(element.get("inside").getAsBoolean(), element.get("stateSwitchTime").getAsLong(), element.get("stayed").getAsBoolean());
                 } else {
                     return new EntityGeofencingState(false, 0L, false);
                 }
@@ -79,10 +79,11 @@ public class TbGpsGeofencingActionNode extends AbstractGeofencingNode<TbGpsGeofe
         if (entityState.getStateSwitchTime() == 0L || entityState.isInside() != matches) {
             switchState(ctx, msg.getOriginator(), entityState, matches, ts);
             ctx.tellNext(msg, matches ? "Entered" : "Left");
-        } else if (!entityState.isStaid()) {
+        } else if (!entityState.isStayed()) {
             long stayTime = ts - entityState.getStateSwitchTime();
             if (stayTime > (entityState.isInside() ? config.getMinInsideDuration() : config.getMinOutsideDuration())) {
                 setStaid(ctx, msg.getOriginator(), entityState);
+                ctx.tellNext(msg, entityState.isInside() ? "Inside" : "Outside");
             }
         }
     }
@@ -90,12 +91,12 @@ public class TbGpsGeofencingActionNode extends AbstractGeofencingNode<TbGpsGeofe
     private void switchState(TbContext ctx, EntityId entityId, EntityGeofencingState entityState, boolean matches, long ts) {
         entityState.setInside(matches);
         entityState.setStateSwitchTime(ts);
-        entityState.setStaid(false);
+        entityState.setStayed(false);
         persist(ctx, entityId, entityState);
     }
 
     private void setStaid(TbContext ctx, EntityId entityId, EntityGeofencingState entityState) {
-        entityState.setStaid(true);
+        entityState.setStayed(true);
         persist(ctx, entityId, entityState);
     }
 
@@ -103,15 +104,10 @@ public class TbGpsGeofencingActionNode extends AbstractGeofencingNode<TbGpsGeofe
         JsonObject object = new JsonObject();
         object.addProperty("inside", entityState.isInside());
         object.addProperty("stateSwitchTime", entityState.getStateSwitchTime());
-        object.addProperty("staid", entityState.isStaid());
+        object.addProperty("stayed", entityState.isStayed());
         AttributeKvEntry entry = new BaseAttributeKvEntry(new StringDataEntry(ctx.getNodeId(), gson.toJson(object)), System.currentTimeMillis());
         List<AttributeKvEntry> attributeKvEntryList = Collections.singletonList(entry);
         ctx.getAttributesService().save(ctx.getTenantId(), entityId, DataConstants.SERVER_SCOPE, attributeKvEntryList);
-    }
-
-    @Override
-    public void destroy() {
-
     }
 
     @Override
