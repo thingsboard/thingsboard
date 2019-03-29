@@ -15,40 +15,53 @@
     limitations under the License.
 
 -->
-<div class="heat-map-widget tracking-widget" layout="column" layout-align="center start"
+<div class="trip-animation-widget" layout="column" layout-align="center start"
      ng-style="{'padding-top' : (!vm.widgetConfig.showTitle && vm.ctx.settings.showLabel) ? '5px' : '0px'}">
-    <div ng-show="vm.ctx.settings.showLabel">
+    <div class="trip-animation-label-container" ng-show="vm.ctx.settings.showLabel">
         {{vm.trips[vm.activeTripIndex].settings.labelText}}
     </div>
-    <div class="heat-map-control-panel" lang="row" layout-align="center start">
+    <div class="trip-animation-container" layout="column">
+        <div flex id='trip-animation-map'></div>
+        <div class="trip-animation-info-panel" layout="row">
+            <md-button class="md-primary md-fab" aria-label="tooltip" ng-show="vm.staticSettings.displayTooltip" ng-click="vm.showHideTooltip()">
+                <ng-md-icon icon="info_outline"></ng-md-icon>
+            </md-button>
+        </div>
+        <div class="trip-animation-tooltip md-whiteframe-z4" layout="column" ng-class="!vm.staticSettings.showTooltip ? 'trip-animation-tooltip-hidden':''" ng-bind-html="vm.trips[vm.activeTripIndex].settings.tooltipText"
+        ng-style="{'background-color': vm.staticSettings.tooltipColor, 'opacity': vm.staticSettings.tooltipOpacity, 'color': vm.staticSettings.tooltipFontColor}">
+        </div>
+    </div>
+    <div class="trip-animation-control-panel">
         <md-slider-container>
+            <md-button class="md-icon-button" aria-label="Start" ng-click="vm.moveStart()">
+                <md-icon class="material-icons" ng-style="{'color': vm.staticSettings.buttonColor}">fast_rewind</md-icon>
+            </md-button>
+            <md-button class="md-icon-button" aria-label="Previous" ng-click="vm.movePrev()">
+                <md-icon class="material-icons" ng-style="{'color': vm.staticSettings.buttonColor}">skip_previous</md-icon>
+            </md-button>
             <md-slider ng-model="vm.index" min="{{vm.minTime}}" max="{{vm.maxTime}}" ng-change="vm.recalculateTrips()"></md-slider>
-            <md-button aria-label="Play" ng-click="vm.playMove(true)" ng-disabled="vm.isPlaying">
-                <ng-md-icon icon="play_circle_outline"></ng-md-icon>
+            <md-button class="md-icon-button" aria-label="Next" ng-click="vm.moveNext()">
+                <md-icon class="material-icons" ng-style="{'color': vm.staticSettings.buttonColor}">skip_next</md-icon>
+            </md-button>
+            <md-button class="md-icon-button" aria-label="End" ng-click="vm.moveEnd()">
+                <md-icon class="material-icons" ng-style="{'color': vm.staticSettings.buttonColor}">fast_forward</md-icon>
+            </md-button>
+            <md-button class="md-icon-button" aria-label="Play" ng-click="vm.playMove(true)" ng-disabled="vm.isPlaying">
+                <md-icon class="material-icons" ng-style="{'color': vm.isPlaying ? vm.staticSettings.disabledButtonColor : vm.staticSettings.buttonColor}">
+                    play_circle_outline
+                </md-icon>
             </md-button>
             <md-select ng-model="vm.speed" aria-label="Speed selector">
                 <md-option ng-value="speed" flex="1" ng-repeat="speed in vm.speeds track by $index">{{ speed}}
                 </md-option>
             </md-select>
-            <md-button aria-label="Stop playing" ng-click="vm.stopPlay()">
-                <ng-md-icon icon="pause_circle_outline"></ng-md-icon>
+            <md-button class="md-icon-button" aria-label="Stop playing" ng-click="vm.stopPlay()" ng-disabled="!vm.isPlaying">
+                <md-icon class="material-icons" ng-style="{'color': vm.isPlaying ? vm.staticSettings.buttonColor : vm.staticSettings.disabledButtonColor}">
+                    pause_circle_outline
+                </md-icon>
             </md-button>
-            <div class="panel-timer">{{vm.trips[vm.activeTripIndex].timeRange[vm.index].ts | date:'medium'}}
-            </div>
         </md-slider-container>
-    </div>
-    <div class="heat-map-container" layout="column">
-        <div flex id='heat-map'></div>
-        <div class="heat-map-info-panel" layout="row">
-            <md-button aria-label="tooltip" ng-show="vm.staticSettings.displayTooltip" ng-click="vm.showHideTooltip()">
-                <ng-md-icon icon="info"></ng-md-icon>
-            </md-button>
-            <!--<md-button aria-label="settings" ng-click="vm.openHideSettings()">-->
-                <!--<ng-md-icon icon="settings_applications"></ng-md-icon>-->
-            <!--</md-button>-->
-        </div>
-        <div class="heat-map-tooltip" class="heat-map-title" layout="column" ng-class="!vm.staticSettings.showTooltip ? 'heat-map-tooltip-hidden':''" ng-bind-html="vm.trips[vm.activeTripIndex].settings.tooltipText"
-        ng-style="{'background-color': vm.staticSettings.tooltipColor, 'opacity': vm.staticSettings.tooltipOpacity, 'color': vm.staticSettings.tooltipFontColor}">
+        <div class="panel-timer">{{vm.trips[vm.activeTripIndex].timeRange[vm.index].ts | date:'medium'}}
         </div>
     </div>
 </div>
