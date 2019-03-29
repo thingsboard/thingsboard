@@ -22,6 +22,7 @@ import thingsboardTimeseriesTableWidget from '../widget/lib/timeseries-table-wid
 import thingsboardAlarmsTableWidget from '../widget/lib/alarms-table-widget';
 import thingsboardEntitiesTableWidget from '../widget/lib/entities-table-widget';
 import thingsboardExtensionsTableWidget from '../widget/lib/extensions-table-widget';
+import thingsboardDateRangeNavigatorWidget from '../widget/lib/date-range-navigator/date-range-navigator';
 
 import thingsboardRpcWidgets from '../widget/lib/rpc';
 
@@ -33,6 +34,7 @@ import TbCanvasDigitalGauge from '../widget/lib/canvas-digital-gauge';
 import TbMapWidget from '../widget/lib/map-widget';
 import TbMapWidgetV2 from '../widget/lib/map-widget2';
 
+
 import 'jquery.terminal/js/jquery.terminal.min.js';
 import 'jquery.terminal/css/jquery.terminal.min.css';
 
@@ -43,7 +45,8 @@ import thingsboardTypes from '../common/types.constant';
 import thingsboardUtils from '../common/utils.service';
 
 export default angular.module('thingsboard.api.widget', ['oc.lazyLoad', thingsboardLedLight, thingsboardTimeseriesTableWidget,
-    thingsboardAlarmsTableWidget, thingsboardEntitiesTableWidget, thingsboardExtensionsTableWidget, thingsboardRpcWidgets, thingsboardTypes, thingsboardUtils])
+    thingsboardAlarmsTableWidget, thingsboardEntitiesTableWidget, thingsboardExtensionsTableWidget,
+    thingsboardDateRangeNavigatorWidget, thingsboardRpcWidgets, thingsboardTypes, thingsboardUtils])
     .factory('widgetService', WidgetService)
     .name;
 
