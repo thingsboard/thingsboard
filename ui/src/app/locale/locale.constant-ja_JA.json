@@ -1205,10 +1205,10 @@
 		"tenant-required": "テナントが必要です"
 	},
 	"timeinterval": {
-		"seconds-interval": "{ seconds, select, 1 {1 second} other {# seconds} }",
-		"minutes-interval": "{ minutes, select, 1 {1 minute} other {# minutes} }",
-		"hours-interval": "{ hours, select, 1 {1 hour} other {# hours} }",
-		"days-interval": "{ days, select, 1 {1 day} other {# days} }",
+		"seconds-interval": "{ seconds, plural, 1 {1 second} other {# seconds} }",
+		"minutes-interval": "{ minutes, plural, 1 {1 minute} other {# minutes} }",
+		"hours-interval": "{ hours, plural, 1 {1 hour} other {# hours} }",
+		"days-interval": "{ days, plural, 1 {1 day} other {# days} }",
 		"days": "日々",
 		"hours": "時間",
 		"minutes": "分",
@@ -1216,10 +1216,10 @@
 		"advanced": "上級"
 	},
 	"timewindow": {
-		"days": "{ days, select, 1 { day } other {# days } }",
-		"hours": "{ hours, select, 0 { hour } 1 {1 hour } other {# hours } }",
-		"minutes": "{ minutes, select, 0 { minute } 1 {1 minute } other {# minutes } }",
-		"seconds": "{ seconds, select, 0 { second } 1 {1 second } other {# seconds } }",
+		"days": "{ days, plural, 1 { day } other {# days } }",
+		"hours": "{ hours, plural, 0 { hour } 1 {1 hour } other {# hours } }",
+		"minutes": "{ minutes, plural, 0 { minute } 1 {1 minute } other {# minutes } }",
+		"seconds": "{ seconds, plural, 0 { second } 1 {1 second } other {# seconds } }",
 		"realtime": "リアルタイム",
 		"history": "歴史",
 		"last-prefix": "最終",
@@ -1460,7 +1460,8 @@
 			"es_ES": "スペイン語",
 			"ja_JA": "日本語",
 			"tr_TR": "トルコ語",
-            "fa_IR": "ペルシャ語"
+            "fa_IR": "ペルシャ語",
+            "uk_UA": "ウクライナ語"
 		}
 	}
 }

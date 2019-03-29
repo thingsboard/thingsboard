@@ -1285,10 +1285,10 @@
         "tenant-required": "Tenant gerekli"
     },
     "timeinterval": {
-        "seconds-interval": "{ seconds, select, 1 {1 saniye} other {# saniye} }",
-        "minutes-interval": "{ minutes, select, 1 {1 dakika} other {# dakika} }",
-        "hours-interval": "{ hours, select, 1 {1 saat} other {# saat} }",
-        "days-interval": "{ days, select, 1 {1 gün} other {# gün} }",
+        "seconds-interval": "{ seconds, plural, 1 {1 saniye} other {# saniye} }",
+        "minutes-interval": "{ minutes, plural, 1 {1 dakika} other {# dakika} }",
+        "hours-interval": "{ hours, plural, 1 {1 saat} other {# saat} }",
+        "days-interval": "{ days, plural, 1 {1 gün} other {# gün} }",
         "days": "Gün",
         "hours": "Saat",
         "minutes": "Dakika",
@@ -1296,10 +1296,10 @@
         "advanced": "İleri düzey"
     },
     "timewindow": {
-        "days": "{ days, select, 1 { gün } other {# gün } }",
-        "hours": "{ hours, select, 0 { saat } 1 {1 saat } other {# saat } }",
-        "minutes": "{ minutes, select, 0 { dakika } 1 {1 dakika } other {# dakika } }",
-        "seconds": "{ seconds, select, 0 { saniye } 1 {1 saniye } other {# saniye } }",
+        "days": "{ days, plural, 1 { gün } other {# gün } }",
+        "hours": "{ hours, plural, 0 { saat } 1 {1 saat } other {# saat } }",
+        "minutes": "{ minutes, plural, 0 { dakika } 1 {1 dakika } other {# dakika } }",
+        "seconds": "{ seconds, plural, 0 { saniye } 1 {1 saniye } other {# saniye } }",
         "realtime": "Gerçek zaman",
         "history": "Tarih",
         "last-prefix": "son",
@@ -1542,7 +1542,8 @@
             "es_ES": "İspanyol",
             "ja_JA": "Japonca",
             "tr_TR": "Türkçe",
-            "fa_IR": "Farsça"
+            "fa_IR": "Farsça",
+            "uk_UA": "Ukrayna"
         }
     }
 }

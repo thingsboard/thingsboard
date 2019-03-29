@@ -223,6 +223,15 @@
             </md-tooltip>
             <ng-md-icon icon="delete"></ng-md-icon>
         </md-button>
+        <md-button ng-disabled="$root.loading || !vm.isDebugModeEnabled()"
+                   class="tb-btn-footer md-accent md-hue-2 md-fab"
+                   aria-label="{{ 'rulenode.reset-debug-mode' | translate }}"
+                   ng-click="vm.resetDebugModeInAllNodes()">
+            <md-tooltip md-direction="top">
+                {{ 'rulenode.reset-debug-mode' | translate }}
+            </md-tooltip>
+            <ng-md-icon icon="bug_report"></ng-md-icon>
+        </md-button>
         <md-button ng-disabled="$root.loading  || vm.isInvalid || (!vm.isDirty && !vm.isImport)"
                    class="tb-btn-footer md-accent md-hue-2 md-fab"
                    aria-label="{{ 'action.apply' | translate }}"

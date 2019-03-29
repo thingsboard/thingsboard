@@ -108,6 +108,9 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
     vm.objectsSelected = objectsSelected;
     vm.deleteSelected = deleteSelected;
 
+    vm.isDebugModeEnabled = isDebugModeEnabled;
+    vm.resetDebugModeInAllNodes = resetDebugModeInAllNodes;
+
     vm.triggerResize = triggerResize;
 
     vm.openRuleChainContextMenu = openRuleChainContextMenu;
@@ -1340,6 +1343,19 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
 
     function deleteSelected() {
         vm.modelservice.deleteSelected();
+    }
+
+    function isDebugModeEnabled() {
+        var res = $filter('filter')(vm.ruleChainModel.nodes, {debugMode: true});
+        return (res && res.length);
+    }
+
+    function resetDebugModeInAllNodes() {
+        vm.ruleChainModel.nodes.forEach((node) => {
+            if (node.component.type != types.ruleNodeType.INPUT.value && node.component.type != types.ruleNodeType.RULE_CHAIN.value) {
+                node.debugMode = false;
+            }
+        });
     }
 
     function triggerResize() {
