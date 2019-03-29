@@ -1,0 +1,124 @@
+/**
+ * ThingsBoard, Inc. ("COMPANY") CONFIDENTIAL
+ *
+ * Copyright © 2016-2019 ThingsBoard, Inc. All Rights Reserved.
+ *
+ * NOTICE: All information contained herein is, and remains
+ * the property of ThingsBoard, Inc. and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to ThingsBoard, Inc.
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ *
+ * Dissemination of this information or reproduction of this material is strictly forbidden
+ * unless prior written permission is obtained from COMPANY.
+ *
+ * Access to the source code contained herein is hereby forbidden to anyone except current COMPANY employees,
+ * managers or contractors who have executed Confidentiality and Non-disclosure agreements
+ * explicitly covering such access.
+ *
+ * The copyright notice above does not evidence any actual or intended publication
+ * or disclosure  of  this source code, which includes
+ * information that is confidential and/or proprietary, and is a trade secret, of  COMPANY.
+ * ANY REPRODUCTION, MODIFICATION, DISTRIBUTION, PUBLIC  PERFORMANCE,
+ * OR PUBLIC DISPLAY OF OR THROUGH USE  OF THIS  SOURCE CODE  WITHOUT
+ * THE EXPRESS WRITTEN CONSENT OF COMPANY IS STRICTLY PROHIBITED,
+ * AND IN VIOLATION OF APPLICABLE LAWS AND INTERNATIONAL TREATIES.
+ * THE RECEIPT OR POSSESSION OF THIS SOURCE CODE AND/OR RELATED INFORMATION
+ * DOES NOT CONVEY OR IMPLY ANY RIGHTS TO REPRODUCE, DISCLOSE OR DISTRIBUTE ITS CONTENTS,
+ * OR TO MANUFACTURE, USE, OR SELL ANYTHING THAT IT  MAY DESCRIBE, IN WHOLE OR IN PART.
+ */
+
+.date-range-navigator-widget {
+  display: flex;
+  height: 100%;
+}
+
+.date-range-navigator {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-evenly;
+  width: 100%;
+  margin: auto;
+
+  .drn__element {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    max-width: 100%;
+    height: 60px;
+    margin: 4px 0;
+  }
+
+  .navigation {
+    md-input-container {
+      margin: 0;
+    }
+  }
+
+  .picker {
+    .picker__wrapper {
+      position: relative;
+      max-width: 100%;
+      padding: 2px;
+
+      > label {
+        position: absolute;
+        right: -3px;
+        bottom: 100%;
+        left: 0;
+        padding-left: 3px;
+        color: #787878;
+        transform: scale(.75);
+        transform-origin: left bottom;
+      }
+    }
+
+    .md-select-value {
+      min-width: 225px;
+      border-color: #e1e1e1;
+
+      .md-select-icon {
+        color: #757575;
+      }
+    }
+  }
+
+  &.short-mode {
+    display: block;
+    width: 90%;
+
+    .drn__element {
+      width: 100%;
+
+      md-input-container {
+        flex: 1;
+      }
+    }
+
+    .picker {
+      .picker__wrapper {
+        width: 100%;
+      }
+
+      .md-select-value {
+        min-width: initial;
+      }
+    }
+
+    &.labels-hidden {
+      .drn__element {
+        margin: 0;
+      }
+    }
+  }
+
+  &.long-mode {
+    &.labels-hidden {
+      .drn__element {
+        height: 36px;
+      }
+    }
+  }
+}
