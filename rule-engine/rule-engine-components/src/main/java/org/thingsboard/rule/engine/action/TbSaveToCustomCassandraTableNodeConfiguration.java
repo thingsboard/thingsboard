@@ -22,7 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Data
-public class TbSaveToCustomCassandraTableConfiguration implements NodeConfiguration<TbSaveToCustomCassandraTableConfiguration> {
+public class TbSaveToCustomCassandraTableNodeConfiguration implements NodeConfiguration<TbSaveToCustomCassandraTableNodeConfiguration> {
 
 
     private String tableName;
@@ -30,8 +30,8 @@ public class TbSaveToCustomCassandraTableConfiguration implements NodeConfigurat
 
 
     @Override
-    public TbSaveToCustomCassandraTableConfiguration defaultConfiguration() {
-        TbSaveToCustomCassandraTableConfiguration configuration = new TbSaveToCustomCassandraTableConfiguration();
+    public TbSaveToCustomCassandraTableNodeConfiguration defaultConfiguration() {
+        TbSaveToCustomCassandraTableNodeConfiguration configuration = new TbSaveToCustomCassandraTableNodeConfiguration();
         configuration.setTableName("");
         Map<String, String> map = new HashMap<>();
         map.put("", "");

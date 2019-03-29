@@ -53,8 +53,6 @@ import org.thingsboard.server.dao.model.type.JsonCodec;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
 
 import javax.annotation.Nullable;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -69,7 +67,7 @@ import static org.thingsboard.rule.engine.api.util.DonAsynchron.withCallback;
 @Slf4j
 @RuleNode(type = ComponentType.ACTION,
         name = "save to custom table",
-        configClazz = TbSaveToCustomCassandraTableConfiguration.class,
+        configClazz = TbSaveToCustomCassandraTableNodeConfiguration.class,
         nodeDescription = "Node stores data from incoming Message payload to the Cassandra database into the predefined custom table" +
                 " that should have <b>cs_tb_</b> prefix, to avoid the data insertion to the common TB tables.<br>" +
                 "<b>Note:</b> rule node can be used only for Cassandra DB.",
@@ -81,12 +79,12 @@ import static org.thingsboard.rule.engine.api.util.DonAsynchron.withCallback;
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeCustomTableConfig",
         icon = "file_upload")
-public class TbSaveToCustomCassandraTable implements TbNode {
+public class TbSaveToCustomCassandraTableNode implements TbNode {
 
     private static final String TABLE_PREFIX = "cs_tb_";
     private static final JsonParser parser = new JsonParser();
 
-    private TbSaveToCustomCassandraTableConfiguration config;
+    private TbSaveToCustomCassandraTableNodeConfiguration config;
     private Session session;
     private CassandraCluster cassandraCluster;
     private ConsistencyLevel defaultWriteLevel;
@@ -96,7 +94,7 @@ public class TbSaveToCustomCassandraTable implements TbNode {
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        config = TbNodeUtils.convert(configuration, TbSaveToCustomCassandraTableConfiguration.class);
+        config = TbNodeUtils.convert(configuration, TbSaveToCustomCassandraTableNodeConfiguration.class);
         cassandraCluster = ctx.getCassandraCluster();
         if (cassandraCluster == null) {
             throw new RuntimeException("Unable to connect to Cassandra database");
