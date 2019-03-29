@@ -37,7 +37,6 @@ public class TbGpsGeofencingActionNodeConfiguration extends TbGpsGeofencingFilte
         configuration.setLatitudeKeyName("latitude");
         configuration.setLongitudeKeyName("longitude");
         configuration.setFetchPerimeterInfoFromMessage(true);
-        configuration.setPerimeters(Collections.emptyList());
         configuration.setMinInsideDuration(TimeUnit.MINUTES.toMillis(1));
         configuration.setMinOutsideDuration(TimeUnit.MINUTES.toMillis(1));
         return configuration;

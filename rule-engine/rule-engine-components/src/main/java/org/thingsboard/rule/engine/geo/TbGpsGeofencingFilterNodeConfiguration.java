@@ -33,7 +33,17 @@ public class TbGpsGeofencingFilterNodeConfiguration implements NodeConfiguration
     private String latitudeKeyName;
     private String longitudeKeyName;
     private boolean fetchPerimeterInfoFromMessage;
-    private List<Perimeter> perimeters;
+
+    private PerimeterType perimeterType;
+
+    //For Polygons
+    private String polygonsDefinition;
+
+    //For Circles
+    private Double centerLatitude;
+    private Double centerLongitude;
+    private Double range;
+    private RangeUnit rangeUnit;
 
     @Override
     public TbGpsGeofencingFilterNodeConfiguration defaultConfiguration() {
@@ -41,7 +51,6 @@ public class TbGpsGeofencingFilterNodeConfiguration implements NodeConfiguration
         configuration.setLatitudeKeyName("latitude");
         configuration.setLongitudeKeyName("longitude");
         configuration.setFetchPerimeterInfoFromMessage(true);
-        configuration.setPerimeters(Collections.emptyList());
         return configuration;
     }
 }

@@ -24,6 +24,6 @@ public class EntityGeofencingState {
 
     private boolean inside;
     private long stateSwitchTime;
-    private boolean staid;
+    private boolean stayed;
 
 }

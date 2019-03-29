@@ -55,13 +55,7 @@ public class TbGpsGeofencingFilterNode extends AbstractGeofencingNode<TbGpsGeofe
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
-        boolean matches = checkMatches(msg);
-        ctx.tellNext(msg, matches ? "True" : "False");
-    }
-
-    @Override
-    public void destroy() {
-
+        ctx.tellNext(msg, checkMatches(msg) ? "True" : "False");
     }
 
     @Override
