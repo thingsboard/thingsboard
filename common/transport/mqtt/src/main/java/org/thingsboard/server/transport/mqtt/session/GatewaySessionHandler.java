@@ -279,10 +279,10 @@ public class GatewaySessionHandler {
 
                         @Override
                         public void onFailure(Throwable t) {
+                            ack(msg);
                             log.debug("[{}] Failed to process device attributes request command: {}", sessionId, deviceName, t);
                         }
                     }, context.getExecutor());
-            ack(msg);
         } else {
             throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
         }
