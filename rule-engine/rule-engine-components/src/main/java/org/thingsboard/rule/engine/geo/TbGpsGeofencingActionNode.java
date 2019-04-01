@@ -49,7 +49,9 @@ import java.util.concurrent.TimeoutException;
         configClazz = TbGpsGeofencingActionNodeConfiguration.class,
         relationTypes = {"Entered", "Left", "Inside", "Outside"},
         nodeDescription = "Produces incoming messages using GPS based geofencing",
-        nodeDetails = "Extracts latitude and longitude parameters from incoming message and returns different events based on configuration parameters")
+        nodeDetails = "Extracts latitude and longitude parameters from incoming message and returns different events based on configuration parameters",
+        uiResources = {"static/rulenode/rulenode-core-config.js"},
+        configDirective = "tbActionNodeGpsGeofencingConfig")
 public class TbGpsGeofencingActionNode extends AbstractGeofencingNode<TbGpsGeofencingActionNodeConfiguration> {
 
     private final Map<EntityId, EntityGeofencingState> entityStates = new HashMap<>();
@@ -81,7 +83,8 @@ public class TbGpsGeofencingActionNode extends AbstractGeofencingNode<TbGpsGeofe
             ctx.tellNext(msg, matches ? "Entered" : "Left");
         } else if (!entityState.isStayed()) {
             long stayTime = ts - entityState.getStateSwitchTime();
-            if (stayTime > (entityState.isInside() ? config.getMinInsideDuration() : config.getMinOutsideDuration())) {
+            if (stayTime > (entityState.isInside() ?
+                    TimeUnit.valueOf(config.getMinInsideDurationTimeUnit()).toMillis(config.getMinInsideDuration()) : TimeUnit.valueOf(config.getMinOutsideDurationTimeUnit()).toMillis(config.getMinOutsideDuration()))) {
                 setStaid(ctx, msg.getOriginator(), entityState);
                 ctx.tellNext(msg, entityState.isInside() ? "Inside" : "Outside");
             }

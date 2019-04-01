@@ -50,7 +50,9 @@ import java.util.List;
         configClazz = TbGpsGeofencingFilterNodeConfiguration.class,
         relationTypes = {"True", "False"},
         nodeDescription = "Filter incoming messages by GPS based geofencing",
-        nodeDetails = "Extracts latitude and longitude parameters from incoming message and returns 'True' if they are inside configured perimeters, 'False' otherwise.")
+        nodeDetails = "Extracts latitude and longitude parameters from incoming message and returns 'True' if they are inside configured perimeters, 'False' otherwise.",
+        uiResources = {"static/rulenode/rulenode-core-config.js"},
+        configDirective = "tbFilterNodeGpsGeofencingConfig")
 public class TbGpsGeofencingFilterNode extends AbstractGeofencingNode<TbGpsGeofencingFilterNodeConfiguration> {
 
     @Override
