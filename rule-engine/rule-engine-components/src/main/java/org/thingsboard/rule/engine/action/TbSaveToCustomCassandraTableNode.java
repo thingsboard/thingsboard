@@ -205,7 +205,9 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
             BoundStatement stmt = saveStmt.bind();
             AtomicInteger i = new AtomicInteger(0);
             fieldsMap.forEach((key, value) -> {
-                if (dataAsObject.has(key)) {
+                if (key.equals(ENTITY_ID)) {
+                    stmt.setUUID(i.get(), msg.getOriginator().getId());
+                } else if (dataAsObject.has(key)) {
                     if (dataAsObject.get(key).isJsonPrimitive()) {
                         JsonPrimitive primitive = dataAsObject.get(key).getAsJsonPrimitive();
                         if (primitive.isNumber()) {
@@ -220,8 +222,6 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
                     } else {
                         throw new IllegalStateException("Message data key: '" + key + "' with value: '" + value + "' is not a JSON Primitive!");
                     }
-                } else if (key.equals(ENTITY_ID)) {
-                    stmt.setUUID(i.get(), msg.getOriginator().getId());
                 } else {
                     throw new RuntimeException("Message data doesn't contain key: " + "'" + key + "'!");
                 }
