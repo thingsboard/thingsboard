@@ -32,7 +32,7 @@ public class TbGpsGeofencingFilterNodeConfiguration implements NodeConfiguration
 
     private String latitudeKeyName;
     private String longitudeKeyName;
-    private boolean fetchPerimeterInfoFromMessage;
+    private boolean fetchPerimeterInfoFromMessageMetadata;
 
     private PerimeterType perimeterType;
 
@@ -50,7 +50,7 @@ public class TbGpsGeofencingFilterNodeConfiguration implements NodeConfiguration
         TbGpsGeofencingFilterNodeConfiguration configuration = new TbGpsGeofencingFilterNodeConfiguration();
         configuration.setLatitudeKeyName("latitude");
         configuration.setLongitudeKeyName("longitude");
-        configuration.setFetchPerimeterInfoFromMessage(true);
+        configuration.setFetchPerimeterInfoFromMessageMetadata(true);
         return configuration;
     }
 }

@@ -28,17 +28,22 @@ import java.util.concurrent.TimeUnit;
 @Data
 public class TbGpsGeofencingActionNodeConfiguration extends TbGpsGeofencingFilterNodeConfiguration {
 
-    private double minInsideDuration;
-    private double minOutsideDuration;
+    private int minInsideDuration;
+    private int minOutsideDuration;
+
+    private String minInsideDurationTimeUnit;
+    private String minOutsideDurationTimeUnit;
 
     @Override
     public TbGpsGeofencingActionNodeConfiguration defaultConfiguration() {
         TbGpsGeofencingActionNodeConfiguration configuration = new TbGpsGeofencingActionNodeConfiguration();
         configuration.setLatitudeKeyName("latitude");
         configuration.setLongitudeKeyName("longitude");
-        configuration.setFetchPerimeterInfoFromMessage(true);
-        configuration.setMinInsideDuration(TimeUnit.MINUTES.toMillis(1));
-        configuration.setMinOutsideDuration(TimeUnit.MINUTES.toMillis(1));
+        configuration.setFetchPerimeterInfoFromMessageMetadata(true);
+        configuration.setMinInsideDurationTimeUnit(TimeUnit.MINUTES.name());
+        configuration.setMinOutsideDurationTimeUnit(TimeUnit.MINUTES.name());
+        configuration.setMinInsideDuration(1);
+        configuration.setMinOutsideDuration(1);
         return configuration;
     }
 }

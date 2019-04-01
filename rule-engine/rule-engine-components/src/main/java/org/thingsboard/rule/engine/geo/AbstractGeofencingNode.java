@@ -78,7 +78,7 @@ public abstract class AbstractGeofencingNode<T extends TbGpsGeofencingFilterNode
     }
 
     protected List<Perimeter> getPerimeters(TbMsg msg, JsonObject msgDataObj) throws TbNodeException {
-        if (config.isFetchPerimeterInfoFromMessage()) {
+        if (config.isFetchPerimeterInfoFromMessageMetadata()) {
             //TODO: add fetching perimeters from the message itself, if configuration is empty.
             if (!StringUtils.isEmpty(msg.getMetaData().getValue("perimeter"))) {
                 Perimeter perimeter = new Perimeter();
