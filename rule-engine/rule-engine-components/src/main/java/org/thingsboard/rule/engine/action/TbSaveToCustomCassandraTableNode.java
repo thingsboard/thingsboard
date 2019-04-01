@@ -73,7 +73,7 @@ import static org.thingsboard.rule.engine.api.util.DonAsynchron.withCallback;
                 "<b>Note:</b> rule node can be used only for Cassandra DB.",
         nodeDetails = "Administrator should set the custom table name without prefix: <b>cs_tb_</b>. <br>" +
                 "Administrator can configure the mapping between the Message field names and Table columns name.<br>" +
-                "<b>Note:</b> the first table column would be always <b>entity_id</b>, that is identified by the Message Originator.<br><br>" +
+                "<b>Note:</b>If the mapping key is <b>$entity_id</b>, that is identified by the Message Originator, then to the appropriate column name(mapping value) will be write the message originator id.<br><br>" +
                 "If specified message field does not exist or is not a JSON Primitive, the outbound message will be routed via <b>failure</b> chain," +
                 " otherwise, the message will be routed via <b>success</b> chain.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
@@ -83,6 +83,7 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
 
     private static final String TABLE_PREFIX = "cs_tb_";
     private static final JsonParser parser = new JsonParser();
+    private static final String ENTITY_ID = "$entityId";
 
     private TbSaveToCustomCassandraTableNodeConfiguration config;
     private Session session;
@@ -170,13 +171,12 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
     }
 
     private String createQuery(List<String> fieldsList) {
+        int size = fieldsList.size();
         StringBuilder query = new StringBuilder();
         query.append("INSERT INTO ")
                 .append(TABLE_PREFIX)
                 .append(config.getTableName())
-                .append("(").append(ModelConstants.ENTITY_ID_COLUMN)
-                .append(",");
-        int size = fieldsList.size();
+                .append("(");
         for (String field : fieldsList) {
             query.append(field);
             if (fieldsList.get(size - 1).equals(field)) {
@@ -186,8 +186,8 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
             }
         }
         query.append(" VALUES(");
-        for (int i = 0; i <= size; i++) {
-            if (i == size) {
+        for (int i = 0; i < size; i++) {
+            if (i == size - 1) {
                 query.append("?)");
             } else {
                 query.append("?, ");
@@ -204,9 +204,7 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
             JsonObject dataAsObject = data.getAsJsonObject();
             BoundStatement stmt = saveStmt.bind();
             AtomicInteger i = new AtomicInteger(0);
-            stmt.setUUID(i.get(), msg.getOriginator().getId());
             fieldsMap.forEach((key, value) -> {
-                i.getAndIncrement();
                 if (dataAsObject.has(key)) {
                     if (dataAsObject.get(key).isJsonPrimitive()) {
                         JsonPrimitive primitive = dataAsObject.get(key).getAsJsonPrimitive();
@@ -222,9 +220,12 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
                     } else {
                         throw new IllegalStateException("Message data key: '" + key + "' with value: '" + value + "' is not a JSON Primitive!");
                     }
+                } else if (key.equals(ENTITY_ID)) {
+                    stmt.setUUID(i.get(), msg.getOriginator().getId());
                 } else {
                     throw new RuntimeException("Message data doesn't contain key: " + "'" + key + "'!");
                 }
+                i.getAndIncrement();
             });
             return getFuture(executeAsyncWrite(ctx, stmt), rs -> null);
         }
