@@ -32,8 +32,8 @@ import org.thingsboard.server.common.msg.TbMsg;
 @RuleNode(type = ComponentType.ENRICHMENT,
         name = "tenant details",
         configClazz = TbGetTenantDetailsNodeConfiguration.class,
-        nodeDescription = "",
-        nodeDetails = "",
+        nodeDescription = "Node fetch current Tenant details that selected from the drop-down list and add them to the message if they exist.",
+        nodeDetails = "If selected checkbox: <b>Add selected details to the message metadata</b>, existing fields will add to the message metadata instead of message data.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeEntityDetailsConfig")
 public class TbGetTenantDetailsNode extends TbAbstractGetEntityDetailsNode<TbGetTenantDetailsNodeConfiguration> {
