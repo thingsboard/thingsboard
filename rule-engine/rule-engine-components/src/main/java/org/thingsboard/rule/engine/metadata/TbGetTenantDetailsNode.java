@@ -54,7 +54,7 @@ public class TbGetTenantDetailsNode extends TbAbstractGetEntityDetailsNode<TbGet
     private TbMsg getTenantTbMsg(TbContext ctx, TbMsg msg, MessageData messageData) {
         JsonElement resultObject = null;
         Tenant tenant = ctx.getTenantService().findTenantById(ctx.getTenantId());
-        if(!config.getDetailsList().isEmpty()) {
+        if (!config.getDetailsList().isEmpty()) {
             for (EntityDetails entityDetails : config.getDetailsList()) {
                 resultObject = addTenantProperties(messageData.getData(), tenant, entityDetails);
             }
@@ -68,16 +68,19 @@ public class TbGetTenantDetailsNode extends TbAbstractGetEntityDetailsNode<TbGet
         JsonObject dataAsObject = data.getAsJsonObject();
         switch (entityDetails) {
             case ADDRESS:
-                if (tenant.getAddress() != null) dataAsObject.addProperty(TENANT_PREFIX + "address", tenant.getAddress());
+                if (tenant.getAddress() != null)
+                    dataAsObject.addProperty(TENANT_PREFIX + "address", tenant.getAddress());
                 break;
             case ADDRESS2:
-                if (tenant.getAddress2() != null) dataAsObject.addProperty(TENANT_PREFIX + "address2", tenant.getAddress2());
+                if (tenant.getAddress2() != null)
+                    dataAsObject.addProperty(TENANT_PREFIX + "address2", tenant.getAddress2());
                 break;
             case CITY:
                 if (tenant.getCity() != null) dataAsObject.addProperty(TENANT_PREFIX + "city", tenant.getCity());
                 break;
             case COUNTRY:
-                if (tenant.getCountry() != null) dataAsObject.addProperty(TENANT_PREFIX + "country", tenant.getCountry());
+                if (tenant.getCountry() != null)
+                    dataAsObject.addProperty(TENANT_PREFIX + "country", tenant.getCountry());
                 break;
             case STATE:
                 if (tenant.getState() != null) dataAsObject.addProperty(TENANT_PREFIX + "state", tenant.getState());

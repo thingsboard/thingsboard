@@ -52,6 +52,8 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import static org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent.Type.CHILD_REMOVED;
@@ -96,11 +98,13 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
     @Lazy
     private ClusterRoutingService routingService;
 
+    private ExecutorService reconnectExecutorService;
+
     private CuratorFramework client;
     private PathChildrenCache cache;
     private String nodePath;
 
-    private volatile boolean stopped = false;
+    private volatile boolean stopped = true;
 
     @PostConstruct
     public void init() {
@@ -110,9 +114,15 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
         Assert.notNull(zkConnectionTimeout, MiscUtils.missingProperty("zk.connection_timeout_ms"));
         Assert.notNull(zkSessionTimeout, MiscUtils.missingProperty("zk.session_timeout_ms"));
 
+        reconnectExecutorService = Executors.newSingleThreadExecutor();
+
         log.info("Initializing discovery service using ZK connect string: {}", zkUrl);
 
         zkNodesDir = zkDir + "/nodes";
+        initZkClient();
+    }
+
+    private void initZkClient() {
         try {
             client = CuratorFrameworkFactory.newClient(zkUrl, zkSessionTimeout, zkConnectionTimeout, new RetryForever(zkRetryInterval));
             client.start();
@@ -120,6 +130,8 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
             cache = new PathChildrenCache(client, zkNodesDir, true);
             cache.getListenable().addListener(this);
             cache.start();
+            stopped = false;
+            log.info("ZK client connected");
         } catch (Exception e) {
             log.error("Failed to connect to ZK: {}", e.getMessage(), e);
             CloseableUtils.closeQuietly(cache);
@@ -128,12 +140,20 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
         }
     }
 
-    @PreDestroy
-    public void destroy() {
+    private void destroyZkClient() {
         stopped = true;
-        unpublishCurrentServer();
+        try {
+            unpublishCurrentServer();
+        } catch (Exception e) {}
         CloseableUtils.closeQuietly(cache);
         CloseableUtils.closeQuietly(client);
+        log.info("ZK client disconnected");
+    }
+
+    @PreDestroy
+    public void destroy() {
+        destroyZkClient();
+        reconnectExecutorService.shutdownNow();
         log.info("Stopped discovery service");
     }
 
@@ -180,20 +200,21 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
         return (client, newState) -> {
             log.info("[{}:{}] ZK state changed: {}", self.getHost(), self.getPort(), newState);
             if (newState == ConnectionState.LOST) {
-                reconnect();
+                reconnectExecutorService.submit(this::reconnect);
             }
         };
     }
 
-    private boolean reconnectInProgress = false;
+    private volatile boolean reconnectInProgress = false;
 
     private synchronized void reconnect() {
         if (!reconnectInProgress) {
             reconnectInProgress = true;
             try {
-                client.blockUntilConnected();
+                destroyZkClient();
+                initZkClient();
                 publishCurrentServer();
-            } catch (InterruptedException e) {
+            } catch (Exception e) {
                 log.error("Failed to reconnect to ZK: {}", e.getMessage(), e);
             } finally {
                 reconnectInProgress = false;
