@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import './settings-card.scss';
+
 /*@ngInject*/
 export default function AdminController(adminService, toast, $scope, $rootScope, $state, $translate) {
 

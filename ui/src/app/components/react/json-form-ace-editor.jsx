@@ -21,6 +21,7 @@ import reactCSS from 'reactcss';
 import AceEditor from 'react-ace';
 import FlatButton from 'material-ui/FlatButton';
 import 'brace/ext/language_tools';
+import 'brace/ext/searchbox';
 import 'brace/theme/github';
 
 import fixAceEditor from './../ace-editor-fix';

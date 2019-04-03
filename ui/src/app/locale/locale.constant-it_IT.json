@@ -1554,6 +1554,65 @@
         "widget-type-file": "File tipo di widget",
         "invalid-widget-type-file-error": "Impossibile importare un tipo di widget: struttura dati del widget non valida."
     },
+    "widgets": {
+        "date-range-navigator": {
+            "localizationMap": {
+                "Sun": "Dom",
+                "Mon": "Lun",
+                "Tue": "Mar",
+                "Wed": "Mer",
+                "Thu": "Gio",
+                "Fri": "Ven",
+                "Sat": "Sab",
+                "Jan": "Gen",
+                "Feb": "Feb",
+                "Mar": "Mar",
+                "Apr": "Apr",
+                "May": "Mag",
+                "Jun": "Giu",
+                "Jul": "Lug",
+                "Aug": "Ago",
+                "Sep": "Set",
+                "Oct": "Ott",
+                "Nov": "Nov",
+                "Dec": "Dic",
+                "January": "Gennaio",
+                "February": "Febbraio",
+                "March": "Marzo",
+                "April": "Aprile",
+                "June": "Giugno",
+                "July": "Luglio",
+                "August": "Agosto",
+                "September": "Settembre",
+                "October": "Ottobre",
+                "November": "Novembre",
+                "December": "Dicembre",
+                "Custom Date Range": "Intervallo di date personalizzato",
+                "Date Range Template": "Modello di intervallo di date",
+                "Today": "Oggi",
+                "Yesterday": "Ieri",
+                "This Week": "Questa settimana",
+                "Last Week": "La settimana scorsa",
+                "This Month": "Questo mese",
+                "Last Month": "Lo scorso mese",
+                "Year": "Anno",
+                "This Year": "Quest'anno",
+                "Last Year": "L'anno scorso",
+                "Date picker": "Date picker",
+                "Hour": "Ora",
+                "Day": "Giorno",
+                "Week": "Settimana",
+                "2 weeks": "2 Settimane",
+                "Month": "Mese",
+                "3 months": "3 Mesi",
+                "6 months": "6 Mesi",
+                "Custom interval": "Intervallo personalizzato",
+                "Interval": "Intervallo",
+                "Step size": "Dimensione del passo",
+                "Ok": "Ok"
+            }
+        }
+    },
     "icon": {
         "icon": "Icona",
         "select-icon": "Seleziona icona",
@@ -1582,7 +1641,8 @@
             "es_ES": "Spagnolo",
             "ja_JA": "Giapponese",
             "tr_TR": "Turco",
-            "fa_IR": "Persiana"
+            "fa_IR": "Persiana",
+            "uk_UA": "Ucraino"
         }
     }
 }

@@ -17,10 +17,8 @@ import './trip-animation-widget.scss';
 import template from "./trip-animation-widget.tpl.html";
 import TbOpenStreetMap from '../openstreet-map';
 import L from 'leaflet';
-//import tinycolor from 'tinycolor2';
 import tinycolor from "tinycolor2";
 import {fillPatternWithActions, isNumber, padValue, processPattern} from "../widget-utils";
-//import {fillPatternWithActions, isNumber, padValue, processPattern, fillPattern} from "../widget-utils";
 
 (function () {
 	// save these original methods before they are overwritten
@@ -121,20 +119,17 @@ function tripAnimationWidget() {
 }
 
 /*@ngInject*/
-function tripAnimationController($document, $scope, $http, $timeout, $filter) {
+function tripAnimationController($document, $scope, $http, $timeout, $filter, $sce) {
 	let vm = this;
-	//const varsRegex = /\$\{([^\}]*)\}/g;
-	//let icon;
 
 	vm.initBounds = true;
 
 	vm.markers = [];
 	vm.index = 0;
 	vm.dsIndex = 0;
-	vm.isPlaying = false;
 	vm.minTime = 0;
 	vm.maxTime = 0;
-	vm.isPLaying = false;
+	vm.isPlaying = false;
 	vm.trackingLine = {
 		"type": "FeatureCollection",
 		features: []
@@ -163,7 +158,7 @@ function tripAnimationController($document, $scope, $http, $timeout, $filter) {
 
 	function initializeCallbacks() {
 		vm.self.onDataUpdated = function () {
-			createUpdatePath();
+			createUpdatePath(true);
 		};
 
 		vm.self.onResize = function () {
@@ -192,25 +187,53 @@ function tripAnimationController($document, $scope, $http, $timeout, $filter) {
 	}
 
 	vm.playMove = function (play) {
-		if (play && vm.isPLaying) return;
-		if (play || vm.isPLaying) vm.isPLaying = true;
-		if (vm.isPLaying) {
-			if (vm.index + 1 > vm.maxTime) return;
-			vm.index++;
-			vm.trips.forEach(function (trip) {
-				moveMarker(trip);
-			});
+		if (play && vm.isPlaying) return;
+		if (play || vm.isPlaying) vm.isPlaying = true;
+		if (vm.isPlaying) {
+            moveInc(1);
 			vm.timeout = $timeout(function () {
 				vm.playMove();
 			}, 1000 / vm.speed)
 		}
 	};
 
+    vm.moveNext = function () {
+        vm.stopPlay();
+        moveInc(1);
+    }
+
+    vm.movePrev = function () {
+        vm.stopPlay();
+        moveInc(-1);
+    }
+
+    vm.moveStart = function () {
+        vm.stopPlay();
+        moveToIndex(vm.minTime);
+    }
+
+    vm.moveEnd = function () {
+        vm.stopPlay();
+        moveToIndex(vm.maxTime);
+    }
 
 	vm.stopPlay = function () {
-		vm.isPLaying = false;
-		$timeout.cancel(vm.timeout);
+        if (vm.isPlaying) {
+            vm.isPlaying = false;
+            $timeout.cancel(vm.timeout);
+        }
 	};
+
+    function moveInc(inc) {
+        let newIndex = vm.index + inc;
+        moveToIndex(newIndex);
+    }
+
+    function moveToIndex(newIndex) {
+        if (newIndex > vm.maxTime || newIndex < vm.minTime) return;
+        vm.index = newIndex;
+        recalculateTrips();
+    }
 
 	function recalculateTrips() {
 		vm.trips.forEach(function (value) {
@@ -233,7 +256,7 @@ function tripAnimationController($document, $scope, $http, $timeout, $filter) {
 		vm.utils = vm.self.ctx.$scope.$injector.get('utils');
 
 		vm.showTimestamp = vm.settings.showTimestamp !== false;
-		vm.ctx.$element = angular.element("#heat-map", vm.ctx.$container);
+		vm.ctx.$element = angular.element("#trip-animation-map", vm.ctx.$container);
 		vm.defaultZoomLevel = 2;
 		if (vm.ctx.settings.defaultZoomLevel) {
 			if (vm.ctx.settings.defaultZoomLevel > 0 && vm.ctx.settings.defaultZoomLevel < 21) {
@@ -257,6 +280,8 @@ function tripAnimationController($document, $scope, $http, $timeout, $filter) {
 		let staticSettings = {};
 		vm.staticSettings = staticSettings;
 		//Calculate General Settings
+        staticSettings.buttonColor = tinycolor(vm.widgetConfig.color).setAlpha(0.54).toRgbString();
+        staticSettings.disabledButtonColor = tinycolor(vm.widgetConfig.color).setAlpha(0.3).toRgbString();
 		staticSettings.mapProvider = vm.ctx.settings.mapProvider || "OpenStreetMap.Mapnik";
 		staticSettings.latKeyName = vm.ctx.settings.latKeyName || "latitude";
 		staticSettings.lngKeyName = vm.ctx.settings.lngKeyName || "longitude";
@@ -268,10 +293,14 @@ function tripAnimationController($document, $scope, $http, $timeout, $filter) {
 		staticSettings.useLabelFunction = vm.ctx.settings.useLabelFunction || false;
 		staticSettings.showLabel = vm.ctx.settings.showLabel || false;
 		staticSettings.useTooltipFunction = vm.ctx.settings.useTooltipFunction || false;
-		staticSettings.tooltipPattern = vm.ctx.settings.tooltipPattern || "<b>${entityName}</b><br/><br/><b>Latitude:</b> ${latitude:7}<br/><b>Longitude:</b> ${longitude:7}<br/><b>Start Time:</b> ${maxTime}<br/><b>End Time:</b> ${minTime}";
-		staticSettings.tooltipOpacity = vm.ctx.settings.tooltipOpacity || 1;
-		staticSettings.tooltipColor = vm.ctx.settings.tooltipColor ? tinycolor(vm.ctx.settings.tooltipColor).toHexString() : "#ffffff";
-		staticSettings.tooltipFontColor = vm.ctx.settings.tooltipFontColor ? tinycolor(vm.ctx.settings.tooltipFontColor).toHexString() : "#000000";
+		staticSettings.tooltipPattern = vm.ctx.settings.tooltipPattern || "<span style=\"font-size: 26px; color: #666; font-weight: bold;\">${entityName}</span>\n" +
+            "<br/>\n" +
+            "<span style=\"font-size: 12px; color: #666; font-weight: bold;\">Time:</span><span style=\"font-size: 12px;\"> ${formattedTs}</span>\n" +
+            "<span style=\"font-size: 12px; color: #666; font-weight: bold;\">Latitude:</span> ${latitude:7}\n" +
+            "<span style=\"font-size: 12px; color: #666; font-weight: bold;\">Longitude:</span> ${longitude:7}";
+		staticSettings.tooltipOpacity = angular.isNumber(vm.ctx.settings.tooltipOpacity) ? vm.ctx.settings.tooltipOpacity : 1;
+		staticSettings.tooltipColor = vm.ctx.settings.tooltipColor ? tinycolor(vm.ctx.settings.tooltipColor).toRgbString() : "#ffffff";
+		staticSettings.tooltipFontColor = vm.ctx.settings.tooltipFontColor ? tinycolor(vm.ctx.settings.tooltipFontColor).toRgbString() : "#000000";
 		staticSettings.pathColor = vm.ctx.settings.color ? tinycolor(vm.ctx.settings.color).toHexString() : "#ff6300";
 		staticSettings.pathWeight = vm.ctx.settings.strokeWeight || 1;
 		staticSettings.pathOpacity = vm.ctx.settings.strokeOpacity || 1;
@@ -351,16 +380,23 @@ function tripAnimationController($document, $scope, $http, $timeout, $filter) {
 		}
 	}
 
-	function configureTripSettings(trip) {
+	function configureTripSettings(trip, index, apply) {
 		trip.settings = {};
 		trip.settings.color = calculateColor(trip);
 		trip.settings.strokeWeight = vm.staticSettings.pathWeight;
 		trip.settings.strokeOpacity = vm.staticSettings.pathOpacity;
 		trip.settings.pointColor = vm.staticSettings.pointColor;
 		trip.settings.pointSize = vm.staticSettings.pointSize;
-		trip.settings.labelText = calculateLabel(trip);
-		trip.settings.tooltipText = calculateTooltip(trip);
 		trip.settings.icon = calculateIcon(trip);
+		if (apply) {
+            $timeout(() => {
+                trip.settings.labelText = calculateLabel(trip);
+                trip.settings.tooltipText = $sce.trustAsHtml(calculateTooltip(trip));
+            },0,true);
+        } else {
+            trip.settings.labelText = calculateLabel(trip);
+            trip.settings.tooltipText = $sce.trustAsHtml(calculateTooltip(trip));
+        }
 	}
 
 	function calculateLabel(trip) {
@@ -464,7 +500,7 @@ function tripAnimationController($document, $scope, $http, $timeout, $filter) {
 		return icon;
 	}
 
-	function createUpdatePath() {
+	function createUpdatePath(apply) {
 		if (vm.trips && vm.map) {
 			vm.trips.forEach(function (trip) {
 				if (trip.marker) {
@@ -486,7 +522,7 @@ function tripAnimationController($document, $scope, $http, $timeout, $filter) {
 		}
 		let normalizedTimeRange = createNormalizedTime(vm.data, 1000);
 		createNormalizedTrips(normalizedTimeRange, vm.datasources);
-		createTripsOnMap();
+		createTripsOnMap(apply);
 		if (vm.initBounds && !vm.initTrips) {
 			vm.trips.forEach(function (trip) {
 				vm.map.extendBounds(vm.map.bounds, trip.polyline);
@@ -501,7 +537,6 @@ function tripAnimationController($document, $scope, $http, $timeout, $filter) {
 
 			vm.map.fitBounds(vm.map.bounds);
 		}
-
 	}
 
 	function fillPattern(pattern, replaceInfo, currentNormalizedValue) {
@@ -549,12 +584,20 @@ function tripAnimationController($document, $scope, $http, $timeout, $filter) {
 				}
 			});
 			for (let i = min_time; i < max_time; i += step) {
-				normalizedArray.push({ts: i})
+				normalizedArray.push({ts: i, formattedTs: $filter('date')(i, 'medium')});
+
 			}
-			if (normalizedArray[normalizedArray.length - 1] && normalizedArray[normalizedArray.length - 1].ts !== max_time) normalizedArray.push({ts: max_time});
+			if (normalizedArray[normalizedArray.length - 1] && normalizedArray[normalizedArray.length - 1].ts !== max_time) {
+                normalizedArray.push({ts: max_time, formattedTs: $filter('date')(max_time, 'medium')});
+            }
 		}
 		vm.maxTime = normalizedArray.length - 1;
-		vm.minTime = 0;
+		vm.minTime = vm.maxTime > 1 ? 1 : 0;
+		if (vm.index < vm.minTime) {
+            vm.index = vm.minTime;
+        } else if (vm.index > vm.maxTime) {
+            vm.index = vm.maxTime;
+        }
 		return normalizedArray;
 	}
 
@@ -611,27 +654,43 @@ function tripAnimationController($document, $scope, $http, $timeout, $filter) {
 				}
 				el.latLngs.push(data.latLng);
 			});
-			addAngleForTip(el);
+			addAngleForTrip(el);
 		})
 	}
 
-	function addAngleForTip(trip) {
+	function addAngleForTrip(trip) {
 		if (trip.timeRange && trip.timeRange.length > 0) {
 			trip.timeRange.forEach(function (point, index) {
 				let nextPoint, prevPoint;
 				nextPoint = index === (trip.timeRange.length - 1) ? trip.timeRange[index] : trip.timeRange[index + 1];
 				prevPoint = index === 0 ? trip.timeRange[0] : trip.timeRange[index - 1];
-				point.h = findAngle(prevPoint[vm.staticSettings.latKeyName], prevPoint[vm.staticSettings.lngKeyName], nextPoint[vm.staticSettings.latKeyName], nextPoint[vm.staticSettings.lngKeyName]);
-				point.h += vm.staticSettings.rotationAngle;
+				let nextLatLng = {
+                    lat: nextPoint[vm.staticSettings.latKeyName],
+                    lng: nextPoint[vm.staticSettings.lngKeyName]
+                };
+                let prevLatLng = {
+                    lat: prevPoint[vm.staticSettings.latKeyName],
+                    lng: prevPoint[vm.staticSettings.lngKeyName]
+                };
+                if (nextLatLng.lat === prevLatLng.lat && nextLatLng.lng === prevLatLng.lng) {
+                    if (angular.isNumber(prevPoint.h)) {
+                        point.h = prevPoint.h;
+                    } else {
+                        point.h = vm.staticSettings.rotationAngle;
+                    }
+                } else {
+                    point.h = findAngle(prevLatLng.lat, prevLatLng.lng, nextLatLng.lat, nextLatLng.lng);
+                    point.h += vm.staticSettings.rotationAngle;
+                }
 			});
 		}
 	}
 
-	function createTripsOnMap() {
+	function createTripsOnMap(apply) {
 		if (vm.trips.length > 0) {
 			vm.trips.forEach(function (trip) {
 				if (trip.timeRange.length > 0 && trip.latLngs.every(el => angular.isDefined(el))) {
-					configureTripSettings(trip, vm.index);
+					configureTripSettings(trip, vm.index, apply);
 					if (vm.staticSettings.showPoints) {
 						trip.points = [];
 						trip.latLngs.forEach(function (latLng) {
@@ -648,14 +707,14 @@ function tripAnimationController($document, $scope, $http, $timeout, $filter) {
 					}
 
 					if (trip.timeRange && trip.timeRange.length && angular.isUndefined(trip.marker)) {
-						trip.marker = L.marker(trip.timeRange[vm.index].latLng).addTo(vm.map.map);
+						trip.marker = L.marker(trip.timeRange[vm.index].latLng);
 						trip.marker.setZIndexOffset(1000);
 						trip.marker.setIcon(vm.staticSettings.icon);
 						trip.marker.setRotationOrigin('center center');
-						// trip.marker.addTo(vm.map.map);
-						trip.marker.on('click', function () {
-							showHideTooltip(trip);
-						});
+                        trip.marker.on('click', function () {
+                            showHideTooltip(trip);
+                        });
+						trip.marker.addTo(vm.map.map);
 						moveMarker(trip);
 					}
 				}
@@ -675,10 +734,10 @@ function tripAnimationController($document, $scope, $http, $timeout, $filter) {
 				trip.marker.setZIndexOffset(1000);
 				trip.marker.setIcon(vm.staticSettings.icon);
 				trip.marker.setRotationOrigin('center center');
+                trip.marker.on('click', function () {
+                    showHideTooltip(trip);
+                });
 				trip.marker.addTo(vm.map.map);
-				trip.marker.on('click', function () {
-					showHideTooltip(trip);
-				});
 				trip.marker.update();
 			}
 

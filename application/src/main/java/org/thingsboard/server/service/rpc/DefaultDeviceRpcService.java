@@ -28,6 +28,7 @@ import org.thingsboard.rule.engine.api.RpcError;
 import org.thingsboard.rule.engine.api.msg.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -38,6 +39,7 @@ import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.core.ToServerRpcResponseMsg;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
+import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
 import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
 import org.thingsboard.server.service.cluster.rpc.ClusterRpcService;
@@ -66,6 +68,9 @@ public class DefaultDeviceRpcService implements DeviceRpcService {
 
     @Autowired
     private ClusterRpcService rpcService;
+
+    @Autowired
+    private DeviceService deviceService;
 
     @Autowired
     @Lazy
@@ -170,6 +175,12 @@ public class DefaultDeviceRpcService implements DeviceRpcService {
         metaData.putValue("originPort", Integer.toString(routingService.getCurrentServer().getPort()));
         metaData.putValue("expirationTime", Long.toString(msg.getExpirationTime()));
         metaData.putValue("oneway", Boolean.toString(msg.isOneway()));
+
+        Device device = deviceService.findDeviceById(msg.getTenantId(), msg.getDeviceId());
+        if (device != null) {
+            metaData.putValue("deviceName", device.getName());
+            metaData.putValue("deviceType", device.getType());
+        }
 
         entityNode.put("method", msg.getBody().getMethod());
         entityNode.put("params", msg.getBody().getParams());

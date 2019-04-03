@@ -1308,6 +1308,65 @@
         "widget-type-file": "위젯 타입 파일",
         "invalid-widget-type-file-error": "위젯 타입을 가져오기 할 수 없습니다.: 잘못된 위젯 타입 데이터 구조입니다."
     },
+    "widgets": {
+        "date-range-navigator": {
+            "localizationMap": {
+                "Sun": "일",
+                "Mon": "월",
+                "Tue": "화",
+                "Wed": "수",
+                "Thu": "목",
+                "Fri": "금",
+                "Sat": "토",
+                "Jan": "1월",
+                "Feb": "2월",
+                "Mar": "3월",
+                "Apr": "4월",
+                "May": "5월",
+                "Jun": "6월",
+                "Jul": "7월",
+                "Aug": "8월",
+                "Sep": "9월",
+                "Oct": "10월",
+                "Nov": "11월",
+                "Dec": "12월",
+                "January": "일월",
+                "February": "이월",
+                "March": "행진",
+                "April": "4 월",
+                "June": "유월",
+                "July": "칠월",
+                "August": "팔월",
+                "September": "구월",
+                "October": "십월",
+                "November": "십일월",
+                "December": "12 월",
+                "Custom Date Range": "맞춤 기간",
+                "Date Range Template": "기간 템플릿",
+                "Today": "오늘",
+                "Yesterday": "어제",
+                "This Week": "이번 주",
+                "Last Week": "지난주",
+                "This Month": "이번 달",
+                "Last Month": "지난 달",
+                "Year": "년",
+                "This Year": "올해",
+                "Last Year": "작년",
+                "Date picker": "날짜 선택기",
+                "Hour": "시간",
+                "Day": "일",
+                "Week": "주",
+                "2 weeks": "이주",
+                "Month": "달",
+                "3 months": "3 개월",
+                "6 months": "6 개월",
+                "Custom interval": "사용자 지정 간격",
+                "Interval": "간격",
+                "Step size": "단계 크기",
+                "Ok": "Ok"
+            }
+        }
+    },
     "icon": {
         "icon": "Icon",
         "select-icon": "Select icon",
@@ -1336,7 +1395,8 @@
             "it_IT": "이탈리아 사람",
             "ja_JA": "일본어",
             "tr_TR": "터키어",
-            "fa_IR": "페르시아 인"
+            "fa_IR": "페르시아 인",
+            "uk_UA": "우크라이나의"
         }
     }
 }
