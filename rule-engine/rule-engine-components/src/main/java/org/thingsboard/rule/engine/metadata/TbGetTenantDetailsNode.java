@@ -24,6 +24,7 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.util.EntityDetails;
+import org.thingsboard.server.common.data.ContactBased;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -32,12 +33,13 @@ import org.thingsboard.server.common.msg.TbMsg;
 @RuleNode(type = ComponentType.ENRICHMENT,
         name = "tenant details",
         configClazz = TbGetTenantDetailsNodeConfiguration.class,
-        nodeDescription = "Node fetch current Tenant details that selected from the drop-down list and add them to the message if they exist.",
-        nodeDetails = "If selected checkbox: <b>Add selected details to the message metadata</b>, existing fields will add to the message metadata instead of message data.",
+        nodeDescription = "Adds fields from Tenant details to the message body or metadata",
+        nodeDetails = "If checkbox: <b>Add selected details to the message metadata</b> is selected, existing fields will be added to the message metadata instead of message data.<br><br>" +
+                "<b>Note:</b> only Device, Asset, and Entity View type are allowed.<br><br>" +
+                "If the originator of the message is not assigned to Tenant, or originator type is not supported - Message will be forwarded to <b>Failure</b> chain, otherwise, <b>Success</b> chain will be used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeEntityDetailsConfig")
 public class TbGetTenantDetailsNode extends TbAbstractGetEntityDetailsNode<TbGetTenantDetailsNodeConfiguration> {
-
 
     private static final String TENANT_PREFIX = "tenant_";
 
@@ -56,50 +58,11 @@ public class TbGetTenantDetailsNode extends TbAbstractGetEntityDetailsNode<TbGet
         Tenant tenant = ctx.getTenantService().findTenantById(ctx.getTenantId());
         if (!config.getDetailsList().isEmpty()) {
             for (EntityDetails entityDetails : config.getDetailsList()) {
-                resultObject = addTenantProperties(messageData.getData(), tenant, entityDetails);
+                resultObject = addContactProperties(messageData.getData(), tenant, entityDetails, TENANT_PREFIX);
             }
             return transformMsg(ctx, msg, resultObject, messageData);
         } else {
             return msg;
         }
-    }
-
-    private JsonElement addTenantProperties(JsonElement data, Tenant tenant, EntityDetails entityDetails) {
-        JsonObject dataAsObject = data.getAsJsonObject();
-        switch (entityDetails) {
-            case ADDRESS:
-                if (tenant.getAddress() != null)
-                    dataAsObject.addProperty(TENANT_PREFIX + "address", tenant.getAddress());
-                break;
-            case ADDRESS2:
-                if (tenant.getAddress2() != null)
-                    dataAsObject.addProperty(TENANT_PREFIX + "address2", tenant.getAddress2());
-                break;
-            case CITY:
-                if (tenant.getCity() != null) dataAsObject.addProperty(TENANT_PREFIX + "city", tenant.getCity());
-                break;
-            case COUNTRY:
-                if (tenant.getCountry() != null)
-                    dataAsObject.addProperty(TENANT_PREFIX + "country", tenant.getCountry());
-                break;
-            case STATE:
-                if (tenant.getState() != null) dataAsObject.addProperty(TENANT_PREFIX + "state", tenant.getState());
-                break;
-            case EMAIL:
-                if (tenant.getEmail() != null) dataAsObject.addProperty(TENANT_PREFIX + "email", tenant.getEmail());
-                break;
-            case PHONE:
-                if (tenant.getPhone() != null) dataAsObject.addProperty(TENANT_PREFIX + "phone", tenant.getPhone());
-                break;
-            case ZIP:
-                if (tenant.getZip() != null) dataAsObject.addProperty(TENANT_PREFIX + "zip", tenant.getZip());
-                break;
-            case ADDITIONAL_INFO:
-                if (tenant.getAdditionalInfo().hasNonNull("description")) {
-                    dataAsObject.addProperty(TENANT_PREFIX + "additionalInfo", tenant.getAdditionalInfo().get("description").asText());
-                }
-                break;
-        }
-        return dataAsObject;
     }
 }

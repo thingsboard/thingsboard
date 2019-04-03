@@ -17,6 +17,7 @@ package org.thingsboard.rule.engine.metadata;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import lombok.AllArgsConstructor;
@@ -26,6 +27,8 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.util.EntityDetails;
+import org.thingsboard.server.common.data.ContactBased;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -50,7 +53,7 @@ public abstract class TbAbstractGetEntityDetailsNode<C extends TbAbstractGetEnti
     }
 
     @Override
-    public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
+    public void onMsg(TbContext ctx, TbMsg msg) {
         try {
             ctx.tellNext(getDetails(ctx, msg), SUCCESS);
         } catch (Exception e) {
@@ -82,13 +85,50 @@ public abstract class TbAbstractGetEntityDetailsNode<C extends TbAbstractGetEnti
         }
     }
 
+    protected JsonElement addContactProperties(JsonElement data, ContactBased entity, EntityDetails entityDetails, String prefix) {
+        JsonObject dataAsObject = data.getAsJsonObject();
+        switch (entityDetails) {
+            case ADDRESS:
+                if (entity.getAddress() != null)
+                    dataAsObject.addProperty(prefix + "address", entity.getAddress());
+                break;
+            case ADDRESS2:
+                if (entity.getAddress2() != null)
+                    dataAsObject.addProperty(prefix + "address2", entity.getAddress2());
+                break;
+            case CITY:
+                if (entity.getCity() != null) dataAsObject.addProperty(prefix + "city", entity.getCity());
+                break;
+            case COUNTRY:
+                if (entity.getCountry() != null)
+                    dataAsObject.addProperty(prefix + "country", entity.getCountry());
+                break;
+            case STATE:
+                if (entity.getState() != null) dataAsObject.addProperty(prefix + "state", entity.getState());
+                break;
+            case EMAIL:
+                if (entity.getEmail() != null) dataAsObject.addProperty(prefix + "email", entity.getEmail());
+                break;
+            case PHONE:
+                if (entity.getPhone() != null) dataAsObject.addProperty(prefix + "phone", entity.getPhone());
+                break;
+            case ZIP:
+                if (entity.getZip() != null) dataAsObject.addProperty(prefix + "zip", entity.getZip());
+                break;
+            case ADDITIONAL_INFO:
+                if (entity.getAdditionalInfo().hasNonNull("description")) {
+                    dataAsObject.addProperty(prefix + "additionalInfo", entity.getAdditionalInfo().get("description").asText());
+                }
+                break;
+        }
+        return dataAsObject;
+    }
+
     @Data
     @AllArgsConstructor
     protected static class MessageData {
-
         private JsonElement data;
         private String dataType;
-
     }
 
 
