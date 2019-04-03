@@ -67,6 +67,7 @@
     "material-ui": "^0.16.1",
     "material-ui-number-input": "^5.0.16",
     "md-color-picker": "0.2.6",
+    "md-date-range-picker": "^0.8.4",
     "mdPickers": "git://github.com/alenaksu/mdPickers.git#0.7.5",
     "moment": "^2.15.0",
     "ngFlowchart": "git://github.com/thingsboard/ngFlowchart.git#master",
