@@ -48,11 +48,13 @@ import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.audit.AuditLogService;
+import org.thingsboard.server.dao.cassandra.CassandraCluster;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.event.EventService;
+import org.thingsboard.server.dao.nosql.CassandraBufferedRateExecutor;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
@@ -307,6 +309,16 @@ public class ActorSystemContext {
 
     @Getter
     private final Config config;
+
+    @Autowired(required = false)
+    @Getter
+    private CassandraCluster cassandraCluster;
+
+    @Autowired(required = false)
+    @Getter
+    private CassandraBufferedRateExecutor cassandraBufferedRateExecutor;
+
+
 
     public ActorSystemContext() {
         config = ConfigFactory.parseResources(AKKA_CONF_FILE_NAME).withFallback(ConfigFactory.load());
