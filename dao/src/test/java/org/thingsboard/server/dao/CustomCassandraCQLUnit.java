@@ -82,6 +82,7 @@ public class CustomCassandraCQLUnit extends BaseCassandraUnit {
             session = null;
             cluster = null;
         }
+        System.setSecurityManager(null);
     }
 
     // Getters for those who do not like to directly access fields

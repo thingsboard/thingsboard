@@ -1205,10 +1205,10 @@
 		"tenant-required": "テナントが必要です"
 	},
 	"timeinterval": {
-		"seconds-interval": "{ seconds, select, 1 {1 second} other {# seconds} }",
-		"minutes-interval": "{ minutes, select, 1 {1 minute} other {# minutes} }",
-		"hours-interval": "{ hours, select, 1 {1 hour} other {# hours} }",
-		"days-interval": "{ days, select, 1 {1 day} other {# days} }",
+		"seconds-interval": "{ seconds, plural, 1 {1 second} other {# seconds} }",
+		"minutes-interval": "{ minutes, plural, 1 {1 minute} other {# minutes} }",
+		"hours-interval": "{ hours, plural, 1 {1 hour} other {# hours} }",
+		"days-interval": "{ days, plural, 1 {1 day} other {# days} }",
 		"days": "日々",
 		"hours": "時間",
 		"minutes": "分",
@@ -1216,10 +1216,10 @@
 		"advanced": "上級"
 	},
 	"timewindow": {
-		"days": "{ days, select, 1 { day } other {# days } }",
-		"hours": "{ hours, select, 0 { hour } 1 {1 hour } other {# hours } }",
-		"minutes": "{ minutes, select, 0 { minute } 1 {1 minute } other {# minutes } }",
-		"seconds": "{ seconds, select, 0 { second } 1 {1 second } other {# seconds } }",
+		"days": "{ days, plural, 1 { day } other {# days } }",
+		"hours": "{ hours, plural, 0 { hour } 1 {1 hour } other {# hours } }",
+		"minutes": "{ minutes, plural, 0 { minute } 1 {1 minute } other {# minutes } }",
+		"seconds": "{ seconds, plural, 0 { second } 1 {1 second } other {# seconds } }",
 		"realtime": "リアルタイム",
 		"history": "歴史",
 		"last-prefix": "最終",
@@ -1432,6 +1432,65 @@
 		"widget-type-file": "ウィジェットタイプファイル",
 		"invalid-widget-type-file-error": "ウィジェットタイプをインポートできません：ウィジェットタイプのデータ構造が無効です。"
 	},
+	"widgets": {
+		"date-range-navigator": {
+			"localizationMap": {
+				"Sun": "日",
+				"Mon": "月",
+				"Tue": "火",
+				"Wed": "水",
+				"Thu": "木",
+				"Fri": "金",
+				"Sat": "土",
+				"Jan": "1月",
+				"Feb": "2月",
+				"Mar": "3月",
+				"Apr": "4月",
+				"May": "5月",
+				"Jun": "6月",
+				"Jul": "7月",
+				"Aug": "8月",
+				"Sep": "9月",
+				"Oct": "10月",
+				"Nov": "11月",
+				"Dec": "12月",
+				"January": "1月",
+				"February": "2月",
+				"March": "行進",
+				"April": "4月",
+				"June": "六月",
+				"July": "7月",
+				"August": "8月",
+				"September": "9月",
+				"October": "10月",
+				"November": "11月",
+				"December": "12月",
+				"Custom Date Range": "カスタム期間",
+				"Date Range Template": "日付範囲テンプレート",
+				"Today": "今日",
+				"Yesterday": "昨日",
+				"This Week": "今週",
+				"Last Week": "先週",
+				"This Month": "今月",
+				"Last Month": "先月",
+				"Year": "年",
+				"This Year": "今年",
+				"Last Year": "昨年",
+				"Date picker": "日付ピッカー",
+				"Hour": "時",
+				"Day": "日",
+				"Week": "週間",
+				"2 weeks": "2週間",
+				"Month": "月",
+				"3 months": "3ヶ月",
+				"6 months": "6ヵ月",
+				"Custom interval": "カスタム間隔",
+				"Interval": "間隔",
+				"Step size": "刻み幅",
+				"Ok": "Ok"
+			}
+		}
+	},
 	"icon": {
 		"icon": "アイコン",
 		"select-icon": "選択アイコン",
@@ -1460,7 +1519,8 @@
 			"es_ES": "スペイン語",
 			"ja_JA": "日本語",
 			"tr_TR": "トルコ語",
-            "fa_IR": "ペルシャ語"
+            "fa_IR": "ペルシャ語",
+            "uk_UA": "ウクライナ語"
 		}
 	}
 }

@@ -15,6 +15,7 @@
  */
 import $ from 'jquery';
 import 'brace/ext/language_tools';
+import 'brace/ext/searchbox';
 import 'brace/mode/java';
 import 'brace/theme/github';
 

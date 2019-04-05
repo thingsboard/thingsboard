@@ -362,6 +362,25 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, time
                     $location.search('publicId', null);
                     deferred.reject();
                 });
+            } else if (locationSearch.accessToken) {
+                var token = locationSearch.accessToken;
+                var refreshToken = locationSearch.refreshToken;
+                $location.search('accessToken', null);
+                if (refreshToken) {
+                    $location.search('refreshToken', null);
+                }
+                try {
+                    updateAndValidateToken(token, 'jwt_token', false);
+                    if (refreshToken) {
+                        updateAndValidateToken(refreshToken, 'refresh_token', false);
+                    } else {
+                        store.remove('refresh_token');
+                        store.remove('refresh_token_expiration');
+                    }
+                } catch (e) {
+                    deferred.reject();
+                }
+                procceedJwtTokenValidate();
             } else {
                 procceedJwtTokenValidate();
             }

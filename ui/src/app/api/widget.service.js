@@ -21,7 +21,9 @@ import thingsboardLedLight from '../components/led-light.directive';
 import thingsboardTimeseriesTableWidget from '../widget/lib/timeseries-table-widget';
 import thingsboardAlarmsTableWidget from '../widget/lib/alarms-table-widget';
 import thingsboardEntitiesTableWidget from '../widget/lib/entities-table-widget';
+import thingsboardEntitiesHierarchyWidget from '../widget/lib/entities-hierarchy-widget';
 import thingsboardExtensionsTableWidget from '../widget/lib/extensions-table-widget';
+import thingsboardDateRangeNavigatorWidget from '../widget/lib/date-range-navigator/date-range-navigator';
 
 import thingsboardRpcWidgets from '../widget/lib/rpc';
 
@@ -32,6 +34,8 @@ import TbAnalogueCompass from '../widget/lib/analogue-compass';
 import TbCanvasDigitalGauge from '../widget/lib/canvas-digital-gauge';
 import TbMapWidget from '../widget/lib/map-widget';
 import TbMapWidgetV2 from '../widget/lib/map-widget2';
+import TripAnimationWidget from '../widget/lib/tripAnimation/trip-animation-widget';
+
 
 import 'jquery.terminal/js/jquery.terminal.min.js';
 import 'jquery.terminal/css/jquery.terminal.min.css';
@@ -42,8 +46,10 @@ import cssjs from '../../vendor/css.js/css';
 import thingsboardTypes from '../common/types.constant';
 import thingsboardUtils from '../common/utils.service';
 
-export default angular.module('thingsboard.api.widget', ['oc.lazyLoad', thingsboardLedLight, thingsboardTimeseriesTableWidget,
-    thingsboardAlarmsTableWidget, thingsboardEntitiesTableWidget, thingsboardExtensionsTableWidget, thingsboardRpcWidgets, thingsboardTypes, thingsboardUtils])
+export default angular.module('thingsboard.api.widget', ['oc.lazyLoad', thingsboardLedLight,
+    thingsboardTimeseriesTableWidget, thingsboardAlarmsTableWidget, thingsboardEntitiesTableWidget,
+    thingsboardEntitiesHierarchyWidget, thingsboardExtensionsTableWidget, thingsboardDateRangeNavigatorWidget,
+    thingsboardRpcWidgets, thingsboardTypes, thingsboardUtils, TripAnimationWidget])
     .factory('widgetService', WidgetService)
     .name;
 

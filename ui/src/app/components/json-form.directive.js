@@ -71,7 +71,10 @@ function JsonForm($compile, $templateCache, $mdColorPicker) {
             $compile(element.contents())(childScope);
         }
 
+        scope.isFullscreen = false;
+
         scope.formProps = {
+            isFullscreen: false,
             option: {
                 formDefaults: {
                     startEmpty: true
@@ -86,6 +89,10 @@ function JsonForm($compile, $templateCache, $mdColorPicker) {
             },
             onColorClick: function(event, key, val) {
                 scope.showColorPicker(event, val);
+            },
+            onToggleFullscreen: function() {
+                scope.isFullscreen = !scope.isFullscreen;
+                scope.formProps.isFullscreen = scope.isFullscreen;
             }
         };
 
@@ -115,6 +122,8 @@ function JsonForm($compile, $templateCache, $mdColorPicker) {
                 }
             });
         }
+
+        scope.onFullscreenChanged = function() {}
 
         scope.validate = function(){
             if (scope.schema && scope.model) {

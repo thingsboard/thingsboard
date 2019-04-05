@@ -338,15 +338,21 @@ export default class TbGoogleMap {
 			locationSettings: settings,
 			dsIndex: location.dsIndex
 		});
-
+		let map = this;
 		if (onClickListener) {
 			google.maps.event.addListener(polygon, 'click', function (event) {
-				if (settings.displayTooltip) {
+				if (settings.displayTooltip ) {
+					if (settings.autocloseTooltip) {
+						map.tooltips.forEach((tooltip) => {
+							tooltip.popup.close();
+						});
+					}
 					if (!polygon.anchor) {
 						polygon.anchor = new google.maps.MVCObject();
 					}
 					polygon.anchor.set("position", event.latLng);
 					popup.open(this.map, polygon.anchor);
+
 				}
 				onClickListener();
 			});

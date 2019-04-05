@@ -29,10 +29,10 @@
 
     <properties>
         <main.dir>${basedir}</main.dir>
-        <spring-boot.version>1.4.3.RELEASE</spring-boot.version>
-        <spring.version>4.3.4.RELEASE</spring.version>
-        <spring-security.version>4.2.0.RELEASE</spring-security.version>
-        <spring-data-redis.version>1.8.10.RELEASE</spring-data-redis.version>
+        <spring-boot.version>2.1.3.RELEASE</spring-boot.version>
+        <spring.version>5.1.5.RELEASE</spring.version>
+        <spring-security.version>5.1.4.RELEASE</spring-security.version>
+        <spring-data-redis.version>2.1.5.RELEASE</spring-data-redis.version>
         <jedis.version>2.9.0</jedis.version>
         <jjwt.version>0.7.0</jjwt.version>
         <json-path.version>2.2.0</json-path.version>
@@ -41,8 +41,8 @@
         <logback.version>1.2.3</logback.version>
         <mockito.version>1.9.5</mockito.version>
         <rat.version>0.10</rat.version>
-        <cassandra.version>3.5.0</cassandra.version>
-        <cassandra-unit.version>3.3.0.2</cassandra-unit.version>
+        <cassandra.version>3.6.0</cassandra.version>
+        <cassandra-unit.version>3.5.0.1</cassandra-unit.version>
         <takari-cpsuite.version>1.2.7</takari-cpsuite.version>
         <guava.version>21.0</guava.version>
         <caffeine.version>2.6.1</caffeine.version>
@@ -50,7 +50,7 @@
         <commons-validator.version>1.5.0</commons-validator.version>
         <commons-io.version>2.5</commons-io.version>
         <commons-csv.version>1.4</commons-csv.version>
-        <jackson.version>2.8.11.1</jackson.version>
+        <jackson.version>2.9.8</jackson.version>
         <json-schema-validator.version>2.2.6</json-schema-validator.version>
         <scala.version>2.11</scala.version>
         <akka.version>2.4.2</akka.version>
@@ -59,18 +59,20 @@
         <velocity.version>1.7</velocity.version>
         <velocity-tools.version>2.0</velocity-tools.version>
         <mail.version>1.4.3</mail.version>
-        <curator.version>4.0.1</curator.version>
-        <protobuf.version>3.0.2</protobuf.version>
-        <grpc.version>1.12.0</grpc.version>
+        <curator.version>4.2.0</curator.version>
+        <protobuf.version>3.6.1</protobuf.version>
+        <grpc.version>1.19.0</grpc.version>
         <lombok.version>1.16.18</lombok.version>
         <paho.client.version>1.1.0</paho.client.version>
-        <netty.version>4.1.22.Final</netty.version>
+        <netty.version>4.1.34.Final</netty.version>
         <os-maven-plugin.version>1.5.0</os-maven-plugin.version>
         <rabbitmq.version>4.8.0</rabbitmq.version>
         <surfire.version>2.19.1</surfire.version>
         <jar-plugin.version>3.0.2</jar-plugin.version>
         <springfox-swagger.version>2.6.1</springfox-swagger.version>
         <springfox-swagger-ui-rfc6570.version>1.0.0</springfox-swagger-ui-rfc6570.version>
+        <spatial4j.version>0.7</spatial4j.version>
+        <jts.version>1.15.0</jts.version>
         <bouncycastle.version>1.56</bouncycastle.version>
         <winsw.version>2.0.1</winsw.version>
         <hsqldb.version>2.4.0</hsqldb.version>
@@ -85,6 +87,8 @@
         <kafka.version>2.0.0</kafka.version>
         <bucket4j.version>4.1.1</bucket4j.version>
         <fst.version>2.57</fst.version>
+        <antlr.version>2.7.7</antlr.version>
+        <snakeyaml.version>1.23</snakeyaml.version>
     </properties>
 
     <modules>
@@ -513,6 +517,16 @@
                 </exclusions>
             </dependency>
             <dependency>
+                <groupId>org.yaml</groupId>
+                <artifactId>snakeyaml</artifactId>
+                <version>${snakeyaml.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>antlr</groupId>
+                <artifactId>antlr</artifactId>
+                <version>${antlr.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>com.rabbitmq</groupId>
                 <artifactId>amqp-client</artifactId>
                 <version>${rabbitmq.version}</version>
@@ -598,6 +612,16 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
                 <version>${jackson.version}</version>
             </dependency>
             <dependency>
@@ -794,11 +818,27 @@
                 <groupId>de.ruedigermoeller</groupId>
                 <artifactId>fst</artifactId>
                 <version>${fst.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.fasterxml.jackson.core</groupId>
+                        <artifactId>jackson-core</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>io.springfox.ui</groupId>
                 <artifactId>springfox-swagger-ui-rfc6570</artifactId>
                 <version>${springfox-swagger-ui-rfc6570.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.locationtech.spatial4j</groupId>
+                <artifactId>spatial4j</artifactId>
+                <version>${spatial4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.locationtech.jts</groupId>
+                <artifactId>jts-core</artifactId>
+                <version>${jts.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

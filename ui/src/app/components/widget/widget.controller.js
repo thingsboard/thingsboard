@@ -76,9 +76,9 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
         defaultSubscription: null,
         dashboardTimewindow: dashboardTimewindow,
         timewindowFunctions: {
-            onUpdateTimewindow: function(startTimeMs, endTimeMs) {
+            onUpdateTimewindow: function(startTimeMs, endTimeMs, interval) {
                 if (widgetContext.defaultSubscription) {
-                    widgetContext.defaultSubscription.onUpdateTimewindow(startTimeMs, endTimeMs);
+                    widgetContext.defaultSubscription.onUpdateTimewindow(startTimeMs, endTimeMs, interval);
                 }
             },
             onResetTimewindow: function() {
