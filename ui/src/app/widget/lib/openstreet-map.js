@@ -19,7 +19,7 @@ import 'leaflet-providers';
 
 export default class TbOpenStreetMap {
 
-	constructor($containerElement, utils, initCallback, defaultZoomLevel, dontFitMapBounds, minZoomLevel, mapProvider) {
+	constructor($containerElement, utils, initCallback, defaultZoomLevel, dontFitMapBounds, minZoomLevel, mapProvider, credentials) {
 
 		this.utils = utils;
 		this.defaultZoomLevel = defaultZoomLevel;
@@ -31,9 +31,14 @@ export default class TbOpenStreetMap {
 			mapProvider = "OpenStreetMap.Mapnik";
 		}
 
+		if (!mapProvider.indexOf("HERE.")) {
+			credentials.app_id = credentials.app_id || "AhM6TzD9ThyK78CT3ptx";
+			credentials.app_code = credentials.app_code || "p6NPiITB3Vv0GMUFnkLOOg";
+		}
+
 		this.map = L.map($containerElement[0]).setView([0, 0], this.defaultZoomLevel || 8);
 
-		var tileLayer = L.tileLayer.provider(mapProvider);
+		var tileLayer = L.tileLayer.provider(mapProvider, credentials);
 
 		tileLayer.addTo(this.map);
 
