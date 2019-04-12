@@ -74,10 +74,11 @@ public class DeviceController extends BaseController {
     @RequestMapping(value = "/device", method = RequestMethod.POST)
     @ResponseBody
     public Device saveDevice(@RequestBody Device device) throws ThingsboardException {
+		boolean isAdd = (device.getId() == null) || (deviceService.findDeviceById(getCurrentUser().getTenantId(), device.getId()) == null);
         try {
             device.setTenantId(getCurrentUser().getTenantId());
 
-            Operation operation = device.getId() == null ? Operation.CREATE : Operation.WRITE;
+            Operation operation = isAdd ? Operation.CREATE : Operation.WRITE;
 
             accessControlService.checkPermission(getCurrentUser(), Resource.DEVICE, operation,
                     device.getId(), device);
@@ -93,9 +94,9 @@ public class DeviceController extends BaseController {
 
             logEntityAction(savedDevice.getId(), savedDevice,
                     savedDevice.getCustomerId(),
-                    device.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
+                    isAdd ? ActionType.ADDED : ActionType.UPDATED, null);
 
-            if (device.getId() == null) {
+            if (isAdd) {
                 deviceStateService.onDeviceAdded(savedDevice);
             } else {
                 deviceStateService.onDeviceUpdated(savedDevice);
@@ -103,7 +104,7 @@ public class DeviceController extends BaseController {
             return savedDevice;
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.DEVICE), device,
-                    null, device.getId() == null ? ActionType.ADDED : ActionType.UPDATED, e);
+                    null, isAdd ? ActionType.ADDED : ActionType.UPDATED, e);
             throw handleException(e);
         }
     }
