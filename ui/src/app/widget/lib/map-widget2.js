@@ -81,7 +81,14 @@ export default class TbMapWidgetV2 {
 		if (mapProvider === 'google-map') {
 			this.map = new TbGoogleMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.gmApiKey, settings.gmDefaultMapType);
 		} else if (mapProvider === 'openstreet-map') {
-			this.map = new TbOpenStreetMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.mapProvider);
+			let openStreetMapProvider = {};
+			if (settings.useCustomProvider && settings.customProviderTileUrl) {
+                openStreetMapProvider.name = settings.customProviderTileUrl;
+                openStreetMapProvider.isCustom = true;
+			} else {
+                openStreetMapProvider.name = settings.mapProvider;
+			}
+			this.map = new TbOpenStreetMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, openStreetMapProvider);
 		} else if (mapProvider === 'image-map') {
 			this.map = new TbImageMap(this.ctx, $element, this.utils, initCallback,
 				settings.mapImageUrl,
@@ -800,7 +807,17 @@ const openstreetMapSettingsSchema =
 					"title": "Map provider",
 					"type": "string",
 					"default": "OpenStreetMap.Mapnik"
-				}
+				},
+                "useCustomProvider": {
+                    "title": "Use custom provider",
+                    "type": "boolean",
+                    "default": false
+                },
+                "customProviderTileUrl": {
+                    "title": "Custom provider tile URL",
+                    "type": "string",
+                    "default": "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                }
 			},
 			"required": []
 		},
@@ -839,7 +856,9 @@ const openstreetMapSettingsSchema =
 						"label": "CartoDB.DarkMatter"
 					}
 				]
-			}
+			},
+            "useCustomProvider",
+            "customProviderTileUrl"
 		]
 	};
 

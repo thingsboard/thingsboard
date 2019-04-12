@@ -28,12 +28,14 @@ export default class TbOpenStreetMap {
 		this.tooltips = [];
 
 		if (!mapProvider) {
-			mapProvider = "OpenStreetMap.Mapnik";
+			mapProvider = {
+                name: "OpenStreetMap.Mapnik"
+			};
 		}
 
 		this.map = L.map($containerElement[0]).setView([0, 0], this.defaultZoomLevel || 8);
 
-		var tileLayer = L.tileLayer.provider(mapProvider);
+		var tileLayer = mapProvider.isCustom ? L.tileLayer(mapProvider.name) : L.tileLayer.provider(mapProvider.name);
 
 		tileLayer.addTo(this.map);
 
