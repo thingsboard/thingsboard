@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.mqtt;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -50,6 +51,8 @@ public class MqttTransportService {
     private Integer bossGroupThreadCount;
     @Value("${transport.mqtt.netty.worker_group_thread_count}")
     private Integer workerGroupThreadCount;
+    @Value("${transport.mqtt.netty.so_keep_alive}")
+    private boolean keepAlive;
 
     @Autowired
     private MqttTransportContext context;
@@ -69,7 +72,8 @@ public class MqttTransportService {
         ServerBootstrap b = new ServerBootstrap();
         b.group(bossGroup, workerGroup)
                 .channel(NioServerSocketChannel.class)
-                .childHandler(new MqttTransportServerInitializer(context));
+                .childHandler(new MqttTransportServerInitializer(context))
+                .childOption(ChannelOption.SO_KEEPALIVE, keepAlive);
 
         serverChannel = b.bind(host, port).sync().channel();
         log.info("Mqtt transport started!");
