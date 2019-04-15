@@ -860,9 +860,9 @@ const commonMapSettingsSchema =
 					"default": true
 				},
 				"disableScrollZooming": {
-                    "title": "Disable scroll zooming",
-                    "type": "boolean",
-                    "default": false
+					"title": "Disable scroll zooming",
+					"type": "boolean",
+					"default": false
 				},
 				"latKeyName": {
 					"title": "Latitude key name",
@@ -1004,7 +1004,7 @@ const commonMapSettingsSchema =
 		"form": [
 			"defaultZoomLevel",
 			"fitMapBounds",
-            "disableScrollZooming",
+			"disableScrollZooming",
 			"latKeyName",
 			"lngKeyName",
 			"showLabel",
@@ -1117,9 +1117,9 @@ const imageMapSettingsSchema =
 					"default": ""
 				},
 				"disableScrollZooming": {
-                    "title": "Disable scroll zooming",
-                    "type": "boolean",
-                    "default": false
+					"title": "Disable scroll zooming",
+					"type": "boolean",
+					"default": false
 				},
 				"xPosKeyName": {
 					"title": "X position key name",
@@ -1238,7 +1238,7 @@ const imageMapSettingsSchema =
 			},
 			"imageEntityAlias",
 			"imageUrlAttribute",
-            "disableScrollZooming",
+			"disableScrollZooming",
 			"xPosKeyName",
 			"yPosKeyName",
 			"showLabel",

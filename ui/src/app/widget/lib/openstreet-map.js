@@ -34,7 +34,7 @@ export default class TbOpenStreetMap {
 		this.map = L.map($containerElement[0]).setView([0, 0], this.defaultZoomLevel || 8);
 
 		if (disableScrollZooming) {
-            this.map.scrollWheelZoom.disable();
+			this.map.scrollWheelZoom.disable();
 		}
 
 		var tileLayer = L.tileLayer.provider(mapProvider);
