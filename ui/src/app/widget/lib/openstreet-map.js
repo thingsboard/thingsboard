@@ -28,17 +28,19 @@ export default class TbOpenStreetMap {
 		this.tooltips = [];
 
 		if (!mapProvider) {
-			mapProvider = "OpenStreetMap.Mapnik";
+			mapProvider = {
+                name: "OpenStreetMap.Mapnik"
+			};
 		}
 
-		if (!mapProvider.indexOf("HERE.")) {
+		if (mapProvider.startsWith("HERE.")) {
 			credentials.app_id = credentials.app_id || "AhM6TzD9ThyK78CT3ptx";
 			credentials.app_code = credentials.app_code || "p6NPiITB3Vv0GMUFnkLOOg";
 		}
 
 		this.map = L.map($containerElement[0]).setView([0, 0], this.defaultZoomLevel || 8);
 
-		var tileLayer = L.tileLayer.provider(mapProvider, credentials);
+		var tileLayer = mapProvider.isCustom ? L.tileLayer(mapProvider.name) : L.tileLayer.provider(mapProvider.name, credentials);
 
 		tileLayer.addTo(this.map);
 

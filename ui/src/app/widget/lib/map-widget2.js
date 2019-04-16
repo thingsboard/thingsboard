@@ -81,7 +81,14 @@ export default class TbMapWidgetV2 {
 		if (mapProvider === 'google-map') {
 			this.map = new TbGoogleMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.gmApiKey, settings.gmDefaultMapType);
 		} else if (mapProvider === 'openstreet-map') {
-			this.map = new TbOpenStreetMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.mapProvider);
+			let openStreetMapProvider = {};
+			if (settings.useCustomProvider && settings.customProviderTileUrl) {
+                openStreetMapProvider.name = settings.customProviderTileUrl;
+                openStreetMapProvider.isCustom = true;
+			} else {
+                openStreetMapProvider.name = settings.mapProvider;
+			}
+			this.map = new TbOpenStreetMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, openStreetMapProvider);
 		} else if (mapProvider === 'here') {
 			this.map = new TbOpenStreetMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.mapProvider, settings.credentials);
 		} else if (mapProvider === 'image-map') {
@@ -548,7 +555,13 @@ export default class TbMapWidgetV2 {
 		function mapPolygonArray (rawArray) {
 			let latLngArray = rawArray.map(function (el) {
 				if (el.length === 2) {
-					return tbMap.map.createLatLng(el[0], el[1]);
+					if (!angular.isNumber(el[0]) && !angular.isNumber(el[1])) {
+						return el.map(function (subEl) {
+							return mapPolygonArray(subEl);
+						})
+					} else {
+						return tbMap.map.createLatLng(el[0], el[1]);
+					}
 				} else if (el.length > 2) {
 					return mapPolygonArray(el);
 				} else {
@@ -662,7 +675,6 @@ export default class TbMapWidgetV2 {
 		} else if (mapProvider === 'here') {
 			schema = angular.copy(hereMapSettingsSchema);
 		}
-
 		angular.merge(schema.schema.properties, commonMapSettingsSchema.schema.properties);
 		schema.schema.required = schema.schema.required.concat(commonMapSettingsSchema.schema.required);
 		schema.form = schema.form.concat(commonMapSettingsSchema.form);
@@ -855,7 +867,17 @@ const openstreetMapSettingsSchema =
 					"title": "Map provider",
 					"type": "string",
 					"default": "OpenStreetMap.Mapnik"
-				}
+				},
+                "useCustomProvider": {
+                    "title": "Use custom provider",
+                    "type": "boolean",
+                    "default": false
+                },
+                "customProviderTileUrl": {
+                    "title": "Custom provider tile URL",
+                    "type": "string",
+                    "default": "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                }
 			},
 			"required": []
 		},
@@ -894,7 +916,9 @@ const openstreetMapSettingsSchema =
 						"label": "CartoDB.DarkMatter"
 					}
 				]
-			}
+			},
+            "useCustomProvider",
+            "customProviderTileUrl"
 		]
 	};
 
