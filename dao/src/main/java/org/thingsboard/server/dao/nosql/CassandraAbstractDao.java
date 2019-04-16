@@ -27,6 +27,7 @@ import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.exceptions.CodecNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
 import org.thingsboard.server.dao.model.type.AuthorityCodec;
@@ -44,6 +45,7 @@ import java.util.concurrent.ConcurrentMap;
 public abstract class CassandraAbstractDao {
 
     @Autowired
+    @Qualifier("CassandraCluster")
     protected CassandraCluster cluster;
 
     private ConcurrentMap<String, PreparedStatement> preparedStatementMap = new ConcurrentHashMap<>();

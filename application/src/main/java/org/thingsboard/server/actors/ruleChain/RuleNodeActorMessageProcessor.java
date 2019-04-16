@@ -55,7 +55,9 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     @Override
     public void start(ActorContext context) throws Exception {
         tbNode = initComponent(ruleNode);
-        state = ComponentLifecycleState.ACTIVE;
+        if (tbNode != null) {
+            state = ComponentLifecycleState.ACTIVE;
+        }
     }
 
     @Override
@@ -118,9 +120,12 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     }
 
     private TbNode initComponent(RuleNode ruleNode) throws Exception {
-        Class<?> componentClazz = Class.forName(ruleNode.getType());
-        TbNode tbNode = (TbNode) (componentClazz.newInstance());
-        tbNode.init(defaultCtx, new TbNodeConfiguration(ruleNode.getConfiguration()));
+        TbNode tbNode = null;
+        if (ruleNode != null) {
+            Class<?> componentClazz = Class.forName(ruleNode.getType());
+            tbNode = (TbNode) (componentClazz.newInstance());
+            tbNode.init(defaultCtx, new TbNodeConfiguration(ruleNode.getConfiguration()));
+        }
         return tbNode;
     }
 

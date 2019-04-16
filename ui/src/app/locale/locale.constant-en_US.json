@@ -1295,7 +1295,8 @@
         "metadata-required": "Metadata entries can't be empty.",
         "output": "Output",
         "test": "Test",
-        "help": "Help"
+        "help": "Help",
+        "reset-debug-mode": "Reset debug mode in all nodes"
     },
     "tenant": {
         "tenant": "Tenant",
@@ -1554,6 +1555,65 @@
         "widget-type-file": "Widget type file",
         "invalid-widget-type-file-error": "Unable to import widget type: Invalid widget type data structure."
     },
+    "widgets": {
+        "date-range-navigator": {
+            "localizationMap": {
+                "Sun": "Sun",
+                "Mon": "Mon",
+                "Tue": "Tue",
+                "Wed": "Wed",
+                "Thu": "Thu",
+                "Fri": "Fri",
+                "Sat": "Sat",
+                "Jan": "Jan",
+                "Feb": "Feb",
+                "Mar": "Mar",
+                "Apr": "Apr",
+                "May": "May",
+                "Jun": "Jun",
+                "Jul": "Jul",
+                "Aug": "Aug",
+                "Sep": "Sep",
+                "Oct": "Oct",
+                "Nov": "Nov",
+                "Dec": "Dec",
+                "January": "January",
+                "February": "February",
+                "March": "March",
+                "April": "April",
+                "June": "June",
+                "July": "July",
+                "August": "August",
+                "September": "September",
+                "October": "October",
+                "November": "November",
+                "December": "December",
+                "Custom Date Range": "Custom Date Range",
+                "Date Range Template": "Date Range Template",
+                "Today": "Today",
+                "Yesterday": "Yesterday",
+                "This Week": "This Week",
+                "Last Week": "Last Week",
+                "This Month": "This Month",
+                "Last Month": "Last Month",
+                "Year": "Year",
+                "This Year": "This Year",
+                "Last Year": "Last Year",
+                "Date picker": "Date picker",
+                "Hour": "Hour",
+                "Day": "Day",
+                "Week": "Week",
+                "2 weeks": "2 Weeks",
+                "Month": "Month",
+                "3 months": "3 Months",
+                "6 months": "6 Months",
+                "Custom interval": "Custom interval",
+                "Interval": "Interval",
+                "Step size": "Step size",
+                "Ok": "Ok"
+            }
+        }
+    },
     "icon": {
         "icon": "Icon",
         "select-icon": "Select icon",
@@ -1566,7 +1626,8 @@
             "row-click": "On row click",
             "polygon-click": "On polygon click",
             "marker-click": "On marker click",
-            "tooltip-tag-action": "Tooltip tag action"
+            "tooltip-tag-action": "Tooltip tag action",
+            "node-selected": "On node selected"
         }
     },
     "language": {
@@ -1582,7 +1643,8 @@
             "es_ES": "Spanish",
             "ja_JA": "Japanese",
             "tr_TR": "Turkish",
-            "fa_IR": "Persian"
+            "fa_IR": "Persian",
+            "uk_UA": "Ukrainian"
         }
     }
 }

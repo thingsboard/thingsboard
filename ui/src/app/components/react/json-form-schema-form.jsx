@@ -63,6 +63,7 @@ class ThingsboardSchemaForm extends React.Component {
 
         this.onChange = this.onChange.bind(this);
         this.onColorClick = this.onColorClick.bind(this);
+        this.onToggleFullscreen = this.onToggleFullscreen.bind(this);
         this.hasConditions = false;
     }
 
@@ -78,7 +79,11 @@ class ThingsboardSchemaForm extends React.Component {
         this.props.onColorClick(event, key, val);
     }
 
-    builder(form, model, index, onChange, onColorClick, mapper) {
+    onToggleFullscreen() {
+        this.props.onToggleFullscreen();
+    }
+
+    builder(form, model, index, onChange, onColorClick, onToggleFullscreen, mapper) {
         var type = form.type;
         let Field = this.mapper[type];
         if(!Field) {
@@ -91,7 +96,7 @@ class ThingsboardSchemaForm extends React.Component {
                 return null;
             }
         }
-        return <Field model={model} form={form} key={index} onChange={onChange} onColorClick={onColorClick} mapper={mapper} builder={this.builder}/>
+        return <Field model={model} form={form} key={index} onChange={onChange} onColorClick={onColorClick} onToggleFullscreen={onToggleFullscreen} mapper={mapper} builder={this.builder}/>
     }
 
     render() {
@@ -101,11 +106,16 @@ class ThingsboardSchemaForm extends React.Component {
             mapper = _.merge(this.mapper, this.props.mapper);
         }
         let forms = merged.map(function(form, index) {
-            return this.builder(form, this.props.model, index, this.onChange, this.onColorClick, mapper);
+            return this.builder(form, this.props.model, index, this.onChange, this.onColorClick, this.onToggleFullscreen, mapper);
         }.bind(this));
 
+        let formClass = 'SchemaForm';
+        if (this.props.isFullscreen) {
+            formClass += ' SchemaFormFullscreen';
+        }
+
         return (
-            <div style={{width: '100%'}} className='SchemaForm'>{forms}</div>
+            <div style={{width: '100%'}} className={formClass}>{forms}</div>
         );
     }
 }

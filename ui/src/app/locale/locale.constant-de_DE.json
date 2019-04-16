@@ -1549,6 +1549,65 @@
     "widget-type-file": "Widget-Typdatei",
     "invalid-widget-type-file-error": "Widget-Typ kann nicht importiert werden: Ungültige Datenstruktur des Widget-Typs."
   },
+  "widgets": {
+    "date-range-navigator": {
+      "localizationMap": {
+        "Sun": "So.",
+        "Mon": "Mo.",
+        "Tue": "Di.",
+        "Wed": "Mi.",
+        "Thu": "Do.",
+        "Fri": "Fr.",
+        "Sat": "Sa.",
+        "Jan": "Jan.",
+        "Feb": "Feb.",
+        "Mar": "März",
+        "Apr": "Apr.",
+        "May": "Mai",
+        "Jun": "Juni",
+        "Jul": "Juli",
+        "Aug": "Aug.",
+        "Sep": "Sep.",
+        "Oct": "Okt.",
+        "Nov": "Nov.",
+        "Dec": "Dez.",
+        "January": "Januar",
+        "February": "Februar",
+        "March": "März",
+        "April": "April",
+        "June": "Juni",
+        "July": "Juli",
+        "August": "August",
+        "September": "September",
+        "October": "Oktober",
+        "November": "November",
+        "December": "Dezember",
+        "Custom Date Range": "Benutzerdefinierter Datumsbereich",
+        "Date Range Template": "Datumsbereichsvorlage",
+        "Today": "Heute",
+        "Yesterday": "Gestern",
+        "This Week": "Diese Woche",
+        "Last Week": "Letzte Woche",
+        "This Month": "Diesen Monat",
+        "Last Month": "Im vergangenen Monat",
+        "Year": "Jahr",
+        "This Year": "Dieses Jahr",
+        "Last Year": "Vergangenes Jahr",
+        "Date picker": "Datumsauswahl",
+        "Hour": "Stunde",
+        "Day": "Tag",
+        "Week": "Woche",
+        "2 weeks": "2 Wochen",
+        "Month": "Monat",
+        "3 months": "3 Monate",
+        "6 months": "6 Monate",
+        "Custom interval": "Benutzerdefiniertes Intervall",
+        "Interval": "Intervall",
+        "Step size": "Schrittlänge",
+        "Ok": "Ok"
+      }
+    }
+  },
   "icon": {
     "icon": "Symbol",
     "select-icon": "Symbol auswählen",
@@ -1577,7 +1636,8 @@
       "es_ES": "Spanisch",
       "ja_JA": "Japanisch",
       "tr_TR": "Türkisch",
-      "fa_IR": "Persisch"
+      "fa_IR": "Persisch",
+      "uk_UA": "Ukrainisch"
     }
   }
 }

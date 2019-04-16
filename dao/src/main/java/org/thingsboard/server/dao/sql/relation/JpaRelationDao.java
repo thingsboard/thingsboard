@@ -97,13 +97,13 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
     @Override
     public ListenableFuture<Boolean> checkRelation(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
         RelationCompositeKey key = getRelationCompositeKey(from, to, relationType, typeGroup);
-        return service.submit(() -> relationRepository.findOne(key) != null);
+        return service.submit(() -> relationRepository.existsById(key));
     }
 
     @Override
     public ListenableFuture<EntityRelation> getRelation(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
         RelationCompositeKey key = getRelationCompositeKey(from, to, relationType, typeGroup);
-        return service.submit(() -> DaoUtil.getData(relationRepository.findOne(key)));
+        return service.submit(() -> DaoUtil.getData(relationRepository.findById(key)));
     }
 
     private RelationCompositeKey getRelationCompositeKey(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
@@ -152,9 +152,9 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
     }
 
     private boolean deleteRelationIfExists(RelationCompositeKey key) {
-        boolean relationExistsBeforeDelete = relationRepository.exists(key);
+        boolean relationExistsBeforeDelete = relationRepository.existsById(key);
         if (relationExistsBeforeDelete) {
-            relationRepository.delete(key);
+            relationRepository.deleteById(key);
         }
         return relationExistsBeforeDelete;
     }

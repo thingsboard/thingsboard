@@ -1549,6 +1549,65 @@
         "widget-type-file": "پرونده نوع ويجت",
         "invalid-widget-type-file-error": ".وارد کردن نوع ويجت ممکن نيست: ساختار داده نوع ويجت نامعتبر است"
     },
+    "widgets": {
+        "date-range-navigator": {
+            "localizationMap": {
+                "Sun": "یکشنبه",
+                "Mon": "دوشنبه",
+                "Tue": "سه‌شنبه",
+                "Wed": "چهارشنبه",
+                "Thu": "پنجشنبه",
+                "Fri": "جمعه",
+                "Sat": "شنبه",
+                "Jan": "ژانویهٔ",
+                "Feb": "فوریهٔ",
+                "Mar": "مارس",
+                "Apr": "آوریل",
+                "May": "مهٔ",
+                "Jun": "ژوئن",
+                "Jul": "ژوئیهٔ",
+                "Aug": "اوت",
+                "Sep": "سپتامبر",
+                "Oct": "اکتبر",
+                "Nov": "نوامبر",
+                "Dec": "دسامبر",
+                "January": "January",
+                "February": "February",
+                "March": "March",
+                "April": "April",
+                "June": "June",
+                "July": "July",
+                "August": "August",
+                "September": "September",
+                "October": "October",
+                "November": "November",
+                "December": "December",
+                "Custom Date Range": "Custom Date Range",
+                "Date Range Template": "Date Range Template",
+                "Today": "Today",
+                "Yesterday": "Yesterday",
+                "This Week": "This Week",
+                "Last Week": "Last Week",
+                "This Month": "This Month",
+                "Last Month": "Last Month",
+                "Year": "Year",
+                "This Year": "This Year",
+                "Last Year": "Last Year",
+                "Date picker": "Date picker",
+                "Hour": "Hour",
+                "Day": "Day",
+                "Week": "Week",
+                "2 weeks": "2 weeks",
+                "Month": "Month",
+                "3 months": "3 months",
+                "6 months": "6 months",
+                "Custom interval": "Custom interval",
+                "Interval": "Interval",
+                "Step size": "Step size",
+                "Ok": "Ok"
+            }
+        }
+    },
     "icon": {
         "icon": "آيکون",
         "select-icon": "انتخاب آيکون",
@@ -1576,7 +1635,8 @@
             "es_ES": "اسپانيولي",
             "ja_JA": "ژاپني",
             "tr_TR": "ترکي",
-			"fa_IR": "فارسي"
+			"fa_IR": "فارسي",
+            "uk_UA": "اوکراین"
         }
     }
 }

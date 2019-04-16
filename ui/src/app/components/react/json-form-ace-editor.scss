@@ -13,6 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+.fullscreen-form-field {
+  .json-form-ace-editor {
+    height: calc(100% - 60px);
+  }
+}
+
 .json-form-ace-editor {
   position: relative;
   height: 100%;

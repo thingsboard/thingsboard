@@ -219,14 +219,14 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
                 }
             }, 0);
         },
-        onUpdateTimewindow: function(startTimeMs, endTimeMs) {
+        onUpdateTimewindow: function(startTimeMs, endTimeMs, interval) {
             if (!vm.originalDashboardTimewindow) {
                 vm.originalDashboardTimewindow = angular.copy(vm.dashboardTimewindow);
             }
             $timeout(function() {
-                vm.dashboardTimewindow = timeService.toHistoryTimewindow(vm.dashboardTimewindow, startTimeMs, endTimeMs);
+                vm.dashboardTimewindow = timeService.toHistoryTimewindow(vm.dashboardTimewindow, startTimeMs, endTimeMs, interval);
             }, 0);
-        }
+        },
     };
 
     addResizeListener(gridsterParent[0], onGridsterParentResize); // eslint-disable-line no-undef
