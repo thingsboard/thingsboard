@@ -29,7 +29,7 @@ export default class TbOpenStreetMap {
 
 		if (!mapProvider) {
 			mapProvider = {
-                name: "OpenStreetMap.Mapnik"
+				name: "OpenStreetMap.Mapnik"
 			};
 		}
 
@@ -41,7 +41,6 @@ export default class TbOpenStreetMap {
 		this.map = L.map($containerElement[0]).setView([0, 0], this.defaultZoomLevel || 8);
 
 		var tileLayer = mapProvider.isCustom ? L.tileLayer(mapProvider.name) : L.tileLayer.provider(mapProvider.name, credentials);
-
 		tileLayer.addTo(this.map);
 
 		if (initCallback) {

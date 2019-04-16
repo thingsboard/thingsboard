@@ -15,19 +15,16 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.rule.engine.util.EntityDetails;
+import org.thingsboard.server.common.data.ContactBased;
 import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityViewId;
@@ -54,45 +51,59 @@ public class TbGetCustomerDetailsNode extends TbAbstractGetEntityDetailsNode<TbG
     }
 
     @Override
-    protected TbMsg getDetails(TbContext ctx, TbMsg msg) {
-        return getCustomerTbMsg(ctx, msg, getDataAsJson(msg));
+    protected ListenableFuture<TbMsg> getDetails(TbContext ctx, TbMsg msg) {
+        return getTbMsgListenableFuture(ctx, msg, getDataAsJson(msg), CUSTOMER_PREFIX);
     }
 
-    private TbMsg getCustomerTbMsg(TbContext ctx, TbMsg msg, MessageData messageData) {
-        JsonElement resultObject = null;
-        if (!config.getDetailsList().isEmpty()) {
-            for (EntityDetails entityDetails : config.getDetailsList()) {
-                resultObject = addContactProperties(messageData.getData(), getCustomer(ctx, msg), entityDetails, CUSTOMER_PREFIX);
+    @Override
+    protected ListenableFuture<ContactBased> getContactBasedListenableFuture(TbContext ctx, TbMsg msg) {
+        return Futures.transformAsync(getCustomer(ctx, msg), customer -> {
+            if (customer != null) {
+                return Futures.immediateFuture(customer);
+            } else {
+                return Futures.immediateFuture(null);
             }
-            return transformMsg(ctx, msg, resultObject, messageData);
-        } else {
-            return msg;
-        }
+        });
     }
 
-    private Customer getCustomer(TbContext ctx, TbMsg msg) {
+    private ListenableFuture<Customer> getCustomer(TbContext ctx, TbMsg msg) {
         switch (msg.getOriginator().getEntityType()) {
             case DEVICE:
-                Device device = ctx.getDeviceService().findDeviceById(ctx.getTenantId(), new DeviceId(msg.getOriginator().getId()));
-                if (!device.getCustomerId().isNullUid()) {
-                    return ctx.getCustomerService().findCustomerById(ctx.getTenantId(), device.getCustomerId());
-                } else {
-                    throw new RuntimeException("Device with name '" + device.getName() + "' is not assigned to Customer.");
-                }
+                return Futures.transformAsync(ctx.getDeviceService().findDeviceByIdAsync(ctx.getTenantId(), new DeviceId(msg.getOriginator().getId())), device -> {
+                    if (device != null) {
+                        if (!device.getCustomerId().isNullUid()) {
+                            return ctx.getCustomerService().findCustomerByIdAsync(ctx.getTenantId(), device.getCustomerId());
+                        } else {
+                            throw new RuntimeException("Device with name '" + device.getName() + "' is not assigned to Customer.");
+                        }
+                    } else {
+                        return Futures.immediateFuture(null);
+                    }
+                });
             case ASSET:
-                Asset asset = ctx.getAssetService().findAssetById(ctx.getTenantId(), new AssetId(msg.getOriginator().getId()));
-                if (!asset.getCustomerId().isNullUid()) {
-                    return ctx.getCustomerService().findCustomerById(ctx.getTenantId(), asset.getCustomerId());
-                } else {
-                    throw new RuntimeException("Asset with name '" + asset.getName() + "' is not assigned to Customer.");
-                }
+                return Futures.transformAsync(ctx.getAssetService().findAssetByIdAsync(ctx.getTenantId(), new AssetId(msg.getOriginator().getId())), asset -> {
+                    if (asset != null) {
+                        if (!asset.getCustomerId().isNullUid()) {
+                            return ctx.getCustomerService().findCustomerByIdAsync(ctx.getTenantId(), asset.getCustomerId());
+                        } else {
+                            throw new RuntimeException("Asset with name '" + asset.getName() + "' is not assigned to Customer.");
+                        }
+                    } else {
+                        return Futures.immediateFuture(null);
+                    }
+                });
             case ENTITY_VIEW:
-                EntityView entityView = ctx.getEntityViewService().findEntityViewById(ctx.getTenantId(), new EntityViewId(msg.getOriginator().getId()));
-                if (!entityView.getCustomerId().isNullUid()) {
-                    return ctx.getCustomerService().findCustomerById(ctx.getTenantId(), entityView.getCustomerId());
-                } else {
-                    throw new RuntimeException("EntityView with name '" + entityView.getName() + "' is not assigned to Customer.");
-                }
+                return Futures.transformAsync(ctx.getEntityViewService().findEntityViewByIdAsync(ctx.getTenantId(), new EntityViewId(msg.getOriginator().getId())), entityView -> {
+                    if (entityView != null) {
+                        if (!entityView.getCustomerId().isNullUid()) {
+                            return ctx.getCustomerService().findCustomerByIdAsync(ctx.getTenantId(), entityView.getCustomerId());
+                        } else {
+                            throw new RuntimeException("EntityView with name '" + entityView.getName() + "' is not assigned to Customer.");
+                        }
+                    } else {
+                        return Futures.immediateFuture(null);
+                    }
+                });
             default:
                 throw new RuntimeException("Entity with entityType '" + msg.getOriginator().getEntityType() + "' is not supported.");
         }

@@ -57,5 +57,9 @@ table.tb-legend {
         opacity: .6;
       }
     }
+
+    &.tb-row-direction {
+      display: inline-block;
+    }
   }
 }

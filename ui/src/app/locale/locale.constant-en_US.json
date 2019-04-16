@@ -670,6 +670,10 @@
     "dialog": {
         "close": "Close dialog"
     },
+    "direction": {
+        "column": "Column",
+        "row": "Row"
+    },
     "error": {
         "unable-to-connect": "Unable to connect to the server! Please check your internet connection.",
         "unhandled-error-code": "Unhandled error code: {{errorCode}}",
@@ -1116,6 +1120,7 @@
         "select": "Select target layout"
     },
     "legend": {
+        "direction": "Legend direction",
         "position": "Legend position",
         "show-max": "Show max value",
         "show-min": "Show min value",
