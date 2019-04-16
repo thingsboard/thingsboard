@@ -21,23 +21,33 @@
             <section layout="column">
                 <md-content class="md-padding" layout="column">
                     <md-input-container>
+                        <label translate>legend.direction</label>
+                        <md-select ng-model="vm.legendConfig.direction" style="min-width: 150px;"
+                                   ng-change="vm.onChangeDirection()">
+                            <md-option ng-repeat="direction in vm.directions" ng-value="direction.value">
+                                {{direction.name | translate}}
+                            </md-option>
+                        </md-select>
+                    </md-input-container>
+                    <md-input-container>
                         <label translate>legend.position</label>
                         <md-select ng-model="vm.legendConfig.position" style="min-width: 150px;">
-                            <md-option ng-repeat="pos in vm.positions" ng-value="pos.value">
+                            <md-option ng-repeat="pos in vm.positions" ng-value="pos.value"
+                                       ng-disabled="(vm.isRowDirection && (pos.value === vm.positions.left.value || pos.value === vm.positions.right.value))">
                                 {{pos.name | translate}}
                             </md-option>
                         </md-select>
                     </md-input-container>
-                    <md-checkbox flex aria-label="{{ 'legend.show-min' | translate }}"
+                    <md-checkbox flex aria-label="{{ 'legend.show-min' | translate }}" ng-disabled="vm.isRowDirection"
                                  ng-model="vm.legendConfig.showMin">{{ 'legend.show-min' | translate }}
                     </md-checkbox>
-                    <md-checkbox flex aria-label="{{ 'legend.show-max' | translate }}"
+                    <md-checkbox flex aria-label="{{ 'legend.show-max' | translate }}" ng-disabled="vm.isRowDirection"
                                  ng-model="vm.legendConfig.showMax">{{ 'legend.show-max' | translate }}
                     </md-checkbox>
-                    <md-checkbox flex aria-label="{{ 'legend.show-avg' | translate }}"
+                    <md-checkbox flex aria-label="{{ 'legend.show-avg' | translate }}" ng-disabled="vm.isRowDirection"
                                  ng-model="vm.legendConfig.showAvg">{{ 'legend.show-avg' | translate }}
                     </md-checkbox>
-                    <md-checkbox flex aria-label="{{ 'legend.show-total' | translate }}"
+                    <md-checkbox flex aria-label="{{ 'legend.show-total' | translate }}" ng-disabled="vm.isRowDirection"
                                  ng-model="vm.legendConfig.showTotal">{{ 'legend.show-total' | translate }}
                     </md-checkbox>
                 </md-content>
