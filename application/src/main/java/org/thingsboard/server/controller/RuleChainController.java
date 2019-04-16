@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.StringUtils;
@@ -34,6 +35,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.rule.engine.api.ScriptEngine;
+import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.actors.tenant.DebugTbRateLimits;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Event;
@@ -56,10 +59,10 @@ import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -77,6 +80,12 @@ public class RuleChainController extends BaseController {
 
     @Autowired
     private JsInvokeService jsInvokeService;
+
+    @Autowired(required = false)
+    private ActorSystemContext actorContext;
+
+    @Value("${actors.rule.chain.debug_mode_rate_limits_per_tenant.enabled}")
+    private boolean debugPerTenantEnabled;
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/ruleChain/{ruleChainId}", method = RequestMethod.GET)
@@ -182,8 +191,17 @@ public class RuleChainController extends BaseController {
     @ResponseBody
     public RuleChainMetaData saveRuleChainMetaData(@RequestBody RuleChainMetaData ruleChainMetaData) throws ThingsboardException {
         try {
+            TenantId tenantId = getTenantId();
+            if (debugPerTenantEnabled) {
+                ConcurrentMap<TenantId, DebugTbRateLimits> debugPerTenantLimits = actorContext.getDebugPerTenantLimits();
+                DebugTbRateLimits debugTbRateLimits = debugPerTenantLimits.getOrDefault(tenantId, null);
+                if (debugTbRateLimits != null) {
+                    debugPerTenantLimits.remove(tenantId, debugTbRateLimits);
+                }
+            }
+
             RuleChain ruleChain = checkRuleChain(ruleChainMetaData.getRuleChainId(), Operation.WRITE);
-            RuleChainMetaData savedRuleChainMetaData = checkNotNull(ruleChainService.saveRuleChainMetaData(getTenantId(), ruleChainMetaData));
+            RuleChainMetaData savedRuleChainMetaData = checkNotNull(ruleChainService.saveRuleChainMetaData(tenantId, ruleChainMetaData));
 
             actorService.onEntityStateChange(ruleChain.getTenantId(), ruleChain.getId(), ComponentLifecycleEvent.UPDATED);
 
@@ -236,7 +254,7 @@ public class RuleChainController extends BaseController {
             referencingRuleChainIds.remove(ruleChain.getId());
 
             referencingRuleChainIds.forEach(referencingRuleChainId ->
-                actorService.onEntityStateChange(ruleChain.getTenantId(), referencingRuleChainId, ComponentLifecycleEvent.UPDATED));
+                    actorService.onEntityStateChange(ruleChain.getTenantId(), referencingRuleChainId, ComponentLifecycleEvent.UPDATED));
 
             actorService.onEntityStateChange(ruleChain.getTenantId(), ruleChain.getId(), ComponentLifecycleEvent.DELETED);
 
@@ -291,7 +309,8 @@ public class RuleChainController extends BaseController {
 
             String data = inputParams.get("msg").asText();
             JsonNode metadataJson = inputParams.get("metadata");
-            Map<String, String> metadata = objectMapper.convertValue(metadataJson, new TypeReference<Map<String, String>>() {});
+            Map<String, String> metadata = objectMapper.convertValue(metadataJson, new TypeReference<Map<String, String>>() {
+            });
             String msgType = inputParams.get("msgType").asText();
             String output = "";
             String errorText = "";

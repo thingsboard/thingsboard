@@ -17,7 +17,7 @@
 -->
 <table class="tb-legend">
     <thead>
-        <tr class="tb-legend-header">
+        <tr class="tb-legend-header" ng-if="!isRowDirection">
             <th colspan="2"></th>
             <th ng-if="legendConfig.showMin === true">{{ 'legend.min' | translate }}</th>
             <th ng-if="legendConfig.showMax === true">{{ 'legend.max' | translate }}</th>
@@ -26,7 +26,7 @@
         </tr>
     </thead>
     <tbody>
-        <tr class="tb-legend-keys" ng-repeat="legendKey in legendData.keys">
+        <tr class="tb-legend-keys" ng-repeat="legendKey in legendData.keys" ng-class="{ 'tb-row-direction': isRowDirection }">
             <td><span class="tb-legend-line"  ng-style="{backgroundColor: legendKey.dataKey.color}"></span></td>
             <td class="tb-legend-label"
                 ng-click="toggleHideData(legendKey.dataIndex)"
