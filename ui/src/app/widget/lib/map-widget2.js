@@ -88,6 +88,7 @@ export default class TbMapWidgetV2 {
 			} else {
                 openStreetMapProvider.name = settings.mapProvider;
 			}
+
 			this.map = new TbOpenStreetMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, openStreetMapProvider);
 		} else if (mapProvider === 'here') {
 			this.map = new TbOpenStreetMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.mapProvider, settings.credentials);
