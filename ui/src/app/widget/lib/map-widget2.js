@@ -78,10 +78,10 @@ export default class TbMapWidgetV2 {
 			tbMap.tooltipActionsMap[descriptor.name] = descriptor;
 		});
 
+		let openStreetMapProvider = {};
 		if (mapProvider === 'google-map') {
 			this.map = new TbGoogleMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, settings.disableScrollZooming, minZoomLevel, settings.gmApiKey, settings.gmDefaultMapType);
 		} else if (mapProvider === 'openstreet-map') {
-			let openStreetMapProvider = {};
 			if (settings.useCustomProvider && settings.customProviderTileUrl) {
                 openStreetMapProvider.name = settings.customProviderTileUrl;
                 openStreetMapProvider.isCustom = true;
@@ -90,7 +90,8 @@ export default class TbMapWidgetV2 {
 			}
 			this.map = new TbOpenStreetMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, settings.disableScrollZooming, minZoomLevel, openStreetMapProvider);
 		} else if (mapProvider === 'here') {
-			this.map = new TbOpenStreetMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, settings.disableScrollZooming, minZoomLevel, settings.mapProvider, settings.credentials);
+			openStreetMapProvider.name = settings.mapProvider;
+			this.map = new TbOpenStreetMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, settings.disableScrollZooming, minZoomLevel, openStreetMapProvider, settings.credentials);
 		} else if (mapProvider === 'image-map') {
 			this.map = new TbImageMap(this.ctx, $element, this.utils, initCallback,
 				settings.mapImageUrl,
