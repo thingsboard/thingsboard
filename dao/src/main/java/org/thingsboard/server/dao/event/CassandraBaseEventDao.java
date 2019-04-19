@@ -71,7 +71,7 @@ public class CassandraBaseEventDao extends CassandraAbstractSearchTimeDao<EventE
     private int eventsTtl;
 
     @Value("${cassandra.query.debug_events_ttl}")
-    private String debugEventsTtl;
+    private int debugEventsTtl;
 
     @Override
     public Event save(TenantId tenantId, Event event) {
@@ -197,7 +197,7 @@ public class CassandraBaseEventDao extends CassandraAbstractSearchTimeDao<EventE
             insert = insert.ifNotExists();
         }
 
-        int selectedTtl = entity.getEventType().matches(DataConstants.DEBUG_RULE_NODE) ? toMillis(debugEventsTtl) : ttl;
+        int selectedTtl = entity.getEventType().equals(DataConstants.DEBUG_RULE_NODE) ? debugEventsTtl : ttl;
 
         if(selectedTtl > 0){
             insert.using(ttl(selectedTtl));
@@ -210,15 +210,5 @@ public class CassandraBaseEventDao extends CassandraAbstractSearchTimeDao<EventE
                 return Optional.empty();
             }
         });
-    }
-
-    private int toMillis(String timeInterval) {
-        switch (timeInterval) {
-            case "DAY":
-                return 24 * 3600;
-            case "WEEK":
-                return 7 * 24 * 3600;
-        }
-        return 0;
     }
 }
