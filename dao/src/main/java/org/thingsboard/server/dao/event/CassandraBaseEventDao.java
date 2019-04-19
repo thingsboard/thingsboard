@@ -215,9 +215,9 @@ public class CassandraBaseEventDao extends CassandraAbstractSearchTimeDao<EventE
     private int toMillis(String timeInterval) {
         switch (timeInterval) {
             case "DAY":
-                return 24 * 3600 * 1000;
+                return 24 * 3600;
             case "WEEK":
-                return 7 * 24 * 3600 * 1000;
+                return 7 * 24 * 3600;
         }
         return 0;
     }
