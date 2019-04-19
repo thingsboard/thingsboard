@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EventId;
@@ -68,6 +69,9 @@ public class CassandraBaseEventDao extends CassandraAbstractSearchTimeDao<EventE
 
     @Value("${cassandra.query.events_ttl:0}")
     private int eventsTtl;
+
+    @Value("${cassandra.query.debug_events_ttl}")
+    private String debugEventsTtl;
 
     @Override
     public Event save(TenantId tenantId, Event event) {
@@ -188,11 +192,15 @@ public class CassandraBaseEventDao extends CassandraAbstractSearchTimeDao<EventE
                 .value(ModelConstants.EVENT_TYPE_PROPERTY, entity.getEventType())
                 .value(ModelConstants.EVENT_UID_PROPERTY, entity.getEventUid())
                 .value(ModelConstants.EVENT_BODY_PROPERTY, entity.getBody());
+
         if (ifNotExists) {
             insert = insert.ifNotExists();
         }
-        if(ttl > 0){
-            insert.using(ttl(ttl));
+
+        int selectedTtl = entity.getEventType().matches(DataConstants.DEBUG_RULE_NODE) ? toMillis(debugEventsTtl) : ttl;
+
+        if(selectedTtl > 0){
+            insert.using(ttl(selectedTtl));
         }
         ResultSetFuture resultSetFuture = executeAsyncWrite(tenantId, insert);
         return Futures.transform(resultSetFuture, rs -> {
@@ -202,5 +210,15 @@ public class CassandraBaseEventDao extends CassandraAbstractSearchTimeDao<EventE
                 return Optional.empty();
             }
         });
+    }
+
+    private int toMillis(String timeInterval) {
+        switch (timeInterval) {
+            case "DAY":
+                return 24 * 3600 * 1000;
+            case "WEEK":
+                return 7 * 24 * 3600 * 1000;
+        }
+        return 0;
     }
 }
