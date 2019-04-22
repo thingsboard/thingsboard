@@ -16,7 +16,8 @@
 
 FROM debian:stretch
 
-COPY start-js-executor.sh ${pkg.name}.deb /tmp/
+COPY start-js-executor.sh /tmp/
+COPY ${pkg.name}*.deb /tmp/${pkg.name}.deb
 
 RUN chmod a+x /tmp/*.sh \
     && mv /tmp/start-js-executor.sh /usr/bin

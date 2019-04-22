@@ -309,7 +309,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-install-plugin</artifactId>
                 <configuration>
-                    <file>${project.build.directory}/${pkg.name}.deb</file>
+                    <file>${project.build.directory}/${pkg.name}_${project.version}-1_all.deb</file>
                     <artifactId>${project.artifactId}</artifactId>
                     <groupId>${project.groupId}</groupId>
                     <version>${project.version}</version>

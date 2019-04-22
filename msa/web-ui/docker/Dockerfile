@@ -16,7 +16,8 @@
 
 FROM debian:stretch
 
-COPY start-web-ui.sh ${pkg.name}.deb /tmp/
+COPY start-web-ui.sh /tmp/
+COPY ${pkg.name}*.deb /tmp/${pkg.name}.deb
 
 RUN chmod a+x /tmp/*.sh \
     && mv /tmp/start-web-ui.sh /usr/bin
