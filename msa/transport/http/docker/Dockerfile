@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM openjdk:8-jdk
+FROM openjdk:11-jdk-stretch
 
 COPY start-tb-http-transport.sh ${pkg.name}.deb /tmp/
 
