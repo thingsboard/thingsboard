@@ -83,7 +83,7 @@
             org/thingsboard/server/extensions/core/plugin/telemetry/gen/**/*
         </sonar.exclusions>
         <elasticsearch.version>5.0.2</elasticsearch.version>
-        <delight-nashorn-sandbox.version>0.1.14</delight-nashorn-sandbox.version>
+        <delight-nashorn-sandbox.version>0.1.22</delight-nashorn-sandbox.version>
         <kafka.version>2.0.0</kafka.version>
         <bucket4j.version>4.1.1</bucket4j.version>
         <fst.version>2.57</fst.version>
@@ -160,6 +160,22 @@
                     <groupId>org.fortasoft</groupId>
                     <artifactId>gradle-maven-plugin</artifactId>
                     <version>1.0.8</version>
+                    <configuration>
+                        <gradleVersion>5.3.1</gradleVersion>
+                    </configuration>
+                    <dependencies>
+                        <dependency>
+                          <groupId>org.gradle</groupId>
+                          <artifactId>gradle-tooling-api</artifactId>
+                          <version>5.3.1</version>
+                      </dependency>
+                      <dependency>
+                          <groupId>org.codehaus.groovy</groupId>
+                          <artifactId>groovy-all</artifactId>
+                          <version>2.5.6</version>
+                          <type>pom</type>
+                      </dependency>
+                    </dependencies>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
