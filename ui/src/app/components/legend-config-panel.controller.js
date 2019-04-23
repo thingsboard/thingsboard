@@ -21,10 +21,26 @@ export default function LegendConfigPanelController(mdPanelRef, $scope, types, l
     vm.legendConfig = legendConfig;
     vm.onLegendConfigUpdate = onLegendConfigUpdate;
     vm.positions = types.position;
+    vm.directions = types.direction;
+    vm.isRowDirection = vm.legendConfig.direction === types.direction.row.value;
 
     vm._mdPanelRef.config.onOpenComplete = function () {
         $scope.theForm.$setPristine();
-    }
+    };
+
+    vm.onChangeDirection = function() {
+        if (vm.legendConfig.direction === types.direction.row.value) {
+            vm.isRowDirection = true;
+            vm.legendConfig.position = types.position.bottom.value;
+            vm.legendConfig.showMin = false;
+            vm.legendConfig.showMax = false;
+            vm.legendConfig.showAvg = false;
+            vm.legendConfig.showTotal = false;
+        }
+        else {
+            vm.isRowDirection = false;
+        }
+    };
 
     $scope.$watch('vm.legendConfig', function () {
         if (onLegendConfigUpdate) {
