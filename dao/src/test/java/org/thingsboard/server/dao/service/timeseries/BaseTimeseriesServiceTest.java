@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.assertEquals;
@@ -62,7 +63,7 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
 
     KvEntry stringKvEntry = new StringDataEntry(STRING_KEY, "value");
     KvEntry longKvEntry = new LongDataEntry(LONG_KEY, Long.MAX_VALUE);
-    KvEntry doubleKvEntry = new DoubleDataEntry(DOUBLE_KEY, Double.MAX_VALUE);
+    KvEntry doubleKvEntry = new DoubleDataEntry(DOUBLE_KEY, (double)Float.MAX_VALUE);
     KvEntry booleanKvEntry = new BooleanDataEntry(BOOLEAN_KEY, Boolean.TRUE);
 
     private TenantId tenantId;
@@ -170,7 +171,7 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
 
     @Test
     public void testDeleteDeviceTsDataWithOverwritingLatest() throws Exception {
-        DeviceId deviceId = new DeviceId(UUIDs.timeBased());
+        DeviceId deviceId = new DeviceId(UUID.fromString("11a24190-629b-11e9-8ee8-19e69140628c"));
 
         saveEntries(deviceId, 10000);
         saveEntries(deviceId, 20000);
@@ -190,7 +191,7 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindDeviceTsData() throws Exception {
-        DeviceId deviceId = new DeviceId(UUIDs.timeBased());
+        DeviceId deviceId = new DeviceId(UUID.fromString("11a24190-629b-11e9-8ee8-19e69140628c"));
         List<TsKvEntry> entries = new ArrayList<>();
 
         entries.add(save(deviceId, 5000, 100));

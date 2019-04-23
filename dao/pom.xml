@@ -36,6 +36,15 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-dynamodb</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>DynamoDBLocal</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.thingsboard.common</groupId>
             <artifactId>data</artifactId>
         </dependency>

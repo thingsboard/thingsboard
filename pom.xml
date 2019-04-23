@@ -89,6 +89,8 @@
         <fst.version>2.57</fst.version>
         <antlr.version>2.7.7</antlr.version>
         <snakeyaml.version>1.23</snakeyaml.version>
+        <dynamodb-local.version>[1.11,2.0)</dynamodb-local.version>
+        <dynamodb.version>1.11.538</dynamodb.version>
     </properties>
 
     <modules>
@@ -341,6 +343,17 @@
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>com.amazonaws</groupId>
+                <artifactId>aws-java-sdk-dynamodb</artifactId>
+                <version>${dynamodb.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.amazonaws</groupId>
+                <artifactId>DynamoDBLocal</artifactId>
+                <version>${dynamodb-local.version}</version>
+                <scope>test</scope>
+            </dependency>
             <dependency>
                 <groupId>org.thingsboard</groupId>
                 <artifactId>netty-mqtt</artifactId>
@@ -872,6 +885,11 @@
         <repository>
             <id>sonatype</id>
             <url>https://oss.sonatype.org/content/groups/public</url>
+        </repository>
+        <repository>
+            <id>dynamodb-local-oregon</id>
+            <name>DynamoDB Local Release Repository</name>
+            <url>https://s3.eu-central-1.amazonaws.com/dynamodb-local-frankfurt/release</url>
         </repository>
     </repositories>
 

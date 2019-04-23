@@ -71,10 +71,10 @@ public class BasicTsKvEntry implements TsKvEntry {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof BasicTsKvEntry)) return false;
-        BasicTsKvEntry that = (BasicTsKvEntry) o;
+        if (!(o instanceof TsKvEntry)) return false;
+        TsKvEntry that = (TsKvEntry) o;
         return getTs() == that.getTs() &&
-                Objects.equals(kv, that.kv);
+                Objects.equals(kv.getValue(), that.getValue());
     }
 
     @Override

@@ -311,6 +311,15 @@ spring:
     url: "${SPRING_DATASOURCE_URL:jdbc:hsqldb:file:${SQL_DATA_FOLDER:/tmp}/thingsboardDb;sql.enforce_size=false;hsqldb.log_size=5}"
     username: "${SPRING_DATASOURCE_USERNAME:sa}"
     password: "${SPRING_DATASOURCE_PASSWORD:}"
+  dynamodb:
+    access:
+      id: "--access-key-id--"
+      secret-key: "--access-secret-key---"
+      region: "us-east-1"
+    throughput:
+      capacity:
+        write: 1
+        reed: 2
 
 # PostgreSQL DAO Configuration
 #spring:

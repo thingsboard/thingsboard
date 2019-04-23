@@ -15,14 +15,21 @@
  */
 package org.thingsboard.server.dao.service;
 
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.client.builder.AwsClientBuilder;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -129,6 +136,22 @@ public abstract class AbstractServiceTest {
         public int compare(D o1, D o2) {
             return o1.getId().getId().compareTo(o2.getId().getId());
         }
+    }
+
+    @Bean
+    @Primary
+    public AmazonDynamoDB createAmazonDynamoDbClientToLocalInstance(
+            @Value("${spring.dynamodb.endpoint-url}") String endpointUrl,
+            @Value("${spring.dynamodb.access.region}") String region,
+            @Value("${spring.dynamodb.access.secret-key}") String accessKey,
+            @Value("${spring.dynamodb.access.id}") String accessId) {
+        return AmazonDynamoDBClientBuilder
+                .standard()
+                .withEndpointConfiguration(
+                        new AwsClientBuilder.EndpointConfiguration(endpointUrl, region)
+                )
+                .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessId, accessKey)))
+                .build();
     }
 
 
