@@ -312,6 +312,7 @@ spring:
     username: "${SPRING_DATASOURCE_USERNAME:sa}"
     password: "${SPRING_DATASOURCE_PASSWORD:}"
   dynamodb:
+    endpoint-url: "http://localhost:8000"
     access:
       id: "--access-key-id--"
       secret-key: "--access-secret-key---"
