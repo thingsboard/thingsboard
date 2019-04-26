@@ -17,6 +17,7 @@ import './trip-animation-widget.scss';
 import template from "./trip-animation-widget.tpl.html";
 import TbOpenStreetMap from '../openstreet-map';
 import L from 'leaflet';
+import 'leaflet-polylinedecorator'
 import tinycolor from "tinycolor2";
 import {fillPatternWithActions, isNumber, padValue, processPattern} from "../widget-utils";
 
@@ -24,7 +25,6 @@ import {fillPatternWithActions, isNumber, padValue, processPattern} from "../wid
     // save these original methods before they are overwritten
     var proto_initIcon = L.Marker.prototype._initIcon;
     var proto_setPos = L.Marker.prototype._setPos;
-
     var oldIE = (L.DomUtil.TRANSFORM === 'msTransform');
 
     L.Marker.addInitHook(function () {
@@ -199,23 +199,45 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
 
     vm.moveNext = function () {
         vm.stopPlay();
-        moveInc(1);
-    }
+        if (vm.staticSettings.usePointAsAnchor) {
+            let newIndex = vm.maxTime;
+            for (let index = vm.index+1; index < vm.maxTime; index++) {
+                if (vm.trips.some(function (trip) {
+                    return trip.timeRange[index].hasAnchor;
+                })) {
+                    newIndex = index;
+                    break;
+                }
+            }
+            moveToIndex(newIndex);
+        } else moveInc(1);
+    };
 
     vm.movePrev = function () {
         vm.stopPlay();
-        moveInc(-1);
-    }
+        if (vm.staticSettings.usePointAsAnchor) {
+            let newIndex = vm.minTime;
+            for (let index = vm.index-1; index > vm.minTime; index--) {
+                if (vm.trips.some(function (trip) {
+                        return trip.timeRange[index].hasAnchor;
+                    })) {
+                    newIndex = index;
+                    break;
+                }
+            }
+            moveToIndex(newIndex);
+        } else  moveInc(-1);
+    };
 
     vm.moveStart = function () {
         vm.stopPlay();
         moveToIndex(vm.minTime);
-    }
+    };
 
     vm.moveEnd = function () {
         vm.stopPlay();
         moveToIndex(vm.maxTime);
-    }
+    };
 
     vm.stopPlay = function () {
         if (vm.isPlaying) {
@@ -280,6 +302,7 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
         let staticSettings = {};
         vm.staticSettings = staticSettings;
         //Calculate General Settings
+        staticSettings.normalizationStep = vm.ctx.settings.normalizationStep || 1000;
         staticSettings.buttonColor = tinycolor(vm.widgetConfig.color).setAlpha(0.54).toRgbString();
         staticSettings.disabledButtonColor = tinycolor(vm.widgetConfig.color).setAlpha(0.3).toRgbString();
         staticSettings.polygonColor = tinycolor(vm.ctx.settings.polygonColor).toHexString();
@@ -300,8 +323,19 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
         staticSettings.showTooltip = false;
         staticSettings.label = vm.ctx.settings.label || "${entityName}";
         staticSettings.useLabelFunction = vm.ctx.settings.useLabelFunction || false;
+        staticSettings.autocloseTooltip = vm.ctx.settings.autocloseTooltip || false;
+        staticSettings.pointTooltipOnRightPanel = vm.ctx.settings.pointTooltipOnRightPanel || false;
+        staticSettings.usePointAsAnchor = vm.ctx.settings.usePointAsAnchor || false;
         staticSettings.showLabel = vm.ctx.settings.showLabel || false;
         staticSettings.useTooltipFunction = vm.ctx.settings.useTooltipFunction || false;
+        staticSettings.usePolylineDecorator = vm.ctx.settings.usePolylineDecorator || false;
+        staticSettings.useDecoratorCustomColor = vm.ctx.settings.useDecoratorCustomColor || false;
+        staticSettings.decoratorCustomColor = tinycolor(vm.ctx.settings.decoratorCustomColor).toHexString();
+        staticSettings.decoratorSymbol = vm.ctx.settings.decoratorSymbol || "arrowHead";
+        staticSettings.decoratorSymbolSize = vm.ctx.settings.decoratorSymbolSize || 10;
+        staticSettings.decoratorOffset = vm.ctx.settings.decoratorOffset || "20px";
+        staticSettings.endDecoratorOffset = vm.ctx.settings.endDecoratorOffset || "20px";
+        staticSettings.decoratorRepeat = vm.ctx.settings.decoratorRepeat || "20px";
         staticSettings.tooltipPattern = vm.ctx.settings.tooltipPattern || "<span style=\"font-size: 26px; color: #666; font-weight: bold;\">${entityName}</span>\n" +
             "<br/>\n" +
             "<span style=\"font-size: 12px; color: #666; font-weight: bold;\">Time:</span><span style=\"font-size: 12px;\"> ${formattedTs}</span>\n" +
@@ -338,6 +372,10 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
 
         if (staticSettings.usePathColorFunction && angular.isDefined(vm.ctx.settings.colorFunction)) {
             staticSettings.colorFunction = new Function('data, dsData, dsIndex', vm.ctx.settings.colorFunction);
+        }
+
+        if (staticSettings.usePointAsAnchor && angular.isDefined(vm.ctx.settings.pointAsAnchorFunction)) {
+            staticSettings.pointAsAnchorFunction = new Function('data, dsData, dsIndex', vm.ctx.settings.pointAsAnchorFunction);
         }
 
         if (staticSettings.usePolygonTooltipFunction && angular.isDefined(vm.ctx.settings.polygonTooltipFunction)) {
@@ -494,6 +532,27 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
         return tooltip;
     }
 
+    function calculatePointTooltip(trip, index) {
+        let tooltip = '';
+        if (vm.staticSettings.displayTooltip) {
+            let tooltipReplaceInfo;
+            let tooltipText = vm.staticSettings.tooltipPattern;
+            if (vm.staticSettings.useTooltipFunction && angular.isDefined(vm.staticSettings.tooltipFunction)) {
+                try {
+                    tooltipText = vm.staticSettings.tooltipFunction(vm.ctx.data, trip.timeRange[index], trip.dSIndex);
+                } catch (e) {
+                    tooltipText = null;
+                }
+            }
+            tooltipText = vm.utils.createLabelFromDatasource(trip.dataSource, tooltipText);
+            tooltipReplaceInfo = processPattern(tooltipText, vm.ctx.datasources, trip.dSIndex);
+            tooltip = fillPattern(tooltipText, tooltipReplaceInfo, trip.timeRange[index]);
+            tooltip = fillPatternWithActions(tooltip, 'onTooltipAction', null);
+
+        }
+        return tooltip;
+    }
+
     function calculateColor(trip) {
         let color = vm.staticSettings.pathColor;
         let colorFn;
@@ -575,6 +634,10 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
                     trip.polyline.remove();
                     delete trip.polyline;
                 }
+                if (trip.polylineDecorator) {
+                    trip.polylineDecorator.remove();
+                    delete trip.polylineDecorator;
+                }
                 if (trip.polygon) {
                     trip.polygon.remove();
                     delete trip.polygon;
@@ -588,7 +651,7 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
             });
             vm.initBounds = true;
         }
-        let normalizedTimeRange = createNormalizedTime(vm.data, 1000);
+        let normalizedTimeRange = createNormalizedTime(vm.data, vm.staticSettings.normalizationStep);
         createNormalizedTrips(normalizedTimeRange, vm.datasources);
         createTripsOnMap(apply);
         if (vm.initBounds && !vm.initTrips) {
@@ -660,7 +723,7 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
             }
         }
         vm.maxTime = normalizedArray.length - 1;
-        vm.minTime = vm.maxTime > 1 ? 1 : 0;
+        //vm.minTime = vm.maxTime > 1 ? 1 : 0;
         if (vm.index < vm.minTime) {
             vm.index = vm.minTime;
         } else if (vm.index > vm.maxTime) {
@@ -754,6 +817,13 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
         }
     }
 
+    function createPointPopup(point, index, trip) {
+        let popup = L.popup();
+        popup.setContent(calculatePointTooltip(trip, index));
+        point.bindPopup(popup, {autoClose: vm.staticSettings.autocloseTooltip, closeOnClick: false});
+        return popup;
+    }
+
     function createTripsOnMap(apply) {
         if (vm.trips.length > 0) {
             vm.trips.forEach(function (trip) {
@@ -761,17 +831,47 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
                 if (trip.timeRange.length > 0 && trip.latLngs.every(el => angular.isDefined(el))) {
                     if (vm.staticSettings.showPoints) {
                         trip.points = [];
-                        trip.latLngs.forEach(function (latLng) {
-                            let point = L.circleMarker(latLng, {
-                                color: trip.settings.pointColor,
-                                radius: trip.settings.pointSize
-                            }).addTo(vm.map.map);
-                            trip.points.push(point);
+                        trip.timeRange.forEach(function (tRange, index) {
+                            if (tRange && tRange.latLng
+                                && (!vm.staticSettings.usePointAsAnchor || vm.staticSettings.pointAsAnchorFunction(vm.ctx.data, tRange, trip.dSIndex))) {
+                                let point = L.circleMarker(tRange.latLng, {
+                                    color: trip.settings.pointColor,
+                                    radius: trip.settings.pointSize
+                                }).addTo(vm.map.map);
+                                if (vm.staticSettings.pointTooltipOnRightPanel) {
+                                    point.popup = createPointPopup(point, index, trip);
+                                } else {
+                                    point.on('click', function () {
+                                        showHidePointTooltip(calculatePointTooltip(trip, index), index);
+                                    });
+                                }
+                                if (vm.staticSettings.usePointAsAnchor) tRange.hasAnchor = true;
+                                trip.points.push(point);
+                            }
                         });
                     }
 
                     if (angular.isUndefined(trip.marker)) {
                         trip.polyline = vm.map.createPolyline(trip.latLngs, trip.settings);
+                        if (vm.staticSettings.usePolylineDecorator) {
+                            trip.polylineDecorator = L.polylineDecorator(trip.polyline, {
+                                patterns: [
+                                    {
+                                        offset: vm.staticSettings.decoratorOffset,
+                                        endOffset: vm.staticSettings.endDecoratorOffset,
+                                        repeat: vm.staticSettings.decoratorRepeat,
+                                        symbol: L.Symbol[vm.staticSettings.decoratorSymbol]({
+                                            pixelSize: vm.staticSettings.decoratorSymbolSize,
+                                            polygon: false,
+                                            pathOptions: {
+                                                color: vm.staticSettings.useDecoratorCustomColor ? vm.staticSettings.decoratorCustomColor : trip.settings.color,
+                                                stroke: true}
+                                        })
+                                    }
+                                ],
+                                interactive: false,
+                            }).addTo(vm.map.map);
+                        }
                     }
 
 
@@ -852,23 +952,43 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
         if (vm.staticSettings.displayTooltip) {
             if (vm.staticSettings.showTooltip && trip && (vm.activeTripIndex !== trip.dSIndex || vm.staticSettings.tooltipMarker !== 'marker')) {
                 vm.staticSettings.showTooltip = true;
+                vm.staticSettings.tooltipMarker = 'marker';
             } else {
                 vm.staticSettings.showTooltip = !vm.staticSettings.showTooltip;
             }
-            vm.staticSettings.tooltipMarker = 'marker';
         }
         if (trip && vm.activeTripIndex !== trip.dSIndex) vm.activeTripIndex = trip.dSIndex;
+        vm.mainTooltip = vm.trips[vm.activeTripIndex].settings.tooltipText;
+    }
+
+    function showHidePointTooltip(text, index) {
+        if (vm.staticSettings.displayTooltip) {
+            if (vm.staticSettings.tooltipMarker && vm.staticSettings.tooltipMarker.includes('point')) {
+               if (vm.staticSettings.tooltipMarker === 'point' + index) {
+                   vm.staticSettings.showTooltip = !vm.staticSettings.showTooltip;
+               } else {
+                   vm.staticSettings.showTooltip = true;
+                   vm.mainTooltip = $sce.trustAsHtml(text);
+                   vm.staticSettings.tooltipMarker = 'point' + index;
+               }
+            } else {
+                vm.staticSettings.showTooltip = true;
+                vm.mainTooltip = $sce.trustAsHtml(text);
+                vm.staticSettings.tooltipMarker = 'point' + index;
+            }
+        }
     }
 
     function showHidePolygonTooltip(trip) {
         if (vm.staticSettings.displayTooltip) {
             if (vm.staticSettings.showTooltip && trip && (vm.activeTripIndex !== trip.dSIndex || vm.staticSettings.tooltipMarker !== 'polygon')) {
                 vm.staticSettings.showTooltip = true;
+                vm.staticSettings.tooltipMarker = 'polygon';
             } else {
                 vm.staticSettings.showTooltip = !vm.staticSettings.showTooltip;
             }
-            vm.staticSettings.tooltipMarker = 'polygon';
         }
         if (trip && vm.activeTripIndex !== trip.dSIndex) vm.activeTripIndex = trip.dSIndex;
+        vm.mainTooltip = vm.trips[vm.activeTripIndex].settings.polygonTooltipText;
     }
 }
