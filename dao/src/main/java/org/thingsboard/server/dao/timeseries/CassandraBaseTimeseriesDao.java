@@ -94,6 +94,9 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
     @Value("${cassandra.query.ts_key_value_ttl}")
     private long systemTtl;
 
+    @Value("${cassandra.query.set_null_values_enabled}")
+    private boolean setNullValuesEnabled;
+
     private TsPartitionDate tsFormat;
 
     private PreparedStatement partitionInsertStmt;
@@ -307,9 +310,13 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
 
     @Override
     public ListenableFuture<Void> save(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry, long ttl) {
+        List<ListenableFuture<Void>> futures = new ArrayList<>();
         ttl = computeTtl(ttl);
         long partition = toPartitionTs(tsKvEntry.getTs());
         DataType type = tsKvEntry.getDataType();
+        if (setNullValuesEnabled) {
+            processSetNullValues(tenantId, entityId, tsKvEntry, ttl, futures, partition, type);
+        }
         BoundStatement stmt = (ttl == 0 ? getSaveStmt(type) : getSaveTtlStmt(type)).bind();
         stmt.setString(0, entityId.getEntityType().name())
                 .setUUID(1, entityId.getId())
@@ -317,6 +324,46 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
                 .setLong(3, partition)
                 .setLong(4, tsKvEntry.getTs());
         addValue(tsKvEntry, stmt, 5);
+        if (ttl > 0) {
+            stmt.setInt(6, (int) ttl);
+        }
+        futures.add(getFuture(executeAsyncWrite(tenantId, stmt), rs -> null));
+        return Futures.transform(Futures.allAsList(futures), result -> null);
+    }
+
+    private void processSetNullValues(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry, long ttl, List<ListenableFuture<Void>> futures, long partition, DataType type) {
+        switch (type) {
+            case LONG:
+                futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.BOOLEAN));
+                futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.DOUBLE));
+                futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.STRING));
+                break;
+            case BOOLEAN:
+                futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.DOUBLE));
+                futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.LONG));
+                futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.STRING));
+                break;
+            case DOUBLE:
+                futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.BOOLEAN));
+                futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.LONG));
+                futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.STRING));
+                break;
+            case STRING:
+                futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.BOOLEAN));
+                futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.DOUBLE));
+                futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.LONG));
+                break;
+        }
+    }
+
+    private ListenableFuture<Void> saveNull(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry, long ttl, long partition, DataType type) {
+        BoundStatement stmt = (ttl == 0 ? getSaveStmt(type) : getSaveTtlStmt(type)).bind();
+        stmt.setString(0, entityId.getEntityType().name())
+                .setUUID(1, entityId.getId())
+                .setString(2, tsKvEntry.getKey())
+                .setLong(3, partition)
+                .setLong(4, tsKvEntry.getTs());
+        stmt.setToNull(getColumnName(type));
         if (ttl > 0) {
             stmt.setInt(6, (int) ttl);
         }

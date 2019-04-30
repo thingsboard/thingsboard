@@ -13,41 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.md-panel {
-  &.tb-legend-config-panel {
-    position: absolute;
-  }
-}
+package org.thingsboard.rule.engine.metadata;
 
-.tb-legend-config-panel {
-  min-width: 220px;
-  max-height: 300px;
-  overflow: hidden;
-  background: #fff;
-  border-radius: 4px;
-  box-shadow:
-    0 7px 8px -4px rgba(0, 0, 0, .2),
-    0 13px 19px 2px rgba(0, 0, 0, .14),
-    0 5px 24px 4px rgba(0, 0, 0, .12);
+import lombok.Data;
+import org.thingsboard.rule.engine.api.NodeConfiguration;
 
-  form,
-  fieldset {
-    height: 100%;
-  }
+import java.util.Collections;
 
-  md-content {
-    overflow: hidden;
-    background-color: #fff;
-  }
+@Data
+public class TbGetTenantDetailsNodeConfiguration extends TbAbstractGetEntityDetailsNodeConfiguration implements NodeConfiguration<TbGetTenantDetailsNodeConfiguration> {
 
-  .md-padding {
-    padding: 12px 16px 0;
-  }
-}
 
-tb-legend-config {
-  span {
-    pointer-events: all;
-    cursor: pointer;
-  }
+    @Override
+    public TbGetTenantDetailsNodeConfiguration defaultConfiguration() {
+        TbGetTenantDetailsNodeConfiguration configuration = new TbGetTenantDetailsNodeConfiguration();
+        configuration.setDetailsList(Collections.emptyList());
+        return configuration;
+    }
 }

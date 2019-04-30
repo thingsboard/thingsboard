@@ -81,7 +81,17 @@ export default class TbMapWidgetV2 {
 		if (mapProvider === 'google-map') {
 			this.map = new TbGoogleMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.gmApiKey, settings.gmDefaultMapType);
 		} else if (mapProvider === 'openstreet-map') {
-			this.map = new TbOpenStreetMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.mapProvider);
+			let openStreetMapProvider = {};
+			if (settings.useCustomProvider && settings.customProviderTileUrl) {
+                openStreetMapProvider.name = settings.customProviderTileUrl;
+                openStreetMapProvider.isCustom = true;
+			} else {
+                openStreetMapProvider.name = settings.mapProvider;
+			}
+
+			this.map = new TbOpenStreetMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, openStreetMapProvider);
+		} else if (mapProvider === 'here') {
+			this.map = new TbOpenStreetMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.mapProvider, settings.credentials);
 		} else if (mapProvider === 'image-map') {
 			this.map = new TbImageMap(this.ctx, $element, this.utils, initCallback,
 				settings.mapImageUrl,
@@ -663,6 +673,8 @@ export default class TbMapWidgetV2 {
 			return imageMapSettingsSchema;
 		} else if (mapProvider === 'tencent-map') {
 			schema = angular.copy(tencentMapSettingsSchema);
+		} else if (mapProvider === 'here') {
+			schema = angular.copy(hereMapSettingsSchema);
 		}
 		angular.merge(schema.schema.properties, commonMapSettingsSchema.schema.properties);
 		schema.schema.required = schema.schema.required.concat(commonMapSettingsSchema.schema.required);
@@ -790,6 +802,62 @@ const tencentMapSettingsSchema =
 		]
 	};
 
+const hereMapSettingsSchema =
+	{
+		"schema": {
+			"title": "HERE Map Configuration",
+			"type": "object",
+			"properties": {
+				"mapProvider": {
+					"title": "Map layer",
+					"type": "string",
+					"default": "HERE.normalDay"
+				},
+				"credentials":{
+					"type": "object",
+					"properties": {
+						"app_id": {
+							"title": "HERE app id",
+							"type": "string"
+						},
+						"app_code": {
+							"title": "HERE app code",
+							"type": "string"
+						}
+					},
+					"required": ["app_id", "app_code"]
+				}
+			},
+			"required": []
+		},
+		"form": [
+			{
+				"key": "mapProvider",
+				"type": "rc-select",
+				"multiple": false,
+				"items": [
+					{
+						"value": "HERE.normalDay",
+						"label": "HERE.normalDay (Default)"
+					},
+					{
+						"value": "HERE.normalNight",
+						"label": "HERE.normalNight"
+					},
+					{
+						"value": "HERE.hybridDay",
+						"label": "HERE.hybridDay"
+					},
+					{
+						"value": "HERE.terrainDay",
+						"label": "HERE.terrainDay"
+					}
+				]
+			},
+			"credentials"
+		]
+	};
+
 const openstreetMapSettingsSchema =
 	{
 		"schema": {
@@ -800,7 +868,17 @@ const openstreetMapSettingsSchema =
 					"title": "Map provider",
 					"type": "string",
 					"default": "OpenStreetMap.Mapnik"
-				}
+				},
+                "useCustomProvider": {
+                    "title": "Use custom provider",
+                    "type": "boolean",
+                    "default": false
+                },
+                "customProviderTileUrl": {
+                    "title": "Custom provider tile URL",
+                    "type": "string",
+                    "default": "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                }
 			},
 			"required": []
 		},
@@ -839,7 +917,9 @@ const openstreetMapSettingsSchema =
 						"label": "CartoDB.DarkMatter"
 					}
 				]
-			}
+			},
+            "useCustomProvider",
+            "customProviderTileUrl"
 		]
 	};
 
