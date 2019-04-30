@@ -57,15 +57,8 @@ public class ThingsboardMessageConfiguration {
     @Bean
     public VelocityEngine velocityEngine() {
         VelocityEngine velocityEngine = new VelocityEngine();
-        try {
-            Resource resource = resourceLoader.getResource(DEFAULT_RESOURCE_LOADER_PATH);
-            File file = resource.getFile();
-            velocityEngine.setProperty(RuntimeConstants.RESOURCE_LOADER, "file");
-            velocityEngine.setProperty(RuntimeConstants.FILE_RESOURCE_LOADER_CACHE, "true");
-            velocityEngine.setProperty(RuntimeConstants.FILE_RESOURCE_LOADER_PATH, file.getAbsolutePath());
-        } catch (IOException e) {
-            initSpringResourceLoader(velocityEngine, DEFAULT_RESOURCE_LOADER_PATH);
-        }
+        velocityEngine.setProperty(RuntimeConstants.RESOURCE_LOADER, DEFAULT_RESOURCE_LOADER_PATH);
+        velocityEngine.setProperty("classpath.resource.loader.class", ClasspathResourceLoader.class.getName());
         velocityEngine.init();
         return velocityEngine;
     }
