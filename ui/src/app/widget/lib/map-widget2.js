@@ -78,28 +78,29 @@ export default class TbMapWidgetV2 {
 			tbMap.tooltipActionsMap[descriptor.name] = descriptor;
 		});
 
+		let openStreetMapProvider = {};
 		if (mapProvider === 'google-map') {
-			this.map = new TbGoogleMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.gmApiKey, settings.gmDefaultMapType);
+			this.map = new TbGoogleMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, settings.disableScrollZooming, minZoomLevel, settings.gmApiKey, settings.gmDefaultMapType);
 		} else if (mapProvider === 'openstreet-map') {
-			let openStreetMapProvider = {};
 			if (settings.useCustomProvider && settings.customProviderTileUrl) {
                 openStreetMapProvider.name = settings.customProviderTileUrl;
                 openStreetMapProvider.isCustom = true;
 			} else {
                 openStreetMapProvider.name = settings.mapProvider;
 			}
-
-			this.map = new TbOpenStreetMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, openStreetMapProvider);
+			this.map = new TbOpenStreetMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, settings.disableScrollZooming, minZoomLevel, openStreetMapProvider);
 		} else if (mapProvider === 'here') {
-			this.map = new TbOpenStreetMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.mapProvider, settings.credentials);
+			openStreetMapProvider.name = settings.mapProvider;
+			this.map = new TbOpenStreetMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, settings.disableScrollZooming, minZoomLevel, openStreetMapProvider, settings.credentials);
 		} else if (mapProvider === 'image-map') {
 			this.map = new TbImageMap(this.ctx, $element, this.utils, initCallback,
 				settings.mapImageUrl,
+				settings.disableScrollZooming,
 				settings.posFunction,
 				settings.imageEntityAlias,
 				settings.imageUrlAttribute);
 		} else if (mapProvider === 'tencent-map') {
-			this.map = new TbTencentMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.tmApiKey, settings.tmDefaultMapType);
+			this.map = new TbTencentMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, settings.disableScrollZooming, minZoomLevel, settings.tmApiKey, settings.tmDefaultMapType);
 		}
 
 
@@ -938,6 +939,11 @@ const commonMapSettingsSchema =
 					"type": "boolean",
 					"default": true
 				},
+				"disableScrollZooming": {
+					"title": "Disable scroll zooming",
+					"type": "boolean",
+					"default": false
+				},
 				"latKeyName": {
 					"title": "Latitude key name",
 					"type": "string",
@@ -1078,6 +1084,7 @@ const commonMapSettingsSchema =
 		"form": [
 			"defaultZoomLevel",
 			"fitMapBounds",
+			"disableScrollZooming",
 			"latKeyName",
 			"lngKeyName",
 			"showLabel",
@@ -1188,6 +1195,11 @@ const imageMapSettingsSchema =
 					"title": "Image URL source entity attribute",
 					"type": "string",
 					"default": ""
+				},
+				"disableScrollZooming": {
+					"title": "Disable scroll zooming",
+					"type": "boolean",
+					"default": false
 				},
 				"xPosKeyName": {
 					"title": "X position key name",
@@ -1306,6 +1318,7 @@ const imageMapSettingsSchema =
 			},
 			"imageEntityAlias",
 			"imageUrlAttribute",
+			"disableScrollZooming",
 			"xPosKeyName",
 			"yPosKeyName",
 			"showLabel",
