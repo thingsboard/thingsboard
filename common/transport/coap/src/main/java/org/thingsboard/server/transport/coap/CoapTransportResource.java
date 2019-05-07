@@ -393,7 +393,6 @@ public class CoapTransportResource extends CoapResource {
         @Override
         public void onToServerRpcResponse(TransportProtos.ToServerRpcResponseMsg msg) {
             try {
-                log.info("onToServerRpcResponse called");
                 exchange.respond(transportContext.getAdaptor().convertToPublish(this, msg));
             } catch (AdaptorException e) {
                 log.trace("Failed to reply due to error", e);
