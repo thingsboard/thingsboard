@@ -178,15 +178,24 @@ public abstract class AbstractTransportService implements TransportService {
 
     @Override
     public void registerSyncSession(TransportProtos.SessionInfoProto sessionInfo, SessionMsgListener listener, long timeout) {
-        sessions.putIfAbsent(toId(sessionInfo), new SessionMetaData(sessionInfo, TransportProtos.SessionType.SYNC, listener));
-        schedulerExecutor.schedule(() -> {
+        SessionMetaData currentSession = new SessionMetaData(sessionInfo, TransportProtos.SessionType.SYNC, listener);
+        sessions.putIfAbsent(toId(sessionInfo), currentSession);
+
+        ScheduledFuture executorFuture = schedulerExecutor.schedule(() -> {
             listener.onRemoteSessionCloseCommand(TransportProtos.SessionCloseNotificationProto.getDefaultInstance());
             deregisterSession(sessionInfo);
         }, timeout, TimeUnit.MILLISECONDS);
+
+        currentSession.setScheduledFuture(executorFuture);
     }
 
     @Override
     public void deregisterSession(TransportProtos.SessionInfoProto sessionInfo) {
+        SessionMetaData currentSession = sessions.get(toId(sessionInfo));
+        if (currentSession.hasScheduledFuture()) {
+            log.debug("Stopping scheduler to avoid resending response if request has been ack.");
+            currentSession.getScheduledFuture().cancel(false);
+        }
         sessions.remove(toId(sessionInfo));
     }
 
