@@ -192,6 +192,7 @@ public class CoapTransportResource extends CoapResource {
                                         new CoapOkCallback(exchange));
                                 break;
                             case TO_SERVER_RPC_REQUEST:
+                                transportService.registerSyncSession(sessionInfo, new CoapSessionListener(sessionId, exchange), transportContext.getTimeout());
                                 transportService.process(sessionInfo,
                                         transportContext.getAdaptor().convertToServerRpcRequest(sessionId, request),
                                         new CoapNoOpCallback(exchange));
@@ -392,6 +393,7 @@ public class CoapTransportResource extends CoapResource {
         @Override
         public void onToServerRpcResponse(TransportProtos.ToServerRpcResponseMsg msg) {
             try {
+                log.info("onToServerRpcResponse called");
                 exchange.respond(transportContext.getAdaptor().convertToPublish(this, msg));
             } catch (AdaptorException e) {
                 log.trace("Failed to reply due to error", e);
