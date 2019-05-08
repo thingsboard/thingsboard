@@ -59,6 +59,8 @@ public interface TbContext {
 
     void updateSelf(RuleNode self);
 
+    void sentActionMessageToRootRuleChain(TbMsg msg);
+
     TbMsg newMsg(String type, EntityId originator, TbMsgMetaData metaData, String data);
 
     TbMsg transformMsg(TbMsg origMsg, String type, EntityId originator, TbMsgMetaData metaData, String data);
