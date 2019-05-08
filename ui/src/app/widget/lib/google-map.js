@@ -19,7 +19,7 @@ var gmGlobals = {
 }
 
 export default class TbGoogleMap {
-    constructor($containerElement, utils, initCallback, defaultZoomLevel, dontFitMapBounds, minZoomLevel, gmApiKey, gmDefaultMapType) {
+    constructor($containerElement, utils, initCallback, defaultZoomLevel, dontFitMapBounds, disableScrollZooming, minZoomLevel, gmApiKey, gmDefaultMapType) {
 
         var tbMap = this;
         this.utils = utils;
@@ -44,7 +44,7 @@ export default class TbGoogleMap {
         function initGoogleMap() {
 
             tbMap.map = new google.maps.Map($containerElement[0], { // eslint-disable-line no-undef
-                scrollwheel: true,
+                scrollwheel: !disableScrollZooming,
                 mapTypeId: getGoogleMapTypeId(tbMap.defaultMapType),
                 zoom: tbMap.defaultZoomLevel || 8
             });
