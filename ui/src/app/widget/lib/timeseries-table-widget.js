@@ -390,7 +390,18 @@ function TimeseriesTableWidgetController($element, $scope, $filter, $timeout, ty
         }
         var rows = [];
         for (var t in rowsMap) {
-            rows.push(rowsMap[t]);
+            if (vm.settings.hideEmptyLines)
+			{
+                var hideLine = true;
+                for (var _c = 0; (_c < data.length) && hideLine; _c++) {
+                    if (rowsMap[t][_c+1])
+                        hideLine = false;
+                }
+                if (!hideLine)
+                   rows.push(rowsMap[t]);
+            }
+            else
+                rows.push(rowsMap[t]);
         }
         return rows;
     }
