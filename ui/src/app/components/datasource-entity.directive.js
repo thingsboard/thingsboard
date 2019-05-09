@@ -110,7 +110,11 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
                 dataKeys = dataKeys.concat(scope.timeseriesDataKeys);
                 dataKeys = dataKeys.concat(scope.attributeDataKeys);
                 dataKeys = dataKeys.concat(scope.alarmDataKeys);
-                ngModelCtrl.$viewValue.dataKeys = dataKeys;
+                if (ngModelCtrl.$viewValue.dataKeys != dataKeys)
+                {
+                   ngModelCtrl.$setDirty();
+                   ngModelCtrl.$viewValue.dataKeys = dataKeys;
+                }
                 scope.updateValidity();
             }
         }
