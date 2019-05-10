@@ -39,8 +39,14 @@
 							md-min-length="0"
 							placeholder=""
 							md-menu-class="tb-datakey-autocomplete">
-							<span ng-show="item.type==types.dataKeyType.attribute"><ng-md-icon size="16" icon="perm_device_information"></ng-md-icon></span>
-                            <span ng-show="item.type==types.dataKeyType.timeseries"><ng-md-icon size="16" icon="timeline"></ng-md-icon></span>
+							<span ng-show="item.type==types.dataKeyType.attribute">
+								<md-tooltip>{{'datakey.attributes' | translate }}</md-tooltip>
+								<ng-md-icon size="16" icon="perm_device_information"></ng-md-icon>
+							</span>
+							<span ng-show="item.type==types.dataKeyType.timeseries">
+								<md-tooltip>{{'datakey.timeseries' | translate }}</md-tooltip>
+								<ng-md-icon size="16" icon="timeline"></ng-md-icon>
+							</span>
                             <span md-highlight-text="dataKeySearchText" md-highlight-flags="^i">{{item.name}}</span>
 						    <md-not-found>
 							  <div class="tb-not-found">
