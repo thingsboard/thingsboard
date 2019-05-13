@@ -23,6 +23,7 @@ import alarmsTableWidgetTemplate from './alarms-table-widget.tpl.html';
 import alarmDetailsDialogTemplate from '../../alarm/alarm-details-dialog.tpl.html';
 import displayColumnsPanelTemplate from './display-columns-panel.tpl.html';
 import alarmStatusFilterPanelTemplate from './alarm-status-filter-panel.tpl.html';
+import alarmCommentsDialogTemplate from '../../alarm/alarm-comments-dialog.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
 
@@ -49,7 +50,7 @@ function AlarmsTableWidget() {
 }
 
 /*@ngInject*/
-function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDialog, $mdPanel, $document, $translate, $q, $timeout, alarmService, utils, types) {
+function AlarmsTableWidgetController($element, $scope, $filter, $log, $mdMedia, $mdDialog, $mdPanel, $document, $translate, $q, $timeout, alarmService, utils, types) {
     var vm = this;
 
     vm.stylesInfo = {};
@@ -73,6 +74,7 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
     vm.displayDetails = true;
     vm.allowAcknowledgment = true;
     vm.allowClear = true;
+    vm.allowComments = true;
     vm.actionCellDescriptors = [];
     vm.displayPagination = true;
     vm.defaultPageSize = 10;
@@ -103,6 +105,7 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
     vm.actionEnabled = actionEnabled;
     vm.isCurrent = isCurrent;
     vm.openAlarmDetails = openAlarmDetails;
+    vm.openAlarmComments = openAlarmComments;
     vm.ackAlarms = ackAlarms;
     vm.ackAlarm = ackAlarm;
     vm.clearAlarms = clearAlarms;
@@ -110,6 +113,9 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
 
     vm.cellStyle = cellStyle;
     vm.cellContent = cellContent;
+
+    vm.alarmCommentsCount = alarmCommentsCount;
+    vm.showBadge = showBadge;
 
     vm.editAlarmStatusFilter = editAlarmStatusFilter;
     vm.editColumnsToDisplay = editColumnsToDisplay;
@@ -172,6 +178,7 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
         vm.displayDetails = angular.isDefined(vm.settings.displayDetails) ? vm.settings.displayDetails : true;
         vm.allowAcknowledgment = angular.isDefined(vm.settings.allowAcknowledgment) ? vm.settings.allowAcknowledgment : true;
         vm.allowClear = angular.isDefined(vm.settings.allowClear) ? vm.settings.allowClear : true;
+        vm.allowComments = angular.isDefined(vm.settings.allowComments) ? vm.settings.allowComments : true;
 
         if (vm.displayDetails) {
             vm.actionCellDescriptors.push(
@@ -199,6 +206,16 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
                     displayName: $translate.instant('alarm.clear'),
                     icon: 'clear',
                     clear: true
+                }
+            );
+        }
+
+        if (vm.allowComments) {
+            vm.actionCellDescriptors.push(
+                {
+                    displayName: $translate.instant('alarm.comments'),
+                    icon: 'comment',
+                    comments: true
                 }
             );
         }
@@ -353,6 +370,8 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
             vm.ackAlarm($event, alarm);
         } else if (actionDescriptor.clear) {
             vm.clearAlarm($event, alarm);
+        } else if (actionDescriptor.comments) {
+          vm.openAlarmComments($event, alarm);
         } else {
             if ($event) {
                 $event.stopPropagation();
@@ -381,6 +400,22 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
     function isCurrent(alarm) {
         return (vm.currentAlarm && alarm && vm.currentAlarm.id && alarm.id) &&
             (vm.currentAlarm.id.id === alarm.id.id);
+    }
+
+    function openAlarmComments($event, alarm) {
+        $event;
+        alarm;
+        alarmCommentsDialogTemplate;
+        $mdDialog.show({
+            controller: 'AlarmCommentsDialogController',
+            controllerAs: 'vm',
+            templateUrl: alarmCommentsDialogTemplate,
+            locals: {alarm:alarm},
+            parent: angular.element($document[0].body),
+            targetEvent: $event,
+            clickOutsideToClose: true,
+            fullscreen: true
+        });
     }
 
     function openAlarmDetails($event, alarm) {
@@ -551,6 +586,17 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
                 }
             }
             vm.selectedAlarms = newSelectedAlarms;
+        }
+    }
+
+
+    function showBadge(alarm, actionDescriptor) {
+        return actionDescriptor.displayName === 'Comments' && alarm.details && alarm.details.comments && alarm.details.comments.length > 0;
+    }
+
+    function alarmCommentsCount(alarm) {
+        if (alarm.details && alarm.details.comments && alarm.details.comments.length > 0) {
+            return alarm.details.comments.length
         }
     }
 

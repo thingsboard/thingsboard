@@ -75,3 +75,18 @@ md-list.tb-alarm-table {
   height: 100%;
   min-height: 50px;
 }
+
+.tb-alarm-comment-badge {
+  position: absolute;
+  top: 3px;
+  right: 6px;
+  display: inline-block;
+  padding: 2px 3px;
+  font-size: .7em;
+  line-height: .9em;
+  color: #fff;
+  text-align: center;
+  background-color: #f44336 !important;
+  border-radius: 50%;
+}
+

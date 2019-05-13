@@ -88,6 +88,7 @@
     "alarm": {
         "ack-time": "Heure d'acquittement",
         "acknowledge": "Acquitter",
+        "add-comment": "Ajouter un commentaire",
         "aknowledge-alarms-text": "Etes-vous sûr de vouloir acquitter {count, plural, 1 {1 alarme} other {# alarmes}}?",
         "aknowledge-alarms-title": "Acquitter {count, plural, 1 {1 alarme} other {# alarmes}}",
         "alarm": "Alarme",
@@ -100,6 +101,8 @@
         "clear-alarms-title": "Effacer {count, plural, 1 {1 alarme} other {# alarmes}}",
         "clear-time": "Heure d'éffacement",
         "created-time": "Heure de création",
+        "comment": "Commentaire",
+        "comments": "Commentaires",
         "details": "Détails",
         "display-status": {
             "ACTIVE_ACK": "Active acquittée",

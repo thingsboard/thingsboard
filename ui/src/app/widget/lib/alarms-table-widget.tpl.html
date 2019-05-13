@@ -104,6 +104,7 @@
                                    aria-label="{{ actionDescriptor.displayName }}"
                                    ng-click="vm.onActionButtonClick($event, alarm, actionDescriptor)" ng-disabled="$root.loading">
                             <md-icon aria-label="{{ actionDescriptor.displayName }}" class="material-icons">{{actionDescriptor.icon}}</md-icon>
+                            <span ng-if="vm.showBadge(alarm, actionDescriptor)" class="tb-alarm-comment-badge">{{vm.alarmCommentsCount(alarm)}}</span>
                             <md-tooltip md-direction="top">
                                 {{ actionDescriptor.displayName }}
                             </md-tooltip>

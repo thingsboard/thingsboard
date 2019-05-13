@@ -88,6 +88,12 @@
     "alarm": {
         "alarm": "Alarm",
         "alarms": "Alarms",
+        "comment": {
+            "add-comment": "Add Comment",
+            "author":"Author",
+            "comment": "Comment"
+        },
+        "comments": "Comments",
         "select-alarm": "Select alarm",
         "no-alarms-matching": "No alarms matching '{{entity}}' were found.",
         "alarm-required": "Alarm is required",

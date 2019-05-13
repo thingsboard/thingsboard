@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 import AlarmDetailsDialogController from './alarm-details-dialog.controller';
+import AlarmCommentsDialogController from './alarm-comments-dialog.controller';
 import AlarmHeaderDirective from './alarm-header.directive';
 import AlarmRowDirective from './alarm-row.directive';
 import AlarmTableDirective from './alarm-table.directive';
 
 export default angular.module('thingsboard.alarm', [])
     .controller('AlarmDetailsDialogController', AlarmDetailsDialogController)
+    .controller('AlarmCommentsDialogController', AlarmCommentsDialogController)
     .directive('tbAlarmHeader', AlarmHeaderDirective)
     .directive('tbAlarmRow', AlarmRowDirective)
     .directive('tbAlarmTable', AlarmTableDirective)
