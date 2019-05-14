@@ -674,6 +674,10 @@ export default class Subscription {
                 }
             }
         }
+        else if(angular.toJson(currentData.data)==angular.toJson(sourceData.data)){
+            update = false;
+        }
+
         if (update) {
             if (this.subscriptionTimewindow && this.subscriptionTimewindow.realtimeWindowMs) {
                 this.updateTimewindow();
