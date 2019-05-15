@@ -172,8 +172,12 @@ public class GatewaySessionHandler {
                                 if (!deviceEntry.getValue().isJsonArray()) {
                                     throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
                                 }
-                                TransportProtos.PostTelemetryMsg postTelemetryMsg = JsonConverter.convertToTelemetryProto(deviceEntry.getValue().getAsJsonArray());
-                                transportService.process(deviceCtx.getSessionInfo(), postTelemetryMsg, getPubAckCallback(channel, deviceName, msgId, postTelemetryMsg));
+                                try {
+                                    TransportProtos.PostTelemetryMsg postTelemetryMsg = JsonConverter.convertToTelemetryProto(deviceEntry.getValue().getAsJsonArray());
+                                    transportService.process(deviceCtx.getSessionInfo(), postTelemetryMsg, getPubAckCallback(channel, deviceName, msgId, postTelemetryMsg));
+                                } catch (Throwable e) {
+                                    log.warn("Failed to post telemetry.", e);
+                                }
                             }
 
                             @Override
