@@ -49,13 +49,36 @@ export function DeviceCardController(types) {
 
 /*@ngInject*/
 export function DeviceController($rootScope, userService, deviceService, customerService, $state, $stateParams,
-                                 $document, $mdDialog, $q, $translate, types) {
+                                 $document, $mdDialog, $q, $translate, types, importExport) {
 
     var customerId = $stateParams.customerId;
 
     var deviceActionsList = [];
 
     var deviceGroupActionsList = [];
+
+    var deviceAddItemActionsList = [
+        {
+            onAction: function ($event) {
+                vm.grid.addItem($event);
+            },
+            name: function() { return $translate.instant('action.add') },
+            details: function() { return $translate.instant('device.add-device-text') },
+            icon: "insert_drive_file"
+        },
+        {
+            onAction: function ($event) {
+                importExport.importDevices($event).then(
+                    function() {
+                        vm.grid.refreshList();
+                    }
+                );
+            },
+            name: function() { return $translate.instant('action.import') },
+            details: function() { return $translate.instant('device.import') },
+            icon: "file_upload"
+        }
+    ];
 
     var vm = this;
 
@@ -78,12 +101,13 @@ export function DeviceController($rootScope, userService, deviceService, custome
 
         actionsList: deviceActionsList,
         groupActionsList: deviceGroupActionsList,
+        addItemActions: deviceAddItemActionsList,
 
         onGridInited: gridInited,
 
         addItemTemplateUrl: addDeviceTemplate,
 
-        addItemText: function() { return $translate.instant('device.add-device-text') },
+        // addItemText: function() { return $translate.instant('device.add-device-text') },
         noItemsText: function() { return $translate.instant('device.no-devices-text') },
         itemDetailsText: function() { return $translate.instant('device.device-details') },
         isDetailsReadOnly: isCustomerUser,

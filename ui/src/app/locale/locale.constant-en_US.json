@@ -665,7 +665,9 @@
         "is-gateway": "Is gateway",
         "public": "Public",
         "device-public": "Device is public",
-        "select-device": "Select device"
+        "select-device": "Select device",
+        "import": "Import device",
+        "device-file": "Device file"
     },
     "dialog": {
         "close": "Close dialog"
@@ -1093,7 +1095,8 @@
     },
     "import": {
         "no-file": "No file selected",
-        "drop-file": "Drop a JSON file or click to select a file to upload."
+        "drop-file": "Drop a JSON file or click to select a file to upload.",
+        "drop-file-csv": "Drop a CSV file or click to select a file to upload."
     },
     "item": {
         "selected": "Selected"

@@ -15,9 +15,11 @@
  */
 import ImportExport from './import-export.service';
 import ImportDialogController from './import-dialog.controller';
+import ImportDialogCSVController from './import-dialog-csv.controller';
 
 
 export default angular.module('thingsboard.importexport', [])
     .factory('importExport', ImportExport)
     .controller('ImportDialogController', ImportDialogController)
+    .controller('ImportDialogCSVController', ImportDialogCSVController)
     .name;

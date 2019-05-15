@@ -16,6 +16,7 @@
 /* eslint-disable import/no-unresolved, import/default */
 
 import importDialogTemplate from './import-dialog.tpl.html';
+import importDialogCSVTemplate from './import-dialog-csv.tpl.html';
 import entityAliasesTemplate from '../entity/alias/entity-aliases.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
@@ -41,6 +42,7 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         importWidgetsBundle: importWidgetsBundle,
         exportExtension: exportExtension,
         importExtension: importExtension,
+        importDevices: importDevices,
         exportToPc: exportToPc
     };
 
@@ -575,6 +577,54 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         return deferred.promise;
     }
 
+    function importDevices($event) {
+        var deferred = $q.defer();
+        openImportDialogCSV($event, 'device.import', 'device.device-file').then(
+            function success() {
+                // if (!validateImportedDashboard(dashboard)) {
+                //     toast.showError($translate.instant('dashboard.invalid-dashboard-file-error'));
+                //     deferred.reject();
+                // } else {
+                //     dashboard = dashboardUtils.validateAndUpdateDashboard(dashboard);
+                //     var entityAliases = dashboard.configuration.entityAliases;
+                //     if (entityAliases) {
+                //         var aliasIds = Object.keys( entityAliases );
+                //         if (aliasIds.length > 0) {
+                //             processEntityAliases(entityAliases, aliasIds).then(
+                //                 function(missingEntityAliases) {
+                //                     if (Object.keys( missingEntityAliases ).length > 0) {
+                //                         editMissingAliases($event, dashboard.configuration.widgets,
+                //                                 false, 'dashboard.dashboard-import-missing-aliases-title', missingEntityAliases).then(
+                //                             function success(updatedEntityAliases) {
+                //                                 for (var aliasId in updatedEntityAliases) {
+                //                                     entityAliases[aliasId] = updatedEntityAliases[aliasId];
+                //                                 }
+                //                                 saveImportedDashboard(dashboard, deferred);
+                //                             },
+                //                             function fail() {
+                //                                 deferred.reject();
+                //                             }
+                //                         );
+                //                     } else {
+                //                         saveImportedDashboard(dashboard, deferred);
+                //                     }
+                //                 }
+                //             )
+                //         } else {
+                //             saveImportedDashboard(dashboard, deferred);
+                //         }
+                //     } else {
+                //         saveImportedDashboard(dashboard, deferred);
+                //     }
+                // }
+            },
+            function fail() {
+                deferred.reject();
+            }
+        );
+        return deferred.promise;
+    }
+
     function saveImportedDashboard(dashboard, deferred) {
         dashboardService.saveDashboard(dashboard).then(
             function success() {
@@ -807,6 +857,28 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         return deferred.promise;
     }
 
+    function openImportDialogCSV($event, importTitle, importFileLabel) {
+        var deferred = $q.defer();
+        $mdDialog.show({
+            controller: 'ImportDialogCSVController',
+            controllerAs: 'vm',
+            templateUrl: importDialogCSVTemplate,
+            locals: {
+                importTitle: importTitle,
+                importFileLabel: importFileLabel
+            },
+            parent: angular.element($document[0].body),
+            multiple: true,
+            fullscreen: true,
+            targetEvent: $event
+        }).then(function (importData) {
+            deferred.resolve(importData);
+
+        }, function () {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
 }
 
 /* eslint-enable no-undef, angular/window-service, angular/document-service */
