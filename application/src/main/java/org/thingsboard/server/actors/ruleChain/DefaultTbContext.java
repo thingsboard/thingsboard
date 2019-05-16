@@ -141,7 +141,7 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public void sentActionMessageToRootRuleChain(TbMsg msg) {
+    public void sendTbMsgToRuleEngine(TbMsg msg) {
         mainCtx.getActorService().onMsg(new SendToClusterMsg(msg.getOriginator(), new ServiceToRuleEngineMsg(getTenantId(), msg)));
     }
 

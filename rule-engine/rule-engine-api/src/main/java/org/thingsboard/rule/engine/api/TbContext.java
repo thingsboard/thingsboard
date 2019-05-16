@@ -59,7 +59,7 @@ public interface TbContext {
 
     void updateSelf(RuleNode self);
 
-    void sentActionMessageToRootRuleChain(TbMsg msg);
+    void sendTbMsgToRuleEngine(TbMsg msg);
 
     TbMsg newMsg(String type, EntityId originator, TbMsgMetaData metaData, String data);
 

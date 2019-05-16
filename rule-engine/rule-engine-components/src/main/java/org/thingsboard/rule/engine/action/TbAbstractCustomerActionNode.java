@@ -122,7 +122,10 @@ public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerA
                 newCustomer.setTitle(key.getCustomerTitle());
                 newCustomer.setTenantId(ctx.getTenantId());
                 Customer savedCustomer = service.saveCustomer(newCustomer);
-                ActionEvent.onCustomerCreated(savedCustomer, ctx);
+                TbMsg msg = ActionEvent.onCustomerCreated(savedCustomer, ctx.getSelfId());
+                if(msg != null) {
+                    ctx.sendTbMsgToRuleEngine(msg);
+                }
                 return Optional.of(savedCustomer.getId());
             }
             return Optional.empty();

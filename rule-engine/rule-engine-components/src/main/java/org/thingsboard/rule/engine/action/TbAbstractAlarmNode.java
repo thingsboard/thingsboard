@@ -60,7 +60,10 @@ public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfigura
                         ctx.tellNext(msg, "False");
                     } else if (alarmResult.isCreated) {
                         ctx.tellNext(toAlarmMsg(ctx, alarmResult, msg), "Created");
-                        ActionEvent.onAlarmCreated(alarmResult.alarm, ctx);
+                        TbMsg actionMsg = ActionEvent.onAlarmCreated(alarmResult.alarm, ctx.getSelfId());
+                        if (actionMsg != null) {
+                            ctx.sendTbMsgToRuleEngine(actionMsg);
+                        }
                     } else if (alarmResult.isUpdated) {
                         ctx.tellNext(toAlarmMsg(ctx, alarmResult, msg), "Updated");
                     } else if (alarmResult.isCleared) {

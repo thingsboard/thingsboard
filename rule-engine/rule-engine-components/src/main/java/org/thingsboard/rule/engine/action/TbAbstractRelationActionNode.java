@@ -137,7 +137,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
         }
     }
 
-    protected String processPattern(TbMsg msg, String pattern){
+    protected String processPattern(TbMsg msg, String pattern) {
         return TbNodeUtils.processPattern(pattern, msg.getMetaData());
     }
 
@@ -187,7 +187,10 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                         newDevice.setType(entitykey.getType());
                         newDevice.setTenantId(ctx.getTenantId());
                         Device savedDevice = deviceService.saveDevice(newDevice);
-                        ActionEvent.onDeviceCreated(savedDevice, ctx);
+                        TbMsg msg = ActionEvent.onDeviceCreated(savedDevice, ctx.getSelfId());
+                        if (msg != null) {
+                            ctx.sendTbMsgToRuleEngine(msg);
+                        }
                         targetEntity.setEntityId(savedDevice.getId());
                     }
                     break;
@@ -202,7 +205,10 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                         newAsset.setType(entitykey.getType());
                         newAsset.setTenantId(ctx.getTenantId());
                         Asset savedAsset = assetService.saveAsset(newAsset);
-                        ActionEvent.onAssetCreated(savedAsset, ctx);
+                        TbMsg msg = ActionEvent.onAssetCreated(savedAsset, ctx.getSelfId());
+                        if (msg != null) {
+                            ctx.sendTbMsgToRuleEngine(msg);
+                        }
                         targetEntity.setEntityId(savedAsset.getId());
                     }
                     break;
@@ -216,7 +222,10 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                         newCustomer.setTitle(entitykey.getEntityName());
                         newCustomer.setTenantId(ctx.getTenantId());
                         Customer savedCustomer = customerService.saveCustomer(newCustomer);
-                        ActionEvent.onCustomerCreated(savedCustomer, ctx);
+                        TbMsg msg = ActionEvent.onCustomerCreated(savedCustomer, ctx.getSelfId());
+                        if (msg != null) {
+                            ctx.sendTbMsgToRuleEngine(msg);
+                        }
                         targetEntity.setEntityId(savedCustomer.getId());
                     }
                     break;
