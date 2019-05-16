@@ -38,6 +38,7 @@ public class DataConstants {
     public static final String LC_EVENT = "LC_EVENT";
     public static final String STATS = "STATS";
     public static final String DEBUG_RULE_NODE = "DEBUG_RULE_NODE";
+    public static final String DEBUG_RULE_CHAIN = "DEBUG_RULE_CHAIN";
 
     public static final String ONEWAY = "ONEWAY";
     public static final String TWOWAY = "TWOWAY";

@@ -286,7 +286,7 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
             }
         }
         vm.dontFitMapBounds = vm.ctx.settings.fitMapBounds === false;
-        vm.map = new TbOpenStreetMap(vm.ctx.$element, vm.utils, initCallback, vm.defaultZoomLevel, vm.dontFitMapBounds, null, vm.staticSettings.mapProvider);
+        vm.map = new TbOpenStreetMap(vm.ctx.$element, vm.utils, initCallback, vm.defaultZoomLevel, vm.dontFitMapBounds, vm.staticSettings.disableScrollZooming, null, vm.staticSettings.mapProvider);
         vm.map.bounds = vm.map.createBounds();
         vm.map.invalidateSize(true);
         vm.map.bounds = vm.map.createBounds();
@@ -307,7 +307,8 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
         staticSettings.disabledButtonColor = tinycolor(vm.widgetConfig.color).setAlpha(0.3).toRgbString();
         staticSettings.polygonColor = tinycolor(vm.ctx.settings.polygonColor).toHexString();
         staticSettings.polygonStrokeColor = tinycolor(vm.ctx.settings.polygonStrokeColor).toHexString();
-        staticSettings.mapProvider = vm.ctx.settings.mapProvider || "OpenStreetMap.Mapnik";
+        staticSettings.mapProvider = vm.ctx.settings.mapProvider ? {name: vm.ctx.settings.mapProvider} : {name: "OpenStreetMap.Mapnik"};
+        staticSettings.disableScrollZooming = vm.ctx.settings.disableScrollZooming || false;
         staticSettings.latKeyName = vm.ctx.settings.latKeyName || "latitude";
         staticSettings.lngKeyName = vm.ctx.settings.lngKeyName || "longitude";
         staticSettings.polKeyName = vm.ctx.settings.polKeyName || "coordinates";
@@ -362,6 +363,12 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
             iconSize: [30, 30],
             iconAnchor: [15, 15]
         });
+
+        if (vm.ctx.settings.useCustomProvider && vm.ctx.settings.customProviderTileUrl) {
+            staticSettings.mapProvider.name = vm.ctx.settings.customProviderTileUrl;
+            staticSettings.mapProvider.isCustom = true;
+        }
+
         if (angular.isDefined(vm.ctx.settings.markerImage)) {
             staticSettings.icon = L.icon({
                 iconUrl: vm.ctx.settings.markerImage,

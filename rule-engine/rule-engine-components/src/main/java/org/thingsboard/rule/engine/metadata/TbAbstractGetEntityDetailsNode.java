@@ -15,6 +15,8 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -34,9 +36,9 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.lang.reflect.Type;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 
 import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
+import static org.thingsboard.rule.engine.api.util.DonAsynchron.withCallback;
 
 @Slf4j
 public abstract class TbAbstractGetEntityDetailsNode<C extends TbAbstractGetEntityDetailsNodeConfiguration> implements TbNode {
@@ -54,19 +56,20 @@ public abstract class TbAbstractGetEntityDetailsNode<C extends TbAbstractGetEnti
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        try {
-            ctx.tellNext(getDetails(ctx, msg), SUCCESS);
-        } catch (Exception e) {
-            ctx.tellFailure(msg, e);
-        }
+        withCallback(getDetails(ctx, msg),
+                m -> ctx.tellNext(m, SUCCESS),
+                t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
     }
 
     @Override
-    public void destroy() {}
+    public void destroy() {
+    }
 
     protected abstract C loadGetEntityDetailsNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException;
 
-    protected abstract TbMsg getDetails(TbContext ctx, TbMsg msg);
+    protected abstract ListenableFuture<TbMsg> getDetails(TbContext ctx, TbMsg msg);
+
+    protected abstract ListenableFuture<ContactBased> getContactBasedListenableFuture(TbContext ctx, TbMsg msg);
 
     protected MessageData getDataAsJson(TbMsg msg) {
         if (this.config.isAddToMetadata()) {
@@ -76,25 +79,56 @@ public abstract class TbAbstractGetEntityDetailsNode<C extends TbAbstractGetEnti
         }
     }
 
-    protected TbMsg transformMsg(TbContext ctx, TbMsg msg, JsonElement resultObject, MessageData messageData) {
-        if (messageData.getDataType().equals("metadata")) {
-            Map<String, String> metadataMap = gson.fromJson(resultObject.toString(), TYPE);
-            return ctx.transformMsg(msg, msg.getType(), msg.getOriginator(), new TbMsgMetaData(metadataMap), msg.getData());
+    protected ListenableFuture<TbMsg> getTbMsgListenableFuture(TbContext ctx, TbMsg msg, MessageData messageData, String prefix) {
+        if (!this.config.getDetailsList().isEmpty()) {
+            ListenableFuture<JsonElement> resultObject = null;
+            ListenableFuture<ContactBased> contactBasedListenableFuture = getContactBasedListenableFuture(ctx, msg);
+            for (EntityDetails entityDetails : this.config.getDetailsList()) {
+                resultObject = addContactProperties(messageData.getData(), contactBasedListenableFuture, entityDetails, prefix);
+            }
+            return transformMsg(ctx, msg, resultObject, messageData);
         } else {
-            return ctx.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), gson.toJson(resultObject));
+            return Futures.immediateFuture(msg);
         }
     }
 
-    protected JsonElement addContactProperties(JsonElement data, ContactBased entity, EntityDetails entityDetails, String prefix) {
+    private ListenableFuture<TbMsg> transformMsg(TbContext ctx, TbMsg msg, ListenableFuture<JsonElement> propertiesFuture, MessageData messageData) {
+        return Futures.transformAsync(propertiesFuture, jsonElement -> {
+            if (jsonElement != null) {
+                if (messageData.getDataType().equals("metadata")) {
+                    Map<String, String> metadataMap = gson.fromJson(jsonElement.toString(), TYPE);
+                    return Futures.immediateFuture(ctx.transformMsg(msg, msg.getType(), msg.getOriginator(), new TbMsgMetaData(metadataMap), msg.getData()));
+                } else {
+                    return Futures.immediateFuture(ctx.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), gson.toJson(jsonElement)));
+                }
+            } else {
+                return Futures.immediateFuture(null);
+            }
+        });
+    }
+
+    private ListenableFuture<JsonElement> addContactProperties(JsonElement data, ListenableFuture<ContactBased> entityFuture, EntityDetails entityDetails, String prefix) {
+        return Futures.transformAsync(entityFuture, contactBased -> {
+            if (contactBased != null) {
+                return Futures.immediateFuture(setProperties(contactBased, data, entityDetails, prefix));
+            } else {
+                return Futures.immediateFuture(null);
+            }
+        });
+    }
+
+    private JsonElement setProperties(ContactBased entity, JsonElement data, EntityDetails entityDetails, String prefix) {
         JsonObject dataAsObject = data.getAsJsonObject();
         switch (entityDetails) {
             case ADDRESS:
-                if (entity.getAddress() != null)
+                if (entity.getAddress() != null) {
                     dataAsObject.addProperty(prefix + "address", entity.getAddress());
+                }
                 break;
             case ADDRESS2:
-                if (entity.getAddress2() != null)
+                if (entity.getAddress2() != null) {
                     dataAsObject.addProperty(prefix + "address2", entity.getAddress2());
+                }
                 break;
             case CITY:
                 if (entity.getCity() != null) dataAsObject.addProperty(prefix + "city", entity.getCity());
@@ -104,16 +138,24 @@ public abstract class TbAbstractGetEntityDetailsNode<C extends TbAbstractGetEnti
                     dataAsObject.addProperty(prefix + "country", entity.getCountry());
                 break;
             case STATE:
-                if (entity.getState() != null) dataAsObject.addProperty(prefix + "state", entity.getState());
+                if (entity.getState() != null) {
+                    dataAsObject.addProperty(prefix + "state", entity.getState());
+                }
                 break;
             case EMAIL:
-                if (entity.getEmail() != null) dataAsObject.addProperty(prefix + "email", entity.getEmail());
+                if (entity.getEmail() != null) {
+                    dataAsObject.addProperty(prefix + "email", entity.getEmail());
+                }
                 break;
             case PHONE:
-                if (entity.getPhone() != null) dataAsObject.addProperty(prefix + "phone", entity.getPhone());
+                if (entity.getPhone() != null) {
+                    dataAsObject.addProperty(prefix + "phone", entity.getPhone());
+                }
                 break;
             case ZIP:
-                if (entity.getZip() != null) dataAsObject.addProperty(prefix + "zip", entity.getZip());
+                if (entity.getZip() != null) {
+                    dataAsObject.addProperty(prefix + "zip", entity.getZip());
+                }
                 break;
             case ADDITIONAL_INFO:
                 if (entity.getAdditionalInfo().hasNonNull("description")) {
@@ -126,7 +168,7 @@ public abstract class TbAbstractGetEntityDetailsNode<C extends TbAbstractGetEnti
 
     @Data
     @AllArgsConstructor
-    protected static class MessageData {
+    private static class MessageData {
         private JsonElement data;
         private String dataType;
     }
