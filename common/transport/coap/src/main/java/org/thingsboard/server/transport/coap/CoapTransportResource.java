@@ -192,6 +192,7 @@ public class CoapTransportResource extends CoapResource {
                                         new CoapOkCallback(exchange));
                                 break;
                             case TO_SERVER_RPC_REQUEST:
+                                transportService.registerSyncSession(sessionInfo, new CoapSessionListener(sessionId, exchange), transportContext.getTimeout());
                                 transportService.process(sessionInfo,
                                         transportContext.getAdaptor().convertToServerRpcRequest(sessionId, request),
                                         new CoapNoOpCallback(exchange));
