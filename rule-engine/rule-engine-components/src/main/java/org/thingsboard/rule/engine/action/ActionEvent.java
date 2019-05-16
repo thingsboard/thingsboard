@@ -59,7 +59,7 @@ public class ActionEvent {
             ObjectNode entityNode = mapper.valueToTree(asset);
             return new TbMsg(UUIDs.timeBased(), DataConstants.ENTITY_CREATED, asset.getId(), getActionMetaData(ruleNodeId), mapper.writeValueAsString(entityNode), null, null, 0L);
         } catch (JsonProcessingException | IllegalArgumentException e) {
-            log.warn("[{}] Failed to push asset action msg: {}", asset.getId(), DataConstants.ENTITY_CREATED, e);
+            log.warn("[{}] Failed to process asset action msg: {}", asset.getId(), DataConstants.ENTITY_CREATED, e);
         }
         return null;
     }
@@ -69,7 +69,7 @@ public class ActionEvent {
             ObjectNode entityNode = mapper.valueToTree(alarm);
             return new TbMsg(UUIDs.timeBased(), DataConstants.ENTITY_CREATED, alarm.getId(), getActionMetaData(ruleNodeId), mapper.writeValueAsString(entityNode), null, null, 0L);
         } catch (JsonProcessingException | IllegalArgumentException e) {
-            log.warn("[{}] Failed to push alarm action msg: {}", alarm.getId(), DataConstants.ENTITY_CREATED, e);
+            log.warn("[{}] Failed to process alarm action msg: {}", alarm.getId(), DataConstants.ENTITY_CREATED, e);
         }
         return null;
     }
