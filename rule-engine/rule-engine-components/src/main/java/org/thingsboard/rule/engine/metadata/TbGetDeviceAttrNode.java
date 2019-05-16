@@ -26,6 +26,7 @@ import org.thingsboard.rule.engine.util.EntitiesRelatedDeviceIdAsyncLoader;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.msg.TbMsg;
 
 @Slf4j
 @RuleNode(type = ComponentType.ENRICHMENT,
@@ -46,7 +47,8 @@ public class TbGetDeviceAttrNode extends TbAbstractGetAttributesNode<TbGetDevice
     }
 
     @Override
-    protected ListenableFuture<DeviceId> findEntityIdAsync(TbContext ctx, EntityId originator) {
-        return EntitiesRelatedDeviceIdAsyncLoader.findDeviceAsync(ctx, originator, config.getDeviceRelationsQuery());
+    protected ListenableFuture<DeviceId> findEntityIdAsync(TbContext ctx, TbMsg msg) {
+        return EntitiesRelatedDeviceIdAsyncLoader.findDeviceAsync(ctx, msg.getOriginator(), config.getDeviceRelationsQuery());
     }
+
 }
