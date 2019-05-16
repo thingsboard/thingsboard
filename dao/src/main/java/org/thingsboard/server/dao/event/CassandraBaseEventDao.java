@@ -70,7 +70,7 @@ public class CassandraBaseEventDao extends CassandraAbstractSearchTimeDao<EventE
     @Value("${cassandra.query.events_ttl:0}")
     private int eventsTtl;
 
-    @Value("${cassandra.query.debug_events_ttl:604800}")
+    @Value("${cassandra.query.debug_events_ttl:0}")
     private int debugEventsTtl;
 
     @Override
