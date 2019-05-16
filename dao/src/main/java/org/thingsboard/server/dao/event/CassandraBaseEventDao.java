@@ -70,7 +70,7 @@ public class CassandraBaseEventDao extends CassandraAbstractSearchTimeDao<EventE
     @Value("${cassandra.query.events_ttl:0}")
     private int eventsTtl;
 
-    @Value("${cassandra.query.debug_events_ttl}")
+    @Value("${cassandra.query.debug_events_ttl:604800}")
     private int debugEventsTtl;
 
     @Override
@@ -197,9 +197,10 @@ public class CassandraBaseEventDao extends CassandraAbstractSearchTimeDao<EventE
             insert = insert.ifNotExists();
         }
 
-        int selectedTtl = entity.getEventType().equals(DataConstants.DEBUG_RULE_NODE) ? debugEventsTtl : ttl;
+        int selectedTtl = (entity.getEventType().equals(DataConstants.DEBUG_RULE_NODE) ||
+                entity.getEventType().equals(DataConstants.DEBUG_RULE_CHAIN)) ? debugEventsTtl : ttl;
 
-        if(selectedTtl > 0){
+        if (selectedTtl > 0) {
             insert.using(ttl(selectedTtl));
         }
         ResultSetFuture resultSetFuture = executeAsyncWrite(tenantId, insert);

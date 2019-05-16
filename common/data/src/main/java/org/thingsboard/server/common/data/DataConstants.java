@@ -20,7 +20,6 @@ package org.thingsboard.server.common.data;
  */
 public class DataConstants {
 
-    public static final String SYSTEM = "SYSTEM";
     public static final String TENANT = "TENANT";
     public static final String CUSTOMER = "CUSTOMER";
     public static final String DEVICE = "DEVICE";
@@ -39,9 +38,6 @@ public class DataConstants {
     public static final String STATS = "STATS";
     public static final String DEBUG_RULE_NODE = "DEBUG_RULE_NODE";
     public static final String DEBUG_RULE_CHAIN = "DEBUG_RULE_CHAIN";
-
-    public static final String ONEWAY = "ONEWAY";
-    public static final String TWOWAY = "TWOWAY";
 
     public static final String IN = "IN";
     public static final String OUT = "OUT";
