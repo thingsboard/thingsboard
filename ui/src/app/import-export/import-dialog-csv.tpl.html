@@ -26,7 +26,8 @@
                 </md-button>
             </div>
         </md-toolbar>
-        <md-progress-linear class="md-warn" md-mode="indeterminate" ng-disabled="!$root.loading" ng-show="$root.loading"></md-progress-linear>
+        <md-progress-linear class="md-warn" md-mode="indeterminate" ng-disabled="!$root.loading"
+                            ng-show="$root.loading"></md-progress-linear>
         <span style="min-height: 5px;" flex="" ng-show="!$root.loading"></span>
         <md-dialog-content>
             <div class="md-dialog-content">
@@ -38,7 +39,8 @@
                                  flow-file-added="vm.fileAdded( $file )" class="tb-file-select-container">
                                 <div class="tb-file-clear-container">
                                     <md-button ng-click="vm.clearFile()"
-                                               class="tb-file-clear-btn md-icon-button md-primary" aria-label="{{ 'action.remove' | translate }}">
+                                               class="tb-file-clear-btn md-icon-button md-primary"
+                                               aria-label="{{ 'action.remove' | translate }}">
                                         <md-tooltip md-direction="top">
                                             {{ 'action.remove' | translate }}
                                         </md-tooltip>
@@ -49,7 +51,8 @@
                                 </div>
                                 <div class="alert tb-flow-drop" flow-drop>
                                     <label for="select" translate>import.drop-file-csv</label>
-                                    <input class="file-input" flow-btn flow-attrs="{accept:'.csv,application/csv,text/csv'}" id="select">
+                                    <input class="file-input" flow-btn
+                                           flow-attrs="{accept:'.csv,application/csv,text/csv'}" id="select">
                                 </div>
                             </div>
                         </div>
@@ -59,14 +62,81 @@
                         </div>
                     </div>
                 </fieldset>
+                <div flex layout="row">
+                    <md-input-container class="md-block">
+                        <label translate>CSV delimiter parametr</label>
+                        <input ng-model="vm.importParams.delim">
+                    </md-input-container>
+                    <md-input-container class="md-block">
+                        <md-checkbox ng-model="vm.importParams.isHeader" aria-label="Checkbox 1">
+                            Use first line is header
+                        </md-checkbox>
+                    </md-input-container>
+                    <md-input-container class="md-block">
+                        <md-checkbox ng-model="vm.importParams.isUpdate" aria-label="Checkbox 1">
+                            Update parameter device
+                        </md-checkbox>
+                    </md-input-container>
+                </div>
+                <md-table-container flex class="tb-table-select">
+                    <table md-table>
+                        <thead md-head>
+                        <tr md-row>
+                            <th md-column>&nbsp</th>
+                            <th md-column>Example value data</th>
+                            <th md-column style="min-width: 140px">Column type</th>
+                            <th md-column style="min-width: 140px">Value</th>
+                        </tr>
+                        </thead>
+                        <tbody md-body>
+                        <tr md-row ng-repeat="column in vm.columnsParam">
+                            <td md-cell>{{$index + 1}}</td>
+                            <td md-cell>{{column.sampleData}}</td>
+                            <td md-cell>
+                                <md-select ng-model="column.type" required name="columnType"
+                                           aria-label="{{ 'entity-group.column-type' | translate }}">
+                                    <md-option ng-repeat="type in vm.columnTypes" ng-value="type.value">
+                                        {{type.name | translate}}
+                                    </md-option>
+                                </md-select>
+                            </td>
+                            <td md-cell>
+                                <md-select ng-if="column.type == vm.columnTypes.entityField.value"
+                                           required name="columnKey" ng-model="column.key"
+                                           aria-label="{{ 'entity-group.column-value' | translate }}">
+                                    <md-option ng-repeat="field in vm.entityField" ng-value="field.value" ng-disabled="field.disable">
+                                        {{field.name | translate}}
+                                    </md-option>
+                                </md-select>
+                                <md-input-container md-no-float
+                                                    ng-if="column.type != vm.columnTypes.entityField.value &&
+                                                    column.type != vm.columnTypes.name.value &&
+                                                    column.type != vm.columnTypes.type.value">
+                                    <input required name="columnKeyName"
+                                           placeholder="{{ 'entity-group.column-value' | translate }}"
+                                           ng-model="column.key"
+                                           aria-label="{{ 'entity-group.column-value' | translate }}">
+                                </md-input-container>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    <md-divider></md-divider>
+                </md-table-container>
             </div>
         </md-dialog-content>
         <md-dialog-actions layout="row">
             <span flex></span>
-            <md-button ng-disabled="$root.loading || !theForm.$dirty || !theForm.$valid || !vm.importData" type="submit" class="md-raised md-primary">
+            <md-button ng-disabled="$root.loading" ng-click="vm.addDevices()" style="margin-right:20px;">
+                Add Device
+            </md-button>
+            <md-button ng-disabled="$root.loading || !theForm.$dirty || !theForm.$valid || !vm.importData" type="submit"
+                       class="md-raised md-primary">
                 {{ 'action.import' | translate }}
             </md-button>
-            <md-button ng-disabled="$root.loading" ng-click="vm.cancel()" style="margin-right:20px;">{{ 'action.cancel' | translate }}</md-button>
+            <md-button ng-disabled="$root.loading" ng-click="vm.cancel()" style="margin-right:20px;">{{ 'action.cancel'
+                | translate }}
+            </md-button>
         </md-dialog-actions>
     </form>
 </md-dialog>

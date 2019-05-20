@@ -778,6 +778,22 @@
         "no-data": "No data to display",
         "columns-to-display": "Columns to Display"
     },
+    "entity-group": {
+        "column-value": "Value",
+        "column-title": "Title",
+        "column-type": {
+            "column-type": "Column type",
+            "shared-attribute": "Shared attribute",
+            "server-attribute": "Server attribute",
+            "timeseries": "Timeseries",
+            "entity-field": "Entity field"
+        },
+        "entity-field": {
+            "name": "Name",
+            "type": "Type",
+            "assigned_customer": "Assigned Customer"
+        }
+    },
     "entity-view": {
         "entity-view": "Entity View",
         "entity-view-required": "Entity view is required.",

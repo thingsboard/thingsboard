@@ -40,3 +40,13 @@ $previewSize: 100px !default;
   top: 50%;
   transform: translate(0%, -50%) !important;
 }
+
+.tb-table-select{
+  md-input-container{
+    margin: 0;
+
+    .md-errors-spacer{
+      min-height: 0;
+    }
+  }
+}
