@@ -238,23 +238,23 @@ function AttributeService($http, $q, $filter, types, telemetryWebsocketService) 
                         function success() {
                             deferred.resolve(response.data);
                         },
-                        function fail() {
-                            deferred.reject();
+                        function fail(response) {
+                            deferred.reject(response);
                         }
                     )
                 } else {
                     deferred.resolve(response.data);
                 }
-            }, function fail() {
-                deferred.reject();
+            }, function fail(response) {
+                deferred.reject(response);
             });
         } else if (deleteEntityAttributesPromise) {
             deleteEntityAttributesPromise.then(
                 function success() {
                     deferred.resolve();
                 },
-                function fail() {
-                    deferred.reject();
+                function fail(response) {
+                    deferred.reject(response);
                 }
             )
         } else {
@@ -277,7 +277,7 @@ function AttributeService($http, $q, $filter, types, telemetryWebsocketService) 
         }
         var deleteEntityTimeseriesPromise;
         if (deleteTimeseries.length) {
-            deleteEntityTimeseriesPromise = deleteEntityTimeseries(entityType, entityId, deleteTimeseries);
+            deleteEntityTimeseriesPromise = deleteEntityTimeseries(entityType, entityId, deleteTimeseries, config);
         }
         if (Object.keys(timeseriesData).length) {
             var url = '/api/plugins/telemetry/' + entityType + '/' + entityId + '/timeseries/' + timeseriesScope;
@@ -287,23 +287,23 @@ function AttributeService($http, $q, $filter, types, telemetryWebsocketService) 
                         function success() {
                             deferred.resolve(response.data);
                         },
-                        function fail() {
-                            deferred.reject();
+                        function fail(response) {
+                            deferred.reject(response);
                         }
                     )
                 } else {
                     deferred.resolve(response.data);
                 }
-            }, function fail() {
-                deferred.reject();
+            }, function fail(response) {
+                deferred.reject(response);
             });
         } else if (deleteEntityTimeseriesPromise) {
             deleteEntityTimeseriesPromise.then(
                 function success() {
                     deferred.resolve();
                 },
-                function fail() {
-                    deferred.reject();
+                function fail(response) {
+                    deferred.reject(response);
                 }
             )
         } else {
@@ -312,7 +312,8 @@ function AttributeService($http, $q, $filter, types, telemetryWebsocketService) 
         return deferred.promise;
     }
 
-    function deleteEntityAttributes(entityType, entityId, attributeScope, attributes) {
+    function deleteEntityAttributes(entityType, entityId, attributeScope, attributes, config) {
+        config = config || {};
         var deferred = $q.defer();
         var keys = '';
         for (var i = 0; i < attributes.length; i++) {
@@ -322,15 +323,16 @@ function AttributeService($http, $q, $filter, types, telemetryWebsocketService) 
             keys += attributes[i].key;
         }
         var url = '/api/plugins/telemetry/' + entityType + '/' + entityId + '/' + attributeScope + '?keys=' + keys;
-        $http.delete(url).then(function success() {
+        $http.delete(url, config).then(function success() {
             deferred.resolve();
-        }, function fail() {
-            deferred.reject();
+        }, function fail(response) {
+            deferred.reject(response);
         });
         return deferred.promise;
     }
 
-    function deleteEntityTimeseries(entityType, entityId, timeseries) {
+    function deleteEntityTimeseries(entityType, entityId, timeseries, config) {
+        config = config || {};
         var deferred = $q.defer();
         var keys = '';
         for (var i = 0; i < timeseries.length; i++) {
@@ -340,10 +342,10 @@ function AttributeService($http, $q, $filter, types, telemetryWebsocketService) 
             keys += timeseries[i].key;
         }
         var url = '/api/plugins/telemetry/' + entityType + '/' + entityId + '/timeseries/delete' + '?keys=' + keys;
-        $http.delete(url).then(function success() {
+        $http.delete(url, config).then(function success() {
             deferred.resolve();
-        }, function fail() {
-            deferred.reject();
+        }, function fail(response) {
+            deferred.reject(response);
         });
         return deferred.promise;
     }

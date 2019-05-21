@@ -20,7 +20,7 @@ export default angular.module('thingsboard.api.device', [thingsboardTypes])
     .name;
 
 /*@ngInject*/
-function DeviceService($http, $q, $window, userService, attributeService, customerService, types) {
+function DeviceService($http, $q, $window, userService, attributeService, customerService, types, $timeout) {
 
     var service = {
         assignDeviceToCustomer: assignDeviceToCustomer,
@@ -167,25 +167,45 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
         var url = '/api/device';
         $http.post(url, device, config).then(function success(response) {
             deferred.resolve(response.data);
-        }, function fail() {
-            deferred.reject();
+        }, function fail(response) {
+            deferred.reject(response);
+        });
+        return deferred.promise;
+    }
+
+    function resendRequest(callback){
+        const deferred = $q.defer();
+        let request = callback();
+        request.then(function success(response) {
+            deferred.resolve(response);
+        }, function fail(response) {
+            if (response.status === 429) {
+                $timeout(function () {
+                    request = callback();
+                }, 1000 + Math.random() * 10000);
+            } else {
+                deferred.reject(response);
+            }
         });
         return deferred.promise;
     }
 
     function saveDeviceRelarion(deviceId, deviceRelation, config) {
-        var deferred = $q.defer();
-        var attributesType = Object.keys(types.attributesScope);
-        var allPromise = [];
-        var promise = "";
-        for (var i = 0; i < attributesType.length; i++) {
+        const deferred = $q.defer();
+        let attributesType = Object.keys(types.attributesScope);
+        let allPromise = [];
+        let promise = "";
+        for (let i = 0; i < attributesType.length; i++) {
             if (deviceRelation.attributes[attributesType[i]] && deviceRelation.attributes[attributesType[i]].length !== 0) {
-                promise = attributeService.saveEntityAttributes(types.entityType.device, deviceId, types.attributesScope[attributesType[i]].value, deviceRelation.attributes[attributesType[i]], config).then(function success() {});
+                promise = resendRequest(function () {
+                    return attributeService.saveEntityAttributes(types.entityType.device, deviceId, types.attributesScope[attributesType[i]].value, deviceRelation.attributes[attributesType[i]], config);
+                });
                 allPromise.push(promise);
             }
         }
         if (deviceRelation.timeseries.length !== 0) {
-            promise = attributeService.saveEntityTimeseries(types.entityType.device, deviceId, "time", deviceRelation.timeseries, config).then(function success() {
+            promise = resendRequest(function () {
+                return attributeService.saveEntityTimeseries(types.entityType.device, deviceId, "time", deviceRelation.timeseries, config);
             });
             allPromise.push(promise);
         }
@@ -197,26 +217,41 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
 
     function saveDeviceParameters(deviceParameters, update, config) {
         config = config || {};
-        var deferred = $q.defer();
-        var newDevice = {
+        const deferred = $q.defer();
+        let statisticalInfo = {
+            create: {},
+            update: {},
+            error: {}
+        };
+        let newDevice = {
             name: deviceParameters.name,
             type: deviceParameters.type
         };
-        saveDevice(newDevice, config).then(function success(response) {
+        resendRequest(function () {
+            return saveDevice(newDevice, config);
+        }).then(function success(response) {
+            statisticalInfo.create.device = 1;
             saveDeviceRelarion(response.id.id, deviceParameters, config).then(function success() {
-                deferred.resolve();
+                deferred.resolve(statisticalInfo);
             });
-        }, function fail() {
+        }, function fail(response) {
+            console.log(response); // eslint-disable-line
             if (update) {
-                findByName(deviceParameters.name, config).then(function success(response) {
+                resendRequest(function () {
+                    return findByName(deviceParameters.name, config);
+                }).then(function success(response) {
+                    statisticalInfo.update.device = 1;
                     saveDeviceRelarion(response.id.id, deviceParameters, config).then(function success() {
-                        deferred.resolve();
+                        deferred.resolve(statisticalInfo);
                     });
+                }, function fail() {
+                    statisticalInfo.error.device = newDevice;
+                    deferred.resolve(statisticalInfo);
                 });
             } else {
-                deferred.resolve();
+                statisticalInfo.error.device = newDevice;
+                deferred.resolve(statisticalInfo);
             }
-            console.log("error"); // eslint-disable-line
         });
         return deferred.promise;
     }
@@ -374,8 +409,8 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
         var url = '/api/tenant/devices?deviceName=' + deviceName;
         $http.get(url, config).then(function success(response) {
             deferred.resolve(response.data);
-        }, function fail() {
-            deferred.reject();
+        }, function fail(response) {
+            deferred.reject(response);
         });
         return deferred.promise;
     }

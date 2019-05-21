@@ -27,13 +27,15 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
 
     vm.addDevices = addDevices;
     vm.importParams = {
-        isUpdate: true
+        isUpdate: true,
+        isHeader: true
     };
 
     vm.importTitle = importTitle;
     vm.importFileLabel = importFileLabel;
 
     vm.columnsParam = [];
+    vm.parseData = [];
 
     vm.entityType = types.entityType.device;
     vm.columnTypes = {};
@@ -108,17 +110,26 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
     }
 
     function parseCSVData(importData) {
+        var columnParam = {};
         var config = {
             delim: vm.importParams.delim,
             header: vm.importParams.isHeader
         };
         parseData = importExport.convertCSVToJson(importData, config);
         for (var i = 0; i < parseData.headers.length; i++) {
-            var columnParam = {
-                type: types.entityGroup.columnType.serverAttribute.value,
-                key: vm.importParams.isHeader ? parseData.headers[i] : "",
-                sampleData: parseData.rows[0][i]
-            };
+            if (vm.importParams.isHeader && parseData.headers[i].search(/^(name|type)$/im) === 0) {
+                columnParam = {
+                    type: types.entityGroup.columnType.entityField.value,
+                    key: parseData.headers[i].toLowerCase(),
+                    sampleData: parseData.rows[0][i]
+                };
+            } else {
+                columnParam = {
+                    type: types.entityGroup.columnType.serverAttribute.value,
+                    key: vm.importParams.isHeader ? parseData.headers[i] : "",
+                    sampleData: parseData.rows[0][i]
+                };
+            }
             vm.columnsParam.push(columnParam);
         }
     }
@@ -132,6 +143,8 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
         //         ["Device 3", "test", "test", false, 125],
         //         ["Device 4", "test", "test", false, 126],
         //         ["Device 5", "test", "test", false, 127]]};
+        arrayParam = vm.columnsParam;
+        data = parseData;
         var arrayData = [];
         var config = {
             ignoreErrors: true

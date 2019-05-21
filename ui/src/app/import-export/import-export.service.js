@@ -810,7 +810,7 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
             return parseFloat(str.replace(',', '.'));
         }
         if (str.search(/^(true|false)$/im) === 0) {
-            return str.toLowerCase() === 'true';
+            return str === 'true';
         }
         if (str === "") {
             return null;
@@ -822,12 +822,16 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         config = config || {};
         const delim = config.delim || ",";
         const header = config.header || false;
+        let result = {};
 
         let csvlines = csvdata.split(/[\r\n]+/);
         let csvheaders = splitCSV(csvlines[0], delim);
+        if (csvheaders.length < 2) {
+            toast.showError('A file should contain at least two columns');
+            return -1;
+        }
         let csvrows = header ? csvlines.slice(1, csvlines.length) : csvlines;
 
-        let result = {};
         result.headers = csvheaders;
         result.rows = [];
 
@@ -839,6 +843,10 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
                     break;
 
                 let rowitems = splitCSV(row, delim);
+                if (rowitems.length !== result.headers.length) {
+                    toast.showError('Invalid file format. Row:' + (header ? result.rows.length + 2: result.rows.length + 1));
+                    return -1;
+                }
                 for (let i = 0; i < rowitems.length; i++) {
                     rowitems[i] = parseStringToFormatJS(rowitems[i]);
                 }
