@@ -80,7 +80,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
         ListenableFuture<List<AttributeKvEntry>> latest = ctx.getAttributesService().find(ctx.getTenantId(), entityId, scope, keys);
         return Futures.transform(latest, l -> {
             l.forEach(r -> {
-                if (this.config.isSendFailureIfAbsent()) {
+                if (this.config.isTellFailureIfAbsent()) {
                     if (r.getValue() != null) {
                         msg.getMetaData().putValue(prefix + r.getKey(), r.getValueAsString());
                     } else {
@@ -104,7 +104,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
         ListenableFuture<List<TsKvEntry>> latest = ctx.getTimeseriesService().findLatest(ctx.getTenantId(), entityId, keys);
         return Futures.transform(latest, l -> {
             l.forEach(r -> {
-                if (this.config.isSendFailureIfAbsent()) {
+                if (this.config.isTellFailureIfAbsent()) {
                     if (r.getValue() != null) {
                         msg.getMetaData().putValue(r.getKey(), r.getValueAsString());
                     } else {
