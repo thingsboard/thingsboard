@@ -153,7 +153,7 @@ export default function GlobalInterceptor($rootScope, $q, $injector) {
     }
 
     function retryRequest (httpConfig) {
-        var thisTimeout =  1000 + Math.random() * 10000;
+        var thisTimeout =  1000 + Math.random() * 3000;
         return getTimeout()(function() {
             return getHttp()(httpConfig);
         }, thisTimeout);
