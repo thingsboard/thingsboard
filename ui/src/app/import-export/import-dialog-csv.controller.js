@@ -147,7 +147,8 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
         data = parseData;
         var arrayData = [];
         var config = {
-            ignoreErrors: true
+            ignoreErrors: true,
+            resendRequest: true
         };
         for (var i = 0; i < data.rows.length; i ++) {
             var obj = {

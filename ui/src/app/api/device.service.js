@@ -20,7 +20,7 @@ export default angular.module('thingsboard.api.device', [thingsboardTypes])
     .name;
 
 /*@ngInject*/
-function DeviceService($http, $q, $window, userService, attributeService, customerService, types, $timeout) {
+function DeviceService($http, $q, $window, userService, attributeService, customerService, types) {
 
     var service = {
         assignDeviceToCustomer: assignDeviceToCustomer,
@@ -173,23 +173,6 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
         return deferred.promise;
     }
 
-    function resendRequest(callback){
-        const deferred = $q.defer();
-        let request = callback();
-        request.then(function success(response) {
-            deferred.resolve(response);
-        }, function fail(response) {
-            if (response.status === 429) {
-                $timeout(function () {
-                    request = callback();
-                }, 1000 + Math.random() * 10000);
-            } else {
-                deferred.reject(response);
-            }
-        });
-        return deferred.promise;
-    }
-
     function saveDeviceRelarion(deviceId, deviceRelation, config) {
         const deferred = $q.defer();
         let attributesType = Object.keys(types.attributesScope);
@@ -197,16 +180,12 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
         let promise = "";
         for (let i = 0; i < attributesType.length; i++) {
             if (deviceRelation.attributes[attributesType[i]] && deviceRelation.attributes[attributesType[i]].length !== 0) {
-                promise = resendRequest(function () {
-                    return attributeService.saveEntityAttributes(types.entityType.device, deviceId, types.attributesScope[attributesType[i]].value, deviceRelation.attributes[attributesType[i]], config);
-                });
+                promise = attributeService.saveEntityAttributes(types.entityType.device, deviceId, types.attributesScope[attributesType[i]].value, deviceRelation.attributes[attributesType[i]], config);
                 allPromise.push(promise);
             }
         }
         if (deviceRelation.timeseries.length !== 0) {
-            promise = resendRequest(function () {
-                return attributeService.saveEntityTimeseries(types.entityType.device, deviceId, "time", deviceRelation.timeseries, config);
-            });
+            promise = attributeService.saveEntityTimeseries(types.entityType.device, deviceId, "time", deviceRelation.timeseries, config);
             allPromise.push(promise);
         }
         $q.all(allPromise).then(function success() {
@@ -227,9 +206,7 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
             name: deviceParameters.name,
             type: deviceParameters.type
         };
-        resendRequest(function () {
-            return saveDevice(newDevice, config);
-        }).then(function success(response) {
+        saveDevice(newDevice, config).then(function success(response) {
             statisticalInfo.create.device = 1;
             saveDeviceRelarion(response.id.id, deviceParameters, config).then(function success() {
                 deferred.resolve(statisticalInfo);
@@ -237,9 +214,7 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
         }, function fail(response) {
             console.log(response); // eslint-disable-line
             if (update) {
-                resendRequest(function () {
-                    return findByName(deviceParameters.name, config);
-                }).then(function success(response) {
+                findByName(deviceParameters.name, config).then(function success(response) {
                     statisticalInfo.update.device = 1;
                     saveDeviceRelarion(response.id.id, deviceParameters, config).then(function success() {
                         deferred.resolve(statisticalInfo);
