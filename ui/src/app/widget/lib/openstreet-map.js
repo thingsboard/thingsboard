@@ -168,6 +168,14 @@ export default class TbOpenStreetMap {
 		var popup = L.popup();
 		popup.setContent('');
 		marker.bindPopup(popup, {autoClose: settings.autocloseTooltip, closeOnClick: false});
+		if (settings.displayTooltipAction == 'hover') {
+			marker.on('mouseover', function () {
+				this.openPopup();
+			});
+			marker.on('mouseout', function () {
+				this.closePopup();
+			});
+		}
 		this.tooltips.push({
 			markerArgs: markerArgs,
 			popup: popup,
