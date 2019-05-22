@@ -355,6 +355,7 @@ export default class TbImageMap {
         popup.setContent('');
         marker.bindPopup(popup, {autoClose: settings.autocloseTooltip, closeOnClick: false});
         if (settings.displayTooltipAction == 'hover') {
+            marker.off('click');
             marker.on('mouseover', function () {
                 this.openPopup();
             });
