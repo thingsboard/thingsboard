@@ -16,7 +16,7 @@
 import './import-dialog.scss';
 
 /*@ngInject*/
-export default function ImportDialogCsvController($scope, $mdDialog, toast, importTitle, importFileLabel, importExport, types, $timeout) {
+export default function ImportDialogCsvController($scope, $mdDialog, toast, importTitle, importFileLabel, entityType, importExport, types, $timeout, $q) {
 
     var vm = this;
 
@@ -27,62 +27,79 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
 
     vm.addDevices = addDevices;
     vm.importParams = {
+        delim: ',',
         isUpdate: true,
         isHeader: true
     };
 
+    vm.selectedStep = 0;
+    vm.stepProgress = 1;
+    vm.maxStep = 3;
+    vm.showBusyText = false;
+    vm.stepData = [
+        { step: 1, completed: false, optional: false, data: {} },
+        { step: 2, completed: false, optional: false, data: {} },
+        { step: 3, completed: false, optional: false, data: {} },
+    ];
+
+    vm.enableNextStep = function nextStep() {
+        //do not exceed into max step
+        if (vm.selectedStep >= vm.maxStep) {
+            return;
+        }
+        //do not increment vm.stepProgress when submitting from previously completed step
+        if (vm.selectedStep === vm.stepProgress - 1) {
+            vm.stepProgress = vm.stepProgress + 1;
+        }
+        vm.selectedStep = vm.selectedStep + 1;
+    };
+
+    vm.moveToPreviousStep = function moveToPreviousStep() {
+        if (vm.selectedStep > 0) {
+            vm.selectedStep = vm.selectedStep - 1;
+        }
+    };
+
+    vm.submitCurrentStep = function submitCurrentStep(stepData, isSkip) {
+        var deferred = $q.defer();
+        vm.showBusyText = true;
+        if (!stepData.completed && !isSkip) {
+            //simulate $http
+            $timeout(function () {
+                vm.showBusyText = false;
+                deferred.resolve({ status: 200, statusText: 'success', data: {} });
+                //move to next step when success
+                stepData.completed = true;
+                vm.enableNextStep();
+            }, 1000)
+        } else {
+            vm.showBusyText = false;
+            vm.enableNextStep();
+        }
+    };
+
     vm.importTitle = importTitle;
     vm.importFileLabel = importFileLabel;
+    vm.entityType = entityType;
 
     vm.columnsParam = [];
     vm.parseData = [];
 
-    vm.entityType = types.entityType.device;
-    vm.columnTypes = {};
-    vm.entityField = {};
+    vm.delimiters = [{
+        key: ',',
+        value: ','
+    },{
+        key: ';',
+        value: ';'
+    },{
+        key: '|',
+        value: '|'
+    },{
+        key: '\t',
+        value: 'Tab'
+    }];
 
     var parseData = {};
-
-    switch (vm.entityType) {
-        case types.entityType.device:
-            vm.columnTypes = types.entityGroup.columnType;
-            break;
-    }
-
-    vm.entityField.name = types.entityGroup.entityField.name;
-
-    switch (vm.entityType) {
-        case types.entityType.device:
-            vm.entityField.type = types.entityGroup.entityField.type;
-            // vm.entityField.assigned_customer = types.entityGroup.entityField.assigned_customer;
-            break;
-    }
-
-    $scope.$watch('vm.columnsParam', function(newVal, prevVal){
-        if (newVal && !angular.equals(newVal, prevVal)) {
-            var isSelectName = false;
-            var isSelectType = false;
-            for (var i = 0; i < newVal.length; i++) {
-                if (newVal[i].type === types.entityGroup.columnType.entityField.value &&
-                    newVal[i].key === types.entityGroup.entityField.name.value) {
-                    isSelectName = true;
-                }
-                if (newVal[i].type === types.entityGroup.columnType.entityField.value &&
-                    newVal[i].key === types.entityGroup.entityField.type.value) {
-                    isSelectType = true;
-                }
-            }
-            $timeout(function () {
-                vm.entityField.name.disable = isSelectName;
-                vm.entityField.type.disable = isSelectType;
-            });
-        }
-    }, true);
-
-
-    function cancel() {
-        $mdDialog.cancel();
-    }
 
     function fileAdded($file) {
         if ($file.getExtension() === 'csv') {
@@ -94,9 +111,8 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
                         var importCSV = event.target.result;
                         if (importCSV && importCSV.length > 0) {
                             try {
-                                vm.importData = importCSV;
+                                parseCSV(importCSV);
                                 vm.fileName = $file.name;
-                                parseCSVData(vm.importData);
                             } catch (err) {
                                 vm.fileName = null;
                                 toast.showError(err.message);
@@ -109,7 +125,7 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
         }
     }
 
-    function parseCSVData(importData) {
+    function parseCSV(importData) {
         var columnParam = {};
         var config = {
             delim: vm.importParams.delim,
@@ -202,8 +218,12 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
     function clearFile() {
         $scope.theForm.$setDirty();
         vm.fileName = null;
-        vm.importData = null;
+        parseData = null;
         vm.columnsParam = [];
+    }
+
+    function cancel() {
+        $mdDialog.cancel();
     }
 
     function importFromJson() {

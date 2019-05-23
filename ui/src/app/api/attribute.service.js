@@ -238,23 +238,23 @@ function AttributeService($http, $q, $filter, types, telemetryWebsocketService) 
                         function success() {
                             deferred.resolve(response.data);
                         },
-                        function fail(response) {
-                            deferred.reject(response);
+                        function fail() {
+                            deferred.reject();
                         }
                     )
                 } else {
                     deferred.resolve(response.data);
                 }
-            }, function fail(response) {
-                deferred.reject(response);
+            }, function fail() {
+                deferred.reject();
             });
         } else if (deleteEntityAttributesPromise) {
             deleteEntityAttributesPromise.then(
                 function success() {
                     deferred.resolve();
                 },
-                function fail(response) {
-                    deferred.reject(response);
+                function fail() {
+                    deferred.reject();
                 }
             )
         } else {
@@ -287,23 +287,23 @@ function AttributeService($http, $q, $filter, types, telemetryWebsocketService) 
                         function success() {
                             deferred.resolve(response.data);
                         },
-                        function fail(response) {
-                            deferred.reject(response);
+                        function fail() {
+                            deferred.reject();
                         }
                     )
                 } else {
                     deferred.resolve(response.data);
                 }
-            }, function fail(response) {
-                deferred.reject(response);
+            }, function fail() {
+                deferred.reject();
             });
         } else if (deleteEntityTimeseriesPromise) {
             deleteEntityTimeseriesPromise.then(
                 function success() {
                     deferred.resolve();
                 },
-                function fail(response) {
-                    deferred.reject(response);
+                function fail() {
+                    deferred.reject();
                 }
             )
         } else {
@@ -325,8 +325,8 @@ function AttributeService($http, $q, $filter, types, telemetryWebsocketService) 
         var url = '/api/plugins/telemetry/' + entityType + '/' + entityId + '/' + attributeScope + '?keys=' + keys;
         $http.delete(url, config).then(function success() {
             deferred.resolve();
-        }, function fail(response) {
-            deferred.reject(response);
+        }, function fail() {
+            deferred.reject();
         });
         return deferred.promise;
     }
@@ -344,8 +344,8 @@ function AttributeService($http, $q, $filter, types, telemetryWebsocketService) 
         var url = '/api/plugins/telemetry/' + entityType + '/' + entityId + '/timeseries/delete' + '?keys=' + keys;
         $http.delete(url, config).then(function success() {
             deferred.resolve();
-        }, function fail(response) {
-            deferred.reject(response);
+        }, function fail() {
+            deferred.reject();
         });
         return deferred.promise;
     }

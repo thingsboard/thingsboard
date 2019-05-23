@@ -578,9 +578,9 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         return deferred.promise;
     }
 
-    function importDevices($event) {
+    function importDevices($event, entityType) {
         var deferred = $q.defer();
-        openImportDialogCSV($event, 'device.import', 'device.device-file').then(
+        openImportDialogCSV($event, entityType,'device.import', 'device.device-file').then(
             function success() {
                 // if (!validateImportedDashboard(dashboard)) {
                 //     toast.showError($translate.instant('dashboard.invalid-dashboard-file-error'));
@@ -783,10 +783,6 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         return deferred.promise;
     }
 
-    /**
-     * splitCSV function (c) 2009 Brian Huisman, see http://www.greywyvern.com/?post=258
-     * Works by spliting on seperators first, then patching together quoted values
-     */
     function splitCSV(str, sep) {
         for (var foo = str.split(sep = sep || ","), x = foo.length - 1, tl; x >= 0; x--) {
             if (foo[x].replace(/"\s+$/, '"').charAt(foo[x].length - 1) == '"') {
@@ -805,7 +801,7 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         return !isNaN(parseFloat(str)) && isFinite(str);
     }
 
-    function parseStringToFormatJS(str) {
+    function convertStringToJSType(str) {
         if (isNumeric(str.replace(',', '.'))) {
             return parseFloat(str.replace(',', '.'));
         }
@@ -827,7 +823,7 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         let csvlines = csvdata.split(/[\r\n]+/);
         let csvheaders = splitCSV(csvlines[0], delim);
         if (csvheaders.length < 2) {
-            toast.showError('A file should contain at least two columns');
+            toast.showError($translate.instant('entity.import-csv-number-columns-error'));
             return -1;
         }
         let csvrows = header ? csvlines.slice(1, csvlines.length) : csvlines;
@@ -844,34 +840,47 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
 
                 let rowitems = splitCSV(row, delim);
                 if (rowitems.length !== result.headers.length) {
-                    toast.showError('Invalid file format. Row:' + (header ? result.rows.length + 2: result.rows.length + 1));
+                    toast.showError($translate.instant('entity.import-csv-invalid-format-error', {line: (header ? result.rows.length + 2: result.rows.length + 1)}));
                     return -1;
                 }
                 for (let i = 0; i < rowitems.length; i++) {
-                    rowitems[i] = parseStringToFormatJS(rowitems[i]);
+                    rowitems[i] = convertStringToJSType(rowitems[i]);
                 }
                 result.rows.push(rowitems);
             }
         }
         return result;
     }
+
+    function sumObject(obj1, obj2){
+        Object.keys(obj2).map(function(key) {
+            if (angular.isObject(obj2[key])) {
+                obj1[key] = obj1[key] || {};
+                angular.merge(obj1[key], sumObject(obj1[key], obj2[key]));
+            } else {
+                obj1[key] = (obj1[key] || 0) + obj2[key];
+            }
+        });
+        return obj1;
+    }
     
     function createMultiEntity(arrayData, entityType, update, config) {
-        var deferred = $q.defer();
-        var allPromise = [];
+        let deferred = $q.defer();
+        let allPromise = [];
+        let statisticalInfo = {};
         switch (entityType) {
             case types.entityType.device:
-                for(var i = 0; i < arrayData.length; i++){
-                    var promise = deviceService.saveDeviceParameters(arrayData[i], update, config);
+                for(let i = 0; i < arrayData.length; i++){
+                    const promise = deviceService.saveDeviceParameters(arrayData[i], update, config);
                     allPromise.push(promise);
                 }
                 break;
         }
-        $q.all(allPromise).then(function success() {
-            deferred.resolve();
-            $timeout(function () {
-                console.log("1"); // eslint-disable-line
-            }, 1000);
+        $q.all(allPromise).then(function success(response) {
+            for (let i = 0; i < response.length; i++){
+                statisticalInfo = sumObject(statisticalInfo, response[i]);
+            }
+            deferred.resolve(statisticalInfo);
         });
         return deferred.promise;
     }
@@ -950,7 +959,7 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         return deferred.promise;
     }
 
-    function openImportDialogCSV($event, importTitle, importFileLabel) {
+    function openImportDialogCSV($event, entityType, importTitle, importFileLabel) {
         var deferred = $q.defer();
         $mdDialog.show({
             controller: 'ImportDialogCSVController',
@@ -958,7 +967,8 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
             templateUrl: importDialogCSVTemplate,
             locals: {
                 importTitle: importTitle,
-                importFileLabel: importFileLabel
+                importFileLabel: importFileLabel,
+                entityType: entityType
             },
             parent: angular.element($document[0].body),
             multiple: true,

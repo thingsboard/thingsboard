@@ -63,66 +63,26 @@
                     </div>
                 </fieldset>
                 <div flex layout="row">
-                    <md-input-container class="md-block">
-                        <label translate>CSV delimiter parametr</label>
-                        <input ng-model="vm.importParams.delim">
+                    <md-input-container class="md-block" style="min-width: 120px">
+                        <label translate>CSV delimiter</label>
+                        <md-select ng-model="vm.importParams.delim">
+                            <md-option ng-repeat="delimiter in vm.delimiters" ng-value="delimiter.key">
+                                {{delimiter.value}}
+                            </md-option>
+                        </md-select>
                     </md-input-container>
                     <md-input-container class="md-block">
                         <md-checkbox ng-model="vm.importParams.isHeader" aria-label="Checkbox 1">
-                            Use first line is header
+                            First line is header
                         </md-checkbox>
                     </md-input-container>
                     <md-input-container class="md-block">
                         <md-checkbox ng-model="vm.importParams.isUpdate" aria-label="Checkbox 1">
-                            Update parameter device
+                            Update parameters
                         </md-checkbox>
                     </md-input-container>
                 </div>
-                <md-table-container flex class="tb-table-select">
-                    <table md-table>
-                        <thead md-head>
-                        <tr md-row>
-                            <th md-column>&nbsp</th>
-                            <th md-column>Example value data</th>
-                            <th md-column style="min-width: 140px">Column type</th>
-                            <th md-column style="min-width: 140px">Value</th>
-                        </tr>
-                        </thead>
-                        <tbody md-body>
-                        <tr md-row ng-repeat="column in vm.columnsParam">
-                            <td md-cell>{{$index + 1}}</td>
-                            <td md-cell>{{column.sampleData}}</td>
-                            <td md-cell>
-                                <md-select ng-model="column.type" required name="columnType"
-                                           aria-label="{{ 'entity-group.column-type' | translate }}">
-                                    <md-option ng-repeat="type in vm.columnTypes" ng-value="type.value">
-                                        {{type.name | translate}}
-                                    </md-option>
-                                </md-select>
-                            </td>
-                            <td md-cell>
-                                <md-select ng-if="column.type == vm.columnTypes.entityField.value"
-                                           required name="columnKey" ng-model="column.key"
-                                           aria-label="{{ 'entity-group.column-value' | translate }}">
-                                    <md-option ng-repeat="field in vm.entityField" ng-value="field.value" ng-disabled="field.disable">
-                                        {{field.name | translate}}
-                                    </md-option>
-                                </md-select>
-                                <md-input-container md-no-float
-                                                    ng-if="column.type != vm.columnTypes.entityField.value &&
-                                                    column.type != vm.columnTypes.name.value &&
-                                                    column.type != vm.columnTypes.type.value">
-                                    <input required name="columnKeyName"
-                                           placeholder="{{ 'entity-group.column-value' | translate }}"
-                                           ng-model="column.key"
-                                           aria-label="{{ 'entity-group.column-value' | translate }}">
-                                </md-input-container>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
-                    <md-divider></md-divider>
-                </md-table-container>
+                <tb-table-columns-assignment the-form="theForm" columns="vm.columnsParam" entityType="vm.entityType"></tb-table-columns-assignment>
             </div>
         </md-dialog-content>
         <md-dialog-actions layout="row">

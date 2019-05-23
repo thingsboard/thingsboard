@@ -68,7 +68,7 @@ export function DeviceController($rootScope, userService, deviceService, custome
         },
         {
             onAction: function ($event) {
-                importExport.importDevices($event).then(
+                importExport.importDevices($event, types.entityType.device).then(
                     function() {
                         vm.grid.refreshList();
                     }
@@ -107,7 +107,6 @@ export function DeviceController($rootScope, userService, deviceService, custome
 
         addItemTemplateUrl: addDeviceTemplate,
 
-        // addItemText: function() { return $translate.instant('device.add-device-text') },
         noItemsText: function() { return $translate.instant('device.no-devices-text') },
         itemDetailsText: function() { return $translate.instant('device.device-details') },
         isDetailsReadOnly: isCustomerUser,
@@ -338,6 +337,7 @@ export function DeviceController($rootScope, userService, deviceService, custome
                     icon: "add"
                 };
 
+                vm.deviceGridConfig.addItemActions = [];
 
             } else if (vm.devicesScope === 'customer_user') {
                 deviceActionsList.push(
@@ -352,6 +352,7 @@ export function DeviceController($rootScope, userService, deviceService, custome
                 );
 
                 vm.deviceGridConfig.addItemAction = {};
+                vm.deviceGridConfig.addItemActions = [];
             }
         }
 

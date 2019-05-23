@@ -352,6 +352,10 @@ export default angular.module('thingsboard.types', [])
             },
             entityGroup: {
                 columnType: {
+                    clientAttribute: {
+                        name: 'entity-group.column-type.client-attribute',
+                        value: 'CLIENT_ATTRIBUTE'
+                    },
                     sharedAttribute: {
                         name: 'entity-group.column-type.shared-attribute',
                         value: 'SHARED_ATTRIBUTE'
