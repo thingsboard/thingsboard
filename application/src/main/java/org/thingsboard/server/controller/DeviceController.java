@@ -15,8 +15,12 @@
  */
 package org.thingsboard.server.controller;
 
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,20 +30,20 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.async.DeferredResult;
+import org.thingsboard.server.claim.ClaimResult;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
-import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
-import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -47,6 +51,7 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -56,6 +61,9 @@ import java.util.stream.Collectors;
 public class DeviceController extends BaseController {
 
     public static final String DEVICE_ID = "deviceId";
+
+    @Value("${device.claim.duration}")
+    private long durationMs;
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device/{deviceId}", method = RequestMethod.GET)
@@ -375,6 +383,44 @@ public class DeviceController extends BaseController {
             TenantId tenantId = user.getTenantId();
             ListenableFuture<List<EntitySubtype>> deviceTypes = deviceService.findDeviceTypesByTenantId(tenantId);
             return checkNotNull(deviceTypes.get());
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('CUSTOMER_USER')")
+    @RequestMapping(value = "/customer/device/claim", params = {"deviceName"}, method = RequestMethod.POST)
+    @ResponseBody
+    public DeferredResult<ResponseEntity> claimDevice(@RequestParam String deviceName,
+                                                      @RequestParam(required = false, defaultValue = "") String secretKey) throws ThingsboardException {
+        try {
+            final DeferredResult<ResponseEntity> deferredResult = new DeferredResult<>();
+
+            SecurityUser user = getCurrentUser();
+            TenantId tenantId = user.getTenantId();
+            CustomerId customerId = user.getCustomerId();
+
+            Device device = checkNotNull(deviceService.findDeviceByTenantIdAndName(tenantId, deviceName));
+            accessControlService.checkPermission(getCurrentUser(), Resource.DEVICE, Operation.CLAIM_DEVICES,
+                    device.getId(), device);
+
+            ListenableFuture<Boolean> future = claimDevicesService.claimDevice(tenantId, customerId, device, secretKey, durationMs);
+            Futures.addCallback(future, new FutureCallback<Boolean>() {
+                @Override
+                public void onSuccess(@Nullable Boolean result) {
+                    if (result) {
+                        deferredResult.setResult(new ResponseEntity<>(ClaimResult.SUCCESS, HttpStatus.OK));
+                    } else {
+                        deferredResult.setResult(new ResponseEntity<>(ClaimResult.CLAIMED, HttpStatus.BAD_REQUEST));
+                    }
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    deferredResult.setErrorResult(t);
+                }
+            });
+            return deferredResult;
         } catch (Exception e) {
             throw handleException(e);
         }

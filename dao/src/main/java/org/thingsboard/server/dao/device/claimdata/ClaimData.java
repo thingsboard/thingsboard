@@ -13,11 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.security.permission;
+package org.thingsboard.server.dao.device.claimdata;
 
-public enum Operation {
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.TenantId;
 
-    ALL, CREATE, READ, WRITE, DELETE, ASSIGN_TO_CUSTOMER, UNASSIGN_FROM_CUSTOMER, RPC_CALL,
-    READ_CREDENTIALS, WRITE_CREDENTIALS, READ_ATTRIBUTES, WRITE_ATTRIBUTES, READ_TELEMETRY, WRITE_TELEMETRY, CLAIM_DEVICES
+@AllArgsConstructor
+@Data
+public class ClaimData {
+
+    private final TenantId tenantId;
+    private final CustomerId customerId;
+    private final String deviceName;
+    private final String secretKey;
+    private final long expirationTime;
 
 }

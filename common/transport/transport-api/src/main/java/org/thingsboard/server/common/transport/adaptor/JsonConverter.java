@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.msg.kv.AttributesKVMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ClaimDeviceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.KeyValueProto;
 import org.thingsboard.server.gen.transport.TransportProtos.KeyValueType;
@@ -80,6 +81,11 @@ public class JsonConverter {
             throw new JsonSyntaxException(CAN_T_PARSE_VALUE + jsonObject);
         }
         return builder.build();
+    }
+
+    public static ClaimDeviceMsg convertToClaimDeviceProto(String deviceToken, String secretKey) {
+        ClaimDeviceMsg.Builder result = ClaimDeviceMsg.newBuilder();
+        return result.setDeviceToken(deviceToken).setSecretKey(secretKey).build();
     }
 
     public static PostAttributeMsg convertToAttributesProto(JsonElement jsonObject) throws JsonSyntaxException {
@@ -137,7 +143,7 @@ public class JsonConverter {
                         String message = String.format("String value length [%d] for key [%s] is greater than maximum allowed [%d]", value.getAsString().length(), valueEntry.getKey(), maxStringValueLength);
                         throw new JsonSyntaxException(message);
                     }
-                    if(isTypeCastEnabled && NumberUtils.isParsable(value.getAsString())) {
+                    if (isTypeCastEnabled && NumberUtils.isParsable(value.getAsString())) {
                         try {
                             result.add(buildNumericKeyValueProto(value, valueEntry.getKey()));
                         } catch (RuntimeException th) {
@@ -400,7 +406,7 @@ public class JsonConverter {
                         String message = String.format("String value length [%d] for key [%s] is greater than maximum allowed [%d]", value.getAsString().length(), valueEntry.getKey(), maxStringValueLength);
                         throw new JsonSyntaxException(message);
                     }
-                    if(isTypeCastEnabled && NumberUtils.isParsable(value.getAsString())) {
+                    if (isTypeCastEnabled && NumberUtils.isParsable(value.getAsString())) {
                         try {
                             parseNumericValue(result, valueEntry, value);
                         } catch (RuntimeException th) {

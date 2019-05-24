@@ -20,7 +20,6 @@ import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
@@ -114,6 +113,19 @@ public class DeviceApiController {
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
                     TransportService transportService = transportContext.getTransportService();
                     transportService.process(sessionInfo, JsonConverter.convertToTelemetryProto(new JsonParser().parse(json)),
+                            new HttpOkCallback(responseWriter));
+                }));
+        return responseWriter;
+    }
+
+    @RequestMapping(value = "/{deviceToken}/claim", method = RequestMethod.POST)
+    public DeferredResult<ResponseEntity> claimDevice(@PathVariable("deviceToken") String deviceToken,
+                                                      @RequestParam(required = false, defaultValue = "") String secretKey, HttpServletRequest request) {
+        DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
+        transportContext.getTransportService().process(ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
+                new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
+                    TransportService transportService = transportContext.getTransportService();
+                    transportService.processClaiming(sessionInfo, JsonConverter.convertToClaimDeviceProto(deviceToken, secretKey),
                             new HttpOkCallback(responseWriter));
                 }));
         return responseWriter;

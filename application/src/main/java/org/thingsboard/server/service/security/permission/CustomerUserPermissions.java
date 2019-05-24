@@ -16,20 +16,20 @@
 package org.thingsboard.server.service.security.permission;
 
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.*;
+import org.thingsboard.server.common.data.DashboardInfo;
+import org.thingsboard.server.common.data.HasCustomerId;
+import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
-import java.util.HashMap;
+@Component(value = "customerUserPermissions")
+public class CustomerUserPermissions extends AbstractPermissions {
 
-@Component(value="customerUserPermissions")
-public class CustomerUserPremissions extends AbstractPermissions {
-
-    public CustomerUserPremissions() {
+    public CustomerUserPermissions() {
         super();
         put(Resource.ALARM, TenantAdminPermissions.tenantEntityPermissionChecker);
         put(Resource.ASSET, customerEntityPermissionChecker);
@@ -44,26 +44,26 @@ public class CustomerUserPremissions extends AbstractPermissions {
 
     private static final PermissionChecker customerEntityPermissionChecker =
             new PermissionChecker.GenericPermissionChecker(Operation.READ, Operation.READ_CREDENTIALS,
-                    Operation.READ_ATTRIBUTES, Operation.READ_TELEMETRY, Operation.RPC_CALL) {
+                    Operation.READ_ATTRIBUTES, Operation.READ_TELEMETRY, Operation.RPC_CALL, Operation.CLAIM_DEVICES) {
 
-        @Override
-        public boolean hasPermission(SecurityUser user, Operation operation, EntityId entityId, HasTenantId entity) {
+                @Override
+                public boolean hasPermission(SecurityUser user, Operation operation, EntityId entityId, HasTenantId entity) {
 
-            if (!super.hasPermission(user, operation, entityId, entity)) {
-                return false;
-            }
-            if (!user.getTenantId().equals(entity.getTenantId())) {
-                return false;
-            }
-            if (!(entity instanceof HasCustomerId)) {
-                return false;
-            }
-            if (!user.getCustomerId().equals(((HasCustomerId)entity).getCustomerId())) {
-                return false;
-            }
-            return true;
-        }
-    };
+                    if (!super.hasPermission(user, operation, entityId, entity)) {
+                        return false;
+                    }
+                    if (!user.getTenantId().equals(entity.getTenantId())) {
+                        return false;
+                    }
+                    if (!(entity instanceof HasCustomerId)) {
+                        return false;
+                    }
+                    if (!operation.equals(Operation.CLAIM_DEVICES) && !user.getCustomerId().equals(((HasCustomerId) entity).getCustomerId())) {
+                        return false;
+                    }
+                    return true;
+                }
+            };
 
     private static final PermissionChecker customerPermissionChecker =
             new PermissionChecker.GenericPermissionChecker(Operation.READ, Operation.READ_ATTRIBUTES, Operation.READ_TELEMETRY) {

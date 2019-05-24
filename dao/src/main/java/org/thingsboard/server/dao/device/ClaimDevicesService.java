@@ -13,11 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.security.permission;
+package org.thingsboard.server.dao.device;
 
-public enum Operation {
+import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.TenantId;
 
-    ALL, CREATE, READ, WRITE, DELETE, ASSIGN_TO_CUSTOMER, UNASSIGN_FROM_CUSTOMER, RPC_CALL,
-    READ_CREDENTIALS, WRITE_CREDENTIALS, READ_ATTRIBUTES, WRITE_ATTRIBUTES, READ_TELEMETRY, WRITE_TELEMETRY, CLAIM_DEVICES
+public interface ClaimDevicesService {
+
+    ListenableFuture<Boolean> claimDevice(TenantId tenantId, CustomerId customerId, Device device, String secretKey, long durationMs);
+
+    void processClaimDevice(String deviceToken, String secretKey);
 
 }
