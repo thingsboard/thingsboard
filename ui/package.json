@@ -64,6 +64,7 @@
     "jstree-bootstrap-theme": "^1.0.1",
     "leaflet": "^1.0.3",
     "leaflet-providers": "^1.1.17",
+    "material-steppers": "^2.0.0",
     "material-ui": "^0.16.1",
     "material-ui-number-input": "^5.0.16",
     "md-color-picker": "0.2.6",

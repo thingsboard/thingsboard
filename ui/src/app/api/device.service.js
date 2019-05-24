@@ -179,15 +179,15 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
         let promise = "";
         let statisticalInfo = {};
         for (let i = 0; i < attributesType.length; i++) {
-            let attrribute = attributesType[i];
-            if (deviceRelation.attributes[attrribute] && deviceRelation.attributes[attrribute].length !== 0) {
-                promise = attributeService.saveEntityAttributes(types.entityType.device, deviceId, types.attributesScope[attrribute].value, deviceRelation.attributes[attrribute], config).then(function () {
+            let attribute = attributesType[i];
+            if (deviceRelation.attributes[attribute] && deviceRelation.attributes[attribute].length !== 0) {
+                promise = attributeService.saveEntityAttributes(types.entityType.device, deviceId, types.attributesScope[attribute].value, deviceRelation.attributes[attribute], config).then(function () {
                         statisticalInfo.create = {
-                            [attrribute]: deviceRelation.attributes[attributesType[i]].length
+                            [attribute]: deviceRelation.attributes[attribute].length
                         };
                     }, function () {
                         statisticalInfo.error = {
-                            [attrribute]: deviceRelation.attributes[attributesType[i]].length
+                            [attribute]: deviceRelation.attributes[attribute].length
                         };
                 });
                 allPromise.push(promise);
@@ -234,7 +234,9 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
                         device: 1
                     };
                     saveDeviceRelarion(response.id.id, deviceParameters, config).then(function success(response) {
-                        delete Object.assign(response, {update: response.create}).create;
+                        if(response.create) {
+                            delete Object.assign(response, {update: response.create}).create;
+                        }
                         angular.merge(statisticalInfo, response);
                         deferred.resolve(statisticalInfo);
                     });
