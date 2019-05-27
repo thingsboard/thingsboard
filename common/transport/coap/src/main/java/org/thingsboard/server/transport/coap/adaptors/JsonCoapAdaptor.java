@@ -24,6 +24,7 @@ import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.Request;
 import org.eclipse.californium.core.coap.Response;
 import org.springframework.util.StringUtils;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.msg.kv.AttributesKVMsg;
 import org.thingsboard.server.common.msg.session.SessionContext;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
@@ -110,6 +111,17 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
     }
 
     @Override
+    public TransportProtos.ClaimDeviceMsg convertToClaimDevice(UUID sessionId, Request inbound, TransportProtos.SessionInfoProto sessionInfo) throws AdaptorException {
+        DeviceId deviceId = new DeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
+        String payload = validateClaimPayload(sessionId, inbound);
+        try {
+            return JsonConverter.convertToClaimDeviceProto(deviceId, payload);
+        } catch (IllegalStateException | JsonSyntaxException ex) {
+            throw new AdaptorException(ex);
+        }
+    }
+
+    @Override
     public Response convertToPublish(CoapTransportResource.CoapSessionListener session, TransportProtos.GetAttributeResponseMsg msg) throws AdaptorException {
         if (msg.getClientAttributeListCount() == 0 && msg.getSharedAttributeListCount() == 0 && msg.getDeletedAttributeKeysCount() == 0) {
             return new Response(CoAP.ResponseCode.NOT_FOUND);
@@ -133,6 +145,15 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
         if (payload == null) {
             log.warn("[{}] Payload is empty!", sessionId);
             throw new AdaptorException(new IllegalArgumentException("Payload is empty!"));
+        }
+        return payload;
+    }
+
+    private String validateClaimPayload(UUID sessionId, Request inbound) throws AdaptorException {
+        String payload = inbound.getPayloadString();
+        if (payload == null) {
+            log.warn("[{}] Payload is empty!", sessionId);
+            return "";
         }
         return payload;
     }

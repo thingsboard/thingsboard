@@ -16,12 +16,16 @@
 package org.thingsboard.server.service.transport;
 
 import akka.actor.ActorRef;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.util.DonAsynchron;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.service.AbstractTransportService;
@@ -53,6 +57,7 @@ import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWra
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
@@ -180,12 +185,10 @@ public class LocalTransportService extends AbstractTransportService implements R
             rpcService.tell(encodingService.convertToProtoDataMessage(address.get(), wrapper));
             callback.onSuccess(null);
         } else {
-            try {
-                claimDevicesService.processClaimDevice(msg.getDeviceToken(), msg.getSecretKey());
-                callback.onSuccess(null);
-            } catch (Exception e) {
-                callback.onError(e);
-            }
+            TenantId tenantId = new TenantId(new UUID(sessionInfo.getTenantIdMSB(), sessionInfo.getTenantIdLSB()));
+            DeviceId deviceId = new DeviceId(new UUID(msg.getDeviceIdMSB(), msg.getDeviceIdLSB()));
+            DonAsynchron.withCallback(claimDevicesService.claimDevice(tenantId, deviceId, msg.getSecretKey()),
+                    callback::onSuccess, callback::onError);
         }
     }
 

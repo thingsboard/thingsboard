@@ -174,6 +174,16 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
         return Optional.of(createMqttPublishMsg(ctx, MqttTopics.DEVICE_RPC_RESPONSE_TOPIC + rpcResponse.getRequestId(), JsonConverter.toJson(rpcResponse)));
     }
 
+    @Override
+    public TransportProtos.ClaimDeviceMsg convertToClaimDevice(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
+        String payload = validateClaimPayload(ctx.getSessionId(), inbound.payload());
+        try {
+            return JsonConverter.convertToClaimDeviceProto(ctx.getDeviceId(), payload);
+        } catch (IllegalStateException | JsonSyntaxException ex) {
+            throw new AdaptorException(ex);
+        }
+    }
+
     private MqttPublishMessage createMqttPublishMsg(MqttDeviceAwareSessionContext ctx, String topic, JsonElement json) {
         MqttFixedHeader mqttFixedHeader =
                 new MqttFixedHeader(MqttMessageType.PUBLISH, false, ctx.getQoSForTopic(topic), false, 0);
@@ -207,6 +217,19 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
             if (payload == null) {
                 log.warn("[{}] Payload is empty!", sessionId);
                 throw new AdaptorException(new IllegalArgumentException("Payload is empty!"));
+            }
+            return payload;
+        } finally {
+            payloadData.release();
+        }
+    }
+
+    private static String validateClaimPayload(UUID sessionId, ByteBuf payloadData) throws AdaptorException {
+        try {
+            String payload = payloadData.toString(UTF8);
+            if (payload == null) {
+                log.warn("[{}] Payload is empty!", sessionId);
+                return "";
             }
             return payload;
         } finally {

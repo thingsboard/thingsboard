@@ -173,8 +173,9 @@ message ToServerRpcResponseMsg {
 }
 
 message ClaimDeviceMsg {
-  string deviceToken = 1;
-  string secretKey = 2;
+  int64 deviceIdMSB = 1;
+  int64 deviceIdLSB = 2;
+  string secretKey = 3;
 }
 
 //Used to report session state to tb-node and persist this state in the cache on the tb-node level.

@@ -18,12 +18,18 @@ package org.thingsboard.server.dao.device;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.device.claim.ClaimResponse;
+
+import java.util.List;
 
 public interface ClaimDevicesService {
 
-    ListenableFuture<Boolean> claimDevice(TenantId tenantId, CustomerId customerId, Device device, String secretKey, long durationMs);
+    ListenableFuture<Void> claimDevice(TenantId tenantId, DeviceId deviceId, String secretKey);
 
-    void processClaimDevice(String deviceToken, String secretKey);
+    ListenableFuture<ClaimResponse> processClaimDevice(Device device, CustomerId customerId, String secretKey);
+
+    ListenableFuture<List<Void>> reClaimDevice(TenantId tenantId, Device device);
 
 }

@@ -13,20 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.device.claimdata;
+package org.thingsboard.server.dao.device.claim;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.TenantId;
 
 @AllArgsConstructor
 @Data
 public class ClaimData {
 
-    private final TenantId tenantId;
-    private final CustomerId customerId;
-    private final String deviceName;
     private final String secretKey;
     private final long expirationTime;
 

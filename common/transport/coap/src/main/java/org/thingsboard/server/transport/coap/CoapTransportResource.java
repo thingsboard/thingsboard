@@ -25,6 +25,7 @@ import org.eclipse.californium.core.network.ExchangeObserver;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.eclipse.californium.core.server.resources.Resource;
 import org.springframework.util.ReflectionUtils;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.security.DeviceTokenCredentials;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
@@ -122,6 +123,9 @@ public class CoapTransportResource extends CoapResource {
                         processRequest(exchange, SessionMsgType.TO_SERVER_RPC_REQUEST);
                     }
                     break;
+                case CLAIM:
+                    processRequest(exchange, SessionMsgType.CLAIM_REQUEST);
+                    break;
             }
         }
     }
@@ -151,6 +155,11 @@ public class CoapTransportResource extends CoapResource {
                             case POST_TELEMETRY_REQUEST:
                                 transportService.process(sessionInfo,
                                         transportContext.getAdaptor().convertToPostTelemetry(sessionId, request),
+                                        new CoapOkCallback(exchange));
+                                break;
+                            case CLAIM_REQUEST:
+                                transportService.processClaiming(sessionInfo,
+                                        transportContext.getAdaptor().convertToClaimDevice(sessionId, request, sessionInfo),
                                         new CoapOkCallback(exchange));
                                 break;
                             case SUBSCRIBE_ATTRIBUTES_REQUEST:

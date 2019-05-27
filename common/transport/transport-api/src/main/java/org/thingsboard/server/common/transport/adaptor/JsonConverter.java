@@ -24,6 +24,7 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.util.StringUtils;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.kv.AttributeKey;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
@@ -83,9 +84,40 @@ public class JsonConverter {
         return builder.build();
     }
 
-    public static ClaimDeviceMsg convertToClaimDeviceProto(String deviceToken, String secretKey) {
+    public static ClaimDeviceMsg convertToClaimDeviceProto(DeviceId deviceId, String json) {
+        return buildClaimDeviceMsg(deviceId, getSecretKey(json));
+    }
+
+    public static ClaimDeviceMsg convertToClaimDeviceProto(DeviceId deviceId, JsonElement json) {
+        return buildClaimDeviceMsg(deviceId, getSecretKey(json));
+    }
+
+    private static ClaimDeviceMsg buildClaimDeviceMsg(DeviceId deviceId, String secretKey) {
         ClaimDeviceMsg.Builder result = ClaimDeviceMsg.newBuilder();
-        return result.setDeviceToken(deviceToken).setSecretKey(secretKey).build();
+        return result
+                .setDeviceIdMSB(deviceId.getId().getMostSignificantBits())
+                .setDeviceIdLSB(deviceId.getId().getLeastSignificantBits())
+                .setSecretKey(secretKey)
+                .build();
+    }
+
+    private static String getSecretKey(String json) {
+        if (json != null && !json.isEmpty()) {
+            return getSecretKey(new JsonParser().parse(json));
+        }
+        return "";
+    }
+
+    private static String getSecretKey(JsonElement jsonElement) {
+        if (jsonElement.isJsonObject()) {
+            JsonObject jo = jsonElement.getAsJsonObject();
+            if (jo.has("secretKey")) {
+                return jo.get("secretKey").getAsString();
+            }
+        } else {
+            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + jsonElement);
+        }
+        return "";
     }
 
     public static PostAttributeMsg convertToAttributesProto(JsonElement jsonObject) throws JsonSyntaxException {

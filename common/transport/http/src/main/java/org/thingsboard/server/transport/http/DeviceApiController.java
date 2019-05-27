@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.common.transport.TransportService;
@@ -120,12 +121,13 @@ public class DeviceApiController {
 
     @RequestMapping(value = "/{deviceToken}/claim", method = RequestMethod.POST)
     public DeferredResult<ResponseEntity> claimDevice(@PathVariable("deviceToken") String deviceToken,
-                                                      @RequestParam(required = false, defaultValue = "") String secretKey, HttpServletRequest request) {
+                                                      @RequestBody(required = false) String json, HttpServletRequest request) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
         transportContext.getTransportService().process(ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
                     TransportService transportService = transportContext.getTransportService();
-                    transportService.processClaiming(sessionInfo, JsonConverter.convertToClaimDeviceProto(deviceToken, secretKey),
+                    DeviceId deviceId = new DeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
+                    transportService.processClaiming(sessionInfo, JsonConverter.convertToClaimDeviceProto(deviceId, json),
                             new HttpOkCallback(responseWriter));
                 }));
         return responseWriter;

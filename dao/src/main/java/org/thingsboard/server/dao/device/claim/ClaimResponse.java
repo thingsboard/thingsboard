@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.claim;
+package org.thingsboard.server.dao.device.claim;
 
-public enum ClaimResult {
+public enum  ClaimResponse {
 
     SUCCESS,
+    TIMEOUT,
     CLAIMED
 
 }
