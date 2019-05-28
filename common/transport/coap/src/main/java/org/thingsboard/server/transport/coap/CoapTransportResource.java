@@ -19,13 +19,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.coap.CoAP.ResponseCode;
 import org.eclipse.californium.core.coap.Request;
-import org.eclipse.californium.core.coap.Response;
 import org.eclipse.californium.core.network.Exchange;
 import org.eclipse.californium.core.network.ExchangeObserver;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.eclipse.californium.core.server.resources.Resource;
 import org.springframework.util.ReflectionUtils;
-import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.security.DeviceTokenCredentials;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
@@ -327,7 +325,7 @@ public class CoapTransportResource extends CoapResource {
 
         @Override
         public void onSuccess(Void msg) {
-                exchange.respond(ResponseCode.VALID);
+            exchange.respond(ResponseCode.VALID);
         }
 
         @Override

@@ -54,7 +54,7 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
     @Autowired
     private CacheManager cacheManager;
 
-    @Value("${device.claim.duration}") // TODO: 5/27/19 tests are failing...
+    @Value("${device.claim.duration}")
     private long durationMs;
 
     public ListenableFuture<Void> claimDevice(TenantId tenantId, DeviceId deviceId, String secretKey) {
@@ -77,7 +77,7 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
                         return null;
                     }
                 }
-                log.warn("The device has been already claimed!");
+                log.warn("The device [{}] has been already claimed!", device.getName());
                 throw new IllegalArgumentException();
             });
 
@@ -96,6 +96,7 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
         if (claimData != null) {
             long currTs = System.currentTimeMillis();
             if (currTs > claimData.getExpirationTime() || !secretKey.equals(claimData.getSecretKey())) {
+                log.debug("The claiming timeout occurred for the device [{}]", device.getName());
                 return Futures.immediateFuture(ClaimResponse.TIMEOUT);
             } else {
                 device.setCustomerId(customerId);
@@ -108,6 +109,7 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
                 return Futures.transform(future, result -> ClaimResponse.SUCCESS);
             }
         } else {
+            log.debug("Failed to find the device's claiming message![{}]", device.getName());
             return Futures.immediateFuture(ClaimResponse.CLAIMED);
         }
     }

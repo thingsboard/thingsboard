@@ -213,13 +213,13 @@ public class GatewaySessionHandler {
                                     transportService.processClaiming(deviceCtx.getSessionInfo(), claimDeviceMsg, getPubAckCallback(channel, deviceName, msgId, claimDeviceMsg));
                                 } catch (Throwable e) {
                                     UUID gatewayId = new UUID(gateway.getDeviceIdMSB(), gateway.getDeviceIdLSB());
-                                    log.warn("[{}][{}] Failed to convert telemetry: {}", gatewayId, deviceName, deviceEntry.getValue(), e);
+                                    log.warn("[{}][{}] Failed to convert claim message: {}", gatewayId, deviceName, deviceEntry.getValue(), e);
                                 }
                             }
 
                             @Override
                             public void onFailure(Throwable t) {
-                                log.debug("[{}] Failed to process device telemetry command: {}", sessionId, deviceName, t);
+                                log.debug("[{}] Failed to process device claiming command: {}", sessionId, deviceName, t);
                             }
                         }, context.getExecutor());
             }
@@ -245,6 +245,7 @@ public class GatewaySessionHandler {
                                 TransportProtos.PostAttributeMsg postAttributeMsg = JsonConverter.convertToAttributesProto(deviceEntry.getValue().getAsJsonObject());
                                 transportService.process(deviceCtx.getSessionInfo(), postAttributeMsg, getPubAckCallback(channel, deviceName, msgId, postAttributeMsg));
                             }
+
                             @Override
                             public void onFailure(Throwable t) {
                                 log.debug("[{}] Failed to process device attributes command: {}", sessionId, deviceName, t);
