@@ -16,14 +16,12 @@
 package org.thingsboard.server.service.transport;
 
 import akka.actor.ActorRef;
-import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.util.DonAsynchron;
 import org.thingsboard.server.actors.ActorSystemContext;
-import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
@@ -187,7 +185,7 @@ public class LocalTransportService extends AbstractTransportService implements R
         } else {
             TenantId tenantId = new TenantId(new UUID(sessionInfo.getTenantIdMSB(), sessionInfo.getTenantIdLSB()));
             DeviceId deviceId = new DeviceId(new UUID(msg.getDeviceIdMSB(), msg.getDeviceIdLSB()));
-            DonAsynchron.withCallback(claimDevicesService.claimDevice(tenantId, deviceId, msg.getSecretKey()),
+            DonAsynchron.withCallback(claimDevicesService.claimDevice(tenantId, deviceId, msg.getSecretKey(), msg.getDurationMs()),
                     callback::onSuccess, callback::onError);
         }
     }

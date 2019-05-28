@@ -26,7 +26,7 @@ import java.util.List;
 
 public interface ClaimDevicesService {
 
-    ListenableFuture<Void> claimDevice(TenantId tenantId, DeviceId deviceId, String secretKey);
+    ListenableFuture<Void> claimDevice(TenantId tenantId, DeviceId deviceId, String secretKey, long durationMs);
 
     ListenableFuture<ClaimResponse> processClaimDevice(Device device, CustomerId customerId, String secretKey);
 

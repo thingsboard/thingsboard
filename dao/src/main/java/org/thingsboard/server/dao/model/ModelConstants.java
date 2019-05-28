@@ -53,7 +53,6 @@ public class ModelConstants {
     public static final String LAST_UPDATE_TS_COLUMN = "last_update_ts";
 
     public static final String CLAIM_ATTRIBUTE_NAME = "claimingAllowed";
-    public static final String CLAIM_SECRET_KEY_FIELD_NAME = "secretKey";
 
     /**
      * Cassandra user constants.

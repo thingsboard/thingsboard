@@ -85,39 +85,50 @@ public class JsonConverter {
     }
 
     public static ClaimDeviceMsg convertToClaimDeviceProto(DeviceId deviceId, String json) {
-        return buildClaimDeviceMsg(deviceId, getSecretKey(json));
+        String secretKey = "";
+        long durationMs = 0L;
+        if (json != null && !json.isEmpty()) {
+            JsonElement jsonElement = new JsonParser().parse(json);
+            if (jsonElement.isJsonObject()) {
+                JsonObject jo = jsonElement.getAsJsonObject();
+                if (jo.has("secretKey")) {
+                    secretKey = jo.get("secretKey").getAsString();
+                }
+                if (jo.has("durationMs")) {
+                    durationMs = jo.get("durationMs").getAsLong();
+                }
+            } else {
+                throw new JsonSyntaxException(CAN_T_PARSE_VALUE + jsonElement);
+            }
+        }
+        return buildClaimDeviceMsg(deviceId, secretKey, durationMs);
     }
 
     public static ClaimDeviceMsg convertToClaimDeviceProto(DeviceId deviceId, JsonElement json) {
-        return buildClaimDeviceMsg(deviceId, getSecretKey(json));
+        String secretKey = "";
+        long durationMs = 0L;
+        if (json.isJsonObject()) {
+            JsonObject jo = json.getAsJsonObject();
+            if (jo.has("secretKey")) {
+                secretKey = jo.get("secretKey").getAsString();
+            }
+            if (jo.has("durationMs")) {
+                durationMs = jo.get("durationMs").getAsLong();
+            }
+        } else {
+            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
+        }
+        return buildClaimDeviceMsg(deviceId, secretKey, durationMs);
     }
 
-    private static ClaimDeviceMsg buildClaimDeviceMsg(DeviceId deviceId, String secretKey) {
+    private static ClaimDeviceMsg buildClaimDeviceMsg(DeviceId deviceId, String secretKey, long durationMs) {
         ClaimDeviceMsg.Builder result = ClaimDeviceMsg.newBuilder();
         return result
                 .setDeviceIdMSB(deviceId.getId().getMostSignificantBits())
                 .setDeviceIdLSB(deviceId.getId().getLeastSignificantBits())
                 .setSecretKey(secretKey)
+                .setDurationMs(durationMs)
                 .build();
-    }
-
-    private static String getSecretKey(String json) {
-        if (json != null && !json.isEmpty()) {
-            return getSecretKey(new JsonParser().parse(json));
-        }
-        return "";
-    }
-
-    private static String getSecretKey(JsonElement jsonElement) {
-        if (jsonElement.isJsonObject()) {
-            JsonObject jo = jsonElement.getAsJsonObject();
-            if (jo.has("secretKey")) {
-                return jo.get("secretKey").getAsString();
-            }
-        } else {
-            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + jsonElement);
-        }
-        return "";
     }
 
     public static PostAttributeMsg convertToAttributesProto(JsonElement jsonObject) throws JsonSyntaxException {

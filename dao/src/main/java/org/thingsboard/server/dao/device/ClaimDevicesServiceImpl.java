@@ -55,9 +55,10 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
     private CacheManager cacheManager;
 
     @Value("${device.claim.duration}")
-    private long durationMs;
+    private long systemDurationMs;
 
-    public ListenableFuture<Void> claimDevice(TenantId tenantId, DeviceId deviceId, String secretKey) {
+    @Override
+    public ListenableFuture<Void> claimDevice(TenantId tenantId, DeviceId deviceId, String secretKey, long durationMs) {
         ListenableFuture<Device> deviceFuture = deviceService.findDeviceByIdAsync(tenantId, deviceId);
         return Futures.transformAsync(deviceFuture, device -> {
             Cache cache = cacheManager.getCache(CLAIM_DEVICES_CACHE);
@@ -72,7 +73,8 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
                     Optional<Boolean> claimingAllowedOptional = list.get(0).getBooleanValue();
                     if (claimingAllowedOptional.isPresent() && claimingAllowedOptional.get()
                             && device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
-                        ClaimData claimData = new ClaimData(secretKey, System.currentTimeMillis() + durationMs);
+                        ClaimData claimData = new ClaimData(secretKey,
+                                System.currentTimeMillis() + validateDurationMs(durationMs));
                         cache.putIfAbsent(key, claimData);
                         return null;
                     }
@@ -82,6 +84,13 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
             });
 
         });
+    }
+
+    private long validateDurationMs(long durationMs) {
+        if (durationMs > 0L) {
+            return durationMs;
+        }
+        return systemDurationMs;
     }
 
     @Override
@@ -114,6 +123,7 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
         }
     }
 
+    @Override
     public ListenableFuture<List<Void>> reClaimDevice(TenantId tenantId, Device device) {
         if (!device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
             device.setCustomerId(null);
