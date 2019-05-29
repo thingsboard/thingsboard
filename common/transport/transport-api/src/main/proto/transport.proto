@@ -172,6 +172,13 @@ message ToServerRpcResponseMsg {
   string error = 3;
 }
 
+message ClaimDeviceMsg {
+  int64 deviceIdMSB = 1;
+  int64 deviceIdLSB = 2;
+  string secretKey = 3;
+  int64 durationMs = 4;
+}
+
 //Used to report session state to tb-node and persist this state in the cache on the tb-node level.
 message SubscriptionInfoProto {
   int64 lastActivityTime = 1;
@@ -199,6 +206,7 @@ message TransportToDeviceActorMsg {
   ToDeviceRpcResponseMsg toDeviceRPCCallResponse = 8;
   ToServerRpcRequestMsg toServerRPCCallRequest = 9;
   SubscriptionInfoProto subscriptionInfo = 10;
+  ClaimDeviceMsg claimDevice = 11;
 }
 
 message DeviceActorToTransportMsg {

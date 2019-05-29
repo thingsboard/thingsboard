@@ -24,6 +24,7 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.util.StringUtils;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.kv.AttributeKey;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
@@ -35,6 +36,7 @@ import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.msg.kv.AttributesKVMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ClaimDeviceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.KeyValueProto;
 import org.thingsboard.server.gen.transport.TransportProtos.KeyValueType;
@@ -80,6 +82,53 @@ public class JsonConverter {
             throw new JsonSyntaxException(CAN_T_PARSE_VALUE + jsonObject);
         }
         return builder.build();
+    }
+
+    public static ClaimDeviceMsg convertToClaimDeviceProto(DeviceId deviceId, String json) {
+        String secretKey = "";
+        long durationMs = 0L;
+        if (json != null && !json.isEmpty()) {
+            JsonElement jsonElement = new JsonParser().parse(json);
+            if (jsonElement.isJsonObject()) {
+                JsonObject jo = jsonElement.getAsJsonObject();
+                if (jo.has("secretKey")) {
+                    secretKey = jo.get("secretKey").getAsString();
+                }
+                if (jo.has("durationMs")) {
+                    durationMs = jo.get("durationMs").getAsLong();
+                }
+            } else {
+                throw new JsonSyntaxException(CAN_T_PARSE_VALUE + jsonElement);
+            }
+        }
+        return buildClaimDeviceMsg(deviceId, secretKey, durationMs);
+    }
+
+    public static ClaimDeviceMsg convertToClaimDeviceProto(DeviceId deviceId, JsonElement json) {
+        String secretKey = "";
+        long durationMs = 0L;
+        if (json.isJsonObject()) {
+            JsonObject jo = json.getAsJsonObject();
+            if (jo.has("secretKey")) {
+                secretKey = jo.get("secretKey").getAsString();
+            }
+            if (jo.has("durationMs")) {
+                durationMs = jo.get("durationMs").getAsLong();
+            }
+        } else {
+            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
+        }
+        return buildClaimDeviceMsg(deviceId, secretKey, durationMs);
+    }
+
+    private static ClaimDeviceMsg buildClaimDeviceMsg(DeviceId deviceId, String secretKey, long durationMs) {
+        ClaimDeviceMsg.Builder result = ClaimDeviceMsg.newBuilder();
+        return result
+                .setDeviceIdMSB(deviceId.getId().getMostSignificantBits())
+                .setDeviceIdLSB(deviceId.getId().getLeastSignificantBits())
+                .setSecretKey(secretKey)
+                .setDurationMs(durationMs)
+                .build();
     }
 
     public static PostAttributeMsg convertToAttributesProto(JsonElement jsonObject) throws JsonSyntaxException {
@@ -137,7 +186,7 @@ public class JsonConverter {
                         String message = String.format("String value length [%d] for key [%s] is greater than maximum allowed [%d]", value.getAsString().length(), valueEntry.getKey(), maxStringValueLength);
                         throw new JsonSyntaxException(message);
                     }
-                    if(isTypeCastEnabled && NumberUtils.isParsable(value.getAsString())) {
+                    if (isTypeCastEnabled && NumberUtils.isParsable(value.getAsString())) {
                         try {
                             result.add(buildNumericKeyValueProto(value, valueEntry.getKey()));
                         } catch (RuntimeException th) {
@@ -400,7 +449,7 @@ public class JsonConverter {
                         String message = String.format("String value length [%d] for key [%s] is greater than maximum allowed [%d]", value.getAsString().length(), valueEntry.getKey(), maxStringValueLength);
                         throw new JsonSyntaxException(message);
                     }
-                    if(isTypeCastEnabled && NumberUtils.isParsable(value.getAsString())) {
+                    if (isTypeCastEnabled && NumberUtils.isParsable(value.getAsString())) {
                         try {
                             parseNumericValue(result, valueEntry, value);
                         } catch (RuntimeException th) {

@@ -28,7 +28,12 @@ import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.UUID;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by ashvayka on 17.10.18.
@@ -148,6 +153,8 @@ public abstract class AbstractTransportService implements TransportService {
 
     protected abstract void doProcess(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ToServerRpcRequestMsg msg, TransportServiceCallback<Void> callback);
 
+    protected abstract void doProcessClaiming(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ClaimDeviceMsg msg, TransportServiceCallback<Void> callback);
+
     private SessionMetaData reportActivityInternal(TransportProtos.SessionInfoProto sessionInfo) {
         UUID sessionId = toId(sessionInfo);
         SessionMetaData sessionMetaData = sessions.get(sessionId);
@@ -188,6 +195,12 @@ public abstract class AbstractTransportService implements TransportService {
     @Override
     public void deregisterSession(TransportProtos.SessionInfoProto sessionInfo) {
         sessions.remove(toId(sessionInfo));
+    }
+
+    @Override
+    public void processClaiming(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ClaimDeviceMsg msg,
+                                TransportServiceCallback<Void> callback) {
+        doProcessClaiming(sessionInfo, msg, callback);
     }
 
     @Override

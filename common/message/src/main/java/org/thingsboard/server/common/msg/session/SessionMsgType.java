@@ -28,7 +28,9 @@ public enum SessionMsgType {
 
     RULE_ENGINE_ERROR,
 
-    SESSION_OPEN, SESSION_CLOSE;
+    SESSION_OPEN, SESSION_CLOSE,
+
+    CLAIM_REQUEST();
 
     private final boolean requiresRulesProcessing;
 
