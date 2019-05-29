@@ -266,14 +266,23 @@ export default class TbGoogleMap {
             content: ''
         });
         var map = this;
-        marker.addListener('click', function() {
-            if (settings.autocloseTooltip) {
-                map.tooltips.forEach((tooltip) => {
-                    tooltip.popup.close();
-                });
-            }
-            popup.open(this.map, marker);
-        });
+        if (settings.displayTooltipAction == 'hover') {
+            marker.addListener('mouseover', function () {
+                popup.open(this.map, marker);
+            });
+            marker.addListener('mouseout', function () {
+                popup.close();
+            });
+        } else {
+            marker.addListener('click', function() {
+                if (settings.autocloseTooltip) {
+                    map.tooltips.forEach((tooltip) => {
+                        tooltip.popup.close();
+                    });
+                }
+                popup.open(this.map, marker);
+            });
+        }
         this.tooltips.push( {
             markerArgs: markerArgs,
             popup: popup,

@@ -278,15 +278,25 @@ export default class TbTencentMap {
 			map: this.map
 		});
 		var map = this;
-		qq.maps.event.addListener(marker, 'click', function () {
-			if (settings.autocloseTooltip) {
-				map.tooltips.forEach((tooltip) => {
-					tooltip.popup.close();
-				});
-			}
-			popup.open();
-			popup.setPosition(marker);
-		});
+		if (settings.displayTooltipAction == 'hover') {
+			qq.maps.event.addListener(marker, 'mouseover', function () {
+				popup.open();
+				popup.setPosition(marker);
+			});
+			qq.maps.event.addListener(marker, 'mouseout', function () {
+				popup.close();
+			});
+		} else {
+			qq.maps.event.addListener(marker, 'click', function () {
+				if (settings.autocloseTooltip) {
+					map.tooltips.forEach((tooltip) => {
+						tooltip.popup.close();
+					});
+				}
+				popup.open();
+				popup.setPosition(marker);
+			});
+		}
 		map.tooltips.push({
 			markerArgs: markerArgs,
 			popup: popup,
