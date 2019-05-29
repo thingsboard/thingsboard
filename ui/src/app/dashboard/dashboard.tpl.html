@@ -21,7 +21,7 @@
              ng-class="{ 'tb-dashboard-toolbar-opened': vm.toolbarOpened, 'tb-dashboard-toolbar-closed': !vm.toolbarOpened }">
         <tb-dashboard-toolbar ng-show="!vm.widgetEditMode" force-fullscreen="forceFullscreen"
                               toolbar-opened="vm.toolbarOpened" on-trigger-click="vm.openToolbar()">
-            <div class="tb-dashboard-action-panels" layout-gt-sm="row" layout-align-gt-sm="space-between center" layout="column" layout-align="center stretch">
+            <div class="tb-dashboard-action-panels" layout-sm="column" layout-xs="column" layout-align-gt-sm="space-between center" layout="row" layout-align="center stretch">
                 <div class="tb-dashboard-action-panel" flex-md="30" layout="row" layout-align-gt-sm="start center" layout-align="space-between center">
                     <md-button ng-show="vm.showCloseToolbar()" aria-label="close-toolbar" class="md-icon-button close-action" ng-click="vm.closeToolbar()">
                         <md-tooltip md-direction="bottom">
