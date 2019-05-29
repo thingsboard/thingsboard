@@ -62,8 +62,8 @@ function TableColumnsAssignmentController($scope, types, $timeout) {
             break;
     }
 
-    $scope.$watch('vm.columns', function(newVal, prevVal){
-        if (newVal && !angular.equals(newVal, prevVal)) {
+    $scope.$watch('vm.columns', function(newVal){
+        if (newVal) {
             var isSelectName = false;
             var isSelectType = false;
             for (var i = 0; i < newVal.length; i++) {
@@ -80,12 +80,17 @@ function TableColumnsAssignmentController($scope, types, $timeout) {
                 vm.entityField.name.disable = isSelectName;
                 vm.entityField.type.disable = isSelectType;
             });
+            if(isSelectName && isSelectType) {
+                vm.theForm.$setDirty();
+            } else {
+                vm.theForm.$setPristine();
+            }
         }
     }, true);
-
-    $scope.$watch('vm.columns', function(newVal, prevVal)  {
-        if (vm.isEdit && !angular.equals(newVal, prevVal)) {
-            vm.theForm.$setDirty();
-        }
-    }, true);
+    //
+    // $scope.$watch('vm.columns', function(newVal, prevVal)  {
+    //     if (newVal && !angular.equals(newVal, prevVal)) {
+    //         vm.theForm.$setDirty();
+    //     }
+    // }, true);
 }

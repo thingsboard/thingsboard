@@ -199,7 +199,7 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
                 break;
             case 4:
                 steppers.next();
-                addDevices(parseData, vm.columnsParam)
+                addDevices(parseData, vm.columnsParam);
                 break;
         }
 

@@ -582,46 +582,10 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         var deferred = $q.defer();
         openImportDialogCSV($event, entityType,'device.import', 'device.device-file').then(
             function success() {
-                // if (!validateImportedDashboard(dashboard)) {
-                //     toast.showError($translate.instant('dashboard.invalid-dashboard-file-error'));
-                //     deferred.reject();
-                // } else {
-                //     dashboard = dashboardUtils.validateAndUpdateDashboard(dashboard);
-                //     var entityAliases = dashboard.configuration.entityAliases;
-                //     if (entityAliases) {
-                //         var aliasIds = Object.keys( entityAliases );
-                //         if (aliasIds.length > 0) {
-                //             processEntityAliases(entityAliases, aliasIds).then(
-                //                 function(missingEntityAliases) {
-                //                     if (Object.keys( missingEntityAliases ).length > 0) {
-                //                         editMissingAliases($event, dashboard.configuration.widgets,
-                //                                 false, 'dashboard.dashboard-import-missing-aliases-title', missingEntityAliases).then(
-                //                             function success(updatedEntityAliases) {
-                //                                 for (var aliasId in updatedEntityAliases) {
-                //                                     entityAliases[aliasId] = updatedEntityAliases[aliasId];
-                //                                 }
-                //                                 saveImportedDashboard(dashboard, deferred);
-                //                             },
-                //                             function fail() {
-                //                                 deferred.reject();
-                //                             }
-                //                         );
-                //                     } else {
-                //                         saveImportedDashboard(dashboard, deferred);
-                //                     }
-                //                 }
-                //             )
-                //         } else {
-                //             saveImportedDashboard(dashboard, deferred);
-                //         }
-                //     } else {
-                //         saveImportedDashboard(dashboard, deferred);
-                //     }
-                // }
                 deferred.resolve();
             },
             function fail() {
-                deferred.reject();
+                deferred.resolve();
             }
         );
         return deferred.promise;
@@ -971,15 +935,22 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
                 entityType: entityType
             },
             parent: angular.element($document[0].body),
+            onComplete: fixedDialogSize,
             multiple: true,
             fullscreen: true,
             targetEvent: $event
-        }).then(function (importData) {
-            deferred.resolve(importData);
+        }).then(function () {
+            deferred.resolve();
         }, function () {
             deferred.reject();
         });
         return deferred.promise;
+    }
+
+    function fixedDialogSize(scope, element) {
+        let dialogElement = element[0].getElementsByTagName('md-dialog');
+        dialogElement[0].style.width = dialogElement[0].offsetWidth + 2 + "px";
+        dialogElement[0].style.height = dialogElement[0].offsetHeight + "px";
     }
 }
 

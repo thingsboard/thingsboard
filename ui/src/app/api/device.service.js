@@ -241,11 +241,15 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
                         deferred.resolve(statisticalInfo);
                     });
                 }, function fail() {
-                    statisticalInfo.error.device = newDevice;
+                    statisticalInfo.error = {
+                        device: 1
+                    };
                     deferred.resolve(statisticalInfo);
                 });
             } else {
-                statisticalInfo.error.device = newDevice;
+                statisticalInfo.error = {
+                    device: 1
+                };
                 deferred.resolve(statisticalInfo);
             }
         });
