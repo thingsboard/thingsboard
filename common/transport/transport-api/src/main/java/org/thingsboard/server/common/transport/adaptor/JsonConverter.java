@@ -104,6 +104,7 @@ public class JsonConverter {
         return buildClaimDeviceMsg(deviceId, secretKey, durationMs);
     }
 
+    //TODO: @dlandiak Fix code duplication
     public static ClaimDeviceMsg convertToClaimDeviceProto(DeviceId deviceId, JsonElement json) {
         String secretKey = "";
         long durationMs = 0L;

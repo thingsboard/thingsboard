@@ -389,6 +389,7 @@ public class DeviceController extends BaseController {
         }
     }
 
+    //TODO: @dlandiak deviceId -> deviceName
     @PreAuthorize("hasAnyAuthority('CUSTOMER_USER')")
     @RequestMapping(value = "/customer/device/{deviceId}/claim", method = RequestMethod.POST)
     @ResponseBody
@@ -470,6 +471,7 @@ public class DeviceController extends BaseController {
         }
     }
 
+    //TODO: @dlandiak add DataConstants.DEFAULT_SECRET_KEY
     private String getSecretKey(String json) throws IOException {
         if (json != null && !json.isEmpty()) {
             JsonNode node = mapper.readTree(json);

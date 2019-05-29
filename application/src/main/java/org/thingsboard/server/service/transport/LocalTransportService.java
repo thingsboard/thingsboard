@@ -173,6 +173,7 @@ public class LocalTransportService extends AbstractTransportService implements R
         forwardToDeviceActor(TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo).setToServerRPCCallRequest(msg).build(), callback);
     }
 
+    //TODO: @dlandiak rename to registerClaimingInfo
     @Override
     protected void doProcessClaiming(SessionInfoProto sessionInfo, ClaimDeviceMsg msg, TransportServiceCallback<Void> callback) {
         TransportToDeviceActorMsg toDeviceActorMsg = TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo).setClaimDevice(msg).build();

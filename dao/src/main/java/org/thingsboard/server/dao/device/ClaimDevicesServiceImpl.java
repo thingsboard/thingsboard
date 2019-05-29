@@ -57,6 +57,7 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
     @Value("${device.claim.duration}")
     private long systemDurationMs;
 
+    //TODO: @dlandiak rename to registerClaimingInfo
     @Override
     public ListenableFuture<Void> claimDevice(TenantId tenantId, DeviceId deviceId, String secretKey, long durationMs) {
         ListenableFuture<Device> deviceFuture = deviceService.findDeviceByIdAsync(tenantId, deviceId);
@@ -93,9 +94,11 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
         return systemDurationMs;
     }
 
+    //TODO: @dlandiak rename to claimDevice
     @Override
     public ListenableFuture<ClaimResponse> processClaimDevice(Device device, CustomerId customerId, String secretKey) {
         List<Object> key = new ArrayList<>();
+        //TODO: @dlandiak add special symbols
         key.add(device.getName());
         key.add(secretKey);
 
@@ -106,8 +109,10 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
             long currTs = System.currentTimeMillis();
             if (currTs > claimData.getExpirationTime() || !secretKey.equals(claimData.getSecretKey())) {
                 log.debug("The claiming timeout occurred for the device [{}]", device.getName());
+                //TODO: @dlandiak cache evict
                 return Futures.immediateFuture(ClaimResponse.TIMEOUT);
             } else {
+                //TODO: @dlandiak check that device is not already assigned to customer at this stage
                 device.setCustomerId(customerId);
                 deviceService.saveDevice(device);
 
@@ -126,6 +131,7 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
     @Override
     public ListenableFuture<List<Void>> reClaimDevice(TenantId tenantId, Device device) {
         if (!device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
+            //TODO: @dlandiak remove info from cache.
             device.setCustomerId(null);
             deviceService.saveDevice(device);
             return attributesService.save(tenantId, device.getId(), DataConstants.SERVER_SCOPE, Collections.singletonList(
