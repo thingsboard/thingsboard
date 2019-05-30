@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
@@ -62,7 +63,8 @@ import java.util.stream.Collectors;
 @RequestMapping("/api")
 public class DeviceController extends BaseController {
 
-    public static final String DEVICE_ID = "deviceId";
+    private static final String DEVICE_ID = "deviceId";
+    private static final String DEVICE_NAME = "deviceName";
 
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -389,13 +391,12 @@ public class DeviceController extends BaseController {
         }
     }
 
-    //TODO: @dlandiak deviceId -> deviceName
     @PreAuthorize("hasAnyAuthority('CUSTOMER_USER')")
-    @RequestMapping(value = "/customer/device/{deviceId}/claim", method = RequestMethod.POST)
+    @RequestMapping(value = "/customer/device/{deviceName}/claim", method = RequestMethod.POST)
     @ResponseBody
-    public DeferredResult<ResponseEntity> claimDevice(@PathVariable(DEVICE_ID) String strDeviceId,
+    public DeferredResult<ResponseEntity> claimDevice(@PathVariable(DEVICE_NAME) String deviceName,
                                                       @RequestBody(required = false) String json) throws ThingsboardException {
-        checkParameter(DEVICE_ID, strDeviceId);
+        checkParameter(DEVICE_NAME, deviceName);
         try {
             final DeferredResult<ResponseEntity> deferredResult = new DeferredResult<>();
 
@@ -403,15 +404,12 @@ public class DeviceController extends BaseController {
             TenantId tenantId = user.getTenantId();
             CustomerId customerId = user.getCustomerId();
 
-            DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
-            ListenableFuture<Device> deviceFuture = deviceService.findDeviceByIdAsync(tenantId, deviceId);
+            Device device = checkNotNull(deviceService.findDeviceByTenantIdAndName(tenantId, deviceName));
+            accessControlService.checkPermission(user, Resource.DEVICE, Operation.CLAIM_DEVICES,
+                    device.getId(), device);
+            String secretKey = getSecretKey(json);
 
-            ListenableFuture<ClaimResponse> future = Futures.transformAsync(deviceFuture, device -> {
-                accessControlService.checkPermission(user, Resource.DEVICE, Operation.CLAIM_DEVICES,
-                        device.getId(), device);
-                String secretKey = getSecretKey(json);
-                return claimDevicesService.processClaimDevice(device, customerId, secretKey);
-            });
+            ListenableFuture<ClaimResponse> future = claimDevicesService.claimDevice(device, customerId, secretKey);
             Futures.addCallback(future, new FutureCallback<ClaimResponse>() {
                 @Override
                 public void onSuccess(@Nullable ClaimResponse result) {
@@ -438,7 +436,8 @@ public class DeviceController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/customer/device/{deviceId}/claim", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
-    public DeferredResult<ResponseEntity> reClaimDevice(@PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
+    public DeferredResult<ResponseEntity> reClaimDevice(@PathVariable(DEVICE_ID) String strDeviceId,
+                                                        @RequestParam(required = false) String secretKey) throws ThingsboardException {
         checkParameter(DEVICE_ID, strDeviceId);
         try {
             final DeferredResult<ResponseEntity> deferredResult = new DeferredResult<>();
@@ -450,14 +449,21 @@ public class DeviceController extends BaseController {
             ListenableFuture<Device> deviceFuture = deviceService.findDeviceByIdAsync(tenantId, deviceId);
 
             ListenableFuture<List<Void>> future = Futures.transformAsync(deviceFuture, device -> {
-                accessControlService.checkPermission(user, Resource.DEVICE, Operation.CLAIM_DEVICES,
-                        device.getId(), device);
-                return claimDevicesService.reClaimDevice(tenantId, device);
+                if (device != null) {
+                    accessControlService.checkPermission(user, Resource.DEVICE, Operation.CLAIM_DEVICES,
+                            device.getId(), device);
+                    return claimDevicesService.reClaimDevice(tenantId, device, validateSecretKey(secretKey));
+                }
+                return Futures.immediateFuture(null);
             });
             Futures.addCallback(future, new FutureCallback<List<Void>>() {
                 @Override
                 public void onSuccess(@Nullable List<Void> result) {
-                    deferredResult.setResult(new ResponseEntity(HttpStatus.OK));
+                    if (result != null) {
+                        deferredResult.setResult(new ResponseEntity(HttpStatus.OK));
+                    } else {
+                        deferredResult.setResult(new ResponseEntity(HttpStatus.BAD_REQUEST));
+                    }
                 }
 
                 @Override
@@ -471,14 +477,20 @@ public class DeviceController extends BaseController {
         }
     }
 
-    //TODO: @dlandiak add DataConstants.DEFAULT_SECRET_KEY
     private String getSecretKey(String json) throws IOException {
         if (json != null && !json.isEmpty()) {
             JsonNode node = mapper.readTree(json);
-            if (node.has("secretKey")) {
-                return node.get("secretKey").asText();
+            if (node.has(DataConstants.SECRET_KEY_FIELD_NAME)) {
+                return node.get(DataConstants.SECRET_KEY_FIELD_NAME).asText();
             }
         }
-        return "";
+        return DataConstants.DEFAULT_SECRET_KEY;
+    }
+
+    private String validateSecretKey(String secretKey) {
+        if (secretKey != null && !secretKey.isEmpty()) {
+            return secretKey;
+        }
+        return DataConstants.DEFAULT_SECRET_KEY;
     }
 }

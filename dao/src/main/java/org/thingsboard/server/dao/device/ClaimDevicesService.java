@@ -26,10 +26,10 @@ import java.util.List;
 
 public interface ClaimDevicesService {
 
-    ListenableFuture<Void> claimDevice(TenantId tenantId, DeviceId deviceId, String secretKey, long durationMs);
+    ListenableFuture<Void> registerClaimingInfo(TenantId tenantId, DeviceId deviceId, String secretKey, long durationMs);
 
-    ListenableFuture<ClaimResponse> processClaimDevice(Device device, CustomerId customerId, String secretKey);
+    ListenableFuture<ClaimResponse> claimDevice(Device device, CustomerId customerId, String secretKey);
 
-    ListenableFuture<List<Void>> reClaimDevice(TenantId tenantId, Device device);
+    ListenableFuture<List<Void>> reClaimDevice(TenantId tenantId, Device device, String secretKey);
 
 }

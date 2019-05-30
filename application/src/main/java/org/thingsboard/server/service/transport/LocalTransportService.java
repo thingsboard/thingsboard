@@ -173,9 +173,8 @@ public class LocalTransportService extends AbstractTransportService implements R
         forwardToDeviceActor(TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo).setToServerRPCCallRequest(msg).build(), callback);
     }
 
-    //TODO: @dlandiak rename to registerClaimingInfo
     @Override
-    protected void doProcessClaiming(SessionInfoProto sessionInfo, ClaimDeviceMsg msg, TransportServiceCallback<Void> callback) {
+    protected void registerClaimingInfo(SessionInfoProto sessionInfo, ClaimDeviceMsg msg, TransportServiceCallback<Void> callback) {
         TransportToDeviceActorMsg toDeviceActorMsg = TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo).setClaimDevice(msg).build();
 
         TransportToDeviceActorMsgWrapper wrapper = new TransportToDeviceActorMsgWrapper(toDeviceActorMsg);
@@ -186,7 +185,7 @@ public class LocalTransportService extends AbstractTransportService implements R
         } else {
             TenantId tenantId = new TenantId(new UUID(sessionInfo.getTenantIdMSB(), sessionInfo.getTenantIdLSB()));
             DeviceId deviceId = new DeviceId(new UUID(msg.getDeviceIdMSB(), msg.getDeviceIdLSB()));
-            DonAsynchron.withCallback(claimDevicesService.claimDevice(tenantId, deviceId, msg.getSecretKey(), msg.getDurationMs()),
+            DonAsynchron.withCallback(claimDevicesService.registerClaimingInfo(tenantId, deviceId, msg.getSecretKey(), msg.getDurationMs()),
                     callback::onSuccess, callback::onError);
         }
     }

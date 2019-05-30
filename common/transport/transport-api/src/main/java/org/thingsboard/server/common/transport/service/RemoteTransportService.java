@@ -312,7 +312,7 @@ public class RemoteTransportService extends AbstractTransportService {
     }
 
     @Override
-    protected void doProcessClaiming(SessionInfoProto sessionInfo, ClaimDeviceMsg msg, TransportServiceCallback<Void> callback) {
+    protected void registerClaimingInfo(SessionInfoProto sessionInfo, ClaimDeviceMsg msg, TransportServiceCallback<Void> callback) {
         ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
                 TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
                         .setClaimDevice(msg).build()

@@ -156,7 +156,7 @@ public class CoapTransportResource extends CoapResource {
                                         new CoapOkCallback(exchange));
                                 break;
                             case CLAIM_REQUEST:
-                                transportService.processClaiming(sessionInfo,
+                                transportService.process(sessionInfo,
                                         transportContext.getAdaptor().convertToClaimDevice(sessionId, request, sessionInfo),
                                         new CoapOkCallback(exchange));
                                 break;

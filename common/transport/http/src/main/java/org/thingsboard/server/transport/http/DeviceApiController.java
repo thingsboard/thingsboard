@@ -127,7 +127,7 @@ public class DeviceApiController {
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
                     TransportService transportService = transportContext.getTransportService();
                     DeviceId deviceId = new DeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
-                    transportService.processClaiming(sessionInfo, JsonConverter.convertToClaimDeviceProto(deviceId, json),
+                    transportService.process(sessionInfo, JsonConverter.convertToClaimDeviceProto(deviceId, json),
                             new HttpOkCallback(responseWriter));
                 }));
         return responseWriter;

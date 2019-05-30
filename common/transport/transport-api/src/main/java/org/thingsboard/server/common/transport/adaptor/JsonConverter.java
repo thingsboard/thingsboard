@@ -24,6 +24,7 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.util.StringUtils;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.kv.AttributeKey;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -65,59 +66,57 @@ public class JsonConverter {
 
     private static int maxStringValueLength = 0;
 
-    public static PostTelemetryMsg convertToTelemetryProto(JsonElement jsonObject) throws JsonSyntaxException {
-        long systemTs = System.currentTimeMillis();
+    public static PostTelemetryMsg convertToTelemetryProto(JsonElement jsonElement) throws JsonSyntaxException {
         PostTelemetryMsg.Builder builder = PostTelemetryMsg.newBuilder();
-        if (jsonObject.isJsonObject()) {
-            parseObject(builder, systemTs, jsonObject);
-        } else if (jsonObject.isJsonArray()) {
-            jsonObject.getAsJsonArray().forEach(je -> {
+        convertToTelemetry(jsonElement, System.currentTimeMillis(), null, builder);
+        return builder.build();
+    }
+
+    private static void convertToTelemetry(JsonElement jsonElement, long systemTs, Map<Long, List<KvEntry>> result, PostTelemetryMsg.Builder builder) {
+        if (jsonElement.isJsonObject()) {
+            parseObject(systemTs, result, builder, jsonElement.getAsJsonObject());
+        } else if (jsonElement.isJsonArray()) {
+            jsonElement.getAsJsonArray().forEach(je -> {
                 if (je.isJsonObject()) {
-                    parseObject(builder, systemTs, je.getAsJsonObject());
+                    parseObject(systemTs, result, builder, je.getAsJsonObject());
                 } else {
                     throw new JsonSyntaxException(CAN_T_PARSE_VALUE + je);
                 }
             });
         } else {
-            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + jsonObject);
+            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + jsonElement);
         }
-        return builder.build();
+    }
+
+    private static void parseObject(long systemTs, Map<Long, List<KvEntry>> result, PostTelemetryMsg.Builder builder, JsonObject jo) {
+        if (result != null) {
+            parseObject(result, systemTs, jo);
+        } else {
+            parseObject(builder, systemTs, jo);
+        }
     }
 
     public static ClaimDeviceMsg convertToClaimDeviceProto(DeviceId deviceId, String json) {
-        String secretKey = "";
         long durationMs = 0L;
         if (json != null && !json.isEmpty()) {
-            JsonElement jsonElement = new JsonParser().parse(json);
-            if (jsonElement.isJsonObject()) {
-                JsonObject jo = jsonElement.getAsJsonObject();
-                if (jo.has("secretKey")) {
-                    secretKey = jo.get("secretKey").getAsString();
-                }
-                if (jo.has("durationMs")) {
-                    durationMs = jo.get("durationMs").getAsLong();
-                }
-            } else {
-                throw new JsonSyntaxException(CAN_T_PARSE_VALUE + jsonElement);
-            }
+            return convertToClaimDeviceProto(deviceId, new JsonParser().parse(json));
         }
-        return buildClaimDeviceMsg(deviceId, secretKey, durationMs);
+        return buildClaimDeviceMsg(deviceId, DataConstants.DEFAULT_SECRET_KEY, durationMs);
     }
 
-    //TODO: @dlandiak Fix code duplication
-    public static ClaimDeviceMsg convertToClaimDeviceProto(DeviceId deviceId, JsonElement json) {
-        String secretKey = "";
+    public static ClaimDeviceMsg convertToClaimDeviceProto(DeviceId deviceId, JsonElement jsonElement) {
+        String secretKey = DataConstants.DEFAULT_SECRET_KEY;
         long durationMs = 0L;
-        if (json.isJsonObject()) {
-            JsonObject jo = json.getAsJsonObject();
-            if (jo.has("secretKey")) {
-                secretKey = jo.get("secretKey").getAsString();
+        if (jsonElement.isJsonObject()) {
+            JsonObject jo = jsonElement.getAsJsonObject();
+            if (jo.has(DataConstants.SECRET_KEY_FIELD_NAME)) {
+                secretKey = jo.get(DataConstants.SECRET_KEY_FIELD_NAME).getAsString();
             }
-            if (jo.has("durationMs")) {
-                durationMs = jo.get("durationMs").getAsLong();
+            if (jo.has(DataConstants.DURATION_MS_FIELD_NAME)) {
+                durationMs = jo.get(DataConstants.DURATION_MS_FIELD_NAME).getAsLong();
             }
         } else {
-            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
+            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + jsonElement);
         }
         return buildClaimDeviceMsg(deviceId, secretKey, durationMs);
     }
@@ -153,8 +152,7 @@ public class JsonConverter {
         return result;
     }
 
-    private static void parseObject(PostTelemetryMsg.Builder builder, long systemTs, JsonElement jsonObject) {
-        JsonObject jo = jsonObject.getAsJsonObject();
+    private static void parseObject(PostTelemetryMsg.Builder builder, long systemTs, JsonObject jo) {
         if (jo.has("ts") && jo.has("values")) {
             parseWithTs(builder, jo);
         } else {
@@ -473,26 +471,13 @@ public class JsonConverter {
         return result;
     }
 
-    public static Map<Long, List<KvEntry>> convertToTelemetry(JsonElement jsonObject, long systemTs) throws JsonSyntaxException {
+    public static Map<Long, List<KvEntry>> convertToTelemetry(JsonElement jsonElement, long systemTs) throws JsonSyntaxException {
         Map<Long, List<KvEntry>> result = new HashMap<>();
-        if (jsonObject.isJsonObject()) {
-            parseObject(result, systemTs, jsonObject);
-        } else if (jsonObject.isJsonArray()) {
-            jsonObject.getAsJsonArray().forEach(je -> {
-                if (je.isJsonObject()) {
-                    parseObject(result, systemTs, je.getAsJsonObject());
-                } else {
-                    throw new JsonSyntaxException(CAN_T_PARSE_VALUE + je);
-                }
-            });
-        } else {
-            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + jsonObject);
-        }
+        convertToTelemetry(jsonElement, systemTs, result, null);
         return result;
     }
 
-    private static void parseObject(Map<Long, List<KvEntry>> result, long systemTs, JsonElement jsonObject) {
-        JsonObject jo = jsonObject.getAsJsonObject();
+    private static void parseObject(Map<Long, List<KvEntry>> result, long systemTs, JsonObject jo) {
         if (jo.has("ts") && jo.has("values")) {
             parseWithTs(result, jo);
         } else {
