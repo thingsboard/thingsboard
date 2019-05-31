@@ -15,14 +15,14 @@
     limitations under the License.
 
 -->
-<md-table-container layout="column" class="tb-table-select">
+<md-table-container class="tb-table-select">
     <table md-table>
         <thead md-head>
         <tr md-row>
             <th md-column>&nbsp</th>
             <th md-column>Example value data</th>
-            <th md-column style="min-width: 140px">Column type</th>
-            <th md-column style="min-width: 140px">Value</th>
+            <th md-column>Column type</th>
+            <th md-column>Value</th>
         </tr>
         </thead>
         <tbody md-body>
@@ -32,7 +32,7 @@
             <td md-cell>
                 <md-select ng-model="column.type" required name="columnType"
                            aria-label="{{ 'entity-group.column-type' | translate }}">
-                    <md-option ng-repeat="type in vm.columnTypes" ng-value="type.value">
+                    <md-option ng-repeat="type in vm.columnTypes" ng-value="type.value" ng-disabled="type.disable">
                         {{type.name | translate}}
                     </md-option>
                 </md-select>
@@ -47,8 +47,7 @@
                 </md-select>
                 <md-input-container md-no-float
                                     ng-if="column.type != vm.columnTypes.entityField.value &&
-                                                    column.type != vm.columnTypes.name.value &&
-                                                    column.type != vm.columnTypes.type.value">
+                                                    column.type != vm.columnTypes.accessToken.value">
                     <input required name="columnKeyName"
                            placeholder="{{ 'entity-group.column-value' | translate }}"
                            ng-model="column.key"

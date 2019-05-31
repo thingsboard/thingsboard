@@ -25,7 +25,7 @@ import entityAliasesTemplate from '../entity/alias/entity-aliases.tpl.html';
 /* eslint-disable no-undef, angular/window-service, angular/document-service */
 
 /*@ngInject*/
-export default function ImportExport($log, $translate, $q, $mdDialog, $document, $http, itembuffer, utils, types, $timeout, deviceService,
+export default function ImportExport($log, $translate, $q, $mdDialog, $document, $http, itembuffer, utils, types, $timeout, deviceService, $rootScope,
                                      dashboardUtils, entityService, dashboardService, ruleChainService, widgetService, toast, attributeService) {
 
 
@@ -585,7 +585,7 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
                 deferred.resolve();
             },
             function fail() {
-                deferred.resolve();
+                deferred.reject();
             }
         );
         return deferred.promise;
@@ -827,6 +827,18 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         });
         return obj1;
     }
+
+    function qAllWithProgress(promises, progress) {
+        var total = promises.length;
+        var now = 0;
+        promises.forEach(function(p) {
+            p.then(function() {
+                now++;
+                progress(now / total);
+            });
+        });
+        return $q.all(promises);
+    }
     
     function createMultiEntity(arrayData, entityType, update, config) {
         let deferred = $q.defer();
@@ -840,7 +852,10 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
                 }
                 break;
         }
-        $q.all(allPromise).then(function success(response) {
+        qAllWithProgress(allPromise, function(progress) {
+            progress = Math.round(progress * 100);
+            $rootScope.$broadcast('importCSV-completed', {progress: progress});
+        }).then(function success(response) {
             for (let i = 0; i < response.length; i++){
                 statisticalInfo = sumObject(statisticalInfo, response[i]);
             }

@@ -789,7 +789,8 @@
             "shared-attribute": "Shared attribute",
             "server-attribute": "Server attribute",
             "timeseries": "Timeseries",
-            "entity-field": "Entity field"
+            "entity-field": "Entity field",
+            "access-token": "Access token"
         },
         "entity-field": {
             "name": "Name",

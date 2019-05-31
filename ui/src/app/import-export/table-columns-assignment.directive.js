@@ -50,6 +50,7 @@ function TableColumnsAssignmentController($scope, types, $timeout) {
             vm.columnTypes.serverAttribute = types.entityGroup.columnType.serverAttribute;
             vm.columnTypes.timeseries = types.entityGroup.columnType.timeseries;
             vm.columnTypes.entityField = types.entityGroup.columnType.entityField;
+            vm.columnTypes.accessToken = types.entityGroup.columnType.accessToken;
             break;
     }
 
@@ -66,6 +67,7 @@ function TableColumnsAssignmentController($scope, types, $timeout) {
         if (newVal) {
             var isSelectName = false;
             var isSelectType = false;
+            var isSelectCredentials = false;
             for (var i = 0; i < newVal.length; i++) {
                 if (newVal[i].type === types.entityGroup.columnType.entityField.value &&
                     newVal[i].key === types.entityGroup.entityField.name.value) {
@@ -75,10 +77,14 @@ function TableColumnsAssignmentController($scope, types, $timeout) {
                     newVal[i].key === types.entityGroup.entityField.type.value) {
                     isSelectType = true;
                 }
+                if (newVal[i].type === types.entityGroup.columnType.accessToken.value) {
+                    isSelectCredentials = true;
+                }
             }
             $timeout(function () {
                 vm.entityField.name.disable = isSelectName;
                 vm.entityField.type.disable = isSelectType;
+                vm.columnTypes.accessToken.disable = isSelectCredentials;
             });
             if(isSelectName && isSelectType) {
                 vm.theForm.$setDirty();
@@ -87,10 +93,4 @@ function TableColumnsAssignmentController($scope, types, $timeout) {
             }
         }
     }, true);
-    //
-    // $scope.$watch('vm.columns', function(newVal, prevVal)  {
-    //     if (newVal && !angular.equals(newVal, prevVal)) {
-    //         vm.theForm.$setDirty();
-    //     }
-    // }, true);
 }

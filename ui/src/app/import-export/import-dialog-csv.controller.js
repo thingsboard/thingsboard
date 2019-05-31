@@ -28,7 +28,7 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
     vm.previousStep = previousStep;
 
     vm.addDevices = addDevices;
-    vm.importParams = {
+    vm.importParameters = {
         delim: ',',
         isUpdate: true,
         isHeader: true
@@ -43,7 +43,6 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
     vm.isAlternative = false;
     vm.isMobileStepText = true;
 
-    vm.columnsParam = [];
     vm.parseData = [];
 
     vm.delimiters = [{
@@ -59,6 +58,12 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
         key: '\t',
         value: 'Tab'
     }];
+
+    vm.progressCreate = 0;
+
+    $scope.$on('importCSV-completed', function (event, completed) {
+        vm.progressCreate = completed.progress;
+    });
 
     var parseData = {};
 
@@ -88,16 +93,17 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
 
     function parseCSV(importData) {
         var config = {
-            delim: vm.importParams.delim,
-            header: vm.importParams.isHeader
+            delim: vm.importParameters.delim,
+            header: vm.importParameters.isHeader
         };
         return importExport.convertCSVToJson(importData, config);
     }
 
     function createColumnsData(parseData) {
+        vm.columnsParam = [];
         var columnParam = {};
         for (var i = 0; i < parseData.headers.length; i++) {
-            if (vm.importParams.isHeader && parseData.headers[i].search(/^(name|type)$/im) === 0) {
+            if (vm.importParameters.isHeader && parseData.headers[i].search(/^(name|type)$/im) === 0) {
                 columnParam = {
                     type: types.entityGroup.columnType.entityField.value,
                     key: parseData.headers[i].toLowerCase(),
@@ -106,7 +112,7 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
             } else {
                 columnParam = {
                     type: types.entityGroup.columnType.serverAttribute.value,
-                    key: vm.importParams.isHeader ? parseData.headers[i] : "",
+                    key: vm.importParameters.isHeader ? parseData.headers[i] : "",
                     sampleData: parseData.rows[0][i]
                 };
             }
@@ -124,6 +130,7 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
             var entityData = {
                 name: "",
                 type: "",
+                accessToken: "",
                 attributes: {
                     server: [],
                     shared: []
@@ -150,6 +157,9 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
                             value: importData.rows[i][j]
                         });
                         break;
+                    case types.entityGroup.columnType.accessToken.value:
+                        entityData.accessToken = importData.rows[i][j];
+                        break;
                     case types.entityGroup.columnType.entityField.value:
                         switch (parameterColumns[j].key) {
                             case types.entityGroup.entityField.name.value:
@@ -164,7 +174,7 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
             }
             entitysData.push(entityData);
         }
-        importExport.createMultiEntity(entitysData, vm.entityType, vm.importParams.isUpdate, config).then(function (response) {
+        importExport.createMultiEntity(entitysData, vm.entityType, vm.importParameters.isUpdate, config).then(function (response) {
             vm.statistical = response;
             $mdStepper('import-stepper').next();
         });
@@ -206,7 +216,11 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
     }
 
     function cancel() {
-        $mdDialog.cancel();
+        if($mdStepper('import-stepper').currentStep > 2){
+            $mdDialog.hide();
+        } else {
+            $mdDialog.cancel();
+        }
     }
 
     function finishExport() {

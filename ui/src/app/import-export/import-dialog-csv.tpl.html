@@ -15,19 +15,20 @@
     limitations under the License.
 
 -->
-<md-dialog aria-label="{{ vm.importTitle | translate }}" class="tb-import-stepper">
+<md-dialog aria-label="{{ vm.importTitle | translate }}" class="tb-import-stepper" tb-help="'import-csv'" help-container-id="help-container">
     <md-toolbar>
         <div class="md-toolbar-tools">
             <h2 translate>{{ vm.importTitle }}</h2>
             <span flex></span>
+            <div id="help-container"></div>
             <md-button class="md-icon-button" ng-click="vm.cancel()">
                 <ng-md-icon icon="close" aria-label="{{ 'dialog.close' | translate }}"></ng-md-icon>
             </md-button>
         </div>
     </md-toolbar>
-    <md-progress-linear class="md-warn" md-mode="indeterminate" ng-disabled="!$root.loading"
-                        ng-show="$root.loading"></md-progress-linear>
-    <span style="max-height: 5px; height: 5px;" flex ng-show="!$root.loading"></span>
+    <!--<md-progress-linear class="md-warn" md-mode="indeterminate" ng-disabled="!$root.loading"-->
+                        <!--ng-show="$root.loading"></md-progress-linear>-->
+    <span style="max-height: 5px; height: 5px;" flex></span>
     <md-dialog-content>
         <md-stepper id="import-stepper" md-mobile-step-text="vm.isMobileStepText" md-vertical="vm.isVertical"
                     md-linear="vm.isLinear" md-alternative="vm.isAlternative">
@@ -85,25 +86,21 @@
 
             <md-step md-label="Import configuration">
                 <md-step-body>
-                    <div flex layout="row" layout-xs="column">
-                        <md-input-container class="md-block" style="min-width: 120px">
+                    <div layout="column">
+                        <md-input-container>
                             <label translate>CSV delimiter</label>
-                            <md-select ng-model="vm.importParams.delim">
+                            <md-select ng-model="vm.importParameters.delim">
                                 <md-option ng-repeat="delimiter in vm.delimiters" ng-value="delimiter.key">
                                     {{delimiter.value}}
                                 </md-option>
                             </md-select>
                         </md-input-container>
-                        <md-input-container class="md-block">
-                            <md-checkbox ng-model="vm.importParams.isHeader" aria-label="First line is header">
-                                First line is header
-                            </md-checkbox>
-                        </md-input-container>
-                        <md-input-container class="md-block">
-                            <md-checkbox ng-model="vm.importParams.isUpdate" aria-label="Update attributes/telemetry">
-                                Update attributes/telemetry
-                            </md-checkbox>
-                        </md-input-container>
+                        <md-checkbox ng-model="vm.importParameters.isHeader" aria-label="First line contains column names">
+                            First line contains column names
+                        </md-checkbox>
+                        <md-checkbox ng-model="vm.importParameters.isUpdate" aria-label="Update attributes/telemetry">
+                            Update attributes/telemetry
+                        </md-checkbox>
                     </div>
                 </md-step-body>
 
@@ -145,18 +142,15 @@
 
             <md-step md-label="Creating new entities">
                 <md-step-body>
-                    <md-progress-linear md-mode="determinate" value="{{vm.determinateValue}}"></md-progress-linear>
+                    <md-progress-linear class="md-warn tb-import-progress" md-mode="determinate" value="{{vm.progressCreate}}"></md-progress-linear>
                 </md-step-body>
             </md-step>
             <md-step md-label="Done">
-                <md-step-body layout="row">
-                    <div flex ng-repeat="(key, value) in vm.statistical">
-                        <div flex layout="column">
-                            <div class="md-subhead" style="font-weight: 500; margin: 0.4em 0 0.6em;">{{key}}</div>
-                            <div class="md-body-1" ng-repeat="(info, infoValue) in vm.statistical[key]">
-                                {{ info }}: {{ infoValue }}
-                            </div>
-                        </div>
+                <md-step-body layout="column">
+                    <div>
+                        <p class="md-body-1" ng-if="vm.statistical.create && vm.statistical.create.device">{{vm.statistical.create.device}} new devices were successfully created.</p>
+                        <p class="md-body-1" ng-if="vm.statistical.update && vm.statistical.update.device">{{vm.statistical.update.device}} devices were successfully updated.</p>
+                        <p class="md-body-1" ng-if="vm.statistical.error && vm.statistical.error.device">There was an error creating {{vm.statistical.error.device}} devices.</p>
                     </div>
                 </md-step-body>
                 <md-step-actions layout="row">

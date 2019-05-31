@@ -371,6 +371,10 @@ export default angular.module('thingsboard.types', [])
                     entityField: {
                         name: 'entity-group.column-type.entity-field',
                         value: 'ENTITY_FIELD'
+                    },
+                    accessToken: {
+                        name: 'entity-group.column-type.access-token',
+                        value: 'ACCESS_TOKEN'
                     }
                 },
                 entityField: {
