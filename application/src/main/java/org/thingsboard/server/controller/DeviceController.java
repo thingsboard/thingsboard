@@ -468,8 +468,9 @@ public class DeviceController extends BaseController {
     }
 
     private String getSecretKey(ClaimRequest claimRequest) throws IOException {
-        if (claimRequest != null) {
-            return claimRequest.getSecretKey();
+        String secretKey = claimRequest.getSecretKey();
+        if (secretKey != null) {
+            return secretKey;
         }
         return DataConstants.DEFAULT_SECRET_KEY;
     }
