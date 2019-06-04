@@ -15,25 +15,28 @@
  */
 package org.thingsboard.server.transport.coap.adaptors;
 
-import java.util.*;
-
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.Request;
 import org.eclipse.californium.core.coap.Response;
+import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-import org.thingsboard.server.common.msg.kv.AttributesKVMsg;
-import org.thingsboard.server.common.msg.session.SessionContext;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
-import org.springframework.stereotype.Component;
-
-import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.coap.CoapTransportResource;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 
 @Component("JsonCoapAdaptor")
 @Slf4j
@@ -41,7 +44,7 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
 
     @Override
     public TransportProtos.PostTelemetryMsg convertToPostTelemetry(UUID sessionId, Request inbound) throws AdaptorException {
-        String payload = validatePayload(sessionId, inbound);
+        String payload = validatePayload(sessionId, inbound, false);
         try {
             return JsonConverter.convertToTelemetryProto(new JsonParser().parse(payload));
         } catch (IllegalStateException | JsonSyntaxException ex) {
@@ -51,7 +54,7 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
 
     @Override
     public TransportProtos.PostAttributeMsg convertToPostAttributes(UUID sessionId, Request inbound) throws AdaptorException {
-        String payload = validatePayload(sessionId, inbound);
+        String payload = validatePayload(sessionId, inbound, false);
         try {
             return JsonConverter.convertToAttributesProto(new JsonParser().parse(payload));
         } catch (IllegalStateException | JsonSyntaxException ex) {
@@ -79,7 +82,7 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
     @Override
     public TransportProtos.ToDeviceRpcResponseMsg convertToDeviceRpcResponse(UUID sessionId, Request inbound) throws AdaptorException {
         Optional<Integer> requestId = CoapTransportResource.getRequestId(inbound);
-        String payload = validatePayload(sessionId, inbound);
+        String payload = validatePayload(sessionId, inbound, false);
         JsonObject response = new JsonParser().parse(payload).getAsJsonObject();
         return TransportProtos.ToDeviceRpcResponseMsg.newBuilder().setRequestId(requestId.orElseThrow(() -> new AdaptorException("Request id is missing!")))
                 .setPayload(response.toString()).build();
@@ -87,8 +90,19 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
 
     @Override
     public TransportProtos.ToServerRpcRequestMsg convertToServerRpcRequest(UUID sessionId, Request inbound) throws AdaptorException {
-        String payload = validatePayload(sessionId, inbound);
+        String payload = validatePayload(sessionId, inbound, false);
         return JsonConverter.convertToServerRpcRequest(new JsonParser().parse(payload), 0);
+    }
+
+    @Override
+    public TransportProtos.ClaimDeviceMsg convertToClaimDevice(UUID sessionId, Request inbound, TransportProtos.SessionInfoProto sessionInfo) throws AdaptorException {
+        DeviceId deviceId = new DeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
+        String payload = validatePayload(sessionId, inbound, true);
+        try {
+            return JsonConverter.convertToClaimDeviceProto(deviceId, payload);
+        } catch (IllegalStateException | JsonSyntaxException ex) {
+            throw new AdaptorException(ex);
+        }
     }
 
     @Override
@@ -128,11 +142,13 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
         return response;
     }
 
-    private String validatePayload(UUID sessionId, Request inbound) throws AdaptorException {
+    private String validatePayload(UUID sessionId, Request inbound, boolean isEmptyPayloadAllowed) throws AdaptorException {
         String payload = inbound.getPayloadString();
         if (payload == null) {
             log.warn("[{}] Payload is empty!", sessionId);
-            throw new AdaptorException(new IllegalArgumentException("Payload is empty!"));
+            if (!isEmptyPayloadAllowed) {
+                throw new AdaptorException(new IllegalArgumentException("Payload is empty!"));
+            }
         }
         return payload;
     }
