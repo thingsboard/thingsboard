@@ -30,6 +30,6 @@ public interface ClaimDevicesService {
 
     ListenableFuture<ClaimResponse> claimDevice(Device device, CustomerId customerId, String secretKey);
 
-    ListenableFuture<List<Void>> reClaimDevice(TenantId tenantId, Device device, String secretKey);
+    ListenableFuture<List<Void>> reClaimDevice(TenantId tenantId, Device device);
 
 }

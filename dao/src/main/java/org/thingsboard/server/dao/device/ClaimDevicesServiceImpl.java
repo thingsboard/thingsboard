@@ -36,7 +36,6 @@ import org.thingsboard.server.dao.device.claim.ClaimData;
 import org.thingsboard.server.dao.device.claim.ClaimResponse;
 import org.thingsboard.server.dao.model.ModelConstants;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -47,7 +46,7 @@ import static org.thingsboard.server.common.data.CacheConstants.CLAIM_DEVICES_CA
 @Slf4j
 public class ClaimDevicesServiceImpl implements ClaimDevicesService {
 
-    public static final String CLAIM_ATTRIBUTE_NAME = "claimingAllowed";
+    private static final String CLAIM_ATTRIBUTE_NAME = "claimingAllowed";
 
     @Autowired
     private DeviceService deviceService;
@@ -64,7 +63,7 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
         ListenableFuture<Device> deviceFuture = deviceService.findDeviceByIdAsync(tenantId, deviceId);
         return Futures.transformAsync(deviceFuture, device -> {
             Cache cache = cacheManager.getCache(CLAIM_DEVICES_CACHE);
-            List<Object> key = constructCacheKey(device.getName(), secretKey);
+            List<Object> key = constructCacheKey(device.getId());
 
             ListenableFuture<List<AttributeKvEntry>> claimingAllowedFuture = attributesService.find(tenantId, device.getId(),
                     DataConstants.SERVER_SCOPE, Collections.singletonList(CLAIM_ATTRIBUTE_NAME));
@@ -82,21 +81,20 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
                 log.warn("The device [{}] has been already claimed!", device.getName());
                 throw new IllegalArgumentException();
             });
-
         });
     }
 
     @Override
     public ListenableFuture<ClaimResponse> claimDevice(Device device, CustomerId customerId, String secretKey) {
-        List<Object> key = constructCacheKey(device.getName(), secretKey);
+        List<Object> key = constructCacheKey(device.getId());
         Cache cache = cacheManager.getCache(CLAIM_DEVICES_CACHE);
         ClaimData claimData = cache.get(key, ClaimData.class);
         if (claimData != null) {
             long currTs = System.currentTimeMillis();
             if (currTs > claimData.getExpirationTime() || !secretKey.equals(claimData.getSecretKey())) {
-                log.warn("The claiming timeout occurred for the device [{}]", device.getName());
+                log.warn("The claiming timeout occurred or wrong 'secretKey' provided for the device [{}]", device.getName());
                 cache.evict(key);
-                return Futures.immediateFuture(ClaimResponse.TIMEOUT);
+                return Futures.immediateFuture(ClaimResponse.FAILURE);
             } else {
                 if (device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
                     device.setCustomerId(customerId);
@@ -112,9 +110,9 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
     }
 
     @Override
-    public ListenableFuture<List<Void>> reClaimDevice(TenantId tenantId, Device device, String secretKey) {
+    public ListenableFuture<List<Void>> reClaimDevice(TenantId tenantId, Device device) {
         if (!device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
-            cacheEviction(device.getName(), secretKey);
+            cacheEviction(device.getId());
 
             device.setCustomerId(null);
             deviceService.saveDevice(device);
@@ -122,18 +120,12 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
                     new BaseAttributeKvEntry(new BooleanDataEntry(CLAIM_ATTRIBUTE_NAME, true),
                             System.currentTimeMillis())));
         }
-        cacheEviction(device.getName(), secretKey);
+        cacheEviction(device.getId());
         return Futures.immediateFuture(Collections.emptyList());
     }
 
-    private List<Object> constructCacheKey(String deviceName, String secretKey) {
-        List<Object> key = new ArrayList<>();
-        key.add("|");
-        key.add(deviceName);
-        key.add("-");
-        key.add(secretKey);
-        key.add("|");
-        return key;
+    private List<Object> constructCacheKey(DeviceId deviceId) {
+        return Collections.singletonList(deviceId);
     }
 
     private long validateDurationMs(long durationMs) {
@@ -149,9 +141,9 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
                 device.getId(), DataConstants.SERVER_SCOPE, Collections.singletonList(CLAIM_ATTRIBUTE_NAME));
     }
 
-    private void cacheEviction(String deviceName, String secretKey) {
+    private void cacheEviction(DeviceId deviceId) {
         Cache cache = cacheManager.getCache(CLAIM_DEVICES_CACHE);
-        cache.evict(constructCacheKey(deviceName, secretKey));
+        cache.evict(constructCacheKey(deviceId));
     }
 
 }

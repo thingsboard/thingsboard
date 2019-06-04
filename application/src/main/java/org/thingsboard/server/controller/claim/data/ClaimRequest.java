@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.device.claim;
+package org.thingsboard.server.controller.claim.data;
 
-public enum ClaimResponse {
+import lombok.Data;
 
-    SUCCESS,
-    FAILURE,
-    CLAIMED
+@Data
+public class ClaimRequest {
+
+    private final String secretKey;
 
 }
