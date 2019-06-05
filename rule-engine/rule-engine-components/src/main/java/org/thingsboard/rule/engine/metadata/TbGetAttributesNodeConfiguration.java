@@ -33,6 +33,8 @@ public class TbGetAttributesNodeConfiguration implements NodeConfiguration<TbGet
 
     private List<String> latestTsKeyNames;
 
+    private boolean tellFailureIfAbsent;
+
     @Override
     public TbGetAttributesNodeConfiguration defaultConfiguration() {
         TbGetAttributesNodeConfiguration configuration = new TbGetAttributesNodeConfiguration();
@@ -40,6 +42,7 @@ public class TbGetAttributesNodeConfiguration implements NodeConfiguration<TbGet
         configuration.setSharedAttributeNames(Collections.emptyList());
         configuration.setServerAttributeNames(Collections.emptyList());
         configuration.setLatestTsKeyNames(Collections.emptyList());
+        configuration.setTellFailureIfAbsent(true);
         return configuration;
     }
 }
