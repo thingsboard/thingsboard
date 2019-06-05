@@ -55,7 +55,10 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
     @Autowired
     private CacheManager cacheManager;
 
-    @Value("${device.claim.duration}")
+    @Value("${security.claim.allowClaimingByDefault}")
+    private boolean isAllowedClaimingByDefault;
+
+    @Value("${security.claim.duration}")
     private long systemDurationMs;
 
     @Override
@@ -65,22 +68,29 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
             Cache cache = cacheManager.getCache(CLAIM_DEVICES_CACHE);
             List<Object> key = constructCacheKey(device.getId());
 
-            ListenableFuture<List<AttributeKvEntry>> claimingAllowedFuture = attributesService.find(tenantId, device.getId(),
-                    DataConstants.SERVER_SCOPE, Collections.singletonList(CLAIM_ATTRIBUTE_NAME));
-            return Futures.transform(claimingAllowedFuture, list -> {
-                if (list != null && !list.isEmpty()) {
-                    Optional<Boolean> claimingAllowedOptional = list.get(0).getBooleanValue();
-                    if (claimingAllowedOptional.isPresent() && claimingAllowedOptional.get()
-                            && device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
-                        ClaimData claimData = new ClaimData(secretKey,
-                                System.currentTimeMillis() + validateDurationMs(durationMs));
-                        cache.putIfAbsent(key, claimData);
-                        return null;
-                    }
+            if (isAllowedClaimingByDefault) {
+                if (device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
+                    persistInCache(secretKey, durationMs, cache, key);
+                    return Futures.immediateFuture(null);
                 }
                 log.warn("The device [{}] has been already claimed!", device.getName());
                 throw new IllegalArgumentException();
-            });
+            } else {
+                ListenableFuture<List<AttributeKvEntry>> claimingAllowedFuture = attributesService.find(tenantId, device.getId(),
+                        DataConstants.SERVER_SCOPE, Collections.singletonList(CLAIM_ATTRIBUTE_NAME));
+                return Futures.transform(claimingAllowedFuture, list -> {
+                    if (list != null && !list.isEmpty()) {
+                        Optional<Boolean> claimingAllowedOptional = list.get(0).getBooleanValue();
+                        if (claimingAllowedOptional.isPresent() && claimingAllowedOptional.get()
+                                && device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
+                            persistInCache(secretKey, durationMs, cache, key);
+                            return null;
+                        }
+                    }
+                    log.warn("Failed to find claimingAllowed attribute for device or it is already claimed![{}]", device.getName());
+                    throw new IllegalArgumentException();
+                });
+            }
         });
     }
 
@@ -116,6 +126,9 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
 
             device.setCustomerId(null);
             deviceService.saveDevice(device);
+            if (isAllowedClaimingByDefault) {
+                return Futures.immediateFuture(Collections.emptyList());
+            }
             return attributesService.save(tenantId, device.getId(), DataConstants.SERVER_SCOPE, Collections.singletonList(
                     new BaseAttributeKvEntry(new BooleanDataEntry(CLAIM_ATTRIBUTE_NAME, true),
                             System.currentTimeMillis())));
@@ -128,6 +141,12 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
         return Collections.singletonList(deviceId);
     }
 
+    private void persistInCache(String secretKey, long durationMs, Cache cache, List<Object> key) {
+        ClaimData claimData = new ClaimData(secretKey,
+                System.currentTimeMillis() + validateDurationMs(durationMs));
+        cache.putIfAbsent(key, claimData);
+    }
+
     private long validateDurationMs(long durationMs) {
         if (durationMs > 0L) {
             return durationMs;
@@ -137,6 +156,9 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
 
     private ListenableFuture<List<Void>> removeClaimingSavedData(Cache cache, List<Object> key, Device device) {
         cache.evict(key);
+        if (isAllowedClaimingByDefault) {
+            return Futures.immediateFuture(null);
+        }
         return attributesService.removeAll(device.getTenantId(),
                 device.getId(), DataConstants.SERVER_SCOPE, Collections.singletonList(CLAIM_ATTRIBUTE_NAME));
     }
