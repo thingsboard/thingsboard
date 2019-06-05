@@ -18,6 +18,7 @@ package org.thingsboard.rule.engine.metadata;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -80,7 +81,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
         ListenableFuture<List<AttributeKvEntry>> latest = ctx.getAttributesService().find(ctx.getTenantId(), entityId, scope, keys);
         return Futures.transform(latest, l -> {
             l.forEach(r -> {
-                if (this.config.isTellFailureIfAbsent()) {
+                if (BooleanUtils.toBooleanDefaultIfNull(this.config.isTellFailureIfAbsent(), true)) {
                     if (r.getValue() != null) {
                         msg.getMetaData().putValue(prefix + r.getKey(), r.getValueAsString());
                     } else {
@@ -104,7 +105,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
         ListenableFuture<List<TsKvEntry>> latest = ctx.getTimeseriesService().findLatest(ctx.getTenantId(), entityId, keys);
         return Futures.transform(latest, l -> {
             l.forEach(r -> {
-                if (this.config.isTellFailureIfAbsent()) {
+                if (BooleanUtils.toBooleanDefaultIfNull(this.config.isTellFailureIfAbsent(), true)) {
                     if (r.getValue() != null) {
                         msg.getMetaData().putValue(r.getKey(), r.getValueAsString());
                     } else {
