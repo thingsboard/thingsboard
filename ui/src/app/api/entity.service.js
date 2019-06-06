@@ -1112,11 +1112,7 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                     break;
                 }
             }
-            if (isResponseHasError){
-                deferred.reject();
-            } else {
-                deferred.resolve();
-            }
+            isResponseHasError ? deferred.reject() : deferred.resolve();
         });
         return deferred.promise;
     }

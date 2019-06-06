@@ -21,13 +21,11 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
     var vm = this;
 
     vm.cancel = cancel;
-    vm.finishExport = finishExport;
     vm.fileAdded = fileAdded;
     vm.clearFile = clearFile;
     vm.nextStep = nextStep;
     vm.previousStep = previousStep;
 
-    vm.addDevices = addDevices;
     vm.importParameters = {
         delim: ',',
         isUpdate: true,
@@ -101,7 +99,7 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
         for (var i = 0; i < parseData.headers.length; i++) {
             if (vm.importParameters.isHeader && parseData.headers[i].search(/^(name|type)$/im) === 0) {
                 columnParam = {
-                    type: types.importEntityColumnType.entityField.value,
+                    type: types.importEntityColumnType[parseData.headers[i].toLowerCase()].value,
                     key: parseData.headers[i].toLowerCase(),
                     sampleData: parseData.rows[0][i]
                 };
@@ -116,10 +114,9 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
         }
     }
 
-    function addDevices(importData, parameterColumns) {
-        var entitysData = [];
-        var sendDataLength = 0;
-        var entitysDataLength = 0;
+    function addEntities (importData, parameterColumns) {
+        var entitiesData = [];
+        var sentDataLength = 0;
         var config = {
             ignoreErrors: true,
             resendRequest: true
@@ -143,14 +140,14 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
                             value: importData.rows[i][j]
                         });
                         break;
-                    case types.importEntityColumnType.sharedAttribute.value:
-                        entityData.attributes.shared.push({
+                    case types.importEntityColumnType.timeseries.value:
+                        entityData.timeseries.push({
                             key: parameterColumns[j].key,
                             value: importData.rows[i][j]
                         });
                         break;
-                    case types.importEntityColumnType.timeseries.value:
-                        entityData.timeseries.push({
+                    case types.importEntityColumnType.sharedAttribute.value:
+                        entityData.attributes.shared.push({
                             key: parameterColumns[j].key,
                             value: importData.rows[i][j]
                         });
@@ -166,14 +163,13 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
                         break;
                 }
             }
-            entitysData.push(entityData);
+            entitiesData.push(entityData);
         }
-        entitysDataLength = entitysData.length;
-        $scope.$on('importCSV-completed', function () {
-            sendDataLength++;
-            vm.progressCreate = Math.round((sendDataLength / entitysDataLength) * 100);
+        $scope.$on('createImportEntityCompleted', function () {
+            sentDataLength++;
+            vm.progressCreate = Math.round((sentDataLength / importData.rows.length) * 100);
         });
-        importExport.createMultiEntity(entitysData, vm.entityType, vm.importParameters.isUpdate, config).then(function (response) {
+        importExport.createMultiEntity(entitiesData, vm.entityType, vm.importParameters.isUpdate, config).then(function (response) {
             vm.statistical = response;
             $mdStepper('import-stepper').next();
         });
@@ -216,7 +212,10 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
                 break;
             case 4:
                 steppers.next();
-                addDevices(parseData, vm.columnsParam);
+                addEntities(parseData, vm.columnsParam);
+                break;
+            case 6:
+                $mdDialog.hide();
                 break;
         }
 
@@ -228,9 +227,5 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
         } else {
             $mdDialog.cancel();
         }
-    }
-
-    function finishExport() {
-        $mdDialog.hide();
     }
 }

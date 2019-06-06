@@ -38,7 +38,7 @@ export default function TableColumnsAssignment() {
 }
 
 /*@ngInject*/
-function TableColumnsAssignmentController($scope, types) {
+function TableColumnsAssignmentController($scope, types, $timeout) {
     var vm = this;
 
     vm.columnTypes = {};
@@ -59,45 +59,36 @@ function TableColumnsAssignmentController($scope, types) {
             break;
     }
 
-    // switch (vm.entityType) {
-    //     case types.entityType.device:
-    //         vm.entityField.type = types.entityGroup.entityField.type;
-    //         // vm.entityField.assigned_customer = types.entityGroup.entityField.assigned_customer;
-    //         break;
-    //     case types.entityType.asset:
-    //         vm.entityField.type = types.entityGroup.entityField.type;
-    //         // vm.entityField.assigned_customer = types.entityGroup.entityField.assigned_customer;
-    //         break;
-    // }
-
-    // $scope.$watch('vm.columns', function(newVal){
-    //     if (newVal) {
-    //         var isSelectName = false;
-    //         var isSelectType = false;
-    //         // var isSelectCredentials = false;
-    //         for (var i = 0; i < newVal.length; i++) {
-    //             if (newVal[i].type === types.importEntityColumnType.entityField.value &&
-    //                 newVal[i].key === types.entityGroup.entityField.name.value) {
-    //                 isSelectName = true;
-    //             }
-    //             if (newVal[i].type === types.importEntityColumnType.entityField.value &&
-    //                 newVal[i].key === types.entityGroup.entityField.type.value) {
-    //                 isSelectType = true;
-    //             }
-    //             // if (newVal[i].type === types.entityGroup.columnType.accessToken.value) {
-    //             //     isSelectCredentials = true;
-    //             // }
-    //         }
-    //         $timeout(function () {
-    //             vm.entityField.name.disable = isSelectName;
-    //             vm.entityField.type.disable = isSelectType;
-    //             // vm.columnTypes.accessToken.disable = isSelectCredentials;
-    //         });
-    //         if(isSelectName && isSelectType) {
-    //             vm.theForm.$setDirty();
-    //         } else {
-    //             vm.theForm.$setPristine();
-    //         }
-    //     }
-    // }, true);
+    $scope.$watch('vm.columns', function(newVal){
+        if (newVal) {
+            var isSelectName = false;
+            var isSelectType = false;
+            var isSelectCredentials = false;
+            for (var i = 0; i < newVal.length; i++) {
+                switch (newVal[i].type) {
+                    case types.importEntityColumnType.name.value:
+                        isSelectName = true;
+                        break;
+                    case types.importEntityColumnType.type.value:
+                        isSelectType = true;
+                        break;
+                    case types.importEntityColumnType.accessToken.value:
+                        isSelectCredentials = true;
+                        break;
+                }
+            }
+            if(isSelectName && isSelectType) {
+                vm.theForm.$setDirty();
+            } else {
+                vm.theForm.$setPristine();
+            }
+            $timeout(function () {
+                vm.columnTypes.name.disable = isSelectName;
+                vm.columnTypes.type.disable = isSelectType;
+                if (angular.isDefined(vm.columnTypes.accessToken)) {
+                    vm.columnTypes.accessToken.disable = isSelectCredentials;
+                }
+            });
+        }
+    }, true);
 }

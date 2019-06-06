@@ -22,7 +22,7 @@
             <th md-column>&nbsp</th>
             <th md-column>Example value data</th>
             <th md-column>Column type</th>
-            <th md-column>Value</th>
+            <th md-column>Name attributes/telemetry</th>
         </tr>
         </thead>
         <tbody md-body>
@@ -38,16 +38,10 @@
                 </md-select>
             </td>
             <td md-cell>
-                <md-select ng-if="column.type == vm.columnTypes.entityField.value"
-                           required name="columnKey" ng-model="column.key"
-                           aria-label="{{ 'entity-group.column-value' | translate }}">
-                    <md-option ng-repeat="field in vm.entityField" ng-value="field.value" ng-disabled="field.disable">
-                        {{field.name | translate}}
-                    </md-option>
-                </md-select>
                 <md-input-container md-no-float
-                                    ng-if="column.type != vm.columnTypes.entityField.value &&
-                                                    column.type != vm.columnTypes.accessToken.value">
+                                    ng-if="column.type != vm.columnTypes.name.value &&
+                                           column.type != vm.columnTypes.type.value &&
+                                           column.type != vm.columnTypes.accessToken.value">
                     <input required name="columnKeyName"
                            placeholder="{{ 'entity-group.column-value' | translate }}"
                            ng-model="column.key"

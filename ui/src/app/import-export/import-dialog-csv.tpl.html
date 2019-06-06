@@ -147,14 +147,14 @@
             <md-step md-label="Done">
                 <md-step-body layout="column">
                     <div>
-                        <p class="md-body-1" ng-if="vm.statistical.create && vm.statistical.create.device">{{vm.statistical.create.entity}} new entities were successfully created.</p>
-                        <p class="md-body-1" ng-if="vm.statistical.update && vm.statistical.update.device">{{vm.statistical.update.entity}} entities were successfully updated.</p>
-                        <p class="md-body-1" ng-if="vm.statistical.error && vm.statistical.error.device">There was an error creating {{vm.statistical.error.entity}} entities.</p>
+                        <p class="md-body-1" ng-if="vm.statistical.create && vm.statistical.create.entity">{{vm.statistical.create.entity}} new entities were successfully created.</p>
+                        <p class="md-body-1" ng-if="vm.statistical.update && vm.statistical.update.entity">{{vm.statistical.update.entity}} entities were successfully updated.</p>
+                        <p class="md-body-1" ng-if="vm.statistical.error && vm.statistical.error.entity">There was an error creating {{vm.statistical.error.entity}} entities.</p>
                     </div>
                 </md-step-body>
                 <md-step-actions layout="row">
                     <span flex></span>
-                    <md-button class="md-primary md-raised" ng-disabled="$root.loading" ng-click="vm.finishExport();">
+                    <md-button class="md-primary md-raised" ng-disabled="$root.loading" ng-click="vm.nextStep(6);">
                         Ok
                     </md-button>
                 </md-step-actions>
@@ -162,14 +162,4 @@
 
         </md-stepper>
     </md-dialog-content>
-    <!--<md-dialog-actions layout="row">-->
-    <!--<span flex></span>-->
-    <!--<md-button ng-disabled="$root.loading || !theForm.$dirty || !theForm.$valid || !vm.importData" type="submit"-->
-    <!--class="md-raised md-primary">-->
-    <!--{{ 'action.import' | translate }}-->
-    <!--</md-button>-->
-    <!--<md-button ng-disabled="$root.loading" ng-click="vm.cancel()" style="margin-right:20px;">{{ 'action.cancel'-->
-    <!--| translate }}-->
-    <!--</md-button>-->
-    <!--</md-dialog-actions>-->
 </md-dialog>

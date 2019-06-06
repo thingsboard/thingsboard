@@ -384,48 +384,6 @@ export default angular.module('thingsboard.types', [])
                     value: 'ACCESS_TOKEN'
                 }
             },
-            // entityGroup: {
-            //     columnType: {
-            //         clientAttribute: {
-            //             name: 'entity-group.column-type.client-attribute',
-            //             value: 'CLIENT_ATTRIBUTE'
-            //         },
-            //         sharedAttribute: {
-            //             name: 'entity-group.column-type.shared-attribute',
-            //             value: 'SHARED_ATTRIBUTE'
-            //         },
-            //         serverAttribute: {
-            //             name: 'entity-group.column-type.server-attribute',
-            //             value: 'SERVER_ATTRIBUTE'
-            //         },
-            //         timeseries: {
-            //             name: 'entity-group.column-type.timeseries',
-            //             value: 'TIMESERIES'
-            //         },
-            //         entityField: {
-            //             name: 'entity-group.column-type.entity-field',
-            //             value: 'ENTITY_FIELD'
-            //         },
-            //         accessToken: {
-            //             name: 'entity-group.column-type.access-token',
-            //             value: 'ACCESS_TOKEN'
-            //         }
-            //     },
-            //     entityField: {
-            //         name: {
-            //             name: 'entity-group.entity-field.name',
-            //             value: 'name'
-            //         },
-            //         type: {
-            //             name: 'entity-group.entity-field.type',
-            //             value: 'type'
-            //         },
-            //         assigned_customer: {
-            //             name: 'entity-group.entity-field.assigned_customer',
-            //             value: 'assigned_customer'
-            //         }
-            //     }
-            // },
             aliasEntityType: {
                 current_customer: "CURRENT_CUSTOMER"
             },

@@ -846,7 +846,7 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
     function qAllWithProgress(promises) {
         promises.forEach(function(p) {
             p.then(function() {
-                $rootScope.$broadcast('importCSV-completed', {});
+                $rootScope.$broadcast('createImportEntityCompleted', {});
             });
         });
         return $q.all(promises);
