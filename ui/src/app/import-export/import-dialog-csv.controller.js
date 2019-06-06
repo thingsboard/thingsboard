@@ -61,10 +61,6 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
 
     vm.progressCreate = 0;
 
-    $scope.$on('importCSV-completed', function (event, completed) {
-        vm.progressCreate = completed.progress;
-    });
-
     var parseData = {};
 
     function fileAdded($file) {
@@ -122,6 +118,8 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
 
     function addDevices(importData, parameterColumns) {
         var entitysData = [];
+        var sendDataLength = 0;
+        var entitysDataLength = 0;
         var config = {
             ignoreErrors: true,
             resendRequest: true
@@ -174,6 +172,11 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
             }
             entitysData.push(entityData);
         }
+        entitysDataLength = entitysData.length;
+        $scope.$on('importCSV-completed', function () {
+            sendDataLength++;
+            vm.progressCreate = Math.round((sendDataLength / entitysDataLength) * 100);
+        });
         importExport.createMultiEntity(entitysData, vm.entityType, vm.importParameters.isUpdate, config).then(function (response) {
             vm.statistical = response;
             $mdStepper('import-stepper').next();
@@ -186,9 +189,17 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
         vm.importData = null;
     }
 
-    function previousStep() {
+    function previousStep(step) {
         let steppers = $mdStepper('import-stepper');
-        steppers.back();
+        switch (step) {
+            case 1:
+                steppers.back();
+                vm.theFormStep1.$setDirty();
+                break;
+            default:
+                steppers.back();
+                break;
+        }
     }
 
     function nextStep(step) {

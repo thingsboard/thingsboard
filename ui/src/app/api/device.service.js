@@ -182,23 +182,40 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
                 response.credentialsId = deviceRelation.accessToken;
                 response.credentialsType = "ACCESS_TOKEN";
                 response.credentialsValue = null;
-                return saveDeviceCredentials(response, config).catch(function(){});
+                return saveDeviceCredentials(response, config).catch(function(){
+                    return "error";
+                });
             });
             allPromise.push(promise)
         }
         for (let i = 0; i < attributesType.length; i++) {
             let attribute = attributesType[i];
             if (deviceRelation.attributes[attribute] && deviceRelation.attributes[attribute].length !== 0) {
-                promise = attributeService.saveEntityAttributes(types.entityType.device, deviceId.id, types.attributesScope[attribute].value, deviceRelation.attributes[attribute], config).catch(function () {});
+                promise = attributeService.saveEntityAttributes(types.entityType.device, deviceId.id, types.attributesScope[attribute].value, deviceRelation.attributes[attribute], config).catch(function () {
+                    return "error";
+                });
                 allPromise.push(promise);
             }
         }
         if (deviceRelation.timeseries.length !== 0) {
-            promise = attributeService.saveEntityTimeseries(types.entityType.device, deviceId.id, "time", deviceRelation.timeseries, config).catch(function(){});
+            promise = attributeService.saveEntityTimeseries(types.entityType.device, deviceId.id, "time", deviceRelation.timeseries, config).catch(function(){
+                return "error";
+            });
             allPromise.push(promise);
         }
-        $q.all(allPromise).then(function success() {
-            deferred.resolve();
+        $q.all(allPromise).then(function success(response) {
+            let isResponseHasError = false;
+            for(let i = 0; i < response.length; i++){
+                if(response[i] === "error"){
+                    isResponseHasError = true;
+                    break;
+                }
+            }
+            if (isResponseHasError){
+                deferred.reject();
+            } else {
+                deferred.resolve();
+            }
         });
         return deferred.promise;
     }
@@ -212,19 +229,29 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
             type: deviceParameters.type
         };
         saveDevice(newDevice, config).then(function success(response) {
-            statisticalInfo.create={
-                device: 1
-            };
             saveDeviceRelarion(response.id, deviceParameters, config).then(function success() {
+                statisticalInfo.create = {
+                    device: 1
+                };
+                deferred.resolve(statisticalInfo);
+            }, function fail() {
+                statisticalInfo.error = {
+                    device: 1
+                };
                 deferred.resolve(statisticalInfo);
             });
         }, function fail() {
             if (update) {
                 findByName(deviceParameters.name, config).then(function success(response) {
-                    statisticalInfo.update = {
-                        device: 1
-                    };
                     saveDeviceRelarion(response.id, deviceParameters, config).then(function success() {
+                        statisticalInfo.update = {
+                            device: 1
+                        };
+                        deferred.resolve(statisticalInfo);
+                    }, function fail() {
+                        statisticalInfo.error = {
+                            device: 1
+                        };
                         deferred.resolve(statisticalInfo);
                     });
                 }, function fail() {

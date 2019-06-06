@@ -828,38 +828,41 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         return obj1;
     }
 
-    function qAllWithProgress(promises, progress) {
-        var total = promises.length;
-        var now = 0;
+    function qAllWithProgress(promises) {
         promises.forEach(function(p) {
             p.then(function() {
-                now++;
-                progress(now / total);
+                $rootScope.$broadcast('importCSV-completed', {});
             });
         });
         return $q.all(promises);
     }
     
-    function createMultiEntity(arrayData, entityType, update, config) {
-        let deferred = $q.defer();
+    function createMultiEntity(arrayData, entityType, updateData, config) {
+        let partSize = 100;
+        partSize = arrayData.length > partSize ? partSize : arrayData.length;
         let allPromise = [];
         let statisticalInfo = {};
+        let deferred = $q.defer();
         switch (entityType) {
             case types.entityType.device:
-                for(let i = 0; i < arrayData.length; i++){
-                    const promise = deviceService.saveDeviceParameters(arrayData[i], update, config);
+                for(let i = 0; i < partSize; i++){
+                    const promise = deviceService.saveDeviceParameters(arrayData[i], updateData, config);
                     allPromise.push(promise);
                 }
                 break;
         }
-        qAllWithProgress(allPromise, function(progress) {
-            progress = Math.round(progress * 100);
-            $rootScope.$broadcast('importCSV-completed', {progress: progress});
-        }).then(function success(response) {
+        qAllWithProgress(allPromise).then(function success(response) {
             for (let i = 0; i < response.length; i++){
                 statisticalInfo = sumObject(statisticalInfo, response[i]);
             }
-            deferred.resolve(statisticalInfo);
+            arrayData.splice(0, partSize);
+            if(arrayData.length > 0){
+                deferred.resolve(createMultiEntity(arrayData, entityType, updateData, config).then(function (response) {
+                    return sumObject(statisticalInfo, response);
+                }));
+            } else {
+                deferred.resolve(statisticalInfo);
+            }
         });
         return deferred.promise;
     }
@@ -965,7 +968,6 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
     function fixedDialogSize(scope, element) {
         let dialogElement = element[0].getElementsByTagName('md-dialog');
         dialogElement[0].style.width = dialogElement[0].offsetWidth + 2 + "px";
-        dialogElement[0].style.height = dialogElement[0].offsetHeight + "px";
     }
 }
 
