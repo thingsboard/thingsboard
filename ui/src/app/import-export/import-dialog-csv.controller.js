@@ -101,13 +101,13 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
         for (var i = 0; i < parseData.headers.length; i++) {
             if (vm.importParameters.isHeader && parseData.headers[i].search(/^(name|type)$/im) === 0) {
                 columnParam = {
-                    type: types.entityGroup.columnType.entityField.value,
+                    type: types.importEntityColumnType.entityField.value,
                     key: parseData.headers[i].toLowerCase(),
                     sampleData: parseData.rows[0][i]
                 };
             } else {
                 columnParam = {
-                    type: types.entityGroup.columnType.serverAttribute.value,
+                    type: types.importEntityColumnType.serverAttribute.value,
                     key: vm.importParameters.isHeader ? parseData.headers[i] : "",
                     sampleData: parseData.rows[0][i]
                 };
@@ -137,36 +137,32 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
             };
             for (var j = 0; j < parameterColumns.length; j++) {
                 switch (parameterColumns[j].type) {
-                    case types.entityGroup.columnType.serverAttribute.value:
+                    case types.importEntityColumnType.serverAttribute.value:
                         entityData.attributes.server.push({
                             key: parameterColumns[j].key,
                             value: importData.rows[i][j]
                         });
                         break;
-                    case types.entityGroup.columnType.sharedAttribute.value:
+                    case types.importEntityColumnType.sharedAttribute.value:
                         entityData.attributes.shared.push({
                             key: parameterColumns[j].key,
                             value: importData.rows[i][j]
                         });
                         break;
-                    case types.entityGroup.columnType.timeseries.value:
+                    case types.importEntityColumnType.timeseries.value:
                         entityData.timeseries.push({
                             key: parameterColumns[j].key,
                             value: importData.rows[i][j]
                         });
                         break;
-                    case types.entityGroup.columnType.accessToken.value:
+                    case types.importEntityColumnType.accessToken.value:
                         entityData.accessToken = importData.rows[i][j];
                         break;
-                    case types.entityGroup.columnType.entityField.value:
-                        switch (parameterColumns[j].key) {
-                            case types.entityGroup.entityField.name.value:
-                                entityData.name = importData.rows[i][j];
-                                break;
-                            case types.entityGroup.entityField.type.value:
-                                entityData.type = importData.rows[i][j];
-                                break;
-                        }
+                    case types.importEntityColumnType.name.value:
+                        entityData.name = importData.rows[i][j];
+                        break;
+                    case types.importEntityColumnType.type.value:
+                        entityData.type = importData.rows[i][j];
                         break;
                 }
             }

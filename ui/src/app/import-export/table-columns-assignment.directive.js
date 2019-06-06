@@ -38,59 +38,66 @@ export default function TableColumnsAssignment() {
 }
 
 /*@ngInject*/
-function TableColumnsAssignmentController($scope, types, $timeout) {
+function TableColumnsAssignmentController($scope, types) {
     var vm = this;
 
     vm.columnTypes = {};
-    vm.entityField = {};
+
+    vm.columnTypes.name = types.importEntityColumnType.name;
+    vm.columnTypes.type = types.importEntityColumnType.type;
 
     switch (vm.entityType) {
         case types.entityType.device:
-            vm.columnTypes.sharedAttribute = types.entityGroup.columnType.sharedAttribute;
-            vm.columnTypes.serverAttribute = types.entityGroup.columnType.serverAttribute;
-            vm.columnTypes.timeseries = types.entityGroup.columnType.timeseries;
-            vm.columnTypes.entityField = types.entityGroup.columnType.entityField;
-            vm.columnTypes.accessToken = types.entityGroup.columnType.accessToken;
+            vm.columnTypes.sharedAttribute = types.importEntityColumnType.sharedAttribute;
+            vm.columnTypes.serverAttribute = types.importEntityColumnType.serverAttribute;
+            vm.columnTypes.timeseries = types.importEntityColumnType.timeseries;
+            vm.columnTypes.accessToken = types.importEntityColumnType.accessToken;
+            break;
+        case types.entityType.asset:
+            vm.columnTypes.serverAttribute = types.importEntityColumnType.serverAttribute;
+            vm.columnTypes.timeseries = types.importEntityColumnType.timeseries;
             break;
     }
 
-    vm.entityField.name = types.entityGroup.entityField.name;
+    // switch (vm.entityType) {
+    //     case types.entityType.device:
+    //         vm.entityField.type = types.entityGroup.entityField.type;
+    //         // vm.entityField.assigned_customer = types.entityGroup.entityField.assigned_customer;
+    //         break;
+    //     case types.entityType.asset:
+    //         vm.entityField.type = types.entityGroup.entityField.type;
+    //         // vm.entityField.assigned_customer = types.entityGroup.entityField.assigned_customer;
+    //         break;
+    // }
 
-    switch (vm.entityType) {
-        case types.entityType.device:
-            vm.entityField.type = types.entityGroup.entityField.type;
-            // vm.entityField.assigned_customer = types.entityGroup.entityField.assigned_customer;
-            break;
-    }
-
-    $scope.$watch('vm.columns', function(newVal){
-        if (newVal) {
-            var isSelectName = false;
-            var isSelectType = false;
-            var isSelectCredentials = false;
-            for (var i = 0; i < newVal.length; i++) {
-                if (newVal[i].type === types.entityGroup.columnType.entityField.value &&
-                    newVal[i].key === types.entityGroup.entityField.name.value) {
-                    isSelectName = true;
-                }
-                if (newVal[i].type === types.entityGroup.columnType.entityField.value &&
-                    newVal[i].key === types.entityGroup.entityField.type.value) {
-                    isSelectType = true;
-                }
-                if (newVal[i].type === types.entityGroup.columnType.accessToken.value) {
-                    isSelectCredentials = true;
-                }
-            }
-            $timeout(function () {
-                vm.entityField.name.disable = isSelectName;
-                vm.entityField.type.disable = isSelectType;
-                vm.columnTypes.accessToken.disable = isSelectCredentials;
-            });
-            if(isSelectName && isSelectType) {
-                vm.theForm.$setDirty();
-            } else {
-                vm.theForm.$setPristine();
-            }
-        }
-    }, true);
+    // $scope.$watch('vm.columns', function(newVal){
+    //     if (newVal) {
+    //         var isSelectName = false;
+    //         var isSelectType = false;
+    //         // var isSelectCredentials = false;
+    //         for (var i = 0; i < newVal.length; i++) {
+    //             if (newVal[i].type === types.importEntityColumnType.entityField.value &&
+    //                 newVal[i].key === types.entityGroup.entityField.name.value) {
+    //                 isSelectName = true;
+    //             }
+    //             if (newVal[i].type === types.importEntityColumnType.entityField.value &&
+    //                 newVal[i].key === types.entityGroup.entityField.type.value) {
+    //                 isSelectType = true;
+    //             }
+    //             // if (newVal[i].type === types.entityGroup.columnType.accessToken.value) {
+    //             //     isSelectCredentials = true;
+    //             // }
+    //         }
+    //         $timeout(function () {
+    //             vm.entityField.name.disable = isSelectName;
+    //             vm.entityField.type.disable = isSelectType;
+    //             // vm.columnTypes.accessToken.disable = isSelectCredentials;
+    //         });
+    //         if(isSelectName && isSelectType) {
+    //             vm.theForm.$setDirty();
+    //         } else {
+    //             vm.theForm.$setPristine();
+    //         }
+    //     }
+    // }, true);
 }

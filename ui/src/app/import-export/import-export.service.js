@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/* eslint-disable import/no-unresolved, import/default */
+/* eslint-disable import/no-unresolved, import/default*/
 
 import importDialogTemplate from './import-dialog.tpl.html';
 import importDialogCSVTemplate from './import-dialog-csv.tpl.html';
@@ -25,7 +25,7 @@ import entityAliasesTemplate from '../entity/alias/entity-aliases.tpl.html';
 /* eslint-disable no-undef, angular/window-service, angular/document-service */
 
 /*@ngInject*/
-export default function ImportExport($log, $translate, $q, $mdDialog, $document, $http, itembuffer, utils, types, $timeout, deviceService, $rootScope,
+export default function ImportExport($log, $translate, $q, $mdDialog, $document, $http, itembuffer, utils, types, $rootScope,
                                      dashboardUtils, entityService, dashboardService, ruleChainService, widgetService, toast, attributeService) {
 
 
@@ -42,7 +42,7 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         importWidgetsBundle: importWidgetsBundle,
         exportExtension: exportExtension,
         importExtension: importExtension,
-        importDevices: importDevices,
+        importEntities: importEntities,
         convertCSVToJson: convertCSVToJson,
         exportToPc: exportToPc,
         createMultiEntity: createMultiEntity
@@ -578,17 +578,32 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         return deferred.promise;
     }
 
-    function importDevices($event, entityType) {
+    function importEntities($event, entityType) {
         var deferred = $q.defer();
-        openImportDialogCSV($event, entityType,'device.import', 'device.device-file').then(
-            function success() {
-                deferred.resolve();
-            },
-            function fail() {
-                deferred.reject();
-            }
-        );
-        return deferred.promise;
+
+        switch (entityType) {
+            case types.entityType.device:
+                openImportDialogCSV($event, entityType, 'device.import', 'device.device-file').then(
+                    function success() {
+                        deferred.resolve();
+                    },
+                    function fail() {
+                        deferred.reject();
+                    }
+                );
+                return deferred.promise;
+            case types.entityType.asset:
+                openImportDialogCSV($event, entityType, 'asset.import', 'asset.asset-file').then(
+                    function success() {
+                        deferred.resolve();
+                    },
+                    function fail() {
+                        deferred.reject();
+                    }
+                );
+                return deferred.promise;
+        }
+
     }
 
     function saveImportedDashboard(dashboard, deferred) {
@@ -843,14 +858,12 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         let allPromise = [];
         let statisticalInfo = {};
         let deferred = $q.defer();
-        switch (entityType) {
-            case types.entityType.device:
-                for(let i = 0; i < partSize; i++){
-                    const promise = deviceService.saveDeviceParameters(arrayData[i], updateData, config);
-                    allPromise.push(promise);
-                }
-                break;
+
+        for(let i = 0; i < partSize; i++){
+            const promise = entityService.saveEntityParameters(entityType, arrayData[i], updateData, config);
+            allPromise.push(promise);
         }
+
         qAllWithProgress(allPromise).then(function success(response) {
             for (let i = 0; i < response.length; i++){
                 statisticalInfo = sumObject(statisticalInfo, response[i]);

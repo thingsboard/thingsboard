@@ -31,7 +31,6 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
         getDeviceCredentials: getDeviceCredentials,
         getTenantDevices: getTenantDevices,
         saveDevice: saveDevice,
-        saveDeviceParameters: saveDeviceParameters,
         saveDeviceCredentials: saveDeviceCredentials,
         unassignDeviceFromCustomer: unassignDeviceFromCustomer,
         makeDevicePublic: makeDevicePublic,
@@ -43,8 +42,9 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
         sendOneWayRpcCommand: sendOneWayRpcCommand,
         sendTwoWayRpcCommand: sendTwoWayRpcCommand,
         findByQuery: findByQuery,
-        getDeviceTypes: getDeviceTypes
-    }
+        getDeviceTypes: getDeviceTypes,
+        findByName: findByName
+    };
 
     return service;
 
@@ -168,104 +168,6 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
             deferred.resolve(response.data);
         }, function fail() {
             deferred.reject();
-        });
-        return deferred.promise;
-    }
-
-    function saveDeviceRelarion(deviceId, deviceRelation, config) {
-        const deferred = $q.defer();
-        let attributesType = Object.keys(types.attributesScope);
-        let allPromise = [];
-        let promise = "";
-        if (deviceRelation.accessToken !== "") {
-            promise = getDeviceCredentials(deviceId.id,null,config).then(function (response){
-                response.credentialsId = deviceRelation.accessToken;
-                response.credentialsType = "ACCESS_TOKEN";
-                response.credentialsValue = null;
-                return saveDeviceCredentials(response, config).catch(function(){
-                    return "error";
-                });
-            });
-            allPromise.push(promise)
-        }
-        for (let i = 0; i < attributesType.length; i++) {
-            let attribute = attributesType[i];
-            if (deviceRelation.attributes[attribute] && deviceRelation.attributes[attribute].length !== 0) {
-                promise = attributeService.saveEntityAttributes(types.entityType.device, deviceId.id, types.attributesScope[attribute].value, deviceRelation.attributes[attribute], config).catch(function () {
-                    return "error";
-                });
-                allPromise.push(promise);
-            }
-        }
-        if (deviceRelation.timeseries.length !== 0) {
-            promise = attributeService.saveEntityTimeseries(types.entityType.device, deviceId.id, "time", deviceRelation.timeseries, config).catch(function(){
-                return "error";
-            });
-            allPromise.push(promise);
-        }
-        $q.all(allPromise).then(function success(response) {
-            let isResponseHasError = false;
-            for(let i = 0; i < response.length; i++){
-                if(response[i] === "error"){
-                    isResponseHasError = true;
-                    break;
-                }
-            }
-            if (isResponseHasError){
-                deferred.reject();
-            } else {
-                deferred.resolve();
-            }
-        });
-        return deferred.promise;
-    }
-
-    function saveDeviceParameters(deviceParameters, update, config) {
-        config = config || {};
-        const deferred = $q.defer();
-        let statisticalInfo = {};
-        let newDevice = {
-            name: deviceParameters.name,
-            type: deviceParameters.type
-        };
-        saveDevice(newDevice, config).then(function success(response) {
-            saveDeviceRelarion(response.id, deviceParameters, config).then(function success() {
-                statisticalInfo.create = {
-                    device: 1
-                };
-                deferred.resolve(statisticalInfo);
-            }, function fail() {
-                statisticalInfo.error = {
-                    device: 1
-                };
-                deferred.resolve(statisticalInfo);
-            });
-        }, function fail() {
-            if (update) {
-                findByName(deviceParameters.name, config).then(function success(response) {
-                    saveDeviceRelarion(response.id, deviceParameters, config).then(function success() {
-                        statisticalInfo.update = {
-                            device: 1
-                        };
-                        deferred.resolve(statisticalInfo);
-                    }, function fail() {
-                        statisticalInfo.error = {
-                            device: 1
-                        };
-                        deferred.resolve(statisticalInfo);
-                    });
-                }, function fail() {
-                    statisticalInfo.error = {
-                        device: 1
-                    };
-                    deferred.resolve(statisticalInfo);
-                });
-            } else {
-                statisticalInfo.error = {
-                    device: 1
-                };
-                deferred.resolve(statisticalInfo);
-            }
         });
         return deferred.promise;
     }

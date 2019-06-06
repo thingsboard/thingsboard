@@ -246,7 +246,9 @@
         "select-asset": "Select asset",
         "no-assets-matching": "No assets matching '{{entity}}' were found.",
         "asset-required": "Asset is required",
-        "name-starts-with": "Asset name starts with"
+        "name-starts-with": "Asset name starts with",
+        "import": "Import assets",
+        "asset-file": "Asset file"
     },
     "attribute": {
         "attributes": "Attributes",

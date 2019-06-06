@@ -68,7 +68,7 @@ export function DeviceController($rootScope, userService, deviceService, custome
         },
         {
             onAction: function ($event) {
-                importExport.importDevices($event, types.entityType.device).then(
+                importExport.importEntities($event, types.entityType.device).then(
                     function() {
                         vm.grid.refreshList();
                     }
@@ -337,8 +337,6 @@ export function DeviceController($rootScope, userService, deviceService, custome
                     icon: "add"
                 };
 
-                vm.deviceGridConfig.addItemActions = [];
-
             } else if (vm.devicesScope === 'customer_user') {
                 deviceActionsList.push(
                     {
@@ -352,8 +350,9 @@ export function DeviceController($rootScope, userService, deviceService, custome
                 );
 
                 vm.deviceGridConfig.addItemAction = {};
-                vm.deviceGridConfig.addItemActions = [];
             }
+            vm.deviceGridConfig.addItemActions = [];
+
         }
 
         vm.deviceGridConfig.refreshParamsFunc = refreshDevicesParamsFunction;

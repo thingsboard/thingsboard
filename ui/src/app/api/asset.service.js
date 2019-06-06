@@ -32,7 +32,8 @@ function AssetService($http, $q, customerService, userService) {
         getCustomerAssets: getCustomerAssets,
         findByQuery: findByQuery,
         fetchAssetsByNameFilter: fetchAssetsByNameFilter,
-        getAssetTypes: getAssetTypes
+        getAssetTypes: getAssetTypes,
+        findByName: findByName
     }
 
     return service;
@@ -268,6 +269,18 @@ function AssetService($http, $q, customerService, userService) {
     function getAssetTypes(config) {
         var deferred = $q.defer();
         var url = '/api/asset/types';
+        $http.get(url, config).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function findByName(assetName, config) {
+        config = config || {};
+        var deferred = $q.defer();
+        var url = '/api/tenant/assets?assetName=' + assetName;
         $http.get(url, config).then(function success(response) {
             deferred.resolve(response.data);
         }, function fail() {
