@@ -48,7 +48,8 @@
         "paste-reference": "Paste reference",
         "import": "Import",
         "export": "Export",
-        "share-via": "Share via {{provider}}"
+        "share-via": "Share via {{provider}}",
+        "continue": "Continue"
     },
     "aggregation": {
         "aggregation": "Aggregation",
@@ -778,27 +779,7 @@
         "details": "Entity details",
         "no-entities-prompt": "No entities found",
         "no-data": "No data to display",
-        "columns-to-display": "Columns to Display",
-        "import-csv-number-columns-error": "A file should contain at least two columns",
-        "import-csv-invalid-format-error": "Invalid file format. Line: '{{line}}'"
-    },
-    "entity-group": {
-        "column-value": "Value",
-        "column-title": "Title",
-        "column-type": {
-            "column-type": "Column type",
-            "client-attribute": "Client attribute",
-            "shared-attribute": "Shared attribute",
-            "server-attribute": "Server attribute",
-            "timeseries": "Timeseries",
-            "entity-field": "Entity field",
-            "access-token": "Access token"
-        },
-        "entity-field": {
-            "name": "Name",
-            "type": "Type",
-            "assigned_customer": "Assigned Customer"
-        }
+        "columns-to-display": "Columns to Display"
     },
     "entity-view": {
         "entity-view": "Entity View",
@@ -1118,7 +1099,39 @@
     "import": {
         "no-file": "No file selected",
         "drop-file": "Drop a JSON file or click to select a file to upload.",
-        "drop-file-csv": "Drop a CSV file or click to select a file to upload."
+        "drop-file-csv": "Drop a CSV file or click to select a file to upload.",
+        "column-value": "Value",
+        "column-title": "Title",
+        "column-example": "Example value data",
+        "column-key": "Attribute/telemetry key",
+        "csv-delimiter": "CSV delimiter",
+        "csv-first-line-header": "First line contains column names",
+        "csv-update-data": "Update attributes/telemetry",
+        "import-csv-number-columns-error": "A file should contain at least two columns",
+        "import-csv-invalid-format-error": "Invalid file format. Line: '{{line}}'",
+        "column-type": {
+            "name": "Name",
+            "type": "Type",
+            "column-type": "Column type",
+            "client-attribute": "Client attribute",
+            "shared-attribute": "Shared attribute",
+            "server-attribute": "Server attribute",
+            "timeseries": "Timeseries",
+            "entity-field": "Entity field",
+            "access-token": "Access token"
+        },
+        "stepper-text":{
+            "select-file": "Select a file",
+            "configuration": "Import configuration",
+            "column-type": "Select columns type",
+            "creat-entities": "Creating new entities",
+            "done": "Done"
+        },
+        "message": {
+            "create-entities": "'{{count}}' new entities were successfully created.",
+            "update-entities": "'{{count}}' entities were successfully updated.",
+            "error-entities": "There was an error creating '{{count}}' entities."
+        }
     },
     "item": {
         "selected": "Selected"

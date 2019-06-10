@@ -15,13 +15,14 @@
     limitations under the License.
 
 -->
-<md-dialog aria-label="{{ vm.importTitle | translate }}" class="tb-import-stepper" tb-help="'import-csv'" help-container-id="help-container">
+<md-dialog aria-label="{{ vm.importTitle | translate }}" class="tb-import-stepper" tb-help="'entitiesImport'"
+           help-container-id="help-container">
     <md-toolbar>
         <div class="md-toolbar-tools">
             <h2 translate>{{ vm.importTitle }}</h2>
             <span flex></span>
             <div id="help-container"></div>
-            <md-button class="md-icon-button" ng-click="vm.cancel()">
+            <md-button class="md-icon-button" ng-click="vm.cancel()" ng-disabled="vm.isImportData">
                 <ng-md-icon icon="close" aria-label="{{ 'dialog.close' | translate }}"></ng-md-icon>
             </md-button>
         </div>
@@ -31,7 +32,7 @@
     <md-dialog-content>
         <md-stepper id="import-stepper" md-mobile-step-text="vm.isMobileStepText" md-vertical="vm.isVertical"
                     md-linear="vm.isLinear" md-alternative="vm.isAlternative">
-            <md-step md-label="Select a file">
+            <md-step md-label="{{ 'import.stepper-text.select-file' | translate }}">
                 <md-step-body>
                     <form name="vm.theFormStep1">
                         <fieldset ng-disabled="$root.loading">
@@ -78,27 +79,28 @@
                     <md-button class="md-primary md-raised"
                                ng-disabled="$root.loading || !vm.theFormStep1.$dirty || !vm.theFormStep1.$valid || !vm.importData"
                                ng-click="vm.nextStep(2);">
-                        Continue
+                        {{ 'action.continue' | translate }}
                     </md-button>
                 </md-step-actions>
             </md-step>
 
-            <md-step md-label="Import configuration">
+            <md-step md-label="{{ 'import.stepper-text.configuration' | translate }}">
                 <md-step-body>
                     <div layout="column">
                         <md-input-container>
-                            <label translate>CSV delimiter</label>
+                            <label translate>import.csv-delimiter</label>
                             <md-select ng-model="vm.importParameters.delim">
                                 <md-option ng-repeat="delimiter in vm.delimiters" ng-value="delimiter.key">
                                     {{delimiter.value}}
                                 </md-option>
                             </md-select>
                         </md-input-container>
-                        <md-checkbox ng-model="vm.importParameters.isHeader" aria-label="First line contains column names">
-                            First line contains column names
+                        <md-checkbox ng-model="vm.importParameters.isHeader"
+                                     aria-label="First line contains column names">
+                            {{ 'import.csv-first-line-header' | translate }}
                         </md-checkbox>
                         <md-checkbox ng-model="vm.importParameters.isUpdate" aria-label="Update attributes/telemetry">
-                            Update attributes/telemetry
+                            {{ 'import.csv-update-data' | translate }}
                         </md-checkbox>
                     </div>
                 </md-step-body>
@@ -111,12 +113,12 @@
                         {{ 'action.cancel' | translate }}
                     </md-button>
                     <md-button class="md-primary md-raised" ng-disabled="$root.loading" ng-click="vm.nextStep(3);">
-                        Continue
+                        {{ 'action.continue' | translate }}
                     </md-button>
                 </md-step-actions>
             </md-step>
 
-            <md-step md-label="Select columns type">
+            <md-step md-label="{{ 'import.stepper-text.column-type' | translate }}">
                 <md-step-body>
                     <form name="vm.theFormStep3">
                         <tb-table-columns-assignment columns="vm.columnsParam" the-form="vm.theFormStep3"
@@ -134,28 +136,32 @@
                     <md-button class="md-primary md-raised"
                                ng-disabled="$root.loading || !vm.theFormStep3.$dirty || !vm.theFormStep3.$valid"
                                ng-click="vm.nextStep(4);">
-                        Continue
+                        {{ 'action.continue' | translate }}
                     </md-button>
                 </md-step-actions>
             </md-step>
 
-            <md-step md-label="Creating new entities">
+            <md-step md-label="{{ 'import.stepper-text.creat-entities' | translate }}">
                 <md-step-body>
-                    <md-progress-linear class="md-warn tb-import-progress" md-mode="determinate" value="{{vm.progressCreate}}"></md-progress-linear>
+                    <md-progress-linear class="md-warn tb-import-progress" md-mode="determinate"
+                                        value="{{vm.progressCreate}}"></md-progress-linear>
                 </md-step-body>
             </md-step>
-            <md-step md-label="Done">
+            <md-step md-label="{{ 'import.stepper-text.done' | translate }}">
                 <md-step-body layout="column">
                     <div>
-                        <p class="md-body-1" ng-if="vm.statistical.create && vm.statistical.create.entity">{{vm.statistical.create.entity}} new entities were successfully created.</p>
-                        <p class="md-body-1" ng-if="vm.statistical.update && vm.statistical.update.entity">{{vm.statistical.update.entity}} entities were successfully updated.</p>
-                        <p class="md-body-1" ng-if="vm.statistical.error && vm.statistical.error.entity">There was an error creating {{vm.statistical.error.entity}} entities.</p>
+                        <p class="md-body-1" translate translate-values="{count: vm.statistical.create.entity}"
+                           ng-if="vm.statistical.create && vm.statistical.create.entity">import.message.create-entities</p>
+                        <p class="md-body-1" translate translate-values="{count: vm.statistical.update.entity}"
+                           ng-if="vm.statistical.update && vm.statistical.update.entity">import.message.update-entities</p>
+                        <p class="md-body-1" translate translate-values="{count: vm.statistical.error.entity}"
+                           ng-if="vm.statistical.error && vm.statistical.error.entity">import.message.error-entities</p>
                     </div>
                 </md-step-body>
                 <md-step-actions layout="row">
                     <span flex></span>
                     <md-button class="md-primary md-raised" ng-disabled="$root.loading" ng-click="vm.nextStep(6);">
-                        Ok
+                        {{ 'action.ok' | translate }}
                     </md-button>
                 </md-step-actions>
             </md-step>

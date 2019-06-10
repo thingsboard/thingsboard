@@ -1159,7 +1159,7 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                         break;
                 }
                 findIdEntity.then(function success(response) {
-                    saveEntityRelarion(response.id, entityType, entityParameters, config).then(function success() {
+                    saveEntityRelarion(entityType, response.id, entityParameters, config).then(function success() {
                         statisticalInfo.update = {
                             entity: 1
                         };

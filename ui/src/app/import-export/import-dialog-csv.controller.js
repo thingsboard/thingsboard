@@ -16,7 +16,7 @@
 import './import-dialog.scss';
 
 /*@ngInject*/
-export default function ImportDialogCsvController($scope, $mdDialog, toast, importTitle, importFileLabel, entityType, importExport, types, $mdStepper) {
+export default function ImportDialogCsvController($scope, $mdDialog, toast, importTitle, importFileLabel, entityType, importExport, types, $mdStepper, $timeout) {
 
     var vm = this;
 
@@ -40,6 +40,7 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
     vm.isLinear = true;
     vm.isAlternative = false;
     vm.isMobileStepText = true;
+    vm.isImportData = false;
 
     vm.parseData = [];
 
@@ -171,6 +172,7 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
         });
         importExport.createMultiEntity(entitiesData, vm.entityType, vm.importParameters.isUpdate, config).then(function (response) {
             vm.statistical = response;
+            vm.isImportData = false;
             $mdStepper('import-stepper').next();
         });
     }
@@ -186,7 +188,9 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
         switch (step) {
             case 1:
                 steppers.back();
-                vm.theFormStep1.$setDirty();
+                $timeout(function () {
+                    vm.theFormStep1.$setDirty();
+                });
                 break;
             default:
                 steppers.back();
@@ -203,8 +207,10 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
             case 3:
                 parseData = parseCSV(vm.importData);
                 if (parseData === -1) {
-                    clearFile();
                     steppers.back();
+                    $timeout(function () {
+                        clearFile();
+                    });
                 } else {
                     createColumnsData(parseData);
                     steppers.next();
@@ -212,6 +218,7 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
                 break;
             case 4:
                 steppers.next();
+                vm.isImportData = true;
                 addEntities(parseData, vm.columnsParam);
                 break;
             case 6:

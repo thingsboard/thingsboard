@@ -20,9 +20,9 @@
         <thead md-head>
         <tr md-row>
             <th md-column>&nbsp</th>
-            <th md-column>Example value data</th>
-            <th md-column>Column type</th>
-            <th md-column>Name attributes/telemetry</th>
+            <th md-column>{{ 'import.column-example' | translate }}</th>
+            <th md-column>{{ 'import.column-type.column-type' | translate }}</th>
+            <th md-column>{{ 'import.column-key' | translate }}</th>
         </tr>
         </thead>
         <tbody md-body>
@@ -31,7 +31,7 @@
             <td md-cell>{{column.sampleData}}</td>
             <td md-cell>
                 <md-select ng-model="column.type" required name="columnType"
-                           aria-label="{{ 'entity-group.column-type' | translate }}">
+                           aria-label="{{ 'import.column-type.column-type' | translate }}">
                     <md-option ng-repeat="type in vm.columnTypes" ng-value="type.value" ng-disabled="type.disable">
                         {{type.name | translate}}
                     </md-option>
@@ -43,9 +43,9 @@
                                            column.type != vm.columnTypes.type.value &&
                                            column.type != vm.columnTypes.accessToken.value">
                     <input required name="columnKeyName"
-                           placeholder="{{ 'entity-group.column-value' | translate }}"
+                           placeholder="{{ 'import.column-value' | translate }}"
                            ng-model="column.key"
-                           aria-label="{{ 'entity-group.column-value' | translate }}">
+                           aria-label="{{ 'import.column-value' | translate }}">
                 </md-input-container>
             </td>
         </tr>

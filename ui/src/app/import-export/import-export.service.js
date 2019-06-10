@@ -802,7 +802,7 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         let csvlines = csvdata.split(/[\r\n]+/);
         let csvheaders = splitCSV(csvlines[0], delim);
         if (csvheaders.length < 2) {
-            toast.showError($translate.instant('entity.import-csv-number-columns-error'));
+            toast.showError($translate.instant('import.import-csv-number-columns-error'));
             return -1;
         }
         let csvrows = header ? csvlines.slice(1, csvlines.length) : csvlines;
@@ -819,7 +819,7 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
 
                 let rowitems = splitCSV(row, delim);
                 if (rowitems.length !== result.headers.length) {
-                    toast.showError($translate.instant('entity.import-csv-invalid-format-error', {line: (header ? result.rows.length + 2: result.rows.length + 1)}));
+                    toast.showError($translate.instant('import.import-csv-invalid-format-error', {line: (header ? result.rows.length + 2: result.rows.length + 1)}));
                     return -1;
                 }
                 for (let i = 0; i < rowitems.length; i++) {
