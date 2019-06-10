@@ -36,7 +36,6 @@ import org.thingsboard.server.dao.device.claim.ClaimData;
 import org.thingsboard.server.dao.device.claim.ClaimResponse;
 import org.thingsboard.server.dao.model.ModelConstants;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -47,7 +46,7 @@ import static org.thingsboard.server.common.data.CacheConstants.CLAIM_DEVICES_CA
 @Slf4j
 public class ClaimDevicesServiceImpl implements ClaimDevicesService {
 
-    public static final String CLAIM_ATTRIBUTE_NAME = "claimingAllowed";
+    private static final String CLAIM_ATTRIBUTE_NAME = "claimingAllowed";
 
     @Autowired
     private DeviceService deviceService;
@@ -56,7 +55,10 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
     @Autowired
     private CacheManager cacheManager;
 
-    @Value("${device.claim.duration}")
+    @Value("${security.claim.allowClaimingByDefault}")
+    private boolean isAllowedClaimingByDefault;
+
+    @Value("${security.claim.duration}")
     private long systemDurationMs;
 
     @Override
@@ -64,39 +66,45 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
         ListenableFuture<Device> deviceFuture = deviceService.findDeviceByIdAsync(tenantId, deviceId);
         return Futures.transformAsync(deviceFuture, device -> {
             Cache cache = cacheManager.getCache(CLAIM_DEVICES_CACHE);
-            List<Object> key = constructCacheKey(device.getName(), secretKey);
+            List<Object> key = constructCacheKey(device.getId());
 
-            ListenableFuture<List<AttributeKvEntry>> claimingAllowedFuture = attributesService.find(tenantId, device.getId(),
-                    DataConstants.SERVER_SCOPE, Collections.singletonList(CLAIM_ATTRIBUTE_NAME));
-            return Futures.transform(claimingAllowedFuture, list -> {
-                if (list != null && !list.isEmpty()) {
-                    Optional<Boolean> claimingAllowedOptional = list.get(0).getBooleanValue();
-                    if (claimingAllowedOptional.isPresent() && claimingAllowedOptional.get()
-                            && device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
-                        ClaimData claimData = new ClaimData(secretKey,
-                                System.currentTimeMillis() + validateDurationMs(durationMs));
-                        cache.putIfAbsent(key, claimData);
-                        return null;
-                    }
+            if (isAllowedClaimingByDefault) {
+                if (device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
+                    persistInCache(secretKey, durationMs, cache, key);
+                    return Futures.immediateFuture(null);
                 }
                 log.warn("The device [{}] has been already claimed!", device.getName());
                 throw new IllegalArgumentException();
-            });
-
+            } else {
+                ListenableFuture<List<AttributeKvEntry>> claimingAllowedFuture = attributesService.find(tenantId, device.getId(),
+                        DataConstants.SERVER_SCOPE, Collections.singletonList(CLAIM_ATTRIBUTE_NAME));
+                return Futures.transform(claimingAllowedFuture, list -> {
+                    if (list != null && !list.isEmpty()) {
+                        Optional<Boolean> claimingAllowedOptional = list.get(0).getBooleanValue();
+                        if (claimingAllowedOptional.isPresent() && claimingAllowedOptional.get()
+                                && device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
+                            persistInCache(secretKey, durationMs, cache, key);
+                            return null;
+                        }
+                    }
+                    log.warn("Failed to find claimingAllowed attribute for device or it is already claimed![{}]", device.getName());
+                    throw new IllegalArgumentException();
+                });
+            }
         });
     }
 
     @Override
     public ListenableFuture<ClaimResponse> claimDevice(Device device, CustomerId customerId, String secretKey) {
-        List<Object> key = constructCacheKey(device.getName(), secretKey);
+        List<Object> key = constructCacheKey(device.getId());
         Cache cache = cacheManager.getCache(CLAIM_DEVICES_CACHE);
         ClaimData claimData = cache.get(key, ClaimData.class);
         if (claimData != null) {
             long currTs = System.currentTimeMillis();
             if (currTs > claimData.getExpirationTime() || !secretKey.equals(claimData.getSecretKey())) {
-                log.warn("The claiming timeout occurred for the device [{}]", device.getName());
+                log.warn("The claiming timeout occurred or wrong 'secretKey' provided for the device [{}]", device.getName());
                 cache.evict(key);
-                return Futures.immediateFuture(ClaimResponse.TIMEOUT);
+                return Futures.immediateFuture(ClaimResponse.FAILURE);
             } else {
                 if (device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
                     device.setCustomerId(customerId);
@@ -112,28 +120,31 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
     }
 
     @Override
-    public ListenableFuture<List<Void>> reClaimDevice(TenantId tenantId, Device device, String secretKey) {
+    public ListenableFuture<List<Void>> reClaimDevice(TenantId tenantId, Device device) {
         if (!device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
-            cacheEviction(device.getName(), secretKey);
+            cacheEviction(device.getId());
 
             device.setCustomerId(null);
             deviceService.saveDevice(device);
+            if (isAllowedClaimingByDefault) {
+                return Futures.immediateFuture(Collections.emptyList());
+            }
             return attributesService.save(tenantId, device.getId(), DataConstants.SERVER_SCOPE, Collections.singletonList(
                     new BaseAttributeKvEntry(new BooleanDataEntry(CLAIM_ATTRIBUTE_NAME, true),
                             System.currentTimeMillis())));
         }
-        cacheEviction(device.getName(), secretKey);
+        cacheEviction(device.getId());
         return Futures.immediateFuture(Collections.emptyList());
     }
 
-    private List<Object> constructCacheKey(String deviceName, String secretKey) {
-        List<Object> key = new ArrayList<>();
-        key.add("|");
-        key.add(deviceName);
-        key.add("-");
-        key.add(secretKey);
-        key.add("|");
-        return key;
+    private List<Object> constructCacheKey(DeviceId deviceId) {
+        return Collections.singletonList(deviceId);
+    }
+
+    private void persistInCache(String secretKey, long durationMs, Cache cache, List<Object> key) {
+        ClaimData claimData = new ClaimData(secretKey,
+                System.currentTimeMillis() + validateDurationMs(durationMs));
+        cache.putIfAbsent(key, claimData);
     }
 
     private long validateDurationMs(long durationMs) {
@@ -145,13 +156,16 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
 
     private ListenableFuture<List<Void>> removeClaimingSavedData(Cache cache, List<Object> key, Device device) {
         cache.evict(key);
+        if (isAllowedClaimingByDefault) {
+            return Futures.immediateFuture(null);
+        }
         return attributesService.removeAll(device.getTenantId(),
                 device.getId(), DataConstants.SERVER_SCOPE, Collections.singletonList(CLAIM_ATTRIBUTE_NAME));
     }
 
-    private void cacheEviction(String deviceName, String secretKey) {
+    private void cacheEviction(DeviceId deviceId) {
         Cache cache = cacheManager.getCache(CLAIM_DEVICES_CACHE);
-        cache.evict(constructCacheKey(deviceName, secretKey));
+        cache.evict(constructCacheKey(deviceId));
     }
 
 }
