@@ -1128,9 +1128,9 @@
             "done": "Done"
         },
         "message": {
-            "create-entities": "'{{count}}' new entities were successfully created.",
-            "update-entities": "'{{count}}' entities were successfully updated.",
-            "error-entities": "There was an error creating '{{count}}' entities."
+            "create-entities": "{{count}} new entities were successfully created.",
+            "update-entities": "{{count}} entities were successfully updated.",
+            "error-entities": "There was an error creating {{count}} entities."
         }
     },
     "item": {

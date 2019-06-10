@@ -352,35 +352,35 @@ export default angular.module('thingsboard.types', [])
             },
             importEntityColumnType: {
                 name: {
-                    name: 'entity-group.entity-field.name',
+                    name: 'import.column-type.name',
                     value: 'name'
                 },
                 type: {
-                    name: 'entity-group.entity-field.type',
+                    name: 'import.column-type.type',
                     value: 'type'
                 },
                 clientAttribute: {
-                    name: 'entity-group.column-type.client-attribute',
+                    name: 'import.column-type.client-attribute',
                     value: 'CLIENT_ATTRIBUTE'
                 },
                 sharedAttribute: {
-                    name: 'entity-group.column-type.shared-attribute',
+                    name: 'import.column-type.shared-attribute',
                     value: 'SHARED_ATTRIBUTE'
                 },
                 serverAttribute: {
-                    name: 'entity-group.column-type.server-attribute',
+                    name: 'import.column-type.server-attribute',
                     value: 'SERVER_ATTRIBUTE'
                 },
                 timeseries: {
-                    name: 'entity-group.column-type.timeseries',
+                    name: 'import.column-type.timeseries',
                     value: 'TIMESERIES'
                 },
                 entityField: {
-                    name: 'entity-group.column-type.entity-field',
+                    name: 'import.column-type.entity-field',
                     value: 'ENTITY_FIELD'
                 },
                 accessToken: {
-                    name: 'entity-group.column-type.access-token',
+                    name: 'import.column-type.access-token',
                     value: 'ACCESS_TOKEN'
                 }
             },
