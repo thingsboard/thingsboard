@@ -63,6 +63,8 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
             type: "object",
             properties: {}
         };
+        
+        scope.emptySettingsGroupInfoes=[];
         scope.defaultSettingsForm = [
             '*'
         ];
@@ -90,6 +92,7 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
 
         scope.currentSettingsSchema = {};
         scope.currentSettings = angular.copy(scope.emptySettingsSchema);
+        scope.currentSettingsGroupInfoes = angular.copy(scope.emptySettingsGroupInfoes);
 
         scope.targetDeviceAlias = {
             value: null
@@ -189,10 +192,12 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
             if (scope.widgetSettingsSchema && scope.widgetSettingsSchema.schema) {
                 scope.currentSettingsSchema = scope.widgetSettingsSchema.schema;
                 scope.currentSettingsForm = scope.widgetSettingsSchema.form || angular.copy(scope.defaultSettingsForm);
+                scope.currentSettingsGroupInfoes = scope.widgetSettingsSchema.groupInfoes;
                 scope.currentSettings = scope.settings;
             } else {
                 scope.currentSettingsForm = angular.copy(scope.defaultSettingsForm);
                 scope.currentSettingsSchema = angular.copy(scope.emptySettingsSchema);
+                scope.currentSettingsGroupInfoes = angular.copy(scope.emptySettingsGroupInfoes);
                 scope.currentSettings = {};
             }
         }
