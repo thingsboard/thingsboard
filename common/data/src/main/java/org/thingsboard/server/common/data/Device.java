@@ -20,8 +20,6 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
 @EqualsAndHashCode(callSuper = true)
 public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implements HasName, HasTenantId, HasCustomerId {
 
@@ -31,6 +29,7 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
     private CustomerId customerId;
     private String name;
     private String type;
+    private String label;
 
     public Device() {
         super();
@@ -46,6 +45,7 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
         this.customerId = device.getCustomerId();
         this.name = device.getName();
         this.type = device.getType();
+        this.label = device.getLabel();
     }
 
     public TenantId getTenantId() {
@@ -81,6 +81,14 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
         this.type = type;
     }
 
+    public String getLabel() {
+        return label;
+    }
+
+    public void setLabel(String label) {
+        this.label = label;
+    }
+
     @Override
     public String getSearchText() {
         return getName();
@@ -97,6 +105,8 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
         builder.append(name);
         builder.append(", type=");
         builder.append(type);
+        builder.append(", label=");
+        builder.append(label);
         builder.append(", additionalInfo=");
         builder.append(getAdditionalInfo());
         builder.append(", createdTime=");

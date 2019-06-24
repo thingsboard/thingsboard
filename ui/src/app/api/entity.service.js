@@ -347,6 +347,7 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         return {
             origEntity: entity,
             name: entity.name,
+            label: entity.label?entity.label:"",
             entityType: entity.id.entityType,
             id: entity.id.id,
             entityDescription: entity.additionalInfo?entity.additionalInfo.description:""
