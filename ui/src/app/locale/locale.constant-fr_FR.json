@@ -1015,7 +1015,8 @@
             "ja_JA": "Japonaise",
             "tr_TR": "Turc",
             "fa_IR": "Persane",
-            "uk_UA": "Ukrainien"
+            "uk_UA": "Ukrainien",
+            "cs_CZ": "Tchèque"            
         }
     },
     "layout": {
