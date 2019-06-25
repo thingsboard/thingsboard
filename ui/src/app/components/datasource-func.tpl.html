@@ -58,11 +58,14 @@
 				  </md-autocomplete>
 				  <md-chip-template>
 					  <div layout="row" layout-align="start center" class="tb-attribute-chip">
-						  <div class="tb-color-preview" ng-click="showColorPicker($event, $chip, $index)" style="margin-right: 5px;">
+                          <div class="tb-chip-drag-handle" style="margin-right: 5px;" tb-chip-draggable>
+                              <ng-md-icon size="20" icon="drag_handle"></ng-md-icon>
+                          </div>
+                          <div class="tb-color-preview" ng-click="showColorPicker($event, $chip, $index)" style="margin-right: 5px;">
 							  <div class="tb-color-result" ng-style="{background: $chip.color}"></div>
 						  </div>
 						  <div layout="row">
-							  <div class="tb-chip-label" tb-chip-draggable>
+							  <div class="tb-chip-label">
 								  {{$chip.label}}
 							  </div>
 							  <div class="tb-chip-separator">: </div>
@@ -109,11 +112,14 @@
 			</md-autocomplete>
 			<md-chip-template>
 				<div layout="row" layout-align="start center" class="tb-attribute-chip">
-					<div class="tb-color-preview" ng-click="showColorPicker($event, $chip, $index)" style="margin-right: 5px;">
+                    <div class="tb-chip-drag-handle" style="margin-right: 5px;" tb-chip-draggable>
+                        <ng-md-icon size="20" icon="drag_handle"></ng-md-icon>
+                    </div>
+                    <div class="tb-color-preview" ng-click="showColorPicker($event, $chip, $index)" style="margin-right: 5px;">
 						<div class="tb-color-result" ng-style="{background: $chip.color}"></div>
 					</div>
 					<div layout="row">
-						<div class="tb-chip-label" tb-chip-draggable>
+						<div class="tb-chip-label">
 							{{$chip.label}}
 						</div>
 						<div class="tb-chip-separator">: </div>

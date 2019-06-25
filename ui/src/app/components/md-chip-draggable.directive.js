@@ -22,9 +22,6 @@ export default angular.module('thingsboard.directives.mdChipDraggable', [])
       controllerAs: 'vm',
       controller: ['$document', '$scope', '$element', '$timeout',
         function ($document, $scope, $element, $timeout) {
-          var options = {
-            axis: 'horizontal',
-          };
           var handle = $element[0];
           var draggingClassName = 'dragging';
           var droppingClassName = 'dropping';
@@ -92,26 +89,28 @@ export default angular.module('thingsboard.directives.mdChipDraggable', [])
               y: (event.originalEvent || event).clientY - bounds.top,
             };
 
-            var offset = options.axis === 'vertical' ? props.y : props.x;
-            var midPoint = (options.axis === 'vertical' ? props.height : props.width) / 2;
+            var horizontalOffset = props.x;
+            var horizontalMidPoint = props.width / 2;
+
+            var verticalOffset = props.y;
+            var verticalMidPoint = props.height / 2;
 
             $element.addClass(droppingClassName);
-            
-            if (offset < midPoint) {
-              dropPosition = 'before';
-              $element.removeClass(droppingAfterClassName);
-              $element.addClass(droppingBeforeClassName);
 
+            if (horizontalOffset >= horizontalMidPoint || verticalOffset >= verticalMidPoint) {
+                dropPosition = 'after';
+                $element.removeClass(droppingBeforeClassName);
+                $element.addClass(droppingAfterClassName);
             } else {
-              dropPosition = 'after';
-              $element.removeClass(droppingBeforeClassName);
-              $element.addClass(droppingAfterClassName);
+                dropPosition = 'before';
+                $element.removeClass(droppingAfterClassName);
+                $element.addClass(droppingBeforeClassName);
             }
+
           };
 
           var dropHandler = function (event) {
             event.preventDefault();
-
             var droppedItemIndex = parseInt((event.dataTransfer || event.originalEvent.dataTransfer).getData('text/plain'), 10);
             var currentIndex = $scope.$parent.$mdChipsCtrl.items.indexOf($scope.$parent.$chip);
             var newIndex = null;

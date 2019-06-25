@@ -58,6 +58,14 @@
 }
 
 .tb-attribute-chip {
+  .tb-chip-drag-handle {
+    cursor: move;
+
+    ng-md-icon {
+      pointer-events: none;
+    }
+  }
+
   .tb-chip-label {
     overflow: hidden;
     text-overflow: ellipsis;

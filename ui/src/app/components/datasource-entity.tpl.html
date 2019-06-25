@@ -70,20 +70,23 @@
 					  </md-autocomplete>
 					  <md-chip-template>
 						  <div layout="row" layout-align="start center" class="tb-attribute-chip">
+                              <div class="tb-chip-drag-handle" style="margin-right: 5px;" tb-chip-draggable>
+                                  <ng-md-icon size="20" icon="drag_handle"></ng-md-icon>
+                              </div>
 							  <div class="tb-color-preview" ng-click="showColorPicker($event, $chip, $index)" style="margin-right: 5px;">
 								  <div class="tb-color-result" ng-style="{background: $chip.color}"></div>
 							  </div>
 							  <div layout="row">
-								  <div class="tb-chip-label" tb-chip-draggable>
-								  <span ng-show="$chip.type==types.dataKeyType.attribute">
-									  <md-tooltip>{{'datakey.attributes' | translate }}</md-tooltip>
-								      <ng-md-icon size="20" icon="perm_device_information"></ng-md-icon>
-								  </span>
-		                          <span ng-show="$chip.type==types.dataKeyType.timeseries">
-									  <md-tooltip>{{'datakey.timeseries' | translate }}</md-tooltip>
-		                              <ng-md-icon size="20" icon="timeline"></ng-md-icon>
-		                          </span>
-									  {{$chip.label}}
+								  <div class="tb-chip-label">
+                                      <span ng-show="$chip.type==types.dataKeyType.attribute">
+                                          <md-tooltip>{{'datakey.attributes' | translate }}</md-tooltip>
+                                          <ng-md-icon size="20" icon="perm_device_information"></ng-md-icon>
+                                      </span>
+                                      <span ng-show="$chip.type==types.dataKeyType.timeseries">
+                                          <md-tooltip>{{'datakey.timeseries' | translate }}</md-tooltip>
+                                          <ng-md-icon size="20" icon="timeline"></ng-md-icon>
+                                      </span>
+                                          {{$chip.label}}
 								  </div>
 								  <div class="tb-chip-separator">: </div>
 								  <div class="tb-chip-label">
@@ -130,11 +133,14 @@
 				   </md-autocomplete>
 				   <md-chip-template>
 					   <div layout="row" layout-align="start center" class="tb-attribute-chip">
+                           <div class="tb-chip-drag-handle" style="margin-right: 5px;" tb-chip-draggable>
+                               <ng-md-icon size="20" icon="drag_handle"></ng-md-icon>
+                           </div>
 						   <div class="tb-color-preview" ng-click="showColorPicker($event, $chip, $index)" style="margin-right: 5px;">
 							   <div class="tb-color-result" ng-style="{background: $chip.color}"></div>
 						   </div>
 						   <div layout="row">
-							   <div class="tb-chip-label" tb-chip-draggable>
+							   <div class="tb-chip-label">
 								   {{$chip.label}}
 							   </div>
 							   <div class="tb-chip-separator">: </div>

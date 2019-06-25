@@ -152,7 +152,15 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
             if (scope.maxDataKeys > 0 && ngModelCtrl.$viewValue.dataKeys.length >= scope.maxDataKeys ) {
                 return null;
             } else {
-                return scope.generateDataKey({chip: chip.name, type: chip.type});
+                if (chip.type) {
+                    return scope.generateDataKey({chip: chip.name, type: chip.type});
+                } else {
+                    if (scope.widgetType != types.widgetType.latest.value) {
+                        return scope.generateDataKey({chip: chip, type: types.dataKeyType.timeseries});
+                    } else {
+                        return null;
+                    }
+                }
             }
         };
 
