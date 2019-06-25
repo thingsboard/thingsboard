@@ -287,6 +287,9 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
         options.useDashboardTimewindow = angular.isDefined(widget.config.useDashboardTimewindow)
             ? widget.config.useDashboardTimewindow : true;
 
+        options.displayTimewindow = angular.isDefined(widget.config.displayTimewindow)
+            ? widget.config.displayTimewindow : !options.useDashboardTimewindow;
+
         options.timeWindowConfig = options.useDashboardTimewindow ? vm.dashboardTimewindow : widget.config.timewindow;
         options.legendConfig = null;
 

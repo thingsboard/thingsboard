@@ -172,8 +172,13 @@ public class GatewaySessionHandler {
                                 if (!deviceEntry.getValue().isJsonArray()) {
                                     throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
                                 }
-                                TransportProtos.PostTelemetryMsg postTelemetryMsg = JsonConverter.convertToTelemetryProto(deviceEntry.getValue().getAsJsonArray());
-                                transportService.process(deviceCtx.getSessionInfo(), postTelemetryMsg, getPubAckCallback(channel, deviceName, msgId, postTelemetryMsg));
+                                try {
+                                    TransportProtos.PostTelemetryMsg postTelemetryMsg = JsonConverter.convertToTelemetryProto(deviceEntry.getValue().getAsJsonArray());
+                                    transportService.process(deviceCtx.getSessionInfo(), postTelemetryMsg, getPubAckCallback(channel, deviceName, msgId, postTelemetryMsg));
+                                } catch (Throwable e) {
+                                    UUID gatewayId = new UUID(gateway.getDeviceIdMSB(), gateway.getDeviceIdLSB());
+                                    log.warn("[{}][{}] Failed to convert telemetry: {}", gatewayId, deviceName, deviceEntry.getValue(), e);
+                                }
                             }
 
                             @Override
@@ -204,7 +209,6 @@ public class GatewaySessionHandler {
                                 TransportProtos.PostAttributeMsg postAttributeMsg = JsonConverter.convertToAttributesProto(deviceEntry.getValue().getAsJsonObject());
                                 transportService.process(deviceCtx.getSessionInfo(), postAttributeMsg, getPubAckCallback(channel, deviceName, msgId, postAttributeMsg));
                             }
-
                             @Override
                             public void onFailure(Throwable t) {
                                 log.debug("[{}] Failed to process device attributes command: {}", sessionId, deviceName, t);

@@ -124,6 +124,8 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
                     scope.decimals = config.decimals;
                     scope.useDashboardTimewindow = angular.isDefined(config.useDashboardTimewindow) ?
                         config.useDashboardTimewindow : true;
+                    scope.displayTimewindow = angular.isDefined(config.displayTimewindow) ?
+                        config.displayTimewindow : true;
                     scope.timewindow = config.timewindow;
                     scope.showLegend = angular.isDefined(config.showLegend) ?
                         config.showLegend : scope.widgetType === types.widgetType.timeseries.value;
@@ -230,7 +232,7 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
         };
 
         scope.$watch('title + showTitle + dropShadow + enableFullscreen + backgroundColor + color + ' +
-            'padding + margin + widgetStyle + titleStyle + mobileOrder + mobileHeight + units + decimals + useDashboardTimewindow + ' +
+            'padding + margin + widgetStyle + titleStyle + mobileOrder + mobileHeight + units + decimals + useDashboardTimewindow + displayTimewindow + ' +
             'alarmSearchStatus + alarmsPollingInterval + showLegend', function () {
             if (ngModelCtrl.$viewValue) {
                 var value = ngModelCtrl.$viewValue;
@@ -257,6 +259,7 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
                     config.units = scope.units;
                     config.decimals = scope.decimals;
                     config.useDashboardTimewindow = scope.useDashboardTimewindow;
+                    config.displayTimewindow = scope.displayTimewindow;
                     config.alarmSearchStatus = scope.alarmSearchStatus;
                     config.alarmsPollingInterval = scope.alarmsPollingInterval;
                     config.showLegend = scope.showLegend;

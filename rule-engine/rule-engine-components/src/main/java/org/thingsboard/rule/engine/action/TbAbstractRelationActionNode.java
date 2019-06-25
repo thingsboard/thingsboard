@@ -137,7 +137,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
         }
     }
 
-    protected String processPattern(TbMsg msg, String pattern){
+    protected String processPattern(TbMsg msg, String pattern) {
         return TbNodeUtils.processPattern(pattern, msg.getMetaData());
     }
 
@@ -187,6 +187,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                         newDevice.setType(entitykey.getType());
                         newDevice.setTenantId(ctx.getTenantId());
                         Device savedDevice = deviceService.saveDevice(newDevice);
+                        ctx.sendTbMsgToRuleEngine(ctx.deviceCreatedMsg(savedDevice, ctx.getSelfId()));
                         targetEntity.setEntityId(savedDevice.getId());
                     }
                     break;
@@ -201,6 +202,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                         newAsset.setType(entitykey.getType());
                         newAsset.setTenantId(ctx.getTenantId());
                         Asset savedAsset = assetService.saveAsset(newAsset);
+                        ctx.sendTbMsgToRuleEngine(ctx.assetCreatedMsg(savedAsset, ctx.getSelfId()));
                         targetEntity.setEntityId(savedAsset.getId());
                     }
                     break;
@@ -214,6 +216,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                         newCustomer.setTitle(entitykey.getEntityName());
                         newCustomer.setTenantId(ctx.getTenantId());
                         Customer savedCustomer = customerService.saveCustomer(newCustomer);
+                        ctx.sendTbMsgToRuleEngine(ctx.customerCreatedMsg(savedCustomer, ctx.getSelfId()));
                         targetEntity.setEntityId(savedCustomer.getId());
                     }
                     break;

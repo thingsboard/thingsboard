@@ -166,6 +166,8 @@ cassandra:
     ts_key_value_partitioning: "${TS_KV_PARTITIONING:MONTHS}"
     ts_key_value_ttl: "${TS_KV_TTL:0}"
     events_ttl: "${TS_EVENTS_TTL:0}"
+    # Specify TTL of debug log in seconds. The current value corresponds to one week
+    debug_events_ttl: "${DEBUG_EVENTS_TTL:604800}"
     buffer_size: "${CASSANDRA_QUERY_BUFFER_SIZE:200000}"
     concurrent_limit: "${CASSANDRA_QUERY_CONCURRENT_LIMIT:1000}"
     permit_max_wait_time: "${PERMIT_MAX_WAIT_TIME:120000}"

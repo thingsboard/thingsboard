@@ -63,6 +63,7 @@
     "jstree": "^3.3.7",
     "jstree-bootstrap-theme": "^1.0.1",
     "leaflet": "^1.0.3",
+    "leaflet-polylinedecorator": "^1.6.0",
     "leaflet-providers": "^1.1.17",
     "material-ui": "^0.16.1",
     "material-ui-number-input": "^5.0.16",

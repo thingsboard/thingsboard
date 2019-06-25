@@ -60,13 +60,26 @@
                         </thead>
 
                         <tbody md-body>
-                            <tr md-row ng-repeat="row in source.ts.data track by $index">
+                            <tr md-row ng-repeat="row in source.ts.data track by $index" ng-click="vm.onRowClick($event, row)">
                                 <td ng-show="$index > 0 || ($index === 0 && vm.showTimestamp)"
                                     md-cell
                                     ng-repeat="d in row track by $index"
                                     ng-style="vm.cellStyle(source, $index, d)"
                                     ng-bind-html="vm.cellContent(source, $index, row, d)"
                                 ></td>
+                                <td md-cell class="tb-action-cell"
+                                    ng-style="{minWidth: vm.actionCellDescriptors.length*36+'px',
+                                               maxWidth: vm.actionCellDescriptors.length*36+'px',
+                                               width: vm.actionCellDescriptors.length*36+'px'}">
+                                    <md-button class="md-icon-button" ng-repeat="actionDescriptor in vm.actionCellDescriptors"
+                                               aria-label="{{ actionDescriptor.displayName }}"
+                                               ng-click="vm.onActionButtonClick($event, row, actionDescriptor)" ng-disabled="$root.loading">
+                                       <md-icon aria-label="{{ actionDescriptor.displayName }}" class="material-icons">{{actionDescriptor.icon}}</md-icon>
+                                       <md-tooltip md-direction="top">
+                                           {{ actionDescriptor.displayName }}
+                                       </md-tooltip>
+                                    </md-button>
+                                </td>
                             </tr>
                         </tbody>
                     </table>

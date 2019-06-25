@@ -27,7 +27,7 @@
                 <ng-md-icon icon="info_outline"></ng-md-icon>
             </md-button>
         </div>
-        <div class="trip-animation-tooltip md-whiteframe-z4" layout="column" ng-class="!vm.staticSettings.showTooltip ? 'trip-animation-tooltip-hidden':''" ng-bind-html="vm.staticSettings.tooltipMarker === 'polygon' ? vm.trips[vm.activeTripIndex].settings.polygonTooltipText  : vm.trips[vm.activeTripIndex].settings.tooltipText"
+        <div class="trip-animation-tooltip md-whiteframe-z4" layout="column" ng-class="!vm.staticSettings.showTooltip ? 'trip-animation-tooltip-hidden':''" ng-bind-html="vm.mainTooltip"
         ng-style="{'background-color': vm.staticSettings.tooltipColor, 'opacity': vm.staticSettings.tooltipOpacity, 'color': vm.staticSettings.tooltipFontColor}">
         </div>
     </div>

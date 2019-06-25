@@ -647,7 +647,7 @@ section.tb-top-header-buttons {
 
 .tb-header-buttons .tb-btn-header {
   position: relative !important;
-  display: inline-block !important;
+  display: inline-block;
   animation: tbMoveFromTopFade .3s ease both;
 }
 

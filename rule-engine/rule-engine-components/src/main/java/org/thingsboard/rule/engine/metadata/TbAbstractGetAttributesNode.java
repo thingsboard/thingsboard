@@ -18,6 +18,7 @@ package org.thingsboard.rule.engine.metadata;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -51,7 +52,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
     public void onMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
         try {
             withCallback(
-                    findEntityIdAsync(ctx, msg.getOriginator()),
+                    findEntityIdAsync(ctx, msg),
                     entityId -> safePutAttributes(ctx, msg, entityId),
                     t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
         } catch (Throwable th) {
@@ -80,11 +81,18 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
         ListenableFuture<List<AttributeKvEntry>> latest = ctx.getAttributesService().find(ctx.getTenantId(), entityId, scope, keys);
         return Futures.transform(latest, l -> {
             l.forEach(r -> {
-                if (r.getValue() != null) {
-                    msg.getMetaData().putValue(prefix + r.getKey(), r.getValueAsString());
+                if (BooleanUtils.toBooleanDefaultIfNull(this.config.isTellFailureIfAbsent(), true)) {
+                    if (r.getValue() != null) {
+                        msg.getMetaData().putValue(prefix + r.getKey(), r.getValueAsString());
+                    } else {
+                        throw new RuntimeException("[" + scope + "][" + r.getKey() + "] attribute value is not present in the DB!");
+                    }
                 } else {
-                    throw new RuntimeException("[" + scope + "][" + r.getKey() + "] attribute value is not present in the DB!");
+                    if (r.getValue() != null) {
+                        msg.getMetaData().putValue(prefix + r.getKey(), r.getValueAsString());
+                    }
                 }
+
             });
             return null;
         });
@@ -97,10 +105,16 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
         ListenableFuture<List<TsKvEntry>> latest = ctx.getTimeseriesService().findLatest(ctx.getTenantId(), entityId, keys);
         return Futures.transform(latest, l -> {
             l.forEach(r -> {
-                if (r.getValue() != null) {
-                    msg.getMetaData().putValue(r.getKey(), r.getValueAsString());
+                if (BooleanUtils.toBooleanDefaultIfNull(this.config.isTellFailureIfAbsent(), true)) {
+                    if (r.getValue() != null) {
+                        msg.getMetaData().putValue(r.getKey(), r.getValueAsString());
+                    } else {
+                        throw new RuntimeException("[" + r.getKey() + "] telemetry value is not present in the DB!");
+                    }
                 } else {
-                    throw new RuntimeException("[" + r.getKey() + "] telemetry value is not present in the DB!");
+                    if (r.getValue() != null) {
+                        msg.getMetaData().putValue(r.getKey(), r.getValueAsString());
+                    }
                 }
             });
             return null;
@@ -112,5 +126,5 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
 
     }
 
-    protected abstract ListenableFuture<T> findEntityIdAsync(TbContext ctx, EntityId originator);
+    protected abstract ListenableFuture<T> findEntityIdAsync(TbContext ctx, TbMsg msg);
 }

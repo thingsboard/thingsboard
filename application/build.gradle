@@ -160,6 +160,13 @@ buildDeb {
     user pkgName
     permissionGroup pkgName
 
+    // Copy the system unit files
+    from("${buildDir}/control/${pkgName}.service") {
+        addParentDirs = false
+        fileMode 0644
+        into "/lib/systemd/system"
+    }
+
     directory(pkgLogFolder, 0755)
     link("/etc/init.d/${pkgName}", "${pkgInstallFolder}/bin/${pkgName}.jar")
     link("${pkgInstallFolder}/bin/${pkgName}.yml", "${pkgInstallFolder}/conf/${pkgName}.yml")

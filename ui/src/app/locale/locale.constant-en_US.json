@@ -1526,6 +1526,7 @@
         "decimals": "Number of digits after floating point",
         "timewindow": "Timewindow",
         "use-dashboard-timewindow": "Use dashboard timewindow",
+        "display-timewindow": "Display timewindow",
         "display-legend": "Display legend",
         "datasources": "Datasources",
         "maximum-datasources": "Maximum { count, plural, 1 {1 datasource is allowed.} other {# datasources are allowed} }",
