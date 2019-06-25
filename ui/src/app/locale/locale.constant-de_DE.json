@@ -1515,6 +1515,7 @@
     "decimals": "Anzahl der Stellen nach dem Fließkomma",
     "timewindow": "Zeitfenster",
     "use-dashboard-timewindow": "Dashboard-Zeitfenster verwenden",
+    "display-timewindow": "Zeitfenster anzeigen",
     "display-legend": "Legende anzeigen",
     "datasources": "Datenquellen",
     "maximum-datasources": "Maximal { count, plural, 1 {1 Datenquelle ist erlaubt} other {# Datenquellen sind erlaubt} }.",

@@ -1405,6 +1405,7 @@
         "delete-action": "Supprimer l'action",
         "delete-action-text": "Etes-vous sûr de vouloir supprimer l'action du widget nommé '{{actionName}}'?",
         "delete-action-title": "Supprimer l'action du widget",
+        "display-timewindow": "Afficher fenêtre de temps",
         "display-legend": "Afficher la légende",
         "display-title": "Afficher le titre",
         "drop-shadow": "Ombre portée",
