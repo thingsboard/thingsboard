@@ -88,7 +88,11 @@ function DatasourceFunc($compile, $templateCache, $mdDialog, $window, $document,
                 var dataKeys = [];
                 dataKeys = dataKeys.concat(scope.funcDataKeys);
                 dataKeys = dataKeys.concat(scope.alarmDataKeys);
-                ngModelCtrl.$viewValue.dataKeys = dataKeys;
+                if (ngModelCtrl.$viewValue.dataKeys != dataKeys)
+                {
+                   ngModelCtrl.$setDirty();
+                   ngModelCtrl.$viewValue.dataKeys = dataKeys;
+                }
                 scope.updateValidity();
             }
         }

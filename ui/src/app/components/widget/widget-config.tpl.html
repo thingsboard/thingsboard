@@ -23,12 +23,14 @@
         <md-content class="md-padding" layout="column">
             <div ng-show="widgetType === types.widgetType.timeseries.value || widgetType === types.widgetType.alarm.value" layout='column' layout-align="center"
                  layout-gt-sm='row' layout-align-gt-sm="start center">
-                <md-checkbox flex aria-label="{{ 'widget-config.use-dashboard-timewindow' | translate }}"
-                             ng-model="useDashboardTimewindow">{{ 'widget-config.use-dashboard-timewindow' | translate }}
-                </md-checkbox>
-                <md-checkbox ng-disabled="useDashboardTimewindow" flex aria-label="{{ 'widget-config.display-timewindow' | translate }}"
-                             ng-model="displayTimewindow">{{ 'widget-config.display-timewindow' | translate }}
-                </md-checkbox>
+                <div layout="column" flex>
+                    <md-checkbox flex aria-label="{{ 'widget-config.use-dashboard-timewindow' | translate }}"
+                                 ng-model="useDashboardTimewindow">{{ 'widget-config.use-dashboard-timewindow' | translate }}
+                    </md-checkbox>
+                    <md-checkbox ng-disabled="useDashboardTimewindow" flex aria-label="{{ 'widget-config.display-timewindow' | translate }}"
+                                 ng-model="displayTimewindow">{{ 'widget-config.display-timewindow' | translate }}
+                    </md-checkbox>
+                </div>
                 <section flex layout="row" layout-align="start center" style="margin-bottom: 16px;">
                     <span ng-class="{'tb-disabled-label': useDashboardTimewindow}" translate style="padding-right: 8px;">widget-config.timewindow</span>
                     <tb-timewindow ng-disabled="useDashboardTimewindow" as-button="true" aggregation="{{ widgetType === types.widgetType.timeseries.value }}"

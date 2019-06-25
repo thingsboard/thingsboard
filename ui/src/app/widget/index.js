@@ -27,6 +27,7 @@ import thingsboardConfirmOnExit from '../components/confirm-on-exit.directive';
 import thingsboardDashboard from '../components/dashboard.directive';
 import thingsboardExpandFullscreen from '../components/expand-fullscreen.directive';
 import thingsboardCircularProgress from '../components/circular-progress.directive';
+import thingsboardMdChipDraggable from '../components/md-chip-draggable.directive';
 
 import WidgetLibraryRoutes from './widget-library.routes';
 import WidgetLibraryController from './widget-library.controller';
@@ -46,6 +47,7 @@ export default angular.module('thingsboard.widget-library', [
     thingsboardDashboard,
     thingsboardExpandFullscreen,
     thingsboardCircularProgress,
+    thingsboardMdChipDraggable,
     'cfp.hotkeys',
     'ui.ace'
 ])
