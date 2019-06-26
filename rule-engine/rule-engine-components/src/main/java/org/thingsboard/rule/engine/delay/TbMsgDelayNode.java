@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.delay;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -51,13 +52,11 @@ public class TbMsgDelayNode implements TbNode {
     private static final String TB_MSG_DELAY_NODE_MSG = "TbMsgDelayNodeMsg";
 
     private TbMsgDelayNodeConfiguration config;
-    private long delay;
     private Map<UUID, TbMsg> pendingMsgs;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgDelayNodeConfiguration.class);
-        this.delay = TimeUnit.SECONDS.toMillis(config.getPeriodInSeconds());
         this.pendingMsgs = new HashMap<>();
     }
 
@@ -72,11 +71,29 @@ public class TbMsgDelayNode implements TbNode {
             if(pendingMsgs.size() < config.getMaxPendingMsgs()) {
                 pendingMsgs.put(msg.getId(), msg);
                 TbMsg tickMsg = ctx.newMsg(TB_MSG_DELAY_NODE_MSG, ctx.getSelfId(), new TbMsgMetaData(), msg.getId().toString());
-                ctx.tellSelf(tickMsg, delay);
+                ctx.tellSelf(tickMsg, getDelay(msg));
             } else {
                 ctx.tellNext(msg, FAILURE, new RuntimeException("Max limit of pending messages reached!"));
             }
         }
+    }
+
+    private long getDelay(TbMsg msg) {
+        int periodInSeconds;
+        if (config.isUseMetadataPeriodInSecondsPatterns()) {
+            if (isParsable(msg, config.getPeriodInSecondsPattern())) {
+                periodInSeconds = Integer.parseInt(TbNodeUtils.processPattern(config.getPeriodInSecondsPattern(), msg.getMetaData()));
+            } else {
+                throw new RuntimeException("Can't parse period in seconds from metadata using pattern: " + config.getPeriodInSecondsPattern());
+            }
+        } else {
+            periodInSeconds = config.getPeriodInSeconds();
+        }
+        return TimeUnit.SECONDS.toMillis(periodInSeconds);
+    }
+
+    private boolean isParsable(TbMsg msg, String pattern) {
+        return NumberUtils.isParsable(TbNodeUtils.processPattern(pattern, msg.getMetaData()));
     }
 
     @Override
