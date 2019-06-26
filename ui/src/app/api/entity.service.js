@@ -345,7 +345,14 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
     }
 
     function entityToEntityInfo(entity) {
-        return { origEntity: entity, name: entity.name, entityType: entity.id.entityType, id: entity.id.id, entityDescription: entity.additionalInfo?entity.additionalInfo.description:"" };
+        return {
+            origEntity: entity,
+            name: entity.name,
+            label: entity.label?entity.label:"",
+            entityType: entity.id.entityType,
+            id: entity.id.id,
+            entityDescription: entity.additionalInfo?entity.additionalInfo.description:""
+        };
     }
 
     function entityRelationInfoToEntityInfo(entityRelationInfo, direction) {

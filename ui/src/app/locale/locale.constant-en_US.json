@@ -656,6 +656,7 @@
         "name": "Name",
         "name-required": "Name is required.",
         "description": "Description",
+        "label": "Label",
         "events": "Events",
         "details": "Details",
         "copyId": "Copy device Id",
