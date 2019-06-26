@@ -28,7 +28,7 @@
 	   <md-chips flex ng-if="widgetType != types.widgetType.alarm.value"
 					 id="function_datakey_chips"
 					 ng-required="true"
-					 ng-model="funcDataKeys" md-autocomplete-snap
+					 ng-model="funcDataKeys"
 					 md-transform-chip="transformFuncDataKeyChip($chip)"
 					 md-require-match="false">
 				  <md-autocomplete
@@ -82,7 +82,7 @@
 		<md-chips flex ng-if="widgetType == types.widgetType.alarm.value"
 				  id="alarm_datakey_chips"
 				  ng-required="true"
-				  ng-model="alarmDataKeys" md-autocomplete-snap
+				  ng-model="alarmDataKeys"
 				  md-transform-chip="transformAlarmDataKeyChip($chip)"
 				  md-require-match="false">
 			<md-autocomplete

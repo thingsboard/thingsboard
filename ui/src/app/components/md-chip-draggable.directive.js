@@ -13,6 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import './md-chip-draggable.scss';
+
+var globalDraggingChipsWrapId = null;
+
 export default angular.module('thingsboard.directives.mdChipDraggable', [])
     .directive('tbChipDraggable', function () {
     return {
@@ -25,12 +30,13 @@ export default angular.module('thingsboard.directives.mdChipDraggable', [])
           var handle = $element[0];
           var draggingClassName = 'dragging';
           var droppingClassName = 'dropping';
-          var droppingBeforeClassName = 'dropping--before';
-          var droppingAfterClassName = 'dropping--after';
+          var droppingBeforeClassName = 'dropping-before';
+          var droppingAfterClassName = 'dropping-after';
           var dragging = false;
           var preventDrag = false;
           var dropPosition;
           var dropTimeout;
+          var counter = 0;
 
           var move = function (from, to) {
             this.splice(to, 0, this.splice(from, 1)[0]);
@@ -57,18 +63,22 @@ export default angular.module('thingsboard.directives.mdChipDraggable', [])
             } else {
               dragging = true;
 
+              globalDraggingChipsWrapId = angular.element($element[0].closest('md-chips-wrap')).attr('id');
+
               $element.addClass(draggingClassName);
 
               var dataTransfer = event.dataTransfer || event.originalEvent.dataTransfer;
 
               dataTransfer.effectAllowed = 'copyMove';
               dataTransfer.dropEffect = 'move';
+
               dataTransfer.setData('text/plain', $scope.$parent.$mdChipsCtrl.items.indexOf($scope.$parent.$chip));
             }
           });
 
           $element.on('dragend', function () {
             dragging = false;
+            globalDraggingChipsWrapId = null;
 
             $element.removeClass(draggingClassName);
           });
@@ -78,8 +88,14 @@ export default angular.module('thingsboard.directives.mdChipDraggable', [])
               return;
             }
 
+            var targetChipsWrapId = angular.element($element[0].closest('md-chips-wrap')).attr('id');
+
             event.preventDefault();
-            
+
+            if (globalDraggingChipsWrapId !== targetChipsWrapId) {
+                return;
+            }
+
             var bounds = $element[0].getBoundingClientRect();
 
             var props = {
@@ -97,20 +113,28 @@ export default angular.module('thingsboard.directives.mdChipDraggable', [])
 
             $element.addClass(droppingClassName);
 
+            $element.removeClass(droppingAfterClassName);
+            $element.removeClass(droppingBeforeClassName);
+
             if (horizontalOffset >= horizontalMidPoint || verticalOffset >= verticalMidPoint) {
                 dropPosition = 'after';
-                $element.removeClass(droppingBeforeClassName);
                 $element.addClass(droppingAfterClassName);
             } else {
                 dropPosition = 'before';
-                $element.removeClass(droppingAfterClassName);
                 $element.addClass(droppingBeforeClassName);
             }
 
           };
 
           var dropHandler = function (event) {
+            counter = 0;
             event.preventDefault();
+
+            var targetChipsWrapId = angular.element($element[0].closest('md-chips-wrap')).attr('id');
+            if (globalDraggingChipsWrapId !== targetChipsWrapId) {
+                return;
+            }
+
             var droppedItemIndex = parseInt((event.dataTransfer || event.originalEvent.dataTransfer).getData('text/plain'), 10);
             var currentIndex = $scope.$parent.$mdChipsCtrl.items.indexOf($scope.$parent.$chip);
             var newIndex = null;
@@ -146,14 +170,15 @@ export default angular.module('thingsboard.directives.mdChipDraggable', [])
               });
 
               $element.removeClass(droppingClassName);
-              $element.removeClass(droppingBeforeClassName);
               $element.removeClass(droppingAfterClassName);
+              $element.removeClass(droppingBeforeClassName);
 
               $element.off('drop', dropHandler);
             }, 1000 / 16);
           };
 
           $element.on('dragenter', function () {
+              counter++;
             if (dragging) {
               return;
             }
@@ -166,9 +191,13 @@ export default angular.module('thingsboard.directives.mdChipDraggable', [])
           });
 
           $element.on('dragleave', function () {
-            $element.removeClass(droppingClassName);
-            $element.removeClass(droppingBeforeClassName);
-            $element.removeClass(droppingAfterClassName);
+              counter--;
+            if (counter <=0) {
+                counter = 0;
+                $element.removeClass(droppingClassName);
+                $element.removeClass(droppingAfterClassName);
+                $element.removeClass(droppingBeforeClassName);
+            }
           });
 
         }],

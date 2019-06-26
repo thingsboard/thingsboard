@@ -26,7 +26,7 @@
 		   <section flex layout='column' layout-align="center" style="padding-left: 4px;">
 			   <md-chips flex ng-if="widgetType != types.widgetType.alarm.value"
                          id="datakey_chips"
-                         ng-model="dataKeys" md-autocomplete-snap
+                         ng-model="dataKeys"
                          md-transform-chip="transformDataKeyChip($chip)"
                          md-require-match="false">
 					  <md-autocomplete
@@ -41,7 +41,7 @@
 							md-menu-class="tb-datakey-autocomplete">
 							<span ng-show="item.type==types.dataKeyType.attribute">
 								<md-tooltip>{{'datakey.attributes' | translate }}</md-tooltip>
-								<ng-md-icon size="16" icon="perm_device_information"></ng-md-icon>
+								<ng-md-icon size="16" icon="alpha-a-circle-outline"></ng-md-icon>
 							</span>
 							<span ng-show="item.type==types.dataKeyType.timeseries">
 								<md-tooltip>{{'datakey.timeseries' | translate }}</md-tooltip>
@@ -58,7 +58,7 @@
 									  <span>{{'entity.create-new-key' | translate }}  </span>
 									  <span ng-show="widgetType == types.widgetType.latest.value">
 										  <md-tooltip>{{'datakey.attributes' | translate }}</md-tooltip>
-									      <ng-md-icon size="16" icon="perm_device_information" ng-click="createKey($event, types.dataKeyType.attribute, '#datakey_chips')"></ng-md-icon>
+									      <ng-md-icon size="16" icon="alpha-a-circle-outline" ng-click="createKey($event, types.dataKeyType.attribute, '#datakey_chips')"></ng-md-icon>
 									  </span>
 			                          <span>
 										  <md-tooltip>{{'datakey.timeseries' | translate }}</md-tooltip>
@@ -80,7 +80,7 @@
 								  <div class="tb-chip-label">
                                       <span ng-show="$chip.type==types.dataKeyType.attribute">
                                           <md-tooltip>{{'datakey.attributes' | translate }}</md-tooltip>
-                                          <ng-md-icon size="20" icon="perm_device_information"></ng-md-icon>
+                                          <ng-md-icon size="20" icon="alpha-a-circle-outline"></ng-md-icon>
                                       </span>
                                       <span ng-show="$chip.type==types.dataKeyType.timeseries">
                                           <md-tooltip>{{'datakey.timeseries' | translate }}</md-tooltip>
@@ -103,7 +103,7 @@
 			   <md-chips flex ng-if="widgetType == types.widgetType.alarm.value"
 						 id="alarm_datakey_chips"
 						 ng-required="true"
-						 ng-model="alarmDataKeys" md-autocomplete-snap
+						 ng-model="alarmDataKeys"
 						 md-transform-chip="transformAlarmDataKeyChip($chip)"
 						 md-require-match="false">
 				   <md-autocomplete
