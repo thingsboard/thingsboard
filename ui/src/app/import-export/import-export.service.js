@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/* eslint-disable import/no-unresolved, import/default */
+/* eslint-disable import/no-unresolved, import/default*/
 
 import importDialogTemplate from './import-dialog.tpl.html';
+import importDialogCSVTemplate from './import-dialog-csv.tpl.html';
 import entityAliasesTemplate from '../entity/alias/entity-aliases.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
@@ -24,7 +25,7 @@ import entityAliasesTemplate from '../entity/alias/entity-aliases.tpl.html';
 /* eslint-disable no-undef, angular/window-service, angular/document-service */
 
 /*@ngInject*/
-export default function ImportExport($log, $translate, $q, $mdDialog, $document, $http, itembuffer, utils, types,
+export default function ImportExport($log, $translate, $q, $mdDialog, $document, $http, itembuffer, utils, types, $rootScope,
                                      dashboardUtils, entityService, dashboardService, ruleChainService, widgetService, toast, attributeService) {
 
 
@@ -41,7 +42,10 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         importWidgetsBundle: importWidgetsBundle,
         exportExtension: exportExtension,
         importExtension: importExtension,
-        exportToPc: exportToPc
+        importEntities: importEntities,
+        convertCSVToJson: convertCSVToJson,
+        exportToPc: exportToPc,
+        createMultiEntity: createMultiEntity
     };
 
     return service;
@@ -54,11 +58,11 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
                 var bundleAlias = widgetsBundle.alias;
                 var isSystem = widgetsBundle.tenantId.id === types.id.nullUid;
                 widgetService.getBundleWidgetTypes(bundleAlias, isSystem).then(
-                    function success (widgetTypes) {
+                    function success(widgetTypes) {
                         prepareExport(widgetsBundle);
                         var widgetsBundleItem = {
-                           widgetsBundle:  prepareExport(widgetsBundle),
-                           widgetTypes: []
+                            widgetsBundle: prepareExport(widgetsBundle),
+                            widgetTypes: []
                         };
                         for (var t in widgetTypes) {
                             var widgetType = widgetTypes[t];
@@ -68,10 +72,10 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
                             widgetsBundleItem.widgetTypes.push(prepareExport(widgetType));
                         }
                         var name = widgetsBundle.title;
-                        name = name.toLowerCase().replace(/\W/g,"_");
+                        name = name.toLowerCase().replace(/\W/g, "_");
                         exportToPc(widgetsBundleItem, name + '.json');
                     },
-                    function fail (rejection) {
+                    function fail(rejection) {
                         var message = rejection;
                         if (!message) {
                             message = $translate.instant('error.unknown-error');
@@ -168,7 +172,7 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
                     delete widgetType.bundleAlias;
                 }
                 var name = widgetType.name;
-                name = name.toLowerCase().replace(/\W/g,"_");
+                name = name.toLowerCase().replace(/\W/g, "_");
                 exportToPc(prepareExport(widgetType), name + '.json');
             },
             function fail(rejection) {
@@ -209,8 +213,7 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
 
     function validateImportedWidgetType(widgetType) {
         if (angular.isUndefined(widgetType.name)
-            || angular.isUndefined(widgetType.descriptor))
-        {
+            || angular.isUndefined(widgetType.descriptor)) {
             return false;
         }
         return true;
@@ -228,7 +231,7 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
                             metadata: prepareRuleChainMetaData(ruleChainMetaData)
                         };
                         var name = ruleChain.name;
-                        name = name.toLowerCase().replace(/\W/g,"_");
+                        name = name.toLowerCase().replace(/\W/g, "_");
                         exportToPc(ruleChainExport, name + '.json');
                     },
                     (rejection) => {
@@ -253,7 +256,7 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
 
     function prepareRuleChainMetaData(ruleChainMetaData) {
         delete ruleChainMetaData.ruleChainId;
-        for (var i=0;i<ruleChainMetaData.nodes.length;i++) {
+        for (var i = 0; i < ruleChainMetaData.nodes.length; i++) {
             var node = ruleChainMetaData.nodes[i];
             delete node.ruleChainId;
             ruleChainMetaData.nodes[i] = prepareExport(node);
@@ -305,7 +308,7 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
     function exportWidget(dashboard, sourceState, sourceLayout, widget) {
         var widgetItem = itembuffer.prepareWidgetItem(dashboard, sourceState, sourceLayout, widget);
         var name = widgetItem.widget.config.title;
-        name = name.toLowerCase().replace(/\W/g,"_");
+        name = name.toLowerCase().replace(/\W/g, "_");
         exportToPc(prepareExport(widgetItem), name + '.json');
     }
 
@@ -415,10 +418,10 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
                         var aliasIds = Object.keys(entityAliases);
                         if (aliasIds.length > 0) {
                             processEntityAliases(entityAliases, aliasIds).then(
-                                function(missingEntityAliases) {
+                                function (missingEntityAliases) {
                                     if (Object.keys(missingEntityAliases).length > 0) {
-                                        editMissingAliases($event, [ widget ],
-                                              true, 'dashboard.widget-import-missing-aliases-title', missingEntityAliases).then(
+                                        editMissingAliases($event, [widget],
+                                            true, 'dashboard.widget-import-missing-aliases-title', missingEntityAliases).then(
                                             function success(updatedEntityAliases) {
                                                 for (var aliasId in updatedEntityAliases) {
                                                     var entityAlias = updatedEntityAliases[aliasId];
@@ -483,14 +486,14 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
             function success(targetLayout) {
                 itembuffer.addWidgetToDashboard(dashboard, targetState, targetLayout, widget,
                     aliasesInfo, onAliasesUpdateFunction, originalColumns, originalSize, -1, -1).then(
-                        function() {
-                            deferred.resolve(
-                                {
-                                    widget: widget,
-                                    layoutId: targetLayout
-                                }
-                            );
-                        }
+                    function () {
+                        deferred.resolve(
+                            {
+                                widget: widget,
+                                layoutId: targetLayout
+                            }
+                        );
+                    }
                 );
             },
             function fail() {
@@ -505,7 +508,7 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         dashboardService.getDashboard(dashboardId).then(
             function success(dashboard) {
                 var name = dashboard.title;
-                name = name.toLowerCase().replace(/\W/g,"_");
+                name = name.toLowerCase().replace(/\W/g, "_");
                 exportToPc(prepareDashboardExport(dashboard), name + '.json');
             },
             function fail(rejection) {
@@ -538,13 +541,13 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
                     dashboard = dashboardUtils.validateAndUpdateDashboard(dashboard);
                     var entityAliases = dashboard.configuration.entityAliases;
                     if (entityAliases) {
-                        var aliasIds = Object.keys( entityAliases );
+                        var aliasIds = Object.keys(entityAliases);
                         if (aliasIds.length > 0) {
                             processEntityAliases(entityAliases, aliasIds).then(
-                                function(missingEntityAliases) {
-                                    if (Object.keys( missingEntityAliases ).length > 0) {
+                                function (missingEntityAliases) {
+                                    if (Object.keys(missingEntityAliases).length > 0) {
                                         editMissingAliases($event, dashboard.configuration.widgets,
-                                                false, 'dashboard.dashboard-import-missing-aliases-title', missingEntityAliases).then(
+                                            false, 'dashboard.dashboard-import-missing-aliases-title', missingEntityAliases).then(
                                             function success(updatedEntityAliases) {
                                                 for (var aliasId in updatedEntityAliases) {
                                                     entityAliases[aliasId] = updatedEntityAliases[aliasId];
@@ -575,6 +578,34 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         return deferred.promise;
     }
 
+    function importEntities($event, entityType) {
+        var deferred = $q.defer();
+
+        switch (entityType) {
+            case types.entityType.device:
+                openImportDialogCSV($event, entityType, 'device.import', 'device.device-file').then(
+                    function success() {
+                        deferred.resolve();
+                    },
+                    function fail() {
+                        deferred.reject();
+                    }
+                );
+                return deferred.promise;
+            case types.entityType.asset:
+                openImportDialogCSV($event, entityType, 'asset.import', 'asset.asset-file').then(
+                    function success() {
+                        deferred.resolve();
+                    },
+                    function fail() {
+                        deferred.reject();
+                    }
+                );
+                return deferred.promise;
+        }
+
+    }
+
     function saveImportedDashboard(dashboard, deferred) {
         dashboardService.saveDashboard(dashboard).then(
             function success() {
@@ -594,14 +625,13 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
     }
 
 
-
     function exportExtension(extensionId) {
 
         getExtension(extensionId)
             .then(
                 function success(extension) {
                     var name = extension.title;
-                    name = name.toLowerCase().replace(/\W/g,"_");
+                    name = name.toLowerCase().replace(/\W/g, "_");
                     exportToPc(prepareExport(extension), name + '.json');
                 },
                 function fail(rejection) {
@@ -661,7 +691,7 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
     function validateImportedExtension(configuration) {
         if (configuration.length) {
             for (let i = 0; i < configuration.length; i++) {
-                if (angular.isUndefined(configuration[i].configuration) || angular.isUndefined(configuration[i].id )|| angular.isUndefined(configuration[i].type)) {
+                if (angular.isUndefined(configuration[i].configuration) || angular.isUndefined(configuration[i].id) || angular.isUndefined(configuration[i].type)) {
                     return false;
                 }
             }
@@ -692,7 +722,7 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         var aliasId = aliasIds[index];
         var entityAlias = entityAliases[aliasId];
         entityService.checkEntityAlias(entityAlias).then(
-            function(result) {
+            function (result) {
                 if (result) {
                     checkNextEntityAliasOrComplete(index, aliasIds, entityAliases, missingEntityAliases, deferred);
                 } else {
@@ -728,6 +758,124 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
             deferred.resolve(updatedEntityAliases);
         }, function () {
             deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function splitCSV(str, sep) {
+        for (var foo = str.split(sep = sep || ","), x = foo.length - 1, tl; x >= 0; x--) {
+            if (foo[x].replace(/"\s+$/, '"').charAt(foo[x].length - 1) == '"') {
+                if ((tl = foo[x].replace(/^\s+"/, '"')).length > 1 && tl.charAt(0) == '"') {
+                    foo[x] = foo[x].replace(/^\s*"|"\s*$/g, '').replace(/""/g, '"');
+                } else if (x) {
+                    foo.splice(x - 1, 2, [foo[x - 1], foo[x]].join(sep));
+                } else foo = foo.shift().split(sep).concat(foo);
+            } else foo[x].replace(/""/g, '"');
+        }
+        return foo;
+    }
+
+    function isNumeric(str) {
+        str = str.replace(',', '.');
+        return !isNaN(parseFloat(str)) && isFinite(str);
+    }
+
+    function convertStringToJSType(str) {
+        if (isNumeric(str.replace(',', '.'))) {
+            return parseFloat(str.replace(',', '.'));
+        }
+        if (str.search(/^(true|false)$/im) === 0) {
+            return str === 'true';
+        }
+        if (str === "") {
+            return null;
+        }
+        return str;
+    }
+
+    function convertCSVToJson(csvdata, config) {
+        config = config || {};
+        const delim = config.delim || ",";
+        const header = config.header || false;
+        let result = {};
+
+        let csvlines = csvdata.split(/[\r\n]+/);
+        let csvheaders = splitCSV(csvlines[0], delim);
+        if (csvheaders.length < 2) {
+            toast.showError($translate.instant('import.import-csv-number-columns-error'));
+            return -1;
+        }
+        let csvrows = header ? csvlines.slice(1, csvlines.length) : csvlines;
+
+        result.headers = csvheaders;
+        result.rows = [];
+
+        for (let r in csvrows) {
+            if (csvrows.hasOwnProperty(r)) {
+                let row = csvrows[r];
+
+                if (row.length === 0)
+                    break;
+
+                let rowitems = splitCSV(row, delim);
+                if (rowitems.length !== result.headers.length) {
+                    toast.showError($translate.instant('import.import-csv-invalid-format-error', {line: (header ? result.rows.length + 2: result.rows.length + 1)}));
+                    return -1;
+                }
+                for (let i = 0; i < rowitems.length; i++) {
+                    rowitems[i] = convertStringToJSType(rowitems[i]);
+                }
+                result.rows.push(rowitems);
+            }
+        }
+        return result;
+    }
+
+    function sumObject(obj1, obj2){
+        Object.keys(obj2).map(function(key) {
+            if (angular.isObject(obj2[key])) {
+                obj1[key] = obj1[key] || {};
+                angular.merge(obj1[key], sumObject(obj1[key], obj2[key]));
+            } else {
+                obj1[key] = (obj1[key] || 0) + obj2[key];
+            }
+        });
+        return obj1;
+    }
+
+    function qAllWithProgress(promises) {
+        promises.forEach(function(p) {
+            p.then(function() {
+                $rootScope.$broadcast('createImportEntityCompleted', {});
+            });
+        });
+        return $q.all(promises);
+    }
+    
+    function createMultiEntity(arrayData, entityType, updateData, config) {
+        let partSize = 100;
+        partSize = arrayData.length > partSize ? partSize : arrayData.length;
+        let allPromise = [];
+        let statisticalInfo = {};
+        let deferred = $q.defer();
+
+        for(let i = 0; i < partSize; i++){
+            const promise = entityService.saveEntityParameters(entityType, arrayData[i], updateData, config);
+            allPromise.push(promise);
+        }
+
+        qAllWithProgress(allPromise).then(function success(response) {
+            for (let i = 0; i < response.length; i++){
+                statisticalInfo = sumObject(statisticalInfo, response[i]);
+            }
+            arrayData.splice(0, partSize);
+            if(arrayData.length > 0){
+                deferred.resolve(createMultiEntity(arrayData, entityType, updateData, config).then(function (response) {
+                    return sumObject(statisticalInfo, response);
+                }));
+            } else {
+                deferred.resolve(statisticalInfo);
+            }
         });
         return deferred.promise;
     }
@@ -771,8 +919,7 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
 
         if (window.navigator && window.navigator.msSaveOrOpenBlob) {
             window.navigator.msSaveOrOpenBlob(blob, filename);
-        }
-        else{
+        } else {
             var e = document.createEvent('MouseEvents'),
                 a = document.createElement('a');
 
@@ -807,6 +954,34 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         return deferred.promise;
     }
 
+    function openImportDialogCSV($event, entityType, importTitle, importFileLabel) {
+        var deferred = $q.defer();
+        $mdDialog.show({
+            controller: 'ImportDialogCSVController',
+            controllerAs: 'vm',
+            templateUrl: importDialogCSVTemplate,
+            locals: {
+                importTitle: importTitle,
+                importFileLabel: importFileLabel,
+                entityType: entityType
+            },
+            parent: angular.element($document[0].body),
+            onComplete: fixedDialogSize,
+            multiple: true,
+            fullscreen: true,
+            targetEvent: $event
+        }).then(function () {
+            deferred.resolve();
+        }, function () {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function fixedDialogSize(scope, element) {
+        let dialogElement = element[0].getElementsByTagName('md-dialog');
+        dialogElement[0].style.width = dialogElement[0].offsetWidth + 2 + "px";
+    }
 }
 
 /* eslint-enable no-undef, angular/window-service, angular/document-service */

@@ -48,13 +48,36 @@ export function AssetCardController(types) {
 
 /*@ngInject*/
 export function AssetController($rootScope, userService, assetService, customerService, $state, $stateParams,
-                                $document, $mdDialog, $q, $translate, types) {
+                                $document, $mdDialog, $q, $translate, types, importExport) {
 
     var customerId = $stateParams.customerId;
 
     var assetActionsList = [];
 
     var assetGroupActionsList = [];
+
+    var assetAddItemActionsList = [
+        {
+            onAction: function ($event) {
+                vm.grid.addItem($event);
+            },
+            name: function() { return $translate.instant('action.add') },
+            details: function() { return $translate.instant('asset.add-asset-text') },
+            icon: "insert_drive_file"
+        },
+        {
+            onAction: function ($event) {
+                importExport.importEntities($event, types.entityType.asset).then(
+                    function() {
+                        vm.grid.refreshList();
+                    }
+                );
+            },
+            name: function() { return $translate.instant('action.import') },
+            details: function() { return $translate.instant('asset.import') },
+            icon: "file_upload"
+        }
+    ];
 
     var vm = this;
 
@@ -77,6 +100,7 @@ export function AssetController($rootScope, userService, assetService, customerS
 
         actionsList: assetActionsList,
         groupActionsList: assetGroupActionsList,
+        addItemActions: assetAddItemActionsList,
 
         onGridInited: gridInited,
 
@@ -294,6 +318,8 @@ export function AssetController($rootScope, userService, assetService, customerS
             } else if (vm.assetsScope === 'customer_user') {
                 vm.assetGridConfig.addItemAction = {};
             }
+            vm.assetGridConfig.addItemActions = [];
+
         }
 
         vm.assetGridConfig.refreshParamsFunc = refreshAssetsParamsFunction;
