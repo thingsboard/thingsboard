@@ -42,8 +42,9 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
         sendOneWayRpcCommand: sendOneWayRpcCommand,
         sendTwoWayRpcCommand: sendTwoWayRpcCommand,
         findByQuery: findByQuery,
-        getDeviceTypes: getDeviceTypes
-    }
+        getDeviceTypes: getDeviceTypes,
+        findByName: findByName
+    };
 
     return service;
 
@@ -124,7 +125,7 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
         if (!config) {
             config = {};
         }
-        config = Object.assign(config, { ignoreErrors: ignoreErrors });
+        config = Object.assign(config, {ignoreErrors: ignoreErrors});
         $http.get(url, config).then(function success(response) {
             deferred.resolve(response.data);
         }, function fail(response) {
@@ -136,8 +137,8 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
     function getDevices(deviceIds, config) {
         var deferred = $q.defer();
         var ids = '';
-        for (var i=0;i<deviceIds.length;i++) {
-            if (i>0) {
+        for (var i = 0; i < deviceIds.length; i++) {
+            if (i > 0) {
                 ids += ',';
             }
             ids += deviceIds[i];
@@ -146,11 +147,11 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
         $http.get(url, config).then(function success(response) {
             var devices = response.data;
             devices.sort(function (device1, device2) {
-               var id1 =  device1.id.id;
-               var id2 =  device2.id.id;
-               var index1 = deviceIds.indexOf(id1);
-               var index2 = deviceIds.indexOf(id2);
-               return index1 - index2;
+                var id1 = device1.id.id;
+                var id2 = device2.id.id;
+                var index1 = deviceIds.indexOf(id1);
+                var index2 = deviceIds.indexOf(id2);
+                return index1 - index2;
             });
             deferred.resolve(devices);
         }, function fail(response) {
@@ -159,10 +160,11 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
         return deferred.promise;
     }
 
-    function saveDevice(device) {
+    function saveDevice(device, config) {
+        config = config || {};
         var deferred = $q.defer();
         var url = '/api/device';
-        $http.post(url, device).then(function success(response) {
+        $http.post(url, device, config).then(function success(response) {
             deferred.resolve(response.data);
         }, function fail() {
             deferred.reject();
@@ -181,7 +183,8 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
         return deferred.promise;
     }
 
-    function getDeviceCredentials(deviceId, sync) {
+    function getDeviceCredentials(deviceId, sync, config) {
+        config = config || {};
         var deferred = $q.defer();
         var url = '/api/device/' + deviceId + '/credentials';
         if (sync) {
@@ -196,7 +199,7 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
                 deferred.reject();
             }
         } else {
-            $http.get(url, null).then(function success(response) {
+            $http.get(url, config).then(function success(response) {
                 deferred.resolve(response.data);
             }, function fail() {
                 deferred.reject();
@@ -205,10 +208,11 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
         return deferred.promise;
     }
 
-    function saveDeviceCredentials(deviceCredentials) {
+    function saveDeviceCredentials(deviceCredentials, config) {
+        config = config || {};
         var deferred = $q.defer();
         var url = '/api/device/credentials';
-        $http.post(url, deviceCredentials).then(function success(response) {
+        $http.post(url, deviceCredentials, config).then(function success(response) {
             deferred.resolve(response.data);
         }, function fail() {
             deferred.reject();
@@ -297,7 +301,7 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
         if (!config) {
             config = {};
         }
-        config = Object.assign(config, { ignoreErrors: ignoreErrors });
+        config = Object.assign(config, {ignoreErrors: ignoreErrors});
         $http.post(url, query, config).then(function success(response) {
             deferred.resolve(response.data);
         }, function fail() {
@@ -317,4 +321,15 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
         return deferred.promise;
     }
 
+    function findByName(deviceName, config) {
+        config = config || {};
+        var deferred = $q.defer();
+        var url = '/api/tenant/devices?deviceName=' + deviceName;
+        $http.get(url, config).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
 }

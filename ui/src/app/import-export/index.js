@@ -15,9 +15,13 @@
  */
 import ImportExport from './import-export.service';
 import ImportDialogController from './import-dialog.controller';
+import ImportDialogCSVController from './import-dialog-csv.controller';
+import TableColumnsAssignment from './table-columns-assignment.directive';
 
 
 export default angular.module('thingsboard.importexport', [])
     .factory('importExport', ImportExport)
     .controller('ImportDialogController', ImportDialogController)
+    .controller('ImportDialogCSVController', ImportDialogCSVController)
+    .directive('tbTableColumnsAssignment', TableColumnsAssignment)
     .name;
