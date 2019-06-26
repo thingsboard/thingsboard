@@ -25,6 +25,7 @@ import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.util.EntitiesAlarmOriginatorIdAsyncLoader;
 import org.thingsboard.rule.engine.util.EntitiesCustomerIdAsyncLoader;
 import org.thingsboard.rule.engine.util.EntitiesRelatedEntityIdAsyncLoader;
 import org.thingsboard.rule.engine.util.EntitiesTenantIdAsyncLoader;
@@ -39,9 +40,10 @@ import java.util.HashSet;
         type = ComponentType.TRANSFORMATION,
         name = "change originator",
         configClazz = TbChangeOriginatorNodeConfiguration.class,
-        nodeDescription = "Change Message Originator To Tenant/Customer/Related Entity",
+        nodeDescription = "Change Message Originator To Tenant/Customer/Related Entity/Alarm Originator",
         nodeDetails = "Related Entity found using configured relation direction and Relation Type. " +
-                "If multiple Related Entities are found, only first Entity is used as new Originator, other entities are discarded. ",
+                "If multiple Related Entities are found, only first Entity is used as new Originator, other entities are discarded.<br/>" +
+                "Alarm Originator found only in case original Originator is <code>Alarm</code> entity.",
         uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
         configDirective = "tbTransformationNodeChangeOriginatorConfig",
         icon = "find_replace"
@@ -51,6 +53,7 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode {
     protected static final String CUSTOMER_SOURCE = "CUSTOMER";
     protected static final String TENANT_SOURCE = "TENANT";
     protected static final String RELATED_SOURCE = "RELATED";
+    protected static final String ALARM_ORIGINATOR_SOURCE = "ALARM_ORIGINATOR";
 
     private TbChangeOriginatorNodeConfiguration config;
 
@@ -80,13 +83,15 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode {
                 return EntitiesTenantIdAsyncLoader.findEntityIdAsync(ctx, original);
             case RELATED_SOURCE:
                 return EntitiesRelatedEntityIdAsyncLoader.findEntityAsync(ctx, original, config.getRelationsQuery());
+            case ALARM_ORIGINATOR_SOURCE:
+                return EntitiesAlarmOriginatorIdAsyncLoader.findEntityIdAsync(ctx, original);
             default:
                 return Futures.immediateFailedFuture(new IllegalStateException("Unexpected originator source " + config.getOriginatorSource()));
         }
     }
 
     private void validateConfig(TbChangeOriginatorNodeConfiguration conf) {
-        HashSet<String> knownSources = Sets.newHashSet(CUSTOMER_SOURCE, TENANT_SOURCE, RELATED_SOURCE);
+        HashSet<String> knownSources = Sets.newHashSet(CUSTOMER_SOURCE, TENANT_SOURCE, RELATED_SOURCE, ALARM_ORIGINATOR_SOURCE);
         if (!knownSources.contains(conf.getOriginatorSource())) {
             log.error("Unsupported source [{}] for TbChangeOriginatorNode", conf.getOriginatorSource());
             throw new IllegalArgumentException("Unsupported source TbChangeOriginatorNode" + conf.getOriginatorSource());
