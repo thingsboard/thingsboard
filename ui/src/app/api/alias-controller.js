@@ -151,7 +151,8 @@ export default class AliasController {
                                     newDatasource.entityId = resolvedEntity.id;
                                     newDatasource.entityType = resolvedEntity.entityType;
                                     newDatasource.entityName = resolvedEntity.name;
-                                    newDatasource.entityDescription = resolvedEntity.entityDescription
+                                    newDatasource.entityLabel = resolvedEntity.label;
+                                    newDatasource.entityDescription = resolvedEntity.entityDescription;
                                     newDatasource.name = resolvedEntity.name;
                                     newDatasource.generated = i > 0 ? true : false;
                                     datasources.push(newDatasource);
@@ -177,6 +178,7 @@ export default class AliasController {
                                 datasource.entityId = entity.id;
                                 datasource.entityType = entity.entityType;
                                 datasource.entityName = entity.name;
+                                datasource.entityLabel = entity.label;
                                 datasource.name = entity.name;
                                 datasource.entityDescription = entity.entityDescription;
                                 deferred.resolve([datasource]);

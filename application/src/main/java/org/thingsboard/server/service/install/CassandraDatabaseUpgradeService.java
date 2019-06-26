@@ -257,6 +257,12 @@ public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
                 break;
             case "2.3.0":
                 break;
+            case "2.3.1":
+                log.info("Updating schema ...");
+                schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "2.4.0", SCHEMA_UPDATE_CQL);
+                loadCql(schemaUpdateFile);
+                log.info("Schema updated.");
+                break;
             default:
                 throw new RuntimeException("Unable to upgrade Cassandra database, unsupported fromVersion: " + fromVersion);
         }
