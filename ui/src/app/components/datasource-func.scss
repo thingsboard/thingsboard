@@ -25,22 +25,22 @@
       display: none;
     }
   }
+}
 
-  .tb-func-datakey-autocomplete,
-  .tb-alarm-datakey-autocomplete {
-    .tb-not-found {
-      display: block;
-      height: 48px;
-      line-height: 1.5;
+.tb-func-datakey-autocomplete,
+.tb-alarm-datakey-autocomplete {
+  .tb-not-found {
+    display: block;
+    height: 48px;
+    line-height: 1.5;
 
-      .tb-no-entries {
-        line-height: 48px;
-      }
+    .tb-no-entries {
+      line-height: 48px;
     }
+  }
 
-    li {
-      height: auto !important;
-      white-space: normal !important;
-    }
+  li {
+    height: auto !important;
+    white-space: normal !important;
   }
 }
