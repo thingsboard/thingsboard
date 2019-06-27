@@ -63,6 +63,8 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
             type: "object",
             properties: {}
         };
+        
+        scope.emptySettingsGroupInfoes=[];
         scope.defaultSettingsForm = [
             '*'
         ];
@@ -90,6 +92,7 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
 
         scope.currentSettingsSchema = {};
         scope.currentSettings = angular.copy(scope.emptySettingsSchema);
+        scope.currentSettingsGroupInfoes = angular.copy(scope.emptySettingsGroupInfoes);
 
         scope.targetDeviceAlias = {
             value: null
@@ -124,6 +127,8 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
                     scope.decimals = config.decimals;
                     scope.useDashboardTimewindow = angular.isDefined(config.useDashboardTimewindow) ?
                         config.useDashboardTimewindow : true;
+                    scope.displayTimewindow = angular.isDefined(config.displayTimewindow) ?
+                        config.displayTimewindow : true;
                     scope.timewindow = config.timewindow;
                     scope.showLegend = angular.isDefined(config.showLegend) ?
                         config.showLegend : scope.widgetType === types.widgetType.timeseries.value;
@@ -189,10 +194,12 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
             if (scope.widgetSettingsSchema && scope.widgetSettingsSchema.schema) {
                 scope.currentSettingsSchema = scope.widgetSettingsSchema.schema;
                 scope.currentSettingsForm = scope.widgetSettingsSchema.form || angular.copy(scope.defaultSettingsForm);
+                scope.currentSettingsGroupInfoes = scope.widgetSettingsSchema.groupInfoes;
                 scope.currentSettings = scope.settings;
             } else {
                 scope.currentSettingsForm = angular.copy(scope.defaultSettingsForm);
                 scope.currentSettingsSchema = angular.copy(scope.emptySettingsSchema);
+                scope.currentSettingsGroupInfoes = angular.copy(scope.emptySettingsGroupInfoes);
                 scope.currentSettings = {};
             }
         }
@@ -230,7 +237,7 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
         };
 
         scope.$watch('title + showTitle + dropShadow + enableFullscreen + backgroundColor + color + ' +
-            'padding + margin + widgetStyle + titleStyle + mobileOrder + mobileHeight + units + decimals + useDashboardTimewindow + ' +
+            'padding + margin + widgetStyle + titleStyle + mobileOrder + mobileHeight + units + decimals + useDashboardTimewindow + displayTimewindow + ' +
             'alarmSearchStatus + alarmsPollingInterval + showLegend', function () {
             if (ngModelCtrl.$viewValue) {
                 var value = ngModelCtrl.$viewValue;
@@ -257,6 +264,7 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
                     config.units = scope.units;
                     config.decimals = scope.decimals;
                     config.useDashboardTimewindow = scope.useDashboardTimewindow;
+                    config.displayTimewindow = scope.displayTimewindow;
                     config.alarmSearchStatus = scope.alarmSearchStatus;
                     config.alarmsPollingInterval = scope.alarmsPollingInterval;
                     config.showLegend = scope.showLegend;

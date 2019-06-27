@@ -96,6 +96,7 @@ export default angular.module('thingsboard.help', [])
                 assets: helpBaseUrl + "/docs/user-guide/ui/assets",
                 devices: helpBaseUrl + "/docs/user-guide/ui/devices",
                 entityViews: helpBaseUrl + "/docs/user-guide/ui/entity-views",
+                entitiesImport: helpBaseUrl + "/docs/user-guide/bulk-provisioning",
                 dashboards: helpBaseUrl + "/docs/user-guide/ui/dashboards",
                 users: helpBaseUrl + "/docs/user-guide/ui/users",
                 widgetsBundles: helpBaseUrl + "/docs/user-guide/ui/widget-library#bundles",

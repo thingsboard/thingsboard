@@ -38,6 +38,7 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         createAlarmSourceFromSubscriptionInfo: createAlarmSourceFromSubscriptionInfo,
         getRelatedEntities: getRelatedEntities,
         saveRelatedEntity: saveRelatedEntity,
+        saveEntityParameters: saveEntityParameters,
         getRelatedEntity: getRelatedEntity,
         deleteRelatedEntity: deleteRelatedEntity,
         moveEntity: moveEntity,
@@ -344,7 +345,14 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
     }
 
     function entityToEntityInfo(entity) {
-        return { origEntity: entity, name: entity.name, entityType: entity.id.entityType, id: entity.id.id, entityDescription: entity.additionalInfo?entity.additionalInfo.description:"" };
+        return {
+            origEntity: entity,
+            name: entity.name,
+            label: entity.label?entity.label:"",
+            entityType: entity.id.entityType,
+            id: entity.id.id,
+            entityDescription: entity.additionalInfo?entity.additionalInfo.description:""
+        };
     }
 
     function entityRelationInfoToEntityInfo(entityRelationInfo, direction) {
@@ -1069,6 +1077,119 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         } else {
             addRelatedEntity(relatedEntity, parentEntityId, keys, deferred, relation, direction);
         }
+        return deferred.promise;
+    }
+
+    function saveEntityRelation(entityType, entityId, entityRelation, config) {
+        const deferred = $q.defer();
+        let attributesType = Object.keys(types.attributesScope);
+        let allPromise = [];
+        let promise = "";
+        if (entityRelation.accessToken !== "") {
+            promise = deviceService.getDeviceCredentials(entityId.id, null, config).then(function (response) {
+                response.credentialsId = entityRelation.accessToken;
+                response.credentialsType = "ACCESS_TOKEN";
+                response.credentialsValue = null;
+                return deviceService.saveDeviceCredentials(response, config).catch(function () {
+                    return "error";
+                });
+            });
+            allPromise.push(promise)
+        }
+        for (let i = 0; i < attributesType.length; i++) {
+            let attribute = attributesType[i];
+            if (entityRelation.attributes[attribute] && entityRelation.attributes[attribute].length !== 0) {
+                promise = attributeService.saveEntityAttributes(entityType, entityId.id, types.attributesScope[attribute].value, entityRelation.attributes[attribute], config).catch(function () {
+                    return "error";
+                });
+                allPromise.push(promise);
+            }
+        }
+        if (entityRelation.timeseries.length !== 0) {
+            promise = attributeService.saveEntityTimeseries(entityType, entityId.id, "time", entityRelation.timeseries, config).catch(function(){
+                return "error";
+            });
+            allPromise.push(promise);
+        }
+        $q.all(allPromise).then(function success(response) {
+            let isResponseHasError = false;
+            for(let i = 0; i < response.length; i++){
+                if(response[i] === "error"){
+                    isResponseHasError = true;
+                    break;
+                }
+            }
+            isResponseHasError ? deferred.reject() : deferred.resolve();
+        });
+        return deferred.promise;
+    }
+
+    function saveEntityParameters(entityType, entityParameters, update, config) {
+        config = config || {};
+        const deferred = $q.defer();
+        let statisticalInfo = {};
+        let newEntity = {
+            name: entityParameters.name,
+            type: entityParameters.type
+        };
+        let promise;
+        switch (entityType) {
+            case types.entityType.device:
+                promise = deviceService.saveDevice(newEntity, config);
+                break;
+            case types.entityType.asset:
+                promise = assetService.saveAsset(newEntity, true, config);
+                break;
+        }
+
+        promise.then(function success(response) {
+            saveEntityRelation(entityType, response.id, entityParameters, config).then(function success() {
+                statisticalInfo.create = {
+                    entity: 1
+                };
+                deferred.resolve(statisticalInfo);
+            }, function fail() {
+                statisticalInfo.error = {
+                    entity: 1
+                };
+                deferred.resolve(statisticalInfo);
+            });
+        }, function fail() {
+            if (update) {
+                let findIdEntity;
+                switch (entityType) {
+                    case types.entityType.device:
+                        findIdEntity = deviceService.findByName(entityParameters.name, config);
+                        break;
+                    case types.entityType.asset:
+                        findIdEntity = assetService.findByName(entityParameters.name, config);
+                        break;
+                }
+                findIdEntity.then(function success(response) {
+                    saveEntityRelation(entityType, response.id, entityParameters, config).then(function success() {
+                        statisticalInfo.update = {
+                            entity: 1
+                        };
+                        deferred.resolve(statisticalInfo);
+                    }, function fail() {
+                        statisticalInfo.error = {
+                            entity: 1
+                        };
+                        deferred.resolve(statisticalInfo);
+                    });
+                }, function fail() {
+                    statisticalInfo.error = {
+                        entity: 1
+                    };
+                    deferred.resolve(statisticalInfo);
+                });
+            } else {
+                statisticalInfo.error = {
+                    entity: 1
+                };
+                deferred.resolve(statisticalInfo);
+            }
+        });
         return deferred.promise;
     }
 

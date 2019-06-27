@@ -24,12 +24,19 @@ div.tb-widget {
 
   transition: all .2s ease-in-out;
 
-  .tb-widget-title {
-    max-height: 60px;
+  .tb-widget-header{
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+  }
 
+  .tb-widget-title {
+    display: block;
+    max-height: 75px;
     padding-top: 5px;
     padding-left: 5px;
     overflow: hidden;
+    text-overflow: ellipsis;
 
     tb-timewindow {
       font-size: 14px;
@@ -38,9 +45,6 @@ div.tb-widget {
   }
 
   .tb-widget-actions {
-    position: absolute;
-    top: 8px;
-    right: 8px;
     z-index: 19;
     margin: 0;
 

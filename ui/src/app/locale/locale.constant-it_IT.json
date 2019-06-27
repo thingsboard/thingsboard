@@ -1520,6 +1520,7 @@
         "decimals": "Numero di cifre decimali",
         "timewindow": "Intervallo temporale",
         "use-dashboard-timewindow": "Usa intervallo temporale dashboard",
+        "display-timewindow": "Mostra intervallo temporale",
         "display-legend": "Mostra legenda",
         "datasources": "Sorgenti dei dati",
         "maximum-datasources": "Massimo { count, plural, 1 {1 sorgente dati consentita.} other {# sorgenti dati consentite} }",
@@ -1642,7 +1643,8 @@
             "ja_JA": "Giapponese",
             "tr_TR": "Turco",
             "fa_IR": "Persiana",
-            "uk_UA": "Ucraino"
+            "uk_UA": "Ucraino",
+            "cs_CZ": "Ceco"            
         }
     }
 }

@@ -979,7 +979,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
     function hasTimewindow(widget) {
         if (widget.type === types.widgetType.timeseries.value || widget.type === types.widgetType.alarm.value) {
             return angular.isDefined(widget.config.useDashboardTimewindow) ?
-                !widget.config.useDashboardTimewindow : false;
+                (!widget.config.useDashboardTimewindow && (angular.isUndefined(widget.config.displayTimewindow) || widget.config.displayTimewindow)) : false;
         } else {
             return false;
         }

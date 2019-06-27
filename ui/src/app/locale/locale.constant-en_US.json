@@ -48,7 +48,8 @@
         "paste-reference": "Paste reference",
         "import": "Import",
         "export": "Export",
-        "share-via": "Share via {{provider}}"
+        "share-via": "Share via {{provider}}",
+        "continue": "Continue"
     },
     "aggregation": {
         "aggregation": "Aggregation",
@@ -246,7 +247,9 @@
         "select-asset": "Select asset",
         "no-assets-matching": "No assets matching '{{entity}}' were found.",
         "asset-required": "Asset is required",
-        "name-starts-with": "Asset name starts with"
+        "name-starts-with": "Asset name starts with",
+        "import": "Import assets",
+        "asset-file": "Asset file"
     },
     "attribute": {
         "attributes": "Attributes",
@@ -653,6 +656,7 @@
         "name": "Name",
         "name-required": "Name is required.",
         "description": "Description",
+        "label": "Label",
         "events": "Events",
         "details": "Details",
         "copyId": "Copy device Id",
@@ -665,7 +669,9 @@
         "is-gateway": "Is gateway",
         "public": "Public",
         "device-public": "Device is public",
-        "select-device": "Select device"
+        "select-device": "Select device",
+        "import": "Import device",
+        "device-file": "Device file"
     },
     "dialog": {
         "close": "Close dialog"
@@ -1093,7 +1099,40 @@
     },
     "import": {
         "no-file": "No file selected",
-        "drop-file": "Drop a JSON file or click to select a file to upload."
+        "drop-file": "Drop a JSON file or click to select a file to upload.",
+        "drop-file-csv": "Drop a CSV file or click to select a file to upload.",
+        "column-value": "Value",
+        "column-title": "Title",
+        "column-example": "Example value data",
+        "column-key": "Attribute/telemetry key",
+        "csv-delimiter": "CSV delimiter",
+        "csv-first-line-header": "First line contains column names",
+        "csv-update-data": "Update attributes/telemetry",
+        "import-csv-number-columns-error": "A file should contain at least two columns",
+        "import-csv-invalid-format-error": "Invalid file format. Line: '{{line}}'",
+        "column-type": {
+            "name": "Name",
+            "type": "Type",
+            "column-type": "Column type",
+            "client-attribute": "Client attribute",
+            "shared-attribute": "Shared attribute",
+            "server-attribute": "Server attribute",
+            "timeseries": "Timeseries",
+            "entity-field": "Entity field",
+            "access-token": "Access token"
+        },
+        "stepper-text":{
+            "select-file": "Select a file",
+            "configuration": "Import configuration",
+            "column-type": "Select columns type",
+            "creat-entities": "Creating new entities",
+            "done": "Done"
+        },
+        "message": {
+            "create-entities": "{{count}} new entities were successfully created.",
+            "update-entities": "{{count}} entities were successfully updated.",
+            "error-entities": "There was an error creating {{count}} entities."
+        }
     },
     "item": {
         "selected": "Selected"
@@ -1526,6 +1565,7 @@
         "decimals": "Number of digits after floating point",
         "timewindow": "Timewindow",
         "use-dashboard-timewindow": "Use dashboard timewindow",
+        "display-timewindow": "Display timewindow",
         "display-legend": "Display legend",
         "datasources": "Datasources",
         "maximum-datasources": "Maximum { count, plural, 1 {1 datasource is allowed.} other {# datasources are allowed} }",
@@ -1649,7 +1689,8 @@
             "ja_JA": "Japanese",
             "tr_TR": "Turkish",
             "fa_IR": "Persian",
-            "uk_UA": "Ukrainian"
+            "uk_UA": "Ukrainian",
+            "cs_CZ": "Czech"            
         }
     }
 }

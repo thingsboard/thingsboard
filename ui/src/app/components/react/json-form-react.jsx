@@ -47,6 +47,7 @@ class ReactSchemaForm extends React.Component {
 ReactSchemaForm.propTypes = {
         schema: React.PropTypes.object,
         form: React.PropTypes.array,
+        groupInfoes: React.PropTypes.array,
         model: React.PropTypes.object,
         option: React.PropTypes.object,
         onModelChange: React.PropTypes.func,
@@ -56,7 +57,8 @@ ReactSchemaForm.propTypes = {
 
 ReactSchemaForm.defaultProps = {
     schema: {},
-    form: [ "*" ]
+    form: [ "*" ],
+    groupInfoes:[]
 }
 
 ReactSchemaForm.childContextTypes = {

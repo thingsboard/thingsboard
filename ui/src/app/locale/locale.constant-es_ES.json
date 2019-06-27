@@ -1515,6 +1515,7 @@
         "decimals": "Número de dígitos después del punto flotante",
         "timewindow": "Ventana de tiempo",
         "use-dashboard-timewindow": "Utilizar ventana de tiempo del panel",
+        "display-timewindow": "Mostrar ventana de tiempo",
         "display-legend": "Mostrar leyenda",
         "datasources": "Orígenes de datos",
         "maximum-datasources": "Máximo { count, plural, 1 {1 origen de datos permitido.} other {# origenes de datos permitidos} }",
@@ -1637,7 +1638,8 @@
             "ja_JA": "Japonés",
             "tr_TR": "Turco",
             "fa_IR": "Persa",
-            "uk_UA": "Ucraniano"
+            "uk_UA": "Ucraniano",
+            "cs_CZ": "Checo"            
         }
     }
 }

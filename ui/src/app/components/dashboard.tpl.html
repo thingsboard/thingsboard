@@ -44,66 +44,68 @@
 										ng-click="vm.widgetClicked($event, widget)"
 										tb-contextmenu="vm.openWidgetContextMenu($event, widget, $mdOpenMousepointMenu)"
 									    ng-style="vm.widgetStyle(widget)">
-								<div class="tb-widget-title" layout="column" layout-align="center start" ng-show="vm.showWidgetTitlePanel(widget)">
-									<div ng-if="vm.hasWidgetTitleTemplate(widget)" ng-include="vm.widgetTitleTemplate(widget)"></div>
-									<span ng-show="vm.showWidgetTitle(widget)" ng-style="vm.widgetTitleStyle(widget)" class="md-subhead">{{vm.widgetTitle(widget)}}</span>
-									<tb-timewindow aggregation="{{vm.hasAggregation(widget)}}" ng-if="vm.hasTimewindow(widget)" ng-model="widget.config.timewindow"></tb-timewindow>
-								</div>
-								<div class="tb-widget-actions" layout="row" layout-align="start center" ng-show="vm.showWidgetActions(widget)" tb-mousedown="$event.stopPropagation()">
-									<md-button ng-repeat="action in vm.customWidgetHeaderActions(widget)"
-											   aria-label="{{action.displayName}}"
-											   ng-show="!vm.isEdit"
-											   ng-click="action.onAction($event)"
-											   class="md-icon-button">
-										<md-tooltip md-direction="{{vm.isWidgetExpanded ? 'bottom' : 'top'}}">
-											{{action.displayName}}
-										</md-tooltip>
-										<ng-md-icon size="20" icon="{{action.icon}}"></ng-md-icon>
-									</md-button>
-									<md-button ng-repeat="action in vm.widgetActions(widget)"
-											   aria-label="{{ action.name | translate }}"
-											   ng-show="!vm.isEdit && action.show"
-											   ng-click="action.onAction($event)"
-											   class="md-icon-button">
-											   <md-tooltip md-direction="{{vm.isWidgetExpanded ? 'bottom' : 'top'}}">
-												   {{ action.name | translate }}
-											   </md-tooltip>
-											   <ng-md-icon size="20" icon="{{action.icon}}"></ng-md-icon>
-									</md-button>
-									<md-button id="expand-button"
-											   ng-show="!vm.isEdit && vm.enableWidgetFullscreen(widget)"
-											   aria-label="{{ 'fullscreen.fullscreen' | translate }}"
-											   class="md-icon-button"></md-button>
-									<md-button ng-show="vm.isEditActionEnabled && !vm.isWidgetExpanded"
-											   ng-disabled="vm.loading()"
-											   class="md-icon-button"
-											   ng-click="vm.editWidget($event, widget)"
-											   aria-label="{{ 'widget.edit' | translate }}">
-										<md-tooltip md-direction="top">
-											{{ 'widget.edit' | translate }}
-										</md-tooltip>
-										<ng-md-icon size="20" icon="edit"></ng-md-icon>
-									</md-button>
-									<md-button ng-show="vm.isExportActionEnabled && !vm.isWidgetExpanded"
-											   ng-disabled="vm.loading()"
-											   class="md-icon-button"
-											   ng-click="vm.exportWidget($event, widget)"
-											   aria-label="{{ 'widget.export' | translate }}">
-										<md-tooltip md-direction="top">
-											{{ 'widget.export' | translate }}
-										</md-tooltip>
-										<ng-md-icon size="20" icon="file_download"></ng-md-icon>
-									</md-button>
-									<md-button ng-show="vm.isRemoveActionEnabled && !vm.isWidgetExpanded"
-										ng-disabled="vm.loading()"
-										class="md-icon-button"
-										ng-click="vm.removeWidget($event, widget)"
-										aria-label="{{ 'widget.remove' | translate }}">
-										<md-tooltip md-direction="top">
-											{{ 'widget.remove' | translate }}
-										</md-tooltip>
-										<ng-md-icon size="20" icon="close"></ng-md-icon>
-									</md-button>
+								<div class="tb-widget-header">
+									<div class="tb-widget-title" layout="column" layout-align="center start" ng-show="vm.showWidgetTitlePanel(widget)">
+										<div ng-if="vm.hasWidgetTitleTemplate(widget)" ng-include="vm.widgetTitleTemplate(widget)"></div>
+										<span ng-show="vm.showWidgetTitle(widget)" ng-style="vm.widgetTitleStyle(widget)" class="md-subhead">{{vm.widgetTitle(widget)}}</span>
+										<tb-timewindow aggregation="{{vm.hasAggregation(widget)}}" ng-if="vm.hasTimewindow(widget)" ng-model="widget.config.timewindow"></tb-timewindow>
+									</div>
+									<div class="tb-widget-actions" layout="row" layout-align="start center" ng-show="vm.showWidgetActions(widget)" tb-mousedown="$event.stopPropagation()">
+										<md-button ng-repeat="action in vm.customWidgetHeaderActions(widget)"
+												   aria-label="{{action.displayName}}"
+												   ng-show="!vm.isEdit"
+												   ng-click="action.onAction($event)"
+												   class="md-icon-button">
+											<md-tooltip md-direction="{{vm.isWidgetExpanded ? 'bottom' : 'top'}}">
+												{{action.displayName}}
+											</md-tooltip>
+											<ng-md-icon size="20" icon="{{action.icon}}"></ng-md-icon>
+										</md-button>
+										<md-button ng-repeat="action in vm.widgetActions(widget)"
+												   aria-label="{{ action.name | translate }}"
+												   ng-show="!vm.isEdit && action.show"
+												   ng-click="action.onAction($event)"
+												   class="md-icon-button">
+											<md-tooltip md-direction="{{vm.isWidgetExpanded ? 'bottom' : 'top'}}">
+												{{ action.name | translate }}
+											</md-tooltip>
+											<ng-md-icon size="20" icon="{{action.icon}}"></ng-md-icon>
+										</md-button>
+										<md-button id="expand-button"
+												   ng-show="!vm.isEdit && vm.enableWidgetFullscreen(widget)"
+												   aria-label="{{ 'fullscreen.fullscreen' | translate }}"
+												   class="md-icon-button"></md-button>
+										<md-button ng-show="vm.isEditActionEnabled && !vm.isWidgetExpanded"
+												   ng-disabled="vm.loading()"
+												   class="md-icon-button"
+												   ng-click="vm.editWidget($event, widget)"
+												   aria-label="{{ 'widget.edit' | translate }}">
+											<md-tooltip md-direction="top">
+												{{ 'widget.edit' | translate }}
+											</md-tooltip>
+											<ng-md-icon size="20" icon="edit"></ng-md-icon>
+										</md-button>
+										<md-button ng-show="vm.isExportActionEnabled && !vm.isWidgetExpanded"
+												   ng-disabled="vm.loading()"
+												   class="md-icon-button"
+												   ng-click="vm.exportWidget($event, widget)"
+												   aria-label="{{ 'widget.export' | translate }}">
+											<md-tooltip md-direction="top">
+												{{ 'widget.export' | translate }}
+											</md-tooltip>
+											<ng-md-icon size="20" icon="file_download"></ng-md-icon>
+										</md-button>
+										<md-button ng-show="vm.isRemoveActionEnabled && !vm.isWidgetExpanded"
+												   ng-disabled="vm.loading()"
+												   class="md-icon-button"
+												   ng-click="vm.removeWidget($event, widget)"
+												   aria-label="{{ 'widget.remove' | translate }}">
+											<md-tooltip md-direction="top">
+												{{ 'widget.remove' | translate }}
+											</md-tooltip>
+											<ng-md-icon size="20" icon="close"></ng-md-icon>
+										</md-button>
+									</div>
 								</div>
 								<div flex layout="column" class="tb-widget-content">
 									<div flex tb-widget
