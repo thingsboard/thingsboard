@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *	 http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -83,10 +83,10 @@ export default class TbMapWidgetV2 {
 			this.map = new TbGoogleMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, settings.disableScrollZooming, minZoomLevel, settings.gmApiKey, settings.gmDefaultMapType);
 		} else if (mapProvider === 'openstreet-map') {
 			if (settings.useCustomProvider && settings.customProviderTileUrl) {
-                openStreetMapProvider.name = settings.customProviderTileUrl;
-                openStreetMapProvider.isCustom = true;
+				openStreetMapProvider.name = settings.customProviderTileUrl;
+				openStreetMapProvider.isCustom = true;
 			} else {
-                openStreetMapProvider.name = settings.mapProvider;
+				openStreetMapProvider.name = settings.mapProvider;
 			}
 			this.map = new TbOpenStreetMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, settings.disableScrollZooming, minZoomLevel, openStreetMapProvider);
 		} else if (mapProvider === 'here') {
@@ -669,22 +669,49 @@ export default class TbMapWidgetV2 {
 		var schema;
 		if (mapProvider === 'google-map') {
 			schema = angular.copy(googleMapSettingsSchema);
+			schema.groupInfoes=[{
+				"formIndex":0,
+				"GroupTitle":"Google Map Settings"
+			}];
 		} else if (mapProvider === 'openstreet-map') {
 			schema = angular.copy(openstreetMapSettingsSchema);
+			schema.groupInfoes=[{
+				"formIndex":0,
+				"GroupTitle":"Openstreet Map Settings"
+			}];
 		} else if (mapProvider === 'image-map') {
 			return imageMapSettingsSchema;
 		} else if (mapProvider === 'tencent-map') {
 			schema = angular.copy(tencentMapSettingsSchema);
+			schema.groupInfoes=[{
+				"formIndex":0,
+				"GroupTitle":"Tencent Map Settings"
+			}];
 		} else if (mapProvider === 'here') {
 			schema = angular.copy(hereMapSettingsSchema);
+			schema.groupInfoes=[{
+				"formIndex":0,
+				"GroupTitle":"Here Map Settings"
+			}];
 		}
+		if(!schema.groupInfoes)schema.groupInfoes=[];
+		schema.form = [schema.form];
+
 		angular.merge(schema.schema.properties, commonMapSettingsSchema.schema.properties);
 		schema.schema.required = schema.schema.required.concat(commonMapSettingsSchema.schema.required);
-		schema.form = schema.form.concat(commonMapSettingsSchema.form);
+		schema.form.push(commonMapSettingsSchema.form);//schema.form.concat(commonMapSettingsSchema.form);
+		schema.groupInfoes.push({
+			"formIndex":schema.groupInfoes.length,
+			"GroupTitle":"Common Map Settings"
+		});
 		if (drawRoutes) {
 			angular.merge(schema.schema.properties, routeMapSettingsSchema.schema.properties);
 			schema.schema.required = schema.schema.required.concat(routeMapSettingsSchema.schema.required);
-			schema.form = schema.form.concat(routeMapSettingsSchema.form);
+			schema.form.push(routeMapSettingsSchema.form);//schema.form = schema.form.concat(routeMapSettingsSchema.form);
+			schema.groupInfoes.push({
+				"formIndex":schema.groupInfoes.length,
+				"GroupTitle":"Route Map Settings"
+			});
 		}
 		return schema;
 	}
@@ -871,16 +898,16 @@ const openstreetMapSettingsSchema =
 					"type": "string",
 					"default": "OpenStreetMap.Mapnik"
 				},
-                "useCustomProvider": {
-                    "title": "Use custom provider",
-                    "type": "boolean",
-                    "default": false
-                },
-                "customProviderTileUrl": {
-                    "title": "Custom provider tile URL",
-                    "type": "string",
-                    "default": "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                }
+				"useCustomProvider": {
+					"title": "Use custom provider",
+					"type": "boolean",
+					"default": false
+				},
+				"customProviderTileUrl": {
+					"title": "Custom provider tile URL",
+					"type": "string",
+					"default": "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+				}
 			},
 			"required": []
 		},
@@ -920,8 +947,8 @@ const openstreetMapSettingsSchema =
 					}
 				]
 			},
-            "useCustomProvider",
-            "customProviderTileUrl"
+			"useCustomProvider",
+			"customProviderTileUrl"
 		]
 	};
 
