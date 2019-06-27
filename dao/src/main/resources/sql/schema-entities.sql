@@ -37,6 +37,8 @@ CREATE TABLE IF NOT EXISTS alarm (
     type varchar(255)
 );
 
+CREATE INDEX IF NOT EXISTS idx_alarm_originator_alarm_type ON alarm(tenant_id, type, originator_type, originator_id);
+
 CREATE TABLE IF NOT EXISTS asset (
     id varchar(31) NOT NULL CONSTRAINT asset_pkey PRIMARY KEY,
     additional_info varchar,
@@ -141,6 +143,8 @@ CREATE TABLE IF NOT EXISTS event (
     CONSTRAINT event_unq_key UNIQUE (tenant_id, entity_type, entity_id, event_type, event_uid)
 );
 
+CREATE INDEX IF NOT EXISTS idx_event_type_entity_id ON event(tenant_id, event_type, entity_type, entity_id);
+
 CREATE TABLE IF NOT EXISTS relation (
     from_id varchar(31),
     from_type varchar(255),
@@ -151,6 +155,10 @@ CREATE TABLE IF NOT EXISTS relation (
     additional_info varchar,
     CONSTRAINT relation_pkey PRIMARY KEY (from_id, from_type, relation_type_group, relation_type, to_id, to_type)
 );
+
+CREATE INDEX IF NOT EXISTS idx_relation_to_id ON relation(relation_type_group, to_type, to_id);
+
+CREATE INDEX IF NOT EXISTS idx_relation_from_id ON relation(relation_type_group, from_type, from_id);
 
 CREATE TABLE IF NOT EXISTS tb_user (
     id varchar(31) NOT NULL CONSTRAINT tb_user_pkey PRIMARY KEY,
@@ -207,7 +215,8 @@ CREATE TABLE IF NOT EXISTS widgets_bundle (
 );
 
 CREATE TABLE IF NOT EXISTS rule_chain (
-    id varchar(31) NOT NULL CONSTRAINT rule_chain_pkey PRIMARY KEY,
+    id varchar(31) NOT NULL CONSTRAINT rule_chCREATE INDEX IF NOT EXISTS idx_event_type_entity_id ON event(tenant_id, event_type, entity_type, entity_id);
+ain_pkey PRIMARY KEY,
     additional_info varchar,
     configuration varchar(10000000),
     name varchar(255),
