@@ -145,11 +145,13 @@ function JsonForm($compile, $templateCache, $mdColorPicker) {
                 };
             schema.strict = true;
             var form = scope.form ? angular.copy(scope.form) : [ "*" ];
+            var groupInfoes = scope.groupInfoes ? angular.copy(scope.groupInfoes) : [];
             var model = scope.model || {};
             scope.model = inspector.sanitize(schema, model).data;
             scope.formProps.option.formDefaults.readonly = readonly;
             scope.formProps.schema = schema;
             scope.formProps.form = form;
+            scope.formProps.groupInfoes = groupInfoes;
             scope.formProps.model = angular.copy(scope.model);
             if (!skipRerender) {
                 recompile();
@@ -176,6 +178,12 @@ function JsonForm($compile, $templateCache, $mdColorPicker) {
             }
         });
 
+        scope.$watch('groupInfoes',function(newValue, prevValue) {
+            if (newValue && newValue != prevValue) {
+                scope.updateValues();
+            }
+        });
+
         scope.validate();
 
         recompile();
@@ -189,6 +197,7 @@ function JsonForm($compile, $templateCache, $mdColorPicker) {
             form: '=',
             model: '=',
             formControl: '=',
+            groupInfoes: '=',
             readonly: '='
         },
         link: linker
