@@ -153,6 +153,12 @@ tb-dashboard-toolbar {
                 min-width: 0;
                 height: $half-mobile-toolbar-height;
 
+                @media (max-width: $layout-breakpoint-sm) {
+                  md-menu{
+                    margin: 0;
+                  }
+                }
+
                 @media (min-width: $layout-breakpoint-sm) {
                   height: 46px;
                 }
