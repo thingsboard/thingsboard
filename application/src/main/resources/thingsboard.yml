@@ -103,6 +103,11 @@ security:
   user_token_access_enabled: "${SECURITY_USER_TOKEN_ACCESS_ENABLED:true}"
   # Enable/disable case-sensitive username login
   user_login_case_sensitive: "${SECURITY_USER_LOGIN_CASE_SENSITIVE:true}"
+  claim:
+    # Enable/disable claiming devices, if false -> the device's [claimingAllowed] SERVER_SCOPE attribute must be set to [true] to allow claiming specific device
+    allowClaimingByDefault: "${SECURITY_CLAIM_ALLOW_CLAIMING_BY_DEFAULT:true}"
+    # Time allowed to claim the device in milliseconds
+    duration: "${SECURITY_CLAIM_DURATION:60000}" # 1 minute, note this value must equal claimDevices.timeToLiveInMinutes value
 
 # Dashboard parameters
 dashboard:
@@ -260,6 +265,9 @@ caffeine:
       maxSize: 100000
     entityViews:
       timeToLiveInMinutes: 1440
+      maxSize: 100000
+    claimDevices:
+      timeToLiveInMinutes: 1
       maxSize: 100000
 
 redis:

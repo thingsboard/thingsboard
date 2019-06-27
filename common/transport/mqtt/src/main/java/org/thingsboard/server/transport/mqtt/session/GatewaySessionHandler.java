@@ -30,6 +30,7 @@ import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
@@ -183,7 +184,42 @@ public class GatewaySessionHandler {
 
                             @Override
                             public void onFailure(Throwable t) {
-                                log.debug("[{}] Failed to process device teleemtry command: {}", sessionId, deviceName, t);
+                                log.debug("[{}] Failed to process device telemetry command: {}", sessionId, deviceName, t);
+                            }
+                        }, context.getExecutor());
+            }
+        } else {
+            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
+        }
+    }
+
+    public void onDeviceClaim(MqttPublishMessage mqttMsg) throws AdaptorException {
+        JsonElement json = JsonMqttAdaptor.validateJsonPayload(sessionId, mqttMsg.payload());
+        int msgId = mqttMsg.variableHeader().packetId();
+        if (json.isJsonObject()) {
+            JsonObject jsonObj = json.getAsJsonObject();
+            for (Map.Entry<String, JsonElement> deviceEntry : jsonObj.entrySet()) {
+                String deviceName = deviceEntry.getKey();
+                Futures.addCallback(checkDeviceConnected(deviceName),
+                        new FutureCallback<GatewayDeviceSessionCtx>() {
+                            @Override
+                            public void onSuccess(@Nullable GatewayDeviceSessionCtx deviceCtx) {
+                                if (!deviceEntry.getValue().isJsonObject()) {
+                                    throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
+                                }
+                                try {
+                                    DeviceId deviceId = deviceCtx.getDeviceId();
+                                    TransportProtos.ClaimDeviceMsg claimDeviceMsg = JsonConverter.convertToClaimDeviceProto(deviceId, deviceEntry.getValue());
+                                    transportService.process(deviceCtx.getSessionInfo(), claimDeviceMsg, getPubAckCallback(channel, deviceName, msgId, claimDeviceMsg));
+                                } catch (Throwable e) {
+                                    UUID gatewayId = new UUID(gateway.getDeviceIdMSB(), gateway.getDeviceIdLSB());
+                                    log.warn("[{}][{}] Failed to convert claim message: {}", gatewayId, deviceName, deviceEntry.getValue(), e);
+                                }
+                            }
+
+                            @Override
+                            public void onFailure(Throwable t) {
+                                log.debug("[{}] Failed to process device claiming command: {}", sessionId, deviceName, t);
                             }
                         }, context.getExecutor());
             }
@@ -209,6 +245,7 @@ public class GatewaySessionHandler {
                                 TransportProtos.PostAttributeMsg postAttributeMsg = JsonConverter.convertToAttributesProto(deviceEntry.getValue().getAsJsonObject());
                                 transportService.process(deviceCtx.getSessionInfo(), postAttributeMsg, getPubAckCallback(channel, deviceName, msgId, postAttributeMsg));
                             }
+
                             @Override
                             public void onFailure(Throwable t) {
                                 log.debug("[{}] Failed to process device attributes command: {}", sessionId, deviceName, t);
