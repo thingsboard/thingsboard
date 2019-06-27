@@ -44,9 +44,11 @@ public abstract class SqlAbstractDatabaseSchemaService implements DatabaseSchema
     private InstallScripts installScripts;
 
     private final String schemaSql;
+    private final String schemaIdxSql;
 
-    protected SqlAbstractDatabaseSchemaService(String schemaSql) {
+    protected SqlAbstractDatabaseSchemaService(String schemaSql, String schemaIdxSql) {
         this.schemaSql = schemaSql;
+        this.schemaIdxSql = schemaIdxSql;
     }
 
     @Override
@@ -60,6 +62,15 @@ public abstract class SqlAbstractDatabaseSchemaService implements DatabaseSchema
             conn.createStatement().execute(sql); //NOSONAR, ignoring because method used to load initial thingsboard database schema
         }
 
+        if (schemaIdxSql != null) {
+            log.info("Installing SQL DataBase schema indexes part: " + schemaIdxSql);
+
+            Path schemaIdxFile = Paths.get(installScripts.getDataDir(), SQL_DIR, schemaIdxSql);
+            try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+                String sql = new String(Files.readAllBytes(schemaIdxFile), Charset.forName("UTF-8"));
+                conn.createStatement().execute(sql); //NOSONAR, ignoring because method used to load initial thingsboard database schema
+            }
+        }
     }
 
 }

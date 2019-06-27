@@ -25,6 +25,6 @@ import org.thingsboard.server.dao.util.SqlTsDao;
 public class SqlTsDatabaseSchemaService extends SqlAbstractDatabaseSchemaService
         implements TsDatabaseSchemaService {
     public SqlTsDatabaseSchemaService() {
-        super("schema-ts.sql");
+        super("schema-ts.sql", null);
     }
 }
