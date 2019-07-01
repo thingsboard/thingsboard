@@ -44,13 +44,14 @@
 										ng-click="vm.widgetClicked($event, widget)"
 										tb-contextmenu="vm.openWidgetContextMenu($event, widget, $mdOpenMousepointMenu)"
 									    ng-style="vm.widgetStyle(widget)">
-								<div class="tb-widget-header">
+								<div layout="row" layout-align="space-between start">
 									<div class="tb-widget-title" layout="column" layout-align="center start" ng-show="vm.showWidgetTitlePanel(widget)">
 										<div ng-if="vm.hasWidgetTitleTemplate(widget)" ng-include="vm.widgetTitleTemplate(widget)"></div>
-										<span ng-show="vm.showWidgetTitle(widget)" ng-style="vm.widgetTitleStyle(widget)" class="md-subhead">{{vm.widgetTitle(widget)}}</span>
+										<span ng-show="vm.showWidgetTitle(widget)" ng-style="vm.widgetTitleStyle(widget)" class="md-subhead title">{{vm.widgetTitle(widget)}}</span>
 										<tb-timewindow aggregation="{{vm.hasAggregation(widget)}}" ng-if="vm.hasTimewindow(widget)" ng-model="widget.config.timewindow"></tb-timewindow>
 									</div>
-									<div class="tb-widget-actions" layout="row" layout-align="start center" ng-show="vm.showWidgetActions(widget)" tb-mousedown="$event.stopPropagation()">
+									<div class="tb-widget-actions" layout="row" layout-align="start center" ng-show="vm.showWidgetActions(widget)" tb-mousedown="$event.stopPropagation()"
+										ng-class="{'tb-widget-actions-absolute': !vm.showWidgetTitlePanel(widget) && !(vm.hasWidgetTitleTemplate(widget)||vm.showWidgetTitle(widget)||vm.hasAggregation(widget))}">
 										<md-button ng-repeat="action in vm.customWidgetHeaderActions(widget)"
 												   aria-label="{{action.displayName}}"
 												   ng-show="!vm.isEdit"
