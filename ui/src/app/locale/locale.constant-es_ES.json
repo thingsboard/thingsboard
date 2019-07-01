@@ -1621,7 +1621,9 @@
             "row-click": "Clic en la fila",
             "polygon-click": "Clic en la fila",
             "marker-click": "Clic en el polígono",
-            "tooltip-tag-action": "Acción de etiqueta para globo de ayuda"
+            "tooltip-tag-action": "Acción de etiqueta para globo de ayuda",
+            "node-selected": "Clic en el nodo seleccionado",
+            "element-click": "Clic en el elemento HTML"
         }
     },
     "language": {

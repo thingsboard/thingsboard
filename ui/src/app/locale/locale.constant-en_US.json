@@ -1672,7 +1672,8 @@
             "polygon-click": "On polygon click",
             "marker-click": "On marker click",
             "tooltip-tag-action": "Tooltip tag action",
-            "node-selected": "On node selected"
+            "node-selected": "On node selected",
+            "element-click": "On HTML element click"
         }
     },
     "language": {

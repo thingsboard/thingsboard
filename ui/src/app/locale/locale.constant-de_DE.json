@@ -1621,7 +1621,9 @@
       "row-click": "Klick auf Zeile",
       "polygon-click": "Klick auf Polygon",
       "marker-click": "Klick auf Marker",
-      "tooltip-tag-action": "Tooltip-Tag-Aktion"
+      "tooltip-tag-action": "Tooltip-Tag-Aktion",
+      "node-selected": "Klick auf Node",
+      "element-click": "Klick auf HTML element"
     }
   },
   "language": {

@@ -337,7 +337,9 @@
             "marker-click": "On marker click",
             "row-click": "On row click",
             "polygon-click": "On polygon click",
-            "tooltip-tag-action": "Tooltip tag action"
+            "tooltip-tag-action": "Tooltip tag action",
+            "node-selected": "On node selected",
+            "element-click": "On HTML element click"
         }
     },
     "customer": {

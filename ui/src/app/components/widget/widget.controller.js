@@ -122,7 +122,8 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
         actionsApi: {
             actionDescriptorsBySourceId: actionDescriptorsBySourceId,
             getActionDescriptors: getActionDescriptors,
-            handleWidgetAction: handleWidgetAction
+            handleWidgetAction: handleWidgetAction,
+            elementClick: elementClick
         },
         stateController: stateController,
         aliasController: aliasController
@@ -426,6 +427,24 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
             result = [];
         }
         return result;
+    }
+
+    function elementClick(event) {
+        event.stopPropagation();
+        var e = event.target || event.srcElement;
+        if (e.id) {
+            var descriptors = getActionDescriptors('elementClick');
+            if (descriptors.length) {
+                for (var i = 0; i < descriptors.length; i++) {
+                    if (descriptors[i].name == e.id) {
+                        var entityInfo = getActiveEntityInfo();
+                        var entityId = entityInfo ? entityInfo.entityId : null;
+                        var entityName = entityInfo ? entityInfo.entityName : null;
+                        handleWidgetAction(event, descriptors[i], entityId, entityName);
+                    }
+                }
+            }
+        }
     }
 
     function updateEntityParams(params, targetEntityParamName, targetEntityId, entityName) {
