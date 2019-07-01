@@ -16,7 +16,7 @@
 
 -->
 <section class="tb-timewindow" layout='row' layout-align="start center">
-    <md-button ng-if="direction === 'left'" ng-disabled="disabled" class="md-icon-button" aria-label="{{ 'timewindow.edit' | translate }}" ng-click="openEditMode($event)">
+    <md-button ng-if="direction === 'left'" ng-disabled="disabled" class="md-icon-button tb-md-32" aria-label="{{ 'timewindow.edit' | translate }}" ng-click="openEditMode($event)">
         <md-tooltip md-direction="{{tooltipDirection}}">
             {{ 'timewindow.edit' | translate }}
         </md-tooltip>
@@ -28,7 +28,7 @@
         </md-tooltip>
         {{model.displayValue}}
     </span>
-    <md-button ng-if="direction === 'right'" ng-disabled="disabled" class="md-icon-button" aria-label="{{ 'timewindow.edit' | translate }}" ng-click="openEditMode($event)">
+    <md-button ng-if="direction === 'right'" ng-disabled="disabled" class="md-icon-button tb-md-32" aria-label="{{ 'timewindow.edit' | translate }}" ng-click="openEditMode($event)">
         <md-tooltip md-direction="{{tooltipDirection}}">
             {{ 'timewindow.edit' | translate }}
         </md-tooltip>
