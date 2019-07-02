@@ -1392,7 +1392,8 @@
         "edit": "Edit timewindow",
         "date-range": "Date range",
         "last": "Last",
-        "time-period": "Time period"
+        "time-period": "Time period",
+        "hide": "Hide"
     },
     "user": {
         "user": "User",

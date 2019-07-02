@@ -42,7 +42,10 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
     var linker = function (scope, element, attrs, ngModelCtrl) {
 
         /* tbTimewindow (ng-model)
-         * {
+         * {         
+         *    hideInterval: false,
+         *    hideAggregation: false,
+         *    hideAggInterval: false,
          * 	  realtime: {
          * 	        interval: 0,
          * 			timewindowMs: 0
@@ -63,6 +66,8 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
          */
 
         scope.historyOnly = angular.isDefined(attrs.historyOnly);
+
+        scope.isEdit = attrs.isEdit === 'true';
 
         scope.aggregation = scope.$eval(attrs.aggregation);
 
@@ -135,7 +140,8 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
                 locals: {
                     'timewindow': angular.copy(scope.model),
                     'historyOnly': scope.historyOnly,
-                    'aggregation': scope.aggregation,
+                    'aggregation': scope.aggregation,                    
+                    'isEdit': scope.isEdit,
                     'onTimewindowUpdate': function (timewindow) {
                         scope.model = timewindow;
                         scope.updateView();
@@ -176,7 +182,10 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
             value.aggregation = {
                 type: model.aggregation.type,
                 limit: model.aggregation.limit
-            };
+            };            
+            value.hideInterval = model.hideInterval;
+            value.hideAggregation = model.hideAggregation;
+            value.hideAggInterval = model.hideAggInterval;
             ngModelCtrl.$setViewValue(value);
             scope.updateDisplayValue();
         }
@@ -230,6 +239,9 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
                     }
                     model.aggregation.limit = value.aggregation.limit || Math.floor(timeService.getMaxDatapointsLimit() / 2);
                 }
+                model.hideInterval = value.hideInterval;
+                model.hideAggregation = value.hideAggregation;
+                model.hideAggInterval = value.hideAggInterval;
             }
             scope.updateDisplayValue();
         };
@@ -242,7 +254,9 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
         require: "^ngModel",
         scope: {
             asButton: '=asButton',
-            disabled:'=ngDisabled'
+            disabled:'=ngDisabled',
+            isEdit: '=?'
+
         },
         link: linker
     };

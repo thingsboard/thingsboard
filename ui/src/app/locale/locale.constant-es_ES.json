@@ -1342,7 +1342,8 @@
         "edit": "Editar ventana de tiempo",
         "date-range": "Rango de fecha",
         "last": "Último(s)",
-        "time-period": "Período de tiempo"
+        "time-period": "Período de tiempo",
+        "hide": "Ocultar"
     },
     "user": {
         "user": "Usuario",
