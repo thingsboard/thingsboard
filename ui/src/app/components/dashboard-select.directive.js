@@ -58,6 +58,18 @@ function DashboardSelect($compile, $templateCache, $q, $mdMedia, $mdPanel, $docu
 
         promise.then(function success(result) {
             scope.dashboards = result.data;
+            // try to get dashboard configuration that may include icon to put in front of dashboard title
+            for (var i = 0; i < scope.dashboards.length; i++) {
+                dashboardService.getDashboard(scope.dashboards[i].id.id)
+                    .then(function success(dashboard) {
+                        for (var j = 0; j < scope.dashboards.length; j++) {
+                            if (scope.dashboards[j].id.id == dashboard.id.id) {
+                                scope.dashboards[j].configuration = dashboard.configuration;
+                            }
+                        }
+                    }, function fail() {
+                    });
+            }
         }, function fail() {
             scope.dashboards = [];
         });

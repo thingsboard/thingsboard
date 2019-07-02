@@ -485,6 +485,7 @@
         "min-mobile-row-height-message": "Sólo está permitido 5 píxeles como valor mínimo en la altura de fila para móvil.",
         "max-mobile-row-height-message": "Sólo está permitido 200 píxeles como valor máximo en la altura de fila para móvil.",
         "display-title": "Mostrar título del panel",
+        "display-icon": "Mostrar icono del panel",
         "toolbar-always-open": "Mantener la barra de herramientas abierta",
         "title-color": "Color del título",
         "display-dashboards-selection": "Mostrar selección del panel",

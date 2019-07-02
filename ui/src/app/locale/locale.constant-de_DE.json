@@ -485,6 +485,7 @@
     "min-mobile-row-height-message": "Der Mindestwert für die mobile Zeilenhöhe beträgt 5 Pixel.",
     "max-mobile-row-height-message": "Der Höchstwert für die mobile Zeilenhöhe beträgt 200 Pixel.",
     "display-title": "Display Dashboard Titel",
+    "display-icon": "Display Dashboard Symbol",
     "toolbar-always-open": "Werkzeugleiste geöffnet lassen",
     "title-color": "Titelfarbe ",
     "display-dashboards-selection": "Auswahl der Dashboards anzeigen",

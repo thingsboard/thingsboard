@@ -485,6 +485,7 @@
         "min-mobile-row-height-message": "5 pixel è il minimo concesso al valore altezza riga mobile.",
         "max-mobile-row-height-message": "200 pixel è il massimo concesso al valore altezza riga mobile.",
         "display-title": "Mostra titolo dashboard",
+        "display-icon": "Mostra icona dashboard",
         "toolbar-always-open": "Mantieni aperta la barra degli strumenti",
         "title-color": "Colore titolo",
         "display-dashboards-selection": "Mostra selezione dashboard",

@@ -44,6 +44,14 @@ export default function DashboardSettingsController($scope, $mdDialog, statesCon
             vm.settings.titleColor = 'rgba(0,0,0,0.870588)';
         }
 
+        if (angular.isUndefined(vm.settings.showIcon)) {
+            vm.settings.showIcon = false;
+        }
+
+        if (angular.isUndefined(vm.settings.icon)) {
+            vm.settings.icon = 'dashboards';
+        }
+
         if (angular.isUndefined(vm.settings.showDashboardsSelect)) {
             vm.settings.showDashboardsSelect = true;
         }

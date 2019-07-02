@@ -22,6 +22,7 @@
                 <label>{{ 'dashboard.select-dashboard' | translate }}</label>
                 <md-select ng-model="vm.dashboardId" ng-change="vm.dashboardSelected(vm.dashboardId)">
                     <md-option ng-repeat="dashboard in vm.dashboards" ng-value="dashboard.id.id">
+                        <ng-md-icon ng-if="dashboard.configuration.settings.showIcon" size="30" icon="{{dashboard.configuration.settings.icon}}" style="margin-right:5px;"></ng-md-icon>
                         {{dashboard.title}}
                     </md-option>
                 </md-select>

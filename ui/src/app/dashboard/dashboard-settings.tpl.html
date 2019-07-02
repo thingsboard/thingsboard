@@ -48,6 +48,11 @@
                             <md-checkbox flex aria-label="{{ 'dashboard.display-title' | translate }}"
                                          ng-model="vm.settings.showTitle">{{ 'dashboard.display-title' | translate }}
                             </md-checkbox>
+                            <md-checkbox flex aria-label="{{ 'dashboard.display-icon' | translate }}"
+                                         ng-model="vm.settings.showIcon">{{ 'dashboard.display-icon' | translate }}
+                            </md-checkbox>
+					        <tb-material-icon-select ng-disabled="!vm.settings.showIcon" ng-model="vm.settings.icon">
+					        </tb-material-icon-select>
                             <div flex
                                  ng-required="false"
                                  md-color-picker

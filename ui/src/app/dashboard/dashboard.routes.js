@@ -83,7 +83,7 @@ export default function DashboardRoutes($stateProvider) {
                 pageTitle: 'dashboard.dashboard'
             },
             ncyBreadcrumb: {
-                label: '{"icon": "dashboard", "label": "{{ vm.dashboard.title }}", "translate": "false"}'
+                label: '{"icon": "{{ vm.dashboard.configuration.settings.icon }}", "label": "{{ vm.dashboard.title }}", "translate": "false"}'
             }
         })
         .state('dashboard', {

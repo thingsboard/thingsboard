@@ -21,6 +21,7 @@
            ng-model="dashboardId"
            aria-label="{{ 'dashboard.dashboard' | translate }}">
     <md-option ng-repeat="dashboard in dashboards" ng-value="dashboard.id.id">
+        <ng-md-icon ng-if="dashboard.configuration.settings.showIcon" size="30" icon="{{dashboard.configuration.settings.icon}}" style="margin-right:5px;"></ng-md-icon>
         {{dashboard.title}}
     </md-option>
 </md-select>

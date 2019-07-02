@@ -441,6 +441,7 @@
         "display-dashboards-selection": "Afficher la sélection des tableaux de bord",
         "display-entities-selection": "Afficher la sélection des entités",
         "display-title": "Afficher le titre du tableau de bord",
+        "display-icon": "Afficher l'icône du tableau de bord",
         "drop-image": "Déposer une image ou cliquez pour sélectionner un fichier à télécharger.",
         "edit-state": "Modifier l'état du tableau de bord",
         "export": "Exporter le tableau de bord",

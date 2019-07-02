@@ -488,6 +488,7 @@
         "min-mobile-row-height-message": "Only 5 pixels is allowed as minimum mobile row height value.",
         "max-mobile-row-height-message": "Only 200 pixels is allowed as maximum mobile row height value.",
         "display-title": "Display dashboard title",
+        "display-icon": "Display dashboard icon",
         "toolbar-always-open": "Keep toolbar opened",
         "title-color": "Title color",
         "display-dashboards-selection": "Display dashboards selection",
