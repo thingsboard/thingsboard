@@ -14,8 +14,6 @@
 -- limitations under the License.
 --
 
-ALTER TABLE device ADD COLUMN label varchar(255);
-
 CREATE INDEX IF NOT EXISTS idx_alarm_originator_alarm_type ON alarm(tenant_id, type, originator_type, originator_id);
 
 CREATE INDEX IF NOT EXISTS idx_event_type_entity_id ON event(tenant_id, event_type, entity_type, entity_id);
