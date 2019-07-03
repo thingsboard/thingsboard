@@ -48,7 +48,8 @@
         "paste-reference": "Incolla riferimento",
         "import": "Importa",
         "export": "Esporta",
-        "share-via": "Condividi con {{provider}}"
+        "share-via": "Condividi con {{provider}}",
+        "discard-changes": "Annulla le modifiche"
     },
     "aggregation": {
         "aggregation": "Aggregazione",
