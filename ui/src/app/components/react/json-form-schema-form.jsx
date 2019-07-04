@@ -82,6 +82,10 @@ class ThingsboardSchemaForm extends React.Component {
         this.props.onColorClick(event, key, val);
     }
 
+    onIconClick(event) {
+        this.props.onIconClick(event);
+    }
+
     onToggleFullscreen() {
         this.props.onToggleFullscreen();
     }
@@ -161,4 +165,4 @@ class ThingsboardSchemaGroup extends React.Component{
                     <div style={{padding: '20px'}} className={this.state.showGroup?"":"invisible"}>{this.props.forms}</div>
                 </section>);
     }
-}
+} 
