@@ -29,6 +29,7 @@ import javax.annotation.Nullable;
 import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
 
 /**
  * Created by ashvayka on 24.10.18.
@@ -189,7 +190,12 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
                 CassandraStatementTask cassStmtTask = (CassandraStatementTask) taskCtx.getTask();
                 if (cassStmtTask.getStatement() instanceof BoundStatement) {
                     BoundStatement stmt = (BoundStatement) cassStmtTask.getStatement();
-                    String query = toStringWithValues(stmt, ProtocolVersion.V5);
+                    String query = stmt.preparedStatement().getQueryString();
+                    try {
+                        query = toStringWithValues(stmt, ProtocolVersion.V5);
+                    } catch (Exception e) {
+                        log.warn("Can't convert to query with values", e);
+                    }
                     log.trace("[{}] {} task: {}, BoundStatement query: {}", taskCtx.getId(), action, taskCtx, query);
                 }
             } else {
@@ -211,7 +217,8 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
             TypeCodec<Object> codec = codecRegistry.codecFor(type);
             if (boundStatement.getBytesUnsafe(index) != null) {
                 Object value = codec.deserialize(boundStatement.getBytesUnsafe(index), protocolVersion);
-                query = query.replaceFirst("\\?", codec.format(value));
+                String replacement = Matcher.quoteReplacement(codec.format(value));
+                query = query.replaceFirst("\\?", replacement);
             }
             index++;
         }

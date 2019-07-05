@@ -317,7 +317,7 @@ spring:
         enabled: "true"
   jpa:
     hibernate:
-      ddl-auto: "validate"
+      ddl-auto: "none"
     database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.HSQLDialect}"
   datasource:
     driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.hsqldb.jdbc.JDBCDriver}"
@@ -333,7 +333,7 @@ spring:
 #        enabled: "true"
 #  sql:
 #    hibernate:
-#      ddl-auto: "validate"
+#      ddl-auto: "none"
 #    database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}"
 #  datasource:
 #    driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.postgresql.Driver}"
