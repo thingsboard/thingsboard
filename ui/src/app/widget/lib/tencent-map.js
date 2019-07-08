@@ -19,7 +19,7 @@ var tmGlobals = {
 }
 
 export default class TbTencentMap {
-	constructor($containerElement, utils, initCallback, defaultZoomLevel, dontFitMapBounds, disableScrollZooming, minZoomLevel, tmApiKey, tmDefaultMapType) {
+	constructor($containerElement, utils, initCallback, defaultZoomLevel, dontFitMapBounds, disableScrollZooming, minZoomLevel, tmApiKey, tmDefaultMapType, defaultCenterPosition) {
 		var tbMap = this;
 		this.utils = utils;
 		this.defaultZoomLevel = defaultZoomLevel;
@@ -27,6 +27,7 @@ export default class TbTencentMap {
 		this.minZoomLevel = minZoomLevel;
 		this.tooltips = [];
 		this.defaultMapType = tmDefaultMapType;
+		this.defaultCenterPosition =defaultCenterPosition;
 
 		function clearGlobalId() {
 			if (tmGlobals.loadingTmId && tmGlobals.loadingTmId === tbMap.mapId) {
@@ -44,7 +45,8 @@ export default class TbTencentMap {
 			tbMap.map = new qq.maps.Map($containerElement[0], { // eslint-disable-line no-undef
 				scrollwheel: !disableScrollZooming,
 				mapTypeId: getTencentMapTypeId(tbMap.defaultMapType),
-				zoom: tbMap.defaultZoomLevel || 8
+				zoom: tbMap.defaultZoomLevel || 8,
+				center: new qq.maps.LatLng(tbMap.defaultCenterPosition[0],tbMap.defaultCenterPosition[1]) // eslint-disable-line no-undef
 			});
 
 			if (initCallback) {
