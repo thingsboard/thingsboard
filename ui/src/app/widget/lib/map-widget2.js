@@ -463,7 +463,7 @@ export default class TbMapWidgetV2 {
 		}
 
 		function createUpdatePolygon(location, dataMap) {
-			if (location.settings.showPolygon && dataMap.dsDataMap[location.dsIndex][location.settings.polygonKeyName] !== null) {
+            if (location.settings.showPolygon && dataMap.dsDataMap[location.dsIndex][location.settings.polygonKeyName] !== null) {
 				let polygonLatLngsRaw = angular.fromJson(dataMap.dsDataMap[location.dsIndex][location.settings.polygonKeyName]);
 				let polygonLatLngs = !polygonLatLngsRaw || mapPolygonArray(polygonLatLngsRaw);
 				if (!location.polygon && polygonLatLngs.length > 0) {
@@ -592,7 +592,7 @@ export default class TbMapWidgetV2 {
 			for (var p = 0; p < tbMap.locations.length; p++) {
 				var location = tbMap.locations[p];
 				locationsChanged |= updateLocation(location, data, dataMap);
-				createUpdatePolygon(location, dataMap);
+                createUpdatePolygon(location, dataMap);
 				if (!tbMap.locationSettings.useDefaultCenterPosition) {
                     if (location.polyline) {
                         tbMap.map.extendBounds(bounds, location.polyline);

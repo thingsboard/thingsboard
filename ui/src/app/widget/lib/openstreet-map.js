@@ -37,6 +37,8 @@ export default class TbOpenStreetMap {
 			credentials.app_id = credentials.app_id || "AhM6TzD9ThyK78CT3ptx";
 			credentials.app_code = credentials.app_code || "p6NPiITB3Vv0GMUFnkLOOg";
 		}
+
+        defaultCenterPosition = defaultCenterPosition || [0,0];
 		this.map = L.map($containerElement[0]).setView(defaultCenterPosition, this.defaultZoomLevel || 8);
 
 		if (disableScrollZooming) {
