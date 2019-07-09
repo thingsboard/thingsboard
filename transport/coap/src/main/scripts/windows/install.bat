@@ -14,7 +14,7 @@ if %jver% NEQ 18 GOTO JAVA_NOT_INSTALLED
 @ECHO Java 1.8 found!
 @ECHO Installing ${pkg.name} ...
 
-"%BASE%$"{pkg.name}.exe install
+"%BASE%"${pkg.name}.exe install
 
 @ECHO ${pkg.name} installed successfully!
 
