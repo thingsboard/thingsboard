@@ -43,7 +43,7 @@ if errorlevel 1 (
 )
 POPD
 
-%BASE%thingsboard.exe install
+"%BASE%"thingsboard.exe install
 
 @ECHO ThingsBoard installed successfully!
 
