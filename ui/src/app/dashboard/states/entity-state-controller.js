@@ -179,6 +179,9 @@ export default function EntityStateController($scope, $timeout, $location, $stat
 
     function resolveEntity(params) {
         var deferred = $q.defer();
+        if (params && params.targetEntityParamName) {
+            params = params[params.targetEntityParamName];
+        }
         if (params && params.entityId && params.entityId.id && params.entityId.entityType) {
             if (params.entityName && params.entityName.length) {
                 deferred.resolve(params.entityName);
