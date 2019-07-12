@@ -19,24 +19,32 @@ import lombok.Data;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.model.ToData;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.Id;
 import javax.persistence.IdClass;
 import javax.persistence.Table;
+
+import static org.thingsboard.server.dao.model.ModelConstants.TENANT_ID_COLUMN;
 
 @Data
 @Entity
 @Table(name = "ts_kv")
-@IdClass(TsKvCompositeKey.class)
-public final class TsKvEntity extends AbsractTsKvEntity implements ToData<TsKvEntry> {
+@IdClass(TimescaleTsKvCompositeKey.class)
+public final class TimescaleTsKvEntity extends AbsractTsKvEntity implements ToData<TsKvEntry> {
 
-    public TsKvEntity() {
+    @Id
+    @Column(name = TENANT_ID_COLUMN)
+    private String tenantId;
+
+    public TimescaleTsKvEntity() {
     }
 
-    public TsKvEntity(String strValue) {
+    public TimescaleTsKvEntity(String strValue) {
         this.strValue = strValue;
     }
 
-    public TsKvEntity(Long longValue, Double doubleValue, Long longCountValue, Long doubleCountValue, String aggType) {
+    public TimescaleTsKvEntity(Long longValue, Double doubleValue, Long longCountValue, Long doubleCountValue, String aggType) {
         if(!isAllNull(longValue, doubleValue, longCountValue, doubleCountValue)) {
             switch (aggType) {
                 case AVG:
@@ -75,7 +83,7 @@ public final class TsKvEntity extends AbsractTsKvEntity implements ToData<TsKvEn
         }
     }
 
-    public TsKvEntity(Long booleanValueCount, Long strValueCount, Long longValueCount, Long doubleValueCount) {
+    public TimescaleTsKvEntity(Long booleanValueCount, Long strValueCount, Long longValueCount, Long doubleValueCount) {
         if(!isAllNull(booleanValueCount, strValueCount, longValueCount, doubleValueCount)) {
             if (booleanValueCount != 0) {
                 this.longValue = booleanValueCount;
@@ -85,10 +93,6 @@ public final class TsKvEntity extends AbsractTsKvEntity implements ToData<TsKvEn
                 this.longValue = longValueCount + doubleValueCount;
             }
         }
-    }
-
-    public boolean isNotEmpty() {
-        return strValue != null || longValue != null || doubleValue != null || booleanValue != null;
     }
 
 }
