@@ -573,7 +573,7 @@ public class BaseRelationService implements RelationService {
     private ListenableFuture<Set<EntityRelation>> findRelationsRecursively(final TenantId tenantId, final EntityId rootId, final EntitySearchDirection direction,
                                                                            RelationTypeGroup relationTypeGroup, int lvl,
                                                                            final ConcurrentHashMap<EntityId, Boolean> uniqueMap, boolean fetchLastLevelOnly) throws Exception {
-        if (lvl == 0) {
+        if (lvl == 0 && !fetchLastLevelOnly) {
             return Futures.immediateFuture(Collections.emptySet());
         }
         if(!fetchLastLevelOnly) {
@@ -607,6 +607,9 @@ public class BaseRelationService implements RelationService {
         }
         else {
             lvl--;
+            if(lvl==0){
+
+            }
             Set<EntityRelation> children = new HashSet<>(findRelations(tenantId, rootId, direction, relationTypeGroup).get());
             Set<EntityId> childrenIds = new HashSet<>();
             for (EntityRelation childRelation : children) {
