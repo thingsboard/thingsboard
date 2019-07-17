@@ -15,14 +15,27 @@
  */
 .tb-custom-action-pretty {
   box-sizing: border-box;
-  width: 100%;
-  height: 100%;
   padding: 8px;
   background-color: #fff;
 
   .tb-fullscreen-panel {
-    display: flex;
-    width: 100%;
+    .tb-custom-action-editor-container {
+      height: calc(100% - 40px);
+    }
+
+    #right-panel {
+      padding-top: 8px;
+      padding-left: 3px;
+    }
+
+    tb-js-func .tb-js-func-panel {
+      box-sizing: border-box;
+    }
+
+    md-tabs-content-wrapper,
+    md-tab-content {
+      height: 100%;
+    }
   }
 
   .html-panel,
@@ -31,10 +44,6 @@
     min-width: 200px;
     height: 100%;
     min-height: 200px;
-  }
-
-  tb-js-func label.tb-title {
-    max-width: calc(100% - 80px);
   }
 
   .tb-split {
@@ -82,30 +91,6 @@
   .tb-custom-action-editor {
     &.tb-fullscreen-editor {
       height: 100%;
-    }
-
-    .tb-fullscreen-panel {
-      display: flex;
-      height: 100%;
-
-      .tb-custom-action-editor-container {
-        height: calc(100% - 88px);
-      }
-
-      #right-panel {
-        padding-top: 8px;
-        padding-left: 3px;
-      }
-
-      tb-js-func .tb-js-func-panel {
-        box-sizing: border-box;
-      }
-
-      md-tabs,
-      md-tabs-content-wrapper,
-      md-tab-content {
-        height: 100%;
-      }
     }
   }
 }

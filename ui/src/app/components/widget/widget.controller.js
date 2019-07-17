@@ -531,7 +531,7 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
                 }
                 break;
             case types.widgetActionTypes.customPretty.value:
-                var customFunction = descriptor.customFunction; //eslint-disable-line
+                var customPrettyFunction = descriptor.customFunction;
                 var customHtml = descriptor.customHtml;
                 var customCss = descriptor.customCss;
                 var customResources = descriptor.customResources;
@@ -542,13 +542,13 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
                 }
                 loadCustomActionResources(actionNamespace, customCss, customResources).then(
                     function success() {
-                        if (angular.isDefined(customFunction) && customFunction.length > 0) {
+                        if (angular.isDefined(customPrettyFunction) && customPrettyFunction.length > 0) {
                             try {
                                 if (!additionalParams) {
                                     additionalParams = {};
                                 }
-                                var customActionFunction = new Function('$event', 'widgetContext', 'entityId', 'entityName', 'htmlTemplate', 'additionalParams', customFunction); //eslint-disable-line
-                                customActionFunction($event, widgetContext, entityId, entityName, htmlTemplate, additionalParams);
+                                var customActionPrettyFunction = new Function('$event', 'widgetContext', 'entityId', 'entityName', 'htmlTemplate', 'additionalParams', customPrettyFunction);
+                                customActionPrettyFunction($event, widgetContext, entityId, entityName, htmlTemplate, additionalParams);
                             } catch (e) {
                                 //
                             }

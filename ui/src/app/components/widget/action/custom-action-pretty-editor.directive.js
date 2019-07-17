@@ -67,8 +67,6 @@ function CustomActionPrettyEditor($compile, $templateCache, $window, $timeout) {
             }
         };
 
-        scope.customResourcesChanged = false;
-
         scope.addResource = addResource;
         scope.beautifyCss = beautifyCss;
         scope.beautifyHtml = beautifyHtml;
@@ -199,7 +197,6 @@ function CustomActionPrettyEditor($compile, $templateCache, $window, $timeout) {
             "//    vm.relations = [];\n" +
             "//    vm.newRelations = [];\n" +
             "//    vm.relationsToDelete = [];\n" +
-            "//    vm.relationsChanged = false;\n" +
             "//    getEntityInfo();\n" +
             "//    \n" +
             "//    vm.addRelation = function() {\n" +
@@ -209,25 +206,25 @@ function CustomActionPrettyEditor($compile, $templateCache, $window, $timeout) {
             "//            relatedEntity: null\n" +
             "//        };\n" +
             "//        vm.newRelations.push(relation);\n" +
+            "//        $scope.editEntityForm.$setDirty();\n" +
             "//    };\n" +
             "//    vm.removeRelation = function(index) {\n" +
             "//        if (index > -1) {\n" +
             "//            vm.newRelations.splice(index, 1);\n" +
-            "//            vm.relationsChanged = true;\n" +
+            "//            $scope.editEntityForm.$setDirty();\n" +
             "//        }\n" +
             "//    };\n" +
             "//    vm.removeOldRelation = function(index, relation) {\n" +
             "//        if (index > -1) {\n" +
             "//            vm.relations.splice(index, 1);\n" +
             "//            vm.relationsToDelete.push(relation);\n" +
-            "//            vm.relationsChanged = true;\n" +
+            "//            $scope.editEntityForm.$setDirty();\n" +
             "//        }\n" +
             "//    };\n" +
             "//    vm.save = function() {\n" +
             "//        saveAttributes();\n" +
             "//        saveRelations();\n" +
             "//        $scope.editEntityForm.$setPristine();\n" +
-            "//        vm.relationsChanged = false;\n" +
             "//    };\n" +
             "//    vm.cancel = function() {\n" +
             "//        $mdDialog.hide();\n" +
@@ -631,7 +628,7 @@ function CustomActionPrettyEditor($compile, $templateCache, $window, $timeout) {
             '<!--            </div>-->\n' +
             '<!--        </md-dialog-content>-->\n' +
             '<!--        <md-dialog-actions>-->\n' +
-            '<!--            <md-button type="submit" ng-disabled="editEntityForm.$invalid || (!editEntityForm.$dirty && !vm.relationsChanged)" class="md-raised md-primary">Save</md-button>-->\n' +
+            '<!--            <md-button type="submit" ng-disabled="editEntityForm.$invalid || !editEntityForm.$dirty" class="md-raised md-primary">Save</md-button>-->\n' +
             '<!--            <md-button ng-click="vm.cancel()" class="md-primary">Cancel</md-button>-->\n' +
             '<!--        </md-dialog-actions>-->\n' +
             '<!--    </form>-->\n' +
@@ -901,7 +898,7 @@ function CustomActionPrettyEditor($compile, $templateCache, $window, $timeout) {
         function removeResource(index) {
             if (index > -1) {
                 scope.action.customResources.splice(index, 1);
-                scope.customResourcesChanged = true;
+                scope.theForm.$setDirty();
             }
         }
 
@@ -910,6 +907,7 @@ function CustomActionPrettyEditor($compile, $templateCache, $window, $timeout) {
                 scope.action.customResources = [];
             }
             scope.action.customResources.push({url: ''});
+            scope.theForm.$setDirty();
         }
 
         function beautifyHtml() {
@@ -924,7 +922,7 @@ function CustomActionPrettyEditor($compile, $templateCache, $window, $timeout) {
 
         function toggleFullscreen() {
             scope.fullscreen = !scope.fullscreen;
-            if (scope.fullscreen === true) {
+            if (scope.fullscreen) {
                 scope.customActionEditorElement = angular.element('.tb-custom-action-editor');
                 angular.element(scope.customActionEditorElement[0]).ready(function () {
                     var w = scope.customActionEditorElement.width();
@@ -987,7 +985,9 @@ function CustomActionPrettyEditor($compile, $templateCache, $window, $timeout) {
     return {
         restrict: "E",
         require: "^ngModel",
-        scope: {},
+        scope: {
+            theForm: '=?',
+        },
         link: linker
     };
 }

@@ -106,9 +106,9 @@
                 </md-tab>
             </md-tabs>
         </div>
-        <div ng-if="fullscreen" class="tb-fullscreen-panel">
+        <div ng-if="fullscreen" class="tb-fullscreen-panel" layout="row" layout-fill>
             <div id="left-panel" class="tb-split tb-content">
-                <md-tabs md-selected="2" md-dynamic-height md-border-bottom style="width: 100%;">
+                <md-tabs md-selected="2" md-dynamic-height md-border-bottom layout="column" layout-fill>
                     <md-tab label="{{ 'widget.resources' | translate }}">
                         <div class="tb-custom-action-editor-container" style="background-color: #fff;">
                             <div class="md-padding">
