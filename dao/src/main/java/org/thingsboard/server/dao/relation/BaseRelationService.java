@@ -607,9 +607,6 @@ public class BaseRelationService implements RelationService {
         }
         else {
             lvl--;
-            if(lvl==0){
-
-            }
             Set<EntityRelation> children = new HashSet<>(findRelations(tenantId, rootId, direction, relationTypeGroup).get());
             Set<EntityId> childrenIds = new HashSet<>();
             for (EntityRelation childRelation : children) {
@@ -628,10 +625,14 @@ public class BaseRelationService implements RelationService {
                 }
             }
             List<ListenableFuture<Set<EntityRelation>>> futures = new ArrayList<>();
+            List<ListenableFuture<Set<EntityRelation>>> lastLevelFutures = new ArrayList<>();
             for (EntityId entityId : childrenIds) {
                 futures.add(findRelationsRecursively(tenantId, entityId, direction, relationTypeGroup, lvl, uniqueMap, fetchLastLevelOnly));
+                if(lvl == 1){
+                    lastLevelFutures.add(findRelationsRecursively(tenantId, entityId, direction, relationTypeGroup, lvl, uniqueMap, fetchLastLevelOnly));
+                }
             }
-            List<Set<EntityRelation>> relations = Futures.successfulAsList(futures).get();
+            List<Set<EntityRelation>> relations = Futures.successfulAsList(lastLevelFutures).get();
             relations.forEach(r -> r.forEach(children::add));
             return Futures.immediateFuture(children);
         }
