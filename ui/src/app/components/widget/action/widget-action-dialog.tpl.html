@@ -123,13 +123,14 @@
                                     function-args="{{ ['$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams'] }}"
                                     validation-args="{{ [] }}">
                         </tb-js-func>
+                        <tb-custom-action-pretty-editor ng-model="vm.action" ng-if="vm.action.type == vm.types.widgetActionTypes.customPretty.value"></tb-custom-action-pretty-editor>
                     </fieldset>
                 </md-content>
             </div>
         </md-dialog-content>
         <md-dialog-actions layout="row">
             <span flex></span>
-            <md-button ng-disabled="$root.loading || theForm.$invalid || !theForm.$dirty" type="submit"
+            <md-button ng-disabled="$root.loading || theForm.$invalid || (!theForm.$dirty && !vm.customResourcesChanged)" type="submit"
                        class="md-raised md-primary">
                 {{ (vm.isAdd ? 'action.add' : 'action.save') | translate }}
             </md-button>
