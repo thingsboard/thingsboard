@@ -460,18 +460,17 @@ public class BaseRelationService implements RelationService {
             tmpAlreadySet = false;
             ListenableFuture<Set<EntityRelation>> relationSet = findRelationsRecursively(tenantId, params.getEntityId(), params.getDirection(), params.getRelationTypeGroup(), maxLvl, new ConcurrentHashMap<>());
             if(fetchLastLevelOnly){
-                ListenableFuture<Set<EntityRelation>> relationSetNotLastLevels = findRelationsRecursivelyNotLastLevel(tenantId, params.getEntityId(), params.getDirection(), params.getRelationTypeGroup(), maxLvl, new ConcurrentHashMap<>());
-                List<Set<EntityRelation>> relationsNotLastLevels = new ArrayList<>();
-                List<EntityRelation> relations1 = new ArrayList<>();
+                ListenableFuture<Set<EntityRelation>> relationSetNotLastLevels = findRelationsRecursively(tenantId, params.getEntityId(), params.getDirection(), params.getRelationTypeGroup(), maxLvl-1, new ConcurrentHashMap<>());
+                List<EntityRelation> relationsNotLastLevels = new ArrayList<>();
 
                 Futures.transform(relationSetNotLastLevels, input1 -> {
-                   relations1.addAll(input1);
-                   return relations1;
+                   relationsNotLastLevels.addAll(input1);
+                   return relationsNotLastLevels;
                 });
                 return Futures.transform(relationSet, input -> {
                     List<EntityRelation> relations = new ArrayList<>();
                     for (EntityRelation relation: input){
-                        if(!relations1.contains(relation)){
+                        if(!relationsNotLastLevels.contains(relation)){
                             relations.add(relation);
                         }
                     }
@@ -628,48 +627,6 @@ public class BaseRelationService implements RelationService {
             relations.forEach(r -> r.forEach(children::add));
             return Futures.immediateFuture(children);
 
-    }
-
-    private ListenableFuture<Set<EntityRelation>> findRelationsRecursivelyNotLastLevel(final TenantId tenantId, final EntityId rootId, final EntitySearchDirection direction,
-                                                                                       RelationTypeGroup relationTypeGroup, int lvl,
-                                                                                       final ConcurrentHashMap<EntityId, Boolean> uniqueMap) throws Exception {
-
-        if(!tmpAlreadySet){
-            temp = lvl;
-            tmpAlreadySet = true;
-        }
-        if (lvl == 0) {
-            return Futures.immediateFuture(Collections.emptySet());
-        }
-            lvl--;
-            Set<EntityRelation> children = new HashSet<>(findRelations(tenantId, rootId, direction, relationTypeGroup).get());
-            Set<EntityId> childrenIds = new HashSet<>();
-            for (EntityRelation childRelation : children) {
-                log.trace("Found Relation: {}", childRelation);
-                EntityId childId;
-                if (direction == EntitySearchDirection.FROM) {
-                    childId = childRelation.getTo();
-                } else {
-                    childId = childRelation.getFrom();
-                }
-                if (uniqueMap.putIfAbsent(childId, Boolean.TRUE) == null) {
-                    log.trace("Adding Relation: {}", childId);
-                    if (childrenIds.add(childId)) {
-                        log.trace("Added Relation: {}", childId);
-                    }
-                }
-            }
-            List<ListenableFuture<Set<EntityRelation>>> futures = new ArrayList<>();
-            List<ListenableFuture<Set<EntityRelation>>> notLastLevelFutures = new ArrayList<>();
-            for (EntityId entityId : childrenIds) {
-                futures.add(findRelationsRecursivelyNotLastLevel(tenantId, entityId, direction, relationTypeGroup, lvl, uniqueMap));
-                if(lvl == temp - 1){
-                    notLastLevelFutures.add(findRelationsRecursivelyNotLastLevel(tenantId, entityId, direction, relationTypeGroup, lvl, uniqueMap));
-                }
-            }
-            List<Set<EntityRelation>> relations = Futures.successfulAsList(notLastLevelFutures).get();
-            relations.forEach(r -> r.forEach(children::add));
-            return Futures.immediateFuture(children);
     }
 
     private ListenableFuture<List<EntityRelation>> findRelations(final TenantId tenantId, final EntityId rootId, final EntitySearchDirection direction, RelationTypeGroup relationTypeGroup) {
