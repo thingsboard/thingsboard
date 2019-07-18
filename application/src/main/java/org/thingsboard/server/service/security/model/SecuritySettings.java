@@ -17,8 +17,10 @@ package org.thingsboard.server.service.security.model;
 
 import lombok.Data;
 
+import java.io.Serializable;
+
 @Data
-public class SecuritySettings {
+public class SecuritySettings implements Serializable {
 
     private UserPasswordPolicy passwordPolicy;
 

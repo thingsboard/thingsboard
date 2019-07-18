@@ -17,8 +17,10 @@ package org.thingsboard.server.service.security.model;
 
 import lombok.Data;
 
+import java.io.Serializable;
+
 @Data
-public class UserPasswordPolicy {
+public class UserPasswordPolicy implements Serializable {
 
     private Integer minimumLength;
     private Integer minimumUppercaseLetters;
