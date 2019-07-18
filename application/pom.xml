@@ -272,6 +272,14 @@
             <groupId>io.springfox.ui</groupId>
             <artifactId>springfox-swagger-ui-rfc6570</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.passay</groupId>
+            <artifactId>passay</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.github.ua-parser</groupId>
+            <artifactId>uap-java</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

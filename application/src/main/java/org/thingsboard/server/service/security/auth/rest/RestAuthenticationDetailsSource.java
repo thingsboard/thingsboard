@@ -13,32 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.exception;
 
-import com.fasterxml.jackson.annotation.JsonValue;
+package org.thingsboard.server.service.security.auth.rest;
 
-public enum ThingsboardErrorCode {
+import org.springframework.security.authentication.AuthenticationDetailsSource;
 
-    GENERAL(2),
-    AUTHENTICATION(10),
-    JWT_TOKEN_EXPIRED(11),
-    CREDENTIALS_EXPIRED(15),
-    PERMISSION_DENIED(20),
-    INVALID_ARGUMENTS(30),
-    BAD_REQUEST_PARAMS(31),
-    ITEM_NOT_FOUND(32),
-    TOO_MANY_REQUESTS(33),
-    TOO_MANY_UPDATES(34);
+import javax.servlet.http.HttpServletRequest;
 
-    private int errorCode;
+public class RestAuthenticationDetailsSource implements
+        AuthenticationDetailsSource<HttpServletRequest, RestAuthenticationDetails> {
 
-    ThingsboardErrorCode(int errorCode) {
-        this.errorCode = errorCode;
+    public RestAuthenticationDetails buildDetails(HttpServletRequest context) {
+        return new RestAuthenticationDetails(context);
     }
-
-    @JsonValue
-    public int getErrorCode() {
-        return errorCode;
-    }
-
 }

@@ -13,32 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.exception;
+package org.thingsboard.server.service.security.exception;
 
-import com.fasterxml.jackson.annotation.JsonValue;
+import org.springframework.security.authentication.CredentialsExpiredException;
 
-public enum ThingsboardErrorCode {
+public class UserPasswordExpiredException extends CredentialsExpiredException {
 
-    GENERAL(2),
-    AUTHENTICATION(10),
-    JWT_TOKEN_EXPIRED(11),
-    CREDENTIALS_EXPIRED(15),
-    PERMISSION_DENIED(20),
-    INVALID_ARGUMENTS(30),
-    BAD_REQUEST_PARAMS(31),
-    ITEM_NOT_FOUND(32),
-    TOO_MANY_REQUESTS(33),
-    TOO_MANY_UPDATES(34);
+    private final String resetToken;
 
-    private int errorCode;
-
-    ThingsboardErrorCode(int errorCode) {
-        this.errorCode = errorCode;
+    public UserPasswordExpiredException(String msg, String resetToken) {
+        super(msg);
+        this.resetToken = resetToken;
     }
 
-    @JsonValue
-    public int getErrorCode() {
-        return errorCode;
+    public String getResetToken() {
+        return resetToken;
     }
 
 }

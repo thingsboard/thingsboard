@@ -85,11 +85,5 @@ public abstract class DataValidator<D extends BaseData<?>> {
         if (!expectedFields.containsAll(actualFields) || !actualFields.containsAll(expectedFields)) {
             throw new DataValidationException("Provided json structure is different from stored one '" + actualNode + "'!");
         }
-
-        for (String field : actualFields) {
-            if (!actualNode.get(field).isTextual()) {
-                throw new DataValidationException("Provided json structure can't contain non-text values '" + actualNode + "'!");
-            }
-        }
     }
 }

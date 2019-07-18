@@ -89,6 +89,8 @@
         <fst.version>2.57</fst.version>
         <antlr.version>2.7.7</antlr.version>
         <snakeyaml.version>1.23</snakeyaml.version>
+        <passay.version>1.5.0</passay.version>
+        <ua-parser.version>1.4.3</ua-parser.version>
     </properties>
 
     <modules>
@@ -839,6 +841,16 @@
                 <groupId>org.locationtech.jts</groupId>
                 <artifactId>jts-core</artifactId>
                 <version>${jts.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.passay</groupId>
+                <artifactId>passay</artifactId>
+                <version>${passay.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.ua-parser</groupId>
+                <artifactId>uap-java</artifactId>
+                <version>${ua-parser.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
