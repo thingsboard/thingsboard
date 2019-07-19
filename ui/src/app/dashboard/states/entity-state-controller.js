@@ -346,7 +346,7 @@ export default function EntityStateController($scope, $timeout, $location, $stat
 
     function isEmpty(map) {
         for(var key in map) {
-            return !map.hasOwnProperty(key);
+            return !Object.prototype.hasOwnProperty.call(map, key);
         }
         return true;
     }
