@@ -455,6 +455,7 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
                 if (!targetEntityParams) {
                     targetEntityParams = {};
                     params[targetEntityParamName] = targetEntityParams;
+					params.targetEntityParamName = targetEntityParamName;
                 }
             } else {
                 targetEntityParams = params;
