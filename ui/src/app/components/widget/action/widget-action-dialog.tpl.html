@@ -123,6 +123,7 @@
                                     function-args="{{ ['$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams'] }}"
                                     validation-args="{{ [] }}">
                         </tb-js-func>
+                        <tb-custom-action-pretty-editor ng-model="vm.action" the-form="theForm" ng-if="vm.action.type == vm.types.widgetActionTypes.customPretty.value"></tb-custom-action-pretty-editor>
                     </fieldset>
                 </md-content>
             </div>
