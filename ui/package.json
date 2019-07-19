@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "start": "babel-node --max_old_space_size=4096 server.js",
-    "build": "cross-env NODE_ENV=production --max_old_space_size=4096 webpack"
+    "build": "cross-env NODE_ENV=production --max_old_space_size=8192 webpack"
   },
   "dependencies": {
     "@flowjs/ng-flow": "^2.7.1",
