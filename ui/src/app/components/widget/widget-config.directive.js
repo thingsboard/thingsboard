@@ -109,6 +109,7 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
                 if (config) {
                     scope.selectedTab = 0;
                     scope.title = config.title;
+                    scope.titleTooltip = angular.isDefined(config.titleTooltip) ? config.titleTooltip : '';
                     scope.showTitle = config.showTitle;
                     scope.dropShadow = angular.isDefined(config.dropShadow) ? config.dropShadow : true;
                     scope.enableFullscreen = angular.isDefined(config.enableFullscreen) ? config.enableFullscreen : true;
@@ -236,7 +237,7 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
             }
         };
 
-        scope.$watch('title + showTitle + dropShadow + enableFullscreen + backgroundColor + color + ' +
+        scope.$watch('title + titleTooltip + showTitle + dropShadow + enableFullscreen + backgroundColor + color + ' +
             'padding + margin + widgetStyle + titleStyle + mobileOrder + mobileHeight + units + decimals + useDashboardTimewindow + displayTimewindow + ' +
             'alarmSearchStatus + alarmsPollingInterval + showLegend', function () {
             if (ngModelCtrl.$viewValue) {
@@ -244,6 +245,7 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
                 if (value.config) {
                     var config = value.config;
                     config.title = scope.title;
+                    config.titleTooltip = scope.titleTooltip;
                     config.showTitle = scope.showTitle;
                     config.dropShadow = scope.dropShadow;
                     config.enableFullscreen = scope.enableFullscreen;

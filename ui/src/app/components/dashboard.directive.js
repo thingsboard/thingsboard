@@ -187,6 +187,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
     vm.showWidgetActions = showWidgetActions;
     vm.widgetTitleStyle = widgetTitleStyle;
     vm.widgetTitle = widgetTitle;
+    vm.widgetTitleTooltip = widgetTitleTooltip;
     vm.customWidgetHeaderActions = customWidgetHeaderActions;
     vm.widgetActions = widgetActions;
     vm.dropWidgetShadow = dropWidgetShadow;
@@ -931,6 +932,16 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
             return ctx.widgetTitle;
         } else {
             return widget.config.title;
+        }
+    }
+
+    function widgetTitleTooltip(widget) {
+        var ctx = widgetContext(widget);
+        if (ctx && ctx.widgetTitleTooltip
+            && ctx.widgetTitleTooltip.length) {
+            return ctx.widgetTitleTooltip;
+        } else {
+            return widget.config.titleTooltip;
         }
     }
 
