@@ -36,7 +36,6 @@ dirTree('./src/app/locale/', {extensions:/\.json$/}, (item) => {
 
 module.exports = {
     mode: 'production',
-    devtool: 'source-map',
     entry: [
         './src/app/app.js',
         'webpack-material-design-icons'
@@ -45,6 +44,7 @@ module.exports = {
         path: path.resolve(__dirname, 'target/generated-resources/public/static'),
         publicPath: PUBLIC_RESOURCE_PATH,
         filename: 'bundle.[hash].js',
+        pathinfo: false
     },
     plugins: [
         new webpack.ProvidePlugin({
