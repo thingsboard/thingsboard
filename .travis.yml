@@ -9,5 +9,4 @@ language: java
 sudo: required
 services:
   - docker
-install: travis_wait 30 mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
-script: travis_wait 30 mvn clean verify -Ddockerfile.skip=false -DblackBoxTests.skip=false -DblackBoxTests.skipTailChildContainers=true
+script: mvn clean verify -Ddockerfile.skip=false -DblackBoxTests.skip=false -DblackBoxTests.skipTailChildContainers=true
