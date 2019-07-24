@@ -38,14 +38,6 @@
     }
   }
 
-  .html-panel,
-  .css-panel {
-    width: 100%;
-    min-width: 200px;
-    height: 100%;
-    min-height: 200px;
-  }
-
   .tb-split {
     box-sizing: border-box;
     overflow-x: hidden;
@@ -92,5 +84,15 @@
     &.tb-fullscreen-editor {
       height: 100%;
     }
+  }
+}
+
+.tb-custom-action-editor-container {
+  .html-panel,
+  .css-panel {
+    width: 100%;
+    min-width: 200px;
+    height: 100%;
+    min-height: 200px;
   }
 }
