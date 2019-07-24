@@ -212,18 +212,14 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
     }
 
     private static String validatePayload(UUID sessionId, ByteBuf payloadData, boolean isEmptyPayloadAllowed) throws AdaptorException {
-        try {
-            String payload = payloadData.toString(UTF8);
-            if (payload == null) {
-                log.warn("[{}] Payload is empty!", sessionId);
-                if (!isEmptyPayloadAllowed) {
-                    throw new AdaptorException(new IllegalArgumentException("Payload is empty!"));
-                }
+        String payload = payloadData.toString(UTF8);
+        if (payload == null) {
+            log.warn("[{}] Payload is empty!", sessionId);
+            if (!isEmptyPayloadAllowed) {
+                throw new AdaptorException(new IllegalArgumentException("Payload is empty!"));
             }
-            return payload;
-        } finally {
-            payloadData.release();
         }
+        return payload;
     }
 
 }
