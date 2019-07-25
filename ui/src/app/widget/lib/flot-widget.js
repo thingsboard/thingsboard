@@ -350,7 +350,7 @@ export default class TbFlot {
                 pie: {
                     show: true,
                     label: {
-                        show: settings.showLabels === true
+                        show: settings.showLabels || settings.showPercentages
                     },
                     radius: settings.radius || 1,
                     innerRadius: settings.innerRadius || 0,
@@ -373,7 +373,11 @@ export default class TbFlot {
 
             if (options.series.pie.label.show) {
                 options.series.pie.label.formatter = function (label, series) {
-                    return "<div class='pie-label'>" + series.dataKey.label + "<br/>" + Math.round(series.percent) + "%</div>";
+                    return "<div class='pie-label'>" +
+                        (settings.showLabels ? series.dataKey.label : "") +
+                        (settings.showLabels && settings.showPercentages ? "<br/>" : "") +
+                        (settings.showPercentages ? Math.round(series.percent) + "%" : "") +
+                        "</div>";
                 }
                 options.series.pie.label.radius = 3/4;
                 options.series.pie.label.background = {
@@ -791,6 +795,11 @@ export default class TbFlot {
                         "type": "boolean",
                         "default": false
                     },
+                    "showPercentages": {
+                        "title": "Show percentages",
+                        "type": "boolean",
+                        "default": false
+                    },
                     "fontColor": {
                         "title": "Font color",
                         "type": "string",
@@ -820,6 +829,7 @@ export default class TbFlot {
                     ]
                 },
                 "showLabels",
+                "showPercentages",
                 {
                     "key": "fontColor",
                     "type": "color"
