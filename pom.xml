@@ -876,6 +876,14 @@
         </dependencies>
     </dependencyManagement>
 
+    <distributionManagement>
+        <repository>
+            <id>thingsboard-repo-deploy</id>
+            <name>ThingsBoard Repo Deployment</name>
+            <url>https://repo.thingsboard.io/artifactory/libs-release-public</url>
+        </repository>
+    </distributionManagement>
+
     <repositories>
         <repository>
             <id>central</id>
