@@ -23,7 +23,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.Set;
 
-import static org.thingsboard.rule.engine.api.util.DonAsynchron.withCallback;
+import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
 @Slf4j
 @RuleNode(

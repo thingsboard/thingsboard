@@ -56,7 +56,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
 import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
-import static org.thingsboard.rule.engine.api.util.DonAsynchron.withCallback;
+import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
 @Slf4j
 public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationActionNodeConfiguration> implements TbNode {
@@ -72,8 +72,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
         if (this.config.getEntityCacheExpiration() > 0) {
             cacheBuilder.expireAfterWrite(this.config.getEntityCacheExpiration(), TimeUnit.SECONDS);
         }
-        entityIdCache = cacheBuilder
-                .build(new EntityCacheLoader(ctx, createEntityIfNotExists()));
+        entityIdCache = cacheBuilder.build(new EntityCacheLoader(ctx, createEntityIfNotExists()));
     }
 
     @Override
