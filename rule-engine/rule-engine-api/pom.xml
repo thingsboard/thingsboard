@@ -40,11 +40,6 @@
     <dependencies>
         <dependency>
             <groupId>org.thingsboard.common</groupId>
-            <artifactId>util</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.thingsboard.common</groupId>
             <artifactId>message</artifactId>
             <scope>provided</scope>
         </dependency>
