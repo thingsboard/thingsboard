@@ -811,7 +811,7 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         result.rows = [];
 
         for (let r in csvrows) {
-            if (csvrows.hasOwnProperty(r)) {
+            if (Object.prototype.hasOwnProperty.call(csvrows, r)) {
                 let row = csvrows[r];
 
                 if (row.length === 0)

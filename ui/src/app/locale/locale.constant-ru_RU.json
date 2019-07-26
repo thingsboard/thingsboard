@@ -1464,6 +1464,7 @@
         "update-dashboard-state": "Обновить текущее состояние дашборда",
         "open-dashboard": "Перейти к другому дашборду",
         "custom": "Пользовательское действие",
+        "custom-pretty": "Пользовательское действие (с HTML шаблоном)",
         "target-dashboard-state": "Целевое состояние дашборда",
         "target-dashboard-state-required": "Целевое состояние дашборда обязательно",
         "set-entity-from-widget": "Установить объект из виджета",

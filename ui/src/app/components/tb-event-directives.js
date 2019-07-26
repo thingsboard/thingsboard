@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const SPECIAL_CHARS_REGEXP = /([\:\-\_]+(.))/g;
+const SPECIAL_CHARS_REGEXP = /([:\-_]+(.))/g;
 const MOZ_HACK_REGEXP = /^moz([A-Z])/;
-const PREFIX_REGEXP = /^((?:x|data)[\:\-_])/i;
+const PREFIX_REGEXP = /^((?:x|data)[:\-_])/i;
 
 var tbEventDirectives = {};
 

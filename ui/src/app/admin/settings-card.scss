@@ -20,4 +20,8 @@ md-card.settings-card {
   @media (min-width: $layout-breakpoint-sm) {
     width: 60%;
   }
+
+  md-icon.md-expansion-panel-icon {
+    margin-right: 0;
+  }
 }

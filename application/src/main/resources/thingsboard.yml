@@ -270,6 +270,9 @@ caffeine:
     claimDevices:
       timeToLiveInMinutes: 1
       maxSize: 100000
+    securitySettings:
+      timeToLiveInMinutes: 1440
+      maxSize: 1
 
 redis:
   # standalone or cluster

@@ -325,7 +325,7 @@ export default class TbGoogleMap {
 
 
 	createPolygon(latLangs, settings, location,  onClickListener, markerArgs) {
-		let polygon = new google.maps.Polygon({
+		let polygon = new google.maps.Polygon({ // eslint-disable-line no-undef
 			map: this.map,
 			paths: latLangs,
 			strokeColor: settings.polygonStrokeColor,
@@ -337,7 +337,7 @@ export default class TbGoogleMap {
 
 		//initialize-tooltip
 
-		let popup = new google.maps.InfoWindow({
+		let popup = new google.maps.InfoWindow({ // eslint-disable-line no-undef
 			content: ''
 		});
 		if (!this.tooltips) this.tooltips = [];
@@ -349,7 +349,7 @@ export default class TbGoogleMap {
 		});
 		let map = this;
 		if (onClickListener) {
-			google.maps.event.addListener(polygon, 'click', function (event) {
+			google.maps.event.addListener(polygon, 'click', function (event) { // eslint-disable-line no-undef
 				if (settings.displayTooltip ) {
 					if (settings.autocloseTooltip) {
 						map.tooltips.forEach((tooltip) => {
@@ -357,7 +357,7 @@ export default class TbGoogleMap {
 						});
 					}
 					if (!polygon.anchor) {
-						polygon.anchor = new google.maps.MVCObject();
+						polygon.anchor = new google.maps.MVCObject(); // eslint-disable-line no-undef
 					}
 					polygon.anchor.set("position", event.latLng);
 					popup.open(this.map, polygon.anchor);

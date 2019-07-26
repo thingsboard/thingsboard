@@ -20,6 +20,7 @@ export default angular.module('thingsboard.types', [])
                 general: 2,
                 authentication: 10,
                 jwtTokenExpired: 11,
+                credentialsExpired: 15,
                 permissionDenied: 20,
                 invalidArguments: 30,
                 badRequestParams: 31,
@@ -212,6 +213,12 @@ export default angular.module('thingsboard.types', [])
                 },
                 "ALARM_CLEAR": {
                     name: "audit-log.type-alarm-clear"
+                },
+                "LOGIN": {
+                    name: "audit-log.type-login"
+                },
+                "LOGOUT": {
+                    name: "audit-log.type-logout"
                 }
             },
             auditLogActionStatus: {
@@ -821,6 +828,10 @@ export default angular.module('thingsboard.types', [])
                 custom: {
                     name: 'widget-action.custom',
                     value: 'custom'
+                },
+                customPretty: {
+                    name: 'widget-action.custom-pretty',
+                    value: 'customPretty'
                 }
             },
             systemBundleAlias: {

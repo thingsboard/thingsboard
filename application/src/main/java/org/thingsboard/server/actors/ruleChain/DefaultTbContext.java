@@ -16,6 +16,7 @@
 package org.thingsboard.server.actors.ruleChain;
 
 import akka.actor.ActorRef;
+import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -60,6 +61,7 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.nosql.CassandraBufferedRateExecutor;
+import org.thingsboard.server.dao.nosql.CassandraStatementTask;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
@@ -355,8 +357,8 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public CassandraBufferedRateExecutor getCassandraBufferedRateExecutor() {
-        return mainCtx.getCassandraBufferedRateExecutor();
+    public ResultSetFuture submitCassandraTask(CassandraStatementTask task) {
+        return mainCtx.getCassandraBufferedRateExecutor().submit(task);
     }
 
     private TbMsgMetaData getActionMetaData(RuleNodeId ruleNodeId) {

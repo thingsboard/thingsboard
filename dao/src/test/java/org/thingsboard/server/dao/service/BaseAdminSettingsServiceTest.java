@@ -76,13 +76,4 @@ public abstract class BaseAdminSettingsServiceTest extends AbstractServiceTest {
         adminSettings.setJsonValue(json);
         adminSettingsService.saveAdminSettings(SYSTEM_TENANT_ID, adminSettings);
     }
-    
-    @Test(expected = DataValidationException.class)
-    public void testSaveAdminSettingsWithNonTextValue() {
-        AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey(SYSTEM_TENANT_ID, "mail");
-        JsonNode json = adminSettings.getJsonValue();
-        ((ObjectNode) json).put("timeout", 10000L);
-        adminSettings.setJsonValue(json);
-        adminSettingsService.saveAdminSettings(SYSTEM_TENANT_ID, adminSettings);
-    }
 }

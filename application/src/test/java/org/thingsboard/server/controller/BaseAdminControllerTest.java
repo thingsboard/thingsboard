@@ -106,18 +106,6 @@ public abstract class BaseAdminControllerTest extends AbstractControllerTest {
     }
     
     @Test
-    public void testSaveAdminSettingsWithNonTextValue() throws Exception {
-        loginSysAdmin();
-        AdminSettings adminSettings = doGet("/api/admin/settings/mail", AdminSettings.class); 
-        JsonNode json = adminSettings.getJsonValue();
-        ((ObjectNode) json).put("timeout", 10000L);
-        adminSettings.setJsonValue(json);
-        doPost("/api/admin/settings", adminSettings)
-        .andExpect(status().isBadRequest())
-        .andExpect(statusReason(containsString("Provided json structure can't contain non-text values")));
-    }
-    
-    @Test
     public void testSendTestMail() throws Exception {
         loginSysAdmin();
         AdminSettings adminSettings = doGet("/api/admin/settings/mail", AdminSettings.class);

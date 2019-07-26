@@ -17,6 +17,7 @@
 
 import generalSettingsTemplate from '../admin/general-settings.tpl.html';
 import outgoingMailSettingsTemplate from '../admin/outgoing-mail-settings.tpl.html';
+import securitySettingsTemplate from '../admin/security-settings.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
 
@@ -68,6 +69,24 @@ export default function AdminRoutes($stateProvider) {
             },
             ncyBreadcrumb: {
                 label: '{"icon": "mail", "label": "admin.outgoing-mail"}'
+            }
+        })
+        .state('home.settings.security-settings', {
+            url: '/security-settings',
+            module: 'private',
+            auth: ['SYS_ADMIN'],
+            views: {
+                "content@home": {
+                    templateUrl: securitySettingsTemplate,
+                    controllerAs: 'vm',
+                    controller: 'SecuritySettingsController'
+                }
+            },
+            data: {
+                pageTitle: 'admin.security-settings'
+            },
+            ncyBreadcrumb: {
+                label: '{"icon": "security", "label": "admin.security-settings"}'
             }
         });
 }

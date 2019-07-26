@@ -28,7 +28,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import java.nio.charset.Charset;
 import java.util.concurrent.ExecutionException;
 
-import static org.thingsboard.rule.engine.api.util.DonAsynchron.withCallback;
+import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
 @Slf4j
 @RuleNode(

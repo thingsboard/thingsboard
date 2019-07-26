@@ -37,7 +37,9 @@ public enum ActionType {
     RELATION_DELETED(false),
     RELATIONS_DELETED(false),
     ALARM_ACK(false),
-    ALARM_CLEAR(false);
+    ALARM_CLEAR(false),
+    LOGIN(false),
+    LOGOUT(false);
 
     private final boolean isRead;
 

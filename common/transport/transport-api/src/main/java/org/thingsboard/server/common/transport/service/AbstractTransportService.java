@@ -200,7 +200,7 @@ public abstract class AbstractTransportService implements TransportService {
     @Override
     public void deregisterSession(TransportProtos.SessionInfoProto sessionInfo) {
         SessionMetaData currentSession = sessions.get(toId(sessionInfo));
-        if (currentSession.hasScheduledFuture()) {
+        if (currentSession != null && currentSession.hasScheduledFuture()) {
             log.debug("Stopping scheduler to avoid resending response if request has been ack.");
             currentSession.getScheduledFuture().cancel(false);
         }
