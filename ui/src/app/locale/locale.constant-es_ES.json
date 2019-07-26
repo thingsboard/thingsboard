@@ -670,6 +670,10 @@
     "dialog": {
         "close": "Cerrar diálogo"
     },
+    "direction": {
+        "column": "Columna",
+        "row": "Fila"
+    },
     "error": {
         "unable-to-connect": "¡No se puede conectar al servidor! Por favor, revise su conexión a Internet.",
         "unhandled-error-code": "Código de error no controlado: {{errorCode}}",
@@ -1111,6 +1115,7 @@
         "select": "Seleccionar diseño objetivo"
     },
     "legend": {
+        "direction": "Dirección de la leyenda",
         "position": "Posición de la leyenda",
         "show-max": "Mostrar valor máximo",
         "show-min": "Mostrar valor mínimo",
