@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!--
 
     Copyright © 2016-2019 The Thingsboard Authors
@@ -16,20 +15,19 @@
     limitations under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
         <version>2.4.1-SNAPSHOT</version>
-        <artifactId>rule-engine</artifactId>
+        <artifactId>common</artifactId>
     </parent>
-    <groupId>org.thingsboard.rule-engine</groupId>
-    <artifactId>rule-engine-api</artifactId>
+    <groupId>org.thingsboard.common</groupId>
+    <artifactId>dao-api</artifactId>
     <packaging>jar</packaging>
 
-    <name>Thingsboard Rule Engine API</name>
+    <name>Thingsboard Server Common DAO API</name>
     <url>https://thingsboard.io</url>
 
     <properties>
@@ -40,32 +38,43 @@
     <dependencies>
         <dependency>
             <groupId>org.thingsboard.common</groupId>
-            <artifactId>message</artifactId>
-            <scope>provided</scope>
+            <artifactId>data</artifactId>
         </dependency>
         <dependency>
             <groupId>org.thingsboard.common</groupId>
-            <artifactId>dao-api</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-all</artifactId>
-            <scope>provided</scope>
+            <artifactId>message</artifactId>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.fge</groupId>
+            <artifactId>json-schema-validator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>log4j-over-slf4j</artifactId>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-core</artifactId>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
+        </dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+		</dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -83,5 +92,26 @@
             <artifactId>cassandra-driver-extras</artifactId>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+        </plugins>
+    </build>
+
 </project>

@@ -39,6 +39,7 @@
         <module>message</module>
         <module>queue</module>
         <module>transport</module>
+        <module>dao-api</module>
     </modules>
 
 </project>
