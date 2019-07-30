@@ -25,6 +25,7 @@
                         {{key.settings.icon}}
                     </md-icon>
                     <input name="key.name"
+                           ng-disabled="key.settings.readOnly"
                            ng-model="key.currentValue"
                            type="{{key.settings.inputType}}"
                            step="{{key.settings.step}}"
