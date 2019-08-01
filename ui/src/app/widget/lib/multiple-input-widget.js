@@ -56,6 +56,7 @@ function MultipleInputWidgetController($q, $scope, attributeService, toast, type
     vm.datasources = null;
 
     vm.cellStyle = cellStyle;
+    vm.textColor = textColor;
     vm.discardAll = discardAll;
     vm.inputChanged = inputChanged;
     vm.postData = postData;
@@ -82,7 +83,7 @@ function MultipleInputWidgetController($q, $scope, attributeService, toast, type
         return {};
     }
 
-    function cellStyle(key) {
+    function cellStyle(key, rowIndex, firstKey, lastKey) {
         var style = {};
         if (key) {
             var styleInfo = vm.stylesInfo[key.label];
@@ -95,6 +96,33 @@ function MultipleInputWidgetController($q, $scope, attributeService, toast, type
                 }
             } else {
                 style = defaultStyle();
+            }
+        }
+        if (vm.settings.rowMargin) {
+            if (angular.isUndefined(style.marginTop) && rowIndex != 0) {
+                style.marginTop = (vm.settings.rowMargin / 2) + 'px';
+            }
+            if (angular.isUndefined(style.marginBottom)) {
+                style.marginBottom = (vm.settings.rowMargin / 2) + 'px';
+            }
+        }
+        if (vm.settings.columnMargin) {
+            if (angular.isUndefined(style.marginLeft) && !firstKey) {
+                style.marginLeft = (vm.settings.columnMargin / 2) + 'px';
+            }
+            if (angular.isUndefined(style.marginRight) && !lastKey) {
+                style.marginRight = (vm.settings.columnMargin / 2) + 'px';
+            }
+        }
+        return style;
+    }
+
+    function textColor(key) {
+        var style = {};
+        if (key) {
+            var styleInfo = vm.stylesInfo[key.label];
+            if (styleInfo.color) {
+                style = { color: styleInfo.color };
             }
         }
         return style;
@@ -232,7 +260,8 @@ function MultipleInputWidgetController($q, $scope, attributeService, toast, type
 
                         vm.stylesInfo[dataKey.label] = {
                             useCellStyleFunction: useCellStyleFunction,
-                            cellStyleFunction: cellStyleFunction
+                            cellStyleFunction: cellStyleFunction,
+                            color: keySettings.color
                         };
 
                         row.data.push(dataKey);
