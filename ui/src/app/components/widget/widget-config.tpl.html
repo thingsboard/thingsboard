@@ -191,6 +191,32 @@
                     </div>
                 </div>
                 <div layout='column' layout-align="center" layout-gt-sm='row' layout-align-gt-sm="start center">
+                    <div layout="row" flex layout-padding>
+                        <md-checkbox aria-label="{{ 'widget-config.display-icon' | translate }}"
+                                     ng-model="showTitleIcon">{{ 'widget-config.display-icon' | translate }}
+                        </md-checkbox>
+                    </div>
+                    <div flex>
+                        <tb-material-icon-select ng-disabled="!showTitleIcon" ng-model="titleIcon">
+                        </tb-material-icon-select>
+                    </div>
+                    <div flex
+                         md-color-picker
+                         ng-model="iconColor"
+                         label="{{ 'widget-config.icon-color' | translate }}"
+                         icon="format_color_fill"
+                         default="rgba(0, 0, 0, 0.87)"
+                         md-color-clear-button="false"
+                         open-on-input="true"
+                         md-color-generic-palette="false"
+                         md-color-history="false"
+                    ></div>
+                    <md-input-container flex>
+                        <label translate>widget-config.icon-size</label>
+                        <input ng-model="iconSize">
+                    </md-input-container>
+                </div>
+                <div layout='column' layout-align="center" layout-gt-sm='row' layout-align-gt-sm="start center">
                     <div layout="row" layout-padding>
                         <md-checkbox aria-label="{{ 'widget-config.display-title' | translate }}"
                                      ng-model="showTitle">{{ 'widget-config.display-title' | translate }}
