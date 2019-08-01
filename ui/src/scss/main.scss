@@ -483,6 +483,15 @@ pre.tb-highlight {
   @include line-clamp(2, 1.1);
 }
 
+.tb-tooltip-multiline {
+  max-width: 400px;
+  height: auto !important;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  line-height: 1.5;
+  white-space: normal !important;
+}
+
 /***********************
  * Flow
  ***********************/
