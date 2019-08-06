@@ -412,7 +412,7 @@ public class DeviceController extends BaseController {
                 @Override
                 public void onSuccess(@Nullable ClaimResult result) {
                     HttpStatus status;
-                    if (result.equals(ClaimResponse.SUCCESS)) {
+                    if (result != null && result.getResponse().equals(ClaimResponse.SUCCESS)) {
                         status = HttpStatus.OK;
                     } else {
                         status = HttpStatus.BAD_REQUEST;
