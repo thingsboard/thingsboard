@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2019 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,6 +46,9 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
 
     @Autowired
     private AttributeKvRepository attributeKvRepository;
+
+//    @Autowired
+//    private AttributeKvInsertRepository attributeKvInsertRepository;
 
     @Override
     public ListenableFuture<Optional<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String attributeType, String attributeKey) {
@@ -87,10 +90,22 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
         entity.setLongValue(attribute.getLongValue().orElse(null));
         entity.setBooleanValue(attribute.getBooleanValue().orElse(null));
         return service.submit(() -> {
-            attributeKvRepository.save(entity);
+
+            if (entity.getLongValue() != null) {
+                attributeKvRepository.saveIfNotExistLong(entity.getId().getEntityType().name(), entity.getId().getEntityId(), entity.getId().getAttributeType(), entity.getId().getAttributeKey(), entity.getLongValue(), entity.getLastUpdateTs());
+            } else if(entity.getDoubleValue() != null) {
+                attributeKvRepository.saveIfNotExistDouble(entity.getId().getEntityType().name(), entity.getId().getEntityId(), entity.getId().getAttributeType(), entity.getId().getAttributeKey(), entity.getDoubleValue(), entity.getLastUpdateTs());
+            } else if(entity.getBooleanValue() != null) {
+                attributeKvRepository.saveIfNotExistBool(entity.getId().getEntityType().name(), entity.getId().getEntityId(), entity.getId().getAttributeType(), entity.getId().getAttributeKey(), entity.getBooleanValue(), entity.getLastUpdateTs());
+            }
+
+//            attributeKvRepository.saveIfNotExist(entity.);
+//            attributeKvInsertRepository.saveIfNotExist(entity);
+//            attributeKvRepository.saveIfNotExist(entity.getId().getEntityType().name(), entity.getId().getEntityId(), entity.getId().getAttributeType(), entity.getId().getAttributeKey(), entity.getBooleanValue(), entity.getStrValue(), entity.getLongValue(), entity.getDoubleValue(), entity.getLastUpdateTs());
             return null;
         });
     }
+
 
     @Override
     public ListenableFuture<List<Void>> removeAll(TenantId tenantId, EntityId entityId, String attributeType, List<String> keys) {
