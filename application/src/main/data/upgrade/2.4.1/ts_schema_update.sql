@@ -16,6 +16,8 @@
 
 CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;
 
+
+
 CREATE TABLE IF NOT EXISTS tenant_ts_kv (
     tenant_id varchar(31) NOT NULL,
     entity_id varchar(31) NOT NULL,
@@ -29,3 +31,5 @@ CREATE TABLE IF NOT EXISTS tenant_ts_kv (
 );
 
 SELECT create_hypertable('tenant_ts_kv', 'ts', chunk_time_interval => 86400000000, if_not_exists => true);
+
+CREATE INDEX IF NOT EXISTS idx_tenant_ts_kv ON tenant_ts_kv(tenant_id, entity_id, key, ts);

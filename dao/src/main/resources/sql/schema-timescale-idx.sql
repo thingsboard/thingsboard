@@ -14,4 +14,4 @@
 -- limitations under the License.
 --
 
-CREATE INDEX IF NOT EXISTS idx_ts_kv ON ts_kv(tenant_id, entity_id, entity_type, key, ts);
+CREATE INDEX IF NOT EXISTS idx_tenant_ts_kv ON tenant_ts_kv(tenant_id, entity_id, key, ts);

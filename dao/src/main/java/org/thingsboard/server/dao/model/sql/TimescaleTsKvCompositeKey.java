@@ -32,7 +32,6 @@ public class TimescaleTsKvCompositeKey implements Serializable {
     private static final long serialVersionUID = -4089175869616037523L;
 
     private String tenantId;
-    private EntityType entityType;
     private String entityId;
     private String key;
     private long ts;

@@ -64,7 +64,22 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao<TimescaleTs
 
     @Override
     public ListenableFuture<List<TsKvEntry>> findAllAsync(TenantId tenantId, EntityId entityId, List<ReadTsKvQuery> queries) {
-        return null;
+        List<ListenableFuture<List<TsKvEntry>>> futures = queries
+                .stream()
+                .map(query -> findAllAsync(tenantId, entityId, query))
+                .collect(Collectors.toList());
+        return Futures.transform(Futures.allAsList(futures), new Function<List<List<TsKvEntry>>, List<TsKvEntry>>() {
+            @Nullable
+            @Override
+            public List<TsKvEntry> apply(@Nullable List<List<TsKvEntry>> results) {
+                if (results == null || results.isEmpty()) {
+                    return null;
+                }
+                return results.stream()
+                        .flatMap(List::stream)
+                        .collect(Collectors.toList());
+            }
+        }, service);
     }
 
     private ListenableFuture<List<TsKvEntry>> findAllAsync(TenantId tenantId, EntityId entityId, ReadTsKvQuery query) {
@@ -103,7 +118,6 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao<TimescaleTs
                         tsKvRepository.findAllWithLimit(
                                 fromTimeUUID(tenantId.getId()),
                                 fromTimeUUID(entityId.getId()),
-                                entityId.getEntityType(),
                                 query.getKey(),
                                 query.getStartTs(),
                                 query.getEndTs(),
@@ -127,14 +141,13 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao<TimescaleTs
 
     @Override
     public ListenableFuture<List<TsKvEntry>> findAllLatest(TenantId tenantId, EntityId entityId) {
-        return Futures.immediateFuture(DaoUtil.convertDataList(Lists.newArrayList(tsKvRepository.findAllLatestValues(fromTimeUUID(tenantId.getId()), fromTimeUUID(entityId.getId()), entityId.getEntityType().name()))));
+        return Futures.immediateFuture(DaoUtil.convertDataList(Lists.newArrayList(tsKvRepository.findAllLatestValues(fromTimeUUID(tenantId.getId()), fromTimeUUID(entityId.getId())))));
     }
 
     @Override
     public ListenableFuture<Void> save(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry, long ttl) {
         TimescaleTsKvEntity entity = new TimescaleTsKvEntity();
         entity.setTenantId(fromTimeUUID(tenantId.getId()));
-        entity.setEntityType(entityId.getEntityType());
         entity.setEntityId(fromTimeUUID(entityId.getId()));
         entity.setTs(tsKvEntry.getTs());
         entity.setKey(tsKvEntry.getKey());
@@ -165,7 +178,6 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao<TimescaleTs
             tsKvRepository.delete(
                     fromTimeUUID(tenantId.getId()),
                     fromTimeUUID(entityId.getId()),
-                    entityId.getEntityType(),
                     query.getKey(),
                     query.getStartTs(),
                     query.getEndTs());
@@ -226,7 +238,6 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao<TimescaleTs
         return Futures.immediateFuture(tsKvRepository.findAllWithLimit(
                 fromTimeUUID(tenantId.getId()),
                 fromTimeUUID(entityId.getId()),
-                entityId.getEntityType(),
                 key,
                 start,
                 end,
@@ -265,7 +276,6 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao<TimescaleTs
         return Futures.transform(listenableFuture, entity -> {
             if (entity != null && entity.isNotEmpty()) {
                 entity.setEntityId(entityIdStr);
-                entity.setEntityType(entityId.getEntityType());
                 entity.setKey(key);
                 entity.setTs(ts);
                 return Optional.of(DaoUtil.getData(entity));
@@ -280,7 +290,6 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao<TimescaleTs
         entitiesFutures.add(tsKvRepository.findAvg(
                 tenantIdStr,
                 entityIdStr,
-                entityId.getEntityType(),
                 key,
                 startTs,
                 endTs));
@@ -291,14 +300,12 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao<TimescaleTs
         entitiesFutures.add(tsKvRepository.findStringMax(
                 tenantIdStr,
                 entityIdStr,
-                entityId.getEntityType(),
                 key,
                 startTs,
                 endTs));
         entitiesFutures.add(tsKvRepository.findNumericMax(
                 tenantIdStr,
                 entityIdStr,
-                entityId.getEntityType(),
                 key,
                 startTs,
                 endTs));
@@ -309,14 +316,12 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao<TimescaleTs
         entitiesFutures.add(tsKvRepository.findStringMin(
                 tenantIdStr,
                 entityIdStr,
-                entityId.getEntityType(),
                 key,
                 startTs,
                 endTs));
         entitiesFutures.add(tsKvRepository.findNumericMin(
                 tenantIdStr,
                 entityIdStr,
-                entityId.getEntityType(),
                 key,
                 startTs,
                 endTs));
@@ -327,7 +332,6 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao<TimescaleTs
         entitiesFutures.add(tsKvRepository.findSum(
                 tenantIdStr,
                 entityIdStr,
-                entityId.getEntityType(),
                 key,
                 startTs,
                 endTs));
@@ -338,7 +342,6 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao<TimescaleTs
         entitiesFutures.add(tsKvRepository.findCount(
                 tenantIdStr,
                 entityIdStr,
-                entityId.getEntityType(),
                 key,
                 startTs,
                 endTs));

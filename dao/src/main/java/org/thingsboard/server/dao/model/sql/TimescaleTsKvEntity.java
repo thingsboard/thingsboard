@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.model.sql;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.model.ToData;
 
@@ -28,8 +29,9 @@ import javax.persistence.Table;
 import static org.thingsboard.server.dao.model.ModelConstants.TENANT_ID_COLUMN;
 
 @Data
+@EqualsAndHashCode(callSuper=true)
 @Entity
-@Table(name = "ts_kv")
+@Table(name = "tenant_ts_kv")
 @IdClass(TimescaleTsKvCompositeKey.class)
 public final class TimescaleTsKvEntity extends AbsractTsKvEntity implements ToData<TsKvEntry> {
 

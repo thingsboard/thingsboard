@@ -16,18 +16,30 @@
 package org.thingsboard.server.dao.model.sql;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.model.ToData;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.Id;
 import javax.persistence.IdClass;
 import javax.persistence.Table;
+
+import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_TYPE_COLUMN;
 
 @Data
 @Entity
 @Table(name = "ts_kv")
 @IdClass(TsKvCompositeKey.class)
 public final class TsKvEntity extends AbsractTsKvEntity implements ToData<TsKvEntry> {
+
+    @Id
+    @Enumerated(EnumType.STRING)
+    @Column(name = ENTITY_TYPE_COLUMN)
+    private EntityType entityType;
 
     public TsKvEntity() {
     }

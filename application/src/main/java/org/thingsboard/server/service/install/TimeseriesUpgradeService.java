@@ -15,18 +15,6 @@
  */
 package org.thingsboard.server.service.install;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
-import org.thingsboard.server.dao.util.SqlDao;
-import org.thingsboard.server.dao.util.TimescaleDBTsDao;
+public interface TimeseriesUpgradeService extends DatabaseUpgradeService {
 
-@Service
-@SqlDao
-@TimescaleDBTsDao
-@Profile("install")
-public class SqlTimescaleDatabaseSchemaService extends SqlAbstractDatabaseSchemaService
-        implements TsDatabaseSchemaService {
-    public SqlTimescaleDatabaseSchemaService() {
-        super("schema-timescale.sql", "schema-timescale-idx.sql");
-    }
 }

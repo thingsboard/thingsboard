@@ -16,7 +16,6 @@
 package org.thingsboard.server.dao.model.sql;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
@@ -27,15 +26,12 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.model.ToData;
 
 import javax.persistence.Column;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
 
 import static org.thingsboard.server.dao.model.ModelConstants.BOOLEAN_VALUE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.DOUBLE_VALUE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_ID_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_TYPE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.KEY_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.LONG_VALUE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.STRING_VALUE_COLUMN;
@@ -49,11 +45,6 @@ public class AbsractTsKvEntity implements ToData<TsKvEntry> {
     protected static final String AVG = "AVG";
     protected static final String MIN = "MIN";
     protected static final String MAX = "MAX";
-
-    @Id
-    @Enumerated(EnumType.STRING)
-    @Column(name = ENTITY_TYPE_COLUMN)
-    protected EntityType entityType;
 
     @Id
     @Column(name = ENTITY_ID_COLUMN)
