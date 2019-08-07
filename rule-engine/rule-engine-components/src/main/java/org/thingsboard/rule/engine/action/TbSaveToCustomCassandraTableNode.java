@@ -15,15 +15,7 @@
  */
 package org.thingsboard.rule.engine.action;
 
-import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.CodecRegistry;
-import com.datastax.driver.core.ConsistencyLevel;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.ResultSetFuture;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.Statement;
-import com.datastax.driver.core.TypeCodec;
+import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.CodecNotFoundException;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
@@ -33,20 +25,12 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.rule.engine.api.RuleNode;
-import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNode;
-import org.thingsboard.rule.engine.api.TbNodeConfiguration;
-import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
-import org.thingsboard.server.dao.model.type.AuthorityCodec;
 import org.thingsboard.server.dao.model.type.ComponentLifecycleStateCodec;
-import org.thingsboard.server.dao.model.type.ComponentScopeCodec;
-import org.thingsboard.server.dao.model.type.ComponentTypeCodec;
-import org.thingsboard.server.dao.model.type.DeviceCredentialsTypeCodec;
 import org.thingsboard.server.dao.model.type.EntityTypeCodec;
 import org.thingsboard.server.dao.model.type.JsonCodec;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
@@ -60,8 +44,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
+import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 
 @Slf4j
 @RuleNode(type = ComponentType.ACTION,
@@ -137,11 +121,7 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
             defaultWriteLevel = cassandraCluster.getDefaultWriteConsistencyLevel();
             CodecRegistry registry = session.getCluster().getConfiguration().getCodecRegistry();
             registerCodecIfNotFound(registry, new JsonCodec());
-            registerCodecIfNotFound(registry, new DeviceCredentialsTypeCodec());
-            registerCodecIfNotFound(registry, new AuthorityCodec());
             registerCodecIfNotFound(registry, new ComponentLifecycleStateCodec());
-            registerCodecIfNotFound(registry, new ComponentTypeCodec());
-            registerCodecIfNotFound(registry, new ComponentScopeCodec());
             registerCodecIfNotFound(registry, new EntityTypeCodec());
         }
         return session;
