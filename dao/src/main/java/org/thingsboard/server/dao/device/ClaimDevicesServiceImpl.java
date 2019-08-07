@@ -112,14 +112,14 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
                     Device savedDevice = deviceService.saveDevice(device);
                     return Futures.transform(removeClaimingSavedData(cache, key, device), result -> new ClaimResult(savedDevice, ClaimResponse.SUCCESS));
                 }
-                return Futures.transform(removeClaimingSavedData(cache, key, device), result -> new ClaimResult(device, ClaimResponse.CLAIMED));
+                return Futures.transform(removeClaimingSavedData(cache, key, device), result -> new ClaimResult(null, ClaimResponse.CLAIMED));
             }
         } else {
             log.warn("Failed to find the device's claiming message![{}]", device.getName());
             if(device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
                 return Futures.immediateFuture(new ClaimResult(null, ClaimResponse.FAILURE));
             } else {
-                return Futures.immediateFuture(new ClaimResult(device, ClaimResponse.CLAIMED));
+                return Futures.immediateFuture(new ClaimResult(null, ClaimResponse.CLAIMED));
             }
         }
     }
