@@ -412,12 +412,21 @@ public class DeviceController extends BaseController {
                 @Override
                 public void onSuccess(@Nullable ClaimResult result) {
                     HttpStatus status;
-                    if (result != null && result.getResponse().equals(ClaimResponse.SUCCESS)) {
-                        status = HttpStatus.OK;
+                    if (result != null) {
+                        if (result.getResponse().equals(ClaimResponse.SUCCESS)) {
+                            status = HttpStatus.OK;
+                            deferredResult.setResult(new ResponseEntity<>(result, status));
+                        } else {
+                            status = HttpStatus.BAD_REQUEST;
+                            if (result.getResponse().equals(ClaimResponse.FAILURE)) {
+                                deferredResult.setResult(new ResponseEntity<>(result.getResponse(), status));
+                            } else {
+                                deferredResult.setResult(new ResponseEntity<>(result, status));
+                            }
+                        }
                     } else {
-                        status = HttpStatus.BAD_REQUEST;
+                        deferredResult.setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
                     }
-                    deferredResult.setResult(new ResponseEntity<>(result, status));
                 }
                 @Override
                 public void onFailure(Throwable t) {

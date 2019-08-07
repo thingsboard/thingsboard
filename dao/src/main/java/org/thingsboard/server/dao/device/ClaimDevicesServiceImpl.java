@@ -105,7 +105,7 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
             if (currTs > claimData.getExpirationTime() || !secretKey.equals(claimData.getSecretKey())) {
                 log.warn("The claiming timeout occurred or wrong 'secretKey' provided for the device [{}]", device.getName());
                 cache.evict(key);
-                return Futures.immediateFuture(new ClaimResult(device, ClaimResponse.FAILURE));
+                return Futures.immediateFuture(new ClaimResult(null, ClaimResponse.FAILURE));
             } else {
                 if (device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
                     device.setCustomerId(customerId);
