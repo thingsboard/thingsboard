@@ -121,7 +121,6 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
             } else {
                 return Futures.immediateFuture(new ClaimResult(device, ClaimResponse.CLAIMED));
             }
-
         }
     }
 
