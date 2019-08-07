@@ -47,7 +47,12 @@
 								<div layout="row" layout-align="space-between start">
 									<div class="tb-widget-title" layout="column" layout-align="center start" ng-show="vm.showWidgetTitlePanel(widget)">
 										<div ng-if="vm.hasWidgetTitleTemplate(widget)" ng-include="vm.widgetTitleTemplate(widget)"></div>
-										<span ng-show="vm.showWidgetTitle(widget)" ng-style="vm.widgetTitleStyle(widget)" class="md-subhead title">{{vm.widgetTitle(widget)}}</span>
+										<span ng-show="vm.showWidgetTitle(widget)" ng-style="vm.widgetTitleStyle(widget)" class="md-subhead title">
+											<md-icon class="material-icons" ng-if="vm.showWidgetTitleIcon(widget)" ng-style="vm.widgetTitleIconStyle(widget)">
+												{{vm.widgetTitleIcon(widget)}}
+											</md-icon>
+											{{vm.widgetTitle(widget)}}
+										</span>
 										<tb-timewindow aggregation="{{vm.hasAggregation(widget)}}" ng-if="vm.hasTimewindow(widget)" ng-model="widget.config.timewindow"></tb-timewindow>
 									</div>
 									<div class="tb-widget-actions" layout="row" layout-align="start center" ng-show="vm.showWidgetActions(widget)" tb-mousedown="$event.stopPropagation()"

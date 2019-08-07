@@ -1431,7 +1431,10 @@
         "title-style": "Style de titre",
         "units": "Symbole spécial à afficher à côté de la valeur",
         "use-dashboard-timewindow": "Utiliser la fenêtre de temps du tableau de bord",
-        "widget-style": "Style du widget"
+        "widget-style": "Style du widget",
+        "display-icon": "Afficher l'icône du titre",
+        "icon-color": "Couleur de l'icône",
+        "icon-size": "Taille de l'icône"
     },
     "widget-type": {
         "create-new-widget-type": "Créer un nouveau type de widget",

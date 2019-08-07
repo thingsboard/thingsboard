@@ -1610,7 +1610,10 @@
         "edit-action": "Editar acción",
         "delete-action": "Eliminar acción",
         "delete-action-title": "Eliminar acción del widget",
-        "delete-action-text": "¿Está seguro de que desea eliminar la acción del widget con nombre '{{actionName}}'?"
+        "delete-action-text": "¿Está seguro de que desea eliminar la acción del widget con nombre '{{actionName}}'?",
+        "display-icon": "Mostrar icono del título",
+        "icon-color": "Color del icono",
+        "icon-size": "Tamaño del icono"
     },
     "widget-type": {
         "import": "Importar tipo de widget",
