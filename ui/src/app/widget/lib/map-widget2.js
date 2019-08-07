@@ -464,7 +464,7 @@ export default class TbMapWidgetV2 {
 
 		function createUpdatePolygon(location, dataMap) {
             if (location.settings.showPolygon && dataMap.dsDataMap[location.dsIndex][location.settings.polygonKeyName] !== null) {
-				let polygonLatLngsRaw = angular.fromJson(dataMap.dsDataMap[location.dsIndex][location.settings.polygonKeyName]);
+                let polygonLatLngsRaw = angular.fromJson(dataMap.dsDataMap[location.dsIndex][location.settings.polygonKeyName]);
 				let polygonLatLngs = !polygonLatLngsRaw || mapPolygonArray(polygonLatLngsRaw);
 				if (!location.polygon && polygonLatLngs.length > 0) {
 					location.polygon = tbMap.map.createPolygon(polygonLatLngs, location.settings, location, function (event) {
@@ -639,7 +639,8 @@ export default class TbMapWidgetV2 {
 			if (this.subscription.data) {
 				if (!this.locations) {
 					loadLocations(this.subscription.data, this.subscription.datasources);
-				} else {
+
+                } else {
 					updateLocations(this.subscription.data, this.subscription.datasources);
 				}
 				var tooltips = this.map.getTooltips();
