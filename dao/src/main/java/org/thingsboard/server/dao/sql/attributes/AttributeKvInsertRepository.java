@@ -15,71 +15,48 @@
  */
 package org.thingsboard.server.dao.sql.attributes;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
+@Slf4j
 @SqlDao
 @Repository
-public class AttributeKvInsertRepository {
+public abstract class AttributeKvInsertRepository {
 
-    private static final String INSERT_OR_UPDATE_LONG_VALUE = "INSERT INTO attribute_kv (entity_type, entity_id, attribute_type, attribute_key, long_v, last_update_ts) VALUES (:entity_type, :entity_id, :attribute_type, :attribute_key, :long_v, :last_update_ts) ON CONFLICT (entity_type, entity_id, attribute_type, attribute_key) DO UPDATE SET long_v = :long_v";
-
-    private static final String INSERT_OR_UPDATE_BOOL_VALUE = "INSERT INTO attribute_kv (entity_type, entity_id, attribute_type, attribute_key, bool_v, last_update_ts) VALUES (:entity_type, :entity_id, :attribute_type, :attribute_key, :bool_v, :last_update_ts) ON CONFLICT (entity_type, entity_id, attribute_type, attribute_key) DO UPDATE SET bool_v = :bool_v";
-
-    private static final String INSERT_OR_UPDATE_DBL_VALUE = "INSERT INTO attribute_kv (entity_type, entity_id, attribute_type, attribute_key, dbl_v, last_update_ts) VALUES (:entity_type, :entity_id, :attribute_type, :attribute_key, :dbl_v, :last_update_ts) ON CONFLICT (entity_type, entity_id, attribute_type, attribute_key) DO UPDATE SET dbl_v = :dbl_v";
-
-    private static final String INSERT_OR_UPDATE_STR_VALUE = "INSERT INTO attribute_kv (entity_type, entity_id, attribute_type, attribute_key, str_v, last_update_ts) VALUES (:entity_type, :entity_id, :attribute_type, :attribute_key, :str_v, :last_update_ts) ON CONFLICT (entity_type, entity_id, attribute_type, attribute_key) DO UPDATE SET str_v = :str_v";
+    protected static final String BOOL_V = "bool_v";
+    protected static final String STR_V = "str_v";
+    protected static final String LONG_V = "long_v";
+    protected static final String DBL_V = "dbl_v";
 
     @PersistenceContext
-    private EntityManager entityManager;
+    protected EntityManager entityManager;
 
-    @Modifying
-    @Transactional
-    public void saveOrUpdate(AttributeKvEntity entity) {
+    public abstract void saveOrUpdate(AttributeKvEntity entity);
+
+    protected void processSaveOrUpdate(AttributeKvEntity entity, String requestBoolValue, String requestStrValue, String requestLongValue, String requestDblValue) {
         if (entity.getBooleanValue() != null) {
-            saveBoolean(entity);
+            saveOrUpdateBoolean(entity, requestBoolValue);
         }
         if (entity.getStrValue() != null) {
-            saveString(entity);
+            saveOrUpdateString(entity, requestStrValue);
         }
         if (entity.getLongValue() != null) {
-            saveLong(entity);
+            saveOrUpdateLong(entity, requestLongValue);
         }
         if (entity.getDoubleValue() != null) {
-            saveDouble(entity);
+            saveOrUpdateDouble(entity, requestDblValue);
         }
     }
 
-    private void saveString(AttributeKvEntity entity) {
-        entityManager.createNativeQuery(INSERT_OR_UPDATE_STR_VALUE)
-                .setParameter("entity_type", entity.getId().getEntityType().name())
-                .setParameter("entity_id", entity.getId().getEntityId())
-                .setParameter("attribute_type", entity.getId().getAttributeType())
-                .setParameter("attribute_key", entity.getId().getAttributeKey())
-                .setParameter("str_v", entity.getStrValue())
-                .setParameter("last_update_ts", entity.getLastUpdateTs())
-                .executeUpdate();
-    }
-
-    private void saveLong(AttributeKvEntity entity) {
-        entityManager.createNativeQuery(INSERT_OR_UPDATE_LONG_VALUE)
-                .setParameter("entity_type", entity.getId().getEntityType().name())
-                .setParameter("entity_id", entity.getId().getEntityId())
-                .setParameter("attribute_type", entity.getId().getAttributeType())
-                .setParameter("attribute_key", entity.getId().getAttributeKey())
-                .setParameter("long_v", entity.getLongValue())
-                .setParameter("last_update_ts", entity.getLastUpdateTs())
-                .executeUpdate();
-    }
-
-    private void saveBoolean(AttributeKvEntity entity) {
-        entityManager.createNativeQuery(INSERT_OR_UPDATE_BOOL_VALUE)
+    @Modifying
+    private void saveOrUpdateBoolean(AttributeKvEntity entity, String query) {
+        entityManager.createNativeQuery(query)
                 .setParameter("entity_type", entity.getId().getEntityType().name())
                 .setParameter("entity_id", entity.getId().getEntityId())
                 .setParameter("attribute_type", entity.getId().getAttributeType())
@@ -89,8 +66,33 @@ public class AttributeKvInsertRepository {
                 .executeUpdate();
     }
 
-    private void saveDouble(AttributeKvEntity entity) {
-        entityManager.createNativeQuery(INSERT_OR_UPDATE_DBL_VALUE)
+    @Modifying
+    private void saveOrUpdateString(AttributeKvEntity entity, String query) {
+        entityManager.createNativeQuery(query)
+                .setParameter("entity_type", entity.getId().getEntityType().name())
+                .setParameter("entity_id", entity.getId().getEntityId())
+                .setParameter("attribute_type", entity.getId().getAttributeType())
+                .setParameter("attribute_key", entity.getId().getAttributeKey())
+                .setParameter("str_v", entity.getStrValue())
+                .setParameter("last_update_ts", entity.getLastUpdateTs())
+                .executeUpdate();
+    }
+
+    @Modifying
+    private void saveOrUpdateLong(AttributeKvEntity entity, String query) {
+        entityManager.createNativeQuery(query)
+                .setParameter("entity_type", entity.getId().getEntityType().name())
+                .setParameter("entity_id", entity.getId().getEntityId())
+                .setParameter("attribute_type", entity.getId().getAttributeType())
+                .setParameter("attribute_key", entity.getId().getAttributeKey())
+                .setParameter("long_v", entity.getLongValue())
+                .setParameter("last_update_ts", entity.getLastUpdateTs())
+                .executeUpdate();
+    }
+
+    @Modifying
+    private void saveOrUpdateDouble(AttributeKvEntity entity, String query) {
+        entityManager.createNativeQuery(query)
                 .setParameter("entity_type", entity.getId().getEntityType().name())
                 .setParameter("entity_id", entity.getId().getEntityId())
                 .setParameter("attribute_type", entity.getId().getAttributeType())
