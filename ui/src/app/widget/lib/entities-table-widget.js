@@ -71,7 +71,7 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
     vm.actionCellDescriptors = [];
     vm.displayPagination = true;
     vm.defaultPageSize = 10;
-    vm.defaultSortOrder = 'entityName';
+    vm.defaultSortOrder = "'entityName'";
 
     vm.query = {
         order: vm.defaultSortOrder,
@@ -176,6 +176,11 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
 
         if (vm.settings.defaultSortOrder && vm.settings.defaultSortOrder.length) {
             vm.defaultSortOrder = vm.settings.defaultSortOrder;
+            if (vm.settings.defaultSortOrder.charAt(0) === "-") {
+                vm.defaultSortOrder = "-'" + vm.settings.defaultSortOrder.substring(1) + "'";
+            } else {
+                vm.defaultSortOrder = "'" + vm.settings.defaultSortOrder + "'";
+            }
         }
 
         vm.query.order = vm.defaultSortOrder;
