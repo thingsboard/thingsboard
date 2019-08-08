@@ -116,7 +116,7 @@
         </dependency>
         <dependency>
             <groupId>org.thingsboard</groupId>
-            <artifactId>ui</artifactId>
+            <artifactId>ui-ngx</artifactId>
             <version>${project.version}</version>
             <scope>runtime</scope>
         </dependency>

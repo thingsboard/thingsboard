@@ -1,0 +1,557 @@
+/**
+ * Copyright © 2016-2019 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import '~@angular/material/theming';
+@import '~@mat-datetimepicker/core/datetimepicker/datetimepicker-theme.scss';
+@import './scss/constants';
+
+@include mat-core();
+
+$tb-primary-color: #305680;
+$tb-secondary-color: #527dad;
+$tb-hue3-color: #a7c1de;
+
+$tb-dark-primary-color: #9fa8da;
+
+$tb-mat-indigo: (
+  50: #e8eaf6,
+  100: #c5cae9,
+  200: #9fa8da,
+  300: #7986cb,
+  400: #5c6bc0,
+  500: $tb-primary-color,
+  600: $tb-secondary-color,
+  700: #303f9f,
+  800: #283593,
+  900: #1a237e,
+  A100: $tb-hue3-color,
+  A200: #536dfe,
+  A400: #3d5afe,
+  A700: #304ffe,
+  contrast: (
+    50: $dark-primary-text,
+    100: $dark-primary-text,
+    200: $dark-primary-text,
+    300: $light-primary-text,
+    400: $light-primary-text,
+    500: $light-primary-text,
+    600: $light-primary-text,
+    700: $light-primary-text,
+    800: $light-primary-text,
+    900: $light-primary-text,
+    A100: $dark-primary-text,
+    A200: $light-primary-text,
+    A400: $light-primary-text,
+    A700: $light-primary-text,
+  )
+);
+
+$tb-primary: mat-palette($tb-mat-indigo);
+$tb-accent: mat-palette($mat-deep-orange);
+
+// Background palette for light themes.
+$tb-light-theme-background: (
+  status-bar: map_get($mat-grey, 300),
+  app-bar:    map_get($mat-grey, 100),
+  background: #eee, // map_get($mat-grey, 50),
+  hover:      rgba(black, 0.04),
+  card:       white,
+  dialog:     white,
+  disabled-button: rgba(black, 0.12),
+  raised-button: white,
+  focused-button: $dark-focused,
+  selected-button: map_get($mat-grey, 300),
+  selected-disabled-button: map_get($mat-grey, 400),
+  disabled-button-toggle: map_get($mat-grey, 200),
+  unselected-chip: map_get($mat-grey, 300),
+  disabled-list-option: map_get($mat-grey, 200),
+);
+
+@function get-tb-light-theme($primary, $accent, $warn: mat-palette($mat-red)) {
+  @return (
+    primary: $primary,
+    accent: $accent,
+    warn: $warn,
+    is-dark: false,
+    foreground: $mat-light-theme-foreground,
+    background: $tb-light-theme-background,
+  );
+}
+
+$tb-theme: get-tb-light-theme(
+    $tb-primary,
+    $tb-accent
+);
+
+$primary: mat-color($tb-primary);
+$accent: mat-color($tb-accent);
+
+$tb-dark-mat-indigo: (
+  50: #e8eaf6,
+  100: #c5cae9,
+  200: #9fa8da,
+  300: #7986cb,
+  400: #5c6bc0,
+  500: $tb-dark-primary-color,
+  600: $tb-secondary-color,
+  700: #303f9f,
+  800: #283593,
+  900: #1a237e,
+  A100: $tb-hue3-color,
+  A200: #536dfe,
+  A400: #3d5afe,
+  A700: #304ffe,
+  contrast: (
+    50: $dark-primary-text,
+    100: $dark-primary-text,
+    200: $dark-primary-text,
+    300: $dark-primary-text,
+    400: $dark-primary-text,
+    500: map_get($tb-mat-indigo, 900),
+    600: $light-primary-text,
+    700: $light-primary-text,
+    800: $light-primary-text,
+    900: $light-primary-text,
+    A100: $dark-primary-text,
+    A200: $dark-primary-text,
+    A400: $dark-primary-text,
+    A700: $dark-primary-text,
+  )
+);
+
+$tb-dark-primary: mat-palette($tb-dark-mat-indigo);
+
+$tb-dark-theme-background: (
+  status-bar: black,
+  app-bar:    map_get($tb-mat-indigo, 900),
+  background: map_get($tb-mat-indigo, 800),
+  hover:      rgba(white, 0.04),
+  card:       map_get($tb-mat-indigo, 800),
+  dialog:     map_get($tb-mat-indigo, 800),
+  disabled-button: rgba(white, 0.12),
+  raised-button: map-get($tb-mat-indigo, 50),
+  focused-button: $light-focused,
+  selected-button: map_get($tb-mat-indigo, 900),
+  selected-disabled-button: map_get($tb-mat-indigo, 800),
+  disabled-button-toggle: black,
+  unselected-chip: map_get($tb-mat-indigo, 700),
+  disabled-list-option: black,
+);
+
+@function get-tb-dark-theme($primary, $accent, $warn: mat-palette($mat-red)) {
+  @return (
+    primary: $primary,
+    accent: $accent,
+    warn: $warn,
+    is-dark: true,
+    foreground: $mat-dark-theme-foreground,
+    background: $tb-dark-theme-background,
+  );
+}
+
+$tb-dark-theme: get-tb-dark-theme(
+    $tb-dark-primary,
+    $tb-accent
+);
+
+.tb-default {
+  @include angular-material-theme($tb-theme);
+  @include mat-datetimepicker-theme($tb-theme);
+}
+
+.tb-dark {
+  @include angular-material-theme($tb-dark-theme);
+}
+
+.tb-default, .tb-dark {
+
+  /*********************************
+   * MATERIAL DESIGN CUSTOMIZATIONS
+   ********************************/
+
+  .mat-tooltip {
+    white-space: pre-line;
+  }
+
+  button {
+    pointer-events: all;
+  }
+
+  button:not(.mat-menu-item):not(.mat-sort-header-button) {
+    text-transform: uppercase;
+  }
+
+  button.mat-menu-item {
+    font-size: 15px;
+  }
+
+  button.mat-fab.mat-fab-bottom-right {
+    top: auto;
+    right: 20px;
+    bottom: 20px;
+    left: auto;
+    position: absolute;
+  }
+
+  .layout-padding, .layout-padding > * {
+    @media #{$mat-lt-md} {
+      padding: 4px;
+    }
+    @media #{$mat-gt-sm} {
+      padding: 8px;
+    }
+  }
+
+  .mat-padding {
+    padding: 8px;
+    @media #{$mat-gt-sm} {
+      padding: 16px;
+    }
+  }
+
+  .mat-content {
+    position: relative;
+    overflow: auto;
+  }
+
+  .layout-wrap {
+    flex-wrap: wrap;
+  }
+
+  mat-form-field.mat-block {
+    display: block;
+  }
+
+  mat-toolbar.mat-table-toolbar {
+    background: #fff;
+    padding: 0 24px;
+    .mat-toolbar-tools {
+      padding: 0;
+      & > button.mat-icon-button:last-child {
+        margin-right: -12px;
+      }
+    }
+  }
+
+  mat-toolbar.mat-table-toolbar, .mat-cell {
+    button.mat-icon-button {
+      mat-icon {
+        color: rgba(0, 0, 0, .54);
+      }
+    }
+  }
+
+  mat-toolbar.mat-primary {
+    button.mat-icon-button {
+      mat-icon {
+        color: white;
+      }
+    }
+  }
+
+
+  .mat-row {
+    transition: background-color .2s;
+    &:hover:not(.tb-current-entity) {
+      background-color: #f4f4f4;
+    }
+    &.tb-current-entity {
+      background-color: #e9e9e9;
+    }
+  }
+
+  .mat-row:not(.mat-row-select), .mat-header-row:not(.mat-row-select) {
+    mat-cell:first-child, mat-footer-cell:first-child, mat-header-cell:first-child {
+      padding: 0 12px;
+    }
+    mat-cell:nth-child(n+2):nth-last-child(n+2), mat-footer-cell:nth-child(n+2):nth-last-child(n+2), mat-header-cell:nth-child(n+2):nth-last-child(n+2) {
+      padding: 0 28px 0 0;
+    }
+  }
+
+  .mat-row.mat-row-select, .mat-header-row.mat-row-select {
+    mat-cell:first-child, mat-footer-cell:first-child, mat-header-cell:first-child {
+      width: 30px;
+      padding: 0 0 0 12px;
+    }
+    mat-cell:nth-child(2), mat-footer-cell:nth-child(2), mat-header-cell:nth-child(2) {
+      padding: 0 12px;
+    }
+    mat-cell:nth-child(n+3):nth-last-child(n+2), mat-footer-cell:nth-child(n+3):nth-last-child(n+2), mat-header-cell:nth-child(n+3):nth-last-child(n+2) {
+      padding: 0 28px 0 0;
+    }
+    &.mat-selected:not(.tb-current-entity) {
+      background-color: #ededed;
+    }
+  }
+
+  .mat-header-cell {
+    white-space: nowrap;
+  }
+
+  .mat-cell, .mat-header-cell {
+    min-width: 80px;
+    &:last-child {
+      padding: 0 12px 0 0;
+    }
+    &.mat-column-select {
+      min-width: 30px;
+      max-width: 30px;
+      width: 30px;
+      padding: 0 0 0 12px;
+    }
+    &.mat-column-actions {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  .mat-cell, .mat-footer-cell {
+    font-size: 13px;
+  }
+
+  .mat-cell, .mat-footer-cell, .mat-header-cell {
+    // fix for ie11 'align-items: center'
+    height: 20px;
+  }
+
+  .mat-toolbar-tools {
+    font-size: 20px;
+    letter-spacing: .005em;
+    box-sizing: border-box;
+    font-weight: 400;
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    width: 100%;
+    height: 64px;
+    max-height: 64px;
+    padding: 0 16px;
+    margin: 0;
+  }
+
+  .mat-icon {
+    vertical-align: middle;
+    &.tb-mat-32 {
+      width: 32px;
+      height: 32px;
+      font-size: 32px;
+      svg {
+        width: 24px;
+        height: 24px;
+        transform: scale(1.33);
+      }
+    }
+    &.tb-mat-96 {
+      width: 96px;
+      height: 96px;
+      font-size: 96px;
+      svg {
+        width: 24px;
+        height: 24px;
+        transform: scale(4);
+      }
+    }
+  }
+
+  .mat-icon-button {
+    &.tb-mat-32 {
+      width: 32px;
+      height: 32px;
+      line-height: 32px;
+    }
+    &.tb-mat-96 {
+      width: 96px;
+      height: 96px;
+      line-height: 96px;
+    }
+  }
+
+  .mat-snack-bar-container {
+    position: absolute;
+    background: none;
+    box-shadow: none;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: inherit;
+    max-width: inherit;
+    min-width: inherit;
+    pointer-events: none;
+    display: flex;
+  }
+
+  .mat-snack-bar-handset {
+    .mat-snack-bar-container {
+      position: relative !important;
+      width: 100% !important;
+      top: 0 !important;
+      left: 0 !important;
+      height: inherit !important;
+      tb-snack-bar-component {
+        width: 100%;
+      }
+    }
+  }
+
+  .mat-drawer-side {
+    border: none;
+  }
+
+  .mat-drawer-inner-container {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  mat-drawer.tb-details-drawer {
+    z-index: 59 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    @media #{$mat-gt-sm} {
+      width: 80% !important;
+    }
+    @media #{$mat-gt-md} {
+      width: 65% !important;
+    }
+  }
+
+  .mat-card-subtitle, .mat-card-content {
+    font-size: 16px;
+  }
+
+  .mat-toolbar > button:first-child {
+    margin-left: -8px;
+  }
+
+  .mat-toolbar > button:last-child {
+    margin-right: -8px;
+  }
+
+  .mat-toolbar {
+    line-height: normal;
+  }
+
+  mat-toolbar *, mat-toolbar :after, mat-toolbar :before {
+    box-sizing: border-box;
+  }
+
+  .mat-button, .mat-flat-button, .mat-stroked-button, .mat-raised-button {
+    &:not(.mat-icon-button) {
+      @media #{$mat-lt-md} {
+        padding: 0 6px;
+        min-width: 88px;
+      }
+      mat-icon {
+        margin-right: 5px;
+      }
+    }
+  }
+
+  .tb-dialog {
+    .mat-dialog-container {
+      padding: 0;
+      > *:first-child, form {
+        max-width: 100%;
+        min-width: 100%;
+        display: flex;
+        flex-direction: column;
+        overflow: auto;
+        height: 100%;
+      }
+      .mat-dialog-content {
+        margin: 0;
+        padding: 24px;
+      }
+      .mat-dialog-actions {
+        margin-bottom: 0;
+        padding: 8px 8px 8px 16px;
+      }
+    }
+  }
+
+  .tb-fullscreen-dialog-gt-sm {
+    @media #{$mat-gt-sm} {
+      min-height: 100%;
+      min-width: 100%;
+      max-width: none !important;
+      position: absolute !important;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      .mat-dialog-container {
+        > *:first-child, form {
+          min-width: 100% !important;
+        }
+        .mat-dialog-content {
+          max-height: 100%;
+        }
+      }
+    }
+  }
+
+  .tb-fullscreen-dialog {
+    @media #{$mat-lt-md} {
+      min-height: 100%;
+      min-width: 100%;
+      max-width: none !important;
+      position: absolute !important;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      .mat-dialog-container {
+        > *:first-child, form {
+          min-width: 100% !important;
+        }
+        .mat-dialog-content {
+          max-height: 100%;
+        }
+      }
+    }
+  }
+
+  .tb-absolute-fill {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+  }
+
+  span.no-data-found {
+    position: relative;
+    display: flex;
+    height: calc(100% - 57px);
+    text-transform: uppercase;
+  }
+
+
+  mat-tab-group.tb-headless {
+    margin-top: -50px;
+  }
+
+  .mat-tab-label {
+    text-transform: uppercase;
+  }
+
+  .tb-primary-background {
+    background-color: $primary;
+  }
+
+}
+

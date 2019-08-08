@@ -46,7 +46,7 @@
     <dependencies>
         <dependency>
             <groupId>org.thingsboard</groupId>
-            <artifactId>ui</artifactId>
+            <artifactId>ui-ngx</artifactId>
             <version>${project.version}</version>
             <type>jar</type>
             <scope>provided</scope>
@@ -105,7 +105,7 @@
                             <artifactItems>
                                 <artifactItem>
                                     <groupId>org.thingsboard</groupId>
-                                    <artifactId>ui</artifactId>
+                                    <artifactId>ui-ngx</artifactId>
                                     <type>jar</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${project.build.directory}/web</outputDirectory>
