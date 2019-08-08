@@ -22,7 +22,8 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.TenantEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
@@ -55,12 +56,11 @@ public class JpaTenantDao extends JpaAbstractSearchTextDao<TenantEntity, Tenant>
     }
 
     @Override
-    public List<Tenant> findTenantsByRegion(TenantId tenantId, String region, TextPageLink pageLink) {
-        return DaoUtil.convertDataList(tenantRepository
+    public PageData<Tenant> findTenantsByRegion(TenantId tenantId, String region, PageLink pageLink) {
+        return DaoUtil.toPageData(tenantRepository
                 .findByRegionNextPage(
                         region,
                         Objects.toString(pageLink.getTextSearch(), ""),
-                        pageLink.getIdOffset() == null ? NULL_UUID_STR : UUIDConverter.fromTimeUUID(pageLink.getIdOffset()),
-                        new PageRequest(0, pageLink.getLimit())));
+                        DaoUtil.toPageable(pageLink)));
     }
 }

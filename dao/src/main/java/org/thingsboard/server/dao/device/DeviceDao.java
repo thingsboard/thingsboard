@@ -19,7 +19,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
 
 import java.util.List;
@@ -47,7 +48,7 @@ public interface DeviceDao extends Dao<Device> {
      * @param pageLink the page link
      * @return the list of device objects
      */
-    List<Device> findDevicesByTenantId(UUID tenantId, TextPageLink pageLink);
+    PageData<Device> findDevicesByTenantId(UUID tenantId, PageLink pageLink);
 
     /**
      * Find devices by tenantId, type and page link.
@@ -57,7 +58,7 @@ public interface DeviceDao extends Dao<Device> {
      * @param pageLink the page link
      * @return the list of device objects
      */
-    List<Device> findDevicesByTenantIdAndType(UUID tenantId, String type, TextPageLink pageLink);
+    PageData<Device> findDevicesByTenantIdAndType(UUID tenantId, String type, PageLink pageLink);
 
     /**
      * Find devices by tenantId and devices Ids.
@@ -76,7 +77,7 @@ public interface DeviceDao extends Dao<Device> {
      * @param pageLink the page link
      * @return the list of device objects
      */
-    List<Device> findDevicesByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TextPageLink pageLink);
+    PageData<Device> findDevicesByTenantIdAndCustomerId(UUID tenantId, UUID customerId, PageLink pageLink);
 
     /**
      * Find devices by tenantId, customerId, type and page link.
@@ -87,7 +88,7 @@ public interface DeviceDao extends Dao<Device> {
      * @param pageLink the page link
      * @return the list of device objects
      */
-    List<Device> findDevicesByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, TextPageLink pageLink);
+    PageData<Device> findDevicesByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, PageLink pageLink);
 
 
     /**

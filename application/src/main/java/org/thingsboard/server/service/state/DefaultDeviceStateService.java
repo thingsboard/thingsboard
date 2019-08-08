@@ -38,7 +38,7 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
@@ -219,10 +219,10 @@ public class DefaultDeviceStateService implements DeviceStateService {
     }
 
     private void onClusterUpdateSync() {
-        List<Tenant> tenants = tenantService.findTenants(new TextPageLink(Integer.MAX_VALUE)).getData();
+        List<Tenant> tenants = tenantService.findTenants(new PageLink(Integer.MAX_VALUE)).getData();
         for (Tenant tenant : tenants) {
             List<ListenableFuture<DeviceStateData>> fetchFutures = new ArrayList<>();
-            List<Device> devices = deviceService.findDevicesByTenantId(tenant.getId(), new TextPageLink(Integer.MAX_VALUE)).getData();
+            List<Device> devices = deviceService.findDevicesByTenantId(tenant.getId(), new PageLink(Integer.MAX_VALUE)).getData();
             for (Device device : devices) {
                 if (!routingService.resolveById(device.getId()).isPresent()) {
                     if (!deviceStates.containsKey(device.getId())) {
@@ -245,10 +245,10 @@ public class DefaultDeviceStateService implements DeviceStateService {
     }
 
     private void initStateFromDB() {
-        List<Tenant> tenants = tenantService.findTenants(new TextPageLink(Integer.MAX_VALUE)).getData();
+        List<Tenant> tenants = tenantService.findTenants(new PageLink(Integer.MAX_VALUE)).getData();
         for (Tenant tenant : tenants) {
             List<ListenableFuture<DeviceStateData>> fetchFutures = new ArrayList<>();
-            List<Device> devices = deviceService.findDevicesByTenantId(tenant.getId(), new TextPageLink(Integer.MAX_VALUE)).getData();
+            List<Device> devices = deviceService.findDevicesByTenantId(tenant.getId(), new PageLink(Integer.MAX_VALUE)).getData();
             for (Device device : devices) {
                 if (!routingService.resolveById(device.getId()).isPresent()) {
                     fetchFutures.add(fetchDeviceState(device));

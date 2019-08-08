@@ -22,7 +22,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import org.thingsboard.server.dao.dashboard.DashboardInfoDao;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
@@ -48,13 +49,12 @@ public class JpaDashboardInfoDaoTest extends AbstractJpaDaoTest {
             createDashboard(tenantId2, i * 2);
         }
 
-        TextPageLink pageLink1 = new TextPageLink(15, "DASHBOARD");
-        List<DashboardInfo> dashboardInfos1 = dashboardInfoDao.findDashboardsByTenantId(tenantId1, pageLink1);
-        Assert.assertEquals(15, dashboardInfos1.size());
+        PageLink pageLink = new PageLink(15, 0, "DASHBOARD");
+        PageData<DashboardInfo> dashboardInfos1 = dashboardInfoDao.findDashboardsByTenantId(tenantId1, pageLink);
+        Assert.assertEquals(15, dashboardInfos1.getData().size());
 
-        TextPageLink pageLink2 = new TextPageLink(15, "DASHBOARD", dashboardInfos1.get(14).getId().getId(), null);
-        List<DashboardInfo> dashboardInfos2 = dashboardInfoDao.findDashboardsByTenantId(tenantId1, pageLink2);
-        Assert.assertEquals(5, dashboardInfos2.size());
+        PageData<DashboardInfo> dashboardInfos2 = dashboardInfoDao.findDashboardsByTenantId(tenantId1, pageLink.nextPageLink());
+        Assert.assertEquals(5, dashboardInfos2.getData().size());
     }
 
     private void createDashboard(UUID tenantId, int index) {

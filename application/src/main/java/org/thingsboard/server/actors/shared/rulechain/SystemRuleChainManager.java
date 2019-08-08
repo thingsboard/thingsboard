@@ -18,8 +18,8 @@ package org.thingsboard.server.actors.shared.rulechain;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageDataIterable.FetchFunction;
-import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.dao.model.ModelConstants;
 
@@ -33,7 +33,7 @@ public class SystemRuleChainManager extends RuleChainManager {
 
     @Override
     protected FetchFunction<RuleChain> getFetchEntitiesFunction() {
-        return link -> new TextPageData<>(Collections.emptyList(), link);
+        return link -> new PageData<>();
     }
 
     @Override

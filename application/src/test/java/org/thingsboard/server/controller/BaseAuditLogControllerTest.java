@@ -24,7 +24,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.AuditLog;
-import org.thingsboard.server.common.data.page.TimePageData;
+import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -77,14 +77,14 @@ public abstract class BaseAuditLogControllerTest extends AbstractControllerTest 
 
         List<AuditLog> loadedAuditLogs = new ArrayList<>();
         TimePageLink pageLink = new TimePageLink(23);
-        TimePageData<AuditLog> pageData;
+        PageData<AuditLog> pageData;
         do {
             pageData = doGetTypedWithTimePageLink("/api/audit/logs?",
-                    new TypeReference<TimePageData<AuditLog>>() {
+                    new TypeReference<PageData<AuditLog>>() {
                     }, pageLink);
             loadedAuditLogs.addAll(pageData.getData());
             if (pageData.hasNext()) {
-                pageLink = pageData.getNextPageLink();
+                pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
 
@@ -94,11 +94,11 @@ public abstract class BaseAuditLogControllerTest extends AbstractControllerTest 
         pageLink = new TimePageLink(23);
         do {
             pageData = doGetTypedWithTimePageLink("/api/audit/logs/customer/" + ModelConstants.NULL_UUID + "?",
-                    new TypeReference<TimePageData<AuditLog>>() {
+                    new TypeReference<PageData<AuditLog>>() {
                     }, pageLink);
             loadedAuditLogs.addAll(pageData.getData());
             if (pageData.hasNext()) {
-                pageLink = pageData.getNextPageLink();
+                pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
 
@@ -108,11 +108,11 @@ public abstract class BaseAuditLogControllerTest extends AbstractControllerTest 
         pageLink = new TimePageLink(23);
         do {
             pageData = doGetTypedWithTimePageLink("/api/audit/logs/user/" + tenantAdmin.getId().getId().toString() + "?",
-                    new TypeReference<TimePageData<AuditLog>>() {
+                    new TypeReference<PageData<AuditLog>>() {
                     }, pageLink);
             loadedAuditLogs.addAll(pageData.getData());
             if (pageData.hasNext()) {
-                pageLink = pageData.getNextPageLink();
+                pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
 
@@ -132,14 +132,14 @@ public abstract class BaseAuditLogControllerTest extends AbstractControllerTest 
 
         List<AuditLog> loadedAuditLogs = new ArrayList<>();
         TimePageLink pageLink = new TimePageLink(23);
-        TimePageData<AuditLog> pageData;
+        PageData<AuditLog> pageData;
         do {
             pageData = doGetTypedWithTimePageLink("/api/audit/logs/entity/DEVICE/" + savedDevice.getId().getId() + "?",
-                    new TypeReference<TimePageData<AuditLog>>() {
+                    new TypeReference<PageData<AuditLog>>() {
                     }, pageLink);
             loadedAuditLogs.addAll(pageData.getData());
             if (pageData.hasNext()) {
-                pageLink = pageData.getNextPageLink();
+                pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
 

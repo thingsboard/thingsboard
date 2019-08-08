@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.audit.AuditLogDao;
@@ -81,51 +82,30 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
     }
 
     @Override
-    public ListenableFuture<Void> saveByTenantIdAndEntityId(AuditLog auditLog) {
-        return insertService.submit(() -> null);
-    }
-
-    @Override
-    public ListenableFuture<Void> saveByTenantIdAndCustomerId(AuditLog auditLog) {
-        return insertService.submit(() -> null);
-    }
-
-    @Override
-    public ListenableFuture<Void> saveByTenantIdAndUserId(AuditLog auditLog) {
-        return insertService.submit(() -> null);
-    }
-
-    @Override
-    public ListenableFuture<Void> savePartitionsByTenantId(AuditLog auditLog) {
-        return insertService.submit(() -> null);
-    }
-
-    @Override
-    public List<AuditLog> findAuditLogsByTenantIdAndEntityId(UUID tenantId, EntityId entityId, TimePageLink pageLink) {
+    public PageData<AuditLog> findAuditLogsByTenantIdAndEntityId(UUID tenantId, EntityId entityId, TimePageLink pageLink) {
         return findAuditLogs(tenantId, entityId, null, null, pageLink);
     }
 
     @Override
-    public List<AuditLog> findAuditLogsByTenantIdAndCustomerId(UUID tenantId, CustomerId customerId, TimePageLink pageLink) {
+    public PageData<AuditLog> findAuditLogsByTenantIdAndCustomerId(UUID tenantId, CustomerId customerId, TimePageLink pageLink) {
         return findAuditLogs(tenantId, null, customerId, null, pageLink);
     }
 
     @Override
-    public List<AuditLog> findAuditLogsByTenantIdAndUserId(UUID tenantId, UserId userId, TimePageLink pageLink) {
+    public PageData<AuditLog> findAuditLogsByTenantIdAndUserId(UUID tenantId, UserId userId, TimePageLink pageLink) {
         return findAuditLogs(tenantId, null, null, userId, pageLink);
     }
 
     @Override
-    public List<AuditLog> findAuditLogsByTenantId(UUID tenantId, TimePageLink pageLink) {
+    public PageData<AuditLog> findAuditLogsByTenantId(UUID tenantId, TimePageLink pageLink) {
         return findAuditLogs(tenantId, null, null, null, pageLink);
     }
 
-    private List<AuditLog> findAuditLogs(UUID tenantId, EntityId entityId, CustomerId customerId, UserId userId, TimePageLink pageLink) {
+    private PageData<AuditLog> findAuditLogs(UUID tenantId, EntityId entityId, CustomerId customerId, UserId userId, TimePageLink pageLink) {
         Specification<AuditLogEntity> timeSearchSpec = JpaAbstractSearchTimeDao.getTimeSearchPageSpec(pageLink, "id");
         Specification<AuditLogEntity> fieldsSpec = getEntityFieldsSpec(tenantId, entityId, customerId, userId);
-        Sort.Direction sortDirection = pageLink.isAscOrder() ? Sort.Direction.ASC : Sort.Direction.DESC;
-        Pageable pageable = new PageRequest(0, pageLink.getLimit(), sortDirection, ID_PROPERTY);
-        return DaoUtil.convertDataList(auditLogRepository.findAll(where(timeSearchSpec).and(fieldsSpec), pageable).getContent());
+        Pageable pageable = DaoUtil.toPageable(pageLink);
+        return DaoUtil.toPageData(auditLogRepository.findAll(where(timeSearchSpec).and(fieldsSpec), pageable));
     }
 
     private Specification<AuditLogEntity> getEntityFieldsSpec(UUID tenantId, EntityId entityId, CustomerId customerId, UserId userId) {

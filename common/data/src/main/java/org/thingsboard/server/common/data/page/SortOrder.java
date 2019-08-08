@@ -15,23 +15,25 @@
  */
 package org.thingsboard.server.common.data.page;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import lombok.Data;
 
-import java.io.Serializable;
-import java.util.Arrays;
-import java.util.UUID;
+@Data
+public class SortOrder {
 
-@RequiredArgsConstructor
-@AllArgsConstructor
-public abstract class BasePageLink implements Serializable {
+    private final String property;
+    private final Direction direction;
 
-    private static final long serialVersionUID = -4189954843653250481L;
+    public SortOrder(String property) {
+        this(property, Direction.ASC);
+    }
 
-    @Getter protected final int limit;
+    public SortOrder(String property, Direction direction) {
+        this.property = property;
+        this.direction = direction;
+    }
 
-    @Getter @Setter protected UUID idOffset;
+    public static enum Direction {
+        ASC, DESC
+    }
 
 }

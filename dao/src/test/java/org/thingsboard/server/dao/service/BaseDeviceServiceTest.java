@@ -27,8 +27,8 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.TextPageData;
-import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -236,13 +236,13 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         }
         
         List<Device> loadedDevices = new ArrayList<>();
-        TextPageLink pageLink = new TextPageLink(23);
-        TextPageData<Device> pageData = null;
+        PageLink pageLink = new PageLink(23);
+        PageData<Device> pageData = null;
         do {
             pageData = deviceService.findDevicesByTenantId(tenantId, pageLink);
             loadedDevices.addAll(pageData.getData());
             if (pageData.hasNext()) {
-                pageLink = pageData.getNextPageLink();
+                pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
         
@@ -253,7 +253,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         
         deviceService.deleteDevicesByTenantId(tenantId);
 
-        pageLink = new TextPageLink(33);
+        pageLink = new PageLink(33);
         pageData = deviceService.findDevicesByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
@@ -289,13 +289,13 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         }
         
         List<Device> loadedDevicesTitle1 = new ArrayList<>();
-        TextPageLink pageLink = new TextPageLink(15, title1);
-        TextPageData<Device> pageData = null;
+        PageLink pageLink = new PageLink(15, 0, title1);
+        PageData<Device> pageData = null;
         do {
             pageData = deviceService.findDevicesByTenantId(tenantId, pageLink);
             loadedDevicesTitle1.addAll(pageData.getData());
             if (pageData.hasNext()) {
-                pageLink = pageData.getNextPageLink();
+                pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
         
@@ -305,12 +305,12 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         Assert.assertEquals(devicesTitle1, loadedDevicesTitle1);
         
         List<Device> loadedDevicesTitle2 = new ArrayList<>();
-        pageLink = new TextPageLink(4, title2);
+        pageLink = new PageLink(4, 0, title2);
         do {
             pageData = deviceService.findDevicesByTenantId(tenantId, pageLink);
             loadedDevicesTitle2.addAll(pageData.getData());
             if (pageData.hasNext()) {
-                pageLink = pageData.getNextPageLink();
+                pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
 
@@ -323,7 +323,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
             deviceService.deleteDevice(tenantId, device.getId());
         }
         
-        pageLink = new TextPageLink(4, title1);
+        pageLink = new PageLink(4, 0, title1);
         pageData = deviceService.findDevicesByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
@@ -332,7 +332,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
             deviceService.deleteDevice(tenantId, device.getId());
         }
         
-        pageLink = new TextPageLink(4, title2);
+        pageLink = new PageLink(4, 0, title2);
         pageData = deviceService.findDevicesByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
@@ -368,13 +368,13 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         }
 
         List<Device> loadedDevicesType1 = new ArrayList<>();
-        TextPageLink pageLink = new TextPageLink(15);
-        TextPageData<Device> pageData = null;
+        PageLink pageLink = new PageLink(15);
+        PageData<Device> pageData = null;
         do {
             pageData = deviceService.findDevicesByTenantIdAndType(tenantId, type1, pageLink);
             loadedDevicesType1.addAll(pageData.getData());
             if (pageData.hasNext()) {
-                pageLink = pageData.getNextPageLink();
+                pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
 
@@ -384,12 +384,12 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         Assert.assertEquals(devicesType1, loadedDevicesType1);
 
         List<Device> loadedDevicesType2 = new ArrayList<>();
-        pageLink = new TextPageLink(4);
+        pageLink = new PageLink(4);
         do {
             pageData = deviceService.findDevicesByTenantIdAndType(tenantId, type2, pageLink);
             loadedDevicesType2.addAll(pageData.getData());
             if (pageData.hasNext()) {
-                pageLink = pageData.getNextPageLink();
+                pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
 
@@ -402,7 +402,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
             deviceService.deleteDevice(tenantId, device.getId());
         }
 
-        pageLink = new TextPageLink(4);
+        pageLink = new PageLink(4);
         pageData = deviceService.findDevicesByTenantIdAndType(tenantId, type1, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
@@ -411,7 +411,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
             deviceService.deleteDevice(tenantId, device.getId());
         }
 
-        pageLink = new TextPageLink(4);
+        pageLink = new PageLink(4);
         pageData = deviceService.findDevicesByTenantIdAndType(tenantId, type2, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
@@ -442,13 +442,13 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         }
         
         List<Device> loadedDevices = new ArrayList<>();
-        TextPageLink pageLink = new TextPageLink(23);
-        TextPageData<Device> pageData = null;
+        PageLink pageLink = new PageLink(23);
+        PageData<Device> pageData = null;
         do {
             pageData = deviceService.findDevicesByTenantIdAndCustomerId(tenantId, customerId, pageLink);
             loadedDevices.addAll(pageData.getData());
             if (pageData.hasNext()) {
-                pageLink = pageData.getNextPageLink();
+                pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
         
@@ -459,7 +459,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         
         deviceService.unassignCustomerDevices(tenantId, customerId);
 
-        pageLink = new TextPageLink(33);
+        pageLink = new PageLink(33);
         pageData = deviceService.findDevicesByTenantIdAndCustomerId(tenantId, customerId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
@@ -504,13 +504,13 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         }
         
         List<Device> loadedDevicesTitle1 = new ArrayList<>();
-        TextPageLink pageLink = new TextPageLink(15, title1);
-        TextPageData<Device> pageData = null;
+        PageLink pageLink = new PageLink(15, 0, title1);
+        PageData<Device> pageData = null;
         do {
             pageData = deviceService.findDevicesByTenantIdAndCustomerId(tenantId, customerId, pageLink);
             loadedDevicesTitle1.addAll(pageData.getData());
             if (pageData.hasNext()) {
-                pageLink = pageData.getNextPageLink();
+                pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
         
@@ -520,12 +520,12 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         Assert.assertEquals(devicesTitle1, loadedDevicesTitle1);
         
         List<Device> loadedDevicesTitle2 = new ArrayList<>();
-        pageLink = new TextPageLink(4, title2);
+        pageLink = new PageLink(4, 0, title2);
         do {
             pageData = deviceService.findDevicesByTenantIdAndCustomerId(tenantId, customerId, pageLink);
             loadedDevicesTitle2.addAll(pageData.getData());
             if (pageData.hasNext()) {
-                pageLink = pageData.getNextPageLink();
+                pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
 
@@ -538,7 +538,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
             deviceService.deleteDevice(tenantId, device.getId());
         }
         
-        pageLink = new TextPageLink(4, title1);
+        pageLink = new PageLink(4, 0, title1);
         pageData = deviceService.findDevicesByTenantIdAndCustomerId(tenantId, customerId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
@@ -547,7 +547,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
             deviceService.deleteDevice(tenantId, device.getId());
         }
         
-        pageLink = new TextPageLink(4, title2);
+        pageLink = new PageLink(4, 0, title2);
         pageData = deviceService.findDevicesByTenantIdAndCustomerId(tenantId, customerId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
@@ -593,13 +593,13 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         }
 
         List<Device> loadedDevicesType1 = new ArrayList<>();
-        TextPageLink pageLink = new TextPageLink(15);
-        TextPageData<Device> pageData = null;
+        PageLink pageLink = new PageLink(15);
+        PageData<Device> pageData = null;
         do {
             pageData = deviceService.findDevicesByTenantIdAndCustomerIdAndType(tenantId, customerId, type1, pageLink);
             loadedDevicesType1.addAll(pageData.getData());
             if (pageData.hasNext()) {
-                pageLink = pageData.getNextPageLink();
+                pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
 
@@ -609,12 +609,12 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         Assert.assertEquals(devicesType1, loadedDevicesType1);
 
         List<Device> loadedDevicesType2 = new ArrayList<>();
-        pageLink = new TextPageLink(4);
+        pageLink = new PageLink(4);
         do {
             pageData = deviceService.findDevicesByTenantIdAndCustomerIdAndType(tenantId, customerId, type2, pageLink);
             loadedDevicesType2.addAll(pageData.getData());
             if (pageData.hasNext()) {
-                pageLink = pageData.getNextPageLink();
+                pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
 
@@ -627,7 +627,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
             deviceService.deleteDevice(tenantId, device.getId());
         }
 
-        pageLink = new TextPageLink(4);
+        pageLink = new PageLink(4);
         pageData = deviceService.findDevicesByTenantIdAndCustomerIdAndType(tenantId, customerId, type1, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
@@ -636,7 +636,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
             deviceService.deleteDevice(tenantId, device.getId());
         }
 
-        pageLink = new TextPageLink(4);
+        pageLink = new PageLink(4);
         pageData = deviceService.findDevicesByTenantIdAndCustomerIdAndType(tenantId, customerId, type2, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());

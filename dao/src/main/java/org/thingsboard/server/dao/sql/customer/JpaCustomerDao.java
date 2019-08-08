@@ -21,7 +21,8 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.UUIDConverter;
-import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.model.sql.CustomerEntity;
@@ -56,12 +57,11 @@ public class JpaCustomerDao extends JpaAbstractSearchTextDao<CustomerEntity, Cus
     }
 
     @Override
-    public List<Customer> findCustomersByTenantId(UUID tenantId, TextPageLink pageLink) {
-        return DaoUtil.convertDataList(customerRepository.findByTenantId(
+    public PageData<Customer> findCustomersByTenantId(UUID tenantId, PageLink pageLink) {
+        return DaoUtil.toPageData(customerRepository.findByTenantId(
                 UUIDConverter.fromTimeUUID(tenantId),
                 Objects.toString(pageLink.getTextSearch(), ""),
-                pageLink.getIdOffset() == null ? NULL_UUID_STR : UUIDConverter.fromTimeUUID(pageLink.getIdOffset()),
-                new PageRequest(0, pageLink.getLimit())));
+                DaoUtil.toPageable(pageLink)));
     }
 
     @Override

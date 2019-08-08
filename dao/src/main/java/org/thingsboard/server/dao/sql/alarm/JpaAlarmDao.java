@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.DaoUtil;
@@ -92,7 +93,7 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     }
 
     @Override
-    public ListenableFuture<List<AlarmInfo>> findAlarms(TenantId tenantId, AlarmQuery query) {
+    public ListenableFuture<PageData<AlarmInfo>> findAlarms(TenantId tenantId, AlarmQuery query) {
         log.trace("Try to find alarms by entity [{}], status [{}] and pageLink [{}]", query.getAffectedEntityId(), query.getStatus(), query.getPageLink());
         EntityId affectedEntity = query.getAffectedEntityId();
         String searchStatusName;
@@ -104,15 +105,17 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
             searchStatusName = query.getStatus().name();
         }
         String relationType = BaseAlarmService.ALARM_RELATION_PREFIX + searchStatusName;
-        ListenableFuture<List<EntityRelation>> relations = relationDao.findRelations(tenantId, affectedEntity, relationType, RelationTypeGroup.ALARM, EntityType.ALARM, query.getPageLink());
+        ListenableFuture<PageData<EntityRelation>> relations = relationDao.findRelations(tenantId, affectedEntity, relationType, RelationTypeGroup.ALARM, EntityType.ALARM, query.getPageLink());
         return Futures.transformAsync(relations, input -> {
-            List<ListenableFuture<AlarmInfo>> alarmFutures = new ArrayList<>(input.size());
-            for (EntityRelation relation : input) {
+            List<ListenableFuture<AlarmInfo>> alarmFutures = new ArrayList<>(input.getData().size());
+            for (EntityRelation relation : input.getData()) {
                 alarmFutures.add(Futures.transform(
                         findAlarmByIdAsync(tenantId, relation.getTo().getId()),
                         AlarmInfo::new));
             }
-            return Futures.successfulAsList(alarmFutures);
+            return Futures.transform(Futures.successfulAsList(alarmFutures), alarmInfos -> {
+                return new PageData(alarmInfos, input.getTotalPages(), input.getTotalElements(), input.hasNext());
+            });
         });
     }
 }

@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EventId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.event.EventDao;
@@ -107,17 +108,16 @@ public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event
     }
 
     @Override
-    public List<Event> findEvents(UUID tenantId, EntityId entityId, TimePageLink pageLink) {
+    public PageData<Event> findEvents(UUID tenantId, EntityId entityId, TimePageLink pageLink) {
         return findEvents(tenantId, entityId, null, pageLink);
     }
 
     @Override
-    public List<Event> findEvents(UUID tenantId, EntityId entityId, String eventType, TimePageLink pageLink) {
+    public PageData<Event> findEvents(UUID tenantId, EntityId entityId, String eventType, TimePageLink pageLink) {
         Specification<EventEntity> timeSearchSpec = JpaAbstractSearchTimeDao.getTimeSearchPageSpec(pageLink, "id");
         Specification<EventEntity> fieldsSpec = getEntityFieldsSpec(tenantId, entityId, eventType);
-        Sort.Direction sortDirection = pageLink.isAscOrder() ? Sort.Direction.ASC : Sort.Direction.DESC;
-        Pageable pageable = new PageRequest(0, pageLink.getLimit(), sortDirection, ID_PROPERTY);
-        return DaoUtil.convertDataList(eventRepository.findAll(where(timeSearchSpec).and(fieldsSpec), pageable).getContent());
+        Pageable pageable = DaoUtil.toPageable(pageLink);
+        return DaoUtil.toPageData(eventRepository.findAll(where(timeSearchSpec).and(fieldsSpec), pageable));
     }
 
     @Override

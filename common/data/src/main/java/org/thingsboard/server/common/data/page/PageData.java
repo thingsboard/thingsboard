@@ -18,39 +18,29 @@ package org.thingsboard.server.common.data.page;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.thingsboard.server.common.data.BaseData;
-import org.thingsboard.server.common.data.SearchTextBased;
-import org.thingsboard.server.common.data.id.UUIDBased;
 
+import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 
-public class TimePageData<T extends BaseData<? extends UUIDBased>> {
+public class PageData<T> {
 
     private final List<T> data;
-    private final TimePageLink nextPageLink;
+    private final int totalPages;
+    private final long totalElements;
     private final boolean hasNext;
 
-    public TimePageData(List<T> data, TimePageLink pageLink) {
-        super();
-        this.data = data;
-        int limit = pageLink.getLimit();
-        if (data != null && data.size() == limit) {
-            int index = data.size() - 1;
-            UUID idOffset = data.get(index).getId().getId();
-            nextPageLink = new TimePageLink(limit, pageLink.getStartTime(), pageLink.getEndTime(), pageLink.isAscOrder(), idOffset);
-            hasNext = true;
-        } else {
-            nextPageLink = null;
-            hasNext = false;
-        }
+    public PageData() {
+        this(Collections.emptyList(), 0, 0, false);
     }
 
     @JsonCreator
-    public TimePageData(@JsonProperty("data") List<T> data,
-                        @JsonProperty("nextPageLink") TimePageLink nextPageLink,
-                        @JsonProperty("hasNext") boolean hasNext) {
+    public PageData(@JsonProperty("data") List<T> data,
+                    @JsonProperty("totalPages") int totalPages,
+                    @JsonProperty("totalElements") long totalElements,
+                    @JsonProperty("hasNext") boolean hasNext) {
         this.data = data;
-        this.nextPageLink = nextPageLink;
+        this.totalPages = totalPages;
+        this.totalElements = totalElements;
         this.hasNext = hasNext;
     }
 
@@ -58,13 +48,17 @@ public class TimePageData<T extends BaseData<? extends UUIDBased>> {
         return data;
     }
 
+    public int getTotalPages() {
+        return totalPages;
+    }
+
+    public long getTotalElements() {
+        return totalElements;
+    }
+
     @JsonProperty("hasNext")
     public boolean hasNext() {
         return hasNext;
-    }
-
-    public TimePageLink getNextPageLink() {
-        return nextPageLink;
     }
 
 }

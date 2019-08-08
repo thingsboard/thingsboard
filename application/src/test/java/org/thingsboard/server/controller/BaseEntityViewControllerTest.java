@@ -33,8 +33,8 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.objects.AttributesEntityView;
 import org.thingsboard.server.common.data.objects.TelemetryEntityView;
-import org.thingsboard.server.common.data.page.TextPageData;
-import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -223,7 +223,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
                     + getNewSavedEntityView("Test entity view " + i).getId().getId().toString(), EntityView.class));
         }
 
-        List<EntityView> loadedViews = loadListOf(new TextPageLink(23), urlTemplate);
+        List<EntityView> loadedViews = loadListOf(new PageLink(23), urlTemplate);
 
         Collections.sort(views, idComparator);
         Collections.sort(loadedViews, idComparator);
@@ -239,7 +239,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         String name1 = "Entity view name1";
         List<EntityView> namesOfView1 = fillListOf(125, name1, "/api/customer/" + customerId.getId().toString()
                 + "/entityView/");
-        List<EntityView> loadedNamesOfView1 = loadListOf(new TextPageLink(15, name1), urlTemplate);
+        List<EntityView> loadedNamesOfView1 = loadListOf(new PageLink(15, 0, name1), urlTemplate);
         Collections.sort(namesOfView1, idComparator);
         Collections.sort(loadedNamesOfView1, idComparator);
         assertEquals(namesOfView1, loadedNamesOfView1);
@@ -247,7 +247,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         String name2 = "Entity view name2";
         List<EntityView> NamesOfView2 = fillListOf(143, name2, "/api/customer/" + customerId.getId().toString()
                 + "/entityView/");
-        List<EntityView> loadedNamesOfView2 = loadListOf(new TextPageLink(4, name2), urlTemplate);
+        List<EntityView> loadedNamesOfView2 = loadListOf(new PageLink(4, 0, name2), urlTemplate);
         Collections.sort(NamesOfView2, idComparator);
         Collections.sort(loadedNamesOfView2, idComparator);
         assertEquals(NamesOfView2, loadedNamesOfView2);
@@ -255,18 +255,18 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         for (EntityView view : loadedNamesOfView1) {
             doDelete("/api/customer/entityView/" + view.getId().getId().toString()).andExpect(status().isOk());
         }
-        TextPageData<EntityView> pageData = doGetTypedWithPageLink(urlTemplate,
-                new TypeReference<TextPageData<EntityView>>() {
-                }, new TextPageLink(4, name1));
+        PageData<EntityView> pageData = doGetTypedWithPageLink(urlTemplate,
+                new TypeReference<PageData<EntityView>>() {
+                }, new PageLink(4, 0, name1));
         Assert.assertFalse(pageData.hasNext());
         assertEquals(0, pageData.getData().size());
 
         for (EntityView view : loadedNamesOfView2) {
             doDelete("/api/customer/entityView/" + view.getId().getId().toString()).andExpect(status().isOk());
         }
-        pageData = doGetTypedWithPageLink(urlTemplate, new TypeReference<TextPageData<EntityView>>() {
+        pageData = doGetTypedWithPageLink(urlTemplate, new TypeReference<PageData<EntityView>>() {
                 },
-                new TextPageLink(4, name2));
+                new PageLink(4, 0, name2));
         Assert.assertFalse(pageData.hasNext());
         assertEquals(0, pageData.getData().size());
     }
@@ -278,7 +278,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         for (int i = 0; i < 178; i++) {
             views.add(getNewSavedEntityView("Test entity view" + i));
         }
-        List<EntityView> loadedViews = loadListOf(new TextPageLink(23), "/api/tenant/entityViews?");
+        List<EntityView> loadedViews = loadListOf(new PageLink(23), "/api/tenant/entityViews?");
 
         Collections.sort(views, idComparator);
         Collections.sort(loadedViews, idComparator);
@@ -290,14 +290,14 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
     public void testGetTenantEntityViewsByName() throws Exception {
         String name1 = "Entity view name1";
         List<EntityView> namesOfView1 = fillListOf(143, name1);
-        List<EntityView> loadedNamesOfView1 = loadListOf(new TextPageLink(15, name1), "/api/tenant/entityViews?");
+        List<EntityView> loadedNamesOfView1 = loadListOf(new PageLink(15, 0, name1), "/api/tenant/entityViews?");
         Collections.sort(namesOfView1, idComparator);
         Collections.sort(loadedNamesOfView1, idComparator);
         assertEquals(namesOfView1, loadedNamesOfView1);
 
         String name2 = "Entity view name2";
         List<EntityView> NamesOfView2 = fillListOf(75, name2);
-        List<EntityView> loadedNamesOfView2 = loadListOf(new TextPageLink(4, name2), "/api/tenant/entityViews?");
+        List<EntityView> loadedNamesOfView2 = loadListOf(new PageLink(4, 0, name2), "/api/tenant/entityViews?");
         Collections.sort(NamesOfView2, idComparator);
         Collections.sort(loadedNamesOfView2, idComparator);
         assertEquals(NamesOfView2, loadedNamesOfView2);
@@ -305,18 +305,18 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         for (EntityView view : loadedNamesOfView1) {
             doDelete("/api/entityView/" + view.getId().getId().toString()).andExpect(status().isOk());
         }
-        TextPageData<EntityView> pageData = doGetTypedWithPageLink("/api/tenant/entityViews?",
-                new TypeReference<TextPageData<EntityView>>() {
-                }, new TextPageLink(4, name1));
+        PageData<EntityView> pageData = doGetTypedWithPageLink("/api/tenant/entityViews?",
+                new TypeReference<PageData<EntityView>>() {
+                }, new PageLink(4, 0, name1));
         Assert.assertFalse(pageData.hasNext());
         assertEquals(0, pageData.getData().size());
 
         for (EntityView view : loadedNamesOfView2) {
             doDelete("/api/entityView/" + view.getId().getId().toString()).andExpect(status().isOk());
         }
-        pageData = doGetTypedWithPageLink("/api/tenant/entityViews?", new TypeReference<TextPageData<EntityView>>() {
+        pageData = doGetTypedWithPageLink("/api/tenant/entityViews?", new TypeReference<PageData<EntityView>>() {
                 },
-                new TextPageLink(4, name2));
+                new PageLink(4, 0, name2));
         Assert.assertFalse(pageData.hasNext());
         assertEquals(0, pageData.getData().size());
     }
@@ -516,15 +516,15 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         return viewNames;
     }
 
-    private List<EntityView> loadListOf(TextPageLink pageLink, String urlTemplate) throws Exception {
+    private List<EntityView> loadListOf(PageLink pageLink, String urlTemplate) throws Exception {
         List<EntityView> loadedItems = new ArrayList<>();
-        TextPageData<EntityView> pageData;
+        PageData<EntityView> pageData;
         do {
-            pageData = doGetTypedWithPageLink(urlTemplate, new TypeReference<TextPageData<EntityView>>() {
+            pageData = doGetTypedWithPageLink(urlTemplate, new TypeReference<PageData<EntityView>>() {
             }, pageLink);
             loadedItems.addAll(pageData.getData());
             if (pageData.hasNext()) {
-                pageLink = pageData.getNextPageLink();
+                pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
 
