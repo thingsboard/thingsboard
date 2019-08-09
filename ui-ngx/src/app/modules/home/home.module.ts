@@ -14,30 +14,28 @@
 /// limitations under the License.
 ///
 
-import { BrowserModule } from '@angular/platform-browser';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 
-import { AppRoutingModule } from './app-routing.module';
-import { CoreModule } from './core/core.module';
-import { LoginModule } from './modules/login/login.module';
-import { HomeModule } from './modules/home/home.module';
-
-import { AppComponent } from './app.component';
+import { HomeRoutingModule } from './home-routing.module';
+import { HomeComponent } from './home.component';
+import { SharedModule } from '@app/shared/shared.module';
+import { MenuLinkComponent } from '@modules/home/menu/menu-link.component';
+import { MenuToggleComponent } from '@modules/home/menu/menu-toggle.component';
+import { SideMenuComponent } from '@modules/home/menu/side-menu.component';
 
 @NgModule({
-  declarations: [
-    AppComponent
-  ],
+  declarations:
+    [
+      HomeComponent,
+      MenuLinkComponent,
+      MenuToggleComponent,
+      SideMenuComponent
+    ],
   imports: [
-    BrowserModule,
-    BrowserAnimationsModule,
-    AppRoutingModule,
-    CoreModule,
-    LoginModule,
-    HomeModule
-  ],
-  providers: [],
-  bootstrap: [AppComponent]
+    CommonModule,
+    SharedModule,
+    HomeRoutingModule
+  ]
 })
-export class AppModule { }
+export class HomeModule { }

@@ -14,30 +14,23 @@
 /// limitations under the License.
 ///
 
-import { BrowserModule } from '@angular/platform-browser';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgModule } from '@angular/core';
+import { Routes, RouterModule } from '@angular/router';
 
-import { AppRoutingModule } from './app-routing.module';
-import { CoreModule } from './core/core.module';
-import { LoginModule } from './modules/login/login.module';
-import { HomeModule } from './modules/home/home.module';
-
-import { AppComponent } from './app.component';
+const routes: Routes = [
+  { path: '',
+    redirectTo: 'home',
+    pathMatch: 'full',
+    data: {
+      breadcrumb: {
+        skip: true
+      }
+    }
+  }
+];
 
 @NgModule({
-  declarations: [
-    AppComponent
-  ],
-  imports: [
-    BrowserModule,
-    BrowserAnimationsModule,
-    AppRoutingModule,
-    CoreModule,
-    LoginModule,
-    HomeModule
-  ],
-  providers: [],
-  bootstrap: [AppComponent]
+  imports: [RouterModule.forRoot(routes)],
+  exports: [RouterModule]
 })
-export class AppModule { }
+export class AppRoutingModule { }

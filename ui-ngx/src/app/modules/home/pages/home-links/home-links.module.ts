@@ -14,30 +14,22 @@
 /// limitations under the License.
 ///
 
-import { BrowserModule } from '@angular/platform-browser';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 
-import { AppRoutingModule } from './app-routing.module';
-import { CoreModule } from './core/core.module';
-import { LoginModule } from './modules/login/login.module';
-import { HomeModule } from './modules/home/home.module';
-
-import { AppComponent } from './app.component';
+import { HomeLinksRoutingModule } from './home-links-routing.module';
+import { HomeLinksComponent} from './home-links.component';
+import { SharedModule } from '@app/shared/shared.module';
 
 @NgModule({
-  declarations: [
-    AppComponent
-  ],
+  declarations:
+    [
+      HomeLinksComponent
+    ],
   imports: [
-    BrowserModule,
-    BrowserAnimationsModule,
-    AppRoutingModule,
-    CoreModule,
-    LoginModule,
-    HomeModule
-  ],
-  providers: [],
-  bootstrap: [AppComponent]
+    CommonModule,
+    SharedModule,
+    HomeLinksRoutingModule
+  ]
 })
-export class AppModule { }
+export class HomeLinksModule { }

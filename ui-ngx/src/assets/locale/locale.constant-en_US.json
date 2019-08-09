@@ -407,7 +407,9 @@
         "customer-required": "Customer is required",
         "select-default-customer": "Select default customer",
         "default-customer": "Default customer",
-        "default-customer-required": "Default customer is required in order to debug dashboard on Tenant level"
+        "default-customer-required": "Default customer is required in order to debug dashboard on Tenant level",
+        "search": "Search customers",
+        "selected-customers": "{ count, plural, 1 {1 customer} other {# customers} } selected"
     },
     "datetime": {
         "date-from": "Date from",
@@ -1385,7 +1387,9 @@
         "idCopiedMessage": "Tenant Id has been copied to clipboard",
         "select-tenant": "Select tenant",
         "no-tenants-matching": "No tenants matching '{{entity}}' were found.",
-        "tenant-required": "Tenant is required"
+        "tenant-required": "Tenant is required",
+        "search": "Search tenants",
+        "selected-tenants": "{ count, plural, 1 {1 tenant} other {# tenants} } selected"
     },
     "timeinterval": {
         "seconds-interval": "{ seconds, plural, 1 {1 second} other {# seconds} }",
@@ -1453,7 +1457,9 @@
         "activation-link-copied-message": "User activation link has been copied to clipboard",
         "details": "Details",
         "login-as-tenant-admin": "Login as Tenant Admin",
-        "login-as-customer-user": "Login as Customer User"
+        "login-as-customer-user": "Login as Customer User",
+        "search": "Search users",
+        "selected-users": "{ count, plural, 1 {1 user} other {# users} } selected"
     },
     "value": {
         "type": "Value type",

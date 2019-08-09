@@ -14,30 +14,32 @@
 /// limitations under the License.
 ///
 
-import { BrowserModule } from '@angular/platform-browser';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgModule } from '@angular/core';
+import { Routes, RouterModule } from '@angular/router';
 
-import { AppRoutingModule } from './app-routing.module';
-import { CoreModule } from './core/core.module';
-import { LoginModule } from './modules/login/login.module';
-import { HomeModule } from './modules/home/home.module';
+import { HomeComponent } from './home.component';
+import { AuthGuard } from '@core/guards/auth.guard';
+import { StoreModule } from '@ngrx/store';
 
-import { AppComponent } from './app.component';
+const routes: Routes = [
+  { path: '',
+    component: HomeComponent,
+    data: {
+      title: 'home.home',
+      breadcrumb: {
+        skip: true
+      }
+    },
+    canActivate: [AuthGuard],
+    canActivateChild: [AuthGuard],
+    loadChildren: './pages/home-pages.module#HomePagesModule'
+  }
+];
 
 @NgModule({
-  declarations: [
-    AppComponent
-  ],
   imports: [
-    BrowserModule,
-    BrowserAnimationsModule,
-    AppRoutingModule,
-    CoreModule,
-    LoginModule,
-    HomeModule
-  ],
-  providers: [],
-  bootstrap: [AppComponent]
+    StoreModule,
+    RouterModule.forChild(routes)],
+  exports: [RouterModule]
 })
-export class AppModule { }
+export class HomeRoutingModule { }
