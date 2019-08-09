@@ -116,7 +116,7 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
             }
         } else {
             log.warn("Failed to find the device's claiming message![{}]", device.getName());
-            if(device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
+            if (device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
                 return Futures.immediateFuture(new ClaimResult(null, ClaimResponse.FAILURE));
             } else {
                 return Futures.immediateFuture(new ClaimResult(null, ClaimResponse.CLAIMED));

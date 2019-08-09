@@ -418,11 +418,7 @@ public class DeviceController extends BaseController {
                             deferredResult.setResult(new ResponseEntity<>(result, status));
                         } else {
                             status = HttpStatus.BAD_REQUEST;
-                            if (result.getResponse().equals(ClaimResponse.FAILURE)) {
-                                deferredResult.setResult(new ResponseEntity<>(result.getResponse(), status));
-                            } else {
-                                deferredResult.setResult(new ResponseEntity<>(result, status));
-                            }
+                            deferredResult.setResult(new ResponseEntity<>(result.getResponse(), status));
                         }
                     } else {
                         deferredResult.setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
