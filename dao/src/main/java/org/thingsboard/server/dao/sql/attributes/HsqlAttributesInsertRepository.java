@@ -32,7 +32,7 @@ import org.thingsboard.server.dao.util.SqlDao;
 @SqlDao
 @HsqlDao
 @Repository
-public class HsqlInsertRepository extends AttributeKvInsertRepository {
+public class HsqlAttributesInsertRepository extends AttributeKvInsertRepository {
 
     @Autowired
     private PlatformTransactionManager transactionManager;
@@ -51,9 +51,7 @@ public class HsqlInsertRepository extends AttributeKvInsertRepository {
 
     @Override
     public void saveOrUpdate(AttributeKvEntity entity) {
-        DefaultTransactionDefinition insertDefinition = new DefaultTransactionDefinition();
-        insertDefinition.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
-        TransactionStatus insertTransaction = transactionManager.getTransaction(insertDefinition);
+        TransactionStatus insertTransaction = getTransactionStatus(TransactionDefinition.PROPAGATION_REQUIRED);
         try {
             processSaveOrUpdate(entity, INSERT_BOOL_STATEMENT, INSERT_STR_STATEMENT, INSERT_LONG_STATEMENT, INSERT_DBL_STATEMENT);
             transactionManager.commit(insertTransaction);
@@ -61,9 +59,7 @@ public class HsqlInsertRepository extends AttributeKvInsertRepository {
             transactionManager.rollback(insertTransaction);
             if (e.getCause() instanceof ConstraintViolationException) {
                 log.trace("Insert request leaded in a violation of a defined integrity constraint {} for Entity with entityId {} and entityType {}", e.getMessage(), UUIDConverter.fromString(entity.getId().getEntityId()), entity.getId().getEntityType());
-                DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
-                definition.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
-                TransactionStatus transaction = transactionManager.getTransaction(definition);
+                TransactionStatus transaction = getTransactionStatus(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
                 try {
                     processSaveOrUpdate(entity, UPDATE_BOOL_STATEMENT, UPDATE_STR_STATEMENT, UPDATE_LONG_STATEMENT, UPDATE_DBL_STATEMENT);
                 } catch (Throwable th) {
@@ -75,6 +71,12 @@ public class HsqlInsertRepository extends AttributeKvInsertRepository {
                 log.trace("Could not execute the insert statement for Entity with entityId {} and entityType {}", UUIDConverter.fromString(entity.getId().getEntityId()), entity.getId().getEntityType());
             }
         }
+    }
+
+    private TransactionStatus getTransactionStatus(int propagationRequiresNew) {
+        DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+        definition.setPropagationBehavior(propagationRequiresNew);
+        return transactionManager.getTransaction(definition);
     }
 
     private static String getInsertString(String value) {

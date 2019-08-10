@@ -25,7 +25,7 @@ import org.thingsboard.server.dao.util.SqlDao;
 @PsqlDao
 @Repository
 @Transactional
-public class PsqlInsertRepository extends AttributeKvInsertRepository {
+public class PsqlAttributesInsertRepository extends AttributeKvInsertRepository {
 
     private static final String INSERT_OR_UPDATE_BOOL_STATEMENT = getInsertOrUpdateString(BOOL_V);
     private static final String INSERT_OR_UPDATE_STR_STATEMENT = getInsertOrUpdateString(STR_V);
