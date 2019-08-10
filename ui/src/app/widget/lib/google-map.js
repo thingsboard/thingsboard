@@ -19,7 +19,7 @@ var gmGlobals = {
 }
 
 export default class TbGoogleMap {
-    constructor($containerElement, utils, initCallback, defaultZoomLevel, dontFitMapBounds, disableScrollZooming, minZoomLevel, gmApiKey, gmDefaultMapType) {
+    constructor($containerElement, utils, initCallback, defaultZoomLevel, dontFitMapBounds, disableScrollZooming, minZoomLevel, gmApiKey, gmDefaultMapType, defaultCenterPosition) {
 
         var tbMap = this;
         this.utils = utils;
@@ -28,6 +28,7 @@ export default class TbGoogleMap {
         this.minZoomLevel = minZoomLevel;
         this.tooltips = [];
         this.defaultMapType = gmDefaultMapType;
+        this.defaultCenterPosition = defaultCenterPosition;
 
         function clearGlobalId() {
             if (gmGlobals.loadingGmId && gmGlobals.loadingGmId === tbMap.mapId) {
@@ -42,13 +43,12 @@ export default class TbGoogleMap {
         }
 
         function initGoogleMap() {
-
             tbMap.map = new google.maps.Map($containerElement[0], { // eslint-disable-line no-undef
                 scrollwheel: !disableScrollZooming,
                 mapTypeId: getGoogleMapTypeId(tbMap.defaultMapType),
-                zoom: tbMap.defaultZoomLevel || 8
+                zoom: tbMap.defaultZoomLevel || 8,
+                center: new google.maps.LatLng(tbMap.defaultCenterPosition[0], tbMap.defaultCenterPosition[1]) // eslint-disable-line no-undef
             });
-
             if (initCallback) {
                 initCallback();
             }
