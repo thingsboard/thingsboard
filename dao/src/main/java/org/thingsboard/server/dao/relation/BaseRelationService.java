@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2019 The Thingsboard Authors
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -65,7 +65,6 @@ public class BaseRelationService implements RelationService {
 
     @Autowired
     private CacheManager cacheManager;
-
 
     @Override
     public ListenableFuture<Boolean> checkRelation(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
@@ -307,10 +306,8 @@ public class BaseRelationService implements RelationService {
                         public void onSuccess(@Nullable List<EntityRelation> result) {
                             cache.putIfAbsent(fromAndTypeGroup, result);
                         }
-
                         @Override
-                        public void onFailure(Throwable t) {
-                        }
+                        public void onFailure(Throwable t) {}
                     });
             return relationsFuture;
         }
@@ -388,10 +385,8 @@ public class BaseRelationService implements RelationService {
                         public void onSuccess(@Nullable List<EntityRelation> result) {
                             cache.putIfAbsent(toAndTypeGroup, result);
                         }
-
                         @Override
-                        public void onFailure(Throwable t) {
-                        }
+                        public void onFailure(Throwable t) {}
                     });
             return relationsFuture;
         }
@@ -592,7 +587,6 @@ public class BaseRelationService implements RelationService {
         }
     }
 
-
     private ListenableFuture<Set<EntityRelation>> findRelationsRecursively(final TenantId tenantId, final EntityId rootId, final EntitySearchDirection direction,
                                                                            RelationTypeGroup relationTypeGroup, int lvl,
                                                                            final ConcurrentHashMap<EntityId, Boolean> uniqueMap) throws Exception {
@@ -626,7 +620,6 @@ public class BaseRelationService implements RelationService {
         List<Set<EntityRelation>> relations = Futures.successfulAsList(futures).get();
         relations.forEach(r -> r.forEach(children::add));
         return Futures.immediateFuture(children);
-
     }
 
     private ListenableFuture<List<EntityRelation>> findRelations(final TenantId tenantId, final EntityId rootId, final EntitySearchDirection direction, RelationTypeGroup relationTypeGroup) {
