@@ -255,7 +255,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
 
     @Override
     public ListenableFuture<List<Device>> findDevicesByQuery(TenantId tenantId, DeviceSearchQuery query) {
-        ListenableFuture<List<EntityRelation>> relations = relationService.findByQuery(tenantId, query.toEntitySearchQuery());
+        ListenableFuture<List<EntityRelation>> relations = relationService.findByQuery(tenantId, query.toEntitySearchQuery(),query.getParameters().isFetchLastLevelOnly());
         ListenableFuture<List<Device>> devices = Futures.transformAsync(relations, r -> {
             EntitySearchDirection direction = query.toEntitySearchQuery().getParameters().getDirection();
             List<ListenableFuture<Device>> futures = new ArrayList<>();

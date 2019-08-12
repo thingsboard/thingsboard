@@ -35,6 +35,7 @@ public class RelationsSearchParameters {
     private EntitySearchDirection direction;
     private RelationTypeGroup relationTypeGroup;
     private int maxLevel = 1;
+    private boolean fetchLastLevelOnly = false;
 
     public RelationsSearchParameters(EntityId entityId, EntitySearchDirection direction, int maxLevel) {
         this(entityId, direction, maxLevel, RelationTypeGroup.COMMON);
@@ -46,6 +47,7 @@ public class RelationsSearchParameters {
         this.direction = direction;
         this.maxLevel = maxLevel;
         this.relationTypeGroup = relationTypeGroup;
+        this.fetchLastLevelOnly = isFetchLastLevelOnly();
     }
 
     public EntityId getEntityId() {

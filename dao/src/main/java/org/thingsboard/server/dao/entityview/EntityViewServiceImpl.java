@@ -188,7 +188,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
 
     @Override
     public ListenableFuture<List<EntityView>> findEntityViewsByQuery(TenantId tenantId, EntityViewSearchQuery query) {
-        ListenableFuture<List<EntityRelation>> relations = relationService.findByQuery(tenantId, query.toEntitySearchQuery());
+        ListenableFuture<List<EntityRelation>> relations = relationService.findByQuery(tenantId, query.toEntitySearchQuery(), query.getParameters().isFetchLastLevelOnly());
         ListenableFuture<List<EntityView>> entityViews = Futures.transformAsync(relations, r -> {
             EntitySearchDirection direction = query.toEntitySearchQuery().getParameters().getDirection();
             List<ListenableFuture<EntityView>> futures = new ArrayList<>();

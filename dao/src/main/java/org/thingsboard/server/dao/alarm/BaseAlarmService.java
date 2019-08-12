@@ -154,7 +154,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     private List<EntityId> getParentEntities(Alarm alarm) throws InterruptedException, ExecutionException {
         EntityRelationsQuery query = new EntityRelationsQuery();
         query.setParameters(new RelationsSearchParameters(alarm.getOriginator(), EntitySearchDirection.TO, Integer.MAX_VALUE));
-        return relationService.findByQuery(alarm.getTenantId(), query).get().stream().map(EntityRelation::getFrom).collect(Collectors.toList());
+        return relationService.findByQuery(alarm.getTenantId(), query, query.getParameters().isFetchLastLevelOnly()).get().stream().map(EntityRelation::getFrom).collect(Collectors.toList());
     }
 
     private ListenableFuture<Alarm> updateAlarm(Alarm update) {

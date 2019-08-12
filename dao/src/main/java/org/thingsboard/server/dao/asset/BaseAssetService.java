@@ -230,7 +230,7 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
 
     @Override
     public ListenableFuture<List<Asset>> findAssetsByQuery(TenantId tenantId, AssetSearchQuery query) {
-        ListenableFuture<List<EntityRelation>> relations = relationService.findByQuery(tenantId, query.toEntitySearchQuery());
+        ListenableFuture<List<EntityRelation>> relations = relationService.findByQuery(tenantId, query.toEntitySearchQuery(),query.getParameters().isFetchLastLevelOnly());
         ListenableFuture<List<Asset>> assets = Futures.transformAsync(relations, r -> {
             EntitySearchDirection direction = query.toEntitySearchQuery().getParameters().getDirection();
             List<ListenableFuture<Asset>> futures = new ArrayList<>();

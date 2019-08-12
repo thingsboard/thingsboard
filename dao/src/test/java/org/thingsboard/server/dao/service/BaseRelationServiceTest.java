@@ -222,14 +222,14 @@ public abstract class BaseRelationServiceTest extends AbstractServiceTest {
         EntityRelationsQuery query = new EntityRelationsQuery();
         query.setParameters(new RelationsSearchParameters(assetA, EntitySearchDirection.FROM, -1));
         query.setFilters(Collections.singletonList(new EntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.singletonList(EntityType.ASSET))));
-        List<EntityRelation> relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
+        List<EntityRelation> relations = relationService.findByQuery(SYSTEM_TENANT_ID, query, query.getParameters().isFetchLastLevelOnly()).get();
         Assert.assertEquals(3, relations.size());
         Assert.assertTrue(relations.contains(relationA));
         Assert.assertTrue(relations.contains(relationB));
         Assert.assertTrue(relations.contains(relationC));
 
         //Test from cache
-        relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
+        relations = relationService.findByQuery(SYSTEM_TENANT_ID, query, query.getParameters().isFetchLastLevelOnly()).get();
         Assert.assertEquals(3, relations.size());
         Assert.assertTrue(relations.contains(relationA));
         Assert.assertTrue(relations.contains(relationB));
@@ -256,13 +256,13 @@ public abstract class BaseRelationServiceTest extends AbstractServiceTest {
         EntityRelationsQuery query = new EntityRelationsQuery();
         query.setParameters(new RelationsSearchParameters(assetA, EntitySearchDirection.FROM, -1));
         query.setFilters(Collections.singletonList(new EntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.singletonList(EntityType.ASSET))));
-        List<EntityRelation> relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
+        List<EntityRelation> relations = relationService.findByQuery(SYSTEM_TENANT_ID, query, query.getParameters().isFetchLastLevelOnly()).get();
         Assert.assertEquals(2, relations.size());
         Assert.assertTrue(relations.contains(relationAB));
         Assert.assertTrue(relations.contains(relationBC));
 
         //Test from cache
-        relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
+        relations = relationService.findByQuery(SYSTEM_TENANT_ID, query, query.getParameters().isFetchLastLevelOnly()).get();
         Assert.assertEquals(2, relations.size());
         Assert.assertTrue(relations.contains(relationAB));
         Assert.assertTrue(relations.contains(relationBC));
