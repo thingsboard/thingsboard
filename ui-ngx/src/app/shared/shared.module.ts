@@ -58,39 +58,41 @@ import { NospacePipe } from './pipe/nospace.pipe';
 import { TranslateModule } from '@ngx-translate/core';
 import { TbCheckboxComponent } from '@shared/components/tb-checkbox.component';
 import { HelpComponent } from '@shared/components/help.component';
-// import { EntitiesTableComponent } from '@shared/components/entity/entities-table.component';
-// import { AddEntityDialogComponent } from '@shared/components/entity/add-entity-dialog.component';
-// import { DetailsPanelComponent } from '@shared/components/details-panel.component';
-// import { EntityDetailsPanelComponent } from '@shared/components/entity/entity-details-panel.component';
+import { EntitiesTableComponent } from '@shared/components/entity/entities-table.component';
+import { AddEntityDialogComponent } from '@shared/components/entity/add-entity-dialog.component';
+import { DetailsPanelComponent } from '@shared/components/details-panel.component';
+import { EntityDetailsPanelComponent } from '@shared/components/entity/entity-details-panel.component';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
-// import { ContactComponent } from '@shared/components/contact.component';
+import { ContactComponent } from '@shared/components/contact.component';
 // import { AuditLogDetailsDialogComponent } from '@shared/components/audit-log/audit-log-details-dialog.component';
 // import { AuditLogTableComponent } from '@shared/components/audit-log/audit-log-table.component';
-// import { MillisecondsToTimeStringPipe } from '@shared/pipe/milliseconds-to-time-string.pipe';
-// import { TimewindowComponent } from '@shared/components/time/timewindow.component';
+import { MillisecondsToTimeStringPipe } from '@shared/pipe/milliseconds-to-time-string.pipe';
+import { TimewindowComponent } from '@shared/components/time/timewindow.component';
 import { OverlayModule } from '@angular/cdk/overlay';
-// import { TimewindowPanelComponent } from '@shared/components/time/timewindow-panel.component';
-// import { TimeintervalComponent } from '@shared/components/time/timeinterval.component';
-// import { DatetimePeriodComponent } from '@shared/components/time/datetime-period.component';
-// import { EnumToArrayPipe } from '@shared/pipe/enum-to-array.pipe';
+import { TimewindowPanelComponent } from '@shared/components/time/timewindow-panel.component';
+import { TimeintervalComponent } from '@shared/components/time/timeinterval.component';
+import { DatetimePeriodComponent } from '@shared/components/time/datetime-period.component';
+import { EnumToArrayPipe } from '@shared/pipe/enum-to-array.pipe';
 import { ClipboardModule } from 'ngx-clipboard';
 // import { ValueInputComponent } from '@shared/components/value-input.component';
-// import { IntervalCountPipe } from '@shared/pipe/interval-count.pipe';
 import { FullscreenDirective } from '@shared/components/fullscreen.directive';
+import { HighlightPipe } from '@shared/pipe/highlight.pipe';
+import {DashboardAutocompleteComponent} from '@shared/components/dashboard-autocomplete.component';
 
 @NgModule({
   providers: [
     DatePipe,
-//    MillisecondsToTimeStringPipe,
-//    EnumToArrayPipe,
+    MillisecondsToTimeStringPipe,
+    EnumToArrayPipe,
+    HighlightPipe
 //    IntervalCountPipe,
   ],
   entryComponents: [
     TbSnackBarComponent,
     TbAnchorComponent,
-//    AddEntityDialogComponent,
+    AddEntityDialogComponent,
 //    AuditLogDetailsDialogComponent,
-//    TimewindowPanelComponent,
+    TimewindowPanelComponent,
   ],
   declarations: [
     FooterComponent,
@@ -103,22 +105,23 @@ import { FullscreenDirective } from '@shared/components/fullscreen.directive';
     TbSnackBarComponent,
     BreadcrumbComponent,
     UserMenuComponent,
-//    EntitiesTableComponent,
-//    AddEntityDialogComponent,
-//    DetailsPanelComponent,
-//    EntityDetailsPanelComponent,
-//    ContactComponent,
+    EntitiesTableComponent,
+    AddEntityDialogComponent,
+    DetailsPanelComponent,
+    EntityDetailsPanelComponent,
+    ContactComponent,
 //    AuditLogTableComponent,
 //    AuditLogDetailsDialogComponent,
-//    TimewindowComponent,
-//    TimewindowPanelComponent,
-//    TimeintervalComponent,
-//    DatetimePeriodComponent,
+    TimewindowComponent,
+    TimewindowPanelComponent,
+    TimeintervalComponent,
+    DatetimePeriodComponent,
 //    ValueInputComponent,
+    DashboardAutocompleteComponent,
     NospacePipe,
-//    MillisecondsToTimeStringPipe,
-//    EnumToArrayPipe,
-//    IntervalCountPipe
+    MillisecondsToTimeStringPipe,
+    EnumToArrayPipe,
+    HighlightPipe
   ],
   imports: [
     CommonModule,
@@ -169,16 +172,17 @@ import { FullscreenDirective } from '@shared/components/fullscreen.directive';
     TbCheckboxComponent,
     BreadcrumbComponent,
     UserMenuComponent,
-//    EntitiesTableComponent,
-//    AddEntityDialogComponent,
-//    DetailsPanelComponent,
-//    EntityDetailsPanelComponent,
-//    ContactComponent,
+    EntitiesTableComponent,
+    AddEntityDialogComponent,
+    DetailsPanelComponent,
+    EntityDetailsPanelComponent,
+    ContactComponent,
 //    AuditLogTableComponent,
-//    TimewindowComponent,
-//    TimewindowPanelComponent,
-//    TimeintervalComponent,
-//    DatetimePeriodComponent,
+    TimewindowComponent,
+    TimewindowPanelComponent,
+    TimeintervalComponent,
+    DatetimePeriodComponent,
+    DashboardAutocompleteComponent,
 //    ValueInputComponent,
     MatButtonModule,
     MatCheckboxModule,
@@ -215,9 +219,9 @@ import { FullscreenDirective } from '@shared/components/fullscreen.directive';
     ReactiveFormsModule,
     OverlayModule,
     NospacePipe,
-//    MillisecondsToTimeStringPipe,
-//    EnumToArrayPipe,
-//    IntervalCountPipe,
+    MillisecondsToTimeStringPipe,
+    EnumToArrayPipe,
+    HighlightPipe,
     TranslateModule
   ]
 })

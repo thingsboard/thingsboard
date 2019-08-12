@@ -1,0 +1,103 @@
+///
+/// Copyright © 2016-2019 The Thingsboard Authors
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///     http://www.apache.org/licenses/LICENSE-2.0
+///
+/// Unless required by applicable law or agreed to in writing, software
+/// distributed under the License is distributed on an "AS IS" BASIS,
+/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/// See the License for the specific language governing permissions and
+/// limitations under the License.
+///
+
+import {
+  Component,
+  ComponentFactoryResolver,
+  Inject,
+  OnInit,
+  SkipSelf,
+  ViewChild
+} from '@angular/core';
+import { ErrorStateMatcher, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material';
+import { PageComponent } from '@shared/components/page.component';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { FormControl, FormGroupDirective, NgForm } from '@angular/forms';
+import { EntityTypeResource, EntityTypeTranslation } from '@shared/models/entity-type.models';
+import { EntityTableConfig } from '@shared/components/entity/entities-table-config.models';
+import { BaseData, HasId } from '@shared/models/base-data';
+import { EntityId } from '@shared/models/id/entity-id';
+import { AddEntityDialogData } from '@shared/components/entity/entity-component.models';
+import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
+import { EntityComponent } from '@shared/components/entity/entity.component';
+
+@Component({
+  selector: 'tb-add-entity-dialog',
+  templateUrl: './add-entity-dialog.component.html',
+  providers: [{provide: ErrorStateMatcher, useExisting: AddEntityDialogComponent}],
+  styleUrls: ['./add-entity-dialog.component.scss']
+})
+export class AddEntityDialogComponent extends PageComponent implements OnInit, ErrorStateMatcher {
+
+  entityComponent: EntityComponent<BaseData<HasId>>;
+  detailsForm: NgForm;
+
+  entitiesTableConfig: EntityTableConfig<BaseData<HasId>>;
+  translations: EntityTypeTranslation;
+  resources: EntityTypeResource;
+  entity: BaseData<EntityId>;
+
+  submitted = false;
+
+  @ViewChild('entityDetailsForm', {static: true}) entityDetailsFormAnchor: TbAnchorComponent;
+
+  constructor(protected store: Store<AppState>,
+              @Inject(MAT_DIALOG_DATA) public data: AddEntityDialogData<BaseData<HasId>>,
+              public dialogRef: MatDialogRef<AddEntityDialogComponent, BaseData<HasId>>,
+              private componentFactoryResolver: ComponentFactoryResolver,
+              @SkipSelf() private errorStateMatcher: ErrorStateMatcher) {
+    super(store);
+  }
+
+  ngOnInit(): void {
+    this.entitiesTableConfig = this.data.entitiesTableConfig;
+    this.translations = this.entitiesTableConfig.entityTranslations;
+    this.resources = this.entitiesTableConfig.entityResources;
+    this.entity = {};
+    const componentFactory = this.componentFactoryResolver.resolveComponentFactory(this.entitiesTableConfig.entityComponent);
+    const viewContainerRef = this.entityDetailsFormAnchor.viewContainerRef;
+    viewContainerRef.clear();
+    const componentRef = viewContainerRef.createComponent(componentFactory);
+    this.entityComponent = componentRef.instance;
+    this.entityComponent.isEdit = true;
+    this.entityComponent.entitiesTableConfig = this.entitiesTableConfig;
+    this.entityComponent.entity = this.entity;
+    this.detailsForm = this.entityComponent.entityNgForm;
+  }
+
+  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+    const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
+    const customErrorState = !!(control && control.invalid && this.submitted);
+    return originalErrorState || customErrorState;
+  }
+
+  cancel(): void {
+    this.dialogRef.close(null);
+  }
+
+  add(): void {
+    this.submitted = true;
+    if (this.detailsForm.valid) {
+      this.entity = {...this.entity, ...this.entityComponent.entityFormValue()};
+      this.entitiesTableConfig.saveEntity(this.entity).subscribe(
+        (entity) => {
+          this.dialogRef.close(entity);
+        }
+      );
+    }
+  }
+}

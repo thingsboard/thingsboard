@@ -33,3 +33,20 @@ export interface MailServerSettings {
   username: string;
   password: string;
 }
+
+export interface GeneralSettings {
+  baseUrl: string;
+}
+
+export interface UserPasswordPolicy {
+  minimumLength: number;
+  minimumUppercaseLetters: number;
+  minimumLowercaseLetters: number;
+  minimumDigits: number;
+  minimumSpecialCharacters: number;
+  passwordExpirationPeriodDays: number;
+}
+
+export interface SecuritySettings {
+  passwordPolicy: UserPasswordPolicy;
+}

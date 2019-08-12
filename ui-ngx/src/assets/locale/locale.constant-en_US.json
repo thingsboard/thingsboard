@@ -590,6 +590,7 @@
         "add-datasource-prompt": "Please add datasource"
     },
     "details": {
+        "details": "Details",
         "edit-mode": "Edit mode",
         "toggle-edit-mode": "Toggle edit mode"
     },
@@ -1378,6 +1379,7 @@
         "delete-tenants-title": "Are you sure you want to delete { count, plural, 1 {1 tenant} other {# tenants} }?",
         "delete-tenants-action-title": "Delete { count, plural, 1 {1 tenant} other {# tenants} }",
         "delete-tenants-text": "Be careful, after the confirmation all selected tenants will be removed and all related data will become unrecoverable.",
+        "created-time": "Created time",
         "title": "Title",
         "title-required": "Title is required.",
         "description": "Description",
@@ -1437,6 +1439,7 @@
         "delete-users-text": "Be careful, after the confirmation all selected users will be removed and all related data will become unrecoverable.",
         "activation-email-sent-message": "Activation email was successfully sent!",
         "resend-activation": "Resend activation",
+        "created-time": "Created time",
         "email": "Email",
         "email-required": "Email is required.",
         "invalid-email-format": "Invalid email format.",

@@ -152,7 +152,7 @@
         "aknowledge-alarm-title": "Reconocer alarma",
         "aknowledge-alarm-text": "¿Está seguro que quiere reconocer la alarma?",
         "clear-alarms-title": "Quitar { count, plural, 1 {1 alarma} other {# alarmas} }",
-        "clear-alarms-text": "¿Está seguro de que desea quitar { count, plural, 1 {1 alarma} other {# alarmas}?",
+        "clear-alarms-text": "¿Está seguro de que desea quitar { count, plural, 1 {1 alarma} other {# alarmas} }?",
         "clear-alarm-title": "Quitar alarma",
         "clear-alarm-text": "¿Está seguro que quiere quitar la alarma?",
         "alarm-status-filter": "Filtro de estado de alarma"

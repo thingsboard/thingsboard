@@ -23,3 +23,9 @@ export interface Customer extends ContactBased<CustomerId> {
   title: string;
   additionalInfo?: any;
 }
+
+export interface ShortCustomerInfo {
+  customerId: CustomerId;
+  title: string;
+  isPublic: boolean;
+}

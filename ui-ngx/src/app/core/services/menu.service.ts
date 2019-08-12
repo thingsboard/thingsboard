@@ -320,15 +320,78 @@ export class MenuService {
         type: 'link',
         path: '/home',
         icon: 'home'
+      },
+      {
+        name: 'asset.assets',
+        type: 'link',
+        path: '/assets',
+        icon: 'domain'
+      },
+      {
+        name: 'device.devices',
+        type: 'link',
+        path: '/devices',
+        icon: 'devices_other'
+      },
+      {
+        name: 'entity-view.entity-views',
+        type: 'link',
+        path: '/entityViews',
+        icon: 'view_quilt'
+      },
+      {
+        name: 'dashboard.dashboards',
+        type: 'link',
+        path: '/dashboards',
+        icon: 'dashboard'
       }
     );
-    // TODO:
     return sections;
   }
 
   private buildCustomerUserHome(authUser: any): Array<HomeSection> {
-    const homeSections: Array<HomeSection> = [];
-    // TODO:
+    const homeSections: Array<HomeSection> = [
+      {
+        name: 'asset.view-assets',
+        places: [
+          {
+            name: 'asset.assets',
+            icon: 'domain',
+            path: '/assets'
+          }
+        ]
+      },
+      {
+        name: 'device.view-devices',
+        places: [
+          {
+            name: 'device.devices',
+            icon: 'devices_other',
+            path: '/devices'
+          }
+        ]
+      },
+      {
+        name: 'entity-view.management',
+        places: [
+          {
+            name: 'entity-view.entity-views',
+            icon: 'view_quilt',
+            path: '/entityViews'
+          }
+        ]
+      },
+      {
+        name: 'dashboard.view-dashboards',
+        places: [
+          {
+            name: 'dashboard.dashboards',
+            icon: 'dashboard',
+            path: '/dashboards'
+          }
+        ]
+      }
+    ];
     return homeSections;
   }
 
