@@ -16,17 +16,21 @@
 package org.thingsboard.server.dao.sql.event;
 
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
+import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.dao.model.sql.EventEntity;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 @Slf4j
 @SqlDao
@@ -41,14 +45,50 @@ public abstract class EventInsertRepository {
 
     public abstract EventEntity saveOrUpdate(EventEntity entity);
 
-    protected EventEntity processSaveOrUpdate(EventEntity entity, String query) {
-        return doProcessSaveOrUpdate(entity, query);
+    protected EventEntity getEventEntity(EventEntity entity, String firstStatement, String secondStatement) {
+        EventEntity eventEntity = null;
+        TransactionStatus insertTransaction = getTransactionStatus(TransactionDefinition.PROPAGATION_REQUIRED);
+        try {
+            eventEntity = processSaveOrUpdate(entity, firstStatement);
+            transactionManager.commit(insertTransaction);
+        } catch (Throwable throwable) {
+            transactionManager.rollback(insertTransaction);
+            if (throwable.getCause() instanceof ConstraintViolationException) {
+                log.trace("Insert request leaded in a violation of a defined integrity constraint {} for Entity with entityId {} and entityType {}", throwable.getMessage(), entity.getEventUid(), entity.getEventType());
+                TransactionStatus transaction = getTransactionStatus(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+                try {
+                    eventEntity = processSaveOrUpdate(entity, secondStatement);
+                } catch (Throwable th) {
+                    log.trace("Could not execute the update statement for Entity with entityId {} and entityType {}", entity.getEventUid(), entity.getEventType());
+                    transactionManager.rollback(transaction);
+                }
+                transactionManager.commit(transaction);
+            } else {
+                log.trace("Could not execute the insert statement for Entity with entityId {} and entityType {}", entity.getEventUid(), entity.getEventType());
+            }
+        }
+        return eventEntity;
     }
 
     @Modifying
-    protected abstract EventEntity doProcessSaveOrUpdate(EventEntity entity, String query);
+    protected abstract EventEntity doProcessSaveOrUpdate(EventEntity entity, String strQuery);
 
-    protected TransactionStatus getTransactionStatus(int propagationRequired) {
+    protected Query getQuery(EventEntity entity, String strQuery) {
+        return entityManager.createNativeQuery(strQuery, EventEntity.class)
+                .setParameter("id", UUIDConverter.fromTimeUUID(entity.getId()))
+                .setParameter("body", entity.getBody().toString())
+                .setParameter("entity_id", entity.getEntityId())
+                .setParameter("entity_type", entity.getEntityType().name())
+                .setParameter("event_type", entity.getEventType())
+                .setParameter("event_uid", entity.getEventUid())
+                .setParameter("tenant_id", entity.getTenantId());
+    }
+
+    private EventEntity processSaveOrUpdate(EventEntity entity, String query) {
+        return doProcessSaveOrUpdate(entity, query);
+    }
+
+    private TransactionStatus getTransactionStatus(int propagationRequired) {
         DefaultTransactionDefinition insertDefinition = new DefaultTransactionDefinition();
         insertDefinition.setPropagationBehavior(propagationRequired);
         return transactionManager.getTransaction(insertDefinition);
