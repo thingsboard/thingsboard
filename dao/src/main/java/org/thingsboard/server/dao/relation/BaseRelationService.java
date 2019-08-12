@@ -308,7 +308,7 @@ public class BaseRelationService implements RelationService {
                         }
                         @Override
                         public void onFailure(Throwable t) {}
-                    });
+            });
             return relationsFuture;
         }
     }
