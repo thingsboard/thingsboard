@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /*@ngInject*/
-export default function WidgetActionDialogController($scope, $mdDialog, $filter, $q, dashboardService, dashboardUtils, types, utils,
+export default function WidgetActionDialogController($scope, $mdDialog, $filter, $q, dashboardService, dashboardUtils, types, toast, utils,
                                                      isAdd, fetchDashboardStates, actionSources, widgetActions, action) {
 
     var vm = this;
@@ -41,7 +41,7 @@ export default function WidgetActionDialogController($scope, $mdDialog, $filter,
     vm.actionSourceName = actionSourceName;
 
     vm.targetDashboardStateSearchTextChanged = function() {
-    }
+    };
 
     vm.dashboardStateSearch = dashboardStateSearch;
     vm.cancel = cancel;
@@ -153,6 +153,12 @@ export default function WidgetActionDialogController($scope, $mdDialog, $filter,
                 result.stateEntityParamName = action.stateEntityParamName;
                 break;
             case vm.types.widgetActionTypes.custom.value:
+                result.customFunction = action.customFunction;
+                break;
+            case vm.types.widgetActionTypes.customPretty.value:
+                result.customResources = action.customResources;
+                result.customHtml = action.customHtml;
+                result.customCss = action.customCss;
                 result.customFunction = action.customFunction;
                 break;
         }

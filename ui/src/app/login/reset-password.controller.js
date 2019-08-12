@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 /*@ngInject*/
-export default function ResetPasswordController($stateParams, $translate, toast, loginService, userService) {
+export default function ResetPasswordController($stateParams, $state, $translate, toast, loginService, userService) {
     var vm = this;
 
     vm.newPassword = '';
     vm.newPassword2 = '';
 
     vm.resetPassword = resetPassword;
+
+    vm.isExpiredPassword = $state.$current.data.expiredPassword === true;
 
     function resetPassword() {
         if (vm.newPassword !== vm.newPassword2) {

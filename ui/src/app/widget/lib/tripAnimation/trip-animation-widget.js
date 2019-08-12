@@ -679,7 +679,7 @@ function tripAnimationController($document, $scope, $log, $http, $timeout, $filt
 
     function fillPattern(pattern, replaceInfo, currentNormalizedValue) {
         let text = angular.copy(pattern);
-        let reg = /\$\{([^\}]*)\}/g;
+        let reg = /\$\{([^}]*)\}/g;
         if (replaceInfo) {
             for (let v = 0; v < replaceInfo.variables.length; v++) {
                 let variableInfo = replaceInfo.variables[v];

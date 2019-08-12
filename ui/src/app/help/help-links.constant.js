@@ -56,6 +56,7 @@ export default angular.module('thingsboard.help', [])
         {
             linksMap: {
                 outgoingMailSettings: helpBaseUrl + "/docs/user-guide/ui/mail-settings",
+                securitySettings: helpBaseUrl + "/docs/user-guide/ui/security-settings",
                 ruleEngine: helpBaseUrl + "/docs/user-guide/rule-engine-2-0/overview/",
                 ruleNodeCheckRelation: helpBaseUrl + "/docs/user-guide/rule-engine-2-0/filter-nodes/#check-relation-filter-node",
                 ruleNodeJsFilter: helpBaseUrl + "/docs/user-guide/rule-engine-2-0/filter-nodes/#script-filter-node",

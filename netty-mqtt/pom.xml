@@ -56,14 +56,6 @@
         </dependency>
     </dependencies>
 
-    <distributionManagement>
-        <repository>
-            <id>jk-5-maven</id>
-            <name>jk-5's maven server</name>
-            <url>sftp://10.2.1.2/opt/maven</url>
-        </repository>
-    </distributionManagement>
-
     <build>
         <extensions>
             <extension>

@@ -248,6 +248,17 @@ public class AuditLogServiceImpl implements AuditLogService {
                 EntityRelation relation = extractParameter(EntityRelation.class, 0, additionalInfo);
                 actionData.set("relation", objectMapper.valueToTree(relation));
                 break;
+            case LOGIN:
+            case LOGOUT:
+                String clientAddress = extractParameter(String.class, 0, additionalInfo);
+                String browser = extractParameter(String.class, 1, additionalInfo);
+                String os = extractParameter(String.class, 2, additionalInfo);
+                String device = extractParameter(String.class, 3, additionalInfo);
+                actionData.put("clientAddress", clientAddress);
+                actionData.put("browser", browser);
+                actionData.put("os", os);
+                actionData.put("device", device);
+                break;
         }
         return actionData;
     }

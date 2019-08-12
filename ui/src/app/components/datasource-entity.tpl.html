@@ -76,7 +76,7 @@
 							  <div class="tb-color-preview" ng-click="showColorPicker($event, $chip, $index)" style="margin-right: 5px;">
 								  <div class="tb-color-result" ng-style="{background: $chip.color}"></div>
 							  </div>
-							  <div layout="row">
+							  <div layout="row" flex>
 								  <div class="tb-chip-label">
                                       <span ng-show="$chip.type==types.dataKeyType.attribute">
                                           <md-tooltip>{{'datakey.attributes' | translate }}</md-tooltip>
@@ -94,7 +94,7 @@
 									  <strong ng-if="$chip.postFuncBody">f({{$chip.name}})</strong>
 								  </div>
 							  </div>
-							  <md-button ng-click="editDataKey($event, $chip, $index)" class="md-icon-button tb-md-32">
+							  <md-button ng-click="editDataKey($event, $chip)" class="md-icon-button tb-md-32">
 								  <md-icon aria-label="edit" class="material-icons tb-md-20">edit</md-icon>
 							  </md-button>
 						  </div>
@@ -139,7 +139,7 @@
 						   <div class="tb-color-preview" ng-click="showColorPicker($event, $chip, $index)" style="margin-right: 5px;">
 							   <div class="tb-color-result" ng-style="{background: $chip.color}"></div>
 						   </div>
-						   <div layout="row">
+						   <div layout="row" flex>
 							   <div class="tb-chip-label">
 								   {{$chip.label}}
 							   </div>
@@ -149,7 +149,7 @@
 								   <strong ng-if="$chip.postFuncBody">f({{$chip.name}})</strong>
 							   </div>
 						   </div>
-						   <md-button ng-click="editDataKey($event, $chip, $index)" class="md-icon-button tb-md-32">
+						   <md-button ng-click="editDataKey($event, $chip)" class="md-icon-button tb-md-32">
 							   <md-icon aria-label="edit" class="material-icons tb-md-20">edit</md-icon>
 						   </md-button>
 					   </div>

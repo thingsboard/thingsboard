@@ -24,6 +24,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,15 +35,24 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.UserCredentials;
+import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
+import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
+import org.thingsboard.server.service.security.model.SecuritySettings;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.model.UserPasswordPolicy;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.security.model.token.JwtToken;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
+import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.security.permission.Resource;
+import org.thingsboard.server.service.security.system.SystemSecurityService;
+import ua_parser.Client;
 
 import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
@@ -65,6 +75,12 @@ public class AuthController extends BaseController {
     @Autowired
     private MailService mailService;
 
+    @Autowired
+    private SystemSecurityService systemSecurityService;
+
+    @Autowired
+    private AuditLogService auditLogService;
+
     @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/auth/user", method = RequestMethod.GET)
     public @ResponseBody User getUser() throws ThingsboardException {
@@ -74,6 +90,13 @@ public class AuthController extends BaseController {
         } catch (Exception e) {
             throw handleException(e);
         }
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @RequestMapping(value = "/auth/logout", method = RequestMethod.POST)
+    @ResponseStatus(value = HttpStatus.OK)
+    public void logout(HttpServletRequest request) throws ThingsboardException {
+        logLogoutAction(request);
     }
 
     @PreAuthorize("isAuthenticated()")
@@ -89,8 +112,24 @@ public class AuthController extends BaseController {
             if (!passwordEncoder.matches(currentPassword, userCredentials.getPassword())) {
                 throw new ThingsboardException("Current password doesn't match!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
             }
+            systemSecurityService.validatePassword(securityUser.getTenantId(), newPassword);
+            if (passwordEncoder.matches(newPassword, userCredentials.getPassword())) {
+                throw new ThingsboardException("New password should be different from existing!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+            }
             userCredentials.setPassword(passwordEncoder.encode(newPassword));
-            userService.saveUserCredentials(securityUser.getTenantId(), userCredentials);
+            userService.replaceUserCredentials(securityUser.getTenantId(), userCredentials);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @RequestMapping(value = "/noauth/userPasswordPolicy", method = RequestMethod.GET)
+    @ResponseBody
+    public UserPasswordPolicy getUserPasswordPolicy() throws ThingsboardException {
+        try {
+            SecuritySettings securitySettings =
+                    checkNotNull(systemSecurityService.getSecuritySettings(TenantId.SYS_TENANT_ID));
+            return securitySettings.getPasswordPolicy();
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -167,6 +206,7 @@ public class AuthController extends BaseController {
         try {
             String activateToken = activateRequest.get("activateToken").asText();
             String password = activateRequest.get("password").asText();
+            systemSecurityService.validatePassword(TenantId.SYS_TENANT_ID, password);
             String encodedPassword = passwordEncoder.encode(password);
             UserCredentials credentials = userService.activateUserCredentials(TenantId.SYS_TENANT_ID, activateToken, encodedPassword);
             User user = userService.findUserById(TenantId.SYS_TENANT_ID, credentials.getUserId());
@@ -206,10 +246,14 @@ public class AuthController extends BaseController {
             String password = resetPasswordRequest.get("password").asText();
             UserCredentials userCredentials = userService.findUserCredentialsByResetToken(TenantId.SYS_TENANT_ID, resetToken);
             if (userCredentials != null) {
+                systemSecurityService.validatePassword(TenantId.SYS_TENANT_ID, password);
+                if (passwordEncoder.matches(password, userCredentials.getPassword())) {
+                    throw new ThingsboardException("New password should be different from existing!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+                }
                 String encodedPassword = passwordEncoder.encode(password);
                 userCredentials.setPassword(encodedPassword);
                 userCredentials.setResetToken(null);
-                userCredentials = userService.saveUserCredentials(TenantId.SYS_TENANT_ID, userCredentials);
+                userCredentials = userService.replaceUserCredentials(TenantId.SYS_TENANT_ID, userCredentials);
                 User user = userService.findUserById(TenantId.SYS_TENANT_ID, userCredentials.getUserId());
                 UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail());
                 SecurityUser securityUser = new SecurityUser(user, userCredentials.isEnabled(), principal);
@@ -229,6 +273,56 @@ public class AuthController extends BaseController {
             } else {
                 throw new ThingsboardException("Invalid reset token!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
             }
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    private void logLogoutAction(HttpServletRequest request) throws ThingsboardException {
+        try {
+            SecurityUser user = getCurrentUser();
+            RestAuthenticationDetails details = new RestAuthenticationDetails(request);
+            String clientAddress = details.getClientAddress();
+            String browser = "Unknown";
+            String os = "Unknown";
+            String device = "Unknown";
+            if (details.getUserAgent() != null) {
+                Client userAgent = details.getUserAgent();
+                if (userAgent.userAgent != null) {
+                    browser = userAgent.userAgent.family;
+                    if (userAgent.userAgent.major != null) {
+                        browser += " " + userAgent.userAgent.major;
+                        if (userAgent.userAgent.minor != null) {
+                            browser += "." + userAgent.userAgent.minor;
+                            if (userAgent.userAgent.patch != null) {
+                                browser += "." + userAgent.userAgent.patch;
+                            }
+                        }
+                    }
+                }
+                if (userAgent.os != null) {
+                    os = userAgent.os.family;
+                    if (userAgent.os.major != null) {
+                        os += " " + userAgent.os.major;
+                        if (userAgent.os.minor != null) {
+                            os += "." + userAgent.os.minor;
+                            if (userAgent.os.patch != null) {
+                                os += "." + userAgent.os.patch;
+                                if (userAgent.os.patchMinor != null) {
+                                    os += "." + userAgent.os.patchMinor;
+                                }
+                            }
+                        }
+                    }
+                }
+                if (userAgent.device != null) {
+                    device = userAgent.device.family;
+                }
+            }
+            auditLogService.logEntityAction(
+                    user.getTenantId(), user.getCustomerId(), user.getId(),
+                    user.getName(), user.getId(), null, ActionType.LOGOUT, null, clientAddress, browser, os, device);
+
         } catch (Exception e) {
             throw handleException(e);
         }

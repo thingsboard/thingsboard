@@ -141,7 +141,11 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, time
     }
 
     function logout() {
-        clearJwtToken(true);
+        $http.post('/api/auth/logout', null, {ignoreErrors: true}).then(function success() {
+            clearJwtToken(true);
+        }, function fail() {
+            clearJwtToken(true);
+        });
     }
 
     function clearJwtToken(doLogout) {

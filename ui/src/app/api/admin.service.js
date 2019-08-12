@@ -23,6 +23,8 @@ function AdminService($http, $q) {
     var service = {
         getAdminSettings: getAdminSettings,
         saveAdminSettings: saveAdminSettings,
+        getSecuritySettings: getSecuritySettings,
+        saveSecuritySettings: saveSecuritySettings,
         sendTestMail: sendTestMail,
         checkUpdates: checkUpdates
     }
@@ -44,6 +46,28 @@ function AdminService($http, $q) {
         var deferred = $q.defer();
         var url = '/api/admin/settings';
         $http.post(url, settings).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail(response) {
+            deferred.reject(response.data);
+        });
+        return deferred.promise;
+    }
+
+    function getSecuritySettings() {
+        var deferred = $q.defer();
+        var url = '/api/admin/securitySettings';
+        $http.get(url, null).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function saveSecuritySettings(securitySettings) {
+        var deferred = $q.defer();
+        var url = '/api/admin/securitySettings';
+        $http.post(url, securitySettings).then(function success(response) {
             deferred.resolve(response.data);
         }, function fail(response) {
             deferred.reject(response.data);
