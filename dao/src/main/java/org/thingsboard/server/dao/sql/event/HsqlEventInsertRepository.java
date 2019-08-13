@@ -26,20 +26,20 @@ import org.thingsboard.server.dao.util.SqlDao;
 @Repository
 public class HsqlEventInsertRepository extends EventInsertRepository {
 
-    private static final String EVENT_P_KEY_CONFLICT = "(event.id=I.id)";
-    private static final String EVENT_UNQ_KEY_CONFLICT = "(event.tenant_id=I.tenant_id AND event.entity_type=I.entity_type AND event.entity_id=I.entity_id AND event.event_type=I.event_type AND event.event_uid=I.event_uid)";
+    private static final String P_KEY_CONFLICT_STATEMENT = "(event.id=I.id)";
+    private static final String UNQ_KEY_CONFLICT_STATEMENT = "(event.tenant_id=I.tenant_id AND event.entity_type=I.entity_type AND event.entity_id=I.entity_id AND event.event_type=I.event_type AND event.event_uid=I.event_uid)";
 
-    private static final String FIRST_INSERT_STATEMENT = getInsertString(EVENT_P_KEY_CONFLICT);
-    private static final String SECOND_INSERT_STATEMENT = getInsertString(EVENT_UNQ_KEY_CONFLICT);
+    private static final String INSERT_OR_UPDATE_ON_P_KEY_CONFLICT = getInsertString(P_KEY_CONFLICT_STATEMENT);
+    private static final String INSERT_OR_UPDATE_ON_UNQ_KEY_CONFLICT = getInsertString(UNQ_KEY_CONFLICT_STATEMENT);
 
     @Override
     public EventEntity saveOrUpdate(EventEntity entity) {
-        return getEventEntity(entity, FIRST_INSERT_STATEMENT, SECOND_INSERT_STATEMENT);
+        return saveAndGet(entity, INSERT_OR_UPDATE_ON_P_KEY_CONFLICT, INSERT_OR_UPDATE_ON_UNQ_KEY_CONFLICT);
     }
 
     @Override
-    protected EventEntity doProcessSaveOrUpdate(EventEntity entity, String strQuery) {
-        getQuery(entity, strQuery).executeUpdate();
+    protected EventEntity doProcessSaveOrUpdate(EventEntity entity, String query) {
+        getQuery(entity, query).executeUpdate();
         return entityManager.find(EventEntity.class, UUIDConverter.fromTimeUUID(entity.getId()));
     }
 

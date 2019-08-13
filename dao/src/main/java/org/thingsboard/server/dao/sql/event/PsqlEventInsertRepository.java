@@ -27,27 +27,27 @@ import org.thingsboard.server.dao.util.SqlDao;
 @Repository
 public class PsqlEventInsertRepository extends EventInsertRepository {
 
-    private static final String UPDATE_P_KEY = "id = :id";
-    private static final String UPDATE_UNQ_KEY = "tenant_id = :tenant_id, entity_type = :entity_type, entity_id = :entity_id, event_type = :event_type, event_uid = :event_uid";
+    private static final String P_KEY_CONFLICT_STATEMENT = "(id)";
+    private static final String UNQ_KEY_CONFLICT_STATEMENT = "(tenant_id, entity_type, entity_id, event_type, event_uid)";
 
-    private static final String EVENT_P_KEY = "(id)";
-    private static final String EVENT_UNQ_KEY = "(tenant_id, entity_type, entity_id, event_type, event_uid)";
+    private static final String UPDATE_P_KEY_STATEMENT = "id = :id";
+    private static final String UPDATE_UNQ_KEY_STATEMENT = "tenant_id = :tenant_id, entity_type = :entity_type, entity_id = :entity_id, event_type = :event_type, event_uid = :event_uid";
 
-    private static final String FIRST_INSERT_STATEMENT = getInsertOrUpdateString(EVENT_P_KEY, UPDATE_UNQ_KEY);
-    private static final String SECOND_INSERT_STATEMENT = getInsertOrUpdateString(EVENT_UNQ_KEY, UPDATE_P_KEY);
+    private static final String INSERT_OR_UPDATE_ON_P_KEY_CONFLICT = getInsertOrUpdateString(P_KEY_CONFLICT_STATEMENT, UPDATE_UNQ_KEY_STATEMENT);
+    private static final String INSERT_OR_UPDATE_ON_UNQ_KEY_CONFLICT = getInsertOrUpdateString(UNQ_KEY_CONFLICT_STATEMENT, UPDATE_P_KEY_STATEMENT);
 
     @Override
     public EventEntity saveOrUpdate(EventEntity entity) {
-        return getEventEntity(entity, FIRST_INSERT_STATEMENT, SECOND_INSERT_STATEMENT);
+        return saveAndGet(entity, INSERT_OR_UPDATE_ON_P_KEY_CONFLICT, INSERT_OR_UPDATE_ON_UNQ_KEY_CONFLICT);
     }
 
     @Override
-    protected EventEntity doProcessSaveOrUpdate(EventEntity entity, String strQuery) {
-        return (EventEntity) getQuery(entity, strQuery).getSingleResult();
+    protected EventEntity doProcessSaveOrUpdate(EventEntity entity, String query) {
+        return (EventEntity) getQuery(entity, query).getSingleResult();
 
     }
 
-    private static String getInsertOrUpdateString(String eventKey, String updateKey) {
-        return "INSERT INTO event (id, body, entity_id, entity_type, event_type, event_uid, tenant_id) VALUES (:id, :body, :entity_id, :entity_type, :event_type, :event_uid, :tenant_id) ON CONFLICT " + eventKey + " DO UPDATE SET body = :body, " + updateKey + " returning *";
+    private static String getInsertOrUpdateString(String eventKeyStatement, String updateKeyStatement) {
+        return "INSERT INTO event (id, body, entity_id, entity_type, event_type, event_uid, tenant_id) VALUES (:id, :body, :entity_id, :entity_type, :event_type, :event_uid, :tenant_id) ON CONFLICT " + eventKeyStatement + " DO UPDATE SET body = :body, " + updateKeyStatement + " returning *";
     }
 }

@@ -45,11 +45,11 @@ public abstract class EventInsertRepository {
 
     public abstract EventEntity saveOrUpdate(EventEntity entity);
 
-    protected EventEntity getEventEntity(EventEntity entity, String firstStatement, String secondStatement) {
+    protected EventEntity saveAndGet(EventEntity entity, String insertOrUpdateOnPrimaryKeyConflict, String insertOrUpdateOnUniqueKeyConflict) {
         EventEntity eventEntity = null;
         TransactionStatus insertTransaction = getTransactionStatus(TransactionDefinition.PROPAGATION_REQUIRED);
         try {
-            eventEntity = processSaveOrUpdate(entity, firstStatement);
+            eventEntity = processSaveOrUpdate(entity, insertOrUpdateOnPrimaryKeyConflict);
             transactionManager.commit(insertTransaction);
         } catch (Throwable throwable) {
             transactionManager.rollback(insertTransaction);
@@ -57,7 +57,7 @@ public abstract class EventInsertRepository {
                 log.trace("Insert request leaded in a violation of a defined integrity constraint {} for Entity with entityId {} and entityType {}", throwable.getMessage(), entity.getEventUid(), entity.getEventType());
                 TransactionStatus transaction = getTransactionStatus(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
                 try {
-                    eventEntity = processSaveOrUpdate(entity, secondStatement);
+                    eventEntity = processSaveOrUpdate(entity, insertOrUpdateOnUniqueKeyConflict);
                 } catch (Throwable th) {
                     log.trace("Could not execute the update statement for Entity with entityId {} and entityType {}", entity.getEventUid(), entity.getEventType());
                     transactionManager.rollback(transaction);
@@ -71,10 +71,10 @@ public abstract class EventInsertRepository {
     }
 
     @Modifying
-    protected abstract EventEntity doProcessSaveOrUpdate(EventEntity entity, String strQuery);
+    protected abstract EventEntity doProcessSaveOrUpdate(EventEntity entity, String query);
 
-    protected Query getQuery(EventEntity entity, String strQuery) {
-        return entityManager.createNativeQuery(strQuery, EventEntity.class)
+    protected Query getQuery(EventEntity entity, String query) {
+        return entityManager.createNativeQuery(query, EventEntity.class)
                 .setParameter("id", UUIDConverter.fromTimeUUID(entity.getId()))
                 .setParameter("body", entity.getBody().toString())
                 .setParameter("entity_id", entity.getEntityId())
