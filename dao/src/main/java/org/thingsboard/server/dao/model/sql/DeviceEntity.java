@@ -39,74 +39,18 @@ import javax.persistence.Table;
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ModelConstants.DEVICE_COLUMN_FAMILY_NAME)
-public final class DeviceEntity extends BaseSqlEntity<Device> implements SearchTextEntity<Device> {
-
-    @Column(name = ModelConstants.DEVICE_TENANT_ID_PROPERTY)
-    private String tenantId;
-
-    @Column(name = ModelConstants.DEVICE_CUSTOMER_ID_PROPERTY)
-    private String customerId;
-
-    @Column(name = ModelConstants.DEVICE_TYPE_PROPERTY)
-    private String type;
-
-    @Column(name = ModelConstants.DEVICE_NAME_PROPERTY)
-    private String name;
-
-    @Column(name = ModelConstants.DEVICE_LABEL_PROPERTY)
-    private String label;
-
-    @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
-    private String searchText;
-
-    @Type(type = "json")
-    @Column(name = ModelConstants.DEVICE_ADDITIONAL_INFO_PROPERTY)
-    private JsonNode additionalInfo;
+public final class DeviceEntity extends AbstractDeviceEntity<Device> {
 
     public DeviceEntity() {
         super();
     }
 
     public DeviceEntity(Device device) {
-        if (device.getId() != null) {
-            this.setId(device.getId().getId());
-        }
-        if (device.getTenantId() != null) {
-            this.tenantId = toString(device.getTenantId().getId());
-        }
-        if (device.getCustomerId() != null) {
-            this.customerId = toString(device.getCustomerId().getId());
-        }
-        this.name = device.getName();
-        this.type = device.getType();
-        this.label = device.getLabel();
-        this.additionalInfo = device.getAdditionalInfo();
-    }
-
-    @Override
-    public String getSearchTextSource() {
-        return name;
-    }
-
-    @Override
-    public void setSearchText(String searchText) {
-        this.searchText = searchText;
+        super(device);
     }
 
     @Override
     public Device toData() {
-        Device device = new Device(new DeviceId(getId()));
-        device.setCreatedTime(UUIDs.unixTimestamp(getId()));
-        if (tenantId != null) {
-            device.setTenantId(new TenantId(toUUID(tenantId)));
-        }
-        if (customerId != null) {
-            device.setCustomerId(new CustomerId(toUUID(customerId)));
-        }
-        device.setName(name);
-        device.setType(type);
-        device.setLabel(label);
-        device.setAdditionalInfo(additionalInfo);
-        return device;
+        return super.toDevice();
     }
 }

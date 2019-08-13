@@ -74,8 +74,6 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
 
   filteredDashboards: Observable<Array<DashboardInfo>>;
 
-  private valueLoaded = false;
-
   private searchText = '';
 
   private propagateChange = (v: any) => { };
@@ -97,7 +95,21 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
   }
 
   ngOnInit() {
-
+    this.filteredDashboards = this.selectDashboardFormGroup.get('dashboard').valueChanges
+      .pipe(
+        tap(value => {
+          let modelValue;
+          if (typeof value === 'string' || !value) {
+            modelValue = null;
+          } else {
+            modelValue = this.useIdValue ? value.id.id : value;
+          }
+          this.updateView(modelValue);
+        }),
+        startWith<string | DashboardInfo>(''),
+        map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
+        mergeMap(name => this.fetchDashboards(name) )
+      );
   }
 
   ngAfterViewInit(): void {
@@ -123,48 +135,23 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
     this.disabled = isDisabled;
   }
 
-  initFilteredResults(): void {
-    this.filteredDashboards = this.selectDashboardFormGroup.get('dashboard').valueChanges
-      .pipe(
-        startWith<string | DashboardInfo>(''),
-        tap(value => {
-          if (this.valueLoaded) {
-            let modelValue;
-            if (typeof value === 'string' || !value) {
-              modelValue = null;
-            } else {
-              modelValue = this.useIdValue ? value.id.id : value;
-            }
-            this.updateView(modelValue);
-          }
-        }),
-        map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
-        mergeMap(name => this.fetchDashboards(name) )
-      );
-  }
-
   writeValue(value: DashboardInfo | string | null): void {
-    this.valueLoaded = false;
     this.searchText = '';
-    this.initFilteredResults();
     if (value != null) {
       if (typeof value === 'string') {
         this.dashboardService.getDashboardInfo(value).subscribe(
           (dashboard) => {
             this.modelValue = this.useIdValue ? dashboard.id.id : dashboard;
             this.selectDashboardFormGroup.get('dashboard').patchValue(dashboard, {emitEvent: true});
-            this.valueLoaded = true;
           }
         );
       } else {
         this.modelValue = this.useIdValue ? value.id.id : value;
-        this.selectDashboardFormGroup.get('dashboard').patchValue(value, {emitEvent: false});
-        this.valueLoaded = true;
+        this.selectDashboardFormGroup.get('dashboard').patchValue(value, {emitEvent: true});
       }
     } else {
       this.modelValue = null;
-      this.selectDashboardFormGroup.get('dashboard').patchValue(null, {emitEvent: false});
-      this.valueLoaded = true;
+      this.selectDashboardFormGroup.get('dashboard').patchValue(null, {emitEvent: true});
     }
   }
 

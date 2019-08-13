@@ -120,7 +120,7 @@
               </mat-cell>
             </ng-container>
             <ng-container [matColumnDef]="column.key" *ngFor="let column of columns">
-              <mat-header-cell *matHeaderCellDef [ngStyle]="{maxWidth: column.maxWidth}" mat-sort-header> {{ column.title | translate }} </mat-header-cell>
+              <mat-header-cell *matHeaderCellDef [ngStyle]="{maxWidth: column.maxWidth}" mat-sort-header [disabled]="!column.sortable"> {{ column.title | translate }} </mat-header-cell>
               <mat-cell *matCellDef="let entity" [ngStyle]="cellStyle(entity, column)" [innerHTML]="cellContent(entity, column)"></mat-cell>
             </ng-container>
             <ng-container matColumnDef="actions" stickyEnd>

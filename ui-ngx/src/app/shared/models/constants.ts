@@ -59,7 +59,8 @@ export const HelpLinks = {
     securitySettings: helpBaseUrl + '/docs/user-guide/ui/security-settings',
     tenants: helpBaseUrl + '/docs/user-guide/ui/tenants',
     customers: helpBaseUrl + '/docs/user-guide/customers',
-    users: helpBaseUrl + '/docs/user-guide/ui/users'
+    users: helpBaseUrl + '/docs/user-guide/ui/users',
+    devices: helpBaseUrl + '/docs/user-guide/ui/devices'
   }
 };
 

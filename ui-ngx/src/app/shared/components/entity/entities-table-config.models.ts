@@ -76,7 +76,8 @@ export class EntityTableColumn<T extends BaseData<HasId>> {
               public title: string,
               public maxWidth: string = '100%',
               public cellContentFunction: CellContentFunction<T> = (entity, property) => entity[property],
-              public cellStyleFunction: CellStyleFunction<T> = () => ({})) {
+              public cellStyleFunction: CellStyleFunction<T> = () => ({}),
+              public sortable: boolean = true) {
   }
 }
 
@@ -134,4 +135,8 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   deleteEntity: EntityIdOneWayOperation = () => of();
   entitiesFetchFunction: EntitiesFetchFunction<T, P> = () => of(emptyPageData<T>());
   onEntityAction: EntityActionFunction<T> = () => false;
+}
+
+export function checkBoxCell(value: boolean): string {
+  return `<mat-icon class="material-icons mat-icon">${value ? 'check_box' : 'check_box_outline_blank'}</mat-icon>`;
 }

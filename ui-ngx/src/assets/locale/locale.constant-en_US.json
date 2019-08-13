@@ -673,6 +673,7 @@
         "no-device-types-matching": "No device types matching '{{entitySubtype}}' were found.",
         "device-type-list-empty": "No device types selected.",
         "device-types": "Device types",
+        "created-time": "Created time",
         "name": "Name",
         "name-required": "Name is required.",
         "description": "Description",
@@ -691,7 +692,9 @@
         "device-public": "Device is public",
         "select-device": "Select device",
         "import": "Import device",
-        "device-file": "Device file"
+        "device-file": "Device file",
+        "search": "Search devices",
+        "selected-devices": "{ count, plural, 1 {1 device} other {# devices} } selected"
     },
     "dialog": {
         "close": "Close dialog"

@@ -82,7 +82,7 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
 
   isDetailsOpen = false;
 
-  @ViewChild('entityTableHeader', {static: false}) entityTableHeaderAnchor: TbAnchorComponent;
+  @ViewChild('entityTableHeader', {static: true}) entityTableHeaderAnchor: TbAnchorComponent;
 
   @ViewChild('searchInput', {static: false}) searchInputField: ElementRef;
 

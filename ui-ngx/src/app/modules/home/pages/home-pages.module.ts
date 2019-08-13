@@ -23,6 +23,7 @@ import { TenantModule } from '@modules/home/pages/tenant/tenant.module';
 // import { CustomerModule } from '@modules/home/pages/customer/customer.module';
 // import { AuditLogModule } from '@modules/home/pages/audit-log/audit-log.module';
 import { UserModule } from '@modules/home/pages/user/user.module';
+import {DeviceModule} from '@modules/home/pages/device/device.module';
 
 @NgModule({
   exports: [
@@ -30,6 +31,7 @@ import { UserModule } from '@modules/home/pages/user/user.module';
     HomeLinksModule,
     ProfileModule,
     TenantModule,
+    DeviceModule,
 //    CustomerModule,
 //    AuditLogModule,
     UserModule

@@ -1,3 +1,5 @@
+import {TenantId} from './id/tenant-id';
+
 ///
 /// Copyright © 2016-2019 The Thingsboard Authors
 ///
@@ -88,6 +90,20 @@ export const entityTypeTranslations = new Map<EntityType, EntityTypeTranslation>
         search: 'user.search',
         selectedEntities: 'user.selected-users'
       }
+    ],
+    [
+      EntityType.DEVICE,
+      {
+        type: 'entity.type-device',
+        typePlural: 'entity.type-devices',
+        list: 'entity.list-of-devices',
+        nameStartsWith: 'entity.device-name-starts-with',
+        details: 'device.device-details',
+        add: 'device.add',
+        noEntities: 'device.no-devices-text',
+        search: 'device.search',
+        selectedEntities: 'device.selected-devices'
+      }
     ]
   ]
 );
@@ -111,6 +127,18 @@ export const entityTypeResources = new Map<EntityType, EntityTypeResource>(
       {
         helpLinkId: 'users'
       }
+    ],
+    [
+      EntityType.DEVICE,
+      {
+        helpLinkId: 'devices'
+      }
     ]
   ]
 );
+
+export interface EntitySubtype {
+  tenantId: TenantId;
+  entityType: EntityType;
+  type: string;
+}

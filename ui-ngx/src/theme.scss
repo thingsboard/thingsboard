@@ -253,6 +253,12 @@ $tb-dark-theme: get-tb-dark-theme(
     }
   }
 
+  .mat-cell {
+    mat-icon {
+      color: rgba(0, 0, 0, .54);
+    }
+  }
+
   mat-toolbar.mat-primary {
     button.mat-icon-button {
       mat-icon {

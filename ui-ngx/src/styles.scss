@@ -209,6 +209,13 @@ label {
   }
 }
 
+div {
+  &.tb-small {
+    font-size: 14px;
+    color: rgba(0, 0, 0, .54);
+  }
+}
+
 pre.tb-highlight {
   display: block;
   padding: 15px;

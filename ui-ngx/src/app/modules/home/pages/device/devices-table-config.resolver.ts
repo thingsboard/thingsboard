@@ -1,0 +1,196 @@
+///
+/// Copyright © 2016-2019 The Thingsboard Authors
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///     http://www.apache.org/licenses/LICENSE-2.0
+///
+/// Unless required by applicable law or agreed to in writing, software
+/// distributed under the License is distributed on an "AS IS" BASIS,
+/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/// See the License for the specific language governing permissions and
+/// limitations under the License.
+///
+
+import { Injectable } from '@angular/core';
+
+import {ActivatedRouteSnapshot, Resolve, Router} from '@angular/router';
+
+import { Tenant } from '@shared/models/tenant.model';
+import {
+  CellActionDescriptor,
+  checkBoxCell,
+  DateEntityTableColumn,
+  EntityTableColumn,
+  EntityTableConfig
+} from '@shared/components/entity/entities-table-config.models';
+import { TenantService } from '@core/http/tenant.service';
+import { TranslateService } from '@ngx-translate/core';
+import { DatePipe } from '@angular/common';
+import {
+  EntityType,
+  entityTypeResources,
+  entityTypeTranslations
+} from '@shared/models/entity-type.models';
+import { TenantComponent } from '@modules/home/pages/tenant/tenant.component';
+import { EntityAction } from '@shared/components/entity/entity-component.models';
+import { User } from '@shared/models/user.model';
+import {Device, DeviceInfo} from '@app/shared/models/device.models';
+import {DeviceComponent} from '@modules/home/pages/device/device.component';
+import {Observable, of} from 'rxjs';
+import {select, Store} from '@ngrx/store';
+import {selectAuth, selectAuthUser} from '@core/auth/auth.selectors';
+import {map, mergeMap, take, tap} from 'rxjs/operators';
+import {AppState} from '@core/core.state';
+import {DeviceService} from '@app/core/http/device.service';
+import {Authority} from '@app/shared/models/authority.enum';
+import {CustomerService} from '@core/http/customer.service';
+import {Customer} from '@app/shared/models/customer.model';
+import {NULL_UUID} from '@shared/models/id/has-uuid';
+import {BroadcastService} from '@core/services/broadcast.service';
+import {DeviceTableHeaderComponent} from '@modules/home/pages/device/device-table-header.component';
+
+@Injectable()
+export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<DeviceInfo>> {
+
+  private readonly config: EntityTableConfig<DeviceInfo> = new EntityTableConfig<DeviceInfo>();
+
+  private customerId: string;
+
+  constructor(private store: Store<AppState>,
+              private broadcast: BroadcastService,
+              private deviceService: DeviceService,
+              private customerService: CustomerService,
+              private translate: TranslateService,
+              private datePipe: DatePipe,
+              private router: Router) {
+
+    this.config.entityType = EntityType.CUSTOMER;
+    this.config.entityComponent = DeviceComponent;
+    this.config.entityTranslations = entityTypeTranslations.get(EntityType.DEVICE);
+    this.config.entityResources = entityTypeResources.get(EntityType.DEVICE);
+
+    this.config.deleteEntityTitle = device => this.translate.instant('device.delete-device-title', { deviceName: device.name });
+    this.config.deleteEntityContent = () => this.translate.instant('device.delete-device-text');
+    this.config.deleteEntitiesTitle = count => this.translate.instant('device.delete-devices-title', {count});
+    this.config.deleteEntitiesContent = () => this.translate.instant('device.delete-devices-text');
+
+    this.config.loadEntity = id => this.deviceService.getDeviceInfo(id.id);
+    this.config.saveEntity = device => {
+      return this.deviceService.saveDevice(device).pipe(
+        tap(() => {
+          this.broadcast.broadcast('deviceSaved');
+        }),
+        mergeMap((savedDevice) => this.deviceService.getDeviceInfo(savedDevice.id.id)
+      ));
+    };
+    this.config.onEntityAction = action => this.onDeviceAction(action);
+
+    this.config.headerComponent = DeviceTableHeaderComponent;
+
+  }
+
+  resolve(route: ActivatedRouteSnapshot): Observable<EntityTableConfig<DeviceInfo>> {
+    const routeParams = route.params;
+    this.config.componentsData = {
+      deviceScope: route.data.devicesType,
+      deviceType: ''
+    };
+    this.customerId = routeParams.customerId;
+    return this.store.pipe(select(selectAuthUser), take(1)).pipe(
+      tap((authUser) => {
+        if (authUser.authority === Authority.CUSTOMER_USER) {
+          this.config.componentsData.deviceScope = 'customer_user';
+          this.customerId = authUser.customerId;
+        }
+      }),
+      mergeMap(() =>
+        this.customerId ? this.customerService.getCustomer(this.customerId) : of(null as Customer)
+      ),
+      map((parentCustomer) => {
+        if (parentCustomer) {
+          if (parentCustomer.additionalInfo && parentCustomer.additionalInfo.isPublic) {
+            this.config.tableTitle = this.translate.instant('customer.public-devices');
+          } else {
+            this.config.tableTitle = parentCustomer.title + ': ' + this.translate.instant('device.devices');
+          }
+        } else {
+          this.config.tableTitle = this.translate.instant('device.devices');
+        }
+        this.config.columns = this.configureColumns(this.config.componentsData.deviceScope);
+        this.configureEntityFunctions(this.config.componentsData.deviceScope);
+        this.config.cellActionDescriptors = this.configureCellActions(this.config.componentsData.deviceScope);
+        return this.config;
+      })
+    );
+  }
+
+  configureColumns(deviceScope: string): Array<EntityTableColumn<Device | DeviceInfo>> {
+    const columns: Array<EntityTableColumn<Device | DeviceInfo>> = [
+      new DateEntityTableColumn<DeviceInfo>('createdTime', 'device.created-time', this.datePipe, '150px'),
+      new EntityTableColumn<DeviceInfo>('name', 'device.name'),
+      new EntityTableColumn<DeviceInfo>('type', 'device.device-type'),
+      new EntityTableColumn<DeviceInfo>('label', 'device.label')
+    ];
+    if (deviceScope === 'tenant') {
+      columns.push(
+        new EntityTableColumn<DeviceInfo>('customerTitle', 'customer.customer'),
+        new EntityTableColumn<DeviceInfo>('customerIsPublic', 'device.public', '60px',
+          entity => {
+            return checkBoxCell(entity.customerIsPublic);
+          }, () => ({}), false),
+      );
+    }
+    columns.push(
+      new EntityTableColumn<DeviceInfo>('gateway', 'device.is-gateway', '60px',
+        entity => {
+          return checkBoxCell(entity.additionalInfo && entity.additionalInfo.gateway);
+        }, () => ({}), false)
+    );
+    return columns;
+  }
+
+  configureEntityFunctions(deviceScope: string): void {
+    if (deviceScope === 'tenant') {
+      this.config.entitiesFetchFunction = pageLink => this.deviceService.getTenantDeviceInfos(pageLink, this.config.componentsData.deviceType);
+      this.config.deleteEntity = id => this.deviceService.deleteDevice(id.id);
+    } else {
+      this.config.entitiesFetchFunction = pageLink => this.deviceService.getCustomerDeviceInfos(this.customerId, pageLink, this.config.componentsData.deviceType);
+      this.config.deleteEntity = id => this.deviceService.unassignDeviceFromCustomer(id.id);
+    }
+  }
+
+  configureCellActions(deviceScope: string): Array<CellActionDescriptor<Device | DeviceInfo>> {
+    const actions: Array<CellActionDescriptor<Device | DeviceInfo>> = [];
+    if (deviceScope === 'tenant') {
+      actions.push(
+        {
+          name: this.translate.instant('device.make-public'),
+          icon: 'share',
+          isEnabled: (entity) => (!entity.customerId || entity.customerId.id === NULL_UUID),
+          onAction: ($event, entity) => this.makePublic($event, entity)
+        }
+      );
+    }
+    return actions;
+  }
+
+  makePublic($event: Event, device: Device) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    // TODO:
+  }
+
+  onDeviceAction(action: EntityAction<Device | DeviceInfo>): boolean {
+    switch (action.action) {
+      case 'makePublic':
+        this.makePublic(action.event, action.entity);
+        return true;
+    }
+    return false;
+  }
+
+}

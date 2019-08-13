@@ -78,6 +78,8 @@ import { ClipboardModule } from 'ngx-clipboard';
 import { FullscreenDirective } from '@shared/components/fullscreen.directive';
 import { HighlightPipe } from '@shared/pipe/highlight.pipe';
 import {DashboardAutocompleteComponent} from '@shared/components/dashboard-autocomplete.component';
+import {EntitySubTypeAutocompleteComponent} from '@shared/components/entity/entity-subtype-autocomplete.component';
+import {EntitySubTypeSelectComponent} from './components/entity/entity-subtype-select.component';
 
 @NgModule({
   providers: [
@@ -118,6 +120,8 @@ import {DashboardAutocompleteComponent} from '@shared/components/dashboard-autoc
     DatetimePeriodComponent,
 //    ValueInputComponent,
     DashboardAutocompleteComponent,
+    EntitySubTypeAutocompleteComponent,
+    EntitySubTypeSelectComponent,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
@@ -183,6 +187,8 @@ import {DashboardAutocompleteComponent} from '@shared/components/dashboard-autoc
     TimeintervalComponent,
     DatetimePeriodComponent,
     DashboardAutocompleteComponent,
+    EntitySubTypeAutocompleteComponent,
+    EntitySubTypeSelectComponent,
 //    ValueInputComponent,
     MatButtonModule,
     MatCheckboxModule,
