@@ -276,7 +276,7 @@ public class EntityRelationController extends BaseController {
         checkNotNull(query.getFilters());
         checkEntityId(query.getParameters().getEntityId(), Operation.READ);
         try {
-            return checkNotNull(relationService.findByQuery(getTenantId(), query, query.getParameters().isFetchLastLevelOnly()).get());
+            return checkNotNull(relationService.findByQuery(getTenantId(), query).get());
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -291,7 +291,7 @@ public class EntityRelationController extends BaseController {
         checkNotNull(query.getFilters());
         checkEntityId(query.getParameters().getEntityId(), Operation.READ);
         try {
-            return checkNotNull(relationService.findInfoByQuery(getTenantId(), query, query.getParameters().isFetchLastLevelOnly()).get());
+            return checkNotNull(relationService.findInfoByQuery(getTenantId(), query).get());
         } catch (Exception e) {
             throw handleException(e);
         }
