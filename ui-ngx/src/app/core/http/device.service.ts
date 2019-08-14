@@ -16,15 +16,16 @@
 
 import { Injectable } from '@angular/core';
 import { defaultHttpOptions } from './http-utils';
-import { Observable } from 'rxjs/index';
+import { Observable, Subject, ReplaySubject } from 'rxjs/index';
 import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
 import { Tenant } from '@shared/models/tenant.model';
 import {DashboardInfo, Dashboard} from '@shared/models/dashboard.models';
 import {map} from 'rxjs/operators';
-import {DeviceInfo, Device} from '@app/shared/models/device.models';
+import {DeviceInfo, Device, DeviceCredentials} from '@app/shared/models/device.models';
 import {EntitySubtype} from '@app/shared/models/entity-type.models';
+import {AuthService} from '../auth/auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -65,6 +66,40 @@ export class DeviceService {
 
   public getDeviceTypes(ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Array<EntitySubtype>> {
     return this.http.get<Array<EntitySubtype>>('/api/device/types', defaultHttpOptions(ignoreLoading, ignoreErrors));
+  }
+
+  public getDeviceCredentials(deviceId: string, sync: boolean = false, ignoreErrors: boolean = false,
+                              ignoreLoading: boolean = false): Observable<DeviceCredentials> {
+    const url = `/api/device/${deviceId}/credentials`;
+    if (sync) {
+      const responseSubject = new ReplaySubject<DeviceCredentials>();
+      const request = new XMLHttpRequest();
+      request.open('GET', url, false);
+      request.setRequestHeader('Accept', 'application/json, text/plain, */*');
+      const jwtToken = AuthService.getJwtToken();
+      if (jwtToken) {
+        request.setRequestHeader('X-Authorization', 'Bearer ' + jwtToken);
+      }
+      request.send(null);
+      if (request.status === 200) {
+        const credentials = JSON.parse(request.responseText) as DeviceCredentials;
+        responseSubject.next(credentials);
+      } else {
+        responseSubject.error(null);
+      }
+      return responseSubject.asObservable();
+    } else {
+      return this.http.get<DeviceCredentials>(url, defaultHttpOptions(ignoreLoading, ignoreErrors));
+    }
+  }
+
+  public saveDeviceCredentials(deviceCredentials: DeviceCredentials, ignoreErrors: boolean = false,
+                               ignoreLoading: boolean = false): Observable<DeviceCredentials> {
+    return this.http.post<DeviceCredentials>('/api/device/credentials', deviceCredentials, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  }
+
+  public makeDevicePublic(deviceId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Device> {
+    return this.http.post<Device>(`/api/customer/public/device/${deviceId}`, null, defaultHttpOptions(ignoreLoading, ignoreErrors));
   }
 
   public unassignDeviceFromCustomer(deviceId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false) {

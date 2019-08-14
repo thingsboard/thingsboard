@@ -24,7 +24,8 @@ import {
   checkBoxCell,
   DateEntityTableColumn,
   EntityTableColumn,
-  EntityTableConfig
+  EntityTableConfig,
+  HeaderActionDescriptor
 } from '@shared/components/entity/entities-table-config.models';
 import { TenantService } from '@core/http/tenant.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -37,7 +38,7 @@ import {
 import { TenantComponent } from '@modules/home/pages/tenant/tenant.component';
 import { EntityAction } from '@shared/components/entity/entity-component.models';
 import { User } from '@shared/models/user.model';
-import {Device, DeviceInfo} from '@app/shared/models/device.models';
+import {Device, DeviceCredentials, DeviceInfo} from '@app/shared/models/device.models';
 import {DeviceComponent} from '@modules/home/pages/device/device.component';
 import {Observable, of} from 'rxjs';
 import {select, Store} from '@ngrx/store';
@@ -51,6 +52,12 @@ import {Customer} from '@app/shared/models/customer.model';
 import {NULL_UUID} from '@shared/models/id/has-uuid';
 import {BroadcastService} from '@core/services/broadcast.service';
 import {DeviceTableHeaderComponent} from '@modules/home/pages/device/device-table-header.component';
+import {MatDialog} from '@angular/material';
+import {
+  DeviceCredentialsDialogComponent,
+  DeviceCredentialsDialogData
+} from '@modules/home/pages/device/device-credentials-dialog.component';
+import {DialogService} from '@core/services/dialog.service';
 
 @Injectable()
 export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<DeviceInfo>> {
@@ -63,9 +70,11 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
               private broadcast: BroadcastService,
               private deviceService: DeviceService,
               private customerService: CustomerService,
+              private dialogService: DialogService,
               private translate: TranslateService,
               private datePipe: DatePipe,
-              private router: Router) {
+              private router: Router,
+              private dialog: MatDialog) {
 
     this.config.entityType = EntityType.CUSTOMER;
     this.config.entityComponent = DeviceComponent;
@@ -122,6 +131,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
         this.config.columns = this.configureColumns(this.config.componentsData.deviceScope);
         this.configureEntityFunctions(this.config.componentsData.deviceScope);
         this.config.cellActionDescriptors = this.configureCellActions(this.config.componentsData.deviceScope);
+        this.config.addActionDescriptors = this.configureAddActions(this.config.componentsData.deviceScope);
         return this.config;
       })
     );
@@ -154,16 +164,18 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
 
   configureEntityFunctions(deviceScope: string): void {
     if (deviceScope === 'tenant') {
-      this.config.entitiesFetchFunction = pageLink => this.deviceService.getTenantDeviceInfos(pageLink, this.config.componentsData.deviceType);
+      this.config.entitiesFetchFunction = pageLink =>
+        this.deviceService.getTenantDeviceInfos(pageLink, this.config.componentsData.deviceType);
       this.config.deleteEntity = id => this.deviceService.deleteDevice(id.id);
     } else {
-      this.config.entitiesFetchFunction = pageLink => this.deviceService.getCustomerDeviceInfos(this.customerId, pageLink, this.config.componentsData.deviceType);
+      this.config.entitiesFetchFunction = pageLink =>
+        this.deviceService.getCustomerDeviceInfos(this.customerId, pageLink, this.config.componentsData.deviceType);
       this.config.deleteEntity = id => this.deviceService.unassignDeviceFromCustomer(id.id);
     }
   }
 
-  configureCellActions(deviceScope: string): Array<CellActionDescriptor<Device | DeviceInfo>> {
-    const actions: Array<CellActionDescriptor<Device | DeviceInfo>> = [];
+  configureCellActions(deviceScope: string): Array<CellActionDescriptor<DeviceInfo>> {
+    const actions: Array<CellActionDescriptor<Device>> = [];
     if (deviceScope === 'tenant') {
       actions.push(
         {
@@ -177,17 +189,121 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
     return actions;
   }
 
-  makePublic($event: Event, device: Device) {
+  configureAddActions(deviceScope: string): Array<HeaderActionDescriptor> {
+    const actions: Array<HeaderActionDescriptor> = [];
+    actions.push(
+      {
+        name: this.translate.instant('device.add-device-text'),
+        icon: 'insert_drive_file',
+        isEnabled: () => true,
+        onAction: ($event) => this.config.table.addEntity($event)
+      },
+      {
+        name: this.translate.instant('device.import'),
+        icon: 'file_upload',
+        isEnabled: () => true,
+        onAction: ($event) => this.importDevices($event)
+      }
+    );
+    return actions;
+  }
+
+  importDevices($event: Event) {
     if ($event) {
       $event.stopPropagation();
     }
     // TODO:
   }
 
-  onDeviceAction(action: EntityAction<Device | DeviceInfo>): boolean {
+  makePublic($event: Event, device: Device) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.dialogService.confirm(
+      this.translate.instant('device.make-public-device-title', {deviceName: device.name}),
+      this.translate.instant('device.make-public-device-text'),
+      this.translate.instant('action.no'),
+      this.translate.instant('action.yes'),
+      true
+    ).subscribe((res) => {
+        if (res) {
+          this.deviceService.makeDevicePublic(device.id.id).subscribe(
+            () => {
+              this.config.table.updateData();
+            }
+          );
+        }
+      }
+    );
+  }
+
+  assignToCustomer($event: Event, device: Device) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    // TODO:
+  }
+
+  unassignFromCustomer($event: Event, device: DeviceInfo) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const isPublic = device.customerIsPublic;
+    let title;
+    let content;
+    if (isPublic) {
+      title = this.translate.instant('device.make-private-device-title', {deviceName: device.name});
+      content = this.translate.instant('device.make-private-device-text');
+    } else {
+      title = this.translate.instant('device.unassign-device-title', {deviceName: device.name});
+      content = this.translate.instant('device.unassign-device-text');
+    }
+    this.dialogService.confirm(
+      this.translate.instant(title),
+      this.translate.instant(content),
+      this.translate.instant('action.no'),
+      this.translate.instant('action.yes'),
+      true
+    ).subscribe((res) => {
+        if (res) {
+          this.deviceService.unassignDeviceFromCustomer(device.id.id).subscribe(
+            () => {
+              this.config.table.updateData();
+            }
+          );
+        }
+      }
+    );
+  }
+
+  manageCredentials($event: Event, device: Device) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.dialog.open<DeviceCredentialsDialogComponent, DeviceCredentialsDialogData,
+      DeviceCredentials>(DeviceCredentialsDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        deviceId: device.id.id,
+        isReadOnly: this.config.componentsData.deviceScope === 'customer_user'
+      }
+    });
+  }
+
+  onDeviceAction(action: EntityAction<DeviceInfo>): boolean {
     switch (action.action) {
       case 'makePublic':
         this.makePublic(action.event, action.entity);
+        return true;
+      case 'assignToCustomer':
+        this.assignToCustomer(action.event, action.entity);
+        return true;
+      case 'unassignFromCustomer':
+        this.unassignFromCustomer(action.event, action.entity);
+        return true;
+      case 'manageCredentials':
+        this.manageCredentials(action.event, action.entity);
         return true;
     }
     return false;

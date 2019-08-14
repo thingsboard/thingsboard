@@ -122,6 +122,7 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   cellActionDescriptors: Array<CellActionDescriptor<T>> = [];
   groupActionDescriptors: Array<GroupActionDescriptor<T>> = [];
   headerActionDescriptors: Array<HeaderActionDescriptor> = [];
+  addActionDescriptors: Array<HeaderActionDescriptor> = [];
   headerComponent: Type<EntityTableHeaderComponent<T>>;
   addEntity: CreateEntityOperation<T> = null;
   detailsReadonly: EntityBooleanFunction<T> = () => false;

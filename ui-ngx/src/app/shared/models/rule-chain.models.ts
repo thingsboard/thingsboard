@@ -15,40 +15,23 @@
 ///
 
 import {BaseData} from '@shared/models/base-data';
-import {DeviceId} from './id/device-id';
+import {AssetId} from '@shared/models/id/asset-id';
 import {TenantId} from '@shared/models/id/tenant-id';
 import {CustomerId} from '@shared/models/id/customer-id';
-import {DeviceCredentialsId} from '@shared/models/id/device-credentials-id';
+import {RuleChainId} from '@shared/models/id/rule-chain-id';
+import {RuleNodeId} from '@shared/models/id/rule-node-id';
 
-export interface Device extends BaseData<DeviceId> {
+export interface RuleChainConfiguration {
+  todo: Array<any>;
+  // TODO:
+}
+
+export interface RuleChain extends BaseData<RuleChainId> {
   tenantId: TenantId;
-  customerId: CustomerId;
   name: string;
-  type: string;
-  label: string;
+  firstRuleNodeId: RuleNodeId;
+  root: boolean;
+  debugMode: boolean;
+  configuration: RuleChainConfiguration;
   additionalInfo?: any;
-}
-
-export interface DeviceInfo extends Device {
-  customerTitle: string;
-  customerIsPublic: boolean;
-}
-
-export enum DeviceCredentialsType {
-  ACCESS_TOKEN = 'ACCESS_TOKEN',
-  X509_CERTIFICATE = 'X509_CERTIFICATE'
-}
-
-export const credentialTypeNames = new Map<DeviceCredentialsType, string>(
-  [
-    [DeviceCredentialsType.ACCESS_TOKEN, 'Access token'],
-    [DeviceCredentialsType.X509_CERTIFICATE, 'X.509 Certificate'],
-  ]
-);
-
-export interface DeviceCredentials extends BaseData<DeviceCredentialsId> {
-  deviceId: DeviceId;
-  credentialsType: DeviceCredentialsType;
-  credentialsId: string;
-  credentialsValue: string;
 }

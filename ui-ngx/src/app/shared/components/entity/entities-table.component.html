@@ -42,11 +42,32 @@
                             asButton historyOnly></tb-timewindow>
             <tb-anchor #entityTableHeader></tb-anchor>
             <span fxFlex *ngIf="!this.entitiesTableConfig.headerComponent"></span>
-            <button mat-button mat-icon-button [disabled]="isLoading$ | async" [fxShow]="addEnabled()" (click)="addEntity($event)"
-                    matTooltip="{{ translations.add | translate }}"
-                    matTooltipPosition="above">
-              <mat-icon>add</mat-icon>
-            </button>
+            <div [fxShow]="addEnabled()">
+              <button mat-button mat-icon-button [disabled]="isLoading$ | async"
+                      *ngIf="!this.entitiesTableConfig.addActionDescriptors.length; else addActions"
+                      (click)="addEntity($event)"
+                      matTooltip="{{ translations.add | translate }}"
+                      matTooltipPosition="above">
+                <mat-icon>add</mat-icon>
+              </button>
+              <ng-template #addActions>
+                <button mat-button mat-icon-button [disabled]="isLoading$ | async"
+                        matTooltip="{{ translations.add | translate }}"
+                        matTooltipPosition="above"
+                        [matMenuTriggerFor]="addActionsMenu">
+                  <mat-icon>add</mat-icon>
+                </button>
+                <mat-menu #addActionsMenu="matMenu" xPosition="before">
+                  <button mat-menu-item *ngFor="let actionDescriptor of this.entitiesTableConfig.addActionDescriptors"
+                          [disabled]="isLoading$ | async"
+                          [fxShow]="actionDescriptor.isEnabled()"
+                          (click)="actionDescriptor.onAction($event)">
+                    <mat-icon>{{actionDescriptor.icon}}</mat-icon>
+                    <span>{{ actionDescriptor.name }}</span>
+                  </button>
+                </mat-menu>
+              </ng-template>
+            </div>
             <button mat-button mat-icon-button [disabled]="isLoading$ | async"
                     [fxShow]="actionDescriptor.isEnabled()" *ngFor="let actionDescriptor of headerActionDescriptors"
                     matTooltip="{{ actionDescriptor.name }}"

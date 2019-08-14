@@ -26,6 +26,10 @@ import { Authority } from '@shared/models/authority.enum';
 import {DeviceInfo} from '@shared/models/device.models';
 import {EntityType} from '@shared/models/entity-type.models';
 import {NULL_UUID} from '@shared/models/id/has-uuid';
+import {ActionNotificationShow} from '@core/notification/notification.actions';
+import {TranslateService} from '@ngx-translate/core';
+import {DeviceService} from '@core/http/device.service';
+import {ClipboardService} from 'ngx-clipboard';
 
 @Component({
   selector: 'tb-device',
@@ -39,6 +43,9 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
   deviceScope: 'tenant' | 'customer' | 'customer_user';
 
   constructor(protected store: Store<AppState>,
+              protected translate: TranslateService,
+              private deviceService: DeviceService,
+              private clipboardService: ClipboardService,
               public fb: FormBuilder) {
     super(store);
   }
@@ -85,4 +92,35 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
     this.entityForm.patchValue({additionalInfo: {description: entity.additionalInfo ? entity.additionalInfo.description : ''}});
   }
 
+
+  onDeviceIdCopied($event) {
+    this.store.dispatch(new ActionNotificationShow(
+      {
+        message: this.translate.instant('device.idCopiedMessage'),
+        type: 'success',
+        duration: 750,
+        verticalPosition: 'bottom',
+        horizontalPosition: 'right'
+      }));
+  }
+
+  copyAccessToken($event) {
+    if (this.entity.id) {
+      this.deviceService.getDeviceCredentials(this.entity.id.id, true).subscribe(
+        (deviceCredentials) => {
+          const credentialsId = deviceCredentials.credentialsId;
+          if (this.clipboardService.copyFromContent(credentialsId)) {
+            this.store.dispatch(new ActionNotificationShow(
+              {
+                message: this.translate.instant('device.accessTokenCopiedMessage'),
+                type: 'success',
+                duration: 750,
+                verticalPosition: 'bottom',
+                horizontalPosition: 'right'
+              }));
+          }
+        }
+      );
+    }
+  }
 }

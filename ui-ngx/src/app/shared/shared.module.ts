@@ -80,6 +80,7 @@ import { HighlightPipe } from '@shared/pipe/highlight.pipe';
 import {DashboardAutocompleteComponent} from '@shared/components/dashboard-autocomplete.component';
 import {EntitySubTypeAutocompleteComponent} from '@shared/components/entity/entity-subtype-autocomplete.component';
 import {EntitySubTypeSelectComponent} from './components/entity/entity-subtype-select.component';
+import {EntityAutocompleteComponent} from './components/entity/entity-autocomplete.component';
 
 @NgModule({
   providers: [
@@ -122,6 +123,7 @@ import {EntitySubTypeSelectComponent} from './components/entity/entity-subtype-s
     DashboardAutocompleteComponent,
     EntitySubTypeAutocompleteComponent,
     EntitySubTypeSelectComponent,
+    EntityAutocompleteComponent,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
@@ -189,6 +191,7 @@ import {EntitySubTypeSelectComponent} from './components/entity/entity-subtype-s
     DashboardAutocompleteComponent,
     EntitySubTypeAutocompleteComponent,
     EntitySubTypeSelectComponent,
+    EntityAutocompleteComponent,
 //    ValueInputComponent,
     MatButtonModule,
     MatCheckboxModule,

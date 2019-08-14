@@ -31,6 +31,10 @@ export enum EntityType {
   WIDGET_TYPE = 'WIDGET_TYPE'
 }
 
+export enum AliasEntityType {
+  CURRENT_CUSTOMER = 'CURRENT_CUSTOMER'
+}
+
 export interface EntityTypeTranslation {
   type: string;
   typePlural: string;

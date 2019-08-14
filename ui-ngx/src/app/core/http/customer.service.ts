@@ -31,9 +31,9 @@ export class CustomerService {
     private http: HttpClient
   ) { }
 
-  public getCustomers(tenantId: string, pageLink: PageLink, ignoreErrors: boolean = false,
+  public getCustomers(pageLink: PageLink, ignoreErrors: boolean = false,
                       ignoreLoading: boolean = false): Observable<PageData<Customer>> {
-    return this.http.get<PageData<Customer>>(`/api/tenant/${tenantId}/customers${pageLink.toQuery()}`,
+    return this.http.get<PageData<Customer>>(`/api/customers${pageLink.toQuery()}`,
       defaultHttpOptions(ignoreLoading, ignoreErrors));
   }
 

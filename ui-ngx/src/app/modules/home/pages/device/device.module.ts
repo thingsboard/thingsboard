@@ -20,15 +20,18 @@ import { SharedModule } from '@shared/shared.module';
 import {DeviceComponent} from '@modules/home/pages/device/device.component';
 import {DeviceRoutingModule} from './device-routing.module';
 import {DeviceTableHeaderComponent} from '@modules/home/pages/device/device-table-header.component';
+import {DeviceCredentialsDialogComponent} from '@modules/home/pages/device/device-credentials-dialog.component';
 
 @NgModule({
   entryComponents: [
     DeviceComponent,
-    DeviceTableHeaderComponent
+    DeviceTableHeaderComponent,
+    DeviceCredentialsDialogComponent
   ],
   declarations: [
     DeviceComponent,
-    DeviceTableHeaderComponent
+    DeviceTableHeaderComponent,
+    DeviceCredentialsDialogComponent
   ],
   imports: [
     CommonModule,

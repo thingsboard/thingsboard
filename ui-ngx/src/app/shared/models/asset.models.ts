@@ -15,40 +15,20 @@
 ///
 
 import {BaseData} from '@shared/models/base-data';
-import {DeviceId} from './id/device-id';
+import {AssetId} from './id/asset-id';
 import {TenantId} from '@shared/models/id/tenant-id';
 import {CustomerId} from '@shared/models/id/customer-id';
 import {DeviceCredentialsId} from '@shared/models/id/device-credentials-id';
 
-export interface Device extends BaseData<DeviceId> {
+export interface Asset extends BaseData<AssetId> {
   tenantId: TenantId;
   customerId: CustomerId;
   name: string;
   type: string;
-  label: string;
   additionalInfo?: any;
 }
 
-export interface DeviceInfo extends Device {
+export interface AssetInfo extends Asset {
   customerTitle: string;
   customerIsPublic: boolean;
-}
-
-export enum DeviceCredentialsType {
-  ACCESS_TOKEN = 'ACCESS_TOKEN',
-  X509_CERTIFICATE = 'X509_CERTIFICATE'
-}
-
-export const credentialTypeNames = new Map<DeviceCredentialsType, string>(
-  [
-    [DeviceCredentialsType.ACCESS_TOKEN, 'Access token'],
-    [DeviceCredentialsType.X509_CERTIFICATE, 'X.509 Certificate'],
-  ]
-);
-
-export interface DeviceCredentials extends BaseData<DeviceCredentialsId> {
-  deviceId: DeviceId;
-  credentialsType: DeviceCredentialsType;
-  credentialsId: string;
-  credentialsValue: string;
 }
