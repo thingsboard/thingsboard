@@ -52,6 +52,10 @@ export class DeviceService {
     return this.http.get<Device>(`/api/device/${deviceId}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
   }
 
+  public getDevices(deviceIds: Array<string>, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Array<Device>> {
+    return this.http.get<Array<Device>>(`/api/devices?deviceIds=${deviceIds.join(',')}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  }
+
   public getDeviceInfo(deviceId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<DeviceInfo> {
     return this.http.get<DeviceInfo>(`/api/device/info/${deviceId}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
   }

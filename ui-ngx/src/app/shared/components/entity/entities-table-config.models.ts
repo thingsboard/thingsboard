@@ -126,6 +126,7 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   headerComponent: Type<EntityTableHeaderComponent<T>>;
   addEntity: CreateEntityOperation<T> = null;
   detailsReadonly: EntityBooleanFunction<T> = () => false;
+  entitySelectionEnabled: EntityBooleanFunction<T> = () => true;
   deleteEnabled: EntityBooleanFunction<T> = () => true;
   deleteEntityTitle: EntityStringFunction<T> = () => '';
   deleteEntityContent: EntityStringFunction<T> = () => '';

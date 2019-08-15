@@ -22,6 +22,7 @@ import { BaseData, HasId } from '@shared/models/base-data';
 import { CollectionViewer, DataSource } from '@angular/cdk/typings/collections';
 import { catchError, map, take, tap } from 'rxjs/operators';
 import { SelectionModel } from '@angular/cdk/collections';
+import {EntityBooleanFunction} from '@shared/components/entity/entities-table-config.models';
 
 export type EntitiesFetchFunction<T extends BaseData<HasId>, P extends PageLink> = (pageLink: P) => Observable<PageData<T>>;
 
@@ -37,6 +38,7 @@ export class EntitiesDataSource<T extends BaseData<HasId>, P extends PageLink = 
   public currentEntity: T = null;
 
   constructor(private fetchFunction: EntitiesFetchFunction<T, P>,
+              private selectionEnabledFunction: EntityBooleanFunction<T>,
               private dataLoadedFunction: () => void) {}
 
   connect(collectionViewer: CollectionViewer): Observable<T[] | ReadonlyArray<T>> {
@@ -69,7 +71,7 @@ export class EntitiesDataSource<T extends BaseData<HasId>, P extends PageLink = 
   isAllSelected(): Observable<boolean> {
     const numSelected = this.selection.selected.length;
     return this.entitiesSubject.pipe(
-      map((entities) => numSelected === entities.length)
+      map((entities) => numSelected === this.selectableEntitiesCount(entities))
     );
   }
 
@@ -103,13 +105,21 @@ export class EntitiesDataSource<T extends BaseData<HasId>, P extends PageLink = 
     this.entitiesSubject.pipe(
       tap((entities) => {
         const numSelected = this.selection.selected.length;
-        if (numSelected === entities.length) {
+        if (numSelected === this.selectableEntitiesCount(entities)) {
           this.selection.clear();
         } else {
-          entities.forEach(row => this.selection.select(row));
+          entities.forEach(row => {
+            if (this.selectionEnabledFunction(row)) {
+              this.selection.select(row);
+            }
+          });
         }
       }),
       take(1)
     ).subscribe();
+  }
+
+  private selectableEntitiesCount(entities: Array<T>): number {
+    return entities.filter((entity) => this.selectionEnabledFunction(entity)).length;
   }
 }

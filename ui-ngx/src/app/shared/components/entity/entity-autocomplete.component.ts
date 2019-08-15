@@ -17,7 +17,7 @@
 import {AfterViewInit, Component, ElementRef, forwardRef, Input, OnInit, ViewChild} from '@angular/core';
 import {ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR} from '@angular/forms';
 import {Observable} from 'rxjs';
-import {map, mergeMap, startWith, tap} from 'rxjs/operators';
+import {map, mergeMap, startWith, tap, share} from 'rxjs/operators';
 import {Store} from '@ngrx/store';
 import {AppState} from '@app/core/core.state';
 import {TranslateService} from '@ngx-translate/core';
@@ -25,6 +25,7 @@ import {AliasEntityType, EntityType} from '@shared/models/entity-type.models';
 import {BaseData} from '@shared/models/base-data';
 import {EntityId} from '@shared/models/id/entity-id';
 import {EntityService} from '@core/http/entity.service';
+import {coerceBooleanProperty} from '@angular/cdk/coercion';
 
 @Component({
   selector: 'tb-entity-autocomplete',
@@ -70,8 +71,14 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   @Input()
   excludeEntityIds: Array<string>;
 
+  private requiredValue: boolean;
+  get required(): boolean {
+    return this.requiredValue;
+  }
   @Input()
-  required: boolean;
+  set required(value: boolean) {
+    this.requiredValue = coerceBooleanProperty(value);
+  }
 
   @Input()
   disabled: boolean;
@@ -115,10 +122,14 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
             modelValue = value.id.id;
           }
           this.updateView(modelValue);
+          if (value === null) {
+            this.clear();
+          }
         }),
         startWith<string | BaseData<EntityId>>(''),
         map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
-        mergeMap(name => this.fetchEntities(name) )
+        mergeMap(name => this.fetchEntities(name) ),
+        share()
       );
   }
 
@@ -216,12 +227,12 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
       );
     } else {
       this.modelValue = null;
-      this.selectEntityFormGroup.get('entity').patchValue(null, {emitEvent: true});
+      this.selectEntityFormGroup.get('entity').patchValue('', {emitEvent: true});
     }
   }
 
   reset() {
-    this.selectEntityFormGroup.get('entity').patchValue(null, {emitEvent: true});
+    this.selectEntityFormGroup.get('entity').patchValue('', {emitEvent: true});
   }
 
   updateView(value: string | null) {
@@ -264,7 +275,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   }
 
   clear() {
-    this.selectEntityFormGroup.get('entity').patchValue(null, {emitEvent: true});
+    this.selectEntityFormGroup.get('entity').patchValue('', {emitEvent: true});
     setTimeout(() => {
       this.entityInput.nativeElement.blur();
       this.entityInput.nativeElement.focus();

@@ -54,6 +54,10 @@ import {
   AssignToCustomerDialogData
 } from '@modules/home/dialogs/assign-to-customer-dialog.component';
 import {DeviceId} from '@app/shared/models/id/device-id';
+import {
+  AddEntitiesToCustomerDialogComponent,
+  AddEntitiesToCustomerDialogData
+} from '../../dialogs/add-entities-to-customer-dialog.component';
 
 @Injectable()
 export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<DeviceInfo>> {
@@ -312,7 +316,20 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
     if ($event) {
       $event.stopPropagation();
     }
-    // TODO:
+    this.dialog.open<AddEntitiesToCustomerDialogComponent, AddEntitiesToCustomerDialogData,
+      boolean>(AddEntitiesToCustomerDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        customerId: this.customerId,
+        entityType: EntityType.DEVICE
+      }
+    }).afterClosed()
+      .subscribe((res) => {
+        if (res) {
+          this.config.table.updateData();
+        }
+      });
   }
 
   makePublic($event: Event, device: Device) {

@@ -21,6 +21,7 @@ import {EntitiesTableComponent} from '@shared/components/entity/entities-table.c
 import {Authority} from '@shared/models/authority.enum';
 import {UsersTableConfigResolver} from '../user/users-table-config.resolver';
 import {CustomersTableConfigResolver} from './customers-table-config.resolver';
+import {DevicesTableConfigResolver} from '@modules/home/pages/device/devices-table-config.resolver';
 
 const routes: Routes = [
   {
@@ -56,6 +57,22 @@ const routes: Routes = [
         },
         resolve: {
           entitiesTableConfig: UsersTableConfigResolver
+        }
+      },
+      {
+        path: ':customerId/devices',
+        component: EntitiesTableComponent,
+        data: {
+          auth: [Authority.TENANT_ADMIN],
+          title: 'customer.devices',
+          devicesType: 'customer',
+          breadcrumb: {
+            label: 'customer.devices',
+            icon: 'devices_other'
+          }
+        },
+        resolve: {
+          entitiesTableConfig: DevicesTableConfigResolver
         }
       }
     ]

@@ -65,6 +65,39 @@ export class CustomersTableConfigResolver implements Resolve<EntityTableConfig<C
         icon: 'account_circle',
         isEnabled: (customer) => !customer.additionalInfo || !customer.additionalInfo.isPublic,
         onAction: ($event, entity) => this.manageCustomerUsers($event, entity)
+      },
+      {
+        name: this.translate.instant('customer.manage-customer-assets'),
+        nameFunction: (customer) => {
+          return customer.additionalInfo && customer.additionalInfo.isPublic
+          ? this.translate.instant('customer.manage-public-assets')
+          : this.translate.instant('customer.manage-customer-assets');
+        },
+        icon: 'domain',
+        isEnabled: (customer) => true,
+        onAction: ($event, entity) => this.manageCustomerAssets($event, entity)
+      },
+      {
+        name: this.translate.instant('customer.manage-customer-devices'),
+        nameFunction: (customer) => {
+          return customer.additionalInfo && customer.additionalInfo.isPublic
+            ? this.translate.instant('customer.manage-public-devices')
+            : this.translate.instant('customer.manage-customer-devices');
+        },
+        icon: 'devices_other',
+        isEnabled: (customer) => true,
+        onAction: ($event, entity) => this.manageCustomerDevices($event, entity)
+      },
+      {
+        name: this.translate.instant('customer.manage-customer-dashboards'),
+        nameFunction: (customer) => {
+          return customer.additionalInfo && customer.additionalInfo.isPublic
+            ? this.translate.instant('customer.manage-public-dashboards')
+            : this.translate.instant('customer.manage-customer-dashboards');
+        },
+        icon: 'dashboard',
+        isEnabled: (customer) => true,
+        onAction: ($event, entity) => this.manageCustomerDashboards($event, entity)
       }
     );
 
@@ -78,6 +111,9 @@ export class CustomersTableConfigResolver implements Resolve<EntityTableConfig<C
     this.config.saveEntity = customer => this.customerService.saveCustomer(customer);
     this.config.deleteEntity = id => this.customerService.deleteCustomer(id.id);
     this.config.onEntityAction = action => this.onCustomerAction(action);
+    this.config.deleteEnabled = (customer) => customer && (!customer.additionalInfo || !customer.additionalInfo.isPublic);
+    this.config.entitySelectionEnabled = (customer) => customer && (!customer.additionalInfo || !customer.additionalInfo.isPublic);
+    this.config.detailsReadonly = (customer) => customer && customer.additionalInfo && customer.additionalInfo.isPublic;
   }
 
   resolve(): EntityTableConfig<Customer> {
@@ -91,6 +127,27 @@ export class CustomersTableConfigResolver implements Resolve<EntityTableConfig<C
       $event.stopPropagation();
     }
     this.router.navigateByUrl(`customers/${customer.id.id}/users`);
+  }
+
+  manageCustomerAssets($event: Event, customer: Customer) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.router.navigateByUrl(`customers/${customer.id.id}/assets`);
+  }
+
+  manageCustomerDevices($event: Event, customer: Customer) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.router.navigateByUrl(`customers/${customer.id.id}/devices`);
+  }
+
+  manageCustomerDashboards($event: Event, customer: Customer) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.router.navigateByUrl(`customers/${customer.id.id}/dashboards`);
   }
 
   onCustomerAction(action: EntityAction<Customer>): boolean {

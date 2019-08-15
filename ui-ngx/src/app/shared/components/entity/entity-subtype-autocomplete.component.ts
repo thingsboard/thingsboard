@@ -32,6 +32,7 @@ import {TranslateService} from '@ngx-translate/core';
 import {DeviceService} from '@core/http/device.service';
 import {EntitySubtype, EntityType} from '@app/shared/models/entity-type.models';
 import {BroadcastService} from '@app/core/services/broadcast.service';
+import {coerceBooleanProperty} from '@angular/cdk/coercion';
 
 @Component({
   selector: 'tb-entity-subtype-autocomplete',
@@ -52,8 +53,14 @@ export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor,
   @Input()
   entityType: EntityType;
 
+  private requiredValue: boolean;
+  get required(): boolean {
+    return this.requiredValue;
+  }
   @Input()
-  required: boolean;
+  set required(value: boolean) {
+    this.requiredValue = coerceBooleanProperty(value);
+  }
 
   @Input()
   disabled: boolean;

@@ -29,6 +29,7 @@ import {AppState} from '@app/core/core.state';
 import {getCurrentAuthUser} from '@app/core/auth/auth.selectors';
 import {Authority} from '@shared/models/authority.enum';
 import {TranslateService} from '@ngx-translate/core';
+import {coerceBooleanProperty} from '@angular/cdk/coercion';
 
 @Component({
   selector: 'tb-dashboard-autocomplete',
@@ -64,8 +65,14 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
   @Input()
   customerId: string;
 
+  private requiredValue: boolean;
+  get required(): boolean {
+    return this.requiredValue;
+  }
   @Input()
-  required: boolean;
+  set required(value: boolean) {
+    this.requiredValue = coerceBooleanProperty(value);
+  }
 
   @Input()
   disabled: boolean;

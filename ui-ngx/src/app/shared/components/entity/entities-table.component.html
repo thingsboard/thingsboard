@@ -145,6 +145,7 @@
               </mat-header-cell>
               <mat-cell *matCellDef="let entity">
                 <mat-checkbox (click)="$event.stopPropagation()"
+                              [fxShow]="entitiesTableConfig.entitySelectionEnabled(entity)"
                               (change)="$event ? dataSource.selection.toggle(entity) : null"
                               [checked]="dataSource.selection.isSelected(entity)">
                 </mat-checkbox>

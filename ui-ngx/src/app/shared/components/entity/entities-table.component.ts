@@ -173,6 +173,7 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
     }
     this.dataSource = new EntitiesDataSource<BaseData<HasId>>(
       this.entitiesTableConfig.entitiesFetchFunction,
+      this.entitiesTableConfig.entitySelectionEnabled,
       () => {
         this.dataLoaded();
       }

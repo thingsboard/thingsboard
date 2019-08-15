@@ -15,7 +15,7 @@
 ///
 
 import {Injectable} from '@angular/core';
-import {Observable, throwError, of, empty, EMPTY} from 'rxjs/index';
+import {Observable, throwError, of, empty, EMPTY, forkJoin} from 'rxjs/index';
 import {HttpClient} from '@angular/common/http';
 import {PageLink} from '@shared/models/page/page-link';
 import {EntityType} from '@shared/models/entity-type.models';
@@ -86,12 +86,84 @@ export class EntityService {
     }
     return observable;
   }
-
   public getEntity(entityType: EntityType, entityId: string,
                    ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<BaseData<EntityId>> {
     const entityObservable = this.getEntityObservable(entityType, entityId, ignoreErrors, ignoreLoading);
     if (entityObservable) {
       return entityObservable;
+    } else {
+      return throwError(null);
+    }
+  }
+
+  private getEntitiesByIdsObservable(fetchEntityFunction: (entityId: string) => Observable<BaseData<EntityId>>,
+                                     entityIds: Array<string>): Observable<Array<BaseData<EntityId>>> {
+    const tasks: Observable<BaseData<EntityId>>[] = [];
+    entityIds.forEach((entityId) => {
+      tasks.push(fetchEntityFunction(entityId));
+    });
+    return forkJoin(tasks).pipe(
+      map((entities) => {
+        if (entities) {
+          entities.sort((entity1, entity2) => {
+            const index1 = entityIds.indexOf(entity1.id.id);
+            const index2 = entityIds.indexOf(entity2.id.id);
+            return index1 - index2;
+          });
+          return entities;
+        } else {
+          return [];
+        }
+      })
+    );
+  }
+
+
+  private getEntitiesObservable(entityType: EntityType, entityIds: Array<string>,
+                                ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Array<BaseData<EntityId>>> {
+    let observable: Observable<Array<BaseData<EntityId>>>;
+    switch (entityType) {
+      case EntityType.DEVICE:
+        observable = this.deviceService.getDevices(entityIds, ignoreErrors, ignoreLoading);
+        break;
+      case EntityType.ASSET:
+        // TODO:
+        break;
+      case EntityType.ENTITY_VIEW:
+        // TODO:
+        break;
+      case EntityType.TENANT:
+        observable = this.getEntitiesByIdsObservable(
+          (id) => this.tenantService.getTenant(id, ignoreErrors, ignoreLoading),
+          entityIds);
+        break;
+      case EntityType.CUSTOMER:
+        observable = this.getEntitiesByIdsObservable(
+          (id) => this.customerService.getCustomer(id, ignoreErrors, ignoreLoading),
+          entityIds);
+        break;
+      case EntityType.DASHBOARD:
+        observable = this.getEntitiesByIdsObservable(
+          (id) => this.dashboardService.getDashboardInfo(id, ignoreErrors, ignoreLoading),
+          entityIds);
+        break;
+      case EntityType.USER:
+        observable = this.getEntitiesByIdsObservable(
+          (id) => this.userService.getUser(id, ignoreErrors, ignoreLoading),
+          entityIds);
+        break;
+      case EntityType.ALARM:
+        console.error('Get Alarm Entity is not implemented!');
+        break;
+    }
+    return observable;
+  }
+
+  public getEntities(entityType: EntityType, entityIds: Array<string>,
+                     ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Array<BaseData<EntityId>>> {
+    const entitiesObservable = this.getEntitiesObservable(entityType, entityIds, ignoreErrors, ignoreLoading);
+    if (entitiesObservable) {
+      return entitiesObservable;
     } else {
       return throwError(null);
     }

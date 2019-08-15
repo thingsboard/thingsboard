@@ -47,7 +47,9 @@ import {
   MatDatepickerModule,
   MatSliderModule,
   MatExpansionModule,
-  MatStepperModule, MatAutocompleteModule
+  MatStepperModule,
+  MatAutocompleteModule,
+  MatChipsModule
 } from '@angular/material';
 import { MatDatetimepickerModule, MatNativeDatetimeModule } from '@mat-datetimepicker/core';
 import { FlexLayoutModule } from '@angular/flex-layout';
@@ -81,6 +83,7 @@ import {DashboardAutocompleteComponent} from '@shared/components/dashboard-autoc
 import {EntitySubTypeAutocompleteComponent} from '@shared/components/entity/entity-subtype-autocomplete.component';
 import {EntitySubTypeSelectComponent} from './components/entity/entity-subtype-select.component';
 import {EntityAutocompleteComponent} from './components/entity/entity-autocomplete.component';
+import {EntityListComponent} from '@shared/components/entity/entity-list.component';
 
 @NgModule({
   providers: [
@@ -124,6 +127,7 @@ import {EntityAutocompleteComponent} from './components/entity/entity-autocomple
     EntitySubTypeAutocompleteComponent,
     EntitySubTypeSelectComponent,
     EntityAutocompleteComponent,
+    EntityListComponent,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
@@ -162,6 +166,7 @@ import {EntityAutocompleteComponent} from './components/entity/entity-autocomple
     MatExpansionModule,
     MatStepperModule,
     MatAutocompleteModule,
+    MatChipsModule,
     ClipboardModule,
     FlexLayoutModule.withConfig({addFlexToParent: false}),
     FormsModule,
@@ -192,6 +197,7 @@ import {EntityAutocompleteComponent} from './components/entity/entity-autocomple
     EntitySubTypeAutocompleteComponent,
     EntitySubTypeSelectComponent,
     EntityAutocompleteComponent,
+    EntityListComponent,
 //    ValueInputComponent,
     MatButtonModule,
     MatCheckboxModule,
@@ -222,6 +228,7 @@ import {EntityAutocompleteComponent} from './components/entity/entity-autocomple
     MatExpansionModule,
     MatStepperModule,
     MatAutocompleteModule,
+    MatChipsModule,
     ClipboardModule,
     FlexLayoutModule,
     FormsModule,
