@@ -105,7 +105,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   }
 
   ngOnInit() {
-    this.filteredEntities = this.selectEntityFormGroup.get('dashboard').valueChanges
+    this.filteredEntities = this.selectEntityFormGroup.get('entity').valueChanges
       .pipe(
         tap(value => {
           let modelValue;

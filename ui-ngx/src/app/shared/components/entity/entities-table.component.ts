@@ -21,7 +21,8 @@ import {
   Input,
   OnInit,
   Type,
-  ViewChild
+  ViewChild,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
@@ -51,13 +52,14 @@ import {
   EntityAction
 } from '@shared/components/entity/entity-component.models';
 import { Timewindow } from '@shared/models/time/time.models';
-import { DomSanitizer } from '@angular/platform-browser';
+import {DomSanitizer, SafeHtml} from '@angular/platform-browser';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 
 @Component({
   selector: 'tb-entities-table',
   templateUrl: './entities-table.component.html',
-  styleUrls: ['./entities-table.component.scss']
+  styleUrls: ['./entities-table.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EntitiesTableComponent extends PageComponent implements AfterViewInit, OnInit {
 
@@ -72,6 +74,10 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
 
   columns: Array<EntityTableColumn<BaseData<HasId>>>;
   displayedColumns: string[] = [];
+
+  cellContentCache: Array<SafeHtml> = [];
+
+  cellStyleCache: Array<any> = [];
 
   selectionEnabled;
 
@@ -139,7 +145,10 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
 
     this.columns = [...this.entitiesTableConfig.columns];
 
-    this.selectionEnabled = this.entitiesTableConfig.selectionEnabled;
+    const enabledGroupActionDescriptors =
+      this.groupActionDescriptors.filter((descriptor) => descriptor.isEnabled);
+
+    this.selectionEnabled = this.entitiesTableConfig.selectionEnabled && enabledGroupActionDescriptors.length;
 
     if (this.selectionEnabled) {
       this.displayedColumns.push('select');
@@ -163,7 +172,10 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
       this.pageLink = new PageLink(10, 0, null, sortOrder);
     }
     this.dataSource = new EntitiesDataSource<BaseData<HasId>>(
-      this.entitiesTableConfig.entitiesFetchFunction
+      this.entitiesTableConfig.entitiesFetchFunction,
+      () => {
+        this.dataLoaded();
+      }
     );
     if (this.entitiesTableConfig.onLoadAction) {
       this.entitiesTableConfig.onLoadAction(this.route);
@@ -219,6 +231,11 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
       }
     }
     this.dataSource.loadEntities(this.pageLink);
+  }
+
+  private dataLoaded() {
+    this.cellContentCache.length = 0;
+    this.cellStyleCache.length = 0;
   }
 
   onRowClick($event: Event, entity) {
@@ -347,12 +364,28 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
     }
   }
 
-  cellContent(entity: BaseData<HasId>, column: EntityTableColumn<BaseData<HasId>>) {
-    return this.domSanitizer.bypassSecurityTrustHtml(column.cellContentFunction(entity, column.key));
+  cellContent(entity: BaseData<HasId>, column: EntityTableColumn<BaseData<HasId>>, row: number, col: number) {
+    const index = row * this.columns.length + col;
+    let res = this.cellContentCache[index];
+    if (!res) {
+      res = this.domSanitizer.bypassSecurityTrustHtml(column.cellContentFunction(entity, column.key));
+      this.cellContentCache[index] = res;
+    }
+    return res;
   }
 
-  cellStyle(entity: BaseData<HasId>, column: EntityTableColumn<BaseData<HasId>>) {
-    return {...column.cellStyleFunction(entity, column.key), ...{maxWidth: column.maxWidth}};
+  cellStyle(entity: BaseData<HasId>, column: EntityTableColumn<BaseData<HasId>>, row: number, col: number) {
+    const index = row * this.columns.length + col;
+    let res = this.cellStyleCache[index];
+    if (!res) {
+      res = {...column.cellStyleFunction(entity, column.key), ...{maxWidth: column.maxWidth}};
+      this.cellStyleCache[index] = res;
+    }
+    return res;
+  }
+
+  trackByColumnKey(index, column: EntityTableColumn<BaseData<HasId>>) {
+    return column.key;
   }
 
 }

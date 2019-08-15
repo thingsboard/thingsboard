@@ -14,35 +14,26 @@
 /// limitations under the License.
 ///
 
-import { Injectable } from '@angular/core';
+import {Injectable} from '@angular/core';
 
 import {ActivatedRouteSnapshot, Resolve, Router} from '@angular/router';
-
-import { Tenant } from '@shared/models/tenant.model';
 import {
   CellActionDescriptor,
   checkBoxCell,
   DateEntityTableColumn,
   EntityTableColumn,
-  EntityTableConfig,
+  EntityTableConfig, GroupActionDescriptor,
   HeaderActionDescriptor
 } from '@shared/components/entity/entities-table-config.models';
-import { TenantService } from '@core/http/tenant.service';
-import { TranslateService } from '@ngx-translate/core';
-import { DatePipe } from '@angular/common';
-import {
-  EntityType,
-  entityTypeResources,
-  entityTypeTranslations
-} from '@shared/models/entity-type.models';
-import { TenantComponent } from '@modules/home/pages/tenant/tenant.component';
-import { EntityAction } from '@shared/components/entity/entity-component.models';
-import { User } from '@shared/models/user.model';
+import {TranslateService} from '@ngx-translate/core';
+import {DatePipe} from '@angular/common';
+import {EntityType, entityTypeResources, entityTypeTranslations} from '@shared/models/entity-type.models';
+import {EntityAction} from '@shared/components/entity/entity-component.models';
 import {Device, DeviceCredentials, DeviceInfo} from '@app/shared/models/device.models';
 import {DeviceComponent} from '@modules/home/pages/device/device.component';
-import {Observable, of} from 'rxjs';
+import {forkJoin, Observable, of} from 'rxjs';
 import {select, Store} from '@ngrx/store';
-import {selectAuth, selectAuthUser} from '@core/auth/auth.selectors';
+import {selectAuthUser} from '@core/auth/auth.selectors';
 import {map, mergeMap, take, tap} from 'rxjs/operators';
 import {AppState} from '@core/core.state';
 import {DeviceService} from '@app/core/http/device.service';
@@ -58,6 +49,11 @@ import {
   DeviceCredentialsDialogData
 } from '@modules/home/pages/device/device-credentials-dialog.component';
 import {DialogService} from '@core/services/dialog.service';
+import {
+  AssignToCustomerDialogComponent,
+  AssignToCustomerDialogData
+} from '@modules/home/dialogs/assign-to-customer-dialog.component';
+import {DeviceId} from '@app/shared/models/id/device-id';
 
 @Injectable()
 export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<DeviceInfo>> {
@@ -76,7 +72,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
               private router: Router,
               private dialog: MatDialog) {
 
-    this.config.entityType = EntityType.CUSTOMER;
+    this.config.entityType = EntityType.DEVICE;
     this.config.entityComponent = DeviceComponent;
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.DEVICE);
     this.config.entityResources = entityTypeResources.get(EntityType.DEVICE);
@@ -131,7 +127,11 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
         this.config.columns = this.configureColumns(this.config.componentsData.deviceScope);
         this.configureEntityFunctions(this.config.componentsData.deviceScope);
         this.config.cellActionDescriptors = this.configureCellActions(this.config.componentsData.deviceScope);
+        this.config.groupActionDescriptors = this.configureGroupActions(this.config.componentsData.deviceScope);
         this.config.addActionDescriptors = this.configureAddActions(this.config.componentsData.deviceScope);
+        this.config.addEnabled = this.config.componentsData.deviceScope !== 'customer_user';
+        this.config.entitiesDeleteEnabled = this.config.componentsData.deviceScope === 'tenant';
+        this.config.deleteEnabled = () => this.config.componentsData.deviceScope === 'tenant';
         return this.config;
       })
     );
@@ -175,7 +175,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
   }
 
   configureCellActions(deviceScope: string): Array<CellActionDescriptor<DeviceInfo>> {
-    const actions: Array<CellActionDescriptor<Device>> = [];
+    const actions: Array<CellActionDescriptor<DeviceInfo>> = [];
     if (deviceScope === 'tenant') {
       actions.push(
         {
@@ -183,6 +183,87 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
           icon: 'share',
           isEnabled: (entity) => (!entity.customerId || entity.customerId.id === NULL_UUID),
           onAction: ($event, entity) => this.makePublic($event, entity)
+        },
+        {
+          name: this.translate.instant('device.assign-to-customer'),
+          icon: 'assignment_ind',
+          isEnabled: (entity) => (!entity.customerId || entity.customerId.id === NULL_UUID),
+          onAction: ($event, entity) => this.assignToCustomer($event, [entity.id])
+        },
+        {
+          name: this.translate.instant('device.unassign-from-customer'),
+          icon: 'assignment_return',
+          isEnabled: (entity) => (entity.customerId && entity.customerId.id !== NULL_UUID && !entity.customerIsPublic),
+          onAction: ($event, entity) => this.unassignFromCustomer($event, entity)
+        },
+        {
+          name: this.translate.instant('device.make-private'),
+          icon: 'reply',
+          isEnabled: (entity) => (entity.customerId && entity.customerId.id !== NULL_UUID && entity.customerIsPublic),
+          onAction: ($event, entity) => this.unassignFromCustomer($event, entity)
+        },
+        {
+          name: this.translate.instant('device.manage-credentials'),
+          icon: 'security',
+          isEnabled: (entity) => true,
+          onAction: ($event, entity) => this.manageCredentials($event, entity)
+        }
+      );
+    }
+    if (deviceScope === 'customer') {
+        actions.push(
+          {
+            name: this.translate.instant('device.unassign-from-customer'),
+            icon: 'assignment_return',
+            isEnabled: (entity) => (entity.customerId && entity.customerId.id !== NULL_UUID && !entity.customerIsPublic),
+            onAction: ($event, entity) => this.unassignFromCustomer($event, entity)
+          },
+          {
+            name: this.translate.instant('device.make-private'),
+            icon: 'reply',
+            isEnabled: (entity) => (entity.customerId && entity.customerId.id !== NULL_UUID && entity.customerIsPublic),
+            onAction: ($event, entity) => this.unassignFromCustomer($event, entity)
+          },
+          {
+            name: this.translate.instant('device.manage-credentials'),
+            icon: 'security',
+            isEnabled: (entity) => true,
+            onAction: ($event, entity) => this.manageCredentials($event, entity)
+          }
+        );
+    }
+    if (deviceScope === 'customer_user') {
+      actions.push(
+        {
+          name: this.translate.instant('device.view-credentials'),
+          icon: 'security',
+          isEnabled: (entity) => true,
+          onAction: ($event, entity) => this.manageCredentials($event, entity)
+        }
+      );
+    }
+    return actions;
+  }
+
+  configureGroupActions(deviceScope: string): Array<GroupActionDescriptor<DeviceInfo>> {
+    const actions: Array<GroupActionDescriptor<DeviceInfo>> = [];
+    if (deviceScope === 'tenant') {
+      actions.push(
+        {
+          name: this.translate.instant('device.assign-devices'),
+          icon: 'assignment_ind',
+          isEnabled: true,
+          onAction: ($event, entities) => this.assignToCustomer($event, entities.map((entity) => entity.id))
+        }
+      );
+    }
+    if (deviceScope === 'customer') {
+      actions.push(
+        {
+          name: this.translate.instant('device.unassign-devices'),
+          icon: 'assignment_return',
+          isEnabled: true,
+          onAction: ($event, entities) => this.unassignDevicesFromCustomer($event, entities)
         }
       );
     }
@@ -191,24 +272,43 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
 
   configureAddActions(deviceScope: string): Array<HeaderActionDescriptor> {
     const actions: Array<HeaderActionDescriptor> = [];
-    actions.push(
-      {
-        name: this.translate.instant('device.add-device-text'),
-        icon: 'insert_drive_file',
-        isEnabled: () => true,
-        onAction: ($event) => this.config.table.addEntity($event)
-      },
-      {
-        name: this.translate.instant('device.import'),
-        icon: 'file_upload',
-        isEnabled: () => true,
-        onAction: ($event) => this.importDevices($event)
-      }
-    );
+    if (deviceScope === 'tenant') {
+      actions.push(
+        {
+          name: this.translate.instant('device.add-device-text'),
+          icon: 'insert_drive_file',
+          isEnabled: () => true,
+          onAction: ($event) => this.config.table.addEntity($event)
+        },
+        {
+          name: this.translate.instant('device.import'),
+          icon: 'file_upload',
+          isEnabled: () => true,
+          onAction: ($event) => this.importDevices($event)
+        }
+      );
+    }
+    if (deviceScope === 'customer') {
+      actions.push(
+        {
+          name: this.translate.instant('device.assign-new-device'),
+          icon: 'add',
+          isEnabled: () => true,
+          onAction: ($event) => this.addDevicesToCustomer($event)
+        }
+      );
+    }
     return actions;
   }
 
   importDevices($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    // TODO:
+  }
+
+  addDevicesToCustomer($event: Event) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -237,11 +337,24 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
     );
   }
 
-  assignToCustomer($event: Event, device: Device) {
+  assignToCustomer($event: Event, deviceIds: Array<DeviceId>) {
     if ($event) {
       $event.stopPropagation();
     }
-    // TODO:
+    this.dialog.open<AssignToCustomerDialogComponent, AssignToCustomerDialogData,
+      boolean>(AssignToCustomerDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        entityIds: deviceIds,
+        entityType: EntityType.DEVICE
+      }
+    }).afterClosed()
+      .subscribe((res) => {
+      if (res) {
+        this.config.table.updateData();
+      }
+    });
   }
 
   unassignFromCustomer($event: Event, device: DeviceInfo) {
@@ -259,14 +372,42 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
       content = this.translate.instant('device.unassign-device-text');
     }
     this.dialogService.confirm(
-      this.translate.instant(title),
-      this.translate.instant(content),
+      title,
+      content,
       this.translate.instant('action.no'),
       this.translate.instant('action.yes'),
       true
     ).subscribe((res) => {
         if (res) {
           this.deviceService.unassignDeviceFromCustomer(device.id.id).subscribe(
+            () => {
+              this.config.table.updateData();
+            }
+          );
+        }
+      }
+    );
+  }
+
+  unassignDevicesFromCustomer($event: Event, devices: Array<DeviceInfo>) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.dialogService.confirm(
+      this.translate.instant('device.unassign-devices-title', {count: devices.length}),
+      this.translate.instant('device.unassign-devices-text'),
+      this.translate.instant('action.no'),
+      this.translate.instant('action.yes'),
+      true
+    ).subscribe((res) => {
+        if (res) {
+          const tasks: Observable<any>[] = [];
+          devices.forEach(
+            (device) => {
+              tasks.push(this.deviceService.unassignDeviceFromCustomer(device.id.id));
+            }
+          );
+          forkJoin(tasks).subscribe(
             () => {
               this.config.table.updateData();
             }
@@ -297,7 +438,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
         this.makePublic(action.event, action.entity);
         return true;
       case 'assignToCustomer':
-        this.assignToCustomer(action.event, action.entity);
+        this.assignToCustomer(action.event, [action.entity.id]);
         return true;
       case 'unassignFromCustomer':
         this.unassignFromCustomer(action.event, action.entity);

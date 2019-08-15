@@ -15,6 +15,7 @@
 ///
 
 import {
+  ChangeDetectionStrategy,
   Component,
   ComponentFactoryResolver,
   EventEmitter,
@@ -44,7 +45,8 @@ import { Subscription } from 'rxjs';
 @Component({
   selector: 'tb-entity-details-panel',
   templateUrl: './entity-details-panel.component.html',
-  styleUrls: ['./entity-details-panel.component.scss']
+  styleUrls: ['./entity-details-panel.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EntityDetailsPanelComponent extends PageComponent implements OnInit, OnDestroy {
 

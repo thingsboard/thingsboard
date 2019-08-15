@@ -102,6 +102,11 @@ export class DeviceService {
     return this.http.post<Device>(`/api/customer/public/device/${deviceId}`, null, defaultHttpOptions(ignoreLoading, ignoreErrors));
   }
 
+  public assignDeviceToCustomer(customerId: string, deviceId: string,
+                                  ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Device> {
+    return this.http.post<Device>(`/api/customer/${customerId}/device/${deviceId}`, null, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  }
+
   public unassignDeviceFromCustomer(deviceId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false) {
     return this.http.delete(`/api/customer/device/${deviceId}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
   }

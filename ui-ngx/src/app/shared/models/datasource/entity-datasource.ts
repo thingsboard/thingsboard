@@ -36,7 +36,8 @@ export class EntitiesDataSource<T extends BaseData<HasId>, P extends PageLink = 
 
   public currentEntity: T = null;
 
-  constructor(private fetchFunction: EntitiesFetchFunction<T, P>) {}
+  constructor(private fetchFunction: EntitiesFetchFunction<T, P>,
+              private dataLoadedFunction: () => void) {}
 
   connect(collectionViewer: CollectionViewer): Observable<T[] | ReadonlyArray<T>> {
     return this.entitiesSubject.asObservable();
@@ -59,6 +60,7 @@ export class EntitiesDataSource<T extends BaseData<HasId>, P extends PageLink = 
         this.entitiesSubject.next(pageData.data);
         this.pageDataSubject.next(pageData);
         result.next(pageData);
+        this.dataLoadedFunction();
       }
     );
     return result;

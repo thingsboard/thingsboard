@@ -52,20 +52,30 @@
               </button>
               <ng-template #addActions>
                 <button mat-button mat-icon-button [disabled]="isLoading$ | async"
-                        matTooltip="{{ translations.add | translate }}"
-                        matTooltipPosition="above"
-                        [matMenuTriggerFor]="addActionsMenu">
-                  <mat-icon>add</mat-icon>
+                        *ngIf="this.entitiesTableConfig.addActionDescriptors.length === 1; else addActionsMenu"
+                        [fxShow]="this.entitiesTableConfig.addActionDescriptors[0].isEnabled()"
+                        (click)="this.entitiesTableConfig.addActionDescriptors[0].onAction($event)"
+                        matTooltip="{{ this.entitiesTableConfig.addActionDescriptors[0].name }}"
+                        matTooltipPosition="above">
+                  <mat-icon>{{this.entitiesTableConfig.addActionDescriptors[0].icon}}</mat-icon>
                 </button>
-                <mat-menu #addActionsMenu="matMenu" xPosition="before">
-                  <button mat-menu-item *ngFor="let actionDescriptor of this.entitiesTableConfig.addActionDescriptors"
-                          [disabled]="isLoading$ | async"
-                          [fxShow]="actionDescriptor.isEnabled()"
-                          (click)="actionDescriptor.onAction($event)">
-                    <mat-icon>{{actionDescriptor.icon}}</mat-icon>
-                    <span>{{ actionDescriptor.name }}</span>
+                <ng-template #addActionsMenu>
+                  <button mat-button mat-icon-button [disabled]="isLoading$ | async"
+                          matTooltip="{{ translations.add | translate }}"
+                          matTooltipPosition="above"
+                          [matMenuTriggerFor]="addActionsMenu">
+                    <mat-icon>add</mat-icon>
                   </button>
-                </mat-menu>
+                  <mat-menu #addActionsMenu="matMenu" xPosition="before">
+                    <button mat-menu-item *ngFor="let actionDescriptor of this.entitiesTableConfig.addActionDescriptors"
+                            [disabled]="isLoading$ | async"
+                            [fxShow]="actionDescriptor.isEnabled()"
+                            (click)="actionDescriptor.onAction($event)">
+                      <mat-icon>{{actionDescriptor.icon}}</mat-icon>
+                      <span>{{ actionDescriptor.name }}</span>
+                    </button>
+                  </mat-menu>
+                </ng-template>
               </ng-template>
             </div>
             <button mat-button mat-icon-button [disabled]="isLoading$ | async"
@@ -140,9 +150,11 @@
                 </mat-checkbox>
               </mat-cell>
             </ng-container>
-            <ng-container [matColumnDef]="column.key" *ngFor="let column of columns">
+            <ng-container [matColumnDef]="column.key" *ngFor="let column of columns; trackBy: trackByColumnKey; let col = index">
               <mat-header-cell *matHeaderCellDef [ngStyle]="{maxWidth: column.maxWidth}" mat-sort-header [disabled]="!column.sortable"> {{ column.title | translate }} </mat-header-cell>
-              <mat-cell *matCellDef="let entity" [ngStyle]="cellStyle(entity, column)" [innerHTML]="cellContent(entity, column)"></mat-cell>
+              <mat-cell *matCellDef="let entity; let row = index"
+                        [innerHTML]="cellContent(entity, column, row, col)"
+                        [ngStyle]="cellStyle(entity, column, row, col)"></mat-cell>
             </ng-container>
             <ng-container matColumnDef="actions" stickyEnd>
               <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: (cellActionDescriptors.length * 40) + 'px' }">
@@ -155,10 +167,8 @@
                           matTooltip="{{ actionDescriptor.nameFunction ? actionDescriptor.nameFunction(entity) : actionDescriptor.name }}"
                           matTooltipPosition="above"
                           (click)="actionDescriptor.onAction($event, entity)">
-                    <mat-icon *ngIf="!actionDescriptor.isMdiIcon" [ngStyle]="actionDescriptor.color ? {color: actionDescriptor.color} : {}">
+                    <mat-icon [svgIcon]="actionDescriptor.mdiIcon" [ngStyle]="actionDescriptor.style">
                       {{actionDescriptor.icon}}</mat-icon>
-                    <mat-icon *ngIf="actionDescriptor.isMdiIcon" [ngStyle]="actionDescriptor.color ? {color: actionDescriptor.color} : {}"
-                              [svgIcon]="actionDescriptor.icon"></mat-icon>
                   </button>
                 </div>
                 <div fxHide fxShow.lt-lg>
@@ -172,10 +182,8 @@
                             [disabled]="isLoading$ | async"
                             [fxShow]="actionDescriptor.isEnabled(entity)"
                             (click)="actionDescriptor.onAction($event, entity)">
-                      <mat-icon *ngIf="!actionDescriptor.isMdiIcon" [ngStyle]="actionDescriptor.color ? {color: actionDescriptor.color} : {}">
+                      <mat-icon [svgIcon]="actionDescriptor.mdiIcon" [ngStyle]="actionDescriptor.style">
                         {{actionDescriptor.icon}}</mat-icon>
-                      <mat-icon *ngIf="actionDescriptor.isMdiIcon" [ngStyle]="actionDescriptor.color ? {color: actionDescriptor.color} : {}"
-                                [svgIcon]="actionDescriptor.icon"></mat-icon>
                       <span>{{ actionDescriptor.nameFunction ? actionDescriptor.nameFunction(entity) : actionDescriptor.name }}</span>
                     </button>
                   </mat-menu>

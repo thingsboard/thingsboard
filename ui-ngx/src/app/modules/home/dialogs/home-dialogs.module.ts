@@ -16,29 +16,23 @@
 
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { SharedModule } from '@shared/shared.module';
-import {DeviceComponent} from '@modules/home/pages/device/device.component';
-import {DeviceRoutingModule} from './device-routing.module';
-import {DeviceTableHeaderComponent} from '@modules/home/pages/device/device-table-header.component';
-import {DeviceCredentialsDialogComponent} from '@modules/home/pages/device/device-credentials-dialog.component';
-import {HomeDialogsModule} from '../../dialogs/home-dialogs.module';
+import { SharedModule } from '@app/shared/shared.module';
+import {AssignToCustomerDialogComponent} from '@modules/home/dialogs/assign-to-customer-dialog.component';
 
 @NgModule({
   entryComponents: [
-    DeviceComponent,
-    DeviceTableHeaderComponent,
-    DeviceCredentialsDialogComponent
+    AssignToCustomerDialogComponent
   ],
-  declarations: [
-    DeviceComponent,
-    DeviceTableHeaderComponent,
-    DeviceCredentialsDialogComponent
+  declarations:
+  [
+    AssignToCustomerDialogComponent
   ],
   imports: [
     CommonModule,
-    SharedModule,
-    HomeDialogsModule,
-    DeviceRoutingModule
+    SharedModule
+  ],
+  exports: [
+    AssignToCustomerDialogComponent
   ]
 })
-export class DeviceModule { }
+export class HomeDialogsModule { }

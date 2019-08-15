@@ -145,8 +145,7 @@ export class UsersTableConfigResolver implements Resolve<EntityTableConfig<User>
           name: this.authority === Authority.TENANT_ADMIN ?
             this.translate.instant('user.login-as-tenant-admin') :
             this.translate.instant('user.login-as-customer-user'),
-          icon: 'mdi:login',
-          isMdiIcon: true,
+          mdiIcon: 'mdi:login',
           isEnabled: () => true,
           onAction: ($event, entity) => this.loginAsUser($event, entity)
         }

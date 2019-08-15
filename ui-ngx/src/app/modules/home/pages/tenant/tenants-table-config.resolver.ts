@@ -46,7 +46,7 @@ export class TenantsTableConfigResolver implements Resolve<EntityTableConfig<Ten
               private datePipe: DatePipe,
               private router: Router) {
 
-    this.config.entityType = EntityType.CUSTOMER;
+    this.config.entityType = EntityType.TENANT;
     this.config.entityComponent = TenantComponent;
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.TENANT);
     this.config.entityResources = entityTypeResources.get(EntityType.TENANT);
