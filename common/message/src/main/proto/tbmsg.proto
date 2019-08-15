@@ -48,7 +48,9 @@ message TbMsgProto {
 
     TbMsgTransactionDataProto transactionData = 12;
 
-    int32 dataType = 13;
-    string data = 14;
+    string tbMsgPackId = 13;
+
+    int32 dataType = 14;
+    string data = 15;
 
 }
