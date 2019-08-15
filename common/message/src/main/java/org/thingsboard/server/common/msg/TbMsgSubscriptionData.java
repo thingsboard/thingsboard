@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api;
+package org.thingsboard.server.common.msg;
 
-import com.google.common.util.concurrent.FutureCallback;
-import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.TbMsgPack;
+import lombok.Data;
 
-public interface TbBackPressureConsumer {
+@Data
+public class TbMsgSubscriptionData {
 
-    void subscribe(String topic, long duration, FutureCallback<TbMsgPack> callback);
-
-    void ack(TbMsg tbMsg);
+    private final String topic;
+    private final long duration;
 
 }

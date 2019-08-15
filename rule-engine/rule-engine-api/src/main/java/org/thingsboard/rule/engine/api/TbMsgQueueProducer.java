@@ -18,7 +18,7 @@ package org.thingsboard.rule.engine.api;
 import com.google.common.util.concurrent.FutureCallback;
 import org.thingsboard.server.common.msg.TbMsg;
 
-public interface TbBackPressureProducer {
+public interface TbMsgQueueProducer {
 
     void submit(String topic, TbMsg msg, FutureCallback<Void> callback);
 
