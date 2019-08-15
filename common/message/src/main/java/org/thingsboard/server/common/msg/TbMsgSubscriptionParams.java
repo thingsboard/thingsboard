@@ -16,10 +16,13 @@
 package org.thingsboard.server.common.msg;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.id.TenantId;
 
 @Data
-public class TbMsgSubscriptionData {
+public final class TbMsgSubscriptionParams {
 
+    private final TenantId tenantId;
+    private final long clusterPartition;
     private final String topic;
     private final long duration;
 

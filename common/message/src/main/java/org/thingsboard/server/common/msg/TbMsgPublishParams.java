@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api;
+package org.thingsboard.server.common.msg;
 
-import com.google.common.util.concurrent.FutureCallback;
-import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.TbMsgPublishParams;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.TenantId;
 
-public interface TbMsgQueueProducer {
+@Data
+public final class TbMsgPublishParams {
 
-    void publish(TbMsgPublishParams publishParams, TbMsg msg, FutureCallback<Void> callback);
+    private final TenantId tenantId;
+    private final long clusterPartition;
+    private final String topic;
 
 }

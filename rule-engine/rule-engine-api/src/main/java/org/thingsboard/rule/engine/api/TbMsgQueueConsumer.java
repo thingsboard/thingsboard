@@ -18,11 +18,11 @@ package org.thingsboard.rule.engine.api;
 import com.google.common.util.concurrent.FutureCallback;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgPack;
-import org.thingsboard.server.common.msg.TbMsgSubscriptionData;
+import org.thingsboard.server.common.msg.TbMsgSubscriptionParams;
 
 public interface TbMsgQueueConsumer {
 
-    void subscribe(TbMsgSubscriptionData subscriptionData, FutureCallback<TbMsgPack> callback);
+    void subscribe(TbMsgSubscriptionParams subscriptionParams, FutureCallback<TbMsgPack> callback);
 
     void ack(TbMsg tbMsg);
 
