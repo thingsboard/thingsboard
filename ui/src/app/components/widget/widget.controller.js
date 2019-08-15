@@ -132,7 +132,8 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
             actionDescriptorsBySourceId: actionDescriptorsBySourceId,
             getActionDescriptors: getActionDescriptors,
             handleWidgetAction: handleWidgetAction,
-            elementClick: elementClick
+            elementClick: elementClick,
+            getActiveEntityInfo: getActiveEntityInfo
         },
         stateController: stateController,
         aliasController: aliasController
