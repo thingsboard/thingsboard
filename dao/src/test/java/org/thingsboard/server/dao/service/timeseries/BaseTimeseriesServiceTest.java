@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.objects.TelemetryEntityView;
@@ -146,6 +147,58 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
         entries = tsService.findLatest(tenantId, entityView.getId(), Collections.singleton(STRING_KEY)).get();
         Assert.assertEquals(1, entries.size());
         Assert.assertEquals(toTsEntry(TS, stringKvEntry), entries.get(0));
+    }
+
+    @Test
+    public void testFindByQueryAscOrder() throws Exception {
+        DeviceId deviceId = new DeviceId(UUIDs.timeBased());
+
+        saveEntries(deviceId, TS - 2);
+        saveEntries(deviceId, TS - 1);
+        saveEntries(deviceId, TS);
+
+        List<ReadTsKvQuery> queries = new ArrayList<>();
+        queries.add(new BaseReadTsKvQuery(STRING_KEY, TS - 3, TS, 0, 1000, Aggregation.NONE, "ASC"));
+
+        List<TsKvEntry> entries = tsService.findAll(tenantId, deviceId, queries).get();
+        Assert.assertEquals(3, entries.size());
+        Assert.assertEquals(toTsEntry(TS - 2, stringKvEntry), entries.get(0));
+        Assert.assertEquals(toTsEntry(TS - 1, stringKvEntry), entries.get(1));
+        Assert.assertEquals(toTsEntry(TS, stringKvEntry), entries.get(2));
+
+        EntityView entityView = saveAndCreateEntityView(deviceId, Arrays.asList(STRING_KEY));
+
+        entries = tsService.findAll(tenantId, entityView.getId(), queries).get();
+        Assert.assertEquals(3, entries.size());
+        Assert.assertEquals(toTsEntry(TS - 2, stringKvEntry), entries.get(0));
+        Assert.assertEquals(toTsEntry(TS - 1, stringKvEntry), entries.get(1));
+        Assert.assertEquals(toTsEntry(TS, stringKvEntry), entries.get(2));
+    }
+
+    @Test
+    public void testFindByQueryDescOrder() throws Exception {
+        DeviceId deviceId = new DeviceId(UUIDs.timeBased());
+
+        saveEntries(deviceId, TS - 2);
+        saveEntries(deviceId, TS - 1);
+        saveEntries(deviceId, TS);
+
+        List<ReadTsKvQuery> queries = new ArrayList<>();
+        queries.add(new BaseReadTsKvQuery(STRING_KEY, TS - 3, TS, 0, 1000, Aggregation.NONE, "DESC"));
+
+        List<TsKvEntry> entries = tsService.findAll(tenantId, deviceId, queries).get();
+        Assert.assertEquals(3, entries.size());
+        Assert.assertEquals(toTsEntry(TS, stringKvEntry), entries.get(0));
+        Assert.assertEquals(toTsEntry(TS - 1, stringKvEntry), entries.get(1));
+        Assert.assertEquals(toTsEntry(TS - 2, stringKvEntry), entries.get(2));
+
+        EntityView entityView = saveAndCreateEntityView(deviceId, Arrays.asList(STRING_KEY));
+
+        entries = tsService.findAll(tenantId, entityView.getId(), queries).get();
+        Assert.assertEquals(3, entries.size());
+        Assert.assertEquals(toTsEntry(TS, stringKvEntry), entries.get(0));
+        Assert.assertEquals(toTsEntry(TS - 1, stringKvEntry), entries.get(1));
+        Assert.assertEquals(toTsEntry(TS - 2, stringKvEntry), entries.get(2));
     }
 
     @Test

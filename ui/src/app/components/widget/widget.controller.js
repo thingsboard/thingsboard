@@ -780,6 +780,10 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
             widgetContext.dashboardTimewindow = newDashboardTimewindow;
         });
 
+        $scope.$on('widgetForceReInit', function () {
+            reInit();
+        });
+
         $scope.$on("$destroy", function () {
             onDestroy();
         });
