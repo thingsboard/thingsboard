@@ -85,7 +85,7 @@ public interface DeviceDao extends Dao<Device> {
      * @param tenantId the tenantId
      * @param type the type
      * @param pageLink the page link
-     * @return the list of device onfo objects
+     * @return the list of device info objects
      */
     PageData<DeviceInfo> findDeviceInfosByTenantIdAndType(UUID tenantId, String type, PageLink pageLink);
 

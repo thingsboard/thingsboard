@@ -28,11 +28,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.EntitySubtype;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -124,6 +120,13 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
         customerEntityViewsUnAssigner.removeEntities(tenantId, customerId);
     }
 
+    @Override
+    public EntityViewInfo findEntityViewInfoById(TenantId tenantId, EntityViewId entityViewId) {
+        log.trace("Executing findEntityViewInfoById [{}]", entityViewId);
+        validateId(entityViewId, INCORRECT_ENTITY_VIEW_ID + entityViewId);
+        return entityViewDao.findEntityViewInfoById(tenantId, entityViewId.getId());
+    }
+
     @Cacheable(cacheNames = ENTITY_VIEW_CACHE, key = "{#entityViewId}")
     @Override
     public EntityView findEntityViewById(TenantId tenantId, EntityViewId entityViewId) {
@@ -150,12 +153,29 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
     }
 
     @Override
+    public PageData<EntityViewInfo> findEntityViewInfosByTenantId(TenantId tenantId, PageLink pageLink) {
+        log.trace("Executing findEntityViewInfosByTenantId, tenantId [{}], pageLink [{}]", tenantId, pageLink);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validatePageLink(pageLink);
+        return entityViewDao.findEntityViewInfosByTenantId(tenantId.getId(), pageLink);
+    }
+
+    @Override
     public PageData<EntityView> findEntityViewByTenantIdAndType(TenantId tenantId, PageLink pageLink, String type) {
         log.trace("Executing findEntityViewByTenantIdAndType, tenantId [{}], pageLink [{}], type [{}]", tenantId, pageLink, type);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validatePageLink(pageLink);
         validateString(type, "Incorrect type " + type);
         return entityViewDao.findEntityViewsByTenantIdAndType(tenantId.getId(), type, pageLink);
+    }
+
+    @Override
+    public PageData<EntityViewInfo> findEntityViewInfosByTenantIdAndType(TenantId tenantId, String type, PageLink pageLink) {
+        log.trace("Executing findEntityViewInfosByTenantIdAndType, tenantId [{}], pageLink [{}], type [{}]", tenantId, pageLink, type);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validatePageLink(pageLink);
+        validateString(type, "Incorrect type " + type);
+        return entityViewDao.findEntityViewInfosByTenantIdAndType(tenantId.getId(), type, pageLink);
     }
 
     @Override
@@ -171,6 +191,17 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
     }
 
     @Override
+    public PageData<EntityViewInfo> findEntityViewInfosByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink) {
+        log.trace("Executing findEntityViewInfosByTenantIdAndCustomerId, tenantId [{}], customerId [{}]," +
+                " pageLink [{}]", tenantId, customerId, pageLink);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
+        validatePageLink(pageLink);
+        return entityViewDao.findEntityViewInfosByTenantIdAndCustomerId(tenantId.getId(),
+                customerId.getId(), pageLink);
+    }
+
+    @Override
     public PageData<EntityView> findEntityViewsByTenantIdAndCustomerIdAndType(TenantId tenantId, CustomerId customerId, PageLink pageLink, String type) {
         log.trace("Executing findEntityViewsByTenantIdAndCustomerIdAndType, tenantId [{}], customerId [{}]," +
                 " pageLink [{}], type [{}]", tenantId, customerId, pageLink, type);
@@ -179,6 +210,18 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
         validatePageLink(pageLink);
         validateString(type, "Incorrect type " + type);
         return entityViewDao.findEntityViewsByTenantIdAndCustomerIdAndType(tenantId.getId(),
+                customerId.getId(), type, pageLink);
+    }
+
+    @Override
+    public PageData<EntityViewInfo> findEntityViewInfosByTenantIdAndCustomerIdAndType(TenantId tenantId, CustomerId customerId, String type, PageLink pageLink) {
+        log.trace("Executing findEntityViewInfosByTenantIdAndCustomerIdAndType, tenantId [{}], customerId [{}]," +
+                " pageLink [{}], type [{}]", tenantId, customerId, pageLink, type);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
+        validatePageLink(pageLink);
+        validateString(type, "Incorrect type " + type);
+        return entityViewDao.findEntityViewInfosByTenantIdAndCustomerIdAndType(tenantId.getId(),
                 customerId.getId(), type, pageLink);
     }
 

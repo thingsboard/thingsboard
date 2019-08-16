@@ -25,11 +25,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.objects.AttributesEntityView;
 import org.thingsboard.server.common.data.objects.TelemetryEntityView;
@@ -214,16 +210,20 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
 
     @Test
     public void testGetCustomerEntityViews() throws Exception {
-        CustomerId customerId = doPost("/api/customer", getNewCustomer("Test customer"), Customer.class).getId();
-        String urlTemplate = "/api/customer/" + customerId.getId().toString() + "/entityViews?";
+        Customer customer = doPost("/api/customer", getNewCustomer("Test customer"), Customer.class);
+        CustomerId customerId = customer.getId();
+        String urlTemplate = "/api/customer/" + customerId.getId().toString() + "/entityViewInfos?";
 
-        List<EntityView> views = new ArrayList<>();
+        List<EntityViewInfo> views = new ArrayList<>();
         for (int i = 0; i < 128; i++) {
-            views.add(doPost("/api/customer/" + customerId.getId().toString() + "/entityView/"
-                    + getNewSavedEntityView("Test entity view " + i).getId().getId().toString(), EntityView.class));
+            views.add(
+                    new EntityViewInfo(doPost("/api/customer/" + customerId.getId().toString() + "/entityView/"
+                    + getNewSavedEntityView("Test entity view " + i).getId().getId().toString(), EntityView.class),
+                    customer.getTitle(), customer.isPublic())
+            );
         }
 
-        List<EntityView> loadedViews = loadListOf(new PageLink(23), urlTemplate);
+        List<EntityViewInfo> loadedViews = loadListOfInfo(new PageLink(23), urlTemplate);
 
         Collections.sort(views, idComparator);
         Collections.sort(loadedViews, idComparator);
@@ -274,11 +274,11 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
     @Test
     public void testGetTenantEntityViews() throws Exception {
 
-        List<EntityView> views = new ArrayList<>();
+        List<EntityViewInfo> views = new ArrayList<>();
         for (int i = 0; i < 178; i++) {
-            views.add(getNewSavedEntityView("Test entity view" + i));
+            views.add(new EntityViewInfo(getNewSavedEntityView("Test entity view" + i), null, false));
         }
-        List<EntityView> loadedViews = loadListOf(new PageLink(23), "/api/tenant/entityViews?");
+        List<EntityViewInfo> loadedViews = loadListOfInfo(new PageLink(23), "/api/tenant/entityViewInfos?");
 
         Collections.sort(views, idComparator);
         Collections.sort(loadedViews, idComparator);
@@ -521,6 +521,21 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         PageData<EntityView> pageData;
         do {
             pageData = doGetTypedWithPageLink(urlTemplate, new TypeReference<PageData<EntityView>>() {
+            }, pageLink);
+            loadedItems.addAll(pageData.getData());
+            if (pageData.hasNext()) {
+                pageLink = pageLink.nextPageLink();
+            }
+        } while (pageData.hasNext());
+
+        return loadedItems;
+    }
+
+    private List<EntityViewInfo> loadListOfInfo(PageLink pageLink, String urlTemplate) throws Exception {
+        List<EntityViewInfo> loadedItems = new ArrayList<>();
+        PageData<EntityViewInfo> pageData;
+        do {
+            pageData = doGetTypedWithPageLink(urlTemplate, new TypeReference<PageData<EntityViewInfo>>() {
             }, pageLink);
             loadedItems.addAll(pageData.getData());
             if (pageData.hasNext()) {

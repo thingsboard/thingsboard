@@ -308,6 +308,7 @@ spring.resources.chain:
       enabled: "true"
 
 spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation: "true"
+spring.jpa.properties.hibernate.order_by.default_null_ordering: "last"
 
 # SQL DAO Configuration
 spring:
