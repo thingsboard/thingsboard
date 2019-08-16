@@ -34,7 +34,7 @@
                 <section flex layout="row" layout-align="start center" style="margin-bottom: 16px;">
                     <span ng-class="{'tb-disabled-label': useDashboardTimewindow}" translate style="padding-right: 8px;">widget-config.timewindow</span>
                     <tb-timewindow ng-disabled="useDashboardTimewindow" as-button="true" aggregation="{{ widgetType === types.widgetType.timeseries.value }}"
-                                   flex ng-model="timewindow"></tb-timewindow>
+                                   is-edit="true" flex ng-model="timewindow"></tb-timewindow>
                 </section>
             </div>
             <div ng-show="widgetType === types.widgetType.alarm.value" layout='column' layout-align="center"
