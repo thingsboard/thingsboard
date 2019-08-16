@@ -1,0 +1,68 @@
+<!--
+
+    Copyright © 2016-2019 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<form class="tb-multiple-input" name="multipleInputForm" ng-submit="vm.postData($event)" novalidate>
+    <div style="padding: 0 8px; margin: auto 0;">
+        <div ng-show="vm.entityDetected" layout="row" flex ng-repeat="row in vm.rows" ng-init="rowIndex=$index">
+            <div layout="column" flex ng-repeat="key in row.data track by $index" ng-init="keyIndex=$index">
+                <md-tooltip class="tb-tooltip-multiline" ng-if="key.settings.tooltipMessage && key.settings.tooltipMessage.length" md-direction="left">
+                    <span ng-bind-html="key.settings.tooltipMessage"></span>
+                </md-tooltip>
+                <md-input-container class="md-block" ng-style="vm.cellStyle(key, rowIndex, $first, $last)">
+                    <label ng-style="vm.textColor(key)">{{key.label}}</label>
+                    <md-icon ng-style="vm.textColor(key)" class="material-icons" ng-if="key.settings.icon">
+                        {{key.settings.icon}}
+                    </md-icon>
+                    <input name="value{{rowIndex}}{{keyIndex}}"
+                           ng-style="vm.textColor(key)"
+                           ng-disabled="key.settings.readOnly"
+                           ng-model="key.currentValue"
+                           min="{{key.settings.min}}"
+                           max="{{key.settings.max}}"
+                           ng-required="key.settings.required"
+                           type="{{key.settings.inputType}}"
+                           step="{{key.settings.step}}"
+                           md-select-on-focus
+                           ng-change="vm.inputChanged()">
+                    <div ng-messages="multipleInputForm['value' + rowIndex + keyIndex].$error">
+                        <div ng-message="min">Value must be greater than {{key.settings.min}}</div>
+                        <div ng-message="max">Value must be lower than {{key.settings.max}}</div>
+                        <div ng-message="required">This field is required</div>
+                    </div>
+                </md-input-container>
+            </div>
+        </div>
+
+        <div style="text-align: center; font-size: 18px; color: #a0a0a0;" ng-hide="vm.entityDetected" ng-bind="vm.message"
+        ></div>
+        <div style="text-align: center; font-size: 18px; color: #a0a0a0;" ng-show="vm.entityDetected && !vm.dataKeyDetected">
+            No attribute is selected
+        </div>
+        <div style="text-align: center; font-size: 18px; color: #a0a0a0;" ng-show="vm.entityDetected && !vm.isValidParameter">
+            Timeseries parameter cannot be used in this widget
+        </div>
+    </div>
+    <div class="md-padding" layout="row" layout-align="end center" ng-show="vm.entityDetected && vm.dataKeyDetected">
+        <md-button class="md-primary" ng-click="vm.discardAll()" style="max-height: 50px;margin-right:20px;" ng-disabled="!vm.hasAnyChange">
+            {{ 'action.undo' | translate }}
+        </md-button>
+        <md-button class="md-raised md-primary" type="submit" value="Submit" style="max-height: 50px;margin-right:20px;"
+                   ng-disabled="!vm.hasAnyChange || multipleInputForm.$invalid" ng-click="vm.isFocused = false">
+            {{ 'action.save' | translate }}
+        </md-button>
+    </div>
+</form>

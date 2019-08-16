@@ -49,6 +49,7 @@
         "import": "Importar",
         "export": "Exportar",
         "share-via": "Compartir vía {{provider}}",
+        "discard-changes": "Cancelar los cambios",
         "continue": "Continuar"
     },
     "aggregation": {
