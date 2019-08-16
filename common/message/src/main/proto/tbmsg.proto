@@ -51,4 +51,6 @@ message TbMsgProto {
     int32 dataType = 13;
     string data = 14;
 
+    string tbMsgPackId = 15;
+
 }
