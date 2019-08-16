@@ -1429,6 +1429,7 @@
         "timewindow": "Fenêtre de temps",
         "title": "Titre",
         "title-style": "Style de titre",
+        "title-tooltip": "Tooltip de titre",
         "units": "Symbole spécial à afficher à côté de la valeur",
         "use-dashboard-timewindow": "Utiliser la fenêtre de temps du tableau de bord",
         "widget-style": "Style du widget",
