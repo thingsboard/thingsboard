@@ -1176,7 +1176,7 @@
         "select": "Seleccionar diseño objetivo"
     },
     "legend": {
-        "direction": "",
+        "direction": "Dirección de la leyenda",
         "position": "Posición de la leyenda",
         "show-max": "Mostrar valor máximo",
         "show-min": "Mostrar valor mínimo",
