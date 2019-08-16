@@ -439,13 +439,13 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
     }
 
     function elementClick(event) {
-        event.stopPropagation();
         var e = event.target || event.srcElement;
         if (e.id) {
             var descriptors = getActionDescriptors('elementClick');
             if (descriptors.length) {
                 for (var i = 0; i < descriptors.length; i++) {
                     if (descriptors[i].name == e.id) {
+                        event.stopPropagation();
                         var entityInfo = getActiveEntityInfo();
                         var entityId = entityInfo ? entityInfo.entityId : null;
                         var entityName = entityInfo ? entityInfo.entityName : null;
