@@ -56,7 +56,8 @@
 												<span ng-bind-html="vm.widgetTitleTooltip(widget)"></span>
 											</md-tooltip>
 										</span>
-										<tb-timewindow aggregation="{{vm.hasAggregation(widget)}}" ng-if="vm.hasTimewindow(widget)" ng-model="widget.config.timewindow"></tb-timewindow>
+										<tb-timewindow aggregation="{{vm.hasAggregation(widget)}}" is-edit="vm.isEdit"
+                                                       ng-if="vm.hasTimewindow(widget)" ng-model="widget.config.timewindow"></tb-timewindow>
 									</div>
 									<div class="tb-widget-actions" layout="row" layout-align="start center" ng-show="vm.showWidgetActions(widget)" tb-mousedown="$event.stopPropagation()"
 										ng-class="{'tb-widget-actions-absolute': !(vm.showWidgetTitlePanel(widget)&&(vm.hasWidgetTitleTemplate(widget)||vm.showWidgetTitle(widget)||vm.hasAggregation(widget)))}">

@@ -1263,7 +1263,8 @@
         "period": "de {{startTime}} à {{endTime}}",
         "realtime": "Temps réel",
         "seconds": "{seconds, plural, 0 {second} 1 {1 second} other {# seconds}}",
-        "time-period": "Période"
+        "time-period": "Période",
+        "hide": "Masquer"
     },
     "user": {
         "activation-email-sent-message": "L'e-mail d'activation a été envoyé avec succès!",

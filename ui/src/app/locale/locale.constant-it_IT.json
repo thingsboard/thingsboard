@@ -1353,7 +1353,8 @@
         "edit": "Modifica intervallo temporale",
         "date-range": "Intervallo date",
         "last": "Ultimo",
-        "time-period": "Intervallo temporale"
+        "time-period": "Intervallo temporale",
+        "hide": "Nascondi"
     },
     "user": {
         "user": "Utente",
