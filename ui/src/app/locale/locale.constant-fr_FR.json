@@ -48,7 +48,8 @@
         "undo": "Annuler",
         "update": "mise à jour",
         "view": "Afficher",
-        "yes": "Oui"
+        "yes": "Oui",
+        "discard-changes": "Annuler les modifications"
     },
     "admin": {
         "base-url": "URL de base",

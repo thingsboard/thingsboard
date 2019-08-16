@@ -49,7 +49,8 @@
         "import": "Import",
         "export": "Export",
         "share-via": "Share via {{provider}}",
-        "continue": "Continue"
+        "continue": "Continue",
+        "discard-changes": "Discard Changes"
     },
     "aggregation": {
         "aggregation": "Aggregation",
