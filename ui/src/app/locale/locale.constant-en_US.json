@@ -1699,7 +1699,8 @@
             "marker-click": "On marker click",
             "tooltip-tag-action": "Tooltip tag action",
             "node-selected": "On node selected",
-            "element-click": "On HTML element click"
+            "element-click": "On HTML element click",
+            "pie-slice-click": "On slice click"
         }
     },
     "language": {

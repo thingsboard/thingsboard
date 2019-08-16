@@ -1698,7 +1698,8 @@
             "marker-click": "Clic en el polígono",
             "tooltip-tag-action": "Acción de etiqueta para globo de ayuda",
             "node-selected": "Clic en el nodo seleccionado",
-            "element-click": "Clic en el elemento HTML"
+            "element-click": "Clic en el elemento HTML",
+            "pie-slice-click": "Clic en la rebanada"
         }
     },
     "language": {

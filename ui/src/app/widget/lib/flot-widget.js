@@ -366,6 +366,8 @@ export default class TbFlot {
                     }
                 }
             }
+            options.grid.clickable = true;
+                
             if (settings.stroke) {
                 options.series.pie.stroke.color = settings.stroke.color || '#fff';
                 options.series.pie.stroke.width = settings.stroke.width || 0;
@@ -1306,6 +1308,17 @@ export default class TbFlot {
             };
             this.$element.bind('mouseleave', this.mouseleaveHandler);
         }
+
+        if (!this.flotClickHandler) {
+            this.flotClickHandler =  function (event, pos, item) {
+                if (!tbFlot.ctx.plot) {
+                    return;
+                }
+                tbFlot.onPieSliceClick(event, item);
+            };
+            this.$element.bind('plotclick', this.flotClickHandler);
+        }
+
     }
 
     disableMouseEvents() {
@@ -1337,6 +1350,10 @@ export default class TbFlot {
         if (this.mouseleaveHandler) {
             this.$element.unbind('mouseleave', this.mouseleaveHandler);
             this.mouseleaveHandler = null;
+        }
+        if (this.flotClickHandler) {
+            this.$element.unbind('plotclick', this.flotClickHandler);
+            this.flotClickHandler = null;
         }
     }
 
@@ -1487,6 +1504,17 @@ export default class TbFlot {
         this.pieDataRendered();
         this.ctx.plot.setData(this.pieData);
         this.ctx.plot.draw();
+    }
+
+    onPieSliceClick($event, item) {
+        var descriptors = this.ctx.actionsApi.getActionDescriptors('sliceClick');
+        if ($event && descriptors.length) {
+            $event.stopPropagation();
+            var entityInfo = this.ctx.actionsApi.getActiveEntityInfo();
+            var entityId = entityInfo ? entityInfo.entityId : null;
+            var entityName = entityInfo ? entityInfo.entityName : null;
+            this.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, item);
+        }
     }
 }
 
