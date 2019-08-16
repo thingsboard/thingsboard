@@ -670,6 +670,10 @@
     "dialog": {
         "close": "Close dialog"
     },
+    "direction": {
+        "column": "Colonna",
+        "row": "Riga"
+    },
     "error": {
         "unable-to-connect": "Impossibile connettersi al server! Controlla la connessione ad Internet.",
         "unhandled-error-code": "Codice errore non gestito: {{errorCode}}",
@@ -1116,6 +1120,7 @@
         "select": "Select target layout"
     },
     "legend": {
+        "direction": "Direzione",
         "position": "Posizione Legenda",
         "show-max": "Mostra valore max",
         "show-min": "Mostra valore min",
