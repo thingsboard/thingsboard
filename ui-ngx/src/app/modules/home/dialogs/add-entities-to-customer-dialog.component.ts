@@ -24,6 +24,8 @@ import {DeviceService} from '@core/http/device.service';
 import {EntityId} from '@shared/models/id/entity-id';
 import {EntityType} from '@shared/models/entity-type.models';
 import {forkJoin, Observable} from 'rxjs';
+import {AssetService} from '@core/http/asset.service';
+import {EntityViewService} from '@core/http/entity-view.service';
 
 export interface AddEntitiesToCustomerDialogData {
   customerId: string;
@@ -50,6 +52,8 @@ export class AddEntitiesToCustomerDialogComponent extends PageComponent implemen
   constructor(protected store: Store<AppState>,
               @Inject(MAT_DIALOG_DATA) public data: AddEntitiesToCustomerDialogData,
               private deviceService: DeviceService,
+              private assetService: AssetService,
+              private entityViewService: EntityViewService,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<AddEntitiesToCustomerDialogComponent, boolean>,
               public fb: FormBuilder) {
@@ -107,10 +111,10 @@ export class AddEntitiesToCustomerDialogComponent extends PageComponent implemen
         return this.deviceService.assignDeviceToCustomer(customerId, entityId);
         break;
       case EntityType.ASSET:
-        // TODO:
+        return this.assetService.assignAssetToCustomer(customerId, entityId);
         break;
       case EntityType.ENTITY_VIEW:
-        // TODO:
+        return this.entityViewService.assignEntityViewToCustomer(customerId, entityId);
         break;
     }
   }

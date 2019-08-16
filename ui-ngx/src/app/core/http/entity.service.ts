@@ -35,6 +35,8 @@ import {Authority} from '@shared/models/authority.enum';
 import {Tenant} from '@shared/models/tenant.model';
 import {concatMap, expand, map, toArray} from 'rxjs/operators';
 import {Customer} from '@app/shared/models/customer.model';
+import {AssetService} from '@core/http/asset.service';
+import {EntityViewService} from '@core/http/entity-view.service';
 
 @Injectable({
   providedIn: 'root'
@@ -45,6 +47,8 @@ export class EntityService {
     private http: HttpClient,
     private store: Store<AppState>,
     private deviceService: DeviceService,
+    private assetService: AssetService,
+    private entityViewService: EntityViewService,
     private tenantService: TenantService,
     private customerService: CustomerService,
     private userService: UserService,
@@ -60,10 +64,10 @@ export class EntityService {
         observable = this.deviceService.getDevice(entityId, ignoreErrors, ignoreLoading);
         break;
       case EntityType.ASSET:
-        // TODO:
+        observable = this.assetService.getAsset(entityId, ignoreErrors, ignoreLoading);
         break;
       case EntityType.ENTITY_VIEW:
-        // TODO:
+        observable = this.entityViewService.getEntityView(entityId, ignoreErrors, ignoreLoading);
         break;
       case EntityType.TENANT:
         observable = this.tenantService.getTenant(entityId, ignoreErrors, ignoreLoading);
@@ -127,10 +131,12 @@ export class EntityService {
         observable = this.deviceService.getDevices(entityIds, ignoreErrors, ignoreLoading);
         break;
       case EntityType.ASSET:
-        // TODO:
+        observable = this.assetService.getAssets(entityIds, ignoreErrors, ignoreLoading);
         break;
       case EntityType.ENTITY_VIEW:
-        // TODO:
+        observable = this.getEntitiesByIdsObservable(
+          (id) => this.entityViewService.getEntityView(id, ignoreErrors, ignoreLoading),
+          entityIds);
         break;
       case EntityType.TENANT:
         observable = this.getEntitiesByIdsObservable(
@@ -233,17 +239,18 @@ export class EntityService {
       case EntityType.ASSET:
         pageLink.sortOrder.property = 'name';
         if (authUser.authority === Authority.CUSTOMER_USER) {
-          // TODO:
+          entitiesObservable = this.assetService.getCustomerAssetInfos(customerId, pageLink, subType, ignoreErrors, ignoreLoading);
         } else {
-          // TODO:
+          entitiesObservable = this.assetService.getTenantAssetInfos(pageLink, subType, ignoreErrors, ignoreLoading);
         }
         break;
       case EntityType.ENTITY_VIEW:
         pageLink.sortOrder.property = 'name';
         if (authUser.authority === Authority.CUSTOMER_USER) {
-          // TODO:
+          entitiesObservable = this.entityViewService.getCustomerEntityViewInfos(customerId, pageLink,
+            subType, ignoreErrors, ignoreLoading);
         } else {
-          // TODO:
+          entitiesObservable = this.entityViewService.getTenantEntityViewInfos(pageLink, subType, ignoreErrors, ignoreLoading);
         }
         break;
       case EntityType.TENANT:

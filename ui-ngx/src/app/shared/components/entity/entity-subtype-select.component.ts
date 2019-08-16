@@ -32,6 +32,8 @@ import {TranslateService} from '@ngx-translate/core';
 import {DeviceService} from '@core/http/device.service';
 import {EntitySubtype, EntityType} from '@app/shared/models/entity-type.models';
 import {BroadcastService} from '@app/core/services/broadcast.service';
+import {AssetService} from '@core/http/asset.service';
+import {EntityViewService} from '@core/http/entity-view.service';
 
 @Component({
   selector: 'tb-entity-subtype-select',
@@ -83,6 +85,8 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
               private broadcast: BroadcastService,
               public translate: TranslateService,
               private deviceService: DeviceService,
+              private assetService: AssetService,
+              private entityViewService: EntityViewService,
               private fb: FormBuilder) {
     this.subTypeFormGroup = this.fb.group({
       subType: [null]
@@ -202,13 +206,13 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
     if (!this.subTypes) {
       switch (this.entityType) {
         case EntityType.ASSET:
-          // TODO:
+          this.subTypes = this.assetService.getAssetTypes(false, true);
           break;
         case EntityType.DEVICE:
           this.subTypes = this.deviceService.getDeviceTypes(false,  true);
           break;
         case EntityType.ENTITY_VIEW:
-          // TODO:
+          this.subTypes = this.entityViewService.getEntityViewTypes(false, true);
           break;
       }
       if (this.subTypes) {
