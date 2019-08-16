@@ -141,8 +141,8 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
     );
   }
 
-  configureColumns(deviceScope: string): Array<EntityTableColumn<Device | DeviceInfo>> {
-    const columns: Array<EntityTableColumn<Device | DeviceInfo>> = [
+  configureColumns(deviceScope: string): Array<EntityTableColumn<DeviceInfo>> {
+    const columns: Array<EntityTableColumn<DeviceInfo>> = [
       new DateEntityTableColumn<DeviceInfo>('createdTime', 'device.created-time', this.datePipe, '150px'),
       new EntityTableColumn<DeviceInfo>('name', 'device.name'),
       new EntityTableColumn<DeviceInfo>('type', 'device.device-type'),

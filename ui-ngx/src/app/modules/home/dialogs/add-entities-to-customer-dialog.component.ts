@@ -71,7 +71,8 @@ export class AddEntitiesToCustomerDialogComponent extends PageComponent implemen
         this.assignToCustomerText = 'device.assign-device-to-customer-text';
         break;
       case EntityType.ASSET:
-        // TODO:
+        this.assignToCustomerTitle = 'asset.assign-asset-to-customer';
+        this.assignToCustomerText = 'asset.assign-asset-to-customer-text';
         break;
       case EntityType.ENTITY_VIEW:
         // TODO:

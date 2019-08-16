@@ -70,7 +70,8 @@ export class AssignToCustomerDialogComponent extends PageComponent implements On
         this.assignToCustomerText = 'device.assign-to-customer-text';
         break;
       case EntityType.ASSET:
-        // TODO:
+        this.assignToCustomerTitle = 'asset.assign-asset-to-customer';
+        this.assignToCustomerText = 'asset.assign-to-customer-text';
         break;
       case EntityType.ENTITY_VIEW:
         // TODO:

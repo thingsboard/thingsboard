@@ -228,6 +228,7 @@
         "no-asset-types-matching": "No asset types matching '{{entitySubtype}}' were found.",
         "asset-type-list-empty": "No asset types selected.",
         "asset-types": "Asset types",
+        "created-time": "Created time",
         "name": "Name",
         "name-required": "Name is required.",
         "description": "Description",
@@ -264,7 +265,9 @@
         "asset-required": "Asset is required",
         "name-starts-with": "Asset name starts with",
         "import": "Import assets",
-        "asset-file": "Asset file"
+        "asset-file": "Asset file",
+        "search": "Search assets",
+        "selected-assets": "{ count, plural, 1 {1 asset} other {# assets} } selected"
     },
     "attribute": {
         "attributes": "Attributes",
@@ -867,6 +870,7 @@
         "no-entity-view-types-matching": "No entity view types matching '{{entitySubtype}}' were found.",
         "entity-view-type-list-empty": "No entity view types selected.",
         "entity-view-types": "Entity View types",
+        "created-time": "Created time",
         "name": "Name",
         "name-required": "Name is required.",
         "description": "Description",
@@ -900,7 +904,9 @@
         "make-public-entity-view-title": "Are you sure you want to make the entity view '{{entityViewName}}' public?",
         "make-public-entity-view-text": "After the confirmation the entity view and all its data will be made public and accessible by others.",
         "make-private-entity-view-title": "Are you sure you want to make the entity view '{{entityViewName}}' private?",
-        "make-private-entity-view-text": "After the confirmation the entity view and all its data will be made private and won't be accessible by others."
+        "make-private-entity-view-text": "After the confirmation the entity view and all its data will be made private and won't be accessible by others.",
+        "search": "Search entity views",
+        "selected-entity-views": "{ count, plural, 1 {1 entity view} other {# entity views} } selected"
     },
     "event": {
         "event-type": "Event type",

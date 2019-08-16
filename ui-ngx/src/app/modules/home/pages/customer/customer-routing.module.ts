@@ -22,6 +22,7 @@ import {Authority} from '@shared/models/authority.enum';
 import {UsersTableConfigResolver} from '../user/users-table-config.resolver';
 import {CustomersTableConfigResolver} from './customers-table-config.resolver';
 import {DevicesTableConfigResolver} from '@modules/home/pages/device/devices-table-config.resolver';
+import {AssetsTableConfigResolver} from '../asset/assets-table-config.resolver';
 
 const routes: Routes = [
   {
@@ -73,6 +74,22 @@ const routes: Routes = [
         },
         resolve: {
           entitiesTableConfig: DevicesTableConfigResolver
+        }
+      },
+      {
+        path: ':customerId/assets',
+        component: EntitiesTableComponent,
+        data: {
+          auth: [Authority.TENANT_ADMIN],
+          title: 'customer.assets',
+          assetsType: 'customer',
+          breadcrumb: {
+            label: 'customer.assets',
+            icon: 'domain'
+          }
+        },
+        resolve: {
+          entitiesTableConfig: AssetsTableConfigResolver
         }
       }
     ]

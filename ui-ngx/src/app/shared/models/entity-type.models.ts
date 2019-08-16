@@ -108,6 +108,34 @@ export const entityTypeTranslations = new Map<EntityType, EntityTypeTranslation>
         search: 'device.search',
         selectedEntities: 'device.selected-devices'
       }
+    ],
+    [
+      EntityType.ASSET,
+      {
+        type: 'entity.type-asset',
+        typePlural: 'entity.type-assets',
+        list: 'entity.list-of-assets',
+        nameStartsWith: 'entity.asset-name-starts-with',
+        details: 'asset.asset-details',
+        add: 'asset.add',
+        noEntities: 'asset.no-assets-text',
+        search: 'asset.search',
+        selectedEntities: 'asset.selected-assets'
+      }
+    ],
+    [
+      EntityType.ENTITY_VIEW,
+      {
+        type: 'entity.type-entity-view',
+        typePlural: 'entity.type-entity-views',
+        list: 'entity.list-of-entity-views',
+        nameStartsWith: 'entity.entity-view-name-starts-with',
+        details: 'entity-view.entity-view-details',
+        add: 'entity-view.add',
+        noEntities: 'entity-view.no-entity-views-text',
+        search: 'entity-view.search',
+        selectedEntities: 'entity-view.selected-entity-views'
+      }
     ]
   ]
 );
@@ -136,6 +164,18 @@ export const entityTypeResources = new Map<EntityType, EntityTypeResource>(
       EntityType.DEVICE,
       {
         helpLinkId: 'devices'
+      }
+    ],
+    [
+      EntityType.ASSET,
+      {
+        helpLinkId: 'assets'
+      }
+    ],
+    [
+      EntityType.ENTITY_VIEW,
+      {
+        helpLinkId: 'entityViews'
       }
     ]
   ]
