@@ -51,6 +51,8 @@
         <commons-io.version>2.5</commons-io.version>
         <commons-csv.version>1.4</commons-csv.version>
         <jackson.version>2.9.9.3</jackson.version>
+        <jackson-annotations.version>2.9.9</jackson-annotations.version>
+        <jackson-core.version>2.9.9</jackson-core.version>
         <json-schema-validator.version>2.2.6</json-schema-validator.version>
         <scala.version>2.11</scala.version>
         <akka.version>2.4.2</akka.version>
@@ -635,12 +637,12 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-core</artifactId>
-                <version>${jackson.version}</version>
+                <version>${jackson-core.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-annotations</artifactId>
-                <version>${jackson.version}</version>
+                <version>${jackson-annotations.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.github.fge</groupId>
