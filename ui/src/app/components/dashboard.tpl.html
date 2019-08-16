@@ -52,6 +52,9 @@
 												{{vm.widgetTitleIcon(widget)}}
 											</md-icon>
 											{{vm.widgetTitle(widget)}}
+											<md-tooltip class="tb-tooltip-multiline" ng-if="vm.widgetTitleTooltip(widget)" md-direction="{{vm.isWidgetExpanded ? 'bottom' : 'top'}}">
+												<span ng-bind-html="vm.widgetTitleTooltip(widget)"></span>
+											</md-tooltip>
 										</span>
 										<tb-timewindow aggregation="{{vm.hasAggregation(widget)}}" ng-if="vm.hasTimewindow(widget)" ng-model="widget.config.timewindow"></tb-timewindow>
 									</div>

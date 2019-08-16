@@ -1568,6 +1568,7 @@
         "settings": "Configuración",
         "advanced": "Avanzado",
         "title": "Título",
+        "title-tooltip": "Tooltip Título",
         "general-settings": "Configuración general",
         "display-title": "Mostrar título",
         "drop-shadow": "Colocar sombra",
