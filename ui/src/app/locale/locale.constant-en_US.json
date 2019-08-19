@@ -49,7 +49,8 @@
         "import": "Import",
         "export": "Export",
         "share-via": "Share via {{provider}}",
-        "continue": "Continue"
+        "continue": "Continue",
+        "discard-changes": "Discard Changes"
     },
     "aggregation": {
         "aggregation": "Aggregation",
@@ -1411,7 +1412,8 @@
         "edit": "Edit timewindow",
         "date-range": "Date range",
         "last": "Last",
-        "time-period": "Time period"
+        "time-period": "Time period",
+        "hide": "Hide"
     },
     "user": {
         "user": "User",
@@ -1569,6 +1571,7 @@
         "settings": "Settings",
         "advanced": "Advanced",
         "title": "Title",
+        "title-tooltip": "Title Tooltip",
         "general-settings": "General settings",
         "display-title": "Display title",
         "drop-shadow": "Drop shadow",
@@ -1697,7 +1700,8 @@
             "marker-click": "On marker click",
             "tooltip-tag-action": "Tooltip tag action",
             "node-selected": "On node selected",
-            "element-click": "On HTML element click"
+            "element-click": "On HTML element click",
+            "pie-slice-click": "On slice click"
         }
     },
     "language": {

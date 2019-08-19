@@ -113,6 +113,7 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
                     scope.titleIcon = angular.isDefined(config.titleIcon) ? config.titleIcon : '';
                     scope.iconColor = angular.isDefined(config.iconColor) ? config.iconColor : 'rgba(0, 0, 0, 0.87)';
                     scope.iconSize = angular.isDefined(config.iconSize) ? config.iconSize : '24px';
+                    scope.titleTooltip = angular.isDefined(config.titleTooltip) ? config.titleTooltip : '';
                     scope.showTitle = config.showTitle;
                     scope.dropShadow = angular.isDefined(config.dropShadow) ? config.dropShadow : true;
                     scope.enableFullscreen = angular.isDefined(config.enableFullscreen) ? config.enableFullscreen : true;
@@ -240,7 +241,7 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
             }
         };
 
-        scope.$watch('title + showTitleIcon + titleIcon + iconColor + iconSize + showTitle + dropShadow + enableFullscreen + backgroundColor + ' +
+        scope.$watch('title + showTitleIcon + titleIcon + iconColor + iconSize + titleTooltip + showTitle + dropShadow + enableFullscreen + backgroundColor + ' +
             'color + padding + margin + widgetStyle + titleStyle + mobileOrder + mobileHeight + units + decimals + useDashboardTimewindow + ' +
             'displayTimewindow + alarmSearchStatus + alarmsPollingInterval + showLegend', function () {
             if (ngModelCtrl.$viewValue) {
@@ -252,6 +253,7 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
                     config.titleIcon = scope.titleIcon;
                     config.iconColor = scope.iconColor;
                     config.iconSize = scope.iconSize;
+                    config.titleTooltip = scope.titleTooltip;
                     config.showTitle = scope.showTitle;
                     config.dropShadow = scope.dropShadow;
                     config.enableFullscreen = scope.enableFullscreen;
