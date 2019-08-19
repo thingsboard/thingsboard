@@ -14,6 +14,7 @@
 /// limitations under the License.
 ///
 
+import {COMMA, ENTER, SEMICOLON} from '@angular/cdk/keycodes';
 import {AfterViewInit, Component, ElementRef, forwardRef, Input, OnInit, SkipSelf, ViewChild} from '@angular/core';
 import {
   ControlValueAccessor,
@@ -23,7 +24,7 @@ import {
   FormGroupDirective,
   NG_VALUE_ACCESSOR, NgForm
 } from '@angular/forms';
-import {Observable} from 'rxjs';
+import {Observable, of} from 'rxjs';
 import {map, mergeMap, startWith, tap, share, pairwise, filter} from 'rxjs/operators';
 import {Store} from '@ngrx/store';
 import {AppState} from '@app/core/core.state';
@@ -32,36 +33,44 @@ import {AliasEntityType, EntityType} from '@shared/models/entity-type.models';
 import {BaseData} from '@shared/models/base-data';
 import {EntityId} from '@shared/models/id/entity-id';
 import {EntityService} from '@core/http/entity.service';
-import {ErrorStateMatcher, MatAutocomplete, MatAutocompleteSelectedEvent, MatChipList} from '@angular/material';
+import {ErrorStateMatcher, MatAutocomplete, MatAutocompleteSelectedEvent, MatChipList, MatChipInputEvent} from '@angular/material';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import {DataKeyType} from '@shared/models/telemetry/telemetry.models';
+import * as equal from 'deep-equal';
 
 @Component({
-  selector: 'tb-entity-list',
-  templateUrl: './entity-list.component.html',
+  selector: 'tb-entity-keys-list',
+  templateUrl: './entity-keys-list.component.html',
   styleUrls: [],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => EntityListComponent),
+      useExisting: forwardRef(() => EntityKeysListComponent),
       multi: true
     }
   ]
 })
-export class EntityListComponent implements ControlValueAccessor, OnInit, AfterViewInit {
+export class EntityKeysListComponent implements ControlValueAccessor, OnInit, AfterViewInit {
 
-  entityListFormGroup: FormGroup;
+  keysListFormGroup: FormGroup;
 
   modelValue: Array<string> | null;
 
-  entityTypeValue: EntityType;
+  entityIdValue: EntityId;
 
   @Input()
-  set entityType(entityType: EntityType) {
-    if (this.entityTypeValue !== entityType) {
-      this.entityTypeValue = entityType;
+  set entityId(entityId: EntityId) {
+    if (!equal(this.entityIdValue, entityId)) {
+      this.entityIdValue = entityId;
       this.reset();
     }
   }
+
+  @Input()
+  keysText: string;
+
+  @Input()
+  dataKeyType: DataKeyType;
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -75,12 +84,13 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
   @Input()
   disabled: boolean;
 
-  @ViewChild('entityInput', {static: false}) entityInput: ElementRef<HTMLInputElement>;
-  @ViewChild('entityAutocomplete', {static: false}) matAutocomplete: MatAutocomplete;
+  @ViewChild('keyInput', {static: false}) keyInput: ElementRef<HTMLInputElement>;
+  @ViewChild('keyAutocomplete', {static: false}) matAutocomplete: MatAutocomplete;
   @ViewChild('chipList', {static: false}) chipList: MatChipList;
 
-  entities: Array<BaseData<EntityId>> = [];
-  filteredEntities: Observable<Array<BaseData<EntityId>>>;
+  filteredKeys: Observable<Array<string>>;
+
+  separatorKeysCodes: number[] = [ENTER, COMMA, SEMICOLON];
 
   private searchText = '';
 
@@ -90,8 +100,8 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
               public translate: TranslateService,
               private entityService: EntityService,
               private fb: FormBuilder) {
-    this.entityListFormGroup = this.fb.group({
-      entity: [null]
+    this.keysListFormGroup = this.fb.group({
+      key: [null]
     });
   }
 
@@ -103,21 +113,12 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
   }
 
   ngOnInit() {
-    this.filteredEntities = this.entityListFormGroup.get('entity').valueChanges
-    .pipe(
-      startWith<string | BaseData<EntityId>>(''),
-      tap((value) => {
-        if (value && typeof value !== 'string') {
-          this.add(value);
-        } else if (value === null) {
-          this.clear(this.entityInput.nativeElement.value);
-        }
-      }),
-      filter((value) => typeof value === 'string'),
-      map((value) => value ? (typeof value === 'string' ? value : value.name) : ''),
-      mergeMap(name => this.fetchEntities(name) ),
-      share()
-    );
+    this.filteredKeys = this.keysListFormGroup.get('key').valueChanges
+      .pipe(
+        map((value) => value ? value : ''),
+        mergeMap(name => this.fetchKeys(name) ),
+        share()
+      );
   }
 
   ngAfterViewInit(): void {}
@@ -125,82 +126,83 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (this.disabled) {
-      this.entityListFormGroup.disable();
+      this.keysListFormGroup.disable();
     } else {
-      this.entityListFormGroup.enable();
+      this.keysListFormGroup.enable();
     }
   }
 
   writeValue(value: Array<string> | null): void {
     this.searchText = '';
     if (value != null) {
-      this.modelValue = value;
-      this.entityService.getEntities(this.entityTypeValue, value).subscribe(
-        (entities) => {
-          this.entities = entities;
-        }
-      );
+      this.modelValue = [...value];
     } else {
-      this.entities = [];
-      this.modelValue = null;
+      this.modelValue = [];
     }
   }
 
   reset() {
-    this.entities = [];
-    this.modelValue = null;
-    this.entityListFormGroup.get('entity').patchValue('', {emitEvent: true});
-    this.propagateChange(this.modelValue);
+    this.keysListFormGroup.get('key').patchValue(null, {emitEvent: true});
   }
 
-  add(entity: BaseData<EntityId>): void {
-    if (!this.modelValue || this.modelValue.indexOf(entity.id.id) === -1) {
+  addKey(key: string): void {
+    if (!this.modelValue || this.modelValue.indexOf(key) === -1) {
       if (!this.modelValue) {
         this.modelValue = [];
       }
-      this.modelValue.push(entity.id.id);
-      this.entities.push(entity);
+      this.modelValue.push(key);
       if (this.required) {
         this.chipList.errorState = false;
       }
     }
     this.propagateChange(this.modelValue);
-    this.clear();
   }
 
-  remove(entity: BaseData<EntityId>) {
-    const index = this.entities.indexOf(entity);
+  add(event: MatChipInputEvent): void {
+   if (!this.matAutocomplete.isOpen) {
+      const value = event.value;
+      if ((value || '').trim()) {
+        this.addKey(value.trim());
+      }
+      this.clear('');
+   }
+  }
+
+  remove(key: string) {
+    const index = this.modelValue.indexOf(key);
     if (index >= 0) {
-      this.entities.splice(index, 1);
       this.modelValue.splice(index, 1);
       if (!this.modelValue.length) {
-        this.modelValue = null;
         if (this.required) {
           this.chipList.errorState = true;
         }
       }
-      this.propagateChange(this.modelValue);
-      this.clear();
+      this.propagateChange(this.modelValue.length ? this.modelValue : null);
     }
   }
 
-  displayEntityFn(entity?: BaseData<EntityId>): string | undefined {
-    return entity ? entity.name : undefined;
+  selected(event: MatAutocompleteSelectedEvent): void {
+    this.addKey(event.option.viewValue);
+    this.clear('');
   }
 
-  fetchEntities(searchText?: string): Observable<Array<BaseData<EntityId>>> {
+  displayKeyFn(key?: string): string | undefined {
+    return key ? key : undefined;
+  }
+
+  fetchKeys(searchText?: string): Observable<Array<string>> {
     this.searchText = searchText;
-    return this.entityService.getEntitiesByNameFilter(this.entityTypeValue, searchText,
-      50, '', false, true).pipe(
-      map((data) => data ? data : []));
+    return this.entityIdValue ? this.entityService.getEntityKeys(this.entityIdValue, searchText,
+      this.dataKeyType, false, true).pipe(
+      map((data) => data ? data : [])) : of([]);
   }
 
   clear(value: string = '') {
-    this.entityInput.nativeElement.value = value;
-    this.entityListFormGroup.get('entity').patchValue(value, {emitEvent: true});
+    this.keyInput.nativeElement.value = value;
+    this.keysListFormGroup.get('key').patchValue(null, {emitEvent: true});
     setTimeout(() => {
-      this.entityInput.nativeElement.blur();
-      this.entityInput.nativeElement.focus();
+      this.keyInput.nativeElement.blur();
+      this.keyInput.nativeElement.focus();
     }, 0);
   }
 

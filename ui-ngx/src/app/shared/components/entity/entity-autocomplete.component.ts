@@ -52,6 +52,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
     if (this.entityTypeValue !== entityType) {
       this.entityTypeValue = entityType;
       this.load();
+      this.reset();
     }
   }
 
@@ -210,21 +211,36 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
+    if (this.disabled) {
+      this.selectEntityFormGroup.disable();
+    } else {
+      this.selectEntityFormGroup.enable();
+    }
   }
 
-  writeValue(value: string | null): void {
+  writeValue(value: string | EntityId | null): void {
     this.searchText = '';
     if (value != null) {
-      let targetEntityType = this.entityTypeValue;
-      if (targetEntityType === AliasEntityType.CURRENT_CUSTOMER) {
-        targetEntityType = EntityType.CUSTOMER;
-      }
-      this.entityService.getEntity(targetEntityType, value).subscribe(
-        (entity) => {
-          this.modelValue = entity.id.id;
-          this.selectEntityFormGroup.get('entity').patchValue(entity, {emitEvent: true});
+      if (typeof value === 'string') {
+        let targetEntityType = this.entityTypeValue;
+        if (targetEntityType === AliasEntityType.CURRENT_CUSTOMER) {
+          targetEntityType = EntityType.CUSTOMER;
         }
-      );
+        this.entityService.getEntity(targetEntityType, value).subscribe(
+          (entity) => {
+            this.modelValue = entity.id.id;
+            this.selectEntityFormGroup.get('entity').patchValue(entity, {emitEvent: true});
+          }
+        );
+      } else {
+        const targetEntityType = value.entityType as EntityType;
+        this.entityService.getEntity(targetEntityType, value.id).subscribe(
+          (entity) => {
+            this.modelValue = entity.id.id;
+            this.selectEntityFormGroup.get('entity').patchValue(entity, {emitEvent: true});
+          }
+        );
+      }
     } else {
       this.modelValue = null;
       this.selectEntityFormGroup.get('entity').patchValue('', {emitEvent: true});

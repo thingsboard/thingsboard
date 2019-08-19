@@ -6,7 +6,9 @@
         "access-forbidden": "Access Forbidden",
         "access-forbidden-text": "You haven't access rights to this location!<br/>Try to sign in with different user if you still wish to gain access to this location.",
         "refresh-token-expired": "Session has expired",
-        "refresh-token-failed": "Unable to refresh session"
+        "refresh-token-failed": "Unable to refresh session",
+        "permission-denied": "Permission Denied",
+        "permission-denied-text": "You don't have permission to perform this operation!"
     },
     "action": {
         "activate": "Activate",
@@ -826,6 +828,7 @@
         "duplicate-alias-error": "Duplicate alias found '{{alias}}'.<br>Entity View aliases must be unique whithin the dashboard.",
         "configure-alias": "Configure '{{alias}}' alias",
         "no-entity-views-matching": "No entity views matching '{{entity}}' were found.",
+        "public": "Public",
         "alias": "Alias",
         "alias-required": "Entity View alias is required.",
         "remove-alias": "Remove entity view alias",
@@ -837,6 +840,7 @@
         "entity-view-name-filter-required": "Entity view name filter is required.",
         "entity-view-name-filter-no-entity-view-matched": "No entity views starting with '{{entityView}}' were found.",
         "add": "Add Entity View",
+        "entity-view-public": "Entity view is public",
         "assign-to-customer": "Assign to customer",
         "assign-entity-view-to-customer": "Assign Entity View(s) To Customer",
         "assign-entity-view-to-customer-text": "Please select the entity views to assign to the customer",
@@ -877,6 +881,7 @@
         "events": "Events",
         "details": "Details",
         "copyId": "Copy entity view Id",
+        "idCopiedMessage": "Entity view Id has been copied to clipboard",
         "assignedToCustomer": "Assigned to customer",
         "unable-entity-view-device-alias-title": "Unable to delete entity view alias",
         "unable-entity-view-device-alias-text": "Device alias '{{entityViewAlias}}' can't be deleted as it used by the following widget(s):<br/>{{widgetsList}}",

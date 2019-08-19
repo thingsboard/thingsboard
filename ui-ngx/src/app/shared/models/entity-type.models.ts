@@ -37,21 +37,21 @@ export enum AliasEntityType {
 
 export interface EntityTypeTranslation {
   type: string;
-  typePlural: string;
+  typePlural?: string;
   list: string;
-  nameStartsWith: string;
-  details: string;
-  add: string;
-  noEntities: string;
-  selectedEntities: string;
-  search: string;
+  nameStartsWith?: string;
+  details?: string;
+  add?: string;
+  noEntities?: string;
+  selectedEntities?: string;
+  search?: string;
 }
 
 export interface EntityTypeResource {
   helpLinkId: string;
 }
 
-export const entityTypeTranslations = new Map<EntityType, EntityTypeTranslation>(
+export const entityTypeTranslations = new Map<EntityType | AliasEntityType, EntityTypeTranslation>(
   [
     [
       EntityType.TENANT,
@@ -135,6 +135,13 @@ export const entityTypeTranslations = new Map<EntityType, EntityTypeTranslation>
         noEntities: 'entity-view.no-entity-views-text',
         search: 'entity-view.search',
         selectedEntities: 'entity-view.selected-entity-views'
+      }
+    ],
+    [
+      AliasEntityType.CURRENT_CUSTOMER,
+      {
+        type: 'entity.type-entity-view',
+        list: 'entity.type-current-customer'
       }
     ]
   ]

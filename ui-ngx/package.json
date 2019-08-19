@@ -33,6 +33,7 @@
     "ace-builds": "^1.4.5",
     "compass-sass-mixins": "^0.12.7",
     "core-js": "^3.1.4",
+    "deep-equal": "^1.0.1",
     "font-awesome": "^4.7.0",
     "hammerjs": "^2.0.8",
     "material-design-icons": "^3.0.1",

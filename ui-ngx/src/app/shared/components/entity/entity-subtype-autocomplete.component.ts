@@ -161,6 +161,11 @@ export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor,
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
+    if (this.disabled) {
+      this.subTypeFormGroup.disable();
+    } else {
+      this.subTypeFormGroup.enable();
+    }
   }
 
   writeValue(value: string | null): void {

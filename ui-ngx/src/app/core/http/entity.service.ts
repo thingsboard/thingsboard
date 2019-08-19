@@ -15,10 +15,10 @@
 ///
 
 import {Injectable} from '@angular/core';
-import {Observable, throwError, of, empty, EMPTY, forkJoin} from 'rxjs/index';
+import {EMPTY, forkJoin, Observable, of, throwError} from 'rxjs/index';
 import {HttpClient} from '@angular/common/http';
 import {PageLink} from '@shared/models/page/page-link';
-import {EntityType} from '@shared/models/entity-type.models';
+import {AliasEntityType, EntityType} from '@shared/models/entity-type.models';
 import {BaseData} from '@shared/models/base-data';
 import {EntityId} from '@shared/models/id/entity-id';
 import {DeviceService} from '@core/http/device.service';
@@ -37,6 +37,9 @@ import {concatMap, expand, map, toArray} from 'rxjs/operators';
 import {Customer} from '@app/shared/models/customer.model';
 import {AssetService} from '@core/http/asset.service';
 import {EntityViewService} from '@core/http/entity-view.service';
+import {DataKeyType} from '@shared/models/telemetry/telemetry.models';
+import {DeviceInfo} from '@shared/models/device.models';
+import {defaultHttpOptions} from '@core/http/http-utils';
 
 @Injectable({
   providedIn: 'root'
@@ -338,5 +341,69 @@ export class EntityService {
         return of(null);
       }
     }
+  }
+
+  public prepareAllowedEntityTypesList(allowedEntityTypes: Array<EntityType | AliasEntityType>,
+                                       useAliasEntityTypes: boolean): Array<EntityType | AliasEntityType> {
+    const authUser = getCurrentAuthUser(this.store);
+    const entityTypes: Array<EntityType | AliasEntityType> = [];
+    switch (authUser.authority) {
+      case Authority.SYS_ADMIN:
+        entityTypes.push(EntityType.TENANT);
+        break;
+      case Authority.TENANT_ADMIN:
+        entityTypes.push(EntityType.DEVICE);
+        entityTypes.push(EntityType.ASSET);
+        entityTypes.push(EntityType.ENTITY_VIEW);
+        entityTypes.push(EntityType.TENANT);
+        entityTypes.push(EntityType.CUSTOMER);
+        entityTypes.push(EntityType.DASHBOARD);
+        if (useAliasEntityTypes) {
+          entityTypes.push(AliasEntityType.CURRENT_CUSTOMER);
+        }
+        break;
+      case Authority.CUSTOMER_USER:
+        entityTypes.push(EntityType.DEVICE);
+        entityTypes.push(EntityType.ASSET);
+        entityTypes.push(EntityType.ENTITY_VIEW);
+        entityTypes.push(EntityType.CUSTOMER);
+        entityTypes.push(EntityType.DASHBOARD);
+        if (useAliasEntityTypes) {
+          entityTypes.push(AliasEntityType.CURRENT_CUSTOMER);
+        }
+        break;
+    }
+    if (allowedEntityTypes && allowedEntityTypes.length) {
+      for (let index = entityTypes.length - 1; index >= 0; index--) {
+        if (allowedEntityTypes.indexOf(entityTypes[index]) === -1) {
+          entityTypes.splice(index, 1);
+        }
+      }
+    }
+    return entityTypes;
+  }
+
+  public getEntityKeys(entityId: EntityId, query: string, type: DataKeyType,
+                       ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Array<string>> {
+    let url = `/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/keys/`;
+    if (type === DataKeyType.timeseries) {
+      url += 'timeseries';
+    } else if (type === DataKeyType.attribute) {
+      url += 'attributes';
+    }
+    return this.http.get<Array<string>>(url,
+      defaultHttpOptions(ignoreLoading, ignoreErrors))
+      .pipe(
+        map(
+          (dataKeys) => {
+            if (query) {
+              const lowercaseQuery = query.toLowerCase();
+              return dataKeys.filter((dataKey) => dataKey.toLowerCase().indexOf(lowercaseQuery) === 0);
+            } else {
+              return dataKeys;
+            }
+           }
+        )
+    );
   }
 }

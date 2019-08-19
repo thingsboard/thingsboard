@@ -66,8 +66,6 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
   @Input()
   typeTranslatePrefix: string;
 
-  @ViewChild('subTypeInput', {static: true}) subTypeInput: ElementRef;
-
   entitySubtypeTitle: string;
   entitySubtypeRequiredText: string;
 
@@ -158,6 +156,11 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
+    if (this.disabled) {
+      this.subTypeFormGroup.disable();
+    } else {
+      this.subTypeFormGroup.enable();
+    }
   }
 
   writeValue(value: string | null): void {
@@ -230,13 +233,4 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
     }
     return this.subTypes;
   }
-
-  clear() {
-    this.subTypeFormGroup.get('subType').patchValue(null, {emitEvent: true});
-    setTimeout(() => {
-      this.subTypeInput.nativeElement.blur();
-      this.subTypeInput.nativeElement.focus();
-    }, 0);
-  }
-
 }

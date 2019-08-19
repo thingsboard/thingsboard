@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<form (ngSubmit)="add()" style="min-width: 400px;">
+<form (ngSubmit)="add()" style="min-width: 400px;" [ngStyle]="entitiesTableConfig.addDialogStyle">
   <mat-toolbar fxLayout="row" color="primary">
     <h2 translate>{{ translations.add }}</h2>
     <span fxFlex></span>

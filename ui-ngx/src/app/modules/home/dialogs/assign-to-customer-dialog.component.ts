@@ -74,7 +74,8 @@ export class AssignToCustomerDialogComponent extends PageComponent implements On
         this.assignToCustomerText = 'asset.assign-to-customer-text';
         break;
       case EntityType.ENTITY_VIEW:
-        // TODO:
+        this.assignToCustomerTitle = 'entity-view.assign-entity-view-to-customer';
+        this.assignToCustomerText = 'entity-view.assign-to-customer-text';
         break;
     }
   }

@@ -25,6 +25,7 @@ import { CustomerModule } from '@modules/home/pages/customer/customer.module';
 import { UserModule } from '@modules/home/pages/user/user.module';
 import {DeviceModule} from '@modules/home/pages/device/device.module';
 import {AssetModule} from '@modules/home/pages/asset/asset.module';
+import {EntityViewModule} from '@modules/home/pages/entity-view/entity-view.module';
 
 @NgModule({
   exports: [
@@ -34,6 +35,7 @@ import {AssetModule} from '@modules/home/pages/asset/asset.module';
     TenantModule,
     DeviceModule,
     AssetModule,
+    EntityViewModule,
     CustomerModule,
 //    AuditLogModule,
     UserModule

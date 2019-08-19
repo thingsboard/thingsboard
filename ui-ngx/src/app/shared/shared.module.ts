@@ -84,6 +84,10 @@ import {EntitySubTypeAutocompleteComponent} from '@shared/components/entity/enti
 import {EntitySubTypeSelectComponent} from './components/entity/entity-subtype-select.component';
 import {EntityAutocompleteComponent} from './components/entity/entity-autocomplete.component';
 import {EntityListComponent} from '@shared/components/entity/entity-list.component';
+import {EntityTypeSelectComponent} from './components/entity/entity-type-select.component';
+import {EntitySelectComponent} from './components/entity/entity-select.component';
+import {DatetimeComponent} from '@shared/components/time/datetime.component';
+import {EntityKeysListComponent} from './components/entity/entity-keys-list.component';
 
 @NgModule({
   providers: [
@@ -122,12 +126,16 @@ import {EntityListComponent} from '@shared/components/entity/entity-list.compone
     TimewindowPanelComponent,
     TimeintervalComponent,
     DatetimePeriodComponent,
+    DatetimeComponent,
 //    ValueInputComponent,
     DashboardAutocompleteComponent,
     EntitySubTypeAutocompleteComponent,
     EntitySubTypeSelectComponent,
     EntityAutocompleteComponent,
     EntityListComponent,
+    EntityTypeSelectComponent,
+    EntitySelectComponent,
+    EntityKeysListComponent,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
@@ -193,11 +201,15 @@ import {EntityListComponent} from '@shared/components/entity/entity-list.compone
     TimewindowPanelComponent,
     TimeintervalComponent,
     DatetimePeriodComponent,
+    DatetimeComponent,
     DashboardAutocompleteComponent,
     EntitySubTypeAutocompleteComponent,
     EntitySubTypeSelectComponent,
     EntityAutocompleteComponent,
     EntityListComponent,
+    EntityTypeSelectComponent,
+    EntitySelectComponent,
+    EntityKeysListComponent,
 //    ValueInputComponent,
     MatButtonModule,
     MatCheckboxModule,

@@ -14,9 +14,10 @@
 /// limitations under the License.
 ///
 
-import {AliasEntityType, EntityType} from '@shared/models/entity-type.models';
-import { HasUUID } from '@shared/models/id/has-uuid';
 
-export interface EntityId extends HasUUID {
-  entityType: EntityType | AliasEntityType;
+export enum DataKeyType {
+  timeseries = 'timeseries',
+  attribute = 'attribute',
+  function = 'function',
+  alarm = 'alarm'
 }

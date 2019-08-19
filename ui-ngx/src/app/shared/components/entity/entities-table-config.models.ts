@@ -117,6 +117,7 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   entityTranslations: EntityTypeTranslation;
   entityResources: EntityTypeResource;
   entityComponent: Type<EntityComponent<T>>;
+  addDialogStyle = {};
   defaultSortOrder: SortOrder = {property: 'createdTime', direction: Direction.ASC};
   columns: Array<EntityTableColumn<T>> = [];
   cellActionDescriptors: Array<CellActionDescriptor<T>> = [];

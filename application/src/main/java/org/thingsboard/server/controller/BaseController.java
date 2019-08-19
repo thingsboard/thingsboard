@@ -402,7 +402,7 @@ public abstract class BaseController {
             validateId(entityViewId, "Incorrect entityViewId " + entityViewId);
             EntityViewInfo entityView = entityViewService.findEntityViewInfoById(getCurrentUser().getTenantId(), entityViewId);
             checkNotNull(entityView);
-            accessControlService.checkPermission(getCurrentUser(), Resource.DEVICE, operation, entityViewId, entityView);
+            accessControlService.checkPermission(getCurrentUser(), Resource.ENTITY_VIEW, operation, entityViewId, entityView);
             return entityView;
         } catch (Exception e) {
             throw handleException(e, false);
@@ -426,7 +426,7 @@ public abstract class BaseController {
             validateId(assetId, "Incorrect assetId " + assetId);
             AssetInfo asset = assetService.findAssetInfoById(getCurrentUser().getTenantId(), assetId);
             checkNotNull(asset);
-            accessControlService.checkPermission(getCurrentUser(), Resource.DEVICE, operation, assetId, asset);
+            accessControlService.checkPermission(getCurrentUser(), Resource.ASSET, operation, assetId, asset);
             return asset;
         } catch (Exception e) {
             throw handleException(e, false);
