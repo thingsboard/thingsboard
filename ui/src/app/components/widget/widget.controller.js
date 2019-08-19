@@ -312,7 +312,9 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
 
         options.callbacks = {
             onDataUpdated: function() {
-                widgetTypeInstance.onDataUpdated();
+                if (displayWidgetInstance()) {
+                    widgetTypeInstance.onDataUpdated();
+                }
             },
             onDataUpdateError: function(subscription, e) {
                 handleWidgetException(e);
@@ -849,7 +851,11 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
         if (!widgetContext.inited && isReady()) {
             widgetContext.inited = true;
             try {
-                widgetTypeInstance.onInit();
+                if (displayWidgetInstance()) {
+                    widgetTypeInstance.onInit();
+                } else {
+                    $scope.loadingData = false;
+                }
             } catch (e) {
                 handleWidgetException(e);
             }
@@ -886,7 +892,9 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
                 }
                 cafs['resize'] = tbRaf(function() {
                     try {
-                        widgetTypeInstance.onResize();
+                        if (displayWidgetInstance()) {
+                            widgetTypeInstance.onResize();
+                        }
                     } catch (e) {
                         handleWidgetException(e);
                     }
@@ -916,7 +924,9 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
                 }
                 cafs['editMode'] = tbRaf(function() {
                     try {
-                        widgetTypeInstance.onEditModeChanged();
+                        if (displayWidgetInstance()) {
+                            widgetTypeInstance.onEditModeChanged();
+                        }
                     } catch (e) {
                         handleWidgetException(e);
                     }
@@ -935,7 +945,9 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
                 }
                 cafs['mobileMode'] = tbRaf(function() {
                     try {
-                        widgetTypeInstance.onMobileModeChanged();
+                        if (displayWidgetInstance()) {
+                            widgetTypeInstance.onMobileModeChanged();
+                        }
                     } catch (e) {
                         handleWidgetException(e);
                     }
@@ -968,7 +980,21 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
         }
     }
 
+    function displayWidgetInstance() {
+        if (widget.type !== types.widgetType.static.value) {
+            for (var id in widgetContext.subscriptions) {
+                if (widgetContext.subscriptions[id].isDataResolved()) {
+                    return true;
+                }
+            }
+            return false;
+        } else {
+            return true;
+        }
+    }
+
     function onDestroy() {
+        var shouldDestroyWidgetInstance = displayWidgetInstance();
         for (var id in widgetContext.subscriptions) {
             var subscription = widgetContext.subscriptions[id];
             subscription.destroy();
@@ -984,7 +1010,9 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
                 }
             }
             try {
-                widgetTypeInstance.onDestroy();
+                if (shouldDestroyWidgetInstance) {
+                    widgetTypeInstance.onDestroy();
+                }
             } catch (e) {
                 handleWidgetException(e);
             }
