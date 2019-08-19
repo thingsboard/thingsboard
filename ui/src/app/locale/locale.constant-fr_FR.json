@@ -48,7 +48,8 @@
         "undo": "Annuler",
         "update": "mise à jour",
         "view": "Afficher",
-        "yes": "Oui"
+        "yes": "Oui",
+        "discard-changes": "Annuler les modifications"
     },
     "admin": {
         "base-url": "URL de base",
@@ -339,7 +340,8 @@
             "polygon-click": "On polygon click",
             "tooltip-tag-action": "Tooltip tag action",
             "node-selected": "On node selected",
-            "element-click": "On HTML element click"
+            "element-click": "On HTML element click",
+            "pie-slice-click": "On slice click"
         }
     },
     "customer": {
@@ -1262,7 +1264,8 @@
         "period": "de {{startTime}} à {{endTime}}",
         "realtime": "Temps réel",
         "seconds": "{seconds, plural, 0 {second} 1 {1 second} other {# seconds}}",
-        "time-period": "Période"
+        "time-period": "Période",
+        "hide": "Masquer"
     },
     "user": {
         "activation-email-sent-message": "L'e-mail d'activation a été envoyé avec succès!",
@@ -1429,9 +1432,13 @@
         "timewindow": "Fenêtre de temps",
         "title": "Titre",
         "title-style": "Style de titre",
+        "title-tooltip": "Tooltip de titre",
         "units": "Symbole spécial à afficher à côté de la valeur",
         "use-dashboard-timewindow": "Utiliser la fenêtre de temps du tableau de bord",
-        "widget-style": "Style du widget"
+        "widget-style": "Style du widget",
+        "display-icon": "Afficher l'icône du titre",
+        "icon-color": "Couleur de l'icône",
+        "icon-size": "Taille de l'icône"
     },
     "widget-type": {
         "create-new-widget-type": "Créer un nouveau type de widget",

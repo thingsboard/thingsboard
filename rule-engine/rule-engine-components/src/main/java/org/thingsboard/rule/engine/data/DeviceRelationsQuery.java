@@ -26,4 +26,5 @@ public class DeviceRelationsQuery {
     private int maxLevel = 1;
     private String relationType;
     private List<String> deviceTypes;
+    private boolean fetchLastLevelOnly;
 }

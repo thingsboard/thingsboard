@@ -48,7 +48,8 @@
         "paste-reference": "Incolla riferimento",
         "import": "Importa",
         "export": "Esporta",
-        "share-via": "Condividi con {{provider}}"
+        "share-via": "Condividi con {{provider}}",
+        "discard-changes": "Annulla le modifiche"
     },
     "aggregation": {
         "aggregation": "Aggregazione",
@@ -670,6 +671,10 @@
     "dialog": {
         "close": "Close dialog"
     },
+    "direction": {
+        "column": "Colonna",
+        "row": "Riga"
+    },
     "error": {
         "unable-to-connect": "Impossibile connettersi al server! Controlla la connessione ad Internet.",
         "unhandled-error-code": "Codice errore non gestito: {{errorCode}}",
@@ -1116,6 +1121,7 @@
         "select": "Select target layout"
     },
     "legend": {
+        "direction": "Direzione",
         "position": "Posizione Legenda",
         "show-max": "Mostra valore max",
         "show-min": "Mostra valore min",
@@ -1347,7 +1353,8 @@
         "edit": "Modifica intervallo temporale",
         "date-range": "Intervallo date",
         "last": "Ultimo",
-        "time-period": "Intervallo temporale"
+        "time-period": "Intervallo temporale",
+        "hide": "Nascondi"
     },
     "user": {
         "user": "Utente",
@@ -1503,6 +1510,7 @@
         "settings": "Impostazioni",
         "advanced": "Avanzate",
         "title": "Titolo",
+        "title-tooltip": "Tooltip titolo",
         "general-settings": "Impostazioni generali",
         "display-title": "Mostra titolo",
         "drop-shadow": "Drop shadow",
@@ -1545,7 +1553,10 @@
         "edit-action": "Modifica azione",
         "delete-action": "Cancella azione",
         "delete-action-title": "Cancella azione del widget",
-        "delete-action-text": "Sei sicuro di voler cancellare l'azione del widget '{{actionName}}'?"
+        "delete-action-text": "Sei sicuro di voler cancellare l'azione del widget '{{actionName}}'?",
+        "display-icon": "Mostra icona titolo",
+        "icon-color": "Colore dell'icona",
+        "icon-size": "Dimensione dell'icona"
     },
     "widget-type": {
         "import": "Importa un tipo di widget",
@@ -1628,7 +1639,8 @@
             "marker-click": "Click sul marker",
             "tooltip-tag-action": "Azione tooltip",
             "node-selected": "Click su nodo selezionato",
-            "element-click": "Click su elemento HTML"
+            "element-click": "Click su elemento HTML",
+            "pie-slice-click": "Click sulla fetta"
         }
     },
     "language": {

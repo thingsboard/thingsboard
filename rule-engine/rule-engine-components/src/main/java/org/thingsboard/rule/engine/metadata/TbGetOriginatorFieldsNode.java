@@ -26,7 +26,7 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
-import static org.thingsboard.rule.engine.api.util.DonAsynchron.withCallback;
+import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
 /**
  * Created by ashvayka on 19.01.18.

@@ -34,7 +34,7 @@
                 <section flex layout="row" layout-align="start center" style="margin-bottom: 16px;">
                     <span ng-class="{'tb-disabled-label': useDashboardTimewindow}" translate style="padding-right: 8px;">widget-config.timewindow</span>
                     <tb-timewindow ng-disabled="useDashboardTimewindow" as-button="true" aggregation="{{ widgetType === types.widgetType.timeseries.value }}"
-                                   flex ng-model="timewindow"></tb-timewindow>
+                                   is-edit="true" flex ng-model="timewindow"></tb-timewindow>
                 </section>
             </div>
             <div ng-show="widgetType === types.widgetType.alarm.value" layout='column' layout-align="center"
@@ -189,6 +189,36 @@
                         <div ui-ace="styleEditorOptions" ng-model="titleStyle" ng-style="{ minHeight: '100px' }">
                         </div>
                     </div>
+                </div>
+                <div layout='column' layout-align="center" layout-gt-sm='row' layout-align-gt-sm="start center">
+                    <div layout="row" flex layout-padding>
+                        <md-checkbox aria-label="{{ 'widget-config.display-icon' | translate }}"
+                                     ng-model="showTitleIcon">{{ 'widget-config.display-icon' | translate }}
+                        </md-checkbox>
+                    </div>
+                    <div flex>
+                        <tb-material-icon-select ng-disabled="!showTitleIcon" ng-model="titleIcon">
+                        </tb-material-icon-select>
+                    </div>
+                    <div flex
+                         md-color-picker
+                         ng-model="iconColor"
+                         label="{{ 'widget-config.icon-color' | translate }}"
+                         icon="format_color_fill"
+                         default="rgba(0, 0, 0, 0.87)"
+                         md-color-clear-button="false"
+                         open-on-input="true"
+                         md-color-generic-palette="false"
+                         md-color-history="false"
+                    ></div>
+                    <md-input-container flex>
+                        <label translate>widget-config.icon-size</label>
+                        <input ng-model="iconSize">
+                    </md-input-container>
+                    <md-input-container flex class="md-block">
+                        <label translate>widget-config.title-tooltip</label>
+                        <input name="titleTooltip" ng-model="titleTooltip">
+                    </md-input-container>
                 </div>
                 <div layout='column' layout-align="center" layout-gt-sm='row' layout-align-gt-sm="start center">
                     <div layout="row" layout-padding>

@@ -61,6 +61,9 @@ public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event
     @Autowired
     private EventRepository eventRepository;
 
+    @Autowired
+    private EventInsertRepository eventInsertRepository;
+
     @Override
     protected Class<EventEntity> getEntityClass() {
         return EventEntity.class;
@@ -147,7 +150,7 @@ public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event
                 eventRepository.findByTenantIdAndEntityTypeAndEntityId(entity.getTenantId(), entity.getEntityType(), entity.getEntityId()) != null) {
             return Optional.empty();
         }
-        return Optional.of(DaoUtil.getData(eventRepository.save(entity)));
+        return Optional.of(DaoUtil.getData(eventInsertRepository.saveOrUpdate(entity)));
     }
 
     private Specification<EventEntity> getEntityFieldsSpec(UUID tenantId, EntityId entityId, String eventType) {

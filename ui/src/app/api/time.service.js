@@ -234,7 +234,10 @@ function TimeService($translate, $http, $q, types) {
         var currentTime = (new Date).getTime();
         var timewindow = {
             displayValue: "",
-            selectedTab: 0,
+            selectedTab: 0,            
+            hideInterval: false,
+            hideAggregation: false,
+            hideAggInterval: false,
             realtime: {
                 interval: SECOND,
                 timewindowMs: MINUTE // 1 min by default

@@ -30,7 +30,7 @@ import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import static org.thingsboard.rule.engine.api.util.DonAsynchron.withCallback;
+import static org.thingsboard.common.util.DonAsynchron.withCallback;
 import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 
 @Slf4j

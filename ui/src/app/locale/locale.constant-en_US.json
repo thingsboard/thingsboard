@@ -49,7 +49,8 @@
         "import": "Import",
         "export": "Export",
         "share-via": "Share via {{provider}}",
-        "continue": "Continue"
+        "continue": "Continue",
+        "discard-changes": "Discard Changes"
     },
     "aggregation": {
         "aggregation": "Aggregation",
@@ -794,6 +795,7 @@
         "search": "Search entities",
         "selected-entities": "{ count, plural, 1 {1 entity} other {# entities} } selected",
         "entity-name": "Entity name",
+        "entity-label": "Entity label",
         "details": "Entity details",
         "no-entities-prompt": "No entities found",
         "no-data": "No data to display",
@@ -1410,7 +1412,8 @@
         "edit": "Edit timewindow",
         "date-range": "Date range",
         "last": "Last",
-        "time-period": "Time period"
+        "time-period": "Time period",
+        "hide": "Hide"
     },
     "user": {
         "user": "User",
@@ -1568,6 +1571,7 @@
         "settings": "Settings",
         "advanced": "Advanced",
         "title": "Title",
+        "title-tooltip": "Title Tooltip",
         "general-settings": "General settings",
         "display-title": "Display title",
         "drop-shadow": "Drop shadow",
@@ -1610,7 +1614,10 @@
         "edit-action": "Edit action",
         "delete-action": "Delete action",
         "delete-action-title": "Delete widget action",
-        "delete-action-text": "Are you sure you want delete widget action with name '{{actionName}}'?"
+        "delete-action-text": "Are you sure you want delete widget action with name '{{actionName}}'?",
+        "display-icon": "Display title icon",
+        "icon-color": "Icon color",
+        "icon-size": "Icon size"
     },
     "widget-type": {
         "import": "Import widget type",
@@ -1693,7 +1700,8 @@
             "marker-click": "On marker click",
             "tooltip-tag-action": "Tooltip tag action",
             "node-selected": "On node selected",
-            "element-click": "On HTML element click"
+            "element-click": "On HTML element click",
+            "pie-slice-click": "On slice click"
         }
     },
     "language": {

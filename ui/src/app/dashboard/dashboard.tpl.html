@@ -50,7 +50,7 @@
                         <md-icon aria-label="{{ 'action.export' | translate }}" class="material-icons">file_download</md-icon>
                     </md-button>
                     <tb-timewindow ng-show="vm.isEdit || vm.displayDashboardTimewindow()"
-                                   is-toolbar
+                                   is-toolbar is-edit="vm.isEdit"
                                    direction="left"
                                    tooltip-direction="bottom" aggregation="true"
                                    ng-model="vm.dashboardCtx.dashboardTimewindow">
