@@ -62,7 +62,10 @@ export const HelpLinks = {
     users: helpBaseUrl + '/docs/user-guide/ui/users',
     devices: helpBaseUrl + '/docs/user-guide/ui/devices',
     assets: helpBaseUrl + '/docs/user-guide/ui/assets',
-    entityViews: helpBaseUrl + '/docs/user-guide/ui/entity-views'
+    entityViews: helpBaseUrl + '/docs/user-guide/ui/entity-views',
+    rulechains: helpBaseUrl + '/docs/user-guide/ui/rule-chains',
+    dashboards: helpBaseUrl + '/docs/user-guide/ui/dashboards',
+    widgetsBundles: helpBaseUrl + '/docs/user-guide/ui/widget-library#bundles'
   }
 };
 

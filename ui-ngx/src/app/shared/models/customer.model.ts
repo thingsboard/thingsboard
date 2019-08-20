@@ -27,5 +27,5 @@ export interface Customer extends ContactBased<CustomerId> {
 export interface ShortCustomerInfo {
   customerId: CustomerId;
   title: string;
-  isPublic: boolean;
+  public: boolean;
 }

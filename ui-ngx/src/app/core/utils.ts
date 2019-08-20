@@ -41,6 +41,17 @@ export function onParentScrollOrWindowResize(el: Node): Observable<Event> {
   return shared;
 }
 
+export function isLocalUrl(url: string): boolean {
+  const parser = document.createElement('a');
+  parser.href = url;
+  const host = parser.hostname;
+  if (host === 'localhost' || host === '127.0.0.1') {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 const scrollRegex = /(auto|scroll)/;
 
 function parentNodes(node: Node, nodes: Node[]): Node[] {

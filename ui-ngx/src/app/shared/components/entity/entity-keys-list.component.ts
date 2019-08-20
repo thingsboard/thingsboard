@@ -62,7 +62,7 @@ export class EntityKeysListComponent implements ControlValueAccessor, OnInit, Af
   set entityId(entityId: EntityId) {
     if (!equal(this.entityIdValue, entityId)) {
       this.entityIdValue = entityId;
-      this.reset();
+      this.dirty = true;
     }
   }
 
@@ -93,6 +93,8 @@ export class EntityKeysListComponent implements ControlValueAccessor, OnInit, Af
   separatorKeysCodes: number[] = [ENTER, COMMA, SEMICOLON];
 
   private searchText = '';
+
+  private dirty = false;
 
   private propagateChange = (v: any) => { };
 
@@ -126,9 +128,9 @@ export class EntityKeysListComponent implements ControlValueAccessor, OnInit, Af
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (this.disabled) {
-      this.keysListFormGroup.disable();
+      this.keysListFormGroup.disable({emitEvent: false});
     } else {
-      this.keysListFormGroup.enable();
+      this.keysListFormGroup.enable({emitEvent: false});
     }
   }
 
@@ -141,8 +143,11 @@ export class EntityKeysListComponent implements ControlValueAccessor, OnInit, Af
     }
   }
 
-  reset() {
-    this.keysListFormGroup.get('key').patchValue(null, {emitEvent: true});
+  onFocus() {
+    if (this.dirty) {
+      this.keysListFormGroup.get('key').updateValueAndValidity({onlySelf: true, emitEvent: true});
+      this.dirty = false;
+    }
   }
 
   addKey(key: string): void {

@@ -49,7 +49,7 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
 
   subTypeFormGroup: FormGroup;
 
-  modelValue: string | null;
+  modelValue: string | null = '';
 
   @Input()
   entityType: EntityType;
@@ -75,6 +75,8 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
 
   subTypes: Observable<Array<EntitySubtype | string>>;
 
+  subTypesLoaded = false;
+
   private broadcastSubscription: Subscription;
 
   private propagateChange = (v: any) => { };
@@ -87,7 +89,7 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
               private entityViewService: EntityViewService,
               private fb: FormBuilder) {
     this.subTypeFormGroup = this.fb.group({
-      subType: [null]
+      subType: ['']
     });
   }
 
@@ -222,6 +224,7 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
         this.subTypes = this.subTypes.pipe(
           map((allSubtypes) => {
               allSubtypes.unshift('');
+              this.subTypesLoaded = true;
               return allSubtypes;
           }),
           publishReplay(1),

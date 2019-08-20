@@ -28,6 +28,7 @@
     "@ngrx/effects": "^8.2.0",
     "@ngrx/store": "^8.2.0",
     "@ngrx/store-devtools": "^8.2.0",
+    "@ngx-share/core": "^7.1.2",
     "@ngx-translate/core": "^11.0.1",
     "@ngx-translate/http-loader": "^4.0.0",
     "ace-builds": "^1.4.5",

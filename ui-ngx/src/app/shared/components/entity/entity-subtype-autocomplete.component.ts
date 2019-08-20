@@ -73,13 +73,15 @@ export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor,
   entitySubtypeText: string;
   entitySubtypeRequiredText: string;
 
-  filteredSubTypes: Observable<Array<EntitySubtype>>;
+  filteredSubTypes: Observable<Array<string>>;
 
-  subTypes: Observable<Array<EntitySubtype>>;
+  subTypes: Observable<Array<string>>;
 
   private broadcastSubscription: Subscription;
 
   private searchText = '';
+
+  private dirty = false;
 
   private propagateChange = (v: any) => { };
 
@@ -134,18 +136,10 @@ export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor,
     this.filteredSubTypes = this.subTypeFormGroup.get('subType').valueChanges
       .pipe(
         tap(value => {
-            let modelValue;
-            if (!value) {
-              modelValue = null;
-            } else if (typeof value === 'string') {
-              modelValue = value;
-            } else {
-              modelValue = value.type;
-            }
-            this.updateView(modelValue);
+            this.updateView(value);
         }),
-        startWith<string | EntitySubtype>(''),
-        map(value => value ? (typeof value === 'string' ? value : value.type) : ''),
+        // startWith<string | EntitySubtype>(''),
+        map(value => value ? value : ''),
         mergeMap(type => this.fetchSubTypes(type) )
       );
   }
@@ -162,25 +156,23 @@ export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor,
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (this.disabled) {
-      this.subTypeFormGroup.disable();
+      this.subTypeFormGroup.disable({emitEvent: false});
     } else {
-      this.subTypeFormGroup.enable();
+      this.subTypeFormGroup.enable({emitEvent: false});
     }
   }
 
   writeValue(value: string | null): void {
     this.searchText = '';
-    if (value != null) {
-      this.modelValue = value;
-      this.fetchSubTypes(value, true).subscribe(
-        (subTypes) => {
-          const subType = subTypes && subTypes.length === 1 ? subTypes[0] : null;
-          this.subTypeFormGroup.get('subType').patchValue(subType, {emitEvent: true});
-        }
-      );
-    } else {
-      this.modelValue = null;
-      this.subTypeFormGroup.get('subType').patchValue(null, {emitEvent: true});
+    this.modelValue = value;
+    this.subTypeFormGroup.get('subType').patchValue(value, {emitEvent: false});
+    this.dirty = true;
+  }
+
+  onFocus() {
+    if (this.dirty) {
+      this.subTypeFormGroup.get('subType').updateValueAndValidity({onlySelf: true, emitEvent: true});
+      this.dirty = false;
     }
   }
 
@@ -191,38 +183,40 @@ export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor,
     }
   }
 
-  displaySubTypeFn(subType?: EntitySubtype): string | undefined {
-    return subType ? subType.type : undefined;
+  displaySubTypeFn(subType?: string): string | undefined {
+    return subType ? subType : undefined;
   }
 
-  fetchSubTypes(searchText?: string, strictMatch: boolean = false): Observable<Array<EntitySubtype>> {
+  fetchSubTypes(searchText?: string, strictMatch: boolean = false): Observable<Array<string>> {
     this.searchText = searchText;
     return this.getSubTypes().pipe(
       map(subTypes => subTypes.filter( subType => {
         if (strictMatch) {
-          return searchText ? subType.type === searchText : false;
+          return searchText ? subType === searchText : false;
         } else {
-          return searchText ? subType.type.toUpperCase().startsWith(searchText.toUpperCase()) : true;
+          return searchText ? subType.toUpperCase().startsWith(searchText.toUpperCase()) : true;
         }
       }))
     );
   }
 
-  getSubTypes(): Observable<Array<EntitySubtype>> {
+  getSubTypes(): Observable<Array<string>> {
     if (!this.subTypes) {
+      let subTypesObservable: Observable<Array<EntitySubtype>>;
       switch (this.entityType) {
         case EntityType.ASSET:
-          this.subTypes = this.assetService.getAssetTypes(false, true);
+          subTypesObservable = this.assetService.getAssetTypes(false, true);
           break;
         case EntityType.DEVICE:
-          this.subTypes = this.deviceService.getDeviceTypes(false,  true);
+          subTypesObservable = this.deviceService.getDeviceTypes(false,  true);
           break;
         case EntityType.ENTITY_VIEW:
-          this.subTypes = this.entityViewService.getEntityViewTypes(false, true);
+          subTypesObservable = this.entityViewService.getEntityViewTypes(false, true);
           break;
       }
-      if (this.subTypes) {
-        this.subTypes = this.subTypes.pipe(
+      if (subTypesObservable) {
+        this.subTypes = subTypesObservable.pipe(
+          map(subTypes => subTypes.map(subType => subType.type)),
           publishReplay(1),
           refCount()
         );

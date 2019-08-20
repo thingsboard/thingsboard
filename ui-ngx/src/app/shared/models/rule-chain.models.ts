@@ -15,16 +15,9 @@
 ///
 
 import {BaseData} from '@shared/models/base-data';
-import {AssetId} from '@shared/models/id/asset-id';
 import {TenantId} from '@shared/models/id/tenant-id';
-import {CustomerId} from '@shared/models/id/customer-id';
 import {RuleChainId} from '@shared/models/id/rule-chain-id';
 import {RuleNodeId} from '@shared/models/id/rule-node-id';
-
-export interface RuleChainConfiguration {
-  todo: Array<any>;
-  // TODO:
-}
 
 export interface RuleChain extends BaseData<RuleChainId> {
   tenantId: TenantId;
@@ -32,6 +25,6 @@ export interface RuleChain extends BaseData<RuleChainId> {
   firstRuleNodeId: RuleNodeId;
   root: boolean;
   debugMode: boolean;
-  configuration: RuleChainConfiguration;
+  configuration?: any;
   additionalInfo?: any;
 }

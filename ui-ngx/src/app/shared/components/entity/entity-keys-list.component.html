@@ -29,6 +29,7 @@
     <input matInput type="text" placeholder="{{ keysText | translate }}"
            #keyInput
            formControlName="key"
+           (focusin)="onFocus()"
            [matAutocomplete]="keyAutocomplete"
            [matChipInputFor]="chipList"
            [matChipInputSeparatorKeyCodes]="separatorKeysCodes"

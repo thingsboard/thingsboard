@@ -21,11 +21,11 @@ import {Store} from '@ngrx/store';
 import {AppState} from '@core/core.state';
 import {FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Validators} from '@angular/forms';
 import {DeviceService} from '@core/http/device.service';
-import {EntityId} from '@shared/models/id/entity-id';
 import {EntityType} from '@shared/models/entity-type.models';
 import {forkJoin, Observable} from 'rxjs';
 import {AssetService} from '@core/http/asset.service';
 import {EntityViewService} from '@core/http/entity-view.service';
+import {DashboardService} from '@core/http/dashboard.service';
 
 export interface AddEntitiesToCustomerDialogData {
   customerId: string;
@@ -54,6 +54,7 @@ export class AddEntitiesToCustomerDialogComponent extends PageComponent implemen
               private deviceService: DeviceService,
               private assetService: AssetService,
               private entityViewService: EntityViewService,
+              private dashboardService: DashboardService,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<AddEntitiesToCustomerDialogComponent, boolean>,
               public fb: FormBuilder) {
@@ -77,6 +78,10 @@ export class AddEntitiesToCustomerDialogComponent extends PageComponent implemen
       case EntityType.ENTITY_VIEW:
         this.assignToCustomerTitle = 'entity-view.assign-entity-view-to-customer';
         this.assignToCustomerText = 'entity-view.assign-entity-view-to-customer-text';
+        break;
+      case EntityType.DASHBOARD:
+        this.assignToCustomerTitle = 'dashboard.assign-dashboard-to-customer';
+        this.assignToCustomerText = 'dashboard.assign-dashboard-to-customer-text';
         break;
     }
   }
@@ -117,6 +122,9 @@ export class AddEntitiesToCustomerDialogComponent extends PageComponent implemen
         break;
       case EntityType.ENTITY_VIEW:
         return this.entityViewService.assignEntityViewToCustomer(customerId, entityId);
+        break;
+      case EntityType.DASHBOARD:
+        return this.dashboardService.assignDashboardToCustomer(customerId, entityId);
         break;
     }
   }

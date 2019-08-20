@@ -445,6 +445,7 @@
         "no-dashboards-text": "No dashboards found",
         "no-widgets": "No widgets configured",
         "add-widget": "Add new widget",
+        "created-time": "Created time",
         "title": "Title",
         "select-widget-title": "Select widget",
         "select-widget-subtitle": "List of available widget types",
@@ -562,7 +563,9 @@
         "show-details": "Show details",
         "hide-details": "Hide details",
         "select-state": "Select target state",
-        "state-controller": "State controller"
+        "state-controller": "State controller",
+        "search": "Search dashboards",
+        "selected-dashboards": "{ count, plural, 1 {1 dashboard} other {# dashboards} } selected"
     },
     "datakey": {
         "settings": "Settings",
@@ -1282,6 +1285,7 @@
         "rulechains": "Rule chains",
         "root": "Root",
         "delete": "Delete rule chain",
+        "created-time": "Created time",
         "name": "Name",
         "name-required": "Name is required.",
         "description": "Description",
@@ -1312,7 +1316,10 @@
         "no-rulechains-matching": "No rule chains matching '{{entity}}' were found.",
         "rulechain-required": "Rule chain is required",
         "management": "Rules management",
-        "debug-mode": "Debug mode"
+        "debug-mode": "Debug mode",
+        "search": "Search rule chains",
+        "selected-rulechains": "{ count, plural, 1 {1 rule chain} other {# rule chains} } selected",
+        "open-rulechain": "Open rule chain"
     },
     "rulenode": {
         "details": "Details",
@@ -1565,6 +1572,7 @@
         "widgets-bundles": "Widgets Bundles",
         "add": "Add Widgets Bundle",
         "delete": "Delete widgets bundle",
+        "created-time": "Created time",
         "title": "Title",
         "title-required": "Title is required.",
         "add-widgets-bundle-text": "Add new widgets bundle",
@@ -1585,7 +1593,10 @@
         "export-failed-error": "Unable to export widgets bundle: {{error}}",
         "create-new-widgets-bundle": "Create new widgets bundle",
         "widgets-bundle-file": "Widgets bundle file",
-        "invalid-widgets-bundle-file-error": "Unable to import widgets bundle: Invalid widgets bundle data structure."
+        "invalid-widgets-bundle-file-error": "Unable to import widgets bundle: Invalid widgets bundle data structure.",
+        "search": "Search widget bundles",
+        "selected-widgets-bundles": "{ count, plural, 1 {1 widgets bundle} other {# widgets bundles} } selected",
+        "open-widgets-bundle": "Open widgets bundle"
     },
     "widget-config": {
         "data": "Data",

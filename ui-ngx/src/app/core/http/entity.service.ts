@@ -40,6 +40,7 @@ import {EntityViewService} from '@core/http/entity-view.service';
 import {DataKeyType} from '@shared/models/telemetry/telemetry.models';
 import {DeviceInfo} from '@shared/models/device.models';
 import {defaultHttpOptions} from '@core/http/http-utils';
+import {RuleChainService} from '@core/http/rule-chain.service';
 
 @Injectable({
   providedIn: 'root'
@@ -55,6 +56,7 @@ export class EntityService {
     private tenantService: TenantService,
     private customerService: CustomerService,
     private userService: UserService,
+    private ruleChainService: RuleChainService,
     private dashboardService: DashboardService
   ) { }
 
@@ -85,7 +87,7 @@ export class EntityService {
         observable = this.userService.getUser(entityId, ignoreErrors, ignoreLoading);
         break;
       case EntityType.RULE_CHAIN:
-        // TODO:
+        observable = this.ruleChainService.getRuleChain(entityId, ignoreErrors, ignoreLoading);
         break;
       case EntityType.ALARM:
         console.error('Get Alarm Entity is not implemented!');
@@ -274,7 +276,7 @@ export class EntityService {
         break;
       case EntityType.RULE_CHAIN:
         pageLink.sortOrder.property = 'name';
-        // TODO:
+        entitiesObservable = this.ruleChainService.getRuleChains(pageLink, ignoreErrors, ignoreLoading);
         break;
       case EntityType.DASHBOARD:
         pageLink.sortOrder.property = 'title';

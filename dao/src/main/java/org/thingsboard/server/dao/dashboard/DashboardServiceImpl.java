@@ -188,7 +188,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     }
 
     @Override
-    public ListenableFuture<PageData<DashboardInfo>> findDashboardsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, TimePageLink pageLink) {
+    public PageData<DashboardInfo> findDashboardsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink) {
         log.trace("Executing findDashboardsByTenantIdAndCustomerId, tenantId [{}], customerId [{}], pageLink [{}]", tenantId, customerId, pageLink);
         Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         Validator.validateId(customerId, "Incorrect customerId " + customerId);
@@ -250,7 +250,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         }
     };
     
-    private class CustomerDashboardsUnassigner extends TimePaginatedRemover<Customer, DashboardInfo> {
+    private class CustomerDashboardsUnassigner extends PaginatedRemover<Customer, DashboardInfo> {
         
         private Customer customer;
 
@@ -259,13 +259,8 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         }
 
         @Override
-        protected PageData<DashboardInfo> findEntities(TenantId tenantId, Customer customer, TimePageLink pageLink) {
-            try {
-                return dashboardInfoDao.findDashboardsByTenantIdAndCustomerId(customer.getTenantId().getId(), customer.getId().getId(), pageLink).get();
-            } catch (InterruptedException | ExecutionException e) {
-                log.warn("Failed to get dashboards by tenantId [{}] and customerId [{}].", customer.getTenantId().getId(), customer.getId().getId());
-                throw new RuntimeException(e);
-            }
+        protected PageData<DashboardInfo> findEntities(TenantId tenantId, Customer customer, PageLink pageLink) {
+            return dashboardInfoDao.findDashboardsByTenantIdAndCustomerId(customer.getTenantId().getId(), customer.getId().getId(), pageLink);
         }
 
         @Override
@@ -275,7 +270,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         
     }
 
-    private class CustomerDashboardsUpdater extends TimePaginatedRemover<Customer, DashboardInfo> {
+    private class CustomerDashboardsUpdater extends PaginatedRemover<Customer, DashboardInfo> {
 
         private Customer customer;
 
@@ -284,13 +279,8 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         }
 
         @Override
-        protected PageData<DashboardInfo> findEntities(TenantId tenantId, Customer customer, TimePageLink pageLink) {
-            try {
-                return dashboardInfoDao.findDashboardsByTenantIdAndCustomerId(customer.getTenantId().getId(), customer.getId().getId(), pageLink).get();
-            } catch (InterruptedException | ExecutionException e) {
-                log.warn("Failed to get dashboards by tenantId [{}] and customerId [{}].", customer.getTenantId().getId(), customer.getId().getId());
-                throw new RuntimeException(e);
-            }
+        protected PageData<DashboardInfo> findEntities(TenantId tenantId, Customer customer, PageLink pageLink) {
+            return dashboardInfoDao.findDashboardsByTenantIdAndCustomerId(customer.getTenantId().getId(), customer.getId().getId(), pageLink);
         }
 
         @Override

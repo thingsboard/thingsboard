@@ -55,6 +55,7 @@ import { MatDatetimepickerModule, MatNativeDatetimeModule } from '@mat-datetimep
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { ShareModule as ShareButtonsModule } from '@ngx-share/core';
 import { UserMenuComponent } from '@shared/components/user-menu.component';
 import { NospacePipe } from './pipe/nospace.pipe';
 import { TranslateModule } from '@ngx-translate/core';
@@ -88,6 +89,7 @@ import {EntityTypeSelectComponent} from './components/entity/entity-type-select.
 import {EntitySelectComponent} from './components/entity/entity-select.component';
 import {DatetimeComponent} from '@shared/components/time/datetime.component';
 import {EntityKeysListComponent} from './components/entity/entity-keys-list.component';
+import {SocialSharePanelComponent} from './components/socialshare-panel.component';
 
 @NgModule({
   providers: [
@@ -136,6 +138,7 @@ import {EntityKeysListComponent} from './components/entity/entity-keys-list.comp
     EntityTypeSelectComponent,
     EntitySelectComponent,
     EntityKeysListComponent,
+    SocialSharePanelComponent,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
@@ -179,7 +182,8 @@ import {EntityKeysListComponent} from './components/entity/entity-keys-list.comp
     FlexLayoutModule.withConfig({addFlexToParent: false}),
     FormsModule,
     ReactiveFormsModule,
-    OverlayModule
+    OverlayModule,
+    ShareButtonsModule
   ],
   exports: [
     FooterComponent,
@@ -210,6 +214,7 @@ import {EntityKeysListComponent} from './components/entity/entity-keys-list.comp
     EntityTypeSelectComponent,
     EntitySelectComponent,
     EntityKeysListComponent,
+    SocialSharePanelComponent,
 //    ValueInputComponent,
     MatButtonModule,
     MatCheckboxModule,
@@ -246,6 +251,7 @@ import {EntityKeysListComponent} from './components/entity/entity-keys-list.comp
     FormsModule,
     ReactiveFormsModule,
     OverlayModule,
+    ShareButtonsModule,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,

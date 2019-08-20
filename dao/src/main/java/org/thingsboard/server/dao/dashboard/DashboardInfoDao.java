@@ -47,6 +47,6 @@ public interface DashboardInfoDao extends Dao<DashboardInfo> {
      * @param pageLink the page link
      * @return the list of dashboard objects
      */
-    ListenableFuture<PageData<DashboardInfo>> findDashboardsByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TimePageLink pageLink);
+    PageData<DashboardInfo> findDashboardsByTenantIdAndCustomerId(UUID tenantId, UUID customerId, PageLink pageLink);
 
 }

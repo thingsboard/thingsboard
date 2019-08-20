@@ -107,7 +107,7 @@ export class DeviceService {
   }
 
   public assignDeviceToCustomer(customerId: string, deviceId: string,
-                                  ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Device> {
+                                ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Device> {
     return this.http.post<Device>(`/api/customer/${customerId}/device/${deviceId}`, null, defaultHttpOptions(ignoreLoading, ignoreErrors));
   }
 

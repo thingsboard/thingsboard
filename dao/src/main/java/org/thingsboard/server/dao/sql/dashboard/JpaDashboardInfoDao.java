@@ -80,19 +80,12 @@ public class JpaDashboardInfoDao extends JpaAbstractSearchTextDao<DashboardInfoE
     }
 
     @Override
-    public ListenableFuture<PageData<DashboardInfo>> findDashboardsByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TimePageLink pageLink) {
-        log.debug("Try to find dashboards by tenantId [{}], customerId[{}] and pageLink [{}]", tenantId, customerId, pageLink);
-
-        ListenableFuture<PageData<EntityRelation>> relations = relationDao.findRelations(new TenantId(tenantId), new CustomerId(customerId), EntityRelation.CONTAINS_TYPE, RelationTypeGroup.DASHBOARD, EntityType.DASHBOARD, pageLink);
-
-        return Futures.transformAsync(relations, input -> {
-            List<ListenableFuture<DashboardInfo>> dashboardFutures = new ArrayList<>(input.getData().size());
-            for (EntityRelation relation : input.getData()) {
-                dashboardFutures.add(findByIdAsync(new TenantId(tenantId), relation.getTo().getId()));
-            }
-            return Futures.transform(Futures.successfulAsList(dashboardFutures), dashboards -> {
-                return new PageData(dashboards, input.getTotalPages(), input.getTotalElements(), input.hasNext());
-            });
-        });
+    public PageData<DashboardInfo> findDashboardsByTenantIdAndCustomerId(UUID tenantId, UUID customerId, PageLink pageLink) {
+        return DaoUtil.toPageData(dashboardInfoRepository
+                .findByTenantIdAndCustomerId(
+                        UUIDConverter.fromTimeUUID(tenantId),
+                        UUIDConverter.fromTimeUUID(customerId),
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        DaoUtil.toPageable(pageLink)));
     }
 }

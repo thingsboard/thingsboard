@@ -134,7 +134,7 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
   writeValue(value: Array<string> | null): void {
     this.searchText = '';
     if (value != null) {
-      this.modelValue = value;
+      this.modelValue = [...value];
       this.entityService.getEntities(this.entityTypeValue, value).subscribe(
         (entities) => {
           this.entities = entities;

@@ -26,6 +26,9 @@ import { UserModule } from '@modules/home/pages/user/user.module';
 import {DeviceModule} from '@modules/home/pages/device/device.module';
 import {AssetModule} from '@modules/home/pages/asset/asset.module';
 import {EntityViewModule} from '@modules/home/pages/entity-view/entity-view.module';
+import {RuleChainModule} from '@modules/home/pages/rulechain/rulechain.module';
+import {WidgetLibraryModule} from '@modules/home/pages/widget/widget-library.module';
+import {DashboardModule} from '@modules/home/pages/dashboard/dashboard.module';
 
 @NgModule({
   exports: [
@@ -37,6 +40,9 @@ import {EntityViewModule} from '@modules/home/pages/entity-view/entity-view.modu
     AssetModule,
     EntityViewModule,
     CustomerModule,
+    RuleChainModule,
+    WidgetLibraryModule,
+    DashboardModule,
 //    AuditLogModule,
     UserModule
   ]

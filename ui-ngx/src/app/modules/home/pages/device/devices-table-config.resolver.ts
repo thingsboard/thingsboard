@@ -96,6 +96,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
       ));
     };
     this.config.onEntityAction = action => this.onDeviceAction(action);
+    this.config.detailsReadonly = () => this.config.componentsData.deviceScope === 'customer_user';
 
     this.config.headerComponent = DeviceTableHeaderComponent;
 

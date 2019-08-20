@@ -23,6 +23,7 @@ import {UsersTableConfigResolver} from '../user/users-table-config.resolver';
 import {CustomersTableConfigResolver} from './customers-table-config.resolver';
 import {DevicesTableConfigResolver} from '@modules/home/pages/device/devices-table-config.resolver';
 import {AssetsTableConfigResolver} from '../asset/assets-table-config.resolver';
+import {DashboardsTableConfigResolver} from '@modules/home/pages/dashboard/dashboards-table-config.resolver';
 
 const routes: Routes = [
   {
@@ -90,6 +91,22 @@ const routes: Routes = [
         },
         resolve: {
           entitiesTableConfig: AssetsTableConfigResolver
+        }
+      },
+      {
+        path: ':customerId/dashboards',
+        component: EntitiesTableComponent,
+        data: {
+          auth: [Authority.TENANT_ADMIN],
+          title: 'customer.assets',
+          dashboardsType: 'customer',
+          breadcrumb: {
+            label: 'customer.dashboards',
+            icon: 'dashboard'
+          }
+        },
+        resolve: {
+          entitiesTableConfig: DashboardsTableConfigResolver
         }
       }
     ]

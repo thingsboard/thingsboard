@@ -53,6 +53,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
       this.entityTypeValue = entityType;
       this.load();
       this.reset();
+      this.dirty = true;
     }
   }
 
@@ -64,6 +65,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
       if (currentEntity) {
         if ((currentEntity as any).type !== this.entitySubtypeValue) {
           this.reset();
+          this.dirty = true;
         }
       }
     }
@@ -93,6 +95,8 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   filteredEntities: Observable<Array<BaseData<EntityId>>>;
 
   private searchText = '';
+
+  private dirty = false;
 
   private propagateChange = (v: any) => { };
 
@@ -127,7 +131,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
             this.clear();
           }
         }),
-        startWith<string | BaseData<EntityId>>(''),
+        // startWith<string | BaseData<EntityId>>(''),
         map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
         mergeMap(name => this.fetchEntities(name) ),
         share()
@@ -212,9 +216,9 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (this.disabled) {
-      this.selectEntityFormGroup.disable();
+      this.selectEntityFormGroup.disable({emitEvent: false});
     } else {
-      this.selectEntityFormGroup.enable();
+      this.selectEntityFormGroup.enable({emitEvent: false});
     }
   }
 
@@ -226,29 +230,37 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
         if (targetEntityType === AliasEntityType.CURRENT_CUSTOMER) {
           targetEntityType = EntityType.CUSTOMER;
         }
-        this.entityService.getEntity(targetEntityType, value).subscribe(
+        this.entityService.getEntity(targetEntityType, value, true).subscribe(
           (entity) => {
             this.modelValue = entity.id.id;
-            this.selectEntityFormGroup.get('entity').patchValue(entity, {emitEvent: true});
+            this.selectEntityFormGroup.get('entity').patchValue(entity, {emitEvent: false});
           }
         );
       } else {
         const targetEntityType = value.entityType as EntityType;
-        this.entityService.getEntity(targetEntityType, value.id).subscribe(
+        this.entityService.getEntity(targetEntityType, value.id, true).subscribe(
           (entity) => {
             this.modelValue = entity.id.id;
-            this.selectEntityFormGroup.get('entity').patchValue(entity, {emitEvent: true});
+            this.selectEntityFormGroup.get('entity').patchValue(entity, {emitEvent: false});
           }
         );
       }
     } else {
       this.modelValue = null;
-      this.selectEntityFormGroup.get('entity').patchValue('', {emitEvent: true});
+      this.selectEntityFormGroup.get('entity').patchValue('', {emitEvent: false});
+    }
+    this.dirty = true;
+  }
+
+  onFocus() {
+    if (this.dirty) {
+      this.selectEntityFormGroup.get('entity').updateValueAndValidity({onlySelf: true, emitEvent: true});
+      this.dirty = false;
     }
   }
 
   reset() {
-    this.selectEntityFormGroup.get('entity').patchValue('', {emitEvent: true});
+    this.selectEntityFormGroup.get('entity').patchValue('', {emitEvent: false});
   }
 
   updateView(value: string | null) {

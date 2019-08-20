@@ -47,7 +47,7 @@ public interface DashboardService {
 
     void deleteDashboardsByTenantId(TenantId tenantId);
 
-    ListenableFuture<PageData<DashboardInfo>> findDashboardsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, TimePageLink pageLink);
+    PageData<DashboardInfo> findDashboardsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink);
 
     void unassignCustomerDashboards(TenantId tenantId, CustomerId customerId);
 

@@ -20,6 +20,7 @@
   <input matInput type="text" placeholder="{{ selectEntitySubtypeText | translate }}"
          #subTypeInput
          formControlName="subType"
+         (focusin)="onFocus()"
          [required]="required"
          [matAutocomplete]="subTypeAutocomplete">
   <button *ngIf="subTypeFormGroup.get('subType').value && !disabled"
@@ -30,7 +31,7 @@
   </button>
   <mat-autocomplete #subTypeAutocomplete="matAutocomplete" [displayWith]="displaySubTypeFn">
     <mat-option *ngFor="let subType of filteredSubTypes | async" [value]="subType">
-      <span [innerHTML]="subType.type | highlight:searchText"></span>
+      <span [innerHTML]="subType | highlight:searchText"></span>
     </mat-option>
   </mat-autocomplete>
   <mat-error *ngIf="subTypeFormGroup.get('subType').hasError('required')">

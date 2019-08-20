@@ -36,9 +36,9 @@ export enum AliasEntityType {
 }
 
 export interface EntityTypeTranslation {
-  type: string;
+  type?: string;
   typePlural?: string;
-  list: string;
+  list?: string;
   nameStartsWith?: string;
   details?: string;
   add?: string;
@@ -138,6 +138,44 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
       }
     ],
     [
+      EntityType.RULE_CHAIN,
+      {
+        type: 'entity.type-rulechain',
+        typePlural: 'entity.type-rulechains',
+        list: 'entity.list-of-rulechains',
+        nameStartsWith: 'entity.rulechain-name-starts-with',
+        details: 'rulechain.rulechain-details',
+        add: 'rulechain.add',
+        noEntities: 'rulechain.no-rulechains-text',
+        search: 'rulechain.search',
+        selectedEntities: 'rulechain.selected-rulechains'
+      }
+    ],
+    [
+      EntityType.DASHBOARD,
+      {
+        type: 'entity.type-dashboard',
+        typePlural: 'entity.type-dashboards',
+        list: 'entity.list-of-dashboards',
+        nameStartsWith: 'entity.dashboard-name-starts-with',
+        details: 'dashboard.dashboard-details',
+        add: 'dashboard.add',
+        noEntities: 'dashboard.no-dashboards-text',
+        search: 'dashboard.search',
+        selectedEntities: 'dashboard.selected-dashboards'
+      }
+    ],
+    [
+      EntityType.WIDGETS_BUNDLE,
+      {
+        details: 'widgets-bundle.widgets-bundle-details',
+        add: 'widgets-bundle.add',
+        noEntities: 'widgets-bundle.no-widgets-bundles-text',
+        search: 'widgets-bundle.search',
+        selectedEntities: 'widgets-bundle.selected-widgets-bundles'
+      }
+    ],
+    [
       AliasEntityType.CURRENT_CUSTOMER,
       {
         type: 'entity.type-entity-view',
@@ -183,6 +221,24 @@ export const entityTypeResources = new Map<EntityType, EntityTypeResource>(
       EntityType.ENTITY_VIEW,
       {
         helpLinkId: 'entityViews'
+      }
+    ],
+    [
+      EntityType.RULE_CHAIN,
+      {
+        helpLinkId: 'rulechains'
+      }
+    ],
+    [
+      EntityType.DASHBOARD,
+      {
+        helpLinkId: 'dashboards'
+      }
+    ],
+    [
+      EntityType.WIDGETS_BUNDLE,
+      {
+        helpLinkId: 'widgetsBundles'
       }
     ]
   ]

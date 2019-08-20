@@ -302,10 +302,10 @@ public abstract class BaseDashboardServiceTest extends AbstractServiceTest {
         }
         
         List<DashboardInfo> loadedDashboards = new ArrayList<>();
-        TimePageLink pageLink = new TimePageLink(23);
+        PageLink pageLink = new PageLink(23);
         PageData<DashboardInfo> pageData = null;
         do {
-            pageData = dashboardService.findDashboardsByTenantIdAndCustomerId(tenantId, customerId, pageLink).get();
+            pageData = dashboardService.findDashboardsByTenantIdAndCustomerId(tenantId, customerId, pageLink);
             loadedDashboards.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -319,8 +319,8 @@ public abstract class BaseDashboardServiceTest extends AbstractServiceTest {
         
         dashboardService.unassignCustomerDashboards(tenantId, customerId);
 
-        pageLink = new TimePageLink(42);
-        pageData = dashboardService.findDashboardsByTenantIdAndCustomerId(tenantId, customerId, pageLink).get();
+        pageLink = new PageLink(42);
+        pageData = dashboardService.findDashboardsByTenantIdAndCustomerId(tenantId, customerId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
         

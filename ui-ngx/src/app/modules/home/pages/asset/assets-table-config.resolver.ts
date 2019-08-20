@@ -93,6 +93,7 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
         ));
     };
     this.config.onEntityAction = action => this.onAssetAction(action);
+    this.config.detailsReadonly = () => this.config.componentsData.assetScope === 'customer_user';
 
     this.config.headerComponent = AssetTableHeaderComponent;
 

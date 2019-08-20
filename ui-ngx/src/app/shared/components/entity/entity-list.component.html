@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="entityListFormGroup" class="mat-block">
+<mat-form-field appearance="standard" [formGroup]="entityListFormGroup" class="mat-block">
   <mat-chip-list #chipList>
     <mat-chip
       *ngFor="let entity of entities"
@@ -26,8 +26,12 @@
       <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
     </mat-chip>
     <input matInput type="text" placeholder="{{ 'entity.entity-list' | translate }}"
+           style="max-width: 200px;"
            #entityInput
            formControlName="entity"
+           matAutocompleteOrigin
+           #origin="matAutocompleteOrigin"
+           [matAutocompleteConnectedTo]="origin"
            [matAutocomplete]="entityAutocomplete"
            [matChipInputFor]="chipList">
   </mat-chip-list>

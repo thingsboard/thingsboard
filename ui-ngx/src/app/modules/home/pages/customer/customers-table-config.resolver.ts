@@ -155,6 +155,15 @@ export class CustomersTableConfigResolver implements Resolve<EntityTableConfig<C
       case 'manageUsers':
         this.manageCustomerUsers(action.event, action.entity);
         return true;
+      case 'manageAssets':
+        this.manageCustomerAssets(action.event, action.entity);
+        return true;
+      case 'manageDevices':
+        this.manageCustomerDevices(action.event, action.entity);
+        return true;
+      case 'manageDashboards':
+        this.manageCustomerDashboards(action.event, action.entity);
+        return true;
     }
     return false;
   }

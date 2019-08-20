@@ -323,10 +323,10 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
         }
         
         List<DashboardInfo> loadedDashboards = new ArrayList<>();
-        TimePageLink pageLink = new TimePageLink(21);
+        PageLink pageLink = new PageLink(21);
         PageData<DashboardInfo> pageData = null;
         do {
-            pageData = doGetTypedWithTimePageLink("/api/customer/" + customerId.getId().toString() + "/dashboards?",
+            pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/dashboards?",
                     new TypeReference<PageData<DashboardInfo>>(){}, pageLink);
             loadedDashboards.addAll(pageData.getData());
             if (pageData.hasNext()) {

@@ -96,6 +96,7 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
         ));
     };
     this.config.onEntityAction = action => this.onEntityViewAction(action);
+    this.config.detailsReadonly = () => this.config.componentsData.entityViewScope === 'customer_user';
 
     this.config.headerComponent = EntityViewTableHeaderComponent;
 

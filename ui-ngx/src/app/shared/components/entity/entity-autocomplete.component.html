@@ -19,6 +19,7 @@
   <input matInput type="text" placeholder="{{ entityText | translate }}"
          #entityInput
          formControlName="entity"
+         (focusin)="onFocus()"
          [required]="required"
          [matAutocomplete]="entityAutocomplete">
   <button *ngIf="selectEntityFormGroup.get('entity').value && !disabled"

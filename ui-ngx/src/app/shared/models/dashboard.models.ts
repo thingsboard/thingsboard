@@ -26,10 +26,40 @@ export interface DashboardInfo extends BaseData<DashboardId> {
 }
 
 export interface DashboardConfiguration {
-  widgets: Array<any>;
+  [key: string]: any;
   // TODO:
 }
 
 export interface Dashboard extends DashboardInfo {
   configuration: DashboardConfiguration;
+}
+
+export function isPublicDashboard(dashboard: DashboardInfo): boolean {
+  if (dashboard && dashboard.assignedCustomers) {
+    return dashboard.assignedCustomers
+      .filter(customerInfo => customerInfo.public).length > 0;
+  } else {
+    return false;
+  }
+}
+
+export function getDashboardAssignedCustomersText(dashboard: DashboardInfo): string {
+  if (dashboard && dashboard.assignedCustomers && dashboard.assignedCustomers.length > 0) {
+    return dashboard.assignedCustomers
+      .filter(customerInfo => !customerInfo.public)
+      .map(customerInfo => customerInfo.title)
+      .join(', ');
+  } else {
+    return null;
+  }
+}
+
+export function isCurrentPublicDashboardCustomer(dashboard: DashboardInfo, customerId: string): boolean {
+  if (customerId && dashboard && dashboard.assignedCustomers) {
+    return dashboard.assignedCustomers.filter(customerInfo => {
+      return customerInfo.public && customerId === customerInfo.customerId.id;
+    }).length > 0;
+  } else {
+    return false;
+  }
 }
