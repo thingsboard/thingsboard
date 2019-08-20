@@ -58,6 +58,7 @@ function Dashboard() {
             columns: '=',
             margins: '=',
             isEdit: '=',
+            hideWidgets: '=?',
             autofillHeight: '=',
             mobileAutofillHeight: '=?',
             mobileRowHeight: '=?',
@@ -100,6 +101,8 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
 
     vm.gridster = null;
 
+    vm.hideWidgets = angular.isDefined(vm.hideWidgets) ? vm.hideWidgets : false;
+
     vm.isMobileDisabled = angular.isDefined(vm.isMobileDisabled) ? vm.isMobileDisabled : false;
 
     vm.isMobileSize = false;
@@ -122,10 +125,10 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
         maxRows: 100,
         columns: vm.columns ? vm.columns : 24,
         margins: vm.margins ? vm.margins : [10, 10],
-        minSizeX: 1,
-        minSizeY: 1,
-        defaultSizeX: 8,
-        defaultSizeY: 6,
+        minSizeX: vm.hideWidgets ? 0 : 1,
+        minSizeY: vm.hideWidgets ? 0 : 1,
+        defaultSizeX: vm.hideWidgets ? 0 : 8,
+        defaultSizeY: vm.hideWidgets ? 0 : 6,
         resizable: {
             enabled: vm.isEdit
         },
@@ -143,11 +146,11 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
     vm.widgetIds = [];
 
     vm.widgetItemMap = {
-        sizeX: 'vm.widgetLayoutInfo[widget.id].sizeX',
-        sizeY: 'vm.widgetLayoutInfo[widget.id].sizeY',
+        sizeX: 'vm.widgetIsHidden(widget) ? 0 : vm.widgetLayoutInfo[widget.id].sizeX',
+        sizeY: 'vm.widgetIsHidden(widget) ? 0 : vm.widgetLayoutInfo[widget.id].sizeY',
         row: 'vm.widgetLayoutInfo[widget.id].row',
         col: 'vm.widgetLayoutInfo[widget.id].col',
-        minSizeY: 'widget.minSizeY',
+        minSizeY: 'vm.widgetIsHidden(widget) ? 0 : widget.minSizeY',
         maxSizeY: 'widget.maxSizeY'
     };
 
@@ -195,6 +198,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
     vm.widgetActions = widgetActions;
     vm.dropWidgetShadow = dropWidgetShadow;
     vm.enableWidgetFullscreen = enableWidgetFullscreen;
+    vm.widgetIsHidden = widgetIsHidden;
     vm.hasTimewindow = hasTimewindow;
     vm.hasAggregation = hasAggregation;
     vm.editWidget = editWidget;
@@ -333,6 +337,13 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
         vm.gridsterOpts.resizable.enabled = vm.isEdit;
         vm.gridsterOpts.draggable.enabled = vm.isEdit;
         $scope.$broadcast('toggleDashboardEditMode', vm.isEdit);
+    });
+
+    $scope.$watch('vm.hideWidgets', function () {
+        vm.gridsterOpts.minSizeX = vm.hideWidgets ? 0 : 1,
+        vm.gridsterOpts.minSizeY = vm.hideWidgets ? 0 : 1,
+        vm.gridsterOpts.defaultSizeX = vm.hideWidgets ? 0 : 8,
+        vm.gridsterOpts.defaultSizeY = vm.hideWidgets ? 0 : 6
     });
 
     $scope.$watch('vm.isMobileSize', function (newVal, prevVal) {
@@ -1014,6 +1025,16 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
             return widget.config.enableFullscreen;
         } else {
             return true;
+        }
+    }
+
+    function widgetIsHidden(widget) {
+        if (!vm.hideWidgets)
+            return false;
+        if (angular.isDefined(widget.config.settings.hidden)) {
+            return widget.config.settings.hidden;
+        } else {
+            return false;
         }
     }
 
