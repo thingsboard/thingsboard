@@ -865,7 +865,7 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
         var sizeChanged = false;
 
         if (!widgetContext.width || widgetContext.width != width || !widgetContext.height || widgetContext.height != height) {
-            if ((width > 0 && height > 0) || (widgetContext.settings.hidden === true)) {
+            if (width > 0 && height > 0) {
                 widgetContext.$container.css('height', height + 'px');
                 widgetContext.$container.css('width', width + 'px');
                 widgetContext.width = width;
