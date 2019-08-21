@@ -14,26 +14,22 @@
 /// limitations under the License.
 ///
 
-import { BaseData, HasId } from '@shared/models/base-data';
-import { EntityId } from '@shared/models/id/entity-id';
-import { EntitiesFetchFunction } from '@shared/models/datasource/entity-datasource';
-import { Observable, of } from 'rxjs';
-import { emptyPageData } from '@shared/models/page/page-data';
-import { DatePipe } from '@angular/common';
-import { Direction, SortOrder } from '@shared/models/page/sort-order';
-import {
-  EntityType,
-  EntityTypeResource,
-  EntityTypeTranslation
-} from '@shared/models/entity-type.models';
-import { EntityComponent } from '@shared/components/entity/entity.component';
-import { Type } from '@angular/core';
-import { EntityAction } from '@shared/components/entity/entity-component.models';
-import { HasUUID } from '@shared/models/id/has-uuid';
-import { PageLink } from '@shared/models/page/page-link';
-import { EntitiesTableComponent } from '@shared/components/entity/entities-table.component';
-import { EntityTableHeaderComponent } from '@shared/components/entity/entity-table-header.component';
-import { ActivatedRoute } from '@angular/router';
+import {BaseData, HasId} from '@shared/models/base-data';
+import {EntitiesFetchFunction} from '@home/models/datasource/entity-datasource';
+import {Observable, of} from 'rxjs';
+import {emptyPageData} from '@shared/models/page/page-data';
+import {DatePipe} from '@angular/common';
+import {Direction, SortOrder} from '@shared/models/page/sort-order';
+import {EntityType, EntityTypeResource, EntityTypeTranslation} from '@shared/models/entity-type.models';
+import {EntityComponent} from '@home/components/entity/entity.component';
+import {Type} from '@angular/core';
+import {EntityAction} from './entity-component.models';
+import {HasUUID} from '@shared/models/id/has-uuid';
+import {PageLink} from '@shared/models/page/page-link';
+import {EntitiesTableComponent} from '@home/components/entity/entities-table.component';
+import {EntityTableHeaderComponent} from '@home/components/entity/entity-table-header.component';
+import {ActivatedRoute} from '@angular/router';
+import { EntityTabsComponent } from '../../components/entity/entity-tabs.component';
 
 export type EntityBooleanFunction<T extends BaseData<HasId>> = (entity: T) => boolean;
 export type EntityStringFunction<T extends BaseData<HasId>> = (entity: T) => string;
@@ -117,6 +113,7 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   entityTranslations: EntityTypeTranslation;
   entityResources: EntityTypeResource;
   entityComponent: Type<EntityComponent<T>>;
+  entityTabsComponent: Type<EntityTabsComponent<T>>;
   addDialogStyle = {};
   defaultSortOrder: SortOrder = {property: 'createdTime', direction: Direction.ASC};
   columns: Array<EntityTableColumn<T>> = [];

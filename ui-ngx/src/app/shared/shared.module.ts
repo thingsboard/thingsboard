@@ -14,72 +14,67 @@
 /// limitations under the License.
 ///
 
-import { NgModule } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
-import { FooterComponent } from './components/footer.component';
-import { LogoComponent } from './components/logo.component';
-import { ToastDirective, TbSnackBarComponent } from './components/toast.directive';
-import { BreadcrumbComponent } from '@app/shared/components/breadcrumb.component';
+import {NgModule} from '@angular/core';
+import {CommonModule, DatePipe} from '@angular/common';
+import {FooterComponent} from './components/footer.component';
+import {LogoComponent} from './components/logo.component';
+import {TbSnackBarComponent, ToastDirective} from './components/toast.directive';
+import {BreadcrumbComponent} from '@app/shared/components/breadcrumb.component';
 
 import {
-  MatButtonModule,
-  MatCheckboxModule,
-  MatIconModule,
-  MatCardModule,
-  MatProgressBarModule,
-  MatInputModule,
-  MatSnackBarModule,
-  MatSidenavModule,
-  MatToolbarModule,
-  MatMenuModule,
-  MatGridListModule,
-  MatDialogModule,
-  MatSelectModule,
-  MatTooltipModule,
-  MatTableModule,
-  MatPaginatorModule,
-  MatSortModule,
-  MatProgressSpinnerModule,
-  MatDividerModule,
-  MatTabsModule,
-  MatRadioModule,
-  MatSlideToggleModule,
-  MatDatepickerModule,
-  MatSliderModule,
-  MatExpansionModule,
-  MatStepperModule,
   MatAutocompleteModule,
-  MatChipsModule
+  MatButtonModule,
+  MatCardModule,
+  MatCheckboxModule,
+  MatChipsModule,
+  MatDatepickerModule,
+  MatDialogModule,
+  MatDividerModule,
+  MatExpansionModule,
+  MatGridListModule,
+  MatIconModule,
+  MatInputModule,
+  MatMenuModule,
+  MatPaginatorModule,
+  MatProgressBarModule,
+  MatProgressSpinnerModule,
+  MatRadioModule,
+  MatSelectModule,
+  MatSidenavModule,
+  MatSliderModule,
+  MatSlideToggleModule,
+  MatSnackBarModule,
+  MatSortModule,
+  MatStepperModule,
+  MatTableModule,
+  MatTabsModule,
+  MatToolbarModule,
+  MatTooltipModule
 } from '@angular/material';
-import { MatDatetimepickerModule, MatNativeDatetimeModule } from '@mat-datetimepicker/core';
-import { FlexLayoutModule } from '@angular/flex-layout';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
-import { ShareModule as ShareButtonsModule } from '@ngx-share/core';
-import { UserMenuComponent } from '@shared/components/user-menu.component';
-import { NospacePipe } from './pipe/nospace.pipe';
-import { TranslateModule } from '@ngx-translate/core';
-import { TbCheckboxComponent } from '@shared/components/tb-checkbox.component';
-import { HelpComponent } from '@shared/components/help.component';
-import { EntitiesTableComponent } from '@shared/components/entity/entities-table.component';
-import { AddEntityDialogComponent } from '@shared/components/entity/add-entity-dialog.component';
-import { DetailsPanelComponent } from '@shared/components/details-panel.component';
-import { EntityDetailsPanelComponent } from '@shared/components/entity/entity-details-panel.component';
-import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
-import { ContactComponent } from '@shared/components/contact.component';
+import {MatDatetimepickerModule, MatNativeDatetimeModule} from '@mat-datetimepicker/core';
+import {FlexLayoutModule} from '@angular/flex-layout';
+import {FormsModule, ReactiveFormsModule} from '@angular/forms';
+import {RouterModule} from '@angular/router';
+import {ShareModule as ShareButtonsModule} from '@ngx-share/core';
+import {UserMenuComponent} from '@shared/components/user-menu.component';
+import {NospacePipe} from './pipe/nospace.pipe';
+import {TranslateModule} from '@ngx-translate/core';
+import {TbCheckboxComponent} from '@shared/components/tb-checkbox.component';
+import {HelpComponent} from '@shared/components/help.component';
+import {TbAnchorComponent} from '@shared/components/tb-anchor.component';
 // import { AuditLogDetailsDialogComponent } from '@shared/components/audit-log/audit-log-details-dialog.component';
 // import { AuditLogTableComponent } from '@shared/components/audit-log/audit-log-table.component';
-import { MillisecondsToTimeStringPipe } from '@shared/pipe/milliseconds-to-time-string.pipe';
-import { TimewindowComponent } from '@shared/components/time/timewindow.component';
-import { OverlayModule } from '@angular/cdk/overlay';
-import { TimewindowPanelComponent } from '@shared/components/time/timewindow-panel.component';
-import { TimeintervalComponent } from '@shared/components/time/timeinterval.component';
-import { DatetimePeriodComponent } from '@shared/components/time/datetime-period.component';
-import { EnumToArrayPipe } from '@shared/pipe/enum-to-array.pipe';
-import { ClipboardModule } from 'ngx-clipboard';
+import {MillisecondsToTimeStringPipe} from '@shared/pipe/milliseconds-to-time-string.pipe';
+import {TimewindowComponent} from '@shared/components/time/timewindow.component';
+import {OverlayModule} from '@angular/cdk/overlay';
+import {TimewindowPanelComponent} from '@shared/components/time/timewindow-panel.component';
+import {TimeintervalComponent} from '@shared/components/time/timeinterval.component';
+import {DatetimePeriodComponent} from '@shared/components/time/datetime-period.component';
+import {EnumToArrayPipe} from '@shared/pipe/enum-to-array.pipe';
+import {ClipboardModule} from 'ngx-clipboard';
 // import { ValueInputComponent } from '@shared/components/value-input.component';
-import { FullscreenDirective } from '@shared/components/fullscreen.directive';
-import { HighlightPipe } from '@shared/pipe/highlight.pipe';
+import {FullscreenDirective} from '@shared/components/fullscreen.directive';
+import {HighlightPipe} from '@shared/pipe/highlight.pipe';
 import {DashboardAutocompleteComponent} from '@shared/components/dashboard-autocomplete.component';
 import {EntitySubTypeAutocompleteComponent} from '@shared/components/entity/entity-subtype-autocomplete.component';
 import {EntitySubTypeSelectComponent} from './components/entity/entity-subtype-select.component';
@@ -102,7 +97,6 @@ import {SocialSharePanelComponent} from './components/socialshare-panel.componen
   entryComponents: [
     TbSnackBarComponent,
     TbAnchorComponent,
-    AddEntityDialogComponent,
 //    AuditLogDetailsDialogComponent,
     TimewindowPanelComponent,
   ],
@@ -117,11 +111,6 @@ import {SocialSharePanelComponent} from './components/socialshare-panel.componen
     TbSnackBarComponent,
     BreadcrumbComponent,
     UserMenuComponent,
-    EntitiesTableComponent,
-    AddEntityDialogComponent,
-    DetailsPanelComponent,
-    EntityDetailsPanelComponent,
-    ContactComponent,
 //    AuditLogTableComponent,
 //    AuditLogDetailsDialogComponent,
     TimewindowComponent,
@@ -195,11 +184,6 @@ import {SocialSharePanelComponent} from './components/socialshare-panel.componen
     TbCheckboxComponent,
     BreadcrumbComponent,
     UserMenuComponent,
-    EntitiesTableComponent,
-    AddEntityDialogComponent,
-    DetailsPanelComponent,
-    EntityDetailsPanelComponent,
-    ContactComponent,
 //    AuditLogTableComponent,
     TimewindowComponent,
     TimewindowPanelComponent,

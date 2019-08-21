@@ -23,7 +23,7 @@ import {
   DateEntityTableColumn,
   EntityTableColumn,
   EntityTableConfig
-} from '@shared/components/entity/entities-table-config.models';
+} from '@home/models/entity/entities-table-config.models';
 import { TenantService } from '@core/http/tenant.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
@@ -33,7 +33,7 @@ import {
   entityTypeTranslations
 } from '@shared/models/entity-type.models';
 import { TenantComponent } from '@modules/home/pages/tenant/tenant.component';
-import { EntityAction } from '@shared/components/entity/entity-component.models';
+import { EntityAction } from '@home/models/entity/entity-component.models';
 import { User } from '@shared/models/user.model';
 
 @Injectable()

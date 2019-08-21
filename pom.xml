@@ -104,7 +104,6 @@
         <module>tools</module>
         <module>application</module>
         <module>msa</module>
-        <module>ui</module>
     </modules>
 
     <profiles>
@@ -307,6 +306,7 @@
                             <exclude>**/*.proto.js</exclude>
                             <exclude>docker/haproxy/**</exclude>
                             <exclude>docker/tb-node/**</exclude>
+                            <exclude>ui/**</exclude>
                         </excludes>
                         <mapping>
                             <proto>JAVADOC_STYLE</proto>

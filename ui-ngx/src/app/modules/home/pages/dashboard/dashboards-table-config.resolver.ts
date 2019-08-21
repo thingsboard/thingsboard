@@ -25,11 +25,11 @@ import {
   EntityTableConfig,
   GroupActionDescriptor,
   HeaderActionDescriptor
-} from '@shared/components/entity/entities-table-config.models';
+} from '@home/models/entity/entities-table-config.models';
 import {TranslateService} from '@ngx-translate/core';
 import {DatePipe} from '@angular/common';
 import {EntityType, entityTypeResources, entityTypeTranslations} from '@shared/models/entity-type.models';
-import {EntityAction} from '@shared/components/entity/entity-component.models';
+import {EntityAction} from '@home/models/entity/entity-component.models';
 import {forkJoin, Observable, of} from 'rxjs';
 import {select, Store} from '@ngrx/store';
 import {selectAuthUser} from '@core/auth/auth.selectors';

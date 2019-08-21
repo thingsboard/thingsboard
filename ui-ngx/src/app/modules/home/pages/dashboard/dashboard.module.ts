@@ -22,6 +22,7 @@ import {DashboardFormComponent} from '@modules/home/pages/dashboard/dashboard-fo
 import {ManageDashboardCustomersDialogComponent} from '@modules/home/pages/dashboard/manage-dashboard-customers-dialog.component';
 import {DashboardRoutingModule} from './dashboard-routing.module';
 import {MakeDashboardPublicDialogComponent} from '@modules/home/pages/dashboard/make-dashboard-public-dialog.component';
+import {HomeComponentsModule} from '@modules/home/components/home-components.module';
 
 @NgModule({
   entryComponents: [
@@ -37,6 +38,7 @@ import {MakeDashboardPublicDialogComponent} from '@modules/home/pages/dashboard/
   imports: [
     CommonModule,
     SharedModule,
+    HomeComponentsModule,
     HomeDialogsModule,
     DashboardRoutingModule
   ]

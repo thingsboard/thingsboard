@@ -16,7 +16,7 @@
 
 import { Component, Input } from '@angular/core';
 import { FormGroup } from '@angular/forms';
-import { COUNTRIES } from '@shared/components/contact.models';
+import { COUNTRIES } from '@home/models/contact.models';
 
 @Component({
   selector: 'tb-contact',

@@ -22,7 +22,7 @@ import { BaseData, HasId } from '@shared/models/base-data';
 import { CollectionViewer, DataSource } from '@angular/cdk/typings/collections';
 import { catchError, map, take, tap } from 'rxjs/operators';
 import { SelectionModel } from '@angular/cdk/collections';
-import {EntityBooleanFunction} from '@shared/components/entity/entities-table-config.models';
+import {EntityBooleanFunction} from '@home/models/entity/entities-table-config.models';
 
 export type EntitiesFetchFunction<T extends BaseData<HasId>, P extends PageLink> = (pageLink: P) => Observable<PageData<T>>;
 

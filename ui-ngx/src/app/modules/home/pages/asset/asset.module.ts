@@ -21,6 +21,7 @@ import {HomeDialogsModule} from '../../dialogs/home-dialogs.module';
 import {AssetComponent} from './asset.component';
 import {AssetTableHeaderComponent} from './asset-table-header.component';
 import {AssetRoutingModule} from './asset-routing.module';
+import {HomeComponentsModule} from '@modules/home/components/home-components.module';
 
 @NgModule({
   entryComponents: [
@@ -34,6 +35,7 @@ import {AssetRoutingModule} from './asset-routing.module';
   imports: [
     CommonModule,
     SharedModule,
+    HomeComponentsModule,
     HomeDialogsModule,
     AssetRoutingModule
   ]

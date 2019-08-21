@@ -22,11 +22,11 @@ import {
   DateEntityTableColumn,
   EntityTableColumn,
   EntityTableConfig
-} from '@shared/components/entity/entities-table-config.models';
+} from '@home/models/entity/entities-table-config.models';
 import {TranslateService} from '@ngx-translate/core';
 import {DatePipe} from '@angular/common';
 import {EntityType, entityTypeResources, entityTypeTranslations} from '@shared/models/entity-type.models';
-import {EntityAction} from '@shared/components/entity/entity-component.models';
+import {EntityAction} from '@home/models/entity/entity-component.models';
 import {WidgetsBundle} from '@shared/models/widgets-bundle.model';
 import {WidgetService} from '@app/core/http/widget.service';
 import {WidgetsBundleComponent} from '@modules/home/pages/widget/widgets-bundle.component';

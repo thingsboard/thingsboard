@@ -19,6 +19,7 @@ import {CommonModule} from '@angular/common';
 import {SharedModule} from '@shared/shared.module';
 import {WidgetsBundleComponent} from '@modules/home/pages/widget/widgets-bundle.component';
 import {WidgetLibraryRoutingModule} from '@modules/home/pages/widget/widget-library-routing.module';
+import {HomeComponentsModule} from '@modules/home/components/home-components.module';
 
 @NgModule({
   entryComponents: [
@@ -30,6 +31,7 @@ import {WidgetLibraryRoutingModule} from '@modules/home/pages/widget/widget-libr
   imports: [
     CommonModule,
     SharedModule,
+    HomeComponentsModule,
     WidgetLibraryRoutingModule
   ]
 })

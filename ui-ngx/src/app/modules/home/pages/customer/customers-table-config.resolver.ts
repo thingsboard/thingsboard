@@ -23,7 +23,7 @@ import {
   DateEntityTableColumn,
   EntityTableColumn,
   EntityTableConfig
-} from '@shared/components/entity/entities-table-config.models';
+} from '@home/models/entity/entities-table-config.models';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import {
@@ -31,7 +31,7 @@ import {
   entityTypeResources,
   entityTypeTranslations
 } from '@shared/models/entity-type.models';
-import { EntityAction } from '@shared/components/entity/entity-component.models';
+import { EntityAction } from '@home/models/entity/entity-component.models';
 import {Customer} from '@app/shared/models/customer.model';
 import {CustomerService} from '@app/core/http/customer.service';
 import {CustomerComponent} from '@modules/home/pages/customer/customer.component';

@@ -14,19 +14,19 @@
 /// limitations under the License.
 ///
 
-import {Component} from '@angular/core';
-import {Store} from '@ngrx/store';
-import {AppState} from '@core/core.state';
-import {EntityTableHeaderComponent} from '../../components/entity/entity-table-header.component';
-import {EntityType} from '@shared/models/entity-type.models';
-import {AssetInfo} from '@shared/models/asset.models';
+import { Component } from '@angular/core';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { DeviceInfo } from '@shared/models/device.models';
+import { EntityType } from '@shared/models/entity-type.models';
+import { EntityTabsComponent } from '../../components/entity/entity-tabs.component';
 
 @Component({
-  selector: 'tb-asset-table-header',
-  templateUrl: './asset-table-header.component.html',
-  styleUrls: ['./asset-table-header.component.scss']
+  selector: 'tb-device-tabs',
+  templateUrl: './device-tabs.component.html',
+  styleUrls: []
 })
-export class AssetTableHeaderComponent extends EntityTableHeaderComponent<AssetInfo> {
+export class DeviceTabsComponent extends EntityTabsComponent<DeviceInfo> {
 
   entityType = EntityType;
 
@@ -34,9 +34,8 @@ export class AssetTableHeaderComponent extends EntityTableHeaderComponent<AssetI
     super(store);
   }
 
-  assetTypeChanged(assetType: string) {
-    this.entitiesTableConfig.componentsData.assetType = assetType;
-    this.entitiesTableConfig.table.updateData();
+  ngOnInit() {
+    super.ngOnInit();
   }
 
 }

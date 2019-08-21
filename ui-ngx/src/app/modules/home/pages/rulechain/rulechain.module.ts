@@ -19,6 +19,7 @@ import {CommonModule} from '@angular/common';
 import {SharedModule} from '@shared/shared.module';
 import {RuleChainComponent} from '@modules/home/pages/rulechain/rulechain.component';
 import {RuleChainRoutingModule} from '@modules/home/pages/rulechain/rulechain-routing.module';
+import {HomeComponentsModule} from '@modules/home/components/home-components.module';
 
 @NgModule({
   entryComponents: [
@@ -30,6 +31,7 @@ import {RuleChainRoutingModule} from '@modules/home/pages/rulechain/rulechain-ro
   imports: [
     CommonModule,
     SharedModule,
+    HomeComponentsModule,
     RuleChainRoutingModule
   ]
 })

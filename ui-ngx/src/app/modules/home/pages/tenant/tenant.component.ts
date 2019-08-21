@@ -19,10 +19,10 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Customer } from '@shared/models/customer.model';
-import { ContactBasedComponent } from '@shared/components/entity/contact-based.component';
 import {Tenant} from '@app/shared/models/tenant.model';
 import {ActionNotificationShow} from '@app/core/notification/notification.actions';
 import {TranslateService} from '@ngx-translate/core';
+import {ContactBasedComponent} from '../../components/entity/contact-based.component';
 
 @Component({
   selector: 'tb-tenant',

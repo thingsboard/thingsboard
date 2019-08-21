@@ -17,7 +17,7 @@
 import {Component} from '@angular/core';
 import {Store} from '@ngrx/store';
 import {AppState} from '@core/core.state';
-import {EntityTableHeaderComponent} from '@shared/components/entity/entity-table-header.component';
+import {EntityTableHeaderComponent} from '../../components/entity/entity-table-header.component';
 import {EntityType} from '@shared/models/entity-type.models';
 import {EntityViewInfo} from '@app/shared/models/entity-view.models';
 

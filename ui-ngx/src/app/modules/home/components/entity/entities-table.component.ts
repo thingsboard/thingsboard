@@ -29,7 +29,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { PageLink, TimePageLink } from '@shared/models/page/page-link';
 import { MatDialog, MatPaginator, MatSort } from '@angular/material';
-import { EntitiesDataSource } from '@shared/models/datasource/entity-datasource';
+import { EntitiesDataSource } from '@home/models/datasource/entity-datasource';
 import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { forkJoin, fromEvent, merge, Observable } from 'rxjs';
@@ -43,14 +43,14 @@ import {
   EntityTableConfig,
   GroupActionDescriptor,
   HeaderActionDescriptor
-} from '@shared/components/entity/entities-table-config.models';
+} from '@home/models/entity/entities-table-config.models';
 import { EntityTypeTranslation } from '@shared/models/entity-type.models';
 import { DialogService } from '@core/services/dialog.service';
-import { AddEntityDialogComponent } from '@shared/components/entity/add-entity-dialog.component';
+import { AddEntityDialogComponent } from './add-entity-dialog.component';
 import {
   AddEntityDialogData,
   EntityAction
-} from '@shared/components/entity/entity-component.models';
+} from '@home/models/entity/entity-component.models';
 import { Timewindow } from '@shared/models/time/time.models';
 import {DomSanitizer, SafeHtml} from '@angular/platform-browser';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';

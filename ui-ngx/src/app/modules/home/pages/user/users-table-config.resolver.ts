@@ -21,7 +21,7 @@ import {
   DateEntityTableColumn,
   EntityTableColumn,
   EntityTableConfig
-} from '@shared/components/entity/entities-table-config.models';
+} from '@home/models/entity/entities-table-config.models';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import {
@@ -38,7 +38,7 @@ import { forkJoin, noop, Observable, of } from 'rxjs';
 import { Authority } from '@shared/models/authority.enum';
 import { CustomerId } from '@shared/models/id/customer-id';
 import { MatDialog } from '@angular/material';
-import { EntityAction } from '@shared/components/entity/entity-component.models';
+import { EntityAction } from '@home/models/entity/entity-component.models';
 import {
   AddUserDialogComponent,
   AddUserDialogData

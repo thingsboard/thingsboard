@@ -22,21 +22,26 @@ import {DeviceRoutingModule} from './device-routing.module';
 import {DeviceTableHeaderComponent} from '@modules/home/pages/device/device-table-header.component';
 import {DeviceCredentialsDialogComponent} from '@modules/home/pages/device/device-credentials-dialog.component';
 import {HomeDialogsModule} from '../../dialogs/home-dialogs.module';
+import {HomeComponentsModule} from '@modules/home/components/home-components.module';
+import { DeviceTabsComponent } from '@home/pages/device/device-tabs.component';
 
 @NgModule({
   entryComponents: [
     DeviceComponent,
+    DeviceTabsComponent,
     DeviceTableHeaderComponent,
     DeviceCredentialsDialogComponent
   ],
   declarations: [
     DeviceComponent,
+    DeviceTabsComponent,
     DeviceTableHeaderComponent,
     DeviceCredentialsDialogComponent
   ],
   imports: [
     CommonModule,
     SharedModule,
+    HomeComponentsModule,
     HomeDialogsModule,
     DeviceRoutingModule
   ]

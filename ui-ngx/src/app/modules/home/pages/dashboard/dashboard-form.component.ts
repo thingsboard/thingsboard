@@ -17,7 +17,7 @@
 import {Component} from '@angular/core';
 import {Store} from '@ngrx/store';
 import {AppState} from '@core/core.state';
-import {EntityComponent} from '@shared/components/entity/entity.component';
+import {EntityComponent} from '../../components/entity/entity.component';
 import {FormBuilder, FormGroup, Validators} from '@angular/forms';
 import {ActionNotificationShow} from '@core/notification/notification.actions';
 import {TranslateService} from '@ngx-translate/core';
@@ -35,7 +35,7 @@ import {DashboardService} from '@core/http/dashboard.service';
   templateUrl: './dashboard-form.component.html',
   styleUrls: ['./dashboard-form.component.scss']
 })
-export class DashboardFormComponent extends EntityComponent<Dashboard | DashboardInfo> {
+export class DashboardFormComponent extends EntityComponent<Dashboard> {
 
   dashboardScope: 'tenant' | 'customer' | 'customer_user';
   customerId: string;

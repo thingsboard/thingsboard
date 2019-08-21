@@ -14,26 +14,19 @@
 /// limitations under the License.
 ///
 
-import {
-  Component,
-  ComponentFactoryResolver,
-  Inject,
-  OnInit,
-  SkipSelf,
-  ViewChild
-} from '@angular/core';
-import { ErrorStateMatcher, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material';
-import { PageComponent } from '@shared/components/page.component';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
-import { FormControl, FormGroupDirective, NgForm } from '@angular/forms';
-import { EntityTypeResource, EntityTypeTranslation } from '@shared/models/entity-type.models';
-import { EntityTableConfig } from '@shared/components/entity/entities-table-config.models';
-import { BaseData, HasId } from '@shared/models/base-data';
-import { EntityId } from '@shared/models/id/entity-id';
-import { AddEntityDialogData } from '@shared/components/entity/entity-component.models';
-import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
-import { EntityComponent } from '@shared/components/entity/entity.component';
+import {Component, ComponentFactoryResolver, Inject, OnInit, SkipSelf, ViewChild} from '@angular/core';
+import {ErrorStateMatcher, MAT_DIALOG_DATA, MatDialogRef} from '@angular/material';
+import {PageComponent} from '@shared/components/page.component';
+import {Store} from '@ngrx/store';
+import {AppState} from '@core/core.state';
+import {FormControl, FormGroupDirective, NgForm} from '@angular/forms';
+import {EntityTypeResource, EntityTypeTranslation} from '@shared/models/entity-type.models';
+import {BaseData, HasId} from '@shared/models/base-data';
+import {EntityId} from '@shared/models/id/entity-id';
+import {TbAnchorComponent} from '@shared/components/tb-anchor.component';
+import {EntityComponent} from './entity.component';
+import {EntityTableConfig} from '@home/models/entity/entities-table-config.models';
+import {AddEntityDialogData} from '@home/models/entity/entity-component.models';
 
 @Component({
   selector: 'tb-add-entity-dialog',

@@ -17,7 +17,7 @@
 import { Injectable, NgModule } from '@angular/core';
 import { Resolve, RouterModule, Routes } from '@angular/router';
 
-import { EntitiesTableComponent } from '@shared/components/entity/entities-table.component';
+import { EntitiesTableComponent } from '../../components/entity/entities-table.component';
 import { Authority } from '@shared/models/authority.enum';
 import { TenantsTableConfigResolver } from '@modules/home/pages/tenant/tenants-table-config.resolver';
 import { ProfileComponent } from '@modules/home/pages/profile/profile.component';

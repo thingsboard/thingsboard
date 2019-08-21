@@ -17,11 +17,11 @@
 import {AfterViewInit, Component, forwardRef, Input, OnInit} from '@angular/core';
 import {ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR} from '@angular/forms';
 import {Store} from '@ngrx/store';
-import {AppState} from '@app/core/core.state';
+import {AppState} from '@core/core.state';
 import {TranslateService} from '@ngx-translate/core';
-import {AliasEntityType, EntityType, entityTypeTranslations} from '@app/shared/models/entity-type.models';
+import {AliasEntityType, EntityType, entityTypeTranslations} from '@shared/models/entity-type.models';
 import {EntityService} from '@core/http/entity.service';
-import {EntityId} from '@app/shared/models/id/entity-id';
+import {EntityId} from '@shared/models/id/entity-id';
 import {coerceBooleanProperty} from '@angular/cdk/coercion';
 
 @Component({
@@ -58,9 +58,9 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
   @Input()
   disabled: boolean;
 
-  private defaultEntityType: EntityType | AliasEntityType = null;
+  displayEntityTypeSelect: boolean;
 
-  private displayEntityTypeSelect: boolean;
+  private defaultEntityType: EntityType | AliasEntityType = null;
 
   private propagateChange = (v: any) => { };
 

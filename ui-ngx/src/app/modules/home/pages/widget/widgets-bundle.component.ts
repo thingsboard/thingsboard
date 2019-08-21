@@ -17,7 +17,7 @@
 import {Component} from '@angular/core';
 import {Store} from '@ngrx/store';
 import {AppState} from '@core/core.state';
-import {EntityComponent} from '@shared/components/entity/entity.component';
+import {EntityComponent} from '../../components/entity/entity.component';
 import {FormBuilder, FormGroup, Validators} from '@angular/forms';
 import {WidgetsBundle} from '@shared/models/widgets-bundle.model';
 

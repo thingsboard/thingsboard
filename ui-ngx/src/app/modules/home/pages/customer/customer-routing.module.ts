@@ -17,7 +17,7 @@
 import {NgModule} from '@angular/core';
 import {RouterModule, Routes} from '@angular/router';
 
-import {EntitiesTableComponent} from '@shared/components/entity/entities-table.component';
+import {EntitiesTableComponent} from '../../components/entity/entities-table.component';
 import {Authority} from '@shared/models/authority.enum';
 import {UsersTableConfigResolver} from '../user/users-table-config.resolver';
 import {CustomersTableConfigResolver} from './customers-table-config.resolver';

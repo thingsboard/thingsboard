@@ -24,11 +24,11 @@ import {
   EntityTableColumn,
   EntityTableConfig, GroupActionDescriptor,
   HeaderActionDescriptor
-} from '@shared/components/entity/entities-table-config.models';
+} from '@home/models/entity/entities-table-config.models';
 import {TranslateService} from '@ngx-translate/core';
 import {DatePipe} from '@angular/common';
 import {EntityType, entityTypeResources, entityTypeTranslations} from '@shared/models/entity-type.models';
-import {EntityAction} from '@shared/components/entity/entity-component.models';
+import {EntityAction} from '@home/models/entity/entity-component.models';
 import {Device, DeviceCredentials, DeviceInfo} from '@app/shared/models/device.models';
 import {DeviceComponent} from '@modules/home/pages/device/device.component';
 import {forkJoin, Observable, of} from 'rxjs';
@@ -58,6 +58,7 @@ import {
   AddEntitiesToCustomerDialogComponent,
   AddEntitiesToCustomerDialogData
 } from '../../dialogs/add-entities-to-customer-dialog.component';
+import { DeviceTabsComponent } from '@home/pages/device/device-tabs.component';
 
 @Injectable()
 export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<DeviceInfo>> {
@@ -78,6 +79,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
 
     this.config.entityType = EntityType.DEVICE;
     this.config.entityComponent = DeviceComponent;
+    this.config.entityTabsComponent = DeviceTabsComponent;
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.DEVICE);
     this.config.entityResources = entityTypeResources.get(EntityType.DEVICE);
 

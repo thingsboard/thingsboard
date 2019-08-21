@@ -20,8 +20,8 @@ import { PageComponent } from '@shared/components/page.component';
 import { EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { EntityAction } from '@shared/components/entity/entity-component.models';
-import { EntityTableConfig } from '@shared/components/entity/entities-table-config.models';
+import { EntityAction } from '@home/models/entity/entity-component.models';
+import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 
 export abstract class EntityComponent<T extends BaseData<HasId>> extends PageComponent implements OnInit {
 

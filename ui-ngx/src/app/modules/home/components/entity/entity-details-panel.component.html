@@ -31,13 +31,6 @@
     <mat-tab label="{{ 'details.details' | translate }}">
       <tb-anchor #entityDetailsForm></tb-anchor>
     </mat-tab>
-    <!--mat-tab *ngIf="entity && entitiesTableConfig.entityType !== entityTypes.CUSTOMER"
-             label="{{ 'audit-log.audit-logs' | translate }}">
-      <tb-audit-log-table [active]="selectedTab === 1" [auditLogMode]="auditLogModes.ENTITY" [entityId]="entity.id" detailsMode="true"></tb-audit-log-table>
-    </mat-tab>
-    <mat-tab *ngIf="entity && entitiesTableConfig.entityType === entityTypes.CUSTOMER"
-             label="{{ 'audit-log.audit-logs' | translate }}">
-      <tb-audit-log-table [active]="selectedTab === 1" [auditLogMode]="auditLogModes.CUSTOMER" [customerId]="entity.id" detailsMode="true"></tb-audit-log-table>
-    </mat-tab-->
+    <tb-anchor #entityTabs></tb-anchor>
   </mat-tab-group>
 </tb-details-panel>
