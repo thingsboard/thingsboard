@@ -58,6 +58,10 @@ import {
   ManageDashboardCustomersDialogComponent,
   ManageDashboardCustomersDialogData
 } from './manage-dashboard-customers-dialog.component';
+import {
+  MakeDashboardPublicDialogComponent,
+  MakeDashboardPublicDialogData
+} from '@modules/home/pages/dashboard/make-dashboard-public-dialog.component';
 
 @Injectable()
 export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<DashboardInfo | Dashboard>> {
@@ -299,6 +303,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
     }
     // TODO:
     // this.router.navigateByUrl(`customers/${customer.id.id}/users`);
+    this.dialogService.todo();
   }
 
   importDashboard($event: Event) {
@@ -306,6 +311,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
       $event.stopPropagation();
     }
     // TODO:
+    this.dialogService.todo();
   }
 
   exportDashboard($event: Event, dashboard: DashboardInfo) {
@@ -313,6 +319,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
       $event.stopPropagation();
     }
     // TODO:
+    this.dialogService.todo();
   }
 
   addDashboardsToCustomer($event: Event) {
@@ -341,9 +348,17 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
     }
     this.dashboardService.makeDashboardPublic(dashboard.id.id).subscribe(
       (publicDashboard) => {
-        // TODO:
-
-        this.config.table.updateData();
+        this.dialog.open<MakeDashboardPublicDialogComponent, MakeDashboardPublicDialogData>
+        (MakeDashboardPublicDialogComponent, {
+          disableClose: true,
+          panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+          data: {
+            dashboard: publicDashboard
+          }
+        }).afterClosed()
+          .subscribe(() => {
+              this.config.table.updateData();
+          });
       }
     );
   }

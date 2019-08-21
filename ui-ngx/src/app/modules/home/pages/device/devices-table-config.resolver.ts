@@ -311,6 +311,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
       $event.stopPropagation();
     }
     // TODO:
+    this.dialogService.todo();
   }
 
   addDevicesToCustomer($event: Event) {

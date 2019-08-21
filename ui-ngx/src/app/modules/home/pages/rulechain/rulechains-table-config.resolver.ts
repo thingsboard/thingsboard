@@ -119,6 +119,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
       $event.stopPropagation();
     }
     // TODO:
+    this.dialogService.todo();
   }
 
   openRuleChain($event: Event, ruleChain: RuleChain) {
@@ -127,6 +128,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     }
     // TODO:
     // this.router.navigateByUrl(`customers/${customer.id.id}/users`);
+    this.dialogService.todo();
   }
 
   exportRuleChain($event: Event, ruleChain: RuleChain) {
@@ -134,6 +136,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
       $event.stopPropagation();
     }
     // TODO:
+    this.dialogService.todo();
   }
 
   setRootRuleChain($event: Event, ruleChain: RuleChain) {

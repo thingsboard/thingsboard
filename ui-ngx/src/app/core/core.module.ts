@@ -38,6 +38,7 @@ import { FlexLayoutModule } from '@angular/flex-layout';
 import { TranslateDefaultCompiler } from '@core/translate/translate-default-compiler';
 import { AlertDialogComponent } from '@core/services/dialog/alert-dialog.component';
 import { WINDOW_PROVIDERS } from '@core/services/window.service';
+import {TodoDialogComponent} from "@core/services/dialog/todo-dialog.component";
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/locale/locale.constant-', '.json');
@@ -46,11 +47,13 @@ export function HttpLoaderFactory(http: HttpClient) {
 @NgModule({
   entryComponents: [
     ConfirmDialogComponent,
-    AlertDialogComponent
+    AlertDialogComponent,
+    TodoDialogComponent
   ],
   declarations: [
     ConfirmDialogComponent,
-    AlertDialogComponent
+    AlertDialogComponent,
+    TodoDialogComponent
   ],
   imports: [
     CommonModule,

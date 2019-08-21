@@ -41,7 +41,7 @@ import * as equal from 'deep-equal';
 @Component({
   selector: 'tb-entity-keys-list',
   templateUrl: './entity-keys-list.component.html',
-  styleUrls: [],
+  styleUrls: ['./entity-keys-list.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

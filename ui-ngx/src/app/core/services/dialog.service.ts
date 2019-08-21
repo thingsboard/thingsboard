@@ -20,6 +20,7 @@ import { MatDialog, MatDialogConfig } from '@angular/material';
 import { ConfirmDialogComponent } from '@core/services/dialog/confirm-dialog.component';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertDialogComponent } from '@core/services/dialog/alert-dialog.component';
+import {TodoDialogComponent} from "@core/services/dialog/todo-dialog.component";
 
 @Injectable(
   {
@@ -64,6 +65,15 @@ export class DialogService {
       dialogConfig.panelClass = ['tb-fullscreen-dialog'];
     }
     const dialogRef = this.dialog.open(AlertDialogComponent, dialogConfig);
+    return dialogRef.afterClosed();
+  }
+
+  todo(): Observable<any> {
+    const dialogConfig: MatDialogConfig = {
+      disableClose: true,
+      panelClass: ['tb-fullscreen-dialog']
+    };
+    const dialogRef = this.dialog.open(TodoDialogComponent, dialogConfig);
     return dialogRef.afterClosed();
   }
 

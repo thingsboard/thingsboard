@@ -93,18 +93,21 @@
             </mat-panel-title>
           </mat-expansion-panel-header>
           <div translate class="tb-hint">entity-view.attributes-propagation-hint</div>
+          <label translate class="tb-title no-padding">entity-view.client-attributes</label>
           <tb-entity-keys-list
             [entityId]="selectedEntityId | async"
             formControlName="cs"
             keysText="entity-view.client-attributes-placeholder"
             [dataKeyType]="dataKeyType.attribute">
           </tb-entity-keys-list>
+          <label translate class="tb-title no-padding">entity-view.shared-attributes</label>
           <tb-entity-keys-list
             [entityId]="selectedEntityId | async"
             formControlName="sh"
             keysText="entity-view.shared-attributes-placeholder"
             [dataKeyType]="dataKeyType.attribute">
           </tb-entity-keys-list>
+          <label translate class="tb-title no-padding">entity-view.server-attributes</label>
           <tb-entity-keys-list
             [entityId]="selectedEntityId | async"
             formControlName="ss"
@@ -119,6 +122,7 @@
             </mat-panel-title>
           </mat-expansion-panel-header>
           <div translate class="tb-hint">entity-view.timeseries-data-hint</div>
+          <label translate class="tb-title no-padding">entity-view.timeseries</label>
           <tb-entity-keys-list
             [entityId]="selectedEntityId | async"
             formControlName="timeseries"

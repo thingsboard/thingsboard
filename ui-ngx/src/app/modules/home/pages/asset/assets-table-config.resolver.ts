@@ -279,6 +279,7 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
       $event.stopPropagation();
     }
     // TODO:
+    this.dialogService.todo();
   }
 
   addAssetsToCustomer($event: Event) {

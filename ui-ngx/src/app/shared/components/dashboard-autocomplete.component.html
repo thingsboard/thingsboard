@@ -27,7 +27,10 @@
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
-  <mat-autocomplete #dashboardAutocomplete="matAutocomplete" [displayWith]="displayDashboardFn">
+  <mat-autocomplete
+    class="tb-autocomplete"
+    #dashboardAutocomplete="matAutocomplete"
+    [displayWith]="displayDashboardFn">
     <mat-option *ngFor="let dashboard of filteredDashboards | async" [value]="dashboard">
       <span [innerHTML]="dashboard.title | highlight:searchText"></span>
     </mat-option>

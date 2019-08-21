@@ -29,7 +29,10 @@
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
-  <mat-autocomplete #subTypeAutocomplete="matAutocomplete" [displayWith]="displaySubTypeFn">
+  <mat-autocomplete
+    class="tb-autocomplete"
+    #subTypeAutocomplete="matAutocomplete"
+    [displayWith]="displaySubTypeFn">
     <mat-option *ngFor="let subType of filteredSubTypes | async" [value]="subType">
       <span [innerHTML]="subType | highlight:searchText"></span>
     </mat-option>

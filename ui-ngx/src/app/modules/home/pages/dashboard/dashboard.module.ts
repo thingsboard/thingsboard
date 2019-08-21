@@ -21,15 +21,18 @@ import {HomeDialogsModule} from '../../dialogs/home-dialogs.module';
 import {DashboardFormComponent} from '@modules/home/pages/dashboard/dashboard-form.component';
 import {ManageDashboardCustomersDialogComponent} from '@modules/home/pages/dashboard/manage-dashboard-customers-dialog.component';
 import {DashboardRoutingModule} from './dashboard-routing.module';
+import {MakeDashboardPublicDialogComponent} from '@modules/home/pages/dashboard/make-dashboard-public-dialog.component';
 
 @NgModule({
   entryComponents: [
     DashboardFormComponent,
-    ManageDashboardCustomersDialogComponent
+    ManageDashboardCustomersDialogComponent,
+    MakeDashboardPublicDialogComponent
   ],
   declarations: [
     DashboardFormComponent,
-    ManageDashboardCustomersDialogComponent
+    ManageDashboardCustomersDialogComponent,
+    MakeDashboardPublicDialogComponent
   ],
   imports: [
     CommonModule,

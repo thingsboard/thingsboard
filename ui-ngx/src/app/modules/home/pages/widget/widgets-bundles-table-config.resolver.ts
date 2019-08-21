@@ -35,6 +35,7 @@ import {Store} from '@ngrx/store';
 import {AppState} from '@core/core.state';
 import {getCurrentAuthUser} from '@app/core/auth/auth.selectors';
 import {Authority} from '@shared/models/authority.enum';
+import {DialogService} from '@core/services/dialog.service';
 
 @Injectable()
 export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableConfig<WidgetsBundle>> {
@@ -42,6 +43,7 @@ export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableCon
   private readonly config: EntityTableConfig<WidgetsBundle> = new EntityTableConfig<WidgetsBundle>();
 
   constructor(private store: Store<AppState>,
+              private dialogService: DialogService,
               private widgetsService: WidgetService,
               private translate: TranslateService,
               private datePipe: DatePipe,
@@ -126,6 +128,7 @@ export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableCon
       $event.stopPropagation();
     }
     // TODO:
+    this.dialogService.todo();
   }
 
   openWidgetsBundle($event: Event, widgetsBundle: WidgetsBundle) {
@@ -134,6 +137,7 @@ export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableCon
     }
     // TODO:
     // this.router.navigateByUrl(`customers/${customer.id.id}/users`);
+    this.dialogService.todo();
   }
 
   exportWidgetsBundle($event: Event, widgetsBundle: WidgetsBundle) {
@@ -141,6 +145,7 @@ export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableCon
       $event.stopPropagation();
     }
     // TODO:
+    this.dialogService.todo();
   }
 
   onWidgetsBundleAction(action: EntityAction<WidgetsBundle>): boolean {

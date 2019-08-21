@@ -242,6 +242,13 @@ pre.tb-highlight {
   }
 }
 
+.tb-notice {
+  padding: 15px;
+  font-size: 16px;
+  background-color: #f7f7f7;
+  border: 1px solid #ccc;
+}
+
 .ace_editor {
   font-size: 16px !important;
 }
@@ -325,4 +332,20 @@ mat-label {
   font-size: 12px;
   line-height: 14px;
   color: rgb(221, 44, 0);
+}
+
+.tb-autocomplete {
+  .mat-option {
+    display: block;
+    line-height: 24px;
+    height: auto !important;
+    padding-top: 8px;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+    .mat-option-text {
+      line-height: 24px;
+      height: auto !important;
+      white-space: normal !important;
+    }
+  }
 }

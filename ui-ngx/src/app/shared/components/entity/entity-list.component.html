@@ -25,7 +25,7 @@
       {{entity.name}}
       <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
     </mat-chip>
-    <input matInput type="text" placeholder="{{ 'entity.entity-list' | translate }}"
+    <input matInput type="text" placeholder="{{ !disabled ? ('entity.entity-list' | translate) : '' }}"
            style="max-width: 200px;"
            #entityInput
            formControlName="entity"
@@ -36,6 +36,7 @@
            [matChipInputFor]="chipList">
   </mat-chip-list>
   <mat-autocomplete #entityAutocomplete="matAutocomplete"
+                    class="tb-autocomplete"
                     [displayWith]="displayEntityFn">
     <mat-option *ngFor="let entity of filteredEntities | async" [value]="entity">
       <span [innerHTML]="entity.name | highlight:searchText"></span>

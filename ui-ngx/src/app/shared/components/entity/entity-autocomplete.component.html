@@ -28,7 +28,9 @@
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
-  <mat-autocomplete #entityAutocomplete="matAutocomplete" [displayWith]="displayEntityFn">
+  <mat-autocomplete class="tb-autocomplete"
+                    #entityAutocomplete="matAutocomplete"
+                    [displayWith]="displayEntityFn">
     <mat-option *ngFor="let entity of filteredEntities | async" [value]="entity">
       <span [innerHTML]="entity.name | highlight:searchText"></span>
     </mat-option>

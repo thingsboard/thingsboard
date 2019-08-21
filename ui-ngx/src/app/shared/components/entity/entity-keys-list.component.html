@@ -15,27 +15,32 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="keysListFormGroup" class="mat-block">
-  <mat-chip-list #chipList [disabled]="disabled">
+<mat-form-field appearance="standard" [formGroup]="keysListFormGroup" class="mat-block">
+  <mat-chip-list #chipList>
     <mat-chip
       *ngFor="let key of modelValue"
-      [disabled]="disabled"
       [selectable]="!disabled"
       [removable]="!disabled"
       (removed)="remove(key)">
       {{key}}
       <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
     </mat-chip>
-    <input matInput type="text" placeholder="{{ keysText | translate }}"
+    <input matInput type="text" placeholder="{{ !disabled ? (keysText | translate) : '' }}"
+           style="max-width: 200px;"
            #keyInput
            formControlName="key"
+           matAutocompleteOrigin
+           #origin="matAutocompleteOrigin"
+           [matAutocompleteConnectedTo]="origin"
            (focusin)="onFocus()"
            [matAutocomplete]="keyAutocomplete"
            [matChipInputFor]="chipList"
            [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
            (matChipInputTokenEnd)="add($event)">
   </mat-chip-list>
-  <mat-autocomplete #keyAutocomplete="matAutocomplete" (optionSelected)="selected($event)"
+  <mat-autocomplete #keyAutocomplete="matAutocomplete"
+                    class="tb-autocomplete"
+                    (optionSelected)="selected($event)"
                     [displayWith]="displayKeyFn">
     <mat-option *ngFor="let key of filteredKeys | async" [value]="key">
       <span [innerHTML]="key | highlight:searchText"></span>

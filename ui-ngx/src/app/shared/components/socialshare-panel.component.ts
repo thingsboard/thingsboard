@@ -28,7 +28,7 @@ import {isLocalUrl} from '@core/utils';
 @Component({
   selector: 'tb-social-share-panel',
   templateUrl: './socialshare-panel.component.html',
-  styleUrls: []
+  styleUrls: ['./socialshare-panel.component.scss']
 })
 export class SocialSharePanelComponent implements OnInit {
 
