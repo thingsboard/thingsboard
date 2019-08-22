@@ -37,6 +37,8 @@ import { selectAuthUser, getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { AuthUser } from '@shared/models/user.model';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AuditLogMode } from '@shared/models/audit-log.models';
+import { DebugEventType, EventType } from '@shared/models/event.models';
+import { NULL_UUID } from '@shared/models/id/has-uuid';
 
 export abstract class EntityTabsComponent<T extends BaseData<HasId>> extends PageComponent implements OnInit, AfterViewInit {
 
@@ -46,7 +48,13 @@ export abstract class EntityTabsComponent<T extends BaseData<HasId>> extends Pag
 
   auditLogModes = AuditLogMode;
 
+  eventTypes = EventType;
+
+  debugEventTypes = DebugEventType;
+
   authUser: AuthUser;
+
+  nullUid = NULL_UUID;
 
   entityValue: T;
 

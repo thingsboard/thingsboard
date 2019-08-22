@@ -53,10 +53,11 @@ public class EventController extends BaseController {
             @RequestParam("tenantId") String strTenantId,
             @RequestParam int pageSize,
             @RequestParam int page,
+            @RequestParam(required = false) String textSearch,
+            @RequestParam(required = false) String sortProperty,
+            @RequestParam(required = false) String sortOrder,
             @RequestParam(required = false) Long startTime,
-            @RequestParam(required = false) Long endTime,
-            @RequestParam(required = false, defaultValue = "false") boolean ascOrder
-    ) throws ThingsboardException {
+            @RequestParam(required = false) Long endTime) throws ThingsboardException {
         checkParameter("EntityId", strEntityId);
         checkParameter("EntityType", strEntityType);
         try {
@@ -64,8 +65,7 @@ public class EventController extends BaseController {
 
             EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
             checkEntityId(entityId, Operation.READ);
-            TimePageLink pageLink = createTimePageLink(pageSize, page, "",
-                    "createdTime", ascOrder ? "asc" : "desc", startTime, endTime);
+            TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
             return checkNotNull(eventService.findEvents(tenantId, entityId, eventType, pageLink));
         } catch (Exception e) {
             throw handleException(e);
@@ -81,10 +81,11 @@ public class EventController extends BaseController {
             @RequestParam("tenantId") String strTenantId,
             @RequestParam int pageSize,
             @RequestParam int page,
+            @RequestParam(required = false) String textSearch,
+            @RequestParam(required = false) String sortProperty,
+            @RequestParam(required = false) String sortOrder,
             @RequestParam(required = false) Long startTime,
-            @RequestParam(required = false) Long endTime,
-            @RequestParam(required = false, defaultValue = "false") boolean ascOrder
-    ) throws ThingsboardException {
+            @RequestParam(required = false) Long endTime) throws ThingsboardException {
         checkParameter("EntityId", strEntityId);
         checkParameter("EntityType", strEntityType);
         try {
@@ -93,8 +94,7 @@ public class EventController extends BaseController {
             EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
             checkEntityId(entityId, Operation.READ);
 
-            TimePageLink pageLink = createTimePageLink(pageSize, page, "",
-                    "createdTime", ascOrder ? "asc" : "desc", startTime, endTime);
+            TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
 
             return checkNotNull(eventService.findEvents(tenantId, entityId, pageLink));
         } catch (Exception e) {

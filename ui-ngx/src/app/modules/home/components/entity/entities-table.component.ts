@@ -42,7 +42,8 @@ import {
   EntityTableColumn,
   EntityTableConfig,
   GroupActionDescriptor,
-  HeaderActionDescriptor
+  HeaderActionDescriptor,
+  EntityColumn
 } from '@home/models/entity/entities-table-config.models';
 import { EntityTypeTranslation } from '@shared/models/entity-type.models';
 import { DialogService } from '@core/services/dialog.service';
@@ -72,8 +73,10 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
   groupActionDescriptors: Array<GroupActionDescriptor<BaseData<HasId>>>;
   cellActionDescriptors: Array<CellActionDescriptor<BaseData<HasId>>>;
 
-  columns: Array<EntityTableColumn<BaseData<HasId>>>;
-  displayedColumns: string[] = [];
+  columns: Array<EntityColumn<BaseData<HasId>>>;
+  displayedColumns: string[];
+
+  headerCellStyleCache: Array<any> = [];
 
   cellContentCache: Array<SafeHtml> = [];
 
@@ -143,22 +146,12 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
       }
     );
 
-    this.columns = [...this.entitiesTableConfig.columns];
-
     const enabledGroupActionDescriptors =
       this.groupActionDescriptors.filter((descriptor) => descriptor.isEnabled);
 
     this.selectionEnabled = this.entitiesTableConfig.selectionEnabled && enabledGroupActionDescriptors.length;
 
-    if (this.selectionEnabled) {
-      this.displayedColumns.push('select');
-    }
-    this.columns.forEach(
-      (column) => {
-        this.displayedColumns.push(column.key);
-      }
-    );
-    this.displayedColumns.push('actions');
+    this.columnsUpdated();
 
     const sortOrder: SortOrder = { property: this.entitiesTableConfig.defaultSortOrder.property,
                                    direction: this.entitiesTableConfig.defaultSortOrder.direction };
@@ -235,6 +228,7 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
   }
 
   private dataLoaded() {
+    this.headerCellStyleCache.length = 0;
     this.cellContentCache.length = 0;
     this.cellStyleCache.length = 0;
   }
@@ -365,21 +359,65 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
     }
   }
 
-  cellContent(entity: BaseData<HasId>, column: EntityTableColumn<BaseData<HasId>>, row: number, col: number) {
-    const index = row * this.columns.length + col;
-    let res = this.cellContentCache[index];
+  columnsUpdated(resetData: boolean = false) {
+    this.columns = [...this.entitiesTableConfig.columns];
+
+    this.displayedColumns = [];
+
+    if (this.selectionEnabled) {
+      this.displayedColumns.push('select');
+    }
+    this.columns.forEach(
+      (column) => {
+        this.displayedColumns.push(column.key);
+      }
+    );
+    this.displayedColumns.push('actions');
+    this.headerCellStyleCache.length = 0;
+    this.cellContentCache.length = 0;
+    this.cellStyleCache.length = 0;
+    if (resetData) {
+      this.dataSource.reset();
+    }
+  }
+
+  headerCellStyle(column: EntityColumn<BaseData<HasId>>, col: number) {
+    const index = col;
+    let res = this.headerCellStyleCache[index];
     if (!res) {
-      res = this.domSanitizer.bypassSecurityTrustHtml(column.cellContentFunction(entity, column.key));
-      this.cellContentCache[index] = res;
+      if (column instanceof EntityTableColumn) {
+        res = {...column.headerCellStyleFunction(column.key), ...{maxWidth: column.maxWidth}};
+      } else {
+        res = {maxWidth: column.maxWidth};
+      }
+      this.headerCellStyleCache[index] = res;
     }
     return res;
   }
 
-  cellStyle(entity: BaseData<HasId>, column: EntityTableColumn<BaseData<HasId>>, row: number, col: number) {
+  cellContent(entity: BaseData<HasId>, column: EntityColumn<BaseData<HasId>>, row: number, col: number) {
+    if (column instanceof EntityTableColumn) {
+      const index = row * this.columns.length + col;
+      let res = this.cellContentCache[index];
+      if (!res) {
+        res = this.domSanitizer.bypassSecurityTrustHtml(column.cellContentFunction(entity, column.key));
+        this.cellContentCache[index] = res;
+      }
+      return res;
+    } else {
+      return null;
+    }
+  }
+
+  cellStyle(entity: BaseData<HasId>, column: EntityColumn<BaseData<HasId>>, row: number, col: number) {
     const index = row * this.columns.length + col;
     let res = this.cellStyleCache[index];
     if (!res) {
-      res = {...column.cellStyleFunction(entity, column.key), ...{maxWidth: column.maxWidth}};
+      if (column instanceof EntityTableColumn) {
+        res = {...column.cellStyleFunction(entity, column.key), ...{maxWidth: column.maxWidth}};
+      } else {
+        res = {maxWidth: column.maxWidth};
+      }
       this.cellStyleCache[index] = res;
     }
     return res;

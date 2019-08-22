@@ -308,7 +308,7 @@ $tb-dark-theme: get-tb-dark-theme(
   }
 
   .mat-cell, .mat-header-cell {
-    min-width: 80px;
+    min-width: 40px;
     &:last-child {
       padding: 0 12px 0 0;
     }

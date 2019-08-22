@@ -41,6 +41,7 @@ export type EntityActionFunction<T extends BaseData<HasId>> = (action: EntityAct
 export type CreateEntityOperation<T extends BaseData<HasId>> = () => Observable<T>;
 
 export type CellContentFunction<T extends BaseData<HasId>> = (entity: T, key: string) => string;
+export type HeaderCellStyleFunction<T extends BaseData<HasId>> = (key: string) => object;
 export type CellStyleFunction<T extends BaseData<HasId>> = (entity: T, key: string) => object;
 
 export interface CellActionDescriptor<T extends BaseData<HasId>> {
@@ -67,13 +68,35 @@ export interface HeaderActionDescriptor {
   onAction: ($event: MouseEvent) => void;
 }
 
-export class EntityTableColumn<T extends BaseData<HasId>> {
+export type EntityTableColumnType = 'content' | 'action';
+
+export class BaseEntityTableColumn<T extends BaseData<HasId>> {
+  constructor(public type: EntityTableColumnType,
+              public key: string,
+              public title: string,
+              public maxWidth: string = '100%',
+              public sortable: boolean = true) {
+  }
+}
+
+export class EntityTableColumn<T extends BaseData<HasId>> extends BaseEntityTableColumn<T> {
   constructor(public key: string,
               public title: string,
               public maxWidth: string = '100%',
               public cellContentFunction: CellContentFunction<T> = (entity, property) => entity[property],
               public cellStyleFunction: CellStyleFunction<T> = () => ({}),
-              public sortable: boolean = true) {
+              public sortable: boolean = true,
+              public headerCellStyleFunction: HeaderCellStyleFunction<T> = () => ({})) {
+    super('content', key, title, maxWidth, sortable);
+  }
+}
+
+export class EntityActionTableColumn<T extends BaseData<HasId>> extends BaseEntityTableColumn<T> {
+  constructor(public key: string,
+              public title: string,
+              public actionDescriptor: CellActionDescriptor<T>,
+              public maxWidth: string = '100%') {
+    super('action', key, title, maxWidth, false);
   }
 }
 
@@ -91,6 +114,8 @@ export class DateEntityTableColumn<T extends BaseData<HasId>> extends EntityTabl
           cellStyleFunction);
   }
 }
+
+export type EntityColumn<T extends BaseData<HasId>> = EntityTableColumn<T> | EntityActionTableColumn<T>;
 
 export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = PageLink> {
 
@@ -116,7 +141,7 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   entityTabsComponent: Type<EntityTabsComponent<T>>;
   addDialogStyle = {};
   defaultSortOrder: SortOrder = {property: 'createdTime', direction: Direction.ASC};
-  columns: Array<EntityTableColumn<T>> = [];
+  columns: Array<EntityColumn<T>> = [];
   cellActionDescriptors: Array<CellActionDescriptor<T>> = [];
   groupActionDescriptors: Array<GroupActionDescriptor<T>> = [];
   headerActionDescriptors: Array<HeaderActionDescriptor> = [];

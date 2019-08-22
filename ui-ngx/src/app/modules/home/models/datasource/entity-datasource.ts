@@ -50,6 +50,13 @@ export class EntitiesDataSource<T extends BaseData<HasId>, P extends PageLink = 
     this.pageDataSubject.complete();
   }
 
+  reset() {
+    const pageData = emptyPageData<T>();
+    this.entitiesSubject.next(pageData.data);
+    this.pageDataSubject.next(pageData);
+    this.dataLoadedFunction();
+  }
+
   loadEntities(pageLink: P): Observable<PageData<T>> {
     const result = new ReplaySubject<PageData<T>>();
     this.fetchFunction(pageLink).pipe(

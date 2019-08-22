@@ -16,11 +16,7 @@
 
 -->
 <mat-tab *ngIf="entity"
-         label="{{ 'asset.events' | translate }}" #eventsTab="matTab">
-  <tb-event-table [active]="eventsTab.isActive" [defaultEventType]="eventTypes.ERROR" [tenantId]="entity.tenantId.id"
+         label="{{ 'tenant.events' | translate }}" #eventsTab="matTab">
+  <tb-event-table [active]="eventsTab.isActive" [defaultEventType]="eventTypes.ERROR" [tenantId]="nullUid"
                   [entityId]="entity.id"></tb-event-table>
-</mat-tab>
-<mat-tab *ngIf="entity && authUser.authority === authorities.TENANT_ADMIN"
-         label="{{ 'audit-log.audit-logs' | translate }}" #auditLogsTab="matTab">
-  <tb-audit-log-table [active]="auditLogsTab.isActive" [auditLogMode]="auditLogModes.ENTITY" [entityId]="entity.id" detailsMode="true"></tb-audit-log-table>
 </mat-tab>

@@ -15,12 +15,13 @@
     limitations under the License.
 
 -->
-<mat-tab *ngIf="entity"
-         label="{{ 'asset.events' | translate }}" #eventsTab="matTab">
-  <tb-event-table [active]="eventsTab.isActive" [defaultEventType]="eventTypes.ERROR" [tenantId]="entity.tenantId.id"
-                  [entityId]="entity.id"></tb-event-table>
-</mat-tab>
-<mat-tab *ngIf="entity && authUser.authority === authorities.TENANT_ADMIN"
-         label="{{ 'audit-log.audit-logs' | translate }}" #auditLogsTab="matTab">
-  <tb-audit-log-table [active]="auditLogsTab.isActive" [auditLogMode]="auditLogModes.ENTITY" [entityId]="entity.id" detailsMode="true"></tb-audit-log-table>
-</mat-tab>
+
+<mat-form-field class="mat-block" style="width: 200px;">
+  <mat-label translate>event.event-type</mat-label>
+  <mat-select matInput [ngModel]="eventTableConfig.eventType"
+              (ngModelChange)="eventTypeChanged($event)">
+    <mat-option *ngFor="let type of eventTableConfig.eventTypes" [value]="type">
+      {{ eventTypeTranslationsMap.get(type) | translate }}
+    </mat-option>
+  </mat-select>
+</mat-form-field>

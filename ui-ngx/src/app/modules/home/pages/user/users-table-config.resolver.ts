@@ -57,6 +57,7 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { Customer } from '@shared/models/customer.model';
 import {TenantService} from '@app/core/http/tenant.service';
 import {TenantId} from '@app/shared/models/id/tenant-id';
+import { UserTabsComponent } from '@home/pages/user/user-tabs.component';
 
 export interface UsersTableRouteData {
   authority: Authority;
@@ -83,6 +84,7 @@ export class UsersTableConfigResolver implements Resolve<EntityTableConfig<User>
 
     this.config.entityType = EntityType.USER;
     this.config.entityComponent = UserComponent;
+    this.config.entityTabsComponent = UserTabsComponent;
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.USER);
     this.config.entityResources = entityTypeResources.get(EntityType.USER);
 

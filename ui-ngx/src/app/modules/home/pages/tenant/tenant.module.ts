@@ -20,13 +20,16 @@ import { SharedModule } from '@shared/shared.module';
 import {TenantComponent} from '@modules/home/pages/tenant/tenant.component';
 import {TenantRoutingModule} from '@modules/home/pages/tenant/tenant-routing.module';
 import {HomeComponentsModule} from '@modules/home/components/home-components.module';
+import { TenantTabsComponent } from '@home/pages/tenant/tenant-tabs.component';
 
 @NgModule({
   entryComponents: [
-    TenantComponent
+    TenantComponent,
+    TenantTabsComponent
   ],
   declarations: [
-    TenantComponent
+    TenantComponent,
+    TenantTabsComponent
   ],
   imports: [
     CommonModule,

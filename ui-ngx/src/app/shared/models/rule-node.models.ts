@@ -21,6 +21,12 @@ import {CustomerId} from '@shared/models/id/customer-id';
 import {RuleChainId} from '@shared/models/id/rule-chain-id';
 import {RuleNodeId} from '@shared/models/id/rule-node-id';
 
+export enum MsgDataType {
+  JSON = 'JSON',
+  TEXT = 'TEXT',
+  BINARY = 'BINARY'
+}
+
 export interface RuleNodeConfiguration {
   todo: Array<any>;
   // TODO:

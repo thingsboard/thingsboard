@@ -15,6 +15,14 @@
     limitations under the License.
 
 -->
+<mat-tab *ngIf="entity"
+         label="{{ 'rulechain.events' | translate }}" #eventsTab="matTab">
+  <tb-event-table [active]="eventsTab.isActive"
+                  [debugEventTypes]="[debugEventTypes.DEBUG_RULE_CHAIN]"
+                  [defaultEventType]="debugEventTypes.DEBUG_RULE_CHAIN"
+                  [tenantId]="entity.tenantId.id"
+                  [entityId]="entity.id"></tb-event-table>
+</mat-tab>
 <mat-tab *ngIf="entity && authUser.authority === authorities.TENANT_ADMIN"
          label="{{ 'audit-log.audit-logs' | translate }}" #auditLogsTab="matTab">
   <tb-audit-log-table [active]="auditLogsTab.isActive" [auditLogMode]="auditLogModes.ENTITY" [entityId]="entity.id" detailsMode="true"></tb-audit-log-table>

@@ -35,6 +35,7 @@ import {
 import { TenantComponent } from '@modules/home/pages/tenant/tenant.component';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { User } from '@shared/models/user.model';
+import { TenantTabsComponent } from '@home/pages/tenant/tenant-tabs.component';
 
 @Injectable()
 export class TenantsTableConfigResolver implements Resolve<EntityTableConfig<Tenant>> {
@@ -48,6 +49,7 @@ export class TenantsTableConfigResolver implements Resolve<EntityTableConfig<Ten
 
     this.config.entityType = EntityType.TENANT;
     this.config.entityComponent = TenantComponent;
+    this.config.entityTabsComponent = TenantTabsComponent;
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.TENANT);
     this.config.entityResources = entityTypeResources.get(EntityType.TENANT);
 
