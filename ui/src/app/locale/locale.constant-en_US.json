@@ -1687,6 +1687,7 @@
         },
         "input-widgets": {
             "attribute-not-allowed": "Attribute parameter cannot be used in this widget",
+            "date": "Date",
             "discard-changes": "Discard changes",
             "entity-attribute-required": "Entity attribute is required",
             "entity-timeseries-required": "Entity timeseries is required",
@@ -1696,6 +1697,7 @@
             "no-timeseries-selected": "No timeseries selected",
             "switch-attribute-value": "Switch entity attribute value",
             "switch-timeseries-value": "Switch entity timeseries value",
+            "time": "Time",
             "timeseries-not-allowed": "Timeseries parameter cannot be used in this widget",
             "update-failed": "Update failed",
             "update-successful": "Update successful",
