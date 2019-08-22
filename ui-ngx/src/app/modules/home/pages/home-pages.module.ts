@@ -21,7 +21,7 @@ import { HomeLinksModule } from './home-links/home-links.module';
 import { ProfileModule } from './profile/profile.module';
 import { TenantModule } from '@modules/home/pages/tenant/tenant.module';
 import { CustomerModule } from '@modules/home/pages/customer/customer.module';
-// import { AuditLogModule } from '@modules/home/pages/audit-log/audit-log.module';
+import { AuditLogModule } from '@modules/home/pages/audit-log/audit-log.module';
 import { UserModule } from '@modules/home/pages/user/user.module';
 import {DeviceModule} from '@modules/home/pages/device/device.module';
 import {AssetModule} from '@modules/home/pages/asset/asset.module';
@@ -43,7 +43,7 @@ import {DashboardModule} from '@modules/home/pages/dashboard/dashboard.module';
     RuleChainModule,
     WidgetLibraryModule,
     DashboardModule,
-//    AuditLogModule,
+    AuditLogModule,
     UserModule
   ]
 })

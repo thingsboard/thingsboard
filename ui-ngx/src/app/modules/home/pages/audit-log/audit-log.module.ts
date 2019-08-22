@@ -14,28 +14,18 @@
 /// limitations under the License.
 ///
 
-import {NgModule} from '@angular/core';
-import {CommonModule} from '@angular/common';
-import {SharedModule} from '@shared/shared.module';
-import {RuleChainComponent} from '@modules/home/pages/rulechain/rulechain.component';
-import {RuleChainRoutingModule} from '@modules/home/pages/rulechain/rulechain-routing.module';
-import {HomeComponentsModule} from '@modules/home/components/home-components.module';
-import { RuleChainTabsComponent } from '@home/pages/rulechain/rulechain-tabs.component';
+import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { SharedModule } from '@shared/shared.module';
+import { AuditLogRoutingModule } from '@modules/home/pages/audit-log/audit-log-routing.module';
 
 @NgModule({
-  entryComponents: [
-    RuleChainComponent,
-    RuleChainTabsComponent
-  ],
   declarations: [
-    RuleChainComponent,
-    RuleChainTabsComponent
   ],
   imports: [
     CommonModule,
     SharedModule,
-    HomeComponentsModule,
-    RuleChainRoutingModule
+    AuditLogRoutingModule
   ]
 })
-export class RuleChainModule { }
+export class AuditLogModule { }

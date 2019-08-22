@@ -22,14 +22,17 @@ import {AssetComponent} from './asset.component';
 import {AssetTableHeaderComponent} from './asset-table-header.component';
 import {AssetRoutingModule} from './asset-routing.module';
 import {HomeComponentsModule} from '@modules/home/components/home-components.module';
+import { AssetTabsComponent } from '@home/pages/asset/asset-tabs.component';
 
 @NgModule({
   entryComponents: [
     AssetComponent,
+    AssetTabsComponent,
     AssetTableHeaderComponent
   ],
   declarations: [
     AssetComponent,
+    AssetTabsComponent,
     AssetTableHeaderComponent
   ],
   imports: [

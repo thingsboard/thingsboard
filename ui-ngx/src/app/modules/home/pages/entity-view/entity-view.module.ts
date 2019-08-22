@@ -22,14 +22,17 @@ import {EntityViewComponent} from '@modules/home/pages/entity-view/entity-view.c
 import {EntityViewTableHeaderComponent} from './entity-view-table-header.component';
 import {EntityViewRoutingModule} from './entity-view-routing.module';
 import {HomeComponentsModule} from '@modules/home/components/home-components.module';
+import { EntityViewTabsComponent } from '@home/pages/entity-view/entity-view-tabs.component';
 
 @NgModule({
   entryComponents: [
     EntityViewComponent,
+    EntityViewTabsComponent,
     EntityViewTableHeaderComponent
   ],
   declarations: [
     EntityViewComponent,
+    EntityViewTabsComponent,
     EntityViewTableHeaderComponent
   ],
   imports: [

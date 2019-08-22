@@ -22,10 +22,13 @@ import {EntitiesTableComponent} from './entity/entities-table.component';
 import {DetailsPanelComponent} from './details-panel.component';
 import {EntityDetailsPanelComponent} from './entity/entity-details-panel.component';
 import {ContactComponent} from './contact.component';
+import { AuditLogDetailsDialogComponent } from './audit-log/audit-log-details-dialog.component';
+import { AuditLogTableComponent } from './audit-log/audit-log-table.component';
 
 @NgModule({
   entryComponents: [
-    AddEntityDialogComponent
+    AddEntityDialogComponent,
+    AuditLogDetailsDialogComponent
   ],
   declarations:
     [
@@ -34,6 +37,8 @@ import {ContactComponent} from './contact.component';
       DetailsPanelComponent,
       EntityDetailsPanelComponent,
       ContactComponent,
+      AuditLogTableComponent,
+      AuditLogDetailsDialogComponent
     ],
   imports: [
     CommonModule,
@@ -44,7 +49,8 @@ import {ContactComponent} from './contact.component';
     AddEntityDialogComponent,
     DetailsPanelComponent,
     EntityDetailsPanelComponent,
-    ContactComponent
+    ContactComponent,
+    AuditLogTableComponent
   ]
 })
 export class HomeComponentsModule { }

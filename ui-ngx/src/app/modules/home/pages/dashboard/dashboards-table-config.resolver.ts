@@ -62,6 +62,7 @@ import {
   MakeDashboardPublicDialogComponent,
   MakeDashboardPublicDialogData
 } from '@modules/home/pages/dashboard/make-dashboard-public-dialog.component';
+import { DashboardTabsComponent } from '@home/pages/dashboard/dashboard-tabs.component';
 
 @Injectable()
 export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<DashboardInfo | Dashboard>> {
@@ -79,6 +80,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
 
     this.config.entityType = EntityType.DASHBOARD;
     this.config.entityComponent = DashboardFormComponent;
+    this.config.entityTabsComponent = DashboardTabsComponent;
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.DASHBOARD);
     this.config.entityResources = entityTypeResources.get(EntityType.DASHBOARD);
 

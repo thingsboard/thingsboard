@@ -158,10 +158,10 @@
                         [ngStyle]="cellStyle(entity, column, row, col)"></mat-cell>
             </ng-container>
             <ng-container matColumnDef="actions" stickyEnd>
-              <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: (cellActionDescriptors.length * 40) + 'px' }">
+              <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: (cellActionDescriptors.length * 40) + 'px', maxWidth: (cellActionDescriptors.length * 40) + 'px' }">
                 {{ entitiesTableConfig.actionsColumnTitle ? (entitiesTableConfig.actionsColumnTitle | translate) : '' }}
               </mat-header-cell>
-              <mat-cell *matCellDef="let entity" [ngStyle.gt-md]="{ minWidth: (cellActionDescriptors.length * 40) + 'px' }">
+              <mat-cell *matCellDef="let entity" [ngStyle.gt-md]="{ minWidth: (cellActionDescriptors.length * 40) + 'px', maxWidth: (cellActionDescriptors.length * 40) + 'px' }">
                 <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
                   <button mat-button mat-icon-button [disabled]="isLoading$ | async"
                           [fxShow]="actionDescriptor.isEnabled(entity)" *ngFor="let actionDescriptor of cellActionDescriptors"

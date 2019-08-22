@@ -55,6 +55,7 @@ import {AssetService} from '@app/core/http/asset.service';
 import {AssetComponent} from '@modules/home/pages/asset/asset.component';
 import {AssetTableHeaderComponent} from '@modules/home/pages/asset/asset-table-header.component';
 import {AssetId} from '@app/shared/models/id/asset-id';
+import { AssetTabsComponent } from '@home/pages/asset/asset-tabs.component';
 
 @Injectable()
 export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<AssetInfo>> {
@@ -75,6 +76,7 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
 
     this.config.entityType = EntityType.ASSET;
     this.config.entityComponent = AssetComponent;
+    this.config.entityTabsComponent = AssetTabsComponent;
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.ASSET);
     this.config.entityResources = entityTypeResources.get(EntityType.ASSET);
 

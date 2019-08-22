@@ -165,7 +165,14 @@ export class AuthService {
     if (captureLastUrl) {
       this.redirectUrl = this.router.url;
     }
-    this.clearJwtToken();
+    this.http.post('/api/auth/logout', null, defaultHttpOptions(true, true))
+      .subscribe(() => {
+          this.clearJwtToken();
+        },
+        () => {
+          this.clearJwtToken();
+        }
+      );
   }
 
   private notifyUserLoaded(isUserLoaded: boolean) {

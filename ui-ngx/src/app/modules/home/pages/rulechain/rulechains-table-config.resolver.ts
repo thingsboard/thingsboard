@@ -31,6 +31,7 @@ import {RuleChain} from '@shared/models/rule-chain.models';
 import {RuleChainService} from '@core/http/rule-chain.service';
 import {RuleChainComponent} from '@modules/home/pages/rulechain/rulechain.component';
 import {DialogService} from '@core/services/dialog.service';
+import { RuleChainTabsComponent } from '@home/pages/rulechain/rulechain-tabs.component';
 
 @Injectable()
 export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<RuleChain>> {
@@ -45,6 +46,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
 
     this.config.entityType = EntityType.RULE_CHAIN;
     this.config.entityComponent = RuleChainComponent;
+    this.config.entityTabsComponent = RuleChainTabsComponent;
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.RULE_CHAIN);
     this.config.entityResources = entityTypeResources.get(EntityType.RULE_CHAIN);
 

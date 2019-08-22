@@ -62,8 +62,6 @@ import {TranslateModule} from '@ngx-translate/core';
 import {TbCheckboxComponent} from '@shared/components/tb-checkbox.component';
 import {HelpComponent} from '@shared/components/help.component';
 import {TbAnchorComponent} from '@shared/components/tb-anchor.component';
-// import { AuditLogDetailsDialogComponent } from '@shared/components/audit-log/audit-log-details-dialog.component';
-// import { AuditLogTableComponent } from '@shared/components/audit-log/audit-log-table.component';
 import {MillisecondsToTimeStringPipe} from '@shared/pipe/milliseconds-to-time-string.pipe';
 import {TimewindowComponent} from '@shared/components/time/timewindow.component';
 import {OverlayModule} from '@angular/cdk/overlay';
@@ -97,7 +95,6 @@ import {SocialSharePanelComponent} from './components/socialshare-panel.componen
   entryComponents: [
     TbSnackBarComponent,
     TbAnchorComponent,
-//    AuditLogDetailsDialogComponent,
     TimewindowPanelComponent,
   ],
   declarations: [
@@ -111,8 +108,6 @@ import {SocialSharePanelComponent} from './components/socialshare-panel.componen
     TbSnackBarComponent,
     BreadcrumbComponent,
     UserMenuComponent,
-//    AuditLogTableComponent,
-//    AuditLogDetailsDialogComponent,
     TimewindowComponent,
     TimewindowPanelComponent,
     TimeintervalComponent,
@@ -184,7 +179,6 @@ import {SocialSharePanelComponent} from './components/socialshare-panel.componen
     TbCheckboxComponent,
     BreadcrumbComponent,
     UserMenuComponent,
-//    AuditLogTableComponent,
     TimewindowComponent,
     TimewindowPanelComponent,
     TimeintervalComponent,

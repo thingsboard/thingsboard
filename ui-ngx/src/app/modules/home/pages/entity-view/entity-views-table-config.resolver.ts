@@ -55,6 +55,7 @@ import {EntityViewService} from '@core/http/entity-view.service';
 import {EntityViewComponent} from '@modules/home/pages/entity-view/entity-view.component';
 import {EntityViewTableHeaderComponent} from '@modules/home/pages/entity-view/entity-view-table-header.component';
 import {EntityViewId} from '@shared/models/id/entity-view-id';
+import { EntityViewTabsComponent } from '@home/pages/entity-view/entity-view-tabs.component';
 
 @Injectable()
 export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig<EntityViewInfo>> {
@@ -75,6 +76,7 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
 
     this.config.entityType = EntityType.ENTITY_VIEW;
     this.config.entityComponent = EntityViewComponent;
+    this.config.entityTabsComponent = EntityViewTabsComponent;
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.ENTITY_VIEW);
     this.config.entityResources = entityTypeResources.get(EntityType.ENTITY_VIEW);
 

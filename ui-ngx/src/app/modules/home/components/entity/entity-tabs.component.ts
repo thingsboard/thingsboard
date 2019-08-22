@@ -32,8 +32,21 @@ import { EntityTableConfig } from '@home/models/entity/entities-table-config.mod
 import { MatTab } from '@angular/material';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { BehaviorSubject } from 'rxjs';
+import { Authority } from '@app/shared/models/authority.enum';
+import { selectAuthUser, getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { AuthUser } from '@shared/models/user.model';
+import { EntityType } from '@shared/models/entity-type.models';
+import { AuditLogMode } from '@shared/models/audit-log.models';
 
 export abstract class EntityTabsComponent<T extends BaseData<HasId>> extends PageComponent implements OnInit, AfterViewInit {
+
+  authorities = Authority;
+
+  entityTypes = EntityType;
+
+  auditLogModes = AuditLogMode;
+
+  authUser: AuthUser;
 
   entityValue: T;
 
@@ -68,6 +81,7 @@ export abstract class EntityTabsComponent<T extends BaseData<HasId>> extends Pag
 
   protected constructor(protected store: Store<AppState>) {
     super(store);
+    this.authUser = getCurrentAuthUser(store);
   }
 
   ngOnInit() {

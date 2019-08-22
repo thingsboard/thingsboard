@@ -17,16 +17,15 @@
 import { Component } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { DeviceInfo } from '@shared/models/device.models';
-import { EntityType } from '@shared/models/entity-type.models';
 import { EntityTabsComponent } from '../../components/entity/entity-tabs.component';
+import { EntityViewInfo } from '@app/shared/models/entity-view.models';
 
 @Component({
-  selector: 'tb-device-tabs',
-  templateUrl: './device-tabs.component.html',
+  selector: 'tb-entity-view-tabs',
+  templateUrl: './entity-view-tabs.component.html',
   styleUrls: []
 })
-export class DeviceTabsComponent extends EntityTabsComponent<DeviceInfo> {
+export class EntityViewTabsComponent extends EntityTabsComponent<EntityViewInfo> {
 
   constructor(protected store: Store<AppState>) {
     super(store);

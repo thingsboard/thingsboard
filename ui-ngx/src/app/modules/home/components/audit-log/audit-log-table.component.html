@@ -15,7 +15,4 @@
     limitations under the License.
 
 -->
-<mat-tab *ngIf="entity && authUser.authority === authorities.TENANT_ADMIN"
-         label="{{ 'audit-log.audit-logs' | translate }}" #auditLogsTab="matTab">
-  <tb-audit-log-table [active]="auditLogsTab.isActive" [auditLogMode]="auditLogModes.ENTITY" [entityId]="entity.id" detailsMode="true"></tb-audit-log-table>
-</mat-tab>
+<tb-entities-table [entitiesTableConfig]="auditLogTableConfig" [ngClass]="{'tb-details-mode': detailsMode}"></tb-entities-table>
