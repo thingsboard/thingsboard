@@ -14,16 +14,17 @@
 /// limitations under the License.
 ///
 
-import { BaseData, HasId } from '@shared/models/base-data';
+import { PageLink } from '@shared/models/page/page-link';
+import { Direction, SortOrder } from '@shared/models/page/sort-order';
 
-export interface PageData<T extends BaseData<HasId>> {
+export interface PageData<T> {
   data: Array<T>;
   totalPages: number;
   totalElements: number;
   hasNext: boolean;
 }
 
-export function emptyPageData<T extends BaseData<HasId>>(): PageData<T> {
+export function emptyPageData<T>(): PageData<T> {
   return {
     data: [],
     totalPages: 0,

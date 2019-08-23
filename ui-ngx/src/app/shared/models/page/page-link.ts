@@ -15,6 +15,27 @@
 ///
 
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
+import { emptyPageData, PageData } from '@shared/models/page/page-data';
+
+export type PageLinkSearchFunction<T> = (entity: T, textSearch: string) => boolean;
+
+const defaultPageLinkSearchFunction: PageLinkSearchFunction<any> =
+  (entity: any, textSearch: string) => {
+    if (textSearch === null || !textSearch.length) {
+      return true;
+    }
+    const expected = ('' + textSearch).toLowerCase();
+    for (const key of Object.keys(entity)) {
+      const val = entity[key];
+      if (val !== null && val !== Object(val)) {
+        const actual = ('' + val).toLowerCase();
+        if (actual.indexOf(expected) !== -1) {
+          return true;
+        }
+      }
+    }
+    return false;
+  };
 
 export class PageLink {
 
@@ -63,6 +84,25 @@ export class PageLink {
       return this.sortOrder.direction === Direction.ASC ? result : result * -1;
     }
     return 0;
+  }
+
+  public filterData<T>(data: Array<T>,
+                       searchFunction: PageLinkSearchFunction<T> = defaultPageLinkSearchFunction): PageData<T> {
+    const pageData = emptyPageData<T>();
+    pageData.data = [...data];
+    if (this.textSearch && this.textSearch.length) {
+      pageData.data = pageData.data.filter((entity) => searchFunction(entity, this.textSearch));
+    }
+    pageData.totalElements = pageData.data.length;
+    pageData.totalPages = Math.ceil(pageData.totalElements / this.pageSize);
+    if (this.sortOrder) {
+      pageData.data = pageData.data.sort(this.sort);
+    }
+    const startIndex = this.pageSize * this.page;
+    const endIndex = startIndex + this.pageSize;
+    pageData.data = pageData.data.slice(startIndex, startIndex + this.pageSize);
+    pageData.hasNext = pageData.totalElements > startIndex + pageData.data.length;
+    return pageData;
   }
 
 }

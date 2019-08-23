@@ -1278,7 +1278,8 @@
         "any-relation": "Any relation",
         "relation-filters": "Relation filters",
         "additional-info": "Additional info (JSON)",
-        "invalid-additional-info": "Unable to parse additional info json."
+        "invalid-additional-info": "Unable to parse additional info json.",
+        "no-relations-text": "No relations found"
     },
     "rulechain": {
         "rulechain": "Rule chain",
@@ -1749,7 +1750,7 @@
             "tr_TR": "Turkish",
             "fa_IR": "Persian",
             "uk_UA": "Ukrainian",
-            "cs_CZ": "Czech"            
+            "cs_CZ": "Czech"
         }
     }
 }

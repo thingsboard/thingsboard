@@ -26,6 +26,7 @@ import { AuditLogDetailsDialogComponent } from './audit-log/audit-log-details-di
 import { AuditLogTableComponent } from './audit-log/audit-log-table.component';
 import { EventTableHeaderComponent } from '@home/components/event/event-table-header.component';
 import { EventTableComponent } from '@home/components/event/event-table.component';
+import { RelationTableComponent } from '@home/components/relation/relation-table.component';
 
 @NgModule({
   entryComponents: [
@@ -43,7 +44,8 @@ import { EventTableComponent } from '@home/components/event/event-table.componen
       AuditLogTableComponent,
       AuditLogDetailsDialogComponent,
       EventTableHeaderComponent,
-      EventTableComponent
+      EventTableComponent,
+      RelationTableComponent
     ],
   imports: [
     CommonModule,
@@ -56,7 +58,8 @@ import { EventTableComponent } from '@home/components/event/event-table.componen
     EntityDetailsPanelComponent,
     ContactComponent,
     AuditLogTableComponent,
-    EventTableComponent
+    EventTableComponent,
+    RelationTableComponent
   ]
 })
 export class HomeComponentsModule { }
