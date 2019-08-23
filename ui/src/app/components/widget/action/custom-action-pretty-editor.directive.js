@@ -466,7 +466,7 @@ function CustomActionPrettyEditor($compile, $templateCache, $window, $timeout) {
             "//            tasks.push(widgetContext.aliasController.getAliasInfo(aliasId));\n" +
             "//        });\n" +
             "//        $q.all(tasks).then(function() {\n" +
-            "//            $rootScope.$broadcast('entityAliasesChanged', aliasIds);\n" +
+            "//            $rootScope.$broadcast('widgetForceReInit');\n" +
             "//        });\n" +
             "//    }\n" +
             "//}\n";
