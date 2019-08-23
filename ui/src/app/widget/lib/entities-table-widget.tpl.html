@@ -59,7 +59,7 @@
                 <tbody md-body>
                 <tr ng-show="vm.entities.length" md-row md-select="entity"
                     md-select-id="id.id" md-auto-select="false" ng-repeat="entity in vm.entities"
-                    ng-click="vm.onRowClick($event, entity)" ng-class="{'tb-current': vm.isCurrent(entity)}">
+                    ng-click="vm.onRowClick($event, entity)" ng-dblclick="vm.onRowClick($event, entity, true)" ng-class="{'tb-current': vm.isCurrent(entity)}">
                     <td ng-if="column.display" md-cell flex ng-repeat="column in vm.columns"
                         ng-style="vm.cellStyle(entity, column)"
                         ng-bind-html="vm.cellContent(entity, column)">
