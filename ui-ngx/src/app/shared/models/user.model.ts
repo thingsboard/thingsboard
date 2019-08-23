@@ -18,7 +18,7 @@ import { BaseData } from './base-data';
 import { UserId } from './id/user-id';
 import { CustomerId } from './id/customer-id';
 import { Authority } from './authority.enum';
-import {TenantId} from './id/tenant-id';
+import { TenantId } from './id/tenant-id';
 
 export interface User extends BaseData<UserId> {
   tenantId: TenantId;
@@ -27,7 +27,14 @@ export interface User extends BaseData<UserId> {
   authority: Authority;
   firstName: string;
   lastName: string;
-  additionalInfo: any;
+  additionalInfo: AdditionalInfo;
+}
+
+export interface AdditionalInfo {
+  description?: string;
+  privacyPolicyAccepted?: boolean;
+  lang?: string;
+  [prop: string]: any;
 }
 
 export enum ActivationMethod {
