@@ -291,14 +291,15 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $mdP
         updateEntities();
     }
 
-    function onRowClick($event, entity) {
+    function onRowClick($event, entity, isDouble) {
         if ($event) {
             $event.stopPropagation();
         }
         if (vm.currentEntity != entity) {
             vm.currentEntity = entity;
         }
-        var descriptors = vm.ctx.actionsApi.getActionDescriptors('rowClick');
+        var actionSourceId = isDouble ? 'rowDoubleClick' : 'rowClick';
+        var descriptors = vm.ctx.actionsApi.getActionDescriptors(actionSourceId);
         if (descriptors.length) {
             var entityId;
             var entityName;
