@@ -19,6 +19,7 @@ import { UserId } from './id/user-id';
 import { CustomerId } from './id/customer-id';
 import { Authority } from './authority.enum';
 import { TenantId } from './id/tenant-id';
+import { AdditionalInfo } from './additional-info';
 
 export interface User extends BaseData<UserId> {
   tenantId: TenantId;
@@ -28,15 +29,6 @@ export interface User extends BaseData<UserId> {
   firstName: string;
   lastName: string;
   additionalInfo: AdditionalInfo;
-}
-
-export interface AdditionalInfo {
-  description?: string;
-  privacyPolicyAccepted?: boolean;
-  lang?: string;
-  defaultDashboardId?: any;
-  defaultDashboardFullscreen?: boolean;
-  [prop: string]: any;
 }
 
 export enum ActivationMethod {
