@@ -20,6 +20,7 @@ import { CustomerId } from './id/customer-id';
 import { EntityId } from './id/entity-id';
 import { UserId } from './id/user-id';
 import { TenantId } from './id/tenant-id';
+import { Device } from './device.models';
 
 export enum AuditLogMode {
   TENANT,
@@ -48,7 +49,10 @@ export enum ActionType {
   ALARM_ACK = 'ALARM_ACK',
   ALARM_CLEAR = 'ALARM_CLEAR',
   LOGIN = 'LOGIN',
-  LOGOUT = 'LOGOUT'
+  LOGOUT = 'LOGOUT',
+  ADDED_TO_ENTITY_GROUP = 'ADDED_TO_ENTITY_GROUP',
+  REMOVED_FROM_ENTITY_GROUP = 'REMOVED_FROM_ENTITY_GROUP',
+  REST_API_RULE_ENGINE_CALL = 'REST_API_RULE_ENGINE_CALL'
 }
 
 export enum ActionStatus {
@@ -96,7 +100,12 @@ export interface AuditLog extends BaseData<AuditLogId> {
   userId: UserId;
   userName: string;
   actionType: ActionType;
-  actionData: any;
+  actionData: ActionData;
   actionStatus: ActionStatus;
   actionFailureDetails: string;
+}
+
+export interface ActionData {
+  entity: Device;
+  [prop: string]: any;
 }

@@ -14,12 +14,12 @@
 /// limitations under the License.
 ///
 
-import {BaseData} from '@shared/models/base-data';
-import {AssetId} from '@shared/models/id/asset-id';
-import {TenantId} from '@shared/models/id/tenant-id';
-import {CustomerId} from '@shared/models/id/customer-id';
-import {AlarmId} from '@shared/models/id/alarm-id';
-import {EntityId} from '@shared/models/id/entity-id';
+import { BaseData } from '@shared/models/base-data';
+import { AssetId } from '@shared/models/id/asset-id';
+import { TenantId } from '@shared/models/id/tenant-id';
+import { CustomerId } from '@shared/models/id/customer-id';
+import { AlarmId } from '@shared/models/id/alarm-id';
+import { EntityId } from '@shared/models/id/entity-id';
 
 export enum AlarmSeverity {
   CRITICAL = 'CRITICAL',
@@ -47,5 +47,6 @@ export interface Alarm extends BaseData<AlarmId> {
   ackTs: number;
   clearTs: number;
   propagate: boolean;
+  originatorName?: string;
   details?: any;
 }

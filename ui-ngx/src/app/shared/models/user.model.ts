@@ -34,6 +34,8 @@ export interface AdditionalInfo {
   description?: string;
   privacyPolicyAccepted?: boolean;
   lang?: string;
+  defaultDashboardId?: any;
+  defaultDashboardFullscreen?: boolean;
   [prop: string]: any;
 }
 
