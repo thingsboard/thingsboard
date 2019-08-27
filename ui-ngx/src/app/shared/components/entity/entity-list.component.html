@@ -16,7 +16,7 @@
 
 -->
 <mat-form-field appearance="standard" [formGroup]="entityListFormGroup" class="mat-block">
-  <mat-chip-list #chipList>
+  <mat-chip-list #chipList formControlName="entities">
     <mat-chip
       *ngFor="let entity of entities"
       [selectable]="!disabled"
@@ -47,7 +47,7 @@
       </span>
     </mat-option>
   </mat-autocomplete>
-  <mat-error>
+  <mat-error *ngIf="entityListFormGroup.get('entities').hasError('required')">
     {{ 'entity.entity-list-empty' | translate }}
   </mat-error>
 </mat-form-field>

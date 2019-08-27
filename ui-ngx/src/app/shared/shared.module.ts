@@ -83,6 +83,9 @@ import {EntitySelectComponent} from './components/entity/entity-select.component
 import {DatetimeComponent} from '@shared/components/time/datetime.component';
 import {EntityKeysListComponent} from './components/entity/entity-keys-list.component';
 import {SocialSharePanelComponent} from './components/socialshare-panel.component';
+import { RelationTypeAutocompleteComponent } from '@shared/components/relation/relation-type-autocomplete.component';
+import { EntityListSelectComponent } from './components/entity/entity-list-select.component';
+import { JsonObjectEditComponent } from './components/json-object-edit.component';
 
 @NgModule({
   providers: [
@@ -122,7 +125,10 @@ import {SocialSharePanelComponent} from './components/socialshare-panel.componen
     EntityTypeSelectComponent,
     EntitySelectComponent,
     EntityKeysListComponent,
+    EntityListSelectComponent,
+    RelationTypeAutocompleteComponent,
     SocialSharePanelComponent,
+    JsonObjectEditComponent,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
@@ -192,7 +198,10 @@ import {SocialSharePanelComponent} from './components/socialshare-panel.componen
     EntityTypeSelectComponent,
     EntitySelectComponent,
     EntityKeysListComponent,
+    EntityListSelectComponent,
+    RelationTypeAutocompleteComponent,
     SocialSharePanelComponent,
+    JsonObjectEditComponent,
 //    ValueInputComponent,
     MatButtonModule,
     MatCheckboxModule,

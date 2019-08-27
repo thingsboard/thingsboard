@@ -26,12 +26,18 @@ import { MatDialog } from '@angular/material/dialog';
 import { DialogService } from '@core/services/dialog.service';
 import { EntityRelationService } from '@core/http/entity-relation.service';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
-import { fromEvent, merge } from 'rxjs';
+import { forkJoin, fromEvent, merge, Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
-import { EntityRelationInfo, EntitySearchDirection, entitySearchDirectionTranslations } from '@shared/models/relation.models';
+import {
+  EntityRelation,
+  EntityRelationInfo,
+  EntitySearchDirection,
+  entitySearchDirectionTranslations,
+  RelationTypeGroup
+} from '@shared/models/relation.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { RelationsDatasource } from '../../models/datasource/relation-datasource';
-import { DebugEventType, EventType } from '@shared/models/event.models';
+import { RelationDialogComponent, RelationDialogData } from '@home/components/relation/relation-dialog.component';
 
 @Component({
   selector: 'tb-relation-table',
@@ -201,8 +207,35 @@ export class RelationTableComponent extends PageComponent implements AfterViewIn
     if ($event) {
       $event.stopPropagation();
     }
+    let title;
+    let content;
+    if (this.direction === EntitySearchDirection.FROM) {
+      title = this.translate.instant('relation.delete-to-relation-title', {entityName: relation.toName});
+      content = this.translate.instant('relation.delete-to-relation-text', {entityName: relation.toName});
+    } else {
+      title = this.translate.instant('relation.delete-from-relation-title', {entityName: relation.fromName});
+      content = this.translate.instant('relation.delete-from-relation-text', {entityName: relation.fromName});
+    }
 
-    // TODO:
+    this.dialogService.confirm(
+      title,
+      content,
+      this.translate.instant('action.no'),
+      this.translate.instant('action.yes'),
+      true
+    ).subscribe((result) => {
+      if (result) {
+        this.entityRelationService.deleteRelation(
+          relation.from,
+          relation.type,
+          relation.to
+        ).subscribe(
+          () => {
+            this.reloadRelations();
+          }
+        );
+      }
+    });
   }
 
   deleteRelations($event: Event) {
@@ -210,16 +243,79 @@ export class RelationTableComponent extends PageComponent implements AfterViewIn
       $event.stopPropagation();
     }
     if (this.dataSource.selection.selected.length > 0) {
-      // TODO:
+      let title;
+      let content;
+
+      if (this.direction === EntitySearchDirection.FROM) {
+        title = this.translate.instant('relation.delete-to-relations-title', {count: this.dataSource.selection.selected.length});
+        content = this.translate.instant('relation.delete-to-relations-text');
+      } else {
+        title = this.translate.instant('relation.delete-from-relations-title', {count: this.dataSource.selection.selected.length});
+        content = this.translate.instant('relation.delete-from-relations-text');
+      }
+
+      this.dialogService.confirm(
+        title,
+        content,
+        this.translate.instant('action.no'),
+        this.translate.instant('action.yes'),
+        true
+      ).subscribe((result) => {
+        if (result) {
+          const tasks: Observable<any>[] = [];
+          this.dataSource.selection.selected.forEach((relation) => {
+            tasks.push(this.entityRelationService.deleteRelation(
+              relation.from,
+              relation.type,
+              relation.to
+            ));
+          });
+          forkJoin(tasks).subscribe(
+            () => {
+              this.reloadRelations();
+            }
+          );
+        }
+      });
     }
   }
 
-  openRelationDialog($event: Event, relation: EntityRelationInfo = null) {
+  openRelationDialog($event: Event, relation: EntityRelation = null) {
     if ($event) {
       $event.stopPropagation();
     }
-    // TODO:
-  }
 
+    let isAdd = false;
+    if (!relation) {
+      isAdd = true;
+      relation = {
+        from: null,
+        to: null,
+        type: null,
+        typeGroup: RelationTypeGroup.COMMON
+      };
+      if (this.direction === EntitySearchDirection.FROM) {
+        relation.from = this.entityIdValue;
+      } else {
+        relation.to = this.entityIdValue;
+      }
+    }
+
+    this.dialog.open<RelationDialogComponent, RelationDialogData, boolean>(RelationDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        isAdd,
+        direction: this.direction,
+        relation: {...relation}
+      }
+    }).afterClosed().subscribe(
+      (res) => {
+        if (res) {
+          this.reloadRelations();
+        }
+      }
+    );
+  }
 
 }
