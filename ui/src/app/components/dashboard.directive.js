@@ -146,8 +146,8 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
     vm.widgetIds = [];
 
     vm.widgetItemMap = {
-        sizeX: 'vm.widgetIsHidden(widget) ? 0 : vm.widgetLayoutInfo[widget.id].sizeX',
-        sizeY: 'vm.widgetIsHidden(widget) ? 0 : vm.widgetLayoutInfo[widget.id].sizeY',
+        sizeX: 'vm.widgetLayoutInfo[widget.id].sizeX',
+        sizeY: 'vm.widgetLayoutInfo[widget.id].sizeY',
         row: 'vm.widgetLayoutInfo[widget.id].row',
         col: 'vm.widgetLayoutInfo[widget.id].col',
         minSizeY: 'vm.widgetIsHidden(widget) ? 0 : widget.minSizeY',
@@ -757,6 +757,9 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
     }
 
     function widgetSizeX(widget) {
+        if (vm.widgetIsHidden(widget)) {
+            return 0;
+        }
         if (vm.widgetLayouts && vm.widgetLayouts[widget.id]) {
             return vm.widgetLayouts[widget.id].sizeX;
         } else {
@@ -765,7 +768,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
     }
 
     function setWidgetSizeX(widget, sizeX) {
-        if (!vm.gridsterOpts.isMobile) {
+        if (!vm.gridsterOpts.isMobile && !vm.widgetIsHidden(widget)) {
             if (vm.widgetLayouts && vm.widgetLayouts[widget.id]) {
                 vm.widgetLayouts[widget.id].sizeX = sizeX;
             } else {
@@ -775,6 +778,9 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
     }
 
     function widgetSizeY(widget) {
+        if (vm.widgetIsHidden(widget)) {
+            return 0;
+        }
         if (vm.gridsterOpts.isMobile && !vm.mobileAutofillHeight) {
             var mobileHeight;
             if (vm.widgetLayouts && vm.widgetLayouts[widget.id]) {
@@ -798,7 +804,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
     }
 
     function setWidgetSizeY(widget, sizeY) {
-        if (!vm.gridsterOpts.isMobile && !vm.autofillHeight) {
+        if (!vm.gridsterOpts.isMobile && !vm.autofillHeight && !vm.widgetIsHidden(widget)) {
             if (vm.widgetLayouts && vm.widgetLayouts[widget.id]) {
                 vm.widgetLayouts[widget.id].sizeY = sizeY;
             } else {
