@@ -23,6 +23,8 @@ import {FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm} from '@
 import {EntityType} from '@shared/models/entity-type.models';
 import {DashboardService} from '@core/http/dashboard.service';
 import {forkJoin, Observable} from 'rxjs';
+import { DialogComponent } from '@shared/components/dialog.component';
+import { Router } from '@angular/router';
 
 export type ManageDashboardCustomersActionType = 'assign' | 'manage' | 'unassign';
 
@@ -38,7 +40,8 @@ export interface ManageDashboardCustomersDialogData {
   providers: [{provide: ErrorStateMatcher, useExisting: ManageDashboardCustomersDialogComponent}],
   styleUrls: []
 })
-export class ManageDashboardCustomersDialogComponent extends PageComponent implements OnInit, ErrorStateMatcher {
+export class ManageDashboardCustomersDialogComponent extends
+  DialogComponent<ManageDashboardCustomersDialogComponent, boolean> implements OnInit, ErrorStateMatcher {
 
   dashboardCustomersFormGroup: FormGroup;
 
@@ -53,12 +56,13 @@ export class ManageDashboardCustomersDialogComponent extends PageComponent imple
   assignedCustomersIds: string[];
 
   constructor(protected store: Store<AppState>,
+              protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: ManageDashboardCustomersDialogData,
               private dashboardService: DashboardService,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<ManageDashboardCustomersDialogComponent, boolean>,
               public fb: FormBuilder) {
-    super(store);
+    super(store, router, dialogRef);
 
     this.assignedCustomersIds = data.assignedCustomersIds || [];
     switch (data.actionType) {

@@ -35,21 +35,20 @@
   .fill-height {
     height: 100%;
   }
+}
 
-  .tb-json-object-panel {
+.tb-json-object-panel {
+  height: 100%;
+  margin-left: 15px;
+  border: 1px solid #c0c0c0;
+
+  #tb-json-input {
+    width: 100%;
+    min-width: 200px;
     height: 100%;
-    margin-left: 15px;
-    border: 1px solid #c0c0c0;
 
-    #tb-json-input {
-      width: 100%;
-      min-width: 200px;
-      height: 100%;
-
-      &:not(.fill-height) {
-        min-height: 200px;
-      }
+    &:not(.fill-height) {
+      min-height: 200px;
     }
   }
-
 }

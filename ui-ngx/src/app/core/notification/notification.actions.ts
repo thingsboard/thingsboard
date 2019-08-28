@@ -15,10 +15,11 @@
 ///
 
 import { Action } from '@ngrx/store';
-import { NotificationMessage } from '@app/core/notification/notification.models';
+import { NotificationMessage, HideNotification } from '@app/core/notification/notification.models';
 
 export enum NotificationActionTypes {
-  SHOW_NOTIFICATION = '[Notification] Show'
+  SHOW_NOTIFICATION = '[Notification] Show',
+  HIDE_NOTIFICATION = '[Notification] Hide'
 }
 
 export class ActionNotificationShow implements Action {
@@ -27,5 +28,11 @@ export class ActionNotificationShow implements Action {
   constructor(readonly notification: NotificationMessage ) {}
 }
 
+export class ActionNotificationHide implements Action {
+  readonly type = NotificationActionTypes.HIDE_NOTIFICATION;
+
+  constructor(readonly hideNotification: HideNotification ) {}
+}
+
 export type NotificationActions =
-  | ActionNotificationShow;
+  | ActionNotificationShow | ActionNotificationHide;

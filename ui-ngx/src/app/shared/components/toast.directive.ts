@@ -45,6 +45,7 @@ export class ToastDirective implements AfterViewInit, OnDestroy {
   toastTarget = 'root';
 
   private notificationSubscription: Subscription = null;
+  private hideNotificationSubscription: Subscription = null;
 
   constructor(public elementRef: ElementRef,
               public viewContainerRef: ViewContainerRef,
@@ -78,11 +79,25 @@ export class ToastDirective implements AfterViewInit, OnDestroy {
         }
       }
     );
+
+    this.hideNotificationSubscription = this.notificationService.getHideNotification().subscribe(
+      (hideNotification) => {
+        if (hideNotification) {
+          const target = hideNotification.target || 'root';
+          if (this.toastTarget === target) {
+            this.snackBar.dismiss();
+          }
+        }
+      }
+    );
   }
 
   ngOnDestroy(): void {
     if (this.notificationSubscription) {
       this.notificationSubscription.unsubscribe();
+    }
+    if (this.hideNotificationSubscription) {
+      this.hideNotificationSubscription.unsubscribe();
     }
   }
 }

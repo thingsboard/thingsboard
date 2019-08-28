@@ -30,6 +30,8 @@ import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 import { ActionStatus, AuditLog } from '@shared/models/audit-log.models';
 
 import * as ace from 'ace-builds';
+import { DialogComponent } from '@shared/components/dialog.component';
+import { Router } from '@angular/router';
 
 export interface AuditLogDetailsDialogData {
   auditLog: AuditLog;
@@ -40,7 +42,7 @@ export interface AuditLogDetailsDialogData {
   templateUrl: './audit-log-details-dialog.component.html',
   styleUrls: ['./audit-log-details-dialog.component.scss']
 })
-export class AuditLogDetailsDialogComponent extends PageComponent implements OnInit {
+export class AuditLogDetailsDialogComponent extends DialogComponent<AuditLogDetailsDialogComponent> implements OnInit {
 
   @ViewChild('actionDataEditor', {static: true})
   actionDataEditorElmRef: ElementRef;
@@ -58,10 +60,11 @@ export class AuditLogDetailsDialogComponent extends PageComponent implements OnI
   @ViewChild('entityDetailsForm', {static: true}) entityDetailsFormAnchor: TbAnchorComponent;
 
   constructor(protected store: Store<AppState>,
+              protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: AuditLogDetailsDialogData,
               public dialogRef: MatDialogRef<AuditLogDetailsDialogComponent>,
               private renderer: Renderer2) {
-    super(store);
+    super(store, router, dialogRef);
   }
 
   ngOnInit(): void {
@@ -114,7 +117,7 @@ export class AuditLogDetailsDialogComponent extends PageComponent implements OnI
       });
       newWidth = 8 * maxLineLength + 16;
     }
-    newHeight = Math.min(400, newHeight);
+    // newHeight = Math.min(400, newHeight);
     this.renderer.setStyle(editorElement, 'minHeight', newHeight.toString() + 'px');
     this.renderer.setStyle(editorElement, 'height', newHeight.toString() + 'px');
     this.renderer.setStyle(editorElement, 'width', newWidth.toString() + 'px');

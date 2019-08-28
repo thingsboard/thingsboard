@@ -99,6 +99,8 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
 
   private searchText = '';
 
+  private dirty = false;
+
   private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
@@ -126,7 +128,7 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
   ngOnInit() {
     this.filteredEntities = this.entityListFormGroup.get('entity').valueChanges
     .pipe(
-      startWith<string | BaseData<EntityId>>(''),
+      // startWith<string | BaseData<EntityId>>(''),
       tap((value) => {
         if (value && typeof value !== 'string') {
           this.add(value);
@@ -145,12 +147,11 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
   }
 
   setDisabledState(isDisabled: boolean): void {
-    const emitEvent = this.disabled !== isDisabled;
     this.disabled = isDisabled;
     if (isDisabled) {
-      this.entityListFormGroup.disable({emitEvent});
+      this.entityListFormGroup.disable({emitEvent: false});
     } else {
-      this.entityListFormGroup.enable({emitEvent});
+      this.entityListFormGroup.enable({emitEvent: false});
     }
   }
 
@@ -169,14 +170,19 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
       this.entityListFormGroup.get('entities').setValue(this.entities);
       this.modelValue = null;
     }
+    this.dirty = true;
   }
 
   reset() {
     this.entities = [];
     this.entityListFormGroup.get('entities').setValue(this.entities);
     this.modelValue = null;
-    this.entityListFormGroup.get('entity').patchValue('', {emitEvent: true});
+    if (this.entityInput) {
+      this.entityInput.nativeElement.value = '';
+    }
+    this.entityListFormGroup.get('entity').patchValue('', {emitEvent: false});
     this.propagateChange(this.modelValue);
+    this.dirty = true;
   }
 
   add(entity: BaseData<EntityId>): void {
@@ -212,10 +218,16 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
 
   fetchEntities(searchText?: string): Observable<Array<BaseData<EntityId>>> {
     this.searchText = searchText;
-    return this.disabled ? of([]) :
-      this.entityService.getEntitiesByNameFilter(this.entityTypeValue, searchText,
+    return this.entityService.getEntitiesByNameFilter(this.entityTypeValue, searchText,
       50, '', false, true).pipe(
       map((data) => data ? data : []));
+  }
+
+  onFocus() {
+    if (this.dirty) {
+      this.entityListFormGroup.get('entity').updateValueAndValidity({onlySelf: true, emitEvent: true});
+      this.dirty = false;
+    }
   }
 
   clear(value: string = '') {

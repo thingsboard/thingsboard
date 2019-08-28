@@ -25,6 +25,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { AuthService } from '@core/auth/auth.service';
 import {DeviceService} from '@core/http/device.service';
 import {DeviceCredentials, DeviceCredentialsType, credentialTypeNames} from '@shared/models/device.models';
+import { DialogComponent } from '@shared/components/dialog.component';
+import { Router } from '@angular/router';
 
 export interface DeviceCredentialsDialogData {
   isReadOnly: boolean;
@@ -37,7 +39,8 @@ export interface DeviceCredentialsDialogData {
   providers: [{provide: ErrorStateMatcher, useExisting: DeviceCredentialsDialogComponent}],
   styleUrls: []
 })
-export class DeviceCredentialsDialogComponent extends PageComponent implements OnInit, ErrorStateMatcher {
+export class DeviceCredentialsDialogComponent extends
+  DialogComponent<DeviceCredentialsDialogComponent, DeviceCredentials> implements OnInit, ErrorStateMatcher {
 
   deviceCredentialsFormGroup: FormGroup;
 
@@ -54,12 +57,13 @@ export class DeviceCredentialsDialogComponent extends PageComponent implements O
   credentialTypeNamesMap = credentialTypeNames;
 
   constructor(protected store: Store<AppState>,
+              protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: DeviceCredentialsDialogData,
               private deviceService: DeviceService,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<DeviceCredentialsDialogComponent, DeviceCredentials>,
               public fb: FormBuilder) {
-    super(store);
+    super(store, router, dialogRef);
 
     this.isReadOnly = data.isReadOnly;
   }

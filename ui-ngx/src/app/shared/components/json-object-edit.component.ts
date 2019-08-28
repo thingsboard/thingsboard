@@ -26,6 +26,9 @@ import {
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormControl, Validator, NG_VALIDATORS } from '@angular/forms';
 import * as ace from 'ace-builds';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { ActionNotificationHide, ActionNotificationShow } from '@core/notification/notification.actions';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
 
 @Component({
   selector: 'tb-json-object-edit',
@@ -83,9 +86,14 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
 
   objectValid: boolean;
 
+  validationError: string;
+
+  errorShowed = false;
+
   private propagateChange = null;
 
-  constructor() {
+  constructor(public elementRef: ElementRef,
+              protected store: Store<AppState>) {
   }
 
   ngOnInit(): void {
@@ -109,6 +117,7 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
     this.jsonEditor.session.setUseWrapMode(false);
     this.jsonEditor.setValue(this.contentValue ? this.contentValue : '', -1);
     this.jsonEditor.on('change', () => {
+      this.cleanupJsonErrors();
       this.updateView();
     });
   }
@@ -132,6 +141,33 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
     };
   }
 
+  validateOnSubmit(): void {
+    if (!this.readonly) {
+      this.cleanupJsonErrors();
+      if (!this.objectValid) {
+        this.store.dispatch(new ActionNotificationShow(
+          {
+            message: this.validationError,
+            type: 'error',
+            target: 'jsonObjectEditor',
+            verticalPosition: 'bottom',
+            horizontalPosition: 'left'
+          }));
+        this.errorShowed = true;
+      }
+    }
+  }
+
+  cleanupJsonErrors(): void {
+    if (this.errorShowed) {
+      this.store.dispatch(new ActionNotificationHide(
+        {
+          target: 'jsonObjectEditor'
+        }));
+      this.errorShowed = false;
+    }
+  }
+
   writeValue(value: any): void {
     this.modelValue = value;
     this.contentValue = '';
@@ -142,6 +178,7 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
         this.objectValid = true;
       } else {
         this.objectValid = !this.required;
+        this.validationError = 'Json object is required.';
       }
     } catch (e) {
       //
@@ -161,9 +198,20 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
         try {
           data = JSON.parse(this.contentValue);
           this.objectValid = true;
-        } catch (ex) {}
+          this.validationError = '';
+        } catch (ex) {
+          let errorInfo = 'Error:';
+          if (ex.name) {
+            errorInfo += ' ' + ex.name + ':';
+          }
+          if (ex.message) {
+            errorInfo += ' ' + ex.message;
+          }
+          this.validationError = errorInfo;
+        }
       } else {
         this.objectValid = !this.required;
+        this.validationError = this.required ? 'Json object is required.' : '';
       }
       this.propagateChange(data);
     }

@@ -82,18 +82,7 @@ export class AuthGuard implements CanActivate, CanActivateChild {
           } else {
             const authority = Authority[authState.authUser.authority];
             if (data.auth && data.auth.indexOf(authority) === -1) {
-              this.dialogService.confirm(
-                this.translate.instant('access.access-forbidden'),
-                this.translate.instant('access.access-forbidden-text'),
-                this.translate.instant('action.cancel'),
-                this.translate.instant('action.sign-in'),
-                true
-              ).subscribe((res) => {
-                    if (res) {
-                      this.authService.logout();
-                    }
-                  }
-              );
+              this.dialogService.forbidden();
               return false;
             } else {
               return true;

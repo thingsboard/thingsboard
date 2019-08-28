@@ -27,6 +27,8 @@ import {TbAnchorComponent} from '@shared/components/tb-anchor.component';
 import {EntityComponent} from './entity.component';
 import {EntityTableConfig} from '@home/models/entity/entities-table-config.models';
 import {AddEntityDialogData} from '@home/models/entity/entity-component.models';
+import { DialogComponent } from '@shared/components/dialog.component';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'tb-add-entity-dialog',
@@ -34,7 +36,7 @@ import {AddEntityDialogData} from '@home/models/entity/entity-component.models';
   providers: [{provide: ErrorStateMatcher, useExisting: AddEntityDialogComponent}],
   styleUrls: ['./add-entity-dialog.component.scss']
 })
-export class AddEntityDialogComponent extends PageComponent implements OnInit, ErrorStateMatcher {
+export class AddEntityDialogComponent extends DialogComponent<AddEntityDialogComponent, BaseData<HasId>> implements OnInit, ErrorStateMatcher {
 
   entityComponent: EntityComponent<BaseData<HasId>>;
   detailsForm: NgForm;
@@ -49,11 +51,12 @@ export class AddEntityDialogComponent extends PageComponent implements OnInit, E
   @ViewChild('entityDetailsForm', {static: true}) entityDetailsFormAnchor: TbAnchorComponent;
 
   constructor(protected store: Store<AppState>,
+              protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: AddEntityDialogData<BaseData<HasId>>,
               public dialogRef: MatDialogRef<AddEntityDialogComponent, BaseData<HasId>>,
               private componentFactoryResolver: ComponentFactoryResolver,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher) {
-    super(store);
+    super(store, router, dialogRef);
   }
 
   ngOnInit(): void {

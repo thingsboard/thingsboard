@@ -41,11 +41,12 @@
         required="true">
       </tb-entity-list-select>
       <tb-json-object-edit
-        formControlName="additionalInfo"
+        #additionalInfoEdit
+        [formControl]="additionalInfo"
         label="{{ 'relation.additional-info' | translate }}">
       </tb-json-object-edit>
       <div class="tb-error-messages" *ngIf="submitted &&
-                                            relationFormGroup.get('additionalInfo').invalid" role="alert">
+                                            additionalInfo.invalid" role="alert">
         <div translate class="tb-error-message">relation.invalid-additional-info</div>
       </div>
     </fieldset>
@@ -54,7 +55,7 @@
     <span fxFlex></span>
     <button mat-button mat-raised-button color="primary"
             type="submit"
-            [disabled]="(isLoading$ | async)">
+            [disabled]="(isLoading$ | async) || relationFormGroup.invalid || !(relationFormGroup.dirty || additionalInfo.dirty)">
       {{ (isAdd  ? 'action.add' : 'action.save') | translate }}
     </button>
     <button mat-button color="primary"

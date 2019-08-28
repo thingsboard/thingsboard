@@ -50,6 +50,8 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
     '/api/auth/token'
   ];
 
+  private activeRequests = 0;
+
   constructor(private store: Store<AppState>,
               private dialogService: DialogService,
               private translate: TranslateService,
@@ -135,7 +137,7 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
       }
     } else if (errorResponse.status === 403) {
       if (!ignoreErrors) {
-        this.permissionDenied();
+        this.dialogService.forbidden();
       }
     } else if (errorResponse.status === 0 || errorResponse.status === -1) {
         this.showError('Unable to connect');
@@ -241,7 +243,16 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
 
   private updateLoadingState(config: InterceptorConfig, isLoading: boolean) {
     if (!config.ignoreLoading) {
-      this.store.dispatch(isLoading ? new ActionLoadStart() : new ActionLoadFinish());
+      if (isLoading) {
+        this.activeRequests++;
+      } else {
+        this.activeRequests--;
+      }
+      if (this.activeRequests === 1) {
+        this.store.dispatch(new ActionLoadStart());
+      } else if (this.activeRequests === 0) {
+        this.store.dispatch(new ActionLoadFinish());
+      }
     }
   }
 
@@ -251,14 +262,6 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
     } else {
       return new InterceptorConfig(false, false);
     }
-  }
-
-  private permissionDenied() {
-    this.dialogService.alert(
-        this.translate.instant('access.permission-denied'),
-        this.translate.instant('access.permission-denied-text'),
-        this.translate.instant('action.close')
-    );
   }
 
   private showError(error: string, timeout: number = 0) {

@@ -20,7 +20,8 @@ import { MatDialog, MatDialogConfig } from '@angular/material';
 import { ConfirmDialogComponent } from '@core/services/dialog/confirm-dialog.component';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertDialogComponent } from '@core/services/dialog/alert-dialog.component';
-import {TodoDialogComponent} from "@core/services/dialog/todo-dialog.component";
+import { TodoDialogComponent } from '@core/services/dialog/todo-dialog.component';
+import { AuthService } from '@core/auth/auth.service';
 
 @Injectable(
   {
@@ -31,6 +32,7 @@ export class DialogService {
 
   constructor(
     private translate: TranslateService,
+    private authService: AuthService,
     public dialog: MatDialog
   ) {
   }
@@ -66,6 +68,30 @@ export class DialogService {
     }
     const dialogRef = this.dialog.open(AlertDialogComponent, dialogConfig);
     return dialogRef.afterClosed();
+  }
+
+  private permissionDenied() {
+    this.alert(
+      this.translate.instant('access.permission-denied'),
+      this.translate.instant('access.permission-denied-text'),
+      this.translate.instant('action.close')
+    );
+  }
+
+  forbidden(): Observable<boolean> {
+    const observable = this.confirm(
+      this.translate.instant('access.access-forbidden'),
+      this.translate.instant('access.access-forbidden-text'),
+      this.translate.instant('action.cancel'),
+      this.translate.instant('action.sign-in'),
+      true
+    );
+    observable.subscribe((res) => {
+      if (res) {
+        this.authService.logout();
+      }
+    });
+    return observable;
   }
 
   todo(): Observable<any> {

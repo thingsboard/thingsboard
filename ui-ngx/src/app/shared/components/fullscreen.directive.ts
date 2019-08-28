@@ -54,13 +54,13 @@ export class FullscreenDirective {
   constructor(public elementRef: ElementRef,
               private viewContainerRef: ViewContainerRef,
               private overlay: Overlay) {
-
   }
 
   enterFullscreen() {
-    this.parentElement = this.elementRef.nativeElement.parentElement;
-    this.parentElement.removeChild(this.elementRef.nativeElement);
-    this.elementRef.nativeElement.classList.add('tb-fullscreen');
+    const targetElement = this.elementRef;
+    this.parentElement = targetElement.nativeElement.parentElement;
+    this.parentElement.removeChild(targetElement.nativeElement);
+    targetElement.nativeElement.classList.add('tb-fullscreen');
     const position = this.overlay.position();
     const config = new OverlayConfig({
       hasBackdrop: false,
@@ -73,21 +73,24 @@ export class FullscreenDirective {
 
     this.overlayRef = this.overlay.create(config);
     this.overlayRef.attach(new EmptyPortal());
-    this.overlayRef.overlayElement.append( this.elementRef.nativeElement );
+    this.overlayRef.overlayElement.append( targetElement.nativeElement );
     this.fullscreenChanged.emit(true);
   }
 
   exitFullscreen() {
+    const targetElement = this.elementRef;
     if (this.parentElement) {
-      this.overlayRef.overlayElement.removeChild( this.elementRef.nativeElement );
-      this.parentElement.append( this.elementRef.nativeElement );
+      this.overlayRef.overlayElement.removeChild( targetElement.nativeElement );
+      this.parentElement.append(targetElement.nativeElement);
       this.parentElement = null;
     }
-    this.elementRef.nativeElement.classList.remove('tb-fullscreen');
+    targetElement.nativeElement.classList.remove('tb-fullscreen');
+    if (this.elementRef !== targetElement) {
+      this.elementRef.nativeElement.classList.remove('tb-fullscreen');
+    }
     this.overlayRef.dispose();
     this.fullscreenChanged.emit(false);
   }
-
 }
 
 class EmptyPortal extends ComponentPortal<TbAnchorComponent> {

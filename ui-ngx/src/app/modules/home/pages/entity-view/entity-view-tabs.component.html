@@ -20,6 +20,10 @@
   <tb-event-table [active]="eventsTab.isActive" [defaultEventType]="eventTypes.ERROR" [tenantId]="entity.tenantId.id"
                   [entityId]="entity.id"></tb-event-table>
 </mat-tab>
+<mat-tab *ngIf="entity"
+         label="{{ 'relation.relations' | translate }}" #relationsTab="matTab">
+  <tb-relation-table [active]="relationsTab.isActive" [entityId]="entity.id"></tb-relation-table>
+</mat-tab>
 <mat-tab *ngIf="entity && authUser.authority === authorities.TENANT_ADMIN"
          label="{{ 'audit-log.audit-logs' | translate }}" #auditLogsTab="matTab">
   <tb-audit-log-table [active]="auditLogsTab.isActive" [auditLogMode]="auditLogModes.ENTITY" [entityId]="entity.id" detailsMode="true"></tb-audit-log-table>

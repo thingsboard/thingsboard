@@ -20,3 +20,7 @@
   <tb-event-table [active]="eventsTab.isActive" [defaultEventType]="eventTypes.ERROR" [tenantId]="nullUid"
                   [entityId]="entity.id"></tb-event-table>
 </mat-tab>
+<mat-tab *ngIf="entity"
+         label="{{ 'relation.relations' | translate }}" #relationsTab="matTab">
+  <tb-relation-table [active]="relationsTab.isActive" [entityId]="entity.id"></tb-relation-table>
+</mat-tab>

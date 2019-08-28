@@ -31,6 +31,8 @@ import {
   ActivationLinkDialogData
 } from '@modules/home/pages/user/activation-link-dialog.component';
 import {TenantId} from '@app/shared/models/id/tenant-id';
+import { DialogComponent } from '@shared/components/dialog.component';
+import { Router } from '@angular/router';
 
 export interface AddUserDialogData {
   tenantId: string;
@@ -42,7 +44,7 @@ export interface AddUserDialogData {
   selector: 'tb-add-user-dialog',
   templateUrl: './add-user-dialog.component.html'
 })
-export class AddUserDialogComponent extends PageComponent implements OnInit {
+export class AddUserDialogComponent extends DialogComponent<AddUserDialogComponent, User> implements OnInit {
 
   detailsForm: NgForm;
   user: User;
@@ -56,11 +58,12 @@ export class AddUserDialogComponent extends PageComponent implements OnInit {
   @ViewChild(UserComponent, {static: true}) userComponent: UserComponent;
 
   constructor(protected store: Store<AppState>,
+              protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: AddUserDialogData,
               public dialogRef: MatDialogRef<AddUserDialogComponent, User>,
               private userService: UserService,
               private dialog: MatDialog) {
-    super(store);
+    super(store, router, dialogRef);
   }
 
   ngOnInit(): void {

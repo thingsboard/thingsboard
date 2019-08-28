@@ -14,9 +14,8 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
+import { Component, Inject, OnInit, SkipSelf, ViewChild } from '@angular/core';
 import { ErrorStateMatcher, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material';
-import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
@@ -28,7 +27,10 @@ import {
 } from '@shared/models/relation.models';
 import { EntityRelationService } from '@core/http/entity-relation.service';
 import { EntityId } from '@shared/models/id/entity-id';
-import { Observable, forkJoin } from 'rxjs';
+import { forkJoin, Observable } from 'rxjs';
+import { JsonObjectEditComponent } from '@app/shared/components/json-object-edit.component';
+import { Router } from '@angular/router';
+import { DialogComponent } from '@app/shared/components/dialog.component';
 
 export interface RelationDialogData {
   isAdd: boolean;
@@ -42,7 +44,7 @@ export interface RelationDialogData {
   providers: [{provide: ErrorStateMatcher, useExisting: RelationDialogComponent}],
   styleUrls: ['./relation-dialog.component.scss']
 })
-export class RelationDialogComponent extends PageComponent implements OnInit, ErrorStateMatcher {
+export class RelationDialogComponent extends DialogComponent<RelationDialogComponent, boolean> implements OnInit, ErrorStateMatcher {
 
   relationFormGroup: FormGroup;
 
@@ -50,15 +52,20 @@ export class RelationDialogComponent extends PageComponent implements OnInit, Er
   direction: EntitySearchDirection;
   entitySearchDirection = EntitySearchDirection;
 
+  additionalInfo: FormControl;
+
+  @ViewChild('additionalInfoEdit', {static: true}) additionalInfoEdit: JsonObjectEditComponent;
+
   submitted = false;
 
   constructor(protected store: Store<AppState>,
+              protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: RelationDialogData,
               private entityRelationService: EntityRelationService,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<RelationDialogComponent, boolean>,
               public fb: FormBuilder) {
-    super(store);
+    super(store, router, dialogRef);
     this.isAdd = data.isAdd;
     this.direction = data.direction;
   }
@@ -68,14 +75,14 @@ export class RelationDialogComponent extends PageComponent implements OnInit, Er
       type: [this.isAdd ? CONTAINS_TYPE : this.data.relation.type, [Validators.required]],
       targetEntityIds: [this.isAdd ? null :
         [this.direction === EntitySearchDirection.FROM ? this.data.relation.to : this.data.relation.from],
-        [Validators.required]],
-      additionalInfo: [this.data.relation.additionalInfo]
+        [Validators.required]]
     });
+    this.additionalInfo = new FormControl(this.data.relation.additionalInfo ? {...this.data.relation.additionalInfo} : null);
     if (!this.isAdd) {
       this.relationFormGroup.get('type').disable();
       this.relationFormGroup.get('targetEntityIds').disable();
     }
-    this.relationFormGroup.valueChanges.subscribe(
+    this.additionalInfo.valueChanges.subscribe(
       () => {
         this.submitted = false;
       }
@@ -94,8 +101,8 @@ export class RelationDialogComponent extends PageComponent implements OnInit, Er
 
   save(): void {
     this.submitted = true;
-    if (this.relationFormGroup.valid) {
-      const additionalInfo = this.relationFormGroup.get('additionalInfo').value;
+    this.additionalInfoEdit.validateOnSubmit();
+    if (!this.relationFormGroup.invalid && !this.additionalInfo.invalid) {
       if (this.isAdd) {
         const tasks: Observable<EntityRelation>[] = [];
         const type: string = this.relationFormGroup.get('type').value;
@@ -103,7 +110,7 @@ export class RelationDialogComponent extends PageComponent implements OnInit, Er
         entityIds.forEach(entityId => {
           const relation = {
             type,
-            additionalInfo,
+            additionalInfo: this.additionalInfo.value,
             typeGroup: RelationTypeGroup.COMMON
           } as EntityRelation;
           if (this.direction === EntitySearchDirection.FROM) {
@@ -122,7 +129,7 @@ export class RelationDialogComponent extends PageComponent implements OnInit, Er
         );
       } else {
         const relation: EntityRelation = {...this.data.relation};
-        relation.additionalInfo = additionalInfo;
+        relation.additionalInfo = this.additionalInfo.value;
         this.entityRelationService.saveRelation(relation).subscribe(
           () => {
             this.dialogRef.close(true);

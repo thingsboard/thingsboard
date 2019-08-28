@@ -23,22 +23,25 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
 import { AuthService } from '@core/auth/auth.service';
+import { DialogComponent } from '@shared/components/dialog.component';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'tb-change-password-dialog',
   templateUrl: './change-password-dialog.component.html',
   styleUrls: ['./change-password-dialog.component.scss']
 })
-export class ChangePasswordDialogComponent extends PageComponent implements OnInit {
+export class ChangePasswordDialogComponent extends DialogComponent<ChangePasswordDialogComponent> implements OnInit {
 
   changePassword: FormGroup;
 
   constructor(protected store: Store<AppState>,
+              protected router: Router,
               private translate: TranslateService,
               private authService: AuthService,
               public dialogRef: MatDialogRef<ChangePasswordDialogComponent>,
               public fb: FormBuilder) {
-    super(store);
+    super(store, router, dialogRef);
   }
 
   ngOnInit(): void {

@@ -16,7 +16,8 @@
 
 -->
 <div style="background: #fff;" [ngClass]="{'fill-height': fillHeight}"
-     tb-fullscreen [fullscreen]="fullscreen" (fullscreenChanged)="onFullscreen()" fxLayout="column">
+     tb-fullscreen
+     [fullscreen]="fullscreen" (fullscreenChanged)="onFullscreen()" fxLayout="column">
   <div fxLayout="row" fxLayoutAlign="start center">
     <label class="tb-title no-padding"
            ng-class="{'tb-required': required,
@@ -29,7 +30,8 @@
       <mat-icon class="material-icons">{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
     </button>
   </div>
-  <div fxFlex="0%" id="tb-json-panel" class="tb-json-object-panel" fxLayout="column">
+  <div fxFlex="0%" id="tb-json-panel" tb-toast toastTarget="jsonObjectEditor"
+       class="tb-json-object-panel" fxLayout="column">
     <div fxFlex #jsonEditor id="tb-json-input" [ngClass]="{'fill-height': fillHeight}"></div>
   </div>
 </div>

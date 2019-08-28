@@ -28,6 +28,7 @@
     <input matInput type="text" placeholder="{{ !disabled ? ('entity.entity-list' | translate) : '' }}"
            style="max-width: 200px;"
            #entityInput
+           (focusin)="onFocus()"
            formControlName="entity"
            matAutocompleteOrigin
            #origin="matAutocompleteOrigin"

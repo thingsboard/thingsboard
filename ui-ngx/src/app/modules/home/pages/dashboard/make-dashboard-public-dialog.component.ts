@@ -26,6 +26,8 @@ import {forkJoin, Observable} from 'rxjs';
 import {DashboardInfo} from '@app/shared/models/dashboard.models';
 import {ActionNotificationShow} from '@core/notification/notification.actions';
 import {TranslateService} from '@ngx-translate/core';
+import { DialogComponent } from '@shared/components/dialog.component';
+import { Router } from '@angular/router';
 
 export interface MakeDashboardPublicDialogData {
   dashboard: DashboardInfo;
@@ -36,19 +38,20 @@ export interface MakeDashboardPublicDialogData {
   templateUrl: './make-dashboard-public-dialog.component.html',
   styleUrls: []
 })
-export class MakeDashboardPublicDialogComponent extends PageComponent implements OnInit {
+export class MakeDashboardPublicDialogComponent extends DialogComponent<MakeDashboardPublicDialogComponent> implements OnInit {
 
   dashboard: DashboardInfo;
 
   publicLink: string;
 
   constructor(protected store: Store<AppState>,
+              protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: MakeDashboardPublicDialogData,
               public translate: TranslateService,
               private dashboardService: DashboardService,
               public dialogRef: MatDialogRef<MakeDashboardPublicDialogComponent>,
               public fb: FormBuilder) {
-    super(store);
+    super(store, router, dialogRef);
 
     this.dashboard = data.dashboard;
     this.publicLink = dashboardService.getPublicDashboardLink(this.dashboard);
