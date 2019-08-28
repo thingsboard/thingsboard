@@ -71,6 +71,7 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
 
     vm.enableSelection = true;
     vm.displayDetails = true;
+    vm.displayFilter = true;
     vm.allowAcknowledgment = true;
     vm.allowClear = true;
     vm.actionCellDescriptors = [];
@@ -219,6 +220,7 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
             vm.enableSelection = false;
         }
 
+        vm.displayFilter = angular.isDefined(vm.settings.displayFilter) ? vm.settings.displayFilter : true;
         vm.displayPagination = angular.isDefined(vm.settings.displayPagination) ? vm.settings.displayPagination : true;
 
         var pageSize = vm.settings.defaultPageSize;

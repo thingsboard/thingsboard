@@ -64,7 +64,7 @@
                 <tr md-row>
                     <th ng-if="key.display" md-column md-order-by="{{ key.name }}" ng-repeat="key in vm.alarmSource.dataKeys"><span>{{ key.title }}</span></th>
                     <th md-column class="tb-action-cell" layout="row" layout-align="end center">
-                        <md-button class="md-icon-button"
+                        <md-button class="md-icon-button" ng-if="vm.displayFilter || vm.ctx.isEdit"
                                    aria-label="{{'alarm.alarm-status-filter' | translate}}"
                                    ng-click="vm.editAlarmStatusFilter($event)">
                             <md-icon aria-label="{{'alarm.alarm-status-filter' | translate}}"
