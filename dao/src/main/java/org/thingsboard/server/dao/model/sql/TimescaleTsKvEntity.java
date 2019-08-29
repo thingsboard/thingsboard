@@ -17,37 +17,110 @@ package org.thingsboard.server.dao.model.sql;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.model.ToData;
 
 import javax.persistence.Column;
+import javax.persistence.ColumnResult;
+import javax.persistence.ConstructorResult;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.IdClass;
+import javax.persistence.NamedNativeQueries;
+import javax.persistence.NamedNativeQuery;
+import javax.persistence.SqlResultSetMapping;
+import javax.persistence.SqlResultSetMappings;
 import javax.persistence.Table;
 
 import static org.thingsboard.server.dao.model.ModelConstants.TENANT_ID_COLUMN;
+import static org.thingsboard.server.dao.sql.timescale.AggregationRepository.FIND_AVG;
+import static org.thingsboard.server.dao.sql.timescale.AggregationRepository.FIND_AVG_QUERY;
+import static org.thingsboard.server.dao.sql.timescale.AggregationRepository.FIND_COUNT;
+import static org.thingsboard.server.dao.sql.timescale.AggregationRepository.FIND_COUNT_QUERY;
+import static org.thingsboard.server.dao.sql.timescale.AggregationRepository.FIND_MAX;
+import static org.thingsboard.server.dao.sql.timescale.AggregationRepository.FIND_MAX_QUERY;
+import static org.thingsboard.server.dao.sql.timescale.AggregationRepository.FIND_MIN;
+import static org.thingsboard.server.dao.sql.timescale.AggregationRepository.FIND_MIN_QUERY;
+import static org.thingsboard.server.dao.sql.timescale.AggregationRepository.FIND_SUM;
+import static org.thingsboard.server.dao.sql.timescale.AggregationRepository.FIND_SUM_QUERY;
+import static org.thingsboard.server.dao.sql.timescale.AggregationRepository.FROM_WHERE_CLAUSE;
 
 @Data
 @EqualsAndHashCode(callSuper=true)
 @Entity
 @Table(name = "tenant_ts_kv")
 @IdClass(TimescaleTsKvCompositeKey.class)
+@SqlResultSetMappings({
+        @SqlResultSetMapping(
+                name = "timescaleAggregationMapping",
+                classes = {
+                        @ConstructorResult(
+                                targetClass = TimescaleTsKvEntity.class,
+                                columns = {
+                                        @ColumnResult(name = "tsBucket", type = Long.class),
+                                        @ColumnResult(name = "longValue", type = Long.class),
+                                        @ColumnResult(name = "doubleValue", type = Double.class),
+                                        @ColumnResult(name = "longCountValue", type = Long.class),
+                                        @ColumnResult(name = "doubleCountValue", type = Long.class),
+                                        @ColumnResult(name = "aggType", type = String.class),
+                                        @ColumnResult(name = "strValue", type = String.class),
+                                }
+                        ),
+                        @ConstructorResult(
+                                targetClass = TimescaleTsKvEntity.class,
+                                columns = {
+                                        @ColumnResult(name = "tsBucket", type = Long.class),
+                                        @ColumnResult(name = "booleanValueCount", type = Long.class),
+                                        @ColumnResult(name = "strValueCount", type = Double.class),
+                                        @ColumnResult(name = "longValueCount", type = Long.class),
+                                        @ColumnResult(name = "doubleValueCount", type = Long.class),
+                                }
+                        )
+
+                }),
+})
+@NamedNativeQueries({
+        @NamedNativeQuery(
+                name = FIND_AVG,
+                query = FIND_AVG_QUERY + FROM_WHERE_CLAUSE,
+                resultSetMapping = "timescaleAggregationMapping"
+        ),
+        @NamedNativeQuery(
+                name = FIND_MAX,
+                query = FIND_MAX_QUERY + FROM_WHERE_CLAUSE,
+                resultSetMapping = "timescaleAggregationMapping"
+        ),
+        @NamedNativeQuery(
+                name = FIND_MIN,
+                query = FIND_MIN_QUERY + FROM_WHERE_CLAUSE,
+                resultSetMapping = "timescaleAggregationMapping"
+        ),
+        @NamedNativeQuery(
+                name = FIND_SUM,
+                query = FIND_SUM_QUERY + FROM_WHERE_CLAUSE,
+                resultSetMapping = "timescaleAggregationMapping"
+        ),
+        @NamedNativeQuery(
+                name = FIND_COUNT,
+                query = FIND_COUNT_QUERY + FROM_WHERE_CLAUSE,
+                resultSetMapping = "timescaleAggregationMapping"
+        )
+})
 public final class TimescaleTsKvEntity extends AbsractTsKvEntity implements ToData<TsKvEntry> {
 
     @Id
     @Column(name = TENANT_ID_COLUMN)
     private String tenantId;
 
-    public TimescaleTsKvEntity() {
-    }
+    public TimescaleTsKvEntity() { }
 
-    public TimescaleTsKvEntity(String strValue) {
-        this.strValue = strValue;
-    }
-
-    public TimescaleTsKvEntity(Long longValue, Double doubleValue, Long longCountValue, Long doubleCountValue, String aggType) {
-        if(!isAllNull(longValue, doubleValue, longCountValue, doubleCountValue)) {
+    public TimescaleTsKvEntity(Long tsBucket, Long longValue, Double doubleValue, Long longCountValue, Long doubleCountValue, String aggType, String strValue) {
+        if(!StringUtils.isEmpty(strValue)) {
+            this.strValue = strValue;
+        }
+        if (!isAllNull(tsBucket, longValue, doubleValue, longCountValue, doubleCountValue)) {
+            this.ts = tsBucket;
             switch (aggType) {
                 case AVG:
                     double sum = 0.0;
@@ -85,8 +158,8 @@ public final class TimescaleTsKvEntity extends AbsractTsKvEntity implements ToDa
         }
     }
 
-    public TimescaleTsKvEntity(Long booleanValueCount, Long strValueCount, Long longValueCount, Long doubleValueCount) {
-        if(!isAllNull(booleanValueCount, strValueCount, longValueCount, doubleValueCount)) {
+    public TimescaleTsKvEntity(Long tsBucket, Long booleanValueCount, Long strValueCount, Long longValueCount, Long doubleValueCount) {
+        if (!isAllNull(tsBucket, booleanValueCount, strValueCount, longValueCount, doubleValueCount)) {
             if (booleanValueCount != 0) {
                 this.longValue = booleanValueCount;
             } else if (strValueCount != 0) {
@@ -96,5 +169,4 @@ public final class TimescaleTsKvEntity extends AbsractTsKvEntity implements ToDa
             }
         }
     }
-
 }

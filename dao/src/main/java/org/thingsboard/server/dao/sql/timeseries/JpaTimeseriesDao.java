@@ -59,7 +59,7 @@ import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
 @Component
 @Slf4j
 @SqlTsDao
-public class JpaTimeseriesDao extends AbstractSqlTimeseriesDao<TsKvEntity> implements TimeseriesDao {
+public class JpaTimeseriesDao extends AbstractSqlTimeseriesDao implements TimeseriesDao {
 
     @Autowired
     private TsKvRepository tsKvRepository;
@@ -117,10 +117,10 @@ public class JpaTimeseriesDao extends AbstractSqlTimeseriesDao<TsKvEntity> imple
         }
     }
 
-    protected ListenableFuture<Optional<TsKvEntry>> findAndAggregateAsync(TenantId tenantId, EntityId entityId, String key, long startTs, long endTs, long ts, Aggregation aggregation) {
+    private ListenableFuture<Optional<TsKvEntry>> findAndAggregateAsync(TenantId tenantId, EntityId entityId, String key, long startTs, long endTs, long ts, Aggregation aggregation) {
         List<CompletableFuture<TsKvEntity>> entitiesFutures = new ArrayList<>();
         String entityIdStr = fromTimeUUID(entityId.getId());
-        switchAgregation(entityId, key, startTs, endTs, aggregation, entitiesFutures, entityIdStr, null);
+        switchAgregation(entityId, key, startTs, endTs, aggregation, entitiesFutures, entityIdStr);
 
         SettableFuture<TsKvEntity> listenableFuture = SettableFuture.create();
 
@@ -157,8 +157,29 @@ public class JpaTimeseriesDao extends AbstractSqlTimeseriesDao<TsKvEntity> imple
         });
     }
 
-    @Override
-    protected void findCount(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures, String entityIdStr, String tenantIdStr) {
+    private void switchAgregation(EntityId entityId, String key, long startTs, long endTs, Aggregation aggregation, List<CompletableFuture<TsKvEntity>> entitiesFutures, String entityIdStr) {
+        switch (aggregation) {
+            case AVG:
+                findAvg(entityId, key, startTs, endTs, entitiesFutures, entityIdStr);
+                break;
+            case MAX:
+                findMax(entityId, key, startTs, endTs, entitiesFutures, entityIdStr);
+                break;
+            case MIN:
+                findMin(entityId, key, startTs, endTs, entitiesFutures, entityIdStr);
+                break;
+            case SUM:
+                findSum(entityId, key, startTs, endTs, entitiesFutures, entityIdStr);
+                break;
+            case COUNT:
+                findCount(entityId, key, startTs, endTs, entitiesFutures, entityIdStr);
+                break;
+            default:
+                throw new IllegalArgumentException("Not supported aggregation type: " + aggregation);
+        }
+    }
+
+    private void findCount(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures, String entityIdStr) {
         entitiesFutures.add(tsKvRepository.findCount(
                 entityIdStr,
                 entityId.getEntityType(),
@@ -167,8 +188,7 @@ public class JpaTimeseriesDao extends AbstractSqlTimeseriesDao<TsKvEntity> imple
                 endTs));
     }
 
-    @Override
-    protected void findSum(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures, String entityIdStr, String tenantIdStr) {
+    private void findSum(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures, String entityIdStr) {
         entitiesFutures.add(tsKvRepository.findSum(
                 entityIdStr,
                 entityId.getEntityType(),
@@ -177,8 +197,7 @@ public class JpaTimeseriesDao extends AbstractSqlTimeseriesDao<TsKvEntity> imple
                 endTs));
     }
 
-    @Override
-    protected void findMin(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures, String entityIdStr, String tenantIdStr) {
+    private void findMin(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures, String entityIdStr) {
         entitiesFutures.add(tsKvRepository.findStringMin(
                 entityIdStr,
                 entityId.getEntityType(),
@@ -193,8 +212,7 @@ public class JpaTimeseriesDao extends AbstractSqlTimeseriesDao<TsKvEntity> imple
                 endTs));
     }
 
-    @Override
-    protected void findMax(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures, String entityIdStr, String tenantIdStr) {
+    private void findMax(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures, String entityIdStr) {
         entitiesFutures.add(tsKvRepository.findStringMax(
                 entityIdStr,
                 entityId.getEntityType(),
@@ -209,8 +227,7 @@ public class JpaTimeseriesDao extends AbstractSqlTimeseriesDao<TsKvEntity> imple
                 endTs));
     }
 
-    @Override
-    protected void finfAvg(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures, String entityIdStr, String tenantIdStr) {
+    private void findAvg(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures, String entityIdStr) {
         entitiesFutures.add(tsKvRepository.findAvg(
                 entityIdStr,
                 entityId.getEntityType(),

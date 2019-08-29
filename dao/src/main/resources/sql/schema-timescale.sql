@@ -28,4 +28,4 @@ CREATE TABLE IF NOT EXISTS tenant_ts_kv (
     CONSTRAINT ts_kv_pkey PRIMARY KEY (tenant_id, entity_id, key, ts)
 );
 
-SELECT create_hypertable('tenant_ts_kv', 'ts', chunk_time_interval => 86400000000, if_not_exists => true);
+SELECT create_hypertable('tenant_ts_kv', 'ts', chunk_time_interval => 86400000, if_not_exists => true);

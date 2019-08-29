@@ -15,25 +15,17 @@
  */
 package org.thingsboard.server.dao.sql;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.springframework.beans.factory.annotation.Value;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.Aggregation;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.dao.model.sql.AbsractTsKvEntity;
 import org.thingsboard.server.dao.timeseries.TsInsertExecutorType;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 
-public abstract class AbstractSqlTimeseriesDao<T extends AbsractTsKvEntity> extends JpaAbstractDaoListeningExecutorService {
+public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningExecutorService {
 
     protected static final String DESC_ORDER = "DESC";
 
@@ -73,38 +65,4 @@ public abstract class AbstractSqlTimeseriesDao<T extends AbsractTsKvEntity> exte
             insertService.shutdown();
         }
     }
-
-    protected abstract ListenableFuture<Optional<TsKvEntry>> findAndAggregateAsync(TenantId tenantId, EntityId entityId, String key, long startTs, long endTs, long ts, Aggregation aggregation);
-
-    protected void switchAgregation(EntityId entityId, String key, long startTs, long endTs, Aggregation aggregation, List<CompletableFuture<T>> entitiesFutures, String entityIdStr, String tenantIdStr) {
-        switch (aggregation) {
-            case AVG:
-                finfAvg(entityId, key, startTs, endTs, entitiesFutures, entityIdStr, tenantIdStr);
-                break;
-            case MAX:
-                findMax(entityId, key, startTs, endTs, entitiesFutures, entityIdStr, tenantIdStr);
-                break;
-            case MIN:
-                findMin(entityId, key, startTs, endTs, entitiesFutures, entityIdStr, tenantIdStr);
-                break;
-            case SUM:
-                findSum(entityId, key, startTs, endTs, entitiesFutures, entityIdStr, tenantIdStr);
-                break;
-            case COUNT:
-                findCount(entityId, key, startTs, endTs, entitiesFutures, entityIdStr, tenantIdStr);
-                break;
-            default:
-                throw new IllegalArgumentException("Not supported aggregation type: " + aggregation);
-        }
-    }
-
-    protected abstract void finfAvg(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<T>> entitiesFutures, String entityIdStr, String tenantIdStr);
-
-    protected abstract void findMax(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<T>> entitiesFutures, String entityIdStr, String tenantIdStr);
-
-    protected abstract void findMin(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<T>> entitiesFutures, String entityIdStr, String tenantIdStr);
-
-    protected abstract void findSum(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<T>> entitiesFutures, String entityIdStr, String tenantIdStr);
-
-    protected abstract void findCount(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<T>> entitiesFutures, String entityIdStr, String tenantIdStr);
 }

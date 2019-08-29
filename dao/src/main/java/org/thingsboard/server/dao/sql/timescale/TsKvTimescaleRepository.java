@@ -20,14 +20,12 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.model.sql.TimescaleTsKvCompositeKey;
 import org.thingsboard.server.dao.model.sql.TimescaleTsKvEntity;
 import org.thingsboard.server.dao.util.TimescaleDBTsDao;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 @TimescaleDBTsDao
 public interface TsKvTimescaleRepository extends CrudRepository<TimescaleTsKvEntity, TimescaleTsKvCompositeKey> {
@@ -65,102 +63,4 @@ public interface TsKvTimescaleRepository extends CrudRepository<TimescaleTsKvEnt
                 @Param("startTs") long startTs,
                 @Param("endTs") long endTs);
 
-    @Async
-    @Query("SELECT new TimescaleTsKvEntity(MAX(tskv.strValue)) FROM TimescaleTsKvEntity tskv " +
-            "WHERE tskv.strValue IS NOT NULL " +
-            "AND tskv.tenantId = :tenantId AND tskv.entityId = :entityId " +
-            "AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts <= :endTs")
-    CompletableFuture<TimescaleTsKvEntity> findStringMax(
-            @Param("tenantId") String tenantId,
-            @Param("entityId") String entityId,
-            @Param("entityKey") String entityKey,
-            @Param("startTs") long startTs,
-            @Param("endTs") long endTs);
-
-    @Async
-    @Query("SELECT new TimescaleTsKvEntity(MAX(COALESCE(tskv.longValue, -9223372036854775807)), " +
-            "MAX(COALESCE(tskv.doubleValue, -1.79769E+308)), " +
-            "SUM(CASE WHEN tskv.longValue IS NULL THEN 0 ELSE 1 END), " +
-            "SUM(CASE WHEN tskv.doubleValue IS NULL THEN 0 ELSE 1 END), " +
-            "'MAX') FROM TimescaleTsKvEntity tskv " +
-            "WHERE tskv.tenantId = :tenantId AND tskv.entityId = :entityId " +
-            "AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts <= :endTs")
-    CompletableFuture<TimescaleTsKvEntity> findNumericMax(
-            @Param("tenantId") String tenantId,
-            @Param("entityId") String entityId,
-            @Param("entityKey") String entityKey,
-            @Param("startTs") long startTs,
-            @Param("endTs") long endTs);
-
-
-    @Async
-    @Query("SELECT new TimescaleTsKvEntity(MIN(tskv.strValue)) FROM TimescaleTsKvEntity tskv " +
-            "WHERE tskv.strValue IS NOT NULL " +
-            "AND tskv.tenantId = :tenantId AND tskv.entityId = :entityId " +
-            "AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts <= :endTs")
-    CompletableFuture<TimescaleTsKvEntity> findStringMin(
-            @Param("tenantId") String tenantId,
-            @Param("entityId") String entityId,
-            @Param("entityKey") String entityKey,
-            @Param("startTs") long startTs,
-            @Param("endTs") long endTs);
-
-    @Async
-    @Query("SELECT new TimescaleTsKvEntity(MIN(COALESCE(tskv.longValue, 9223372036854775807)), " +
-            "MIN(COALESCE(tskv.doubleValue, 1.79769E+308)), " +
-            "SUM(CASE WHEN tskv.longValue IS NULL THEN 0 ELSE 1 END), " +
-            "SUM(CASE WHEN tskv.doubleValue IS NULL THEN 0 ELSE 1 END), " +
-            "'MIN') FROM TimescaleTsKvEntity tskv " +
-            "WHERE tskv.tenantId = :tenantId AND tskv.entityId = :entityId " +
-            "AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts <= :endTs")
-    CompletableFuture<TimescaleTsKvEntity> findNumericMin(
-            @Param("tenantId") String tenantId,
-            @Param("entityId") String entityId,
-            @Param("entityKey") String entityKey,
-            @Param("startTs") long startTs,
-            @Param("endTs") long endTs);
-
-    @Async
-    @Query("SELECT new TimescaleTsKvEntity(SUM(CASE WHEN tskv.booleanValue IS NULL THEN 0 ELSE 1 END), " +
-            "SUM(CASE WHEN tskv.strValue IS NULL THEN 0 ELSE 1 END), " +
-            "SUM(CASE WHEN tskv.longValue IS NULL THEN 0 ELSE 1 END), " +
-            "SUM(CASE WHEN tskv.doubleValue IS NULL THEN 0 ELSE 1 END)) FROM TimescaleTsKvEntity tskv " +
-            "WHERE tskv.tenantId = :tenantId AND tskv.entityId = :entityId " +
-            "AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts <= :endTs")
-    CompletableFuture<TimescaleTsKvEntity> findCount(
-            @Param("tenantId") String tenantId,
-            @Param("entityId") String entityId,
-            @Param("entityKey") String entityKey,
-            @Param("startTs") long startTs,
-            @Param("endTs") long endTs);
-
-    @Async
-    @Query("SELECT new TimescaleTsKvEntity(SUM(COALESCE(tskv.longValue, 0)), " +
-            "SUM(COALESCE(tskv.doubleValue, 0.0)), " +
-            "SUM(CASE WHEN tskv.longValue IS NULL THEN 0 ELSE 1 END), " +
-            "SUM(CASE WHEN tskv.doubleValue IS NULL THEN 0 ELSE 1 END), " +
-            "'AVG') FROM TimescaleTsKvEntity tskv " +
-            "WHERE tskv.tenantId = :tenantId AND tskv.entityId = :entityId " +
-            "AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts <= :endTs")
-    CompletableFuture<TimescaleTsKvEntity> findAvg(
-            @Param("tenantId") String tenantId,
-            @Param("entityId") String entityId,
-            @Param("entityKey") String entityKey,
-            @Param("startTs") long startTs,
-            @Param("endTs") long endTs);
-
-    @Async
-    @Query("SELECT new TimescaleTsKvEntity(SUM(COALESCE(tskv.longValue, 0)), " +
-            "SUM(COALESCE(tskv.doubleValue, 0.0)), " +
-            "SUM(CASE WHEN tskv.longValue IS NULL THEN 0 ELSE 1 END), " +
-            "SUM(CASE WHEN tskv.doubleValue IS NULL THEN 0 ELSE 1 END), " +
-            "'SUM') FROM TimescaleTsKvEntity tskv " +
-            "WHERE tskv.tenantId = :tenantId AND tskv.entityId = :entityId " +
-            "AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts <= :endTs")
-    CompletableFuture<TimescaleTsKvEntity> findSum(
-            @Param("tenantId") String tenantId,
-            @Param("entityId") String entityId,
-            @Param("entityKey") String entityKey,
-            @Param("startTs") long startTs,
-            @Param("endTs") long endTs);
 }
