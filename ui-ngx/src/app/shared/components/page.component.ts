@@ -19,7 +19,7 @@ import { select, Store } from '@ngrx/store';
 import { AppState } from '../../core/core.state';
 import { Observable, Subscription } from 'rxjs';
 import { selectIsLoading } from '../../core/interceptors/load.selectors';
-import { delay } from 'rxjs/operators';
+import { delay, share } from 'rxjs/operators';
 import { AbstractControl } from '@angular/forms';
 
 export abstract class PageComponent implements OnDestroy {
@@ -29,7 +29,7 @@ export abstract class PageComponent implements OnDestroy {
   disabledOnLoadFormControls: Array<AbstractControl> = [];
 
   protected constructor(protected store: Store<AppState>) {
-    this.isLoading$ = this.store.pipe(delay(0), select(selectIsLoading), delay(100));
+    this.isLoading$ = this.store.pipe(delay(0), select(selectIsLoading), share());
   }
 
   protected registerDisableOnLoadFormControl(control: AbstractControl) {

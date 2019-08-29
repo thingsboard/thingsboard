@@ -27,12 +27,19 @@ import { AuditLogTableComponent } from './audit-log/audit-log-table.component';
 import { EventTableHeaderComponent } from '@home/components/event/event-table-header.component';
 import { EventTableComponent } from '@home/components/event/event-table.component';
 import { RelationTableComponent } from '@home/components/relation/relation-table.component';
+import { RelationDialogComponent } from './relation/relation-dialog.component';
+import { AlarmTableHeaderComponent } from '@home/components/alarm/alarm-table-header.component';
+import { AlarmTableComponent } from '@home/components/alarm/alarm-table.component';
+import { AlarmDetailsDialogComponent } from '@home/components/alarm/alarm-details-dialog.component';
 
 @NgModule({
   entryComponents: [
     AddEntityDialogComponent,
     AuditLogDetailsDialogComponent,
-    EventTableHeaderComponent
+    EventTableHeaderComponent,
+    RelationDialogComponent,
+    AlarmTableHeaderComponent,
+    AlarmDetailsDialogComponent
   ],
   declarations:
     [
@@ -45,7 +52,11 @@ import { RelationTableComponent } from '@home/components/relation/relation-table
       AuditLogDetailsDialogComponent,
       EventTableHeaderComponent,
       EventTableComponent,
-      RelationTableComponent
+      RelationTableComponent,
+      RelationDialogComponent,
+      AlarmTableHeaderComponent,
+      AlarmTableComponent,
+      AlarmDetailsDialogComponent
     ],
   imports: [
     CommonModule,
@@ -59,7 +70,9 @@ import { RelationTableComponent } from '@home/components/relation/relation-table
     ContactComponent,
     AuditLogTableComponent,
     EventTableComponent,
-    RelationTableComponent
+    RelationTableComponent,
+    AlarmTableComponent,
+    AlarmDetailsDialogComponent
   ]
 })
 export class HomeComponentsModule { }

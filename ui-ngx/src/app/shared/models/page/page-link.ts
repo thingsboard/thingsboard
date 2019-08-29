@@ -96,7 +96,7 @@ export class PageLink {
     pageData.totalElements = pageData.data.length;
     pageData.totalPages = Math.ceil(pageData.totalElements / this.pageSize);
     if (this.sortOrder) {
-      pageData.data = pageData.data.sort(this.sort);
+      pageData.data = pageData.data.sort((a, b) => this.sort(a, b));
     }
     const startIndex = this.pageSize * this.page;
     const endIndex = startIndex + this.pageSize;

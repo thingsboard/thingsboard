@@ -40,5 +40,5 @@ public interface AlarmDao extends Dao<Alarm> {
 
     Alarm save(TenantId tenantId, Alarm alarm);
 
-    ListenableFuture<PageData<AlarmInfo>> findAlarms(TenantId tenantId, AlarmQuery query);
+    PageData<AlarmInfo> findAlarms(TenantId tenantId, AlarmQuery query);
 }

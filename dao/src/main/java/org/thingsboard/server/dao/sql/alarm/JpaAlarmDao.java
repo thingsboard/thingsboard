@@ -43,7 +43,12 @@ import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
+
+import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
+import static org.thingsboard.server.dao.DaoUtil.endTimeToId;
+import static org.thingsboard.server.dao.DaoUtil.startTimeToId;
 
 /**
  * Created by Valerii Sosliuk on 5/19/2017.
@@ -93,7 +98,7 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     }
 
     @Override
-    public ListenableFuture<PageData<AlarmInfo>> findAlarms(TenantId tenantId, AlarmQuery query) {
+    public PageData<AlarmInfo> findAlarms(TenantId tenantId, AlarmQuery query) {
         log.trace("Try to find alarms by entity [{}], status [{}] and pageLink [{}]", query.getAffectedEntityId(), query.getStatus(), query.getPageLink());
         EntityId affectedEntity = query.getAffectedEntityId();
         String searchStatusName;
@@ -105,17 +110,18 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
             searchStatusName = query.getStatus().name();
         }
         String relationType = BaseAlarmService.ALARM_RELATION_PREFIX + searchStatusName;
-        ListenableFuture<PageData<EntityRelation>> relations = relationDao.findRelations(tenantId, affectedEntity, relationType, RelationTypeGroup.ALARM, EntityType.ALARM, query.getPageLink());
-        return Futures.transformAsync(relations, input -> {
-            List<ListenableFuture<AlarmInfo>> alarmFutures = new ArrayList<>(input.getData().size());
-            for (EntityRelation relation : input.getData()) {
-                alarmFutures.add(Futures.transform(
-                        findAlarmByIdAsync(tenantId, relation.getTo().getId()),
-                        AlarmInfo::new));
-            }
-            return Futures.transform(Futures.successfulAsList(alarmFutures), alarmInfos -> {
-                return new PageData(alarmInfos, input.getTotalPages(), input.getTotalElements(), input.hasNext());
-            });
-        });
+
+        return DaoUtil.toPageData(
+            alarmRepository.findAlarms(
+                    fromTimeUUID(tenantId.getId()),
+                    fromTimeUUID(affectedEntity.getId()),
+                    affectedEntity.getEntityType().name(),
+                    relationType,
+                    startTimeToId(query.getPageLink().getStartTime()),
+                    endTimeToId(query.getPageLink().getEndTime()),
+                    Objects.toString(query.getPageLink().getTextSearch(), ""),
+                    DaoUtil.toPageable(query.getPageLink())
+            )
+        );
     }
 }

@@ -16,9 +16,17 @@
 
 -->
 <mat-tab *ngIf="entity"
+         label="{{ 'alarm.alarms' | translate }}" #alarmsTab="matTab">
+  <tb-alarm-table [active]="alarmsTab.isActive" [entityId]="entity.id"></tb-alarm-table>
+</mat-tab>
+<mat-tab *ngIf="entity"
          label="{{ 'customer.events' | translate }}" #eventsTab="matTab">
   <tb-event-table [active]="eventsTab.isActive" [defaultEventType]="eventTypes.ERROR" [tenantId]="entity.tenantId.id"
                   [entityId]="entity.id"></tb-event-table>
+</mat-tab>
+<mat-tab *ngIf="entity"
+         label="{{ 'relation.relations' | translate }}" #relationsTab="matTab">
+  <tb-relation-table [active]="relationsTab.isActive" [entityId]="entity.id"></tb-relation-table>
 </mat-tab>
 <mat-tab *ngIf="entity && authUser.authority === authorities.TENANT_ADMIN"
          label="{{ 'audit-log.audit-logs' | translate }}" #auditLogsTab="matTab">

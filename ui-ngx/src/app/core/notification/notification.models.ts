@@ -17,6 +17,7 @@
 
 export interface NotificationState {
   notification: NotificationMessage;
+  hideNotification: HideNotification;
 }
 
 export declare type NotificationType = 'info' | 'success' | 'error';
@@ -30,4 +31,8 @@ export class NotificationMessage {
   duration?: number;
   horizontalPosition?: NotificationHorizontalPosition;
   verticalPosition?: NotificationVerticalPosition;
+}
+
+export class HideNotification {
+  target?: string;
 }

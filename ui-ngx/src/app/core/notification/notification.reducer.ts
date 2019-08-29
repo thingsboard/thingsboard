@@ -18,7 +18,8 @@ import { NotificationState } from './notification.models';
 import { NotificationActions, NotificationActionTypes } from './notification.actions';
 
 export const initialState: NotificationState = {
-  notification: null
+  notification: null,
+  hideNotification: null
 };
 
 export function notificationReducer(
@@ -28,6 +29,8 @@ export function notificationReducer(
   switch (action.type) {
     case NotificationActionTypes.SHOW_NOTIFICATION:
       return { ...state, notification: action.notification };
+    case NotificationActionTypes.HIDE_NOTIFICATION:
+      return { ...state, hideNotification: action.hideNotification };
     default:
       return state;
   }

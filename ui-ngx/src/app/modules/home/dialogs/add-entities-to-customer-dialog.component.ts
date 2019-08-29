@@ -26,6 +26,8 @@ import {forkJoin, Observable} from 'rxjs';
 import {AssetService} from '@core/http/asset.service';
 import {EntityViewService} from '@core/http/entity-view.service';
 import {DashboardService} from '@core/http/dashboard.service';
+import { DialogComponent } from '@shared/components/dialog.component';
+import { Router } from '@angular/router';
 
 export interface AddEntitiesToCustomerDialogData {
   customerId: string;
@@ -38,7 +40,8 @@ export interface AddEntitiesToCustomerDialogData {
   providers: [{provide: ErrorStateMatcher, useExisting: AddEntitiesToCustomerDialogComponent}],
   styleUrls: []
 })
-export class AddEntitiesToCustomerDialogComponent extends PageComponent implements OnInit, ErrorStateMatcher {
+export class AddEntitiesToCustomerDialogComponent extends
+  DialogComponent<AddEntitiesToCustomerDialogComponent, boolean> implements OnInit, ErrorStateMatcher {
 
   addEntitiesToCustomerFormGroup: FormGroup;
 
@@ -50,6 +53,7 @@ export class AddEntitiesToCustomerDialogComponent extends PageComponent implemen
   assignToCustomerText: string;
 
   constructor(protected store: Store<AppState>,
+              protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: AddEntitiesToCustomerDialogData,
               private deviceService: DeviceService,
               private assetService: AssetService,
@@ -58,7 +62,7 @@ export class AddEntitiesToCustomerDialogComponent extends PageComponent implemen
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<AddEntitiesToCustomerDialogComponent, boolean>,
               public fb: FormBuilder) {
-    super(store);
+    super(store, router, dialogRef);
     this.entityType = data.entityType;
   }
 

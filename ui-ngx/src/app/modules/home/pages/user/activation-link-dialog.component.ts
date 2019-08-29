@@ -21,6 +21,8 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
+import { DialogComponent } from '@shared/components/dialog.component';
+import { Router } from '@angular/router';
 
 export interface ActivationLinkDialogData {
   activationLink: string;
@@ -30,15 +32,16 @@ export interface ActivationLinkDialogData {
   selector: 'tb-activation-link-dialog',
   templateUrl: './activation-link-dialog.component.html'
 })
-export class ActivationLinkDialogComponent extends PageComponent implements OnInit {
+export class ActivationLinkDialogComponent extends DialogComponent<ActivationLinkDialogComponent, void> implements OnInit {
 
   activationLink: string;
 
   constructor(protected store: Store<AppState>,
+              protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: ActivationLinkDialogData,
               public dialogRef: MatDialogRef<ActivationLinkDialogComponent, void>,
               private translate: TranslateService) {
-    super(store);
+    super(store, router, dialogRef);
     this.activationLink = this.data.activationLink;
   }
 

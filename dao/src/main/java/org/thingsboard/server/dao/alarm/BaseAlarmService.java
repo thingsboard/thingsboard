@@ -261,27 +261,25 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
 
     @Override
     public ListenableFuture<PageData<AlarmInfo>> findAlarms(TenantId tenantId, AlarmQuery query) {
-        ListenableFuture<PageData<AlarmInfo>> alarms = alarmDao.findAlarms(tenantId, query);
+        PageData<AlarmInfo> alarms = alarmDao.findAlarms(tenantId, query);
         if (query.getFetchOriginator() != null && query.getFetchOriginator().booleanValue()) {
-            alarms = Futures.transformAsync(alarms, input -> {
-                List<ListenableFuture<AlarmInfo>> alarmFutures = new ArrayList<>(input.getData().size());
-                for (AlarmInfo alarmInfo : input.getData()) {
-                    alarmFutures.add(Futures.transform(
-                            entityService.fetchEntityNameAsync(tenantId, alarmInfo.getOriginator()), originatorName -> {
-                                if (originatorName == null) {
-                                    originatorName = "Deleted";
-                                }
-                                alarmInfo.setOriginatorName(originatorName);
-                                return alarmInfo;
+            List<ListenableFuture<AlarmInfo>> alarmFutures = new ArrayList<>(alarms.getData().size());
+            for (AlarmInfo alarmInfo : alarms.getData()) {
+                alarmFutures.add(Futures.transform(
+                        entityService.fetchEntityNameAsync(tenantId, alarmInfo.getOriginator()), originatorName -> {
+                            if (originatorName == null) {
+                                originatorName = "Deleted";
                             }
-                    ));
-                }
-                return Futures.transform(Futures.successfulAsList(alarmFutures), alarmInfos -> {
-                    return new PageData(alarmInfos, input.getTotalPages(), input.getTotalElements(), input.hasNext());
-                });
+                            alarmInfo.setOriginatorName(originatorName);
+                            return alarmInfo;
+                        }
+                ));
+            }
+            return Futures.transform(Futures.successfulAsList(alarmFutures), alarmInfos -> {
+                return new PageData(alarmInfos, alarms.getTotalPages(), alarms.getTotalElements(), alarms.hasNext());
             });
         }
-        return alarms;
+        return Futures.immediateFuture(alarms);
     }
 
     @Override
@@ -293,14 +291,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         AlarmQuery query;
         while (hasNext && AlarmSeverity.CRITICAL != highestSeverity) {
             query = new AlarmQuery(entityId, nextPageLink, alarmSearchStatus, alarmStatus, false);
-            PageData<AlarmInfo> alarms;
-            try {
-                alarms = alarmDao.findAlarms(tenantId, query).get();
-            } catch (ExecutionException | InterruptedException e) {
-                log.warn("Failed to find highest alarm severity. EntityId: [{}], AlarmSearchStatus: [{}], AlarmStatus: [{}]",
-                        entityId, alarmSearchStatus, alarmStatus);
-                throw new RuntimeException(e);
-            }
+            PageData<AlarmInfo> alarms = alarmDao.findAlarms(tenantId, query);
             if (alarms.hasNext()) {
                 nextPageLink = nextPageLink.nextPageLink();
             }

@@ -26,6 +26,8 @@ import {EntityType} from '@shared/models/entity-type.models';
 import {forkJoin, Observable} from 'rxjs';
 import {AssetService} from '@core/http/asset.service';
 import {EntityViewService} from '@core/http/entity-view.service';
+import { DialogComponent } from '@shared/components/dialog.component';
+import { Router } from '@angular/router';
 
 export interface AssignToCustomerDialogData {
   entityIds: Array<EntityId>;
@@ -38,7 +40,8 @@ export interface AssignToCustomerDialogData {
   providers: [{provide: ErrorStateMatcher, useExisting: AssignToCustomerDialogComponent}],
   styleUrls: []
 })
-export class AssignToCustomerDialogComponent extends PageComponent implements OnInit, ErrorStateMatcher {
+export class AssignToCustomerDialogComponent extends
+  DialogComponent<AssignToCustomerDialogComponent, boolean> implements OnInit, ErrorStateMatcher {
 
   assignToCustomerFormGroup: FormGroup;
 
@@ -50,6 +53,7 @@ export class AssignToCustomerDialogComponent extends PageComponent implements On
   assignToCustomerText: string;
 
   constructor(protected store: Store<AppState>,
+              protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: AssignToCustomerDialogData,
               private deviceService: DeviceService,
               private assetService: AssetService,
@@ -57,7 +61,7 @@ export class AssignToCustomerDialogComponent extends PageComponent implements On
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<AssignToCustomerDialogComponent, boolean>,
               public fb: FormBuilder) {
-    super(store);
+    super(store, router, dialogRef);
   }
 
   ngOnInit(): void {

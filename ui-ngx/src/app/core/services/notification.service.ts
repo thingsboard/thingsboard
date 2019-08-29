@@ -15,7 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { NotificationMessage } from '@app/core/notification/notification.models';
+import { HideNotification, NotificationMessage } from '@app/core/notification/notification.models';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 
 
@@ -28,6 +28,8 @@ export class NotificationService {
 
   private notificationSubject: Subject<NotificationMessage> = new Subject();
 
+  private hideNotificationSubject: Subject<HideNotification> = new Subject();
+
   constructor(
   ) {
   }
@@ -36,8 +38,15 @@ export class NotificationService {
     this.notificationSubject.next(notification);
   }
 
-  getNotification(): Observable<NotificationMessage> {
-    return this.notificationSubject;
+  hideNotification(hideNotification: HideNotification) {
+    this.hideNotificationSubject.next(hideNotification);
   }
 
+  getNotification(): Observable<NotificationMessage> {
+    return this.notificationSubject.asObservable();
+  }
+
+  getHideNotification(): Observable<HideNotification> {
+    return this.hideNotificationSubject.asObservable();
+  }
 }

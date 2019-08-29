@@ -44,4 +44,13 @@ export class NotificationEffects {
     })
   );
 
+  @Effect({dispatch: false})
+  hideNotification = this.actions$.pipe(
+    ofType(
+      NotificationActionTypes.HIDE_NOTIFICATION,
+    ),
+    map(({ hideNotification }) => {
+      this.notificationService.hideNotification(hideNotification);
+    })
+  );
 }
