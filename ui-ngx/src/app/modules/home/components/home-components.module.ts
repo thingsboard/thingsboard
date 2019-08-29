@@ -31,6 +31,9 @@ import { RelationDialogComponent } from './relation/relation-dialog.component';
 import { AlarmTableHeaderComponent } from '@home/components/alarm/alarm-table-header.component';
 import { AlarmTableComponent } from '@home/components/alarm/alarm-table.component';
 import { AlarmDetailsDialogComponent } from '@home/components/alarm/alarm-details-dialog.component';
+import { AttributeTableComponent } from '@home/components/attribute/attribute-table.component';
+import { AddAttributeDialogComponent } from './attribute/add-attribute-dialog.component';
+import { EditAttributeValuePanelComponent } from './attribute/edit-attribute-value-panel.component';
 
 @NgModule({
   entryComponents: [
@@ -39,7 +42,9 @@ import { AlarmDetailsDialogComponent } from '@home/components/alarm/alarm-detail
     EventTableHeaderComponent,
     RelationDialogComponent,
     AlarmTableHeaderComponent,
-    AlarmDetailsDialogComponent
+    AlarmDetailsDialogComponent,
+    AddAttributeDialogComponent,
+    EditAttributeValuePanelComponent
   ],
   declarations:
     [
@@ -56,7 +61,10 @@ import { AlarmDetailsDialogComponent } from '@home/components/alarm/alarm-detail
       RelationDialogComponent,
       AlarmTableHeaderComponent,
       AlarmTableComponent,
-      AlarmDetailsDialogComponent
+      AlarmDetailsDialogComponent,
+      AttributeTableComponent,
+      AddAttributeDialogComponent,
+      EditAttributeValuePanelComponent
     ],
   imports: [
     CommonModule,
@@ -72,7 +80,8 @@ import { AlarmDetailsDialogComponent } from '@home/components/alarm/alarm-detail
     EventTableComponent,
     RelationTableComponent,
     AlarmTableComponent,
-    AlarmDetailsDialogComponent
+    AlarmDetailsDialogComponent,
+    AttributeTableComponent
   ]
 })
 export class HomeComponentsModule { }

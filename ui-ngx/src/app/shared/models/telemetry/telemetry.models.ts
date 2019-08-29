@@ -15,9 +15,47 @@
 ///
 
 
+import { AlarmSeverity } from '@shared/models/alarm.models';
+
 export enum DataKeyType {
   timeseries = 'timeseries',
   attribute = 'attribute',
   function = 'function',
   alarm = 'alarm'
+}
+
+export enum LatestTelemetry {
+  LATEST_TELEMETRY = 'LATEST_TELEMETRY'
+}
+
+export enum AttributeScope {
+  CLIENT_SCOPE = 'CLIENT_SCOPE',
+  SERVER_SCOPE = 'SERVER_SCOPE',
+  SHARED_SCOPE = 'SHARED_SCOPE'
+}
+
+export type TelemetryType = LatestTelemetry | AttributeScope;
+
+export const telemetryTypeTranslations = new Map<TelemetryType, string>(
+  [
+    [LatestTelemetry.LATEST_TELEMETRY, 'attribute.scope-latest-telemetry'],
+    [AttributeScope.CLIENT_SCOPE, 'attribute.scope-client'],
+    [AttributeScope.SERVER_SCOPE, 'attribute.scope-server'],
+    [AttributeScope.SHARED_SCOPE, 'attribute.scope-shared']
+  ]
+);
+
+export const isClientSideTelemetryType = new Map<TelemetryType, boolean>(
+  [
+    [LatestTelemetry.LATEST_TELEMETRY, true],
+    [AttributeScope.CLIENT_SCOPE, true],
+    [AttributeScope.SERVER_SCOPE, false],
+    [AttributeScope.SHARED_SCOPE, false]
+  ]
+);
+
+export interface AttributeData {
+  lastUpdateTs: number;
+  key: string;
+  value: any;
 }

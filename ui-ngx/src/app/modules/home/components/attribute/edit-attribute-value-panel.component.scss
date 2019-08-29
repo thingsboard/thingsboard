@@ -14,21 +14,6 @@
  * limitations under the License.
  */
 :host {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
+  background-color: #f9f9f9;
 }
 
-:host ::ng-deep {
-  .mat-tab-body-wrapper {
-    position: absolute;
-    top: 49px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-  }
-  .mat-tab-label {
-    min-width: 40px;
-  }
-}

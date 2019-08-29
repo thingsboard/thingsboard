@@ -13,22 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
 
 :host ::ng-deep {
-  .mat-tab-body-wrapper {
-    position: absolute;
-    top: 49px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-  }
-  .mat-tab-label {
-    min-width: 40px;
+  mat-form-field.tb-value-type {
+    .mat-form-field-infix {
+      padding-bottom: 1px;
+    }
+    mat-select-trigger {
+      mat-icon {
+        margin-right: 16px;
+      }
+    }
   }
 }

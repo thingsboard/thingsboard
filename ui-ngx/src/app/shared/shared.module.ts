@@ -70,7 +70,7 @@ import {TimeintervalComponent} from '@shared/components/time/timeinterval.compon
 import {DatetimePeriodComponent} from '@shared/components/time/datetime-period.component';
 import {EnumToArrayPipe} from '@shared/pipe/enum-to-array.pipe';
 import {ClipboardModule} from 'ngx-clipboard';
-// import { ValueInputComponent } from '@shared/components/value-input.component';
+import { ValueInputComponent } from '@shared/components/value-input.component';
 import {FullscreenDirective} from '@shared/components/fullscreen.directive';
 import {HighlightPipe} from '@shared/pipe/highlight.pipe';
 import {DashboardAutocompleteComponent} from '@shared/components/dashboard-autocomplete.component';
@@ -93,7 +93,6 @@ import { JsonObjectEditComponent } from './components/json-object-edit.component
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
     HighlightPipe
-//    IntervalCountPipe,
   ],
   entryComponents: [
     TbSnackBarComponent,
@@ -116,7 +115,7 @@ import { JsonObjectEditComponent } from './components/json-object-edit.component
     TimeintervalComponent,
     DatetimePeriodComponent,
     DatetimeComponent,
-//    ValueInputComponent,
+    ValueInputComponent,
     DashboardAutocompleteComponent,
     EntitySubTypeAutocompleteComponent,
     EntitySubTypeSelectComponent,
@@ -202,7 +201,7 @@ import { JsonObjectEditComponent } from './components/json-object-edit.component
     RelationTypeAutocompleteComponent,
     SocialSharePanelComponent,
     JsonObjectEditComponent,
-//    ValueInputComponent,
+    ValueInputComponent,
     MatButtonModule,
     MatCheckboxModule,
     MatIconModule,

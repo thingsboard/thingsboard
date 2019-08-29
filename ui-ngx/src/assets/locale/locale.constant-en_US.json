@@ -296,7 +296,9 @@
         "add-to-dashboard": "Add to dashboard",
         "add-widget-to-dashboard": "Add widget to dashboard",
         "selected-attributes": "{ count, plural, 1 {1 attribute} other {# attributes} } selected",
-        "selected-telemetry": "{ count, plural, 1 {1 telemetry unit} other {# telemetry units} } selected"
+        "selected-telemetry": "{ count, plural, 1 {1 telemetry unit} other {# telemetry units} } selected",
+        "no-attributes-text": "No attributes found",
+        "no-telemetry-text": "No telemetry found"
     },
     "audit-log": {
         "audit": "Audit",
@@ -1491,11 +1493,14 @@
         "type": "Value type",
         "string": "String",
         "string-value": "String value",
+        "string-value-required": "String value is required",
         "integer": "Integer",
         "integer-value": "Integer value",
+        "integer-value-required": "Integer value is required",
         "invalid-integer-value": "Invalid integer value",
         "double": "Double",
         "double-value": "Double value",
+        "double-value-required": "Double value is required",
         "boolean": "Boolean",
         "boolean-value": "Boolean value",
         "false": "False",
