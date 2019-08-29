@@ -166,6 +166,19 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
       }
     ],
     [
+      EntityType.ALARM,
+      {
+        type: 'entity.type-alarm',
+        typePlural: 'entity.type-alarms',
+        list: 'entity.list-of-alarms',
+        nameStartsWith: 'entity.alarm-name-starts-with',
+        details: 'dashboard.dashboard-details',
+        noEntities: 'alarm.no-alarms-prompt',
+        search: 'alarm.search',
+        selectedEntities: 'alarm.selected-alarms'
+      }
+    ],
+    [
       EntityType.WIDGETS_BUNDLE,
       {
         details: 'widgets-bundle.widgets-bundle-details',

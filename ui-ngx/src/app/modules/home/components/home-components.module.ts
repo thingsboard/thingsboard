@@ -28,13 +28,18 @@ import { EventTableHeaderComponent } from '@home/components/event/event-table-he
 import { EventTableComponent } from '@home/components/event/event-table.component';
 import { RelationTableComponent } from '@home/components/relation/relation-table.component';
 import { RelationDialogComponent } from './relation/relation-dialog.component';
+import { AlarmTableHeaderComponent } from '@home/components/alarm/alarm-table-header.component';
+import { AlarmTableComponent } from '@home/components/alarm/alarm-table.component';
+import { AlarmDetailsDialogComponent } from '@home/components/alarm/alarm-details-dialog.component';
 
 @NgModule({
   entryComponents: [
     AddEntityDialogComponent,
     AuditLogDetailsDialogComponent,
     EventTableHeaderComponent,
-    RelationDialogComponent
+    RelationDialogComponent,
+    AlarmTableHeaderComponent,
+    AlarmDetailsDialogComponent
   ],
   declarations:
     [
@@ -48,7 +53,10 @@ import { RelationDialogComponent } from './relation/relation-dialog.component';
       EventTableHeaderComponent,
       EventTableComponent,
       RelationTableComponent,
-      RelationDialogComponent
+      RelationDialogComponent,
+      AlarmTableHeaderComponent,
+      AlarmTableComponent,
+      AlarmDetailsDialogComponent
     ],
   imports: [
     CommonModule,
@@ -62,7 +70,9 @@ import { RelationDialogComponent } from './relation/relation-dialog.component';
     ContactComponent,
     AuditLogTableComponent,
     EventTableComponent,
-    RelationTableComponent
+    RelationTableComponent,
+    AlarmTableComponent,
+    AlarmDetailsDialogComponent
   ]
 })
 export class HomeComponentsModule { }

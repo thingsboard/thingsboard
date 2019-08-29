@@ -15,12 +15,14 @@
  */
 package org.thingsboard.server.dao.sql.alarm;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.dao.model.sql.AlarmEntity;
+import org.thingsboard.server.dao.model.sql.AlarmInfoEntity;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
@@ -38,4 +40,26 @@ public interface AlarmRepository extends CrudRepository<AlarmEntity, String> {
                                                     @Param("entityType") EntityType entityType,
                                                     @Param("alarmType") String alarmType,
                                                     Pageable pageable);
+
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.AlarmInfoEntity(a) FROM AlarmEntity a, " +
+            "RelationEntity re " +
+            "WHERE a.tenantId = :tenantId " +
+            "AND a.id = re.toId AND re.toType = 'ALARM' " +
+            "AND re.relationTypeGroup = 'ALARM' " +
+            "AND re.relationType = :relationType " +
+            "AND re.fromId = :affectedEntityId " +
+            "AND re.fromType = :affectedEntityType " +
+            "AND (:startId IS NULL OR a.id >= :startId) " +
+            "AND (:endId IS NULL OR a.id <= :endId) " +
+            "AND (LOWER(a.type) LIKE LOWER(CONCAT(:searchText, '%'))" +
+            "OR LOWER(a.severity) LIKE LOWER(CONCAT(:searchText, '%'))" +
+            "OR LOWER(a.status) LIKE LOWER(CONCAT(:searchText, '%')))")
+    Page<AlarmInfoEntity> findAlarms(@Param("tenantId") String tenantId,
+                                     @Param("affectedEntityId") String affectedEntityId,
+                                     @Param("affectedEntityType") String affectedEntityType,
+                                     @Param("relationType") String relationType,
+                                     @Param("startId") String startId,
+                                     @Param("endId") String endId,
+                                     @Param("searchText") String searchText,
+                                     Pageable pageable);
 }

@@ -62,7 +62,7 @@
 </div>
 <div class="mat-padding" fxLayout="column">
   <mat-form-field class="mat-block"
-                  [fxShow]="!isEdit && assignedCustomersText
+                  [fxShow]="!isEdit && assignedCustomersText?.length
                               && dashboardScope === 'tenant'">
     <mat-label translate>dashboard.assignedToCustomers</mat-label>
     <input matInput disabled [ngModel]="assignedCustomersText">

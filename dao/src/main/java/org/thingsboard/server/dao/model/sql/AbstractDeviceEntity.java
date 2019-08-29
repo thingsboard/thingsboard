@@ -83,7 +83,7 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
     }
 
     public AbstractDeviceEntity(DeviceEntity deviceEntity) {
-        this.setId(deviceEntity.getId());;
+        this.setId(deviceEntity.getId());
         this.tenantId = deviceEntity.getTenantId();
         this.customerId = deviceEntity.getCustomerId();
         this.type = deviceEntity.getType();

@@ -20,6 +20,8 @@ import {TenantId} from '@shared/models/id/tenant-id';
 import {CustomerId} from '@shared/models/id/customer-id';
 import {AlarmId} from '@shared/models/id/alarm-id';
 import {EntityId} from '@shared/models/id/entity-id';
+import { ActionStatus } from '@shared/models/audit-log.models';
+import { TimePageLink } from '@shared/models/page/page-link';
 
 export enum AlarmSeverity {
   CRITICAL = 'CRITICAL',
@@ -36,6 +38,53 @@ export enum AlarmStatus {
   CLEARED_ACK = 'CLEARED_ACK'
 }
 
+export enum AlarmSearchStatus {
+  ANY = 'ANY',
+  ACTIVE = 'ACTIVE',
+  CLEARED = 'CLEARED',
+  ACK = 'ACK',
+  UNACK = 'UNACK'
+}
+
+export const alarmSeverityTranslations = new Map<AlarmSeverity, string>(
+  [
+    [AlarmSeverity.CRITICAL, 'alarm.severity-critical'],
+    [AlarmSeverity.MAJOR, 'alarm.severity-major'],
+    [AlarmSeverity.MINOR, 'alarm.severity-minor'],
+    [AlarmSeverity.WARNING, 'alarm.severity-warning'],
+    [AlarmSeverity.INDETERMINATE, 'alarm.severity-indeterminate']
+  ]
+);
+
+export const alarmStatusTranslations = new Map<AlarmStatus, string>(
+  [
+    [AlarmStatus.ACTIVE_UNACK, 'alarm.display-status.ACTIVE_UNACK'],
+    [AlarmStatus.ACTIVE_ACK, 'alarm.display-status.ACTIVE_ACK'],
+    [AlarmStatus.CLEARED_UNACK, 'alarm.display-status.CLEARED_UNACK'],
+    [AlarmStatus.CLEARED_ACK, 'alarm.display-status.CLEARED_ACK'],
+  ]
+);
+
+export const alarmSearchStatusTranslations = new Map<AlarmSearchStatus, string>(
+  [
+    [AlarmSearchStatus.ANY, 'alarm.search-status.ANY'],
+    [AlarmSearchStatus.ACTIVE, 'alarm.search-status.ACTIVE'],
+    [AlarmSearchStatus.CLEARED, 'alarm.search-status.CLEARED'],
+    [AlarmSearchStatus.ACK, 'alarm.search-status.ACK'],
+    [AlarmSearchStatus.UNACK, 'alarm.search-status.UNACK']
+  ]
+);
+
+export const alarmSeverityColors = new Map<AlarmSeverity, string>(
+  [
+    [AlarmSeverity.CRITICAL, 'red'],
+    [AlarmSeverity.MAJOR, 'orange'],
+    [AlarmSeverity.MINOR, '#ffca3d'],
+    [AlarmSeverity.WARNING, '#abab00'],
+    [AlarmSeverity.INDETERMINATE, 'green']
+  ]
+);
+
 export interface Alarm extends BaseData<AlarmId> {
   tenantId: TenantId;
   type: string;
@@ -48,4 +97,42 @@ export interface Alarm extends BaseData<AlarmId> {
   clearTs: number;
   propagate: boolean;
   details?: any;
+}
+
+export interface AlarmInfo extends Alarm {
+  originatorName: string;
+}
+
+export class AlarmQuery {
+
+  affectedEntityId: EntityId;
+  pageLink: TimePageLink;
+  searchStatus: AlarmSearchStatus;
+  status: AlarmStatus;
+  fetchOriginator: boolean;
+
+  constructor(entityId: EntityId, pageLink: TimePageLink,
+              searchStatus: AlarmSearchStatus, status: AlarmStatus,
+              fetchOriginator: boolean) {
+    this.affectedEntityId = entityId;
+    this.pageLink = pageLink;
+    this.searchStatus = searchStatus;
+    this.status = status;
+    this.fetchOriginator = fetchOriginator;
+  }
+
+  public toQuery(): string {
+    let query = `/${this.affectedEntityId.entityType}/${this.affectedEntityId.id}`;
+    query += this.pageLink.toQuery();
+    if (this.searchStatus) {
+      query += `&searchStatus=${this.searchStatus}`;
+    } else if (this.status) {
+      query += `&status=${this.status}`;
+    }
+    if (typeof this.fetchOriginator !== 'undefined' && this.fetchOriginator !== null) {
+      query += `&fetchOriginator=${this.fetchOriginator}`;
+    }
+    return query;
+  }
+
 }

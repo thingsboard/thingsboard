@@ -16,6 +16,10 @@
 
 -->
 <mat-tab *ngIf="entity"
+         label="{{ 'alarm.alarms' | translate }}" #alarmsTab="matTab">
+  <tb-alarm-table [active]="alarmsTab.isActive" [entityId]="entity.id"></tb-alarm-table>
+</mat-tab>
+<mat-tab *ngIf="entity"
          label="{{ 'rulechain.events' | translate }}" #eventsTab="matTab">
   <tb-event-table [active]="eventsTab.isActive"
                   [debugEventTypes]="[debugEventTypes.DEBUG_RULE_CHAIN]"

@@ -42,7 +42,6 @@ export abstract class DialogComponent<T, R = any> extends PageComponent implemen
   }
 
   ngOnDestroy(): void {
-    console.log('Dialog destroy called');
     super.ngOnDestroy();
     if (this.routerSubscription) {
       this.routerSubscription.unsubscribe();

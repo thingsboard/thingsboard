@@ -150,9 +150,11 @@ public class AlarmController extends BaseController {
             @RequestParam(required = false) String status,
             @RequestParam int pageSize,
             @RequestParam int page,
+            @RequestParam(required = false) String textSearch,
+            @RequestParam(required = false) String sortProperty,
+            @RequestParam(required = false) String sortOrder,
             @RequestParam(required = false) Long startTime,
             @RequestParam(required = false) Long endTime,
-            @RequestParam(required = false, defaultValue = "false") boolean ascOrder,
             @RequestParam(required = false) Boolean fetchOriginator
     ) throws ThingsboardException {
         checkParameter("EntityId", strEntityId);
@@ -165,9 +167,8 @@ public class AlarmController extends BaseController {
                     "and 'status' can't be specified at the same time!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
         checkEntityId(entityId, Operation.READ);
+        TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
         try {
-            TimePageLink pageLink = createTimePageLink(pageSize, page, "",
-                    "id", ascOrder ? "asc" : "desc", startTime, endTime);
             return checkNotNull(alarmService.findAlarms(getCurrentUser().getTenantId(), new AlarmQuery(entityId, pageLink, alarmSearchStatus, alarmStatus, fetchOriginator)).get());
         } catch (Exception e) {
             throw handleException(e);
