@@ -20,6 +20,8 @@ import { TenantId } from '@shared/models/id/tenant-id';
 import { CustomerId } from '@shared/models/id/customer-id';
 import { AlarmId } from '@shared/models/id/alarm-id';
 import { EntityId } from '@shared/models/id/entity-id';
+import { ActionStatus } from '@shared/models/audit-log.models';
+import { TimePageLink } from '@shared/models/page/page-link';
 
 export enum AlarmSeverity {
   CRITICAL = 'CRITICAL',
