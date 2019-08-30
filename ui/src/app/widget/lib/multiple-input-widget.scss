@@ -13,19 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.data;
+.tb-multiple-input {
+  height: 100%;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.relation.EntitySearchDirection;
-import org.thingsboard.server.common.data.relation.EntityTypeFilter;
+  .md-button.md-icon-button {
+    width: 32px;
+    min-width: 32px;
+    height: 32px;
+    min-height: 32px;
+    padding: 0 !important;
+    margin: 0;
+    line-height: 20px;
+  }
 
-import java.util.List;
+  .md-icon-button md-icon {
+    width: 20px;
+    min-width: 20px;
+    height: 20px;
+    min-height: 20px;
+    font-size: 20px;
 
-@Data
-public class RelationsQuery {
+    &:not([disabled]) {
+      color: #f66;
+    }
+  }
+}
 
-    private EntitySearchDirection direction;
-    private int maxLevel = 1;
-    private List<EntityTypeFilter> filters;
-    private boolean fetchLastLevelOnly = false;
+md-toast {
+  min-width: 0;
+
+  .md-toast-content {
+    font-size: 14px !important;
+  }
 }

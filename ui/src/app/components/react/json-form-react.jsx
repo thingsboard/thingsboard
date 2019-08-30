@@ -52,6 +52,7 @@ ReactSchemaForm.propTypes = {
         option: React.PropTypes.object,
         onModelChange: React.PropTypes.func,
         onColorClick: React.PropTypes.func,
+        onIconClick: React.PropTypes.func,
         onToggleFullscreen: React.PropTypes.func
 }
 
