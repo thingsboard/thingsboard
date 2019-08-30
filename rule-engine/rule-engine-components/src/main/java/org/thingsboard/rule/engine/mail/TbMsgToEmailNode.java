@@ -78,6 +78,7 @@ public class TbMsgToEmailNode implements TbNode {
         builder.bcc(fromTemplate(this.config.getBccTemplate(), msg.getMetaData()));
         builder.subject(fromTemplate(this.config.getSubjectTemplate(), msg.getMetaData()));
         builder.body(fromTemplate(this.config.getBodyTemplate(), msg.getMetaData()));
+        builder.htmlContent(this.config.isHtmlContent());
         return builder.build();
     }
 

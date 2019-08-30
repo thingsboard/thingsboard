@@ -196,7 +196,7 @@ public class DefaultMailService implements MailService {
     }
 
     @Override
-    public void send(String from, String to, String cc, String bcc, String subject, String body) throws MessagingException {
+    public void send(String from, String to, String cc, String bcc, String subject, String body, boolean htmlContent) throws MessagingException {
         MimeMessage mailMsg = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(mailMsg, "UTF-8");
         helper.setFrom(StringUtils.isBlank(from) ? mailFrom : from);
@@ -208,7 +208,7 @@ public class DefaultMailService implements MailService {
             helper.setBcc(bcc.split("\\s*,\\s*"));
         }
         helper.setSubject(subject);
-        helper.setText(body);
+        helper.setText(body, htmlContent);
         mailSender.send(helper.getMimeMessage());
     }
 
