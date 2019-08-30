@@ -39,7 +39,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.TS_COLUMN;
 
 @Data
 @MappedSuperclass
-public class AbsractTsKvEntity implements ToData<TsKvEntry> {
+public abstract class AbsractTsKvEntity implements ToData<TsKvEntry> {
 
     protected static final String SUM = "SUM";
     protected static final String AVG = "AVG";
@@ -52,7 +52,7 @@ public class AbsractTsKvEntity implements ToData<TsKvEntry> {
 
     @Id
     @Column(name = TS_COLUMN)
-    protected long ts;
+    protected Long ts;
 
     @Id
     @Column(name = KEY_COLUMN)
@@ -85,9 +85,7 @@ public class AbsractTsKvEntity implements ToData<TsKvEntry> {
         return new BasicTsKvEntry(ts, kvEntry);
     }
 
-    public boolean isNotEmpty() {
-        return strValue != null || longValue != null || doubleValue != null || booleanValue != null;
-    }
+    public abstract boolean isNotEmpty();
 
     protected static boolean isAllNull(Object... args) {
         for (Object arg : args) {

@@ -49,7 +49,7 @@ public final class TsKvEntity extends AbsractTsKvEntity implements ToData<TsKvEn
     }
 
     public TsKvEntity(Long longValue, Double doubleValue, Long longCountValue, Long doubleCountValue, String aggType) {
-        if(!isAllNull(longValue, doubleValue, longCountValue, doubleCountValue)) {
+        if (!isAllNull(longValue, doubleValue, longCountValue, doubleCountValue)) {
             switch (aggType) {
                 case AVG:
                     double sum = 0.0;
@@ -88,7 +88,7 @@ public final class TsKvEntity extends AbsractTsKvEntity implements ToData<TsKvEn
     }
 
     public TsKvEntity(Long booleanValueCount, Long strValueCount, Long longValueCount, Long doubleValueCount) {
-        if(!isAllNull(booleanValueCount, strValueCount, longValueCount, doubleValueCount)) {
+        if (!isAllNull(booleanValueCount, strValueCount, longValueCount, doubleValueCount)) {
             if (booleanValueCount != 0) {
                 this.longValue = booleanValueCount;
             } else if (strValueCount != 0) {
@@ -99,8 +99,9 @@ public final class TsKvEntity extends AbsractTsKvEntity implements ToData<TsKvEn
         }
     }
 
+
+    @Override
     public boolean isNotEmpty() {
         return strValue != null || longValue != null || doubleValue != null || booleanValue != null;
     }
-
 }

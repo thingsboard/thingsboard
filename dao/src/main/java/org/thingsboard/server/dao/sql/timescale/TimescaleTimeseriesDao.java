@@ -252,20 +252,33 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
         String entityIdStr = fromTimeUUID(entityId.getId());
         String tenantIdStr = fromTimeUUID(tenantId.getId());
         CompletableFuture<List<TimescaleTsKvEntity>> listCompletableFuture = switchAgregation(key, startTs, endTs, timeBucket, aggregation, entityIdStr, tenantIdStr);
-
         SettableFuture<List<TimescaleTsKvEntity>> listenableFuture = SettableFuture.create();
-
-        listCompletableFuture.whenComplete((params, throwable) -> {
+        listCompletableFuture.whenComplete((timescaleTsKvEntities, throwable) -> {
             if (throwable != null) {
                 listenableFuture.setException(throwable);
             } else {
-                listenableFuture.set(params);
+                listenableFuture.set(timescaleTsKvEntities);
             }
         });
-
-        return Futures.immediateFuture(Collections.emptyList());
+        return Futures.transform(listenableFuture, timescaleTsKvEntities -> {
+            if (!CollectionUtils.isEmpty(timescaleTsKvEntities)) {
+                List<Optional<TsKvEntry>> result = new ArrayList<>();
+                timescaleTsKvEntities.forEach(entity -> {
+                    if(entity != null && entity.isNotEmpty()) {
+                        entity.setEntityId(entityIdStr);
+                        entity.setTenantId(tenantIdStr);
+                        entity.setKey(key);
+                        result.add(Optional.of(DaoUtil.getData(entity)));
+                    } else {
+                        result.add(Optional.empty());
+                    }
+                });
+                return result;
+            } else {
+                return Collections.emptyList();
+            }
+        });
     }
-
 
     private CompletableFuture<List<TimescaleTsKvEntity>> switchAgregation(String key, long startTs, long endTs, long timeBucket, Aggregation aggregation, String entityIdStr, String tenantIdStr) {
         switch (aggregation) {

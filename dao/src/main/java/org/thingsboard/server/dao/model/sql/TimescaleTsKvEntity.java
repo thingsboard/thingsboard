@@ -63,21 +63,24 @@ import static org.thingsboard.server.dao.sql.timescale.AggregationRepository.FRO
                                         @ColumnResult(name = "doubleValue", type = Double.class),
                                         @ColumnResult(name = "longCountValue", type = Long.class),
                                         @ColumnResult(name = "doubleCountValue", type = Long.class),
-                                        @ColumnResult(name = "aggType", type = String.class),
                                         @ColumnResult(name = "strValue", type = String.class),
+                                        @ColumnResult(name = "aggType", type = String.class),
                                 }
                         ),
+                }),
+        @SqlResultSetMapping(
+                name = "timescaleCountMapping",
+                classes = {
                         @ConstructorResult(
                                 targetClass = TimescaleTsKvEntity.class,
                                 columns = {
                                         @ColumnResult(name = "tsBucket", type = Long.class),
                                         @ColumnResult(name = "booleanValueCount", type = Long.class),
-                                        @ColumnResult(name = "strValueCount", type = Double.class),
+                                        @ColumnResult(name = "strValueCount", type = Long.class),
                                         @ColumnResult(name = "longValueCount", type = Long.class),
                                         @ColumnResult(name = "doubleValueCount", type = Long.class),
                                 }
                         )
-
                 }),
 })
 @NamedNativeQueries({
@@ -104,7 +107,7 @@ import static org.thingsboard.server.dao.sql.timescale.AggregationRepository.FRO
         @NamedNativeQuery(
                 name = FIND_COUNT,
                 query = FIND_COUNT_QUERY + FROM_WHERE_CLAUSE,
-                resultSetMapping = "timescaleAggregationMapping"
+                resultSetMapping = "timescaleCountMapping"
         )
 })
 public final class TimescaleTsKvEntity extends AbsractTsKvEntity implements ToData<TsKvEntry> {
@@ -115,7 +118,7 @@ public final class TimescaleTsKvEntity extends AbsractTsKvEntity implements ToDa
 
     public TimescaleTsKvEntity() { }
 
-    public TimescaleTsKvEntity(Long tsBucket, Long longValue, Double doubleValue, Long longCountValue, Long doubleCountValue, String aggType, String strValue) {
+    public TimescaleTsKvEntity(Long tsBucket, Long longValue, Double doubleValue, Long longCountValue, Long doubleCountValue, String strValue, String aggType) {
         if(!StringUtils.isEmpty(strValue)) {
             this.strValue = strValue;
         }
@@ -160,6 +163,7 @@ public final class TimescaleTsKvEntity extends AbsractTsKvEntity implements ToDa
 
     public TimescaleTsKvEntity(Long tsBucket, Long booleanValueCount, Long strValueCount, Long longValueCount, Long doubleValueCount) {
         if (!isAllNull(tsBucket, booleanValueCount, strValueCount, longValueCount, doubleValueCount)) {
+            this.ts = tsBucket;
             if (booleanValueCount != 0) {
                 this.longValue = booleanValueCount;
             } else if (strValueCount != 0) {
@@ -168,5 +172,10 @@ public final class TimescaleTsKvEntity extends AbsractTsKvEntity implements ToDa
                 this.longValue = longValueCount + doubleValueCount;
             }
         }
+    }
+
+    @Override
+    public boolean isNotEmpty() {
+        return ts != null && (strValue != null || longValue != null || doubleValue != null || booleanValue != null);
     }
 }
