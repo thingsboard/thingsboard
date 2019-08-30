@@ -61,6 +61,7 @@ import {
   EditAttributeValuePanelData
 } from './edit-attribute-value-panel.component';
 import { ComponentPortal, PortalInjector } from '@angular/cdk/portal';
+import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service';
 
 
 @Component({
@@ -137,6 +138,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
 
   constructor(protected store: Store<AppState>,
               private attributeService: AttributeService,
+              private telemetryWsService: TelemetryWebsocketService,
               public translate: TranslateService,
               public dialog: MatDialog,
               private overlay: Overlay,
@@ -146,7 +148,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
     this.dirtyValue = !this.activeValue;
     const sortOrder: SortOrder = { property: 'key', direction: Direction.ASC };
     this.pageLink = new PageLink(10, 0, null, sortOrder);
-    this.dataSource = new AttributeDatasource(this.attributeService, this.translate);
+    this.dataSource = new AttributeDatasource(this.attributeService, this.telemetryWsService, this.translate);
   }
 
   ngOnInit() {
@@ -333,7 +335,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
 
   exitWidgetMode() {
     this.mode = 'default';
-    this.reloadAttributes();
+    // this.reloadAttributes();
 
     // TODO:
   }

@@ -85,7 +85,8 @@
                     {count: dataSource.selection.selected.length}) | async }}
                 </span>
         <span fxFlex></span>
-        <button mat-button mat-icon-button [disabled]="isLoading$ | async"
+        <button [fxShow]="!isClientSideTelemetryTypeMap.get(attributeScope)"
+                mat-button mat-icon-button [disabled]="isLoading$ | async"
                 matTooltip="{{ 'action.delete' | translate }}"
                 matTooltipPosition="above"
                 (click)="deleteAttributes($event)">

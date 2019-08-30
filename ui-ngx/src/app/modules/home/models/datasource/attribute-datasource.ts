@@ -26,9 +26,11 @@ import {
   AttributeData,
   AttributeScope,
   isClientSideTelemetryType,
-  TelemetryType
+  TelemetryType,
+  TelemetrySubscriber
 } from '@shared/models/telemetry/telemetry.models';
 import { AttributeService } from '@core/http/attribute.service';
+import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service';
 
 export class AttributeDatasource implements DataSource<AttributeData> {
 
@@ -40,8 +42,10 @@ export class AttributeDatasource implements DataSource<AttributeData> {
   public selection = new SelectionModel<AttributeData>(true, []);
 
   private allAttributes: Observable<Array<AttributeData>>;
+  private telemetrySubscriber: TelemetrySubscriber;
 
   constructor(private attributeService: AttributeService,
+              private telemetryWsService: TelemetryWebsocketService,
               private translate: TranslateService) {}
 
   connect(collectionViewer: CollectionViewer): Observable<AttributeData[] | ReadonlyArray<AttributeData>> {
@@ -51,18 +55,24 @@ export class AttributeDatasource implements DataSource<AttributeData> {
   disconnect(collectionViewer: CollectionViewer): void {
     this.attributesSubject.complete();
     this.pageDataSubject.complete();
+    if (this.telemetrySubscriber) {
+      this.telemetrySubscriber.unsubscribe();
+      this.telemetrySubscriber = null;
+    }
   }
 
   loadAttributes(entityId: EntityId, attributesScope: TelemetryType,
                  pageLink: PageLink, reload: boolean = false): Observable<PageData<AttributeData>> {
     if (reload) {
       this.allAttributes = null;
+      if (this.telemetrySubscriber) {
+        this.telemetrySubscriber.unsubscribe();
+        this.telemetrySubscriber = null;
+      }
     }
+    this.selection.clear();
     const result = new ReplaySubject<PageData<AttributeData>>();
     this.fetchAttributes(entityId, attributesScope, pageLink).pipe(
-      tap(() => {
-        this.selection.clear();
-      }),
       catchError(() => of(emptyPageData<AttributeData>())),
     ).subscribe(
       (pageData) => {
@@ -85,8 +95,10 @@ export class AttributeDatasource implements DataSource<AttributeData> {
     if (!this.allAttributes) {
       let attributesObservable: Observable<Array<AttributeData>>;
       if (isClientSideTelemetryType.get(attributesScope)) {
-        attributesObservable = of([]);
-        // TODO:
+        this.telemetrySubscriber = TelemetrySubscriber.createEntityAttributesSubscription(
+          this.telemetryWsService, entityId, attributesScope);
+        this.telemetrySubscriber.subscribe();
+        attributesObservable = this.telemetrySubscriber.attributeData$();
       } else {
         attributesObservable = this.attributeService.getEntityAttributes(entityId, attributesScope as AttributeScope);
       }

@@ -16,6 +16,21 @@
 
 -->
 <mat-tab *ngIf="entity"
+         label="{{ 'attribute.attributes' | translate }}" #attributesTab="matTab">
+  <tb-attribute-table [active]="attributesTab.isActive"
+                      [entityId]="entity.id"
+                      [defaultAttributeScope]="attributeScopes.SERVER_SCOPE">
+  </tb-attribute-table>
+</mat-tab>
+<mat-tab *ngIf="entity"
+         label="{{ 'attribute.latest-telemetry' | translate }}" #telemetryTab="matTab">
+  <tb-attribute-table [active]="telemetryTab.isActive"
+                      [entityId]="entity.id"
+                      [defaultAttributeScope]="latestTelemetryTypes.LATEST_TELEMETRY"
+                      disableAttributeScopeSelection>
+  </tb-attribute-table>
+</mat-tab>
+<mat-tab *ngIf="entity"
          label="{{ 'alarm.alarms' | translate }}" #alarmsTab="matTab">
   <tb-alarm-table [active]="alarmsTab.isActive" [entityId]="entity.id"></tb-alarm-table>
 </mat-tab>
