@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.sql.timescale;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -29,7 +28,6 @@ import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.Aggregation;
-import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
@@ -42,13 +40,11 @@ import org.thingsboard.server.dao.sql.AbstractSqlTimeseriesDao;
 import org.thingsboard.server.dao.timeseries.TimeseriesDao;
 import org.thingsboard.server.dao.util.TimescaleDBTsDao;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
 
@@ -68,25 +64,10 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
 
     @Override
     public ListenableFuture<List<TsKvEntry>> findAllAsync(TenantId tenantId, EntityId entityId, List<ReadTsKvQuery> queries) {
-        List<ListenableFuture<List<TsKvEntry>>> futures = queries
-                .stream()
-                .map(query -> findAllAsync(tenantId, entityId, query))
-                .collect(Collectors.toList());
-        return Futures.transform(Futures.allAsList(futures), new Function<List<List<TsKvEntry>>, List<TsKvEntry>>() {
-            @Nullable
-            @Override
-            public List<TsKvEntry> apply(@Nullable List<List<TsKvEntry>> results) {
-                if (results == null || results.isEmpty()) {
-                    return null;
-                }
-                return results.stream()
-                        .flatMap(List::stream)
-                        .collect(Collectors.toList());
-            }
-        }, service);
+        return processFindAllAsync(tenantId, entityId, queries);
     }
 
-    private ListenableFuture<List<TsKvEntry>> findAllAsync(TenantId tenantId, EntityId entityId, ReadTsKvQuery query) {
+    protected ListenableFuture<List<TsKvEntry>> findAllAsync(TenantId tenantId, EntityId entityId, ReadTsKvQuery query) {
         if (query.getAggregation() == Aggregation.NONE) {
             return findAllAsyncWithLimit(tenantId, entityId, query);
         } else {
@@ -94,19 +75,7 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
             long endTs = query.getEndTs();
             long timeBucket = query.getInterval();
             ListenableFuture<List<Optional<TsKvEntry>>> future = findAndAggregateAsync(tenantId, entityId, query.getKey(), startTs, endTs, timeBucket, query.getAggregation());
-            return Futures.transform(future, new Function<List<Optional<TsKvEntry>>, List<TsKvEntry>>() {
-                @Nullable
-                @Override
-                public List<TsKvEntry> apply(@Nullable List<Optional<TsKvEntry>> results) {
-                    if (results == null || results.isEmpty()) {
-                        return null;
-                    }
-                    return results.stream()
-                            .filter(Optional::isPresent)
-                            .map(Optional::get)
-                            .collect(Collectors.toList());
-                }
-            }, service);
+            return getTskvEntriesFuture(future);
         }
     }
 
@@ -212,12 +181,7 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
     }
 
     private ListenableFuture<Void> getNewLatestEntryFuture(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
-        long startTs = 0;
-        long endTs = query.getStartTs() - 1;
-        ReadTsKvQuery findNewLatestQuery = new BaseReadTsKvQuery(query.getKey(), startTs, endTs, endTs - startTs, 1,
-                Aggregation.NONE, DESC_ORDER);
-        ListenableFuture<List<TsKvEntry>> future = findAllAsync(tenantId, entityId, findNewLatestQuery);
-
+        ListenableFuture<List<TsKvEntry>> future = findNewLatestEntryFuture(tenantId, entityId, query);
         return Futures.transformAsync(future, entryList -> {
             if (entryList.size() == 1) {
                 return save(tenantId, entityId, entryList.get(0), 0L);
