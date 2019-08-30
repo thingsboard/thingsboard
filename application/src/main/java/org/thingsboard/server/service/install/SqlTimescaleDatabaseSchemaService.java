@@ -21,7 +21,6 @@ import org.thingsboard.server.dao.util.SqlDao;
 import org.thingsboard.server.dao.util.TimescaleDBTsDao;
 
 @Service
-@SqlDao
 @TimescaleDBTsDao
 @Profile("install")
 public class SqlTimescaleDatabaseSchemaService extends SqlAbstractDatabaseSchemaService
