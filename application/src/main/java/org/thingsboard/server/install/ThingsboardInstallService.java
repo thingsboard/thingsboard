@@ -152,7 +152,6 @@ public class ThingsboardInstallService {
 
                 log.info("Installing DataBase schema for timeseries...");
 
-
                 tsDatabaseSchemaService.createDatabaseSchema();
 
                 log.info("Loading system data...");
