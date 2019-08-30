@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.sql.timescale;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Repository;
 import org.thingsboard.server.dao.model.sql.TimescaleTsKvEntity;
@@ -26,7 +25,6 @@ import javax.persistence.PersistenceContext;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-@Slf4j
 @Repository
 @TimescaleDBTsDao
 public class AggregationRepository {
