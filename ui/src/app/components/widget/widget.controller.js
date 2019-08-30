@@ -489,6 +489,7 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
         switch (type) {
             case types.widgetActionTypes.openDashboardState.value:
             case types.widgetActionTypes.updateDashboardState.value:
+            case types.widgetActionTypes.previousDashboardState.value:
                 var targetDashboardStateId = descriptor.targetDashboardStateId;
                 var params = angular.copy(widgetContext.stateController.getStateParams());
                 if (!params) {
@@ -497,6 +498,8 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
                 updateEntityParams(params, targetEntityParamName, targetEntityId, entityName);
                 if (type == types.widgetActionTypes.openDashboardState.value) {
                     widgetContext.stateController.openState(targetDashboardStateId, params, descriptor.openRightLayout);
+                } else if (type == types.widgetActionTypes.previousDashboardState.value) {
+                    widgetContext.stateController.previousState(params);
                 } else {
                     widgetContext.stateController.updateState(targetDashboardStateId, params, descriptor.openRightLayout);
                 }
