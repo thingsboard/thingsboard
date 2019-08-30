@@ -119,7 +119,7 @@ database:
   entities:
     type: "${DATABASE_ENTITIES_TYPE:sql}" # cassandra OR sql
   ts:
-    type: "${DATABASE_TS_TYPE:timescale}" # cassandra, sql, or timescale (for hybrid mode, DATABASE_TS_TYPE value should be cassandra, or timescale)
+    type: "${DATABASE_TS_TYPE:sql}" # cassandra, sql, or timescale (for hybrid mode, DATABASE_TS_TYPE value should be cassandra, or timescale)
 
 # note: timescale works only with postgreSQL database for DATABASE_ENTITIES_TYPE.
 
