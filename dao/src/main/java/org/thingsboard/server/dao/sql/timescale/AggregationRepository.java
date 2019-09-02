@@ -17,7 +17,7 @@ package org.thingsboard.server.dao.sql.timescale;
 
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Repository;
-import org.thingsboard.server.dao.model.sql.TimescaleTsKvEntity;
+import org.thingsboard.server.dao.model.timescale.TimescaleTsKvEntity;
 import org.thingsboard.server.dao.util.TimescaleDBTsDao;
 
 import javax.persistence.EntityManager;

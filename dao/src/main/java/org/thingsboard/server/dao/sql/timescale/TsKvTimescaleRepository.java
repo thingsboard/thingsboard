@@ -21,8 +21,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
-import org.thingsboard.server.dao.model.sql.TimescaleTsKvCompositeKey;
-import org.thingsboard.server.dao.model.sql.TimescaleTsKvEntity;
+import org.thingsboard.server.dao.model.timescale.TimescaleTsKvCompositeKey;
+import org.thingsboard.server.dao.model.timescale.TimescaleTsKvEntity;
 import org.thingsboard.server.dao.util.TimescaleDBTsDao;
 
 import java.util.List;

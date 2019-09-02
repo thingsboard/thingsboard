@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model.sql;
+package org.thingsboard.server.dao.model.timescale;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.EntityType;
 
 import javax.persistence.Transient;
 import java.io.Serializable;
@@ -26,13 +25,13 @@ import java.io.Serializable;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class TsKvCompositeKey implements Serializable {
+public class TimescaleTsKvCompositeKey implements Serializable {
 
     @Transient
     private static final long serialVersionUID = -4089175869616037523L;
 
-    private EntityType entityType;
+    private String tenantId;
     private String entityId;
     private String key;
     private long ts;
-}
+} 

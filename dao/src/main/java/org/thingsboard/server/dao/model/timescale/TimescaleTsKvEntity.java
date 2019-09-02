@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model.sql;
+package org.thingsboard.server.dao.model.timescale;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.model.ToData;
-import org.thingsboard.server.dao.util.TimescaleDBTsDao;
+import org.thingsboard.server.dao.model.sql.AbsractTsKvEntity;
 
 import javax.persistence.Column;
 import javax.persistence.ColumnResult;
@@ -52,7 +52,6 @@ import static org.thingsboard.server.dao.sql.timescale.AggregationRepository.FRO
 @Entity
 @Table(name = "tenant_ts_kv")
 @IdClass(TimescaleTsKvCompositeKey.class)
-@TimescaleDBTsDao
 @SqlResultSetMappings({
         @SqlResultSetMapping(
                 name = "timescaleAggregationMapping",

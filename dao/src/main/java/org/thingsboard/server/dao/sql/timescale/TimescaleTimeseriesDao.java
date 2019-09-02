@@ -35,7 +35,7 @@ import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvQuery;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.model.sql.TimescaleTsKvEntity;
+import org.thingsboard.server.dao.model.timescale.TimescaleTsKvEntity;
 import org.thingsboard.server.dao.sql.AbstractSqlTimeseriesDao;
 import org.thingsboard.server.dao.timeseries.TimeseriesDao;
 import org.thingsboard.server.dao.util.TimescaleDBTsDao;

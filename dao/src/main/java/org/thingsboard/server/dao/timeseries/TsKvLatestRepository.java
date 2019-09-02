@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql.timeseries;
+package org.thingsboard.server.dao.timeseries;
 
 import org.springframework.data.repository.CrudRepository;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.dao.model.sql.TsKvLatestCompositeKey;
-import org.thingsboard.server.dao.model.sql.TsKvLatestEntity;
+import org.thingsboard.server.dao.model.sqlts.TsKvLatestCompositeKey;
+import org.thingsboard.server.dao.model.sqlts.TsKvLatestEntity;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;

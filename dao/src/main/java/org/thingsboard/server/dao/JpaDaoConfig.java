@@ -30,7 +30,7 @@ import org.thingsboard.server.dao.util.SqlDao;
 @EnableAutoConfiguration
 @ComponentScan("org.thingsboard.server.dao.sql")
 @EnableJpaRepositories("org.thingsboard.server.dao.sql")
-@EntityScan("org.thingsboard.server.dao.model.sql")
+@EntityScan({"org.thingsboard.server.dao.model.sql", "org.thingsboard.server.dao.model.sqlts"})
 @EnableTransactionManagement
 @SqlDao
 public class JpaDaoConfig {
