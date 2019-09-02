@@ -233,6 +233,8 @@ function Timeinterval($compile, $templateCache, timeService) {
             max: '=?',
             predefinedName: '=?',
             hideFlag: '=?',
+            fromDashboardFlag: '=?',
+            isToolbar: '=?',
             isEdit: '=?'
         },
         link: linker

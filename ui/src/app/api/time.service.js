@@ -238,6 +238,9 @@ function TimeService($translate, $http, $q, types) {
             hideInterval: false,
             hideAggregation: false,
             hideAggInterval: false,
+            useDashboardInterval: false,
+            useDashboardAggregation: false,
+            useDashboardAggInterval: false,
             realtime: {
                 interval: SECOND,
                 timewindowMs: MINUTE // 1 min by default

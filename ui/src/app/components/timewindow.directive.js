@@ -46,6 +46,9 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
          *    hideInterval: false,
          *    hideAggregation: false,
          *    hideAggInterval: false,
+         *    useDashboardInterval: false,
+         *    useDashboardAggregation: false,
+         *    useDashboardAggInterval: false,
          * 	  realtime: {
          * 	        interval: 0,
          * 			timewindowMs: 0
@@ -142,6 +145,7 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
                     'historyOnly': scope.historyOnly,
                     'aggregation': scope.aggregation,                    
                     'isEdit': scope.isEdit,
+                    'isToolbar': scope.isToolbar,
                     'onTimewindowUpdate': function (timewindow) {
                         scope.model = timewindow;
                         scope.updateView();
@@ -186,6 +190,9 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
             value.hideInterval = model.hideInterval;
             value.hideAggregation = model.hideAggregation;
             value.hideAggInterval = model.hideAggInterval;
+            value.useDashboardInterval = model.useDashboardInterval;
+            value.useDashboardAggregation = model.useDashboardAggregation;
+            value.useDashboardAggInterval = model.useDashboardAggInterval;
             ngModelCtrl.$setViewValue(value);
             scope.updateDisplayValue();
         }
@@ -242,6 +249,9 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
                 model.hideInterval = value.hideInterval;
                 model.hideAggregation = value.hideAggregation;
                 model.hideAggInterval = value.hideAggInterval;
+                model.useDashboardInterval = value.useDashboardInterval;
+                model.useDashboardAggregation = value.useDashboardAggregation;
+                model.useDashboardAggInterval = value.useDashboardAggInterval;
             }
             scope.updateDisplayValue();
         };

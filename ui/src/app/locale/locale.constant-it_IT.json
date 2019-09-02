@@ -1354,7 +1354,8 @@
         "date-range": "Intervallo date",
         "last": "Ultimo",
         "time-period": "Intervallo temporale",
-        "hide": "Nascondi"
+        "hide": "Nascondi",
+        "from-dashboard": "Da dashboard"
     },
     "user": {
         "user": "Utente",

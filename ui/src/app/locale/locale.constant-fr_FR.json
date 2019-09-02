@@ -1265,7 +1265,8 @@
         "realtime": "Temps réel",
         "seconds": "{seconds, plural, 0 {second} 1 {1 second} other {# seconds}}",
         "time-period": "Période",
-        "hide": "Masquer"
+        "hide": "Masquer",
+        "from-dashboard": "Du tableau de bord"
     },
     "user": {
         "activation-email-sent-message": "L'e-mail d'activation a été envoyé avec succès!",

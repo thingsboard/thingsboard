@@ -1412,7 +1412,8 @@
         "date-range": "Rango de fecha",
         "last": "Último(s)",
         "time-period": "Período de tiempo",
-        "hide": "Ocultar"
+        "hide": "Ocultar",
+        "from-dashboard": "Desde ed panel"
     },
     "user": {
         "user": "Usuario",

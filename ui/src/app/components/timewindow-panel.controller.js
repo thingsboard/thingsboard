@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /*@ngInject*/
-export default function TimewindowPanelController(mdPanelRef, $scope, timeService, types, timewindow, historyOnly, aggregation, isEdit, onTimewindowUpdate) {
+export default function TimewindowPanelController(mdPanelRef, $scope, timeService, types, timewindow, historyOnly, aggregation, isEdit, isToolbar, onTimewindowUpdate) {
 
     var vm = this;
 
@@ -34,6 +34,7 @@ export default function TimewindowPanelController(mdPanelRef, $scope, timeServic
     vm.minDatapointsLimit = minDatapointsLimit;
     vm.maxDatapointsLimit = maxDatapointsLimit;
     vm.isEdit = isEdit;
+    vm.isToolbar = isToolbar;
 
     if (vm.historyOnly) {
         vm.timewindow.selectedTab = 1;
