@@ -1409,6 +1409,7 @@
         "last-prefix": "último(s)",
         "period": "desde {{ startTime }} hasta {{ endTime }}",
         "edit": "Editar ventana de tiempo",
+        "edit-aggregation": "Editar agregación de datos",
         "date-range": "Rango de fecha",
         "last": "Último(s)",
         "time-period": "Período de tiempo",

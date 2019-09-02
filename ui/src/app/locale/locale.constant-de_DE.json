@@ -1340,6 +1340,7 @@
     "last-prefix": "letzte",
     "period": "von {{ startTime }} bis {{ endTime }}",
     "edit": "Zeitfenster bearbeiten",
+    "edit-aggregation": "Bearbeiten datenaggregations",
     "date-range": "Datumsbereich",
     "last": "Letzte",
     "time-period": "Zeitfenster"

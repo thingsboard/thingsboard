@@ -18,20 +18,20 @@
 <section class="tb-timewindow" layout='row' layout-align="start center">
     <md-button ng-if="direction === 'left'" ng-disabled="disabled" class="md-icon-button tb-md-32" aria-label="{{ 'timewindow.edit' | translate }}" ng-click="openEditMode($event)">
         <md-tooltip md-direction="{{tooltipDirection}}">
-            {{ 'timewindow.edit' | translate }}
+            {{ (model.hideInterval && !model.hideAggregation) ? 'timewindow.edit-aggregation' : 'timewindow.edit' | translate }}
         </md-tooltip>
-        <ng-md-icon aria-label="{{ 'timewindow.date-range' | translate }}" icon="query_builder"></ng-md-icon>
+        <ng-md-icon aria-label="{{ 'timewindow.date-range' | translate }}" icon="{{ (model.hideInterval && !model.hideAggregation) ? 'functions' : 'query_builder' }}"></ng-md-icon>
     </md-button>
     <span ng-hide="hideLabel()" ng-click="openEditMode($event)">
         <md-tooltip md-direction="{{tooltipDirection}}">
-            {{ 'timewindow.edit' | translate }}
+            {{ (model.hideInterval && !model.hideAggregation) ? 'timewindow.edit-aggregation' : 'timewindow.edit' | translate }}
         </md-tooltip>
         {{model.displayValue}}
     </span>
     <md-button ng-if="direction === 'right'" ng-disabled="disabled" class="md-icon-button tb-md-32" aria-label="{{ 'timewindow.edit' | translate }}" ng-click="openEditMode($event)">
         <md-tooltip md-direction="{{tooltipDirection}}">
-            {{ 'timewindow.edit' | translate }}
+            {{ (model.hideInterval && !model.hideAggregation) ? 'timewindow.edit-aggregation' : 'timewindow.edit' | translate }}
         </md-tooltip>
-        <ng-md-icon aria-label="{{ 'timewindow.date-range' | translate }}" icon="query_builder"></ng-md-icon>
+        <ng-md-icon aria-label="{{ 'timewindow.date-range' | translate }}" icon="{{ (model.hideInterval && !model.hideAggregation) ? 'functions' : 'query_builder' }}"></ng-md-icon>
     </md-button>
 </section>

@@ -37,7 +37,7 @@ export default angular.module('thingsboard.directives.timewindow', [thingsboardT
 
 /* eslint-disable angular/angularelement */
 /*@ngInject*/
-function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdMedia, $translate, timeService) {
+function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdMedia, $translate, timeService, types) {
 
     var linker = function (scope, element, attrs, ngModelCtrl) {
 
@@ -170,7 +170,7 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
                         timewindowMs: model.history.timewindowMs
                     };
                 } else {
-                    value.history = {
+                    value.history = {   
                         interval: model.history.interval,
                         fixedTimewindow: {
                             startTimeMs: model.history.fixedTimewindow.startTimeMs,
@@ -192,19 +192,29 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
 
         scope.updateDisplayValue = function () {
             if ($translate.isReady()) {
-                if (scope.model.selectedTab === 0 && !scope.historyOnly) {
-                    scope.model.displayValue = $translate.instant('timewindow.realtime') + ' - ' +
-                        $translate.instant('timewindow.last-prefix') + ' ' +
-                        $filter('milliSecondsToTimeString')(scope.model.realtime.timewindowMs);
+                if (scope.model.hideInterval && !scope.model.hideAggregation) {
+                    var aggregationName = '';
+                    for (var type in types.aggregation) {
+                        if (types.aggregation[type].value ===  scope.model.aggregation.type) {
+                            aggregationName = types.aggregation[type].name;
+                        }
+                    }
+                    scope.model.displayValue = $translate.instant('aggregation.function') + ' - ' + $translate.instant(aggregationName);
                 } else {
-                    scope.model.displayValue = !scope.historyOnly ? ($translate.instant('timewindow.history') + ' - ') : '';
-                    if (scope.model.history.historyType === 0) {
-                        scope.model.displayValue += $translate.instant('timewindow.last-prefix') + ' ' +
-                            $filter('milliSecondsToTimeString')(scope.model.history.timewindowMs);
+                    if (scope.model.selectedTab === 0 && !scope.historyOnly) {
+                        scope.model.displayValue = $translate.instant('timewindow.realtime') + ' - ' +
+                            $translate.instant('timewindow.last-prefix') + ' ' +
+                            $filter('milliSecondsToTimeString')(scope.model.realtime.timewindowMs);
                     } else {
-                        var startString = $filter('date')(scope.model.history.fixedTimewindow.startTimeMs, 'yyyy-MM-dd HH:mm:ss');
-                        var endString = $filter('date')(scope.model.history.fixedTimewindow.endTimeMs, 'yyyy-MM-dd HH:mm:ss');
-                        scope.model.displayValue += $translate.instant('timewindow.period', {startTime: startString, endTime: endString});
+                        scope.model.displayValue = !scope.historyOnly ? ($translate.instant('timewindow.history') + ' - ') : '';
+                        if (scope.model.history.historyType === 0) {
+                            scope.model.displayValue += $translate.instant('timewindow.last-prefix') + ' ' +
+                                $filter('milliSecondsToTimeString')(scope.model.history.timewindowMs);
+                        } else {
+                            var startString = $filter('date')(scope.model.history.fixedTimewindow.startTimeMs, 'yyyy-MM-dd HH:mm:ss');
+                            var endString = $filter('date')(scope.model.history.fixedTimewindow.endTimeMs, 'yyyy-MM-dd HH:mm:ss');
+                            scope.model.displayValue += $translate.instant('timewindow.period', {startTime: startString, endTime: endString});
+                        }
                     }
                 }
             } else {

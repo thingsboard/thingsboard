@@ -16,6 +16,6 @@
 
 -->
 <md-button ng-disabled="disabled" class="md-raised md-primary" ng-click="openEditMode($event)">
-    <ng-md-icon icon="query_builder"></ng-md-icon>
+    <ng-md-icon icon="{{ (model.hideInterval && !model.hideAggregation) ? 'functions' : 'query_builder' }}"></ng-md-icon>
     <span>{{model.displayValue}}</span>
 </md-button>

@@ -1351,6 +1351,7 @@
         "last-prefix": "ultimo",
         "period": "da {{ startTime }} a {{ endTime }}",
         "edit": "Modifica intervallo temporale",
+        "edit-aggregation": "Modifica aggregazione dati",
         "date-range": "Intervallo date",
         "last": "Ultimo",
         "time-period": "Intervallo temporale",

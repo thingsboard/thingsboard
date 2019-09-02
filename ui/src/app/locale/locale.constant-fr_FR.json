@@ -1256,6 +1256,7 @@
         "date-range": "Plage de dates",
         "days": "{days, plural, 1 {jour} other {# jours}}",
         "edit": "Modifier timewindow",
+        "edit-aggregation": "Modifier agrégation de données",
         "history": "Historique",
         "hours": "{hours, plural, 0 {heure} 1 {1 heure} other {# heures}}",
         "last": "Dernier",

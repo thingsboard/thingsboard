@@ -1410,6 +1410,7 @@
         "last-prefix": "last",
         "period": "from {{ startTime }} to {{ endTime }}",
         "edit": "Edit timewindow",
+        "edit-aggregation": "Edit data aggregation",
         "date-range": "Date range",
         "last": "Last",
         "time-period": "Time period",
