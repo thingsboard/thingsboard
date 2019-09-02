@@ -71,7 +71,17 @@ export default class TbFlot {
                 marginRight: "5px"
             });
             divElement.append(lineSpan);
-            var labelSpan = $('<span>' + label + ':</span>');
+            var valueContent;
+            if (valueFormatFunction) {
+                valueContent = valueFormatFunction(value);
+            } else {
+                valueContent = tbFlot.ctx.utils.formatValue(value, trackDecimals, units);
+            }
+            if (angular.isNumber(percent)) {
+                valueContent += ' (' + Math.round(percent) + ' %)';
+            }
+            var separator = valueContent != '' ? ':' : '';
+            var labelSpan = $('<span>' + label + separator + '</span>');
             labelSpan.css({
                 marginRight: "10px"
             });
@@ -82,15 +92,6 @@ export default class TbFlot {
                 });
             }
             divElement.append(labelSpan);
-            var valueContent;
-            if (valueFormatFunction) {
-                valueContent = valueFormatFunction(value);
-            } else {
-                valueContent = tbFlot.ctx.utils.formatValue(value, trackDecimals, units);
-            }
-            if (angular.isNumber(percent)) {
-                valueContent += ' (' + Math.round(percent) + ' %)';
-            }
             var valueSpan =  $('<span>' + valueContent + '</span>');
             valueSpan.css({
                 marginLeft: "auto",
