@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql.timescale;
+package org.thingsboard.server.dao.timescale;
 
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
