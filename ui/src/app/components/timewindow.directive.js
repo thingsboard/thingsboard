@@ -197,6 +197,7 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
                     for (var type in types.aggregation) {
                         if (types.aggregation[type].value ===  scope.model.aggregation.type) {
                             aggregationName = types.aggregation[type].name;
+                            break;
                         }
                     }
                     scope.model.displayValue = $translate.instant('aggregation.function') + ' - ' + $translate.instant(aggregationName);
