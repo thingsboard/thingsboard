@@ -32,6 +32,7 @@
     "@ngx-translate/core": "^11.0.1",
     "@ngx-translate/http-loader": "^4.0.0",
     "ace-builds": "^1.4.5",
+    "angular-gridster2": "^8.1.0",
     "compass-sass-mixins": "^0.12.7",
     "core-js": "^3.1.4",
     "deep-equal": "^1.0.1",

@@ -34,6 +34,7 @@ import { AlarmDetailsDialogComponent } from '@home/components/alarm/alarm-detail
 import { AttributeTableComponent } from '@home/components/attribute/attribute-table.component';
 import { AddAttributeDialogComponent } from './attribute/add-attribute-dialog.component';
 import { EditAttributeValuePanelComponent } from './attribute/edit-attribute-value-panel.component';
+import { DashboardComponent } from '@home/components/dashboard/dashboard.component';
 
 @NgModule({
   entryComponents: [
@@ -64,7 +65,8 @@ import { EditAttributeValuePanelComponent } from './attribute/edit-attribute-val
       AlarmDetailsDialogComponent,
       AttributeTableComponent,
       AddAttributeDialogComponent,
-      EditAttributeValuePanelComponent
+      EditAttributeValuePanelComponent,
+      DashboardComponent
     ],
   imports: [
     CommonModule,
@@ -81,7 +83,8 @@ import { EditAttributeValuePanelComponent } from './attribute/edit-attribute-val
     RelationTableComponent,
     AlarmTableComponent,
     AlarmDetailsDialogComponent,
-    AttributeTableComponent
+    AttributeTableComponent,
+    DashboardComponent
   ]
 })
 export class HomeComponentsModule { }

@@ -52,6 +52,7 @@ import {
   MatTooltipModule
 } from '@angular/material';
 import {MatDatetimepickerModule, MatNativeDatetimeModule} from '@mat-datetimepicker/core';
+import {GridsterModule} from 'angular-gridster2';
 import {FlexLayoutModule} from '@angular/flex-layout';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {RouterModule} from '@angular/router';
@@ -86,6 +87,7 @@ import {SocialSharePanelComponent} from './components/socialshare-panel.componen
 import { RelationTypeAutocompleteComponent } from '@shared/components/relation/relation-type-autocomplete.component';
 import { EntityListSelectComponent } from './components/entity/entity-list-select.component';
 import { JsonObjectEditComponent } from './components/json-object-edit.component';
+import { FooterFabButtonsComponent } from '@shared/components/footer-fab-buttons.component';
 
 @NgModule({
   providers: [
@@ -102,6 +104,7 @@ import { JsonObjectEditComponent } from './components/json-object-edit.component
   declarations: [
     FooterComponent,
     LogoComponent,
+    FooterFabButtonsComponent,
     ToastDirective,
     FullscreenDirective,
     TbAnchorComponent,
@@ -167,6 +170,7 @@ import { JsonObjectEditComponent } from './components/json-object-edit.component
     MatStepperModule,
     MatAutocompleteModule,
     MatChipsModule,
+    GridsterModule,
     ClipboardModule,
     FlexLayoutModule.withConfig({addFlexToParent: false}),
     FormsModule,
@@ -177,6 +181,7 @@ import { JsonObjectEditComponent } from './components/json-object-edit.component
   exports: [
     FooterComponent,
     LogoComponent,
+    FooterFabButtonsComponent,
     ToastDirective,
     FullscreenDirective,
     TbAnchorComponent,
@@ -232,6 +237,7 @@ import { JsonObjectEditComponent } from './components/json-object-edit.component
     MatStepperModule,
     MatAutocompleteModule,
     MatChipsModule,
+    GridsterModule,
     ClipboardModule,
     FlexLayoutModule,
     FormsModule,

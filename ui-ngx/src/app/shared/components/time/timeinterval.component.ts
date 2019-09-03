@@ -46,6 +46,7 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
   set min(min: number) {
     if (typeof min !== 'undefined' && min !== this.minValue) {
       this.minValue = min;
+      this.maxValue = Math.max(this.maxValue, this.minValue);
       this.updateView();
     }
   }
@@ -54,6 +55,7 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
   set max(max: number) {
     if (typeof max !== 'undefined' && max !== this.maxValue) {
       this.maxValue = max;
+      this.minValue = Math.min(this.minValue, this.maxValue);
       this.updateView();
     }
   }

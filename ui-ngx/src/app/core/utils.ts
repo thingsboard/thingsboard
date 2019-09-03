@@ -52,6 +52,32 @@ export function isLocalUrl(url: string): boolean {
   }
 }
 
+export function animatedScroll(element: HTMLElement, scrollTop: number, delay?: number) {
+  let currentTime = 0;
+  const increment = 20;
+  const start = element.scrollTop;
+  const to = scrollTop;
+  const duration = delay ? delay : 0;
+  const remaining = to - start;
+  const animateScroll = () => {
+    currentTime += increment;
+    const val = easeInOut(currentTime, start, remaining, duration);
+    element.scrollTop = val;
+    if (currentTime < duration) {
+      setTimeout(animateScroll, increment);
+    }
+  };
+  animateScroll();
+}
+
+export function isUndefined(value: any): boolean {
+  return typeof value === 'undefined';
+}
+
+export function isDefined(value: any): boolean {
+  return typeof value !== 'undefined';
+}
+
 const scrollRegex = /(auto|scroll)/;
 
 function parentNodes(node: Node, nodes: Node[]): Node[] {
@@ -94,4 +120,21 @@ function scrollParents(node: Node): Node[] {
     scrollParentNodes.push(document.documentElement);
   }
   return scrollParentNodes;
+}
+
+function easeInOut(
+  currentTime: number,
+  startTime: number,
+  remainingTime: number,
+  duration: number) {
+  currentTime /= duration / 2;
+
+  if (currentTime < 1) {
+    return (remainingTime / 2) * currentTime * currentTime + startTime;
+  }
+
+  currentTime--;
+  return (
+    (-remainingTime / 2) * (currentTime * (currentTime - 2) - 1) + startTime
+  );
 }

@@ -15,7 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { DAY, defaultTimeIntervals, SECOND } from '@shared/models/time/time.models';
+import { DAY, defaultTimeIntervals, MINUTE, SECOND, Timewindow } from '@shared/models/time/time.models';
 import {HttpClient} from '@angular/common/http';
 import {Observable} from 'rxjs';
 import {defaultHttpOptions} from '@core/http/http-utils';
@@ -81,6 +81,9 @@ export class TimeService {
     const intervals = this.getIntervals(min, max);
     let minDelta = MAX_INTERVAL;
     const boundedInterval = intervalMs || min;
+    if (!intervals.length) {
+      return boundedInterval;
+    }
     let matchedInterval: TimeInterval = intervals[0];
     intervals.forEach((interval) => {
       const delta = Math.abs(interval.value - boundedInterval);
@@ -108,6 +111,10 @@ export class TimeService {
   public maxIntervalLimit(timewindowMs: number): number {
     const max = timewindowMs / MIN_LIMIT;
     return this.boundMaxInterval(max);
+  }
+
+  public defaultTimewindow(): Timewindow {
+    return Timewindow.defaultTimewindow(this);
   }
 
   private toBound(value: number, min: number, max: number, defValue: number): number {

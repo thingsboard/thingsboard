@@ -25,6 +25,19 @@ export interface DashboardInfo extends BaseData<DashboardId> {
   assignedCustomers: Array<ShortCustomerInfo>;
 }
 
+export interface WidgetLayout {
+  sizeX: number;
+  sizeY: number;
+  mobileHeight: number;
+  mobileOrder: number;
+  col: number;
+  row: number;
+}
+
+export interface WidgetLayouts {
+  [id: string]: WidgetLayout;
+}
+
 export interface DashboardConfiguration {
   [key: string]: any;
   // TODO:

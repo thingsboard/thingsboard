@@ -351,6 +351,16 @@ $tb-dark-theme: get-tb-dark-theme(
 
   .mat-icon {
     vertical-align: middle;
+    &.tb-mat-20 {
+      width: 20px;
+      height: 20px;
+      font-size: 20px;
+      svg {
+        width: 24px;
+        height: 24px;
+        transform: scale(0.83);
+      }
+    }
     &.tb-mat-32 {
       width: 32px;
       height: 32px;

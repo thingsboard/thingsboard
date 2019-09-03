@@ -54,9 +54,6 @@ export class HomeComponent extends PageComponent implements OnInit {
   authUser$: Observable<any>;
   userDetails$: Observable<User>;
   userDetailsString: Observable<string>;
-  testUser1$: Observable<User>;
-  testUser2$: Observable<User>;
-  testUser3$: Observable<User>;
 
   constructor(protected store: Store<AppState>,
               private authService: AuthService,

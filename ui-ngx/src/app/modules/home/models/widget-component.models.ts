@@ -14,20 +14,24 @@
 /// limitations under the License.
 ///
 
-import {BaseData} from '@shared/models/base-data';
-import {TenantId} from '@shared/models/id/tenant-id';
-import {WidgetsBundleId} from '@shared/models/id/widgets-bundle-id';
-import {WidgetTypeId} from '@shared/models/id/widget-type-id';
-
-export interface WidgetTypeDescriptor {
-  todo: Array<any>;
-  // TODO:
+export interface IWidgetAction {
+  icon: string;
+  onAction: ($event: Event) => void;
 }
 
-export interface WidgetType extends BaseData<WidgetTypeId> {
-  tenantId: TenantId;
-  bundleAlias: string;
-  alias: string;
+export interface WidgetHeaderAction extends IWidgetAction {
+  displayName: string;
+}
+
+export interface WidgetAction extends IWidgetAction {
   name: string;
-  descriptor: WidgetTypeDescriptor;
+  show: boolean;
+}
+
+export interface WidgetContext {
+  widgetTitleTemplate?: string;
+  hideTitlePanel?: boolean;
+  widgetTitle?: string;
+  customHeaderActions?: Array<WidgetHeaderAction>;
+  widgetActions?: Array<WidgetAction>;
 }

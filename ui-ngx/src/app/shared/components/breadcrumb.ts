@@ -14,13 +14,23 @@
 /// limitations under the License.
 ///
 
-import { Params } from '@angular/router';
+import { ActivatedRouteSnapshot, Params } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 
 export interface BreadCrumb {
   label: string;
+  ignoreTranslate: boolean;
   icon: string;
   isMdiIcon: boolean;
   link: any[];
   queryParams: Params;
 }
 
+export type BreadCrumbLabelFunction = (route: ActivatedRouteSnapshot, translate: TranslateService) => string;
+
+export interface BreadCrumbConfig {
+  labelFunction: BreadCrumbLabelFunction;
+  label: string;
+  icon: string;
+  skip: boolean;
+}

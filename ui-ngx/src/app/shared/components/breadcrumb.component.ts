@@ -16,9 +16,10 @@
 
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
-import { BreadCrumb } from './breadcrumb';
+import { BreadCrumb, BreadCrumbConfig } from './breadcrumb';
 import { ActivatedRoute, ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: '[tb-breadcrumb]',
@@ -40,7 +41,8 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
   );
 
   constructor(private router: Router,
-              private activatedRoute: ActivatedRoute) {
+              private activatedRoute: ActivatedRoute,
+              private translate: TranslateService) {
   }
 
   ngOnInit(): void {
@@ -56,15 +58,24 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
   buildBreadCrumbs(route: ActivatedRouteSnapshot, breadcrumbs: Array<BreadCrumb> = []): Array<BreadCrumb> {
     let newBreadcrumbs = breadcrumbs;
     if (route.routeConfig && route.routeConfig.data) {
-      const breadcrumbData = route.routeConfig.data.breadcrumb;
-      if (breadcrumbData && !breadcrumbData.skip) {
-        const label = breadcrumbData.label || 'home.home';
-        const icon = breadcrumbData.icon || 'home';
+      const breadcrumbConfig = route.routeConfig.data.breadcrumb as BreadCrumbConfig;
+      if (breadcrumbConfig && !breadcrumbConfig.skip) {
+        let label;
+        let ignoreTranslate;
+        if (breadcrumbConfig.labelFunction) {
+          label = breadcrumbConfig.labelFunction(route, this.translate);
+          ignoreTranslate = true;
+        } else {
+          label = breadcrumbConfig.label || 'home.home';
+          ignoreTranslate = false;
+        }
+        const icon = breadcrumbConfig.icon || 'home';
         const isMdiIcon = icon.startsWith('mdi:');
         const link = [ '/' + route.url.join('') ];
         const queryParams = route.queryParams;
         const breadcrumb = {
           label,
+          ignoreTranslate,
           icon,
           isMdiIcon,
           link,

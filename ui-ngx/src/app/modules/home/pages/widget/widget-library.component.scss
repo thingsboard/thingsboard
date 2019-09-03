@@ -13,18 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  min-width: 52px;
-  section.tb-timewindow {
-    min-height: 32px;
-    padding: 0 6px;
 
-    span {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      pointer-events: all;
-      cursor: pointer;
-    }
+:host {
+  button.tb-add-new-widget {
+    padding-right: 12px;
+    font-size: 24px;
+    border-style: dashed;
+    border-width: 2px;
   }
 }

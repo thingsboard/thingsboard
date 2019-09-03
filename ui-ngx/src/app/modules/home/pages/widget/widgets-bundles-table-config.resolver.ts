@@ -135,9 +135,7 @@ export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableCon
     if ($event) {
       $event.stopPropagation();
     }
-    // TODO:
-    // this.router.navigateByUrl(`customers/${customer.id.id}/users`);
-    this.dialogService.todo();
+    this.router.navigateByUrl(`widgets-bundles/${widgetsBundle.id.id}/widgetTypes`);
   }
 
   exportWidgetsBundle($event: Event, widgetsBundle: WidgetsBundle) {

@@ -21,6 +21,7 @@ import {HttpClient} from '@angular/common/http';
 import {PageLink} from '@shared/models/page/page-link';
 import {PageData} from '@shared/models/page/page-data';
 import {WidgetsBundle} from '@shared/models/widgets-bundle.model';
+import { WidgetType } from '@shared/models/widget.models';
 
 @Injectable({
   providedIn: 'root'
@@ -49,6 +50,12 @@ export class WidgetService {
 
   public deleteWidgetsBundle(widgetsBundleId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false) {
     return this.http.delete(`/api/widgetsBundle/${widgetsBundleId}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  }
+
+  public getBundleWidgetTypes(bundleAlias: string, isSystem: boolean,
+                              ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Array<WidgetType>> {
+    return this.http.get<Array<WidgetType>>(`/api/widgetTypes?isSystem=${isSystem}&bundleAlias=${bundleAlias}`,
+      defaultHttpOptions(ignoreLoading, ignoreErrors));
   }
 
 }

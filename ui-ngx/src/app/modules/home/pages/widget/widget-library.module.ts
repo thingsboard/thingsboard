@@ -20,13 +20,15 @@ import {SharedModule} from '@shared/shared.module';
 import {WidgetsBundleComponent} from '@modules/home/pages/widget/widgets-bundle.component';
 import {WidgetLibraryRoutingModule} from '@modules/home/pages/widget/widget-library-routing.module';
 import {HomeComponentsModule} from '@modules/home/components/home-components.module';
+import { WidgetLibraryComponent } from './widget-library.component';
 
 @NgModule({
   entryComponents: [
     WidgetsBundleComponent
   ],
   declarations: [
-    WidgetsBundleComponent
+    WidgetsBundleComponent,
+    WidgetLibraryComponent
   ],
   imports: [
     CommonModule,
