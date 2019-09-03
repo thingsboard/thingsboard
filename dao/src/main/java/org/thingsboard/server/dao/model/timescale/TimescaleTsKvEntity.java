@@ -48,7 +48,7 @@ import static org.thingsboard.server.dao.timescale.AggregationRepository.FIND_SU
 import static org.thingsboard.server.dao.timescale.AggregationRepository.FROM_WHERE_CLAUSE;
 
 @Data
-@EqualsAndHashCode(callSuper=true)
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "tenant_ts_kv")
 @IdClass(TimescaleTsKvCompositeKey.class)
@@ -60,6 +60,7 @@ import static org.thingsboard.server.dao.timescale.AggregationRepository.FROM_WH
                                 targetClass = TimescaleTsKvEntity.class,
                                 columns = {
                                         @ColumnResult(name = "tsBucket", type = Long.class),
+                                        @ColumnResult(name = "interval", type = Long.class),
                                         @ColumnResult(name = "longValue", type = Long.class),
                                         @ColumnResult(name = "doubleValue", type = Double.class),
                                         @ColumnResult(name = "longCountValue", type = Long.class),
@@ -76,6 +77,7 @@ import static org.thingsboard.server.dao.timescale.AggregationRepository.FROM_WH
                                 targetClass = TimescaleTsKvEntity.class,
                                 columns = {
                                         @ColumnResult(name = "tsBucket", type = Long.class),
+                                        @ColumnResult(name = "interval", type = Long.class),
                                         @ColumnResult(name = "booleanValueCount", type = Long.class),
                                         @ColumnResult(name = "strValueCount", type = Long.class),
                                         @ColumnResult(name = "longValueCount", type = Long.class),
@@ -119,12 +121,12 @@ public final class TimescaleTsKvEntity extends AbsractTsKvEntity implements ToDa
 
     public TimescaleTsKvEntity() { }
 
-    public TimescaleTsKvEntity(Long tsBucket, Long longValue, Double doubleValue, Long longCountValue, Long doubleCountValue, String strValue, String aggType) {
-        if(!StringUtils.isEmpty(strValue)) {
+    public TimescaleTsKvEntity(Long tsBucket, Long interval, Long longValue, Double doubleValue, Long longCountValue, Long doubleCountValue, String strValue, String aggType) {
+        if (!StringUtils.isEmpty(strValue)) {
             this.strValue = strValue;
         }
-        if (!isAllNull(tsBucket, longValue, doubleValue, longCountValue, doubleCountValue)) {
-            this.ts = tsBucket;
+        if (!isAllNull(tsBucket, interval, longValue, doubleValue, longCountValue, doubleCountValue)) {
+            this.ts = tsBucket + interval/2;
             switch (aggType) {
                 case AVG:
                     double sum = 0.0;
@@ -162,9 +164,9 @@ public final class TimescaleTsKvEntity extends AbsractTsKvEntity implements ToDa
         }
     }
 
-    public TimescaleTsKvEntity(Long tsBucket, Long booleanValueCount, Long strValueCount, Long longValueCount, Long doubleValueCount) {
-        if (!isAllNull(tsBucket, booleanValueCount, strValueCount, longValueCount, doubleValueCount)) {
-            this.ts = tsBucket;
+    public TimescaleTsKvEntity(Long tsBucket, Long interval, Long booleanValueCount, Long strValueCount, Long longValueCount, Long doubleValueCount) {
+        if (!isAllNull(tsBucket, interval, booleanValueCount, strValueCount, longValueCount, doubleValueCount)) {
+            this.ts = tsBucket + interval/2;
             if (booleanValueCount != 0) {
                 this.longValue = booleanValueCount;
             } else if (strValueCount != 0) {

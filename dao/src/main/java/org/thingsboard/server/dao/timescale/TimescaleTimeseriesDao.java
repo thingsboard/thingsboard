@@ -154,25 +154,25 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
 
     @Override
     public ListenableFuture<Void> removeLatest(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
-        ListenableFuture<List<TimescaleTsKvEntity>> future = findLatestByQuery(tenantId, entityId, query);
-        ListenableFuture<Boolean> booleanFuture = Futures.transform(future, latest -> {
-            if (!CollectionUtils.isEmpty(latest)) {
-                TimescaleTsKvEntity entity = latest.get(0);
-                long ts = entity.getTs();
-                if (ts > query.getStartTs() && ts <= query.getEndTs()) {
-                    tsKvRepository.delete(entity);
-                    return true;
-                }
-            }
-            return false;
-        }, service);
-        return Futures.transformAsync(booleanFuture, isRemove -> {
-            if (isRemove && query.getRewriteLatestIfDeleted()) {
-                return getNewLatestEntryFuture(tenantId, entityId, query);
-            }
-            return Futures.immediateFuture(null);
-        }, service);
-
+        return service.submit(() -> null);
+//        ListenableFuture<List<TimescaleTsKvEntity>> future = findLatestByQuery(tenantId, entityId, query);
+//        ListenableFuture<Boolean> booleanFuture = Futures.transform(future, latest -> {
+//            if (!CollectionUtils.isEmpty(latest)) {
+//                TimescaleTsKvEntity entity = latest.get(0);
+//                long ts = entity.getTs();
+//                if (ts > query.getStartTs() && ts <= query.getEndTs()) {
+//                    tsKvRepository.delete(entity);
+//                    return true;
+//                }
+//            }
+//            return false;
+//        }, service);
+//        return Futures.transformAsync(booleanFuture, isRemove -> {
+//            if (isRemove && query.getRewriteLatestIfDeleted()) {
+//                return getNewLatestEntryFuture(tenantId, entityId, query);
+//            }
+//            return Futures.immediateFuture(null);
+//        }, service);
     }
 
     @Override
