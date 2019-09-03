@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.service.security.auth.rest;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -50,6 +53,9 @@ import java.util.UUID;
 @Component
 @Slf4j
 public class RestAuthenticationProvider implements AuthenticationProvider {
+
+    private static final String LAST_LOGIN_TIME = "lastLoginTime";
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private final SystemSecurityService systemSecurityService;
     private final UserService userService;
@@ -109,11 +115,23 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
 
             logLoginAction(user, authentication, null);
 
+            setLastLoginTime(user);
+            user = userService.saveUser(user);
+
             return new UsernamePasswordAuthenticationToken(securityUser, null, securityUser.getAuthorities());
         } catch (Exception e) {
             logLoginAction(user, authentication, e);
             throw e;
         }
+    }
+
+    private void setLastLoginTime(User user) {
+        JsonNode additionalInfo = user.getAdditionalInfo();
+        if (additionalInfo == null || !(additionalInfo instanceof ObjectNode)) {
+            additionalInfo = objectMapper.createObjectNode();
+        }
+        ((ObjectNode) additionalInfo).put(LAST_LOGIN_TIME, System.currentTimeMillis());
+        user.setAdditionalInfo(additionalInfo);
     }
 
     private Authentication authenticateByPublicId(UserPrincipal userPrincipal, String publicId) {

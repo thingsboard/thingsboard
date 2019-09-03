@@ -46,7 +46,8 @@ public class AuditLogController extends BaseController {
             @RequestParam(required = false) Long startTime,
             @RequestParam(required = false) Long endTime,
             @RequestParam(required = false, defaultValue = "false") boolean ascOrder,
-            @RequestParam(required = false) String offset) throws ThingsboardException {
+            @RequestParam(required = false) String offset,
+            @RequestParam(required = false) String actionTypes) throws ThingsboardException {
         try {
             checkParameter("CustomerId", strCustomerId);
             TenantId tenantId = getCurrentUser().getTenantId();
