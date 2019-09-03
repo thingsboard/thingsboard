@@ -1216,6 +1216,7 @@
     },
     "profile": {
         "profile": "Profile",
+        "last-login-time": "Last Login",
         "change-password": "Change Password",
         "current-password": "Current password"
     },

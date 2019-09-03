@@ -54,7 +54,7 @@ import java.util.UUID;
 @Slf4j
 public class RestAuthenticationProvider implements AuthenticationProvider {
 
-    private static final String LAST_LOGIN_TIME = "lastLoginTime";
+    private static final String LAST_LOGIN_TS = "lastLoginTs";
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private final SystemSecurityService systemSecurityService;
@@ -115,7 +115,7 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
 
             logLoginAction(user, authentication, null);
 
-            setLastLoginTime(user);
+            setLastLoginTs(user);
             user = userService.saveUser(user);
 
             return new UsernamePasswordAuthenticationToken(securityUser, null, securityUser.getAuthorities());
@@ -125,12 +125,12 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
         }
     }
 
-    private void setLastLoginTime(User user) {
+    private void setLastLoginTs(User user) {
         JsonNode additionalInfo = user.getAdditionalInfo();
         if (additionalInfo == null || !(additionalInfo instanceof ObjectNode)) {
             additionalInfo = objectMapper.createObjectNode();
         }
-        ((ObjectNode) additionalInfo).put(LAST_LOGIN_TIME, System.currentTimeMillis());
+        ((ObjectNode) additionalInfo).put(LAST_LOGIN_TS, System.currentTimeMillis());
         user.setAdditionalInfo(additionalInfo);
     }
 
