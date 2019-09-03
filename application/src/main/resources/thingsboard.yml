@@ -488,3 +488,18 @@ transport:
     bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"
     bind_port: "${COAP_BIND_PORT:5683}"
     timeout: "${COAP_TIMEOUT:10000}"
+
+swagger:
+  api_path_regex: "${SWAGGER_API_PATH_REGEX:/api.*}"
+  security_path_regex: "${SWAGGER_SECURITY_PATH_REGEX:/api.*}"
+  non_security_path_regex: "${SWAGGER_NON_SECURITY_PATH_REGEX:/api/noauth.*}"
+  title: "${SWAGGER_TITLE:Thingsboard REST API}"
+  description: "${SWAGGER_DESCRIPTION:For instructions how to authorize requests please visit <a href='http://thingsboard.io/docs/reference/rest-api/'>REST API documentation page</a>.}"
+  contact:
+    name: "${SWAGGER_CONTACT_NAME:Thingsboard team}"
+    url: "${SWAGGER_CONTACT_URL:http://thingsboard.io}"
+    email: "${SWAGGER_CONTACT_EMAIL:info@thingsboard.io}"
+  license:
+    title: "${SWAGGER_LICENSE_TITLE:Apache License Version 2.0}"
+    url: "${SWAGGER_LICENSE_URL:https://github.com/thingsboard/thingsboard/blob/master/LICENSE}"
+  version: "${SWAGGER_VERSION:2.0}"
