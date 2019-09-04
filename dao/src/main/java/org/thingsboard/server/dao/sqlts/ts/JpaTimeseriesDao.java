@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sqlts;
+package org.thingsboard.server.dao.sqlts.ts;
 
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.FutureCallback;
@@ -35,10 +35,10 @@ import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.model.sqlts.TsKvEntity;
-import org.thingsboard.server.dao.model.sqlts.TsKvLatestCompositeKey;
-import org.thingsboard.server.dao.model.sqlts.TsKvLatestEntity;
-import org.thingsboard.server.dao.sql.AbstractSqlTimeseriesDao;
+import org.thingsboard.server.dao.model.sqlts.ts.TsKvEntity;
+import org.thingsboard.server.dao.model.sqlts.ts.TsKvLatestCompositeKey;
+import org.thingsboard.server.dao.model.sqlts.ts.TsKvLatestEntity;
+import org.thingsboard.server.dao.sqlts.AbstractSqlTimeseriesDao;
 import org.thingsboard.server.dao.timeseries.SimpleListenableFuture;
 import org.thingsboard.server.dao.timeseries.TimeseriesDao;
 import org.thingsboard.server.dao.util.SqlTsDao;

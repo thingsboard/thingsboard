@@ -13,26 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model.sqlts;
+package org.thingsboard.server.dao.sqlts.ts;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.springframework.data.repository.CrudRepository;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.dao.model.sqlts.ts.TsKvLatestCompositeKey;
+import org.thingsboard.server.dao.model.sqlts.ts.TsKvLatestEntity;
+import org.thingsboard.server.dao.util.SqlDao;
 
-import javax.persistence.Transient;
-import java.io.Serializable;
+import java.util.List;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class TsKvCompositeKey implements Serializable {
+@SqlDao
+public interface TsKvLatestRepository extends CrudRepository<TsKvLatestEntity, TsKvLatestCompositeKey> {
 
-    @Transient
-    private static final long serialVersionUID = -4089175869616037523L;
-
-    private EntityType entityType;
-    private String entityId;
-    private String key;
-    private long ts;
+    List<TsKvLatestEntity> findAllByEntityTypeAndEntityId(EntityType entityType, String entityId);
 }

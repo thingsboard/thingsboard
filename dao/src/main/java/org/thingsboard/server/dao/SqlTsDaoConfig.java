@@ -21,19 +21,15 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import org.thingsboard.server.dao.util.SqlDao;
-import org.thingsboard.server.dao.util.TimescaleDBTsDao;
+import org.thingsboard.server.dao.util.SqlTsDao;
 
-/**
- * @author Valerii Sosliuk
- */
 @Configuration
 @EnableAutoConfiguration
-@ComponentScan("org.thingsboard.server.dao.sql")
-@EnableJpaRepositories("org.thingsboard.server.dao.sql")
-@EntityScan("org.thingsboard.server.dao.model.sql")
+@ComponentScan("org.thingsboard.server.dao.sqlts.ts")
+@EnableJpaRepositories("org.thingsboard.server.dao.sqlts.ts")
+@EntityScan("org.thingsboard.server.dao.model.sqlts.ts")
 @EnableTransactionManagement
-@SqlDao
-public class JpaDaoConfig {
+@SqlTsDao
+public class SqlTsDaoConfig {
 
 }

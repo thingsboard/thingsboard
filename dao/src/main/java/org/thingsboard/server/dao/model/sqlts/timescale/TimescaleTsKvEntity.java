@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model.timescale;
+package org.thingsboard.server.dao.model.sqlts.timescale;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -35,17 +35,17 @@ import javax.persistence.SqlResultSetMappings;
 import javax.persistence.Table;
 
 import static org.thingsboard.server.dao.model.ModelConstants.TENANT_ID_COLUMN;
-import static org.thingsboard.server.dao.timescale.AggregationRepository.FIND_AVG;
-import static org.thingsboard.server.dao.timescale.AggregationRepository.FIND_AVG_QUERY;
-import static org.thingsboard.server.dao.timescale.AggregationRepository.FIND_COUNT;
-import static org.thingsboard.server.dao.timescale.AggregationRepository.FIND_COUNT_QUERY;
-import static org.thingsboard.server.dao.timescale.AggregationRepository.FIND_MAX;
-import static org.thingsboard.server.dao.timescale.AggregationRepository.FIND_MAX_QUERY;
-import static org.thingsboard.server.dao.timescale.AggregationRepository.FIND_MIN;
-import static org.thingsboard.server.dao.timescale.AggregationRepository.FIND_MIN_QUERY;
-import static org.thingsboard.server.dao.timescale.AggregationRepository.FIND_SUM;
-import static org.thingsboard.server.dao.timescale.AggregationRepository.FIND_SUM_QUERY;
-import static org.thingsboard.server.dao.timescale.AggregationRepository.FROM_WHERE_CLAUSE;
+import static org.thingsboard.server.dao.sqlts.timescale.AggregationRepository.FIND_AVG;
+import static org.thingsboard.server.dao.sqlts.timescale.AggregationRepository.FIND_AVG_QUERY;
+import static org.thingsboard.server.dao.sqlts.timescale.AggregationRepository.FIND_COUNT;
+import static org.thingsboard.server.dao.sqlts.timescale.AggregationRepository.FIND_COUNT_QUERY;
+import static org.thingsboard.server.dao.sqlts.timescale.AggregationRepository.FIND_MAX;
+import static org.thingsboard.server.dao.sqlts.timescale.AggregationRepository.FIND_MAX_QUERY;
+import static org.thingsboard.server.dao.sqlts.timescale.AggregationRepository.FIND_MIN;
+import static org.thingsboard.server.dao.sqlts.timescale.AggregationRepository.FIND_MIN_QUERY;
+import static org.thingsboard.server.dao.sqlts.timescale.AggregationRepository.FIND_SUM;
+import static org.thingsboard.server.dao.sqlts.timescale.AggregationRepository.FIND_SUM_QUERY;
+import static org.thingsboard.server.dao.sqlts.timescale.AggregationRepository.FROM_WHERE_CLAUSE;
 
 @Data
 @EqualsAndHashCode(callSuper = true)

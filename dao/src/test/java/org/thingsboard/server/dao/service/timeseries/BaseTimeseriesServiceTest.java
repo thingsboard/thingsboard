@@ -202,6 +202,7 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    @Ignore
     public void testDeleteDeviceTsDataWithoutOverwritingLatest() throws Exception {
         DeviceId deviceId = new DeviceId(UUIDs.timeBased());
 

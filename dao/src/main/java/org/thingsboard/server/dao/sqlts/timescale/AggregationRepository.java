@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.timescale;
+package org.thingsboard.server.dao.sqlts.timescale;
 
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Repository;
-import org.thingsboard.server.dao.model.timescale.TimescaleTsKvEntity;
+import org.thingsboard.server.dao.model.sqlts.timescale.TimescaleTsKvEntity;
 import org.thingsboard.server.dao.util.TimescaleDBTsDao;
 
 import javax.persistence.EntityManager;
