@@ -16,15 +16,15 @@
 
 -->
 <div fxFlex fxLayout="column" class="tb-progress-cover" fxLayoutAlign="center center"
-     [ngStyle]="options.dashboardStyle"
-     [fxShow]="(loading() | async) && !options.isEdit">
+     [ngStyle]="dashboardStyle"
+     [fxShow]="(((isLoading$ | async) && !this.ignoreLoading) || this.dashboardLoading) && !isEdit">
   <mat-spinner color="warn" mode="indeterminate" diameter="100">
   </mat-spinner>
 </div>
 <div id="gridster-parent"
      fxFlex class="tb-dashboard-content layout-wrap" [ngStyle]="{overflowY: isAutofillHeight() ? 'hidden' : 'auto'}"
                 (contextmenu)="openDashboardContextMenu($event)">
-  <div [ngClass]="options.dashboardClass" id="gridster-background" style="height: auto; min-height: 100%; display: inline;">
+  <div [ngClass]="dashboardClass" id="gridster-background" style="height: auto; min-height: 100%; display: inline;">
     <gridster #gridster id="gridster-child" [options]="gridsterOpts">
       <gridster-item [item]="widget" class="tb-noselect" *ngFor="let widget of widgets$ | async">
         <div tb-fullscreen [fullscreen]="widget.isFullscreen" (fullscreenChanged)="onWidgetFullscreenChanged($event, widget)"
@@ -58,42 +58,42 @@
                  fxLayoutAlign="start center"
                  (mousedown)="$event.stopPropagation()">
               <button mat-button mat-icon-button *ngFor="let action of widget.customHeaderActions"
-                    [fxShow]="!options.isEdit"
+                    [fxShow]="!isEdit"
                     (click)="action.onAction($event)"
                     matTooltip="{{ action.displayName }}"
                     matTooltipPosition="above">
                 <mat-icon>{{ action.icon }}</mat-icon>
               </button>
               <button mat-button mat-icon-button *ngFor="let action of widget.widgetActions"
-                      [fxShow]="!options.isEdit && action.show"
+                      [fxShow]="!isEdit && action.show"
                       (click)="action.onAction($event)"
                       matTooltip="{{ action.name | translate }}"
                       matTooltipPosition="above">
                 <mat-icon>{{ action.icon }}</mat-icon>
               </button>
               <button mat-button mat-icon-button
-                      [fxShow]="!options.isEdit && widget.enableFullscreen"
+                      [fxShow]="!isEdit && widget.enableFullscreen"
                       (click)="widget.isFullscreen = !widget.isFullscreen"
                       matTooltip="{{(widget.isFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
                       matTooltipPosition="above">
                 <mat-icon>{{ widget.isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
               </button>
               <button mat-button mat-icon-button
-                      [fxShow]="options.isEditActionEnabled && !widget.isFullscreen"
+                      [fxShow]="isEditActionEnabled && !widget.isFullscreen"
                       (click)="editWidget($event, widget)"
                       matTooltip="{{ 'widget.edit' | translate }}"
                       matTooltipPosition="above">
                 <mat-icon>edit</mat-icon>
               </button>
               <button mat-button mat-icon-button
-                      [fxShow]="options.isExportActionEnabled && !widget.isFullscreen"
+                      [fxShow]="isExportActionEnabled && !widget.isFullscreen"
                       (click)="exportWidget($event, widget)"
                       matTooltip="{{ 'widget.export' | translate }}"
                       matTooltipPosition="above">
                 <mat-icon>file_download</mat-icon>
               </button>
               <button mat-button mat-icon-button
-                      [fxShow]="options.isRemoveActionEnabled && !widget.isFullscreen"
+                      [fxShow]="isRemoveActionEnabled && !widget.isFullscreen"
                       (click)="removeWidget($event, widget)"
                       matTooltip="{{ 'widget.remove' | translate }}"
                       matTooltipPosition="above">
@@ -102,7 +102,12 @@
             </div>
           </div>
           <div fxFlex fxLayout="column" class="tb-widget-content">
-
+            <tb-widget fxFlex
+                       [dashboardWidget]="widget"
+                       [isEdit]="isEdit"
+                       [isMobile]="isMobileSize"
+                       [dashboard]="this">
+            </tb-widget>
           </div>
         </div>
       </gridster-item>

@@ -113,3 +113,5 @@ export const valueTypesMap = new Map<ValueType, ValueTypeData>(
     ]
   ]
 );
+
+export const customTranslationsPrefix = 'custom.';

@@ -24,14 +24,14 @@ import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { ActivatedRoute } from '@angular/router';
 import { Authority } from '@shared/models/authority.enum';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { toWidgetInfo, Widget, widgetType } from '@app/shared/models/widget.models';
 import { WidgetService } from '@core/http/widget.service';
 import { map, share } from 'rxjs/operators';
 import { DialogService } from '@core/services/dialog.service';
-import { speedDialFabAnimations } from '@shared/animations/speed-dial-fab.animations';
 import { FooterFabButtons } from '@app/shared/components/footer-fab-buttons.component';
-import { DashboardConfig } from '@home/models/dashboard-component.models';
+import { DashboardCallbacks, WidgetsData } from '@home/models/dashboard-component.models';
+import { IAliasController } from '@app/core/api/widget-api.models';
 
 @Component({
   selector: 'tb-widget-library',
@@ -69,19 +69,21 @@ export class WidgetLibraryComponent extends PageComponent implements OnInit {
     ]
   };
 
-  dashboardOptions: DashboardConfig = new DashboardConfig();
+  dashboardCallbacks: DashboardCallbacks = {
+    onEditWidget: this.openWidgetType.bind(this),
+    onExportWidget: this.exportWidgetType.bind(this),
+    onRemoveWidget: this.removeWidgetType.bind(this)
+  };
+
+  widgetsData: Observable<WidgetsData>;
+
+  aliasController: IAliasController = {};
 
   constructor(protected store: Store<AppState>,
               private route: ActivatedRoute,
               private widgetService: WidgetService,
               private dialogService: DialogService) {
     super(store);
-    this.dashboardOptions.isEdit = false;
-    this.dashboardOptions.isEditActionEnabled = true;
-    this.dashboardOptions.isExportActionEnabled = true;
-    this.dashboardOptions.onEditWidget = ($event, widget) => { this.openWidgetType($event, widget); };
-    this.dashboardOptions.onExportWidget = ($event, widget) => { this.exportWidgetType($event, widget); };
-    this.dashboardOptions.onRemoveWidget = ($event, widget) => { this.removeWidgetType($event, widget); };
 
     this.authUser = getCurrentAuthUser(store);
     this.widgetsBundle = this.route.snapshot.data.widgetsBundle;
@@ -90,9 +92,8 @@ export class WidgetLibraryComponent extends PageComponent implements OnInit {
     } else {
       this.isReadOnly = this.authUser.authority !== Authority.SYS_ADMIN;
     }
-    this.dashboardOptions.isRemoveActionEnabled = !this.isReadOnly;
     this.loadWidgetTypes();
-    this.dashboardOptions.widgetsData = this.widgetTypes$.pipe(
+    this.widgetsData = this.widgetTypes$.pipe(
       map(widgets => ({ widgets })));
   }
 

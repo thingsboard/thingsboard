@@ -14,14 +14,14 @@
 /// limitations under the License.
 ///
 
-import {NgModule} from '@angular/core';
-import {CommonModule} from '@angular/common';
-import {SharedModule} from '@app/shared/shared.module';
-import {AddEntityDialogComponent} from './entity/add-entity-dialog.component';
-import {EntitiesTableComponent} from './entity/entities-table.component';
-import {DetailsPanelComponent} from './details-panel.component';
-import {EntityDetailsPanelComponent} from './entity/entity-details-panel.component';
-import {ContactComponent} from './contact.component';
+import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { SharedModule } from '@app/shared/shared.module';
+import { AddEntityDialogComponent } from './entity/add-entity-dialog.component';
+import { EntitiesTableComponent } from './entity/entities-table.component';
+import { DetailsPanelComponent } from './details-panel.component';
+import { EntityDetailsPanelComponent } from './entity/entity-details-panel.component';
+import { ContactComponent } from './contact.component';
 import { AuditLogDetailsDialogComponent } from './audit-log/audit-log-details-dialog.component';
 import { AuditLogTableComponent } from './audit-log/audit-log-table.component';
 import { EventTableHeaderComponent } from '@home/components/event/event-table-header.component';
@@ -35,6 +35,8 @@ import { AttributeTableComponent } from '@home/components/attribute/attribute-ta
 import { AddAttributeDialogComponent } from './attribute/add-attribute-dialog.component';
 import { EditAttributeValuePanelComponent } from './attribute/edit-attribute-value-panel.component';
 import { DashboardComponent } from '@home/components/dashboard/dashboard.component';
+import { WidgetComponent } from '@home/components/widget/widget.component';
+import { DynamicWidgetComponentFactoryService } from './widget/dynamic-widget-component-factory.service';
 
 @NgModule({
   entryComponents: [
@@ -66,7 +68,8 @@ import { DashboardComponent } from '@home/components/dashboard/dashboard.compone
       AttributeTableComponent,
       AddAttributeDialogComponent,
       EditAttributeValuePanelComponent,
-      DashboardComponent
+      DashboardComponent,
+      WidgetComponent
     ],
   imports: [
     CommonModule,
@@ -84,7 +87,11 @@ import { DashboardComponent } from '@home/components/dashboard/dashboard.compone
     AlarmTableComponent,
     AlarmDetailsDialogComponent,
     AttributeTableComponent,
-    DashboardComponent
+    DashboardComponent,
+    WidgetComponent
+  ],
+  providers: [
+    DynamicWidgetComponentFactoryService
   ]
 })
 export class HomeComponentsModule { }

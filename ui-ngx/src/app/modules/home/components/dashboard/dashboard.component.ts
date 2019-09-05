@@ -14,40 +14,108 @@
 /// limitations under the License.
 ///
 
-import { Component, OnInit, Input, ViewChild, AfterViewInit, ViewChildren, QueryList, ElementRef } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  Input,
+  OnChanges,
+  OnInit,
+  QueryList,
+  SimpleChanges,
+  ViewChild,
+  ViewChildren
+} from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
 import { AuthUser } from '@shared/models/user.model';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { Timewindow } from '@shared/models/time/time.models';
 import { TimeService } from '@core/services/time.service';
 import { GridsterComponent, GridsterConfig, GridsterItemComponent } from 'angular-gridster2';
-import { GridsterResizable } from 'angular-gridster2/lib/gridsterResizable.service';
-import { IDashboardComponent, DashboardConfig, DashboardWidget } from '../../models/dashboard-component.models';
-import { MatSort } from '@angular/material/sort';
-import { Observable, ReplaySubject, merge } from 'rxjs';
+import {
+  DashboardCallbacks,
+  DashboardWidget,
+  IDashboardComponent,
+  WidgetsData
+} from '../../models/dashboard-component.models';
+import { merge, Observable } from 'rxjs';
 import { map, share, tap } from 'rxjs/operators';
 import { WidgetLayout } from '@shared/models/dashboard.models';
 import { DialogService } from '@core/services/dialog.service';
-import { Widget } from '@app/shared/models/widget.models';
-import { MatTab } from '@angular/material/tabs';
 import { animatedScroll, isDefined } from '@app/core/utils';
-import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
+import { IAliasController, IStateController } from '@app/core/api/widget-api.models';
 
 @Component({
   selector: 'tb-dashboard',
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })
-export class DashboardComponent extends PageComponent implements IDashboardComponent, OnInit, AfterViewInit {
+export class DashboardComponent extends PageComponent implements IDashboardComponent, OnInit, AfterViewInit, OnChanges {
 
   authUser: AuthUser;
 
   @Input()
-  options: DashboardConfig;
+  widgetsData: Observable<WidgetsData>;
+
+  @Input()
+  callbacks: DashboardCallbacks;
+
+  @Input()
+  aliasController: IAliasController;
+
+  @Input()
+  stateController: IStateController;
+
+  @Input()
+  columns: number;
+
+  @Input()
+  horizontalMargin: number;
+
+  @Input()
+  verticalMargin: number;
+
+  @Input()
+  isEdit: boolean;
+
+  @Input()
+  autofillHeight: boolean;
+
+  @Input()
+  mobileAutofillHeight: boolean;
+
+  @Input()
+  mobileRowHeight: number;
+
+  @Input()
+  isMobile: boolean;
+
+  @Input()
+  isMobileDisabled: boolean;
+
+  @Input()
+  isEditActionEnabled: boolean;
+
+  @Input()
+  isExportActionEnabled: boolean;
+
+  @Input()
+  isRemoveActionEnabled: boolean;
+
+  @Input()
+  dashboardStyle: {[klass: string]: any};
+
+  @Input()
+  dashboardClass: string;
+
+  @Input()
+  ignoreLoading: boolean;
+
+  @Input()
+  dashboardTimewindow: Timewindow;
 
   gridsterOpts: GridsterConfig;
 
@@ -77,8 +145,8 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
   }
 
   ngOnInit(): void {
-    if (!this.options.dashboardTimewindow) {
-      this.options.dashboardTimewindow = this.timeService.defaultTimewindow();
+    if (!this.dashboardTimewindow) {
+      this.dashboardTimewindow = this.timeService.defaultTimewindow();
     }
     this.gridsterOpts = {
       gridType: 'scrollVertical',
@@ -86,35 +154,65 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       pushItems: false,
       swap: false,
       maxRows: 100,
-      minCols: this.options.columns ? this.options.columns : 24,
+      minCols: this.columns ? this.columns : 24,
       outerMargin: true,
-      outerMarginLeft: this.options.margins ? this.options.margins[0] : 10,
-      outerMarginRight: this.options.margins ? this.options.margins[0] : 10,
-      outerMarginTop: this.options.margins ? this.options.margins[1] : 10,
-      outerMarginBottom: this.options.margins ? this.options.margins[1] : 10,
+      outerMarginLeft: this.horizontalMargin ? this.horizontalMargin : 10,
+      outerMarginRight: this.horizontalMargin ? this.horizontalMargin : 10,
+      outerMarginTop: this.verticalMargin ? this.verticalMargin : 10,
+      outerMarginBottom: this.horizontalMargin ? this.horizontalMargin : 10,
       minItemCols: 1,
       minItemRows: 1,
       defaultItemCols: 8,
       defaultItemRows: 6,
-      resizable: {enabled: this.options.isEdit},
-      draggable: {enabled: this.options.isEdit}
+      resizable: {enabled: this.isEdit},
+      draggable: {enabled: this.isEdit},
+      itemChangeCallback: item => this.sortWidgets(this.widgets)
     };
 
-    this.updateGridsterOpts();
+    this.updateMobileOpts();
 
     this.loadDashboard();
 
-    merge(this.breakpointObserver
-      .observe(MediaBreakpoints['gt-sm']), this.options.layoutChange$).subscribe(
+    this.breakpointObserver
+      .observe(MediaBreakpoints['gt-sm']).subscribe(
       () => {
-        this.updateGridsterOpts();
-        this.sortWidgets(this.widgets);
+        this.updateMobileOpts();
       }
     );
   }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    let updateMobileOpts = false;
+    let updateLayoutOpts = false;
+    let updateEditingOpts = false;
+    for (const propName of Object.keys(changes)) {
+      const change = changes[propName];
+      if (!change.firstChange && change.currentValue !== change.previousValue) {
+        if (['isMobile', 'isMobileDisabled', 'autofillHeight', 'mobileAutofillHeight', 'mobileRowHeight'].includes(propName)) {
+          updateMobileOpts = true;
+        } else if (['horizontalMargin', 'verticalMargin'].includes(propName)) {
+          updateLayoutOpts = true;
+        } else if (propName === 'isEdit') {
+          updateEditingOpts = true;
+        }
+      }
+    }
+    if (updateMobileOpts) {
+      this.updateMobileOpts();
+    }
+    if (updateLayoutOpts) {
+      this.updateLayoutOpts();
+    }
+    if (updateEditingOpts) {
+      this.updateEditingOpts();
+    }
+    if (updateMobileOpts || updateLayoutOpts || updateEditingOpts) {
+      this.notifyGridsterOptionsChanged();
+    }
+  }
+
   loadDashboard() {
-    this.widgets$ = this.options.widgetsData.pipe(
+    this.widgets$ = this.widgetsData.pipe(
       map(widgetsData => {
         const dashboardWidgets = new Array<DashboardWidget>();
         let maxRows = this.gridsterOpts.maxRows;
@@ -164,17 +262,10 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
 
   isAutofillHeight(): boolean {
     if (this.isMobileSize) {
-      return isDefined(this.options.mobileAutofillHeight) ? this.options.mobileAutofillHeight : false;
+      return isDefined(this.mobileAutofillHeight) ? this.mobileAutofillHeight : false;
     } else {
-      return isDefined(this.options.autofillHeight) ? this.options.autofillHeight : false;
+      return isDefined(this.autofillHeight) ? this.autofillHeight : false;
     }
-  }
-
-  loading(): Observable<boolean> {
-    return this.isLoading$.pipe(
-      map(loading => (!this.options.ignoreLoading && loading) || this.dashboardLoading),
-      share()
-    );
   }
 
   openDashboardContextMenu($event: Event) {
@@ -192,14 +283,14 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
   }
 
   widgetMouseDown($event: Event, widget: DashboardWidget) {
-    if (this.options.onWidgetMouseDown) {
-      this.options.onWidgetMouseDown($event, widget.widget);
+    if (this.callbacks && this.callbacks.onWidgetMouseDown) {
+      this.callbacks.onWidgetMouseDown($event, widget.widget);
     }
   }
 
   widgetClicked($event: Event, widget: DashboardWidget) {
-    if (this.options.onWidgetClicked) {
-      this.options.onWidgetClicked($event, widget.widget);
+    if (this.callbacks && this.callbacks.onWidgetClicked) {
+      this.callbacks.onWidgetClicked($event, widget.widget);
     }
   }
 
@@ -207,8 +298,8 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
     if ($event) {
       $event.stopPropagation();
     }
-    if (this.options.isEditActionEnabled && this.options.onEditWidget) {
-      this.options.onEditWidget($event, widget.widget);
+    if (this.isEditActionEnabled && this.callbacks && this.callbacks.onEditWidget) {
+      this.callbacks.onEditWidget($event, widget.widget);
     }
   }
 
@@ -216,8 +307,8 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
     if ($event) {
       $event.stopPropagation();
     }
-    if (this.options.isExportActionEnabled && this.options.onExportWidget) {
-      this.options.onExportWidget($event, widget.widget);
+    if (this.isExportActionEnabled && this.callbacks && this.callbacks.onExportWidget) {
+      this.callbacks.onExportWidget($event, widget.widget);
     }
   }
 
@@ -225,8 +316,8 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
     if ($event) {
       $event.stopPropagation();
     }
-    if (this.options.isRemoveActionEnabled && this.options.onRemoveWidget) {
-      this.options.onRemoveWidget($event, widget.widget);
+    if (this.isRemoveActionEnabled && this.callbacks && this.callbacks.onRemoveWidget) {
+      this.callbacks.onRemoveWidget($event, widget.widget);
     }
   }
 
@@ -272,7 +363,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
     }
   }
 
-  private updateGridsterOpts() {
+  private updateMobileOpts() {
     this.isMobileSize = this.checkIsMobileSize();
     const mobileBreakPoint = this.isMobileSize ? 20000 : 0;
     this.gridsterOpts.mobileBreakpoint = mobileBreakPoint;
@@ -285,6 +376,21 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
     } else {
       this.gridsterOpts.gridType = this.isMobileSize ? 'fixed' : 'scrollVertical';
     }
+  }
+
+  private updateLayoutOpts() {
+    this.gridsterOpts.outerMarginLeft = this.horizontalMargin ? this.horizontalMargin : 10;
+    this.gridsterOpts.outerMarginRight = this.horizontalMargin ? this.horizontalMargin : 10;
+    this.gridsterOpts.outerMarginTop = this.verticalMargin ? this.verticalMargin : 10;
+    this.gridsterOpts.outerMarginBottom = this.horizontalMargin ? this.horizontalMargin : 10;
+  }
+
+  private updateEditingOpts() {
+    this.gridsterOpts.resizable.enabled = this.isEdit;
+    this.gridsterOpts.draggable.enabled = this.isEdit;
+  }
+
+  private notifyGridsterOptionsChanged() {
     if (this.gridster && this.gridster.options) {
       this.gridster.optionsChanged();
     }
@@ -294,15 +400,15 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
     let rowHeight = null;
     if (!this.isAutofillHeight()) {
       if (isMobile) {
-        rowHeight = isDefined(this.options.mobileRowHeight) ? this.options.mobileRowHeight : 70;
+        rowHeight = isDefined(this.mobileRowHeight) ? this.mobileRowHeight : 70;
       }
     }
     return rowHeight;
   }
 
   private checkIsMobileSize(): boolean {
-    const isMobileDisabled = this.options.isMobileDisabled === true;
-    let isMobileSize = this.options.isMobile === true && !isMobileDisabled;
+    const isMobileDisabled = this.isMobileDisabled === true;
+    let isMobileSize = this.isMobile === true && !isMobileDisabled;
     if (!isMobileSize && !isMobileDisabled) {
       isMobileSize = !this.breakpointObserver.isMatched(MediaBreakpoints['gt-sm']);
     }

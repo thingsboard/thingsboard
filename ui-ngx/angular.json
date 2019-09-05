@@ -30,6 +30,8 @@
               "src/styles.scss"
             ],
             "scripts": [
+              "node_modules/javascript-detect-element-resize/detect-element-resize.js",
+              "node_modules/jquery/dist/jquery.min.js",
               "node_modules/ace-builds/src-min/ace.js",
               "node_modules/ace-builds/src-min/ext-language_tools.js",
               "node_modules/ace-builds/src-min/ext-searchbox.js",
@@ -71,10 +73,10 @@
               "sourceMap": false,
               "extractCss": true,
               "namedChunks": false,
-              "aot": true,
+              "aot": false,
               "extractLicenses": true,
               "vendorChunk": false,
-              "buildOptimizer": true,
+              "buildOptimizer": false,
               "budgets": [
                 {
                   "type": "initial",

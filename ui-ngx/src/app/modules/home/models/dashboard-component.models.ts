@@ -22,92 +22,33 @@ import { Timewindow } from '@shared/models/time/time.models';
 import { Observable } from 'rxjs';
 import { isDefined, isUndefined } from '@app/core/utils';
 import { EventEmitter } from '@angular/core';
-
-export interface IAliasController {
-  [key: string]: any | null;
-  // TODO:
-}
+import { EntityId } from '@app/shared/models/id/entity-id';
+import { IAliasController, IStateController } from '@app/core/api/widget-api.models';
 
 export interface WidgetsData {
   widgets: Array<Widget>;
   widgetLayouts?: WidgetLayouts;
 }
 
-export class DashboardConfig {
-  widgetsData?: Observable<WidgetsData>;
-  isEdit: boolean;
-  isEditActionEnabled: boolean;
-  isExportActionEnabled: boolean;
-  isRemoveActionEnabled: boolean;
+export interface DashboardCallbacks {
   onEditWidget?: ($event: Event, widget: Widget) => void;
   onExportWidget?: ($event: Event, widget: Widget) => void;
   onRemoveWidget?: ($event: Event, widget: Widget) => void;
   onWidgetMouseDown?: ($event: Event, widget: Widget) => void;
   onWidgetClicked?: ($event: Event, widget: Widget) => void;
-  aliasController?: IAliasController;
-  autofillHeight?: boolean;
-  mobileAutofillHeight?: boolean;
-  dashboardStyle?: {[klass: string]: any} | null;
-  columns?: number;
-  margins?: [number, number];
-  dashboardTimewindow?: Timewindow;
-  ignoreLoading?: boolean;
-  dashboardClass?: string;
-  mobileRowHeight?: number;
-
-  private isMobileValue: boolean;
-  private isMobileDisabledValue: boolean;
-
-  private layoutChange = new EventEmitter();
-  layoutChange$ = this.layoutChange.asObservable();
-  layoutChangeTimeout = null;
-
-  set isMobile(isMobile: boolean) {
-    if (this.isMobileValue !== isMobile) {
-      const changed = isDefined(this.isMobileValue);
-      this.isMobileValue = isMobile;
-      if (changed) {
-        this.notifyLayoutChanged();
-      }
-    }
-  }
-  get isMobile(): boolean {
-    return this.isMobileValue;
-  }
-
-  set isMobileDisabled(isMobileDisabled: boolean) {
-    if (this.isMobileDisabledValue !== isMobileDisabled) {
-      const changed = isDefined(this.isMobileDisabledValue);
-      this.isMobileDisabledValue = isMobileDisabled;
-      if (changed) {
-        this.notifyLayoutChanged();
-      }
-    }
-  }
-  get isMobileDisabled(): boolean {
-    return this.isMobileDisabledValue;
-  }
-
-  private notifyLayoutChanged() {
-    if (this.layoutChangeTimeout) {
-      clearTimeout(this.layoutChangeTimeout);
-    }
-    this.layoutChangeTimeout = setTimeout(() => {
-      this.doNotifyLayoutChanged();
-    }, 0);
-  }
-
-  private doNotifyLayoutChanged() {
-    this.layoutChange.emit();
-    this.layoutChangeTimeout = null;
-  }
+  prepareDashboardContextMenu?: ($event: Event) => void;
+  prepareWidgetContextMenu?: ($event: Event, widget: Widget) => void;
 }
 
 export interface IDashboardComponent {
-  options: DashboardConfig;
   gridsterOpts: GridsterConfig;
   gridster: GridsterComponent;
+  mobileAutofillHeight: boolean;
   isMobileSize: boolean;
+  autofillHeight: boolean;
+  dashboardTimewindow: Timewindow;
+  aliasController: IAliasController;
+  stateController: IStateController;
 }
 
 export class DashboardWidget implements GridsterItem {
@@ -262,7 +203,7 @@ export class DashboardWidget implements GridsterItem {
   }
 
   get rows(): number {
-    if (this.dashboard.isMobileSize && !this.dashboard.options.mobileAutofillHeight) {
+    if (this.dashboard.isMobileSize && !this.dashboard.mobileAutofillHeight) {
       let mobileHeight;
       if (this.widgetLayout) {
         mobileHeight = this.widgetLayout.mobileHeight;
@@ -285,7 +226,7 @@ export class DashboardWidget implements GridsterItem {
   }
 
   set rows(rows: number) {
-    if (!this.dashboard.isMobileSize && !this.dashboard.options.autofillHeight) {
+    if (!this.dashboard.isMobileSize && !this.dashboard.autofillHeight) {
       if (this.widgetLayout) {
         this.widgetLayout.sizeY = rows;
       } else {

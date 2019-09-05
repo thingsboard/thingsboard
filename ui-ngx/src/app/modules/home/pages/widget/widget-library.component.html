@@ -27,6 +27,12 @@
         style="text-transform: uppercase; display: flex;"
         class="mat-headline tb-absolute-fill">widgets-bundle.empty</span>
 </section>
-<tb-dashboard [options]="dashboardOptions"></tb-dashboard>
+<tb-dashboard [aliasController]="aliasController"
+              [widgetsData]="widgetsData"
+              [isEdit]="false"
+              [isEditActionEnabled]="true"
+              [isExportActionEnabled]="true"
+              [isRemoveActionEnabled]="!isReadOnly"
+              [callbacks]="dashboardCallbacks"></tb-dashboard>
 <tb-footer-fab-buttons [fxShow]="!isReadOnly" [footerFabButtons]="footerFabButtons">
 </tb-footer-fab-buttons>

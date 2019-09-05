@@ -14,23 +14,75 @@
 /// limitations under the License.
 ///
 
+import { ExceptionData } from '@shared/models/error.models';
+import { IDashboardComponent } from '@home/models/dashboard-component.models';
+import { WidgetActionDescriptor, WidgetConfig, WidgetConfigSettings, widgetType } from '@shared/models/widget.models';
+import { Timewindow } from '@shared/models/time/time.models';
+import {
+  EntityInfo,
+  IWidgetSubscription,
+  SubscriptionInfo,
+  WidgetSubscriptionOptions,
+  IStateController,
+  IAliasController,
+  TimewindowFunctions,
+  WidgetSubscriptionApi,
+  RpcApi,
+  WidgetActionsApi,
+  IWidgetUtils
+} from '@core/api/widget-api.models';
+import { Observable } from 'rxjs';
+import { EntityId } from '@shared/models/id/entity-id';
+
 export interface IWidgetAction {
+  name: string;
   icon: string;
   onAction: ($event: Event) => void;
 }
 
 export interface WidgetHeaderAction extends IWidgetAction {
   displayName: string;
+  descriptor: WidgetActionDescriptor;
 }
 
 export interface WidgetAction extends IWidgetAction {
-  name: string;
   show: boolean;
 }
 
+export interface IDynamicWidgetComponent {
+  widgetContext: WidgetContext;
+  widgetErrorData: ExceptionData;
+  loadingData: boolean;
+  [key: string]: any;
+}
+
 export interface WidgetContext {
-  widgetTitleTemplate?: string;
+  inited?: boolean;
+  $container?: any;
+  $containerParent?: any;
+  width?: number;
+  height?: number;
+  $scope?: IDynamicWidgetComponent;
   hideTitlePanel?: boolean;
+  isEdit?: boolean;
+  isMobile?: boolean;
+  dashboard?: IDashboardComponent;
+  widgetConfig?: WidgetConfig;
+  settings?: WidgetConfigSettings;
+  units?: string;
+  decimals?: number;
+  subscriptions?: {[id: string]: IWidgetSubscription};
+  defaultSubscription?: IWidgetSubscription;
+  dashboardTimewindow?: Timewindow;
+  timewindowFunctions?: TimewindowFunctions;
+  subscriptionApi?: WidgetSubscriptionApi;
+  controlApi?: RpcApi;
+  utils?: IWidgetUtils;
+  actionsApi?: WidgetActionsApi;
+  stateController?: IStateController;
+  aliasController?: IAliasController;
+  activeEntityInfo?: EntityInfo;
+  widgetTitleTemplate?: string;
   widgetTitle?: string;
   customHeaderActions?: Array<WidgetHeaderAction>;
   widgetActions?: Array<WidgetAction>;

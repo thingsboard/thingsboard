@@ -22,7 +22,7 @@ import {Authority} from '@shared/models/authority.enum';
 import {RuleChainsTableConfigResolver} from '@modules/home/pages/rulechain/rulechains-table-config.resolver';
 import {WidgetsBundlesTableConfigResolver} from '@modules/home/pages/widget/widgets-bundles-table-config.resolver';
 import { WidgetLibraryComponent } from '@home/pages/widget/widget-library.component';
-import { BreadCrumbConfig } from '@shared/components/breadcrumb';
+import { BreadCrumbConfig, BreadCrumbLabelFunction } from '@shared/components/breadcrumb';
 import { User } from '@shared/models/user.model';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -44,7 +44,9 @@ export class WidgetsBundleResolver implements Resolve<WidgetsBundle> {
   }
 }
 
-const routes: Routes = [
+export const widgetTypesBreadcumbLabelFunction: BreadCrumbLabelFunction = ((route, translate) => route.data.widgetsBundle.title);
+
+export const routes: Routes = [
   {
     path: 'widgets-bundles',
     data: {
@@ -72,7 +74,7 @@ const routes: Routes = [
           auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
           title: 'widget.widget-library',
           breadcrumb: {
-            labelFunction: ((route, translate) => route.data.widgetsBundle.title),
+            labelFunction: widgetTypesBreadcumbLabelFunction,
             icon: 'now_widgets'
           } as BreadCrumbConfig
         },
