@@ -17,28 +17,44 @@
 -->
 <div layout="column" class="tb-web-camera">
     <md-button ng-show="vm.isShowCamera" ng-click="vm.takePhoto()"">Take Screenshot</md-button>
-    <div ng-show="!vm.isShowCamera" layout="column">
-        <div layout="row">
-            <md-input-container style="margin-right: 10px;">
-                <label>Audio source</label>
-                <md-select ng-model="vm.audioDevice" ng-change="vm.getStream()">
-                    <md-option ng-repeat="audio in vm.audioInput" value="{{audio.deviceId}}">{{audio.label}}</md-option>
-                </md-select>
-            </md-input-container>
-            <md-input-container style="margin-right: 10px;">
-                <label>Video source:</label>
-                <md-select ng-model="vm.videoDevice" ng-change="vm.getStream()">
-                    <md-option ng-repeat="video in vm.videoInput" value="{{video.deviceId}}">{{video.label}}</md-option>
-                </md-select>
-            </md-input-container>
+    <div ng-show="!vm.isShowCamera" layout="column" layout-align="center center">
+        <!--<div layout="row">-->
+            <!--<md-input-container style="margin-right: 10px;">-->
+                <!--<label>Video source:</label>-->
+                <!--<md-select ng-model="vm.videoDevice" ng-change="vm.getStream()">-->
+                    <!--<md-option ng-repeat="video in vm.videoInput" value="{{video.deviceId}}">{{video.label}}</md-option>-->
+                <!--</md-select>-->
+            <!--</md-input-container>-->
+        <!--</div>-->
+        <div class="camera" ng-show="!vm.isPreviewPhoto">
+            <video autoplay muted playsinline id="videoStream" class="camera-stream">></video>
+            <div class="camera-controls" layout="row" layout-wrap="" layout-align="space-between end">
+                <md-button class="md-fab md-primary md-mini" aria-label="Take Photo"
+                           ng-click="vm.switchWebCamera()" ng-disabled="{{vm.videoInput.length < 2}}">
+                    <md-icon md-font-icon="switch_camera" aria-label="Take Photo">switch_camera</md-icon>
+                </md-button>
+                <div flex></div>
+                <md-button class="md-fab md-hue-2" aria-label="Take Photo" ng-click="vm.takeScreenshot()">
+                    <md-icon md-font-icon="photo_camera" aria-label="Take Photo">photo_camera</md-icon>
+                </md-button>
+                <div flex></div>
+                <md-button class="md-fab md-primary md-mini" aria-label="Take Photo" ng-click="vm.takeScreenshot()">
+                    <md-icon md-font-icon="close" aria-label="Take Photo">close</md-icon>
+                </md-button>
+            </div>
         </div>
-        <div class="container">
-            <video autoplay muted playsinline id="videoStream"></video>
-            <md-button class="md-fab md-primary take-photo" aria-label="Take Photo" ng-click="vm.takeScreenshot()">
-                <md-icon md-font-icon="camera_alt" aria-label="Take Photo">camera_alt</md-icon>
-            </md-button>
+        <div class="camera" ng-show="vm.isPreviewPhoto">
+            <img class="camera-stream" ng-src="{{vm.screenShot}}">
+            <canvas style="display:none;"></canvas>
+            <div class="camera-controls" layout="row" layout-wrap="" layout-align="space-between end">
+                <div flex></div>
+                <md-button class="md-fab md-primary md-mini" aria-label="Back Ago" ng-click="vm.cancelPhoto()">
+                    <md-icon md-font-icon="close" aria-label="Back Ago">close</md-icon>
+                </md-button>
+                <md-button class="md-fab md-hue-2 md-mini" aria-label="Save Photo">
+                    <md-icon md-font-icon="check" aria-label="Save Photo">check</md-icon>
+                </md-button>
+            </div>
         </div>
-        <img ng-src="{{vm.screenShot}}">
-        <canvas style="display:none;"></canvas>
     </div>
 </div>

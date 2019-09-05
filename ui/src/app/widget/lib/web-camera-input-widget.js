@@ -41,17 +41,24 @@ function WebCameraWidgetController($element, $scope, $window) { //eslint-disable
     let vm = this;
 
     vm.videoInput = [];
-    vm.audioInput = [];
+    // vm.audioInput = [];
     vm.videoDevice = "";
-    vm.audioDevice = "";
+    // vm.audioDevice = "";
     vm.screenShot = "";
     vm.isShowCamera = false;
+    vm.isPreviewPhoto = false;
 
     let streamDevice = null;
+    let indexWebCamera = 0;
+
+    const videoElement = $element[0].querySelector('#videoStream');
+    const canvas = $element[0].querySelector('canvas');
 
     vm.getStream = getStream;
     vm.takeScreenshot = takeScreenshot;
     vm.takePhoto = takePhoto;
+    vm.switchWebCamera = switchWebCamera;
+    vm.cancelPhoto = cancelPhoto;
 
     $scope.$watch('vm.ctx', function() {
         if (vm.ctx) {
@@ -72,8 +79,16 @@ function WebCameraWidgetController($element, $scope, $window) { //eslint-disable
         getDevices().then(gotDevices).then(getStream);
     }
 
-    const videoElement = $element[0].querySelector('#videoStream');
-    const canvas = $element[0].querySelector('canvas');
+    function cancelPhoto() {
+        vm.isPreviewPhoto = false;
+        vm.screenShot = "";
+    }
+
+    function switchWebCamera() {
+        indexWebCamera = (indexWebCamera+1)%vm.videoInput.length;
+        vm.videoDevice = vm.videoInput[indexWebCamera].deviceId;
+        getStream();
+    }
 
     function getDevices() {
         // AFAICT in Safari this only gets default devices until gUM is called :/
@@ -87,10 +102,11 @@ function WebCameraWidgetController($element, $scope, $window) { //eslint-disable
                 deviceId: deviceInfo.deviceId,
                 label: ""
             };
-            if (deviceInfo.kind === 'audioinput') {
-                device.label = deviceInfo.label || `Microphone ${vm.audioInput.length + 1}`;
-                vm.audioInput.push(device);
-            } else if (deviceInfo.kind === 'videoinput') {
+            // if (deviceInfo.kind === 'audioinput') {
+            //     device.label = deviceInfo.label || `Microphone ${vm.audioInput.length + 1}`;
+            //     vm.audioInput.push(device);
+            // } else
+            if (deviceInfo.kind === 'videoinput') {
                 device.label = deviceInfo.label || `Camera ${vm.videoInput.length + 1}`;
                 vm.videoInput.push(device);
             }
@@ -104,7 +120,7 @@ function WebCameraWidgetController($element, $scope, $window) { //eslint-disable
             });
         }
         const constraints = {
-            audio: {deviceId: vm.audioDevice !== "" ? {exact: vm.audioDevice} : undefined},
+            // audio: {deviceId: vm.audioDevice !== "" ? {exact: vm.audioDevice} : undefined},
             video: {deviceId: vm.videoDevice !== "" ? {exact: vm.videoDevice} : undefined}
         };
         return $window.navigator.mediaDevices.getUserMedia(constraints).then(gotStream).catch(handleError);
@@ -112,11 +128,13 @@ function WebCameraWidgetController($element, $scope, $window) { //eslint-disable
 
     function gotStream(stream) {
         streamDevice = stream; // make stream available to console
-        if(vm.audioDevice === ""){
-            vm.audioDevice = vm.audioInput[vm.audioInput.findIndex(option => option.label === stream.getAudioTracks()[0].label)].deviceId;
-        }
+        // if(vm.audioDevice === ""){
+        //     vm.audioDevice = vm.audioInput[vm.audioInput.findIndex(option => option.label === stream.getAudioTracks()[0].label)].deviceId;
+        // }
         if(vm.videoDevice === ""){
-            vm.videoDevice = vm.videoInput[vm.videoInput.findIndex(option => option.label === stream.getVideoTracks()[0].label)].deviceId;
+            indexWebCamera = vm.videoInput.findIndex(option => option.label === stream.getVideoTracks()[0].label);
+            indexWebCamera = indexWebCamera === -1 ? 0 : indexWebCamera;
+            vm.videoDevice = vm.videoInput[indexWebCamera].deviceId;
         }
         videoElement.srcObject = stream;
     }
@@ -126,6 +144,7 @@ function WebCameraWidgetController($element, $scope, $window) { //eslint-disable
         canvas.height = videoElement.videoHeight;
         canvas.getContext('2d').drawImage(videoElement, 0, 0);
         vm.screenShot = canvas.toDataURL('image/webp');
+        vm.isPreviewPhoto = true;
         console.log(vm.screenShot);//eslint-disable-line
     }
 

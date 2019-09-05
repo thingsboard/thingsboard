@@ -15,15 +15,20 @@
  */
 
 .tb-web-camera {
-  .container {
+  .camera {
     position: relative;
+    overflow: hidden;
 
-    .take-photo {
+    .camera-stream{
+      display: block;
+      width: 100%;
+    }
+
+    .camera-controls {
       position: absolute;
-      top: 50%;
-      left: 50%;
-      z-index: 1;
-      margin: -64px 0 0 -64px;
+      bottom: 0;
+      width: 100%;
+      padding: 0 5px 5px;
     }
   }
 }
