@@ -90,6 +90,7 @@ export default function UserController(userService, toast, $scope, $mdDialog, $d
     vm.displayActivationLink = displayActivationLink;
     vm.resendActivation = resendActivation;
     vm.loginAsUser = loginAsUser;
+    vm.setUserCredentialsEnabled = setUserCredentialsEnabled;
 
     initController();
 
@@ -174,6 +175,17 @@ export default function UserController(userService, toast, $scope, $mdDialog, $d
                 openActivationLinkDialog(event, activationLink);
             }
         );
+    }
+
+    function setUserCredentialsEnabled(user, userCredentialsEnabled) {
+        userService.setUserCredentialsEnabled(user.id.id, userCredentialsEnabled).then(
+            () => {
+                if (!user.additionalInfo) {
+                    user.additionalInfo = {};
+                }
+                user.additionalInfo.userCredentialsEnabled = userCredentialsEnabled;
+            }
+        )
     }
 
     function openActivationLinkDialog(event, activationLink) {

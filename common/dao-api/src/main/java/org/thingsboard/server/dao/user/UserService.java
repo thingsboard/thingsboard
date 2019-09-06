@@ -60,5 +60,6 @@ public interface UserService {
 	TextPageData<User> findCustomerUsers(TenantId tenantId, CustomerId customerId, TextPageLink pageLink);
 	    
 	void deleteCustomerUsers(TenantId tenantId, CustomerId customerId);
-	
+
+	void setUserCredentialsEnabled(TenantId tenantId, UserId userId, boolean enabled);
 }

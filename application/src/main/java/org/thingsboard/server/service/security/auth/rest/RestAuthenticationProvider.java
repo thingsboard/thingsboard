@@ -43,6 +43,7 @@ import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.service.security.model.SecuritySettings;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
@@ -55,6 +56,7 @@ import java.util.UUID;
 public class RestAuthenticationProvider implements AuthenticationProvider {
 
     private static final String LAST_LOGIN_TS = "lastLoginTs";
+    private static final String FAILED_LOGIN_ATTEMPTS = "failedLoginAttempts";
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private final SystemSecurityService systemSecurityService;
@@ -116,22 +118,65 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
             logLoginAction(user, authentication, null);
 
             setLastLoginTs(user);
+            if (!Authority.SYS_ADMIN.equals(user.getAuthority())) {
+                resetFailedLoginAttempts(user);
+            }
             user = userService.saveUser(user);
 
             return new UsernamePasswordAuthenticationToken(securityUser, null, securityUser.getAuthorities());
         } catch (Exception e) {
             logLoginAction(user, authentication, e);
+
+            if (!Authority.SYS_ADMIN.equals(user.getAuthority())) {
+                int failedLoginAttempts = increaseFailedLoginAttempts(user);
+                lockUserAccordingSecurityPolicy(user, failedLoginAttempts);
+                userService.saveUser(user);
+            }
+
             throw e;
         }
     }
 
     private void setLastLoginTs(User user) {
         JsonNode additionalInfo = user.getAdditionalInfo();
-        if (additionalInfo == null || !(additionalInfo instanceof ObjectNode)) {
+        if (!(additionalInfo instanceof ObjectNode)) {
             additionalInfo = objectMapper.createObjectNode();
         }
         ((ObjectNode) additionalInfo).put(LAST_LOGIN_TS, System.currentTimeMillis());
         user.setAdditionalInfo(additionalInfo);
+    }
+
+    private void resetFailedLoginAttempts(User user) {
+        JsonNode additionalInfo = user.getAdditionalInfo();
+        if (!(additionalInfo instanceof ObjectNode)) {
+            additionalInfo = objectMapper.createObjectNode();
+        }
+        ((ObjectNode) additionalInfo).put(FAILED_LOGIN_ATTEMPTS, 0);
+        user.setAdditionalInfo(additionalInfo);
+    }
+
+    private int increaseFailedLoginAttempts(User user) {
+        JsonNode additionalInfo = user.getAdditionalInfo();
+        if (!(additionalInfo instanceof ObjectNode)) {
+            additionalInfo = objectMapper.createObjectNode();
+        }
+        int failedLoginAttempts = 0;
+        if (additionalInfo.has(FAILED_LOGIN_ATTEMPTS)) {
+            failedLoginAttempts = additionalInfo.get(FAILED_LOGIN_ATTEMPTS).asInt();
+        }
+        failedLoginAttempts = failedLoginAttempts + 1;
+        ((ObjectNode) additionalInfo).put(FAILED_LOGIN_ATTEMPTS, failedLoginAttempts);
+        user.setAdditionalInfo(additionalInfo);
+        return failedLoginAttempts;
+    }
+
+    private void lockUserAccordingSecurityPolicy(User user, int failedLoginAttempts) {
+        SecuritySettings securitySettings = systemSecurityService.getSecuritySettings(user.getTenantId());
+        if (securitySettings.getMaxFailedLoginAttempts() != null && securitySettings.getMaxFailedLoginAttempts() > 0) {
+            if (failedLoginAttempts > securitySettings.getMaxFailedLoginAttempts()) {
+                userService.setUserCredentialsEnabled(TenantId.SYS_TENANT_ID, user.getId(), false);
+            }
+        }
     }
 
     private Authentication authenticateByPublicId(UserPrincipal userPrincipal, String publicId) {

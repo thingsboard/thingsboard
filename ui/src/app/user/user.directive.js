@@ -35,6 +35,13 @@ export default function UserDirective($compile, $templateCache, userService) {
             return scope.user && scope.user.authority === 'CUSTOMER_USER';
         };
 
+        scope.isUserCredentialsEnabled = function() {
+            if (!scope.user || !scope.user.additionalInfo) {
+                return true;
+            }
+            return scope.user.additionalInfo.userCredentialsEnabled === true;
+        };
+
         scope.loginAsUserEnabled = userService.isUserTokenAccessEnabled();
 
         $compile(element.contents())(scope);
@@ -49,7 +56,8 @@ export default function UserDirective($compile, $templateCache, userService) {
             onDisplayActivationLink: '&',
             onResendActivation: '&',
             onLoginAsUser: '&',
-            onDeleteUser: '&'
+            onDeleteUser: '&',
+            onSetUserCredentialsEnabled: '&',
         }
     };
 }
