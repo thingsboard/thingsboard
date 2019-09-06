@@ -16,23 +16,30 @@
 
 import { ExceptionData } from '@shared/models/error.models';
 import { IDashboardComponent } from '@home/models/dashboard-component.models';
-import { WidgetActionDescriptor, WidgetConfig, WidgetConfigSettings, widgetType } from '@shared/models/widget.models';
+import {
+  WidgetActionDescriptor,
+  WidgetActionSource,
+  WidgetConfig,
+  WidgetConfigSettings,
+  WidgetControllerDescriptor,
+  WidgetType,
+  widgetType,
+  WidgetTypeDescriptor,
+  WidgetTypeParameters
+} from '@shared/models/widget.models';
 import { Timewindow } from '@shared/models/time/time.models';
 import {
   EntityInfo,
-  IWidgetSubscription,
-  SubscriptionInfo,
-  WidgetSubscriptionOptions,
-  IStateController,
   IAliasController,
-  TimewindowFunctions,
-  WidgetSubscriptionApi,
+  IStateController,
+  IWidgetSubscription,
+  IWidgetUtils,
   RpcApi,
+  TimewindowFunctions,
   WidgetActionsApi,
-  IWidgetUtils
+  WidgetSubscriptionApi
 } from '@core/api/widget-api.models';
-import { Observable } from 'rxjs';
-import { EntityId } from '@shared/models/id/entity-id';
+import { ComponentFactory } from '@angular/core';
 
 export interface IWidgetAction {
   name: string;
@@ -47,13 +54,6 @@ export interface WidgetHeaderAction extends IWidgetAction {
 
 export interface WidgetAction extends IWidgetAction {
   show: boolean;
-}
-
-export interface IDynamicWidgetComponent {
-  widgetContext: WidgetContext;
-  widgetErrorData: ExceptionData;
-  loadingData: boolean;
-  [key: string]: any;
 }
 
 export interface WidgetContext {
@@ -87,3 +87,93 @@ export interface WidgetContext {
   customHeaderActions?: Array<WidgetHeaderAction>;
   widgetActions?: Array<WidgetAction>;
 }
+
+export interface IDynamicWidgetComponent {
+  widgetContext: WidgetContext;
+  errorMessages: string[];
+  [key: string]: any;
+}
+
+export interface WidgetInfo extends WidgetTypeDescriptor, WidgetControllerDescriptor {
+  widgetName: string;
+  alias: string;
+  typeSettingsSchema?: string;
+  typeDataKeySettingsSchema?: string;
+  componentFactory?: ComponentFactory<IDynamicWidgetComponent>;
+}
+
+export const MissingWidgetType: WidgetInfo = {
+  type: widgetType.latest,
+  widgetName: 'Widget type not found',
+  alias: 'undefined',
+  sizeX: 8,
+  sizeY: 6,
+  resources: [],
+  templateHtml: '<div class="tb-widget-error-container">' +
+    '<div translate class="tb-widget-error-msg">widget.widget-type-not-found</div>' +
+    '</div>',
+  templateCss: '',
+  controllerScript: 'self.onInit = function() {}',
+  settingsSchema: '{}\n',
+  dataKeySettingsSchema: '{}\n',
+  defaultConfig: '{\n' +
+    '"title": "Widget type not found",\n' +
+    '"datasources": [],\n' +
+    '"settings": {}\n' +
+    '}\n'
+};
+
+export const ErrorWidgetType: WidgetInfo = {
+  type: widgetType.latest,
+  widgetName: 'Error loading widget',
+  alias: 'error',
+  sizeX: 8,
+  sizeY: 6,
+  resources: [],
+  templateHtml: '<div class="tb-widget-error-container">' +
+                   '<div translate class="tb-widget-error-msg">widget.widget-type-load-error</div>' +
+                   '<div *ngFor="let error of errorMessages" class="tb-widget-error-msg">{{ error }}</div>' +
+                '</div>',
+  templateCss: '',
+  controllerScript: 'self.onInit = function() {}',
+  settingsSchema: '{}\n',
+  dataKeySettingsSchema: '{}\n',
+  defaultConfig: '{\n' +
+    '"title": "Widget failed to load",\n' +
+    '"datasources": [],\n' +
+    '"settings": {}\n' +
+    '}\n'
+};
+
+export interface WidgetTypeInstance {
+  getSettingsSchema?: () => string;
+  getDataKeySettingsSchema?: () => string;
+  typeParameters?: () => WidgetTypeParameters;
+  useCustomDatasources?: () => boolean;
+  actionSources?: () => {[key: string]: WidgetActionSource};
+
+  onInit?: () => void;
+  onDataUpdated?: () => void;
+  onResize?: () => void;
+  onEditModeChanged?: () => void;
+  onMobileModeChanged?: () => void;
+  onDestroy?: () => void;
+}
+
+export function toWidgetInfo(widgetTypeEntity: WidgetType): WidgetInfo {
+  return {
+    widgetName: widgetTypeEntity.name,
+    alias: widgetTypeEntity.alias,
+    type: widgetTypeEntity.descriptor.type,
+    sizeX: widgetTypeEntity.descriptor.sizeX,
+    sizeY: widgetTypeEntity.descriptor.sizeY,
+    resources: widgetTypeEntity.descriptor.resources,
+    templateHtml: widgetTypeEntity.descriptor.templateHtml,
+    templateCss: widgetTypeEntity.descriptor.templateCss,
+    controllerScript: widgetTypeEntity.descriptor.controllerScript,
+    settingsSchema: widgetTypeEntity.descriptor.settingsSchema,
+    dataKeySettingsSchema: widgetTypeEntity.descriptor.dataKeySettingsSchema,
+    defaultConfig: widgetTypeEntity.descriptor.defaultConfig
+  };
+}
+

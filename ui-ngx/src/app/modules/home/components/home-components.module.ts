@@ -36,7 +36,8 @@ import { AddAttributeDialogComponent } from './attribute/add-attribute-dialog.co
 import { EditAttributeValuePanelComponent } from './attribute/edit-attribute-value-panel.component';
 import { DashboardComponent } from '@home/components/dashboard/dashboard.component';
 import { WidgetComponent } from '@home/components/widget/widget.component';
-import { DynamicWidgetComponentFactoryService } from './widget/dynamic-widget-component-factory.service';
+import { WidgetComponentService } from './widget/widget-component.service';
+import { LegendComponent } from '@home/components/widget/legend.component';
 
 @NgModule({
   entryComponents: [
@@ -69,7 +70,8 @@ import { DynamicWidgetComponentFactoryService } from './widget/dynamic-widget-co
       AddAttributeDialogComponent,
       EditAttributeValuePanelComponent,
       DashboardComponent,
-      WidgetComponent
+      WidgetComponent,
+      LegendComponent
     ],
   imports: [
     CommonModule,
@@ -88,10 +90,11 @@ import { DynamicWidgetComponentFactoryService } from './widget/dynamic-widget-co
     AlarmDetailsDialogComponent,
     AttributeTableComponent,
     DashboardComponent,
-    WidgetComponent
+    WidgetComponent,
+    LegendComponent
   ],
   providers: [
-    DynamicWidgetComponentFactoryService
+    WidgetComponentService
   ]
 })
 export class HomeComponentsModule { }

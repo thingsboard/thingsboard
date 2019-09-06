@@ -25,13 +25,14 @@ import { ActivatedRoute } from '@angular/router';
 import { Authority } from '@shared/models/authority.enum';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { Observable } from 'rxjs';
-import { toWidgetInfo, Widget, widgetType } from '@app/shared/models/widget.models';
+import { Widget, widgetType } from '@app/shared/models/widget.models';
 import { WidgetService } from '@core/http/widget.service';
 import { map, share } from 'rxjs/operators';
 import { DialogService } from '@core/services/dialog.service';
 import { FooterFabButtons } from '@app/shared/components/footer-fab-buttons.component';
 import { DashboardCallbacks, WidgetsData } from '@home/models/dashboard-component.models';
 import { IAliasController } from '@app/core/api/widget-api.models';
+import { toWidgetInfo } from '@home/models/widget-component.models';
 
 @Component({
   selector: 'tb-widget-library',

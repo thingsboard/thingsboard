@@ -24,7 +24,11 @@
             "tsConfig": "src/tsconfig.app.json",
             "assets": [
               "src/thingsboard.ico",
-              "src/assets"
+              "src/assets",
+              { "glob": "worker-html.js", "input": "./node_modules/ace-builds/src-min/", "output": "/" },
+              { "glob": "worker-css.js", "input": "./node_modules/ace-builds/src-min/", "output": "/" },
+              { "glob": "worker-json.js", "input": "./node_modules/ace-builds/src-min/", "output": "/" },
+              { "glob": "worker-javascript.js", "input": "./node_modules/ace-builds/src-min/", "output": "/" }
             ],
             "styles": [
               "src/styles.scss"
@@ -49,11 +53,7 @@
               "node_modules/ace-builds/src-min/snippets/css.js",
               "node_modules/ace-builds/src-min/snippets/json.js",
               "node_modules/ace-builds/src-min/snippets/java.js",
-              "node_modules/ace-builds/src-min/snippets/javascript.js",
-              { "bundleName": "worker-html", "input": "node_modules/ace-builds/src-min/worker-html.js" },
-              { "bundleName": "worker-css", "input": "node_modules/ace-builds/src-min/worker-css.js" },
-              { "bundleName": "worker-json", "input": "node_modules/ace-builds/src-min/worker-json.js" },
-              { "bundleName": "worker-javascript", "input": "node_modules/ace-builds/src-min/worker-javascript.js" }
+              "node_modules/ace-builds/src-min/snippets/javascript.js"
             ],
             "es5BrowserSupport": true,
             "customWebpackConfig": {

@@ -21,24 +21,13 @@ import { AppState } from '@core/core.state';
 import { WidgetContext, IDynamicWidgetComponent } from '@home/models/widget-component.models';
 import { ExceptionData } from '@shared/models/error.models';
 
-export abstract class DynamicWidgetComponentModule implements OnDestroy {
-
-  ngOnDestroy(): void {
-    console.log('Module destroyed!');
-  }
-
-}
-
-export abstract class DynamicWidgetComponent extends PageComponent implements IDynamicWidgetComponent, OnInit, OnDestroy {
+export class DynamicWidgetComponent extends PageComponent implements IDynamicWidgetComponent, OnInit, OnDestroy {
 
   @Input()
   widgetContext: WidgetContext;
 
   @Input()
-  widgetErrorData: ExceptionData;
-
-  @Input()
-  loadingData: boolean;
+  errorMessages: string[];
 
   [key: string]: any;
 
@@ -51,7 +40,7 @@ export abstract class DynamicWidgetComponent extends PageComponent implements ID
   }
 
   ngOnDestroy(): void {
-    console.log('Component destroyed!');
+    console.log('Widget component destroyed!');
   }
 
   clearRpcError() {

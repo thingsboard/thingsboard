@@ -25,14 +25,12 @@ import { LegendComponent } from '@home/components/widget/legend.component';
   ],
   declarations:
     [
-      LegendComponent
     ],
   imports: [
     CommonModule,
     SharedModule
   ],
   exports: [
-    LegendComponent
   ]
 })
 export class WidgetComponentsModule { }

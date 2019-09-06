@@ -14,11 +14,9 @@
 /// limitations under the License.
 ///
 
-import {BaseData} from '@shared/models/base-data';
-import {TenantId} from '@shared/models/id/tenant-id';
-import {WidgetsBundleId} from '@shared/models/id/widgets-bundle-id';
-import {WidgetTypeId} from '@shared/models/id/widget-type-id';
-import { AliasEntityType, EntityType, EntityTypeTranslation } from '@shared/models/entity-type.models';
+import { BaseData } from '@shared/models/base-data';
+import { TenantId } from '@shared/models/id/tenant-id';
+import { WidgetTypeId } from '@shared/models/id/widget-type-id';
 import { Timewindow } from '@shared/models/time/time.models';
 
 export enum widgetType {
@@ -137,86 +135,6 @@ export interface WidgetType extends BaseData<WidgetTypeId> {
   alias: string;
   name: string;
   descriptor: WidgetTypeDescriptor;
-}
-
-export interface WidgetInfo extends WidgetTypeDescriptor, WidgetControllerDescriptor {
-  widgetName: string;
-  alias: string;
-  typeSettingsSchema?: string;
-  typeDataKeySettingsSchema?: string;
-}
-
-export const MissingWidgetType: WidgetInfo = {
-  type: widgetType.latest,
-  widgetName: 'Widget type not found',
-  alias: 'undefined',
-  sizeX: 8,
-  sizeY: 6,
-  resources: [],
-  templateHtml: '<div class="tb-widget-error-container">' +
-                    '<div translate class="tb-widget-error-msg">widget.widget-type-not-found</div>' +
-                '</div>',
-  templateCss: '',
-  controllerScript: 'self.onInit = function() {}',
-  settingsSchema: '{}\n',
-  dataKeySettingsSchema: '{}\n',
-  defaultConfig: '{\n' +
-    '"title": "Widget type not found",\n' +
-    '"datasources": [],\n' +
-    '"settings": {}\n' +
-    '}\n'
-};
-
-export const ErrorWidgetType: WidgetInfo = {
-  type: widgetType.latest,
-  widgetName: 'Error loading widget',
-  alias: 'error',
-  sizeX: 8,
-  sizeY: 6,
-  resources: [],
-  templateHtml: '<div class="tb-widget-error-container">' +
-    '<div translate class="tb-widget-error-msg">widget.widget-type-load-error</div>',
-  templateCss: '',
-  controllerScript: 'self.onInit = function() {}',
-  settingsSchema: '{}\n',
-  dataKeySettingsSchema: '{}\n',
-  defaultConfig: '{\n' +
-    '"title": "Widget failed to load",\n' +
-    '"datasources": [],\n' +
-    '"settings": {}\n' +
-    '}\n'
-};
-
-export interface WidgetTypeInstance {
-  getSettingsSchema?: () => string;
-  getDataKeySettingsSchema?: () => string;
-  typeParameters?: () => WidgetTypeParameters;
-  useCustomDatasources?: () => boolean;
-  actionSources?: () => {[key: string]: WidgetActionSource};
-
-  onInit?: () => void;
-  onDataUpdated?: () => void;
-  onResize?: () => void;
-  onEditModeChanged?: () => void;
-  onMobileModeChanged?: () => void;
-  onDestroy?: () => void;
-}
-
-export function toWidgetInfo(widgetTypeEntity: WidgetType): WidgetInfo {
-  return {
-      widgetName: widgetTypeEntity.name,
-      alias: widgetTypeEntity.alias,
-      type: widgetTypeEntity.descriptor.type,
-      sizeX: widgetTypeEntity.descriptor.sizeX,
-      sizeY: widgetTypeEntity.descriptor.sizeY,
-      resources: widgetTypeEntity.descriptor.resources,
-      templateHtml: widgetTypeEntity.descriptor.templateHtml,
-      templateCss: widgetTypeEntity.descriptor.templateCss,
-      controllerScript: widgetTypeEntity.descriptor.controllerScript,
-      settingsSchema: widgetTypeEntity.descriptor.settingsSchema,
-      dataKeySettingsSchema: widgetTypeEntity.descriptor.dataKeySettingsSchema,
-      defaultConfig: widgetTypeEntity.descriptor.defaultConfig
-  };
 }
 
 export enum LegendDirection {

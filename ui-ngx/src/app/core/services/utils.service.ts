@@ -16,7 +16,6 @@
 
 import { Inject, Injectable } from '@angular/core';
 import { WINDOW } from '@core/services/window.service';
-import { WidgetInfo } from '@shared/models/widget.models';
 import { ExceptionData } from '@app/shared/models/error.models';
 import { isUndefined } from '@core/utils';
 import { WindowMessage } from '@shared/models/window-message.model';
@@ -30,7 +29,7 @@ export class UtilsService {
 
   iframeMode = false;
   widgetEditMode = false;
-  editWidgetInfo: WidgetInfo = null;
+  editWidgetInfo: any = null;
 
   constructor(@Inject(WINDOW) private window: Window,
               private translate: TranslateService) {

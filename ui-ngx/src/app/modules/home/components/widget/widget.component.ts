@@ -17,7 +17,6 @@
 import {
   AfterViewInit,
   Component,
-  ComponentFactory,
   ComponentFactoryResolver,
   ComponentRef,
   ElementRef,
@@ -38,34 +37,37 @@ import {
   LegendPosition,
   Widget,
   WidgetActionDescriptor,
+  widgetActionSources,
   WidgetActionType,
-  WidgetInfo, WidgetResource,
-  widgetType,
-  WidgetTypeInstance,
-  widgetActionSources
+  WidgetResource,
+  widgetType
 } from '@shared/models/widget.models';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { WidgetService } from '@core/http/widget.service';
 import { UtilsService } from '@core/services/utils.service';
-import { DynamicWidgetComponent } from '@home/components/widget/dynamic-widget.component';
-import { forkJoin, Observable, of, ReplaySubject, throwError } from 'rxjs';
-import { DynamicWidgetComponentFactoryService } from '@home/components/widget/dynamic-widget-component-factory.service';
+import { forkJoin, Observable, of, throwError } from 'rxjs';
 import { isDefined, objToBase64 } from '@core/utils';
 import * as $ from 'jquery';
-import { WidgetContext, WidgetHeaderAction } from '@home/models/widget-component.models';
+import {
+  IDynamicWidgetComponent,
+  WidgetContext,
+  WidgetHeaderAction,
+  WidgetInfo,
+  WidgetTypeInstance
+} from '@home/models/widget-component.models';
 import {
   EntityInfo,
   IWidgetSubscription,
-  SubscriptionInfo,
-  WidgetSubscriptionOptions,
   StateObject,
   StateParams,
-  WidgetSubscriptionContext
+  SubscriptionInfo,
+  WidgetSubscriptionContext,
+  WidgetSubscriptionOptions
 } from '@core/api/widget-api.models';
 import { EntityId } from '@shared/models/id/entity-id';
-import { ActivatedRoute, Router, UrlSegment } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import cssjs from '@core/css/css';
 import { ResourcesService } from '@core/services/resources.service';
 import { catchError, switchMap } from 'rxjs/operators';
@@ -74,6 +76,7 @@ import { TimeService } from '@core/services/time.service';
 import { DeviceService } from '@app/core/http/device.service';
 import { AlarmService } from '@app/core/http/alarm.service';
 import { ExceptionData } from '@shared/models/error.models';
+import { WidgetComponentService } from './widget-component.service';
 
 @Component({
   selector: 'tb-widget',
@@ -99,14 +102,22 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
 
   widget: Widget;
   widgetInfo: WidgetInfo;
+  errorMessages: string[];
   widgetContext: WidgetContext;
   widgetType: any;
   widgetTypeInstance: WidgetTypeInstance;
   widgetErrorData: ExceptionData;
+  loadingData: boolean;
 
-  dynamicWidgetComponentFactory: ComponentFactory<DynamicWidgetComponent>;
-  dynamicWidgetComponentRef: ComponentRef<DynamicWidgetComponent>;
-  dynamicWidgetComponent: DynamicWidgetComponent;
+  displayLegend: boolean;
+  legendConfig: LegendConfig;
+  legendData: LegendData;
+  isLegendFirst: boolean;
+  legendContainerLayoutType: string;
+  legendStyle: {[klass: string]: any};
+
+  dynamicWidgetComponentRef: ComponentRef<IDynamicWidgetComponent>;
+  dynamicWidgetComponent: IDynamicWidgetComponent;
 
   subscriptionContext: WidgetSubscriptionContext;
 
@@ -120,7 +131,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   constructor(protected store: Store<AppState>,
               private route: ActivatedRoute,
               private router: Router,
-              private dynamicWidgetComponentFactoryService: DynamicWidgetComponentFactoryService,
+              private widgetComponentService: WidgetComponentService,
               private componentFactoryResolver: ComponentFactoryResolver,
               private elementRef: ElementRef,
               private injector: Injector,
@@ -134,7 +145,66 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   }
 
   ngOnInit(): void {
+
+    this.loadingData = true;
+
     this.widget = this.dashboardWidget.widget;
+
+    this.displayLegend = isDefined(this.widget.config.showLegend) ? this.widget.config.showLegend
+      : this.widget.type === widgetType.timeseries;
+
+    this.legendContainerLayoutType = 'column';
+
+    if (this.displayLegend) {
+      this.legendConfig = this.widget.config.legendConfig ||
+        {
+          position: LegendPosition.bottom,
+          showMin: false,
+          showMax: false,
+          showAvg: this.widget.type === widgetType.timeseries,
+          showTotal: false
+        };
+      this.legendData = {
+        keys: [],
+        data: []
+      };
+      if (this.legendConfig.position === LegendPosition.top ||
+        this.legendConfig.position === LegendPosition.bottom) {
+        this.legendContainerLayoutType = 'column';
+      } else {
+        this.legendContainerLayoutType = 'row';
+      }
+      switch (this.legendConfig.position) {
+        case LegendPosition.top:
+          this.legendStyle = {
+            paddingBottom: '8px',
+            maxHeight: '50%',
+            overflowY: 'auto'
+          };
+          break;
+        case LegendPosition.bottom:
+          this.legendStyle = {
+            paddingTop: '8px',
+            maxHeight: '50%',
+            overflowY: 'auto'
+          };
+          break;
+        case LegendPosition.left:
+          this.legendStyle = {
+            paddingRight: '0px',
+            maxWidth: '50%',
+            overflowY: 'auto'
+          };
+          break;
+        case LegendPosition.right:
+          this.legendStyle = {
+            paddingLeft: '0px',
+            maxWidth: '50%',
+            overflowY: 'auto'
+          };
+          break;
+      }
+    }
 
     const actionDescriptorsBySourceId: {[actionSourceId: string]: Array<WidgetActionDescriptor>} = {};
     if (this.widget.config.actions) {
@@ -244,9 +314,14 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       aliasController: this.dashboard.aliasController
     };
 
-    this.widgetService.getWidgetInfo(this.widget.bundleAlias, this.widget.typeAlias, this.widget.isSystemType).subscribe(
+    this.widgetComponentService.getWidgetInfo(this.widget.bundleAlias, this.widget.typeAlias, this.widget.isSystemType).subscribe(
       (widgetInfo) => {
         this.widgetInfo = widgetInfo;
+        this.loadFromWidgetInfo();
+      },
+      (errorData) => {
+        this.widgetInfo = errorData.widgetInfo;
+        this.errorMessages = errorData.errorMessages;
         this.loadFromWidgetInfo();
       }
     );
@@ -363,14 +438,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   }
 
   private initialize() {
-    this.configureDynamicWidgetComponent().subscribe(
-      () => {
-        this.dynamicWidgetComponent.loadingData = false;
-      },
-      (error) => {
-        // TODO:
-      }
-    );
+    this.configureDynamicWidgetComponent();
+    // TODO:
+    this.loadingData = false;
   }
 
   private destroyDynamicWidgetComponent() {
@@ -381,127 +451,37 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     if (this.dynamicWidgetComponentRef) {
       this.dynamicWidgetComponentRef.destroy();
     }
-    if (this.dynamicWidgetComponentFactory) {
-      this.dynamicWidgetComponentFactoryService.destroyDynamicWidgetComponentFactory(this.dynamicWidgetComponentFactory);
-    }
   }
 
   private handleWidgetException(e) {
     console.error(e);
     this.widgetErrorData = this.utils.processWidgetException(e);
-    if (this.dynamicWidgetComponent) {
-      this.dynamicWidgetComponent.widgetErrorData = this.widgetErrorData;
-    }
   }
 
-  private configureDynamicWidgetComponent(): Observable<any> {
+  private configureDynamicWidgetComponent() {
+      this.widgetContentContainer.clear();
+      this.dynamicWidgetComponentRef = this.widgetContentContainer.createComponent(this.widgetInfo.componentFactory);
+      this.dynamicWidgetComponent = this.dynamicWidgetComponentRef.instance;
 
-    const dynamicWidgetComponentSubject = new ReplaySubject();
+      this.dynamicWidgetComponent.widgetContext = this.widgetContext;
+      this.dynamicWidgetComponent.errorMessages = this.errorMessages;
 
-    let html = '<div class="tb-absolute-fill tb-widget-error" *ngIf="widgetErrorData">' +
-      '<span>Widget Error: {{ widgetErrorData.name + ": " + widgetErrorData.message}}</span>' +
-      '</div>' +
-      '<div class="tb-absolute-fill tb-widget-loading" [fxShow]="loadingData" fxLayout="column" fxLayoutAlign="center center">' +
-      '<mat-spinner color="accent" md-mode="indeterminate" diameter="40"></mat-spinner>' +
-      '</div>';
+      this.widgetContext.$scope = this.dynamicWidgetComponent;
 
-    let containerHtml = `<div id="container">${this.widgetInfo.templateHtml}</div>`;
+      const containerElement = $(this.elementRef.nativeElement.querySelector('#widget-container'));
 
-    const displayLegend = isDefined(this.widget.config.showLegend) ? this.widget.config.showLegend
-      : this.widget.type === widgetType.timeseries;
+      this.widgetContext.$container = $('> ng-component', containerElement);
+      this.widgetContext.$container.css('display', 'block');
+      this.widgetContext.$container.attr('id', 'container');
+      this.widgetContext.$containerParent = $(containerElement);
 
-    let legendConfig: LegendConfig;
-    let legendData: LegendData;
-    if (displayLegend) {
-      legendConfig = this.widget.config.legendConfig ||
-        {
-          position: LegendPosition.bottom,
-          showMin: false,
-          showMax: false,
-          showAvg: this.widget.type === widgetType.timeseries,
-          showTotal: false
-        };
-      legendData = {
-        keys: [],
-        data: []
-      };
-      let layoutType;
-      if (legendConfig.position === LegendPosition.top ||
-        legendConfig.position === LegendPosition.bottom) {
-        layoutType = 'column';
-      } else {
-        layoutType = 'row';
-      }
-      let legendStyle;
-      switch (legendConfig.position) {
-        case LegendPosition.top:
-          legendStyle = 'padding-bottom: 8px; max-height: 50%; overflow-y: auto;';
-          break;
-        case LegendPosition.bottom:
-          legendStyle = 'padding-top: 8px; max-height: 50%; overflow-y: auto;';
-          break;
-        case LegendPosition.left:
-          legendStyle = 'padding-right: 0px; max-width: 50%; overflow-y: auto;';
-          break;
-        case LegendPosition.right:
-          legendStyle = 'padding-left: 0px; max-width: 50%; overflow-y: auto;';
-          break;
+      if (this.widgetSizeDetected) {
+        this.widgetContext.$container.css('height', this.widgetContext.height + 'px');
+        this.widgetContext.$container.css('width', this.widgetContext.width + 'px');
       }
 
-      const legendHtml = `<tb-legend style="${legendStyle}" [legendConfig]="legendConfig" [legendData]="legendData"></tb-legend>`;
-      containerHtml = `<div fxFlex id="widget-container">${containerHtml}</div>`;
-      html += `<div class="tb-absolute-fill" fxLayout="${layoutType}">`;
-      if (legendConfig.position === LegendPosition.top ||
-        legendConfig.position === LegendPosition.left) {
-        html += legendHtml;
-        html += containerHtml;
-      } else {
-        html += containerHtml;
-        html += legendHtml;
-      }
-      html += '</div>';
-    } else {
-      html += containerHtml;
-    }
-
-    this.dynamicWidgetComponentFactoryService.createDynamicWidgetComponentFactory(html).subscribe(
-      (componentFactory) => {
-        this.dynamicWidgetComponentFactory = componentFactory;
-        this.widgetContentContainer.clear();
-        this.dynamicWidgetComponentRef = this.widgetContentContainer.createComponent(this.dynamicWidgetComponentFactory);
-        this.dynamicWidgetComponent = this.dynamicWidgetComponentRef.instance;
-
-        this.dynamicWidgetComponent.loadingData = true;
-        this.dynamicWidgetComponent.widgetContext = this.widgetContext;
-        this.dynamicWidgetComponent.widgetErrorData = this.widgetErrorData;
-        this.dynamicWidgetComponent.displayLegend = displayLegend;
-        this.dynamicWidgetComponent.legendConfig = legendConfig;
-        this.dynamicWidgetComponent.legendData = legendData;
-
-        this.widgetContext.$scope = this.dynamicWidgetComponent;
-
-        const containerElement = displayLegend ? $(this.elementRef.nativeElement.querySelector('#widget-container'))
-          : $(this.elementRef.nativeElement);
-
-        this.widgetContext.$container = $('#container', containerElement);
-        this.widgetContext.$containerParent = $(containerElement);
-
-        if (this.widgetSizeDetected) {
-          this.widgetContext.$container.css('height', this.widgetContext.height + 'px');
-          this.widgetContext.$container.css('width', this.widgetContext.width + 'px');
-        }
-
-        // @ts-ignore
-        addResizeListener(this.widgetContext.$containerParent[0], this.onResizeListener);
-
-        dynamicWidgetComponentSubject.next();
-        dynamicWidgetComponentSubject.complete();
-      },
-      (e) => {
-        dynamicWidgetComponentSubject.error(e);
-      }
-    );
-    return dynamicWidgetComponentSubject.asObservable();
+      // @ts-ignore
+      addResizeListener(this.widgetContext.$containerParent[0], this.onResizeListener);
   }
 
   private createSubscription(options: WidgetSubscriptionOptions, subscribe: boolean): Observable<IWidgetSubscription> {
