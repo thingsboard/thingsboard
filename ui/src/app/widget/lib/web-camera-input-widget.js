@@ -37,35 +37,58 @@ function webCameraWidget() {
     };
 }
 
-function WebCameraWidgetController($element, $scope, $window) { //eslint-disable-line
+function WebCameraWidgetController($element, $scope, $window, types, utils, attributeService, Fullscreen) {
     let vm = this;
 
     vm.videoInput = [];
-    // vm.audioInput = [];
     vm.videoDevice = "";
-    // vm.audioDevice = "";
-    vm.screenShot = "";
+    vm.previewPhoto = "";
     vm.isShowCamera = false;
     vm.isPreviewPhoto = false;
 
     let streamDevice = null;
     let indexWebCamera = 0;
-
-    const videoElement = $element[0].querySelector('#videoStream');
-    const canvas = $element[0].querySelector('canvas');
+    let videoElement = null;
+    let canvas = null;
+    let photoCamera = null;
+    let dataKeyType = "";
 
     vm.getStream = getStream;
-    vm.takeScreenshot = takeScreenshot;
+    vm.createPhoto = createPhoto;
     vm.takePhoto = takePhoto;
     vm.switchWebCamera = switchWebCamera;
     vm.cancelPhoto = cancelPhoto;
+    vm.closeCamera = closeCamera;
+    vm.savePhoto = savePhoto;
 
-    $scope.$watch('vm.ctx', function() {
-        if (vm.ctx) {
-            if (!hasGetUserMedia()) {
-                alert('getUserMedia() is not supported by your browser');//eslint-disable-line
-            } else {
-                getDevices().then(gotDevices).then(getStream);
+    vm.isEntityDetected = false;
+    vm.dataKeyDetected = false;
+    vm.isCameraSupport = false;
+    vm.isDeviceDetect = false;
+
+    $scope.$watch('vm.ctx', function () {
+        if (vm.ctx && vm.ctx.datasources && vm.ctx.datasources.length) {
+            let datasource = vm.ctx.datasources[0];
+            if (datasource.type === types.datasourceType.entity) {
+                if (datasource.entityType && datasource.entityId) {
+                    if (vm.ctx.settings.widgetTitle && vm.ctx.settings.widgetTitle.length) {
+                        $scope.titleTemplate = utils.customTranslation(vm.ctx.settings.widgetTitle, vm.ctx.settings.widgetTitle);
+                    } else {
+                        $scope.titleTemplate = vm.ctx.widgetConfig.title;
+                    }
+                    vm.isEntityDetected = true;
+                }
+            }
+            if (datasource.dataKeys.length) {
+                $scope.currentKey = datasource.dataKeys[0].name;
+                dataKeyType = datasource.dataKeys[0].type;
+                vm.dataKeyDetected = true;
+            }
+            if (hasGetUserMedia()) {
+                vm.isCameraSupport = true;
+                getDevices().then(gotDevices).then(() => {
+                    vm.isDeviceDetect = !!vm.videoInput.length;
+                });
             }
         }
     });
@@ -76,12 +99,16 @@ function WebCameraWidgetController($element, $scope, $window) { //eslint-disable
 
     function takePhoto(){
         vm.isShowCamera = true;
-        getDevices().then(gotDevices).then(getStream);
+        videoElement = $element[0].querySelector('#videoStream');
+        photoCamera = $element[0].querySelector('#photoCamera');
+        canvas = $element[0].querySelector('canvas');
+        Fullscreen.enable(photoCamera);
+        getStream();
     }
 
     function cancelPhoto() {
         vm.isPreviewPhoto = false;
-        vm.screenShot = "";
+        vm.previewPhoto = "";
     }
 
     function switchWebCamera() {
@@ -91,21 +118,15 @@ function WebCameraWidgetController($element, $scope, $window) { //eslint-disable
     }
 
     function getDevices() {
-        // AFAICT in Safari this only gets default devices until gUM is called :/
         return $window.navigator.mediaDevices.enumerateDevices();
     }
 
     function gotDevices(deviceInfos) {
-        console.log('Available input and output devices:', deviceInfos);//eslint-disable-line
         for (const deviceInfo of deviceInfos) {
             let device = {
                 deviceId: deviceInfo.deviceId,
                 label: ""
             };
-            // if (deviceInfo.kind === 'audioinput') {
-            //     device.label = deviceInfo.label || `Microphone ${vm.audioInput.length + 1}`;
-            //     vm.audioInput.push(device);
-            // } else
             if (deviceInfo.kind === 'videoinput') {
                 device.label = deviceInfo.label || `Camera ${vm.videoInput.length + 1}`;
                 vm.videoInput.push(device);
@@ -120,17 +141,13 @@ function WebCameraWidgetController($element, $scope, $window) { //eslint-disable
             });
         }
         const constraints = {
-            // audio: {deviceId: vm.audioDevice !== "" ? {exact: vm.audioDevice} : undefined},
             video: {deviceId: vm.videoDevice !== "" ? {exact: vm.videoDevice} : undefined}
         };
-        return $window.navigator.mediaDevices.getUserMedia(constraints).then(gotStream).catch(handleError);
+        return $window.navigator.mediaDevices.getUserMedia(constraints).then(gotStream);
     }
 
     function gotStream(stream) {
-        streamDevice = stream; // make stream available to console
-        // if(vm.audioDevice === ""){
-        //     vm.audioDevice = vm.audioInput[vm.audioInput.findIndex(option => option.label === stream.getAudioTracks()[0].label)].deviceId;
-        // }
+        streamDevice = stream;
         if(vm.videoDevice === ""){
             indexWebCamera = vm.videoInput.findIndex(option => option.label === stream.getVideoTracks()[0].label);
             indexWebCamera = indexWebCamera === -1 ? 0 : indexWebCamera;
@@ -139,16 +156,41 @@ function WebCameraWidgetController($element, $scope, $window) { //eslint-disable
         videoElement.srcObject = stream;
     }
 
-    function takeScreenshot() {
+    function createPhoto() {
         canvas.width = videoElement.videoWidth;
         canvas.height = videoElement.videoHeight;
         canvas.getContext('2d').drawImage(videoElement, 0, 0);
-        vm.screenShot = canvas.toDataURL('image/webp');
+        vm.previewPhoto = canvas.toDataURL('image/png');
         vm.isPreviewPhoto = true;
-        console.log(vm.screenShot);//eslint-disable-line
     }
 
-    function handleError(error) {
-        console.error('Error: ', error);//eslint-disable-line
+    function closeCamera(){
+        Fullscreen.cancel(photoCamera);
+        vm.isShowCamera = false;
+        if (streamDevice !== null) {
+            streamDevice.getTracks().forEach(track => {
+                track.stop();
+            });
+        }
+        streamDevice = null;
+        videoElement.srcObject = null;
+    }
+
+    function savePhoto(){
+        let promiseData = null;
+        let datasource = vm.ctx.datasources[0];
+        let saveData = [{
+            key: datasource.dataKeys[0].name,
+            value: vm.previewPhoto
+        }];
+        if(dataKeyType === types.dataKeyType.attribute){
+            promiseData = attributeService.saveEntityAttributes(datasource.entityType, datasource.entityId, types.attributesScope.server.value, saveData);
+        } else if(dataKeyType === types.dataKeyType.timeseries){
+            promiseData = attributeService.saveEntityTimeseries(datasource.entityType, datasource.entityId, "scope", saveData);
+        }
+        promiseData.then(()=>{
+            vm.isPreviewPhoto = false;
+            closeCamera();
+        })
     }
 }
