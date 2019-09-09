@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.kv.TsKvQuery;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sqlts.timescale.TimescaleTsKvEntity;
 import org.thingsboard.server.dao.sqlts.AbstractSqlTimeseriesDao;
+import org.thingsboard.server.dao.sqlts.AbstractTimeseriesInsertRepository;
 import org.thingsboard.server.dao.timeseries.TimeseriesDao;
 import org.thingsboard.server.dao.util.TimescaleDBTsDao;
 
@@ -61,6 +62,9 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
 
     @Autowired
     private AggregationRepository aggregationRepository;
+
+    @Autowired
+    private AbstractTimeseriesInsertRepository insertRepository;
 
     @Override
     public ListenableFuture<List<TsKvEntry>> findAllAsync(TenantId tenantId, EntityId entityId, List<ReadTsKvQuery> queries) {
@@ -124,7 +128,7 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
         entity.setBooleanValue(tsKvEntry.getBooleanValue().orElse(null));
         log.trace("Saving entity to timescale db: {}", entity);
         return insertService.submit(() -> {
-            tsKvRepository.save(entity);
+            insertRepository.saveOrUpdate(entity);
             return null;
         });
     }
@@ -155,24 +159,6 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
     @Override
     public ListenableFuture<Void> removeLatest(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
         return service.submit(() -> null);
-//        ListenableFuture<List<TimescaleTsKvEntity>> future = findLatestByQuery(tenantId, entityId, query);
-//        ListenableFuture<Boolean> booleanFuture = Futures.transform(future, latest -> {
-//            if (!CollectionUtils.isEmpty(latest)) {
-//                TimescaleTsKvEntity entity = latest.get(0);
-//                long ts = entity.getTs();
-//                if (ts > query.getStartTs() && ts <= query.getEndTs()) {
-//                    tsKvRepository.delete(entity);
-//                    return true;
-//                }
-//            }
-//            return false;
-//        }, service);
-//        return Futures.transformAsync(booleanFuture, isRemove -> {
-//            if (isRemove && query.getRewriteLatestIfDeleted()) {
-//                return getNewLatestEntryFuture(tenantId, entityId, query);
-//            }
-//            return Futures.immediateFuture(null);
-//        }, service);
     }
 
     @Override

@@ -190,10 +190,10 @@ cassandra:
 
 # SQL configuration parameters
 sql:
-    # Specify executor service type used to perform timeseries insert tasks: SINGLE FIXED CACHED
+    # Specify executor service type used to perform timeseries insert tasks: SINGLE or FIXED
     ts_inserts_executor_type: "${SQL_TS_INSERTS_EXECUTOR_TYPE:fixed}"
     # Specify thread pool size for FIXED executor service type
-    ts_inserts_fixed_thread_pool_size: "${SQL_TS_INSERTS_FIXED_THREAD_POOL_SIZE:10}"
+    ts_inserts_fixed_thread_pool_size: "${SQL_TS_INSERTS_FIXED_THREAD_POOL_SIZE:200}"
 
 # Actor system parameters
 actors:
@@ -328,6 +328,8 @@ spring:
     url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard}"
     username: "${SPRING_DATASOURCE_USERNAME:postgres}"
     password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
+  hikari:
+    maximumPoolSize: 50
 
 # Audit log parameters
 audit-log:

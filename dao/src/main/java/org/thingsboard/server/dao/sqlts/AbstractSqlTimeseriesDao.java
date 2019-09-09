@@ -35,19 +35,23 @@ import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningExecutorService {
 
-    protected static final String DESC_ORDER = "DESC";
+    private static final String DESC_ORDER = "DESC";
 
     @Value("${sql.ts_inserts_executor_type}")
-    protected String insertExecutorType;
+    private String insertExecutorType;
 
     @Value("${sql.ts_inserts_fixed_thread_pool_size}")
-    protected int insertFixedThreadPoolSize;
+    private int insertFixedThreadPoolSize;
+
+    @Value("${spring.hikari.maximumPoolSize}")
+    private int maximumPoolSize;
 
     protected ListeningExecutorService insertService;
 
@@ -61,14 +65,12 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
                 insertService = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
                 break;
             case FIXED:
+            case CACHED:
                 int poolSize = insertFixedThreadPoolSize;
                 if (poolSize <= 0) {
-                    poolSize = 10;
+                    poolSize = maximumPoolSize * 4;
                 }
                 insertService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(poolSize));
-                break;
-            case CACHED:
-                insertService = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
                 break;
         }
     }
@@ -93,6 +95,7 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
                     return null;
                 }
                 return results.stream()
+                        .filter(Objects::nonNull)
                         .flatMap(List::stream)
                         .collect(Collectors.toList());
             }
