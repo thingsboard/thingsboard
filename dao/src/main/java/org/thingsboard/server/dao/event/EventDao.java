@@ -27,7 +27,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * The Interface DeviceDao.
+ * The Interface EventDao.
  */
 public interface EventDao extends Dao<Event> {
 
