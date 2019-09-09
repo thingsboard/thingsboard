@@ -59,6 +59,9 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
 
     public static final String USER_PASSWORD_HISTORY = "userPasswordHistory";
 
+    private static final String LAST_LOGIN_TS = "lastLoginTs";
+    private static final String FAILED_LOGIN_ATTEMPTS = "failedLoginAttempts";
+
     private static final int DEFAULT_TOKEN_LENGTH = 30;
     public static final String INCORRECT_USER_ID = "Incorrect userId ";
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
@@ -267,6 +270,58 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         ((ObjectNode) additionalInfo).put(USER_CREDENTIALS_ENABLED, enabled);
         user.setAdditionalInfo(additionalInfo);
         userDao.save(user.getTenantId(), user);
+    }
+
+
+    @Override
+    public void onUserLoginSuccessful(TenantId tenantId, UserId userId) {
+        log.trace("Executing onUserLoginSuccessful [{}]", userId);
+        User user = findUserById(tenantId, userId);
+        setLastLoginTs(user);
+        resetFailedLoginAttempts(user);
+        saveUser(user);
+    }
+
+    private void setLastLoginTs(User user) {
+        JsonNode additionalInfo = user.getAdditionalInfo();
+        if (!(additionalInfo instanceof ObjectNode)) {
+            additionalInfo = objectMapper.createObjectNode();
+        }
+        ((ObjectNode) additionalInfo).put(LAST_LOGIN_TS, System.currentTimeMillis());
+        user.setAdditionalInfo(additionalInfo);
+    }
+
+    private void resetFailedLoginAttempts(User user) {
+        JsonNode additionalInfo = user.getAdditionalInfo();
+        if (!(additionalInfo instanceof ObjectNode)) {
+            additionalInfo = objectMapper.createObjectNode();
+        }
+        ((ObjectNode) additionalInfo).put(FAILED_LOGIN_ATTEMPTS, 0);
+        user.setAdditionalInfo(additionalInfo);
+    }
+
+    @Override
+    public int onUserLoginIncorrectCredentials(TenantId tenantId, UserId userId) {
+        log.trace("Executing onUserLoginIncorrectCredentials [{}]", userId);
+        User user = findUserById(tenantId, userId);
+        int failedLoginAttempts = increaseFailedLoginAttempts(user);
+        saveUser(user);
+        return failedLoginAttempts;
+    }
+
+    private int increaseFailedLoginAttempts(User user) {
+        JsonNode additionalInfo = user.getAdditionalInfo();
+        if (!(additionalInfo instanceof ObjectNode)) {
+            additionalInfo = objectMapper.createObjectNode();
+        }
+        int failedLoginAttempts = 0;
+        if (additionalInfo.has(FAILED_LOGIN_ATTEMPTS)) {
+            failedLoginAttempts = additionalInfo.get(FAILED_LOGIN_ATTEMPTS).asInt();
+        }
+        failedLoginAttempts = failedLoginAttempts + 1;
+        ((ObjectNode) additionalInfo).put(FAILED_LOGIN_ATTEMPTS, failedLoginAttempts);
+        user.setAdditionalInfo(additionalInfo);
+        return failedLoginAttempts;
     }
 
     private UserCredentials saveUserCredentialsAndPasswordHistory(TenantId tenantId, UserCredentials userCredentials) {

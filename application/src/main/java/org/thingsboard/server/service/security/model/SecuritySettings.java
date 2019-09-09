@@ -25,4 +25,5 @@ public class SecuritySettings implements Serializable {
     private UserPasswordPolicy passwordPolicy;
 
     private Integer maxFailedLoginAttempts;
+    private String userLockoutNotificationEmail;
 }

@@ -27,7 +27,7 @@ public interface SystemSecurityService {
 
     SecuritySettings saveSecuritySettings(TenantId tenantId, SecuritySettings securitySettings);
 
-    void validateUserCredentials(TenantId tenantId, UserCredentials userCredentials, String password) throws AuthenticationException;
+    void validateUserCredentials(TenantId tenantId, UserCredentials userCredentials, String username, String password) throws AuthenticationException;
 
     void validatePassword(TenantId tenantId, String password, UserCredentials userCredentials) throws DataValidationException;
 

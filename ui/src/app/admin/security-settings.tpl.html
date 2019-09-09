@@ -52,6 +52,12 @@
                                             <div translate ng-message="min">admin.minimum-max-failed-login-attempts-range</div>
                                         </div>
                                     </md-input-container>
+                                    <md-input-container class="md-block">
+                                        <label translate>admin.user-lockout-notification-email</label>
+                                        <input type="email"
+                                               name="userLockoutNotificationEmail"
+                                               ng-model="vm.securitySettings.userLockoutNotificationEmail">
+                                    </md-input-container>
                                 </md-expansion-panel-content>
                             </md-expansion-panel-expanded>
                         </md-expansion-panel>

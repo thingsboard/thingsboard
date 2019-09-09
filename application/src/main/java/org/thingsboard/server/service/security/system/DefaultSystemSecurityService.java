@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.passay.CharacterRule;
 import org.passay.EnglishCharacterData;
 import org.passay.LengthRule;
@@ -34,8 +35,10 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -68,6 +71,9 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private MailService mailService;
 
     @Resource
     private SystemSecurityService self;
@@ -109,15 +115,31 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
     }
 
     @Override
-    public void validateUserCredentials(TenantId tenantId, UserCredentials userCredentials, String password) throws AuthenticationException {
+    public void validateUserCredentials(TenantId tenantId, UserCredentials userCredentials, String username, String password) throws AuthenticationException {
 
         if (!encoder.matches(password, userCredentials.getPassword())) {
+            int failedLoginAttempts = userService.onUserLoginIncorrectCredentials(tenantId, userCredentials.getUserId());
+            SecuritySettings securitySettings = getSecuritySettings(tenantId);
+            if (securitySettings.getMaxFailedLoginAttempts() != null && securitySettings.getMaxFailedLoginAttempts() > 0) {
+                if (failedLoginAttempts > securitySettings.getMaxFailedLoginAttempts() && userCredentials.isEnabled()) {
+                    userService.setUserCredentialsEnabled(TenantId.SYS_TENANT_ID, userCredentials.getUserId(), false);
+                    if (StringUtils.isNoneBlank(securitySettings.getUserLockoutNotificationEmail())) {
+                        try {
+                            mailService.sendAccountLockoutEmail(username, securitySettings.getUserLockoutNotificationEmail(), securitySettings.getMaxFailedLoginAttempts());
+                        } catch (ThingsboardException e) {
+                            log.warn("Can't send email regarding user account [{}] lockout to provided email [{}]", username, securitySettings.getUserLockoutNotificationEmail(), e);
+                        }
+                    }
+                }
+            }
             throw new BadCredentialsException("Authentication Failed. Username or Password not valid.");
         }
 
         if (!userCredentials.isEnabled()) {
             throw new DisabledException("User is not active");
         }
+
+        userService.onUserLoginSuccessful(tenantId, userCredentials.getUserId());
 
         SecuritySettings securitySettings = self.getSecuritySettings(tenantId);
         if (isPositiveInteger(securitySettings.getPasswordPolicy().getPasswordExpirationPeriodDays())) {
@@ -158,7 +180,7 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
         }
 
         if (userCredentials != null && isPositiveInteger(passwordPolicy.getPasswordReuseFrequencyDays())) {
-            Long passwordReuseFrequencyTs = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(passwordPolicy.getPasswordReuseFrequencyDays());
+            long passwordReuseFrequencyTs = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(passwordPolicy.getPasswordReuseFrequencyDays());
             User user = userService.findUserById(tenantId, userCredentials.getUserId());
             JsonNode additionalInfo = user.getAdditionalInfo();
             if (additionalInfo instanceof ObjectNode && additionalInfo.has(UserServiceImpl.USER_PASSWORD_HISTORY)) {
