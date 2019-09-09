@@ -328,8 +328,8 @@ spring:
     url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard}"
     username: "${SPRING_DATASOURCE_USERNAME:postgres}"
     password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
-  hikari:
-    maximumPoolSize: 50
+    hikari:
+      maximumPoolSize: "${SPRING_DATASOURCE_MAXIMUM_POOL_SIZE:50}"
 
 # Audit log parameters
 audit-log:

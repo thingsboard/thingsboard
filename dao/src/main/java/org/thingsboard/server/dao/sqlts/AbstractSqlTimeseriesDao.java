@@ -50,7 +50,7 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
     @Value("${sql.ts_inserts_fixed_thread_pool_size}")
     private int insertFixedThreadPoolSize;
 
-    @Value("${spring.hikari.maximumPoolSize}")
+    @Value("${spring.datasource.hikari.maximumPoolSize}")
     private int maximumPoolSize;
 
     protected ListeningExecutorService insertService;
