@@ -32,6 +32,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -41,6 +42,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.UserCredentials;
+import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.user.UserService;
@@ -116,7 +118,6 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
 
     @Override
     public void validateUserCredentials(TenantId tenantId, UserCredentials userCredentials, String username, String password) throws AuthenticationException {
-
         if (!encoder.matches(password, userCredentials.getPassword())) {
             int failedLoginAttempts = userService.onUserLoginIncorrectCredentials(tenantId, userCredentials.getUserId());
             SecuritySettings securitySettings = getSecuritySettings(tenantId);
@@ -130,6 +131,7 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
                             log.warn("Can't send email regarding user account [{}] lockout to provided email [{}]", username, securitySettings.getUserLockoutNotificationEmail(), e);
                         }
                     }
+                    throw new LockedException("Authentication Failed. Username was locked due to security policy.");
                 }
             }
             throw new BadCredentialsException("Authentication Failed. Username or Password not valid.");

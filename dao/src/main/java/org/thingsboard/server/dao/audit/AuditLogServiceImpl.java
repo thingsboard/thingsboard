@@ -250,6 +250,7 @@ public class AuditLogServiceImpl implements AuditLogService {
                 break;
             case LOGIN:
             case LOGOUT:
+            case LOCKOUT:
                 String clientAddress = extractParameter(String.class, 0, additionalInfo);
                 String browser = extractParameter(String.class, 1, additionalInfo);
                 String os = extractParameter(String.class, 2, additionalInfo);

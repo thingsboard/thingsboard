@@ -269,6 +269,9 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         }
         ((ObjectNode) additionalInfo).put(USER_CREDENTIALS_ENABLED, enabled);
         user.setAdditionalInfo(additionalInfo);
+        if (enabled) {
+            resetFailedLoginAttempts(user);
+        }
         userDao.save(user.getTenantId(), user);
     }
 

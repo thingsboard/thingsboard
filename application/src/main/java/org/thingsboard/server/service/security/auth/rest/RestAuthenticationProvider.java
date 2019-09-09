@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -98,16 +99,21 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
                 throw new UsernameNotFoundException("User credentials not found");
             }
 
-            systemSecurityService.validateUserCredentials(user.getTenantId(), userCredentials, username, password);
+            try {
+                systemSecurityService.validateUserCredentials(user.getTenantId(), userCredentials, username, password);
+            } catch (LockedException e) {
+                logLoginAction(user, authentication, ActionType.LOCKOUT, null);
+                throw e;
+            }
 
             if (user.getAuthority() == null)
                 throw new InsufficientAuthenticationException("User has no authority assigned");
 
             SecurityUser securityUser = new SecurityUser(user, userCredentials.isEnabled(), userPrincipal);
-            logLoginAction(user, authentication, null);
+            logLoginAction(user, authentication, ActionType.LOGIN, null);
             return new UsernamePasswordAuthenticationToken(securityUser, null, securityUser.getAuthorities());
         } catch (Exception e) {
-            logLoginAction(user, authentication, e);
+            logLoginAction(user, authentication, ActionType.LOGIN, e);
             throw e;
         }
     }
@@ -144,7 +150,7 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
         return (UsernamePasswordAuthenticationToken.class.isAssignableFrom(authentication));
     }
 
-    private void logLoginAction(User user, Authentication authentication, Exception e) {
+    private void logLoginAction(User user, Authentication authentication, ActionType actionType, Exception e) {
         String clientAddress = "Unknown";
         String browser = "Unknown";
         String os = "Unknown";
@@ -190,6 +196,6 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
         }
         auditLogService.logEntityAction(
                 user.getTenantId(), user.getCustomerId(), user.getId(),
-                user.getName(), user.getId(), null, ActionType.LOGIN, e, clientAddress, browser, os, device);
+                user.getName(), user.getId(), null, actionType, e, clientAddress, browser, os, device);
     }
 }

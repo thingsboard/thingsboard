@@ -23,6 +23,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
@@ -139,7 +140,9 @@ public class ThingsboardErrorResponseHandler implements AccessDeniedHandler {
         if (authenticationException instanceof BadCredentialsException) {
             mapper.writeValue(response.getWriter(), ThingsboardErrorResponse.of("Invalid username or password", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED));
         } else if (authenticationException instanceof DisabledException) {
-            mapper.writeValue(response.getWriter(), ThingsboardErrorResponse.of("User account is locked", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED));
+            mapper.writeValue(response.getWriter(), ThingsboardErrorResponse.of("User account is not active", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED));
+        } else if (authenticationException instanceof LockedException) {
+            mapper.writeValue(response.getWriter(), ThingsboardErrorResponse.of("User account is locked due to security policy", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED));
         } else if (authenticationException instanceof JwtExpiredTokenException) {
             mapper.writeValue(response.getWriter(), ThingsboardErrorResponse.of("Token has expired", ThingsboardErrorCode.JWT_TOKEN_EXPIRED, HttpStatus.UNAUTHORIZED));
         } else if (authenticationException instanceof AuthMethodNotSupportedException) {
