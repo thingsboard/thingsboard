@@ -187,7 +187,7 @@ export default function UserController(userService, toast, $scope, $mdDialog, $d
                 if (userCredentialsEnabled) {
                     toast.showSuccess($translate.instant('user.enable-account-message'));
                 } else {
-                    toast.showSuccess($translate.instant('user.disabled-account-message'));
+                    toast.showSuccess($translate.instant('user.disable-account-message'));
                 }
             }
         )
