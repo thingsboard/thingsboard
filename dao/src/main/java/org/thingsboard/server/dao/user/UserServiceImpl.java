@@ -327,7 +327,9 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     private UserCredentials saveUserCredentialsAndPasswordHistory(TenantId tenantId, UserCredentials userCredentials) {
         UserCredentials result = userCredentialsDao.save(tenantId, userCredentials);
         User user = findUserById(tenantId, userCredentials.getUserId());
-        updatePasswordHistory(user, userCredentials);
+        if (userCredentials.getPassword() != null) {
+            updatePasswordHistory(user, userCredentials);
+        }
         return result;
     }
 
