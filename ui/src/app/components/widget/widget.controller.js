@@ -769,6 +769,18 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
 
         $scope.$on('entityAliasesChanged', function (event, aliasIds) {
             var subscriptionChanged = false;
+            var selectedAlias = widgetContext.aliasController.getInstantAliasInfo(aliasIds);
+
+            if (selectedAlias) {
+                var params = {};
+                var entityId = {
+                    entityType : selectedAlias.currentEntity.entityType,
+                    id: selectedAlias.currentEntity.id
+                };
+                updateEntityParams(params, selectedAlias.alias, entityId, selectedAlias.currentEntity.name);
+                widgetContext.stateController.updateState(null, params, null);
+            }
+
             for (var id in widgetContext.subscriptions) {
                 var subscription = widgetContext.subscriptions[id];
                 subscriptionChanged = subscriptionChanged || subscription.onAliasesChanged(aliasIds);
