@@ -36,7 +36,9 @@ export default function UserDirective($compile, $templateCache, userService) {
         };
 
         scope.isUserCredentialsEnabled = function() {
-            if (!scope.user || !scope.user.additionalInfo) {
+            if (scope.user == null || angular.isUndefined(scope.user) ||
+                scope.user.additionalInfo == null || angular.isUndefined(scope.user.additionalInfo) ||
+                scope.user.additionalInfo.userCredentialsEnabled == null || angular.isUndefined(scope.user.additionalInfo.userCredentialsEnabled))  {
                 return true;
             }
             return scope.user.additionalInfo.userCredentialsEnabled === true;
