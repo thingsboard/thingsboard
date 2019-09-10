@@ -201,7 +201,8 @@
         "unlimited-level": "Nivel ilimitado",
         "state-entity": "Entidad del panel de estados",
         "all-entities": "Todas las entidades",
-        "any-relation": "alguna"
+        "any-relation": "alguna",
+        "default-entity": "Entidad predeterminada"
     },
     "asset": {
         "asset": "Activo",

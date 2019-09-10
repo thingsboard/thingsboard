@@ -184,7 +184,8 @@
     "unlimited-level": "Unbegrenzte Ebenen",
     "state-entity": "Dashboard Status Entität",
     "all-entities": "Alle Entitäten",
-    "any-relation": "Jede Beziehung"
+    "any-relation": "Jede Beziehung",
+    "default-entity": "Standard Entität"
   },
   "asset": {
     "asset": "Objekt",

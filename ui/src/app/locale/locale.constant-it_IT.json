@@ -185,7 +185,8 @@
         "unlimited-level": "Illimitato",
         "state-entity": "Entità di stato della dashboard",
         "all-entities": "Tutte le entità",
-        "any-relation": "qualsiasi"
+        "any-relation": "qualsiasi",
+        "default-entity": "Entità predefinita"
     },
     "asset": {
         "asset": "Asset",
