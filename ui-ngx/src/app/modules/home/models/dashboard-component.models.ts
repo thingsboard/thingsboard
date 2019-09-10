@@ -23,7 +23,7 @@ import { Observable } from 'rxjs';
 import { isDefined, isUndefined } from '@app/core/utils';
 import { EventEmitter } from '@angular/core';
 import { EntityId } from '@app/shared/models/id/entity-id';
-import { IAliasController, IStateController } from '@app/core/api/widget-api.models';
+import { IAliasController, IStateController, TimewindowFunctions } from '@app/core/api/widget-api.models';
 
 export interface WidgetsData {
   widgets: Array<Widget>;
@@ -49,6 +49,8 @@ export interface IDashboardComponent {
   dashboardTimewindow: Timewindow;
   aliasController: IAliasController;
   stateController: IStateController;
+  onUpdateTimewindow(startTimeMs: number, endTimeMs: number, interval: number): void;
+  onResetTimewindow(): void;
 }
 
 export class DashboardWidget implements GridsterItem {

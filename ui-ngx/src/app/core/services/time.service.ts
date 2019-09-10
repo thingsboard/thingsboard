@@ -15,11 +15,11 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { DAY, defaultTimeIntervals, MINUTE, SECOND, Timewindow } from '@shared/models/time/time.models';
-import {HttpClient} from '@angular/common/http';
-import {Observable} from 'rxjs';
-import {defaultHttpOptions} from '@core/http/http-utils';
-import {map} from 'rxjs/operators';
+import { AggregationType, DAY, defaultTimeIntervals, SECOND, Timewindow, defaultTimewindow } from '@shared/models/time/time.models';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { defaultHttpOptions } from '@core/http/http-utils';
+import { map } from 'rxjs/operators';
 
 export interface TimeInterval {
   name: string;
@@ -95,12 +95,31 @@ export class TimeService {
     return matchedInterval.value;
   }
 
+  public boundIntervalToTimewindow(timewindow: number, intervalMs: number, aggType: AggregationType): number {
+    if (aggType === AggregationType.NONE) {
+      return SECOND;
+    } else {
+      const min = this.minIntervalLimit(timewindow);
+      const max = this.maxIntervalLimit(timewindow);
+      if (intervalMs) {
+        return this.toBound(intervalMs, min, max, intervalMs);
+      } else {
+        return this.boundToPredefinedInterval(min, max, this.avgInterval(timewindow));
+      }
+    }
+  }
+
   public getMaxDatapointsLimit(): number {
     return this.maxDatapointsLimit;
   }
 
   public getMinDatapointsLimit(): number {
     return MIN_LIMIT;
+  }
+
+  public avgInterval(timewindow: number): number {
+    const avg = timewindow / 200;
+    return this.boundMinInterval(avg);
   }
 
   public minIntervalLimit(timewindowMs: number): number {
@@ -114,7 +133,7 @@ export class TimeService {
   }
 
   public defaultTimewindow(): Timewindow {
-    return Timewindow.defaultTimewindow(this);
+    return defaultTimewindow(this);
   }
 
   private toBound(value: number, min: number, max: number, defValue: number): number {

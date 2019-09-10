@@ -31,11 +31,13 @@
               { "glob": "worker-javascript.js", "input": "./node_modules/ace-builds/src-min/", "output": "/" }
             ],
             "styles": [
-              "src/styles.scss"
+              "src/styles.scss",
+              "node_modules/jquery.terminal/css/jquery.terminal.min.css"
             ],
             "scripts": [
               "node_modules/javascript-detect-element-resize/detect-element-resize.js",
               "node_modules/jquery/dist/jquery.min.js",
+              "node_modules/jquery.terminal/js/jquery.terminal.min.js",
               "node_modules/ace-builds/src-min/ace.js",
               "node_modules/ace-builds/src-min/ext-language_tools.js",
               "node_modules/ace-builds/src-min/ext-searchbox.js",

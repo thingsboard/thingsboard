@@ -18,12 +18,17 @@ import { BaseData } from '@shared/models/base-data';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { WidgetTypeId } from '@shared/models/id/widget-type-id';
 import { Timewindow } from '@shared/models/time/time.models';
+import { EntityType } from '@shared/models/entity-type.models';
+import { AlarmSearchStatus } from '@shared/models/alarm.models';
+import { Data } from '@angular/router';
+import { DataKeyType } from './telemetry/telemetry.models';
 
 export enum widgetType {
   timeseries = 'timeseries',
   latest = 'latest',
   rpc = 'rpc',
-  alarm = 'alarm'
+  alarm = 'alarm',
+  static = 'static'
 }
 
 export interface WidgetTypeTemplate {
@@ -75,6 +80,16 @@ export const widgetTypesData = new Map<widgetType, WidgetTypeData>(
         template: {
           bundleAlias: 'alarm_widgets',
           alias: 'alarms_table'
+        }
+      }
+    ],
+    [
+      widgetType.static,
+      {
+        name: 'widget.static',
+        template: {
+          bundleAlias: 'cards',
+          alias: 'html_card'
         }
       }
     ]
@@ -174,12 +189,48 @@ export interface LegendConfig {
   showTotal: boolean;
 }
 
-export interface DataKey {
-  label: string;
-  color: string;
+export interface KeyInfo {
+  name: string;
+  label?: string;
+  color?: string;
+  funcBody?: string;
+  postFuncBody?: string;
+  units?: string;
+  decimals?: number;
+}
+
+export interface DataKey extends KeyInfo {
+  type: DataKeyType;
+  pattern?: string;
+  settings?: any;
+  usePostProcessing?: boolean;
   hidden?: boolean;
+  _hash?: number;
+}
+
+export enum DatasourceType {
+  function = 'function',
+  entity = 'entity'
+}
+
+export interface Datasource {
+  type: DatasourceType;
+  name?: string;
+  dataKeys?: Array<DataKey>;
+  entityType?: EntityType;
+  entityId?: string;
+  entityName?: string;
+  entityAliasId?: string;
   [key: string]: any;
   // TODO:
+}
+
+export type DataSet = [number, any][];
+
+export interface DatasourceData {
+  datasource: Datasource;
+  dataKey: DataKey;
+  data: DataSet;
 }
 
 export interface LegendKey {
@@ -192,6 +243,7 @@ export interface LegendKeyData {
   max: number;
   avg: number;
   total: number;
+  hidden: boolean;
 }
 
 export interface LegendData {
@@ -264,6 +316,11 @@ export interface WidgetConfig {
   decimals?: number;
   actions?: {[actionSourceId: string]: Array<WidgetActionDescriptor>};
   settings?: WidgetConfigSettings;
+  alarmSource?: Datasource;
+  alarmSearchStatus?: AlarmSearchStatus;
+  alarmsPollingInterval?: number;
+  datasources?: Array<Datasource>;
+  targetDeviceAliasIds?: Array<string>;
   [key: string]: any;
 
   // TODO:

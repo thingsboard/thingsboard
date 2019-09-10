@@ -20,6 +20,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { WidgetContext, IDynamicWidgetComponent } from '@home/models/widget-component.models';
 import { ExceptionData } from '@shared/models/error.models';
+import { HttpErrorResponse } from '@angular/common/http';
 
 export class DynamicWidgetComponent extends PageComponent implements IDynamicWidgetComponent, OnInit, OnDestroy {
 
@@ -28,6 +29,11 @@ export class DynamicWidgetComponent extends PageComponent implements IDynamicWid
 
   @Input()
   errorMessages: string[];
+
+  executingRpcRequest: boolean;
+  rpcEnabled: boolean;
+  rpcErrorText: string;
+  rpcRejection: HttpErrorResponse;
 
   [key: string]: any;
 

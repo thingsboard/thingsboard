@@ -17,10 +17,15 @@
 import { Inject, Injectable } from '@angular/core';
 import { WINDOW } from '@core/services/window.service';
 import { ExceptionData } from '@app/shared/models/error.models';
-import { isUndefined } from '@core/utils';
+import { isUndefined, isDefined } from '@core/utils';
 import { WindowMessage } from '@shared/models/window-message.model';
 import { TranslateService } from '@ngx-translate/core';
 import { customTranslationsPrefix } from '@app/shared/models/constants';
+import { DataKey, Datasource, DatasourceType, KeyInfo } from '@shared/models/widget.models';
+import { EntityType } from '@shared/models/entity-type.models';
+import { DataKeyType } from '@app/shared/models/telemetry/telemetry.models';
+import { alarmFields } from '@shared/models/alarm.models';
+import { materialColors } from '@app/shared/models/material.models';
 
 @Injectable({
   providedIn: 'root'
@@ -110,6 +115,92 @@ export class UtilsService {
       result = defaultValue;
     }
     return result;
+  }
+
+  public guid(): string {
+    function s4(): string {
+      return Math.floor((1 + Math.random()) * 0x10000)
+        .toString(16)
+        .substring(1);
+    }
+    return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+      s4() + '-' + s4() + s4() + s4();
+  }
+
+  public validateDatasources(datasources: Array<Datasource>): Array<Datasource> {
+    datasources.forEach((datasource) => {
+      // @ts-ignore
+      if (datasource.type === 'device') {
+        datasource.type = DatasourceType.entity;
+        datasource.entityType = EntityType.DEVICE;
+        if (datasource.deviceId) {
+          datasource.entityId = datasource.deviceId;
+        } else if (datasource.deviceAliasId) {
+          datasource.entityAliasId = datasource.deviceAliasId;
+        }
+        if (datasource.deviceName) {
+          datasource.entityName = datasource.deviceName;
+        }
+      }
+      if (datasource.type === DatasourceType.entity && datasource.entityId) {
+        datasource.name = datasource.entityName;
+      }
+    });
+    return datasources;
+  }
+
+  public getMaterialColor(index) {
+    const colorIndex = index % materialColors.length;
+    return materialColors[colorIndex].value;
+  }
+
+  public createKey(keyInfo: KeyInfo, type: DataKeyType, index: number = -1): DataKey {
+    let label;
+    if (type === DataKeyType.alarm && !keyInfo.label) {
+      const alarmField = alarmFields[keyInfo.name];
+      if (alarmField) {
+        label = this.translate.instant(alarmField.name);
+      }
+    }
+    if (!label) {
+      label = keyInfo.label || keyInfo.name;
+    }
+    const dataKey: DataKey = {
+      name: keyInfo.name,
+      type,
+      label,
+      funcBody: keyInfo.funcBody,
+      settings: {},
+      _hash: Math.random()
+    };
+    if (keyInfo.units) {
+      dataKey.units = keyInfo.units;
+    }
+    if (isDefined(keyInfo.decimals)) {
+      dataKey.decimals = keyInfo.decimals;
+    }
+    if (keyInfo.color) {
+      dataKey.color = keyInfo.color;
+    } else if (index > -1) {
+      dataKey.color = this.getMaterialColor(index);
+    }
+    if (keyInfo.postFuncBody && keyInfo.postFuncBody.length) {
+      dataKey.usePostProcessing = true;
+      dataKey.postFuncBody = keyInfo.postFuncBody;
+    }
+    return dataKey;
+  }
+
+  public generateColors(datasources: Array<Datasource>) {
+    let index = 0;
+    datasources.forEach((datasource) => {
+      datasource.dataKeys.forEach((dataKey) => {
+        if (!dataKey.color) {
+          dataKey.color = this.getMaterialColor(index);
+        }
+        index++;
+      });
+    });
   }
 
 }

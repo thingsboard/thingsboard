@@ -32,6 +32,7 @@ import {
 } from '@angular/core';
 import { DashboardWidget, IDashboardComponent } from '@home/models/dashboard-component.models';
 import {
+  Datasource,
   LegendConfig,
   LegendData,
   LegendPosition,
@@ -40,16 +41,16 @@ import {
   widgetActionSources,
   WidgetActionType,
   WidgetResource,
-  widgetType
+  widgetType,
+  WidgetTypeParameters
 } from '@shared/models/widget.models';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { WidgetService } from '@core/http/widget.service';
 import { UtilsService } from '@core/services/utils.service';
-import { forkJoin, Observable, of, throwError } from 'rxjs';
-import { isDefined, objToBase64 } from '@core/utils';
-import * as $ from 'jquery';
+import { forkJoin, Observable, of, ReplaySubject, Subscription, throwError } from 'rxjs';
+import { isDefined, objToBase64, deepClone } from '@core/utils';
 import {
   IDynamicWidgetComponent,
   WidgetContext,
@@ -77,6 +78,13 @@ import { DeviceService } from '@app/core/http/device.service';
 import { AlarmService } from '@app/core/http/alarm.service';
 import { ExceptionData } from '@shared/models/error.models';
 import { WidgetComponentService } from './widget-component.service';
+import { Timewindow } from '@shared/models/time/time.models';
+import { AlarmSearchStatus } from '@shared/models/alarm.models';
+import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
+import { DashboardService } from '@core/http/dashboard.service';
+import { DatasourceService } from '@core/api/datasource.service';
+import { WidgetSubscription } from '@core/api/widget-subscription';
+import { EntityService } from '@core/http/entity.service';
 
 @Component({
   selector: 'tb-widget',
@@ -105,6 +113,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   errorMessages: string[];
   widgetContext: WidgetContext;
   widgetType: any;
+  typeParameters: WidgetTypeParameters;
   widgetTypeInstance: WidgetTypeInstance;
   widgetErrorData: ExceptionData;
   loadingData: boolean;
@@ -124,9 +133,13 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   subscriptionInited = false;
   widgetSizeDetected = false;
 
+  cafs: {[cafId: string]: CancelAnimationFrame} = {};
+
   onResizeListener = this.onResize.bind(this);
 
   private cssParser = new cssjs();
+
+  private rxSubscriptions = new Array<Subscription>();
 
   constructor(protected store: Store<AppState>,
               private route: ActivatedRoute,
@@ -139,8 +152,12 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
               private resources: ResourcesService,
               private timeService: TimeService,
               private deviceService: DeviceService,
+              private entityService: EntityService,
               private alarmService: AlarmService,
-              private utils: UtilsService) {
+              private dashboardService: DashboardService,
+              private datasourceService: DatasourceService,
+              private utils: UtilsService,
+              private raf: RafService) {
     super(store);
   }
 
@@ -212,7 +229,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         const descriptors = this.widget.config.actions[actionSourceId];
         const actionDescriptors: Array<WidgetActionDescriptor> = [];
         descriptors.forEach((descriptor) => {
-          const actionDescriptor: WidgetActionDescriptor = {...descriptor};
+          const actionDescriptor: WidgetActionDescriptor = deepClone(descriptor);
           actionDescriptor.displayName = this.utils.customTranslation(descriptor.name, descriptor.name);
           actionDescriptors.push(actionDescriptor);
         });
@@ -302,15 +319,18 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       this.widgetContext.customHeaderActions.push(headerAction);
     });
 
-
     this.subscriptionContext = {
       timeService: this.timeService,
       deviceService: this.deviceService,
       alarmService: this.alarmService,
+      datasourceService: this.datasourceService,
       utils: this.utils,
       widgetUtils: this.widgetContext.utils,
-      dashboardTimewindowApi: null, // TODO:
-      getServerTimeDiff: null, // TODO:
+      dashboardTimewindowApi: {
+        onResetTimewindow: this.dashboard.onResetTimewindow.bind(this.dashboard),
+        onUpdateTimewindow: this.dashboard.onUpdateTimewindow.bind(this.dashboard)
+      },
+      getServerTimeDiff: this.dashboardService.getServerTimeDiff.bind(this.dashboardService),
       aliasController: this.dashboard.aliasController
     };
 
@@ -331,26 +351,6 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   ngAfterViewInit(): void {
   }
 
-  ngOnDestroy(): void {
-
-    for (const id of Object.keys(this.widgetContext.subscriptions)) {
-      const subscription = this.widgetContext.subscriptions[id];
-      subscription.destroy();
-    }
-    this.subscriptionInited = false;
-    this.widgetContext.subscriptions = {};
-    if (this.widgetContext.inited) {
-      this.widgetContext.inited = false;
-      // TODO:
-      try {
-        this.widgetTypeInstance.onDestroy();
-      } catch (e) {
-        this.handleWidgetException(e);
-      }
-    }
-    this.destroyDynamicWidgetComponent();
-  }
-
   ngOnChanges(changes: SimpleChanges): void {
     for (const propName of Object.keys(changes)) {
       const change = changes[propName];
@@ -366,28 +366,43 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     }
   }
 
-  private onEditModeChanged() {
-    if (this.widgetContext.isEdit !== this.isEdit) {
-      this.widgetContext.isEdit = this.isEdit;
-      if (this.widgetContext.inited) {
-        // TODO:
-      }
-    }
+  ngOnDestroy(): void {
+    this.rxSubscriptions.forEach((subscription) => {
+      subscription.unsubscribe();
+    });
+    this.rxSubscriptions.length = 0;
+    this.onDestroy();
   }
 
-  private onMobileModeChanged() {
-    if (this.widgetContext.isMobile !== this.isMobile) {
-      this.widgetContext.isMobile = this.isMobile;
-      if (this.widgetContext.inited) {
-        // TODO:
+  private onDestroy() {
+    for (const id of Object.keys(this.widgetContext.subscriptions)) {
+      const subscription = this.widgetContext.subscriptions[id];
+      subscription.destroy();
+    }
+    this.subscriptionInited = false;
+    this.widgetContext.subscriptions = {};
+    if (this.widgetContext.inited) {
+      this.widgetContext.inited = false;
+      for (const cafId of Object.keys(this.cafs)) {
+        if (this.cafs[cafId]) {
+          this.cafs[cafId]();
+          this.cafs[cafId] = null;
+        }
+      }
+      try {
+        this.widgetTypeInstance.onDestroy();
+      } catch (e) {
+        this.handleWidgetException(e);
       }
     }
+    this.destroyDynamicWidgetComponent();
   }
 
-  private onResize() {
-    if (this.checkSize()) {
-      if (this.widgetContext.inited) {
-        // TODO:
+  public onTimewindowChanged(timewindow: Timewindow) {
+    for (const id of Object.keys(this.widgetContext.subscriptions)) {
+      const subscription = this.widgetContext.subscriptions[id];
+      if (!subscription.useDashboardTimewindow) {
+        subscription.updateTimewindowConfig(timewindow);
       }
     }
   }
@@ -398,6 +413,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     elem.classList.add('tb-widget');
     elem.classList.add(widgetNamespace);
     this.widgetType = this.widgetInfo.widgetTypeFunction;
+    this.typeParameters = this.widgetInfo.typeParameters;
 
     if (!this.widgetType) {
       this.widgetTypeInstance = {};
@@ -428,19 +444,153 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       this.widgetTypeInstance.onDestroy = () => {};
     }
 
-    this.initialize();
+    this.initialize().subscribe(
+      () => {
+        this.onInit();
+      }
+    );
+  }
+
+  private isReady(): boolean {
+    return this.subscriptionInited && this.widgetSizeDetected;
+  }
+
+  private onInit(skipSizeCheck?: boolean) {
+    if (!this.widgetContext.$containerParent) {
+      return;
+    }
+    if (!skipSizeCheck) {
+      this.checkSize();
+    }
+    if (!this.widgetContext.inited && this.isReady()) {
+      this.widgetContext.inited = true;
+      try {
+        this.widgetTypeInstance.onInit();
+      } catch (e) {
+        this.handleWidgetException(e);
+      }
+      if (!this.typeParameters.useCustomDatasources && this.widgetContext.defaultSubscription) {
+        this.widgetContext.defaultSubscription.subscribe();
+      }
+    }
+  }
+
+  private onResize() {
+    if (this.checkSize()) {
+      if (this.widgetContext.inited) {
+        if (this.cafs.resize) {
+          this.cafs.resize();
+          this.cafs.resize = null;
+        }
+        this.cafs.resize = this.raf.raf(() => {
+          try {
+            this.widgetTypeInstance.onResize();
+          } catch (e) {
+            this.handleWidgetException(e);
+          }
+        });
+      } else {
+        this.onInit(true);
+      }
+    }
+  }
+
+  private onEditModeChanged() {
+    if (this.widgetContext.isEdit !== this.isEdit) {
+      this.widgetContext.isEdit = this.isEdit;
+      if (this.widgetContext.inited) {
+        if (this.cafs.editMode) {
+          this.cafs.editMode();
+          this.cafs.editMode = null;
+        }
+        this.cafs.editMode = this.raf.raf(() => {
+          try {
+            this.widgetTypeInstance.onEditModeChanged();
+          } catch (e) {
+            this.handleWidgetException(e);
+          }
+        });
+      }
+    }
+  }
+
+  private onMobileModeChanged() {
+    if (this.widgetContext.isMobile !== this.isMobile) {
+      this.widgetContext.isMobile = this.isMobile;
+      if (this.widgetContext.inited) {
+        if (this.cafs.mobileMode) {
+          this.cafs.mobileMode();
+          this.cafs.mobileMode = null;
+        }
+        this.cafs.mobileMode = this.raf.raf(() => {
+          try {
+            this.widgetTypeInstance.onMobileModeChanged();
+          } catch (e) {
+            this.handleWidgetException(e);
+          }
+        });
+      }
+    }
   }
 
   private reInit() {
-    this.ngOnDestroy();
-    this.initialize();
-    // TODO:
+    this.onDestroy();
+    this.configureDynamicWidgetComponent();
+    if (!this.typeParameters.useCustomDatasources) {
+      this.createDefaultSubscription().subscribe(
+        () => {
+          this.subscriptionInited = true;
+          this.onInit();
+        },
+        () => {
+          this.subscriptionInited = true;
+          this.onInit();
+        }
+      );
+    } else {
+      this.subscriptionInited = true;
+      this.onInit();
+    }
   }
 
-  private initialize() {
+  private initialize(): Observable<any> {
+
+    const initSubject = new ReplaySubject();
+
+    this.rxSubscriptions.push(this.dashboard.aliasController.entityAliasesChanged.subscribe(
+      (aliasIds) => {
+        let subscriptionChanged = false;
+        for (const id of Object.keys(this.widgetContext.subscriptions)) {
+          const subscription = this.widgetContext.subscriptions[id];
+          subscriptionChanged = subscriptionChanged || subscription.onAliasesChanged(aliasIds);
+        }
+        if (subscriptionChanged && !this.typeParameters.useCustomDatasources) {
+          this.reInit();
+        }
+      }
+    ));
+
     this.configureDynamicWidgetComponent();
-    // TODO:
-    this.loadingData = false;
+    if (!this.typeParameters.useCustomDatasources) {
+      // this.cre
+      this.createDefaultSubscription().subscribe(
+        () => {
+          this.subscriptionInited = true;
+          initSubject.next();
+          initSubject.complete();
+        },
+        () => {
+          this.subscriptionInited = true;
+          initSubject.error(null);
+        }
+      );
+    } else {
+      this.loadingData = false;
+      this.subscriptionInited = true;
+      initSubject.next();
+      initSubject.complete();
+    }
+    return initSubject.asObservable();
   }
 
   private destroyDynamicWidgetComponent() {
@@ -484,16 +634,193 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       addResizeListener(this.widgetContext.$containerParent[0], this.onResizeListener);
   }
 
-  private createSubscription(options: WidgetSubscriptionOptions, subscribe: boolean): Observable<IWidgetSubscription> {
-    // TODO:
-    return of(null);
+  private createSubscription(options: WidgetSubscriptionOptions, subscribe?: boolean): Observable<IWidgetSubscription> {
+    const createSubscriptionSubject = new ReplaySubject<IWidgetSubscription>();
+    options.dashboardTimewindow = this.dashboard.dashboardTimewindow;
+    const subscription: IWidgetSubscription = new WidgetSubscription(this.subscriptionContext, options);
+    subscription.init$.subscribe(
+      () => {
+        this.widgetContext.subscriptions[subscription.id] = subscription;
+        if (subscribe) {
+          subscription.subscribe();
+        }
+        createSubscriptionSubject.next(subscription);
+        createSubscriptionSubject.complete();
+      },
+      () => {
+        createSubscriptionSubject.error(null);
+      }
+    );
+    return createSubscriptionSubject.asObservable();
   }
 
   private createSubscriptionFromInfo(type: widgetType, subscriptionsInfo: Array<SubscriptionInfo>,
                                      options: WidgetSubscriptionOptions, useDefaultComponents: boolean,
                                      subscribe: boolean): Observable<IWidgetSubscription> {
-    // TODO:
-    return of(null);
+    const createSubscriptionSubject = new ReplaySubject<IWidgetSubscription>();
+    options.type = type;
+
+    if (useDefaultComponents) {
+      this.defaultComponentsOptions(options);
+    } else {
+      if (!options.timeWindowConfig) {
+        options.useDashboardTimewindow = true;
+      }
+    }
+    let createDatasourcesObservable: Observable<Array<Datasource> | Datasource>;
+    if (options.type === widgetType.alarm) {
+      createDatasourcesObservable = this.entityService.createAlarmSourceFromSubscriptionInfo(subscriptionsInfo[0]);
+    } else {
+      createDatasourcesObservable = this.entityService.createDatasourcesFromSubscriptionsInfo(subscriptionsInfo);
+    }
+    createDatasourcesObservable.subscribe(
+      (result) => {
+        if (options.type === widgetType.alarm) {
+          options.alarmSource = result as Datasource;
+        } else {
+          options.datasources = result as Array<Datasource>;
+        }
+        this.createSubscription(options, subscribe).subscribe(
+          (subscription) => {
+            if (useDefaultComponents) {
+              this.defaultSubscriptionOptions(subscription, options);
+            }
+            createSubscriptionSubject.next(subscription);
+            createSubscriptionSubject.complete();
+          },
+          () => {
+            createSubscriptionSubject.error(null);
+          }
+        );
+      },
+      () => {
+        createSubscriptionSubject.error(null);
+      }
+    );
+    return createSubscriptionSubject.asObservable();
+  }
+
+  private defaultComponentsOptions(options: WidgetSubscriptionOptions) {
+    options.useDashboardTimewindow = isDefined(this.widget.config.useDashboardTimewindow)
+          ? this.widget.config.useDashboardTimewindow : true;
+    options.displayTimewindow = isDefined(this.widget.config.displayTimewindow)
+      ? this.widget.config.displayTimewindow : !options.useDashboardTimewindow;
+    options.timeWindowConfig = options.useDashboardTimewindow ? this.dashboard.dashboardTimewindow : this.widget.config.timewindow;
+    options.legendConfig = null;
+    if (this.displayLegend) {
+      options.legendConfig = this.legendConfig;
+    }
+    options.decimals = this.widgetContext.decimals;
+    options.units = this.widgetContext.units;
+    options.callbacks = {
+      onDataUpdated: () => {
+        this.widgetTypeInstance.onDataUpdated();
+      },
+      onDataUpdateError: (subscription, e) => {
+        this.handleWidgetException(e);
+      },
+      dataLoading: (subscription) => {
+        if (this.loadingData !== subscription.loadingData) {
+          this.loadingData = subscription.loadingData;
+        }
+      },
+      legendDataUpdated: (subscription) => {
+      },
+      timeWindowUpdated: (subscription, timeWindowConfig) => {
+        this.widget.config.timewindow = timeWindowConfig;
+      }
+    };
+
+  }
+
+  private defaultSubscriptionOptions(subscription: IWidgetSubscription, options: WidgetSubscriptionOptions) {
+    if (this.displayLegend) {
+      this.legendData = subscription.legendData;
+    }
+  }
+
+  private createDefaultSubscription(): Observable<any> {
+    const createSubscriptionSubject = new ReplaySubject();
+    let options: WidgetSubscriptionOptions;
+    if (this.widget.type !== widgetType.rpc && this.widget.type !== widgetType.static) {
+      options = {
+        type: this.widget.type,
+        stateData: this.typeParameters.stateData
+      };
+      if (this.widget.type === widgetType.alarm) {
+        options.alarmSource = deepClone(this.widget.config.alarmSource);
+        options.alarmSearchStatus = isDefined(this.widget.config.alarmSearchStatus) ?
+          this.widget.config.alarmSearchStatus : AlarmSearchStatus.ANY;
+        options.alarmsPollingInterval = isDefined(this.widget.config.alarmsPollingInterval) ?
+          this.widget.config.alarmsPollingInterval * 1000 : 5000;
+      } else {
+        options.datasources = deepClone(this.widget.config.datasources);
+      }
+
+      this.defaultComponentsOptions(options);
+
+      this.createSubscription(options).subscribe(
+        (subscription) => {
+          this.defaultSubscriptionOptions(subscription, options);
+
+          // backward compatibility
+          this.widgetContext.datasources = subscription.datasources;
+          this.widgetContext.data = subscription.data;
+          this.widgetContext.hiddenData = subscription.hiddenData;
+          this.widgetContext.timeWindow = subscription.timeWindow;
+          this.widgetContext.defaultSubscription = subscription;
+          createSubscriptionSubject.next();
+          createSubscriptionSubject.complete();
+        },
+        () => {
+          createSubscriptionSubject.error(null);
+        }
+      );
+    } else if (this.widget.type === widgetType.rpc) {
+      this.loadingData = false;
+      options = {
+        type: this.widget.type,
+        targetDeviceAliasIds: this.widget.config.targetDeviceAliasIds
+      };
+      options.callbacks = {
+        rpcStateChanged: (subscription) => {
+          this.dynamicWidgetComponent.rpcEnabled = subscription.rpcEnabled;
+          this.dynamicWidgetComponent.executingRpcRequest = subscription.executingRpcRequest;
+        },
+        onRpcSuccess: (subscription) => {
+          this.dynamicWidgetComponent.executingRpcRequest = subscription.executingRpcRequest;
+          this.dynamicWidgetComponent.rpcErrorText = subscription.rpcErrorText;
+          this.dynamicWidgetComponent.rpcRejection = subscription.rpcRejection;
+        },
+        onRpcFailed: (subscription) => {
+          this.dynamicWidgetComponent.executingRpcRequest = subscription.executingRpcRequest;
+          this.dynamicWidgetComponent.rpcErrorText = subscription.rpcErrorText;
+          this.dynamicWidgetComponent.rpcRejection = subscription.rpcRejection;
+        },
+        onRpcErrorCleared: (subscription) => {
+          this.dynamicWidgetComponent.rpcErrorText = null;
+          this.dynamicWidgetComponent.rpcRejection = null;
+        }
+      };
+      this.createSubscription(options).subscribe(
+        (subscription) => {
+          this.widgetContext.defaultSubscription = subscription;
+          createSubscriptionSubject.next();
+          createSubscriptionSubject.complete();
+        },
+        () => {
+          createSubscriptionSubject.error(null);
+        }
+      );
+    } else if (this.widget.type === widgetType.static) {
+      this.loadingData = false;
+      createSubscriptionSubject.next();
+      createSubscriptionSubject.complete();
+    } else {
+      createSubscriptionSubject.next();
+      createSubscriptionSubject.complete();
+    }
+    return createSubscriptionSubject.asObservable();
   }
 
   private isNumeric(value: any): boolean {
@@ -540,7 +867,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       case WidgetActionType.openDashboardState:
       case WidgetActionType.updateDashboardState:
         let targetDashboardStateId = descriptor.targetDashboardStateId;
-        const params = {...this.widgetContext.stateController.getStateParams()};
+        const params = deepClone(this.widgetContext.stateController.getStateParams());
         this.updateEntityParams(params, targetEntityParamName, targetEntityId, entityName);
         if (type === WidgetActionType.openDashboardState) {
           this.widgetContext.stateController.openState(targetDashboardStateId, params, descriptor.openRightLayout);

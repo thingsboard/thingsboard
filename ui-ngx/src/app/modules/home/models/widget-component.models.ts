@@ -17,6 +17,8 @@
 import { ExceptionData } from '@shared/models/error.models';
 import { IDashboardComponent } from '@home/models/dashboard-component.models';
 import {
+  DataSet,
+  Datasource, DatasourceData,
   WidgetActionDescriptor,
   WidgetActionSource,
   WidgetConfig,
@@ -40,6 +42,7 @@ import {
   WidgetSubscriptionApi
 } from '@core/api/widget-api.models';
 import { ComponentFactory } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 
 export interface IWidgetAction {
   name: string;
@@ -86,11 +89,20 @@ export interface WidgetContext {
   widgetTitle?: string;
   customHeaderActions?: Array<WidgetHeaderAction>;
   widgetActions?: Array<WidgetAction>;
+
+  datasources?: Array<Datasource>;
+  data?: Array<DatasourceData>;
+  hiddenData?: Array<{data: DataSet}>;
+  timeWindow?: Timewindow;
 }
 
 export interface IDynamicWidgetComponent {
   widgetContext: WidgetContext;
   errorMessages: string[];
+  executingRpcRequest: boolean;
+  rpcEnabled: boolean;
+  rpcErrorText: string;
+  rpcRejection: HttpErrorResponse;
   [key: string]: any;
 }
 
@@ -120,7 +132,8 @@ export const MissingWidgetType: WidgetInfo = {
     '"title": "Widget type not found",\n' +
     '"datasources": [],\n' +
     '"settings": {}\n' +
-    '}\n'
+    '}\n',
+  typeParameters: {}
 };
 
 export const ErrorWidgetType: WidgetInfo = {
@@ -142,7 +155,8 @@ export const ErrorWidgetType: WidgetInfo = {
     '"title": "Widget failed to load",\n' +
     '"datasources": [],\n' +
     '"settings": {}\n' +
-    '}\n'
+    '}\n',
+  typeParameters: {}
 };
 
 export interface WidgetTypeInstance {

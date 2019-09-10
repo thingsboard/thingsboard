@@ -294,3 +294,11 @@ function utf8ToBytes(input: string, units?: number): number[] {
   }
   return bytes;
 }
+
+export function deepClone<T>(obj: T): T {
+  if (obj) {
+    return JSON.parse(JSON.stringify(obj));
+  } else {
+    return obj;
+  }
+}

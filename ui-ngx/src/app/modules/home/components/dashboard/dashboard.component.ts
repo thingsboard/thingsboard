@@ -30,7 +30,7 @@ import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
 import { AuthUser } from '@shared/models/user.model';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
-import { Timewindow } from '@shared/models/time/time.models';
+import { Timewindow, toHistoryTimewindow } from '@shared/models/time/time.models';
 import { TimeService } from '@core/services/time.service';
 import { GridsterComponent, GridsterConfig, GridsterItemComponent } from 'angular-gridster2';
 import {
@@ -43,7 +43,7 @@ import { merge, Observable } from 'rxjs';
 import { map, share, tap } from 'rxjs/operators';
 import { WidgetLayout } from '@shared/models/dashboard.models';
 import { DialogService } from '@core/services/dialog.service';
-import { animatedScroll, isDefined } from '@app/core/utils';
+import { animatedScroll, deepClone, isDefined } from '@app/core/utils';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { IAliasController, IStateController } from '@app/core/api/widget-api.models';
@@ -116,6 +116,8 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
 
   @Input()
   dashboardTimewindow: Timewindow;
+
+  originalDashboardTimewindow: Timewindow;
 
   gridsterOpts: GridsterConfig;
 
@@ -258,6 +260,21 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
   }
 
   ngAfterViewInit(): void {
+  }
+
+  onUpdateTimewindow(startTimeMs: number, endTimeMs: number, interval: number): void {
+    if (!this.originalDashboardTimewindow) {
+      this.originalDashboardTimewindow = deepClone(this.dashboardTimewindow);
+    }
+    this.dashboardTimewindow = toHistoryTimewindow(this.dashboardTimewindow,
+                                                   startTimeMs, endTimeMs, interval, this.timeService);
+  }
+
+  onResetTimewindow(): void {
+    if (this.originalDashboardTimewindow) {
+      this.dashboardTimewindow = deepClone(this.originalDashboardTimewindow);
+      this.originalDashboardTimewindow = null;
+    }
   }
 
   isAutofillHeight(): boolean {

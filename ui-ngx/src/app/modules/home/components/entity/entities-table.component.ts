@@ -52,7 +52,7 @@ import {
   AddEntityDialogData,
   EntityAction
 } from '@home/models/entity/entity-component.models';
-import { Timewindow } from '@shared/models/time/time.models';
+import { Timewindow, historyInterval } from '@shared/models/time/time.models';
 import {DomSanitizer, SafeHtml} from '@angular/platform-browser';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 
@@ -157,7 +157,7 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
                                    direction: this.entitiesTableConfig.defaultSortOrder.direction };
 
     if (this.entitiesTableConfig.useTimePageLink) {
-      this.timewindow = Timewindow.historyInterval(24 * 60 * 60 * 1000);
+      this.timewindow = historyInterval(24 * 60 * 60 * 1000);
       const currentTime = new Date().getTime();
       this.pageLink = new TimePageLink(10, 0, null, sortOrder,
         currentTime - this.timewindow.history.timewindowMs, currentTime);
@@ -348,7 +348,7 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
   resetSortAndFilter(update: boolean = true) {
     this.pageLink.textSearch = null;
     if (this.entitiesTableConfig.useTimePageLink) {
-      this.timewindow = Timewindow.historyInterval(24 * 60 * 60 * 1000);
+      this.timewindow = historyInterval(24 * 60 * 60 * 1000);
     }
     this.paginator.pageIndex = 0;
     const sortable = this.sort.sortables.get(this.entitiesTableConfig.defaultSortOrder.property);

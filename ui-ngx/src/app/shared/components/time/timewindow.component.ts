@@ -29,7 +29,8 @@ import { MillisecondsToTimeStringPipe } from '@shared/pipe/milliseconds-to-time-
 import {
   HistoryWindowType,
   Timewindow,
-  TimewindowType
+  TimewindowType,
+  initModelFromDefaultTimewindow, cloneSelectedTimewindow
 } from '@shared/models/time/time.models';
 import { DatePipe } from '@angular/common';
 import {
@@ -50,6 +51,7 @@ import { DOCUMENT } from '@angular/common';
 import { WINDOW } from '@core/services/window.service';
 import { TimeService } from '@core/services/time.service';
 import { TooltipPosition } from '@angular/material/typings/tooltip';
+import { deepClone } from '@core/utils';
 
 @Component({
   selector: 'tb-timewindow',
@@ -206,7 +208,7 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
     const injector = this._createTimewindowPanelInjector(
       overlayRef,
       {
-        timewindow: this.innerValue.clone(),
+        timewindow: deepClone(this.innerValue),
         historyOnly: this.historyOnly,
         aggregation: this.aggregation
       }
@@ -242,12 +244,12 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
   }
 
   writeValue(obj: Timewindow): void {
-    this.innerValue = Timewindow.initModelFromDefaultTimewindow(obj, this.timeService);
+    this.innerValue = initModelFromDefaultTimewindow(obj, this.timeService);
     this.updateDisplayValue();
   }
 
   notifyChanged() {
-    this.propagateChange(this.innerValue.cloneSelectedTimewindow());
+    this.propagateChange(cloneSelectedTimewindow(this.innerValue));
   }
 
   updateDisplayValue() {

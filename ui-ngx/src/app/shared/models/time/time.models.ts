@@ -15,6 +15,7 @@
 ///
 
 import { TimeService } from '@core/services/time.service';
+import { deepClone, isDefined } from '@app/core/utils';
 
 export const SECOND = 1000;
 export const MINUTE = 60 * SECOND;
@@ -31,163 +32,19 @@ export enum HistoryWindowType {
   FIXED
 }
 
-export class Timewindow {
-
-  displayValue?: string;
-  selectedTab?: TimewindowType;
-  realtime?: IntervalWindow;
-  history?: HistoryWindow;
-  aggregation?: Aggregation;
-
-  public static historyInterval(timewindowMs: number): Timewindow {
-    const timewindow = new Timewindow();
-    timewindow.history = new HistoryWindow();
-    timewindow.history.timewindowMs = timewindowMs;
-    return timewindow;
-  }
-
-  public static defaultTimewindow(timeService: TimeService): Timewindow {
-    const currentTime = new Date().getTime();
-    const timewindow = new Timewindow();
-    timewindow.displayValue = '';
-    timewindow.selectedTab = TimewindowType.REALTIME;
-    timewindow.realtime = new IntervalWindow();
-    timewindow.realtime.interval = SECOND;
-    timewindow.realtime.timewindowMs = MINUTE;
-    timewindow.history = new HistoryWindow();
-    timewindow.history.historyType = HistoryWindowType.LAST_INTERVAL;
-    timewindow.history.interval = SECOND;
-    timewindow.history.timewindowMs = MINUTE;
-    timewindow.history.fixedTimewindow = new FixedWindow();
-    timewindow.history.fixedTimewindow.startTimeMs = currentTime - DAY;
-    timewindow.history.fixedTimewindow.endTimeMs = currentTime;
-    timewindow.aggregation = new Aggregation();
-    timewindow.aggregation.type = AggregationType.AVG;
-    timewindow.aggregation.limit = Math.floor(timeService.getMaxDatapointsLimit() / 2);
-    return timewindow;
-  }
-
-  public static initModelFromDefaultTimewindow(value: Timewindow, timeService: TimeService): Timewindow {
-    const model = Timewindow.defaultTimewindow(timeService);
-    if (value) {
-      if (value.realtime) {
-        model.selectedTab = TimewindowType.REALTIME;
-        if (typeof value.realtime.interval !== 'undefined') {
-          model.realtime.interval = value.realtime.interval;
-        }
-        model.realtime.timewindowMs = value.realtime.timewindowMs;
-      } else {
-        model.selectedTab = TimewindowType.HISTORY;
-        if (typeof value.history.interval !== 'undefined') {
-          model.history.interval = value.history.interval;
-        }
-        if (typeof value.history.timewindowMs !== 'undefined') {
-          model.history.historyType = HistoryWindowType.LAST_INTERVAL;
-          model.history.timewindowMs = value.history.timewindowMs;
-        } else {
-          model.history.historyType = HistoryWindowType.FIXED;
-          model.history.fixedTimewindow.startTimeMs = value.history.fixedTimewindow.startTimeMs;
-          model.history.fixedTimewindow.endTimeMs = value.history.fixedTimewindow.endTimeMs;
-        }
-      }
-      if (value.aggregation) {
-        if (value.aggregation.type) {
-          model.aggregation.type = value.aggregation.type;
-        }
-        model.aggregation.limit = value.aggregation.limit || Math.floor(timeService.getMaxDatapointsLimit() / 2);
-      }
-    }
-    return model;
-  }
-
-  public clone(): Timewindow {
-    const cloned = new Timewindow();
-    cloned.displayValue = this.displayValue;
-    cloned.selectedTab = this.selectedTab;
-    cloned.realtime = this.realtime ? this.realtime.clone() : null;
-    cloned.history = this.history ? this.history.clone() : null;
-    cloned.aggregation = this.aggregation ? this.aggregation.clone() : null;
-    return cloned;
-  }
-
-  public cloneSelectedTimewindow(): Timewindow {
-    const cloned = new Timewindow();
-    if (typeof this.selectedTab !== 'undefined') {
-      if (this.selectedTab === TimewindowType.REALTIME) {
-        cloned.realtime = this.realtime ? this.realtime.clone() : null;
-      } else if (this.selectedTab === TimewindowType.HISTORY) {
-        cloned.history = this.history ? this.history.cloneSelectedTimewindow() : null;
-      }
-    }
-    cloned.aggregation = this.aggregation ? this.aggregation.clone() : null;
-    return cloned;
-  }
-
-}
-
-export class IntervalWindow {
+export interface IntervalWindow {
   interval?: number;
   timewindowMs?: number;
-
-  public clone(): IntervalWindow {
-    const cloned = new IntervalWindow();
-    cloned.interval = this.interval;
-    cloned.timewindowMs = this.timewindowMs;
-    return cloned;
-  }
 }
 
-export class FixedWindow {
+export interface FixedWindow {
   startTimeMs: number;
   endTimeMs: number;
-
-  public clone(): FixedWindow {
-    const cloned = new FixedWindow();
-    cloned.startTimeMs = this.startTimeMs;
-    cloned.endTimeMs = this.endTimeMs;
-    return cloned;
-  }
 }
 
-export class HistoryWindow extends IntervalWindow {
+export interface HistoryWindow extends IntervalWindow {
   historyType?: HistoryWindowType;
   fixedTimewindow?: FixedWindow;
-
-  public clone(): HistoryWindow {
-    const cloned = new HistoryWindow();
-    cloned.historyType = this.historyType;
-    if (this.fixedTimewindow) {
-      cloned.fixedTimewindow = this.fixedTimewindow.clone();
-    }
-    cloned.interval = this.interval;
-    cloned.timewindowMs = this.timewindowMs;
-    return cloned;
-  }
-
-  public cloneSelectedTimewindow(): HistoryWindow {
-    const cloned = new HistoryWindow();
-    if (typeof this.historyType !== 'undefined') {
-      cloned.interval = this.interval;
-      if (this.historyType === HistoryWindowType.LAST_INTERVAL) {
-        cloned.timewindowMs = this.timewindowMs;
-      } else if (this.historyType === HistoryWindowType.FIXED) {
-        cloned.fixedTimewindow = this.fixedTimewindow ? this.fixedTimewindow.clone() : null;
-      }
-    }
-    return cloned;
-  }
-}
-
-export class Aggregation {
-  type: AggregationType;
-  limit: number;
-
-  public clone(): Aggregation {
-    const cloned = new Aggregation();
-    cloned.type = this.type;
-    cloned.limit = this.limit;
-    return cloned;
-  }
 }
 
 export enum AggregationType {
@@ -209,6 +66,150 @@ export const aggregationTranslations = new Map<AggregationType, string>(
     [AggregationType.NONE, 'aggregation.none'],
   ]
 );
+
+export interface Aggregation {
+  type: AggregationType;
+  limit: number;
+}
+
+export interface Timewindow {
+  displayValue?: string;
+  selectedTab?: TimewindowType;
+  realtime?: IntervalWindow;
+  history?: HistoryWindow;
+  aggregation?: Aggregation;
+  stDiff?: number;
+}
+
+export function historyInterval(timewindowMs: number): Timewindow {
+  const timewindow: Timewindow = {
+    history: {
+      timewindowMs
+    }
+  };
+  return timewindow;
+}
+
+export function defaultTimewindow(timeService: TimeService): Timewindow {
+  const currentTime = new Date().getTime();
+  const timewindow: Timewindow = {
+    displayValue: '',
+    selectedTab: TimewindowType.REALTIME,
+    realtime: {
+      interval: SECOND,
+      timewindowMs: MINUTE
+    },
+    history: {
+      historyType: HistoryWindowType.LAST_INTERVAL,
+      interval: SECOND,
+      timewindowMs: MINUTE,
+      fixedTimewindow: {
+        startTimeMs: currentTime - DAY,
+        endTimeMs: currentTime
+      }
+    },
+    aggregation: {
+      type: AggregationType.AVG,
+      limit: Math.floor(timeService.getMaxDatapointsLimit() / 2)
+    }
+  };
+  return timewindow;
+}
+
+export function initModelFromDefaultTimewindow(value: Timewindow, timeService: TimeService): Timewindow {
+  const model = defaultTimewindow(timeService);
+  if (value) {
+    if (value.realtime) {
+      model.selectedTab = TimewindowType.REALTIME;
+      if (isDefined(value.realtime.interval)) {
+        model.realtime.interval = value.realtime.interval;
+      }
+      model.realtime.timewindowMs = value.realtime.timewindowMs;
+    } else {
+      model.selectedTab = TimewindowType.HISTORY;
+      if (isDefined(value.history.interval)) {
+        model.history.interval = value.history.interval;
+      }
+      if (isDefined(value.history.timewindowMs)) {
+        model.history.historyType = HistoryWindowType.LAST_INTERVAL;
+        model.history.timewindowMs = value.history.timewindowMs;
+      } else {
+        model.history.historyType = HistoryWindowType.FIXED;
+        model.history.fixedTimewindow.startTimeMs = value.history.fixedTimewindow.startTimeMs;
+        model.history.fixedTimewindow.endTimeMs = value.history.fixedTimewindow.endTimeMs;
+      }
+    }
+    if (value.aggregation) {
+      if (value.aggregation.type) {
+        model.aggregation.type = value.aggregation.type;
+      }
+      model.aggregation.limit = value.aggregation.limit || Math.floor(timeService.getMaxDatapointsLimit() / 2);
+    }
+  }
+  return model;
+}
+
+export function toHistoryTimewindow(timewindow: Timewindow, startTimeMs: number, endTimeMs: number,
+                                    interval: number, timeService: TimeService): Timewindow {
+  if (timewindow.history) {
+    interval = isDefined(interval) ? interval : timewindow.history.interval;
+  } else if (timewindow.realtime) {
+    interval = timewindow.realtime.interval;
+  }  else {
+    interval = 0;
+  }
+  let aggType: AggregationType;
+  let limit: number;
+  if (timewindow.aggregation) {
+    aggType = timewindow.aggregation.type || AggregationType.AVG;
+    limit = timewindow.aggregation.limit || timeService.getMaxDatapointsLimit();
+  } else {
+    aggType = AggregationType.AVG;
+    limit = timeService.getMaxDatapointsLimit();
+  }
+  const historyTimewindow: Timewindow = {
+    history: {
+      fixedTimewindow: {
+        startTimeMs,
+        endTimeMs
+      },
+      interval: timeService.boundIntervalToTimewindow(endTimeMs - startTimeMs, interval, AggregationType.AVG)
+    },
+    aggregation: {
+      type: aggType,
+      limit
+    }
+  };
+  return historyTimewindow;
+}
+
+export function cloneSelectedTimewindow(timewindow: Timewindow): Timewindow {
+  const cloned: Timewindow = {};
+  if (isDefined(timewindow.selectedTab)) {
+    cloned.selectedTab = timewindow.selectedTab;
+    if (timewindow.selectedTab === TimewindowType.REALTIME) {
+      cloned.realtime = deepClone(timewindow.realtime);
+    } else if (timewindow.selectedTab === TimewindowType.HISTORY) {
+      cloned.history = deepClone(timewindow.history);
+    }
+  }
+  cloned.aggregation = deepClone(timewindow.aggregation);
+  return cloned;
+}
+
+export function cloneSelectedHistoryTimewindow(historyWindow: HistoryWindow): HistoryWindow {
+  const cloned: HistoryWindow = {};
+  if (isDefined(historyWindow.historyType)) {
+    cloned.historyType = historyWindow.historyType;
+    cloned.interval = historyWindow.interval;
+    if (historyWindow.historyType === HistoryWindowType.LAST_INTERVAL) {
+      cloned.timewindowMs = historyWindow.timewindowMs;
+    } else if (historyWindow.historyType === HistoryWindowType.FIXED) {
+      cloned.fixedTimewindow = deepClone(historyWindow.fixedTimewindow);
+    }
+  }
+  return cloned;
+}
 
 export interface TimeInterval {
   name: string;

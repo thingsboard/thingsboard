@@ -14,33 +14,35 @@
 /// limitations under the License.
 ///
 
-import {Injectable} from '@angular/core';
-import {EMPTY, forkJoin, Observable, of, throwError} from 'rxjs/index';
-import {HttpClient} from '@angular/common/http';
-import {PageLink} from '@shared/models/page/page-link';
-import {AliasEntityType, EntityType} from '@shared/models/entity-type.models';
-import {BaseData} from '@shared/models/base-data';
-import {EntityId} from '@shared/models/id/entity-id';
-import {DeviceService} from '@core/http/device.service';
-import {TenantService} from '@core/http/tenant.service';
-import {CustomerService} from '@core/http/customer.service';
-import {UserService} from './user.service';
-import {DashboardService} from '@core/http/dashboard.service';
-import {Direction} from '@shared/models/page/sort-order';
-import {PageData} from '@shared/models/page/page-data';
-import {getCurrentAuthUser} from '../auth/auth.selectors';
-import {Store} from '@ngrx/store';
-import {AppState} from '@core/core.state';
-import {Authority} from '@shared/models/authority.enum';
-import {Tenant} from '@shared/models/tenant.model';
-import {concatMap, expand, map, toArray} from 'rxjs/operators';
-import {Customer} from '@app/shared/models/customer.model';
-import {AssetService} from '@core/http/asset.service';
-import {EntityViewService} from '@core/http/entity-view.service';
-import {DataKeyType} from '@shared/models/telemetry/telemetry.models';
-import {DeviceInfo} from '@shared/models/device.models';
-import {defaultHttpOptions} from '@core/http/http-utils';
-import {RuleChainService} from '@core/http/rule-chain.service';
+import { Injectable } from '@angular/core';
+import { EMPTY, forkJoin, Observable, of, throwError } from 'rxjs/index';
+import { HttpClient } from '@angular/common/http';
+import { PageLink } from '@shared/models/page/page-link';
+import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
+import { BaseData } from '@shared/models/base-data';
+import { EntityId } from '@shared/models/id/entity-id';
+import { DeviceService } from '@core/http/device.service';
+import { TenantService } from '@core/http/tenant.service';
+import { CustomerService } from '@core/http/customer.service';
+import { UserService } from './user.service';
+import { DashboardService } from '@core/http/dashboard.service';
+import { Direction } from '@shared/models/page/sort-order';
+import { PageData } from '@shared/models/page/page-data';
+import { getCurrentAuthUser } from '../auth/auth.selectors';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { Authority } from '@shared/models/authority.enum';
+import { Tenant } from '@shared/models/tenant.model';
+import { catchError, concatMap, expand, map, toArray } from 'rxjs/operators';
+import { Customer } from '@app/shared/models/customer.model';
+import { AssetService } from '@core/http/asset.service';
+import { EntityViewService } from '@core/http/entity-view.service';
+import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { defaultHttpOptions } from '@core/http/http-utils';
+import { RuleChainService } from '@core/http/rule-chain.service';
+import { SubscriptionInfo } from '@core/api/widget-api.models';
+import { Datasource, DatasourceType, KeyInfo } from '@app/shared/models/widget.models';
+import { UtilsService } from '@core/services/utils.service';
 
 @Injectable({
   providedIn: 'root'
@@ -57,7 +59,8 @@ export class EntityService {
     private customerService: CustomerService,
     private userService: UserService,
     private ruleChainService: RuleChainService,
-    private dashboardService: DashboardService
+    private dashboardService: DashboardService,
+    private utils: UtilsService
   ) { }
 
   private getEntityObservable(entityType: EntityType, entityId: string,
@@ -407,5 +410,148 @@ export class EntityService {
            }
         )
     );
+  }
+
+  public createDatasourcesFromSubscriptionsInfo(subscriptionsInfo: Array<SubscriptionInfo>): Observable<Array<Datasource>> {
+    const observables = new Array<Observable<Array<Datasource>>>();
+    subscriptionsInfo.forEach((subscriptionInfo) => {
+      observables.push(this.createDatasourcesFromSubscriptionInfo(subscriptionInfo));
+    });
+    return forkJoin(observables).pipe(
+      map((arrayOfDatasources) => {
+        const result = new Array<Datasource>();
+        arrayOfDatasources.forEach((datasources) => {
+          result.push(...datasources);
+        });
+        this.utils.generateColors(result);
+        return result;
+      })
+    );
+  }
+
+  public createAlarmSourceFromSubscriptionInfo(subscriptionInfo: SubscriptionInfo): Observable<Datasource> {
+    if (subscriptionInfo.entityId && subscriptionInfo.entityType) {
+      return this.getEntity(subscriptionInfo.entityType, subscriptionInfo.entityId,
+        true, true).pipe(
+        map((entity) => {
+          const alarmSource = this.createDatasourceFromSubscription(subscriptionInfo, entity);
+          this.utils.generateColors([alarmSource]);
+          return alarmSource;
+        })
+      );
+    } else {
+      return throwError(null);
+    }
+  }
+
+  private createDatasourcesFromSubscriptionInfo(subscriptionInfo: SubscriptionInfo): Observable<Array<Datasource>> {
+    subscriptionInfo = this.validateSubscriptionInfo(subscriptionInfo);
+    if (subscriptionInfo.type === DatasourceType.entity) {
+      return this.resolveEntitiesFromSubscriptionInfo(subscriptionInfo).pipe(
+        map((entities) => {
+          const datasources = new Array<Datasource>();
+          entities.forEach((entity) => {
+            datasources.push(this.createDatasourceFromSubscription(subscriptionInfo, entity));
+          });
+          return datasources;
+        })
+      );
+    } else if (subscriptionInfo.type === DatasourceType.function) {
+      return of([this.createDatasourceFromSubscription(subscriptionInfo)]);
+    } else {
+      return of([]);
+    }
+  }
+
+  private resolveEntitiesFromSubscriptionInfo(subscriptionInfo: SubscriptionInfo): Observable<Array<BaseData<EntityId>>> {
+    if (subscriptionInfo.entityId) {
+      if (subscriptionInfo.entityName) {
+        const entity: BaseData<EntityId> = {
+          id: {id: subscriptionInfo.entityId, entityType: subscriptionInfo.entityType},
+          name: subscriptionInfo.entityName
+        };
+        return of([entity]);
+      } else {
+        return this.getEntity(subscriptionInfo.entityType, subscriptionInfo.entityId,
+          true, true).pipe(
+          map((entity) => [entity]),
+          catchError(e => of([]))
+        );
+      }
+    } else if (subscriptionInfo.entityName || subscriptionInfo.entityNamePrefix || subscriptionInfo.entityIds) {
+      let entitiesObservable: Observable<Array<BaseData<EntityId>>>;
+      if (subscriptionInfo.entityName) {
+        entitiesObservable = this.getEntitiesByNameFilter(subscriptionInfo.entityType, subscriptionInfo.entityName,
+          1, null, true, true);
+      } else if (subscriptionInfo.entityNamePrefix) {
+        entitiesObservable = this.getEntitiesByNameFilter(subscriptionInfo.entityType, subscriptionInfo.entityNamePrefix,
+          100, null, true, true);
+      } else if (subscriptionInfo.entityIds) {
+        entitiesObservable = this.getEntities(subscriptionInfo.entityType, subscriptionInfo.entityIds, true, true);
+      }
+      return entitiesObservable.pipe(
+        catchError(e => of([]))
+      );
+    } else {
+      return of([]);
+    }
+  }
+
+  private validateSubscriptionInfo(subscriptionInfo: SubscriptionInfo): SubscriptionInfo {
+    // @ts-ignore
+    if (subscriptionInfo.type === 'device') {
+      subscriptionInfo.type = DatasourceType.entity;
+      subscriptionInfo.entityType = EntityType.DEVICE;
+      if (subscriptionInfo.deviceId) {
+        subscriptionInfo.entityId = subscriptionInfo.deviceId;
+      } else if (subscriptionInfo.deviceName) {
+        subscriptionInfo.entityName = subscriptionInfo.deviceName;
+      } else if (subscriptionInfo.deviceNamePrefix) {
+        subscriptionInfo.entityNamePrefix = subscriptionInfo.deviceNamePrefix;
+      } else if (subscriptionInfo.deviceIds) {
+        subscriptionInfo.entityIds = subscriptionInfo.deviceIds;
+      }
+    }
+    return subscriptionInfo;
+  }
+
+  private createDatasourceFromSubscription(subscriptionInfo: SubscriptionInfo, entity?: BaseData<EntityId>): Datasource {
+    let datasource: Datasource;
+    if (subscriptionInfo.type === DatasourceType.entity) {
+      datasource = {
+        type: subscriptionInfo.type,
+        entityName: entity.name,
+        name: entity.name,
+        entityType: subscriptionInfo.entityType,
+        entityId: entity.id.id,
+        dataKeys: []
+      };
+    } else if (subscriptionInfo.type === DatasourceType.function) {
+      datasource = {
+        type: subscriptionInfo.type,
+        name: subscriptionInfo.name || DatasourceType.function,
+        dataKeys: []
+      };
+    }
+    if (subscriptionInfo.timeseries) {
+      this.createDatasourceKeys(subscriptionInfo.timeseries, DataKeyType.timeseries, datasource);
+    }
+    if (subscriptionInfo.attributes) {
+      this.createDatasourceKeys(subscriptionInfo.attributes, DataKeyType.attribute, datasource);
+    }
+    if (subscriptionInfo.functions) {
+      this.createDatasourceKeys(subscriptionInfo.functions, DataKeyType.function, datasource);
+    }
+    if (subscriptionInfo.alarmFields) {
+      this.createDatasourceKeys(subscriptionInfo.alarmFields, DataKeyType.alarm, datasource);
+    }
+    return datasource;
+  }
+
+  private createDatasourceKeys(keyInfos: Array<KeyInfo>, type: DataKeyType, datasource: Datasource) {
+    keyInfos.forEach((keyInfo) => {
+      const dataKey = this.utils.createKey(keyInfo, type);
+      datasource.dataKeys.push(dataKey);
+    });
   }
 }

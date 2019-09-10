@@ -28,6 +28,23 @@ import {
   AlarmSeverity,
   AlarmStatus
 } from '@shared/models/alarm.models';
+import { EntityType } from '@shared/models/entity-type.models';
+import { Datasource } from '@shared/models/widget.models';
+
+export interface AlarmSourceListener {
+  id?: string;
+  alarmSource: Datasource;
+  alarmsPollingInterval: number;
+  alarmSearchStatus: AlarmSearchStatus;
+  alarmsQuery: {
+    entityType: EntityType;
+    entityId: string;
+    alarmSearchStatus: AlarmSearchStatus;
+    alarmStatus: AlarmStatus;
+    fetchOriginator?: boolean;
+    onAlarms?: (alarms: Array<AlarmInfo>) => void;
+  };
+}
 
 @Injectable({
   providedIn: 'root'

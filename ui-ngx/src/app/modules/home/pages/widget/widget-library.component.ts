@@ -33,6 +33,7 @@ import { FooterFabButtons } from '@app/shared/components/footer-fab-buttons.comp
 import { DashboardCallbacks, WidgetsData } from '@home/models/dashboard-component.models';
 import { IAliasController } from '@app/core/api/widget-api.models';
 import { toWidgetInfo } from '@home/models/widget-component.models';
+import { DummyAliasController } from '@core/api/alias-controller';
 
 @Component({
   selector: 'tb-widget-library',
@@ -78,7 +79,7 @@ export class WidgetLibraryComponent extends PageComponent implements OnInit {
 
   widgetsData: Observable<WidgetsData>;
 
-  aliasController: IAliasController = {};
+  aliasController: IAliasController = new DummyAliasController();
 
   constructor(protected store: Store<AppState>,
               private route: ActivatedRoute,

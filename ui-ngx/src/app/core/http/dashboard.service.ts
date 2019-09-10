@@ -16,22 +16,36 @@
 
 import {Inject, Injectable} from '@angular/core';
 import {defaultHttpOptions} from './http-utils';
-import {Observable} from 'rxjs/index';
+import { Observable, ReplaySubject, Subject } from 'rxjs/index';
 import {HttpClient} from '@angular/common/http';
 import {PageLink} from '@shared/models/page/page-link';
 import {PageData} from '@shared/models/page/page-data';
 import {Dashboard, DashboardInfo} from '@shared/models/dashboard.models';
 import {WINDOW} from '@core/services/window.service';
+import { ActivationEnd, Router } from '@angular/router';
+import { filter } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DashboardService {
 
+  stDiffSubject: Subject<number>;
+
   constructor(
     private http: HttpClient,
+    private router: Router,
     @Inject(WINDOW) private window: Window
-  ) { }
+  ) {
+    this.router.events.pipe(filter(event => event instanceof ActivationEnd)).subscribe(
+      () => {
+        if (this.stDiffSubject) {
+          this.stDiffSubject.complete();
+          this.stDiffSubject = null;
+        }
+      }
+    );
+  }
 
   public getTenantDashboards(pageLink: PageLink, ignoreErrors: boolean = false,
                              ignoreLoading: boolean = false): Observable<PageData<DashboardInfo>> {
@@ -122,6 +136,27 @@ export class DashboardService {
       }
     }
     return null;
+  }
+
+  public getServerTimeDiff(): Observable<number> {
+    if (this.stDiffSubject) {
+      return this.stDiffSubject.asObservable();
+    } else {
+      this.stDiffSubject = new ReplaySubject<number>(1);
+      const url = '/api/dashboard/serverTime';
+      const ct1 = Date.now();
+      this.http.get<number>(url, defaultHttpOptions(true)).subscribe(
+        (st) => {
+          const ct2 = Date.now();
+          const stDiff = Math.ceil(st - (ct1 + ct2) / 2);
+          this.stDiffSubject.next(stDiff);
+        },
+        () => {
+          this.stDiffSubject.error(null);
+        }
+      );
+      return this.stDiffSubject.asObservable();
+    }
   }
 
 }

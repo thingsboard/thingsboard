@@ -94,9 +94,10 @@ export class DatetimePeriodComponent implements OnInit, ControlValueAccessor {
   updateView() {
     let value: FixedWindow = null;
     if (this.startDate && this.endDate) {
-      value = new FixedWindow();
-      value.startTimeMs = this.startDate.getTime();
-      value.endTimeMs = this.endDate.getTime();
+      value = {
+        startTimeMs: this.startDate.getTime(),
+        endTimeMs: this.endDate.getTime()
+      };
     }
     this.modelValue = value;
     if (!this.propagateChange) {

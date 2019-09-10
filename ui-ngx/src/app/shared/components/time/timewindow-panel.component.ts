@@ -145,18 +145,21 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
 
   update() {
     const timewindowFormValue = this.timewindowForm.value;
-    this.timewindow.realtime = new IntervalWindow();
-    this.timewindow.realtime.timewindowMs = timewindowFormValue.realtime.timewindowMs;
-    this.timewindow.realtime.interval = timewindowFormValue.realtime.interval;
-    this.timewindow.history = new HistoryWindow();
-    this.timewindow.history.historyType = timewindowFormValue.history.historyType;
-    this.timewindow.history.timewindowMs = timewindowFormValue.history.timewindowMs;
-    this.timewindow.history.interval = timewindowFormValue.history.interval;
-    this.timewindow.history.fixedTimewindow = timewindowFormValue.history.fixedTimewindow;
+    this.timewindow.realtime = {
+      timewindowMs: timewindowFormValue.realtime.timewindowMs,
+      interval: timewindowFormValue.realtime.interval
+    };
+    this.timewindow.history = {
+      historyType: timewindowFormValue.history.historyType,
+      timewindowMs: timewindowFormValue.history.timewindowMs,
+      interval: timewindowFormValue.history.interval,
+      fixedTimewindow: timewindowFormValue.history.fixedTimewindow
+    };
     if (this.aggregation) {
-      this.timewindow.aggregation = new Aggregation();
-      this.timewindow.aggregation.type = timewindowFormValue.aggregation.type;
-      this.timewindow.aggregation.limit = timewindowFormValue.aggregation.limit;
+      this.timewindow.aggregation = {
+        type: timewindowFormValue.aggregation.type,
+        limit: timewindowFormValue.aggregation.limit
+      };
     }
     this.result = this.timewindow;
     this.overlayRef.dispose();

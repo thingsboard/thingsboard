@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Injectable } from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
 import { DynamicComponentFactoryService } from '@core/services/dynamic-component-factory.service';
 import { WidgetService } from '@core/http/widget.service';
 import { forkJoin, Observable, of, ReplaySubject, Subject, throwError } from 'rxjs';
@@ -33,6 +33,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { DynamicWidgetComponent } from '@home/components/widget/dynamic-widget.component';
 import { SharedModule } from '@shared/shared.module';
 import { WidgetComponentsModule } from '@home/components/widget/widget-components.module';
+import { WINDOW } from '@core/services/window.service';
+
+import * as tinycolor from 'tinycolor2';
+
+// declare var jQuery: any;
 
 @Injectable()
 export class WidgetComponentService {
@@ -48,11 +53,17 @@ export class WidgetComponentService {
   private missingWidgetType: WidgetInfo;
   private errorWidgetType: WidgetInfo;
 
-  constructor(private dynamicComponentFactoryService: DynamicComponentFactoryService,
+  constructor(@Inject(WINDOW) private window: Window,
+              private dynamicComponentFactoryService: DynamicComponentFactoryService,
               private widgetService: WidgetService,
               private utils: UtilsService,
               private resources: ResourcesService,
               private translate: TranslateService) {
+    // @ts-ignore
+    this.window.tinycolor = tinycolor;
+    // @ts-ignore
+    this.window.cssjs = cssjs;
+
     this.cssParser.testMode = false;
     this.init();
   }
