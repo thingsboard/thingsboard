@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql.timeseries;
+package org.thingsboard.server.dao.sqlts.ts;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;
@@ -23,8 +23,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.dao.model.sql.TsKvCompositeKey;
-import org.thingsboard.server.dao.model.sql.TsKvEntity;
+import org.thingsboard.server.dao.model.sqlts.ts.TsKvCompositeKey;
+import org.thingsboard.server.dao.model.sqlts.ts.TsKvEntity;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;

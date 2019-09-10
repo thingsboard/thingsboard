@@ -202,26 +202,6 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testDeleteDeviceTsDataWithoutOverwritingLatest() throws Exception {
-        DeviceId deviceId = new DeviceId(UUIDs.timeBased());
-
-        saveEntries(deviceId, 10000);
-        saveEntries(deviceId, 20000);
-        saveEntries(deviceId, 30000);
-        saveEntries(deviceId, 40000);
-
-        tsService.remove(tenantId, deviceId, Collections.singletonList(
-                new BaseDeleteTsKvQuery(STRING_KEY, 15000, 45000))).get();
-
-        List<TsKvEntry> list = tsService.findAll(tenantId, deviceId, Collections.singletonList(
-                new BaseReadTsKvQuery(STRING_KEY, 5000, 45000, 10000, 10, Aggregation.NONE))).get();
-        Assert.assertEquals(1, list.size());
-
-        List<TsKvEntry> latest = tsService.findLatest(tenantId, deviceId, Collections.singletonList(STRING_KEY)).get();
-        Assert.assertEquals(null, latest.get(0).getValueAsString());
-    }
-
-    @Test
     public void testDeleteDeviceTsDataWithOverwritingLatest() throws Exception {
         DeviceId deviceId = new DeviceId(UUIDs.timeBased());
 
