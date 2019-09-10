@@ -15,6 +15,12 @@
     limitations under the License.
 
 -->
+<md-button ng-click="onSetUserCredentialsEnabled({userCredentialsEnabled: false})" ng-show="!isEdit && isUserCredentialsEnabled()" class="md-raised md-primary">{{ 'user.disable-account' |
+    translate }}
+</md-button>
+<md-button ng-click="onSetUserCredentialsEnabled({userCredentialsEnabled: true})" ng-show="!isEdit && !isUserCredentialsEnabled()" class="md-raised md-primary">{{ 'user.enable-account' |
+    translate }}
+</md-button>
 <md-button ng-click="onDisplayActivationLink({event: $event})" ng-show="!isEdit" class="md-raised md-primary">{{
     'user.display-activation-link' | translate }}
 </md-button>

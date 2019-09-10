@@ -60,5 +60,10 @@ public interface UserService {
 	TextPageData<User> findCustomerUsers(TenantId tenantId, CustomerId customerId, TextPageLink pageLink);
 	    
 	void deleteCustomerUsers(TenantId tenantId, CustomerId customerId);
-	
+
+	void setUserCredentialsEnabled(TenantId tenantId, UserId userId, boolean enabled);
+
+	void onUserLoginSuccessful(TenantId tenantId, UserId userId);
+
+	int onUserLoginIncorrectCredentials(TenantId tenantId, UserId userId);
 }

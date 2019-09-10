@@ -22,6 +22,10 @@
                 <span translate class="md-headline">profile.profile</span>
                 <span style='opacity: 0.7;'>{{ vm.profileUser.email }}</span>
             </md-card-title-text>
+            <md-card-title-text>
+                <span translate class="md-subhead">profile.last-login-time</span>
+                <span style='opacity: 0.7;'>{{ vm.profileUser.additionalInfo.lastLoginTs | date :  'yyyy-MM-dd HH:mm:ss' }}</span>
+            </md-card-title-text>
         </md-card-title>
         <md-progress-linear md-mode="indeterminate" ng-disabled="!$root.loading" ng-show="$root.loading"></md-progress-linear>
         <span style="min-height: 5px;" flex="" ng-show="!$root.loading"></span>
