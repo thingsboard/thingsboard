@@ -295,9 +295,6 @@ public class UserController extends BaseController {
         try {
             UserId userId = new UserId(toUUID(strUserId));
             User user = checkUserId(userId, Operation.WRITE);
-
-            accessControlService.checkPermission(getCurrentUser(), Resource.USER, Operation.WRITE, user.getId(), user);
-
             TenantId tenantId = getCurrentUser().getTenantId();
             userService.setUserCredentialsEnabled(tenantId, userId, userCredentialsEnabled);
         } catch (Exception e) {
