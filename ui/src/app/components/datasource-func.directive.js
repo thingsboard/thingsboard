@@ -183,9 +183,9 @@ function DatasourceFunc($compile, $templateCache, $mdDialog, $window, $document,
                     w.triggerHandler('resize');
                 }
             }).then(function (newDataKey) {
-                if ((newDataKey.type === types.dataKeyType.timeseries) || (newDataKey.type === types.dataKeyType.attribute)) {
-                    let index = scope.dataKeys.indexOf(dataKey);
-                    scope.dataKeys[index] = newDataKey;
+                if (newDataKey.type === types.dataKeyType.function) {
+                    let index = scope.funcDataKeys.indexOf(dataKey);
+                    scope.funcDataKeys[index] = newDataKey;
                 } else if (newDataKey.type === types.dataKeyType.alarm) {
                     let index = scope.alarmDataKeys.indexOf(dataKey);
                     scope.alarmDataKeys[index] = newDataKey;
