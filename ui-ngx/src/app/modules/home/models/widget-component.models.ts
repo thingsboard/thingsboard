@@ -61,8 +61,8 @@ export interface WidgetAction extends IWidgetAction {
 
 export interface WidgetContext {
   inited?: boolean;
-  $container?: any;
-  $containerParent?: any;
+  $container?: JQuery<any>;
+  $containerParent?: JQuery<any>;
   width?: number;
   height?: number;
   $scope?: IDynamicWidgetComponent;
