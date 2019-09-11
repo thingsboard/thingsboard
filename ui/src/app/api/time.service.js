@@ -47,6 +47,7 @@ function TimeService($translate, $http, $q, types) {
         defaultTimewindow: defaultTimewindow,
         toHistoryTimewindow: toHistoryTimewindow,
         createSubscriptionTimewindow: createSubscriptionTimewindow,
+        createTimewindowForComparison: createTimewindowForComparison,
         getMaxDatapointsLimit: function () {
             return maxDatapointsLimit;
         },
@@ -383,5 +384,24 @@ function TimeService($translate, $http, $q, types) {
         }
     }
 
+    function createTimewindowForComparison(subscriptionTimewindow) {
+        var timewindowForComparison = {
+            fixedWindow: null,
+            realtimeWindowMs: null,
+            aggregation: subscriptionTimewindow.aggregation
+        };
 
+        timewindowForComparison.startTs = moment(subscriptionTimewindow.startTs).subtract(1, 'months').valueOf(); //eslint-disable-line
+
+        if (subscriptionTimewindow.realtimeWindowMs) {
+            timewindowForComparison.realtimeWindowMs = subscriptionTimewindow.realtimeWindowMs;
+        } else if (subscriptionTimewindow.fixedWindow) {
+            timewindowForComparison.fixedWindow = {
+                startTimeMs: timewindowForComparison.startTs,
+                endTimeMs: moment(subscriptionTimewindow.endTimeMs).subtract(1, 'months').valueOf() //eslint-disable-line
+            };
+        }
+
+        return timewindowForComparison;
+    }
 }
