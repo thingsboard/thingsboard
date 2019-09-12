@@ -221,16 +221,21 @@ export interface Datasource {
   entityId?: string;
   entityName?: string;
   entityAliasId?: string;
+  unresolvedStateEntity?: boolean;
+  dataReceived?: boolean;
   [key: string]: any;
   // TODO:
 }
 
 export type DataSet = [number, any][];
 
-export interface DatasourceData {
+export interface DataSetHolder {
+  data: DataSet;
+}
+
+export interface DatasourceData extends DataSetHolder {
   datasource: Datasource;
   dataKey: DataKey;
-  data: DataSet;
 }
 
 export interface LegendKey {
@@ -239,10 +244,10 @@ export interface LegendKey {
 }
 
 export interface LegendKeyData {
-  min: number;
-  max: number;
-  avg: number;
-  total: number;
+  min: string;
+  max: string;
+  avg: string;
+  total: string;
   hidden: boolean;
 }
 
@@ -339,4 +344,14 @@ export interface Widget {
   row: number;
   col: number;
   config: WidgetConfig;
+}
+
+export interface JsonSettingsSchema {
+  schema?: {
+    type: string;
+    title: string;
+    properties: {[key: string]: any};
+    required?: string[];
+  };
+  form?: any[];
 }

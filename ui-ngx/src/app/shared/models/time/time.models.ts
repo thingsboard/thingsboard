@@ -21,6 +21,7 @@ export const SECOND = 1000;
 export const MINUTE = 60 * SECOND;
 export const HOUR = 60 * MINUTE;
 export const DAY = 24 * HOUR;
+export const YEAR = DAY * 365;
 
 export enum TimewindowType {
   REALTIME,
@@ -68,6 +69,7 @@ export const aggregationTranslations = new Map<AggregationType, string>(
 );
 
 export interface Aggregation {
+  interval?: number;
   type: AggregationType;
   limit: number;
 }
@@ -78,6 +80,25 @@ export interface Timewindow {
   realtime?: IntervalWindow;
   history?: HistoryWindow;
   aggregation?: Aggregation;
+}
+
+export interface SubscriptionAggregation extends Aggregation {
+  interval?: number;
+  timeWindow?: number;
+  stateData?: boolean;
+}
+
+export interface SubscriptionTimewindow {
+  startTs?: number;
+  realtimeWindowMs?: number;
+  fixedWindow?: FixedWindow;
+  aggregation?: SubscriptionAggregation;
+}
+
+export interface WidgetTimewindow {
+  minTime?: number;
+  maxTime?: number;
+  interval?: number;
   stDiff?: number;
 }
 
@@ -91,7 +112,7 @@ export function historyInterval(timewindowMs: number): Timewindow {
 }
 
 export function defaultTimewindow(timeService: TimeService): Timewindow {
-  const currentTime = new Date().getTime();
+  const currentTime = Date.now();
   const timewindow: Timewindow = {
     displayValue: '',
     selectedTab: TimewindowType.REALTIME,
@@ -181,6 +202,67 @@ export function toHistoryTimewindow(timewindow: Timewindow, startTimeMs: number,
     }
   };
   return historyTimewindow;
+}
+
+export function createSubscriptionTimewindow(timewindow: Timewindow, stDiff: number, stateData: boolean,
+                                             timeService: TimeService): SubscriptionTimewindow {
+  const subscriptionTimewindow: SubscriptionTimewindow = {
+    fixedWindow: null,
+    realtimeWindowMs: null,
+    aggregation: {
+      interval: SECOND,
+      limit: timeService.getMaxDatapointsLimit(),
+      type: AggregationType.AVG
+    }
+  };
+  let aggTimewindow = 0;
+  if (stateData) {
+    subscriptionTimewindow.aggregation.type = AggregationType.NONE;
+    subscriptionTimewindow.aggregation.stateData = true;
+  }
+  if (isDefined(timewindow.aggregation) && !stateData) {
+    subscriptionTimewindow.aggregation = {
+      type: timewindow.aggregation.type || AggregationType.AVG,
+      limit: timewindow.aggregation.limit || timeService.getMaxDatapointsLimit()
+    };
+  }
+  if (isDefined(timewindow.realtime)) {
+    subscriptionTimewindow.realtimeWindowMs = timewindow.realtime.timewindowMs;
+    subscriptionTimewindow.aggregation.interval =
+      timeService.boundIntervalToTimewindow(subscriptionTimewindow.realtimeWindowMs, timewindow.realtime.interval,
+        subscriptionTimewindow.aggregation.type);
+    subscriptionTimewindow.startTs = Date.now() + stDiff - subscriptionTimewindow.realtimeWindowMs;
+    const startDiff = subscriptionTimewindow.startTs % subscriptionTimewindow.aggregation.interval;
+    aggTimewindow = subscriptionTimewindow.realtimeWindowMs;
+    if (startDiff) {
+      subscriptionTimewindow.startTs -= startDiff;
+      aggTimewindow += subscriptionTimewindow.aggregation.interval;
+    }
+  } else if (isDefined(timewindow.history)) {
+    if (isDefined(timewindow.history.timewindowMs)) {
+      const currentTime = Date.now();
+      subscriptionTimewindow.fixedWindow = {
+        startTimeMs: currentTime - timewindow.history.timewindowMs,
+        endTimeMs: currentTime
+      };
+      aggTimewindow = timewindow.history.timewindowMs;
+    } else {
+      subscriptionTimewindow.fixedWindow = {
+        startTimeMs: timewindow.history.fixedTimewindow.startTimeMs,
+        endTimeMs: timewindow.history.fixedTimewindow.endTimeMs
+      };
+      aggTimewindow = subscriptionTimewindow.fixedWindow.endTimeMs - subscriptionTimewindow.fixedWindow.startTimeMs;
+    }
+    subscriptionTimewindow.startTs = subscriptionTimewindow.fixedWindow.startTimeMs;
+    subscriptionTimewindow.aggregation.interval =
+      timeService.boundIntervalToTimewindow(aggTimewindow, timewindow.history.interval, subscriptionTimewindow.aggregation.type);
+  }
+  const aggregation = subscriptionTimewindow.aggregation;
+  aggregation.timeWindow = aggTimewindow;
+  if (aggregation.type !== AggregationType.NONE) {
+    aggregation.limit = Math.ceil(aggTimewindow / subscriptionTimewindow.aggregation.interval);
+  }
+  return subscriptionTimewindow;
 }
 
 export function cloneSelectedTimewindow(timewindow: Timewindow): Timewindow {

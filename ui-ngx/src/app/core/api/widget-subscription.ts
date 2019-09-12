@@ -23,8 +23,10 @@ import {
 } from '@core/api/widget-api.models';
 import {
   DataSet,
+  DataSetHolder,
   Datasource,
   DatasourceData,
+  DatasourceType,
   LegendConfig,
   LegendData,
   LegendKey,
@@ -32,7 +34,13 @@ import {
   widgetType
 } from '@app/shared/models/widget.models';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Timewindow } from '@app/shared/models/time/time.models';
+import {
+  createSubscriptionTimewindow,
+  SubscriptionTimewindow,
+  Timewindow,
+  toHistoryTimewindow,
+  WidgetTimewindow
+} from '@app/shared/models/time/time.models';
 import { Observable, of, ReplaySubject, Subject } from 'rxjs';
 import { CancelAnimationFrame } from '@core/services/raf.service';
 import { EntityType } from '@shared/models/entity-type.models';
@@ -40,6 +48,7 @@ import { AlarmInfo, AlarmSearchStatus } from '@shared/models/alarm.models';
 import { deepClone, isDefined } from '@core/utils';
 import { AlarmSourceListener } from '@core/http/alarm.service';
 import { DatasourceListener } from '@core/api/datasource.service';
+import * as deepEqual from 'deep-equal';
 
 export class WidgetSubscription implements IWidgetSubscription {
 
@@ -48,16 +57,16 @@ export class WidgetSubscription implements IWidgetSubscription {
   type: widgetType;
   callbacks: WidgetSubscriptionCallbacks;
 
-  timeWindow: Timewindow;
+  timeWindow: WidgetTimewindow;
   originalTimewindow: Timewindow;
   timeWindowConfig: Timewindow;
-  subscriptionTimewindow: Timewindow;
+  subscriptionTimewindow: SubscriptionTimewindow;
   useDashboardTimewindow: boolean;
 
   data: Array<DatasourceData>;
   datasources: Array<Datasource>;
   datasourceListeners: Array<DatasourceListener>;
-  hiddenData: Array<{ data: DataSet }>;
+  hiddenData: Array<DataSetHolder>;
   legendData: LegendData;
   legendConfig: LegendConfig;
   caulculateLegendData: boolean;
@@ -323,17 +332,95 @@ export class WidgetSubscription implements IWidgetSubscription {
     }
   }
 
+  private resetData() {
+    for (let i = 0; i < this.data.length; i++) {
+      this.data[i].data = [];
+      this.hiddenData[i].data = [];
+      if (this.displayLegend) {
+        this.legendData.data[i].min = null;
+        this.legendData.data[i].max = null;
+        this.legendData.data[i].avg = null;
+        this.legendData.data[i].total = null;
+        this.legendData.data[i].hidden = false;
+      }
+    }
+    this.onDataUpdated();
+  }
+
   getFirstEntityInfo(): EntityInfo {
     return undefined;
+  }
+
+  onAliasesChanged(aliasIds: Array<string>): boolean {
+    return false;
+  }
+
+  private onDataUpdated(detectChanges?: boolean) {
+    if (this.cafs.dataUpdated) {
+      this.cafs.dataUpdated();
+      this.cafs.dataUpdated = null;
+    }
+    this.cafs.dataUpdated = this.ctx.raf.raf(() => {
+      try {
+        this.callbacks.onDataUpdated(this, detectChanges);
+      } catch (e) {
+        this.callbacks.onDataUpdateError(this, e);
+      }
+    });
+  }
+
+  onDashboardTimewindowChanged(newDashboardTimewindow: Timewindow): void {
+    if (this.type === widgetType.timeseries || this.type === widgetType.alarm) {
+      if (this.useDashboardTimewindow) {
+        if (!deepEqual(this.timeWindowConfig, newDashboardTimewindow) && newDashboardTimewindow) {
+          this.timeWindowConfig = deepClone(newDashboardTimewindow);
+          this.update();
+        }
+      }
+    }
+  }
+
+  updateDataVisibility(index: number): void {
+    if (this.displayLegend) {
+      const hidden = this.legendData.keys[index].dataKey.hidden;
+      if (hidden) {
+        this.hiddenData[index].data = this.data[index].data;
+        this.data[index].data = [];
+      } else {
+        this.data[index].data = this.hiddenData[index].data;
+        this.hiddenData[index].data = [];
+      }
+      this.onDataUpdated();
+    }
   }
 
   updateTimewindowConfig(newTimewindow: Timewindow): void {
   }
 
   onResetTimewindow(): void {
+    if (this.useDashboardTimewindow) {
+      this.ctx.dashboardTimewindowApi.onResetTimewindow();
+    } else {
+      if (this.originalTimewindow) {
+        this.timeWindowConfig = deepClone(this.originalTimewindow);
+        this.originalTimewindow = null;
+        this.callbacks.timeWindowUpdated(this, this.timeWindowConfig);
+        this.update();
+      }
+    }
   }
 
-  onUpdateTimewindow(startTimeMs: number, endTimeMs: number, interval: number): void {
+  onUpdateTimewindow(startTimeMs: number, endTimeMs: number, interval?: number): void {
+    if (this.useDashboardTimewindow) {
+      this.ctx.dashboardTimewindowApi.onUpdateTimewindow(startTimeMs, endTimeMs);
+    } else {
+      if (!this.originalTimewindow) {
+        this.originalTimewindow = deepClone(this.timeWindowConfig);
+      }
+      this.timeWindowConfig = toHistoryTimewindow(this.timeWindowConfig, startTimeMs, endTimeMs, interval, this.ctx.timeService);
+      this.callbacks.timeWindowUpdated(this, this.timeWindowConfig);
+      this.update();
+    }
   }
 
   sendOneWayCommand(method: string, params?: any, timeout?: number): Observable<any> {
@@ -347,12 +434,109 @@ export class WidgetSubscription implements IWidgetSubscription {
   clearRpcError(): void {
   }
 
+  update() {
+    this.unsubscribe();
+    this.subscribe();
+  }
+
   subscribe(): void {
+    if (this.cafs.subscribe) {
+      this.cafs.subscribe();
+      this.cafs.subscribe = null;
+    }
+    this.cafs.subscribe = this.ctx.raf.raf(() => {
+      this.doSubscribe();
+    });
+  }
+
+  private doSubscribe() {
+    if (this.type === widgetType.rpc) {
+      return;
+    }
+    if (this.type === widgetType.alarm) {
+      this.alarmsSubscribe();
+    } else {
+      this.notifyDataLoading();
+      if (this.type === widgetType.timeseries && this.timeWindowConfig) {
+        this.updateRealtimeSubscription();
+        if (this.subscriptionTimewindow.fixedWindow) {
+          this.onDataUpdated();
+        }
+      }
+      let index = 0;
+      this.datasources.forEach((datasource) => {
+        const listener: DatasourceListener = {
+          subscriptionType: this.type,
+          subscriptionTimewindow: this.subscriptionTimewindow,
+          datasource,
+          entityType: datasource.entityType,
+          entityId: datasource.entityId,
+          dataUpdated: this.dataUpdated.bind(this),
+          updateRealtimeSubscription: () => {
+            this.subscriptionTimewindow = this.updateRealtimeSubscription();
+            return this.subscriptionTimewindow;
+          },
+          setRealtimeSubscription: (subscriptionTimewindow) => {
+            this.updateRealtimeSubscription(deepClone(subscriptionTimewindow));
+          },
+          datasourceIndex: index
+        };
+        for (let a = 0; a < datasource.dataKeys.length; a++) {
+          this.data[index + a].data = [];
+        }
+        index += datasource.dataKeys.length;
+        this.datasourceListeners.push(listener);
+
+        if (datasource.dataKeys.length) {
+          this.ctx.datasourceService.subscribeToDatasource(listener);
+        }
+        let forceUpdate = false;
+        if (datasource.unresolvedStateEntity ||
+          !datasource.dataKeys.length ||
+          (datasource.type === DatasourceType.entity && !datasource.entityId)
+        ) {
+          forceUpdate = true;
+        }
+        if (forceUpdate) {
+          this.notifyDataLoaded();
+          this.onDataUpdated();
+        }
+      });
+    }
+  }
+
+  private alarmsSubscribe() {
     // TODO:
-    this.notifyDataLoaded();
+  }
+
+
+  unsubscribe() {
+    if (this.type !== widgetType.rpc) {
+      if (this.type === widgetType.alarm) {
+        this.alarmsUnsubscribe();
+      } else {
+        this.datasourceListeners.forEach((listener) => {
+          this.ctx.datasourceService.unsubscribeFromDatasource(listener);
+        });
+        this.datasourceListeners.length = 0;
+        this.resetData();
+      }
+    }
+  }
+
+  private alarmsUnsubscribe() {
+    // TODO:
   }
 
   destroy(): void {
+    this.unsubscribe();
+    for (const cafId of Object.keys(this.cafs)) {
+      if (this.cafs[cafId]) {
+        this.cafs[cafId]();
+        this.cafs[cafId] = null;
+      }
+    }
+    // TODO:
   }
 
   private notifyDataLoading() {
@@ -365,9 +549,88 @@ export class WidgetSubscription implements IWidgetSubscription {
     this.callbacks.dataLoading(this);
   }
 
-  onAliasesChanged(aliasIds: Array<string>): boolean {
-    return false;
+  private updateTimewindow() {
+    this.timeWindow.interval = this.subscriptionTimewindow.aggregation.interval || 1000;
+    if (this.subscriptionTimewindow.realtimeWindowMs) {
+      this.timeWindow.maxTime = Date.now() + this.timeWindow.stDiff;
+      this.timeWindow.minTime = this.timeWindow.maxTime - this.subscriptionTimewindow.realtimeWindowMs;
+    } else if (this.subscriptionTimewindow.fixedWindow) {
+      this.timeWindow.maxTime = this.subscriptionTimewindow.fixedWindow.endTimeMs;
+      this.timeWindow.minTime = this.subscriptionTimewindow.fixedWindow.startTimeMs;
+    }
   }
+
+  private updateRealtimeSubscription(subscriptionTimewindow?: SubscriptionTimewindow) {
+    if (subscriptionTimewindow) {
+      this.subscriptionTimewindow = subscriptionTimewindow;
+    } else {
+      this.subscriptionTimewindow =
+        createSubscriptionTimewindow(this.timeWindowConfig, this.timeWindow.stDiff,
+          this.stateData, this.ctx.timeService);
+    }
+    this.updateTimewindow();
+    return this.subscriptionTimewindow;
+  }
+
+  private dataUpdated(sourceData: DataSetHolder, datasourceIndex: number, dataKeyIndex: number, detectChanges: boolean) {
+    for (let x = 0; x < this.datasourceListeners.length; x++) {
+      this.datasources[x].dataReceived = this.datasources[x].dataReceived === true;
+      if (this.datasourceListeners[x].datasourceIndex === datasourceIndex && sourceData.data.length > 0) {
+        this.datasources[x].dataReceived = true;
+      }
+    }
+    this.notifyDataLoaded();
+    let update = true;
+    let currentData: DataSetHolder;
+    if (this.displayLegend && this.legendData.keys[datasourceIndex + dataKeyIndex].dataKey.hidden) {
+      currentData = this.hiddenData[datasourceIndex + dataKeyIndex];
+    } else {
+      currentData = this.data[datasourceIndex + dataKeyIndex];
+    }
+    if (this.type === widgetType.latest) {
+      const prevData = currentData.data;
+      if (!sourceData.data.length) {
+        update = false;
+      } else if (prevData && prevData[0] && prevData[0].length > 1 && sourceData.data.length > 0) {
+        const prevTs = prevData[0][0];
+        const prevValue = prevData[0][1];
+        if (prevTs === sourceData.data[0][0] && prevValue === sourceData.data[0][1]) {
+          update = false;
+        }
+      }
+    }
+    if (update) {
+      if (this.subscriptionTimewindow && this.subscriptionTimewindow.realtimeWindowMs) {
+        this.updateTimewindow();
+      }
+      currentData.data = sourceData.data;
+      if (this.caulculateLegendData) {
+        this.updateLegend(datasourceIndex + dataKeyIndex, sourceData.data, detectChanges);
+      }
+      this.onDataUpdated(detectChanges);
+    }
+  }
+
+  private updateLegend(dataIndex: number, data: DataSet, detectChanges: boolean) {
+    const dataKey = this.legendData.keys[dataIndex].dataKey;
+    const decimals = isDefined(dataKey.decimals) ? dataKey.decimals : this.decimals;
+    const units = dataKey.units && dataKey.units.length ? dataKey.units : this.units;
+    const legendKeyData = this.legendData.data[dataIndex];
+    if (this.legendConfig.showMin) {
+      legendKeyData.min = this.ctx.widgetUtils.formatValue(calculateMin(data), decimals, units);
+    }
+    if (this.legendConfig.showMax) {
+      legendKeyData.max = this.ctx.widgetUtils.formatValue(calculateMax(data), decimals, units);
+    }
+    if (this.legendConfig.showAvg) {
+      legendKeyData.avg = this.ctx.widgetUtils.formatValue(calculateAvg(data), decimals, units);
+    }
+    if (this.legendConfig.showTotal) {
+      legendKeyData.total = this.ctx.widgetUtils.formatValue(calculateTotal(data), decimals, units);
+    }
+    this.callbacks.legendDataUpdated(this, detectChanges !== false);
+  }
+
 
   private loadStDiff(): Observable<any> {
     const loadSubject = new ReplaySubject(1);
@@ -392,5 +655,49 @@ export class WidgetSubscription implements IWidgetSubscription {
       loadSubject.complete();
     }
     return loadSubject.asObservable();
+  }
+}
+
+function calculateMin(data: DataSet): number {
+  if (data.length > 0) {
+    let result = Number(data[0][1]);
+    for (let i = 1; i < data.length; i++) {
+      result = Math.min(result, Number(data[i][1]));
+    }
+    return result;
+  } else {
+    return null;
+  }
+}
+
+function calculateMax(data: DataSet): number {
+  if (data.length > 0) {
+    let result = Number(data[0][1]);
+    for (let i = 1; i < data.length; i++) {
+      result = Math.max(result, Number(data[i][1]));
+    }
+    return result;
+  } else {
+    return null;
+  }
+}
+
+function calculateAvg(data: DataSet): number {
+  if (data.length > 0) {
+    return calculateTotal(data) / data.length;
+  } else {
+    return null;
+  }
+}
+
+function calculateTotal(data: DataSet): number {
+  if (data.length > 0) {
+    let result = 0;
+    data.forEach((dataRow) => {
+      result += Number(dataRow[1]);
+    });
+    return result;
+  } else {
+    return null;
   }
 }

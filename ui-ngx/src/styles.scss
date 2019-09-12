@@ -209,6 +209,10 @@ label {
   }
 }
 
+.tb-noselect {
+  user-select: none;
+}
+
 div {
   &.tb-small {
     font-size: 14px;

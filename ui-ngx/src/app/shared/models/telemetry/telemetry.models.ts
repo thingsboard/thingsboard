@@ -158,18 +158,25 @@ export class TelemetryPluginCmdsWrapper {
   }
 }
 
-export interface SubscriptionUpdateMsg {
+export interface SubscriptionData {
+  [key: string]: [number, any][];
+}
+
+export interface SubscriptionDataHolder {
+  data: SubscriptionData;
+}
+
+export interface SubscriptionUpdateMsg extends SubscriptionDataHolder {
   subscriptionId: number;
   errorCode: number;
   errorMsg: string;
-  data: {[key: string]: [number, string][]};
 }
 
 export class SubscriptionUpdate implements SubscriptionUpdateMsg {
   subscriptionId: number;
   errorCode: number;
   errorMsg: string;
-  data: {[key: string]: [number, string][]};
+  data: SubscriptionData;
 
   constructor(msg: SubscriptionUpdateMsg) {
     this.subscriptionId = msg.subscriptionId;

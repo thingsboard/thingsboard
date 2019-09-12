@@ -13,7 +13,8 @@
     "target": "es5",
     "typeRoots": [
       "node_modules/@types",
-      "src/typings.d.ts"
+      "src/typings/jquery.typings.d.ts",
+      "src/typings/jquery.flot.typings.d.ts"
     ],
     "paths": {
       "@app/*": ["src/app/*"],

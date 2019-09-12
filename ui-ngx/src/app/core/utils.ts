@@ -79,8 +79,20 @@ export function isDefined(value: any): boolean {
   return typeof value !== 'undefined';
 }
 
+export function isDefinedAndNotNull(value: any): boolean {
+  return typeof value !== 'undefined' && value !== null;
+}
+
 export function isFunction(value: any): boolean {
   return typeof value === 'function';
+}
+
+export function isObject(value: any): boolean {
+  return value !== null && typeof value === 'object';
+}
+
+export function isNumber(value: any): boolean {
+  return typeof value === 'number';
 }
 
 export function objToBase64(obj: any): string {
@@ -295,10 +307,24 @@ function utf8ToBytes(input: string, units?: number): number[] {
   return bytes;
 }
 
-export function deepClone<T>(obj: T): T {
-  if (obj) {
-    return JSON.parse(JSON.stringify(obj));
-  } else {
-    return obj;
+export function deepClone<T>(target: T): T {
+  if (target === null) {
+    return target;
   }
+  if (target instanceof Date) {
+    return new Date(target.getTime()) as any;
+  }
+  if (target instanceof Array) {
+    const cp = [] as any[];
+    (target as any[]).forEach((v) => { cp.push(v); });
+    return cp.map((n: any) => deepClone<any>(n)) as any;
+  }
+  if (typeof target === 'object' && target !== {}) {
+    const cp = { ...(target as { [key: string]: any }) } as { [key: string]: any };
+    Object.keys(cp).forEach(k => {
+      cp[k] = deepClone<any>(cp[k]);
+    });
+    return cp as T;
+  }
+  return target;
 }

@@ -39,7 +39,7 @@ import {
   IDashboardComponent,
   WidgetsData
 } from '../../models/dashboard-component.models';
-import { merge, Observable } from 'rxjs';
+import { merge, Observable, ReplaySubject, Subject } from 'rxjs';
 import { map, share, tap } from 'rxjs/operators';
 import { WidgetLayout } from '@shared/models/dashboard.models';
 import { DialogService } from '@core/services/dialog.service';
@@ -116,6 +116,10 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
 
   @Input()
   dashboardTimewindow: Timewindow;
+
+  dashboardTimewindowChangedSubject: Subject<Timewindow> = new ReplaySubject<Timewindow>();
+
+  dashboardTimewindowChanged = this.dashboardTimewindowChangedSubject.asObservable();
 
   originalDashboardTimewindow: Timewindow;
 
@@ -262,18 +266,20 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
   ngAfterViewInit(): void {
   }
 
-  onUpdateTimewindow(startTimeMs: number, endTimeMs: number, interval: number): void {
+  onUpdateTimewindow(startTimeMs: number, endTimeMs: number, interval?: number): void {
     if (!this.originalDashboardTimewindow) {
       this.originalDashboardTimewindow = deepClone(this.dashboardTimewindow);
     }
     this.dashboardTimewindow = toHistoryTimewindow(this.dashboardTimewindow,
                                                    startTimeMs, endTimeMs, interval, this.timeService);
+    this.dashboardTimewindowChangedSubject.next(this.dashboardTimewindow);
   }
 
   onResetTimewindow(): void {
     if (this.originalDashboardTimewindow) {
       this.dashboardTimewindow = deepClone(this.originalDashboardTimewindow);
       this.originalDashboardTimewindow = null;
+      this.dashboardTimewindowChangedSubject.next(this.dashboardTimewindow);
     }
   }
 

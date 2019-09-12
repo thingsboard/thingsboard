@@ -158,7 +158,7 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
 
     if (this.entitiesTableConfig.useTimePageLink) {
       this.timewindow = historyInterval(24 * 60 * 60 * 1000);
-      const currentTime = new Date().getTime();
+      const currentTime = Date.now();
       this.pageLink = new TimePageLink(10, 0, null, sortOrder,
         currentTime - this.timewindow.history.timewindowMs, currentTime);
     } else {
@@ -216,7 +216,7 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
     if (this.entitiesTableConfig.useTimePageLink) {
       const timePageLink = this.pageLink as TimePageLink;
       if (this.timewindow.history.timewindowMs) {
-        const currentTime = new Date().getTime();
+        const currentTime = Date.now();
         timePageLink.startTime = currentTime - this.timewindow.history.timewindowMs;
         timePageLink.endTime = currentTime;
       } else {

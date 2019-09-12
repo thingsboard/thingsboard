@@ -18,10 +18,26 @@ import { Injectable } from '@angular/core';
 import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service';
 import { UtilsService } from '@core/services/utils.service';
 import { EntityType } from '@app/shared/models/entity-type.models';
+import { DataSetHolder, Datasource, DatasourceType, widgetType } from '@shared/models/widget.models';
+import { SubscriptionTimewindow } from '@shared/models/time/time.models';
+import {
+  DatasourceSubscription,
+  DatasourceSubscriptionOptions,
+  SubscriptionDataKey
+} from '@core/api/datasource-subcription';
+import { deepClone } from '@core/utils';
 
 export interface DatasourceListener {
+  subscriptionType: widgetType;
+  subscriptionTimewindow: SubscriptionTimewindow;
+  datasource: Datasource;
   entityType: EntityType;
   entityId: string;
+  datasourceIndex: number;
+  dataUpdated: (data: DataSetHolder, datasourceIndex: number, dataKeyIndex: number, detectChanges: boolean) => void;
+  updateRealtimeSubscription: () => SubscriptionTimewindow;
+  setRealtimeSubscription: (subscriptionTimewindow: SubscriptionTimewindow) => void;
+  datasourceSubscriptionKey?: number;
 }
 
 @Injectable({
@@ -29,14 +45,65 @@ export interface DatasourceListener {
 })
 export class DatasourceService {
 
+  private subscriptions: {[datasourceSubscriptionKey: string]: DatasourceSubscription} = {};
+
   constructor(private telemetryService: TelemetryWebsocketService,
               private utils: UtilsService) {}
 
   public subscribeToDatasource(listener: DatasourceListener) {
-    // TODO:
+    const datasource = listener.datasource;
+    if (datasource.type === DatasourceType.entity && (!listener.entityId || !listener.entityType)) {
+      return;
+    }
+    const subscriptionDataKeys: Array<SubscriptionDataKey> = [];
+    datasource.dataKeys.forEach((dataKey) => {
+      const subscriptionDataKey: SubscriptionDataKey = {
+        name: dataKey.name,
+        type: dataKey.type,
+        funcBody: dataKey.funcBody,
+        postFuncBody: dataKey.postFuncBody
+      };
+      subscriptionDataKeys.push(subscriptionDataKey);
+    });
+
+    const datasourceSubscriptionOptions: DatasourceSubscriptionOptions = {
+      datasourceType: datasource.type,
+      dataKeys: subscriptionDataKeys,
+      type: listener.subscriptionType
+    };
+
+    if (listener.subscriptionType === widgetType.timeseries) {
+      datasourceSubscriptionOptions.subscriptionTimewindow = deepClone(listener.subscriptionTimewindow);
+    }
+    if (datasourceSubscriptionOptions.datasourceType === DatasourceType.entity) {
+      datasourceSubscriptionOptions.entityType = listener.entityType;
+      datasourceSubscriptionOptions.entityId = listener.entityId;
+    }
+    listener.datasourceSubscriptionKey = this.utils.objectHashCode(datasourceSubscriptionOptions);
+    let subscription: DatasourceSubscription;
+    if (this.subscriptions[listener.datasourceSubscriptionKey]) {
+      subscription = this.subscriptions[listener.datasourceSubscriptionKey];
+      subscription.syncListener(listener);
+    } else {
+      subscription = new DatasourceSubscription(datasourceSubscriptionOptions,
+                                                this.telemetryService, this.utils);
+      this.subscriptions[listener.datasourceSubscriptionKey] = subscription;
+      subscription.start();
+    }
+    subscription.addListener(listener);
   }
 
   public unsubscribeFromDatasource(listener: DatasourceListener) {
-    // TODO:
+    if (listener.datasourceSubscriptionKey) {
+      const subscription = this.subscriptions[listener.datasourceSubscriptionKey];
+      if (subscription) {
+        subscription.removeListener(listener);
+        if (!subscription.hasListeners()) {
+          subscription.unsubscribe();
+          delete this.subscriptions[listener.datasourceSubscriptionKey];
+        }
+      }
+      listener.datasourceSubscriptionKey = null;
+    }
   }
 }

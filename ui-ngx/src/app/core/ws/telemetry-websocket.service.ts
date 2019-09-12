@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Inject, Injectable } from '@angular/core';
+import { Inject, Injectable, NgZone } from '@angular/core';
 import {
   AttributesSubscriptionCmd,
   GetHistoryCmd,
@@ -66,6 +66,7 @@ export class TelemetryWebsocketService implements TelemetryService {
 
   constructor(private store: Store<AppState>,
               private authService: AuthService,
+              private ngZone: NgZone,
               @Inject(WINDOW) private window: Window) {
     this.store.pipe(select(selectIsAuthenticated)).subscribe(
       (authenticated: boolean) => {
@@ -222,7 +223,9 @@ export class TelemetryWebsocketService implements TelemetryService {
     );
 
     this.dataStream.subscribe((message) => {
-      this.onMessage(message as SubscriptionUpdateMsg);
+        this.ngZone.runOutsideAngular(() => {
+          this.onMessage(message as SubscriptionUpdateMsg);
+        });
     },
     (error) => {
       this.onError(error);

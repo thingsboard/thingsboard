@@ -1,0 +1,1074 @@
+///
+/// Copyright © 2016-2019 The Thingsboard Authors
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///     http://www.apache.org/licenses/LICENSE-2.0
+///
+/// Unless required by applicable law or agreed to in writing, software
+/// distributed under the License is distributed on an "AS IS" BASIS,
+/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/// See the License for the specific language governing permissions and
+/// limitations under the License.
+///
+
+
+import { WidgetContext } from '@home/models/widget-component.models';
+import { deepClone, isDefined, isNumber, isUndefined } from '@app/core/utils';
+import { IWidgetSubscription } from '@core/api/widget-api.models';
+import { DatasourceData, JsonSettingsSchema } from '@app/shared/models/widget.models';
+import {
+  ChartType,
+  flotDatakeySettingsSchema,
+  flotPieSettingsSchema,
+  flotSettingsSchema,
+  TbFlotAxisOptions,
+  TbFlotHoverInfo,
+  TbFlotKeySettings,
+  TbFlotPlotAxis,
+  TbFlotPlotDataSeries,
+  TbFlotPlotItem,
+  TbFlotSeries,
+  TbFlotSeriesHoverInfo,
+  TbFlotSettings,
+  TbFlotTicksFormatterFunction,
+  TooltipValueFormatFunction
+} from './flot-widget.models';
+import * as moment from 'moment';
+import * as tinycolor from 'tinycolor2';
+import { AggregationType } from '@shared/models/time/time.models';
+import { CancelAnimationFrame } from '@core/services/raf.service';
+import Timeout = NodeJS.Timeout;
+
+export class TbFlot {
+
+  private settings: TbFlotSettings;
+
+  private tooltip: JQuery<any>;
+
+  private yAxisTickFormatter: TbFlotTicksFormatterFunction;
+  private ticksFormatterFunction: TbFlotTicksFormatterFunction;
+  private yaxis: TbFlotAxisOptions;
+  private yaxes: Array<TbFlotAxisOptions>;
+
+  private options: JQueryPlotOptions;
+  private subscription: IWidgetSubscription;
+  private $element: JQuery<any>;
+
+  private trackUnits: string;
+  private trackDecimals: number;
+  private tooltipIndividual: boolean;
+  private tooltipCumulative: boolean;
+
+  private defaultBarWidth: number;
+
+  private plotInited = false;
+  private plot: JQueryPlot;
+
+  private createPlotTimeoutHandle: Timeout;
+  private updateTimeoutHandle: Timeout;
+  private resizeTimeoutHandle: Timeout;
+
+  private mouseEventsEnabled: boolean;
+  private isMouseInteraction = false;
+  private flotHoverHandler = this.onFlotHover.bind(this);
+  private flotSelectHandler = this.onFlotSelect.bind(this);
+  private dblclickHandler = this.onFlotDblClick.bind(this);
+  private mousedownHandler = this.onFlotMouseDown.bind(this);
+  private mouseupHandler = this.onFlotMouseUp.bind(this);
+  private mouseleaveHandler = this.onFlotMouseLeave.bind(this);
+
+  private animatedPie: boolean;
+  private pieDataAnimationDuration: number;
+  private pieData: DatasourceData[];
+  private pieRenderedData: any[];
+  private pieTargetData: any[];
+  private pieAnimationStartTime: number;
+  private pieAnimationLastTime: number;
+  private pieAnimationCaf: CancelAnimationFrame;
+
+  static get pieSettingsSchema(): JsonSettingsSchema {
+    return flotPieSettingsSchema();
+  }
+
+  static get pieDatakeySettingsSchema(): JsonSettingsSchema {
+    return {};
+  }
+
+  static settingsSchema(chartType: ChartType): JsonSettingsSchema {
+    return flotSettingsSchema(chartType);
+  }
+
+  static datakeySettingsSchema(defaultShowLines: boolean): JsonSettingsSchema {
+    return flotDatakeySettingsSchema(defaultShowLines);
+  }
+
+  constructor(private ctx: WidgetContext, private chartType: ChartType) {
+    this.chartType = this.chartType || 'line';
+    this.settings = ctx.settings as TbFlotSettings;
+    this.tooltip = $('#flot-series-tooltip');
+    if (this.tooltip.length === 0) {
+      this.tooltip = this.createTooltipElement();
+    }
+
+    this.trackDecimals = ctx.decimals;
+    this.trackUnits = ctx.units;
+    this.tooltipIndividual = this.chartType === 'pie' || (isDefined(this.settings.tooltipIndividual)
+      ? this.settings.tooltipIndividual : false);
+    this.tooltipCumulative = isDefined(this.settings.tooltipCumulative) ? this.settings.tooltipCumulative : false;
+
+    const font = {
+      color: this.settings.fontColor || '#545454',
+      size: this.settings.fontSize || 10,
+      family: 'Roboto'
+    };
+
+    this.options = {
+      title: null,
+      subtitile: null,
+      shadowSize: isDefined(this.settings.shadowSize) ? this.settings.shadowSize : 4,
+      HtmlText: false,
+      grid: {
+        hoverable: true,
+        mouseActiveRadius: 10,
+        autoHighlight: this.tooltipIndividual === true
+      },
+      selection : { mode : ctx.isMobile ? null : 'x' },
+      legend : {
+        show: false
+      }
+    };
+
+    if (this.chartType === 'line' || this.chartType === 'bar' || this.chartType === 'state') {
+      this.options.xaxis = {
+        mode: 'time',
+        timezone: 'browser',
+        font: deepClone(font),
+        labelFont: deepClone(font)
+      };
+      this.yaxis = {
+        font: deepClone(font),
+        labelFont: deepClone(font)
+      };
+      if (this.settings.xaxis) {
+        if (this.settings.xaxis.showLabels === false) {
+          this.options.xaxis.tickFormatter = () => {
+            return '';
+          };
+        }
+        this.options.xaxis.font.color = this.settings.xaxis.color || this.options.xaxis.font.color;
+        this.options.xaxis.label = this.settings.xaxis.title || null;
+        this.options.xaxis.labelFont.color = this.options.xaxis.font.color;
+        this.options.xaxis.labelFont.size = this.options.xaxis.font.size + 2;
+        this.options.xaxis.labelFont.weight = 'bold';
+      }
+
+      this.yAxisTickFormatter = this.formatYAxisTicks.bind(this);
+
+      this.yaxis.tickFormatter = this.yAxisTickFormatter;
+
+      if (this.settings.yaxis) {
+        this.yaxis.font.color = this.settings.yaxis.color || this.yaxis.font.color;
+        this.yaxis.min = isDefined(this.settings.yaxis.min) ? this.settings.yaxis.min : null;
+        this.yaxis.max = isDefined(this.settings.yaxis.max) ? this.settings.yaxis.max : null;
+        this.yaxis.label = this.settings.yaxis.title || null;
+        this.yaxis.labelFont.color = this.yaxis.font.color;
+        this.yaxis.labelFont.size = this.yaxis.font.size + 2;
+        this.yaxis.labelFont.weight = 'bold';
+        if (isNumber(this.settings.yaxis.tickSize)) {
+          this.yaxis.tickSize = this.settings.yaxis.tickSize;
+        } else {
+          this.yaxis.tickSize = null;
+        }
+        if (isNumber(this.settings.yaxis.tickDecimals)) {
+          this.yaxis.tickDecimals = this.settings.yaxis.tickDecimals;
+        } else {
+          this.yaxis.tickDecimals = null;
+        }
+        if (this.settings.yaxis.ticksFormatter && this.settings.yaxis.ticksFormatter.length) {
+          try {
+            this.yaxis.ticksFormatterFunction = new Function('value',
+                                               this.settings.yaxis.ticksFormatter) as TbFlotTicksFormatterFunction;
+          } catch (e) {
+            this.yaxis.ticksFormatterFunction = null;
+          }
+        }
+      }
+
+      this.options.grid.borderWidth = 1;
+      this.options.grid.color = this.settings.fontColor || '#545454';
+
+      if (this.settings.grid) {
+        this.options.grid.color = this.settings.grid.color || '#545454';
+        this.options.grid.backgroundColor = this.settings.grid.backgroundColor || null;
+        this.options.grid.tickColor = this.settings.grid.tickColor || '#DDDDDD';
+        this. options.grid.borderWidth = isDefined(this.settings.grid.outlineWidth) ?
+          this.settings.grid.outlineWidth : 1;
+        if (this.settings.grid.verticalLines === false) {
+          this.options.xaxis.tickLength = 0;
+        }
+        if (this.settings.grid.horizontalLines === false) {
+          this.yaxis.tickLength = 0;
+        }
+        if (isDefined(this.settings.grid.margin)) {
+          this.options.grid.margin = this.settings.grid.margin;
+        }
+        if (isDefined(this.settings.grid.minBorderMargin)) {
+          this.options.grid.minBorderMargin = this.settings.grid.minBorderMargin;
+        }
+      }
+
+      this.options.crosshair = {
+        mode: 'x'
+      };
+
+      this.options.series = {
+        stack: this.settings.stack === true
+      };
+
+      if (this.chartType === 'line' && this.settings.smoothLines) {
+        this.options.series.curvedLines = {
+          active: true,
+          monotonicFit: true
+        };
+      }
+
+      if (this.chartType === 'bar') {
+        this.options.series.lines = {
+          show: false,
+          fill: false,
+          steps: false
+        };
+        this.options.series.bars = {
+          show: true,
+          lineWidth: 0,
+          fill: 0.9
+        };
+        this.defaultBarWidth = this.settings.defaultBarWidth || 600;
+      }
+
+      if (this.chartType === 'state') {
+        this.options.series.lines = {
+          steps: true,
+          show: true
+        };
+      }
+    } else if (this.chartType === 'pie') {
+      this.options.series = {
+        pie: {
+          show: true,
+          label: {
+            show: this.settings.showLabels === true
+          },
+          radius: this.settings.radius || 1,
+          innerRadius: this.settings.innerRadius || 0,
+          stroke: {
+            color: '#fff',
+            width: 0
+          },
+          tilt: this.settings.tilt || 1,
+          shadow: {
+            left: 5,
+            top: 15,
+            alpha: 0.02
+          }
+        }
+      };
+      if (this.settings.stroke) {
+        this.options.series.pie.stroke.color = this.settings.stroke.color || '#fff';
+        this.options.series.pie.stroke.width = this.settings.stroke.width || 0;
+      }
+
+      if (this.options.series.pie.label.show) {
+        this.options.series.pie.label.formatter = (label, series) => {
+          return `<div class='pie-label'>${series.dataKey.label}<br/>${Math.round(series.percent)}%</div>`;
+        };
+        this.options.series.pie.label.radius = 3 / 4;
+        this.options.series.pie.label.background = {
+          opacity: 0.8
+        };
+      }
+
+      // Experimental
+      this.animatedPie = this.settings.animatedPie === true;
+
+    }
+
+    if (this.ctx.defaultSubscription) {
+      this.init(this.ctx.$container, this.ctx.defaultSubscription);
+    }
+  }
+
+
+  private init($element: JQuery<any>, subscription: IWidgetSubscription) {
+    this.subscription = subscription;
+    this.$element = $element;
+    const colors: string[] = [];
+    this.yaxes = [];
+    const yaxesMap: {[units: string]: TbFlotAxisOptions} = {};
+
+    let tooltipValueFormatFunction: TooltipValueFormatFunction = null;
+    if (this.settings.tooltipValueFormatter && this.settings.tooltipValueFormatter.length) {
+      try {
+        tooltipValueFormatFunction = new Function('value', this.settings.tooltipValueFormatter) as TooltipValueFormatFunction;
+      } catch (e) {
+        tooltipValueFormatFunction = null;
+      }
+    }
+
+    for (let i = 0; i < this.subscription.data.length; i++) {
+      const series = this.subscription.data[i] as TbFlotSeries;
+      colors.push(series.dataKey.color);
+      const keySettings = series.dataKey.settings;
+      series.dataKey.tooltipValueFormatFunction = tooltipValueFormatFunction;
+      if (keySettings.tooltipValueFormatter && keySettings.tooltipValueFormatter.length) {
+        try {
+          series.dataKey.tooltipValueFormatFunction = new Function('value',
+            keySettings.tooltipValueFormatter) as TooltipValueFormatFunction;
+        } catch (e) {
+          series.dataKey.tooltipValueFormatFunction = tooltipValueFormatFunction;
+        }
+      }
+      series.lines = {
+        fill: keySettings.fillLines === true
+      };
+      if (this.chartType === 'line' || this.chartType === 'state') {
+        series.lines.show = keySettings.showLines !== false;
+      } else {
+        series.lines.show = keySettings.showLines === true;
+      }
+      if (isDefined(keySettings.lineWidth) && keySettings.lineWidth !== null) {
+        series.lines.lineWidth = keySettings.lineWidth;
+      }
+      series.points = {
+        show: false,
+        radius: 8
+      };
+      if (keySettings.showPoints === true) {
+        series.points.show = true;
+        series.points.lineWidth = 5;
+        series.points.radius = 3;
+      }
+      if (this.chartType === 'line' && this.settings.smoothLines && !series.points.show) {
+        series.curvedLines = {
+          apply: true
+        };
+      }
+
+      const lineColor = tinycolor(series.dataKey.color);
+      lineColor.setAlpha(.75);
+
+      series.highlightColor = lineColor.toRgbString();
+
+      if (this.yaxis) {
+        const units = series.dataKey.units && series.dataKey.units.length ? series.dataKey.units : this.trackUnits;
+        let yaxis: TbFlotAxisOptions;
+        if (keySettings.showSeparateAxis) {
+          yaxis = this.createYAxis(keySettings, units);
+          this.yaxes.push(yaxis);
+        } else {
+          yaxis = yaxesMap[units];
+          if (!yaxis) {
+            yaxis = this.createYAxis(keySettings, units);
+            yaxesMap[units] = yaxis;
+            this.yaxes.push(yaxis);
+          }
+        }
+        series.yaxisIndex = this.yaxes.indexOf(yaxis);
+        series.yaxis = series.yaxisIndex + 1;
+        yaxis.keysInfo[i] = {hidden: false};
+        yaxis.hidden = false;
+      }
+    }
+    this.options.colors = colors;
+    this.options.yaxes = deepClone(this.yaxes);
+    if (this.chartType === 'line' || this.chartType === 'bar' || this.chartType === 'state') {
+      if (this.chartType === 'bar') {
+        if (this.subscription.timeWindowConfig.aggregation &&
+          this.subscription.timeWindowConfig.aggregation.type === AggregationType.NONE) {
+          this.options.series.bars.barWidth = this.defaultBarWidth;
+        } else {
+          this.options.series.bars.barWidth = this.subscription.timeWindow.interval * 0.6;
+        }
+      }
+      this.options.xaxis.min = this.subscription.timeWindow.minTime;
+      this.options.xaxis.max = this.subscription.timeWindow.maxTime;
+    }
+
+    this.checkMouseEvents();
+
+    if (this.plot) {
+      this.plot.destroy();
+    }
+    if (this.chartType === 'pie' && this.animatedPie) {
+      this.pieDataAnimationDuration = 250;
+      this.pieData = deepClone(this.subscription.data);
+      this.pieRenderedData = [];
+      this.pieTargetData = [];
+      for (let i = 0; i < this.subscription.data.length; i++) {
+        this.pieTargetData[i] = (this.subscription.data[i].data && this.subscription.data[i].data[0])
+          ? this.subscription.data[i].data[0][1] : 0;
+      }
+      this.pieDataRendered();
+    }
+    this.plotInited = true;
+    this.createPlot();
+  }
+
+  public update() {
+    if (this.updateTimeoutHandle) {
+      clearTimeout(this.updateTimeoutHandle);
+      this.updateTimeoutHandle = null;
+    }
+    if (this.subscription) {
+      if (!this.isMouseInteraction && this.plot) {
+        if (this.chartType === 'line' || this.chartType === 'bar' || this.chartType === 'state') {
+
+          let axisVisibilityChanged = false;
+          if (this.yaxis) {
+            for (let i = 0; i < this.subscription.data.length; i++) {
+              const series = this.subscription.data[i] as TbFlotSeries;
+              const yaxisIndex = series.yaxisIndex;
+              if (this.yaxes[yaxisIndex].keysInfo[i].hidden !== series.dataKey.hidden) {
+                this.yaxes[yaxisIndex].keysInfo[i].hidden = series.dataKey.hidden;
+                axisVisibilityChanged = true;
+              }
+            }
+            if (axisVisibilityChanged) {
+              this.options.yaxes.length = 0;
+              this.yaxes.forEach((yaxis) => {
+                let hidden = true;
+                yaxis.keysInfo.forEach((info) => {
+                  if (info) {
+                    hidden = hidden && info.hidden;
+                  }
+                });
+                yaxis.hidden = hidden;
+                let newIndex = 1;
+                if (!yaxis.hidden) {
+                  this.options.yaxes.push(yaxis);
+                  newIndex = this.options.yaxes.length;
+                }
+                for (let k = 0; k < yaxis.keysInfo.length; k++) {
+                  if (yaxis.keysInfo[k]) {
+                    (this.subscription.data[k] as TbFlotSeries).yaxis = newIndex;
+                  }
+                }
+
+              });
+              this.options.yaxis = {
+                show: this.options.yaxes.length ? true : false
+              };
+            }
+          }
+
+          this.options.xaxis.min = this.subscription.timeWindow.minTime;
+          this.options.xaxis.max = this.subscription.timeWindow.maxTime;
+          if (this.chartType === 'bar') {
+            if (this.subscription.timeWindowConfig.aggregation &&
+              this.subscription.timeWindowConfig.aggregation.type === AggregationType.NONE) {
+              this.options.series.bars.barWidth = this.defaultBarWidth;
+            } else {
+              this.options.series.bars.barWidth = this.subscription.timeWindow.interval * 0.6;
+            }
+          }
+
+          if (axisVisibilityChanged) {
+            this.redrawPlot();
+          } else {
+            this.plot.getOptions().xaxes[0].min = this.subscription.timeWindow.minTime;
+            this.plot.getOptions().xaxes[0].max = this.subscription.timeWindow.maxTime;
+            if (this.chartType === 'bar') {
+              if (this.subscription.timeWindowConfig.aggregation &&
+                this.subscription.timeWindowConfig.aggregation.type === AggregationType.NONE) {
+                this.plot.getOptions().series.bars.barWidth = this.defaultBarWidth;
+              } else {
+                this.plot.getOptions().series.bars.barWidth = this.subscription.timeWindow.interval * 0.6;
+              }
+            }
+            this.updateData();
+          }
+        } else if (this.chartType === 'pie') {
+          if (this.animatedPie) {
+            this.nextPieDataAnimation(true);
+          } else {
+            this.updateData();
+          }
+        }
+      } else if (this.isMouseInteraction && this.plot) {
+        this.updateTimeoutHandle = setTimeout(this.update.bind(this), 30);
+      }
+    }
+  }
+
+  public resize() {
+    if (this.resizeTimeoutHandle) {
+      clearTimeout(this.resizeTimeoutHandle);
+      this.resizeTimeoutHandle = null;
+    }
+    if (this.plot && this.plotInited) {
+      const width = this.$element.width();
+      const height = this.$element.height();
+      if (width && height) {
+        this.plot.resize();
+        if (this.chartType !== 'pie') {
+          this.plot.setupGrid();
+        }
+        this.plot.draw();
+      } else {
+        this.resizeTimeoutHandle = setTimeout(this.resize.bind(this), 30);
+      }
+    }
+  }
+
+  public checkMouseEvents() {
+    const enabled = !this.ctx.isMobile &&  !this.ctx.isEdit;
+    if (isUndefined(this.mouseEventsEnabled) || this.mouseEventsEnabled !== enabled) {
+      this.mouseEventsEnabled = enabled;
+      if (this.$element) {
+        if (enabled) {
+          this.enableMouseEvents();
+        } else {
+          this.disableMouseEvents();
+        }
+        this.redrawPlot();
+      }
+    }
+  }
+
+  public destroy() {
+    this.cleanup();
+    if (this.plot) {
+      this.plot.destroy();
+      this.plot = null;
+      this.plotInited = false;
+    }
+  }
+
+  private cleanup() {
+    if (this.updateTimeoutHandle) {
+      clearTimeout(this.updateTimeoutHandle);
+      this.updateTimeoutHandle = null;
+    }
+    if (this.createPlotTimeoutHandle) {
+      clearTimeout(this.createPlotTimeoutHandle);
+      this.createPlotTimeoutHandle = null;
+    }
+    if (this.resizeTimeoutHandle) {
+      clearTimeout(this.resizeTimeoutHandle);
+      this.resizeTimeoutHandle = null;
+    }
+  }
+
+  private createPlot() {
+    if (this.createPlotTimeoutHandle) {
+      clearTimeout(this.createPlotTimeoutHandle);
+      this.createPlotTimeoutHandle = null;
+    }
+    if (this.plotInited && !this.plot) {
+      const width = this.$element.width();
+      const height = this.$element.height();
+      if (width && height) {
+        if (this.chartType === 'pie' && this.animatedPie) {
+          this.plot = $.plot(this.$element, this.pieData, this.options) as JQueryPlot;
+        } else {
+          this.plot = $.plot(this.$element, this.subscription.data, this.options) as JQueryPlot;
+        }
+      } else {
+        this.createPlotTimeoutHandle = setTimeout(this.createPlot.bind(this), 30);
+      }
+    }
+  }
+
+  private updateData() {
+    this.plot.setData(this.subscription.data);
+    if (this.chartType !== 'pie') {
+      this.plot.setupGrid();
+    }
+    this.plot.draw();
+  }
+
+  private redrawPlot() {
+    if (this.plot && this.plotInited) {
+      this.plot.destroy();
+      this.plot = null;
+      this.createPlot();
+    }
+  }
+
+  private createYAxis(keySettings: TbFlotKeySettings, units: string): TbFlotAxisOptions {
+    const yaxis = deepClone(this.yaxis);
+    let tickDecimals: number;
+    let tickSize: number;
+    const label = keySettings.axisTitle && keySettings.axisTitle.length ? keySettings.axisTitle : yaxis.label;
+    if (isNumber(keySettings.axisTickDecimals)) {
+      tickDecimals = keySettings.axisTickDecimals;
+    } else {
+      tickDecimals = yaxis.tickDecimals;
+    }
+    if (isNumber(keySettings.axisTickSize)) {
+      tickSize = keySettings.axisTickSize;
+    } else {
+      tickSize = yaxis.tickSize;
+    }
+    const position = keySettings.axisPosition && keySettings.axisPosition.length ? keySettings.axisPosition : 'left';
+    const min = isDefined(keySettings.axisMin) ? keySettings.axisMin : yaxis.min;
+    const max = isDefined(keySettings.axisMax) ? keySettings.axisMax : yaxis.max;
+    yaxis.label = label;
+    yaxis.min = min;
+    yaxis.max = max;
+    yaxis.tickUnits = units;
+    yaxis.tickDecimals = tickDecimals;
+    yaxis.tickSize = tickSize;
+    if (position === 'right' && tickSize === null) {
+      yaxis.alignTicksWithAxis = 1;
+    } else {
+      yaxis.alignTicksWithAxis = null;
+    }
+    yaxis.position = position;
+
+    yaxis.keysInfo = [];
+
+    if (keySettings.axisTicksFormatter && keySettings.axisTicksFormatter.length) {
+      try {
+        yaxis.ticksFormatterFunction = new Function('value', keySettings.axisTicksFormatter) as TbFlotTicksFormatterFunction;
+      } catch (e) {
+        yaxis.ticksFormatterFunction = this.yaxis.ticksFormatterFunction;
+      }
+    }
+    return yaxis;
+  }
+
+  private seriesInfoDiv(label: string, color: string, value: any,
+                        units: string, trackDecimals: number, active: boolean,
+                        percent: number, valueFormatFunction: TooltipValueFormatFunction): JQuery<HTMLElement> {
+    const divElement = $('<div></div>');
+    divElement.css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'flex-start'
+    });
+    const lineSpan = $('<span></span>');
+    lineSpan.css({
+      backgroundColor: color,
+      width: '20px',
+      height: '3px',
+      display: 'inline-block',
+      verticalAlign: 'middle',
+      marginRight: '5px'
+    });
+    divElement.append(lineSpan);
+    const labelSpan = $(`<span>${label}:</span>`);
+    labelSpan.css({
+      marginRight: '10px'
+    });
+    if (active) {
+      labelSpan.css({
+        color: '#FFF',
+        fontWeight: '700'
+      });
+    }
+    divElement.append(labelSpan);
+    let valueContent: string;
+    if (valueFormatFunction) {
+      valueContent = valueFormatFunction(value);
+    } else {
+      valueContent = this.ctx.utils.formatValue(value, trackDecimals, units);
+    }
+    if (isNumber(percent)) {
+      valueContent += ' (' + Math.round(percent) + ' %)';
+    }
+    const valueSpan =  $(`<span>${valueContent}</span>`);
+    valueSpan.css({
+      marginLeft: 'auto',
+      fontWeight: '700'
+    });
+    if (active) {
+      valueSpan.css({
+        color: '#FFF'
+      });
+    }
+    divElement.append(valueSpan);
+    return divElement;
+  }
+
+  private seriesInfoDivFromInfo(seriesHoverInfo: TbFlotSeriesHoverInfo, seriesIndex: number): string {
+    const units = seriesHoverInfo.units && seriesHoverInfo.units.length ? seriesHoverInfo.units : this.trackUnits;
+    const decimals = isDefined(seriesHoverInfo.decimals) ? seriesHoverInfo.decimals : this.trackDecimals;
+    const divElement = this.seriesInfoDiv(seriesHoverInfo.label, seriesHoverInfo.color,
+      seriesHoverInfo.value, units, decimals, seriesHoverInfo.index === seriesIndex, null, seriesHoverInfo.tooltipValueFormatFunction);
+    return divElement.prop('outerHTML');
+  }
+
+  private createTooltipElement(): JQuery<any> {
+    const tooltip = $('<div id="flot-series-tooltip" class="flot-mouse-value"></div>');
+    tooltip.css({
+      fontSize: '12px',
+      fontFamily: 'Roboto',
+      fontWeight: '300',
+      lineHeight: '18px',
+      opacity: '1',
+      backgroundColor: 'rgba(0,0,0,0.7)',
+      color: '#D9DADB',
+      position: 'absolute',
+      display: 'none',
+      zIndex: '1100',
+      padding: '4px 10px',
+      borderRadius: '4px'
+    }).appendTo('body');
+    return tooltip;
+  }
+
+  private formatPieTooltip(item: TbFlotPlotItem): string {
+    const units = item.series.dataKey.units && item.series.dataKey.units.length ? item.series.dataKey.units : this.trackUnits;
+    const decimals = isDefined(item.series.dataKey.decimals) ? item.series.dataKey.decimals : this.trackDecimals;
+    const divElement = this.seriesInfoDiv(item.series.dataKey.label, item.series.dataKey.color,
+      item.datapoint[1][0][1], units, decimals, true, item.series.percent, item.series.dataKey.tooltipValueFormatFunction);
+    return divElement.prop('outerHTML');
+  }
+
+  private formatChartTooltip(hoverInfo: TbFlotHoverInfo, seriesIndex: number): string {
+    let content = '';
+    const timestamp = parseInt(hoverInfo.time, 10);
+    const date = moment(timestamp).format('YYYY-MM-DD HH:mm:ss');
+    const dateDiv = $(`<div>${date}</div>`);
+    dateDiv.css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '4px',
+      fontWeight: '700'
+    });
+    content += dateDiv.prop('outerHTML');
+    if (this.tooltipIndividual) {
+      const found = hoverInfo.seriesHover.find((seriesHover) => {
+        return seriesHover.index === seriesIndex;
+      });
+      if (found) {
+        content += this.seriesInfoDivFromInfo(found, seriesIndex);
+      }
+    } else {
+      const seriesDiv = $('<div></div>');
+      seriesDiv.css({
+        display: 'flex',
+        flexDirection: 'row'
+      });
+      const maxRows = 15;
+      const columns = Math.ceil(hoverInfo.seriesHover.length / maxRows);
+      let columnsContent = '';
+      for (let c = 0; c < columns; c++) {
+        const columnDiv = $('<div></div>');
+        columnDiv.css({
+          display: 'flex',
+          flexDirection: 'column'
+        });
+        let columnContent = '';
+        for (let i = c * maxRows; i < (c + 1) * maxRows; i++) {
+          if (i === hoverInfo.seriesHover.length) {
+            break;
+          }
+          const seriesHoverInfo = hoverInfo.seriesHover[i];
+          columnContent += this.seriesInfoDivFromInfo(seriesHoverInfo, seriesIndex);
+        }
+        columnDiv.html(columnContent);
+        if (c > 0) {
+          columnsContent += '<span style="width: 20px;"></span>';
+        }
+        columnsContent += columnDiv.prop('outerHTML');
+      }
+      seriesDiv.html(columnsContent);
+      content += seriesDiv.prop('outerHTML');
+    }
+    return content;
+  }
+
+  private formatYAxisTicks(value: number, axis?: TbFlotPlotAxis): string {
+    if (this.settings.yaxis && this.settings.yaxis.showLabels === false) {
+      return '';
+    }
+    if (axis.options.ticksFormatterFunction) {
+      return axis.options.ticksFormatterFunction(value);
+    }
+    const factor = axis.options.tickDecimals ? Math.pow(10, axis.options.tickDecimals) : 1;
+    let formatted = '' + Math.round(value * factor) / factor;
+    if (isDefined(axis.options.tickDecimals) && axis.options.tickDecimals !== null) {
+      const decimal = formatted.indexOf('.');
+      const precision = decimal === -1 ? 0 : formatted.length - decimal - 1;
+      if (precision < axis.options.tickDecimals) {
+        formatted = (precision ? formatted : formatted + '.') + ('' + factor).substr(1, axis.options.tickDecimals - precision);
+      }
+    }
+    if (axis.options.tickUnits) {
+      formatted += ' ' + axis.options.tickUnits;
+    }
+    return formatted;
+  }
+
+  private enableMouseEvents() {
+    this.$element.css('pointer-events', '');
+    this.$element.addClass('mouse-events');
+    this.options.selection = { mode : 'x' };
+    this.$element.bind('plothover', this.flotHoverHandler);
+    this.$element.bind('plotselected', this.flotSelectHandler);
+    this.$element.bind('dblclick', this.dblclickHandler);
+    this.$element.bind('mousedown', this.mousedownHandler);
+    this.$element.bind('mouseup', this.mouseupHandler);
+    this.$element.bind('mouseleave', this.mouseleaveHandler);
+  }
+
+  private disableMouseEvents() {
+    this.$element.css('pointer-events', 'none');
+    this.$element.removeClass('mouse-events');
+    this.options.selection = { mode : null };
+    this.$element.unbind('plothover', this.flotHoverHandler);
+    this.$element.unbind('plotselected', this.flotSelectHandler);
+    this.$element.unbind('dblclick', this.dblclickHandler);
+    this.$element.unbind('mousedown', this.mousedownHandler);
+    this.$element.unbind('mouseup', this.mouseupHandler);
+    this.$element.unbind('mouseleave', this.mouseleaveHandler);
+  }
+
+  private onFlotHover(e: any, pos: JQueryPlotPoint, item: TbFlotPlotItem) {
+    if (!this.plot) {
+      return;
+    }
+    if (!this.tooltipIndividual || item) {
+      const multipleModeTooltip = !this.tooltipIndividual;
+      if (multipleModeTooltip) {
+        this.plot.unhighlight();
+      }
+      const pageX = pos.pageX;
+      const pageY = pos.pageY;
+
+      let tooltipHtml;
+      let hoverInfo: TbFlotHoverInfo;
+
+      if (this.chartType === 'pie') {
+        tooltipHtml = this.formatPieTooltip(item);
+      } else {
+        hoverInfo = this.getHoverInfo(this.plot.getData(), pos);
+        if (isNumber(hoverInfo.time)) {
+          hoverInfo.seriesHover.sort((a, b) => {
+            return b.value - a.value;
+          });
+          tooltipHtml = this.formatChartTooltip(hoverInfo, item ? item.seriesIndex : -1);
+        }
+      }
+      if (tooltipHtml) {
+        this.tooltip.html(tooltipHtml)
+          .css({top: 0, left: 0})
+          .fadeIn(200);
+
+        const windowWidth = $( window ).width();
+        const windowHeight = $( window ).height();
+        const tooltipWidth = this.tooltip.width();
+        const tooltipHeight = this.tooltip.height();
+        let left = pageX + 5;
+        let top = pageY + 5;
+        if (windowWidth - pageX < tooltipWidth + 50) {
+          left = pageX - tooltipWidth - 10;
+        }
+        if (windowHeight - pageY < tooltipHeight + 20) {
+          top = pageY - tooltipHeight - 10;
+        }
+        this.tooltip.css({
+          top,
+          left
+        });
+        if (multipleModeTooltip) {
+          hoverInfo.seriesHover.forEach((seriesHoverInfo) => {
+            this.plot.highlight(seriesHoverInfo.index, seriesHoverInfo.hoverIndex);
+          });
+        }
+      }
+    } else {
+      this.tooltip.stop(true);
+      this.tooltip.hide();
+      this.plot.unhighlight();
+    }
+  }
+
+  private onFlotSelect(e: any, ranges: JQueryPlotSelectionRanges) {
+    if (!this.plot) {
+      return;
+    }
+    this.plot.clearSelection();
+    this.subscription.onUpdateTimewindow(ranges.xaxis.from, ranges.xaxis.to);
+  }
+
+  private onFlotDblClick() {
+    this.subscription.onResetTimewindow();
+  }
+
+  private onFlotMouseDown() {
+    this.isMouseInteraction = true;
+  }
+
+  private onFlotMouseUp() {
+    this.isMouseInteraction = false;
+  }
+
+  private onFlotMouseLeave() {
+    if (!this.tooltip) {
+      return;
+    }
+    this.tooltip.stop(true);
+    this.tooltip.hide();
+    if (this.plot) {
+      this.plot.unhighlight();
+    }
+    this.isMouseInteraction = false;
+  }
+
+  private getHoverInfo(seriesList: TbFlotPlotDataSeries[], pos: JQueryPlotPoint): TbFlotHoverInfo {
+    let i: number;
+    let series: TbFlotPlotDataSeries;
+    let hoverIndex: number;
+    let hoverDistance: number;
+    let minDistance: number;
+    let pointTime: any;
+    let minTime: any;
+    let value: any;
+    let lastValue: any;
+    const results: TbFlotHoverInfo = {
+      seriesHover: []
+    };
+    for (i = 0; i < seriesList.length; i++) {
+      series = seriesList[i];
+      hoverIndex = this.findHoverIndexFromData(pos.x, series);
+      if (series.data[hoverIndex] && series.data[hoverIndex][0]) {
+        hoverDistance = pos.x - series.data[hoverIndex][0];
+        pointTime = series.data[hoverIndex][0];
+
+        if (!minDistance
+          || (hoverDistance >= 0 && (hoverDistance < minDistance || minDistance < 0))
+          || (hoverDistance < 0 && hoverDistance > minDistance)) {
+          minDistance = hoverDistance;
+          minTime = pointTime;
+        }
+        if (series.stack) {
+          if (this.tooltipIndividual || !this.tooltipCumulative) {
+            value = series.data[hoverIndex][1];
+          } else {
+            lastValue += series.data[hoverIndex][1];
+            value = lastValue;
+          }
+        } else {
+          value = series.data[hoverIndex][1];
+        }
+        if (series.stack || (series.curvedLines && series.curvedLines.apply)) {
+          hoverIndex = this.findHoverIndexFromDataPoints(pos.x, series, hoverIndex);
+        }
+        results.seriesHover.push({
+          value,
+          hoverIndex,
+          color: series.dataKey.color,
+          label: series.dataKey.label,
+          units: series.dataKey.units,
+          decimals: series.dataKey.decimals,
+          tooltipValueFormatFunction: series.dataKey.tooltipValueFormatFunction,
+          time: pointTime,
+          distance: hoverDistance,
+          index: i
+        });
+      }
+    }
+    results.time = minTime;
+    return results;
+  }
+
+  private findHoverIndexFromData(posX: number, series: TbFlotPlotDataSeries): number {
+    let lower = 0;
+    let upper = series.data.length - 1;
+    let middle: number;
+    const index: number = null;
+    while (index === null) {
+      if (lower > upper) {
+        return Math.max(upper, 0);
+      }
+      middle = Math.floor((lower + upper) / 2);
+      if (series.data[middle][0] === posX) {
+        return middle;
+      } else if (series.data[middle][0] < posX) {
+        lower = middle + 1;
+      } else {
+        upper = middle - 1;
+      }
+    }
+  }
+
+  private findHoverIndexFromDataPoints(posX: number, series: TbFlotPlotDataSeries, last: number): number {
+    const ps = series.datapoints.pointsize;
+    const initial = last * ps;
+    const len = series.datapoints.points.length;
+    let j: number;
+    for (j = initial; j < len; j += ps) {
+      if ((!series.lines.steps && series.datapoints.points[initial] != null && series.datapoints.points[j] == null)
+        || series.datapoints.points[j] > posX) {
+        return Math.max(j - ps,  0) / ps;
+      }
+    }
+    return j / ps - 1;
+  }
+
+  pieDataRendered() {
+    for (let i = 0; i < this.pieTargetData.length; i++) {
+      const value = this.pieTargetData[i] ? this.pieTargetData[i] : 0;
+      this.pieRenderedData[i] = value;
+      if (!this.pieData[i].data[0]) {
+        this.pieData[i].data[0] = [0, 0];
+      }
+      this.pieData[i].data[0][1] = value;
+    }
+  }
+
+  nextPieDataAnimation(start) {
+    if (start) {
+      this.finishPieDataAnimation();
+      this.pieAnimationStartTime = this.pieAnimationLastTime = Date.now();
+      for (let i = 0;  i < this.subscription.data.length; i++) {
+        this.pieTargetData[i] = (this.subscription.data[i].data && this.subscription.data[i].data[0])
+          ? this.subscription.data[i].data[0][1] : 0;
+      }
+    }
+    if (this.pieAnimationCaf) {
+      this.pieAnimationCaf();
+      this.pieAnimationCaf = null;
+    }
+    this.pieAnimationCaf = this.ctx.$scope.raf.raf(this.onPieDataAnimation.bind(this));
+  }
+
+  onPieDataAnimation() {
+    const time = Date.now();
+    const elapsed = time - this.pieAnimationLastTime; // this.pieAnimationStartTime;
+    const progress = (time - this.pieAnimationStartTime) / this.pieDataAnimationDuration;
+    if (progress >= 1) {
+      this.finishPieDataAnimation();
+    } else {
+      if (elapsed >= 40) {
+        for (let i = 0; i < this.pieTargetData.length; i++) {
+          const prevValue = this.pieRenderedData[i];
+          const targetValue = this.pieTargetData[i];
+          const value = prevValue + (targetValue - prevValue) * progress;
+          if (!this.pieData[i].data[0]) {
+            this.pieData[i].data[0] = [0, 0];
+          }
+          this.pieData[i].data[0][1] = value;
+        }
+        this.plot.setData(this.pieData);
+        this.plot.draw();
+        this.pieAnimationLastTime = time;
+      }
+      this.nextPieDataAnimation(false);
+    }
+  }
+
+  private finishPieDataAnimation() {
+    this.pieDataRendered();
+    this.plot.setData(this.pieData);
+    this.plot.draw();
+  }
+
+}

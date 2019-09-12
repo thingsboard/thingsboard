@@ -29,7 +29,7 @@ import {
   WidgetTypeDescriptor,
   WidgetTypeParameters
 } from '@shared/models/widget.models';
-import { Timewindow } from '@shared/models/time/time.models';
+import { Timewindow, WidgetTimewindow } from '@shared/models/time/time.models';
 import {
   EntityInfo,
   IAliasController,
@@ -43,6 +43,7 @@ import {
 } from '@core/api/widget-api.models';
 import { ComponentFactory } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { RafService } from '@core/services/raf.service';
 
 export interface IWidgetAction {
   name: string;
@@ -93,7 +94,7 @@ export interface WidgetContext {
   datasources?: Array<Datasource>;
   data?: Array<DatasourceData>;
   hiddenData?: Array<{data: DataSet}>;
-  timeWindow?: Timewindow;
+  timeWindow?: WidgetTimewindow;
 }
 
 export interface IDynamicWidgetComponent {
@@ -103,6 +104,7 @@ export interface IDynamicWidgetComponent {
   rpcEnabled: boolean;
   rpcErrorText: string;
   rpcRejection: HttpErrorResponse;
+  raf: RafService;
   [key: string]: any;
 }
 

@@ -16,11 +16,21 @@
 
 -->
 <div class="tb-absolute-fill" [fxLayout]="legendContainerLayoutType">
-  <tb-legend *ngIf="displayLegend && isLegendFirst" [ngStyle]="legendStyle" [legendConfig]="legendConfig" [legendData]="legendData"></tb-legend>
+  <tb-legend *ngIf="displayLegend && isLegendFirst"
+             [ngStyle]="legendStyle"
+             [legendConfig]="legendConfig"
+             [legendData]="legendData"
+             (legendKeyHiddenChange)="onLegendKeyHiddenChange($event)">
+  </tb-legend>
   <div fxFlex id="widget-container">
     <ng-container #widgetContent></ng-container>
   </div>
-  <tb-legend *ngIf="displayLegend && !isLegendFirst" [ngStyle]="legendStyle" [legendConfig]="legendConfig" [legendData]="legendData"></tb-legend>
+  <tb-legend *ngIf="displayLegend && !isLegendFirst"
+             [ngStyle]="legendStyle"
+             [legendConfig]="legendConfig"
+             [legendData]="legendData"
+             (legendKeyHiddenChange)="onLegendKeyHiddenChange($event)">
+  </tb-legend>
 </div>
 <div class="tb-absolute-fill tb-widget-error" *ngIf="widgetErrorData">
   <span>Widget Error: {{ widgetErrorData.name + ": " + widgetErrorData.message}}</span>

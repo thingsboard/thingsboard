@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { LegendConfig, LegendData, LegendDirection, LegendPosition } from '@shared/models/widget.models';
 
 @Component({
@@ -29,6 +29,9 @@ export class LegendComponent implements OnInit {
 
   @Input()
   legendData: LegendData;
+
+  @Output()
+  legendKeyHiddenChange = new EventEmitter<number>();
 
   displayHeader: boolean;
 
@@ -50,6 +53,7 @@ export class LegendComponent implements OnInit {
 
   toggleHideData(index: number) {
     this.legendData.keys[index].dataKey.hidden = !this.legendData.keys[index].dataKey.hidden;
+    this.legendKeyHiddenChange.emit(index);
   }
 
 }

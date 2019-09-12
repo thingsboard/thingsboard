@@ -36,6 +36,7 @@ import { WidgetComponentsModule } from '@home/components/widget/widget-component
 import { WINDOW } from '@core/services/window.service';
 
 import * as tinycolor from 'tinycolor2';
+import { TbFlot } from './lib/flot-widget';
 
 // declare var jQuery: any;
 
@@ -63,6 +64,8 @@ export class WidgetComponentService {
     this.window.tinycolor = tinycolor;
     // @ts-ignore
     this.window.cssjs = cssjs;
+    // @ts-ignore
+    this.window.TbFlot = TbFlot;
 
     this.cssParser.testMode = false;
     this.init();

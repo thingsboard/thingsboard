@@ -21,6 +21,7 @@ import { AppState } from '@core/core.state';
 import { WidgetContext, IDynamicWidgetComponent } from '@home/models/widget-component.models';
 import { ExceptionData } from '@shared/models/error.models';
 import { HttpErrorResponse } from '@angular/common/http';
+import { RafService } from '@core/services/raf.service';
 
 export class DynamicWidgetComponent extends PageComponent implements IDynamicWidgetComponent, OnInit, OnDestroy {
 
@@ -37,7 +38,8 @@ export class DynamicWidgetComponent extends PageComponent implements IDynamicWid
 
   [key: string]: any;
 
-  constructor(protected store: Store<AppState>) {
+  constructor(public raf: RafService,
+              protected store: Store<AppState>) {
     super(store);
   }
 

@@ -28,14 +28,15 @@ import { TimeService } from '../services/time.service';
 import { DeviceService } from '../http/device.service';
 import { AlarmService } from '../http/alarm.service';
 import { UtilsService } from '@core/services/utils.service';
-import { Timewindow } from '@shared/models/time/time.models';
+import { Timewindow, WidgetTimewindow } from '@shared/models/time/time.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AlarmSearchStatus } from '@shared/models/alarm.models';
 import { HttpErrorResponse } from '@angular/common/http';
 import { DatasourceService } from '@core/api/datasource.service';
+import { RafService } from '@core/services/raf.service';
 
 export interface TimewindowFunctions {
-  onUpdateTimewindow: (startTimeMs: number, endTimeMs: number, interval: number) => void;
+  onUpdateTimewindow: (startTimeMs: number, endTimeMs: number, interval?: number) => void;
   onResetTimewindow: () => void;
 }
 
@@ -128,6 +129,7 @@ export interface WidgetSubscriptionContext {
   alarmService: AlarmService;
   datasourceService: DatasourceService;
   utils: UtilsService;
+  raf: RafService;
   widgetUtils: IWidgetUtils;
   dashboardTimewindowApi: TimewindowFunctions;
   getServerTimeDiff: () => Observable<number>;
@@ -137,10 +139,10 @@ export interface WidgetSubscriptionContext {
 }
 
 export interface WidgetSubscriptionCallbacks {
-  onDataUpdated?: (subscription: IWidgetSubscription) => void;
+  onDataUpdated?: (subscription: IWidgetSubscription, detectChanges: boolean) => void;
   onDataUpdateError?: (subscription: IWidgetSubscription, e: any) => void;
   dataLoading?: (subscription: IWidgetSubscription) => void;
-  legendDataUpdated?: (subscription: IWidgetSubscription) => void;
+  legendDataUpdated?: (subscription: IWidgetSubscription, detectChanges: boolean) => void;
   timeWindowUpdated?: (subscription: IWidgetSubscription, timeWindowConfig: Timewindow) => void;
   rpcStateChanged?: (subscription: IWidgetSubscription) => void;
   onRpcSuccess?: (subscription: IWidgetSubscription) => void;
@@ -184,7 +186,8 @@ export interface IWidgetSubscription {
   datasources?: Array<Datasource>;
   data?: Array<DatasourceData>;
   hiddenData?: Array<{data: DataSet}>;
-  timeWindow?: Timewindow;
+  timeWindowConfig?: Timewindow;
+  timeWindow?: WidgetTimewindow;
 
   alarmSource?: Datasource;
   alarmSearchStatus?: AlarmSearchStatus;
@@ -202,7 +205,11 @@ export interface IWidgetSubscription {
 
   onAliasesChanged(aliasIds: Array<string>): boolean;
 
-  onUpdateTimewindow(startTimeMs: number, endTimeMs: number, interval: number): void;
+  onDashboardTimewindowChanged(dashboardTimewindow: Timewindow): void;
+
+  updateDataVisibility(index: number): void;
+
+  onUpdateTimewindow(startTimeMs: number, endTimeMs: number, interval?: number): void;
   onResetTimewindow(): void;
   updateTimewindowConfig(newTimewindow: Timewindow): void;
 

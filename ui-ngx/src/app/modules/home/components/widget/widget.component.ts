@@ -28,7 +28,8 @@ import {
   SimpleChanges,
   ViewChild,
   ViewContainerRef,
-  ViewEncapsulation
+  ViewEncapsulation,
+  ChangeDetectorRef
 } from '@angular/core';
 import { DashboardWidget, IDashboardComponent } from '@home/models/dashboard-component.models';
 import {
@@ -157,7 +158,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
               private dashboardService: DashboardService,
               private datasourceService: DatasourceService,
               private utils: UtilsService,
-              private raf: RafService) {
+              private raf: RafService,
+              private cd: ChangeDetectorRef) {
     super(store);
   }
 
@@ -290,7 +292,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       }
     };
     this.widgetContext.utils = {
-      formatValue: this.formatValue
+      formatValue: this.formatValue.bind(this)
     };
     this.widgetContext.actionsApi = {
       actionDescriptorsBySourceId,
@@ -325,6 +327,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       alarmService: this.alarmService,
       datasourceService: this.datasourceService,
       utils: this.utils,
+      raf: this.raf,
       widgetUtils: this.widgetContext.utils,
       dashboardTimewindowApi: {
         onResetTimewindow: this.dashboard.onResetTimewindow.bind(this.dashboard),
@@ -407,6 +410,13 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     }
   }
 
+  public onLegendKeyHiddenChange(index: number) {
+    for (const id of Object.keys(this.widgetContext.subscriptions)) {
+      const subscription = this.widgetContext.subscriptions[id];
+      subscription.updateDataVisibility(index);
+    }
+  }
+
   private loadFromWidgetInfo() {
     const widgetNamespace = `widget-type-${(this.widget.isSystemType ? 'sys-' : '')}${this.widget.bundleAlias}-${this.widget.typeAlias}`;
     const elem = this.elementRef.nativeElement;
@@ -464,11 +474,17 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     }
     if (!this.widgetContext.inited && this.isReady()) {
       this.widgetContext.inited = true;
-      try {
-        this.widgetTypeInstance.onInit();
-      } catch (e) {
-        this.handleWidgetException(e);
+      if (this.cafs.init) {
+        this.cafs.init();
+        this.cafs.init = null;
       }
+      this.cafs.init = this.raf.raf(() => {
+        try {
+          this.widgetTypeInstance.onInit();
+        } catch (e) {
+          this.handleWidgetException(e);
+        }
+      });
       if (!this.typeParameters.useCustomDatasources && this.widgetContext.defaultSubscription) {
         this.widgetContext.defaultSubscription.subscribe();
       }
@@ -566,6 +582,15 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         }
         if (subscriptionChanged && !this.typeParameters.useCustomDatasources) {
           this.reInit();
+        }
+      }
+    ));
+
+    this.rxSubscriptions.push(this.dashboard.dashboardTimewindowChanged.subscribe(
+      (dashboardTimewindow) => {
+        for (const id of Object.keys(this.widgetContext.subscriptions)) {
+          const subscription = this.widgetContext.subscriptions[id];
+          subscription.onDashboardTimewindowChanged(dashboardTimewindow);
         }
       }
     ));
@@ -722,12 +747,17 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       dataLoading: (subscription) => {
         if (this.loadingData !== subscription.loadingData) {
           this.loadingData = subscription.loadingData;
+          this.cd.detectChanges();
         }
       },
-      legendDataUpdated: (subscription) => {
+      legendDataUpdated: (subscription, detectChanges) => {
+        if (detectChanges) {
+          this.cd.detectChanges();
+        }
       },
       timeWindowUpdated: (subscription, timeWindowConfig) => {
         this.widget.config.timewindow = timeWindowConfig;
+        this.cd.detectChanges();
       }
     };
 
