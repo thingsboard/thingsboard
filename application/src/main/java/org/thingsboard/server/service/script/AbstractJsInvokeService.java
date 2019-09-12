@@ -50,6 +50,7 @@ public abstract class AbstractJsInvokeService implements JsInvokeService {
         if (!isBlackListed(scriptId)) {
             return doInvokeFunction(scriptId, functionName, args);
         } else {
+            log.warn("Script " + functionName + " is blacklisted because execution took longer than " + getMaxCpuTime() + " ms or because error count exceeded"+ getMaxErrors()+ "!");
             return Futures.immediateFailedFuture(
                     new RuntimeException("Script is blacklisted due to maximum error count " + getMaxErrors() + "!"));
         }
@@ -77,6 +78,8 @@ public abstract class AbstractJsInvokeService implements JsInvokeService {
     protected abstract void doRelease(UUID scriptId, String functionName) throws Exception;
 
     protected abstract int getMaxErrors();
+
+    protected abstract long getMaxCpuTime();
 
     protected void onScriptExecutionError(UUID scriptId) {
         blackListedFunctions.computeIfAbsent(scriptId, key -> new AtomicInteger(0)).incrementAndGet();
