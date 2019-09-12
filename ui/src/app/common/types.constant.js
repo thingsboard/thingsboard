@@ -219,6 +219,9 @@ export default angular.module('thingsboard.types', [])
                 },
                 "LOGOUT": {
                     name: "audit-log.type-logout"
+                },
+                "LOCKOUT": {
+                    name: "audit-log.type-lockout"
                 }
             },
             auditLogActionStatus: {

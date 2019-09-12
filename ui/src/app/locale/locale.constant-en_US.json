@@ -100,7 +100,13 @@
         "minimum-special-characters": "Minimum number of special characters",
         "minimum-special-characters-range": "Minimum number of special characters can't be negative",
         "password-expiration-period-days": "Password expiration period in days",
-        "password-expiration-period-days-range": "Password expiration period in days can't be negative"
+        "password-expiration-period-days-range": "Password expiration period in days can't be negative",
+        "password-reuse-frequency-days": "Password reuse frequency in days",
+        "password-reuse-frequency-days-range": "Password reuse frequency in days can't be negative",
+        "general-policy": "General policy",
+        "max-failed-login-attempts": "Maximum number of failed login attempts, before account is locked",
+        "minimum-max-failed-login-attempts-range": "Maximum number of failed login attempts can't be negative",
+        "user-lockout-notification-email": "In case user account lockout, send notification to email"
     },
     "alarm": {
         "alarm": "Alarm",
@@ -324,6 +330,7 @@
         "type-alarm-clear": "Cleared",
         "type-login": "Login",
         "type-logout": "Logout",
+        "type-lockout": "Lockout",
         "status-success": "Success",
         "status-failure": "Failure",
         "audit-log-details": "Audit log details",
@@ -1216,6 +1223,7 @@
     },
     "profile": {
         "profile": "Profile",
+        "last-login-time": "Last Login",
         "change-password": "Change Password",
         "current-password": "Current password"
     },
@@ -1456,7 +1464,11 @@
         "activation-link-copied-message": "User activation link has been copied to clipboard",
         "details": "Details",
         "login-as-tenant-admin": "Login as Tenant Admin",
-        "login-as-customer-user": "Login as Customer User"
+        "login-as-customer-user": "Login as Customer User",
+        "disable-account": "Disable User Account",
+        "enable-account": "Enable User Account",
+        "enable-account-message": "User account was successfully enabled!",
+        "disable-account-message": "User account was successfully disabled!"
     },
     "value": {
         "type": "Value type",
