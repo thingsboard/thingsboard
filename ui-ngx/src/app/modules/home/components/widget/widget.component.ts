@@ -29,7 +29,8 @@ import {
   ViewChild,
   ViewContainerRef,
   ViewEncapsulation,
-  ChangeDetectorRef
+  ChangeDetectorRef,
+  ChangeDetectionStrategy, NgZone
 } from '@angular/core';
 import { DashboardWidget, IDashboardComponent } from '@home/models/dashboard-component.models';
 import {
@@ -86,12 +87,14 @@ import { DashboardService } from '@core/http/dashboard.service';
 import { DatasourceService } from '@core/api/datasource.service';
 import { WidgetSubscription } from '@core/api/widget-subscription';
 import { EntityService } from '@core/http/entity.service';
+import { TimewindowComponent } from '@shared/components/time/timewindow.component';
 
 @Component({
   selector: 'tb-widget',
   templateUrl: './widget.component.html',
   styleUrls: ['./widget.component.scss'],
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WidgetComponent extends PageComponent implements OnInit, AfterViewInit, OnChanges, OnDestroy {
 
@@ -159,6 +162,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
               private datasourceService: DatasourceService,
               private utils: UtilsService,
               private raf: RafService,
+              private ngZone: NgZone,
               private cd: ChangeDetectorRef) {
     super(store);
   }
@@ -647,6 +651,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
 
       this.widgetContext.$container = $('> ng-component', containerElement);
       this.widgetContext.$container.css('display', 'block');
+      this.widgetContext.$container.css('user-select', 'none');
       this.widgetContext.$container.attr('id', 'container');
       this.widgetContext.$containerParent = $(containerElement);
 
@@ -756,8 +761,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         }
       },
       timeWindowUpdated: (subscription, timeWindowConfig) => {
-        this.widget.config.timewindow = timeWindowConfig;
-        this.cd.detectChanges();
+        this.ngZone.run(() => {
+          this.widget.config.timewindow = timeWindowConfig;
+        });
       }
     };
 

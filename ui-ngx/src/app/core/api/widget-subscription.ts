@@ -321,14 +321,6 @@ export class WidgetSubscription implements IWidgetSubscription {
     });
     if (this.displayLegend) {
       this.legendData.keys = this.legendData.keys.sort((key1, key2) => key1.dataKey.label.localeCompare(key2.dataKey.label));
-      // TODO:
-    }
-    if (this.type === widgetType.timeseries) {
-      if (this.useDashboardTimewindow) {
-        // TODO:
-      } else {
-        // TODO:
-      }
     }
   }
 
@@ -395,6 +387,10 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   updateTimewindowConfig(newTimewindow: Timewindow): void {
+    if (!this.useDashboardTimewindow) {
+      this.timeWindowConfig = newTimewindow;
+      this.update();
+    }
   }
 
   onResetTimewindow(): void {
@@ -424,14 +420,17 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   sendOneWayCommand(method: string, params?: any, timeout?: number): Observable<any> {
+    // TODO:
     return undefined;
   }
 
   sendTwoWayCommand(method: string, params?: any, timeout?: number): Observable<any> {
+    // TODO:
     return undefined;
   }
 
   clearRpcError(): void {
+    // TODO:
   }
 
   update() {
@@ -536,7 +535,6 @@ export class WidgetSubscription implements IWidgetSubscription {
         this.cafs[cafId] = null;
       }
     }
-    // TODO:
   }
 
   private notifyDataLoading() {

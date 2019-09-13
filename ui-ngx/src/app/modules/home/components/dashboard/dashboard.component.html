@@ -50,6 +50,7 @@
                 {{widget.title}}
               </span>
               <tb-timewindow *ngIf="widget.hasTimewindow"
+                             #timewindowComponent
                              aggregation="{{widget.hasAggregation}}"
                              [ngModel]="widget.widget.config.timewindow"
                              (ngModelChange)="widgetComponent.onTimewindowChanged($event)">
@@ -98,7 +99,7 @@
               </button>
               <button mat-button mat-icon-button
                       [fxShow]="isRemoveActionEnabled && !widget.isFullscreen"
-                      (click)="removeWidget($event, widget)"
+                      (click)="removeWidget($event, widget);"
                       matTooltip="{{ 'widget.remove' | translate }}"
                       matTooltipPosition="above">
                 <mat-icon>close</mat-icon>
