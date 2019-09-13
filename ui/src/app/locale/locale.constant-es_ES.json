@@ -1737,7 +1737,8 @@
             "tooltip-tag-action": "Acción de etiqueta para globo de ayuda",
             "node-selected": "Clic en el nodo seleccionado",
             "element-click": "Clic en el elemento HTML",
-            "pie-slice-click": "Clic en la rebanada"
+            "pie-slice-click": "Clic en la rebanada",
+            "row-double-click": "Doble clic en la fila"
         }
     },
     "language": {

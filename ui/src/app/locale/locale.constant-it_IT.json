@@ -1694,7 +1694,8 @@
             "tooltip-tag-action": "Azione tooltip",
             "node-selected": "Click su nodo selezionato",
             "element-click": "Click su elemento HTML",
-            "pie-slice-click": "Click sulla fetta"
+            "pie-slice-click": "Click sulla fetta",
+            "row-double-click": "Doppio click sulla riga"
         }
     },
     "language": {
