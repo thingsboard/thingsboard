@@ -41,7 +41,7 @@
             <table md-table>
                 <thead fix-head md-head md-order="vm.query.order" md-on-reorder="vm.onReorder">
                 <tr md-row>
-                    <th ng-if="column.display" md-column md-order-by="{{ column.name }}" ng-repeat="column in vm.columns"><span>{{ column.title }}</span></th>
+                    <th ng-if="column.display" md-column md-order-by="'{{ column.label }}'" ng-repeat="column in vm.columns"><span>{{ column.title }}</span></th>
                     <th md-column class="tb-action-cell" layout="row" layout-align="end center">
                         <md-button class="md-icon-button"
                                    aria-label="{{'entity.columns-to-display' | translate}}"
@@ -59,7 +59,7 @@
                 <tbody md-body>
                 <tr ng-show="vm.entities.length" md-row md-select="entity"
                     md-select-id="id.id" md-auto-select="false" ng-repeat="entity in vm.entities"
-                    ng-click="vm.onRowClick($event, entity)" ng-class="{'tb-current': vm.isCurrent(entity)}">
+                    ng-click="vm.onRowClick($event, entity)" ng-dblclick="vm.onRowClick($event, entity, true)" ng-class="{'tb-current': vm.isCurrent(entity)}">
                     <td ng-if="column.display" md-cell flex ng-repeat="column in vm.columns"
                         ng-style="vm.cellStyle(entity, column)"
                         ng-bind-html="vm.cellContent(entity, column)">

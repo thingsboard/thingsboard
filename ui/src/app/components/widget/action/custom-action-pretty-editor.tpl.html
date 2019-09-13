@@ -1,0 +1,186 @@
+<!--
+
+    Copyright © 2016-2019 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-custom-action-pretty md-whiteframe-z1"
+     tb-expand-fullscreen="fullscreen" fullscreen-zindex="100" hide-expand-button="true">
+    <div layout="row" layout-align="end center" class="tb-action-expand-button" ng-class="{'tb-fullscreen-editor': fullscreen}">
+        <md-button hide-xs hide-sm aria-label="{{ 'widget.toggle-fullscreen' | translate }}" ng-click="toggleFullscreen()">
+            <md-tooltip md-direction="bottom">
+                {{ 'widget.toggle-fullscreen' | translate }}
+            </md-tooltip>
+            <md-icon ng-show="!fullscreen" aria-label="{{ 'widget.toggle-fullscreen' | translate }}">
+                fullscreen
+            </md-icon>
+            <md-icon ng-show="fullscreen" aria-label="{{ 'widget.toggle-fullscreen' | translate }}">
+                fullscreen_exit
+            </md-icon>
+            <span ng-if="fullscreen" translate hide-xs hide-sm>widget.toggle-fullscreen</span>
+        </md-button>
+    </div>
+    <div class="tb-custom-action-editor" ng-class="{'tb-fullscreen-editor': fullscreen}">
+        <div ng-if="!fullscreen">
+            <md-tabs md-selected="3" md-dynamic-height md-border-bottom style="width: 100%;">
+                <md-tab label="{{ 'widget.resources' | translate }}">
+                    <div class="tb-custom-action-editor-container" style="background-color: #fff;">
+                        <div class="md-padding">
+                            <div flex layout="row"
+                                 ng-repeat="resource in action.customResources track by $index"
+                                 style="max-height: 40px;" layout-align="start center">
+                                <md-input-container flex md-no-float class="md-block"
+                                                    style="margin: 10px 0px 0px 0px; max-height: 40px;">
+                                    <input placeholder="{{ 'widget.resource-url' | translate }}"
+                                           ng-required="true" name="resource" ng-model="resource.url">
+                                </md-input-container>
+                                <md-button ng-disabled="$root.loading" class="md-icon-button md-primary"
+                                           ng-click="removeResource($index)"
+                                           aria-label="{{ 'action.remove' | translate }}">
+                                    <md-tooltip md-direction="top">
+                                        {{ 'widget.remove-resource' | translate }}
+                                    </md-tooltip>
+                                    <md-icon aria-label="{{ 'action.delete' | translate }}"
+                                             class="material-icons">
+                                        close
+                                    </md-icon>
+                                </md-button>
+                            </div>
+                            <div>
+                                <md-button ng-disabled="$root.loading" class="md-primary md-raised"
+                                           ng-click="addResource()"
+                                           aria-label="{{ 'action.add' | translate }}">
+                                    <md-tooltip md-direction="top">
+                                        {{ 'widget.add-resource' | translate }}
+                                    </md-tooltip>
+                                    <span translate>action.add</span>
+                                </md-button>
+                            </div>
+                        </div>
+                    </div>
+                </md-tab>
+                <md-tab label="{{ 'widget.css' | translate }}">
+                    <div class="tb-custom-action-editor-container" tb-expand-fullscreen fullscreen-zindex="100" expand-button-id="expand-button">
+                        <div class="tb-editor-area-title-panel">
+                            <md-button aria-label="{{ 'widget.tidy' | translate }}"
+                                       ng-click="beautifyCss()">{{ 'widget.tidy' | translate }}
+                            </md-button>
+                            <md-button id="expand-button"
+                                       aria-label="{{ 'fullscreen.fullscreen' | translate }}"
+                                       class="md-icon-button tb-md-32"></md-button>
+                        </div>
+                        <div id="css-panel" class="css-panel" ui-ace="cssEditorOptions"
+                             ng-model="action.customCss"></div>
+                    </div>
+                </md-tab>
+                <md-tab label="{{ 'widget.html' | translate }}">
+                    <div class="tb-custom-action-editor-container" tb-expand-fullscreen fullscreen-zindex="100" expand-button-id="expand-button">
+                        <div class="tb-editor-area-title-panel">
+                            <md-button aria-label="{{ 'widget.tidy' | translate }}"
+                                       ng-click="beautifyHtml()">{{ 'widget.tidy' | translate }}
+                            </md-button>
+                            <md-button id="expand-button"
+                                       aria-label="{{ 'fullscreen.fullscreen' | translate }}"
+                                       class="md-icon-button tb-md-32"></md-button>
+                        </div>
+                        <div id="html-panel" class="html-panel" ui-ace="htmlEditorOptions"
+                             ng-model="action.customHtml"></div>
+                    </div>
+                </md-tab>
+                <md-tab label="{{ 'widget.js' | translate }}">
+                    <tb-js-func ng-model="action.customFunction"
+                                function-args="{{ ['$event', 'widgetContext', 'entityId', 'entityName', 'htmlTemplate', 'additionalParams'] }}"
+                                validation-args="{{ [] }}">
+                    </tb-js-func>
+                </md-tab>
+            </md-tabs>
+        </div>
+        <div ng-if="fullscreen" class="tb-fullscreen-panel" layout="row" layout-fill>
+            <div id="left-panel" class="tb-split tb-content">
+                <md-tabs md-selected="2" md-dynamic-height md-border-bottom layout="column" layout-fill>
+                    <md-tab label="{{ 'widget.resources' | translate }}">
+                        <div class="tb-custom-action-editor-container" style="background-color: #fff;">
+                            <div class="md-padding">
+                                <div flex layout="row"
+                                     ng-repeat="resource in action.customResources track by $index"
+                                     style="max-height: 40px;" layout-align="start center">
+                                    <md-input-container flex md-no-float class="md-block"
+                                                        style="margin: 10px 0px 0px 0px; max-height: 40px;">
+                                        <input placeholder="{{ 'widget.resource-url' | translate }}"
+                                               ng-required="true" name="resource" ng-model="resource.url">
+                                    </md-input-container>
+                                    <md-button ng-disabled="$root.loading" class="md-icon-button md-primary"
+                                               ng-click="removeResource($index)"
+                                               aria-label="{{ 'action.remove' | translate }}">
+                                        <md-tooltip md-direction="top">
+                                            {{ 'widget.remove-resource' | translate }}
+                                        </md-tooltip>
+                                        <md-icon aria-label="{{ 'action.delete' | translate }}"
+                                                 class="material-icons">
+                                            close
+                                        </md-icon>
+                                    </md-button>
+                                </div>
+                                <div>
+                                    <md-button ng-disabled="$root.loading" class="md-primary md-raised"
+                                               ng-click="addResource()"
+                                               aria-label="{{ 'action.add' | translate }}">
+                                        <md-tooltip md-direction="top">
+                                            {{ 'widget.add-resource' | translate }}
+                                        </md-tooltip>
+                                        <span translate>action.add</span>
+                                    </md-button>
+                                </div>
+                            </div>
+                        </div>
+                    </md-tab>
+                    <md-tab label="{{ 'widget.css' | translate }}">
+                        <div class="tb-custom-action-editor-container" tb-expand-fullscreen fullscreen-zindex="100" expand-button-id="expand-button">
+                            <div class="tb-editor-area-title-panel">
+                                <md-button aria-label="{{ 'widget.tidy' | translate }}"
+                                           ng-click="beautifyCss()">{{ 'widget.tidy' | translate }}
+                                </md-button>
+                                <md-button id="expand-button"
+                                           aria-label="{{ 'fullscreen.fullscreen' | translate }}"
+                                           class="md-icon-button tb-md-32"></md-button>
+                            </div>
+                            <div id="css-panel"  class="css-panel" ui-ace="cssEditorOptions"
+                                 ng-model="action.customCss"></div>
+                        </div>
+                    </md-tab>
+                    <md-tab label="{{ 'widget.html' | translate }}">
+                        <div class="tb-custom-action-editor-container" tb-expand-fullscreen fullscreen-zindex="100" expand-button-id="expand-button">
+                            <div class="tb-editor-area-title-panel">
+                                <md-button aria-label="{{ 'widget.tidy' | translate }}"
+                                           ng-click="beautifyHtml()">{{ 'widget.tidy' | translate }}
+                                </md-button>
+                                <md-button id="expand-button"
+                                           aria-label="{{ 'fullscreen.fullscreen' | translate }}"
+                                           class="md-icon-button tb-md-32"></md-button>
+                            </div>
+                            <div id="html-panel" class="html-panel" ui-ace="htmlEditorOptions"
+                                 ng-model="action.customHtml"></div>
+                        </div>
+                    </md-tab>
+                </md-tabs>
+            </div>
+            <div id="right-panel" class="tb-split tb-content">
+                <tb-js-func ng-model="action.customFunction"
+                            function-args="{{ ['$event', 'widgetContext', 'entityId', 'entityName', 'htmlTemplate', 'additionalParams'] }}"
+                            validation-args="{{ [] }}" fill-height="true">
+                </tb-js-func>
+            </div>
+        </div>
+    </div>
+</div>

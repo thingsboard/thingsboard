@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.claim.ClaimData;
 import org.thingsboard.server.dao.device.claim.ClaimResponse;
+import org.thingsboard.server.dao.device.claim.ClaimResult;
 import org.thingsboard.server.dao.model.ModelConstants;
 
 import java.util.Collections;
@@ -95,7 +96,7 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
     }
 
     @Override
-    public ListenableFuture<ClaimResponse> claimDevice(Device device, CustomerId customerId, String secretKey) {
+    public ListenableFuture<ClaimResult> claimDevice(Device device, CustomerId customerId, String secretKey) {
         List<Object> key = constructCacheKey(device.getId());
         Cache cache = cacheManager.getCache(CLAIM_DEVICES_CACHE);
         ClaimData claimData = cache.get(key, ClaimData.class);
@@ -104,18 +105,22 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
             if (currTs > claimData.getExpirationTime() || !secretKey.equals(claimData.getSecretKey())) {
                 log.warn("The claiming timeout occurred or wrong 'secretKey' provided for the device [{}]", device.getName());
                 cache.evict(key);
-                return Futures.immediateFuture(ClaimResponse.FAILURE);
+                return Futures.immediateFuture(new ClaimResult(null, ClaimResponse.FAILURE));
             } else {
                 if (device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
                     device.setCustomerId(customerId);
-                    deviceService.saveDevice(device);
-                    return Futures.transform(removeClaimingSavedData(cache, key, device), result -> ClaimResponse.SUCCESS);
+                    Device savedDevice = deviceService.saveDevice(device);
+                    return Futures.transform(removeClaimingSavedData(cache, key, device), result -> new ClaimResult(savedDevice, ClaimResponse.SUCCESS));
                 }
-                return Futures.transform(removeClaimingSavedData(cache, key, device), result -> ClaimResponse.CLAIMED);
+                return Futures.transform(removeClaimingSavedData(cache, key, device), result -> new ClaimResult(null, ClaimResponse.CLAIMED));
             }
         } else {
             log.warn("Failed to find the device's claiming message![{}]", device.getName());
-            return Futures.immediateFuture(ClaimResponse.CLAIMED);
+            if (device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
+                return Futures.immediateFuture(new ClaimResult(null, ClaimResponse.FAILURE));
+            } else {
+                return Futures.immediateFuture(new ClaimResult(null, ClaimResponse.CLAIMED));
+            }
         }
     }
 

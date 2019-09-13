@@ -268,7 +268,7 @@ function DateRangeNavigatorWidgetController($scope, $window, $filter) {
         let interval = $scope.advancedModel.dateEnd.getTime() - $scope.advancedModel.dateStart.getTime();
 
         for (let i in $scope.datesMap) {
-            if ($scope.datesMap.hasOwnProperty(i)) {
+            if (Object.prototype.hasOwnProperty.call($scope.datesMap, i)) {
                 if ($scope.datesMap[i].ts === interval || $scope.datesMap[i].ts === interval + 1 || $scope.datesMap[i].ts === interval - 1) {
                     $scope.selectedDateInterval = $scope.datesMap[i].ts;
                     $scope.customInterval = false;

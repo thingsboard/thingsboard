@@ -45,7 +45,7 @@ function DetailsSidenav($timeout, $mdUtil, $q, $animate) {
         var backdrop;
         var previousContainerStyles;
 
-        if (attrs.hasOwnProperty('tbEnableBackdrop')) {
+        if (Object.prototype.hasOwnProperty.call(attrs,'tbEnableBackdrop')) {
             backdrop = $mdUtil.createBackdrop(scope, "md-sidenav-backdrop md-opaque ng-enter");
             element.on('$destroy', function() {
                 backdrop && backdrop.remove();

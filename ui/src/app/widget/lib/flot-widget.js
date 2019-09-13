@@ -350,7 +350,7 @@ export default class TbFlot {
                 pie: {
                     show: true,
                     label: {
-                        show: settings.showLabels === true
+                        show: settings.showLabels || settings.showPercentages
                     },
                     radius: settings.radius || 1,
                     innerRadius: settings.innerRadius || 0,
@@ -366,6 +366,8 @@ export default class TbFlot {
                     }
                 }
             }
+            options.grid.clickable = true;
+                
             if (settings.stroke) {
                 options.series.pie.stroke.color = settings.stroke.color || '#fff';
                 options.series.pie.stroke.width = settings.stroke.width || 0;
@@ -373,7 +375,11 @@ export default class TbFlot {
 
             if (options.series.pie.label.show) {
                 options.series.pie.label.formatter = function (label, series) {
-                    return "<div class='pie-label'>" + series.dataKey.label + "<br/>" + Math.round(series.percent) + "%</div>";
+                    return "<div class='pie-label'>" +
+                        (settings.showLabels ? series.dataKey.label : "") +
+                        (settings.showLabels && settings.showPercentages ? "<br/>" : "") +
+                        (settings.showPercentages ? Math.round(series.percent) + "%" : "") +
+                        "</div>";
                 }
                 options.series.pie.label.radius = 3/4;
                 options.series.pie.label.background = {
@@ -440,7 +446,7 @@ export default class TbFlot {
             if (keySettings.showPoints === true) {
                 series.points.show = true;
                 series.points.lineWidth = 5;
-                series.points.radius = 3;
+                series.points.radius = angular.isDefined(keySettings.showPointsRadius) ? keySettings.showPointsRadius : 3;
             }
 
             if (this.chartType === 'line' && this.ctx.settings.smoothLines && !series.points.show) {
@@ -791,6 +797,11 @@ export default class TbFlot {
                         "type": "boolean",
                         "default": false
                     },
+                    "showPercentages": {
+                        "title": "Show percentages",
+                        "type": "boolean",
+                        "default": false
+                    },
                     "fontColor": {
                         "title": "Font color",
                         "type": "string",
@@ -820,6 +831,7 @@ export default class TbFlot {
                     ]
                 },
                 "showLabels",
+                "showPercentages",
                 {
                     "key": "fontColor",
                     "type": "color"
@@ -1095,6 +1107,11 @@ export default class TbFlot {
                         "type": "boolean",
                         "default": false
                     },
+                    "showPointsRadius": {
+                        "title": "Radius of points",
+                        "type": "number",
+                        "default": 3
+                    },
                     "tooltipValueFormatter": {
                         "title": "Tooltip value format function, f(value)",
                         "type": "string",
@@ -1147,6 +1164,7 @@ export default class TbFlot {
                 "showLines",
                 "fillLines",
                 "showPoints",
+                "showPointsRadius",
                 {
                     "key": "tooltipValueFormatter",
                     "type": "javascript"
@@ -1296,6 +1314,17 @@ export default class TbFlot {
             };
             this.$element.bind('mouseleave', this.mouseleaveHandler);
         }
+
+        if (!this.flotClickHandler) {
+            this.flotClickHandler =  function (event, pos, item) {
+                if (!tbFlot.ctx.plot) {
+                    return;
+                }
+                tbFlot.onPieSliceClick(event, item);
+            };
+            this.$element.bind('plotclick', this.flotClickHandler);
+        }
+
     }
 
     disableMouseEvents() {
@@ -1327,6 +1356,10 @@ export default class TbFlot {
         if (this.mouseleaveHandler) {
             this.$element.unbind('mouseleave', this.mouseleaveHandler);
             this.mouseleaveHandler = null;
+        }
+        if (this.flotClickHandler) {
+            this.$element.unbind('plotclick', this.flotClickHandler);
+            this.flotClickHandler = null;
         }
     }
 
@@ -1477,6 +1510,17 @@ export default class TbFlot {
         this.pieDataRendered();
         this.ctx.plot.setData(this.pieData);
         this.ctx.plot.draw();
+    }
+
+    onPieSliceClick($event, item) {
+        var descriptors = this.ctx.actionsApi.getActionDescriptors('sliceClick');
+        if ($event && descriptors.length) {
+            $event.stopPropagation();
+            var entityInfo = this.ctx.actionsApi.getActiveEntityInfo();
+            var entityId = entityInfo ? entityInfo.entityId : null;
+            var entityName = entityInfo ? entityInfo.entityName : null;
+            this.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, item);
+        }
     }
 }
 

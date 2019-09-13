@@ -192,9 +192,9 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
                 dataKey.color = color;
                 ngModelCtrl.$setDirty();
             });
-        }
+        };
 
-        scope.editDataKey = function (event, dataKey, index) {
+        scope.editDataKey = function (event, dataKey) {
 
             $mdDialog.show({
                 controller: 'DatakeyConfigDialogController',
@@ -214,11 +214,13 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
                     var w = angular.element($window);
                     w.triggerHandler('resize');
                 }
-            }).then(function (dataKey) {
-                if ((dataKey.type === types.dataKeyType.timeseries) || (dataKey.type === types.dataKeyType.attribute)) {
-                    scope.dataKeys[index] = dataKey;
-                } else if (dataKey.type === types.dataKeyType.alarm) {
-                    scope.alarmDataKeys[index] = dataKey;
+            }).then(function (newDataKey) {
+                if ((newDataKey.type === types.dataKeyType.timeseries) || (newDataKey.type === types.dataKeyType.attribute)) {
+                    let index = scope.dataKeys.indexOf(dataKey);
+                    scope.dataKeys[index] = newDataKey;
+                } else if (newDataKey.type === types.dataKeyType.alarm) {
+                    let index = scope.alarmDataKeys.indexOf(dataKey);
+                    scope.alarmDataKeys[index] = newDataKey;
                 }
                 ngModelCtrl.$setDirty();
             }, function () {

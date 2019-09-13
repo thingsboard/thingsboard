@@ -73,7 +73,7 @@ spec:
       containers:
       - name: server
         imagePullPolicy: Always
-        image: wurstmeister/kafka
+        image: wurstmeister/kafka:2.12-2.2.1
         ports:
         - containerPort: 9092
         readinessProbe:

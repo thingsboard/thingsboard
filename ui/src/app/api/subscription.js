@@ -37,6 +37,7 @@ export default class Subscription {
         this.id = this.ctx.utils.guid();
         this.cafs = {};
         this.registrations = [];
+        this.hasResolvedData = false;
 
         var subscription = this;
         var deferred = this.ctx.$q.defer();
@@ -235,12 +236,16 @@ export default class Subscription {
         var subscription = this;
         this.loadStDiff().then(() => {
             if (!subscription.ctx.aliasController) {
+                subscription.hasResolvedData = true;
                 subscription.configureAlarmsData();
                 deferred.resolve();
             } else {
                 subscription.ctx.aliasController.resolveAlarmSource(subscription.alarmSource).then(
                     function success(alarmSource) {
                         subscription.alarmSource = alarmSource;
+                        if (alarmSource) {
+                            subscription.hasResolvedData = true;
+                        }
                         subscription.configureAlarmsData();
                         deferred.resolve();
                     },
@@ -282,16 +287,21 @@ export default class Subscription {
         var subscription = this;
         this.loadStDiff().then(() => {
             if (!subscription.ctx.aliasController) {
+                subscription.hasResolvedData = true;
                 subscription.configureData();
                 deferred.resolve();
             } else {
                 subscription.ctx.aliasController.resolveDatasources(subscription.datasources).then(
                     function success(datasources) {
                         subscription.datasources = datasources;
+                        if (datasources && datasources.length) {
+                            subscription.hasResolvedData = true;
+                        }
                         subscription.configureData();
                         deferred.resolve();
                     },
                     function fail() {
+                        subscription.notifyDataLoaded();
                         deferred.reject();
                     }
                 );
@@ -419,6 +429,7 @@ export default class Subscription {
                         } else {
                             subscription.rpcEnabled = subscription.ctx.$scope.widgetEditMode ? true : false;
                         }
+                        subscription.hasResolvedData = subscription.rpcEnabled;
                         subscription.callbacks.rpcStateChanged(subscription);
                         deferred.resolve();
                     } else {
@@ -442,6 +453,7 @@ export default class Subscription {
             } else {
                 this.rpcEnabled = this.ctx.$scope.widgetEditMode ? true : false;
             }
+            this.hasResolvedData = true;
             this.callbacks.rpcStateChanged(this);
             deferred.resolve();
         }
@@ -877,6 +889,10 @@ export default class Subscription {
             }
         }
         return subscriptionsChanged;
+    }
+
+    isDataResolved() {
+        return this.hasResolvedData;
     }
 
     destroy() {

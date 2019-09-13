@@ -34,12 +34,14 @@ import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
-import org.thingsboard.server.dao.nosql.CassandraBufferedRateExecutor;
+import org.thingsboard.server.dao.nosql.CassandraStatementTask;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
+
+import com.datastax.driver.core.ResultSetFuture;
 
 import java.util.Set;
 
@@ -128,7 +130,6 @@ public interface TbContext {
 
     CassandraCluster getCassandraCluster();
 
-    CassandraBufferedRateExecutor getCassandraBufferedRateExecutor();
-
+    ResultSetFuture submitCassandraTask(CassandraStatementTask task);
 
 }

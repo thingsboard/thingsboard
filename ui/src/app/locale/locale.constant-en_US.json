@@ -49,7 +49,8 @@
         "import": "Import",
         "export": "Export",
         "share-via": "Share via {{provider}}",
-        "continue": "Continue"
+        "continue": "Continue",
+        "discard-changes": "Discard Changes"
     },
     "aggregation": {
         "aggregation": "Aggregation",
@@ -66,8 +67,8 @@
     "admin": {
         "general": "General",
         "general-settings": "General Settings",
-        "outgoing-mail": "Outgoing Mail",
-        "outgoing-mail-settings": "Outgoing Mail Settings",
+        "outgoing-mail": "Mail Server",
+        "outgoing-mail-settings": "Outgoing Mail Server Settings",
         "system-settings": "System Settings",
         "test-mail-sent": "Test mail was successfully sent!",
         "base-url": "Base URL",
@@ -84,7 +85,28 @@
         "timeout-required": "Timeout is required.",
         "timeout-invalid": "That doesn't look like a valid timeout.",
         "enable-tls": "Enable TLS",
-        "send-test-mail": "Send test mail"
+        "send-test-mail": "Send test mail",
+        "security-settings": "Security settings",
+        "password-policy": "Password policy",
+        "minimum-password-length": "Minimum password length",
+        "minimum-password-length-required": "Minimum password length is required",
+        "minimum-password-length-range": "Minimum password length should be in a range from 5 to 50",
+        "minimum-uppercase-letters": "Minimum number of uppercase letters",
+        "minimum-uppercase-letters-range": "Minimum number of uppercase letters can't be negative",
+        "minimum-lowercase-letters": "Minimum number of lowercase letters",
+        "minimum-lowercase-letters-range": "Minimum number of lowercase letters can't be negative",
+        "minimum-digits": "Minimum number of digits",
+        "minimum-digits-range": "Minimum number of digits can't be negative",
+        "minimum-special-characters": "Minimum number of special characters",
+        "minimum-special-characters-range": "Minimum number of special characters can't be negative",
+        "password-expiration-period-days": "Password expiration period in days",
+        "password-expiration-period-days-range": "Password expiration period in days can't be negative",
+        "password-reuse-frequency-days": "Password reuse frequency in days",
+        "password-reuse-frequency-days-range": "Password reuse frequency in days can't be negative",
+        "general-policy": "General policy",
+        "max-failed-login-attempts": "Maximum number of failed login attempts, before account is locked",
+        "minimum-max-failed-login-attempts-range": "Maximum number of failed login attempts can't be negative",
+        "user-lockout-notification-email": "In case user account lockout, send notification to email"
     },
     "alarm": {
         "alarm": "Alarm",
@@ -306,6 +328,9 @@
         "type-relations-delete": "All relation deleted",
         "type-alarm-ack": "Acknowledged",
         "type-alarm-clear": "Cleared",
+        "type-login": "Login",
+        "type-logout": "Logout",
+        "type-lockout": "Lockout",
         "status-success": "Success",
         "status-failure": "Failure",
         "audit-log-details": "Audit log details",
@@ -777,6 +802,7 @@
         "search": "Search entities",
         "selected-entities": "{ count, plural, 1 {1 entity} other {# entities} } selected",
         "entity-name": "Entity name",
+        "entity-label": "Entity label",
         "details": "Entity details",
         "no-entities-prompt": "No entities found",
         "no-data": "No data to display",
@@ -1183,6 +1209,7 @@
         "remember-me": "Remember me",
         "forgot-password": "Forgot Password?",
         "password-reset": "Password reset",
+        "expired-password-reset-message": "Your credentials has been expired! Please create new password.",
         "new-password": "New password",
         "new-password-again": "New password again",
         "password-link-sent-message": "Password reset link was successfully sent!",
@@ -1196,6 +1223,7 @@
     },
     "profile": {
         "profile": "Profile",
+        "last-login-time": "Last Login",
         "change-password": "Change Password",
         "current-password": "Current password"
     },
@@ -1392,7 +1420,8 @@
         "edit": "Edit timewindow",
         "date-range": "Date range",
         "last": "Last",
-        "time-period": "Time period"
+        "time-period": "Time period",
+        "hide": "Hide"
     },
     "user": {
         "user": "User",
@@ -1435,7 +1464,11 @@
         "activation-link-copied-message": "User activation link has been copied to clipboard",
         "details": "Details",
         "login-as-tenant-admin": "Login as Tenant Admin",
-        "login-as-customer-user": "Login as Customer User"
+        "login-as-customer-user": "Login as Customer User",
+        "disable-account": "Disable User Account",
+        "enable-account": "Enable User Account",
+        "enable-account-message": "User account was successfully enabled!",
+        "disable-account-message": "User account was successfully disabled!"
     },
     "value": {
         "type": "Value type",
@@ -1494,6 +1527,7 @@
         "settings-schema": "Settings schema",
         "datakey-settings-schema": "Data key settings schema",
         "javascript": "Javascript",
+        "js": "JS",
         "remove-widget-type-title": "Are you sure you want to remove the widget type '{{widgetName}}'?",
         "remove-widget-type-text": "After the confirmation the widget type and all related data will become unrecoverable.",
         "remove-widget-type": "Remove widget type",
@@ -1510,6 +1544,7 @@
         "update-dashboard-state": "Update current dashboard state",
         "open-dashboard": "Navigate to other dashboard",
         "custom": "Custom action",
+        "custom-pretty": "Custom action (with HTML template)",
         "target-dashboard-state": "Target dashboard state",
         "target-dashboard-state-required": "Target dashboard state is required",
         "set-entity-from-widget": "Set entity from widget",
@@ -1548,6 +1583,7 @@
         "settings": "Settings",
         "advanced": "Advanced",
         "title": "Title",
+        "title-tooltip": "Title Tooltip",
         "general-settings": "General settings",
         "display-title": "Display title",
         "drop-shadow": "Drop shadow",
@@ -1590,7 +1626,10 @@
         "edit-action": "Edit action",
         "delete-action": "Delete action",
         "delete-action-title": "Delete widget action",
-        "delete-action-text": "Are you sure you want delete widget action with name '{{actionName}}'?"
+        "delete-action-text": "Are you sure you want delete widget action with name '{{actionName}}'?",
+        "display-icon": "Display title icon",
+        "icon-color": "Icon color",
+        "icon-size": "Icon size"
     },
     "widget-type": {
         "import": "Import widget type",
@@ -1657,6 +1696,31 @@
                 "Step size": "Step size",
                 "Ok": "Ok"
             }
+        },
+        "input-widgets": {
+            "attribute-not-allowed": "Attribute parameter cannot be used in this widget",
+            "date": "Date",
+            "discard-changes": "Discard changes",
+            "entity-attribute-required": "Entity attribute is required",
+            "entity-timeseries-required": "Entity timeseries is required",
+            "not-allowed-entity": "Selected entity cannot have shared attributes",
+            "no-attribute-selected": "No attribute is selected",
+            "no-datakey-selected": "No datakey is selected",
+            "no-entity-selected": "No entity selected",
+            "no-image": "No image",
+            "no-support-web-camera": "No supported web camera",
+            "no-timeseries-selected": "No timeseries selected",
+            "switch-attribute-value": "Switch entity attribute value",
+            "switch-camera": "Switch camera",
+            "switch-timeseries-value": "Switch entity timeseries value",
+            "take-photo": "Take photo",
+            "time": "Time",
+            "timeseries-not-allowed": "Timeseries parameter cannot be used in this widget",
+            "update-failed": "Update failed",
+            "update-successful": "Update successful",
+            "update-attribute": "Update attribute",
+            "update-timeseries": "Update timeseries",
+            "value": "Value"
         }
     },
     "icon": {
@@ -1673,7 +1737,9 @@
             "marker-click": "On marker click",
             "tooltip-tag-action": "Tooltip tag action",
             "node-selected": "On node selected",
-            "element-click": "On HTML element click"
+            "element-click": "On HTML element click",
+            "pie-slice-click": "On slice click",
+            "row-double-click": "On row double click"
         }
     },
     "language": {

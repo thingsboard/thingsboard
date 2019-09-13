@@ -19,12 +19,12 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>2.4.0</version>
+        <version>2.4.1</version>
         <artifactId>thingsboard</artifactId>
     </parent>
     <groupId>org.thingsboard</groupId>
     <artifactId>netty-mqtt</artifactId>
-    <version>2.4.0</version>
+    <version>2.4.1</version>
     <packaging>jar</packaging>
 
     <name>Netty MQTT Client</name>
@@ -55,14 +55,6 @@
             <artifactId>guava</artifactId>
         </dependency>
     </dependencies>
-
-    <distributionManagement>
-        <repository>
-            <id>jk-5-maven</id>
-            <name>jk-5's maven server</name>
-            <url>sftp://10.2.1.2/opt/maven</url>
-        </repository>
-    </distributionManagement>
 
     <build>
         <extensions>

@@ -1464,6 +1464,7 @@
         "update-dashboard-state": "Обновить текущее состояние дашборда",
         "open-dashboard": "Перейти к другому дашборду",
         "custom": "Пользовательское действие",
+        "custom-pretty": "Пользовательское действие (с HTML шаблоном)",
         "target-dashboard-state": "Целевое состояние дашборда",
         "target-dashboard-state-required": "Целевое состояние дашборда обязательно",
         "set-entity-from-widget": "Установить объект из виджета",
@@ -1610,6 +1611,24 @@
                 "Step size": "Размер шага",
                 "Ok": "Ok"
             }
+        },
+        "input-widgets": {
+            "attribute-not-allowed": "Атрибут не может быть выбран в этом виджете",
+            "discard-changes": "Отменить изменения",
+            "entity-attribute-required": "Значение атрибута обязателено",
+            "entity-timeseries-required": "Значение телеметрии обязательно",
+            "not-allowed-entity": "Выбраный объект не имеет общих атрибутов",
+            "no-attribute-selected": "Атрибут не выбран",
+            "no-entity-selected": "Объект не выбран",
+            "no-timeseries-selected": "Параметр телеметрии не выбран",
+            "switch-attribute-value": "Изменить значение атрибута",
+            "switch-timeseries-value": "Изменить значение телеметрии",
+            "timeseries-not-allowed": "Телеметрия не может быть выбрана в этом виджете",
+            "update-failed": "Не удалось обновить",
+            "update-successful": "Успешно обновлено",
+            "update-attribute": "Обновить атрибут",
+            "update-timeseries": "Обновить телеметрию",
+            "value": "Значение"
         }
     },
     "icon": {

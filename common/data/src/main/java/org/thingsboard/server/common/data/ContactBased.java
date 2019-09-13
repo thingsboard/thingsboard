@@ -19,7 +19,7 @@ import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.UUIDBased;
 
 @EqualsAndHashCode(callSuper = true)
-public abstract class ContactBased<I extends UUIDBased> extends SearchTextBasedWithAdditionalInfo<I> {
+public abstract class ContactBased<I extends UUIDBased> extends SearchTextBasedWithAdditionalInfo<I> implements HasName {
     
     private static final long serialVersionUID = 5047448057830660988L;
     

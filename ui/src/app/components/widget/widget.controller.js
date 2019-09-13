@@ -17,12 +17,15 @@ import $ from 'jquery';
 import 'javascript-detect-element-resize/detect-element-resize';
 import Subscription from '../../api/subscription';
 
+import 'oclazyload';
+import cssjs from '../../../vendor/css.js/css';
+
 /* eslint-disable angular/angularelement */
 
 /*@ngInject*/
-export default function WidgetController($scope, $state, $timeout, $window, $element, $q, $log, $injector, $filter, $compile, tbRaf, types, utils, timeService,
+export default function WidgetController($scope, $state, $timeout, $window, $ocLazyLoad, $element, $q, $log, $injector, $filter, $compile, tbRaf, types, utils, timeService,
                                          datasourceService, alarmService, entityService, dashboardService, deviceService, visibleRect, isEdit, isMobile, dashboardTimewindow,
-                                         dashboardTimewindowApi, dashboard, widget, aliasController, stateController, widgetInfo, widgetType) {
+                                         dashboardTimewindowApi, dashboard, widget, aliasController, stateController, widgetInfo, widgetType, toast) {
 
     var vm = this;
 
@@ -37,6 +40,12 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
     $scope.executingRpcRequest = false;
 
     vm.dashboardTimewindow = dashboardTimewindow;
+
+    $window.lazyLoad = $ocLazyLoad;
+    $window.cssjs = cssjs;
+
+    var cssParser = new cssjs();
+    cssParser.testMode = false;
 
     var gridsterItemInited = false;
     var subscriptionInited = false;
@@ -123,7 +132,8 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
             actionDescriptorsBySourceId: actionDescriptorsBySourceId,
             getActionDescriptors: getActionDescriptors,
             handleWidgetAction: handleWidgetAction,
-            elementClick: elementClick
+            elementClick: elementClick,
+            getActiveEntityInfo: getActiveEntityInfo
         },
         stateController: stateController,
         aliasController: aliasController
@@ -302,7 +312,9 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
 
         options.callbacks = {
             onDataUpdated: function() {
-                widgetTypeInstance.onDataUpdated();
+                if (displayWidgetInstance()) {
+                    widgetTypeInstance.onDataUpdated();
+                }
             },
             onDataUpdateError: function(subscription, e) {
                 handleWidgetException(e);
@@ -430,13 +442,13 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
     }
 
     function elementClick(event) {
-        event.stopPropagation();
         var e = event.target || event.srcElement;
         if (e.id) {
             var descriptors = getActionDescriptors('elementClick');
             if (descriptors.length) {
                 for (var i = 0; i < descriptors.length; i++) {
                     if (descriptors[i].name == e.id) {
+                        event.stopPropagation();
                         var entityInfo = getActiveEntityInfo();
                         var entityId = entityInfo ? entityInfo.entityId : null;
                         var entityName = entityInfo ? entityInfo.entityName : null;
@@ -455,6 +467,7 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
                 if (!targetEntityParams) {
                     targetEntityParams = {};
                     params[targetEntityParamName] = targetEntityParams;
+					params.targetEntityParamName = targetEntityParamName;
                 }
             } else {
                 targetEntityParams = params;
@@ -521,7 +534,93 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
                     }
                 }
                 break;
+            case types.widgetActionTypes.customPretty.value:
+                var customPrettyFunction = descriptor.customFunction;
+                var customHtml = descriptor.customHtml;
+                var customCss = descriptor.customCss;
+                var customResources = descriptor.customResources;
+                var actionNamespace = 'custom-action-pretty-'+descriptor.name.toLowerCase();
+                var htmlTemplate = '';
+                if (angular.isDefined(customHtml) && customHtml.length > 0) {
+                    htmlTemplate = customHtml;
+                }
+                loadCustomActionResources(actionNamespace, customCss, customResources).then(
+                    function success() {
+                        if (angular.isDefined(customPrettyFunction) && customPrettyFunction.length > 0) {
+                            try {
+                                if (!additionalParams) {
+                                    additionalParams = {};
+                                }
+                                var customActionPrettyFunction = new Function('$event', 'widgetContext', 'entityId', 'entityName', 'htmlTemplate', 'additionalParams', customPrettyFunction);
+                                customActionPrettyFunction($event, widgetContext, entityId, entityName, htmlTemplate, additionalParams);
+                            } catch (e) {
+                                //
+                            }
+                        }
+                    },
+                    function fail(errorMessages) {
+                        processResourcesLoadErrors(errorMessages);
+                    }
+                );
+                break;
         }
+    }
+
+    function loadCustomActionResources(actionNamespace, customCss, customResources) {
+        var deferred = $q.defer();
+
+        if (angular.isDefined(customCss) && customCss.length > 0) {
+            cssParser.cssPreviewNamespace = actionNamespace;
+            cssParser.createStyleElement(actionNamespace, customCss, 'nonamespace');
+        }
+
+        function loadNextOrComplete(i) {
+            i++;
+            if (i < customResources.length) {
+                loadNext(i);
+            } else {
+                if (errors.length > 0) {
+                    deferred.reject(errors);
+                } else {
+                    deferred.resolve();
+                }
+            }
+        }
+
+        function loadNext(i) {
+             var resourceUrl = customResources[i].url;
+            if (resourceUrl && resourceUrl.length > 0) {
+                $ocLazyLoad.load(resourceUrl).then(
+                    function success () {
+                        loadNextOrComplete(i);
+                    },
+                    function fail() {
+                        errors.push('Failed to load custom action resource: \'' + resourceUrl + '\'');
+                        loadNextOrComplete(i);
+                    }
+                );
+            } else {
+                loadNextOrComplete(i);
+            }
+        }
+
+        if (angular.isDefined(customResources) && customResources.length > 0) {
+            var errors = [];
+            loadNext(0);
+        } else {
+            deferred.resolve();
+        }
+
+        return deferred.promise;
+    }
+
+    function processResourcesLoadErrors(errorMessages) {
+        var messageToShow = '';
+        for (var e in errorMessages) {
+            var error = errorMessages[e];
+            messageToShow += '<div>' + error + '</div>';
+        }
+        toast.showError(messageToShow);
     }
 
     function getActiveEntityInfo() {
@@ -684,6 +783,10 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
             widgetContext.dashboardTimewindow = newDashboardTimewindow;
         });
 
+        $scope.$on('widgetForceReInit', function () {
+            reInit();
+        });
+
         $scope.$on("$destroy", function () {
             onDestroy();
         });
@@ -748,7 +851,11 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
         if (!widgetContext.inited && isReady()) {
             widgetContext.inited = true;
             try {
-                widgetTypeInstance.onInit();
+                if (displayWidgetInstance()) {
+                    widgetTypeInstance.onInit();
+                } else {
+                    $scope.loadingData = false;
+                }
             } catch (e) {
                 handleWidgetException(e);
             }
@@ -785,7 +892,9 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
                 }
                 cafs['resize'] = tbRaf(function() {
                     try {
-                        widgetTypeInstance.onResize();
+                        if (displayWidgetInstance()) {
+                            widgetTypeInstance.onResize();
+                        }
                     } catch (e) {
                         handleWidgetException(e);
                     }
@@ -815,7 +924,9 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
                 }
                 cafs['editMode'] = tbRaf(function() {
                     try {
-                        widgetTypeInstance.onEditModeChanged();
+                        if (displayWidgetInstance()) {
+                            widgetTypeInstance.onEditModeChanged();
+                        }
                     } catch (e) {
                         handleWidgetException(e);
                     }
@@ -834,7 +945,9 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
                 }
                 cafs['mobileMode'] = tbRaf(function() {
                     try {
-                        widgetTypeInstance.onMobileModeChanged();
+                        if (displayWidgetInstance()) {
+                            widgetTypeInstance.onMobileModeChanged();
+                        }
                     } catch (e) {
                         handleWidgetException(e);
                     }
@@ -867,7 +980,21 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
         }
     }
 
+    function displayWidgetInstance() {
+        if (widget.type !== types.widgetType.static.value) {
+            for (var id in widgetContext.subscriptions) {
+                if (widgetContext.subscriptions[id].isDataResolved()) {
+                    return true;
+                }
+            }
+            return false;
+        } else {
+            return true;
+        }
+    }
+
     function onDestroy() {
+        var shouldDestroyWidgetInstance = displayWidgetInstance();
         for (var id in widgetContext.subscriptions) {
             var subscription = widgetContext.subscriptions[id];
             subscription.destroy();
@@ -883,7 +1010,9 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
                 }
             }
             try {
-                widgetTypeInstance.onDestroy();
+                if (shouldDestroyWidgetInstance) {
+                    widgetTypeInstance.onDestroy();
+                }
             } catch (e) {
                 handleWidgetException(e);
             }

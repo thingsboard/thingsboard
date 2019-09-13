@@ -64,7 +64,8 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, time
         logout: logout,
         reloadUser: reloadUser,
         isUserTokenAccessEnabled: isUserTokenAccessEnabled,
-        loginAsUser: loginAsUser
+        loginAsUser: loginAsUser,
+        setUserCredentialsEnabled: setUserCredentialsEnabled
     }
 
     reloadUser();
@@ -141,7 +142,11 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, time
     }
 
     function logout() {
-        clearJwtToken(true);
+        $http.post('/api/auth/logout', null, {ignoreErrors: true}).then(function success() {
+            clearJwtToken(true);
+        }, function fail() {
+            clearJwtToken(true);
+        });
     }
 
     function clearJwtToken(doLogout) {
@@ -486,6 +491,20 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, time
         }
         $http.post(url, user).then(function success(response) {
             deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function setUserCredentialsEnabled(userId, userCredentialsEnabled) {
+        var deferred = $q.defer();
+        var url = '/api/user/' + userId + '/userCredentialsEnabled';
+        if (angular.isDefined(userCredentialsEnabled)) {
+            url += '?userCredentialsEnabled=' + userCredentialsEnabled;
+        }
+        $http.post(url, null).then(function success() {
+            deferred.resolve();
         }, function fail() {
             deferred.reject();
         });
