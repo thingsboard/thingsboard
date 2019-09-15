@@ -73,7 +73,28 @@
         "test-mail-sent": "Le courrier de test a été envoyé avec succés!",
         "timeout-invalid": "Cela ne ressemble pas à un délai d'expiration valide.",
         "timeout-msec": "Délai (msec)",
-        "timeout-required": "Le délai est requis."
+        "timeout-required": "Le délai est requis.",
+        "security-settings": "Les paramètres de sécurité",
+        "password-policy": "Politique de mot de passe",
+        "minimum-password-length": "Longueur minimale du mot de passe",
+        "minimum-password-length-required": "La longueur minimale du mot de passe est requise",
+        "minimum-password-length-range": "La longueur minimale du mot de passe doit être comprise entre 5 et 50.",
+        "minimum-uppercase-letters": "Nombre minimum de lettres majuscules",
+        "minimum-uppercase-letters-range": "Le nombre minimum de lettres majuscules ne peut pas être négatif",
+        "minimum-lowercase-letters": "Nombre minimum de lettres minuscules",
+        "minimum-lowercase-letters-range": "Le nombre minimum de lettres minuscules ne peut pas être négatif",
+        "minimum-digits": "Nombre minimum de chiffres",
+        "minimum-digits-range": "Le nombre minimum de chiffres ne peut pas être négatif",
+        "minimum-special-characters": "Nombre minimum de caractères spéciaux",
+        "minimum-special-characters-range": "Le nombre minimum de caractères spéciaux ne peut pas être négatif",
+        "password-expiration-period-days": "Délai d'expiration du mot de passe en jours",
+        "password-expiration-period-days-range": "La période d'expiration du mot de passe en jours ne peut pas être négative",
+        "password-reuse-frequency-days": "Fréquence de réutilisation du mot de passe en jours",
+        "password-reuse-frequency-days-range": "La fréquence de réutilisation du mot de passe en jours ne peut être négative",
+        "general-policy": "Politique générale",
+        "max-failed-login-attempts": "Nombre maximal de tentatives de connexion infructueuses avant que le compte ne soit verrouillé",
+        "minimum-max-failed-login-attempts-range": "Le nombre maximal de tentatives de connexion ayant échoué ne peut pas être négatif",
+        "user-lockout-notification-email": "En cas de verrouillage du compte d'utilisateur, envoyez une notification par courrier électronique."
     },
     "aggregation": {
         "aggregation": "agrégation",
@@ -307,6 +328,9 @@
         "type-credentials-read": "Lecture des informations d'identification",
         "type-credentials-updated": "Informations d'identification actualisées",
         "type-deleted": "Supprimé",
+        "type-login": "Login",
+        "type-logout": "Connectez - Out",
+        "type-lockout": "Verrouillage",
         "type-relation-add-or-update": "Relation mise à jour",
         "type-relation-delete": "Relation supprimée",
         "type-relations-delete": "Toutes les relations ont été supprimées",
@@ -347,14 +371,15 @@
     },
     "custom": {
         "widget-action": {
-            "action-cell-button": "Action cell button",
-            "marker-click": "On marker click",
-            "row-click": "On row click",
-            "polygon-click": "On polygon click",
-            "tooltip-tag-action": "Tooltip tag action",
-            "node-selected": "On node selected",
-            "element-click": "On HTML element click",
-            "pie-slice-click": "On slice click"
+            "action-cell-button": "Bouton de cellule d'action",
+            "marker-click": "Sur le marqueur cliquez",
+            "row-click": "Au rang, cliquez",
+            "polygon-click": "Cliquez sur le polygone",
+            "tooltip-tag-action": "Action de balise d'info-bulle",
+            "node-selected": "Sur le noeud sélectionné",
+            "element-click": "Sur l'élément HTML, cliquez sur",
+            "pie-slice-click": "Sur tranche cliquez",
+            "row-double-click": "Sur la ligne double clic"
         }
     },
     "customer": {
@@ -1191,6 +1216,7 @@
     "profile": {
         "change-password": "Modifier le mot de passe",
         "current-password": "Mot de passe actuel",
+        "last-login-time": "Dernière connexion",
         "profile": "Profile"
     },
     "relation": {
@@ -1410,9 +1436,13 @@
         "delete-users-title": "Êtes-vous sûr de vouloir supprimer {count, plural, 1 {1 utilisateur} other {# utilisateurs}}?",
         "description": "Description",
         "details": "Détails",
+        "disable-account": "Désactiver le compte d'utilisateur",
+        "disable-account-message": "Le compte d'utilisateur a été désactivé avec succès!",
         "display-activation-link": "Afficher le lien d'activation",
         "email": "Email",
         "email-required": "Email est requis.",
+        "enable-account": "Activer le compte d'utilisateur",
+        "enable-account-message": "Le compte d'utilisateur a été activé avec succès!",
         "first-name": "Prénom",
         "invalid-email-format": "Format de courrier électronique non valide",
         "last-name": "Nom de famille",
@@ -1628,6 +1658,31 @@
                 "Step size": "Taille de pas",
                 "Ok": "Ok"
             }
+        },
+        "input-widgets": {
+            "attribute-not-allowed": "Le paramètre d'attribut ne peut pas être utilisé dans ce widget",
+            "date": "Date",
+            "discard-changes": "Annuler les modifications",
+            "entity-attribute-required": "L'attribut d'entité est requis",
+            "entity-timeseries-required": "Entité timeseries est requis",
+            "not-allowed-entity": "L'entité sélectionnée ne peut pas avoir d'attributs partagés",
+            "no-attribute-selected": "Aucun attribut n'est sélectionné",
+            "no-datakey-selected": "Aucune date n'est sélectionnée",
+            "no-entity-selected": "Aucune entité sélectionnée",
+            "no-image": "Pas d'image",
+            "no-support-web-camera": "Pas de webcam supportée",
+            "no-timeseries-selected": "Aucune série temporelle sélectionnée",
+            "switch-attribute-value": "Changer la valeur de l'attribut d'entité",
+            "switch-camera": "Changer de caméra",
+            "switch-timeseries-value": "Changer la valeur de l'entité série temporelle",
+            "take-photo": "Prendre une photo",
+            "time": "Temps",
+            "timeseries-not-allowed": "Le paramètre série temporelle ne peut pas être utilisé dans ce widget",
+            "update-failed": "Mise à jour a échoué",
+            "update-successful": "Mise à jour réussie",
+            "update-attribute": "Attribut de mise à jour",
+            "update-timeseries": "Mise à jour de la série temporelle",
+            "value": "Valeur"
         }
     },
     "widgets-bundle": {
