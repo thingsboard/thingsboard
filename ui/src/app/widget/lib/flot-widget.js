@@ -429,6 +429,11 @@ export default class TbFlot {
             series.lines = {
                 fill: keySettings.fillLines === true
             };
+
+            if (this.ctx.settings.stack) {
+                series.stack = !keySettings.excludeFromStacking;
+            }
+
             if (this.chartType === 'line' || this.chartType === 'state') {
                 series.lines.show = keySettings.showLines !== false
             } else {
@@ -1107,6 +1112,11 @@ export default class TbFlot {
                         "type": "boolean",
                         "default": false
                     },
+                    "excludeFromStacking": {
+                        "title": "Exclude from stacking(available in \"Stacking\" mode)",
+                        "type": "boolean",
+                        "default": false
+                    },
                     "showPointsRadius": {
                         "title": "Radius of points",
                         "type": "number",
@@ -1164,6 +1174,7 @@ export default class TbFlot {
                 "showLines",
                 "fillLines",
                 "showPoints",
+                "excludeFromStacking",
                 "showPointsRadius",
                 {
                     "key": "tooltipValueFormatter",
