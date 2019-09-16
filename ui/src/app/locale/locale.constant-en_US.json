@@ -1188,7 +1188,9 @@
         "min": "min",
         "max": "max",
         "avg": "avg",
-        "total": "total"
+        "total": "total",
+        "month-ago": "(month ago)",
+        "year-ago": "(year ago)"
     },
     "login": {
         "login": "Login",

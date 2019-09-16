@@ -32,6 +32,7 @@ export default class TbFlot {
         this.ctx = ctx;
         this.chartType = chartType || 'line';
         var settings = ctx.settings;
+        var utils = this.ctx.$scope.$injector.get('utils');
 
         ctx.tooltip = $('#flot-series-tooltip');
         if (ctx.tooltip.length === 0) {
@@ -189,54 +190,61 @@ export default class TbFlot {
                     if (hoverInfo[1] && hoverInfo[1].seriesHover.length) {
                         maxRows = 5;
                     }
-                    var columns = Math.ceil(hoverInfo[0].seriesHover.length / maxRows);
+                    var columns = 0;
+                    if (hoverInfo[0].seriesHover.length) {
+                        columns = Math.ceil(hoverInfo[0].seriesHover.length / maxRows);
+                    } else if (hoverInfo[1] && hoverInfo[1].seriesHover.length) {
+                        columns = Math.ceil(hoverInfo[1].seriesHover.length / maxRows);
+                    }
 
                     for (var j = 0; j < hoverInfo.length; j++) {
-                        var columnsContent = '';
                         var hoverData = hoverInfo[j];
-                        let timestamp = parseInt(hoverData.time);
-                        let date = moment(timestamp).format('YYYY-MM-DD HH:mm:ss');
-                        let dateDiv = $('<div>' + date + '</div>');
-                        dateDiv.css({
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            padding: "4px",
-                            fontWeight: "700"
-                        });
-                        content += dateDiv.prop('outerHTML');
-
-                        var seriesDiv = $('<div></div>');
-                        seriesDiv.css({
-                            display: "flex",
-                            flexDirection: "row"
-                        });
-                        for (var c = 0; c < columns; c++) {
-                            var columnDiv = $('<div></div>');
-                            columnDiv.css({
+                        if (angular.isNumber(hoverData.time)) {
+                            var columnsContent = '';
+                            let timestamp = parseInt(hoverData.time);
+                            let date = moment(timestamp).format('YYYY-MM-DD HH:mm:ss');
+                            let dateDiv = $('<div>' + date + '</div>');
+                            dateDiv.css({
                                 display: "flex",
-                                flexDirection: "column",
-                                flex: "1"
+                                alignItems: "center",
+                                justifyContent: "center",
+                                padding: "4px",
+                                fontWeight: "700"
                             });
-                            var columnContent = '';
-                            for (var i = c*maxRows; i < (c+1)*maxRows; i++) {
-                                if (i == hoverData.seriesHover.length) {
-                                    break;
-                                }
-                                var seriesHoverInfo = hoverData.seriesHover[i];
-                                columnContent += seriesInfoDivFromInfo(seriesHoverInfo, seriesIndex);
-                            }
-                            columnDiv.html(columnContent);
+                            content += dateDiv.prop('outerHTML');
 
-                            if (columnContent) {
-                                if (c > 0) {
-                                    columnsContent += '<span style="min-width: 20px;"></span>';
+                            var seriesDiv = $('<div></div>');
+                            seriesDiv.css({
+                                display: "flex",
+                                flexDirection: "row"
+                            });
+                            for (var c = 0; c < columns; c++) {
+                                var columnDiv = $('<div></div>');
+                                columnDiv.css({
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    flex: "1"
+                                });
+                                var columnContent = '';
+                                for (var i = c*maxRows; i < (c+1)*maxRows; i++) {
+                                    if (i == hoverData.seriesHover.length) {
+                                        break;
+                                    }
+                                    var seriesHoverInfo = hoverData.seriesHover[i];
+                                    columnContent += seriesInfoDivFromInfo(seriesHoverInfo, seriesIndex);
                                 }
-                                columnsContent += columnDiv.prop('outerHTML');
+                                columnDiv.html(columnContent);
+
+                                if (columnContent) {
+                                    if (c > 0) {
+                                        columnsContent += '<span style="min-width: 20px;"></span>';
+                                    }
+                                    columnsContent += columnDiv.prop('outerHTML');
+                                }
                             }
+                            seriesDiv.html(columnsContent);
+                            content += seriesDiv.prop('outerHTML');
                         }
-                        seriesDiv.html(columnsContent);
-                        content += seriesDiv.prop('outerHTML');
                     }
                 }
 
@@ -286,13 +294,8 @@ export default class TbFlot {
                 labelFont: angular.copy(font)
             };
             if (settings.xaxis) {
-                if (settings.xaxis && settings.xaxis.showLabels === false) {
-                    this.xaxis.tickFormatter = function() {
-                        return '';
-                    };
-                }
                 this.xaxis.font.color = settings.xaxis.color || this.xaxis.font.color;
-                this.xaxis.label = settings.xaxis.title || null;
+                this.xaxis.label = utils.customTranslation(settings.xaxis.title, settings.xaxis.title) || null;
                 this.xaxis.labelFont.color = this.xaxis.font.color;
                 this.xaxis.labelFont.size = this.xaxis.font.size+2;
                 this.xaxis.labelFont.weight = "bold";
@@ -329,7 +332,7 @@ export default class TbFlot {
                 this.yaxis.font.color = settings.yaxis.color || this.yaxis.font.color;
                 this.yaxis.min = angular.isDefined(settings.yaxis.min) ? settings.yaxis.min : null;
                 this.yaxis.max = angular.isDefined(settings.yaxis.max) ? settings.yaxis.max : null;
-                this.yaxis.label = settings.yaxis.title || null;
+                this.yaxis.label = utils.customTranslation(settings.yaxis.title, settings.yaxis.title) || null;
                 this.yaxis.labelFont.color = this.yaxis.font.color;
                 this.yaxis.labelFont.size = this.yaxis.font.size+2;
                 this.yaxis.labelFont.weight = "bold";
@@ -375,7 +378,7 @@ export default class TbFlot {
                 }
             }
 
-            options.xaxes.push(this.xaxis);
+            options.xaxes[0] = angular.copy(this.xaxis);
 
             if (settings.xaxis && settings.xaxis.showLabels === false) {
                 options.xaxes[0].tickFormatter = function() {
@@ -386,22 +389,30 @@ export default class TbFlot {
             if (settings.comparisonEnabled) {
                 var xaxis = angular.copy(this.xaxis);
                 xaxis.position = 'top';
-                if (settings.xaxisSecond && settings.xaxisSecond.showLabels === false) {
-                    xaxis.tickFormatter = function() {
-                        return '';
-                    };
+                if (settings.xaxisSecond) {
+                    if (settings.xaxisSecond.showLabels === false) {
+                        xaxis.tickFormatter = function() {
+                            return '';
+                        };
+                    }
+                    xaxis.label = utils.customTranslation(settings.xaxisSecond.title, settings.xaxisSecond.title) || null;
+                    xaxis.position = settings.xaxisSecond.axisPosition;
                 }
-                xaxis.label = settings.xaxisSecond.title || null;
+                xaxis.tickLength = 0;
                 options.xaxes.push(xaxis);
+
+                options.series = {
+                    stack: false
+                };
+            } else {
+                options.series = {
+                    stack: settings.stack === true
+                };
             }
 
             options.crosshair = {
                 mode: 'x'
-            }
-
-            options.series = {
-                stack: settings.stack === true
-            }
+            };
 
             if (this.chartType === 'line' && settings.smoothLines) {
                 options.series.curvedLines = {
@@ -538,7 +549,7 @@ export default class TbFlot {
             if (this.chartType === 'line' && this.ctx.settings.smoothLines && !series.points.show) {
                 series.curvedLines = {
                     apply: true
-                }
+                };
             }
 
             var lineColor = tinycolor(series.dataKey.color);
@@ -572,7 +583,7 @@ export default class TbFlot {
                 series.yaxisIndex = this.yaxes.indexOf(yaxis);
                 series.yaxis = series.yaxisIndex+1;
                 yaxis.keysInfo[i] = {hidden: false};
-                yaxis.hidden = false;
+                yaxis.show = true;
             }
         }
 
@@ -726,6 +737,10 @@ export default class TbFlot {
                     } else {
                         this.ctx.plot.getOptions().xaxes[0].min = this.subscription.timeWindow.minTime;
                         this.ctx.plot.getOptions().xaxes[0].max = this.subscription.timeWindow.maxTime;
+                        if (this.ctx.settings.comparisonEnabled) {
+                            this.ctx.plot.getOptions().xaxes[1].min = this.subscription.comparisonTimeWindow.minTime;
+                            this.ctx.plot.getOptions().xaxes[1].max = this.subscription.comparisonTimeWindow.maxTime;
+                        }
                         if (this.chartType === 'bar') {
                             if (this.subscription.timeWindowConfig.aggregation && this.subscription.timeWindowConfig.aggregation.type === 'NONE') {
                                 this.ctx.plot.getOptions().series.bars.barWidth = this.ctx.defaultBarWidth;
@@ -1182,7 +1197,7 @@ export default class TbFlot {
                 }
             ]
         });
-        if (chartType === 'graph') {
+        if (chartType === 'graph' || chartType === 'bar') {
             schema.groupInfoes = [{
                 "formIndex":0,
                 "GroupTitle":"Common Settings"
@@ -1311,7 +1326,7 @@ export default class TbFlot {
         };
 
         var properties = schema["schema"]["properties"];
-        if (chartType === 'graph') {
+        if (chartType === 'graph' || chartType === 'bar') {
             properties["comparisonSettings"] = {
                 "title": "Comparison Settings",
                 "type": "object",
@@ -1320,30 +1335,29 @@ export default class TbFlot {
                         "title": "Show historical values for comparison",
                         "type": "boolean",
                         "default": true
+                    },
+                    "comparisonValuesLabel": {
+                        "title": "Historical values label",
+                        "type": "string",
+                        "default": ""
+                    },
+                    "color": {
+                        "title": "Color",
+                        "type": "string",
+                        "default": ""
                     }
-                    // "comparisonValuesLabel": {
-                    //     "title": "Historical values label",
-                    //     "type": "string",
-                    //     "default": ""
-                    // },
-                    // "color": {
-                    //     "title": "Color",
-                    //     "type": "string",
-                    //     "default": "#2196f3"
-                    // }
                 },
                 "required": ["showValuesForComparison"]
-                // "required": ["showValuesForComparison", "color"]
             };
             schema["form"].push({
                 "key": "comparisonSettings",
                 "items": [
-                    "comparisonSettings.showValuesForComparison"
-                    // "comparisonSettings.comparisonValuesLabel",
-                    // {
-                    //     "key": "comparisonSettings.color",
-                    //     "type": "color"
-                    // }
+                    "comparisonSettings.showValuesForComparison",
+                    "comparisonSettings.comparisonValuesLabel",
+                    {
+                        "key": "comparisonSettings.color",
+                        "type": "color"
+                    }
                 ]
             });
 
@@ -1381,7 +1395,7 @@ export default class TbFlot {
                         tooltipHtml = tbFlot.ctx.tooltipFormatter(item);
                     } else {
                         var hoverInfo = tbFlot.getHoverInfo(tbFlot.ctx.plot.getData(), pos);
-                        if (angular.isNumber(hoverInfo[0].time)) {
+                        if (angular.isNumber(hoverInfo[0].time) || (hoverInfo[1] && angular.isNumber(hoverInfo[1].time))) {
                             hoverInfo[0].seriesHover.sort(function (a, b) {
                                 return b.value - a.value;
                             });
@@ -1584,11 +1598,13 @@ export default class TbFlot {
                 hoverDistance = posx - series.data[hoverIndex][0];
                 pointTime = series.data[hoverIndex][0];
 
-                if (series.datasource.isAdditional && !minDistanceHistorical
+                if (series.datasource.isAdditional) {
+                    if (!minDistanceHistorical
                     || (hoverDistance >= 0 && (hoverDistance < minDistanceHistorical || minDistanceHistorical < 0))
                     || (hoverDistance < 0 && hoverDistance > minDistanceHistorical)) {
-                    minDistanceHistorical = hoverDistance;
-                    minTimeHistorical = pointTime;
+                        minDistanceHistorical = hoverDistance;
+                        minTimeHistorical = pointTime;
+                    }
                 } else if (!minDistance
                     || (hoverDistance >= 0 && (hoverDistance < minDistance || minDistance < 0))
                     || (hoverDistance < 0 && hoverDistance > minDistance)) {
@@ -1720,10 +1736,20 @@ const chartSettingsSchemaForComparison = {
                 "type": "boolean",
                 "default": false
             },
+            "timeForComparison": {
+                "title": "Time period to show historical data",
+                "type": "string",
+                "default": "month"
+            },
             "xaxisSecond": {
                 "title": "Second X axis",
                 "type": "object",
                 "properties": {
+                    "axisPosition": {
+                        "title": "Axis position",
+                        "type": "string",
+                        "default": "top"
+                    },
                     "showLabels": {
                         "title": "Show labels",
                         "type": "boolean",
@@ -1742,8 +1768,38 @@ const chartSettingsSchemaForComparison = {
     "form": [
         "comparisonEnabled",
         {
+            "key": "timeForComparison",
+            "type": "rc-select",
+            "multiple": false,
+            "items": [
+                {
+                    "value": "month",
+                    "label": "Month ago (default)"
+                },
+                {
+                    "value": "year",
+                    "label": "Year ago"
+                }
+            ]
+        },
+        {
             "key": "xaxisSecond",
             "items": [
+                {
+                    "key": "xaxisSecond.axisPosition",
+                    "type": "rc-select",
+                    "multiple": false,
+                    "items": [
+                        {
+                            "value": "top",
+                            "label": "Top (default)"
+                        },
+                        {
+                            "value": "bottom",
+                            "label": "Bottom"
+                        }
+                    ]
+                },
                 "xaxisSecond.showLabels",
                 "xaxisSecond.title",
             ]

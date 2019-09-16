@@ -384,22 +384,27 @@ function TimeService($translate, $http, $q, types) {
         }
     }
 
-    function createTimewindowForComparison(subscriptionTimewindow) {
+    function createTimewindowForComparison(subscriptionTimewindow, timeUnit) {
         var timewindowForComparison = {
             fixedWindow: null,
             realtimeWindowMs: null,
             aggregation: subscriptionTimewindow.aggregation
         };
 
-        timewindowForComparison.startTs = moment(subscriptionTimewindow.startTs).subtract(1, 'months').valueOf(); //eslint-disable-line
+        timewindowForComparison.startTs = moment(subscriptionTimewindow.startTs).subtract(1, timeUnit).valueOf(); //eslint-disable-line
 
         if (subscriptionTimewindow.realtimeWindowMs) {
             timewindowForComparison.realtimeWindowMs = subscriptionTimewindow.realtimeWindowMs;
         } else if (subscriptionTimewindow.fixedWindow) {
+            var timeInterval = subscriptionTimewindow.fixedWindow.endTimeMs - subscriptionTimewindow.fixedWindow.startTimeMs;
             timewindowForComparison.fixedWindow = {
                 startTimeMs: timewindowForComparison.startTs,
-                endTimeMs: moment(subscriptionTimewindow.endTimeMs).subtract(1, 'months').valueOf() //eslint-disable-line
+                endTimeMs: moment(subscriptionTimewindow.fixedWindow.endTimeMs).subtract(1, timeUnit).valueOf() //eslint-disable-line
             };
+            // timewindowForComparison.fixedWindow = {
+            //     startTimeMs: timewindowForComparison.startTs,
+            //     endTimeMs: timewindowForComparison.startTs + timeInterval
+            // };
         }
 
         return timewindowForComparison;

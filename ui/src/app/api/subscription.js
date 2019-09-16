@@ -134,6 +134,12 @@ export default class Subscription {
             this.subscriptionTimewindow = null;
             this.comparisonEnabled = options.comparisonEnabled;
             if (this.comparisonEnabled) {
+                this.timeUnitForComparison = 'months';
+                if (options.timeForComparison === 'year') {
+                    this.timeUnitForComparison = 'years';
+                }
+                this.timeForComparison = options.timeForComparison;
+
                 this.comparisonTimeWindow = {};
                 this.timewindowForComparison = null;
             }
@@ -323,6 +329,7 @@ export default class Subscription {
             var datasource = this.datasources[i];
             var additionalDataKeys = [];
             additionalKeysNumber = 0;
+            var $translate = this.ctx.$scope.$injector.get('$translate')
             for (var a = 0; a < datasource.dataKeys.length; a++) {
                 var dataKey = datasource.dataKeys[a];
                 dataKey.hidden = false;
@@ -350,15 +357,25 @@ export default class Subscription {
                     this.legendData.data.push(legendKeyData);
                 }
 
-                if (this.comparisonEnabled && dataKey.settings.comparisonSettings.showValuesForComparison) {
+                if (this.comparisonEnabled && dataKey.settings.comparisonSettings && dataKey.settings.comparisonSettings.showValuesForComparison) {
                     additionalKeysNumber++;
                     let additionalDataKey = angular.copy(dataKey);
-                    if (dataKey.settings.comparisonValuesLabel) {
-                        additionalDataKey.pattern = dataKey.settings.comparisonValuesLabel;
+                    if (dataKey.settings.comparisonSettings.comparisonValuesLabel) {
+                        additionalDataKey.pattern = this.ctx.utils.createLabelFromDatasource(datasource, dataKey.settings.comparisonSettings.comparisonValuesLabel);
                     } else {
-                        additionalDataKey.pattern = dataKey.pattern + ' (historical)';
+                        if (this.timeForComparison === 'year') {
+                            additionalDataKey.pattern = dataKey.pattern + ' ' + $translate.instant('legend.month-ago');
+                        } else {
+                            additionalDataKey.pattern = dataKey.pattern + ' ' + $translate.instant('legend.month-ago');
+                        }
                     }
                     additionalDataKey.label = additionalDataKey.pattern;
+                    if (dataKey.settings.comparisonSettings.color) {
+                        additionalDataKey.color = dataKey.settings.comparisonSettings.color;
+                    } else {
+                        additionalDataKey.color = this.genNextColor(this.datasources, additionalKeysNumber);
+                        dataKey.settings.comparisonSettings.color = additionalDataKey.color;
+                    }
                     additionalDataKeys.push(additionalDataKey);
                 }
             }
@@ -697,7 +714,7 @@ export default class Subscription {
     updateTimewindow() {
         this.timeWindow.interval = this.subscriptionTimewindow.aggregation.interval || 1000;
         if (this.subscriptionTimewindow.realtimeWindowMs) {
-            this.timeWindow.maxTime = (new Date).getTime() + this.timeWindow.stDiff;
+            this.timeWindow.maxTime = (moment()).valueOf() + this.timeWindow.stDiff;//eslint-disable-line
             this.timeWindow.minTime = this.timeWindow.maxTime - this.subscriptionTimewindow.realtimeWindowMs;
         } else if (this.subscriptionTimewindow.fixedWindow) {
             this.timeWindow.maxTime = this.subscriptionTimewindow.fixedWindow.endTimeMs;
@@ -721,7 +738,7 @@ export default class Subscription {
     updateComparisonTimewindow() {
         this.comparisonTimeWindow.interval = this.timewindowForComparison.aggregation.interval || 1000;
         if (this.timewindowForComparison.realtimeWindowMs) {
-            this.comparisonTimeWindow.maxTime = moment(this.timeWindow.maxTime).subtract(1, 'months').valueOf(); //eslint-disable-line
+            this.comparisonTimeWindow.maxTime = moment(this.timeWindow.maxTime).subtract(1, this.timeUnitForComparison).valueOf(); //eslint-disable-line
             this.comparisonTimeWindow.minTime = this.comparisonTimeWindow.maxTime - this.timewindowForComparison.realtimeWindowMs;
         } else if (this.timewindowForComparison.fixedWindow) {
             this.comparisonTimeWindow.maxTime = this.timewindowForComparison.fixedWindow.endTimeMs;
@@ -733,7 +750,7 @@ export default class Subscription {
         if (!this.subscriptionTimewindow) {
             this.subscriptionTimewindow = this.updateRealtimeSubscription();
         }
-        this.timewindowForComparison = this.ctx.timeService.createTimewindowForComparison(this.subscriptionTimewindow);
+        this.timewindowForComparison = this.ctx.timeService.createTimewindowForComparison(this.subscriptionTimewindow, this.timeUnitForComparison);
         this.updateComparisonTimewindow();
         return this.timewindowForComparison;
     }
@@ -1005,6 +1022,16 @@ export default class Subscription {
         this.registrations = [];
     }
 
+    genNextColor(datasources, additionalKeysNumber) {
+        var i = additionalKeysNumber;
+        for (var d = 0; d < datasources.length; d++) {
+            var datasource = datasources[d];
+            if (datasource && datasource.dataKeys) {
+                i += datasource.dataKeys.length;
+            }
+        }
+        return this.ctx.utils.getMaterialColor(i);
+    }
 }
 
 function calculateMin(data) {
