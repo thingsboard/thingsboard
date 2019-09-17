@@ -712,3 +712,20 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.entity_view_by_tenant_and_ent
       AND id IS NOT NULL
     PRIMARY KEY (tenant_id, entity_id, customer_id, search_text, id, type)
     WITH CLUSTERING ORDER BY (entity_id DESC, customer_id DESC, search_text ASC, id DESC);
+
+CREATE TABLE IF NOT EXISTS thingsboard.edge (
+  id timeuuid,
+  tenant_id timeuuid,
+  name text,
+  search_text text,
+  configuration text,
+  additional_info text,
+  PRIMARY KEY (id, tenant_id)
+);
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.edge_by_tenant_and_search_text AS
+  SELECT *
+  from thingsboard.edge
+  WHERE tenant_id IS NOT NULL AND search_text IS NOT NULL AND id IS NOT NULL
+  PRIMARY KEY ( tenant_id, search_text, id )
+  WITH CLUSTERING ORDER BY ( search_text ASC, id DESC );

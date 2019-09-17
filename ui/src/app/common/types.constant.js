@@ -358,7 +358,8 @@ export default angular.module('thingsboard.types', [])
                 alarm: "ALARM",
                 rulechain: "RULE_CHAIN",
                 rulenode: "RULE_NODE",
-                entityView: "ENTITY_VIEW"
+                entityView: "ENTITY_VIEW",
+                edge: "EDGE"
             },
             importEntityColumnType: {
                 name: {
@@ -461,7 +462,13 @@ export default angular.module('thingsboard.types', [])
                 "CURRENT_CUSTOMER": {
                     type: 'entity.type-current-customer',
                     list: 'entity.type-current-customer'
-                }
+                },
+                "EDGE": {
+                    type: 'entity.type-edge',
+                    typePlural: 'entity.type-edges',
+                    list: 'entity.list-of-edges',
+                    nameStartsWith: 'entity.edge-name-starts-with'
+                },
             },
             entitySearchDirection: {
                 from: "FROM",

@@ -243,3 +243,12 @@ CREATE TABLE IF NOT EXISTS entity_view (
     search_text varchar(255),
     additional_info varchar
 );
+
+CREATE TABLE IF NOT EXISTS edge (
+    id varchar(31) NOT NULL CONSTRAINT edge_pkey PRIMARY KEY,
+    additional_info varchar,
+    configuration varchar(10000000),
+    name varchar(255),
+    search_text varchar(255),
+    tenant_id varchar(31)
+);

@@ -107,6 +107,7 @@ export default angular.module('thingsboard.help', [])
                 widgetsConfigRpc: helpBaseUrl +  "/docs/user-guide/ui/dashboards#rpc",
                 widgetsConfigAlarm: helpBaseUrl +  "/docs/user-guide/ui/dashboards#alarm",
                 widgetsConfigStatic: helpBaseUrl +  "/docs/user-guide/ui/dashboards#static",
+                edges: helpBaseUrl + "/docs/user-guide/ui/edges"
             },
             getRuleNodeLink: function(ruleNode) {
                 if (ruleNode && ruleNode.component) {

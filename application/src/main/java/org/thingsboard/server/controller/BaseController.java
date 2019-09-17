@@ -43,12 +43,14 @@ import org.thingsboard.server.common.data.alarm.AlarmId;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
@@ -82,6 +84,7 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.ClaimDevicesService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
@@ -184,6 +187,9 @@ public abstract class BaseController {
 
     @Autowired
     protected ClaimDevicesService claimDevicesService;
+
+    @Autowired
+    protected EdgeService edgeService;
 
     @Value("${server.log_controller_error_stack_trace}")
     @Getter
@@ -458,6 +464,18 @@ public abstract class BaseController {
         }
     }
 
+    Edge checkEdgeId(EdgeId edgeId, Operation operation) throws ThingsboardException {
+        try {
+            validateId(edgeId, "Incorrect edgeId " + edgeId);
+            Edge edge = edgeService.findEdgeById(getTenantId(), edgeId);
+            checkNotNull(edge);
+            accessControlService.checkPermission(getCurrentUser(), Resource.EDGE, operation, edgeId, edge);
+            return edge;
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
+    }
+
     DashboardInfo checkDashboardInfoId(DashboardId dashboardId, Operation operation) throws ThingsboardException {
         try {
             validateId(dashboardId, "Incorrect dashboardId " + dashboardId);
@@ -512,7 +530,6 @@ public abstract class BaseController {
         checkRuleChain(ruleNode.getRuleChainId(), operation);
         return ruleNode;
     }
-
 
     protected String constructBaseUrl(HttpServletRequest request) {
         String scheme = request.getScheme();

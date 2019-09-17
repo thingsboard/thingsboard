@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.controller.sql;
 
-/**
- * @author Andrew Shvayka
- */
-public enum EntityType {
-    TENANT, CUSTOMER, USER, DASHBOARD, ASSET, DEVICE, ALARM, RULE_CHAIN, RULE_NODE, ENTITY_VIEW, WIDGETS_BUNDLE, WIDGET_TYPE, EDGE
+import org.thingsboard.server.controller.BaseEdgeControllerTest;
+import org.thingsboard.server.dao.service.DaoSqlTest;
+
+@DaoSqlTest
+public class EdgeControllerSqlTest extends BaseEdgeControllerTest {
 }

@@ -119,6 +119,11 @@ public class ThingsboardInstallService {
                     case "2.4.0":
                         log.info("Upgrading ThingsBoard from version 2.4.0 to 2.4.1 ...");
 
+                    case "2.4.2":
+                        log.info("Upgrading ThingsBoard from version 2.4.2 to 2.4.x ...");
+
+                        databaseUpgradeService.upgradeDatabase("2.4.2");
+
                         log.info("Updating system data...");
 
                         systemDataLoaderService.deleteSystemWidgetBundle("charts");

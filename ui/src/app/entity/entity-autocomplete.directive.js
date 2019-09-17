@@ -179,6 +179,12 @@ export default function EntityAutocomplete($compile, $templateCache, $q, $filter
                     scope.noEntitiesMatchingText = 'customer.no-customers-matching';
                     scope.entityRequiredText = 'customer.default-customer-required';
                     break;
+                case types.entityType.edge:
+                    scope.selectEntityText = 'edge.select-edge';
+                    scope.entityText = 'edge.edge';
+                    scope.noEntitiesMatchingText = 'edge.no-edges-matching';
+                    scope.entityRequiredText = 'edge.edge-required';
+                    break;
             }
             if (scope.entity && scope.entity.id.entityType != scope.entityType) {
                 scope.entity = null;

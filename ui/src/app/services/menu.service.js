@@ -185,6 +185,12 @@ function Menu(userService, $state, $rootScope) {
                             icon: 'view_quilt'
                         },
                         {
+                            name: 'edge.edges',
+                            type: 'link',
+                            state: 'home.edges',
+                            icon: 'toys'
+                        },
+                        {
                             name: 'widget.widget-library',
                             type: 'link',
                             state: 'home.widgets-bundles',
@@ -255,6 +261,16 @@ function Menu(userService, $state, $rootScope) {
                                 ]
                             },
                             {
+                                name: 'edge.management',
+                                places: [
+                                    {
+                                        name: 'edge.edges',
+                                        icon: 'toys',
+                                        state: 'home.edges'
+                                    }
+                                ]
+                            },
+                            {
                                 name: 'dashboard.management',
                                 places: [
                                     {
@@ -307,6 +323,12 @@ function Menu(userService, $state, $rootScope) {
                             icon: 'view_quilt'
                         },
                         {
+                            name: 'edge.edges',
+                            type: 'link',
+                            state: 'home.edges',
+                            icon: 'toys'
+                        },
+                        {
                             name: 'dashboard.dashboards',
                             type: 'link',
                             state: 'home.dashboards',
@@ -341,6 +363,16 @@ function Menu(userService, $state, $rootScope) {
                                     name: 'entity-view.entity-views',
                                     icon: 'view_quilt',
                                     state: 'home.entityViews'
+                                }
+                            ]
+                        },
+                        {
+                            name: 'edge.management',
+                            places: [
+                                {
+                                    name: 'edge.edges',
+                                    icon: 'toys',
+                                    state: 'home.edges'
                                 }
                             ]
                         },

@@ -348,6 +348,18 @@ public class ModelConstants {
     public static final String RULE_NODE_CONFIGURATION_PROPERTY = "configuration";
 
     /**
+     * Cassandra edge constants.
+     */
+    public static final String EDGE_COLUMN_FAMILY_NAME = "edge";
+    public static final String EDGE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String EDGE_NAME_PROPERTY = "name";
+    public static final String EDGE_CONFIGURATION_PROPERTY = "configuration";
+    public static final String EDGE_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
+
+    public static final String EDGE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "edge_by_tenant_and_search_text";
+
+
+    /**
      * Cassandra attributes and timeseries constants.
      */
     public static final String ATTRIBUTES_KV_CF = "attributes_kv_cf";

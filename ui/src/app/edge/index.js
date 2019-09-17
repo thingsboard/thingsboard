@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+import EdgeRoutes from './edge.routes';
+import {EdgeController, EdgeCardController} from './edge.controller';
+import EdgeDirective from './edge.directive';
 
-/**
- * @author Andrew Shvayka
- */
-public enum EntityType {
-    TENANT, CUSTOMER, USER, DASHBOARD, ASSET, DEVICE, ALARM, RULE_CHAIN, RULE_NODE, ENTITY_VIEW, WIDGETS_BUNDLE, WIDGET_TYPE, EDGE
-}
+export default angular.module('thingsboard.edge', [])
+    .config(EdgeRoutes)
+    .controller('EdgeController', EdgeController)
+    .controller('EdgeCardController', EdgeCardController)
+    .directive('tbEdge', EdgeDirective)
+    .name;
