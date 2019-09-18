@@ -23,6 +23,7 @@ import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
@@ -34,7 +35,9 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 
+import static org.thingsboard.server.dao.model.ModelConstants.ASSET_CUSTOMER_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_COLUMN_FAMILY_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.EDGE_CUSTOMER_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_NAME_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_TENANT_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPERTY;
@@ -48,6 +51,9 @@ public class EdgeEntity extends BaseSqlEntity<Edge> implements SearchTextEntity<
 
     @Column(name = EDGE_TENANT_ID_PROPERTY)
     private String tenantId;
+
+    @Column(name = EDGE_CUSTOMER_ID_PROPERTY)
+    private String customerId;
 
     @Column(name = EDGE_NAME_PROPERTY)
     private String name;
@@ -99,6 +105,9 @@ public class EdgeEntity extends BaseSqlEntity<Edge> implements SearchTextEntity<
         edge.setCreatedTime(UUIDs.unixTimestamp(UUIDConverter.fromString(id)));
         if (tenantId != null) {
             edge.setTenantId(new TenantId(UUIDConverter.fromString(tenantId)));
+        }
+        if (customerId != null) {
+            edge.setCustomerId(new CustomerId(UUIDConverter.fromString(customerId)));
         }
         edge.setName(name);
         edge.setConfiguration(configuration);

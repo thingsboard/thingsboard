@@ -53,6 +53,7 @@ public class Edge extends SearchTextBasedWithAdditionalInfo<EdgeId> implements H
     public Edge(Edge edge) {
         super(edge);
         this.tenantId = edge.getTenantId();
+        this.customerId = edge.getCustomerId();
         this.name = edge.getName();
         this.configuration = edge.getConfiguration();
         this.additionalInfo = edge.getAdditionalInfo();

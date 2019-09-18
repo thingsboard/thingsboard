@@ -352,6 +352,7 @@ public class ModelConstants {
      */
     public static final String EDGE_COLUMN_FAMILY_NAME = "edge";
     public static final String EDGE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String EDGE_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
     public static final String EDGE_NAME_PROPERTY = "name";
     public static final String EDGE_CONFIGURATION_PROPERTY = "configuration";
     public static final String EDGE_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;

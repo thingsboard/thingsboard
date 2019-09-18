@@ -17,6 +17,8 @@
 
 import addEdgeTemplate from './add-edge.tpl.html';
 import edgeCard from './edge-card.tpl.html';
+import assignToCustomerTemplate from './assign-to-customer.tpl.html';
+import addEdgesToCustomerTemplate from './add-edges-to-customer.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
 
@@ -26,25 +28,62 @@ export function EdgeCardController(types) {
     var vm = this;
 
     vm.types = types;
+
+    vm.isAssignedToCustomer = function() {
+        if (vm.item && vm.item.customerId && vm.parentCtl.edgesScope === 'tenant' &&
+            vm.item.customerId.id != vm.types.id.nullUid && !vm.item.assignedCustomer.isPublic) {
+            return true;
+        }
+        return false;
+    }
+
+    vm.isPublic = function() {
+        if (vm.item && vm.item.assignedCustomer && vm.parentCtl.edgesScope === 'tenant' && vm.item.assignedCustomer.isPublic) {
+            return true;
+        }
+        return false;
+    }
 }
 
 
 /*@ngInject*/
-export function EdgeController($rootScope, userService, edgeService, $state, $stateParams,
-                               $document, $mdDialog, $q, $translate, types, securityTypes, userPermissionsService) {
+export function EdgeController($rootScope, userService, edgeService, customerService, $state, $stateParams,
+                                $document, $mdDialog, $q, $translate, types, importExport) {
+
+    var customerId = $stateParams.customerId;
 
     var edgeActionsList = [];
 
     var edgeGroupActionsList = [];
+
+    var edgeAddItemActionsList = [
+        {
+            onAction: function ($event) {
+                vm.grid.addItem($event);
+            },
+            name: function() { return $translate.instant('action.add') },
+            details: function() { return $translate.instant('edge.add-edge-text') },
+            icon: "insert_drive_file"
+        },
+        {
+            onAction: function ($event) {
+                importExport.importEntities($event, types.entityType.edge).then(
+                    function() {
+                        vm.grid.refreshList();
+                    }
+                );
+            },
+            name: function() { return $translate.instant('action.import') },
+            details: function() { return $translate.instant('edge.import') },
+            icon: "file_upload"
+        }
+    ];
 
     var vm = this;
 
     vm.types = types;
 
     vm.edgeGridConfig = {
-
-        resource: securityTypes.resource.edge,
-
         deleteItemTitleFunc: deleteEdgeTitle,
         deleteItemContentFunc: deleteEdgeText,
         deleteItemsTitleFunc: deleteEdgesTitle,
@@ -61,6 +100,7 @@ export function EdgeController($rootScope, userService, edgeService, $state, $st
 
         actionsList: edgeActionsList,
         groupActionsList: edgeGroupActionsList,
+        addItemActions: edgeAddItemActionsList,
 
         onGridInited: gridInited,
 
@@ -68,7 +108,11 @@ export function EdgeController($rootScope, userService, edgeService, $state, $st
 
         addItemText: function() { return $translate.instant('edge.add-edge-text') },
         noItemsText: function() { return $translate.instant('edge.no-edges-text') },
-        itemDetailsText: function() { return $translate.instant('edge.edge-details') }
+        itemDetailsText: function() { return $translate.instant('edge.edge-details') },
+        isDetailsReadOnly: isCustomerUser,
+        isSelectionEnabled: function () {
+            return !isCustomerUser();
+        }
     };
 
     if (angular.isDefined($stateParams.items) && $stateParams.items !== null) {
@@ -79,43 +123,205 @@ export function EdgeController($rootScope, userService, edgeService, $state, $st
         vm.edgeGridConfig.topIndex = $stateParams.topIndex;
     }
 
+    vm.edgesScope = $state.$current.data.edgesType;
+
+    vm.assignToCustomer = assignToCustomer;
+    vm.makePublic = makePublic;
+    vm.unassignFromCustomer = unassignFromCustomer;
+
     initController();
 
     function initController() {
-        var fetchEdgesFunction = function (pageLink, edgeType) {
-            return edgeService.getEdges(pageLink, true, edgeType);
-        };
-        var deleteEdgeFunction = function (edgeId) {
-            return edgeService.deleteEdge(edgeId);
-        };
-        var refreshEdgesParamsFunction = function() {
-            return {"topIndex": vm.topIndex};
-        };
+        var fetchEdgesFunction = null;
+        var deleteEdgeFunction = null;
+        var refreshEdgesParamsFunction = null;
 
-        edgeActionsList.push(
-            {
-                onAction: function ($event, item) {
-                    vm.grid.deleteItem($event, item);
-                },
-                name: function() { return $translate.instant('action.delete') },
-                details: function() { return $translate.instant('edge.delete') },
-                icon: "delete",
-                isEnabled: function() {
-                    return userPermissionsService.hasGenericPermission(securityTypes.resource.edge, securityTypes.operation.delete);
+        var user = userService.getCurrentUser();
+
+        if (user.authority === 'CUSTOMER_USER') {
+            vm.edgesScope = 'customer_user';
+            customerId = user.customerId;
+        }
+        if (customerId) {
+            vm.customerEdgesTitle = $translate.instant('customer.edges');
+            customerService.getShortCustomerInfo(customerId).then(
+                function success(info) {
+                    if (info.isPublic) {
+                        vm.customerEdgesTitle = $translate.instant('customer.public-edges');
+                    }
                 }
-            }
-        );
+            );
+        }
 
-        edgeGroupActionsList.push(
-            {
-                onAction: function ($event) {
-                    vm.grid.deleteItems($event);
+        if (vm.edgesScope === 'tenant') {
+            fetchEdgesFunction = function (pageLink, edgeType) {
+                return edgeService.getTenantEdges(pageLink, true, null, edgeType);
+            };
+            deleteEdgeFunction = function (edgeId) {
+                return edgeService.deleteEdge(edgeId);
+            };
+            refreshEdgesParamsFunction = function() {
+                return {"topIndex": vm.topIndex};
+            };
+
+            edgeActionsList.push({
+                onAction: function ($event, item) {
+                    makePublic($event, item);
                 },
-                name: function() { return $translate.instant('edge.delete-edges') },
-                details: deleteEdgesActionTitle,
-                icon: "delete"
+                name: function() { return $translate.instant('action.share') },
+                details: function() { return $translate.instant('edge.make-public') },
+                icon: "share",
+                isEnabled: function(edge) {
+                    return edge && (!edge.customerId || edge.customerId.id === types.id.nullUid);
+                }
+            });
+
+            edgeActionsList.push(
+                {
+                    onAction: function ($event, item) {
+                        assignToCustomer($event, [ item.id.id ]);
+                    },
+                    name: function() { return $translate.instant('action.assign') },
+                    details: function() { return $translate.instant('edge.assign-to-customer') },
+                    icon: "assignment_ind",
+                    isEnabled: function(edge) {
+                        return edge && (!edge.customerId || edge.customerId.id === types.id.nullUid);
+                    }
+                }
+            );
+
+            edgeActionsList.push(
+                {
+                    onAction: function ($event, item) {
+                        unassignFromCustomer($event, item, false);
+                    },
+                    name: function() { return $translate.instant('action.unassign') },
+                    details: function() { return $translate.instant('edge.unassign-from-customer') },
+                    icon: "assignment_return",
+                    isEnabled: function(edge) {
+                        return edge && edge.customerId && edge.customerId.id !== types.id.nullUid && !edge.assignedCustomer.isPublic;
+                    }
+                }
+            );
+
+            edgeActionsList.push({
+                onAction: function ($event, item) {
+                    unassignFromCustomer($event, item, true);
+                },
+                name: function() { return $translate.instant('action.make-private') },
+                details: function() { return $translate.instant('edge.make-private') },
+                icon: "reply",
+                isEnabled: function(edge) {
+                    return edge && edge.customerId && edge.customerId.id !== types.id.nullUid && edge.assignedCustomer.isPublic;
+                }
+            });
+
+            edgeActionsList.push(
+                {
+                    onAction: function ($event, item) {
+                        vm.grid.deleteItem($event, item);
+                    },
+                    name: function() { return $translate.instant('action.delete') },
+                    details: function() { return $translate.instant('edge.delete') },
+                    icon: "delete"
+                }
+            );
+
+            edgeGroupActionsList.push(
+                {
+                    onAction: function ($event, items) {
+                        assignEdgesToCustomer($event, items);
+                    },
+                    name: function() { return $translate.instant('edge.assign-edges') },
+                    details: function(selectedCount) {
+                        return $translate.instant('edge.assign-edges-text', {count: selectedCount}, "messageformat");
+                    },
+                    icon: "assignment_ind"
+                }
+            );
+
+            edgeGroupActionsList.push(
+                {
+                    onAction: function ($event) {
+                        vm.grid.deleteItems($event);
+                    },
+                    name: function() { return $translate.instant('edge.delete-edges') },
+                    details: deleteEdgesActionTitle,
+                    icon: "delete"
+                }
+            );
+
+
+
+        } else if (vm.edgesScope === 'customer' || vm.edgesScope === 'customer_user') {
+            fetchEdgesFunction = function (pageLink, edgeType) {
+                return edgeService.getCustomerEdges(customerId, pageLink, true, null, edgeType);
+            };
+            deleteEdgeFunction = function (edgeId) {
+                return edgeService.unassignEdgeFromCustomer(edgeId);
+            };
+            refreshEdgesParamsFunction = function () {
+                return {"customerId": customerId, "topIndex": vm.topIndex};
+            };
+
+            if (vm.edgesScope === 'customer') {
+                edgeActionsList.push(
+                    {
+                        onAction: function ($event, item) {
+                            unassignFromCustomer($event, item, false);
+                        },
+                        name: function() { return $translate.instant('action.unassign') },
+                        details: function() { return $translate.instant('edge.unassign-from-customer') },
+                        icon: "assignment_return",
+                        isEnabled: function(edge) {
+                            return edge && !edge.assignedCustomer.isPublic;
+                        }
+                    }
+                );
+                edgeActionsList.push(
+                    {
+                        onAction: function ($event, item) {
+                            unassignFromCustomer($event, item, true);
+                        },
+                        name: function() { return $translate.instant('action.make-private') },
+                        details: function() { return $translate.instant('edge.make-private') },
+                        icon: "reply",
+                        isEnabled: function(edge) {
+                            return edge && edge.assignedCustomer.isPublic;
+                        }
+                    }
+                );
+
+                edgeGroupActionsList.push(
+                    {
+                        onAction: function ($event, items) {
+                            unassignEdgesFromCustomer($event, items);
+                        },
+                        name: function() { return $translate.instant('edge.unassign-edges') },
+                        details: function(selectedCount) {
+                            return $translate.instant('edge.unassign-edges-action-title', {count: selectedCount}, "messageformat");
+                        },
+                        icon: "assignment_return"
+                    }
+                );
+
+                vm.edgeGridConfig.addItemAction = {
+                    onAction: function ($event) {
+                        addEdgesToCustomer($event);
+                    },
+                    name: function() { return $translate.instant('edge.assign-edges') },
+                    details: function() { return $translate.instant('edge.assign-new-edge') },
+                    icon: "add"
+                };
+
+
+            } else if (vm.edgesScope === 'customer_user') {
+                vm.edgeGridConfig.addItemAction = {};
             }
-        );
+            vm.edgeGridConfig.addItemActions = [];
+
+        }
+
         vm.edgeGridConfig.refreshParamsFunc = refreshEdgesParamsFunction;
         vm.edgeGridConfig.fetchItemsFunc = fetchEdgesFunction;
         vm.edgeGridConfig.deleteItemFunc = deleteEdgeFunction;
@@ -155,12 +361,174 @@ export function EdgeController($rootScope, userService, edgeService, $state, $st
         edgeService.saveEdge(edge).then(
             function success(savedEdge) {
                 $rootScope.$broadcast('edgeSaved');
-                deferred.resolve(savedEdge);
+                var edges = [ savedEdge ];
+                customerService.applyAssignedCustomersInfo(edges).then(
+                    function success(items) {
+                        if (items && items.length == 1) {
+                            deferred.resolve(items[0]);
+                        } else {
+                            deferred.reject();
+                        }
+                    },
+                    function fail() {
+                        deferred.reject();
+                    }
+                );
             },
             function fail() {
                 deferred.reject();
             }
         );
         return deferred.promise;
+    }
+
+    function isCustomerUser() {
+        return vm.edgesScope === 'customer_user';
+    }
+
+    function assignToCustomer($event, edgeIds) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        var pageSize = 10;
+        customerService.getCustomers({limit: pageSize, textSearch: ''}).then(
+            function success(_customers) {
+                var customers = {
+                    pageSize: pageSize,
+                    data: _customers.data,
+                    nextPageLink: _customers.nextPageLink,
+                    selection: null,
+                    hasNext: _customers.hasNext,
+                    pending: false
+                };
+                if (customers.hasNext) {
+                    customers.nextPageLink.limit = pageSize;
+                }
+                $mdDialog.show({
+                    controller: 'AssignEdgeToCustomerController',
+                    controllerAs: 'vm',
+                    templateUrl: assignToCustomerTemplate,
+                    locals: {edgeIds: edgeIds, customers: customers},
+                    parent: angular.element($document[0].body),
+                    fullscreen: true,
+                    targetEvent: $event
+                }).then(function () {
+                    vm.grid.refreshList();
+                }, function () {
+                });
+            },
+            function fail() {
+            });
+    }
+
+    function addEdgesToCustomer($event) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        var pageSize = 10;
+        edgeService.getTenantEdges({limit: pageSize, textSearch: ''}, false).then(
+            function success(_edges) {
+                var edges = {
+                    pageSize: pageSize,
+                    data: _edges.data,
+                    nextPageLink: _edges.nextPageLink,
+                    selections: {},
+                    selectedCount: 0,
+                    hasNext: _edges.hasNext,
+                    pending: false
+                };
+                if (edges.hasNext) {
+                    edges.nextPageLink.limit = pageSize;
+                }
+                $mdDialog.show({
+                    controller: 'AddEdgesToCustomerController',
+                    controllerAs: 'vm',
+                    templateUrl: addEdgesToCustomerTemplate,
+                    locals: {customerId: customerId, edges: edges},
+                    parent: angular.element($document[0].body),
+                    fullscreen: true,
+                    targetEvent: $event
+                }).then(function () {
+                    vm.grid.refreshList();
+                }, function () {
+                });
+            },
+            function fail() {
+            });
+    }
+
+    function assignEdgesToCustomer($event, items) {
+        var edgeIds = [];
+        for (var id in items.selections) {
+            edgeIds.push(id);
+        }
+        assignToCustomer($event, edgeIds);
+    }
+
+    function unassignFromCustomer($event, edge, isPublic) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        var title;
+        var content;
+        var label;
+        if (isPublic) {
+            title = $translate.instant('edge.make-private-edge-title', {edgeName: edge.name});
+            content = $translate.instant('edge.make-private-edge-text');
+            label = $translate.instant('edge.make-private');
+        } else {
+            title = $translate.instant('edge.unassign-edge-title', {edgeName: edge.name});
+            content = $translate.instant('edge.unassign-edge-text');
+            label = $translate.instant('edge.unassign-edge');
+        }
+        var confirm = $mdDialog.confirm()
+            .targetEvent($event)
+            .title(title)
+            .htmlContent(content)
+            .ariaLabel(label)
+            .cancel($translate.instant('action.no'))
+            .ok($translate.instant('action.yes'));
+        $mdDialog.show(confirm).then(function () {
+            edgeService.unassignEdgeFromCustomer(edge.id.id).then(function success() {
+                vm.grid.refreshList();
+            });
+        });
+    }
+
+    function unassignEdgesFromCustomer($event, items) {
+        var confirm = $mdDialog.confirm()
+            .targetEvent($event)
+            .title($translate.instant('edge.unassign-edges-title', {count: items.selectedCount}, 'messageformat'))
+            .htmlContent($translate.instant('edge.unassign-edges-text'))
+            .ariaLabel($translate.instant('edge.unassign-edge'))
+            .cancel($translate.instant('action.no'))
+            .ok($translate.instant('action.yes'));
+        $mdDialog.show(confirm).then(function () {
+            var tasks = [];
+            for (var id in items.selections) {
+                tasks.push(edgeService.unassignEdgeFromCustomer(id));
+            }
+            $q.all(tasks).then(function () {
+                vm.grid.refreshList();
+            });
+        });
+    }
+
+    function makePublic($event, edge) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        var confirm = $mdDialog.confirm()
+            .targetEvent($event)
+            .title($translate.instant('edge.make-public-edge-title', {edgeName: edge.name}))
+            .htmlContent($translate.instant('edge.make-public-edge-text'))
+            .ariaLabel($translate.instant('edge.make-public'))
+            .cancel($translate.instant('action.no'))
+            .ok($translate.instant('action.yes'));
+        $mdDialog.show(confirm).then(function () {
+            edgeService.makeEdgePublic(edge.id.id).then(function success() {
+                vm.grid.refreshList();
+            });
+        });
     }
 }

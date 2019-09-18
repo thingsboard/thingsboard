@@ -23,6 +23,7 @@ import com.datastax.driver.mapping.annotations.Table;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.SearchTextEntity;
@@ -33,6 +34,7 @@ import java.util.UUID;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_ADDITIONAL_INFO_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_COLUMN_FAMILY_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_CONFIGURATION_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.EDGE_CUSTOMER_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_NAME_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_TENANT_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ID_PROPERTY;
@@ -49,6 +51,10 @@ public class EdgeEntity implements SearchTextEntity<Edge> {
     @ClusteringColumn
     @Column(name = EDGE_TENANT_ID_PROPERTY)
     private UUID tenantId;
+
+    @ClusteringColumn
+    @Column(name = EDGE_CUSTOMER_ID_PROPERTY)
+    private UUID customerId;
 
     @Column(name = EDGE_NAME_PROPERTY)
     private String name;
@@ -89,6 +95,9 @@ public class EdgeEntity implements SearchTextEntity<Edge> {
         edge.setCreatedTime(UUIDs.unixTimestamp(id));
         if (tenantId != null) {
             edge.setTenantId(new TenantId(tenantId));
+        }
+        if (customerId != null) {
+            edge.setCustomerId(new CustomerId(customerId));
         }
         edge.setName(name);
         edge.setConfiguration(configuration);

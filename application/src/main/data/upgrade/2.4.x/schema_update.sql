@@ -17,8 +17,16 @@
 CREATE TABLE IF NOT EXISTS edge (
     id varchar(31) NOT NULL CONSTRAINT edge_pkey PRIMARY KEY,
     additional_info varchar,
+    customer_id varchar(31),
     configuration varchar(10000000),
     name varchar(255),
     search_text varchar(255),
     tenant_id varchar(31)
 );
+
+ALTER TABLE asset ADD edge_id varchar(31);
+ALTER TABLE device ADD edge_id varchar(31);
+ALTER TABLE entity_view ADD edge_id varchar(31);
+
+ALTER TABLE dashboard ADD assigned_edges varchar(1000000);
+ALTER TABLE rule_chain ADD assigned_edges varchar(1000000);
