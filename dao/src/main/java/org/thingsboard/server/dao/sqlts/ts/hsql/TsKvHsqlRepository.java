@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sqlts.ts;
+package org.thingsboard.server.dao.sqlts.ts.hsql;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;
@@ -23,15 +23,15 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.dao.model.sqlts.ts.TsKvCompositeKey;
-import org.thingsboard.server.dao.model.sqlts.ts.TsKvEntity;
+import org.thingsboard.server.dao.model.sqlts.ts.hsql.TsKvCompositeKey;
+import org.thingsboard.server.dao.model.sqlts.ts.hsql.TsKvEntity;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 @SqlDao
-public interface TsKvRepository extends CrudRepository<TsKvEntity, TsKvCompositeKey> {
+public interface TsKvHsqlRepository extends CrudRepository<TsKvEntity, TsKvCompositeKey> {
 
     @Query("SELECT tskv FROM TsKvEntity tskv WHERE tskv.entityId = :entityId " +
             "AND tskv.entityType = :entityType AND tskv.key = :entityKey " +
@@ -74,10 +74,10 @@ public interface TsKvRepository extends CrudRepository<TsKvEntity, TsKvComposite
             "WHERE tskv.entityId = :entityId AND tskv.entityType = :entityType " +
             "AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts <= :endTs")
     CompletableFuture<TsKvEntity> findNumericMax(@Param("entityId") String entityId,
-                                          @Param("entityType") EntityType entityType,
-                                          @Param("entityKey") String entityKey,
-                                          @Param("startTs") long startTs,
-                                          @Param("endTs") long endTs);
+                                                 @Param("entityType") EntityType entityType,
+                                                 @Param("entityKey") String entityKey,
+                                                 @Param("startTs") long startTs,
+                                                 @Param("endTs") long endTs);
 
 
     @Async
@@ -86,10 +86,10 @@ public interface TsKvRepository extends CrudRepository<TsKvEntity, TsKvComposite
             "AND tskv.entityId = :entityId AND tskv.entityType = :entityType " +
             "AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts <= :endTs")
     CompletableFuture<TsKvEntity> findStringMin(@Param("entityId") String entityId,
-                                          @Param("entityType") EntityType entityType,
-                                          @Param("entityKey") String entityKey,
-                                          @Param("startTs") long startTs,
-                                          @Param("endTs") long endTs);
+                                                @Param("entityType") EntityType entityType,
+                                                @Param("entityKey") String entityKey,
+                                                @Param("startTs") long startTs,
+                                                @Param("endTs") long endTs);
 
     @Async
     @Query("SELECT new TsKvEntity(MIN(COALESCE(tskv.longValue, 9223372036854775807)), " +
@@ -100,10 +100,10 @@ public interface TsKvRepository extends CrudRepository<TsKvEntity, TsKvComposite
             "WHERE tskv.entityId = :entityId AND tskv.entityType = :entityType " +
             "AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts <= :endTs")
     CompletableFuture<TsKvEntity> findNumericMin(@Param("entityId") String entityId,
-                                          @Param("entityType") EntityType entityType,
-                                          @Param("entityKey") String entityKey,
-                                          @Param("startTs") long startTs,
-                                          @Param("endTs") long endTs);
+                                                 @Param("entityType") EntityType entityType,
+                                                 @Param("entityKey") String entityKey,
+                                                 @Param("startTs") long startTs,
+                                                 @Param("endTs") long endTs);
 
     @Async
     @Query("SELECT new TsKvEntity(SUM(CASE WHEN tskv.booleanValue IS NULL THEN 0 ELSE 1 END), " +

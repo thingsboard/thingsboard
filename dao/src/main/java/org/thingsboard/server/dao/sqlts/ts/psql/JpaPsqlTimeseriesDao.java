@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sqlts.ts;
+package org.thingsboard.server.dao.sqlts.ts.psql;
 
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.FutureCallback;
@@ -35,19 +35,22 @@ import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.model.sqlts.ts.TsKvEntity;
-import org.thingsboard.server.dao.model.sqlts.ts.TsKvLatestCompositeKey;
-import org.thingsboard.server.dao.model.sqlts.ts.TsKvLatestEntity;
+import org.thingsboard.server.dao.model.sqlts.ts.latest.TsKvLatestCompositeKey;
+import org.thingsboard.server.dao.model.sqlts.ts.latest.TsKvLatestEntity;
+import org.thingsboard.server.dao.model.sqlts.ts.psql.TsKvEntity;
 import org.thingsboard.server.dao.sqlts.AbstractSqlTimeseriesDao;
 import org.thingsboard.server.dao.sqlts.AbstractTimeseriesInsertRepository;
+import org.thingsboard.server.dao.sqlts.ts.latest.TsKvLatestRepository;
 import org.thingsboard.server.dao.timeseries.SimpleListenableFuture;
 import org.thingsboard.server.dao.timeseries.TimeseriesDao;
+import org.thingsboard.server.dao.util.PsqlDao;
 import org.thingsboard.server.dao.util.SqlTsDao;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -58,10 +61,11 @@ import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
 @Component
 @Slf4j
 @SqlTsDao
-public class JpaTimeseriesDao extends AbstractSqlTimeseriesDao implements TimeseriesDao {
+@PsqlDao
+public class JpaPsqlTimeseriesDao extends AbstractSqlTimeseriesDao implements TimeseriesDao {
 
     @Autowired
-    private TsKvRepository tsKvRepository;
+    private TsKvPsqlRepository tsKvRepository;
 
     @Autowired
     private TsKvLatestRepository tsKvLatestRepository;
@@ -93,8 +97,7 @@ public class JpaTimeseriesDao extends AbstractSqlTimeseriesDao implements Timese
 
     private ListenableFuture<Optional<TsKvEntry>> findAndAggregateAsync(TenantId tenantId, EntityId entityId, String key, long startTs, long endTs, long ts, Aggregation aggregation) {
         List<CompletableFuture<TsKvEntity>> entitiesFutures = new ArrayList<>();
-        String entityIdStr = fromTimeUUID(entityId.getId());
-        switchAgregation(entityId, key, startTs, endTs, aggregation, entitiesFutures, entityIdStr);
+        switchAgregation(entityId, key, startTs, endTs, aggregation, entitiesFutures);
 
         SettableFuture<TsKvEntity> listenableFuture = SettableFuture.create();
 
@@ -120,8 +123,7 @@ public class JpaTimeseriesDao extends AbstractSqlTimeseriesDao implements Timese
         });
         return Futures.transform(listenableFuture, entity -> {
             if (entity != null && entity.isNotEmpty()) {
-                entity.setEntityId(entityIdStr);
-                entity.setEntityType(entityId.getEntityType());
+                entity.setEntityId(entityId.getId());
                 entity.setKey(key);
                 entity.setTs(ts);
                 return Optional.of(DaoUtil.getData(entity));
@@ -131,80 +133,73 @@ public class JpaTimeseriesDao extends AbstractSqlTimeseriesDao implements Timese
         });
     }
 
-    private void switchAgregation(EntityId entityId, String key, long startTs, long endTs, Aggregation aggregation, List<CompletableFuture<TsKvEntity>> entitiesFutures, String entityIdStr) {
+    private void switchAgregation(EntityId entityId, String key, long startTs, long endTs, Aggregation aggregation, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
         switch (aggregation) {
             case AVG:
-                findAvg(entityId, key, startTs, endTs, entitiesFutures, entityIdStr);
+                findAvg(entityId.getId(), key, startTs, endTs, entitiesFutures);
                 break;
             case MAX:
-                findMax(entityId, key, startTs, endTs, entitiesFutures, entityIdStr);
+                findMax(entityId.getId(), key, startTs, endTs, entitiesFutures);
                 break;
             case MIN:
-                findMin(entityId, key, startTs, endTs, entitiesFutures, entityIdStr);
+                findMin(entityId.getId(), key, startTs, endTs, entitiesFutures);
                 break;
             case SUM:
-                findSum(entityId, key, startTs, endTs, entitiesFutures, entityIdStr);
+                findSum(entityId.getId(), key, startTs, endTs, entitiesFutures);
                 break;
             case COUNT:
-                findCount(entityId, key, startTs, endTs, entitiesFutures, entityIdStr);
+                findCount(entityId.getId(), key, startTs, endTs, entitiesFutures);
                 break;
             default:
                 throw new IllegalArgumentException("Not supported aggregation type: " + aggregation);
         }
     }
 
-    private void findCount(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures, String entityIdStr) {
+    private void findCount(UUID entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
         entitiesFutures.add(tsKvRepository.findCount(
-                entityIdStr,
-                entityId.getEntityType(),
+                entityId,
                 key,
                 startTs,
                 endTs));
     }
 
-    private void findSum(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures, String entityIdStr) {
+    private void findSum(UUID entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
         entitiesFutures.add(tsKvRepository.findSum(
-                entityIdStr,
-                entityId.getEntityType(),
+                entityId,
                 key,
                 startTs,
                 endTs));
     }
 
-    private void findMin(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures, String entityIdStr) {
+    private void findMin(UUID entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
         entitiesFutures.add(tsKvRepository.findStringMin(
-                entityIdStr,
-                entityId.getEntityType(),
+                entityId,
                 key,
                 startTs,
                 endTs));
         entitiesFutures.add(tsKvRepository.findNumericMin(
-                entityIdStr,
-                entityId.getEntityType(),
+                entityId,
                 key,
                 startTs,
                 endTs));
     }
 
-    private void findMax(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures, String entityIdStr) {
+    private void findMax(UUID entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
         entitiesFutures.add(tsKvRepository.findStringMax(
-                entityIdStr,
-                entityId.getEntityType(),
+                entityId,
                 key,
                 startTs,
                 endTs));
         entitiesFutures.add(tsKvRepository.findNumericMax(
-                entityIdStr,
-                entityId.getEntityType(),
+                entityId,
                 key,
                 startTs,
                 endTs));
     }
 
-    private void findAvg(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures, String entityIdStr) {
+    private void findAvg(UUID entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
         entitiesFutures.add(tsKvRepository.findAvg(
-                entityIdStr,
-                entityId.getEntityType(),
+                entityId,
                 key,
                 startTs,
                 endTs));
@@ -214,8 +209,7 @@ public class JpaTimeseriesDao extends AbstractSqlTimeseriesDao implements Timese
         return Futures.immediateFuture(
                 DaoUtil.convertDataList(
                         tsKvRepository.findAllWithLimit(
-                                fromTimeUUID(entityId.getId()),
-                                entityId.getEntityType(),
+                                entityId.getId(),
                                 query.getKey(),
                                 query.getStartTs(),
                                 query.getEndTs(),
@@ -253,8 +247,7 @@ public class JpaTimeseriesDao extends AbstractSqlTimeseriesDao implements Timese
     @Override
     public ListenableFuture<Void> save(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry, long ttl) {
         TsKvEntity entity = new TsKvEntity();
-        entity.setEntityType(entityId.getEntityType());
-        entity.setEntityId(fromTimeUUID(entityId.getId()));
+        entity.setEntityId(entityId.getId());
         entity.setTs(tsKvEntry.getTs());
         entity.setKey(tsKvEntry.getKey());
         entity.setStrValue(tsKvEntry.getStrValue().orElse(null));
@@ -294,8 +287,7 @@ public class JpaTimeseriesDao extends AbstractSqlTimeseriesDao implements Timese
     public ListenableFuture<Void> remove(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
         return service.submit(() -> {
             tsKvRepository.delete(
-                    fromTimeUUID(entityId.getId()),
-                    entityId.getEntityType(),
+                    entityId.getId(),
                     query.getKey(),
                     query.getStartTs(),
                     query.getEndTs());

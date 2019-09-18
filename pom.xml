@@ -94,6 +94,7 @@
         <snakeyaml.version>1.23</snakeyaml.version>
         <passay.version>1.5.0</passay.version>
         <ua-parser.version>1.4.3</ua-parser.version>
+        <persistence.version>2.5.0</persistence.version>
     </properties>
 
     <modules>
@@ -879,6 +880,11 @@
                 <groupId>com.github.ua-parser</groupId>
                 <artifactId>uap-java</artifactId>
                 <version>${ua-parser.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.persistence</groupId>
+                <artifactId>eclipselink</artifactId>
+                <version>${persistence.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

@@ -17,10 +17,19 @@ package org.thingsboard.server.dao.model.sqlts.timescale;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.eclipse.persistence.annotations.Convert;
+import org.eclipse.persistence.annotations.Converter;
 import org.springframework.util.StringUtils;
+import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.BooleanDataEntry;
+import org.thingsboard.server.common.data.kv.DoubleDataEntry;
+import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.model.ToData;
 import org.thingsboard.server.dao.model.sql.AbsractTsKvEntity;
+import org.thingsboard.server.dao.model.sqlts.util.UUIDConverter;
 
 import javax.persistence.Column;
 import javax.persistence.ColumnResult;
@@ -34,6 +43,9 @@ import javax.persistence.SqlResultSetMapping;
 import javax.persistence.SqlResultSetMappings;
 import javax.persistence.Table;
 
+import java.util.UUID;
+
+import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_ID_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.TENANT_ID_COLUMN;
 import static org.thingsboard.server.dao.sqlts.timescale.AggregationRepository.FIND_AVG;
 import static org.thingsboard.server.dao.sqlts.timescale.AggregationRepository.FIND_AVG_QUERY;
@@ -52,6 +64,7 @@ import static org.thingsboard.server.dao.sqlts.timescale.AggregationRepository.F
 @Entity
 @Table(name = "tenant_ts_kv")
 @IdClass(TimescaleTsKvCompositeKey.class)
+@Converter(name="uuidConverter", converterClass=UUIDConverter.class)
 @SqlResultSetMappings({
         @SqlResultSetMapping(
                 name = "timescaleAggregationMapping",
@@ -117,7 +130,13 @@ public final class TimescaleTsKvEntity extends AbsractTsKvEntity implements ToDa
 
     @Id
     @Column(name = TENANT_ID_COLUMN)
-    private String tenantId;
+    @Convert("uuidConverter")
+    private UUID tenantId;
+
+    @Id
+    @Column(name = ENTITY_ID_COLUMN)
+    @Convert("uuidConverter")
+    private UUID entityId;
 
     public TimescaleTsKvEntity() { }
 
@@ -175,6 +194,21 @@ public final class TimescaleTsKvEntity extends AbsractTsKvEntity implements ToDa
                 this.longValue = longValueCount + doubleValueCount;
             }
         }
+    }
+
+    @Override
+    public TsKvEntry toData() {
+        KvEntry kvEntry = null;
+        if (strValue != null) {
+            kvEntry = new StringDataEntry(key, strValue);
+        } else if (longValue != null) {
+            kvEntry = new LongDataEntry(key, longValue);
+        } else if (doubleValue != null) {
+            kvEntry = new DoubleDataEntry(key, doubleValue);
+        } else if (booleanValue != null) {
+            kvEntry = new BooleanDataEntry(key, booleanValue);
+        }
+        return new BasicTsKvEntry(ts, kvEntry);
     }
 
     @Override
