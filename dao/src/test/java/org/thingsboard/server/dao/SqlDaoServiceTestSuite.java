@@ -35,4 +35,18 @@ public class SqlDaoServiceTestSuite {
             "sql-test.properties"
     );
 
+//    @ClassRule
+//    public static CustomSqlUnit sqlUnit = new CustomSqlUnit(
+//            Arrays.asList("sql/schema-ts-psql.sql", "sql/schema-entities.sql", "sql/schema-entities-idx.sql", "sql/system-data.sql", "sql/system-test.sql"),
+//            "sql/drop-all-tables.sql",
+//            "sql-test.properties"
+//    );
+
+//    @ClassRule
+//    public static CustomSqlUnit sqlUnit = new CustomSqlUnit(
+//            Arrays.asList("sql/schema-timescale.sql", "sql/schema-timescale-idx.sql", "sql/schema-entities.sql", "sql/schema-entities-idx.sql", "sql/system-data.sql", "sql/system-test.sql"),
+//            "sql/timescale/drop-all-tables.sql",
+//            "sql-test.properties"
+//    );
+
 }

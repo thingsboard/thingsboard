@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model.sqlts.ts.psql;
+package org.thingsboard.server.dao.model.sqlts.hsql;
 
 import lombok.Data;
-import org.eclipse.persistence.annotations.Converter;
-import org.eclipse.persistence.annotations.Convert;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
@@ -27,31 +26,33 @@ import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.model.ToData;
 import org.thingsboard.server.dao.model.sql.AbsractTsKvEntity;
-import org.thingsboard.server.dao.model.sqlts.util.UUIDConverter;
-import org.thingsboard.server.dao.util.PsqlDao;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Id;
 import javax.persistence.IdClass;
 import javax.persistence.Table;
 
-import java.util.UUID;
-
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_ID_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_TYPE_COLUMN;
 
 @Data
 @Entity
 @Table(name = "ts_kv")
 @IdClass(TsKvCompositeKey.class)
-@Converter(name="uuidConverter", converterClass=UUIDConverter.class)
 public final class TsKvEntity extends AbsractTsKvEntity implements ToData<TsKvEntry> {
 
 
     @Id
+    @Enumerated(EnumType.STRING)
+    @Column(name = ENTITY_TYPE_COLUMN)
+    private EntityType entityType;
+
+    @Id
     @Column(name = ENTITY_ID_COLUMN)
-    @Convert("uuidConverter")
-    private UUID entityId;
+    private String entityId;
 
     public TsKvEntity() {
     }

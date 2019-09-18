@@ -29,7 +29,7 @@ import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.model.ToData;
 import org.thingsboard.server.dao.model.sql.AbsractTsKvEntity;
-import org.thingsboard.server.dao.model.sqlts.util.UUIDConverter;
+import org.thingsboard.server.dao.model.UUIDConverter;
 
 import javax.persistence.Column;
 import javax.persistence.ColumnResult;

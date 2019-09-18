@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model.sqlts.ts.hsql;
+package org.thingsboard.server.dao.model.sqlts.psql;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.dao.util.HsqlDao;
 
 import javax.persistence.Transient;
 import java.io.Serializable;
@@ -33,9 +31,7 @@ public class TsKvCompositeKey implements Serializable {
     @Transient
     private static final long serialVersionUID = -4089175869616037523L;
 
-    private EntityType entityType;
-    private String entityId;
+    private UUID entityId;
     private String key;
     private long ts;
-
 }

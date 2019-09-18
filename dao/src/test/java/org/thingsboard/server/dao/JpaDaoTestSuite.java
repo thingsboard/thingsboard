@@ -35,4 +35,18 @@ public class JpaDaoTestSuite {
             "sql-test.properties"
     );
 
+//    @ClassRule
+//    public static CustomSqlUnit sqlUnit = new CustomSqlUnit(
+//            Arrays.asList("sql/schema-ts-psql.sql", "sql/schema-entities.sql", "sql/system-data.sql"),
+//            "sql/drop-all-tables.sql",
+//            "sql-test.properties"
+//    );
+
+//    @ClassRule
+//    public static CustomSqlUnit sqlUnit = new CustomSqlUnit(
+//            Arrays.asList("sql/schema-timescale.sql", "sql/schema-timescale-idx.sql", "sql/schema-entities.sql", "sql/system-data.sql"),
+//            "sql/timescale/drop-all-tables.sql",
+//            "sql-test.properties"
+//    );
+
 }

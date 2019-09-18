@@ -13,26 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model.sqlts.ts.psql;
+package org.thingsboard.server.dao.model.sqlts.latest;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.dao.util.PsqlDao;
+import org.thingsboard.server.common.data.EntityType;
 
 import javax.persistence.Transient;
 import java.io.Serializable;
-import java.util.UUID;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-public class TsKvCompositeKey implements Serializable {
+@AllArgsConstructor
+public class TsKvLatestCompositeKey implements Serializable{
 
     @Transient
     private static final long serialVersionUID = -4089175869616037523L;
 
-    private UUID entityId;
+    private EntityType entityType;
+    private String entityId;
     private String key;
-    private long ts;
 }

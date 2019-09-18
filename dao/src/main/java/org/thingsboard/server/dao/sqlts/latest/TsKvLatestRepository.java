@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sqlts.ts.latest;
+package org.thingsboard.server.dao.sqlts.latest;
 
 import org.springframework.data.repository.CrudRepository;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.dao.model.sqlts.ts.latest.TsKvLatestCompositeKey;
-import org.thingsboard.server.dao.model.sqlts.ts.latest.TsKvLatestEntity;
+import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestCompositeKey;
+import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
