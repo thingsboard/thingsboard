@@ -43,7 +43,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_TYPE_COLUMN
 @Entity
 @Table(name = "ts_kv")
 @IdClass(TsKvCompositeKey.class)
-@HsqlDao
 public final class TsKvEntity extends AbsractTsKvEntity implements ToData<TsKvEntry> {
 
 

@@ -27,7 +27,6 @@ import java.util.UUID;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@PsqlDao
 public class TsKvCompositeKey implements Serializable {
 
     @Transient

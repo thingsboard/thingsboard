@@ -45,7 +45,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_ID_COLUMN;
 @Table(name = "ts_kv")
 @IdClass(TsKvCompositeKey.class)
 @Converter(name="uuidConverter", converterClass=UUIDConverter.class)
-@PsqlDao
 public final class TsKvEntity extends AbsractTsKvEntity implements ToData<TsKvEntry> {
 
 
