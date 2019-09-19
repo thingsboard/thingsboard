@@ -38,6 +38,8 @@ import { DashboardComponent } from '@home/components/dashboard/dashboard.compone
 import { WidgetComponent } from '@home/components/widget/widget.component';
 import { WidgetComponentService } from './widget/widget-component.service';
 import { LegendComponent } from '@home/components/widget/legend.component';
+import { AliasesEntitySelectPanelComponent } from '@home/components/alias/aliases-entity-select-panel.component';
+import { AliasesEntitySelectComponent } from '@home/components/alias/aliases-entity-select.component';
 
 @NgModule({
   entryComponents: [
@@ -48,7 +50,8 @@ import { LegendComponent } from '@home/components/widget/legend.component';
     AlarmTableHeaderComponent,
     AlarmDetailsDialogComponent,
     AddAttributeDialogComponent,
-    EditAttributeValuePanelComponent
+    EditAttributeValuePanelComponent,
+    AliasesEntitySelectPanelComponent
   ],
   declarations:
     [
@@ -69,6 +72,8 @@ import { LegendComponent } from '@home/components/widget/legend.component';
       AttributeTableComponent,
       AddAttributeDialogComponent,
       EditAttributeValuePanelComponent,
+      AliasesEntitySelectPanelComponent,
+      AliasesEntitySelectComponent,
       DashboardComponent,
       WidgetComponent,
       LegendComponent
@@ -89,6 +94,7 @@ import { LegendComponent } from '@home/components/widget/legend.component';
     AlarmTableComponent,
     AlarmDetailsDialogComponent,
     AttributeTableComponent,
+    AliasesEntitySelectComponent,
     DashboardComponent,
     WidgetComponent,
     LegendComponent

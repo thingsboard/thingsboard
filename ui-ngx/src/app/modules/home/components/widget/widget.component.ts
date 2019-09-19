@@ -61,10 +61,9 @@ import {
   WidgetTypeInstance
 } from '@home/models/widget-component.models';
 import {
-  EntityInfo,
   IWidgetSubscription,
   StateObject,
-  StateParams,
+  StateParams, SubscriptionEntityInfo,
   SubscriptionInfo,
   WidgetSubscriptionContext,
   WidgetSubscriptionOptions
@@ -1065,7 +1064,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     this.store.dispatch(new ActionNotificationShow({message: messageToShow, type: 'error'}));
   }
 
-  private getActiveEntityInfo(): EntityInfo {
+  private getActiveEntityInfo(): SubscriptionEntityInfo {
     let entityInfo = this.widgetContext.activeEntityInfo;
     if (!entityInfo) {
       for (const id of Object.keys(this.widgetContext.subscriptions)) {

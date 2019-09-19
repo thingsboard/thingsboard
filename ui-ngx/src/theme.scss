@@ -166,9 +166,52 @@ $tb-dark-theme: get-tb-dark-theme(
     $tb-accent
 );
 
+@mixin mat-fab-toolbar-theme($theme) {
+  $primary: map-get($theme, primary);
+  $accent: map-get($theme, accent);
+  $warn: map-get($theme, warn);
+  $background: map-get($theme, background);
+  $foreground: map-get($theme, foreground);
+
+  mat-fab-toolbar {
+    .mat-fab-toolbar-background {
+      background: mat-color($background, app-bar);
+      color: mat-color($foreground, text);
+    }
+    &.mat-primary {
+      .mat-fab-toolbar-background {
+        @include _mat-toolbar-color($primary);
+      }
+    }
+    &.mat-accent {
+      .mat-fab-toolbar-background {
+        @include _mat-toolbar-color($accent);
+      }
+    }
+    &.mat-warn {
+      .mat-fab-toolbar-background {
+        @include _mat-toolbar-color($warn);
+      }
+    }
+  }
+}
+
+@mixin tb-components-theme($theme) {
+  $primary: map-get($theme, primary);
+
+  mat-toolbar{
+    &.mat-hue-3 {
+      background-color: mat-color($primary, 'A100');
+    }
+  }
+
+  @include mat-fab-toolbar-theme($tb-theme);
+}
+
 .tb-default {
   @include angular-material-theme($tb-theme);
   @include mat-datetimepicker-theme($tb-theme);
+  @include tb-components-theme($tb-theme);
 }
 
 .tb-dark {
@@ -388,11 +431,13 @@ $tb-dark-theme: get-tb-dark-theme(
       width: 32px;
       height: 32px;
       line-height: 32px;
+      padding: 0 !important;
     }
     &.tb-mat-96 {
       width: 96px;
       height: 96px;
       line-height: 96px;
+      padding: 0 !important;
     }
   }
 
@@ -547,6 +592,27 @@ $tb-dark-theme: get-tb-dark-theme(
     bottom: 0;
     left: 0;
     right: 0;
+  }
+
+  .tb-progress-cover {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 6;
+    background-color: #eee;
+    opacity: 1;
+  }
+
+  .mat-button.tb-fullscreen-button-style,
+  .tb-fullscreen-button-style {
+    background: #ccc;
+    opacity: .85;
+
+    mat-icon {
+      color: #666;
+    }
   }
 
   span.no-data-found {

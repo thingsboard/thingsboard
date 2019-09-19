@@ -21,11 +21,12 @@ import { isUndefined, isDefined } from '@core/utils';
 import { WindowMessage } from '@shared/models/window-message.model';
 import { TranslateService } from '@ngx-translate/core';
 import { customTranslationsPrefix } from '@app/shared/models/constants';
-import { DataKey, Datasource, DatasourceType, KeyInfo } from '@shared/models/widget.models';
+import { DataKey, Datasource, DatasourceType, KeyInfo, Widget } from '@shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { DataKeyType } from '@app/shared/models/telemetry/telemetry.models';
 import { alarmFields } from '@shared/models/alarm.models';
 import { materialColors } from '@app/shared/models/material.models';
+import { WidgetInfo } from '@home/models/widget-component.models';
 
 @Injectable({
   providedIn: 'root'
@@ -34,7 +35,7 @@ export class UtilsService {
 
   iframeMode = false;
   widgetEditMode = false;
-  editWidgetInfo: any = null;
+  editWidgetInfo: WidgetInfo = null;
 
   constructor(@Inject(WINDOW) private window: Window,
               private translate: TranslateService) {
@@ -87,7 +88,7 @@ export class UtilsService {
         type: 'widgetException',
         data
       };
-      this.window.parent.postMessage(message, '*');
+      this.window.parent.postMessage(JSON.stringify(message), '*');
     }
     return data;
   }

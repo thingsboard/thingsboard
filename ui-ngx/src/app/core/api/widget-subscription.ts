@@ -15,8 +15,7 @@
 ///
 
 import {
-  EntityInfo,
-  IWidgetSubscription,
+  IWidgetSubscription, SubscriptionEntityInfo,
   WidgetSubscriptionCallbacks,
   WidgetSubscriptionContext,
   WidgetSubscriptionOptions
@@ -339,7 +338,7 @@ export class WidgetSubscription implements IWidgetSubscription {
     this.onDataUpdated();
   }
 
-  getFirstEntityInfo(): EntityInfo {
+  getFirstEntityInfo(): SubscriptionEntityInfo {
     return undefined;
   }
 

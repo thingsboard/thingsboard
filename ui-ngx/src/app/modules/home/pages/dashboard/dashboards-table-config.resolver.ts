@@ -303,9 +303,11 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
     if ($event) {
       $event.stopPropagation();
     }
-    // TODO:
-    // this.router.navigateByUrl(`customers/${customer.id.id}/users`);
-    this.dialogService.todo();
+    if (this.config.componentsData.dashboardScope === 'customer') {
+      this.router.navigateByUrl(`customers/${this.config.componentsData.customerId}/dashboards/${dashboard.id.id}`);
+    } else {
+      this.router.navigateByUrl(`dashboards/${dashboard.id.id}`);
+    }
   }
 
   importDashboard($event: Event) {

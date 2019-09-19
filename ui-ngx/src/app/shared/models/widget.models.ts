@@ -38,6 +38,8 @@ export interface WidgetTypeTemplate {
 
 export interface WidgetTypeData {
   name: string;
+  icon: string;
+  isMdiIcon?: boolean;
   template: WidgetTypeTemplate;
 }
 
@@ -47,6 +49,7 @@ export const widgetTypesData = new Map<widgetType, WidgetTypeData>(
       widgetType.timeseries,
       {
         name: 'widget.timeseries',
+        icon: 'timeline',
         template: {
           bundleAlias: 'charts',
           alias: 'basic_timeseries'
@@ -57,6 +60,7 @@ export const widgetTypesData = new Map<widgetType, WidgetTypeData>(
       widgetType.latest,
       {
         name: 'widget.latest-values',
+        icon: 'track_changes',
         template: {
           bundleAlias: 'cards',
           alias: 'attributes_card'
@@ -67,6 +71,8 @@ export const widgetTypesData = new Map<widgetType, WidgetTypeData>(
       widgetType.rpc,
       {
         name: 'widget.rpc',
+        icon: 'mdi:developer-board',
+        isMdiIcon: true,
         template: {
           bundleAlias: 'gpio_widgets',
           alias: 'basic_gpio_control'
@@ -77,6 +83,7 @@ export const widgetTypesData = new Map<widgetType, WidgetTypeData>(
       widgetType.alarm,
       {
         name: 'widget.alarm',
+        icon: 'error',
         template: {
           bundleAlias: 'alarm_widgets',
           alias: 'alarms_table'
@@ -87,6 +94,7 @@ export const widgetTypesData = new Map<widgetType, WidgetTypeData>(
       widgetType.static,
       {
         name: 'widget.static',
+        icon: 'font_download',
         template: {
           bundleAlias: 'cards',
           alias: 'html_card'
@@ -214,7 +222,7 @@ export enum DatasourceType {
 }
 
 export interface Datasource {
-  type: DatasourceType;
+  type?: DatasourceType | any;
   name?: string;
   dataKeys?: Array<DataKey>;
   entityType?: EntityType;
@@ -333,7 +341,7 @@ export interface WidgetConfig {
 
 export interface Widget {
   id?: string;
-  typeId: WidgetTypeId;
+  typeId?: WidgetTypeId;
   isSystemType: boolean;
   bundleAlias: string;
   typeAlias: string;

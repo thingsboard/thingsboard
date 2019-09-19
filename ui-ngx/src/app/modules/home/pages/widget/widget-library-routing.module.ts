@@ -17,20 +17,24 @@
 import { Injectable, NgModule } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, RouterModule, Routes } from '@angular/router';
 
-import {EntitiesTableComponent} from '../../components/entity/entities-table.component';
-import {Authority} from '@shared/models/authority.enum';
-import {RuleChainsTableConfigResolver} from '@modules/home/pages/rulechain/rulechains-table-config.resolver';
-import {WidgetsBundlesTableConfigResolver} from '@modules/home/pages/widget/widgets-bundles-table-config.resolver';
+import { EntitiesTableComponent } from '../../components/entity/entities-table.component';
+import { Authority } from '@shared/models/authority.enum';
+import { WidgetsBundlesTableConfigResolver } from '@modules/home/pages/widget/widgets-bundles-table-config.resolver';
 import { WidgetLibraryComponent } from '@home/pages/widget/widget-library.component';
 import { BreadCrumbConfig, BreadCrumbLabelFunction } from '@shared/components/breadcrumb';
-import { User } from '@shared/models/user.model';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
-import { UserService } from '@core/http/user.service';
 import { Observable } from 'rxjs';
-import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { WidgetService } from '@core/http/widget.service';
+import { WidgetEditorComponent } from '@home/pages/widget/widget-editor.component';
+import { map } from 'rxjs/operators';
+import { toWidgetInfo, WidgetInfo } from '@home/models/widget-component.models';
+import { widgetType, WidgetType } from '@app/shared/models/widget.models';
+import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
+
+export interface WidgetEditorData {
+  widgetType: WidgetType;
+  widget: WidgetInfo;
+}
 
 @Injectable()
 export class WidgetsBundleResolver implements Resolve<WidgetsBundle> {
@@ -39,12 +43,60 @@ export class WidgetsBundleResolver implements Resolve<WidgetsBundle> {
   }
 
   resolve(route: ActivatedRouteSnapshot): Observable<WidgetsBundle> {
-    const widgetsBundleId = route.params.widgetsBundleId;
+    let widgetsBundleId = route.params.widgetsBundleId;
+    if (!widgetsBundleId) {
+      widgetsBundleId = route.parent.params.widgetsBundleId;
+    }
     return this.widgetsService.getWidgetsBundle(widgetsBundleId);
   }
 }
 
+@Injectable()
+export class WidgetEditorDataResolver implements Resolve<WidgetEditorData> {
+
+  constructor(private widgetsService: WidgetService) {
+  }
+
+  resolve(route: ActivatedRouteSnapshot): Observable<WidgetEditorData> {
+    const widgetTypeId = route.params.widgetTypeId;
+    return this.widgetsService.getWidgetTypeById(widgetTypeId).pipe(
+      map((result) => {
+        return {
+          widgetType: result,
+          widget: toWidgetInfo(result)
+        };
+      })
+    );
+  }
+}
+
+@Injectable()
+export class WidgetEditorAddDataResolver implements Resolve<WidgetEditorData> {
+
+  constructor(private widgetsService: WidgetService) {
+  }
+
+  resolve(route: ActivatedRouteSnapshot): Observable<WidgetEditorData> {
+    let widgetTypeParam = route.params.widgetType as widgetType;
+    if (!widgetTypeParam) {
+      widgetTypeParam = widgetType.timeseries;
+    }
+    return this.widgetsService.getWidgetTemplate(widgetTypeParam).pipe(
+      map((widget) => {
+        widget.widgetName = null;
+        return {
+          widgetType: null,
+          widget
+        };
+      })
+    );
+  }
+}
+
 export const widgetTypesBreadcumbLabelFunction: BreadCrumbLabelFunction = ((route, translate) => route.data.widgetsBundle.title);
+
+export const widgetEditorBreadcumbLabelFunction: BreadCrumbLabelFunction =
+  ((route, translate, component) => component ? (component as WidgetEditorComponent).widget.widgetName : '');
 
 export const routes: Routes = [
   {
@@ -69,10 +121,7 @@ export const routes: Routes = [
       },
       {
         path: ':widgetsBundleId/widgetTypes',
-        component: WidgetLibraryComponent,
         data: {
-          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
-          title: 'widget.widget-library',
           breadcrumb: {
             labelFunction: widgetTypesBreadcumbLabelFunction,
             icon: 'now_widgets'
@@ -80,7 +129,49 @@ export const routes: Routes = [
         },
         resolve: {
           widgetsBundle: WidgetsBundleResolver
-        }
+        },
+        children: [
+          {
+            path: '',
+            component: WidgetLibraryComponent,
+            data: {
+              auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+              title: 'widget.widget-library'
+            }
+          },
+          {
+            path: ':widgetTypeId',
+            component: WidgetEditorComponent,
+            canDeactivate: [ConfirmOnExitGuard],
+            data: {
+              auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+              title: 'widget.editor',
+              breadcrumb: {
+                labelFunction: widgetEditorBreadcumbLabelFunction,
+                icon: 'insert_chart'
+              } as BreadCrumbConfig
+            },
+            resolve: {
+              widgetEditorData: WidgetEditorDataResolver
+            }
+          },
+          {
+            path: 'add/:widgetType',
+            component: WidgetEditorComponent,
+            canDeactivate: [ConfirmOnExitGuard],
+            data: {
+              auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+              title: 'widget.editor',
+              breadcrumb: {
+                labelFunction: widgetEditorBreadcumbLabelFunction,
+                icon: 'insert_chart'
+              } as BreadCrumbConfig
+            },
+            resolve: {
+              widgetEditorData: WidgetEditorAddDataResolver
+            }
+          }
+        ]
       }
     ]
   }
@@ -91,7 +182,9 @@ export const routes: Routes = [
   exports: [RouterModule],
   providers: [
     WidgetsBundlesTableConfigResolver,
-    WidgetsBundleResolver
+    WidgetsBundleResolver,
+    WidgetEditorDataResolver,
+    WidgetEditorAddDataResolver
   ]
 })
 export class WidgetLibraryRoutingModule { }

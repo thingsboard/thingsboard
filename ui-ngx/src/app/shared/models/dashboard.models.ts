@@ -14,22 +14,26 @@
 /// limitations under the License.
 ///
 
-import {BaseData} from '@shared/models/base-data';
-import {DashboardId} from '@shared/models/id/dashboard-id';
-import {TenantId} from '@shared/models/id/tenant-id';
-import {ShortCustomerInfo} from '@shared/models/customer.model';
+import { BaseData } from '@shared/models/base-data';
+import { DashboardId } from '@shared/models/id/dashboard-id';
+import { TenantId } from '@shared/models/id/tenant-id';
+import { ShortCustomerInfo } from '@shared/models/customer.model';
+import { Widget } from './widget.models';
+import { Timewindow } from '@shared/models/time/time.models';
+import { EntityType } from '@shared/models/entity-type.models';
+import { EntityAlias, EntityAliases } from './alias.models';
 
 export interface DashboardInfo extends BaseData<DashboardId> {
-  tenantId: TenantId;
-  title: string;
-  assignedCustomers: Array<ShortCustomerInfo>;
+  tenantId?: TenantId;
+  title?: string;
+  assignedCustomers?: Array<ShortCustomerInfo>;
 }
 
 export interface WidgetLayout {
   sizeX: number;
   sizeY: number;
-  mobileHeight: number;
-  mobileOrder: number;
+  mobileHeight?: number;
+  mobileOrder?: number;
   col: number;
   row: number;
 }
@@ -38,13 +42,59 @@ export interface WidgetLayouts {
   [id: string]: WidgetLayout;
 }
 
+export interface GridSettings {
+  backgroundColor?: string;
+  color?: string;
+  columns?: number;
+  margins?: [number, number];
+  backgroundSizeMode?: string;
+  [key: string]: any;
+  // TODO:
+}
+
+export interface DashboardLayout {
+  widgets: WidgetLayouts;
+  gridSettings: GridSettings;
+}
+
+export declare type DashboardLayoutId = 'main' | 'right';
+
+export interface DashboardStateLayouts {
+  main?: DashboardLayout;
+  right?: DashboardLayout;
+}
+
+export interface DashboardState {
+  name: string;
+  root: boolean;
+  layouts: DashboardStateLayouts;
+}
+
+export declare type StateControllerId = 'entity' | 'default' | string;
+
+export interface DashboardSettings {
+  stateControllerId?: StateControllerId;
+  showTitle?: boolean;
+  showDashboardsSelect?: boolean;
+  showEntitiesSelect?: boolean;
+  showDashboardTimewindow?: boolean;
+  showDashboardExport?: boolean;
+  toolbarAlwaysOpen?: boolean;
+  titleColor?: string;
+}
+
 export interface DashboardConfiguration {
+  timewindow?: Timewindow;
+  settings?: DashboardSettings;
+  widgets?: {[id: string]: Widget } | Widget[];
+  states?: {[id: string]: DashboardState };
+  entityAliases?: EntityAliases;
   [key: string]: any;
   // TODO:
 }
 
 export interface Dashboard extends DashboardInfo {
-  configuration: DashboardConfiguration;
+  configuration?: DashboardConfiguration;
 }
 
 export function isPublicDashboard(dashboard: DashboardInfo): boolean {

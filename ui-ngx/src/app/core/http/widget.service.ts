@@ -21,10 +21,12 @@ import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
-import { WidgetType } from '@shared/models/widget.models';
+import { WidgetType, widgetType, WidgetTypeData, widgetTypesData } from '@shared/models/widget.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ResourcesService } from '../services/resources.service';
+import { toWidgetInfo, WidgetInfo } from '@app/modules/home/models/widget-component.models';
+import { map } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -70,4 +72,23 @@ export class WidgetService {
     return this.http.get<WidgetType>(`/api/widgetType?isSystem=${isSystem}&bundleAlias=${bundleAlias}&alias=${widgetTypeAlias}`,
       defaultHttpOptions(ignoreLoading, ignoreErrors));
   }
+
+  public getWidgetTypeById(widgetTypeId: string,
+                           ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<WidgetType> {
+    return this.http.get<WidgetType>(`/api/widgetType/${widgetTypeId}`,
+      defaultHttpOptions(ignoreLoading, ignoreErrors));
+  }
+
+  public getWidgetTemplate(widgetTypeParam: widgetType,
+                           ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<WidgetInfo> {
+    const templateWidgetType = widgetTypesData.get(widgetTypeParam);
+    return this.getWidgetType(templateWidgetType.template.bundleAlias, templateWidgetType.template.alias, true,
+      ignoreErrors, ignoreLoading).pipe(
+        map((result) => {
+          const widgetInfo = toWidgetInfo(result);
+          widgetInfo.alias = undefined;
+          return widgetInfo;
+        })
+      );
+    }
 }

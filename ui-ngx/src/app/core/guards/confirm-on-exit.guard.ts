@@ -28,21 +28,26 @@ import { selectAuth } from '@core/auth/auth.selectors';
 import { take } from 'rxjs/operators';
 import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
+import { isDefined } from '../utils';
 
 export interface HasConfirmForm {
   confirmForm(): FormGroup;
 }
 
+export interface HasDirtyFlag {
+  isDirty: boolean;
+}
+
 @Injectable({
   providedIn: 'root'
 })
-export class ConfirmOnExitGuard implements CanDeactivate<HasConfirmForm> {
+export class ConfirmOnExitGuard implements CanDeactivate<HasConfirmForm & HasDirtyFlag> {
 
   constructor(private store: Store<AppState>,
               private dialogService: DialogService,
               private translate: TranslateService) { }
 
-  canDeactivate(component: HasConfirmForm,
+  canDeactivate(component: HasConfirmForm & HasDirtyFlag,
                 route: ActivatedRouteSnapshot,
                 state: RouterStateSnapshot) {
 
@@ -54,9 +59,17 @@ export class ConfirmOnExitGuard implements CanDeactivate<HasConfirmForm> {
       }
     );
 
-    if (component.confirmForm && auth && auth.isAuthenticated) {
-      const confirmForm = component.confirmForm();
-      if (confirmForm && confirmForm.dirty) {
+    if (auth && auth.isAuthenticated) {
+      let isDirty = false;
+      if (component.confirmForm) {
+        const confirmForm = component.confirmForm();
+        if (confirmForm) {
+          isDirty = confirmForm.dirty;
+        }
+      } else if (isDefined(component.isDirty)) {
+        isDirty = component.isDirty;
+      }
+      if (isDirty) {
         return this.dialogService.confirm(
           this.translate.instant('confirm-on-exit.title'),
           this.translate.instant('confirm-on-exit.html-message')

@@ -31,12 +31,11 @@ import {
 } from '@shared/models/widget.models';
 import { Timewindow, WidgetTimewindow } from '@shared/models/time/time.models';
 import {
-  EntityInfo,
   IAliasController,
   IStateController,
   IWidgetSubscription,
   IWidgetUtils,
-  RpcApi,
+  RpcApi, SubscriptionEntityInfo,
   TimewindowFunctions,
   WidgetActionsApi,
   WidgetSubscriptionApi
@@ -85,7 +84,7 @@ export interface WidgetContext {
   actionsApi?: WidgetActionsApi;
   stateController?: IStateController;
   aliasController?: IAliasController;
-  activeEntityInfo?: EntityInfo;
+  activeEntityInfo?: SubscriptionEntityInfo;
   widgetTitleTemplate?: string;
   widgetTitle?: string;
   customHeaderActions?: Array<WidgetHeaderAction>;

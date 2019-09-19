@@ -42,6 +42,8 @@ import {TimeService} from '@core/services/time.service';
 })
 export class AuthService {
 
+  forceFullscreen = false; // TODO:
+
   constructor(
     private store: Store<AppState>,
     private http: HttpClient,

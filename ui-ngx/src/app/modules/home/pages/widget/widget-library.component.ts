@@ -21,7 +21,7 @@ import { PageComponent } from '@shared/components/page.component';
 import { AuthUser } from '@shared/models/user.model';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Authority } from '@shared/models/authority.enum';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { Observable } from 'rxjs';
@@ -34,6 +34,13 @@ import { DashboardCallbacks, WidgetsData } from '@home/models/dashboard-componen
 import { IAliasController } from '@app/core/api/widget-api.models';
 import { toWidgetInfo } from '@home/models/widget-component.models';
 import { DummyAliasController } from '@core/api/alias-controller';
+import {
+  DeviceCredentialsDialogComponent,
+  DeviceCredentialsDialogData
+} from '@home/pages/device/device-credentials-dialog.component';
+import { DeviceCredentials } from '@shared/models/device.models';
+import { MatDialog } from '@angular/material/dialog';
+import { SelectWidgetTypeDialogComponent } from '@home/pages/widget/select-widget-type-dialog.component';
 
 @Component({
   selector: 'tb-widget-library',
@@ -83,8 +90,10 @@ export class WidgetLibraryComponent extends PageComponent implements OnInit {
 
   constructor(protected store: Store<AppState>,
               private route: ActivatedRoute,
+              private router: Router,
               private widgetService: WidgetService,
-              private dialogService: DialogService) {
+              private dialogService: DialogService,
+              private dialog: MatDialog) {
     super(store);
 
     this.authUser = getCurrentAuthUser(store);
@@ -163,33 +172,43 @@ export class WidgetLibraryComponent extends PageComponent implements OnInit {
   }
 
   importWidgetType($event: Event): void {
-    if (event) {
-      event.stopPropagation();
+    if ($event) {
+      $event.stopPropagation();
     }
     this.dialogService.todo();
   }
 
   openWidgetType($event: Event, widget?: Widget): void {
-    if (event) {
-      event.stopPropagation();
+    if ($event) {
+      $event.stopPropagation();
     }
     if (widget) {
-      this.dialogService.todo();
+      this.router.navigate([widget.typeId.id], {relativeTo: this.route});
     } else {
-      this.dialogService.todo();
+      this.dialog.open<SelectWidgetTypeDialogComponent, any,
+        widgetType>(SelectWidgetTypeDialogComponent, {
+        disableClose: true,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog']
+      }).afterClosed().subscribe(
+        (type) => {
+          if (type) {
+            this.router.navigate(['add', type], {relativeTo: this.route});
+          }
+        }
+      );
     }
   }
 
   exportWidgetType($event: Event, widget: Widget): void {
-    if (event) {
-      event.stopPropagation();
+    if ($event) {
+      $event.stopPropagation();
     }
     this.dialogService.todo();
   }
 
   removeWidgetType($event: Event, widget: Widget): void {
-    if (event) {
-      event.stopPropagation();
+    if ($event) {
+      $event.stopPropagation();
     }
     this.dialogService.todo();
   }

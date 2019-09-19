@@ -169,6 +169,25 @@ section.tb-header-buttons {
   }
 }
 
+section.tb-footer-buttons {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 30;
+  pointer-events: none;
+
+  .tb-btn-footer {
+    margin: 6px 8px;
+    position: relative !important;
+    display: inline-block !important;
+    animation: tbMoveFromBottomFade .3s ease both;
+    &.tb-hide {
+      animation: tbMoveToBottomFade .3s ease both;
+    }
+  }
+}
+
+
 .tb-details-buttons {
   button {
     margin: 6px 8px;
@@ -293,7 +312,7 @@ pre.tb-highlight {
 }
 
 .tb-fullscreen-parent {
-  background: #fff;
+  background: #eee;
 }
 
 mat-label {

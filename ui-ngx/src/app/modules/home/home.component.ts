@@ -40,6 +40,8 @@ import { MatSidenav } from '@angular/material';
 })
 export class HomeComponent extends PageComponent implements OnInit {
 
+  activeComponent: any;
+
   sidenavMode = 'side';
   sidenavOpened = true;
 

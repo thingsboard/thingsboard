@@ -14,10 +14,13 @@
 /// limitations under the License.
 ///
 
-import { createFeatureSelector, createSelector } from '@ngrx/store';
+import { createFeatureSelector, createSelector, select, Store } from '@ngrx/store';
 
 import { AppState } from '../core.state';
 import { LoadState } from './load.models';
+import { AuthUser } from '@shared/models/user.model';
+import { take } from 'rxjs/operators';
+import { selectAuthUser } from '@core/auth/auth.selectors';
 
 export const selectLoadState = createFeatureSelector<AppState, LoadState>(
   'load'
@@ -32,3 +35,11 @@ export const selectIsLoading = createSelector(
   selectLoadState,
   (state: LoadState) => state.isLoading
 );
+
+export function getCurrentIsLoading(store: Store<AppState>): boolean {
+  let isLoading: boolean;
+  store.pipe(select(selectIsLoading), take(1)).subscribe(
+    val => isLoading = val
+  );
+  return isLoading;
+}

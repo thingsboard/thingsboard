@@ -95,6 +95,10 @@ export function isNumber(value: any): boolean {
   return typeof value === 'number';
 }
 
+export function isString(value: any): boolean {
+  return typeof value === 'string';
+}
+
 export function objToBase64(obj: any): string {
   const json = JSON.stringify(obj);
   const encoded = utf8Encode(json);
