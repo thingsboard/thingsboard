@@ -86,6 +86,7 @@ export interface IAliasController {
   getEntityAliases(): EntityAliases;
   updateCurrentAliasEntity(aliasId: string, currentEntity: EntityInfo);
   updateEntityAliases(entityAliases: EntityAliases);
+  dashboardStateChanged();
   [key: string]: any | null;
   // TODO:
 }
@@ -103,12 +104,19 @@ export interface StateParams {
 }
 
 export interface IStateController {
-  getStateParams?: () => StateParams;
-  openState?: (id: string, params?: StateParams, openRightLayout?: boolean) => void;
-  updateState?: (id?: string, params?: StateParams, openRightLayout?: boolean) => void;
-  openRightLayout: () => void;
-  preserveState?: () => void;
-  // TODO:
+  getStateParams(): StateParams;
+  getStateParamsByStateId(stateId: string): StateParams;
+  openState(id: string, params?: StateParams, openRightLayout?: boolean): void;
+  updateState(id?: string, params?: StateParams, openRightLayout?: boolean): void;
+  resetState(): void;
+  openRightLayout(): void;
+  preserveState(): void;
+  cleanupPreservedStates(): void;
+  navigatePrevState(index: number): void;
+  getStateId(): string;
+  getStateIndex(): number;
+  getStateIdAtIndex(index: number): string;
+  getEntityId(entityParamName: string): EntityId;
 }
 
 export interface SubscriptionInfo {

@@ -37,16 +37,18 @@ import {
   DashboardCallbacks,
   DashboardWidget,
   IDashboardComponent,
-  WidgetsData
+  WidgetsData,
+  DashboardWidgets
 } from '../../models/dashboard-component.models';
 import { merge, Observable, ReplaySubject, Subject } from 'rxjs';
 import { map, share, tap } from 'rxjs/operators';
-import { WidgetLayout } from '@shared/models/dashboard.models';
+import { WidgetLayout, WidgetLayouts } from '@shared/models/dashboard.models';
 import { DialogService } from '@core/services/dialog.service';
 import { animatedScroll, deepClone, isDefined } from '@app/core/utils';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { IAliasController, IStateController } from '@app/core/api/widget-api.models';
+import { Widget } from '@app/shared/models/widget.models';
 
 @Component({
   selector: 'tb-dashboard',
@@ -58,7 +60,10 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
   authUser: AuthUser;
 
   @Input()
-  widgetsData: Observable<WidgetsData>;
+  widgets: Array<Widget>;
+
+  @Input()
+  widgetLayouts: WidgetLayouts;
 
   @Input()
   callbacks: DashboardCallbacks;
@@ -125,8 +130,6 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
 
   gridsterOpts: GridsterConfig;
 
-  dashboardLoading = true;
-
   highlightedMode = false;
   highlightedWidget: DashboardWidget = null;
   selectedWidget: DashboardWidget = null;
@@ -138,9 +141,9 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
 
   @ViewChildren(GridsterItemComponent) gridsterItems: QueryList<GridsterItemComponent>;
 
-  widgets$: Observable<Array<DashboardWidget>>;
+  dashboardLoading = true;
 
-  widgets: Array<DashboardWidget>;
+  dashboardWidgets = new DashboardWidgets(this);
 
   constructor(protected store: Store<AppState>,
               private timeService: TimeService,
@@ -172,12 +175,10 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       defaultItemRows: 6,
       resizable: {enabled: this.isEdit},
       draggable: {enabled: this.isEdit},
-      itemChangeCallback: item => this.sortWidgets(this.widgets)
+      itemChangeCallback: item => this.dashboardWidgets.sortWidgets()
     };
 
     this.updateMobileOpts();
-
-    this.loadDashboard();
 
     this.breakpointObserver
       .observe(MediaBreakpoints['gt-sm']).subscribe(
@@ -185,12 +186,15 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
         this.updateMobileOpts();
       }
     );
+
+    this.updateWidgets();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     let updateMobileOpts = false;
     let updateLayoutOpts = false;
     let updateEditingOpts = false;
+    let updateWidgets = false;
     for (const propName of Object.keys(changes)) {
       const change = changes[propName];
       if (!change.firstChange && change.currentValue !== change.previousValue) {
@@ -200,8 +204,13 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
           updateLayoutOpts = true;
         } else if (propName === 'isEdit') {
           updateEditingOpts = true;
+        } else if (['widgets', 'widgetLayouts'].includes(propName)) {
+          updateWidgets = true;
         }
       }
+    }
+    if (updateWidgets) {
+      this.updateWidgets();
     }
     if (updateMobileOpts) {
       this.updateMobileOpts();
@@ -217,50 +226,9 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
     }
   }
 
-  loadDashboard() {
-    this.widgets$ = this.widgetsData.pipe(
-      map(widgetsData => {
-        const dashboardWidgets = new Array<DashboardWidget>();
-        let maxRows = this.gridsterOpts.maxRows;
-        widgetsData.widgets.forEach(
-          (widget) => {
-            let widgetLayout: WidgetLayout;
-            if (widgetsData.widgetLayouts && widget.id) {
-              widgetLayout = widgetsData.widgetLayouts[widget.id];
-            }
-            const dashboardWidget = new DashboardWidget(this, widget, widgetLayout);
-            const bottom = dashboardWidget.y + dashboardWidget.rows;
-            maxRows = Math.max(maxRows, bottom);
-            dashboardWidgets.push(dashboardWidget);
-          }
-        );
-        this.sortWidgets(dashboardWidgets);
-        this.gridsterOpts.maxRows = maxRows;
-        return dashboardWidgets;
-      }),
-      tap((widgets) => {
-        this.widgets = widgets;
-        this.dashboardLoading = false;
-      })
-    );
-  }
-
-  reload() {
-    this.loadDashboard();
-  }
-
-  sortWidgets(widgets?: Array<DashboardWidget>) {
-    if (widgets) {
-      widgets.sort((widget1, widget2) => {
-        const row1 = widget1.widgetOrder;
-        const row2 = widget2.widgetOrder;
-        let res = row1 - row2;
-        if (res === 0) {
-          res = widget1.x - widget2.x;
-        }
-        return res;
-      });
-    }
+  private updateWidgets() {
+    this.dashboardWidgets.setWidgets(this.widgets, this.widgetLayouts);
+    this.dashboardLoading = false;
   }
 
   ngAfterViewInit(): void {

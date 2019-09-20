@@ -58,6 +58,9 @@ export class DummyAliasController implements IAliasController {
   updateEntityAliases(entityAliases: EntityAliases) {
   }
 
+  dashboardStateChanged() {
+  }
+
 }
 
 export class AliasController implements IAliasController {
@@ -109,6 +112,9 @@ export class AliasController implements IAliasController {
   }
 
   updateEntityAliases(entityAliases: EntityAliases) {
+  }
+
+  dashboardStateChanged() {
   }
 
 }

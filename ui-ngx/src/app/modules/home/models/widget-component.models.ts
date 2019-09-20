@@ -123,7 +123,7 @@ export const MissingWidgetType: WidgetInfo = {
   sizeY: 6,
   resources: [],
   templateHtml: '<div class="tb-widget-error-container">' +
-    '<div translate class="tb-widget-error-msg">widget.widget-type-not-found</div>' +
+    '<div class="tb-widget-error-msg" innerHTML="{{\'widget.widget-type-not-found\' | translate }}"></div>' +
     '</div>',
   templateCss: '',
   controllerScript: 'self.onInit = function() {}',

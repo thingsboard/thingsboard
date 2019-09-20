@@ -55,7 +55,7 @@ export class WidgetLibraryComponent extends PageComponent implements OnInit {
 
   widgetsBundle: WidgetsBundle;
 
-  widgetTypes$: Observable<Array<Widget>>;
+  widgetsData: WidgetsData;
 
   footerFabButtons: FooterFabButtons = {
     fabTogglerName: 'widget.add-widget-type',
@@ -84,8 +84,6 @@ export class WidgetLibraryComponent extends PageComponent implements OnInit {
     onRemoveWidget: this.removeWidgetType.bind(this)
   };
 
-  widgetsData: Observable<WidgetsData>;
-
   aliasController: IAliasController = new DummyAliasController();
 
   constructor(protected store: Store<AppState>,
@@ -98,70 +96,12 @@ export class WidgetLibraryComponent extends PageComponent implements OnInit {
 
     this.authUser = getCurrentAuthUser(store);
     this.widgetsBundle = this.route.snapshot.data.widgetsBundle;
+    this.widgetsData = this.route.snapshot.data.widgetsData;
     if (this.authUser.authority === Authority.TENANT_ADMIN) {
       this.isReadOnly = !this.widgetsBundle || this.widgetsBundle.tenantId.id === NULL_UUID;
     } else {
       this.isReadOnly = this.authUser.authority !== Authority.SYS_ADMIN;
     }
-    this.loadWidgetTypes();
-    this.widgetsData = this.widgetTypes$.pipe(
-      map(widgets => ({ widgets })));
-  }
-
-  loadWidgetTypes() {
-    const bundleAlias = this.widgetsBundle.alias;
-    const isSystem = this.widgetsBundle.tenantId.id === NULL_UUID;
-    this.widgetTypes$ = this.widgetService.getBundleWidgetTypes(bundleAlias,
-      isSystem).pipe(
-      map((types) => {
-          types = types.sort((a, b) => {
-            let result = widgetType[b.descriptor.type].localeCompare(widgetType[a.descriptor.type]);
-            if (result === 0) {
-              result = b.createdTime - a.createdTime;
-            }
-            return result;
-          });
-          const widgetTypes = new Array<Widget>(types.length);
-          let top = 0;
-          const lastTop = [0, 0, 0];
-          let col = 0;
-          let column = 0;
-          types.forEach((type) => {
-            const widgetTypeInfo = toWidgetInfo(type);
-            const sizeX = 8;
-            const sizeY = Math.floor(widgetTypeInfo.sizeY);
-            const widget: Widget = {
-              typeId: type.id,
-              isSystemType: isSystem,
-              bundleAlias,
-              typeAlias: widgetTypeInfo.alias,
-              type: widgetTypeInfo.type,
-              title: widgetTypeInfo.widgetName,
-              sizeX,
-              sizeY,
-              row: top,
-              col,
-              config: JSON.parse(widgetTypeInfo.defaultConfig)
-            };
-
-            widget.config.title = widgetTypeInfo.widgetName;
-
-            widgetTypes.push(widget);
-            top += sizeY;
-            if (top > lastTop[column] + 10) {
-              lastTop[column] = top;
-              column++;
-              if (column > 2) {
-                column = 0;
-              }
-              top = lastTop[column];
-              col = column * 8;
-            }
-          });
-          return widgetTypes;
-        }
-      ),
-      share());
   }
 
   ngOnInit(): void {

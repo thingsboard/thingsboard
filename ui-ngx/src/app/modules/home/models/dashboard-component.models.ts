@@ -43,6 +43,7 @@ export interface DashboardCallbacks {
 export interface IDashboardComponent {
   gridsterOpts: GridsterConfig;
   gridster: GridsterComponent;
+  dashboardWidgets: DashboardWidgets;
   mobileAutofillHeight: boolean;
   isMobileSize: boolean;
   autofillHeight: boolean;
@@ -52,6 +53,74 @@ export interface IDashboardComponent {
   stateController: IStateController;
   onUpdateTimewindow(startTimeMs: number, endTimeMs: number, interval?: number): void;
   onResetTimewindow(): void;
+}
+
+export class DashboardWidgets implements Iterable<DashboardWidget> {
+
+  dashboardWidgets: Array<DashboardWidget> = [];
+
+  [Symbol.iterator](): Iterator<DashboardWidget> {
+    return this.dashboardWidgets[Symbol.iterator]();
+  }
+
+  constructor(private dashboard: IDashboardComponent) {
+  }
+
+  setWidgets(widgets: Array<Widget>, widgetLayouts: WidgetLayouts) {
+    let maxRows = this.dashboard.gridsterOpts.maxRows;
+    this.dashboardWidgets.length = 0;
+    widgets.forEach((widget) => {
+      let widgetLayout: WidgetLayout;
+      if (widgetLayouts && widget.id) {
+        widgetLayout = widgetLayouts[widget.id];
+      }
+      const dashboardWidget = new DashboardWidget(this.dashboard, widget, widgetLayout);
+      const bottom = dashboardWidget.y + dashboardWidget.rows;
+      maxRows = Math.max(maxRows, bottom);
+      this.dashboardWidgets.push(dashboardWidget);
+    });
+    this.sortWidgets();
+    this.dashboard.gridsterOpts.maxRows = maxRows;
+  }
+
+  addWidget(widget: Widget, widgetLayout: WidgetLayout) {
+    const dashboardWidget = new DashboardWidget(this.dashboard, widget, widgetLayout);
+    let maxRows = this.dashboard.gridsterOpts.maxRows;
+    const bottom = dashboardWidget.y + dashboardWidget.rows;
+    maxRows = Math.max(maxRows, bottom);
+    this.dashboardWidgets.push(dashboardWidget);
+    this.sortWidgets();
+    this.dashboard.gridsterOpts.maxRows = maxRows;
+  }
+
+  removeWidget(widget: Widget): boolean {
+    const index = this.dashboardWidgets.findIndex((dashboardWidget) => dashboardWidget.widget === widget);
+    if (index > -1) {
+      this.dashboardWidgets.splice(index, 1);
+      let maxRows = this.dashboard.gridsterOpts.maxRows;
+      this.dashboardWidgets.forEach((dashboardWidget) => {
+        const bottom = dashboardWidget.y + dashboardWidget.rows;
+        maxRows = Math.max(maxRows, bottom);
+      });
+      this.sortWidgets();
+      this.dashboard.gridsterOpts.maxRows = maxRows;
+      return true;
+    }
+    return false;
+  }
+
+  sortWidgets() {
+    this.dashboardWidgets.sort((widget1, widget2) => {
+      const row1 = widget1.widgetOrder;
+      const row2 = widget2.widgetOrder;
+      let res = row1 - row2;
+      if (res === 0) {
+        res = widget1.x - widget2.x;
+      }
+      return res;
+    });
+  }
+
 }
 
 export class DashboardWidget implements GridsterItem {

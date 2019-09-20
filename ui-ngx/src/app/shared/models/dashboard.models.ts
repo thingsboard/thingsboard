@@ -48,6 +48,10 @@ export interface GridSettings {
   columns?: number;
   margins?: [number, number];
   backgroundSizeMode?: string;
+  backgroundImageUrl?: string;
+  autoFillHeight?: boolean;
+  mobileAutoFillHeight?: boolean;
+  mobileRowHeight?: number;
   [key: string]: any;
   // TODO:
 }
@@ -57,12 +61,17 @@ export interface DashboardLayout {
   gridSettings: GridSettings;
 }
 
+export interface DashboardLayoutInfo {
+  widgets?: Array<Widget>;
+  widgetLayouts?: WidgetLayouts;
+  gridSettings?: GridSettings;
+}
+
 export declare type DashboardLayoutId = 'main' | 'right';
 
-export interface DashboardStateLayouts {
-  main?: DashboardLayout;
-  right?: DashboardLayout;
-}
+export declare type DashboardStateLayouts = {[key in DashboardLayoutId]?: DashboardLayout};
+
+export declare type DashboardLayoutsInfo = {[key in DashboardLayoutId]?: DashboardLayoutInfo};
 
 export interface DashboardState {
   name: string;

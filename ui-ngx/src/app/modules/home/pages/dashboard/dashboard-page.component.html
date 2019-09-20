@@ -85,7 +85,31 @@
              fxLayoutAlign.gt-sm="end center" fxLayoutAlign="space-between center" fxLayoutGap="12px">
           <tb-user-menu *ngIf="!isPublicUser() && forceFullscreen" fxHide.gt-sm displayUserInfo="true">
           </tb-user-menu>
-          <!-- TODO -->
+          <div [fxShow]="isEdit"
+               fxFlex.xs fxFlex.sm fxLayout="row"
+               fxLayoutAlign.gt-sm="start center"
+               fxLayoutAlign="space-between center" fxLayoutGap="12px">
+            <button mat-button mat-icon-button
+                    matTooltip="{{'dashboard.manage-states' | translate}}"
+                    matTooltipPosition="below"
+                    (click)="manageDashboardStates($event)">
+              <mat-icon>layers</mat-icon>
+            </button>
+            <button mat-button mat-icon-button
+                    matTooltip="{{'layout.manage' | translate}}"
+                    matTooltipPosition="below"
+                    (click)="manageDashboardLayouts($event)">
+              <mat-icon>view_compact</mat-icon>
+            </button>
+          </div>
+          <tb-states-component fxFlex.xs fxFlex.sm
+                               [statesControllerId]="isEdit ? 'default' : dashboardConfiguration.settings.stateControllerId"
+                               [dashboardCtrl]="this"
+                               [dashboardId]="dashboard.id ? dashboard.id.id : ''"
+                               [isMobile]="isMobile"
+                               [state]="dashboardCtx.state"
+                               [states]="dashboardConfiguration.states">
+          </tb-states-component>
         </div>
       </div>
     </tb-dashboard-toolbar>
@@ -110,7 +134,13 @@
            id="tb-main-layout"
            [ngStyle]="{width: mainLayoutWidth(),
                        height: mainLayoutHeight()}">
-        TODO: MAIN LAYOUT tb-dashboard-layout
+        <tb-dashboard-layout
+          [layoutCtx]="layouts.main.layoutCtx"
+          [dashboardCtx]="dashboardCtx"
+          [isEdit]="isEdit"
+          [isMobile]="forceDashboardMobileMode"
+          [widgetEditMode]="widgetEditMode">
+        </tb-dashboard-layout>
       </div>
       <mat-sidenav-container *ngIf="layouts.right.show"
                              id="tb-right-layout">
@@ -123,14 +153,23 @@
             position="end"
             [mode]="isMobile ? 'over' : 'side'"
             [(opened)]="rightLayoutOpened">
-          TODO: RIGHT LAYOUT tb-dashboard-layout
+          <tb-dashboard-layout style="height: 100%;"
+            [layoutCtx]="layouts.right.layoutCtx"
+            [dashboardCtx]="dashboardCtx"
+            [isEdit]="isEdit"
+            [isMobile]="forceDashboardMobileMode"
+            [widgetEditMode]="widgetEditMode">
+          </tb-dashboard-layout>
         </mat-sidenav>
       </mat-sidenav-container>
     </div>
     <!--tb-details-sidenav TODO -->
     <!--tb-details-sidenav TODO -->
     <section fxLayout="row" class="layout-wrap tb-footer-buttons" fxLayoutAlign="start end">
-      <!--md-fab-speed-dial TODO -->
+      <tb-footer-fab-buttons [fxShow]="!isAddingWidget && isEdit && !widgetEditMode"
+                             relative
+                             [footerFabButtons]="addWidgetFabButtons">
+      </tb-footer-fab-buttons>
       <button *ngIf="(isTenantAdmin() || isSystemAdmin()) && !forceFullscreen"
               mat-fab color="accent" class="tb-btn-footer"
               [ngClass]="{'tb-hide': !isEdit || isAddingWidget}"

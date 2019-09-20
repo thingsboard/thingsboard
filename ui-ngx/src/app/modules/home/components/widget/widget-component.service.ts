@@ -119,7 +119,7 @@ export class WidgetComponentService {
         } else {
           fetchQueue = new Array<Subject<WidgetInfo>>();
           this.widgetsInfoFetchQueue.set(key, fetchQueue);
-          this.widgetService.getWidgetType(bundleAlias, widgetTypeAlias, isSystem).subscribe(
+          this.widgetService.getWidgetType(bundleAlias, widgetTypeAlias, isSystem, true, false).subscribe(
             (widgetType) => {
               this.loadWidget(widgetType, bundleAlias, isSystem, widgetInfoSubject);
             },

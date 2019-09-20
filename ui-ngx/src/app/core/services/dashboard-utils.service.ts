@@ -22,7 +22,9 @@ import {
   DashboardLayout,
   DashboardStateLayouts,
   DashboardState,
-  DashboardConfiguration
+  DashboardConfiguration,
+  DashboardLayoutInfo,
+  DashboardLayoutsInfo
 } from '@shared/models/dashboard.models';
 import { isUndefined, isDefined, isString } from '@core/utils';
 import { DatasourceType, Widget, Datasource } from '@app/shared/models/widget.models';
@@ -236,6 +238,44 @@ export class DashboardUtilsService {
       root,
       layouts: this.createDefaultLayouts()
     };
+  }
+
+  public getRootStateId(states: {[id: string]: DashboardState }): string {
+    for (const stateId of Object.keys(states)) {
+      const state = states[stateId];
+      if (state.root) {
+        return stateId;
+      }
+    }
+    return Object.keys(states)[0];
+  }
+
+  public getStateLayoutsData(dashboard: Dashboard, targetState: string): DashboardLayoutsInfo {
+    const dashboardConfiguration = dashboard.configuration;
+    const states = dashboardConfiguration.states;
+    const state = states[targetState];
+    if (state) {
+      const allWidgets = dashboardConfiguration.widgets;
+      const result: DashboardLayoutsInfo = {};
+      for (const l of Object.keys(state.layouts)) {
+        const layout: DashboardLayout = state.layouts[l];
+        if (layout) {
+          result[l] = {
+            widgets: [],
+            widgetLayouts: {},
+            gridSettings: {}
+          } as DashboardLayoutInfo;
+          for (const id of Object.keys(layout.widgets)) {
+            result[l].widgets.push(allWidgets[id]);
+          }
+          result[l].widgetLayouts = layout.widgets;
+          result[l].gridSettings = layout.gridSettings;
+        }
+      }
+      return result;
+    } else {
+      return null;
+    }
   }
 
   private validateAndUpdateEntityAliases(configuration: DashboardConfiguration,

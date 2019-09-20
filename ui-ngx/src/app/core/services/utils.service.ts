@@ -17,7 +17,7 @@
 import { Inject, Injectable } from '@angular/core';
 import { WINDOW } from '@core/services/window.service';
 import { ExceptionData } from '@app/shared/models/error.models';
-import { isUndefined, isDefined } from '@core/utils';
+import { isUndefined, isDefined, deepClone } from '@core/utils';
 import { WindowMessage } from '@shared/models/window-message.model';
 import { TranslateService } from '@ngx-translate/core';
 import { customTranslationsPrefix } from '@app/shared/models/constants';
@@ -27,6 +27,8 @@ import { DataKeyType } from '@app/shared/models/telemetry/telemetry.models';
 import { alarmFields } from '@shared/models/alarm.models';
 import { materialColors } from '@app/shared/models/material.models';
 import { WidgetInfo } from '@home/models/widget-component.models';
+
+const varsRegex = /\$\{([^}]*)\}/g;
 
 @Injectable({
   providedIn: 'root'
@@ -140,6 +142,20 @@ export class UtilsService {
       result = translation + '';
     } else {
       result = defaultValue;
+    }
+    return result;
+  }
+
+  public insertVariable(pattern: string, name: string, value: any): string {
+    let result = deepClone(pattern);
+    let match = varsRegex.exec(pattern);
+    while (match !== null) {
+      const variable = match[0];
+      const variableName = match[1];
+      if (variableName === name) {
+        result = result.split(variable).join(value);
+      }
+      match = varsRegex.exec(pattern);
     }
     return result;
   }

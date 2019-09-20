@@ -19,6 +19,7 @@ import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { speedDialFabAnimations } from '@shared/animations/speed-dial-fab.animations';
+import { coerceBooleanProperty } from '@angular/cdk/coercion';
 
 export interface FooterFabButton {
   name: string;
@@ -42,6 +43,15 @@ export class FooterFabButtonsComponent extends PageComponent {
 
   @Input()
   footerFabButtons: FooterFabButtons;
+
+  private relativeValue: boolean;
+  get relative(): boolean {
+    return this.relativeValue;
+  }
+  @Input()
+  set relative(value: boolean) {
+    this.relativeValue = coerceBooleanProperty(value);
+  }
 
   buttons: Array<FooterFabButton> = [];
   fabTogglerState = 'inactive';

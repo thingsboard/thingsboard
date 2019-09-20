@@ -14,10 +14,11 @@
 /// limitations under the License.
 ///
 
-import { DashboardLayoutId, GridSettings, WidgetLayout, Dashboard } from '@app/shared/models/dashboard.models';
+import { DashboardLayoutId, GridSettings, WidgetLayout, Dashboard, WidgetLayouts } from '@app/shared/models/dashboard.models';
 import { Widget } from '@app/shared/models/widget.models';
 import { Timewindow } from '@shared/models/time/time.models';
 import { IAliasController, IStateController } from '@core/api/widget-api.models';
+import { ILayoutController } from './layout/layout.models';
 
 export declare type DashboardPageScope = 'tenant' | 'customer';
 
@@ -29,11 +30,18 @@ export interface DashboardContext {
   stateController: IStateController;
 }
 
+export interface IDashboardController {
+  dashboardCtx: DashboardContext;
+  openRightLayout();
+  openDashboardState(stateId: string, openRightLayout: boolean);
+}
+
 export interface DashboardPageLayoutContext {
   id: DashboardLayoutId;
   widgets: Array<Widget>;
-  widgetLayouts: {[id: string]: WidgetLayout};
+  widgetLayouts: WidgetLayouts;
   gridSettings: GridSettings;
+  ctrl: ILayoutController;
   ignoreLoading: boolean;
 }
 
@@ -42,7 +50,5 @@ export interface DashboardPageLayout {
   layoutCtx: DashboardPageLayoutContext;
 }
 
-export interface DashboardPageLayouts {
-  main: DashboardPageLayout;
-  right: DashboardPageLayout;
-}
+export declare type DashboardPageLayouts = {[key in DashboardLayoutId]: DashboardPageLayout};
+

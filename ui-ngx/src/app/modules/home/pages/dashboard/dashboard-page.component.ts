@@ -21,15 +21,21 @@ import { AppState } from '@core/core.state';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UtilsService } from '@core/services/utils.service';
 import { AuthService } from '@core/auth/auth.service';
-import { Dashboard, DashboardConfiguration, WidgetLayout } from '@app/shared/models/dashboard.models';
+import {
+  Dashboard,
+  DashboardConfiguration,
+  WidgetLayout,
+  DashboardLayoutInfo,
+  DashboardLayoutsInfo
+} from '@app/shared/models/dashboard.models';
 import { WINDOW } from '@core/services/window.service';
 import { WindowMessage } from '@shared/models/window-message.model';
 import { deepClone, isDefined } from '@app/core/utils';
 import {
-  DashboardContext,
+  DashboardContext, DashboardPageLayout,
   DashboardPageLayoutContext,
   DashboardPageLayouts,
-  DashboardPageScope
+  DashboardPageScope, IDashboardController
 } from './dashboard-page.models';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
@@ -42,6 +48,9 @@ import { DialogService } from '@core/services/dialog.service';
 import { EntityService } from '@core/http/entity.service';
 import { AliasController } from '@core/api/alias-controller';
 import { Subscription } from 'rxjs';
+import { FooterFabButtons } from '@shared/components/footer-fab-buttons.component';
+import { IStateController } from '@core/api/widget-api.models';
+import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 
 @Component({
   selector: 'tb-dashboard-page',
@@ -49,7 +58,7 @@ import { Subscription } from 'rxjs';
   styleUrls: ['./dashboard-page.component.scss'],
   encapsulation: ViewEncapsulation.None
 })
-export class DashboardPageComponent extends PageComponent implements OnDestroy {
+export class DashboardPageComponent extends PageComponent implements IDashboardController, OnDestroy {
 
   authUser: AuthUser = getCurrentAuthUser(this.store);
 
@@ -94,7 +103,8 @@ export class DashboardPageComponent extends PageComponent implements OnDestroy {
         widgets: [],
         widgetLayouts: {},
         gridSettings: {},
-        ignoreLoading: false
+        ignoreLoading: false,
+        ctrl: null
       }
     },
     right: {
@@ -104,7 +114,8 @@ export class DashboardPageComponent extends PageComponent implements OnDestroy {
         widgets: [],
         widgetLayouts: {},
         gridSettings: {},
-        ignoreLoading: false
+        ignoreLoading: false,
+        ctrl: null
       }
     }
   };
@@ -113,10 +124,29 @@ export class DashboardPageComponent extends PageComponent implements OnDestroy {
     dashboard: null,
     dashboardTimewindow: null,
     state: null,
-    stateController: {
-      openRightLayout: this.openRightLayout.bind(this)
-    },
+    stateController: null,
     aliasController: null
+  };
+
+  addWidgetFabButtons: FooterFabButtons = {
+    fabTogglerName: 'dashboard.add-widget',
+    fabTogglerIcon: 'add',
+    buttons: [
+      {
+        name: 'dashboard.create-new-widget',
+        icon: 'insert_drive_file',
+        onAction: ($event) => {
+          this.addWidget($event);
+        }
+      },
+      {
+        name: 'dashboard.import-widget',
+        icon: 'file_upload',
+        onAction: ($event) => {
+          this.importWidget($event);
+        }
+      }
+    ]
   };
 
   private rxSubscriptions = new Array<Subscription>();
@@ -140,6 +170,7 @@ export class DashboardPageComponent extends PageComponent implements OnDestroy {
               private route: ActivatedRoute,
               private router: Router,
               private utils: UtilsService,
+              private dashboardUtils: DashboardUtilsService,
               private authService: AuthService,
               private entityService: EntityService,
               private dialogService: DialogService) {
@@ -379,6 +410,38 @@ export class DashboardPageComponent extends PageComponent implements OnDestroy {
     this.dialogService.todo();
   }
 
+  public manageDashboardStates($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    // TODO:
+    this.dialogService.todo();
+  }
+
+  public manageDashboardLayouts($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    // TODO:
+    this.dialogService.todo();
+  }
+
+  private addWidget($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    // TODO:
+    this.dialogService.todo();
+  }
+
+  private importWidget($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    // TODO:
+    this.dialogService.todo();
+  }
+
   public currentDashboardIdChanged(dashboardId: string) {
     if (!this.widgetEditMode) {
       if (this.currentDashboardScope === 'customer' && this.authUser.authority === Authority.TENANT_ADMIN) {
@@ -395,6 +458,57 @@ export class DashboardPageComponent extends PageComponent implements OnDestroy {
 
   public toggleDashboardEditMode() {
     this.setEditMode(!this.isEdit, true);
+  }
+
+  public openDashboardState(state: string, openRightLayout: boolean) {
+    const layoutsData = this.dashboardUtils.getStateLayoutsData(this.dashboard, state);
+    if (layoutsData) {
+      this.dashboardCtx.state = state;
+      this.dashboardCtx.aliasController.dashboardStateChanged();
+      let layoutVisibilityChanged = false;
+      for (const l of Object.keys(this.layouts)) {
+        const layout: DashboardPageLayout = this.layouts[l];
+        let showLayout;
+        if (layoutsData[l]) {
+          showLayout = true;
+        } else {
+          showLayout = false;
+        }
+        if (layout.show !== showLayout) {
+          layout.show = showLayout;
+          layoutVisibilityChanged = !this.isMobile;
+        }
+      }
+      this.isRightLayoutOpened = openRightLayout ? true : false;
+      this.updateLayouts(layoutsData, layoutVisibilityChanged);
+    }
+  }
+
+  private updateLayouts(layoutsData: DashboardLayoutsInfo, layoutVisibilityChanged: boolean) {
+    for (const l of Object.keys(this.layouts)) {
+      const layout: DashboardPageLayout = this.layouts[l];
+      if (layoutsData[l]) {
+        const layoutInfo: DashboardLayoutInfo = layoutsData[l];
+        if (layout.layoutCtx.id === 'main') {
+          layout.layoutCtx.ctrl.setResizing(layoutVisibilityChanged);
+        }
+        this.updateLayout(layout, layoutInfo);
+      } else {
+        this.updateLayout(layout, {widgets: [], widgetLayouts: {}, gridSettings: null});
+      }
+    }
+  }
+
+  private updateLayout(layout: DashboardPageLayout, layoutInfo: DashboardLayoutInfo) {
+    if (layoutInfo.gridSettings) {
+      layout.layoutCtx.gridSettings = layoutInfo.gridSettings;
+    }
+    layout.layoutCtx.widgets = layoutInfo.widgets;
+    layout.layoutCtx.widgetLayouts = layoutInfo.widgetLayouts;
+    if (layout.show && layout.layoutCtx.ctrl) {
+      layout.layoutCtx.ctrl.reload();
+    }
+    layout.layoutCtx.ignoreLoading = true;
   }
 
   private setEditMode(isEdit: boolean, revert: boolean) {

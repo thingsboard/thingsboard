@@ -26,6 +26,8 @@ import { HomeComponentsModule } from '@modules/home/components/home-components.m
 import { DashboardTabsComponent } from '@home/pages/dashboard/dashboard-tabs.component';
 import { DashboardPageComponent } from '@home/pages/dashboard/dashboard-page.component';
 import { DashboardToolbarComponent } from './dashboard-toolbar.component';
+import { StatesControllerModule } from '@home/pages/dashboard/states/states-controller.module';
+import { DashboardLayoutComponent } from './layout/dashboard-layout.component';
 
 @NgModule({
   entryComponents: [
@@ -40,13 +42,15 @@ import { DashboardToolbarComponent } from './dashboard-toolbar.component';
     ManageDashboardCustomersDialogComponent,
     MakeDashboardPublicDialogComponent,
     DashboardToolbarComponent,
-    DashboardPageComponent
+    DashboardPageComponent,
+    DashboardLayoutComponent
   ],
   imports: [
     CommonModule,
     SharedModule,
     HomeComponentsModule,
     HomeDialogsModule,
+    StatesControllerModule,
     DashboardRoutingModule
   ]
 })

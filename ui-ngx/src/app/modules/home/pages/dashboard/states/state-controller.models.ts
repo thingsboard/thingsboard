@@ -14,13 +14,17 @@
 /// limitations under the License.
 ///
 
-import {MissingTranslationHandler, MissingTranslationHandlerParams} from '@ngx-translate/core';
-import { customTranslationsPrefix } from '@app/shared/models/constants';
+import { IStateController, StateObject } from '@core/api/widget-api.models';
+import { IDashboardController } from '@home/pages/dashboard/dashboard-page.models';
+import { DashboardState } from '@shared/models/dashboard.models';
 
-export class TbMissingTranslationHandler implements MissingTranslationHandler {
-  handle(params: MissingTranslationHandlerParams) {
-    if (params.key && !params.key.startsWith(customTranslationsPrefix)) {
-      console.warn('Translation for ' + params.key + ' doesn\'t exist');
-    }
-  }
+export declare type StateControllerState = StateObject[];
+
+export interface IStateControllerComponent extends IStateController {
+  state: string;
+  isMobile: boolean;
+  dashboardCtrl: IDashboardController;
+  states: {[id: string]: DashboardState };
+  dashboardId: string;
+  preservedState: any;
 }
