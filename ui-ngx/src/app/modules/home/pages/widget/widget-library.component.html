@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<section [fxShow]="!(isLoading$ | async) && (widgetTypes$ | async)?.length === 0" fxLayoutAlign="center center"
+<section [fxShow]="!(isLoading$ | async) && widgetsData.widgets.length === 0" fxLayoutAlign="center center"
          style="text-transform: uppercase; display: flex; z-index: 1;"
          class="tb-absolute-fill">
   <button mat-button *ngIf="!isReadOnly" class="tb-add-new-widget" (click)="addWidgetType($event)">
@@ -27,7 +27,8 @@
         style="text-transform: uppercase; display: flex;"
         class="mat-headline tb-absolute-fill">widgets-bundle.empty</span>
 </section>
-<tb-dashboard [aliasController]="aliasController"
+<tb-dashboard #dashboard
+              [aliasController]="aliasController"
               [widgets]="widgetsData.widgets"
               [widgetLayouts]="widgetsData.widgetLayouts"
               [isEdit]="false"

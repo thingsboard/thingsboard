@@ -77,4 +77,7 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
   setResizing(layoutVisibilityChanged: boolean) {
   }
 
+  resetHighlight() {
+  }
+
 }

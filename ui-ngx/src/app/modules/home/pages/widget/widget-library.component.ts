@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
@@ -24,13 +24,13 @@ import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Authority } from '@shared/models/authority.enum';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { Widget, widgetType } from '@app/shared/models/widget.models';
 import { WidgetService } from '@core/http/widget.service';
-import { map, share } from 'rxjs/operators';
+import { map, mergeMap, share } from 'rxjs/operators';
 import { DialogService } from '@core/services/dialog.service';
 import { FooterFabButtons } from '@app/shared/components/footer-fab-buttons.component';
-import { DashboardCallbacks, WidgetsData } from '@home/models/dashboard-component.models';
+import { DashboardCallbacks, IDashboardComponent, WidgetsData } from '@home/models/dashboard-component.models';
 import { IAliasController } from '@app/core/api/widget-api.models';
 import { toWidgetInfo } from '@home/models/widget-component.models';
 import { DummyAliasController } from '@core/api/alias-controller';
@@ -41,6 +41,7 @@ import {
 import { DeviceCredentials } from '@shared/models/device.models';
 import { MatDialog } from '@angular/material/dialog';
 import { SelectWidgetTypeDialogComponent } from '@home/pages/widget/select-widget-type-dialog.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'tb-widget-library',
@@ -86,12 +87,15 @@ export class WidgetLibraryComponent extends PageComponent implements OnInit {
 
   aliasController: IAliasController = new DummyAliasController();
 
+  @ViewChild('dashboard', {static: true}) dashboard: IDashboardComponent;
+
   constructor(protected store: Store<AppState>,
               private route: ActivatedRoute,
               private router: Router,
               private widgetService: WidgetService,
               private dialogService: DialogService,
-              private dialog: MatDialog) {
+              private dialog: MatDialog,
+              private translate: TranslateService) {
     super(store);
 
     this.authUser = getCurrentAuthUser(store);
@@ -146,11 +150,32 @@ export class WidgetLibraryComponent extends PageComponent implements OnInit {
     this.dialogService.todo();
   }
 
-  removeWidgetType($event: Event, widget: Widget): void {
+  removeWidgetType($event: Event, widget: Widget): Observable<boolean> {
     if ($event) {
       $event.stopPropagation();
     }
-    this.dialogService.todo();
+    return this.dialogService.confirm(
+      this.translate.instant('widget.remove-widget-type-title', {widgetName: widget.config.title}),
+      this.translate.instant('widget.remove-widget-type-text'),
+      this.translate.instant('action.no'),
+      this.translate.instant('action.yes'),
+    ).pipe(
+      mergeMap((result) => {
+        if (result) {
+          return this.widgetService.deleteWidgetType(widget.bundleAlias, widget.typeAlias, widget.isSystemType);
+        } else {
+          return of(false);
+        }
+      }),
+      map((result) => {
+        if (result !== false) {
+          this.widgetsData.widgets.splice(this.widgetsData.widgets.indexOf(widget), 1);
+          return true;
+        } else {
+          return false;
+        }
+      }
+    ));
   }
 
 }

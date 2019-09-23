@@ -19,9 +19,10 @@
 <div fxFlex fxLayout="column">
   <div fxFlex fxLayout="column" tb-fullscreen [fullscreen]="fullscreen">
     <mat-toolbar class="mat-elevation-z1 tb-edit-toolbar mat-hue-3" fxLayoutGap="16px">
-      <mat-form-field floatLabel="always" class="tb-widget-title">
+      <mat-form-field floatLabel="always" hideRequiredMarker class="tb-widget-title">
         <mat-label></mat-label>
-        <input [disabled]="isReadOnly" matInput [(ngModel)]="widget.widgetName" (ngModelChange)="isDirty = true"
+        <input [disabled]="isReadOnly" matInput required
+               [(ngModel)]="widget.widgetName" (ngModelChange)="isDirty = true"
                placeholder="{{ 'widget.title' | translate }}"/>
       </mat-form-field>
       <mat-form-field>
@@ -238,14 +239,15 @@
             </div>
             <div tb-fullscreen [fullscreen]="iFrameFullscreen" style="width: 100%; height: 100%;">
               <iframe #widgetIFrame frameborder="0" height="100%" width="100%"></iframe>
-              <button mat-button mat-icon-button
-                      class="tb-fullscreen-button-style"
-                      style="position: absolute; top: 10px; left: 10px; bottom: initial;"
-                      (click)="iFrameFullscreen = !iFrameFullscreen"
-                      matTooltip="{{(iFrameFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
-                      matTooltipPosition="above">
-                <mat-icon>{{ iFrameFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
-              </button>
+              <div style="position: absolute; top: 10px; left: 10px; bottom: initial;">
+                <button mat-button mat-icon-button
+                        class="tb-fullscreen-button-style"
+                        (click)="iFrameFullscreen = !iFrameFullscreen"
+                        matTooltip="{{(iFrameFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
+                        matTooltipPosition="above">
+                  <mat-icon>{{ iFrameFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+                </button>
+              </div>
             </div>
           </div>
         </div>

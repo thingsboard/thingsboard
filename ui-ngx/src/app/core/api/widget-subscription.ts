@@ -505,6 +505,7 @@ export class WidgetSubscription implements IWidgetSubscription {
 
   private alarmsSubscribe() {
     // TODO:
+    this.notifyDataLoaded();
   }
 
 

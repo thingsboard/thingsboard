@@ -51,6 +51,7 @@ import { Subscription } from 'rxjs';
 import { FooterFabButtons } from '@shared/components/footer-fab-buttons.component';
 import { IStateController } from '@core/api/widget-api.models';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
+import { DashboardService } from '@core/http/dashboard.service';
 
 @Component({
   selector: 'tb-dashboard-page',
@@ -173,7 +174,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
               private dashboardUtils: DashboardUtilsService,
               private authService: AuthService,
               private entityService: EntityService,
-              private dialogService: DialogService) {
+              private dialogService: DialogService,
+              private dashboardService: DashboardService) {
     super(store);
 
     this.rxSubscriptions.push(this.route.data.subscribe(
@@ -460,6 +462,11 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     this.setEditMode(!this.isEdit, true);
   }
 
+  public saveDashboard() {
+    this.setEditMode(false, false);
+    this.notifyDashboardUpdated();
+  }
+
   public openDashboardState(state: string, openRightLayout: boolean) {
     const layoutsData = this.dashboardUtils.getStateLayoutsData(this.dashboard, state);
     if (layoutsData) {
@@ -514,8 +521,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   private setEditMode(isEdit: boolean, revert: boolean) {
     this.isEdit = isEdit;
     if (this.isEdit) {
-      // TODO:
-      // this.dashboardCtx.stateController.preserveState();
+      this.dashboardCtx.stateController.preserveState();
       this.prevDashboard = deepClone(this.dashboard);
     } else {
       if (this.widgetEditMode) {
@@ -548,5 +554,21 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   private entityAliasesUpdated() {
     this.dashboardCtx.aliasController.updateEntityAliases(this.dashboard.configuration.entityAliases);
+  }
+
+  private notifyDashboardUpdated() {
+    if (this.widgetEditMode) {
+      const widget = this.layouts.main.layoutCtx.widgets[0];
+      const layout = this.layouts.main.layoutCtx.widgetLayouts[widget.id];
+      widget.sizeX = layout.sizeX;
+      widget.sizeY = layout.sizeY;
+      const message: WindowMessage = {
+        type: 'widgetEditUpdated',
+        data: widget
+      };
+      this.window.parent.postMessage(JSON.stringify(message), '*');
+    } else {
+      this.dashboardService.saveDashboard(this.dashboard);
+    }
   }
 }

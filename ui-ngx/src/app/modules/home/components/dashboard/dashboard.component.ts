@@ -308,7 +308,13 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       $event.stopPropagation();
     }
     if (this.isRemoveActionEnabled && this.callbacks && this.callbacks.onRemoveWidget) {
-      this.callbacks.onRemoveWidget($event, widget.widget);
+      this.callbacks.onRemoveWidget($event, widget.widget).subscribe(
+        (result) => {
+          if (result) {
+            this.dashboardWidgets.removeWidget(widget.widget);
+          }
+        }
+      );
     }
   }
 

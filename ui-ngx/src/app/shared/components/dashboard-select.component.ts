@@ -38,6 +38,7 @@ import {
   DashboardSelectPanelComponent,
   DashboardSelectPanelData
 } from './dashboard-select-panel.component';
+import { NULL_UUID } from '@shared/models/id/has-uuid';
 
 @Component({
   selector: 'tb-dashboard-select',
@@ -200,7 +201,7 @@ export class DashboardSelectComponent implements ControlValueAccessor, OnInit {
     let dashboardsObservable: Observable<PageData<DashboardInfo>>;
     const authUser = getCurrentAuthUser(this.store);
     if (this.dashboardsScope === 'customer' || authUser.authority === Authority.CUSTOMER_USER) {
-      if (this.customerId) {
+      if (this.customerId && this.customerId !== NULL_UUID) {
         dashboardsObservable = this.dashboardService.getCustomerDashboards(this.customerId, pageLink, false, true);
       } else {
         dashboardsObservable = of(emptyPageData());

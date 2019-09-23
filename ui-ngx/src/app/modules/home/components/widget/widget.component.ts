@@ -847,13 +847,16 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           createSubscriptionSubject.error(null);
         }
       );
+      this.cd.detectChanges();
     } else if (this.widget.type === widgetType.static) {
       this.loadingData = false;
       createSubscriptionSubject.next();
       createSubscriptionSubject.complete();
+      this.cd.detectChanges();
     } else {
       createSubscriptionSubject.next();
       createSubscriptionSubject.complete();
+      this.cd.detectChanges();
     }
     return createSubscriptionSubject.asObservable();
   }

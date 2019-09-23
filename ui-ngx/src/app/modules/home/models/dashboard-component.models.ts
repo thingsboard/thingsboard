@@ -33,7 +33,7 @@ export interface WidgetsData {
 export interface DashboardCallbacks {
   onEditWidget?: ($event: Event, widget: Widget) => void;
   onExportWidget?: ($event: Event, widget: Widget) => void;
-  onRemoveWidget?: ($event: Event, widget: Widget) => void;
+  onRemoveWidget?: ($event: Event, widget: Widget) => Observable<boolean>;
   onWidgetMouseDown?: ($event: Event, widget: Widget) => void;
   onWidgetClicked?: ($event: Event, widget: Widget) => void;
   prepareDashboardContextMenu?: ($event: Event) => void;

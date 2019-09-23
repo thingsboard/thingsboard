@@ -20,9 +20,9 @@ import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { WidgetService } from '@core/http/widget.service';
-import { WidgetInfo } from '@home/models/widget-component.models';
+import { toWidgetInfo, WidgetInfo } from '@home/models/widget-component.models';
 import { WidgetConfig, widgetType, WidgetType, widgetTypesData, Widget } from '@shared/models/widget.models';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { deepClone } from '@core/utils';
 import { HasDirtyFlag } from '@core/guards/confirm-on-exit.guard';
 import { AuthUser } from '@shared/models/user.model';
@@ -40,6 +40,13 @@ import { WindowMessage } from '@shared/models/window-message.model';
 import { ExceptionData } from '@shared/models/error.models';
 import Timeout = NodeJS.Timeout;
 import { ActionNotificationHide, ActionNotificationShow } from '@core/notification/notification.actions';
+import { MatDialog } from '@angular/material/dialog';
+import { SelectWidgetTypeDialogComponent } from '@home/pages/widget/select-widget-type-dialog.component';
+import {
+  SaveWidgetTypeAsDialogComponent,
+  SaveWidgetTypeAsDialogResult
+} from '@home/pages/widget/save-widget-type-as-dialog.component';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'tb-widget-editor',
@@ -131,25 +138,37 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
 
   saveWidgetTimeout: Timeout;
 
+  private rxSubscriptions = new Array<Subscription>();
+
   constructor(protected store: Store<AppState>,
               @Inject(WINDOW) private window: Window,
               private route: ActivatedRoute,
+              private router: Router,
               private widgetService: WidgetService,
               private hotkeysService: HotkeysService,
               private translate: TranslateService,
-              private raf: RafService) {
+              private raf: RafService,
+              private dialog: MatDialog) {
     super(store);
 
     this.authUser = getCurrentAuthUser(store);
 
-    this.widgetsBundle = this.route.snapshot.data.widgetsBundle;
+    this.rxSubscriptions.push(this.route.data.subscribe(
+      (data) => {
+        this.init(data);
+      }
+    ));
+  }
+
+  private init(data: any) {
+    this.widgetsBundle = data.widgetsBundle;
     if (this.authUser.authority === Authority.TENANT_ADMIN) {
       this.isReadOnly = !this.widgetsBundle || this.widgetsBundle.tenantId.id === NULL_UUID;
     } else {
       this.isReadOnly = this.authUser.authority !== Authority.SYS_ADMIN;
     }
-    this.widgetType = this.route.snapshot.data.widgetEditorData.widgetType;
-    this.widget = this.route.snapshot.data.widgetEditorData.widget;
+    this.widgetType = data.widgetEditorData.widgetType;
+    this.widget = data.widgetEditorData.widget;
     if (this.widgetType) {
       const config = JSON.parse(this.widget.defaultConfig);
       this.widget.defaultConfig = JSON.stringify(config);
@@ -176,6 +195,10 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
       // @ts-ignore
       removeResizeListener(resizeListener.element, resizeListener.resizeListener);
     });
+    this.rxSubscriptions.forEach((subscription) => {
+      subscription.unsubscribe();
+    });
+    this.rxSubscriptions.length = 0;
   }
 
   private initHotKeys(): void {
@@ -448,13 +471,52 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
   }
 
   private commitSaveWidget() {
-    // TODO:
-    this.saveWidgetPending = false;
+    const id = (this.widgetType && this.widgetType.id) ? this.widgetType.id : undefined;
+    this.widgetService.saveWidgetType(this.widget, id, this.widgetsBundle.alias).subscribe(
+      (widgetTypeInstance) => {
+        this.setWidgetType(widgetTypeInstance);
+        this.saveWidgetPending = false;
+        this.store.dispatch(new ActionNotificationShow(
+          {message: this.translate.instant('widget.widget-saved'), type: 'success', duration: 500}));
+      },
+      () => {
+        this.saveWidgetPending = false;
+      }
+    );
   }
 
   private commitSaveWidgetAs() {
-    // TODO:
-    this.saveWidgetAsPending = false;
+    this.dialog.open<SaveWidgetTypeAsDialogComponent, any,
+      SaveWidgetTypeAsDialogResult>(SaveWidgetTypeAsDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog']
+    }).afterClosed().subscribe(
+      (saveWidgetAsData) => {
+        if (saveWidgetAsData) {
+          this.widget.widgetName = saveWidgetAsData.widgetName;
+          this.widget.alias = undefined;
+          const config = JSON.parse(this.widget.defaultConfig);
+          config.title = this.widget.widgetName;
+          this.widget.defaultConfig = JSON.stringify(config);
+          this.isDirty = false;
+          this.widgetService.saveWidgetType(this.widget, undefined, saveWidgetAsData.bundleAlias).subscribe(
+            (widgetTypeInstance) => {
+              this.router.navigateByUrl(`/widgets-bundles/${saveWidgetAsData.bundleId}/widgetTypes/${widgetTypeInstance.id.id}`);
+            }
+          );
+        }
+        this.saveWidgetAsPending = false;
+      }
+    );
+  }
+
+  private setWidgetType(widgetTypeInstance: WidgetType) {
+    this.widgetType = widgetTypeInstance;
+    this.widget = toWidgetInfo(this.widgetType);
+    const config = JSON.parse(this.widget.defaultConfig);
+    this.widget.defaultConfig = JSON.stringify(config);
+    this.origWidget = deepClone(this.widget);
+    this.isDirty = false;
   }
 
   applyWidgetScript(): void {

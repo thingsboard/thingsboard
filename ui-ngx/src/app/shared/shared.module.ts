@@ -94,6 +94,7 @@ import { MatSpinner } from '@angular/material/progress-spinner';
 import { FabToolbarComponent, FabActionsDirective, FabTriggerDirective } from './components/fab-toolbar.component';
 import { DashboardSelectPanelComponent } from '@shared/components/dashboard-select-panel.component';
 import { DashboardSelectComponent } from '@shared/components/dashboard-select.component';
+import { WidgetsBundleSelectComponent } from './components/widgets-bundle-select.component';
 
 @NgModule({
   providers: [
@@ -145,6 +146,7 @@ import { DashboardSelectComponent } from '@shared/components/dashboard-select.co
     FabTriggerDirective,
     FabActionsDirective,
     FabToolbarComponent,
+    WidgetsBundleSelectComponent,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
@@ -226,6 +228,7 @@ import { DashboardSelectComponent } from '@shared/components/dashboard-select.co
     FabTriggerDirective,
     FabActionsDirective,
     FabToolbarComponent,
+    WidgetsBundleSelectComponent,
     ValueInputComponent,
     MatButtonModule,
     MatCheckboxModule,

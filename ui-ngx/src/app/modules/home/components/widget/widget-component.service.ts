@@ -18,16 +18,19 @@ import { Inject, Injectable } from '@angular/core';
 import { DynamicComponentFactoryService } from '@core/services/dynamic-component-factory.service';
 import { WidgetService } from '@core/http/widget.service';
 import { forkJoin, Observable, of, ReplaySubject, Subject, throwError } from 'rxjs';
-import { WidgetInfo, MissingWidgetType, toWidgetInfo, WidgetTypeInstance, ErrorWidgetType } from '@home/models/widget-component.models';
+import {
+  ErrorWidgetType,
+  MissingWidgetType,
+  toWidgetInfo,
+  toWidgetType,
+  WidgetInfo,
+  WidgetTypeInstance
+} from '@home/models/widget-component.models';
 import cssjs from '@core/css/css';
 import { UtilsService } from '@core/services/utils.service';
 import { ResourcesService } from '@core/services/resources.service';
-import {
-  widgetActionSources,
-  WidgetControllerDescriptor,
-  WidgetType
-} from '@shared/models/widget.models';
-import { catchError, switchMap, map, mergeMap } from 'rxjs/operators';
+import { widgetActionSources, WidgetControllerDescriptor, WidgetType } from '@shared/models/widget.models';
+import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
 import { isFunction, isUndefined } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import { DynamicWidgetComponent } from '@home/components/widget/dynamic-widget.component';
@@ -37,6 +40,9 @@ import { WINDOW } from '@core/services/window.service';
 
 import * as tinycolor from 'tinycolor2';
 import { TbFlot } from './lib/flot-widget';
+import { NULL_UUID } from '@shared/models/id/has-uuid';
+import { WidgetTypeId } from '@app/shared/models/id/widget-type-id';
+import { TenantId } from '@app/shared/models/id/tenant-id';
 
 // declare var jQuery: any;
 
@@ -53,6 +59,7 @@ export class WidgetComponentService {
 
   private missingWidgetType: WidgetInfo;
   private errorWidgetType: WidgetInfo;
+  private editingWidgetType: WidgetType;
 
   constructor(@Inject(WINDOW) private window: Window,
               private dynamicComponentFactoryService: DynamicComponentFactoryService,
@@ -68,6 +75,15 @@ export class WidgetComponentService {
     this.window.TbFlot = TbFlot;
 
     this.cssParser.testMode = false;
+
+    this.widgetService.onWidgetTypeUpdated().subscribe((widgetType) => {
+      this.deleteWidgetInfoFromCache(widgetType.bundleAlias, widgetType.alias, widgetType.tenantId.id === NULL_UUID);
+    });
+
+    this.widgetService.onWidgetBundleDeleted().subscribe((widgetsBundle) => {
+      this.deleteWidgetsBundleFromCache(widgetsBundle.alias, widgetsBundle.tenantId.id === NULL_UUID);
+    });
+
     this.init();
   }
 
@@ -77,6 +93,24 @@ export class WidgetComponentService {
     } else {
       this.missingWidgetType = {...MissingWidgetType};
       this.errorWidgetType = {...ErrorWidgetType};
+      if (this.utils.widgetEditMode) {
+        this.editingWidgetType = toWidgetType(
+          {
+            widgetName: this.utils.editWidgetInfo.widgetName,
+            alias: 'customWidget',
+            type: this.utils.editWidgetInfo.type,
+            sizeX: this.utils.editWidgetInfo.sizeX,
+            sizeY: this.utils.editWidgetInfo.sizeY,
+            resources: this.utils.editWidgetInfo.resources,
+            templateHtml: this.utils.editWidgetInfo.templateHtml,
+            templateCss: this.utils.editWidgetInfo.templateCss,
+            controllerScript: this.utils.editWidgetInfo.controllerScript,
+            settingsSchema: this.utils.editWidgetInfo.settingsSchema,
+            dataKeySettingsSchema: this.utils.editWidgetInfo.dataKeySettingsSchema,
+            defaultConfig: this.utils.editWidgetInfo.defaultConfig
+          }, new WidgetTypeId('1'), new TenantId( NULL_UUID ), 'customWidgetBundle'
+        );
+      }
       const initSubject = new ReplaySubject();
       this.init$ = initSubject.asObservable();
       const loadDefaultWidgetInfoTasks = [
@@ -110,7 +144,7 @@ export class WidgetComponentService {
       widgetInfoSubject.complete();
     } else {
       if (this.utils.widgetEditMode) {
-        // TODO:
+        this.loadWidget(this.editingWidgetType, bundleAlias, isSystem, widgetInfoSubject);
       } else {
         const key = this.createWidgetInfoCacheKey(bundleAlias, widgetTypeAlias, isSystem);
         let fetchQueue = this.widgetsInfoFetchQueue.get(key);
@@ -377,4 +411,17 @@ export class WidgetComponentService {
     this.widgetsInfoInMemoryCache.set(key, widgetInfo);
   }
 
+  private deleteWidgetInfoFromCache(bundleAlias: string, widgetTypeAlias: string, isSystem: boolean) {
+    const key = this.createWidgetInfoCacheKey(bundleAlias, widgetTypeAlias, isSystem);
+    this.widgetsInfoInMemoryCache.delete(key);
+  }
+
+  private deleteWidgetsBundleFromCache(bundleAlias: string, isSystem: boolean) {
+    const key = (isSystem ? 'sys_' : '') + bundleAlias;
+    this.widgetsInfoInMemoryCache.forEach((widgetInfo, cacheKey) => {
+      if (cacheKey.startsWith(key)) {
+        this.widgetsInfoInMemoryCache.delete(cacheKey);
+      }
+    });
+  }
 }

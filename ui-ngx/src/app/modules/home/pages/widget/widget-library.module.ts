@@ -23,17 +23,20 @@ import {HomeComponentsModule} from '@modules/home/components/home-components.mod
 import { WidgetLibraryComponent } from './widget-library.component';
 import { WidgetEditorComponent } from '@home/pages/widget/widget-editor.component';
 import { SelectWidgetTypeDialogComponent } from '@home/pages/widget/select-widget-type-dialog.component';
+import { SaveWidgetTypeAsDialogComponent } from './save-widget-type-as-dialog.component';
 
 @NgModule({
   entryComponents: [
     WidgetsBundleComponent,
-    SelectWidgetTypeDialogComponent
+    SelectWidgetTypeDialogComponent,
+    SaveWidgetTypeAsDialogComponent
   ],
   declarations: [
     WidgetsBundleComponent,
     WidgetLibraryComponent,
     WidgetEditorComponent,
-    SelectWidgetTypeDialogComponent
+    SelectWidgetTypeDialogComponent,
+    SaveWidgetTypeAsDialogComponent
   ],
   imports: [
     CommonModule,

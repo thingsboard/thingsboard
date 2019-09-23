@@ -84,7 +84,7 @@ export class UtilsService {
   }
 
   public processWidgetException(exception: any): ExceptionData {
-    const data = this.parseException(exception, -5);
+    const data = this.parseException(exception, -6);
     if (this.widgetEditMode) {
       const message: WindowMessage = {
         type: 'widgetException',

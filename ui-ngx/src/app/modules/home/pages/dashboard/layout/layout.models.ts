@@ -17,4 +17,5 @@
 export interface ILayoutController {
   reload();
   setResizing(layoutVisibilityChanged: boolean);
+  resetHighlight();
 }

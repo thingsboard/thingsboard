@@ -43,6 +43,8 @@ import {
 import { ComponentFactory } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RafService } from '@core/services/raf.service';
+import { WidgetTypeId } from '@shared/models/id/widget-type-id';
+import { TenantId } from '@shared/models/id/tenant-id';
 
 export interface IWidgetAction {
   name: string;
@@ -192,3 +194,25 @@ export function toWidgetInfo(widgetTypeEntity: WidgetType): WidgetInfo {
   };
 }
 
+export function toWidgetType(widgetInfo: WidgetInfo, id: WidgetTypeId, tenantId: TenantId, bundleAlias: string): WidgetType {
+  const descriptor: WidgetTypeDescriptor = {
+    type: widgetInfo.type,
+    sizeX: widgetInfo.sizeX,
+    sizeY: widgetInfo.sizeY,
+    resources: widgetInfo.resources,
+    templateHtml: widgetInfo.templateHtml,
+    templateCss: widgetInfo.templateCss,
+    controllerScript: widgetInfo.controllerScript,
+    settingsSchema: widgetInfo.settingsSchema,
+    dataKeySettingsSchema: widgetInfo.dataKeySettingsSchema,
+    defaultConfig: widgetInfo.defaultConfig
+  };
+  return {
+    id,
+    tenantId,
+    bundleAlias,
+    alias: widgetInfo.alias,
+    name: widgetInfo.widgetName,
+    descriptor
+  };
+}

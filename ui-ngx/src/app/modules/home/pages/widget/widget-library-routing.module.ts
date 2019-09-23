@@ -73,7 +73,7 @@ export class WidgetsTypesDataResolver implements Resolve<WidgetsData> {
             }
             return result;
           });
-          const widgetTypes = new Array<Widget>(types.length);
+          const widgetTypes = new Array<Widget>();
           let top = 0;
           const lastTop = [0, 0, 0];
           let col = 0;
