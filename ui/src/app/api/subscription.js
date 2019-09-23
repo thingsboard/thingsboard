@@ -329,7 +329,7 @@ export default class Subscription {
         for (var i = 0; i < this.datasources.length; i++) {
             var datasource = this.datasources[i];
             var additionalDataKeys = [];
-            additionalKeysNumber = 0;
+            let datasourceAdditionalKeysNumber = 0;
 
             for (var a = 0; a < datasource.dataKeys.length; a++) {
                 var dataKey = datasource.dataKeys[a];
@@ -337,6 +337,7 @@ export default class Subscription {
                 dataKey.pattern = angular.copy(dataKey.label);
 
                 if (this.comparisonEnabled && dataKey.settings.comparisonSettings && dataKey.settings.comparisonSettings.showValuesForComparison) {
+                    datasourceAdditionalKeysNumber++;
                     additionalKeysNumber++;
                     let additionalDataKey = this.ctx.utils.createAdditionalDataKey(dataKey,datasource, this.timeForComparison,this.datasources,additionalKeysNumber);
                     dataKey.settings.comparisonSettings.color = additionalDataKey.color;
@@ -368,7 +369,7 @@ export default class Subscription {
                 }
             }
 
-            if (additionalKeysNumber > 0) {
+            if (datasourceAdditionalKeysNumber > 0) {
                 let additionalDatasource = angular.copy(datasource);
                 additionalDatasource.dataKeys = additionalDataKeys;
                 additionalDatasource.isAdditional = true;
