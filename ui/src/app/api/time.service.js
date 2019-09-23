@@ -399,12 +399,8 @@ function TimeService($translate, $http, $q, types) {
             var timeInterval = subscriptionTimewindow.fixedWindow.endTimeMs - subscriptionTimewindow.fixedWindow.startTimeMs;
             timewindowForComparison.fixedWindow = {
                 startTimeMs: timewindowForComparison.startTs,
-                endTimeMs: moment(subscriptionTimewindow.fixedWindow.endTimeMs).subtract(1, timeUnit).valueOf() //eslint-disable-line
+                endTimeMs: timewindowForComparison.startTs + timeInterval
             };
-            // timewindowForComparison.fixedWindow = {
-            //     startTimeMs: timewindowForComparison.startTs,
-            //     endTimeMs: timewindowForComparison.startTs + timeInterval
-            // };
         }
 
         return timewindowForComparison;

@@ -134,9 +134,10 @@ export default class Subscription {
             this.subscriptionTimewindow = null;
             this.comparisonEnabled = options.comparisonEnabled;
             if (this.comparisonEnabled) {
-                this.timeUnitForComparison = 'months';
                 if (options.timeForComparison === 'year') {
                     this.timeUnitForComparison = 'years';
+                } else {
+                    this.timeUnitForComparison = 'months';
                 }
                 this.timeForComparison = options.timeForComparison;
 
@@ -329,11 +330,20 @@ export default class Subscription {
             var datasource = this.datasources[i];
             var additionalDataKeys = [];
             additionalKeysNumber = 0;
-            var $translate = this.ctx.$scope.$injector.get('$translate')
+
             for (var a = 0; a < datasource.dataKeys.length; a++) {
                 var dataKey = datasource.dataKeys[a];
                 dataKey.hidden = false;
                 dataKey.pattern = angular.copy(dataKey.label);
+
+                if (this.comparisonEnabled && dataKey.settings.comparisonSettings && dataKey.settings.comparisonSettings.showValuesForComparison) {
+                    additionalKeysNumber++;
+                    let additionalDataKey = this.ctx.utils.createAdditionalDataKey(dataKey,datasource, this.timeForComparison,this.datasources,additionalKeysNumber);
+                    dataKey.settings.comparisonSettings.color = additionalDataKey.color;
+
+                    additionalDataKeys.push(additionalDataKey);
+                }
+
                 var datasourceData = {
                     datasource: datasource,
                     dataKey: dataKey,
@@ -355,28 +365,6 @@ export default class Subscription {
                         hidden: false
                     };
                     this.legendData.data.push(legendKeyData);
-                }
-
-                if (this.comparisonEnabled && dataKey.settings.comparisonSettings && dataKey.settings.comparisonSettings.showValuesForComparison) {
-                    additionalKeysNumber++;
-                    let additionalDataKey = angular.copy(dataKey);
-                    if (dataKey.settings.comparisonSettings.comparisonValuesLabel) {
-                        additionalDataKey.pattern = this.ctx.utils.createLabelFromDatasource(datasource, dataKey.settings.comparisonSettings.comparisonValuesLabel);
-                    } else {
-                        if (this.timeForComparison === 'year') {
-                            additionalDataKey.pattern = dataKey.pattern + ' ' + $translate.instant('legend.month-ago');
-                        } else {
-                            additionalDataKey.pattern = dataKey.pattern + ' ' + $translate.instant('legend.month-ago');
-                        }
-                    }
-                    additionalDataKey.label = additionalDataKey.pattern;
-                    if (dataKey.settings.comparisonSettings.color) {
-                        additionalDataKey.color = dataKey.settings.comparisonSettings.color;
-                    } else {
-                        additionalDataKey.color = this.genNextColor(this.datasources, additionalKeysNumber);
-                        dataKey.settings.comparisonSettings.color = additionalDataKey.color;
-                    }
-                    additionalDataKeys.push(additionalDataKey);
                 }
             }
 
@@ -1020,17 +1008,6 @@ export default class Subscription {
             registration();
         });
         this.registrations = [];
-    }
-
-    genNextColor(datasources, additionalKeysNumber) {
-        var i = additionalKeysNumber;
-        for (var d = 0; d < datasources.length; d++) {
-            var datasource = datasources[d];
-            if (datasource && datasource.dataKeys) {
-                i += datasource.dataKeys.length;
-            }
-        }
-        return this.ctx.utils.getMaterialColor(i);
     }
 }
 

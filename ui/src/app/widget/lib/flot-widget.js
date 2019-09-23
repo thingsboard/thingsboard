@@ -139,7 +139,7 @@ export default class TbFlot {
                     });
                     if (found && found.length) {
                         let timestamp;
-                        if (found[0].time < hoverInfo[0].time) {
+                        if (!angular.isNumber(hoverInfo[0].time) || (found[0].time < hoverInfo[0].time)) {
                             timestamp = parseInt(hoverInfo[1].time);
                         } else {
                             timestamp = parseInt(hoverInfo[0].time);
@@ -156,45 +156,18 @@ export default class TbFlot {
                         content += dateDiv.prop('outerHTML');
                         content += seriesInfoDivFromInfo(found[0], seriesIndex);
                     }
-
-                    // var found = hoverInfo[0].seriesHover.filter((seriesHover) => {
-                    //     return seriesHover.index === seriesIndex;
-                    // });
-                    // if (!found && hoverInfo[1] && hoverInfo[1].seriesHover.length) {
-                    //     found = hoverInfo[1].seriesHover.filter((seriesHover) => {
-                    //         return seriesHover.index === seriesIndex;
-                    //     });
-                    // }
-                    // if (found && found.length) {
-                    //     var timestamp;
-                    //     if (found[0].time < hoverInfo[0].time) {
-                    //         timestamp = parseInt(hoverInfo[1].time);
-                    //     } else {
-                    //         timestamp = parseInt(hoverInfo[0].time);
-                    //     }
-                    //     var date = moment(timestamp).format('YYYY-MM-DD HH:mm:ss');
-                    //     var dateDiv = $('<div>' + date + '</div>');
-                    //     dateDiv.css({
-                    //         display: "flex",
-                    //         alignItems: "center",
-                    //         justifyContent: "center",
-                    //         padding: "4px",
-                    //         fontWeight: "700"
-                    //     });
-                    //     content += dateDiv.prop('outerHTML');
-                    //     content += seriesInfoDivFromInfo(found[0], seriesIndex);
-                    //     content += seriesInfoDivFromInfo(found[0], seriesIndex);
-                    // }
                 } else {
-                    var maxRows = 15;
+                    var maxRows;
                     if (hoverInfo[1] && hoverInfo[1].seriesHover.length) {
                         maxRows = 5;
+                    } else {
+                        maxRows = 15;
                     }
                     var columns = 0;
-                    if (hoverInfo[0].seriesHover.length) {
-                        columns = Math.ceil(hoverInfo[0].seriesHover.length / maxRows);
-                    } else if (hoverInfo[1] && hoverInfo[1].seriesHover.length) {
+                    if (hoverInfo[1] && (hoverInfo[1].seriesHover.length > hoverInfo[0].seriesHover.length)) {
                         columns = Math.ceil(hoverInfo[1].seriesHover.length / maxRows);
+                    } else {
+                        columns = Math.ceil(hoverInfo[0].seriesHover.length / maxRows);
                     }
 
                     for (var j = 0; j < hoverInfo.length; j++) {
@@ -227,7 +200,7 @@ export default class TbFlot {
                                 });
                                 var columnContent = '';
                                 for (var i = c*maxRows; i < (c+1)*maxRows; i++) {
-                                    if (i == hoverData.seriesHover.length) {
+                                    if (i >= hoverData.seriesHover.length) {
                                         break;
                                     }
                                     var seriesHoverInfo = hoverData.seriesHover[i];
@@ -526,6 +499,13 @@ export default class TbFlot {
             series.lines = {
                 fill: keySettings.fillLines === true
             };
+
+            if (this.ctx.settings.stack && !this.ctx.settings.comparisonEnabled) {
+                series.stack = !keySettings.excludeFromStacking;
+            } else {
+                series.stack = false;
+            }
+
             if (this.chartType === 'line' || this.chartType === 'state') {
                 series.lines.show = keySettings.showLines !== false
             } else {
@@ -610,6 +590,7 @@ export default class TbFlot {
         if (this.ctx.plot) {
             this.ctx.plot.destroy();
         }
+
         if (this.chartType === 'pie' && this.ctx.animatedPie) {
             this.ctx.pieDataAnimationDuration = 250;
             this.pieData = angular.copy(this.subscription.data);
@@ -1241,6 +1222,11 @@ export default class TbFlot {
                         "type": "boolean",
                         "default": false
                     },
+                    "excludeFromStacking": {
+                        "title": "Exclude from stacking(available in \"Stacking\" mode)",
+                        "type": "boolean",
+                        "default": false
+                    },
                     "tooltipValueFormatter": {
                         "title": "Tooltip value format function, f(value)",
                         "type": "string",
@@ -1293,6 +1279,7 @@ export default class TbFlot {
                 "showLines",
                 "fillLines",
                 "showPoints",
+                "excludeFromStacking",
                 {
                     "key": "tooltipValueFormatter",
                     "type": "javascript"

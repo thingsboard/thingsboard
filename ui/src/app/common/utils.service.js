@@ -144,6 +144,7 @@ function Utils($mdColorPalette, $rootScope, $window, $translate, $q, $timeout, t
         isLocalUrl: isLocalUrl,
         validateDatasources: validateDatasources,
         createKey: createKey,
+        createAdditionalDataKey: createAdditionalDataKey,
         createLabelFromDatasource: createLabelFromDatasource,
         insertVariable: insertVariable,
         customTranslation: customTranslation,
@@ -411,8 +412,9 @@ function Utils($mdColorPalette, $rootScope, $window, $translate, $q, $timeout, t
         return copy;
     }
 
-    function genNextColor(datasources) {
-        var index = 0;
+    function genNextColor(datasources, additionalKeysNumber) {
+        additionalKeysNumber = additionalKeysNumber || 0;
+        var index = additionalKeysNumber;
         if (datasources) {
             for (var i = 0; i < datasources.length; i++) {
                 var datasource = datasources[i];
@@ -489,6 +491,27 @@ function Utils($mdColorPalette, $rootScope, $window, $translate, $q, $timeout, t
             dataKey.postFuncBody = keyInfo.postFuncBody;
         }
         return dataKey;
+    }
+
+    function createAdditionalDataKey(dataKey, datasource, timeUnit, datasources, additionalKeysNumber) {
+        let additionalDataKey = angular.copy(dataKey);
+        if (dataKey.settings.comparisonSettings.comparisonValuesLabel) {
+            additionalDataKey.label = createLabelFromDatasource(datasource, dataKey.settings.comparisonSettings.comparisonValuesLabel);
+        } else {
+            if (timeUnit === 'year') {
+                additionalDataKey.label = dataKey.label + ' ' + $translate.instant('legend.month-ago');
+            } else {
+                additionalDataKey.label = dataKey.label + ' ' + $translate.instant('legend.month-ago');
+            }
+        }
+        additionalDataKey.pattern = additionalDataKey.label;
+        if (dataKey.settings.comparisonSettings.color) {
+            additionalDataKey.color = dataKey.settings.comparisonSettings.color;
+        } else {
+            additionalDataKey.color = genNextColor(datasources, additionalKeysNumber);
+        }
+        additionalDataKey._hash = Math.random();
+        return additionalDataKey;
     }
 
     function createLabelFromDatasource(datasource, pattern) {
