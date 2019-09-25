@@ -61,11 +61,15 @@ export function animatedScroll(element: HTMLElement, scrollTop: number, delay?: 
   const duration = delay ? delay : 0;
   const remaining = to - start;
   const animateScroll = () => {
-    currentTime += increment;
-    const val = easeInOut(currentTime, start, remaining, duration);
-    element.scrollTop = val;
-    if (currentTime < duration) {
-      setTimeout(animateScroll, increment);
+    if (duration === 0) {
+      element.scrollTop = to;
+    } else {
+      currentTime += increment;
+      const val = easeInOut(currentTime, start, remaining, duration);
+      element.scrollTop = val;
+      if (currentTime < duration) {
+        setTimeout(animateScroll, increment);
+      }
     }
   };
   animateScroll();

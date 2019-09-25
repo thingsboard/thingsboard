@@ -138,13 +138,14 @@
           [layoutCtx]="layouts.main.layoutCtx"
           [dashboardCtx]="dashboardCtx"
           [isEdit]="isEdit"
+          [isEditingWidget]="isEditingWidget"
           [isMobile]="forceDashboardMobileMode"
           [widgetEditMode]="widgetEditMode">
         </tb-dashboard-layout>
       </div>
-      <mat-sidenav-container *ngIf="layouts.right.show"
+      <mat-drawer-container *ngIf="layouts.right.show"
                              id="tb-right-layout">
-        <mat-sidenav
+        <mat-drawer
             [ngStyle]="{minWidth: rightLayoutWidth(),
                         maxWidth: rightLayoutWidth(),
                         height: rightLayoutHeight(),
@@ -157,13 +158,43 @@
             [layoutCtx]="layouts.right.layoutCtx"
             [dashboardCtx]="dashboardCtx"
             [isEdit]="isEdit"
+            [isEditingWidget]="isEditingWidget"
             [isMobile]="forceDashboardMobileMode"
             [widgetEditMode]="widgetEditMode">
           </tb-dashboard-layout>
-        </mat-sidenav>
-      </mat-sidenav-container>
+        </mat-drawer>
+      </mat-drawer-container>
     </div>
-    <!--tb-details-sidenav TODO -->
+    <mat-drawer-container hasBackdrop="false" class="tb-widget-details-sidenav">
+      <mat-drawer class="tb-details-drawer"
+                  [opened]="isEditingWidget"
+                  mode="over"
+                  position="end">
+        <tb-details-panel fxFlex
+                          headerTitle="{{editingWidget?.config.title}}"
+                          headerSubtitle="{{ editingWidgetSubtitle }}"
+                          [isReadOnly]="false"
+                          [isAlwaysEdit]="true"
+                          (closeDetails)="onEditWidgetClosed()"
+                          (toggleDetailsEditMode)="onRevertWidgetEdit()"
+                          (applyDetails)="saveWidget()"
+                          [theForm]="widgetForm">
+          <div class="details-buttons">
+            <div [tb-help]="helpLinkIdForWidgetType()"></div>
+          </div>
+          <form #widgetForm="ngForm" [formGroup]="editingWidgetFormGroup">
+            <tb-edit-widget *ngIf="isEditingWidget"
+               [dashboard]="dashboard"
+               [aliasController]="dashboardCtx.aliasController"
+               [widgetEditMode]="widgetEditMode"
+               [widget]="editingWidget"
+               [widgetLayout]="editingWidgetLayout"
+               [widgetFormGroup]="editingWidgetFormGroup">
+            </tb-edit-widget>
+          </form>
+        </tb-details-panel>
+      </mat-drawer>
+    </mat-drawer-container>
     <!--tb-details-sidenav TODO -->
     <section fxLayout="row" class="layout-wrap tb-footer-buttons" fxLayoutAlign="start end">
       <tb-footer-fab-buttons [fxShow]="!isAddingWidget && isEdit && !widgetEditMode"

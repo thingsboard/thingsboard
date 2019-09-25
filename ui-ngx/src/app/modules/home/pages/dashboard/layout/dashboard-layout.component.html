@@ -15,6 +15,7 @@
     limitations under the License.
 
 -->
+<hotkeys-cheatsheet></hotkeys-cheatsheet>
 <div class="mat-content" style="position: relative; width: 100%; height: 100%;"
      [ngStyle]="{'background-color': layoutCtx.gridSettings.backgroundColor,
                     'background-image': layoutCtx.gridSettings.backgroundImageUrl ?
@@ -60,6 +61,7 @@
                 [isEditActionEnabled]="isEdit"
                 [isExportActionEnabled]="isEdit && !widgetEditMode"
                 [isRemoveActionEnabled]="isEdit && !widgetEditMode"
+                [callbacks]="this"
                 [ignoreLoading]="layoutCtx.ignoreLoading">
   </tb-dashboard>
 </div>

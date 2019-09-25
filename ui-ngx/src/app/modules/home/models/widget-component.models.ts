@@ -45,6 +45,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { RafService } from '@core/services/raf.service';
 import { WidgetTypeId } from '@shared/models/id/widget-type-id';
 import { TenantId } from '@shared/models/id/tenant-id';
+import { WidgetLayout } from '@shared/models/dashboard.models';
 
 export interface IWidgetAction {
   name: string;
@@ -112,9 +113,14 @@ export interface IDynamicWidgetComponent {
 export interface WidgetInfo extends WidgetTypeDescriptor, WidgetControllerDescriptor {
   widgetName: string;
   alias: string;
-  typeSettingsSchema?: string;
-  typeDataKeySettingsSchema?: string;
+  typeSettingsSchema?: string | any;
+  typeDataKeySettingsSchema?: string | any;
   componentFactory?: ComponentFactory<IDynamicWidgetComponent>;
+}
+
+export interface WidgetConfigComponentData {
+  config: WidgetConfig;
+  layout: WidgetLayout;
 }
 
 export const MissingWidgetType: WidgetInfo = {

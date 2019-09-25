@@ -32,7 +32,18 @@ export class DetailsPanelComponent extends PageComponent {
   @Input() headerSubtitle = '';
   @Input() isReadOnly = false;
   @Input() isAlwaysEdit = false;
-  @Input() theForm: NgForm;
+
+  theFormValue: NgForm;
+
+  @Input()
+  set theForm(value: NgForm) {
+    this.theFormValue = value;
+  }
+
+  get theForm(): NgForm {
+    return this.theFormValue;
+  }
+
   @Output()
   closeDetails = new EventEmitter<void>();
   @Output()
@@ -47,7 +58,7 @@ export class DetailsPanelComponent extends PageComponent {
 
   @Input()
   get isEdit() {
-    return this.isEditValue;
+    return this.isAlwaysEdit || this.isEditValue;
   }
 
   set isEdit(val: boolean) {
@@ -72,7 +83,7 @@ export class DetailsPanelComponent extends PageComponent {
   }
 
   onApplyDetails() {
-    if (this.theForm.valid) {
+    if (this.theForm && this.theForm.valid) {
       this.applyDetails.emit();
     }
   }

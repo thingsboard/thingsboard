@@ -14,25 +14,31 @@
 /// limitations under the License.
 ///
 
-import { environment } from '@env/environment';
+import { environment as env } from '@env/environment';
 import { TranslateService } from '@ngx-translate/core';
 
 export function updateUserLang(translate: TranslateService, userLang: string) {
   let targetLang = userLang;
-  console.log(`User lang: ${targetLang}`);
+  if (!env.production) {
+    console.log(`User lang: ${targetLang}`);
+  }
   if (!targetLang) {
     targetLang = translate.getBrowserCultureLang();
-    console.log(`Fallback to browser lang: ${targetLang}`);
+    if (!env.production) {
+      console.log(`Fallback to browser lang: ${targetLang}`);
+    }
   }
   const detectedSupportedLang = detectSupportedLang(targetLang);
-  console.log(`Detected supported lang: ${detectedSupportedLang}`);
+  if (!env.production) {
+    console.log(`Detected supported lang: ${detectedSupportedLang}`);
+  }
   translate.use(detectedSupportedLang);
 }
 
 function detectSupportedLang(targetLang: string): string {
   const langTag = (targetLang || '').split('-').join('_');
   if (langTag.length) {
-    if (environment.supportedLangs.indexOf(langTag) > -1) {
+    if (env.supportedLangs.indexOf(langTag) > -1) {
       return langTag;
     } else {
       const parts = langTag.split('_');
@@ -42,7 +48,7 @@ function detectSupportedLang(targetLang: string): string {
       } else {
         lang = langTag;
       }
-      const foundLangs = environment.supportedLangs.filter(
+      const foundLangs = env.supportedLangs.filter(
         (supportedLang: string) => {
           const supportedLangParts = supportedLang.split('_');
           return supportedLangParts[0] === lang;
@@ -53,5 +59,5 @@ function detectSupportedLang(targetLang: string): string {
       }
     }
   }
-  return environment.defaultLang;
+  return env.defaultLang;
 }

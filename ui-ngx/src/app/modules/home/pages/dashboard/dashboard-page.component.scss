@@ -28,6 +28,7 @@ tb-dashboard-page {
 
 div.tb-dashboard-page {
   &.mat-content {
+    overflow: hidden;
     background-color: #eee;
   }
   section.tb-dashboard-title {
@@ -108,9 +109,26 @@ div.tb-dashboard-page {
         z-index: 1;
       }*/
       #tb-right-layout {
-        mat-sidenav {
+        mat-drawer {
           z-index: 1;
         }
+      }
+    }
+  }
+
+  mat-drawer-container.tb-widget-details-sidenav {
+    position: initial;
+    mat-drawer.tb-details-drawer {
+      @media #{$mat-gt-sm} {
+        width: 85% !important;
+      }
+
+      @media #{$mat-gt-md} {
+        width: 75% !important;
+      }
+
+      @media #{$mat-gt-xl} {
+        width: 60% !important;
       }
     }
   }

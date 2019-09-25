@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, Inject, OnDestroy, OnInit, ViewEncapsulation, ViewChild, NgZone } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -41,17 +41,25 @@ import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { AuthUser } from '@shared/models/user.model';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
-import { Widget } from '@app/shared/models/widget.models';
+import { Widget, widgetTypesData } from '@app/shared/models/widget.models';
 import { environment as env } from '@env/environment';
 import { Authority } from '@shared/models/authority.enum';
 import { DialogService } from '@core/services/dialog.service';
 import { EntityService } from '@core/http/entity.service';
 import { AliasController } from '@core/api/alias-controller';
-import { Subscription } from 'rxjs';
+import { Observable, Subscription, of } from 'rxjs';
 import { FooterFabButtons } from '@shared/components/footer-fab-buttons.component';
 import { IStateController } from '@core/api/widget-api.models';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { DashboardService } from '@core/http/dashboard.service';
+import {
+  WidgetContextMenuItem,
+  DashboardContextMenuItem,
+  IDashboardComponent, WidgetPosition
+} from '../../models/dashboard-component.models';
+import { WidgetComponentService } from '../../components/widget/widget-component.service';
+import { FormBuilder, FormGroup, NgForm } from '@angular/forms';
+import { ItemBufferService } from '@core/services/item-buffer.service';
 
 @Component({
   selector: 'tb-dashboard-page',
@@ -89,6 +97,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   editingWidgetLayoutOriginal: WidgetLayout = null;
   editingWidgetSubtitle: string = null;
   editingLayoutCtx: DashboardPageLayoutContext = null;
+  editingWidgetFormGroup: FormGroup;
 
   thingsboardVersion: string = env.tbVersion;
 
@@ -105,7 +114,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         widgetLayouts: {},
         gridSettings: {},
         ignoreLoading: false,
-        ctrl: null
+        ctrl: null,
+        dashboardCtrl: this
       }
     },
     right: {
@@ -116,7 +126,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         widgetLayouts: {},
         gridSettings: {},
         ignoreLoading: false,
-        ctrl: null
+        ctrl: null,
+        dashboardCtrl: this
       }
     }
   };
@@ -175,8 +186,15 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
               private authService: AuthService,
               private entityService: EntityService,
               private dialogService: DialogService,
-              private dashboardService: DashboardService) {
+              private widgetComponentService: WidgetComponentService,
+              private dashboardService: DashboardService,
+              private itembuffer: ItemBufferService,
+              private fb: FormBuilder) {
     super(store);
+
+    this.editingWidgetFormGroup = this.fb.group({
+      widgetConfig: [null]
+    });
 
     this.rxSubscriptions.push(this.route.data.subscribe(
       (data) => {
@@ -253,6 +271,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     this.currentDashboardId = null;
     this.currentCustomerId = null;
     this.currentDashboardScope = null;
+
+    this.dashboardCtx.state = null;
   }
 
   ngOnDestroy(): void {
@@ -428,14 +448,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     this.dialogService.todo();
   }
 
-  private addWidget($event: Event) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    // TODO:
-    this.dialogService.todo();
-  }
-
   private importWidget($event: Event) {
     if ($event) {
       $event.stopPropagation();
@@ -568,7 +580,221 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       };
       this.window.parent.postMessage(JSON.stringify(message), '*');
     } else {
-      this.dashboardService.saveDashboard(this.dashboard);
+      this.dashboardService.saveDashboard(this.dashboard).subscribe();
     }
+  }
+
+  helpLinkIdForWidgetType(): string {
+    let link = 'widgetsConfig';
+    if (this.editingWidget && this.editingWidget.type) {
+      link = widgetTypesData.get(this.editingWidget.type).configHelpLinkId;
+    }
+    return link;
+  }
+
+  addWidget($event: Event, layoutCtx?: DashboardPageLayoutContext) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    // TODO:
+    this.dialogService.todo();
+  }
+
+  onRevertWidgetEdit() {
+    if (this.editingWidgetFormGroup.dirty) {
+      this.editingWidgetFormGroup.markAsPristine();
+      this.editingWidget = deepClone(this.editingWidgetOriginal);
+      this.editingWidgetLayout = deepClone(this.editingWidgetLayoutOriginal);
+    }
+  }
+
+  saveWidget() {
+    this.editingWidgetFormGroup.markAsPristine();
+    const widget = deepClone(this.editingWidget);
+    const widgetLayout = deepClone(this.editingWidgetLayout);
+    const id = this.editingWidgetOriginal.id;
+    const index = this.editingLayoutCtx.widgets.indexOf(this.editingWidgetOriginal);
+    this.dashboardConfiguration.widgets[id] = widget;
+    this.editingWidgetOriginal = widget;
+    this.editingWidgetLayoutOriginal = widgetLayout;
+    this.editingLayoutCtx.widgets[index] = widget;
+    this.editingLayoutCtx.widgetLayouts[widget.id] = widgetLayout;
+    this.editingLayoutCtx.ctrl.highlightWidget(index, 0);
+  }
+
+  onEditWidgetClosed() {
+    this.editingWidgetOriginal = null;
+    this.editingWidget = null;
+    this.editingWidgetLayoutOriginal = null;
+    this.editingWidgetLayout = null;
+    this.editingLayoutCtx = null;
+    this.editingWidgetSubtitle = null;
+    this.isEditingWidget = false;
+    this.resetHighlight();
+    this.forceDashboardMobileMode = false;
+  }
+
+  editWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget, index: number) {
+    $event.stopPropagation();
+    if (this.editingWidgetOriginal === widget) {
+      this.onEditWidgetClosed();
+    } else {
+      const transition = !this.forceDashboardMobileMode;
+      this.editingWidgetOriginal = widget;
+      this.editingWidgetLayoutOriginal = layoutCtx.widgetLayouts[widget.id];
+      this.editingWidget = deepClone(this.editingWidgetOriginal);
+      this.editingWidgetLayout = deepClone(this.editingWidgetLayoutOriginal);
+      this.editingLayoutCtx = layoutCtx;
+      this.editingWidgetSubtitle = this.widgetComponentService.getInstantWidgetInfo(this.editingWidget).widgetName;
+      this.forceDashboardMobileMode = true;
+      this.isEditingWidget = true;
+      if (layoutCtx) {
+        const delayOffset = transition ? 350 : 0;
+        const delay = transition ? 400 : 300;
+        setTimeout(() => {
+          layoutCtx.ctrl.highlightWidget(index, delay);
+        }, delayOffset);
+      }
+    }
+  }
+
+  copyWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget) {
+    // TODO:
+    this.dialogService.todo();
+  }
+
+  copyWidgetReference($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget) {
+    // TODO:
+    this.dialogService.todo();
+  }
+
+  pasteWidget($event: Event, layoutCtx: DashboardPageLayoutContext, pos: WidgetPosition) {
+    // TODO:
+    this.dialogService.todo();
+  }
+
+  pasteWidgetReference($event: Event, layoutCtx: DashboardPageLayoutContext, pos: WidgetPosition) {
+    // TODO:
+    this.dialogService.todo();
+  }
+
+  removeWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget) {
+    // TODO:
+    this.dialogService.todo();
+  }
+
+  exportWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget, index: number) {
+    $event.stopPropagation();
+    // TODO:
+    this.dialogService.todo();
+  }
+
+  widgetClicked($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget, index: number) {
+    if (this.isEditingWidget) {
+      this.editWidget($event, layoutCtx, widget, index);
+    }
+  }
+
+  widgetMouseDown($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget, index: number) {
+    if (this.isEdit && !this.isEditingWidget) {
+      layoutCtx.ctrl.selectWidget(index, 0);
+    }
+  }
+
+  prepareDashboardContextMenu(layoutCtx: DashboardPageLayoutContext): Array<DashboardContextMenuItem> {
+    const dashboardContextActions: Array<DashboardContextMenuItem> = [];
+    if (this.isEdit && !this.isEditingWidget && !this.widgetEditMode) {
+      dashboardContextActions.push(
+        {
+          action: this.openDashboardSettings.bind(this),
+          enabled: true,
+          value: 'dashboard.settings',
+          icon: 'settings'
+        }
+      );
+      dashboardContextActions.push(
+        {
+          action: this.openEntityAliases.bind(this),
+          enabled: true,
+          value: 'entity.aliases',
+          icon: 'devices_other'
+        }
+      );
+      dashboardContextActions.push(
+        {
+          action: ($event) => {
+            layoutCtx.ctrl.pasteWidget($event);
+          },
+          enabled: this.itembuffer.hasWidget(),
+          value: 'action.paste',
+          icon: 'content_paste',
+          shortcut: 'M-V'
+        }
+      );
+      dashboardContextActions.push(
+        {
+          action: ($event) => {
+            layoutCtx.ctrl.pasteWidgetReference($event);
+          },
+          enabled: this.itembuffer.canPasteWidgetReference(this.dashboard, this.dashboardCtx.state, layoutCtx.id),
+          value: 'action.paste-reference',
+          icon: 'content_paste',
+          shortcut: 'M-I'
+        }
+      );
+    }
+    return dashboardContextActions;
+  }
+
+  prepareWidgetContextMenu(layoutCtx: DashboardPageLayoutContext, widget: Widget, index: number): Array<WidgetContextMenuItem> {
+    const widgetContextActions: Array<WidgetContextMenuItem> = [];
+    if (this.isEdit && !this.isEditingWidget) {
+      widgetContextActions.push(
+        {
+          action: (event, currentWidget) => {
+            this.editWidget(event, layoutCtx, currentWidget, index);
+          },
+          enabled: true,
+          value: 'action.edit',
+          icon: 'edit'
+        }
+      );
+      if (!this.widgetEditMode) {
+        widgetContextActions.push(
+          {
+            action: (event, currentWidget) => {
+              this.copyWidget(event, layoutCtx, currentWidget);
+            },
+            enabled: true,
+            value: 'action.copy',
+            icon: 'content_copy',
+            shortcut: 'M-C'
+          }
+        );
+        widgetContextActions.push(
+          {
+            action: (event, currentWidget) => {
+              this.copyWidgetReference(event, layoutCtx, currentWidget);
+            },
+            enabled: true,
+            value: 'action.copy-reference',
+            icon: 'content_copy',
+            shortcut: 'M-R'
+          }
+        );
+        widgetContextActions.push(
+          {
+            action: (event, currentWidget) => {
+              this.removeWidget(event, layoutCtx, currentWidget);
+            },
+            enabled: true,
+            value: 'action.delete',
+            icon: 'clear',
+            shortcut: 'M-X'
+          }
+        );
+      }
+    }
+    return widgetContextActions;
   }
 }

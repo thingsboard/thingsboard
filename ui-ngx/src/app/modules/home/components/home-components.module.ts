@@ -40,6 +40,7 @@ import { WidgetComponentService } from './widget/widget-component.service';
 import { LegendComponent } from '@home/components/widget/legend.component';
 import { AliasesEntitySelectPanelComponent } from '@home/components/alias/aliases-entity-select-panel.component';
 import { AliasesEntitySelectComponent } from '@home/components/alias/aliases-entity-select.component';
+import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 
 @NgModule({
   entryComponents: [
@@ -76,7 +77,8 @@ import { AliasesEntitySelectComponent } from '@home/components/alias/aliases-ent
       AliasesEntitySelectComponent,
       DashboardComponent,
       WidgetComponent,
-      LegendComponent
+      LegendComponent,
+      WidgetConfigComponent
     ],
   imports: [
     CommonModule,
@@ -97,7 +99,8 @@ import { AliasesEntitySelectComponent } from '@home/components/alias/aliases-ent
     AliasesEntitySelectComponent,
     DashboardComponent,
     WidgetComponent,
-    LegendComponent
+    LegendComponent,
+    WidgetConfigComponent
   ],
   providers: [
     WidgetComponentService

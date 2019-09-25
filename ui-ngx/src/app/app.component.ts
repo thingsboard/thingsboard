@@ -49,9 +49,13 @@ export class AppComponent implements OnInit {
   }
 
   setupTranslate() {
-    console.log(`Supported Langs: ${env.supportedLangs}`);
+    if (!env.production) {
+      console.log(`Supported Langs: ${env.supportedLangs}`);
+    }
     this.translate.addLangs(env.supportedLangs);
-    console.log(`Default Lang: ${env.defaultLang}`);
+    if (!env.production) {
+      console.log(`Default Lang: ${env.defaultLang}`);
+    }
     this.translate.setDefaultLang(env.defaultLang);
   }
 

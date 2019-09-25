@@ -14,15 +14,22 @@
 /// limitations under the License.
 ///
 
-import { Widget } from '@shared/models/widget.models';
-import { WidgetLayout } from '@shared/models/dashboard.models';
+import { Injectable } from '@angular/core';
+import { Dashboard, DashboardLayoutId } from '@app/shared/models/dashboard.models';
 
-export interface ILayoutController {
-  reload();
-  setResizing(layoutVisibilityChanged: boolean);
-  resetHighlight();
-  highlightWidget(index: number, delay?: number);
-  selectWidget(index: number, delay?: number);
-  pasteWidget($event: MouseEvent);
-  pasteWidgetReference($event: MouseEvent);
+@Injectable({
+  providedIn: 'root'
+})
+export class ItemBufferService {
+  constructor() {}
+
+  public hasWidget(): boolean {
+    // TODO:
+    return false;
+  }
+
+  public canPasteWidgetReference(dashboard: Dashboard, state: string, layout: DashboardLayoutId): boolean {
+    // TODO:
+    return false;
+  }
 }

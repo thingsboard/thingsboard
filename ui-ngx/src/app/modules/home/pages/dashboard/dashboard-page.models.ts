@@ -19,6 +19,12 @@ import { Widget } from '@app/shared/models/widget.models';
 import { Timewindow } from '@shared/models/time/time.models';
 import { IAliasController, IStateController } from '@core/api/widget-api.models';
 import { ILayoutController } from './layout/layout.models';
+import {
+  DashboardContextMenuItem,
+  WidgetContextMenuItem,
+  WidgetPosition
+} from '@home/models/dashboard-component.models';
+import { Observable } from 'rxjs';
 
 export declare type DashboardPageScope = 'tenant' | 'customer';
 
@@ -34,6 +40,18 @@ export interface IDashboardController {
   dashboardCtx: DashboardContext;
   openRightLayout();
   openDashboardState(stateId: string, openRightLayout: boolean);
+  addWidget($event: Event, layoutCtx: DashboardPageLayoutContext);
+  editWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget, index: number);
+  exportWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget, index: number);
+  removeWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget);
+  widgetMouseDown($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget, index: number);
+  widgetClicked($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget, index: number);
+  prepareDashboardContextMenu(layoutCtx: DashboardPageLayoutContext): Array<DashboardContextMenuItem>;
+  prepareWidgetContextMenu(layoutCtx: DashboardPageLayoutContext, widget: Widget, index: number): Array<WidgetContextMenuItem>;
+  copyWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget);
+  copyWidgetReference($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget);
+  pasteWidget($event: Event, layoutCtx: DashboardPageLayoutContext, pos: WidgetPosition);
+  pasteWidgetReference($event: Event, layoutCtx: DashboardPageLayoutContext, pos: WidgetPosition);
 }
 
 export interface DashboardPageLayoutContext {
@@ -42,6 +60,7 @@ export interface DashboardPageLayoutContext {
   widgetLayouts: WidgetLayouts;
   gridSettings: GridSettings;
   ctrl: ILayoutController;
+  dashboardCtrl: IDashboardController;
   ignoreLoading: boolean;
 }
 

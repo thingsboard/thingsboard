@@ -22,16 +22,25 @@ import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Widget } from '@shared/models/widget.models';
-import { WidgetLayouts } from '@shared/models/dashboard.models';
+import { WidgetLayout, WidgetLayouts } from '@shared/models/dashboard.models';
 import { GridsterComponent } from 'angular-gridster2';
-import { IDashboardComponent } from '@home/models/dashboard-component.models';
+import {
+  DashboardCallbacks,
+  DashboardContextMenuItem,
+  IDashboardComponent, WidgetContextMenuItem
+} from '@home/models/dashboard-component.models';
+import { Observable, of, Subscription } from 'rxjs';
+import { Hotkey, HotkeysService } from 'angular2-hotkeys';
+import { getCurrentIsLoading } from '@core/interceptors/load.selectors';
+import { TranslateService } from '@ngx-translate/core';
+import { ItemBufferService } from '@app/core/services/item-buffer.service';
 
 @Component({
   selector: 'tb-dashboard-layout',
   templateUrl: './dashboard-layout.component.html',
   styleUrls: ['./dashboard-layout.component.scss']
 })
-export class DashboardLayoutComponent extends PageComponent implements ILayoutController, OnInit, OnDestroy {
+export class DashboardLayoutComponent extends PageComponent implements ILayoutController, DashboardCallbacks, OnInit, OnDestroy {
 
   layoutCtxValue: DashboardPageLayoutContext;
 
@@ -53,6 +62,9 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
   isEdit: boolean;
 
   @Input()
+  isEditingWidget: boolean;
+
+  @Input()
   isMobile: boolean;
 
   @Input()
@@ -60,15 +72,97 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
 
   @ViewChild('dashboard', {static: true}) dashboard: IDashboardComponent;
 
+  private rxSubscriptions = new Array<Subscription>();
+
   constructor(protected store: Store<AppState>,
-              private cd: ChangeDetectorRef) {
+              private hotkeysService: HotkeysService,
+              private translate: TranslateService,
+              private itembuffer: ItemBufferService) {
     super(store);
   }
 
   ngOnInit(): void {
+    this.rxSubscriptions.push(this.dashboard.dashboardTimewindowChanged.subscribe(
+      (dashboardTimewindow) => {
+        this.dashboardCtx.dashboardTimewindow = dashboardTimewindow;
+      }
+      )
+    );
+    this.initHotKeys();
   }
 
   ngOnDestroy(): void {
+    this.rxSubscriptions.forEach((subscription) => {
+      subscription.unsubscribe();
+    });
+    this.rxSubscriptions.length = 0;
+  }
+
+  private initHotKeys(): void {
+    this.hotkeysService.add(
+      new Hotkey('ctrl+c', (event: KeyboardEvent) => {
+          if (this.isEdit && !this.isEditingWidget && !this.widgetEditMode) {
+            const widget = this.dashboard.getSelectedWidget();
+            if (widget) {
+              event.preventDefault();
+              this.copyWidget(event, widget);
+            }
+          }
+          return false;
+        }, null,
+        this.translate.instant('action.copy'))
+    );
+    this.hotkeysService.add(
+      new Hotkey('ctrl+r', (event: KeyboardEvent) => {
+          if (this.isEdit && !this.isEditingWidget && !this.widgetEditMode) {
+            const widget = this.dashboard.getSelectedWidget();
+            if (widget) {
+              event.preventDefault();
+              this.copyWidgetReference(event, widget);
+            }
+          }
+          return false;
+        }, null,
+        this.translate.instant('action.copy-reference'))
+    );
+    this.hotkeysService.add(
+      new Hotkey('ctrl+v', (event: KeyboardEvent) => {
+          if (this.isEdit && !this.isEditingWidget && !this.widgetEditMode) {
+            if (this.itembuffer.hasWidget()) {
+              event.preventDefault();
+              this.pasteWidget(event);
+            }
+          }
+          return false;
+        }, null,
+        this.translate.instant('action.paste'))
+    );
+    this.hotkeysService.add(
+      new Hotkey('ctrl+i', (event: KeyboardEvent) => {
+          if (this.isEdit && !this.isEditingWidget && !this.widgetEditMode) {
+            if (this.itembuffer.canPasteWidgetReference(this.dashboardCtx.dashboard,
+              this.dashboardCtx.state, this.layoutCtx.id)) {
+              event.preventDefault();
+              this.pasteWidgetReference(event);
+            }
+          }
+          return false;
+        }, null,
+        this.translate.instant('action.paste-reference'))
+    );
+    this.hotkeysService.add(
+      new Hotkey('ctrl+x', (event: KeyboardEvent) => {
+          if (this.isEdit && !this.isEditingWidget && !this.widgetEditMode) {
+            const widget = this.dashboard.getSelectedWidget();
+            if (widget) {
+              event.preventDefault();
+              this.layoutCtx.dashboardCtrl.removeWidget(event, this.layoutCtx, widget);
+            }
+          }
+          return false;
+        }, null,
+        this.translate.instant('action.delete'))
+    );
   }
 
   reload() {
@@ -78,6 +172,65 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
   }
 
   resetHighlight() {
+    this.dashboard.resetHighlight();
+  }
+
+  highlightWidget(index: number, delay?: number) {
+    this.dashboard.highlightWidget(index, delay);
+  }
+
+  selectWidget(index: number, delay?: number) {
+    this.dashboard.selectWidget(index, delay);
+  }
+
+  addWidget($event: Event) {
+    this.layoutCtx.dashboardCtrl.addWidget($event, this.layoutCtx);
+  }
+
+  onEditWidget($event: Event, widget: Widget, index: number): void {
+    this.layoutCtx.dashboardCtrl.editWidget($event, this.layoutCtx, widget, index);
+  }
+
+  onExportWidget($event: Event, widget: Widget, index: number): void {
+    this.layoutCtx.dashboardCtrl.exportWidget($event, this.layoutCtx, widget, index);
+  }
+
+  onRemoveWidget($event: Event, widget: Widget, index: number): void {
+    return this.layoutCtx.dashboardCtrl.removeWidget($event, this.layoutCtx, widget);
+  }
+
+  onWidgetMouseDown($event: Event, widget: Widget, index: number): void {
+    this.layoutCtx.dashboardCtrl.widgetMouseDown($event, this.layoutCtx, widget, index);
+  }
+
+  onWidgetClicked($event: Event, widget: Widget, index: number): void {
+    this.layoutCtx.dashboardCtrl.widgetClicked($event, this.layoutCtx, widget, index);
+  }
+
+  prepareDashboardContextMenu($event: Event): Array<DashboardContextMenuItem> {
+    return this.layoutCtx.dashboardCtrl.prepareDashboardContextMenu(this.layoutCtx);
+  }
+
+  prepareWidgetContextMenu($event: Event, widget: Widget, index: number): Array<WidgetContextMenuItem> {
+    return this.layoutCtx.dashboardCtrl.prepareWidgetContextMenu(this.layoutCtx, widget, index);
+  }
+
+  copyWidget($event: Event, widget: Widget) {
+    this.layoutCtx.dashboardCtrl.copyWidget($event, this.layoutCtx, widget);
+  }
+
+  copyWidgetReference($event: Event, widget: Widget) {
+    this.layoutCtx.dashboardCtrl.copyWidgetReference($event, this.layoutCtx, widget);
+  }
+
+  pasteWidget($event: Event) {
+    const pos = this.dashboard.getEventGridPosition($event);
+    this.layoutCtx.dashboardCtrl.pasteWidget($event, this.layoutCtx, pos);
+  }
+
+  pasteWidgetReference($event: Event) {
+    const pos = this.dashboard.getEventGridPosition($event);
+    this.layoutCtx.dashboardCtrl.pasteWidgetReference($event, this.layoutCtx, pos);
   }
 
 }

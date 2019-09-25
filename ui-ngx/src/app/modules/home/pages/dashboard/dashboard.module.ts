@@ -28,6 +28,7 @@ import { DashboardPageComponent } from '@home/pages/dashboard/dashboard-page.com
 import { DashboardToolbarComponent } from './dashboard-toolbar.component';
 import { StatesControllerModule } from '@home/pages/dashboard/states/states-controller.module';
 import { DashboardLayoutComponent } from './layout/dashboard-layout.component';
+import { EditWidgetComponent } from './edit-widget.component';
 
 @NgModule({
   entryComponents: [
@@ -43,7 +44,8 @@ import { DashboardLayoutComponent } from './layout/dashboard-layout.component';
     MakeDashboardPublicDialogComponent,
     DashboardToolbarComponent,
     DashboardPageComponent,
-    DashboardLayoutComponent
+    DashboardLayoutComponent,
+    EditWidgetComponent
   ],
   imports: [
     CommonModule,

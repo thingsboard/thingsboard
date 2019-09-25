@@ -16,21 +16,22 @@
 
 import {
   AfterViewInit,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   ComponentFactoryResolver,
   ComponentRef,
   ElementRef,
   Injector,
   Input,
+  NgZone,
   OnChanges,
   OnDestroy,
   OnInit,
   SimpleChanges,
   ViewChild,
   ViewContainerRef,
-  ViewEncapsulation,
-  ChangeDetectorRef,
-  ChangeDetectionStrategy, NgZone
+  ViewEncapsulation
 } from '@angular/core';
 import { DashboardWidget, IDashboardComponent } from '@home/models/dashboard-component.models';
 import {
@@ -52,7 +53,7 @@ import { AppState } from '@core/core.state';
 import { WidgetService } from '@core/http/widget.service';
 import { UtilsService } from '@core/services/utils.service';
 import { forkJoin, Observable, of, ReplaySubject, Subscription, throwError } from 'rxjs';
-import { isDefined, objToBase64, deepClone } from '@core/utils';
+import { deepClone, isDefined, objToBase64 } from '@core/utils';
 import {
   IDynamicWidgetComponent,
   WidgetContext,
@@ -63,7 +64,8 @@ import {
 import {
   IWidgetSubscription,
   StateObject,
-  StateParams, SubscriptionEntityInfo,
+  StateParams,
+  SubscriptionEntityInfo,
   SubscriptionInfo,
   WidgetSubscriptionContext,
   WidgetSubscriptionOptions
@@ -86,7 +88,6 @@ import { DashboardService } from '@core/http/dashboard.service';
 import { DatasourceService } from '@core/api/datasource.service';
 import { WidgetSubscription } from '@core/api/widget-subscription';
 import { EntityService } from '@core/http/entity.service';
-import { TimewindowComponent } from '@shared/components/time/timewindow.component';
 
 @Component({
   selector: 'tb-widget',
@@ -362,10 +363,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       const change = changes[propName];
       if (!change.firstChange && change.currentValue !== change.previousValue) {
         if (propName === 'isEdit') {
-          console.log(`isEdit changed: ${this.isEdit}`);
           this.onEditModeChanged();
         } else if (propName === 'isMobile') {
-          console.log(`isMobile changed: ${this.isMobile}`);
           this.onMobileModeChanged();
         }
       }

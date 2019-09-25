@@ -95,6 +95,7 @@ import { FabToolbarComponent, FabActionsDirective, FabTriggerDirective } from '.
 import { DashboardSelectPanelComponent } from '@shared/components/dashboard-select-panel.component';
 import { DashboardSelectComponent } from '@shared/components/dashboard-select.component';
 import { WidgetsBundleSelectComponent } from './components/widgets-bundle-select.component';
+import { KeyboardShortcutPipe } from './pipe/keyboard-shortcut.pipe';
 
 @NgModule({
   providers: [
@@ -150,7 +151,8 @@ import { WidgetsBundleSelectComponent } from './components/widgets-bundle-select
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
-    HighlightPipe
+    HighlightPipe,
+    KeyboardShortcutPipe
   ],
   imports: [
     CommonModule,
@@ -272,6 +274,7 @@ import { WidgetsBundleSelectComponent } from './components/widgets-bundle-select
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
     HighlightPipe,
+    KeyboardShortcutPipe,
     TranslateModule
   ]
 })

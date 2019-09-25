@@ -40,6 +40,7 @@ export interface WidgetTypeData {
   name: string;
   icon: string;
   isMdiIcon?: boolean;
+  configHelpLinkId: string;
   template: WidgetTypeTemplate;
 }
 
@@ -50,6 +51,7 @@ export const widgetTypesData = new Map<widgetType, WidgetTypeData>(
       {
         name: 'widget.timeseries',
         icon: 'timeline',
+        configHelpLinkId: 'widgetsConfigTimeseries',
         template: {
           bundleAlias: 'charts',
           alias: 'basic_timeseries'
@@ -61,6 +63,7 @@ export const widgetTypesData = new Map<widgetType, WidgetTypeData>(
       {
         name: 'widget.latest-values',
         icon: 'track_changes',
+        configHelpLinkId: 'widgetsConfigLatest',
         template: {
           bundleAlias: 'cards',
           alias: 'attributes_card'
@@ -72,6 +75,7 @@ export const widgetTypesData = new Map<widgetType, WidgetTypeData>(
       {
         name: 'widget.rpc',
         icon: 'mdi:developer-board',
+        configHelpLinkId: 'widgetsConfigRpc',
         isMdiIcon: true,
         template: {
           bundleAlias: 'gpio_widgets',
@@ -84,6 +88,7 @@ export const widgetTypesData = new Map<widgetType, WidgetTypeData>(
       {
         name: 'widget.alarm',
         icon: 'error',
+        configHelpLinkId: 'widgetsConfigAlarm',
         template: {
           bundleAlias: 'alarm_widgets',
           alias: 'alarms_table'
@@ -95,6 +100,7 @@ export const widgetTypesData = new Map<widgetType, WidgetTypeData>(
       {
         name: 'widget.static',
         icon: 'font_download',
+        configHelpLinkId: 'widgetsConfigStatic',
         template: {
           bundleAlias: 'cards',
           alias: 'html_card'
@@ -129,8 +135,8 @@ export interface WidgetTypeDescriptor {
   templateHtml: string;
   templateCss: string;
   controllerScript: string;
-  settingsSchema?: string;
-  dataKeySettingsSchema?: string;
+  settingsSchema?: string | any;
+  dataKeySettingsSchema?: string | any;
   defaultConfig: string;
   sizeX: number;
   sizeY: number;
@@ -146,8 +152,8 @@ export interface WidgetTypeParameters {
 
 export interface WidgetControllerDescriptor {
   widgetTypeFunction?: any;
-  settingsSchema?: string;
-  dataKeySettingsSchema?: string;
+  settingsSchema?: string | any;
+  dataKeySettingsSchema?: string | any;
   typeParameters?: WidgetTypeParameters;
   actionSources?: {[key: string]: WidgetActionSource};
 }
@@ -309,7 +315,7 @@ export interface WidgetConfig {
   showTitle?: boolean;
   showTitleIcon?: boolean;
   iconColor?: string;
-  iconSize?: number;
+  iconSize?: string;
   dropShadow?: boolean;
   enableFullscreen?: boolean;
   useDashboardTimewindow?: boolean;

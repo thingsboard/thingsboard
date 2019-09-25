@@ -14,30 +14,50 @@
 /// limitations under the License.
 ///
 
-import { GridsterConfig, GridsterItem, GridsterComponent } from 'angular-gridster2';
+import { GridsterComponent, GridsterConfig, GridsterItem, GridsterItemComponentInterface } from 'angular-gridster2';
 import { Widget, widgetType } from '@app/shared/models/widget.models';
 import { WidgetLayout, WidgetLayouts } from '@app/shared/models/dashboard.models';
 import { WidgetAction, WidgetContext, WidgetHeaderAction } from './widget-component.models';
 import { Timewindow } from '@shared/models/time/time.models';
-import { Observable } from 'rxjs';
+import { Observable, of, Subject } from 'rxjs';
 import { isDefined, isUndefined } from '@app/core/utils';
-import { EventEmitter } from '@angular/core';
-import { EntityId } from '@app/shared/models/id/entity-id';
-import { IAliasController, IStateController, TimewindowFunctions } from '@app/core/api/widget-api.models';
+import { IterableDiffer, KeyValueDiffer } from '@angular/core';
+import { IAliasController, IStateController } from '@app/core/api/widget-api.models';
+import * as deepEqual from 'deep-equal';
 
 export interface WidgetsData {
   widgets: Array<Widget>;
   widgetLayouts?: WidgetLayouts;
 }
 
+export interface ContextMenuItem {
+  enabled: boolean;
+  shortcut?: string;
+  icon: string;
+  value: string;
+}
+
+export interface DashboardContextMenuItem extends ContextMenuItem {
+  action: (contextMenuEvent: MouseEvent) => void;
+}
+
+export interface WidgetContextMenuItem extends ContextMenuItem {
+  action: (contextMenuEvent: MouseEvent, widget: Widget) => void;
+}
+
 export interface DashboardCallbacks {
-  onEditWidget?: ($event: Event, widget: Widget) => void;
-  onExportWidget?: ($event: Event, widget: Widget) => void;
-  onRemoveWidget?: ($event: Event, widget: Widget) => Observable<boolean>;
-  onWidgetMouseDown?: ($event: Event, widget: Widget) => void;
-  onWidgetClicked?: ($event: Event, widget: Widget) => void;
-  prepareDashboardContextMenu?: ($event: Event) => void;
-  prepareWidgetContextMenu?: ($event: Event, widget: Widget) => void;
+  onEditWidget?: ($event: Event, widget: Widget, index: number) => void;
+  onExportWidget?: ($event: Event, widget: Widget, index: number) => void;
+  onRemoveWidget?: ($event: Event, widget: Widget, index: number) => void;
+  onWidgetMouseDown?: ($event: Event, widget: Widget, index: number) => void;
+  onWidgetClicked?: ($event: Event, widget: Widget, index: number) => void;
+  prepareDashboardContextMenu?: ($event: Event) => Array<DashboardContextMenuItem>;
+  prepareWidgetContextMenu?: ($event: Event, widget: Widget, index: number) => Array<WidgetContextMenuItem>;
+}
+
+export interface WidgetPosition {
+  row: number;
+  column: number;
 }
 
 export interface IDashboardComponent {
@@ -53,60 +73,181 @@ export interface IDashboardComponent {
   stateController: IStateController;
   onUpdateTimewindow(startTimeMs: number, endTimeMs: number, interval?: number): void;
   onResetTimewindow(): void;
+  resetHighlight(): void;
+  highlightWidget(index: number, delay?: number);
+  selectWidget(index: number, delay?: number);
+  getSelectedWidget(): Widget;
+  getEventGridPosition(event: Event): WidgetPosition;
+}
+
+declare type DashboardWidgetUpdateOperation = 'add' | 'remove' | 'update';
+
+interface DashboardWidgetUpdateRecord {
+  widget?: Widget;
+  widgetLayout?: WidgetLayout;
+  widgetIndex: number;
+  operation: DashboardWidgetUpdateOperation;
 }
 
 export class DashboardWidgets implements Iterable<DashboardWidget> {
 
+  highlightedMode = false;
+
   dashboardWidgets: Array<DashboardWidget> = [];
+  widgets: Array<Widget>;
+  widgetLayouts: WidgetLayouts;
 
   [Symbol.iterator](): Iterator<DashboardWidget> {
     return this.dashboardWidgets[Symbol.iterator]();
   }
 
-  constructor(private dashboard: IDashboardComponent) {
+  constructor(private dashboard: IDashboardComponent,
+              private widgetsDiffer: IterableDiffer<Widget>,
+              private widgetLayoutsDiffer: KeyValueDiffer<string, WidgetLayout>) {
+  }
+
+  doCheck() {
+    const widgetChange = this.widgetsDiffer.diff(this.widgets);
+    if (widgetChange !== null) {
+
+      const layouts: WidgetLayouts = {};
+      const updateRecords: Array<DashboardWidgetUpdateRecord> = [];
+
+      const widgetLayoutChange = this.widgetLayoutsDiffer.diff(this.widgetLayouts);
+      if (widgetLayoutChange !== null) {
+        widgetLayoutChange.forEachAddedItem((added) => {
+          layouts[added.key] = added.currentValue;
+        });
+        widgetLayoutChange.forEachChangedItem((changed) => {
+          layouts[changed.key] = changed.currentValue;
+        });
+      }
+      widgetChange.forEachAddedItem((added) => {
+        updateRecords.push({
+          widget: added.item,
+          widgetLayout: layouts[added.item.id],
+          widgetIndex: added.currentIndex,
+          operation: 'add'
+        });
+      });
+      widgetChange.forEachRemovedItem((removed) => {
+        let operation = updateRecords.find((record) => record.widgetIndex === removed.previousIndex);
+        if (operation) {
+          operation.operation = 'update';
+        } else {
+          operation = {
+            widgetIndex: removed.previousIndex,
+            operation: 'remove'
+          };
+          updateRecords.push(operation);
+        }
+      });
+      updateRecords.forEach((record) => {
+        switch (record.operation) {
+          case 'add':
+            this.dashboardWidgets.push(
+              new DashboardWidget(this.dashboard, record.widget, record.widgetIndex, record.widgetLayout)
+            );
+            break;
+          case 'remove':
+            let index = this.dashboardWidgets.findIndex((dashboardWidget) => dashboardWidget.widgetIndex === record.widgetIndex);
+            if (index > -1) {
+              this.dashboardWidgets.splice(index, 1);
+            }
+            break;
+          case 'update':
+            index = this.dashboardWidgets.findIndex((dashboardWidget) => dashboardWidget.widgetIndex === record.widgetIndex);
+            if (index > -1) {
+              const prevDashboardWidget = this.dashboardWidgets[index];
+              if (!deepEqual(prevDashboardWidget.widget, record.widget)) {
+                this.dashboardWidgets[index] = new DashboardWidget(this.dashboard, record.widget, record.widgetIndex, record.widgetLayout);
+                this.dashboardWidgets[index].highlighted = prevDashboardWidget.highlighted;
+                this.dashboardWidgets[index].selected = prevDashboardWidget.selected;
+              } else {
+                this.dashboardWidgets[index].widget = record.widget;
+                this.dashboardWidgets[index].widgetLayout = record.widgetLayout;
+              }
+            }
+            break;
+        }
+      });
+      if (updateRecords.length) {
+        this.updateRowsAndSort();
+      }
+    }
   }
 
   setWidgets(widgets: Array<Widget>, widgetLayouts: WidgetLayouts) {
+    this.highlightedMode = false;
+    this.widgets = widgets;
+    this.widgetLayouts = widgetLayouts;
+  }
+
+  highlightWidget(index: number): DashboardWidget {
+    const widget = this.findWidgetAtIndex(index);
+    if (widget && (!this.highlightedMode || !widget.highlighted)) {
+      this.highlightedMode = true;
+      widget.highlighted = true;
+      this.dashboardWidgets.forEach((dashboardWidget) => {
+        if (dashboardWidget !== widget) {
+          dashboardWidget.highlighted = false;
+        }
+      });
+      return widget;
+    } else {
+      return null;
+    }
+  }
+
+  selectWidget(index: number): DashboardWidget {
+    const widget = this.findWidgetAtIndex(index);
+    if (widget && (!widget.selected)) {
+      widget.selected = true;
+      this.dashboardWidgets.forEach((dashboardWidget) => {
+        if (dashboardWidget !== widget) {
+          dashboardWidget.selected = false;
+        }
+      });
+      return widget;
+    } else {
+      return null;
+    }
+  }
+
+  resetHighlight(): DashboardWidget {
+    const highlighted = this.dashboardWidgets.find((dashboardWidget) => dashboardWidget.highlighted);
+    this.highlightedMode = false;
+    this.dashboardWidgets.forEach((dashboardWidget) => {
+      dashboardWidget.highlighted = false;
+      dashboardWidget.selected = false;
+    });
+    return highlighted;
+  }
+
+  isHighlighted(widget: DashboardWidget): boolean {
+    return (this.highlightedMode && widget.highlighted) || (widget.selected);
+  }
+
+  isNotHighlighted(widget: DashboardWidget): boolean {
+    return this.highlightedMode && !widget.highlighted;
+  }
+
+  getSelectedWidget(): DashboardWidget {
+    return this.dashboardWidgets.find((dashboardWidget) => dashboardWidget.selected);
+  }
+
+  private findWidgetAtIndex(index: number): DashboardWidget {
+    return this.dashboardWidgets.find((dashboardWidget) => dashboardWidget.widgetIndex === index);
+  }
+
+  private updateRowsAndSort() {
     let maxRows = this.dashboard.gridsterOpts.maxRows;
-    this.dashboardWidgets.length = 0;
-    widgets.forEach((widget) => {
-      let widgetLayout: WidgetLayout;
-      if (widgetLayouts && widget.id) {
-        widgetLayout = widgetLayouts[widget.id];
-      }
-      const dashboardWidget = new DashboardWidget(this.dashboard, widget, widgetLayout);
+    this.dashboardWidgets.forEach((dashboardWidget) => {
       const bottom = dashboardWidget.y + dashboardWidget.rows;
       maxRows = Math.max(maxRows, bottom);
-      this.dashboardWidgets.push(dashboardWidget);
     });
     this.sortWidgets();
     this.dashboard.gridsterOpts.maxRows = maxRows;
-  }
-
-  addWidget(widget: Widget, widgetLayout: WidgetLayout) {
-    const dashboardWidget = new DashboardWidget(this.dashboard, widget, widgetLayout);
-    let maxRows = this.dashboard.gridsterOpts.maxRows;
-    const bottom = dashboardWidget.y + dashboardWidget.rows;
-    maxRows = Math.max(maxRows, bottom);
-    this.dashboardWidgets.push(dashboardWidget);
-    this.sortWidgets();
-    this.dashboard.gridsterOpts.maxRows = maxRows;
-  }
-
-  removeWidget(widget: Widget): boolean {
-    const index = this.dashboardWidgets.findIndex((dashboardWidget) => dashboardWidget.widget === widget);
-    if (index > -1) {
-      this.dashboardWidgets.splice(index, 1);
-      let maxRows = this.dashboard.gridsterOpts.maxRows;
-      this.dashboardWidgets.forEach((dashboardWidget) => {
-        const bottom = dashboardWidget.y + dashboardWidget.rows;
-        maxRows = Math.max(maxRows, bottom);
-      });
-      this.sortWidgets();
-      this.dashboard.gridsterOpts.maxRows = maxRows;
-      return true;
-    }
-    return false;
   }
 
   sortWidgets() {
@@ -124,6 +265,9 @@ export class DashboardWidgets implements Iterable<DashboardWidget> {
 }
 
 export class DashboardWidget implements GridsterItem {
+
+  highlighted = false;
+  selected = false;
 
   isFullscreen = false;
 
@@ -160,11 +304,29 @@ export class DashboardWidget implements GridsterItem {
 
   widgetContext: WidgetContext = {};
 
+  private gridsterItemComponentSubject = new Subject<GridsterItemComponentInterface>();
+  private gridsterItemComponentValue: GridsterItemComponentInterface;
+
+  set gridsterItemComponent(item: GridsterItemComponentInterface) {
+    this.gridsterItemComponentValue = item;
+    this.gridsterItemComponentSubject.next(this.gridsterItemComponentValue);
+    this.gridsterItemComponentSubject.complete();
+  }
+
   constructor(
     private dashboard: IDashboardComponent,
     public widget: Widget,
-    private widgetLayout?: WidgetLayout) {
+    public widgetIndex: number,
+    public widgetLayout?: WidgetLayout) {
     this.updateWidgetParams();
+  }
+
+  gridsterItemComponent$(): Observable<GridsterItemComponentInterface> {
+    if (this.gridsterItemComponentValue) {
+      return of(this.gridsterItemComponentValue);
+    } else {
+      return this.gridsterItemComponentSubject.asObservable();
+    }
   }
 
   updateWidgetParams() {
@@ -221,11 +383,13 @@ export class DashboardWidget implements GridsterItem {
   }
 
   get x(): number {
+    let res;
     if (this.widgetLayout) {
-      return this.widgetLayout.col;
+      res = this.widgetLayout.col;
     } else {
-      return this.widget.col;
+      res = this.widget.col;
     }
+    return Math.floor(res);
   }
 
   set x(x: number) {
@@ -239,11 +403,13 @@ export class DashboardWidget implements GridsterItem {
   }
 
   get y(): number {
+    let res;
     if (this.widgetLayout) {
-      return this.widgetLayout.row;
+      res = this.widgetLayout.row;
     } else {
-      return this.widget.row;
+      res = this.widget.row;
     }
+    return Math.floor(res);
   }
 
   set y(y: number) {
@@ -257,11 +423,13 @@ export class DashboardWidget implements GridsterItem {
   }
 
   get cols(): number {
+    let res;
     if (this.widgetLayout) {
-      return this.widgetLayout.sizeX;
+      res = this.widgetLayout.sizeX;
     } else {
-      return this.widget.sizeX;
+      res = this.widget.sizeX;
     }
+    return Math.floor(res);
   }
 
   set cols(cols: number) {
@@ -275,6 +443,7 @@ export class DashboardWidget implements GridsterItem {
   }
 
   get rows(): number {
+    let res;
     if (this.dashboard.isMobileSize && !this.dashboard.mobileAutofillHeight) {
       let mobileHeight;
       if (this.widgetLayout) {
@@ -284,17 +453,18 @@ export class DashboardWidget implements GridsterItem {
         mobileHeight = this.widget.config.mobileHeight;
       }
       if (mobileHeight) {
-        return mobileHeight;
+        res = mobileHeight;
       } else {
-        return this.widget.sizeY * 24 / this.dashboard.gridsterOpts.minCols;
+        res = this.widget.sizeY * 24 / this.dashboard.gridsterOpts.minCols;
       }
     } else {
       if (this.widgetLayout) {
-        return this.widgetLayout.sizeY;
+        res = this.widgetLayout.sizeY;
       } else {
-        return this.widget.sizeY;
+        res = this.widget.sizeY;
       }
     }
+    return Math.floor(res);
   }
 
   set rows(rows: number) {

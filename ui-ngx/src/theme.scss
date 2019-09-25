@@ -277,6 +277,15 @@ $tb-dark-theme: get-tb-dark-theme(
     display: block;
   }
 
+  button.mat-menu-item {
+    overflow: hidden;
+    fill: #737373;
+    display: block;
+    .tb-alt-text {
+      float: right;
+    }
+  }
+
   mat-toolbar.mat-table-toolbar {
     background: #fff;
     padding: 0 24px;

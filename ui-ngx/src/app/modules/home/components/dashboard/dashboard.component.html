@@ -24,6 +24,42 @@
 <div id="gridster-parent"
      fxFlex class="tb-dashboard-content layout-wrap" [ngStyle]="{overflowY: isAutofillHeight() ? 'hidden' : 'auto'}"
                 (contextmenu)="openDashboardContextMenu($event)">
+  <div #dashboardMenuTrigger="matMenuTrigger" style="visibility: hidden; position: fixed"
+       [style.left]="dashboardMenuPosition.x"
+       [style.top]="dashboardMenuPosition.y"
+       [matMenuTriggerFor]="dashboardMenu">
+  </div>
+  <mat-menu #dashboardMenu="matMenu">
+    <ng-template matMenuContent let-items="items">
+      <div class="tb-dashboard-context-menu-items">
+        <button mat-menu-item *ngFor="let item of items;"
+                [disabled]="!item.enabled"
+                (click)="item.action(dashboardContextMenuEvent)">
+          <span *ngIf="item.shortcut" class="tb-alt-text"> {{ item.shortcut | keyboardShortcut }}</span>
+          <mat-icon *ngIf="item.icon">{{item.icon}}</mat-icon>
+          <span translate>{{item.value}}</span>
+        </button>
+      </div>
+    </ng-template>
+  </mat-menu>
+  <div #widgetMenuTrigger="matMenuTrigger" style="visibility: hidden; position: fixed"
+       [style.left]="widgetMenuPosition.x"
+       [style.top]="widgetMenuPosition.y"
+       [matMenuTriggerFor]="widgetMenu">
+  </div>
+  <mat-menu #widgetMenu="matMenu">
+    <ng-template matMenuContent let-items="items" let-widget="widget">
+      <div class="tb-dashboard-context-menu-items">
+        <button mat-menu-item *ngFor="let item of items;"
+                [disabled]="!item.enabled"
+                (click)="item.action(widgetContextMenuEvent, widget)">
+          <span *ngIf="item.shortcut" class="tb-alt-text"> {{ item.shortcut | keyboardShortcut }}</span>
+          <mat-icon *ngIf="item.icon">{{item.icon}}</mat-icon>
+          <span translate>{{item.value}}</span>
+        </button>
+      </div>
+    </ng-template>
+  </mat-menu>
   <div [ngClass]="dashboardClass" id="gridster-background" style="height: auto; min-height: 100%; display: inline;">
     <gridster #gridster id="gridster-child" [options]="gridsterOpts">
       <gridster-item [item]="widget" class="tb-noselect" *ngFor="let widget of dashboardWidgets">

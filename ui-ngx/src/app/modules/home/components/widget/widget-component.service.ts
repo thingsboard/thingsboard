@@ -29,7 +29,7 @@ import {
 import cssjs from '@core/css/css';
 import { UtilsService } from '@core/services/utils.service';
 import { ResourcesService } from '@core/services/resources.service';
-import { widgetActionSources, WidgetControllerDescriptor, WidgetType } from '@shared/models/widget.models';
+import { Widget, widgetActionSources, WidgetControllerDescriptor, WidgetType } from '@shared/models/widget.models';
 import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
 import { isFunction, isUndefined } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
@@ -127,6 +127,15 @@ export class WidgetComponentService {
         }
       );
       return this.init$;
+    }
+  }
+
+  public getInstantWidgetInfo(widget: Widget): WidgetInfo {
+    const widgetInfo = this.getWidgetInfoFromCache(widget.bundleAlias, widget.typeAlias, widget.isSystemType);
+    if (widgetInfo) {
+      return widgetInfo;
+    } else {
+      return {} as WidgetInfo;
     }
   }
 
