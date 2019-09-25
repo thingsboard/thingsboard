@@ -212,6 +212,21 @@ public class DefaultMailService implements MailService {
         mailSender.send(helper.getMimeMessage());
     }
 
+    @Override
+    public void sendAccountLockoutEmail( String lockoutEmail, String email, Integer maxFailedLoginAttempts) throws ThingsboardException {
+        String subject = messages.getMessage("account.lockout.subject", null, Locale.US);
+
+        Map<String, Object> model = new HashMap<String, Object>();
+        model.put("lockoutAccount", lockoutEmail);
+        model.put("maxFailedLoginAttempts", maxFailedLoginAttempts);
+        model.put(TARGET_EMAIL, email);
+
+        String message = mergeTemplateIntoString(this.engine,
+                "account.lockout.vm", UTF_8, model);
+
+        sendMail(mailSender, mailFrom, email, subject, message);
+    }
+
     private void sendMail(JavaMailSenderImpl mailSender,
                           String mailFrom, String email,
                           String subject, String message) throws ThingsboardException {

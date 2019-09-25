@@ -126,7 +126,7 @@ public class UserController extends BaseController {
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/user", method = RequestMethod.POST)
-    @ResponseBody 
+    @ResponseBody
     public User saveUser(@RequestBody User user,
                          @RequestParam(required = false, defaultValue = "true") boolean sendActivationMail,
             HttpServletRequest request) throws ThingsboardException {
@@ -285,5 +285,20 @@ public class UserController extends BaseController {
             throw handleException(e);
         }
     }
-    
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/user/{userId}/userCredentialsEnabled", method = RequestMethod.POST)
+    @ResponseBody
+    public void setUserCredentialsEnabled(@PathVariable(USER_ID) String strUserId,
+                                          @RequestParam(required = false, defaultValue = "true") boolean userCredentialsEnabled) throws ThingsboardException {
+        checkParameter(USER_ID, strUserId);
+        try {
+            UserId userId = new UserId(toUUID(strUserId));
+            User user = checkUserId(userId, Operation.WRITE);
+            TenantId tenantId = getCurrentUser().getTenantId();
+            userService.setUserCredentialsEnabled(tenantId, userId, userCredentialsEnabled);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
 }

@@ -255,7 +255,7 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
         scope: {
             asButton: '=asButton',
             disabled:'=ngDisabled',
-            isEdit: '=?'
+            isEdit: '&?'
 
         },
         link: linker
