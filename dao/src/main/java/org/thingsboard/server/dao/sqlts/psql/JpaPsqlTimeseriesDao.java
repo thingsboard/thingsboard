@@ -302,12 +302,13 @@ public class JpaPsqlTimeseriesDao extends AbstractSqlTimeseriesDao implements Ti
                         try {
                             TsKvDictionary saved = dictionaryRepository.save(tsKvDictionary);
                             tsKvDictionaryMap.put(saved.getKey(), saved.getKeyId());
+                            keyId = saved.getKeyId();
                         } catch (ConstraintViolationException e) {
                             tsKvDictionaryOptional = dictionaryRepository.findById(new TsKvDictionaryCompositeKey(strKey));
                             TsKvDictionary dictionary = tsKvDictionaryOptional.orElseThrow(() -> new RuntimeException("Failed to get TsKvDictionary entity from DB!"));
                             tsKvDictionaryMap.put(dictionary.getKey(), dictionary.getKeyId());
+                            keyId = dictionary.getKeyId();
                         }
-                        keyId = tsKvDictionaryMap.get(strKey);
                     } else {
                         keyId = tsKvDictionaryOptional.get().getKeyId();
                     }

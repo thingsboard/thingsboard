@@ -38,7 +38,7 @@ public interface TsKvTimescaleRepository extends CrudRepository<TimescaleTsKvEnt
     List<TimescaleTsKvEntity> findAllWithLimit(
             @Param("tenantId") UUID tenantId,
             @Param("entityId") UUID entityId,
-            @Param("entityKey") String key,
+            @Param("entityKey") int key,
             @Param("startTs") long startTs,
             @Param("endTs") long endTs, Pageable pageable);
 
@@ -60,7 +60,7 @@ public interface TsKvTimescaleRepository extends CrudRepository<TimescaleTsKvEnt
             "AND tskv.ts > :startTs AND tskv.ts <= :endTs")
     void delete(@Param("tenantId") UUID tenantId,
                 @Param("entityId") UUID entityId,
-                @Param("entityKey") String key,
+                @Param("entityKey") int key,
                 @Param("startTs") long startTs,
                 @Param("endTs") long endTs);
 

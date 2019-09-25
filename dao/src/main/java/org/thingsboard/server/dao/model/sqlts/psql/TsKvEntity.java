@@ -17,49 +17,21 @@ package org.thingsboard.server.dao.model.sqlts.psql;
 
 import lombok.Data;
 import org.eclipse.persistence.annotations.Converter;
-import org.eclipse.persistence.annotations.Convert;
-import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
-import org.thingsboard.server.common.data.kv.BooleanDataEntry;
-import org.thingsboard.server.common.data.kv.DoubleDataEntry;
-import org.thingsboard.server.common.data.kv.KvEntry;
-import org.thingsboard.server.common.data.kv.LongDataEntry;
-import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.model.ToData;
-import org.thingsboard.server.dao.model.sql.AbsractTsKvEntity;
 import org.thingsboard.server.dao.model.UUIDConverter;
+import org.thingsboard.server.dao.model.sql.PsqlAbsractTsKvEntity;
 
-import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.Id;
 import javax.persistence.IdClass;
 import javax.persistence.Table;
-import javax.persistence.Transient;
-
-import java.util.UUID;
-
-import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_ID_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.KEY_COLUMN;
 
 @Data
 @Entity
 @Table(name = "ts_kv")
 @IdClass(TsKvCompositeKey.class)
 @Converter(name="uuidConverter", converterClass=UUIDConverter.class)
-public final class TsKvEntity extends AbsractTsKvEntity implements ToData<TsKvEntry> {
-
-
-    @Id
-    @Column(name = ENTITY_ID_COLUMN)
-    @Convert("uuidConverter")
-    private UUID entityId;
-
-    @Id
-    @Column(name = KEY_COLUMN)
-    private int key;
-
-    @Transient
-    private String strKey;
+public final class TsKvEntity extends PsqlAbsractTsKvEntity implements ToData<TsKvEntry> {
 
     public TsKvEntity() {
     }
@@ -117,22 +89,6 @@ public final class TsKvEntity extends AbsractTsKvEntity implements ToData<TsKvEn
                 this.longValue = longValueCount + doubleValueCount;
             }
         }
-    }
-
-    // TODO: 19.09.19 don't forget to change ""
-    @Override
-    public TsKvEntry toData() {
-        KvEntry kvEntry = null;
-        if (strValue != null) {
-            kvEntry = new StringDataEntry(strKey, strValue);
-        } else if (longValue != null) {
-            kvEntry = new LongDataEntry(strKey, longValue);
-        } else if (doubleValue != null) {
-            kvEntry = new DoubleDataEntry(strKey, doubleValue);
-        } else if (booleanValue != null) {
-            kvEntry = new BooleanDataEntry(strKey, booleanValue);
-        }
-        return new BasicTsKvEntry(ts, kvEntry);
     }
 
     @Override

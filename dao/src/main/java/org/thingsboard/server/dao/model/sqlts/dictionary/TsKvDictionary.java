@@ -36,7 +36,7 @@ public final class TsKvDictionary  {
     @Column(name = KEY_COLUMN)
     private String key;
 
-    @Column(name = KEY_ID_COLUMN)
+    @Column(name = KEY_ID_COLUMN, unique = true)
     private int keyId;
 
 }

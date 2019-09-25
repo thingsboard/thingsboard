@@ -20,5 +20,11 @@ import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionary;
 import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionaryCompositeKey;
 import org.thingsboard.server.dao.util.PsqlDao;
 
+import java.util.Optional;
+
 @PsqlDao
-public interface TsKvDictionaryRepository extends CrudRepository<TsKvDictionary, TsKvDictionaryCompositeKey> { }
+public interface TsKvDictionaryRepository extends CrudRepository<TsKvDictionary, TsKvDictionaryCompositeKey> {
+
+    Optional<TsKvDictionary> findByKeyId(int keyId);
+
+}

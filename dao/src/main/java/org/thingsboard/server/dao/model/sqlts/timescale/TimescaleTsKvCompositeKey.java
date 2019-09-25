@@ -33,6 +33,6 @@ public class TimescaleTsKvCompositeKey implements Serializable {
 
     private UUID tenantId;
     private UUID entityId;
-    private String key;
+    private int key;
     private long ts;
 } 
