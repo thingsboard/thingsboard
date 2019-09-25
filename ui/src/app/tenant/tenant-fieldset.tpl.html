@@ -41,6 +41,35 @@
 			<label translate>tenant.description</label>
 			<textarea ng-model="tenant.additionalInfo.description" rows="2"></textarea>
 		</md-input-container>
+		<md-expansion-panel md-component-id="{{ruleEngineSettingsId}}">
+			<md-expansion-panel-collapsed>
+				<div class="tb-panel-title">{{ 'tenant.rule-engine-settings' | translate }}</div>
+				<span flex></span>
+				<md-expansion-panel-icon></md-expansion-panel-icon>
+			</md-expansion-panel-collapsed>
+			<md-expansion-panel-expanded>
+				<md-expansion-panel-header ng-click="$mdExpansionPanel(ruleEngineSettingsId).collapse()">
+					<div class="tb-panel-title">{{ 'tenant.rule-engine-settings' | translate }}</div>
+					<span flex></span>
+					<md-expansion-panel-icon></md-expansion-panel-icon>
+				</md-expansion-panel-header>
+				<md-expansion-panel-content>
+					<md-input-container flex class="md-block tenant-execution-type">
+						<label translate>tenant.executionType</label>
+						<md-select required name="executionType" aria-label="{{ 'tenant.executionType' | translate }}"
+								   ng-model="tenant.ruleEngineSettings.executionType" ng-change="changeExecutionType()">
+							<md-option ng-repeat="executionType in types.ruleEngine.executionTypes" value="{{executionType}}">
+								{{executionType | translate}}
+							</md-option>
+						</md-select>
+					</md-input-container>
+					<md-input-container class="md-block">
+						<label translate>tenant.partitionsNumber</label>
+						<input ng-model="tenant.ruleEngineSettings.partitionsNumber" type="number"/>
+					</md-input-container>
+				</md-expansion-panel-content>
+			</md-expansion-panel-expanded>
+		</md-expansion-panel>
 		<tb-contact contact="tenant" the-form="theForm" is-edit="isEdit"></tb-contact>
 	</fieldset>
 </md-content>

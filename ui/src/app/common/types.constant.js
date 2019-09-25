@@ -682,6 +682,12 @@ export default angular.module('thingsboard.types', [])
                     icon: "help_outline"
                 }
             },
+            ruleEngine: {
+                executionTypes: {
+                    dedicated: "tenant.execution-type.dedicated",
+                    shared: "tenant.execution-type.shared"
+                }
+            },
             messageType: {
                 'POST_ATTRIBUTES_REQUEST': {
                     name: 'Post attributes',

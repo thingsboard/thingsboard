@@ -17,6 +17,7 @@ package org.thingsboard.server.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -48,6 +49,9 @@ public class TenantController extends BaseController {
 
     @Autowired
     private TenantService tenantService;
+
+    @Value("${tenant.rule_engine.partitions_number}")
+    private long partitionsNumber;
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/{tenantId}", method = RequestMethod.GET)
@@ -114,6 +118,13 @@ public class TenantController extends BaseController {
         } catch (Exception e) {
             throw handleException(e);
         }
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/tenant/partitionsNumber", method = RequestMethod.GET)
+    @ResponseBody
+    public long getTenantPartitionsNumber() throws ThingsboardException {
+        return partitionsNumber;
     }
 
 }

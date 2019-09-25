@@ -372,6 +372,10 @@ state:
   defaultInactivityTimeoutInSec: "${DEFAULT_INACTIVITY_TIMEOUT:10}"
   defaultStateCheckIntervalInSec: "${DEFAULT_STATE_CHECK_INTERVAL:10}"
 
+tenant:
+  rule_engine:
+    partitions_number: "${TENANT_RULE_ENGINE_PARTITIONS_NUMBER:10}"
+
 kafka:
   enabled: true
   bootstrap.servers: "${TB_KAFKA_SERVERS:localhost:9092}"
@@ -393,6 +397,18 @@ kafka:
     auto_commit_interval: "${TB_RULE_ENGINE_AUTO_COMMIT_INTERVAL_MS:100}"
   notifications:
     topic: "${TB_TRANSPORT_NOTIFICATIONS_TOPIC:tb.transport.notifications}"
+  queue:
+    producer:
+      acks: "${TB_KAFKA_PRODUCER_ACKS:all}"
+      buffer_memory: "${TB_KAFKA_PRODUCER_BUFFER_MEMORY:33554432}"
+      retries: "${TB_KAFKA_PRODUCER_RETRIES:1}"
+      batch_size: "${TB_KAFKA_PRODUCER_BATCH_SIZE:16384}"
+      linger_ms: "${TB_KAFKA_PRODUCER_LINGER_MS:1}"
+    consumer:
+      max_poll_records: "${TB_KAFKA_CONSUMER_MAX_POLL_RECORDS:1000}"
+      fetch_max_wait_ms: "${TB_KAFKA_CONSUMER_FETCH_MAX_WAIT_MS:1000}"
+      session_timeout_ms: "${TB_KAFKA_CONSUMER_SESSION_TIMEOUT_MS:10000}"
+      heartbeat_interval_ms: "${TB_KAFKA_CONSUMER_HEARTBEAT_INTERVAL_MS:3000}"
 
 js:
   evaluator: "${JS_EVALUATOR:local}" # local/remote

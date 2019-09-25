@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg;
+package org.thingsboard.server.common.data.rule;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.id.TenantId;
+import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
 
 @Data
-public final class TbMsgSubscriptionParams {
+@NoArgsConstructor
+public class RuleEngineSettings implements Serializable {
 
-    private final TenantId tenantId;
-    private final String topic;
-    private final long duration;
+    private String executionType; // shared or dedicated
+    private int partitionsNumber;
 
 }

@@ -1395,7 +1395,14 @@
         "idCopiedMessage": "Tenant Id has been copied to clipboard",
         "select-tenant": "Select tenant",
         "no-tenants-matching": "No tenants matching '{{entity}}' were found.",
-        "tenant-required": "Tenant is required"
+        "tenant-required": "Tenant is required",
+        "executionType": "Execution type",
+        "partitionsNumber": "Number of partitions",
+        "rule-engine-settings": "Rule Engine Settings",
+        "execution-type": {
+            "dedicated": "Dedicated",
+            "shared": "Shared"
+        }
     },
     "timeinterval": {
         "seconds-interval": "{ seconds, plural, 1 {1 second} other {# seconds} }",

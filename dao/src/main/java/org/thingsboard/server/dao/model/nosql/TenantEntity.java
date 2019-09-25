@@ -20,13 +20,18 @@ import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.rule.RuleEngineSettings;
+import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.model.type.JsonCodec;
 
+import java.io.IOException;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.ADDRESS2_PROPERTY;
@@ -47,7 +52,10 @@ import static org.thingsboard.server.dao.model.ModelConstants.ZIP_PROPERTY;
 @Table(name = TENANT_COLUMN_FAMILY_NAME)
 @EqualsAndHashCode
 @ToString
+@Slf4j
 public final class TenantEntity implements SearchTextEntity<Tenant> {
+
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     @PartitionKey(value = 0)
     @Column(name = ID_PROPERTY)
@@ -55,16 +63,16 @@ public final class TenantEntity implements SearchTextEntity<Tenant> {
 
     @Column(name = TENANT_TITLE_PROPERTY)
     private String title;
-    
+
     @Column(name = SEARCH_TEXT_PROPERTY)
     private String searchText;
 
     @Column(name = TENANT_REGION_PROPERTY)
     private String region;
-    
+
     @Column(name = COUNTRY_PROPERTY)
     private String country;
-    
+
     @Column(name = STATE_PROPERTY)
     private String state;
 
@@ -89,6 +97,9 @@ public final class TenantEntity implements SearchTextEntity<Tenant> {
     @Column(name = TENANT_ADDITIONAL_INFO_PROPERTY, codec = JsonCodec.class)
     private JsonNode additionalInfo;
 
+    @Column(name = ModelConstants.TENANT_RULE_ENGINE_SETTINGS_PROPERTY)
+    private String ruleEngineSettings;
+
     public TenantEntity() {
         super();
     }
@@ -108,8 +119,13 @@ public final class TenantEntity implements SearchTextEntity<Tenant> {
         this.phone = tenant.getPhone();
         this.email = tenant.getEmail();
         this.additionalInfo = tenant.getAdditionalInfo();
+        try {
+            this.ruleEngineSettings = mapper.writeValueAsString(tenant.getRuleEngineSettings());
+        } catch (IOException e) {
+            log.error("Unable to serialize tenant rule engine settings!", e);
+        }
     }
-    
+
     public UUID getId() {
         return id;
     }
@@ -206,6 +222,14 @@ public final class TenantEntity implements SearchTextEntity<Tenant> {
         this.additionalInfo = additionalInfo;
     }
 
+    public String getRuleEngineSettings() {
+        return ruleEngineSettings;
+    }
+
+    public void setRuleEngineSettings(String ruleEngineSettings) {
+        this.ruleEngineSettings = ruleEngineSettings;
+    }
+
     @Override
     public String getSearchTextSource() {
         return getTitle();
@@ -215,7 +239,7 @@ public final class TenantEntity implements SearchTextEntity<Tenant> {
     public void setSearchText(String searchText) {
         this.searchText = searchText;
     }
-    
+
     public String getSearchText() {
         return searchText;
     }
@@ -235,6 +259,11 @@ public final class TenantEntity implements SearchTextEntity<Tenant> {
         tenant.setPhone(phone);
         tenant.setEmail(email);
         tenant.setAdditionalInfo(additionalInfo);
+        try {
+            tenant.setRuleEngineSettings(mapper.readValue(ruleEngineSettings, RuleEngineSettings.class));
+        } catch (IOException e) {
+            log.error("Unable to read tenant rule engine settings!", e);
+        }
         return tenant;
     }
 

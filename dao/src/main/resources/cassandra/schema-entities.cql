@@ -110,6 +110,7 @@ CREATE TABLE IF NOT EXISTS thingsboard.tenant (
 	phone text,
 	email text,
 	additional_info text,
+	rule_engine_settings text,
 	PRIMARY KEY (id, region)
 );
 
