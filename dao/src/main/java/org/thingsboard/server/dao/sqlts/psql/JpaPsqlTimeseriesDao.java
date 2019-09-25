@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -35,11 +36,14 @@ import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionary;
+import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionaryCompositeKey;
 import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestCompositeKey;
 import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
 import org.thingsboard.server.dao.model.sqlts.psql.TsKvEntity;
 import org.thingsboard.server.dao.sqlts.AbstractSqlTimeseriesDao;
 import org.thingsboard.server.dao.sqlts.AbstractTimeseriesInsertRepository;
+import org.thingsboard.server.dao.sqlts.dictionary.TsKvDictionaryRepository;
 import org.thingsboard.server.dao.sqlts.latest.TsKvLatestRepository;
 import org.thingsboard.server.dao.timeseries.SimpleListenableFuture;
 import org.thingsboard.server.dao.timeseries.TimeseriesDao;
@@ -52,7 +56,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
@@ -63,6 +71,15 @@ import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
 @SqlTsDao
 @PsqlDao
 public class JpaPsqlTimeseriesDao extends AbstractSqlTimeseriesDao implements TimeseriesDao {
+
+    private final ConcurrentMap<String, Integer> tsKvDictionaryMap = new ConcurrentHashMap<>();
+
+    private static final ReentrantLock tsCreationLock = new ReentrantLock();
+
+    private AtomicInteger keyCounter = new AtomicInteger(0);
+
+    @Autowired
+    private TsKvDictionaryRepository dictionaryRepository;
 
     @Autowired
     private TsKvPsqlRepository tsKvRepository;
@@ -88,14 +105,14 @@ public class JpaPsqlTimeseriesDao extends AbstractSqlTimeseriesDao implements Ti
                 long startTs = stepTs;
                 long endTs = stepTs + query.getInterval();
                 long ts = startTs + (endTs - startTs) / 2;
-                futures.add(findAndAggregateAsync(tenantId, entityId, query.getKey(), startTs, endTs, ts, query.getAggregation()));
+                futures.add(findAndAggregateAsync(entityId, query.getKey(), startTs, endTs, ts, query.getAggregation()));
                 stepTs = endTs;
             }
             return getTskvEntriesFuture(Futures.allAsList(futures));
         }
     }
 
-    private ListenableFuture<Optional<TsKvEntry>> findAndAggregateAsync(TenantId tenantId, EntityId entityId, String key, long startTs, long endTs, long ts, Aggregation aggregation) {
+    private ListenableFuture<Optional<TsKvEntry>> findAndAggregateAsync(EntityId entityId, String key, long startTs, long endTs, long ts, Aggregation aggregation) {
         List<CompletableFuture<TsKvEntity>> entitiesFutures = new ArrayList<>();
         switchAgregation(entityId, key, startTs, endTs, aggregation, entitiesFutures);
 
@@ -124,7 +141,7 @@ public class JpaPsqlTimeseriesDao extends AbstractSqlTimeseriesDao implements Ti
         return Futures.transform(listenableFuture, entity -> {
             if (entity != null && entity.isNotEmpty()) {
                 entity.setEntityId(entityId.getId());
-                entity.setKey(key);
+                entity.setStrKey(key);
                 entity.setTs(ts);
                 return Optional.of(DaoUtil.getData(entity));
             } else {
@@ -156,66 +173,72 @@ public class JpaPsqlTimeseriesDao extends AbstractSqlTimeseriesDao implements Ti
     }
 
     private void findCount(UUID entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
+        Integer keyId = getOrSaveKeyId(key);
         entitiesFutures.add(tsKvRepository.findCount(
                 entityId,
-                key,
+                keyId,
                 startTs,
                 endTs));
     }
 
     private void findSum(UUID entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
+        Integer keyId = getOrSaveKeyId(key);
         entitiesFutures.add(tsKvRepository.findSum(
                 entityId,
-                key,
+                keyId,
                 startTs,
                 endTs));
     }
 
     private void findMin(UUID entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
+        Integer keyId = getOrSaveKeyId(key);
         entitiesFutures.add(tsKvRepository.findStringMin(
                 entityId,
-                key,
+                keyId,
                 startTs,
                 endTs));
         entitiesFutures.add(tsKvRepository.findNumericMin(
                 entityId,
-                key,
+                keyId,
                 startTs,
                 endTs));
     }
 
     private void findMax(UUID entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
+        Integer keyId = getOrSaveKeyId(key);
         entitiesFutures.add(tsKvRepository.findStringMax(
                 entityId,
-                key,
+                keyId,
                 startTs,
                 endTs));
         entitiesFutures.add(tsKvRepository.findNumericMax(
                 entityId,
-                key,
+                keyId,
                 startTs,
                 endTs));
     }
 
     private void findAvg(UUID entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
+        Integer keyId = getOrSaveKeyId(key);
         entitiesFutures.add(tsKvRepository.findAvg(
                 entityId,
-                key,
+                keyId,
                 startTs,
                 endTs));
     }
 
     private ListenableFuture<List<TsKvEntry>> findAllAsyncWithLimit(EntityId entityId, ReadTsKvQuery query) {
-        return Futures.immediateFuture(
-                DaoUtil.convertDataList(
-                        tsKvRepository.findAllWithLimit(
-                                entityId.getId(),
-                                query.getKey(),
-                                query.getStartTs(),
-                                query.getEndTs(),
-                                new PageRequest(0, query.getLimit(),
-                                        new Sort(Sort.Direction.fromString(
-                                                query.getOrderBy()), "ts")))));
+        Integer keyId = getOrSaveKeyId(query.getKey());
+        List<TsKvEntity> tsKvEntities = tsKvRepository.findAllWithLimit(
+                entityId.getId(),
+                keyId,
+                query.getStartTs(),
+                query.getEndTs(),
+                new PageRequest(0, query.getLimit(),
+                        new Sort(Sort.Direction.fromString(
+                                query.getOrderBy()), "ts")));
+        tsKvEntities.forEach(tsKvEntity -> tsKvEntity.setStrKey(query.getKey()));
+        return Futures.immediateFuture(DaoUtil.convertDataList(tsKvEntities));
     }
 
     @Override
@@ -246,10 +269,12 @@ public class JpaPsqlTimeseriesDao extends AbstractSqlTimeseriesDao implements Ti
 
     @Override
     public ListenableFuture<Void> save(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry, long ttl) {
+        String strKey = tsKvEntry.getKey();
+        Integer keyId = getOrSaveKeyId(strKey);
         TsKvEntity entity = new TsKvEntity();
         entity.setEntityId(entityId.getId());
         entity.setTs(tsKvEntry.getTs());
-        entity.setKey(tsKvEntry.getKey());
+        entity.setKey(keyId);
         entity.setStrValue(tsKvEntry.getStrValue().orElse(null));
         entity.setDoubleValue(tsKvEntry.getDoubleValue().orElse(null));
         entity.setLongValue(tsKvEntry.getLongValue().orElse(null));
@@ -260,6 +285,42 @@ public class JpaPsqlTimeseriesDao extends AbstractSqlTimeseriesDao implements Ti
             return null;
         });
     }
+
+    private Integer getOrSaveKeyId(String strKey) {
+        Integer keyId = tsKvDictionaryMap.get(strKey);
+        if (keyId == null) {
+            Optional<TsKvDictionary> tsKvDictionaryOptional;
+            tsKvDictionaryOptional = dictionaryRepository.findById(new TsKvDictionaryCompositeKey(strKey));
+            if (!tsKvDictionaryOptional.isPresent()) {
+                tsCreationLock.lock();
+                try {
+                    tsKvDictionaryOptional = dictionaryRepository.findById(new TsKvDictionaryCompositeKey(strKey));
+                    if (!tsKvDictionaryOptional.isPresent()) {
+                        TsKvDictionary tsKvDictionary = new TsKvDictionary();
+                        tsKvDictionary.setKey(strKey);
+                        tsKvDictionary.setKeyId(keyCounter.getAndIncrement());
+                        try {
+                            TsKvDictionary saved = dictionaryRepository.save(tsKvDictionary);
+                            tsKvDictionaryMap.put(saved.getKey(), saved.getKeyId());
+                        } catch (ConstraintViolationException e) {
+                            tsKvDictionaryOptional = dictionaryRepository.findById(new TsKvDictionaryCompositeKey(strKey));
+                            TsKvDictionary dictionary = tsKvDictionaryOptional.orElseThrow(() -> new RuntimeException("Failed to get TsKvDictionary entity from DB!"));
+                            tsKvDictionaryMap.put(dictionary.getKey(), dictionary.getKeyId());
+                        }
+                        keyId = tsKvDictionaryMap.get(strKey);
+                    } else {
+                        keyId = tsKvDictionaryOptional.get().getKeyId();
+                    }
+                } finally {
+                    tsCreationLock.unlock();
+                }
+            } else {
+                keyId = tsKvDictionaryOptional.get().getKeyId();
+            }
+        }
+        return keyId;
+    }
+
 
     @Override
     public ListenableFuture<Void> savePartition(TenantId tenantId, EntityId entityId, long tsKvEntryTs, String key, long ttl) {
@@ -285,14 +346,14 @@ public class JpaPsqlTimeseriesDao extends AbstractSqlTimeseriesDao implements Ti
 
     @Override
     public ListenableFuture<Void> remove(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
-        return service.submit(() -> {
-            tsKvRepository.delete(
-                    entityId.getId(),
-                    query.getKey(),
-                    query.getStartTs(),
-                    query.getEndTs());
-            return null;
-        });
+        String strKey = query.getKey();
+        Integer keyId = getOrSaveKeyId(strKey);
+        tsKvRepository.delete(
+                entityId.getId(),
+                keyId,
+                query.getStartTs(),
+                query.getEndTs());
+        return insertService.submit(() -> null);
     }
 
     @Override

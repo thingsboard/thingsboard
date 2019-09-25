@@ -34,10 +34,12 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.IdClass;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_ID_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.KEY_COLUMN;
 
 @Data
 @Entity
@@ -51,6 +53,13 @@ public final class TsKvEntity extends AbsractTsKvEntity implements ToData<TsKvEn
     @Column(name = ENTITY_ID_COLUMN)
     @Convert("uuidConverter")
     private UUID entityId;
+
+    @Id
+    @Column(name = KEY_COLUMN)
+    private int key;
+
+    @Transient
+    private String strKey;
 
     public TsKvEntity() {
     }
@@ -110,18 +119,18 @@ public final class TsKvEntity extends AbsractTsKvEntity implements ToData<TsKvEn
         }
     }
 
-
+    // TODO: 19.09.19 don't forget to change ""
     @Override
     public TsKvEntry toData() {
         KvEntry kvEntry = null;
         if (strValue != null) {
-            kvEntry = new StringDataEntry(key, strValue);
+            kvEntry = new StringDataEntry(strKey, strValue);
         } else if (longValue != null) {
-            kvEntry = new LongDataEntry(key, longValue);
+            kvEntry = new LongDataEntry(strKey, longValue);
         } else if (doubleValue != null) {
-            kvEntry = new DoubleDataEntry(key, doubleValue);
+            kvEntry = new DoubleDataEntry(strKey, doubleValue);
         } else if (booleanValue != null) {
-            kvEntry = new BooleanDataEntry(key, booleanValue);
+            kvEntry = new BooleanDataEntry(strKey, booleanValue);
         }
         return new BasicTsKvEntry(ts, kvEntry);
     }

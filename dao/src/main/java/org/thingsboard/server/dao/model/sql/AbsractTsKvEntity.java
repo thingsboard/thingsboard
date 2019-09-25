@@ -43,10 +43,6 @@ public abstract class AbsractTsKvEntity implements ToData<TsKvEntry> {
     @Column(name = TS_COLUMN)
     protected Long ts;
 
-    @Id
-    @Column(name = KEY_COLUMN)
-    protected String key;
-
     @Column(name = BOOLEAN_VALUE_COLUMN)
     protected Boolean booleanValue;
 

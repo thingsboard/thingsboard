@@ -13,25 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model.sqlts.psql;
+package org.thingsboard.server.dao.sqlts.dictionary;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.springframework.data.repository.CrudRepository;
+import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionary;
+import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionaryCompositeKey;
+import org.thingsboard.server.dao.util.PsqlDao;
 
-import javax.persistence.Transient;
-import java.io.Serializable;
-import java.util.UUID;
-
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class TsKvCompositeKey implements Serializable {
-
-    @Transient
-    private static final long serialVersionUID = -4089175869616037523L;
-
-    private UUID entityId;
-    private int key;
-    private long ts;
-}
+@PsqlDao
+public interface TsKvDictionaryRepository extends CrudRepository<TsKvDictionary, TsKvDictionaryCompositeKey> { }

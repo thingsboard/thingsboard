@@ -13,25 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model.sqlts.psql;
+package org.thingsboard.server.dao.model.sqlts.dictionary;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
-import javax.persistence.Transient;
-import java.io.Serializable;
-import java.util.UUID;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.IdClass;
+import javax.persistence.Table;
+
+import static org.thingsboard.server.dao.model.ModelConstants.KEY_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.KEY_ID_COLUMN;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class TsKvCompositeKey implements Serializable {
+@Entity
+@Table(name = "ts_kv_dictionary")
+@IdClass(TsKvDictionaryCompositeKey.class)
+public final class TsKvDictionary  {
 
-    @Transient
-    private static final long serialVersionUID = -4089175869616037523L;
+    @Id
+    @Column(name = KEY_COLUMN)
+    private String key;
 
-    private UUID entityId;
-    private int key;
-    private long ts;
+    @Column(name = KEY_ID_COLUMN)
+    private int keyId;
+
 }

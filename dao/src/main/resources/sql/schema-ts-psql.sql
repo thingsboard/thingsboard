@@ -16,7 +16,7 @@
 
 CREATE TABLE IF NOT EXISTS ts_kv (
     entity_id uuid NOT NULL,
-    key varchar(255) NOT NULL,
+    key int NOT NULL,
     ts bigint NOT NULL,
     bool_v boolean,
     str_v varchar(10000000),
@@ -25,11 +25,11 @@ CREATE TABLE IF NOT EXISTS ts_kv (
     CONSTRAINT ts_kv_pkey PRIMARY KEY (entity_id, key, ts)
 );
 
--- CREATE TABLE IF NOT EXISTS ts_kv_dictionary (
---     key_id int NOT NULL,
---     key varchar(255) NOT NULL,
---     CONSTRAINT ts_key_id_pkey PRIMARY KEY (key_id)
--- );
+CREATE TABLE IF NOT EXISTS ts_kv_dictionary (
+    key varchar(255) NOT NULL,
+    key_id int NOT NULL,
+    CONSTRAINT ts_key_id_pkey PRIMARY KEY (key)
+);
 
 CREATE TABLE IF NOT EXISTS ts_kv_latest (
     entity_type varchar(255) NOT NULL,

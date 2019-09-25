@@ -46,6 +46,7 @@ import javax.persistence.Table;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_ID_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.KEY_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.TENANT_ID_COLUMN;
 import static org.thingsboard.server.dao.sqlts.timescale.AggregationRepository.FIND_AVG;
 import static org.thingsboard.server.dao.sqlts.timescale.AggregationRepository.FIND_AVG_QUERY;
@@ -137,6 +138,10 @@ public final class TimescaleTsKvEntity extends AbsractTsKvEntity implements ToDa
     @Column(name = ENTITY_ID_COLUMN)
     @Convert("uuidConverter")
     private UUID entityId;
+
+    @Id
+    @Column(name = KEY_COLUMN)
+    private String key;
 
     public TimescaleTsKvEntity() { }
 

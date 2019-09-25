@@ -37,6 +37,7 @@ import javax.persistence.Table;
 
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_ID_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_TYPE_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.KEY_COLUMN;
 
 @Data
 @Entity
@@ -53,6 +54,11 @@ public final class TsKvEntity extends AbsractTsKvEntity implements ToData<TsKvEn
     @Id
     @Column(name = ENTITY_ID_COLUMN)
     private String entityId;
+
+    @Id
+    @Column(name = KEY_COLUMN)
+    private String key;
+
 
     public TsKvEntity() {
     }
