@@ -30,7 +30,7 @@ import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sqlts.hsql.TsKvEntity;
-import org.thingsboard.server.dao.sqlts.AbstractSqlTimeseriesDao;
+import org.thingsboard.server.dao.sqlts.AbstractRelationalSqlTimeseriesDao;
 import org.thingsboard.server.dao.sqlts.AbstractTimeseriesInsertRepository;
 import org.thingsboard.server.dao.timeseries.TimeseriesDao;
 import org.thingsboard.server.dao.util.HsqlDao;
@@ -48,7 +48,7 @@ import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
 @Slf4j
 @SqlTsDao
 @HsqlDao
-public class JpaHsqlTimeseriesDao extends AbstractSqlTimeseriesDao<TsKvEntity> implements TimeseriesDao {
+public class JpaHsqlTimeseriesDao extends AbstractRelationalSqlTimeseriesDao<TsKvEntity> implements TimeseriesDao {
 
     @Autowired
     private TsKvHsqlRepository tsKvRepository;

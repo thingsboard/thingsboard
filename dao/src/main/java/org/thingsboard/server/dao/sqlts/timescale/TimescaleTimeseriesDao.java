@@ -37,7 +37,7 @@ import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionary;
 import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionaryCompositeKey;
 import org.thingsboard.server.dao.model.sqlts.timescale.TimescaleTsKvEntity;
-import org.thingsboard.server.dao.sqlts.AbstractBaseSqlTimeseriesDao;
+import org.thingsboard.server.dao.sqlts.AbstractSqlTimeseriesDao;
 import org.thingsboard.server.dao.sqlts.AbstractTimeseriesInsertRepository;
 import org.thingsboard.server.dao.sqlts.dictionary.TsKvDictionaryRepository;
 import org.thingsboard.server.dao.timeseries.TimeseriesDao;
@@ -58,7 +58,7 @@ import java.util.concurrent.locks.ReentrantLock;
 @Component
 @Slf4j
 @TimescaleDBTsDao
-public class TimescaleTimeseriesDao extends AbstractBaseSqlTimeseriesDao implements TimeseriesDao {
+public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements TimeseriesDao {
 
     private static final String TS = "ts";
 
