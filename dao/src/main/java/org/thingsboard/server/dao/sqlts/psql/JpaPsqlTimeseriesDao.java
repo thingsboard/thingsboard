@@ -33,7 +33,7 @@ import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionary;
 import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionaryCompositeKey;
 import org.thingsboard.server.dao.model.sqlts.psql.TsKvEntity;
-import org.thingsboard.server.dao.sqlts.AbstractRelationalSqlTimeseriesDao;
+import org.thingsboard.server.dao.sqlts.AbstractSimpleSqlTimeseriesDao;
 import org.thingsboard.server.dao.sqlts.AbstractTimeseriesInsertRepository;
 import org.thingsboard.server.dao.sqlts.dictionary.TsKvDictionaryRepository;
 import org.thingsboard.server.dao.timeseries.TimeseriesDao;
@@ -55,7 +55,7 @@ import java.util.concurrent.locks.ReentrantLock;
 @Slf4j
 @SqlTsDao
 @PsqlDao
-public class JpaPsqlTimeseriesDao extends AbstractRelationalSqlTimeseriesDao<TsKvEntity> implements TimeseriesDao {
+public class JpaPsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEntity> implements TimeseriesDao {
 
     private final ConcurrentMap<String, Integer> tsKvDictionaryMap = new ConcurrentHashMap<>();
 
@@ -203,78 +203,56 @@ public class JpaPsqlTimeseriesDao extends AbstractRelationalSqlTimeseriesDao<TsK
         return keyId;
     }
 
-    private void switchAgregation(EntityId entityId, String key, long startTs, long endTs, Aggregation aggregation, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
-        switch (aggregation) {
-            case AVG:
-                findAvg(entityId.getId(), key, startTs, endTs, entitiesFutures);
-                break;
-            case MAX:
-                findMax(entityId.getId(), key, startTs, endTs, entitiesFutures);
-                break;
-            case MIN:
-                findMin(entityId.getId(), key, startTs, endTs, entitiesFutures);
-                break;
-            case SUM:
-                findSum(entityId.getId(), key, startTs, endTs, entitiesFutures);
-                break;
-            case COUNT:
-                findCount(entityId.getId(), key, startTs, endTs, entitiesFutures);
-                break;
-            default:
-                throw new IllegalArgumentException("Not supported aggregation type: " + aggregation);
-        }
-    }
-
-    private void findCount(UUID entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
+    protected void findCount(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
         Integer keyId = getOrSaveKeyId(key);
         entitiesFutures.add(tsKvRepository.findCount(
-                entityId,
+                entityId.getId(),
                 keyId,
                 startTs,
                 endTs));
     }
 
-    private void findSum(UUID entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
+    protected void findSum(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
         Integer keyId = getOrSaveKeyId(key);
         entitiesFutures.add(tsKvRepository.findSum(
-                entityId,
+                entityId.getId(),
                 keyId,
                 startTs,
                 endTs));
     }
 
-    private void findMin(UUID entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
+    protected void findMin(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
         Integer keyId = getOrSaveKeyId(key);
         entitiesFutures.add(tsKvRepository.findStringMin(
-                entityId,
+                entityId.getId(),
                 keyId,
                 startTs,
                 endTs));
         entitiesFutures.add(tsKvRepository.findNumericMin(
-                entityId,
+                entityId.getId(),
                 keyId,
                 startTs,
                 endTs));
     }
 
-    private void findMax(UUID entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
+    protected void findMax(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
         Integer keyId = getOrSaveKeyId(key);
         entitiesFutures.add(tsKvRepository.findStringMax(
-                entityId,
+                entityId.getId(),
                 keyId,
                 startTs,
                 endTs));
         entitiesFutures.add(tsKvRepository.findNumericMax(
-                entityId,
+                entityId.getId(),
                 keyId,
                 startTs,
                 endTs));
     }
 
-    private void findAvg(UUID entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
+    protected void findAvg(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
         Integer keyId = getOrSaveKeyId(key);
         entitiesFutures.add(tsKvRepository.findAvg(
-                entityId,
+                entityId.getId(),
                 keyId,
                 startTs,
                 endTs));

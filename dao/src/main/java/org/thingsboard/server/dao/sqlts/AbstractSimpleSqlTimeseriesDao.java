@@ -49,7 +49,7 @@ import java.util.stream.Collectors;
 import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
 
 @Slf4j
-public abstract class AbstractRelationalSqlTimeseriesDao<T extends AbsractTsKvEntity> extends AbstractSqlTimeseriesDao {
+public abstract class AbstractSimpleSqlTimeseriesDao<T extends AbsractTsKvEntity> extends AbstractSqlTimeseriesDao {
 
     @Autowired
     private TsKvLatestRepository tsKvLatestRepository;
@@ -220,5 +220,36 @@ public abstract class AbstractRelationalSqlTimeseriesDao<T extends AbsractTsKvEn
         }, service);
     }
 
+    protected void switchAgregation(EntityId entityId, String key, long startTs, long endTs, Aggregation aggregation, List<CompletableFuture<T>> entitiesFutures) {
+        switch (aggregation) {
+            case AVG:
+                findAvg(entityId, key, startTs, endTs, entitiesFutures);
+                break;
+            case MAX:
+                findMax(entityId, key, startTs, endTs, entitiesFutures);
+                break;
+            case MIN:
+                findMin(entityId, key, startTs, endTs, entitiesFutures);
+                break;
+            case SUM:
+                findSum(entityId, key, startTs, endTs, entitiesFutures);
+                break;
+            case COUNT:
+                findCount(entityId, key, startTs, endTs, entitiesFutures);
+                break;
+            default:
+                throw new IllegalArgumentException("Not supported aggregation type: " + aggregation);
+        }
+    }
+
+    protected abstract void findCount(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<T>> entitiesFutures);
+
+    protected abstract void findSum(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<T>> entitiesFutures);
+
+    protected abstract void findMin(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<T>> entitiesFutures);
+
+    protected abstract void findMax(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<T>> entitiesFutures);
+
+    protected abstract void findAvg(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<T>> entitiesFutures);
 
 }

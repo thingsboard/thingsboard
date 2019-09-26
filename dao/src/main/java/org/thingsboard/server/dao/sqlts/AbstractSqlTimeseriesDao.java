@@ -58,7 +58,7 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
     protected ListeningExecutorService insertService;
 
     @PostConstruct
-    protected void init() {
+    void init() {
         Optional<TsInsertExecutorType> executorTypeOptional = TsInsertExecutorType.parse(insertExecutorType);
         TsInsertExecutorType executorType;
         executorType = executorTypeOptional.orElse(TsInsertExecutorType.FIXED);
@@ -78,7 +78,7 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
     }
 
     @PreDestroy
-    protected void preDestroy() {
+    void preDestroy() {
         if (insertService != null) {
             insertService.shutdown();
         }
