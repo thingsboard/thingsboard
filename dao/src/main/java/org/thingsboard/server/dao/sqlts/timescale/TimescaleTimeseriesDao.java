@@ -337,11 +337,11 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
 
     }
 
-    private CompletableFuture<List<TimescaleTsKvEntity>> findSum(String key, long startTs, long endTs, long timeBucket, UUID entityIdStr, UUID tenantId) {
+    private CompletableFuture<List<TimescaleTsKvEntity>> findSum(String key, long startTs, long endTs, long timeBucket, UUID entityId, UUID tenantId) {
         Integer keyId = getOrSaveKeyId(key);
         return aggregationRepository.findSum(
                 tenantId,
-                entityIdStr,
+                entityId,
                 keyId,
                 timeBucket,
                 startTs,
