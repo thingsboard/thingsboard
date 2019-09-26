@@ -74,10 +74,10 @@ public interface TsKvHsqlRepository extends CrudRepository<TsKvEntity, TsKvCompo
             "WHERE tskv.entityId = :entityId AND tskv.entityType = :entityType " +
             "AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts <= :endTs")
     CompletableFuture<TsKvEntity> findNumericMax(@Param("entityId") String entityId,
-                                                 @Param("entityType") EntityType entityType,
-                                                 @Param("entityKey") String entityKey,
-                                                 @Param("startTs") long startTs,
-                                                 @Param("endTs") long endTs);
+                                          @Param("entityType") EntityType entityType,
+                                          @Param("entityKey") String entityKey,
+                                          @Param("startTs") long startTs,
+                                          @Param("endTs") long endTs);
 
 
     @Async
@@ -86,10 +86,10 @@ public interface TsKvHsqlRepository extends CrudRepository<TsKvEntity, TsKvCompo
             "AND tskv.entityId = :entityId AND tskv.entityType = :entityType " +
             "AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts <= :endTs")
     CompletableFuture<TsKvEntity> findStringMin(@Param("entityId") String entityId,
-                                                @Param("entityType") EntityType entityType,
-                                                @Param("entityKey") String entityKey,
-                                                @Param("startTs") long startTs,
-                                                @Param("endTs") long endTs);
+                                          @Param("entityType") EntityType entityType,
+                                          @Param("entityKey") String entityKey,
+                                          @Param("startTs") long startTs,
+                                          @Param("endTs") long endTs);
 
     @Async
     @Query("SELECT new TsKvEntity(MIN(COALESCE(tskv.longValue, 9223372036854775807)), " +
@@ -100,10 +100,10 @@ public interface TsKvHsqlRepository extends CrudRepository<TsKvEntity, TsKvCompo
             "WHERE tskv.entityId = :entityId AND tskv.entityType = :entityType " +
             "AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts <= :endTs")
     CompletableFuture<TsKvEntity> findNumericMin(@Param("entityId") String entityId,
-                                                 @Param("entityType") EntityType entityType,
-                                                 @Param("entityKey") String entityKey,
-                                                 @Param("startTs") long startTs,
-                                                 @Param("endTs") long endTs);
+                                          @Param("entityType") EntityType entityType,
+                                          @Param("entityKey") String entityKey,
+                                          @Param("startTs") long startTs,
+                                          @Param("endTs") long endTs);
 
     @Async
     @Query("SELECT new TsKvEntity(SUM(CASE WHEN tskv.booleanValue IS NULL THEN 0 ELSE 1 END), " +
