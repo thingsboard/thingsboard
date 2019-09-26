@@ -37,7 +37,7 @@ public class PsqlTimeseriesInsertRepository extends AbstractTimeseriesInsertRepo
 
     private static final String INSERT_OR_UPDATE_BOOL_STATEMENT = getInsertOrUpdateString(BOOL_V, ON_BOOL_VALUE_UPDATE_SET_NULLS);
     private static final String INSERT_OR_UPDATE_STR_STATEMENT = getInsertOrUpdateString(STR_V, ON_STR_VALUE_UPDATE_SET_NULLS);
-    private static final String INSERT_OR_UPDATE_LONG_STATEMENT = getInsertOrUpdateString(LONG_V , ON_LONG_VALUE_UPDATE_SET_NULLS);
+    private static final String INSERT_OR_UPDATE_LONG_STATEMENT = getInsertOrUpdateString(LONG_V, ON_LONG_VALUE_UPDATE_SET_NULLS);
     private static final String INSERT_OR_UPDATE_DBL_STATEMENT = getInsertOrUpdateString(DBL_V, ON_DBL_VALUE_UPDATE_SET_NULLS);
 
     private static String getInsertOrUpdateString(String value, String nullValues) {
@@ -71,12 +71,12 @@ public class PsqlTimeseriesInsertRepository extends AbstractTimeseriesInsertRepo
 
     @Override
     protected void saveOrUpdateLong(TsKvEntity entity, String query) {
-        Query query1 = entityManager.createNativeQuery(query)
+        entityManager.createNativeQuery(query)
                 .setParameter("entity_id", entity.getEntityId())
                 .setParameter("key", entity.getKey())
                 .setParameter("ts", entity.getTs())
-                .setParameter("long_v", entity.getLongValue());
-        query1.executeUpdate();
+                .setParameter("long_v", entity.getLongValue())
+                .executeUpdate();
     }
 
     @Override
