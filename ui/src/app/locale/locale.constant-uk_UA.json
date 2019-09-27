@@ -1552,6 +1552,7 @@
         "remember-me": "Запам'ятати мене",
         "forgot-password": "Забули пароль?",
         "password-reset": "Скидання пароля",
+        "expired-password-reset-message": "Термін дії Вашого паролю закінчився! Будь ласка, створіть новий пароль.",
         "new-password": "Новий пароль",
         "new-password-again": "Повторіть новий пароль",
         "password-link-sent-message": "Посилання для скидання пароля було успішно надіслано!",
