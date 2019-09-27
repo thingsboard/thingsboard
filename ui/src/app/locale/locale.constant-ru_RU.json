@@ -1137,6 +1137,7 @@
         "remember-me": "Запомнить меня",
         "forgot-password": "Забыли пароль?",
         "password-reset": "Пароль сброшен",
+        "expired-password-reset-message": "Срок действия Вашего пароля закончился! Пожалуйста, создайте новый пароль.",
         "new-password": "Новый пароль",
         "new-password-again": "Повторите новый пароль",
         "password-link-sent-message": "Ссылка для сброса пароля была успешно отправлена!",
