@@ -1724,9 +1724,9 @@ const chartSettingsSchemaForComparison = {
                 "default": false
             },
             "timeForComparison": {
-                "title": "Time period to show historical data",
+                "title": "Time to show historical data",
                 "type": "string",
-                "default": "month"
+                "default": "months"
             },
             "xaxisSecond": {
                 "title": "Second X axis",
@@ -1760,11 +1760,19 @@ const chartSettingsSchemaForComparison = {
             "multiple": false,
             "items": [
                 {
-                    "value": "month",
+                    "value": "days",
+                    "label": "Day ago"
+                },
+                {
+                    "value": "weeks",
+                    "label": "Week ago"
+                },
+                {
+                    "value": "months",
                     "label": "Month ago (default)"
                 },
                 {
-                    "value": "year",
+                    "value": "years",
                     "label": "Year ago"
                 }
             ]

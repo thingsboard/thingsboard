@@ -1189,6 +1189,8 @@
         "max": "max",
         "avg": "avg",
         "total": "total",
+        "day-ago": "(day ago)",
+        "week-ago": "(week ago)",
         "month-ago": "(month ago)",
         "year-ago": "(year ago)"
     },

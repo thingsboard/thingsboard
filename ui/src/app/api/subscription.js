@@ -134,11 +134,6 @@ export default class Subscription {
             this.subscriptionTimewindow = null;
             this.comparisonEnabled = options.comparisonEnabled;
             if (this.comparisonEnabled) {
-                if (options.timeForComparison === 'year') {
-                    this.timeUnitForComparison = 'years';
-                } else {
-                    this.timeUnitForComparison = 'months';
-                }
                 this.timeForComparison = options.timeForComparison;
 
                 this.comparisonTimeWindow = {};
@@ -727,7 +722,7 @@ export default class Subscription {
     updateComparisonTimewindow() {
         this.comparisonTimeWindow.interval = this.timewindowForComparison.aggregation.interval || 1000;
         if (this.timewindowForComparison.realtimeWindowMs) {
-            this.comparisonTimeWindow.maxTime = moment(this.timeWindow.maxTime).subtract(1, this.timeUnitForComparison).valueOf(); //eslint-disable-line
+            this.comparisonTimeWindow.maxTime = moment(this.timeWindow.maxTime).subtract(1, this.timeForComparison).valueOf(); //eslint-disable-line
             this.comparisonTimeWindow.minTime = this.comparisonTimeWindow.maxTime - this.timewindowForComparison.realtimeWindowMs;
         } else if (this.timewindowForComparison.fixedWindow) {
             this.comparisonTimeWindow.maxTime = this.timewindowForComparison.fixedWindow.endTimeMs;
@@ -739,7 +734,7 @@ export default class Subscription {
         if (!this.subscriptionTimewindow) {
             this.subscriptionTimewindow = this.updateRealtimeSubscription();
         }
-        this.timewindowForComparison = this.ctx.timeService.createTimewindowForComparison(this.subscriptionTimewindow, this.timeUnitForComparison);
+        this.timewindowForComparison = this.ctx.timeService.createTimewindowForComparison(this.subscriptionTimewindow, this.timeForComparison);
         this.updateComparisonTimewindow();
         return this.timewindowForComparison;
     }

@@ -498,10 +498,23 @@ function Utils($mdColorPalette, $rootScope, $window, $translate, $q, $timeout, t
         if (dataKey.settings.comparisonSettings.comparisonValuesLabel) {
             additionalDataKey.label = createLabelFromDatasource(datasource, dataKey.settings.comparisonSettings.comparisonValuesLabel);
         } else {
-            if (timeUnit === 'year') {
-                additionalDataKey.label = dataKey.label + ' ' + $translate.instant('legend.month-ago');
-            } else {
-                additionalDataKey.label = dataKey.label + ' ' + $translate.instant('legend.month-ago');
+            additionalDataKey.label = dataKey.label + ' ';
+            switch (timeUnit) {
+                case 'years':
+                    additionalDataKey.label += $translate.instant('legend.year-ago');
+                    break;
+                case 'months':
+                    additionalDataKey.label += $translate.instant('legend.month-ago');
+                    break;
+                case 'weeks':
+                    additionalDataKey.label += $translate.instant('legend.week-ago');
+                    break;
+                case 'days':
+                    additionalDataKey.label += $translate.instant('legend.day-ago');
+                    break;
+                default:
+                    additionalDataKey.label += $translate.instant('legend.month-ago');
+
             }
         }
         additionalDataKey.pattern = additionalDataKey.label;
