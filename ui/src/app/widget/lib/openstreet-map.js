@@ -22,14 +22,14 @@ import 'leaflet.markercluster/dist/leaflet.markercluster'
 
 export default class TbOpenStreetMap {
 
-	constructor($containerElement, utils, initCallback, defaultZoomLevel, dontFitMapBounds, disableScrollZooming, minZoomLevel, mapProvider, credentials, defaultCenterPosition, isMarketCluster) {
+	constructor($containerElement, utils, initCallback, defaultZoomLevel, dontFitMapBounds, disableScrollZooming, minZoomLevel, mapProvider, credentials, defaultCenterPosition, markerClusteringSetting) {
 
 		this.utils = utils;
 		this.defaultZoomLevel = defaultZoomLevel;
 		this.dontFitMapBounds = dontFitMapBounds;
 		this.minZoomLevel = minZoomLevel;
 		this.tooltips = [];
-		this.isMarketCluster = isMarketCluster || false;
+		this.isMarketCluster = markerClusteringSetting.isMarketCluster;
 
 		if (!mapProvider) {
 			mapProvider = {
@@ -52,8 +52,8 @@ export default class TbOpenStreetMap {
 		var tileLayer = mapProvider.isCustom ? L.tileLayer(mapProvider.name) : L.tileLayer.provider(mapProvider.name, credentials);
 		tileLayer.addTo(this.map);
 
-		if (isMarketCluster) {
-			this.markersCluster = L.markerClusterGroup();
+		if (this.isMarketCluster) {
+			this.markersCluster = L.markerClusterGroup(markerClusteringSetting);
 			this.map.addLayer(this.markersCluster);
 		}
 
