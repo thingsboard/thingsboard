@@ -19,7 +19,7 @@ var tmGlobals = {
 }
 
 export default class TbTencentMap {
-	constructor($containerElement, utils, initCallback, defaultZoomLevel, dontFitMapBounds, disableScrollZooming, minZoomLevel, tmApiKey, tmDefaultMapType, defaultCenterPosition) {
+	constructor($containerElement, utils, initCallback, defaultZoomLevel, dontFitMapBounds, disableScrollZooming, minZoomLevel, tmApiKey, tmDefaultMapType, defaultCenterPosition, markerClusteringSetting) {
 		var tbMap = this;
 		this.utils = utils;
 		this.defaultZoomLevel = defaultZoomLevel;
@@ -28,6 +28,7 @@ export default class TbTencentMap {
 		this.tooltips = [];
 		this.defaultMapType = tmDefaultMapType;
 		this.defaultCenterPosition =defaultCenterPosition;
+		this.isMarketCluster = markerClusteringSetting.isMarketCluster;
 
 		function clearGlobalId() {
 			if (tmGlobals.loadingTmId && tmGlobals.loadingTmId === tbMap.mapId) {
@@ -48,6 +49,13 @@ export default class TbTencentMap {
 				zoom: tbMap.defaultZoomLevel || 8,
 				center: new qq.maps.LatLng(tbMap.defaultCenterPosition[0],tbMap.defaultCenterPosition[1]) // eslint-disable-line no-undef
 			});
+
+			if (tbMap.isMarketCluster){
+				tbMap.markersCluster = new qq.maps.MarkerCluster( // eslint-disable-line no-undef
+					angular.merge({map:tbMap.map}, markerClusteringSetting)
+				);
+			}
+
 
 			if (initCallback) {
 				initCallback();
@@ -238,7 +246,11 @@ export default class TbTencentMap {
 		var tMap = this;
 		this.createMarkerIcon(marker, settings, (iconInfo) => {
 			marker.setIcon(iconInfo.icon);
-			marker.setMap(tMap.map);
+			if(tMap.isMarketCluster) {
+				tMap.markersCluster.addMarker(marker);
+			} else {
+				marker.setMap(tMap.map);
+			}
 			if (settings.showLabel) {
 				marker.label = new qq.maps.Label({
 					clickable: false,

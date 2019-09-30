@@ -69,6 +69,31 @@ export default class TbMapWidgetV2 {
 
 		var minZoomLevel = this.drawRoutes ? 18 : 15;
 
+		let markerClusteringSetting = {
+			isMarketCluster: false
+		};
+
+		if (settings.useClusterMarkers === true){
+			if (mapProvider === 'google-map' || mapProvider === 'tencent-map') {
+				markerClusteringSetting = {
+					isMarketCluster: true,
+					zoomOnClick: settings.zoomOnClick,
+					averageCenter: true
+				};
+				if(angular.isDefined(settings.maxZoom) && settings.maxZoom > 0 && settings.maxZoom < 21){
+					markerClusteringSetting.maxZoom = Math.floor(settings.maxZoom);
+				}
+				if(angular.isDefined(settings.gridSize) && settings.gridSize > 0){
+					markerClusteringSetting.gridSize = Math.floor(settings.gridSize);
+				}
+				if(angular.isDefined(settings.minimumClusterSize) && settings.minimumClusterSize > 0){
+					markerClusteringSetting.minimumClusterSize = Math.floor(settings.minimumClusterSize);
+				}
+			}
+		}
+
+
+
 
 		var initCallback = function () {
 			tbMap.update();
@@ -86,7 +111,7 @@ export default class TbMapWidgetV2 {
 
         let openStreetMapProvider = {};
 		if (mapProvider === 'google-map') {
-			this.map = new TbGoogleMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, settings.disableScrollZooming, minZoomLevel, settings.gmApiKey, settings.gmDefaultMapType, settings.defaultCenterPosition);
+			this.map = new TbGoogleMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, settings.disableScrollZooming, minZoomLevel, settings.gmApiKey, settings.gmDefaultMapType, settings.defaultCenterPosition, markerClusteringSetting);
 		} else if (mapProvider === 'openstreet-map') {
 			if (settings.useCustomProvider && settings.customProviderTileUrl) {
 				openStreetMapProvider.name = settings.customProviderTileUrl;
@@ -94,10 +119,10 @@ export default class TbMapWidgetV2 {
 			} else {
 				openStreetMapProvider.name = settings.mapProvider;
 			}
-			this.map = new TbOpenStreetMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, settings.disableScrollZooming, minZoomLevel, openStreetMapProvider, null,settings.defaultCenterPosition);
+			this.map = new TbOpenStreetMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, settings.disableScrollZooming, minZoomLevel, openStreetMapProvider, null,settings.defaultCenterPosition, settings.useClusterMarkers);
 		} else if (mapProvider === 'here') {
 			openStreetMapProvider.name = settings.mapProvider;
-			this.map = new TbOpenStreetMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, settings.disableScrollZooming, minZoomLevel, openStreetMapProvider, settings.credentials, settings.defaultCenterPosition);
+			this.map = new TbOpenStreetMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, settings.disableScrollZooming, minZoomLevel, openStreetMapProvider, settings.credentials, settings.defaultCenterPosition, settings.useClusterMarkers);
 		} else if (mapProvider === 'image-map') {
 			this.map = new TbImageMap(this.ctx, $element, this.utils, initCallback,
 				settings.mapImageUrl,
@@ -107,7 +132,7 @@ export default class TbMapWidgetV2 {
 				settings.imageUrlAttribute,
                 settings.useDefaultCenterPosition ? settings.defaultCenterPosition: null);
 		} else if (mapProvider === 'tencent-map') {
-			this.map = new TbTencentMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, settings.disableScrollZooming, minZoomLevel, settings.tmApiKey, settings.tmDefaultMapType, settings.defaultCenterPosition);
+			this.map = new TbTencentMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, settings.disableScrollZooming, minZoomLevel, settings.tmApiKey, settings.tmDefaultMapType, settings.defaultCenterPosition, markerClusteringSetting);
 		}
 
 
@@ -728,6 +753,19 @@ export default class TbMapWidgetV2 {
 				"formIndex":schema.groupInfoes.length,
 				"GroupTitle":"Route Map Settings"
 			});
+		} else {
+			angular.merge(schema.schema.properties, markerClusteringSettingsSchema.schema.properties);
+			schema.schema.required = schema.schema.required.concat(markerClusteringSettingsSchema.schema.required);
+			schema.form.push(markerClusteringSettingsSchema.form);
+			if (mapProvider === 'google-map' || mapProvider === 'tencent-map') {
+				angular.merge(schema.schema.properties, markerClusteringSettingsSchemaGoogle.schema.properties);
+				schema.schema.required = schema.schema.required.concat(markerClusteringSettingsSchemaGoogle.schema.required);
+				schema.form[schema.form.length -1] = schema.form[schema.form.length -1].concat(markerClusteringSettingsSchemaGoogle.form);
+			}
+			schema.groupInfoes.push({
+				"formIndex":schema.groupInfoes.length,
+				"GroupTitle":"Marker Clustering Settings"
+			});
 		}
 		return schema;
 	}
@@ -1248,6 +1286,60 @@ const routeMapSettingsSchema =
 		"form": [
 			"strokeWeight",
 			"strokeOpacity"
+		]
+	};
+
+const markerClusteringSettingsSchema =
+	{
+		"schema": {
+			"title": "Marker Clustering Configuration",
+			"type": "object",
+			"properties": {
+				"useClusterMarkers": {
+					"title": "Use map markers clustering",
+					"type": "boolean",
+					"default": false
+				},
+				"zoomOnClick": {
+					"title": "Zoom of clicking on a cluster",
+					"type": "boolean",
+					"default": true
+				}
+			},
+			"required": []
+		},
+		"form": [
+			"useClusterMarkers",
+			"zoomOnClick"
+		]
+	};
+
+const markerClusteringSettingsSchemaGoogle =
+	{
+		"schema": {
+			"title": "Marker Clustering Configuration Google",
+			"type": "object",
+			"properties": {
+				"gridSize": {
+					"title": "The grid size of a cluster in pixels",
+					"type": "number",
+					"default": 60
+				},
+				"maxZoom": {
+					"title": "The maximum zoom level that a marker can be part of a cluster (1 - 20)",
+					"type": "number"
+				},
+				"minimumClusterSize": {
+					"title": "The minimum number of markers to be in a cluster",
+					"type": "number"
+				}
+			},
+			"required": []
+		},
+		"form": [
+			"gridSize",
+			"maxZoom",
+			"minimumClusterSize"
 		]
 	};
 
