@@ -15,11 +15,14 @@
  */
 package org.thingsboard.server.service.install;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.rule.RuleEngineSettings;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.util.SqlDao;
 import org.thingsboard.server.service.install.sql.SqlDbHelper;
@@ -66,6 +69,9 @@ public class SqlDatabaseUpgradeService implements DatabaseUpgradeService {
 
     @Value("${spring.datasource.password}")
     private String dbPassword;
+
+    @Value("${tenant.rule_engine.partitions_number}")
+    private int partitionsNumber;
 
     @Autowired
     private DashboardService dashboardService;
@@ -183,7 +189,7 @@ public class SqlDatabaseUpgradeService implements DatabaseUpgradeService {
                     schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "2.4.0", SCHEMA_UPDATE_SQL);
                     loadSql(schemaUpdateFile, conn);
                     try {
-                        conn.createStatement().execute("ALTER TABLE tenant ADD COLUMN rule_engine_settings varchar(10000000)"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
+                        conn.createStatement().execute("ALTER TABLE tenant ADD COLUMN rule_engine_settings varchar(10000000) DEFAULT '" + getDefaultSettings() + "'"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
                     } catch (Exception e) {
                     }
                     log.info("Schema updated.");
@@ -198,5 +204,15 @@ public class SqlDatabaseUpgradeService implements DatabaseUpgradeService {
         String sql = new String(Files.readAllBytes(sqlFile), Charset.forName("UTF-8"));
         conn.createStatement().execute(sql); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
         Thread.sleep(5000);
+    }
+
+    private String getDefaultSettings() {
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            return mapper.writeValueAsString(new RuleEngineSettings("shared", partitionsNumber));
+        } catch (JsonProcessingException e) {
+            log.error("Failed to construct rule engine settings!", e);
+            throw new RuntimeException();
+        }
     }
 }

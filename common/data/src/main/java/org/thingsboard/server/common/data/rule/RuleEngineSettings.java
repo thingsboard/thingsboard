@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.rule;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -22,6 +23,7 @@ import java.io.Serializable;
 
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class RuleEngineSettings implements Serializable {
 
     private String executionType; // shared or dedicated
