@@ -781,7 +781,7 @@ export default class TbMapWidgetV2 {
 			}
 			schema.groupInfoes.push({
 				"formIndex":schema.groupInfoes.length,
-				"GroupTitle":"Marker Clustering Settings"
+				"GroupTitle":"Markers Clustering Settings"
 			});
 		}
 		return schema;
@@ -1309,7 +1309,7 @@ const routeMapSettingsSchema =
 const markerClusteringSettingsSchema =
 	{
 		"schema": {
-			"title": "Marker Clustering Configuration",
+			"title": "Markers Clustering Configuration",
 			"type": "object",
 			"properties": {
 				"useClusterMarkers": {
@@ -1318,7 +1318,7 @@ const markerClusteringSettingsSchema =
 					"default": false
 				},
 				"zoomOnClick": {
-					"title": "Zoom of clicking on a cluster",
+					"title": "Zoom when clicking on a cluster",
 					"type": "boolean",
 					"default": true
 				}
@@ -1338,16 +1338,16 @@ const markerClusteringSettingsSchemaGoogle =
 			"type": "object",
 			"properties": {
 				"gridSize": {
-					"title": "The area size used by the marker clustered to group markers in pixels",
+					"title": "Maximum radius that a cluster will cover in pixels",
 					"type": "number",
 					"default": 60
 				},
 				"maxZoom": {
-					"title": "The maximum zoom level that a marker can be part of a cluster (1 - 20)",
+					"title": "The maximum zoom level when a marker can be part of a cluster (1 - 20)",
 					"type": "number"
 				},
 				"minimumClusterSize": {
-					"title": "The minimum number of markers to be in a cluster",
+					"title": "The minimum number of markers in a cluster",
 					"type": "number"
 				}
 			},
@@ -1363,21 +1363,16 @@ const markerClusteringSettingsSchemaGoogle =
 const markerClusteringSettingsSchemaLeaflet =
 	{
 		"schema": {
-			"title": "Marker Clustering Configuration Leaflet",
+			"title": "Markers Clustering Configuration Leaflet",
 			"type": "object",
 			"properties": {
 				"showCoverageOnHover": {
-					"title": "Shows the bounds of markers when mouse over a cluster",
-					"type": "boolean",
-					"default": true
-				},
-				"removeOutsideVisibleBounds": {
-					"title": "Remove clusters that are too far from the map view for performance",
+					"title": "Show the bounds of markers when mouse over a cluster",
 					"type": "boolean",
 					"default": true
 				},
 				"animate": {
-					"title": "Show animation on marker",
+					"title": "Show animation on markers when zooming",
 					"type": "boolean",
 					"default": true
 				},
@@ -1387,19 +1382,24 @@ const markerClusteringSettingsSchemaLeaflet =
 					"default": 80
 				},
 				"chunkedLoading": {
-					"title": "Split the add marker processing to small interval",
+					"title": "Split the process of adding markers on small intervals",
 					"type": "boolean",
 					"default": false
+				},
+				"removeOutsideVisibleBounds": {
+					"title": "Remove clusters that are too far from the map view for performance",
+					"type": "boolean",
+					"default": true
 				}
 			},
 			"required": []
 		},
 		"form": [
 			"showCoverageOnHover",
-			"removeOutsideVisibleBounds",
 			"animate",
 			"maxClusterRadius",
-			"chunkedLoading"
+			"chunkedLoading",
+			"removeOutsideVisibleBounds"
 		]
 	};
 
