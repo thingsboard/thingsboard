@@ -28,17 +28,12 @@ import javax.persistence.PersistenceContext;
 @Transactional
 public class PsqlPartitioningRepository {
 
-    private static final String TABLE_REGEX = "ts_kv_";
-
     @PersistenceContext
     public EntityManager entityManager;
 
     public void save(PsqlPartition partition) {
-        entityManager.createNativeQuery(createStatement(partition))
+        entityManager.createNativeQuery(partition.getQuery())
                 .executeUpdate();
     }
 
-    private String createStatement(PsqlPartition partition) {
-        return "CREATE TABLE IF NOT EXISTS " + TABLE_REGEX + partition.getPartionDate() + " PARTITION OF ts_kv(PRIMARY KEY (entity_id, key, ts)) FOR VALUES FROM (" + partition.getStart() + ") TO (" + partition.getEnd() + ")";
-    }
 }
