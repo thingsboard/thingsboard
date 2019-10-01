@@ -44,6 +44,7 @@ import org.thingsboard.server.dao.util.SqlTsDao;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -58,6 +59,8 @@ import java.util.concurrent.locks.ReentrantLock;
 public class JpaPsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEntity> implements TimeseriesDao {
 
     private final ConcurrentMap<String, Integer> tsKvDictionaryMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<PsqlPartition, Integer> partitionMap = new ConcurrentHashMap<>();
+    private final Set<PsqlPartition> partitions = ConcurrentHashMap.newKeySet(partitionMap.size());
 
     private static final ReentrantLock tsCreationLock = new ReentrantLock();
 
@@ -93,17 +96,22 @@ public class JpaPsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEnt
         entity.setLongValue(tsKvEntry.getLongValue().orElse(null));
         entity.setBooleanValue(tsKvEntry.getBooleanValue().orElse(null));
         PsqlPartition psqlPartition = toPartition(tsKvEntry.getTs());
-        log.trace("Saving partition: {}", psqlPartition);
-        ListenableFuture<PsqlPartition> partitionSubmit = insertService.submit(() -> {
-            if (psqlPartition != null) {
-                partitioningRepository.save(psqlPartition);
-            }
-        }, psqlPartition);
-        log.trace("Saving entity: {}", entity);
-        return Futures.transformAsync(partitionSubmit, partition -> insertService.submit(() -> {
-            insertRepository.saveOrUpdate(entity, partition);
-            return null;
-        }));
+        if(!partitions.contains(psqlPartition)) {
+            log.trace("Adding partition to Set: {}", psqlPartition);
+            partitions.add(psqlPartition);
+            log.trace("Saving partition: {}", psqlPartition);
+            ListenableFuture<PsqlPartition> partitionSubmit = insertService.submit(() -> partitioningRepository.save(psqlPartition), psqlPartition);
+            log.trace("Saving entity: {}", entity);
+            return Futures.transformAsync(partitionSubmit, partition -> insertService.submit(() -> {
+                insertRepository.saveOrUpdate(entity, partition);
+                return null;
+            }));
+        } else {
+            return insertService.submit(() -> {
+                insertRepository.saveOrUpdate(entity, psqlPartition);
+                return null;
+            });
+        }
     }
 
     @Override

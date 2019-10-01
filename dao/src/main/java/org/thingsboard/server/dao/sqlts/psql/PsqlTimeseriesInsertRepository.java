@@ -23,35 +23,15 @@ import org.thingsboard.server.dao.timeseries.PsqlPartition;
 import org.thingsboard.server.dao.util.PsqlDao;
 import org.thingsboard.server.dao.util.SqlTsDao;
 
-import javax.persistence.Query;
-
 @SqlTsDao
 @PsqlDao
 @Repository
 @Transactional
 public class PsqlTimeseriesInsertRepository extends AbstractTimeseriesInsertRepository<TsKvEntity> {
 
-    private static final String ON_BOOL_VALUE_UPDATE_SET_NULLS = "str_v = null, long_v = null, dbl_v = null";
-    private static final String ON_STR_VALUE_UPDATE_SET_NULLS = "bool_v = null, long_v = null, dbl_v = null";
-    private static final String ON_LONG_VALUE_UPDATE_SET_NULLS = "str_v = null, bool_v = null, dbl_v = null";
-    private static final String ON_DBL_VALUE_UPDATE_SET_NULLS = "str_v = null, long_v = null, bool_v = null";
-
-    //private static final String INSERT_OR_UPDATE_BOOL_STATEMENT = getInsertOrUpdateString(BOOL_V, ON_BOOL_VALUE_UPDATE_SET_NULLS);
-    //private static final String INSERT_OR_UPDATE_STR_STATEMENT = getInsertOrUpdateString(STR_V, ON_STR_VALUE_UPDATE_SET_NULLS);
-    //private static final String INSERT_OR_UPDATE_LONG_STATEMENT = getInsertOrUpdateString(LONG_V, ON_LONG_VALUE_UPDATE_SET_NULLS);
-    //private static final String INSERT_OR_UPDATE_DBL_STATEMENT = getInsertOrUpdateString(DBL_V, ON_DBL_VALUE_UPDATE_SET_NULLS);
-
-    private static String getInsertOrUpdateString(String value, String nullValues, PsqlPartition partition) {
-        if (partition != null) {
-            return "INSERT INTO ts_kv_" + partition.getPartionDate() + " (entity_id, key, ts, " + value + ") VALUES (:entity_id, :key, :ts, :" + value + ") ON CONFLICT (entity_id, key, ts) DO UPDATE SET " + value + " = :" + value + ", ts = :ts," + nullValues;
-        } else {
-            return "INSERT INTO ts_kv (entity_id, key, ts, " + value + ") VALUES (:entity_id, :key, :ts, :" + value + ") ON CONFLICT (entity_id, key, ts) DO UPDATE SET " + value + " = :" + value + ", ts = :ts," + nullValues;
-        }
-    }
-
     @Override
     public void saveOrUpdate(TsKvEntity entity, PsqlPartition partition) {
-        processSaveOrUpdate(entity, getInsertOrUpdateString(BOOL_V, ON_BOOL_VALUE_UPDATE_SET_NULLS, partition), getInsertOrUpdateString(STR_V, ON_STR_VALUE_UPDATE_SET_NULLS, partition), getInsertOrUpdateString(LONG_V, ON_LONG_VALUE_UPDATE_SET_NULLS, partition), getInsertOrUpdateString(DBL_V, ON_DBL_VALUE_UPDATE_SET_NULLS, partition));
+        processSaveOrUpdate(entity, partition.getInsertOrUpdateBoolStatement(), partition.getInsertOrUpdateStrStatement(), partition.getInsertOrUpdateLongStatement(), partition.getInsertOrUpdateDblStatement());
     }
 
     @Override

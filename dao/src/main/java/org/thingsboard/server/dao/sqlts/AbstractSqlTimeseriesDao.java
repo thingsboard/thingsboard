@@ -41,7 +41,6 @@ import javax.annotation.PreDestroy;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -106,36 +105,15 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
         }
     }
 
-//    protected PsqlPartition toPartition(long ts) {
-//        if(!isFixedPartitioning()) {
-//            LocalDateTime time = LocalDateTime.ofInstant(Instant.ofEpochMilli(ts), ZoneOffset.UTC);
-//            LocalDateTime localDateTimeStart = tsFormat.trancateTo(time);
-//            if (localDateTimeStart != null) {
-//                LocalDateTime localDateTimeEnd = tsFormat.plusTo(localDateTimeStart);
-//                if (localDateTimeEnd != null) {
-//                    return new PsqlPartition(toMills(localDateTimeStart), toMills(localDateTimeEnd), tsFormat.getPattern());
-//                }
-//            }
-//        }
-//        return new PsqlPartition(Long.MIN_VALUE, Long.MAX_VALUE, tsFormat.getPattern());
-//    }
-
     protected PsqlPartition toPartition(long ts) {
-        if(!isFixedPartitioning()) {
-            LocalDateTime time = LocalDateTime.ofInstant(Instant.ofEpochMilli(ts), ZoneOffset.UTC);
-            LocalDateTime localDateTimeStart = tsFormat.trancateTo(time);
-            if(localDateTimeStart == SqlTsPartitionDate.EPOCH_START) {
-                return new PsqlPartition(toMills(EPOCH_START), Long.MAX_VALUE, tsFormat.getPattern());
-            } else {
-                LocalDateTime localDateTimeEnd = tsFormat.plusTo(localDateTimeStart);
-                return new PsqlPartition(toMills(localDateTimeStart), toMills(localDateTimeEnd), tsFormat.getPattern());
-            }
+        LocalDateTime time = LocalDateTime.ofInstant(Instant.ofEpochMilli(ts), ZoneOffset.UTC);
+        LocalDateTime localDateTimeStart = tsFormat.trancateTo(time);
+        if (localDateTimeStart == SqlTsPartitionDate.EPOCH_START) {
+            return new PsqlPartition(toMills(EPOCH_START), Long.MAX_VALUE, tsFormat.getPattern());
+        } else {
+            LocalDateTime localDateTimeEnd = tsFormat.plusTo(localDateTimeStart);
+            return new PsqlPartition(toMills(localDateTimeStart), toMills(localDateTimeEnd), tsFormat.getPattern());
         }
-        return new PsqlPartition(Long.MIN_VALUE, Long.MAX_VALUE, tsFormat.getPattern());
-    }
-
-    private boolean isFixedPartitioning() {
-        return tsFormat.getTruncateUnit().equals(ChronoUnit.FOREVER);
     }
 
     private long toMills(LocalDateTime time) {
