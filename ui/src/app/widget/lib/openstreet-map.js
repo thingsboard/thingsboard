@@ -19,7 +19,7 @@ import 'leaflet-providers';
 
 export default class TbOpenStreetMap {
 
-	constructor($containerElement, utils, initCallback, defaultZoomLevel, dontFitMapBounds, disableScrollZooming, minZoomLevel, mapProvider, credentials, defaultCenterPosition) {
+	constructor($containerElement, utils, initCallback, defaultZoomLevel, dontFitMapBounds, disableScrollZooming, minZoomLevel, mapProvider, credentials, defaultCenterPosition, onClickListener) {
 
 		this.utils = utils;
 		this.defaultZoomLevel = defaultZoomLevel;
@@ -48,6 +48,8 @@ export default class TbOpenStreetMap {
 		var tileLayer = mapProvider.isCustom ? L.tileLayer(mapProvider.name) : L.tileLayer.provider(mapProvider.name, credentials);
 		tileLayer.addTo(this.map);
 
+		this.map.on('click', function (e) { onClickListener(e, e.latlng); });
+        
 		if (initCallback) {
 			setTimeout(initCallback, 0); //eslint-disable-line
 		}

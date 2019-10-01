@@ -1739,7 +1739,8 @@
             "node-selected": "On node selected",
             "element-click": "On HTML element click",
             "pie-slice-click": "On slice click",
-            "row-double-click": "On row double click"
+            "row-double-click": "On row double click",
+            "map-click": "On map click"
         }
     },
     "language": {

@@ -84,9 +84,19 @@ export default class TbMapWidgetV2 {
 			tbMap.tooltipActionsMap[descriptor.name] = descriptor;
 		});
 
+		var onMapClick = function (event, latlng) {
+			var descriptors = tbMap.ctx.actionsApi.getActionDescriptors('mapClick');
+			if (descriptors) {
+				var entityInfo = tbMap.ctx.actionsApi.getActiveEntityInfo();
+				var entityId = entityInfo ? entityInfo.entityId : null;
+				var entityName = entityInfo ? entityInfo.entityName : null;
+				tbMap.ctx.actionsApi.handleWidgetAction(event, descriptors[0], entityId, entityName, latlng);
+			}
+		}
+
         let openStreetMapProvider = {};
 		if (mapProvider === 'google-map') {
-			this.map = new TbGoogleMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, settings.disableScrollZooming, minZoomLevel, settings.gmApiKey, settings.gmDefaultMapType, settings.defaultCenterPosition);
+			this.map = new TbGoogleMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, settings.disableScrollZooming, minZoomLevel, settings.gmApiKey, settings.gmDefaultMapType, settings.defaultCenterPosition, onMapClick);
 		} else if (mapProvider === 'openstreet-map') {
 			if (settings.useCustomProvider && settings.customProviderTileUrl) {
 				openStreetMapProvider.name = settings.customProviderTileUrl;
@@ -94,10 +104,10 @@ export default class TbMapWidgetV2 {
 			} else {
 				openStreetMapProvider.name = settings.mapProvider;
 			}
-			this.map = new TbOpenStreetMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, settings.disableScrollZooming, minZoomLevel, openStreetMapProvider, null,settings.defaultCenterPosition);
+			this.map = new TbOpenStreetMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, settings.disableScrollZooming, minZoomLevel, openStreetMapProvider, null,settings.defaultCenterPosition, onMapClick);
 		} else if (mapProvider === 'here') {
 			openStreetMapProvider.name = settings.mapProvider;
-			this.map = new TbOpenStreetMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, settings.disableScrollZooming, minZoomLevel, openStreetMapProvider, settings.credentials, settings.defaultCenterPosition);
+			this.map = new TbOpenStreetMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, settings.disableScrollZooming, minZoomLevel, openStreetMapProvider, settings.credentials, settings.defaultCenterPosition, onMapClick);
 		} else if (mapProvider === 'image-map') {
 			this.map = new TbImageMap(this.ctx, $element, this.utils, initCallback,
 				settings.mapImageUrl,
@@ -107,7 +117,7 @@ export default class TbMapWidgetV2 {
 				settings.imageUrlAttribute,
                 settings.useDefaultCenterPosition ? settings.defaultCenterPosition: null);
 		} else if (mapProvider === 'tencent-map') {
-			this.map = new TbTencentMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, settings.disableScrollZooming, minZoomLevel, settings.tmApiKey, settings.tmDefaultMapType, settings.defaultCenterPosition);
+			this.map = new TbTencentMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, settings.disableScrollZooming, minZoomLevel, settings.tmApiKey, settings.tmDefaultMapType, settings.defaultCenterPosition, onMapClick);
 		}
 
 
@@ -749,6 +759,10 @@ export default class TbMapWidgetV2 {
 			'tooltipAction': {
 				name: 'widget-action.tooltip-tag-action',
 				multiple: true
+			},
+			'mapClick': {
+				name: 'widget-action.map-click',
+				multiple: false
 			}
 		};
 	}

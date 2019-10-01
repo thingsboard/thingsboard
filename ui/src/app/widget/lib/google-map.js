@@ -19,7 +19,7 @@ var gmGlobals = {
 }
 
 export default class TbGoogleMap {
-    constructor($containerElement, utils, initCallback, defaultZoomLevel, dontFitMapBounds, disableScrollZooming, minZoomLevel, gmApiKey, gmDefaultMapType, defaultCenterPosition) {
+    constructor($containerElement, utils, initCallback, defaultZoomLevel, dontFitMapBounds, disableScrollZooming, minZoomLevel, gmApiKey, gmDefaultMapType, defaultCenterPosition, onClickListener) {
 
         var tbMap = this;
         this.utils = utils;
@@ -49,6 +49,9 @@ export default class TbGoogleMap {
                 zoom: tbMap.defaultZoomLevel || 8,
                 center: new google.maps.LatLng(tbMap.defaultCenterPosition[0], tbMap.defaultCenterPosition[1]) // eslint-disable-line no-undef
             });
+
+            tbMap.map.addListener('click', function (e) { onClickListener(e, e.latlng); });
+
             if (initCallback) {
                 initCallback();
             }

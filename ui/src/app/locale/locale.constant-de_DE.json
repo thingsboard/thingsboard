@@ -1680,7 +1680,8 @@
       "node-selected": "Klick auf Node",
       "element-click": "Klick auf HTML element",
       "pie-slice-click": "Klicken auf Slice",
-      "row-double-click": "Doppelklicken auf Zeile"
+      "row-double-click": "Doppelklicken auf Zeile",
+      "map-click": "Klick auf karte"
     }
   },
   "language": {

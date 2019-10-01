@@ -379,7 +379,8 @@
             "node-selected": "Sur le noeud sélectionné",
             "element-click": "Sur l'élément HTML, cliquez sur",
             "pie-slice-click": "Sur tranche cliquez",
-            "row-double-click": "Sur la ligne double clic"
+            "row-double-click": "Sur la ligne double clic",
+            "map-click": "Cliquez sur la carte"
         }
     },
     "customer": {

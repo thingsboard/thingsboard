@@ -20,7 +20,7 @@ const maxZoom = 4;
 
 export default class TbImageMap {
 
-    constructor(ctx, $containerElement, utils, initCallback, imageUrl, disableScrollZooming, posFunction, imageEntityAlias, imageUrlAttribute) {
+    constructor(ctx, $containerElement, utils, initCallback, imageUrl, disableScrollZooming, posFunction, imageEntityAlias, imageUrlAttribute, onClickListener) {
 
         this.ctx = ctx;
         this.utils = utils;
@@ -35,6 +35,7 @@ export default class TbImageMap {
         this.markers = [];
         this.initCallback = initCallback;
         this.disableScrollZooming = disableScrollZooming;
+        this.onClickListener = onClickListener;
 
         if (angular.isDefined(posFunction) && posFunction.length > 0) {
             try {
@@ -122,6 +123,7 @@ export default class TbImageMap {
             (aspect) => {
                 imageMap.aspect = aspect;
                 imageMap.onresize(updateImage);
+                this.map.on('click', function (e) { this.onClickListener(e, e.latlng); });
                 if (initCallback) {
                     setTimeout(initCallback, 0); //eslint-disable-line
                 }

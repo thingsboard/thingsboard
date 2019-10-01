@@ -1695,7 +1695,8 @@
             "node-selected": "Click su nodo selezionato",
             "element-click": "Click su elemento HTML",
             "pie-slice-click": "Click sulla fetta",
-            "row-double-click": "Doppio click sulla riga"
+            "row-double-click": "Doppio click sulla riga",
+            "map-click": "Click sulla mappa"
         }
     },
     "language": {
