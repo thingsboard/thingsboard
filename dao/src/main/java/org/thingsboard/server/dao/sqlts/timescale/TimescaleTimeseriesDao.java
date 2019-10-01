@@ -182,6 +182,8 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
                 }
             } else {
                 keyId = tsKvDictionaryOptional.get().getKeyId();
+                tsKvDictionaryMap.put(strKey, keyId);
+                tsKvDictionaryInvertMap.put(keyId, strKey);
             }
         }
         return keyId;

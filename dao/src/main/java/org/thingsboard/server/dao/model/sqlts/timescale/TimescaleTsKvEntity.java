@@ -17,12 +17,9 @@ package org.thingsboard.server.dao.model.sqlts.timescale;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.eclipse.persistence.annotations.Convert;
-import org.eclipse.persistence.annotations.Converter;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.model.ToData;
-import org.thingsboard.server.dao.model.UUIDConverter;
 import org.thingsboard.server.dao.model.sql.PsqlAbsractTsKvEntity;
 
 import javax.persistence.Column;
@@ -56,7 +53,6 @@ import static org.thingsboard.server.dao.sqlts.timescale.AggregationRepository.F
 @Entity
 @Table(name = "tenant_ts_kv")
 @IdClass(TimescaleTsKvCompositeKey.class)
-@Converter(name="uuidConverter", converterClass=UUIDConverter.class)
 @SqlResultSetMappings({
         @SqlResultSetMapping(
                 name = "timescaleAggregationMapping",
@@ -121,8 +117,7 @@ import static org.thingsboard.server.dao.sqlts.timescale.AggregationRepository.F
 public final class TimescaleTsKvEntity extends PsqlAbsractTsKvEntity implements ToData<TsKvEntry> {
 
     @Id
-    @Column(name = TENANT_ID_COLUMN)
-    @Convert("uuidConverter")
+    @Column(name = TENANT_ID_COLUMN, columnDefinition = "uuid")
     private UUID tenantId;
 
     public TimescaleTsKvEntity() { }

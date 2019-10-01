@@ -17,7 +17,6 @@ package org.thingsboard.server.dao.model.sql;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.eclipse.persistence.annotations.Convert;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
@@ -42,8 +41,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.KEY_COLUMN;
 public abstract class PsqlAbsractTsKvEntity extends AbsractTsKvEntity implements ToData<TsKvEntry> {
 
     @Id
-    @Column(name = ENTITY_ID_COLUMN)
-    @Convert("uuidConverter")
+    @Column(name = ENTITY_ID_COLUMN, columnDefinition = "uuid")
     protected UUID entityId;
 
     @Id

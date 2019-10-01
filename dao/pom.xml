@@ -194,10 +194,6 @@
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>rest</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.eclipse.persistence</groupId>
-            <artifactId>eclipselink</artifactId>
-        </dependency>
     </dependencies>
     <build>
         <plugins>

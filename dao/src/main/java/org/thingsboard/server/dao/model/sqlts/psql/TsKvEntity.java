@@ -16,10 +16,8 @@
 package org.thingsboard.server.dao.model.sqlts.psql;
 
 import lombok.Data;
-import org.eclipse.persistence.annotations.Converter;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.model.ToData;
-import org.thingsboard.server.dao.model.UUIDConverter;
 import org.thingsboard.server.dao.model.sql.PsqlAbsractTsKvEntity;
 
 import javax.persistence.Entity;
@@ -30,7 +28,6 @@ import javax.persistence.Table;
 @Entity
 @Table(name = "ts_kv")
 @IdClass(TsKvCompositeKey.class)
-@Converter(name="uuidConverter", converterClass=UUIDConverter.class)
 public final class TsKvEntity extends PsqlAbsractTsKvEntity implements ToData<TsKvEntry> {
 
     public TsKvEntity() {

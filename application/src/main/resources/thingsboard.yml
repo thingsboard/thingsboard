@@ -324,7 +324,6 @@ spring:
   jpa:
     hibernate:
       ddl-auto: "none"
-    show-sql: "true"
     database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}"
   datasource:
     driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.postgresql.Driver}"

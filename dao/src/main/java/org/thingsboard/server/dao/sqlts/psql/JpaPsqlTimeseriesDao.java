@@ -216,6 +216,7 @@ public class JpaPsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEnt
                 }
             } else {
                 keyId = tsKvDictionaryOptional.get().getKeyId();
+                tsKvDictionaryMap.put(strKey, keyId);
             }
         }
         return keyId;
