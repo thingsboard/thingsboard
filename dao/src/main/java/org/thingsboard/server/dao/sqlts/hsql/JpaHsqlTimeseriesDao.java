@@ -74,7 +74,7 @@ public class JpaHsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEnt
         entity.setBooleanValue(tsKvEntry.getBooleanValue().orElse(null));
         log.trace("Saving entity: {}", entity);
         return insertService.submit(() -> {
-            insertRepository.saveOrUpdate(entity);
+            insertRepository.saveOrUpdate(entity, null);
             return null;
         });
     }

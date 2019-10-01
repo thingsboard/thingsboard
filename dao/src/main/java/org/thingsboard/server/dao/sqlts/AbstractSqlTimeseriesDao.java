@@ -30,16 +30,25 @@ import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
+import org.thingsboard.server.dao.timeseries.PsqlPartition;
+import org.thingsboard.server.dao.timeseries.SqlTsPartitionDate;
 import org.thingsboard.server.dao.timeseries.TsInsertExecutorType;
+import org.thingsboard.server.dao.util.PsqlDao;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
+
+import static org.thingsboard.server.dao.timeseries.SqlTsPartitionDate.EPOCH_START;
 
 @Slf4j
 public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningExecutorService {
@@ -47,13 +56,19 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
     private static final String DESC_ORDER = "DESC";
 
     @Value("${sql.ts_inserts_executor_type}")
-    protected String insertExecutorType;
+    private String insertExecutorType;
 
     @Value("${sql.ts_inserts_fixed_thread_pool_size}")
-    protected int insertFixedThreadPoolSize;
+    private int insertFixedThreadPoolSize;
+
+    @PsqlDao
+    @Value("${sql.ts_key_value_partitioning}")
+    private String partitioning;
 
     @Value("${spring.datasource.hikari.maximumPoolSize}")
-    protected int maximumPoolSize;
+    private int maximumPoolSize;
+
+    private SqlTsPartitionDate tsFormat;
 
     protected ListeningExecutorService insertService;
 
@@ -75,6 +90,13 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
                 insertService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(poolSize));
                 break;
         }
+        Optional<SqlTsPartitionDate> partition = SqlTsPartitionDate.parse(partitioning);
+        if (partition.isPresent()) {
+            tsFormat = partition.get();
+        } else {
+            log.warn("Incorrect configuration of partitioning {}", partitioning);
+            throw new RuntimeException("Failed to parse partitioning property: " + partitioning + "!");
+        }
     }
 
     @PreDestroy
@@ -82,6 +104,42 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
         if (insertService != null) {
             insertService.shutdown();
         }
+    }
+
+//    protected PsqlPartition toPartition(long ts) {
+//        if(!isFixedPartitioning()) {
+//            LocalDateTime time = LocalDateTime.ofInstant(Instant.ofEpochMilli(ts), ZoneOffset.UTC);
+//            LocalDateTime localDateTimeStart = tsFormat.trancateTo(time);
+//            if (localDateTimeStart != null) {
+//                LocalDateTime localDateTimeEnd = tsFormat.plusTo(localDateTimeStart);
+//                if (localDateTimeEnd != null) {
+//                    return new PsqlPartition(toMills(localDateTimeStart), toMills(localDateTimeEnd), tsFormat.getPattern());
+//                }
+//            }
+//        }
+//        return new PsqlPartition(Long.MIN_VALUE, Long.MAX_VALUE, tsFormat.getPattern());
+//    }
+
+    protected PsqlPartition toPartition(long ts) {
+        if(!isFixedPartitioning()) {
+            LocalDateTime time = LocalDateTime.ofInstant(Instant.ofEpochMilli(ts), ZoneOffset.UTC);
+            LocalDateTime localDateTimeStart = tsFormat.trancateTo(time);
+            if(localDateTimeStart == SqlTsPartitionDate.EPOCH_START) {
+                return new PsqlPartition(toMills(EPOCH_START), Long.MAX_VALUE, tsFormat.getPattern());
+            } else {
+                LocalDateTime localDateTimeEnd = tsFormat.plusTo(localDateTimeStart);
+                return new PsqlPartition(toMills(localDateTimeStart), toMills(localDateTimeEnd), tsFormat.getPattern());
+            }
+        }
+        return new PsqlPartition(Long.MIN_VALUE, Long.MAX_VALUE, tsFormat.getPattern());
+    }
+
+    private boolean isFixedPartitioning() {
+        return tsFormat.getTruncateUnit().equals(ChronoUnit.FOREVER);
+    }
+
+    private long toMills(LocalDateTime time) {
+        return time.toInstant(ZoneOffset.UTC).toEpochMilli();
     }
 
     protected ListenableFuture<List<TsKvEntry>> processFindAllAsync(TenantId tenantId, EntityId entityId, List<ReadTsKvQuery> queries) {

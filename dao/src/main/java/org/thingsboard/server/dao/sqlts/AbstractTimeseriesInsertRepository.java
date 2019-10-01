@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.sqlts;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
 import org.thingsboard.server.dao.model.sql.AbsractTsKvEntity;
+import org.thingsboard.server.dao.timeseries.PsqlPartition;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -33,7 +34,7 @@ public abstract class AbstractTimeseriesInsertRepository<T extends AbsractTsKvEn
     @PersistenceContext
     protected EntityManager entityManager;
 
-    public abstract void saveOrUpdate(T entity);
+    public abstract void saveOrUpdate(T entity, PsqlPartition partition);
 
     protected void processSaveOrUpdate(T entity, String requestBoolValue, String requestStrValue, String requestLongValue, String requestDblValue) {
         if (entity.getBooleanValue() != null) {

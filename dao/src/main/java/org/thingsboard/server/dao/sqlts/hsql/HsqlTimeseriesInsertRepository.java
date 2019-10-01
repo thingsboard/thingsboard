@@ -19,6 +19,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.model.sqlts.hsql.TsKvEntity;
 import org.thingsboard.server.dao.sqlts.AbstractTimeseriesInsertRepository;
+import org.thingsboard.server.dao.timeseries.PsqlPartition;
 import org.thingsboard.server.dao.util.HsqlDao;
 import org.thingsboard.server.dao.util.SqlTsDao;
 
@@ -43,7 +44,7 @@ public class HsqlTimeseriesInsertRepository extends AbstractTimeseriesInsertRepo
     }
 
     @Override
-    public void saveOrUpdate(TsKvEntity entity) {
+    public void saveOrUpdate(TsKvEntity entity, PsqlPartition partition) {
         processSaveOrUpdate(entity, INSERT_OR_UPDATE_BOOL_STATEMENT, INSERT_OR_UPDATE_STR_STATEMENT, INSERT_OR_UPDATE_LONG_STATEMENT, INSERT_OR_UPDATE_DBL_STATEMENT);
     }
 

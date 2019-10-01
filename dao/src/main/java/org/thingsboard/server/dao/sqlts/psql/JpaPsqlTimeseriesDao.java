@@ -36,6 +36,7 @@ import org.thingsboard.server.dao.model.sqlts.psql.TsKvEntity;
 import org.thingsboard.server.dao.sqlts.AbstractSimpleSqlTimeseriesDao;
 import org.thingsboard.server.dao.sqlts.AbstractTimeseriesInsertRepository;
 import org.thingsboard.server.dao.sqlts.dictionary.TsKvDictionaryRepository;
+import org.thingsboard.server.dao.timeseries.PsqlPartition;
 import org.thingsboard.server.dao.timeseries.TimeseriesDao;
 import org.thingsboard.server.dao.util.PsqlDao;
 import org.thingsboard.server.dao.util.SqlTsDao;
@@ -43,7 +44,6 @@ import org.thingsboard.server.dao.util.SqlTsDao;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -72,6 +72,9 @@ public class JpaPsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEnt
     @Autowired
     private AbstractTimeseriesInsertRepository insertRepository;
 
+    @Autowired
+    private PsqlPartitioningRepository partitioningRepository;
+
     @Override
     public ListenableFuture<List<TsKvEntry>> findAllAsync(TenantId tenantId, EntityId entityId, List<ReadTsKvQuery> queries) {
         return processFindAllAsync(tenantId, entityId, queries);
@@ -89,11 +92,18 @@ public class JpaPsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEnt
         entity.setDoubleValue(tsKvEntry.getDoubleValue().orElse(null));
         entity.setLongValue(tsKvEntry.getLongValue().orElse(null));
         entity.setBooleanValue(tsKvEntry.getBooleanValue().orElse(null));
+        PsqlPartition psqlPartition = toPartition(tsKvEntry.getTs());
+        log.trace("Saving partition: {}", psqlPartition);
+        ListenableFuture<PsqlPartition> partitionSubmit = insertService.submit(() -> {
+            if (psqlPartition != null) {
+                partitioningRepository.save(psqlPartition);
+            }
+        }, psqlPartition);
         log.trace("Saving entity: {}", entity);
-        return insertService.submit(() -> {
-            insertRepository.saveOrUpdate(entity);
+        return Futures.transformAsync(partitionSubmit, partition -> insertService.submit(() -> {
+            insertRepository.saveOrUpdate(entity, partition);
             return null;
-        });
+        }));
     }
 
     @Override

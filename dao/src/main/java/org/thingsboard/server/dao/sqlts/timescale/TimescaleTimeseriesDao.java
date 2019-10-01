@@ -202,7 +202,7 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
         entity.setBooleanValue(tsKvEntry.getBooleanValue().orElse(null));
         log.trace("Saving entity to timescale db: {}", entity);
         return insertService.submit(() -> {
-            insertRepository.saveOrUpdate(entity);
+            insertRepository.saveOrUpdate(entity, null);
             return null;
         });
     }
