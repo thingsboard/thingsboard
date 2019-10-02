@@ -48,7 +48,7 @@ export default class TbMapWidgetV2 {
 		};
 
 		if (settings.defaultZoomLevel) {
-			if (settings.defaultZoomLevel > 0 && settings.defaultZoomLevel < 21) {
+			if (settings.defaultZoomLevel >= 0 && settings.defaultZoomLevel < 21) {
 				this.defaultZoomLevel = Math.floor(settings.defaultZoomLevel);
 			}
 		}
@@ -80,7 +80,7 @@ export default class TbMapWidgetV2 {
 					zoomOnClick: settings.zoomOnClick,
 					averageCenter: true
 				};
-				if(angular.isDefined(settings.maxZoom) && settings.maxZoom > 0 && settings.maxZoom < 21){
+				if(angular.isDefined(settings.maxZoom) && settings.maxZoom >= 0 && settings.maxZoom < 19){
 					markerClusteringSetting.maxZoom = Math.floor(settings.maxZoom);
 				}
 				if(angular.isDefined(settings.gridSize) && settings.gridSize > 0){
@@ -100,6 +100,9 @@ export default class TbMapWidgetV2 {
 				};
 				if(angular.isDefined(settings.maxClusterRadius) && settings.maxClusterRadius > 0){
 					markerClusteringSetting.maxClusterRadius = Math.floor(settings.maxClusterRadius);
+				}
+				if(angular.isDefined(settings.maxZoom) && settings.maxZoom >= 0 && settings.maxZoom < 19){
+					markerClusteringSetting.disableClusteringAtZoom = Math.floor(settings.maxZoom);
 				}
 			}
 		}
@@ -1030,7 +1033,7 @@ const commonMapSettingsSchema =
 			"type": "object",
 			"properties": {
 				"defaultZoomLevel": {
-					"title": "Default map zoom level (1 - 20)",
+					"title": "Default map zoom level (0 - 20)",
 					"type": "number"
 				},
                 "useDefaultCenterPosition": {
@@ -1321,13 +1324,18 @@ const markerClusteringSettingsSchema =
 					"title": "Zoom when clicking on a cluster",
 					"type": "boolean",
 					"default": true
+				},
+				"maxZoom": {
+					"title": "The maximum zoom level when a marker can be part of a cluster (0 - 18)",
+					"type": "number"
 				}
 			},
 			"required": []
 		},
 		"form": [
 			"useClusterMarkers",
-			"zoomOnClick"
+			"zoomOnClick",
+			"maxZoom"
 		]
 	};
 
@@ -1342,10 +1350,6 @@ const markerClusteringSettingsSchemaGoogle =
 					"type": "number",
 					"default": 60
 				},
-				"maxZoom": {
-					"title": "The maximum zoom level when a marker can be part of a cluster (1 - 20)",
-					"type": "number"
-				},
 				"minimumClusterSize": {
 					"title": "The minimum number of markers in a cluster",
 					"type": "number"
@@ -1355,7 +1359,6 @@ const markerClusteringSettingsSchemaGoogle =
 		},
 		"form": [
 			"gridSize",
-			"maxZoom",
 			"minimumClusterSize"
 		]
 	};
@@ -1382,12 +1385,12 @@ const markerClusteringSettingsSchemaLeaflet =
 					"default": 80
 				},
 				"chunkedLoading": {
-					"title": "Split the process of adding markers on small intervals",
+					"title": "Use chunks for adding markers so that the page does not freeze",
 					"type": "boolean",
 					"default": false
 				},
 				"removeOutsideVisibleBounds": {
-					"title": "Remove clusters that are too far from the map view for performance",
+					"title": "Use lazy load for adding markers",
 					"type": "boolean",
 					"default": true
 				}
