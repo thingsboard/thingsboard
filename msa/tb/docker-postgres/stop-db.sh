@@ -15,4 +15,4 @@
 # limitations under the License.
 #
 
-su postgres -c '/usr/lib/postgresql/9.6/bin/pg_ctl stop'
+su postgres -c '/usr/lib/postgresql/10/bin/pg_ctl stop'
