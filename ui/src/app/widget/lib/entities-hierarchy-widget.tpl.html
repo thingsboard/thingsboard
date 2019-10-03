@@ -41,6 +41,7 @@
             <tb-nav-tree
                     load-nodes="vm.loadNodes"
                     on-node-selected="vm.onNodeSelected(node, event)"
+                    on-node-hovered="vm.onNodeHovered(node, event)"
                     on-nodes-inserted="vm.onNodesInserted(nodes, parent)"
                     edit-callbacks="vm.nodeEditCallbacks"
                     enable-search="true"
