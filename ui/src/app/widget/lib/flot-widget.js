@@ -23,6 +23,7 @@ import 'flot/src/plugins/jquery.flot.selection';
 import 'flot/src/plugins/jquery.flot.pie';
 import 'flot/src/plugins/jquery.flot.crosshair';
 import 'flot/src/plugins/jquery.flot.stack';
+import 'flot/src/plugins/jquery.flot.symbol';
 import 'flot.curvedlines/curvedLines';
 
 /* eslint-disable angular/angularelement */
@@ -445,8 +446,17 @@ export default class TbFlot {
             };
             if (keySettings.showPoints === true) {
                 series.points.show = true;
-                series.points.lineWidth = 5;
+                series.points.lineWidth = angular.isDefined(keySettings.showPointsLineWidth) ? keySettings.showPointsLineWidth : 5;
                 series.points.radius = angular.isDefined(keySettings.showPointsRadius) ? keySettings.showPointsRadius : 3;
+                series.points.symbol = angular.isDefined(keySettings.showPointShape) ? keySettings.showPointShape : 'circle';
+                if (series.points.symbol == 'custom' && angular.isDefined(keySettings.pointShapeFormatter)) {
+                    try {
+                        series.points.symbol = new Function('ctx, x, y, radius, shadow', keySettings.pointShapeFormatter);
+                    } catch (e) {
+                        series.points.symbol = 'circle';
+                    }
+                }
+
             }
 
             if (this.chartType === 'line' && this.ctx.settings.smoothLines && !series.points.show) {
@@ -1107,6 +1117,21 @@ export default class TbFlot {
                         "type": "boolean",
                         "default": false
                     },
+                    "showPointShape": {
+                        "title": "Select point shape:",
+                        "type": "string",
+                        "default": "circle"
+                    },
+                    "pointShapeFormatter": {
+                        "title": "Point shape format function, f(ctx, x, y, radius, shadow)",
+                        "type": "string",
+                        "default": ""
+                    },
+                    "showPointsLineWidth": {
+                        "title": "Line width of points",
+                        "type": "number",
+                        "default": 5
+                    },
                     "showPointsRadius": {
                         "title": "Radius of points",
                         "type": "number",
@@ -1164,6 +1189,42 @@ export default class TbFlot {
                 "showLines",
                 "fillLines",
                 "showPoints",
+                {
+                    "key": "showPointShape",
+                    "type": "rc-select",
+                    "multiple": false,
+                    "items": [
+                        {
+                            "value": "circle",
+                            "label": "Circle"
+                        },
+                        {
+                            "value": "cross",
+                            "label": "Cross"
+                        },
+                        {
+                            "value": "diamond",
+                            "label": "Diamond"
+                        },
+                        {
+                            "value": "square",
+                            "label": "Square"
+                        },
+                        {
+                            "value": "triangle",
+                            "label": "Triangle"
+                        },
+                        {
+                            "value": "custom",
+                            "label": "Custom function"
+                        }
+                    ]
+                },
+                {
+                    "key": "pointShapeFormatter",
+                    "type": "javascript"
+                },
+                "showPointsLineWidth",
                 "showPointsRadius",
                 {
                     "key": "tooltipValueFormatter",
