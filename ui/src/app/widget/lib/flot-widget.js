@@ -1083,7 +1083,35 @@ export default class TbFlot {
     }
 
     static get pieDatakeySettingsSchema() {
-        return {}
+        return {
+            "schema": {
+                "type": "object",
+                "title": "DataKeySettings",
+                "properties": {
+                    "hideDataByDefault": {
+                        "title": "Data is hidden by default",
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "disableDataHiding": {
+                        "title": "Disable data hiding",
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "removeFromLegend": {
+                        "title": "Remove datakey from legend",
+                        "type": "boolean",
+                        "default": false
+                    }
+                },
+                "required": []
+            },
+            "form": [
+                "hideDataByDefault",
+                "disableDataHiding",
+                "removeFromLegend"
+            ]
+        };
     }
 
     static datakeySettingsSchema(defaultShowLines) {
@@ -1092,6 +1120,21 @@ export default class TbFlot {
                 "type": "object",
                 "title": "DataKeySettings",
                 "properties": {
+                    "hideDataByDefault": {
+                        "title": "Data is hidden by default",
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "disableDataHiding": {
+                        "title": "Disable data hiding",
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "removeFromLegend": {
+                        "title": "Remove datakey from legend",
+                        "type": "boolean",
+                        "default": false
+                    },
                     "showLines": {
                         "title": "Show lines",
                         "type": "boolean",
@@ -1161,6 +1204,9 @@ export default class TbFlot {
                 "required": ["showLines", "fillLines", "showPoints"]
             },
             "form": [
+                "hideDataByDefault",
+                "disableDataHiding",
+                "removeFromLegend",
                 "showLines",
                 "fillLines",
                 "showPoints",

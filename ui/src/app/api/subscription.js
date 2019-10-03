@@ -316,7 +316,8 @@ export default class Subscription {
             var datasource = this.datasources[i];
             for (var a = 0; a < datasource.dataKeys.length; a++) {
                 var dataKey = datasource.dataKeys[a];
-                dataKey.hidden = false;
+                dataKey.hidden = dataKey.settings.hideDataByDefault ? true : false;
+                dataKey.inLegend = dataKey.settings.removeFromLegend ? false : true;
                 dataKey.pattern = angular.copy(dataKey.label);
                 var datasourceData = {
                     datasource: datasource,
