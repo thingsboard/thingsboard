@@ -25,13 +25,19 @@ export default function TenantDirective($compile, $templateCache, $translate, to
     var linker = function (scope, element) {
         scope.ruleEngineSettingsId = (Math.random()*1000).toFixed(0);
         scope.$mdExpansionPanel = $mdExpansionPanel;
+        scope.$mdExpansionPanel().waitFor(scope.ruleEngineSettingsId).then((instance) => {
+            instance.expand();
+        });
+
         scope.types = types;
 
         scope.tenantPartitionsNumber = 20;
 
         scope.changeExecutionType = function() {
-            if (scope.tenant.ruleEngineSettings.executionType == types.ruleEngine.executionTypes.shared) {
+            if (scope.tenant.ruleEngineSettings.executionType == types.ruleEngine.executionTypes.shared.value) {
                 scope.tenant.ruleEngineSettings.partitionsNumber = scope.tenantPartitionsNumber;
+            } else {
+                scope.tenant.ruleEngineSettings.partitionsNumber = undefined;
             }
         };
 

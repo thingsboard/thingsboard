@@ -684,8 +684,14 @@ export default angular.module('thingsboard.types', [])
             },
             ruleEngine: {
                 executionTypes: {
-                    dedicated: "tenant.execution-type.dedicated",
-                    shared: "tenant.execution-type.shared"
+                    dedicated: {
+                        value: "dedicated",
+                        name: "tenant.execution-type.dedicated",
+                    },
+                    shared: {
+                        value: "shared",
+                        name: "tenant.execution-type.shared"
+                    }
                 }
             },
             messageType: {

@@ -346,6 +346,7 @@
         "title": "Unsaved changes"
     },
     "contact": {
+        "address-title": "Address",
         "country": "Country",
         "city": "City",
         "state": "State / Province",
@@ -1397,6 +1398,8 @@
         "no-tenants-matching": "No tenants matching '{{entity}}' were found.",
         "tenant-required": "Tenant is required",
         "executionType": "Execution type",
+        "executionType-required": "Execution type is required.",
+        "partitionsNumber-required": "Partitions number is required.",
         "partitionsNumber": "Number of partitions",
         "rule-engine-settings": "Rule Engine Settings",
         "execution-type": {

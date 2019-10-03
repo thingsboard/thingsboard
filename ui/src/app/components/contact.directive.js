@@ -24,7 +24,7 @@ export default angular.module('thingsboard.directives.contact', [])
     .name;
 
 /*@ngInject*/
-function Contact($compile, $templateCache) {
+function Contact($compile, $templateCache, $mdExpansionPanel) {
     var countries = [
         "Afghanistan",
         "Åland Islands",
@@ -299,7 +299,11 @@ function Contact($compile, $templateCache) {
     };
 
     var linker = function (scope, element) {
-
+        scope.addressId = (Math.random()*1000).toFixed(0);
+        scope.$mdExpansionPanel = $mdExpansionPanel;
+        scope.$mdExpansionPanel().waitFor(scope.addressId).then((instance) => {
+            instance.expand();
+        });
         scope.countries = countries;
 
         scope.postalCodePatterns = postalCodePatterns;

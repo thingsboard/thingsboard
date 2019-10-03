@@ -28,7 +28,7 @@
 	</md-button>
 </div>
 
-<md-content class="md-padding" layout="column">
+<md-content class="md-padding" layout="column" style="min-width: 700px">
 	<fieldset ng-disabled="$root.loading || !isEdit">
 		<md-input-container class="md-block">
 			<label translate>tenant.title</label>
@@ -41,6 +41,7 @@
 			<label translate>tenant.description</label>
 			<textarea ng-model="tenant.additionalInfo.description" rows="2"></textarea>
 		</md-input-container>
+		<tb-contact contact="tenant" the-form="theForm" is-edit="isEdit"></tb-contact>
 		<md-expansion-panel md-component-id="{{ruleEngineSettingsId}}">
 			<md-expansion-panel-collapsed>
 				<div class="tb-panel-title">{{ 'tenant.rule-engine-settings' | translate }}</div>
@@ -56,20 +57,25 @@
 				<md-expansion-panel-content>
 					<md-input-container flex class="md-block tenant-execution-type">
 						<label translate>tenant.executionType</label>
-						<md-select required name="executionType" aria-label="{{ 'tenant.executionType' | translate }}"
-								   ng-model="tenant.ruleEngineSettings.executionType" ng-change="changeExecutionType()">
-							<md-option ng-repeat="executionType in types.ruleEngine.executionTypes" value="{{executionType}}">
-								{{executionType | translate}}
+						<md-select name="executionType" aria-label="{{ 'tenant.executionType' | translate }}"
+								   ng-model="tenant.ruleEngineSettings.executionType" ng-change="changeExecutionType()" required>
+							<md-option ng-repeat="executionType in types.ruleEngine.executionTypes" value="{{executionType.value}}">
+								{{executionType.name | translate}}
 							</md-option>
 						</md-select>
+						<div ng-messages="theForm.executionType.$error">
+							<div translate ng-message="required">tenant.executionType-required</div>
+						</div>
 					</md-input-container>
 					<md-input-container class="md-block">
 						<label translate>tenant.partitionsNumber</label>
-						<input ng-model="tenant.ruleEngineSettings.partitionsNumber" type="number"/>
+						<input name="partitionsNumber" ng-disabled="tenant.ruleEngineSettings.executionType === types.ruleEngine.executionTypes.shared.value" ng-model="tenant.ruleEngineSettings.partitionsNumber" type="number" required/>
+						<div ng-messages="theForm.partitionsNumber.$error">
+							<div translate ng-message="required">tenant.partitionsNumber-required</div>
+						</div>
 					</md-input-container>
 				</md-expansion-panel-content>
 			</md-expansion-panel-expanded>
 		</md-expansion-panel>
-		<tb-contact contact="tenant" the-form="theForm" is-edit="isEdit"></tb-contact>
 	</fieldset>
 </md-content>
