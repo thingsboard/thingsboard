@@ -267,6 +267,15 @@ public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
                 } catch (InvalidQueryException e) {}
                 log.info("Schema updated.");
                 break;
+            case "2.4.1":
+                log.info("Updating schema ...");
+                String updateAssetTableStmt = "alter table asset add label text";
+                try {
+                    cluster.getSession().execute(updateAssetTableStmt);
+                    Thread.sleep(2500);
+                } catch (InvalidQueryException e) {}
+                log.info("Schema updated.");
+                break;
             default:
                 throw new RuntimeException("Unable to upgrade Cassandra database, unsupported fromVersion: " + fromVersion);
         }
