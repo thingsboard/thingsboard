@@ -54,7 +54,7 @@ export default class TbFlot {
 
         var tbFlot = this;
 
-        function seriesInfoDiv(label, color, value, units, trackDecimals, active, percent, timestamp, valueFormatFunction) {
+        function seriesInfoDiv(label, color, value, units, trackDecimals, active, percent, timestamp, index, valueFormatFunction) {
             var divElement = $('<div></div>');
             divElement.css({
                 display: "flex",
@@ -84,7 +84,7 @@ export default class TbFlot {
             divElement.append(labelSpan);
             var valueContent;
             if (valueFormatFunction) {
-                valueContent = valueFormatFunction(tbFlot.ctx, timestamp, value);
+                valueContent = valueFormatFunction(tbFlot.ctx, index, timestamp, value);
             } else {
                 valueContent = tbFlot.ctx.utils.formatValue(value, trackDecimals, units);
             }
@@ -106,12 +106,12 @@ export default class TbFlot {
             return divElement;
         }
 
-        function seriesInfoDivFromInfo(seriesHoverInfo, seriesTimestamp, seriesIndex) {
+        function seriesInfoDivFromInfo(seriesHoverInfo, seriesIndex) {
             var units = seriesHoverInfo.units && seriesHoverInfo.units.length ? seriesHoverInfo.units : tbFlot.ctx.trackUnits;
             var decimals = angular.isDefined(seriesHoverInfo.decimals) ? seriesHoverInfo.decimals : tbFlot.ctx.trackDecimals;
             var divElement = seriesInfoDiv(seriesHoverInfo.label, seriesHoverInfo.color,
-                seriesHoverInfo.value, units, decimals, seriesHoverInfo.index === seriesIndex, null, seriesTimestamp,
-                seriesHoverInfo.tooltipValueFormatFunction);
+                seriesHoverInfo.value, units, decimals, seriesHoverInfo.index === seriesIndex, null, seriesHoverInfo.time,
+                seriesHoverInfo.hoverIndex, seriesHoverInfo.tooltipValueFormatFunction);
             return divElement.prop('outerHTML');
         }
 
@@ -120,7 +120,7 @@ export default class TbFlot {
                 var units = item.series.dataKey.units && item.series.dataKey.units.length ? item.series.dataKey.units : tbFlot.ctx.trackUnits;
                 var decimals = angular.isDefined(item.series.dataKey.decimals) ? item.series.dataKey.decimals : tbFlot.ctx.trackDecimals;
                 var divElement = seriesInfoDiv(item.series.dataKey.label, item.series.dataKey.color,
-                    item.datapoint[1][0][1], units, decimals, true, item.series.percent, null, item.series.dataKey.tooltipValueFormatFunction);
+                    item.datapoint[1][0][1], units, decimals, true, item.series.percent, null, null, item.series.dataKey.tooltipValueFormatFunction);
                 return divElement.prop('outerHTML');
             };
         } else {
@@ -142,7 +142,7 @@ export default class TbFlot {
                         return seriesHover.index === seriesIndex;
                     });
                     if (found && found.length) {
-                        content += seriesInfoDivFromInfo(found[0], hoverInfo.time, seriesIndex);
+                        content += seriesInfoDivFromInfo(found[0], seriesIndex);
                     }
                 } else {
                     var seriesDiv = $('<div></div>');
@@ -165,7 +165,7 @@ export default class TbFlot {
                                 break;
                             }
                             var seriesHoverInfo = hoverInfo.seriesHover[i];
-                            columnContent += seriesInfoDivFromInfo(seriesHoverInfo, hoverInfo.time, seriesIndex);
+                            columnContent += seriesInfoDivFromInfo(seriesHoverInfo, seriesIndex);
                         }
                         columnDiv.html(columnContent);
                         if (c > 0) {
@@ -409,7 +409,7 @@ export default class TbFlot {
         var tooltipValueFormatFunction = null;
         if (this.ctx.settings.tooltipValueFormatter && this.ctx.settings.tooltipValueFormatter.length) {
             try {
-                tooltipValueFormatFunction = new Function('ctx, time, value', this.ctx.settings.tooltipValueFormatter);
+                tooltipValueFormatFunction = new Function('ctx, index, time, value', this.ctx.settings.tooltipValueFormatter);
             } catch (e) {
                 tooltipValueFormatFunction = null;
             }
@@ -422,7 +422,7 @@ export default class TbFlot {
             series.dataKey.tooltipValueFormatFunction = tooltipValueFormatFunction;
             if (keySettings.tooltipValueFormatter && keySettings.tooltipValueFormatter.length) {
                 try {
-                    series.dataKey.tooltipValueFormatFunction = new Function('ctx, time, value', keySettings.tooltipValueFormatter);
+                    series.dataKey.tooltipValueFormatFunction = new Function('ctx, index, time, value', keySettings.tooltipValueFormatter);
                 } catch (e) {
                     series.dataKey.tooltipValueFormatFunction = tooltipValueFormatFunction;
                 }
@@ -899,7 +899,7 @@ export default class TbFlot {
             "default": false
         };
         properties["tooltipValueFormatter"] = {
-            "title": "Tooltip value format function, f(ctx, time, value)",
+            "title": "Tooltip value format function, f(ctx, index, time, value)",
             "type": "string",
             "default": ""
         };
@@ -1114,7 +1114,7 @@ export default class TbFlot {
                         "default": 3
                     },
                     "tooltipValueFormatter": {
-                        "title": "Tooltip value format function, f(ctx, time, value)",
+                        "title": "Tooltip value format function, f(ctx, index, time, value)",
                         "type": "string",
                         "default": ""
                     },
