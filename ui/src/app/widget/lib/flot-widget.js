@@ -125,7 +125,11 @@ export default class TbFlot {
         } else {
             ctx.tooltipFormatter = function(hoverInfo, seriesIndex) {
                 var content = '';
-                var timestamp = parseInt(hoverInfo.time);
+                var found = tbFlot.ctx.tooltipIndividual ? hoverInfo.seriesHover.filter((seriesHover) => {
+                        return seriesHover.index === seriesIndex;
+                    }) : [];
+                var timestamp = (tbFlot.ctx.tooltipIndividual && found && found.length) ?
+                    parseInt(found[0].time) : parseInt(hoverInfo.time);
                 var date = moment(timestamp).format('YYYY-MM-DD HH:mm:ss');
                 var dateDiv = $('<div>' + date + '</div>');
                 dateDiv.css({
@@ -136,13 +140,8 @@ export default class TbFlot {
                     fontWeight: "700"
                 });
                 content += dateDiv.prop('outerHTML');
-                if (tbFlot.ctx.tooltipIndividual) {
-                    var found = hoverInfo.seriesHover.filter((seriesHover) => {
-                        return seriesHover.index === seriesIndex;
-                    });
-                    if (found && found.length) {
-                        content += seriesInfoDivFromInfo(found[0], seriesIndex);
-                    }
+                if (tbFlot.ctx.tooltipIndividual && found && found.length) {
+                    content += seriesInfoDivFromInfo(found[0], seriesIndex);
                 } else {
                     var seriesDiv = $('<div></div>');
                     seriesDiv.css({
@@ -1226,7 +1225,7 @@ export default class TbFlot {
                     if (tbFlot.chartType === 'pie') {
                         tooltipHtml = tbFlot.ctx.tooltipFormatter(item);
                     } else {
-                        var hoverInfo = tbFlot.getHoverInfo(tbFlot.ctx.plot.getData(), pos);
+                        var hoverInfo = tbFlot.getHoverInfo(tbFlot.ctx.plot.getData(), item.datapoint[0]);
                         if (angular.isNumber(hoverInfo.time)) {
                             hoverInfo.seriesHover.sort(function (a, b) {
                                 return b.value - a.value;
@@ -1398,7 +1397,7 @@ export default class TbFlot {
     }
 
 
-    getHoverInfo (seriesList, pos) {
+    getHoverInfo (seriesList, pointX) {
         var i, series, value, hoverIndex, hoverDistance, pointTime, minDistance, minTime;
         var last_value = 0;
         var results = {
@@ -1406,9 +1405,9 @@ export default class TbFlot {
         };
         for (i = 0; i < seriesList.length; i++) {
             series = seriesList[i];
-            hoverIndex = this.findHoverIndexFromData(pos.x, series);
+            hoverIndex = this.findHoverIndexFromData(pointX, series);
             if (series.data[hoverIndex] && series.data[hoverIndex][0]) {
-                hoverDistance = pos.x - series.data[hoverIndex][0];
+                hoverDistance = pointX - series.data[hoverIndex][0];
                 pointTime = series.data[hoverIndex][0];
 
                 if (!minDistance
@@ -1429,7 +1428,7 @@ export default class TbFlot {
                 }
 
                 if (series.stack || (series.curvedLines && series.curvedLines.apply)) {
-                    hoverIndex = this.findHoverIndexFromDataPoints(pos.x, series, hoverIndex);
+                    hoverIndex = this.findHoverIndexFromDataPoints(pointX, series, hoverIndex);
                 }
                 results.seriesHover.push({
                     value: value,
