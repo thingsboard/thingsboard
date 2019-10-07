@@ -37,6 +37,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.EDGE_CONFIGURATION
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_CUSTOMER_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_NAME_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_TENANT_ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.EDGE_TYPE_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPERTY;
 
@@ -55,6 +56,9 @@ public class EdgeEntity implements SearchTextEntity<Edge> {
     @ClusteringColumn
     @Column(name = EDGE_CUSTOMER_ID_PROPERTY)
     private UUID customerId;
+
+    @Column(name = EDGE_TYPE_PROPERTY)
+    private String type;
 
     @Column(name = EDGE_NAME_PROPERTY)
     private String name;
@@ -79,6 +83,7 @@ public class EdgeEntity implements SearchTextEntity<Edge> {
         if (edge.getTenantId() != null) {
             this.tenantId = edge.getTenantId().getId();
         }
+        this.type = edge.getType();
         this.name = edge.getName();
         this.configuration = edge.getConfiguration();
         this.additionalInfo = edge.getAdditionalInfo();
@@ -99,6 +104,7 @@ public class EdgeEntity implements SearchTextEntity<Edge> {
         if (customerId != null) {
             edge.setCustomerId(new CustomerId(customerId));
         }
+        edge.setType(type);
         edge.setName(name);
         edge.setConfiguration(configuration);
         edge.setAdditionalInfo(additionalInfo);

@@ -40,6 +40,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.EDGE_COLUMN_FAMILY
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_CUSTOMER_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_NAME_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_TENANT_ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.EDGE_TYPE_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPERTY;
 
 @Data
@@ -54,6 +55,9 @@ public class EdgeEntity extends BaseSqlEntity<Edge> implements SearchTextEntity<
 
     @Column(name = EDGE_CUSTOMER_ID_PROPERTY)
     private String customerId;
+
+    @Column(name = EDGE_TYPE_PROPERTY)
+    private String type;
 
     @Column(name = EDGE_NAME_PROPERTY)
     private String name;
@@ -80,6 +84,10 @@ public class EdgeEntity extends BaseSqlEntity<Edge> implements SearchTextEntity<
         if (edge.getTenantId() != null) {
             this.tenantId = UUIDConverter.fromTimeUUID(edge.getTenantId().getId());
         }
+        if (edge.getCustomerId() != null) {
+            this.customerId = UUIDConverter.fromTimeUUID(edge.getCustomerId().getId());
+        }
+        this.type = edge.getType();
         this.name = edge.getName();
         this.configuration = edge.getConfiguration();
         this.additionalInfo = edge.getAdditionalInfo();
@@ -109,6 +117,7 @@ public class EdgeEntity extends BaseSqlEntity<Edge> implements SearchTextEntity<
         if (customerId != null) {
             edge.setCustomerId(new CustomerId(UUIDConverter.fromString(customerId)));
         }
+        edge.setType(type);
         edge.setName(name);
         edge.setConfiguration(configuration);
         edge.setAdditionalInfo(additionalInfo);

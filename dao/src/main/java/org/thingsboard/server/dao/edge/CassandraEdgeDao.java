@@ -15,29 +15,21 @@
  */
 package org.thingsboard.server.dao.edge;
 
-import com.datastax.driver.core.querybuilder.Select;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
-import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.nosql.EdgeEntity;
 import org.thingsboard.server.dao.nosql.CassandraAbstractSearchTextDao;
 import org.thingsboard.server.dao.util.NoSqlDao;
 
-import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
-import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.in;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
-import static org.thingsboard.server.dao.model.ModelConstants.EDGE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_COLUMN_FAMILY_NAME;
-import static org.thingsboard.server.dao.model.ModelConstants.EDGE_TENANT_ID_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.ID_PROPERTY;
 
 @Component
 @Slf4j
@@ -54,24 +46,44 @@ public class CassandraEdgeDao extends CassandraAbstractSearchTextDao<EdgeEntity,
         return EDGE_COLUMN_FAMILY_NAME;
     }
 
-    @Override
-    public List<Edge> findByTenantIdAndPageLink(UUID tenantId, TextPageLink pageLink) {
-        log.debug("Try to find edges by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
-        List<EdgeEntity> edgeEntities = findPageWithTextSearch(new TenantId(tenantId), EDGE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
-                Collections.singletonList(eq(EDGE_TENANT_ID_PROPERTY, tenantId)), pageLink);
 
-        log.trace("Found edges [{}] by tenantId [{}] and pageLink [{}]", edgeEntities, tenantId, pageLink);
-        return DaoUtil.convertDataList(edgeEntities);
+    @Override
+    public List<Edge> findEdgesByTenantId(UUID tenantId, TextPageLink pageLink) {
+        return null;
+    }
+
+    @Override
+    public List<Edge> findEdgesByTenantIdAndType(UUID tenantId, String type, TextPageLink pageLink) {
+        return null;
     }
 
     @Override
     public ListenableFuture<List<Edge>> findEdgesByTenantIdAndIdsAsync(UUID tenantId, List<UUID> edgeIds) {
-        log.debug("Try to find edges by tenantId [{}] and edge Ids [{}]", tenantId, edgeIds);
-        Select select = select().from(getColumnFamilyName());
-        Select.Where query = select.where();
-        query.and(eq(EDGE_TENANT_ID_PROPERTY, tenantId));
-        query.and(in(ID_PROPERTY, edgeIds));
-        return findListByStatementAsync(new TenantId(tenantId), query);
+        return null;
     }
 
+    @Override
+    public List<Edge> findEdgesByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TextPageLink pageLink) {
+        return null;
+    }
+
+    @Override
+    public List<Edge> findEdgesByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, TextPageLink pageLink) {
+        return null;
+    }
+
+    @Override
+    public ListenableFuture<List<Edge>> findEdgesByTenantIdCustomerIdAndIdsAsync(UUID tenantId, UUID customerId, List<UUID> edgeIds) {
+        return null;
+    }
+
+    @Override
+    public Optional<Edge> findEdgeByTenantIdAndName(UUID tenantId, String name) {
+        return Optional.empty();
+    }
+
+    @Override
+    public ListenableFuture<List<EntitySubtype>> findTenantEdgeTypesAsync(UUID tenantId) {
+        return null;
+    }
 }

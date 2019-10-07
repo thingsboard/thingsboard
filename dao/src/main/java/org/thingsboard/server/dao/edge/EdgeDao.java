@@ -16,11 +16,14 @@
 package org.thingsboard.server.dao.edge;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.Dao;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -30,22 +33,88 @@ import java.util.UUID;
 public interface EdgeDao extends Dao<Edge> {
 
     /**
+     * Save or update edge object
+     *
+     * @param edge the edge object
+     * @return saved edge object
+     */
+    Edge save(TenantId tenantId, Edge edge);
+
+    /**
      * Find edges by tenantId and page link.
      *
      * @param tenantId the tenantId
      * @param pageLink the page link
      * @return the list of edge objects
      */
-    List<Edge> findByTenantIdAndPageLink(UUID tenantId, TextPageLink pageLink);
+    List<Edge> findEdgesByTenantId(UUID tenantId, TextPageLink pageLink);
 
     /**
-     * Find edges by tenantId and edge Ids.
+     * Find edges by tenantId, type and page link.
+     *
+     * @param tenantId the tenantId
+     * @param type the type
+     * @param pageLink the page link
+     * @return the list of edge objects
+     */
+    List<Edge> findEdgesByTenantIdAndType(UUID tenantId, String type, TextPageLink pageLink);
+
+    /**
+     * Find edges by tenantId and edges Ids.
      *
      * @param tenantId the tenantId
      * @param edgeIds the edge Ids
      * @return the list of edge objects
      */
     ListenableFuture<List<Edge>> findEdgesByTenantIdAndIdsAsync(UUID tenantId, List<UUID> edgeIds);
+
+    /**
+     * Find edges by tenantId, customerId and page link.
+     *
+     * @param tenantId the tenantId
+     * @param customerId the customerId
+     * @param pageLink the page link
+     * @return the list of edge objects
+     */
+    List<Edge> findEdgesByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TextPageLink pageLink);
+
+    /**
+     * Find edges by tenantId, customerId, type and page link.
+     *
+     * @param tenantId the tenantId
+     * @param customerId the customerId
+     * @param type the type
+     * @param pageLink the page link
+     * @return the list of edge objects
+     */
+    List<Edge> findEdgesByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, TextPageLink pageLink);
+
+
+    /**
+     * Find edges by tenantId, customerId and edges Ids.
+     *
+     * @param tenantId the tenantId
+     * @param customerId the customerId
+     * @param edgeIds the edge Ids
+     * @return the list of edge objects
+     */
+    ListenableFuture<List<Edge>> findEdgesByTenantIdCustomerIdAndIdsAsync(UUID tenantId, UUID customerId, List<UUID> edgeIds);
+
+    /**
+     * Find edges by tenantId and edge name.
+     *
+     * @param tenantId the tenantId
+     * @param name the edge name
+     * @return the optional edge object
+     */
+    Optional<Edge> findEdgeByTenantIdAndName(UUID tenantId, String name);
+
+    /**
+     * Find tenants edge types.
+     *
+     * @return the list of tenant edge type objects
+     */
+    ListenableFuture<List<EntitySubtype>> findTenantEdgeTypesAsync(UUID tenantId);
 
 
 }

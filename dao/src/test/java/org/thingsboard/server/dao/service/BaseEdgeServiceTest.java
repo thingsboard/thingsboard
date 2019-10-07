@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.controller;
+package org.thingsboard.server.dao.service;
 
 import com.datastax.driver.core.utils.UUIDs;
-import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
@@ -25,246 +24,212 @@ import org.junit.Test;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
-import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static org.hamcrest.Matchers.containsString;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
-public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
+public abstract class BaseEdgeServiceTest extends AbstractServiceTest {
 
     private IdComparator<Edge> idComparator = new IdComparator<>();
 
-    private Tenant savedTenant;
-    private User tenantAdmin;
+    private TenantId tenantId;
 
     @Before
-    public void beforeTest() throws Exception {
-        loginSysAdmin();
-
+    public void before() {
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
-        savedTenant = doPost("/api/tenant", tenant, Tenant.class);
+        Tenant savedTenant = tenantService.saveTenant(tenant);
         Assert.assertNotNull(savedTenant);
-
-        tenantAdmin = new User();
-        tenantAdmin.setAuthority(Authority.TENANT_ADMIN);
-        tenantAdmin.setTenantId(savedTenant.getId());
-        tenantAdmin.setEmail("tenant2@thingsboard.org");
-        tenantAdmin.setFirstName("Joe");
-        tenantAdmin.setLastName("Downs");
-
-        tenantAdmin = createUserAndLogin(tenantAdmin, "testPassword1");
+        tenantId = savedTenant.getId();
     }
 
     @After
-    public void afterTest() throws Exception {
-        loginSysAdmin();
-
-        doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
-                .andExpect(status().isOk());
+    public void after() {
+        tenantService.deleteTenant(tenantId);
     }
 
     @Test
-    public void testSaveEdge() throws Exception {
+    public void testSaveEdge() {
         Edge edge = new Edge();
+        edge.setTenantId(tenantId);
         edge.setName("My edge");
         edge.setType("default");
-        Edge savedEdge = doPost("/api/edge", edge, Edge.class);
+        Edge savedEdge = edgeService.saveEdge(edge);
 
         Assert.assertNotNull(savedEdge);
         Assert.assertNotNull(savedEdge.getId());
         Assert.assertTrue(savedEdge.getCreatedTime() > 0);
-        Assert.assertEquals(savedTenant.getId(), savedEdge.getTenantId());
+        Assert.assertEquals(edge.getTenantId(), savedEdge.getTenantId());
         Assert.assertNotNull(savedEdge.getCustomerId());
         Assert.assertEquals(NULL_UUID, savedEdge.getCustomerId().getId());
         Assert.assertEquals(edge.getName(), savedEdge.getName());
 
         savedEdge.setName("My new edge");
-        doPost("/api/edge", savedEdge, Edge.class);
 
-        Edge foundEdge = doGet("/api/edge/" + savedEdge.getId().getId().toString(), Edge.class);
+        edgeService.saveEdge(savedEdge);
+        Edge foundEdge = edgeService.findEdgeById(tenantId, savedEdge.getId());
         Assert.assertEquals(foundEdge.getName(), savedEdge.getName());
+
+        edgeService.deleteEdge(tenantId, savedEdge.getId());
     }
 
-    @Test
-    public void testFindEdgeById() throws Exception {
+    @Test(expected = DataValidationException.class)
+    public void testSaveEdgeWithEmptyName() {
+        Edge edge = new Edge();
+        edge.setType("default");
+        edge.setTenantId(tenantId);
+        edgeService.saveEdge(edge);
+    }
+
+    @Test(expected = DataValidationException.class)
+    public void testSaveEdgeWithEmptyTenant() {
         Edge edge = new Edge();
         edge.setName("My edge");
         edge.setType("default");
-        Edge savedEdge = doPost("/api/edge", edge, Edge.class);
-        Edge foundEdge = doGet("/api/edge/" + savedEdge.getId().getId().toString(), Edge.class);
+        edgeService.saveEdge(edge);
+    }
+
+    @Test(expected = DataValidationException.class)
+    public void testSaveEdgeWithInvalidTenant() {
+        Edge edge = new Edge();
+        edge.setName("My edge");
+        edge.setType("default");
+        edge.setTenantId(new TenantId(UUIDs.timeBased()));
+        edgeService.saveEdge(edge);
+    }
+
+    @Test(expected = DataValidationException.class)
+    public void testAssignEdgeToNonExistentCustomer() {
+        Edge edge = new Edge();
+        edge.setName("My edge");
+        edge.setType("default");
+        edge.setTenantId(tenantId);
+        edge = edgeService.saveEdge(edge);
+        try {
+            edgeService.assignEdgeToCustomer(tenantId, edge.getId(), new CustomerId(UUIDs.timeBased()));
+        } finally {
+            edgeService.deleteEdge(tenantId, edge.getId());
+        }
+    }
+
+    @Test(expected = DataValidationException.class)
+    public void testAssignEdgeToCustomerFromDifferentTenant() {
+        Edge edge = new Edge();
+        edge.setName("My edge");
+        edge.setType("default");
+        edge.setTenantId(tenantId);
+        edge = edgeService.saveEdge(edge);
+        Tenant tenant = new Tenant();
+        tenant.setTitle("Test different tenant");
+        tenant = tenantService.saveTenant(tenant);
+        Customer customer = new Customer();
+        customer.setTenantId(tenant.getId());
+        customer.setTitle("Test different customer");
+        customer = customerService.saveCustomer(customer);
+        try {
+            edgeService.assignEdgeToCustomer(tenantId, edge.getId(), customer.getId());
+        } finally {
+            edgeService.deleteEdge(tenantId, edge.getId());
+            tenantService.deleteTenant(tenant.getId());
+        }
+    }
+
+    @Test
+    public void testFindEdgeById() {
+        Edge edge = new Edge();
+        edge.setTenantId(tenantId);
+        edge.setName("My edge");
+        edge.setType("default");
+        Edge savedEdge = edgeService.saveEdge(edge);
+        Edge foundEdge = edgeService.findEdgeById(tenantId, savedEdge.getId());
         Assert.assertNotNull(foundEdge);
         Assert.assertEquals(savedEdge, foundEdge);
+        edgeService.deleteEdge(tenantId, savedEdge.getId());
     }
 
     @Test
     public void testFindEdgeTypesByTenantId() throws Exception {
         List<Edge> edges = new ArrayList<>();
-        for (int i = 0; i < 3; i++) {
-            Edge edge = new Edge();
-            edge.setName("My edge B" + i);
-            edge.setType("typeB");
-            edges.add(doPost("/api/edge", edge, Edge.class));
+        try {
+            for (int i = 0; i < 3; i++) {
+                Edge edge = new Edge();
+                edge.setTenantId(tenantId);
+                edge.setName("My edge B" + i);
+                edge.setType("typeB");
+                edges.add(edgeService.saveEdge(edge));
+            }
+            for (int i = 0; i < 7; i++) {
+                Edge edge = new Edge();
+                edge.setTenantId(tenantId);
+                edge.setName("My edge C" + i);
+                edge.setType("typeC");
+                edges.add(edgeService.saveEdge(edge));
+            }
+            for (int i = 0; i < 9; i++) {
+                Edge edge = new Edge();
+                edge.setTenantId(tenantId);
+                edge.setName("My edge A" + i);
+                edge.setType("typeA");
+                edges.add(edgeService.saveEdge(edge));
+            }
+            List<EntitySubtype> edgeTypes = edgeService.findEdgeTypesByTenantId(tenantId).get();
+            Assert.assertNotNull(edgeTypes);
+            Assert.assertEquals(3, edgeTypes.size());
+            Assert.assertEquals("typeA", edgeTypes.get(0).getType());
+            Assert.assertEquals("typeB", edgeTypes.get(1).getType());
+            Assert.assertEquals("typeC", edgeTypes.get(2).getType());
+        } finally {
+            edges.forEach((edge) -> {
+                edgeService.deleteEdge(tenantId, edge.getId());
+            });
         }
-        for (int i = 0; i < 7; i++) {
-            Edge edge = new Edge();
-            edge.setName("My edge C" + i);
-            edge.setType("typeC");
-            edges.add(doPost("/api/edge", edge, Edge.class));
-        }
-        for (int i = 0; i < 9; i++) {
-            Edge edge = new Edge();
-            edge.setName("My edge A" + i);
-            edge.setType("typeA");
-            edges.add(doPost("/api/edge", edge, Edge.class));
-        }
-        List<EntitySubtype> edgeTypes = doGetTyped("/api/edge/types",
-                new TypeReference<List<EntitySubtype>>() {
-                });
-
-        Assert.assertNotNull(edgeTypes);
-        Assert.assertEquals(3, edgeTypes.size());
-        Assert.assertEquals("typeA", edgeTypes.get(0).getType());
-        Assert.assertEquals("typeB", edgeTypes.get(1).getType());
-        Assert.assertEquals("typeC", edgeTypes.get(2).getType());
     }
 
     @Test
-    public void testDeleteEdge() throws Exception {
+    public void testDeleteEdge() {
         Edge edge = new Edge();
+        edge.setTenantId(tenantId);
         edge.setName("My edge");
         edge.setType("default");
-        Edge savedEdge = doPost("/api/edge", edge, Edge.class);
-
-        doDelete("/api/edge/" + savedEdge.getId().getId().toString())
-                .andExpect(status().isOk());
-
-        doGet("/api/edge/" + savedEdge.getId().getId().toString())
-                .andExpect(status().isNotFound());
+        Edge savedEdge = edgeService.saveEdge(edge);
+        Edge foundEdge = edgeService.findEdgeById(tenantId, savedEdge.getId());
+        Assert.assertNotNull(foundEdge);
+        edgeService.deleteEdge(tenantId, savedEdge.getId());
+        foundEdge = edgeService.findEdgeById(tenantId, savedEdge.getId());
+        Assert.assertNull(foundEdge);
     }
 
     @Test
-    public void testSaveEdgeWithEmptyType() throws Exception {
-        Edge edge = new Edge();
-        edge.setName("My edge");
-        doPost("/api/edge", edge)
-                .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Edge type should be specified")));
-    }
+    public void testFindEdgesByTenantId() {
+        Tenant tenant = new Tenant();
+        tenant.setTitle("Test tenant");
+        tenant = tenantService.saveTenant(tenant);
 
-    @Test
-    public void testSaveEdgeWithEmptyName() throws Exception {
-        Edge edge = new Edge();
-        edge.setType("default");
-        doPost("/api/edge", edge)
-                .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Edge name should be specified")));
-    }
+        TenantId tenantId = tenant.getId();
 
-    @Test
-    public void testAssignUnassignEdgeToCustomer() throws Exception {
-        Edge edge = new Edge();
-        edge.setName("My edge");
-        edge.setType("default");
-        Edge savedEdge = doPost("/api/edge", edge, Edge.class);
-
-        Customer customer = new Customer();
-        customer.setTitle("My customer");
-        Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
-
-        Edge assignedEdge = doPost("/api/customer/" + savedCustomer.getId().getId().toString()
-                + "/edge/" + savedEdge.getId().getId().toString(), Edge.class);
-        Assert.assertEquals(savedCustomer.getId(), assignedEdge.getCustomerId());
-
-        Edge foundEdge = doGet("/api/edge/" + savedEdge.getId().getId().toString(), Edge.class);
-        Assert.assertEquals(savedCustomer.getId(), foundEdge.getCustomerId());
-
-        Edge unassignedEdge =
-                doDelete("/api/customer/edge/" + savedEdge.getId().getId().toString(), Edge.class);
-        Assert.assertEquals(ModelConstants.NULL_UUID, unassignedEdge.getCustomerId().getId());
-
-        foundEdge = doGet("/api/edge/" + savedEdge.getId().getId().toString(), Edge.class);
-        Assert.assertEquals(ModelConstants.NULL_UUID, foundEdge.getCustomerId().getId());
-    }
-
-    @Test
-    public void testAssignEdgeToNonExistentCustomer() throws Exception {
-        Edge edge = new Edge();
-        edge.setName("My edge");
-        edge.setType("default");
-        Edge savedEdge = doPost("/api/edge", edge, Edge.class);
-
-        doPost("/api/customer/" + UUIDs.timeBased().toString()
-                + "/edge/" + savedEdge.getId().getId().toString())
-                .andExpect(status().isNotFound());
-    }
-
-    @Test
-    public void testAssignEdgeToCustomerFromDifferentTenant() throws Exception {
-        loginSysAdmin();
-
-        Tenant tenant2 = new Tenant();
-        tenant2.setTitle("Different tenant");
-        Tenant savedTenant2 = doPost("/api/tenant", tenant2, Tenant.class);
-        Assert.assertNotNull(savedTenant2);
-
-        User tenantAdmin2 = new User();
-        tenantAdmin2.setAuthority(Authority.TENANT_ADMIN);
-        tenantAdmin2.setTenantId(savedTenant2.getId());
-        tenantAdmin2.setEmail("tenant3@thingsboard.org");
-        tenantAdmin2.setFirstName("Joe");
-        tenantAdmin2.setLastName("Downs");
-
-        tenantAdmin2 = createUserAndLogin(tenantAdmin2, "testPassword1");
-
-        Customer customer = new Customer();
-        customer.setTitle("Different customer");
-        Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
-
-        login(tenantAdmin.getEmail(), "testPassword1");
-
-        Edge edge = new Edge();
-        edge.setName("My edge");
-        edge.setType("default");
-        Edge savedEdge = doPost("/api/edge", edge, Edge.class);
-
-        doPost("/api/customer/" + savedCustomer.getId().getId().toString()
-                + "/edge/" + savedEdge.getId().getId().toString())
-                .andExpect(status().isForbidden());
-
-        loginSysAdmin();
-
-        doDelete("/api/tenant/" + savedTenant2.getId().getId().toString())
-                .andExpect(status().isOk());
-    }
-
-    @Test
-    public void testFindTenantEdges() throws Exception {
         List<Edge> edges = new ArrayList<>();
         for (int i = 0; i < 178; i++) {
             Edge edge = new Edge();
+            edge.setTenantId(tenantId);
             edge.setName("Edge" + i);
             edge.setType("default");
-            edges.add(doPost("/api/edge", edge, Edge.class));
+            edges.add(edgeService.saveEdge(edge));
         }
+
         List<Edge> loadedEdges = new ArrayList<>();
         TextPageLink pageLink = new TextPageLink(23);
         TextPageData<Edge> pageData = null;
         do {
-            pageData = doGetTypedWithPageLink("/api/tenant/edges?",
-                    new TypeReference<TextPageData<Edge>>() {
-                    }, pageLink);
+            pageData = edgeService.findEdgesByTenantId(tenantId, pageLink);
             loadedEdges.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageData.getNextPageLink();
@@ -275,40 +240,49 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         Collections.sort(loadedEdges, idComparator);
 
         Assert.assertEquals(edges, loadedEdges);
+
+        edgeService.deleteEdgesByTenantId(tenantId);
+
+        pageLink = new TextPageLink(33);
+        pageData = edgeService.findEdgesByTenantId(tenantId, pageLink);
+        Assert.assertFalse(pageData.hasNext());
+        Assert.assertTrue(pageData.getData().isEmpty());
+
+        tenantService.deleteTenant(tenantId);
     }
 
     @Test
-    public void testFindTenantEdgesByName() throws Exception {
+    public void testFindEdgesByTenantIdAndName() {
         String title1 = "Edge title 1";
         List<Edge> edgesTitle1 = new ArrayList<>();
         for (int i = 0; i < 143; i++) {
             Edge edge = new Edge();
+            edge.setTenantId(tenantId);
             String suffix = RandomStringUtils.randomAlphanumeric(15);
             String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             edge.setName(name);
             edge.setType("default");
-            edgesTitle1.add(doPost("/api/edge", edge, Edge.class));
+            edgesTitle1.add(edgeService.saveEdge(edge));
         }
         String title2 = "Edge title 2";
         List<Edge> edgesTitle2 = new ArrayList<>();
-        for (int i = 0; i < 75; i++) {
+        for (int i = 0; i < 175; i++) {
             Edge edge = new Edge();
+            edge.setTenantId(tenantId);
             String suffix = RandomStringUtils.randomAlphanumeric(15);
             String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             edge.setName(name);
             edge.setType("default");
-            edgesTitle2.add(doPost("/api/edge", edge, Edge.class));
+            edgesTitle2.add(edgeService.saveEdge(edge));
         }
 
         List<Edge> loadedEdgesTitle1 = new ArrayList<>();
         TextPageLink pageLink = new TextPageLink(15, title1);
         TextPageData<Edge> pageData = null;
         do {
-            pageData = doGetTypedWithPageLink("/api/tenant/edges?",
-                    new TypeReference<TextPageData<Edge>>() {
-                    }, pageLink);
+            pageData = edgeService.findEdgesByTenantId(tenantId, pageLink);
             loadedEdgesTitle1.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageData.getNextPageLink();
@@ -323,9 +297,7 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         List<Edge> loadedEdgesTitle2 = new ArrayList<>();
         pageLink = new TextPageLink(4, title2);
         do {
-            pageData = doGetTypedWithPageLink("/api/tenant/edges?",
-                    new TypeReference<TextPageData<Edge>>() {
-                    }, pageLink);
+            pageData = edgeService.findEdgesByTenantId(tenantId, pageLink);
             loadedEdgesTitle2.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageData.getNextPageLink();
@@ -338,64 +310,58 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         Assert.assertEquals(edgesTitle2, loadedEdgesTitle2);
 
         for (Edge edge : loadedEdgesTitle1) {
-            doDelete("/api/edge/" + edge.getId().getId().toString())
-                    .andExpect(status().isOk());
+            edgeService.deleteEdge(tenantId, edge.getId());
         }
 
         pageLink = new TextPageLink(4, title1);
-        pageData = doGetTypedWithPageLink("/api/tenant/edges?",
-                new TypeReference<TextPageData<Edge>>() {
-                }, pageLink);
+        pageData = edgeService.findEdgesByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
 
         for (Edge edge : loadedEdgesTitle2) {
-            doDelete("/api/edge/" + edge.getId().getId().toString())
-                    .andExpect(status().isOk());
+            edgeService.deleteEdge(tenantId, edge.getId());
         }
 
         pageLink = new TextPageLink(4, title2);
-        pageData = doGetTypedWithPageLink("/api/tenant/edges?",
-                new TypeReference<TextPageData<Edge>>() {
-                }, pageLink);
+        pageData = edgeService.findEdgesByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
     }
 
     @Test
-    public void testFindTenantEdgesByType() throws Exception {
+    public void testFindEdgesByTenantIdAndType() {
         String title1 = "Edge title 1";
         String type1 = "typeA";
         List<Edge> edgesType1 = new ArrayList<>();
         for (int i = 0; i < 143; i++) {
             Edge edge = new Edge();
+            edge.setTenantId(tenantId);
             String suffix = RandomStringUtils.randomAlphanumeric(15);
             String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             edge.setName(name);
             edge.setType(type1);
-            edgesType1.add(doPost("/api/edge", edge, Edge.class));
+            edgesType1.add(edgeService.saveEdge(edge));
         }
         String title2 = "Edge title 2";
         String type2 = "typeB";
         List<Edge> edgesType2 = new ArrayList<>();
-        for (int i = 0; i < 75; i++) {
+        for (int i = 0; i < 175; i++) {
             Edge edge = new Edge();
+            edge.setTenantId(tenantId);
             String suffix = RandomStringUtils.randomAlphanumeric(15);
             String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             edge.setName(name);
             edge.setType(type2);
-            edgesType2.add(doPost("/api/edge", edge, Edge.class));
+            edgesType2.add(edgeService.saveEdge(edge));
         }
 
         List<Edge> loadedEdgesType1 = new ArrayList<>();
         TextPageLink pageLink = new TextPageLink(15);
         TextPageData<Edge> pageData = null;
         do {
-            pageData = doGetTypedWithPageLink("/api/tenant/edges?type={type}&",
-                    new TypeReference<TextPageData<Edge>>() {
-                    }, pageLink, type1);
+            pageData = edgeService.findEdgesByTenantIdAndType(tenantId, type1, pageLink);
             loadedEdgesType1.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageData.getNextPageLink();
@@ -410,9 +376,7 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         List<Edge> loadedEdgesType2 = new ArrayList<>();
         pageLink = new TextPageLink(4);
         do {
-            pageData = doGetTypedWithPageLink("/api/tenant/edges?type={type}&",
-                    new TypeReference<TextPageData<Edge>>() {
-                    }, pageLink, type2);
+            pageData = edgeService.findEdgesByTenantIdAndType(tenantId, type2, pageLink);
             loadedEdgesType2.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageData.getNextPageLink();
@@ -425,54 +389,53 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         Assert.assertEquals(edgesType2, loadedEdgesType2);
 
         for (Edge edge : loadedEdgesType1) {
-            doDelete("/api/edge/" + edge.getId().getId().toString())
-                    .andExpect(status().isOk());
+            edgeService.deleteEdge(tenantId, edge.getId());
         }
 
         pageLink = new TextPageLink(4);
-        pageData = doGetTypedWithPageLink("/api/tenant/edges?type={type}&",
-                new TypeReference<TextPageData<Edge>>() {
-                }, pageLink, type1);
+        pageData = edgeService.findEdgesByTenantIdAndType(tenantId, type1, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
 
         for (Edge edge : loadedEdgesType2) {
-            doDelete("/api/edge/" + edge.getId().getId().toString())
-                    .andExpect(status().isOk());
+            edgeService.deleteEdge(tenantId, edge.getId());
         }
 
         pageLink = new TextPageLink(4);
-        pageData = doGetTypedWithPageLink("/api/tenant/edges?type={type}&",
-                new TypeReference<TextPageData<Edge>>() {
-                }, pageLink, type2);
+        pageData = edgeService.findEdgesByTenantIdAndType(tenantId, type2, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
     }
 
     @Test
-    public void testFindCustomerEdges() throws Exception {
+    public void testFindEdgesByTenantIdAndCustomerId() {
+        Tenant tenant = new Tenant();
+        tenant.setTitle("Test tenant");
+        tenant = tenantService.saveTenant(tenant);
+
+        TenantId tenantId = tenant.getId();
+
         Customer customer = new Customer();
         customer.setTitle("Test customer");
-        customer = doPost("/api/customer", customer, Customer.class);
+        customer.setTenantId(tenantId);
+        customer = customerService.saveCustomer(customer);
         CustomerId customerId = customer.getId();
 
         List<Edge> edges = new ArrayList<>();
-        for (int i = 0; i < 128; i++) {
+        for (int i = 0; i < 278; i++) {
             Edge edge = new Edge();
+            edge.setTenantId(tenantId);
             edge.setName("Edge" + i);
             edge.setType("default");
-            edge = doPost("/api/edge", edge, Edge.class);
-            edges.add(doPost("/api/customer/" + customerId.getId().toString()
-                    + "/edge/" + edge.getId().getId().toString(), Edge.class));
+            edge = edgeService.saveEdge(edge);
+            edges.add(edgeService.assignEdgeToCustomer(tenantId, edge.getId(), customerId));
         }
 
         List<Edge> loadedEdges = new ArrayList<>();
         TextPageLink pageLink = new TextPageLink(23);
         TextPageData<Edge> pageData = null;
         do {
-            pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/edges?",
-                    new TypeReference<TextPageData<Edge>>() {
-                    }, pageLink);
+            pageData = edgeService.findEdgesByTenantIdAndCustomerId(tenantId, customerId, pageLink);
             loadedEdges.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageData.getNextPageLink();
@@ -483,49 +446,58 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         Collections.sort(loadedEdges, idComparator);
 
         Assert.assertEquals(edges, loadedEdges);
+
+        edgeService.unassignCustomerEdges(tenantId, customerId);
+
+        pageLink = new TextPageLink(33);
+        pageData = edgeService.findEdgesByTenantIdAndCustomerId(tenantId, customerId, pageLink);
+        Assert.assertFalse(pageData.hasNext());
+        Assert.assertTrue(pageData.getData().isEmpty());
+
+        tenantService.deleteTenant(tenantId);
     }
 
     @Test
-    public void testFindCustomerEdgesByName() throws Exception {
+    public void testFindEdgesByTenantIdCustomerIdAndName() {
+
         Customer customer = new Customer();
         customer.setTitle("Test customer");
-        customer = doPost("/api/customer", customer, Customer.class);
+        customer.setTenantId(tenantId);
+        customer = customerService.saveCustomer(customer);
         CustomerId customerId = customer.getId();
 
         String title1 = "Edge title 1";
         List<Edge> edgesTitle1 = new ArrayList<>();
-        for (int i = 0; i < 125; i++) {
+        for (int i = 0; i < 175; i++) {
             Edge edge = new Edge();
+            edge.setTenantId(tenantId);
             String suffix = RandomStringUtils.randomAlphanumeric(15);
             String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             edge.setName(name);
             edge.setType("default");
-            edge = doPost("/api/edge", edge, Edge.class);
-            edgesTitle1.add(doPost("/api/customer/" + customerId.getId().toString()
-                    + "/edge/" + edge.getId().getId().toString(), Edge.class));
+            edge = edgeService.saveEdge(edge);
+            edgesTitle1.add(edgeService.assignEdgeToCustomer(tenantId, edge.getId(), customerId));
         }
         String title2 = "Edge title 2";
         List<Edge> edgesTitle2 = new ArrayList<>();
         for (int i = 0; i < 143; i++) {
             Edge edge = new Edge();
+            edge.setTenantId(tenantId);
             String suffix = RandomStringUtils.randomAlphanumeric(15);
             String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             edge.setName(name);
             edge.setType("default");
-            edge = doPost("/api/edge", edge, Edge.class);
-            edgesTitle2.add(doPost("/api/customer/" + customerId.getId().toString()
-                    + "/edge/" + edge.getId().getId().toString(), Edge.class));
+            edge = edgeService.saveEdge(edge);
+            edgesTitle2.add(edgeService.assignEdgeToCustomer(tenantId, edge.getId(), customerId));
         }
 
         List<Edge> loadedEdgesTitle1 = new ArrayList<>();
         TextPageLink pageLink = new TextPageLink(15, title1);
         TextPageData<Edge> pageData = null;
         do {
-            pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/edges?",
-                    new TypeReference<TextPageData<Edge>>() {
-                    }, pageLink);
+            pageData = edgeService.findEdgesByTenantIdAndCustomerId(tenantId, customerId, pageLink);
             loadedEdgesTitle1.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageData.getNextPageLink();
@@ -540,9 +512,7 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         List<Edge> loadedEdgesTitle2 = new ArrayList<>();
         pageLink = new TextPageLink(4, title2);
         do {
-            pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/edges?",
-                    new TypeReference<TextPageData<Edge>>() {
-                    }, pageLink);
+            pageData = edgeService.findEdgesByTenantIdAndCustomerId(tenantId, customerId, pageLink);
             loadedEdgesTitle2.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageData.getNextPageLink();
@@ -555,73 +525,68 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         Assert.assertEquals(edgesTitle2, loadedEdgesTitle2);
 
         for (Edge edge : loadedEdgesTitle1) {
-            doDelete("/api/customer/edge/" + edge.getId().getId().toString())
-                    .andExpect(status().isOk());
+            edgeService.deleteEdge(tenantId, edge.getId());
         }
 
         pageLink = new TextPageLink(4, title1);
-        pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/edges?",
-                new TypeReference<TextPageData<Edge>>() {
-                }, pageLink);
+        pageData = edgeService.findEdgesByTenantIdAndCustomerId(tenantId, customerId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
 
         for (Edge edge : loadedEdgesTitle2) {
-            doDelete("/api/customer/edge/" + edge.getId().getId().toString())
-                    .andExpect(status().isOk());
+            edgeService.deleteEdge(tenantId, edge.getId());
         }
 
         pageLink = new TextPageLink(4, title2);
-        pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/edges?",
-                new TypeReference<TextPageData<Edge>>() {
-                }, pageLink);
+        pageData = edgeService.findEdgesByTenantIdAndCustomerId(tenantId, customerId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
+        customerService.deleteCustomer(tenantId, customerId);
     }
 
     @Test
-    public void testFindCustomerEdgesByType() throws Exception {
+    public void testFindEdgesByTenantIdCustomerIdAndType() {
+
         Customer customer = new Customer();
         customer.setTitle("Test customer");
-        customer = doPost("/api/customer", customer, Customer.class);
+        customer.setTenantId(tenantId);
+        customer = customerService.saveCustomer(customer);
         CustomerId customerId = customer.getId();
 
         String title1 = "Edge title 1";
         String type1 = "typeC";
         List<Edge> edgesType1 = new ArrayList<>();
-        for (int i = 0; i < 125; i++) {
+        for (int i = 0; i < 175; i++) {
             Edge edge = new Edge();
+            edge.setTenantId(tenantId);
             String suffix = RandomStringUtils.randomAlphanumeric(15);
             String name = title1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             edge.setName(name);
             edge.setType(type1);
-            edge = doPost("/api/edge", edge, Edge.class);
-            edgesType1.add(doPost("/api/customer/" + customerId.getId().toString()
-                    + "/edge/" + edge.getId().getId().toString(), Edge.class));
+            edge = edgeService.saveEdge(edge);
+            edgesType1.add(edgeService.assignEdgeToCustomer(tenantId, edge.getId(), customerId));
         }
         String title2 = "Edge title 2";
         String type2 = "typeD";
         List<Edge> edgesType2 = new ArrayList<>();
         for (int i = 0; i < 143; i++) {
             Edge edge = new Edge();
+            edge.setTenantId(tenantId);
             String suffix = RandomStringUtils.randomAlphanumeric(15);
             String name = title2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             edge.setName(name);
             edge.setType(type2);
-            edge = doPost("/api/edge", edge, Edge.class);
-            edgesType2.add(doPost("/api/customer/" + customerId.getId().toString()
-                    + "/edge/" + edge.getId().getId().toString(), Edge.class));
+            edge = edgeService.saveEdge(edge);
+            edgesType2.add(edgeService.assignEdgeToCustomer(tenantId, edge.getId(), customerId));
         }
 
         List<Edge> loadedEdgesType1 = new ArrayList<>();
         TextPageLink pageLink = new TextPageLink(15);
         TextPageData<Edge> pageData = null;
         do {
-            pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/edges?type={type}&",
-                    new TypeReference<TextPageData<Edge>>() {
-                    }, pageLink, type1);
+            pageData = edgeService.findEdgesByTenantIdAndCustomerIdAndType(tenantId, customerId, type1, pageLink);
             loadedEdgesType1.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageData.getNextPageLink();
@@ -636,9 +601,7 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         List<Edge> loadedEdgesType2 = new ArrayList<>();
         pageLink = new TextPageLink(4);
         do {
-            pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/edges?type={type}&",
-                    new TypeReference<TextPageData<Edge>>() {
-                    }, pageLink, type2);
+            pageData = edgeService.findEdgesByTenantIdAndCustomerIdAndType(tenantId, customerId, type2, pageLink);
             loadedEdgesType2.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageData.getNextPageLink();
@@ -651,27 +614,23 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         Assert.assertEquals(edgesType2, loadedEdgesType2);
 
         for (Edge edge : loadedEdgesType1) {
-            doDelete("/api/customer/edge/" + edge.getId().getId().toString())
-                    .andExpect(status().isOk());
+            edgeService.deleteEdge(tenantId, edge.getId());
         }
 
         pageLink = new TextPageLink(4);
-        pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/edges?type={type}&",
-                new TypeReference<TextPageData<Edge>>() {
-                }, pageLink, type1);
+        pageData = edgeService.findEdgesByTenantIdAndCustomerIdAndType(tenantId, customerId, type1, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
 
         for (Edge edge : loadedEdgesType2) {
-            doDelete("/api/customer/edge/" + edge.getId().getId().toString())
-                    .andExpect(status().isOk());
+            edgeService.deleteEdge(tenantId, edge.getId());
         }
 
         pageLink = new TextPageLink(4);
-        pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/edges?type={type}&",
-                new TypeReference<TextPageData<Edge>>() {
-                }, pageLink, type2);
+        pageData = edgeService.findEdgesByTenantIdAndCustomerIdAndType(tenantId, customerId, type2, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
+        customerService.deleteCustomer(tenantId, customerId);
     }
+
 }

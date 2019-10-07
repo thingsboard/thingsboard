@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,7 +16,10 @@
 package org.thingsboard.server.dao.edge;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
@@ -26,20 +29,49 @@ import java.util.List;
 
 public interface EdgeService {
 
-    Edge saveEdge(Edge edge);
-
     Edge findEdgeById(TenantId tenantId, EdgeId edgeId);
 
     ListenableFuture<Edge> findEdgeByIdAsync(TenantId tenantId, EdgeId edgeId);
 
-    ListenableFuture<List<Edge>> findEdgesByIdsAsync(TenantId tenantId, List<EdgeId> edgeIds);
+    Edge findEdgeByTenantIdAndName(TenantId tenantId, String name);
 
-    List<Edge> findAllEdges(TenantId tenantId);
+    Edge saveEdge(Edge edge);
 
-    TextPageData<Edge> findTenantEdges(TenantId tenantId, TextPageLink pageLink);
+    Edge assignEdgeToCustomer(TenantId tenantId, EdgeId edgeId, CustomerId customerId);
+
+    Edge unassignEdgeFromCustomer(TenantId tenantId, EdgeId edgeId);
 
     void deleteEdge(TenantId tenantId, EdgeId edgeId);
 
+    TextPageData<Edge> findEdgesByTenantId(TenantId tenantId, TextPageLink pageLink);
+
+    TextPageData<Edge> findEdgesByTenantIdAndType(TenantId tenantId, String type, TextPageLink pageLink);
+
+    ListenableFuture<List<Edge>> findEdgesByTenantIdAndIdsAsync(TenantId tenantId, List<EdgeId> edgeIds);
+
     void deleteEdgesByTenantId(TenantId tenantId);
 
+    TextPageData<Edge> findEdgesByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, TextPageLink pageLink);
+
+    TextPageData<Edge> findEdgesByTenantIdAndCustomerIdAndType(TenantId tenantId, CustomerId customerId, String type, TextPageLink pageLink);
+
+    ListenableFuture<List<Edge>> findEdgesByTenantIdCustomerIdAndIdsAsync(TenantId tenantId, CustomerId customerId, List<EdgeId> edgeIds);
+
+    void unassignCustomerEdges(TenantId tenantId, CustomerId customerId);
+
+    ListenableFuture<List<Edge>> findEdgesByQuery(TenantId tenantId, EdgeSearchQuery query);
+
+    ListenableFuture<List<EntitySubtype>> findEdgeTypesByTenantId(TenantId tenantId);
+
 }
+
+
+                
+
+                
+
+                        
+
+                        
+
+                                

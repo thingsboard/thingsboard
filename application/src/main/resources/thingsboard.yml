@@ -267,6 +267,9 @@ caffeine:
     entityViews:
       timeToLiveInMinutes: 1440
       maxSize: 100000
+    edges:
+      timeToLiveInMinutes: 1440
+      maxSize: 100000
     claimDevices:
       timeToLiveInMinutes: 1
       maxSize: 100000
