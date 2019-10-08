@@ -67,8 +67,6 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
 
     private static final ReentrantLock tsCreationLock = new ReentrantLock();
 
-    private AtomicInteger keyCounter = new AtomicInteger(0);
-
     @Autowired
     private TsKvDictionaryRepository dictionaryRepository;
 
@@ -161,7 +159,6 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
                     if (!tsKvDictionaryOptional.isPresent()) {
                         TsKvDictionary tsKvDictionary = new TsKvDictionary();
                         tsKvDictionary.setKey(strKey);
-                        tsKvDictionary.setKeyId(keyCounter.getAndIncrement());
                         try {
                             TsKvDictionary saved = dictionaryRepository.save(tsKvDictionary);
                             tsKvDictionaryMap.put(saved.getKey(), saved.getKeyId());

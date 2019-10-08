@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS ts_kv (
 
 CREATE TABLE IF NOT EXISTS ts_kv_dictionary (
     key varchar(255) NOT NULL,
-    key_id int UNIQUE,
+    key_id serial UNIQUE,
     CONSTRAINT ts_key_id_pkey PRIMARY KEY (key)
 );
 

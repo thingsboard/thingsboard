@@ -48,7 +48,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 
@@ -64,8 +63,6 @@ public class JpaPsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEnt
 
     private static final ReentrantLock tsCreationLock = new ReentrantLock();
     private static final ReentrantLock partitionCreationLock = new ReentrantLock();
-
-    private AtomicInteger keyCounter = new AtomicInteger(0);
 
     @Autowired
     private TsKvDictionaryRepository dictionaryRepository;
@@ -243,7 +240,6 @@ public class JpaPsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEnt
                     if (!tsKvDictionaryOptional.isPresent()) {
                         TsKvDictionary tsKvDictionary = new TsKvDictionary();
                         tsKvDictionary.setKey(strKey);
-                        tsKvDictionary.setKeyId(keyCounter.getAndIncrement());
                         try {
                             TsKvDictionary saved = dictionaryRepository.save(tsKvDictionary);
                             tsKvDictionaryMap.put(saved.getKey(), saved.getKeyId());
