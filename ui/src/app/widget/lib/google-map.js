@@ -87,7 +87,7 @@ export default class TbGoogleMap {
         this.initMapFunctionName = 'initGoogleMap_' + this.mapId;
 
         window[this.initMapFunctionName] = function() { // eslint-disable-line no-undef, angular/window-service
-            lazyLoad.load({ type: 'js', path: 'https://cdn.rawgit.com/googlemaps/v3-utility-library/master/markerwithlabel/src/markerwithlabel.js' }).then( // eslint-disable-line no-undef
+            lazyLoad.load({ type: 'js', path: 'https://unpkg.com/@google/@1.2.3/src/markerwithlabel.js' }).then( // eslint-disable-line no-undef
                 function success() {
                     gmGlobals.gmApiKeys[tbMap.apiKey].loaded = true;
                     initGoogleMap();
