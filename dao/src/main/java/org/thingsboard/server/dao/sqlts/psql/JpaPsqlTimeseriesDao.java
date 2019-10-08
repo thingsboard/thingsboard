@@ -63,6 +63,7 @@ public class JpaPsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEnt
     private final Set<PsqlPartition> partitions = ConcurrentHashMap.newKeySet(partitionMap.size());
 
     private static final ReentrantLock tsCreationLock = new ReentrantLock();
+    private static final ReentrantLock partitionCreationLock = new ReentrantLock();
 
     private AtomicInteger keyCounter = new AtomicInteger(0);
 
@@ -96,22 +97,12 @@ public class JpaPsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEnt
         entity.setLongValue(tsKvEntry.getLongValue().orElse(null));
         entity.setBooleanValue(tsKvEntry.getBooleanValue().orElse(null));
         PsqlPartition psqlPartition = toPartition(tsKvEntry.getTs());
-        if(!partitions.contains(psqlPartition)) {
-            log.trace("Adding partition to Set: {}", psqlPartition);
-            partitions.add(psqlPartition);
-            log.trace("Saving partition: {}", psqlPartition);
-            ListenableFuture<PsqlPartition> partitionSubmit = insertService.submit(() -> partitioningRepository.save(psqlPartition), psqlPartition);
-            log.trace("Saving entity: {}", entity);
-            return Futures.transformAsync(partitionSubmit, partition -> insertService.submit(() -> {
-                insertRepository.saveOrUpdate(entity, partition);
-                return null;
-            }));
-        } else {
-            return insertService.submit(() -> {
-                insertRepository.saveOrUpdate(entity, psqlPartition);
-                return null;
-            });
-        }
+        savePartition(psqlPartition);
+        log.trace("Saving entity: {}", entity);
+        return insertService.submit(() -> {
+            insertRepository.saveOrUpdate(entity, psqlPartition);
+            return null;
+        });
     }
 
     @Override
@@ -185,43 +176,6 @@ public class JpaPsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEnt
         return Futures.immediateFuture(DaoUtil.convertDataList(tsKvEntities));
     }
 
-    private Integer getOrSaveKeyId(String strKey) {
-        Integer keyId = tsKvDictionaryMap.get(strKey);
-        if (keyId == null) {
-            Optional<TsKvDictionary> tsKvDictionaryOptional;
-            tsKvDictionaryOptional = dictionaryRepository.findById(new TsKvDictionaryCompositeKey(strKey));
-            if (!tsKvDictionaryOptional.isPresent()) {
-                tsCreationLock.lock();
-                try {
-                    tsKvDictionaryOptional = dictionaryRepository.findById(new TsKvDictionaryCompositeKey(strKey));
-                    if (!tsKvDictionaryOptional.isPresent()) {
-                        TsKvDictionary tsKvDictionary = new TsKvDictionary();
-                        tsKvDictionary.setKey(strKey);
-                        tsKvDictionary.setKeyId(keyCounter.getAndIncrement());
-                        try {
-                            TsKvDictionary saved = dictionaryRepository.save(tsKvDictionary);
-                            tsKvDictionaryMap.put(saved.getKey(), saved.getKeyId());
-                            keyId = saved.getKeyId();
-                        } catch (ConstraintViolationException e) {
-                            tsKvDictionaryOptional = dictionaryRepository.findById(new TsKvDictionaryCompositeKey(strKey));
-                            TsKvDictionary dictionary = tsKvDictionaryOptional.orElseThrow(() -> new RuntimeException("Failed to get TsKvDictionary entity from DB!"));
-                            tsKvDictionaryMap.put(dictionary.getKey(), dictionary.getKeyId());
-                            keyId = dictionary.getKeyId();
-                        }
-                    } else {
-                        keyId = tsKvDictionaryOptional.get().getKeyId();
-                    }
-                } finally {
-                    tsCreationLock.unlock();
-                }
-            } else {
-                keyId = tsKvDictionaryOptional.get().getKeyId();
-                tsKvDictionaryMap.put(strKey, keyId);
-            }
-        }
-        return keyId;
-    }
-
     protected void findCount(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
         Integer keyId = getOrSaveKeyId(key);
         entitiesFutures.add(tsKvRepository.findCount(
@@ -275,6 +229,57 @@ public class JpaPsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEnt
                 keyId,
                 startTs,
                 endTs));
+    }
+
+    private Integer getOrSaveKeyId(String strKey) {
+        Integer keyId = tsKvDictionaryMap.get(strKey);
+        if (keyId == null) {
+            Optional<TsKvDictionary> tsKvDictionaryOptional;
+            tsKvDictionaryOptional = dictionaryRepository.findById(new TsKvDictionaryCompositeKey(strKey));
+            if (!tsKvDictionaryOptional.isPresent()) {
+                tsCreationLock.lock();
+                try {
+                    tsKvDictionaryOptional = dictionaryRepository.findById(new TsKvDictionaryCompositeKey(strKey));
+                    if (!tsKvDictionaryOptional.isPresent()) {
+                        TsKvDictionary tsKvDictionary = new TsKvDictionary();
+                        tsKvDictionary.setKey(strKey);
+                        tsKvDictionary.setKeyId(keyCounter.getAndIncrement());
+                        try {
+                            TsKvDictionary saved = dictionaryRepository.save(tsKvDictionary);
+                            tsKvDictionaryMap.put(saved.getKey(), saved.getKeyId());
+                            keyId = saved.getKeyId();
+                        } catch (ConstraintViolationException e) {
+                            tsKvDictionaryOptional = dictionaryRepository.findById(new TsKvDictionaryCompositeKey(strKey));
+                            TsKvDictionary dictionary = tsKvDictionaryOptional.orElseThrow(() -> new RuntimeException("Failed to get TsKvDictionary entity from DB!"));
+                            tsKvDictionaryMap.put(dictionary.getKey(), dictionary.getKeyId());
+                            keyId = dictionary.getKeyId();
+                        }
+                    } else {
+                        keyId = tsKvDictionaryOptional.get().getKeyId();
+                    }
+                } finally {
+                    tsCreationLock.unlock();
+                }
+            } else {
+                keyId = tsKvDictionaryOptional.get().getKeyId();
+                tsKvDictionaryMap.put(strKey, keyId);
+            }
+        }
+        return keyId;
+    }
+
+    private void savePartition(PsqlPartition psqlPartition) {
+        if (!partitions.contains(psqlPartition)) {
+            partitionCreationLock.lock();
+            try {
+                log.trace("Saving partition: {}", psqlPartition);
+                partitioningRepository.save(psqlPartition);
+                log.trace("Adding partition to Set: {}", psqlPartition);
+                partitions.add(psqlPartition);
+            } finally {
+                partitionCreationLock.unlock();
+            }
+        }
     }
 
 }
