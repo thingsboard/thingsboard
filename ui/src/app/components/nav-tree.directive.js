@@ -85,7 +85,7 @@ function NavTreeController($scope, $element, types) {
 
         vm.treeElement.on("changed.jstree", function (e, data) {
             if (vm.onNodeSelected) {
-                vm.onNodeSelected({node: data.instance.get_selected(true)[0], event: e});
+                vm.onNodeSelected({node: data.instance.get_selected(true)[0], event: data.event});
             }
         });
 
@@ -97,7 +97,7 @@ function NavTreeController($scope, $element, types) {
 
         vm.treeElement.on("hover_node.jstree", function (e, data) {
             if (vm.onNodeHovered) {
-                vm.onNodeHovered({node: data.node, event: e});
+                vm.onNodeHovered({node: data.node, event: data.event});
             }
         });
 
