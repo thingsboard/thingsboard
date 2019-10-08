@@ -20,6 +20,7 @@ import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
@@ -54,4 +55,11 @@ public interface DashboardService {
 
     void updateCustomerDashboards(TenantId tenantId, CustomerId customerId);
 
+    Dashboard assignDashboardToEdge(TenantId tenantId, DashboardId dashboardId, EdgeId edgeId);
+
+    Dashboard unassignDashboardFromEdge(TenantId tenantId, DashboardId dashboardId, EdgeId edgeId);
+
+    void unassignEdgeDashboards(TenantId tenantId, EdgeId edgeId);
+
+    void updateEdgeDashboards(TenantId tenantId, EdgeId edgeId);
 }

@@ -22,7 +22,7 @@ export default angular.module('thingsboard.api.entity', [thingsboardTypes])
 /*@ngInject*/
 function EntityService($http, $q, $filter, $translate, $log, userService, deviceService, assetService, tenantService,
                        customerService, ruleChainService, dashboardService, entityRelationService, attributeService,
-                       entityViewService, types, utils) {
+                       entityViewService, edgeService, types, utils) {
     var service = {
         getEntity: getEntity,
         getEntities: getEntities,
@@ -76,6 +76,9 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                 break;
             case types.entityType.alarm:
                 $log.error('Get Alarm Entity is not implemented!');
+                break;
+            case types.entityType.edge:
+                promise = edgeService.getEdge(entityId, true, config);
                 break;
         }
         return promise;
@@ -158,6 +161,10 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                 break;
             case types.entityType.alarm:
                 $log.error('Get Alarm Entity is not implemented!');
+                break;
+            case types.entityType.edge:
+                promise = getEntitiesByIdsPromise(
+                    (id) => edgeService.getEdge(id, config), entityIds);
                 break;
         }
         return promise;
@@ -284,6 +291,13 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                 break;
             case types.entityType.alarm:
                 $log.error('Get Alarm Entities is not implemented!');
+                break;
+            case types.entityType.edge:
+                if (user.authority === 'CUSTOMER_USER') {
+                    promise = edgeService.getCustomerEdges(customerId, pageLink, false, config, subType);
+                } else {
+                    promise = edgeService.getTenantEdges(pageLink, false, config, subType);
+                }
                 break;
         }
         return promise;
@@ -655,6 +669,9 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                     } else if (filter.type == types.aliasFilterType.entityViewSearchQuery.value) {
                         searchQuery.entityViewTypes = filter.entityViewTypes;
                         findByQueryPromise = entityViewService.findByQuery(searchQuery, false, {ignoreLoading: true});
+                    } else if (filter.type == types.aliasFilterType.edgeSearchQuery.value) {
+                        searchQuery.edgeTypes = filter.edgeTypes;
+                        findByQueryPromise = edgeService.findByQuery(searchQuery, false, {ignoreLoading: true});
                     }
                     findByQueryPromise.then(
                         function success(entities) {
@@ -699,6 +716,8 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                     return entityTypes.indexOf(types.entityType.device)  > -1 ? true : false;
                 case types.aliasFilterType.entityViewType.value:
                     return entityTypes.indexOf(types.entityType.entityView)  > -1 ? true : false;
+                case types.aliasFilterType.edgeType.value:
+                    return entityTypes.indexOf(types.entityType.edge)  > -1 ? true : false;
                 case types.aliasFilterType.relationsQuery.value:
                     if (filter.filters && filter.filters.length) {
                         var match = false;
@@ -726,6 +745,8 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                     return entityTypes.indexOf(types.entityType.device)  > -1 ? true : false;
                 case types.aliasFilterType.entityViewSearchQuery.value:
                     return entityTypes.indexOf(types.entityType.entityView)  > -1 ? true : false;
+                case types.aliasFilterType.edgeSearchQuery.value:
+                    return entityTypes.indexOf(types.entityType.edge)  > -1 ? true : false;
             }
         }
         return false;
@@ -755,6 +776,8 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                 return entityType === types.entityType.device;
             case types.aliasFilterType.entityViewSearchQuery.value:
                 return entityType === types.entityType.entityView;
+            case types.aliasFilterType.edgeSearchQuery.value:
+                return entityType === types.entityType.edge;
         }
         return false;
     }
@@ -796,6 +819,7 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                 entityTypes.device = types.entityType.device;
                 entityTypes.asset = types.entityType.asset;
                 entityTypes.entityView = types.entityType.entityView;
+                entityTypes.edge = types.entityType.edge;
                 entityTypes.tenant = types.entityType.tenant;
                 entityTypes.customer = types.entityType.customer;
                 entityTypes.dashboard = types.entityType.dashboard;
@@ -807,6 +831,7 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                 entityTypes.device = types.entityType.device;
                 entityTypes.asset = types.entityType.asset;
                 entityTypes.entityView = types.entityType.entityView;
+                entityTypes.edge = types.entityType.edge;
                 entityTypes.customer = types.entityType.customer;
                 entityTypes.dashboard = types.entityType.dashboard;
                 if (useAliasEntityTypes) {
@@ -1041,6 +1066,8 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                 findByQueryPromise = assetService.findByQuery(entitySearchQuery, true, {ignoreLoading: true});
             } else if (entityType == types.entityType.device) {
                 findByQueryPromise = deviceService.findByQuery(entitySearchQuery, true, {ignoreLoading: true});
+            } else if (entityType == types.entityType.entityView) {
+                findByQueryPromise = entityViewService.findByQuery(entitySearchQuery, true, {ignoreLoading: true});
             }
             findByQueryPromise.then(
                 function success(entities) {
@@ -1220,6 +1247,8 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
             return deviceService.deleteDevice(entityId.id);
         } else if (entityId.entityType == types.entityType.entityView) {
             return entityViewService.deleteEntityView(entityId.id);
+        } else if (entityId.entityType == types.entityType.edge) {
+            return edgeService.deleteEdge(entityId.id);
         }
     }
 
@@ -1327,6 +1356,8 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
             return deviceService.saveDevice(entity);
         } else if (entityType == types.entityType.entityView) {
             return entityViewService.saveEntityView(entity);
+        } else if (entityType == types.entityType.edge) {
+            return edgeService.saveEdge(entity);
         }
     }
 
@@ -1457,6 +1488,8 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
             searchQuery.deviceTypes = entitySubTypes;
         } else if (entityType == types.entityType.entityView) {
             searchQuery.entityViewTypes = entitySubTypes;
+        } else if (entityType == types.entityType.edge) {
+            searchQuery.edgeTypes = entitySubTypes;
         } else {
             return null; //Not supported
         }

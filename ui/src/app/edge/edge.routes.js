@@ -20,11 +20,33 @@ import edgesTemplate from './edges.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function EdgeRoutes($stateProvider) {
-
+export default function EdgeRoutes($stateProvider, types) {
     $stateProvider
         .state('home.edges', {
             url: '/edges',
+            params: {'topIndex': 0},
+            module: 'private',
+            auth: ['TENANT_ADMIN', 'CUSTOMER_USER'],
+            views: {
+                "content@home": {
+                    templateUrl: edgesTemplate,
+                    controller: 'EdgeController',
+                    controllerAs: 'vm'
+                }
+            },
+            data: {
+                edgesType: 'tenant',
+                searchEnabled: true,
+                searchByEntitySubtype: true,
+                searchEntityType: types.entityType.edge,
+                pageTitle: 'edge.edges'
+            },
+            ncyBreadcrumb: {
+                label: '{"icon": "transform", "label": "edge.edges"}'
+            }
+        })
+        .state('home.customers.edges', {
+            url: '/:customerId/edges',
             params: {'topIndex': 0},
             module: 'private',
             auth: ['TENANT_ADMIN'],
@@ -36,11 +58,14 @@ export default function EdgeRoutes($stateProvider) {
                 }
             },
             data: {
+                edgesType: 'customer',
                 searchEnabled: true,
-                pageTitle: 'edge.edges'
+                searchByEntitySubtype: true,
+                searchEntityType: types.entityType.edge,
+                pageTitle: 'customer.edges'
             },
             ncyBreadcrumb: {
-                label: '{"icon": "transform", "label": "edge.edges"}'
+                label: '{"icon": "transform", "label": "{{ vm.customerEdgesTitle }}", "translate": "false"}'
             }
         });
 }

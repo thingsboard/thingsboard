@@ -23,22 +23,24 @@
              id="tabs" md-border-bottom flex class="tb-absolute-fill">
         <md-tab label="{{ 'edge.details' | translate }}">
             <tb-edge edge="vm.grid.operatingItem()"
-                         is-edit="vm.grid.detailsConfig.isDetailsEditMode"
-                         the-form="vm.grid.detailsForm"
-                         on-delete-edge="vm.grid.deleteItem(event, vm.grid.detailsConfig.currentItem)"></tb-edge>
+                     is-edit="vm.grid.detailsConfig.isDetailsEditMode"
+                     edge-scope="vm.edgesScope"
+                     the-form="vm.grid.detailsForm"
+                     on-assign-to-customer="vm.assignToCustomer(event, [ vm.grid.detailsConfig.currentItem.id.id ])"
+                     on-make-public="vm.makePublic(event, vm.grid.detailsConfig.currentItem)"
+                     on-unassign-from-customer="vm.unassignFromCustomer(event, vm.grid.detailsConfig.currentItem, isPublic)"
+                     on-delete-edge="vm.grid.deleteItem(event, vm.grid.detailsConfig.currentItem)"></tb-edge>
         </md-tab>
-        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode && ('edge' | hasGenericPermission:'readAttributes')" md-on-select="vm.grid.triggerResize()" label="{{ 'attribute.attributes' | translate }}">
+        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" md-on-select="vm.grid.triggerResize()" label="{{ 'attribute.attributes' | translate }}">
             <tb-attribute-table flex
-                                readonly="!('edge' | hasGenericPermission:'writeAttributes')"
                                 entity-id="vm.grid.operatingItem().id.id"
                                 entity-type="{{vm.types.entityType.edge}}"
                                 entity-name="vm.grid.operatingItem().name"
                                 default-attribute-scope="{{vm.types.attributesScope.server.value}}">
             </tb-attribute-table>
         </md-tab>
-        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode && ('edge' | hasGenericPermission:'readTelemetry')" md-on-select="vm.grid.triggerResize()" label="{{ 'attribute.latest-telemetry' | translate }}">
+        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" md-on-select="vm.grid.triggerResize()" label="{{ 'attribute.latest-telemetry' | translate }}">
             <tb-attribute-table flex
-                                readonly="!('edge' | hasGenericPermission:'writeTelemetry')"
                                 entity-id="vm.grid.operatingItem().id.id"
                                 entity-type="{{vm.types.entityType.edge}}"
                                 entity-name="vm.grid.operatingItem().name"
@@ -46,7 +48,7 @@
                                 disable-attribute-scope-selection="true">
             </tb-attribute-table>
         </md-tab>
-        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode && ('alarm' | hasGenericPermission:'read')" md-on-select="vm.grid.triggerResize()" label="{{ 'alarm.alarms' | translate }}">
+        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" md-on-select="vm.grid.triggerResize()" label="{{ 'alarm.alarms' | translate }}">
             <tb-alarm-table flex entity-type="vm.types.entityType.edge"
                             entity-id="vm.grid.operatingItem().id.id">
             </tb-alarm-table>
@@ -65,7 +67,7 @@
                                entity-type="{{vm.types.entityType.edge}}">
             </tb-relation-table>
         </md-tab>
-        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode && ('auditLog' | hasGenericPermission:'read')" md-on-select="vm.grid.triggerResize()" label="{{ 'audit-log.audit-logs' | translate }}">
+        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode && vm.grid.isTenantAdmin()" md-on-select="vm.grid.triggerResize()" label="{{ 'audit-log.audit-logs' | translate }}">
             <tb-audit-log-table flex entity-type="vm.types.entityType.edge"
                                 entity-id="vm.grid.operatingItem().id.id"
                                 audit-log-mode="{{vm.types.auditLogMode.entity}}">

@@ -38,6 +38,7 @@ import javax.persistence.Table;
 import static org.thingsboard.server.dao.model.ModelConstants.ASSET_CUSTOMER_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_COLUMN_FAMILY_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_CUSTOMER_ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.EDGE_LABEL_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_NAME_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_TENANT_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_TYPE_PROPERTY;
@@ -61,6 +62,9 @@ public class EdgeEntity extends BaseSqlEntity<Edge> implements SearchTextEntity<
 
     @Column(name = EDGE_NAME_PROPERTY)
     private String name;
+
+    @Column(name = EDGE_LABEL_PROPERTY)
+    private String label;
 
     @Column(name = SEARCH_TEXT_PROPERTY)
     private String searchText;
@@ -89,6 +93,7 @@ public class EdgeEntity extends BaseSqlEntity<Edge> implements SearchTextEntity<
         }
         this.type = edge.getType();
         this.name = edge.getName();
+        this.label = edge.getLabel();
         this.configuration = edge.getConfiguration();
         this.additionalInfo = edge.getAdditionalInfo();
     }
@@ -119,6 +124,7 @@ public class EdgeEntity extends BaseSqlEntity<Edge> implements SearchTextEntity<
         }
         edge.setType(type);
         edge.setName(name);
+        edge.setLabel(label);
         edge.setConfiguration(configuration);
         edge.setAdditionalInfo(additionalInfo);
         return edge;

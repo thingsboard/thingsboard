@@ -20,12 +20,33 @@ import edgeFieldsetTemplate from './edge-fieldset.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function EdgeDirective($compile, $templateCache, $translate, $mdDialog, $document, toast, types) {
+export default function EdgeDirective($compile, $templateCache, $translate, $mdDialog, $document, toast, types, customerService) {
     var linker = function (scope, element) {
         var template = $templateCache.get(edgeFieldsetTemplate);
         element.html(template);
 
         scope.types = types;
+        scope.isAssignedToCustomer = false;
+        scope.isPublic = false;
+        scope.assignedCustomer = null;
+
+        scope.$watch('edge', function(newVal) {
+            if (newVal) {
+                if (scope.edge.customerId && scope.edge.customerId.id !== types.id.nullUid) {
+                    scope.isAssignedToCustomer = true;
+                    customerService.getShortCustomerInfo(scope.edge.customerId.id).then(
+                        function success(customer) {
+                            scope.assignedCustomer = customer;
+                            scope.isPublic = customer.isPublic;
+                        }
+                    );
+                } else {
+                    scope.isAssignedToCustomer = false;
+                    scope.isPublic = false;
+                    scope.assignedCustomer = null;
+                }
+            }
+        });
 
         scope.onEdgeIdCopied = function() {
             toast.showSuccess($translate.instant('edge.idCopiedMessage'), 750, angular.element(element).parent().parent(), 'bottom left');
@@ -40,9 +61,11 @@ export default function EdgeDirective($compile, $templateCache, $translate, $mdD
         scope: {
             edge: '=',
             isEdit: '=',
+            edgeScope: '=',
             theForm: '=',
-            isCreate: '<',
-            onExportEdge: '&',
+            onAssignToCustomer: '&',
+            onMakePublic: '&',
+            onUnassignFromCustomer: '&',
             onDeleteEdge: '&'
         }
     };

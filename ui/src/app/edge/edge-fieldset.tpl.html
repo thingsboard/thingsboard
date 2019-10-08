@@ -15,12 +15,15 @@
     limitations under the License.
 
 -->
-<md-button ng-click="onExportEdge({event: $event})"
-           ng-show="!isEdit"
-           class="md-raised md-primary">{{ 'edge.export' | translate }}</md-button>
+<md-button ng-click="onAssignToCustomer({event: $event})"
+           ng-show="!isEdit && edgeScope === 'tenant' && !isAssignedToCustomer"
+           class="md-raised md-primary">{{ 'edge.assign-to-customer' | translate }}</md-button>
+<md-button ng-click="onUnassignFromCustomer({event: $event, isPublic: isPublic})"
+           ng-show="!isEdit && (edgeScope === 'customer' || edgeScope === 'tenant') && isAssignedToCustomer"
+           class="md-raised md-primary">{{ isPublic ? 'edge.make-private' : 'edge.unassign-from-customer' | translate }}</md-button>
 <md-button ng-click="onDeleteEdge({event: $event})"
-           ng-if="'edge' | hasGenericPermission:'delete'"
-           ng-show="!isEdit" class="md-raised md-primary">{{ 'edge.delete' | translate }}</md-button>
+           ng-show="!isEdit && edgeScope === 'tenant'"
+           class="md-raised md-primary">{{ 'edge.delete' | translate }}</md-button>
 
 <div layout="row">
     <md-button ngclipboard data-clipboard-action="copy"
@@ -33,6 +36,15 @@
 </div>
 
 <md-content class="md-padding" layout="column">
+    <md-input-container class="md-block"
+                        ng-show="!isEdit && isAssignedToCustomer && !isPublic && edgeScope === 'tenant'">
+        <label translate>edge.assignedToCustomer</label>
+        <input ng-model="assignedCustomer.title" disabled>
+    </md-input-container>
+    <div class="tb-small" style="padding-bottom: 10px; padding-left: 2px;"
+         ng-show="!isEdit && isPublic && (edgeScope === 'customer' || edgeScope === 'tenant')">
+        {{ 'edge.edge-public' | translate }}
+    </div>
     <fieldset ng-disabled="$root.loading || !isEdit">
         <md-input-container class="md-block">
             <label translate>edge.name</label>
@@ -40,6 +52,17 @@
             <div ng-messages="theForm.name.$error">
                 <div translate ng-message="required">edge.name-required</div>
             </div>
+        </md-input-container>
+        <tb-entity-subtype-autocomplete
+                ng-disabled="$root.loading || !isEdit"
+                tb-required="true"
+                the-form="theForm"
+                ng-model="edge.type"
+                entity-type="types.entityType.edge">
+        </tb-entity-subtype-autocomplete>
+        <md-input-container class="md-block">
+            <label translate>edge.label</label>
+            <input name="label" ng-model="edge.label">
         </md-input-container>
         <md-input-container class="md-block">
             <label translate>edge.description</label>

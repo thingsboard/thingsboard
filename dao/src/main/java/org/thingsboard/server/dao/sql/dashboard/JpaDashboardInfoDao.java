@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -84,6 +85,21 @@ public class JpaDashboardInfoDao extends JpaAbstractSearchTextDao<DashboardInfoE
         log.debug("Try to find dashboards by tenantId [{}], customerId[{}] and pageLink [{}]", tenantId, customerId, pageLink);
 
         ListenableFuture<List<EntityRelation>> relations = relationDao.findRelations(new TenantId(tenantId), new CustomerId(customerId), EntityRelation.CONTAINS_TYPE, RelationTypeGroup.DASHBOARD, EntityType.DASHBOARD, pageLink);
+
+        return Futures.transformAsync(relations, input -> {
+            List<ListenableFuture<DashboardInfo>> dashboardFutures = new ArrayList<>(input.size());
+            for (EntityRelation relation : input) {
+                dashboardFutures.add(findByIdAsync(new TenantId(tenantId), relation.getTo().getId()));
+            }
+            return Futures.successfulAsList(dashboardFutures);
+        });
+    }
+
+    @Override
+    public ListenableFuture<List<DashboardInfo>> findDashboardsByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, TimePageLink pageLink) {
+        log.debug("Try to find dashboards by tenantId [{}], edgeId [{}] and pageLink [{}]", tenantId, edgeId, pageLink);
+
+        ListenableFuture<List<EntityRelation>> relations = relationDao.findRelations(new TenantId(tenantId), new EdgeId(edgeId), EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE, EntityType.DASHBOARD, pageLink);
 
         return Futures.transformAsync(relations, input -> {
             List<ListenableFuture<DashboardInfo>> dashboardFutures = new ArrayList<>(input.size());

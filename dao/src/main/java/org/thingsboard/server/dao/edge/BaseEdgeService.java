@@ -41,6 +41,7 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.dao.customer.CustomerDao;
+import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -84,6 +85,9 @@ public class BaseEdgeService extends AbstractEntityService implements EdgeServic
     @Autowired
     private CacheManager cacheManager;
 
+    @Autowired
+    private DashboardService dashboardService;
+
     @Override
     public Edge findEdgeById(TenantId tenantId, EdgeId edgeId) {
         log.trace("Executing findEdgeById [{}]", edgeId);
@@ -112,7 +116,9 @@ public class BaseEdgeService extends AbstractEntityService implements EdgeServic
     public Edge saveEdge(Edge edge) {
         log.trace("Executing saveEdge [{}]", edge);
         edgeValidator.validate(edge, Edge::getTenantId);
-        return edgeDao.save(edge.getTenantId(), edge);
+        Edge savedEdge = edgeDao.save(edge.getTenantId(), edge);
+        dashboardService.updateEdgeDashboards(savedEdge.getTenantId(), savedEdge.getId());
+        return savedEdge;
     }
 
     @Override
@@ -143,6 +149,8 @@ public class BaseEdgeService extends AbstractEntityService implements EdgeServic
         list.add(edge.getName());
         Cache cache = cacheManager.getCache(EDGE_CACHE);
         cache.evict(list);
+
+        dashboardService.unassignEdgeDashboards(tenantId, edgeId);
 
         edgeDao.removeById(tenantId, edgeId.getId());
     }

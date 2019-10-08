@@ -292,6 +292,7 @@ public class ModelConstants {
     public static final String DASHBOARD_TITLE_PROPERTY = TITLE_PROPERTY;
     public static final String DASHBOARD_CONFIGURATION_PROPERTY = "configuration";
     public static final String DASHBOARD_ASSIGNED_CUSTOMERS_PROPERTY = "assigned_customers";
+    public static final String DASHBOARD_ASSIGNED_EDGES_PROPERTY = "assigned_edges";
 
     public static final String DASHBOARD_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "dashboard_by_tenant_and_search_text";
 
@@ -335,6 +336,7 @@ public class ModelConstants {
     public static final String RULE_CHAIN_FIRST_RULE_NODE_ID_PROPERTY = "first_rule_node_id";
     public static final String RULE_CHAIN_ROOT_PROPERTY = "root";
     public static final String RULE_CHAIN_CONFIGURATION_PROPERTY = "configuration";
+    public static final String RULE_CHAIN_ASSIGNED_EDGES_PROPERTY = "assigned_edges";
 
     public static final String RULE_CHAIN_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "rule_chain_by_tenant_and_search_text";
 
@@ -354,6 +356,7 @@ public class ModelConstants {
     public static final String EDGE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String EDGE_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
     public static final String EDGE_NAME_PROPERTY = "name";
+    public static final String EDGE_LABEL_PROPERTY = "label";
     public static final String EDGE_TYPE_PROPERTY = "type";
     public static final String EDGE_CONFIGURATION_PROPERTY = "configuration";
     public static final String EDGE_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;

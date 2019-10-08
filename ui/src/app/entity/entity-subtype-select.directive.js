@@ -22,7 +22,7 @@ import entitySubtypeSelectTemplate from './entity-subtype-select.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function EntitySubtypeSelect($compile, $templateCache, $translate, assetService, deviceService, entityViewService, types) {
+export default function EntitySubtypeSelect($compile, $templateCache, $translate, assetService, deviceService, entityViewService, edgeService, types) {
 
     var linker = function (scope, element, attrs, ngModelCtrl) {
         var template = $templateCache.get(entitySubtypeSelectTemplate);
@@ -77,6 +77,8 @@ export default function EntitySubtypeSelect($compile, $templateCache, $translate
                 entitySubtypesPromise = deviceService.getDeviceTypes({ignoreLoading: true});
             } else if (scope.entityType == types.entityType.entityView) {
                 entitySubtypesPromise = entityViewService.getEntityViewTypes({ignoreLoading: true});
+            } else if (scope.entityType == types.entityType.edge) {
+                entitySubtypesPromise = edgeService.getEdgeTypes({ignoreLoading: true});
             }
             if (entitySubtypesPromise) {
                 entitySubtypesPromise.then(
@@ -105,6 +107,9 @@ export default function EntitySubtypeSelect($compile, $templateCache, $translate
             } else if (scope.entityType == types.entityType.entityView) {
                 scope.entitySubtypeTitle = 'entity-view.entity-view-type';
                 scope.entitySubtypeRequiredText = 'entity-view.entity-view-type-required';
+            } else if (scope.entityType == types.entityType.edge) {
+                scope.entitySubtypeTitle = 'edge.edge-type';
+                scope.entitySubtypeRequiredText = 'edge.edge-type-required';
             }
             scope.entitySubtypes.length = 0;
             if (scope.entitySubtypesList && scope.entitySubtypesList.length) {
@@ -123,6 +128,10 @@ export default function EntitySubtypeSelect($compile, $templateCache, $translate
                     });
                 } else if (scope.entityType == types.entityType.entityView) {
                     scope.$on('entityViewSaved', function() {
+                        loadSubTypes();
+                    });
+                } else if (scope.entityType == types.entityType.edge) {
+                    scope.$on('edgeSaved', function() {
                         loadSubTypes();
                     });
                 }

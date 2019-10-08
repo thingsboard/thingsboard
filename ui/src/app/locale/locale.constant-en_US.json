@@ -319,6 +319,8 @@
         "type-credentials-updated": "Credentials updated",
         "type-assigned-to-customer": "Assigned to Customer",
         "type-unassigned-from-customer": "Unassigned from Customer",
+        "type-assigned-to-edge": "Assigned to Edge",
+        "type-unassigned-from-edge": "Unassigned from Edge",
         "type-activated": "Activated",
         "type-suspended": "Suspended",
         "type-credentials-read": "Credentials read",
@@ -731,6 +733,9 @@
         "idCopiedMessage": "Edge Id has been copied to clipboard",
         "permissions": "Permissions",
         "edge-required": "Edge required",
+        "edge-type": "Edge type",
+        "edge-type-required": "Edge type is required.",
+        "select-edge-type": "Select edge type"
     },
     "error": {
         "unable-to-connect": "Unable to connect to the server! Please check your internet connection.",

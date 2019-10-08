@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.edge;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -24,6 +25,8 @@ import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
+import org.thingsboard.server.common.data.ShortCustomerInfo;
+import org.thingsboard.server.common.data.ShortEdgeInfo;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -40,8 +43,8 @@ public class Edge extends SearchTextBasedWithAdditionalInfo<EdgeId> implements H
     private CustomerId customerId;
     private String name;
     private String type;
+    private String label;
     private transient JsonNode configuration;
-    private transient JsonNode additionalInfo;
 
     public Edge() {
         super();
@@ -58,7 +61,11 @@ public class Edge extends SearchTextBasedWithAdditionalInfo<EdgeId> implements H
         this.type = edge.getType();
         this.name = edge.getName();
         this.configuration = edge.getConfiguration();
-        this.additionalInfo = edge.getAdditionalInfo();
+    }
+
+    @JsonIgnore
+    public ShortEdgeInfo toShortEdgeInfo() {
+        return new ShortEdgeInfo(id, name);
     }
 
     @Override

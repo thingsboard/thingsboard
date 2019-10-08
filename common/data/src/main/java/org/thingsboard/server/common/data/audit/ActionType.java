@@ -40,7 +40,9 @@ public enum ActionType {
     ALARM_CLEAR(false),
     LOGIN(false),
     LOGOUT(false),
-    LOCKOUT(false);
+    LOCKOUT(false),
+    ASSIGNED_TO_EDGE(false), // log edge name
+    UNASSIGNED_FROM_EDGE(false); // log edge name
 
     private final boolean isRead;
 
