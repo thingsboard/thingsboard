@@ -391,15 +391,17 @@ function TimeService($translate, $http, $q, types) {
             aggregation: subscriptionTimewindow.aggregation
         };
 
-        timewindowForComparison.startTs = moment(subscriptionTimewindow.startTs).subtract(1, timeUnit).valueOf(); //eslint-disable-line
-
         if (subscriptionTimewindow.realtimeWindowMs) {
+            timewindowForComparison.startTs = moment(subscriptionTimewindow.startTs).subtract(1, timeUnit).valueOf(); //eslint-disable-line
             timewindowForComparison.realtimeWindowMs = subscriptionTimewindow.realtimeWindowMs;
         } else if (subscriptionTimewindow.fixedWindow) {
             var timeInterval = subscriptionTimewindow.fixedWindow.endTimeMs - subscriptionTimewindow.fixedWindow.startTimeMs;
+            var endTimeMs = moment(subscriptionTimewindow.fixedWindow.endTimeMs).subtract(1, timeUnit).valueOf(); //eslint-disable-line
+
+            timewindowForComparison.startTs = endTimeMs - timeInterval;
             timewindowForComparison.fixedWindow = {
                 startTimeMs: timewindowForComparison.startTs,
-                endTimeMs: timewindowForComparison.startTs + timeInterval
+                endTimeMs: endTimeMs
             };
         }
 
