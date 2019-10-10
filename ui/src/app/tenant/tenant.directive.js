@@ -31,11 +31,10 @@ export default function TenantDirective($compile, $templateCache, $translate, to
 
         scope.types = types;
 
-        scope.tenantPartitionsNumber = 20;
-
+        let tenantPartitionsNumber = 10;
         scope.changeExecutionType = function() {
             if (scope.tenant.ruleEngineSettings.executionType == types.ruleEngine.executionTypes.shared.value) {
-                scope.tenant.ruleEngineSettings.partitionsNumber = scope.tenantPartitionsNumber;
+                scope.tenant.ruleEngineSettings.partitionsNumber = tenantPartitionsNumber;
             } else {
                 scope.tenant.ruleEngineSettings.partitionsNumber = undefined;
             }
@@ -44,7 +43,8 @@ export default function TenantDirective($compile, $templateCache, $translate, to
         tenantService.getTenantPartitionsNumber().then(
             function (response) {
                 if (response) {
-                    scope.tenantPartitionsNumber = response;
+                    tenantPartitionsNumber = response;
+                    scope.tenant.ruleEngineSettings.partitionsNumber = tenantPartitionsNumber;
                 }
             }
         );

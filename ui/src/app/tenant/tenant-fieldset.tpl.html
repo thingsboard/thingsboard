@@ -59,7 +59,8 @@
 						<label translate>tenant.executionType</label>
 						<md-select name="executionType" aria-label="{{ 'tenant.executionType' | translate }}"
 								   ng-model="tenant.ruleEngineSettings.executionType" ng-change="changeExecutionType()" required>
-							<md-option ng-repeat="executionType in types.ruleEngine.executionTypes" value="{{executionType.value}}">
+							<md-option ng-repeat="executionType in types.ruleEngine.executionTypes" value="{{executionType.value}}"
+									   ng-selected="{{ executionType.value === types.ruleEngine.executionTypes.shared.value ? 'true' : '' }}">
 								{{executionType.name | translate}}
 							</md-option>
 						</md-select>
