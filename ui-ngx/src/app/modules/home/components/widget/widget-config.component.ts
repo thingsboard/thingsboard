@@ -19,20 +19,35 @@ import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
+  DataKey,
   Datasource,
+  DatasourceType,
   LegendConfig,
   WidgetActionDescriptor,
-  WidgetActionSource, WidgetConfigSettings,
+  WidgetActionSource,
+  WidgetConfigSettings,
   widgetType,
   WidgetTypeParameters
 } from '@shared/models/widget.models';
-import { ControlValueAccessor, FormControl, NG_VALIDATORS, NG_VALUE_ACCESSOR, Validator } from '@angular/forms';
+import {
+  ControlValueAccessor,
+  FormArray,
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  NG_VALIDATORS,
+  NG_VALUE_ACCESSOR,
+  Validator,
+  Validators
+} from '@angular/forms';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
-import { deepClone, isDefined } from '@app/core/utils';
-import { Timewindow } from '@shared/models/time/time.models';
-import { AlarmSearchStatus } from '@shared/models/alarm.models';
+import { deepClone, isDefined, isObject } from '@app/core/utils';
+import { alarmFields, AlarmSearchStatus } from '@shared/models/alarm.models';
 import { IAliasController } from '@core/api/widget-api.models';
 import { EntityAlias } from '@shared/models/alias.models';
+import { UtilsService } from '@core/services/utils.service';
+import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'tb-widget-config',
@@ -55,14 +70,13 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
 
   widgetTypes = widgetType;
 
+  alarmSearchStatuses = Object.keys(AlarmSearchStatus);
+
   @Input()
   forceExpandDatasources: boolean;
 
   @Input()
   isDataEnabled: boolean;
-
-  @Input()
-  widgetType: widgetType;
 
   @Input()
   typeParameters: WidgetTypeParameters;
@@ -84,6 +98,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
 
   @Input() disabled: boolean;
 
+  widgetType: widgetType;
+
   selectedTab: number;
   title: string;
   showTitleIcon: boolean;
@@ -101,17 +117,11 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   titleStyle: string;
   units: string;
   decimals: number;
-  useDashboardTimewindow: boolean;
-  displayTimewindow: boolean;
-  timewindow: Timewindow;
   showLegend: boolean;
   legendConfig: LegendConfig;
   actions: {[actionSourceId: string]: Array<WidgetActionDescriptor>};
-  datasources: Array<Datasource>;
   targetDeviceAlias: EntityAlias;
   alarmSource: Datasource;
-  alarmSearchStatus: AlarmSearchStatus;
-  alarmsPollingInterval: number;
   settings: WidgetConfigSettings;
   mobileOrder: number;
   mobileHeight: number;
@@ -138,11 +148,51 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
 
   private propagateChange = null;
 
-  constructor(protected store: Store<AppState>) {
+  public dataSettings: FormGroup;
+
+  constructor(protected store: Store<AppState>,
+              private utils: UtilsService,
+              private translate: TranslateService,
+              private fb: FormBuilder) {
     super(store);
   }
 
   ngOnInit(): void {
+
+  }
+
+  private buildForms() {
+    this.dataSettings = this.fb.group({});
+    if (this.widgetType === widgetType.timeseries || this.widgetType === widgetType.alarm) {
+      this.dataSettings.addControl('useDashboardTimewindow', this.fb.control(null));
+      this.dataSettings.addControl('displayTimewindow', this.fb.control(null));
+      this.dataSettings.addControl('timewindow', this.fb.control(null));
+      this.dataSettings.get('useDashboardTimewindow').valueChanges.subscribe((value: boolean) => {
+        if (value) {
+          this.dataSettings.get('displayTimewindow').disable({emitEvent: false});
+          this.dataSettings.get('timewindow').disable({emitEvent: false});
+        } else {
+          this.dataSettings.get('displayTimewindow').enable({emitEvent: false});
+          this.dataSettings.get('timewindow').enable({emitEvent: false});
+        }
+      });
+      if (this.widgetType === widgetType.alarm) {
+        this.dataSettings.addControl('alarmSearchStatus', this.fb.control(null));
+        this.dataSettings.addControl('alarmsPollingInterval', this.fb.control(null,
+          [Validators.required, Validators.min(1)]));
+      }
+    }
+    if (this.isDataEnabled) {
+      if (this.widgetType !== widgetType.rpc &&
+        this.widgetType !== widgetType.alarm &&
+        this.widgetType !== widgetType.static) {
+        this.dataSettings.addControl('datasources',
+          this.fb.array([]));
+      }
+    }
+    this.dataSettings.valueChanges.subscribe(
+      () => this.updateModel()
+    );
   }
 
   registerOnChange(fn: any): void {
@@ -159,6 +209,10 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   writeValue(value: WidgetConfigComponentData): void {
     this.modelValue = value;
     if (this.modelValue) {
+      if (this.widgetType !== this.modelValue.widgetType) {
+        this.widgetType = this.modelValue.widgetType;
+        this.buildForms();
+      }
       const config = this.modelValue.config;
       const layout = this.modelValue.layout;
       if (config) {
@@ -184,23 +238,42 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
           }, null, 2);
         this.units = config.units;
         this.decimals = config.decimals;
-        this.useDashboardTimewindow = isDefined(config.useDashboardTimewindow) ?
-          config.useDashboardTimewindow : true;
-        this.displayTimewindow = isDefined(config.displayTimewindow) ?
-          config.displayTimewindow : true;
-        this.timewindow = config.timewindow;
         this.actions = config.actions;
         if (!this.actions) {
           this.actions = {};
+        }
+        if (this.widgetType === widgetType.timeseries || this.widgetType === widgetType.alarm) {
+          const useDashboardTimewindow = isDefined(config.useDashboardTimewindow) ?
+            config.useDashboardTimewindow : true;
+          this.dataSettings.patchValue(
+            { useDashboardTimewindow }, {emitEvent: false}
+          );
+          if (useDashboardTimewindow) {
+            this.dataSettings.get('displayTimewindow').disable({emitEvent: false});
+            this.dataSettings.get('timewindow').disable({emitEvent: false});
+          } else {
+            this.dataSettings.get('displayTimewindow').enable({emitEvent: false});
+            this.dataSettings.get('timewindow').enable({emitEvent: false});
+          }
+          this.dataSettings.patchValue(
+            { displayTimewindow: isDefined(config.displayTimewindow) ?
+                config.displayTimewindow : true }, {emitEvent: false}
+          );
+          this.dataSettings.patchValue(
+            { timewindow: config.timewindow }, {emitEvent: false}
+          );
         }
         if (this.isDataEnabled) {
           if (this.widgetType !== widgetType.rpc &&
             this.widgetType !== widgetType.alarm &&
             this.widgetType !== widgetType.static) {
+            const datasourcesFormArray = this.dataSettings.get('datasources') as FormArray;
+            datasourcesFormArray.controls.length = 0;
             if (config.datasources) {
-              this.datasources = config.datasources;
-            } else {
-              this.datasources = [];
+              config.datasources.forEach((datasource) => {
+                datasourcesFormArray.controls.push(this.fb.control(datasource));
+              });
+              datasourcesFormArray.setValue(config.datasources, {emitEvent: false});
             }
           } else if (this.widgetType === widgetType.rpc) {
             if (config.targetDeviceAliasIds && config.targetDeviceAliasIds.length > 0) {
@@ -215,10 +288,14 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
               this.targetDeviceAlias = null;
             }
           } else if (this.widgetType === widgetType.alarm) {
-            this.alarmSearchStatus = isDefined(config.alarmSearchStatus) ?
-              config.alarmSearchStatus : AlarmSearchStatus.ANY;
-            this.alarmsPollingInterval = isDefined(config.alarmsPollingInterval) ?
-              config.alarmsPollingInterval : 5;
+            this.dataSettings.patchValue(
+              { alarmSearchStatus: isDefined(config.alarmSearchStatus) ?
+                  config.alarmSearchStatus : AlarmSearchStatus.ANY }, {emitEvent: false}
+            );
+            this.dataSettings.patchValue(
+              { alarmsPollingInterval: isDefined(config.alarmsPollingInterval) ?
+                  config.alarmsPollingInterval : 5}, {emitEvent: false}
+            );
             if (config.alarmSource) {
               this.alarmSource = config.alarmSource;
             } else {
@@ -255,13 +332,10 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     }
   }
 
-  public updateModel() {
+  private updateModel() {
     if (this.modelValue) {
       if (this.modelValue.config) {
-        const config = this.modelValue.config;
-        config.useDashboardTimewindow = this.useDashboardTimewindow;
-        config.displayTimewindow = this.displayTimewindow;
-        config.timewindow = this.timewindow;
+        Object.assign(this.modelValue.config, this.dataSettings.value);
       }
       this.propagateChange(this.modelValue);
     }
@@ -271,12 +345,150 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     return this.widgetSettingsSchema && this.widgetSettingsSchema.schema;
   }
 
+  public removeDatasource(index: number) {
+    (this.dataSettings.get('datasources') as FormArray).removeAt(index);
+  }
+
+  public addDatasource() {
+    let newDatasource: Datasource;
+    if (this.functionsOnly) {
+      newDatasource = deepClone(this.utils.getDefaultDatasource(this.dataKeySettingsSchema.schema));
+      newDatasource.dataKeys = [this.generateDataKey('Sin', DataKeyType.function)];
+    } else {
+      newDatasource = { type: DatasourceType.entity,
+        dataKeys: []
+      };
+    }
+    const datasourcesFormArray = this.dataSettings.get('datasources') as FormArray;
+    datasourcesFormArray.push(this.fb.control(newDatasource));
+  }
+
+  public generateDataKey(chip: any, type: DataKeyType): DataKey {
+    if (isObject(chip)) {
+      (chip as DataKey)._hash = Math.random();
+      return chip;
+    } else {
+      let label: string = chip;
+      if (type === DataKeyType.alarm) {
+        const alarmField = alarmFields[label];
+        if (alarmField) {
+          label = this.translate.instant(alarmField.name);
+        }
+      }
+      label = this.genNextLabel(label);
+      const result: DataKey = {
+        name: chip,
+        type,
+        label,
+        color: this.genNextColor(),
+        settings: {},
+        _hash: Math.random()
+      };
+      if (type === DataKeyType.function) {
+        result.name = 'f(x)';
+        result.funcBody = this.utils.getPredefinedFunctionBody(chip);
+        if (!result.funcBody) {
+          result.funcBody = 'return prevValue + 1;';
+        }
+      }
+      if (isDefined(this.dataKeySettingsSchema.schema)) {
+        result.settings = this.utils.generateObjectFromJsonSchema(this.dataKeySettingsSchema.schema);
+      }
+      return result;
+    }
+  }
+
+  private genNextLabel(name: string): string {
+    let label = name;
+    let i = 1;
+    let matches = false;
+    const datasources = this.widgetType === widgetType.alarm ? [this.modelValue.config.alarmSource] : this.modelValue.config.datasources;
+    if (datasources) {
+      do {
+        matches = false;
+        datasources.forEach((datasource) => {
+          if (datasource && datasource.dataKeys) {
+            datasource.dataKeys.forEach((dataKey) => {
+              if (dataKey.label === label) {
+                i++;
+                label = name + ' ' + i;
+                matches = true;
+              }
+            });
+          }
+        });
+      } while (matches);
+    }
+    return label;
+  }
+
+  private genNextColor(): string {
+    let i = 0;
+    const datasources = this.widgetType === widgetType.alarm ? [this.modelValue.config.alarmSource] : this.modelValue.config.datasources;
+    if (datasources) {
+      datasources.forEach((datasource) => {
+        if (datasource && datasource.dataKeys) {
+          i += datasource.dataKeys.length;
+        }
+      });
+    }
+    return this.utils.getMaterialColor(i);
+  }
+
   public validate(c: FormControl) {
-    return null; /*{
-      targetDeviceAliasIds: {
-        valid: false,
-      },
-    };*/
+    if (!this.dataSettings.valid) {
+      return {
+        dataSettings: {
+          valid: false
+        }
+      };
+    } else {
+      const config = this.modelValue.config;
+      if (this.widgetType === widgetType.rpc && this.isDataEnabled) {
+        if (!config.targetDeviceAliasIds || !config.targetDeviceAliasIds.length) {
+          return {
+            targetDeviceAliasIds: {
+              valid: false
+            }
+          };
+        }
+      } else if (this.widgetType === widgetType.alarm && this.isDataEnabled) {
+        if (!config.alarmSource) {
+          return {
+            alarmSource: {
+              valid: false
+            }
+          };
+        }
+      } else if (this.widgetType !== widgetType.static && this.isDataEnabled) {
+        if (!config.datasources || !config.datasources.length) {
+          return {
+            datasources: {
+              valid: false
+            }
+          };
+        }
+      }
+      try {
+        JSON.parse(this.widgetStyle);
+      } catch (e) {
+        return {
+          widgetStyle: {
+            valid: false
+          }
+        };
+      }
+      try {
+        JSON.parse(this.titleStyle);
+      } catch (e) {
+        return {
+          titleStyle: {
+            valid: false
+          }
+        };
+      }
+    }
+    return null;
   }
 
 }

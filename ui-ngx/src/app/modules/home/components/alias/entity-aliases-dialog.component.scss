@@ -13,15 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 :host {
+
+  .tb-aliases-header {
+    min-height: 40px;
+    padding: 0 34px 0 34px;
+    margin: 5px;
+
+    .tb-header-label {
+      font-size: 14px;
+      color: rgba(0, 0, 0, .570588);
+    }
+  }
+
+  .tb-alias {
+    padding: 0 0 0 10px;
+    margin: 5px;
+
+    .tb-resolve-multiple-switch {
+      padding-left: 10px;
+
+      .resolve-multiple-switch {
+        margin: 0;
+      }
+    }
+  }
 }
 
 :host ::ng-deep {
-  tb-entity-list {
-    &.tb-not-empty {
-      .mat-form-field-flex {
-        padding-top: 0;
-      }
-    }
+  .mat-dialog-content {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
   }
 }

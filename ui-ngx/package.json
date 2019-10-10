@@ -46,6 +46,7 @@
     "jquery": "^3.4.1",
     "jquery.terminal": "^2.8.0",
     "js-beautify": "^1.10.2",
+    "json-schema-defaults": "^0.4.0",
     "material-design-icons": "^3.0.1",
     "messageformat": "^2.3.0",
     "moment": "^2.24.0",

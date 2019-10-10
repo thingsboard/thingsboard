@@ -28,5 +28,8 @@
         height: 100%;
       }
     }
+    .mat-expansion-panel.tb-datasources.mat-expanded {
+      overflow: visible;
+    }
   }
 }

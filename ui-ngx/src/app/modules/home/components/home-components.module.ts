@@ -41,6 +41,11 @@ import { LegendComponent } from '@home/components/widget/legend.component';
 import { AliasesEntitySelectPanelComponent } from '@home/components/alias/aliases-entity-select-panel.component';
 import { AliasesEntitySelectComponent } from '@home/components/alias/aliases-entity-select.component';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
+import { EntityAliasesDialogComponent } from '@home/components/alias/entity-aliases-dialog.component';
+import { EntityFilterViewComponent } from './entity/entity-filter-view.component';
+import { EntityAliasDialogComponent } from './alias/entity-alias-dialog.component';
+import { EntityFilterComponent } from './entity/entity-filter.component';
+import { RelationFiltersComponent } from './relation/relation-filters.component';
 
 @NgModule({
   entryComponents: [
@@ -52,7 +57,9 @@ import { WidgetConfigComponent } from '@home/components/widget/widget-config.com
     AlarmDetailsDialogComponent,
     AddAttributeDialogComponent,
     EditAttributeValuePanelComponent,
-    AliasesEntitySelectPanelComponent
+    AliasesEntitySelectPanelComponent,
+    EntityAliasesDialogComponent,
+    EntityAliasDialogComponent
   ],
   declarations:
     [
@@ -67,6 +74,7 @@ import { WidgetConfigComponent } from '@home/components/widget/widget-config.com
       EventTableComponent,
       RelationTableComponent,
       RelationDialogComponent,
+      RelationFiltersComponent,
       AlarmTableHeaderComponent,
       AlarmTableComponent,
       AlarmDetailsDialogComponent,
@@ -75,10 +83,14 @@ import { WidgetConfigComponent } from '@home/components/widget/widget-config.com
       EditAttributeValuePanelComponent,
       AliasesEntitySelectPanelComponent,
       AliasesEntitySelectComponent,
+      EntityAliasesDialogComponent,
+      EntityAliasDialogComponent,
       DashboardComponent,
       WidgetComponent,
       LegendComponent,
-      WidgetConfigComponent
+      WidgetConfigComponent,
+      EntityFilterViewComponent,
+      EntityFilterComponent
     ],
   imports: [
     CommonModule,
@@ -93,14 +105,19 @@ import { WidgetConfigComponent } from '@home/components/widget/widget-config.com
     AuditLogTableComponent,
     EventTableComponent,
     RelationTableComponent,
+    RelationFiltersComponent,
     AlarmTableComponent,
     AlarmDetailsDialogComponent,
     AttributeTableComponent,
     AliasesEntitySelectComponent,
+    EntityAliasesDialogComponent,
+    EntityAliasDialogComponent,
     DashboardComponent,
     WidgetComponent,
     LegendComponent,
-    WidgetConfigComponent
+    WidgetConfigComponent,
+    EntityFilterViewComponent,
+    EntityFilterComponent
   ],
   providers: [
     WidgetComponentService

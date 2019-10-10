@@ -17,18 +17,38 @@
 import { Inject, Injectable } from '@angular/core';
 import { WINDOW } from '@core/services/window.service';
 import { ExceptionData } from '@app/shared/models/error.models';
-import { isUndefined, isDefined, deepClone } from '@core/utils';
+import { deepClone, isDefined, isUndefined, deleteNullProperties } from '@core/utils';
 import { WindowMessage } from '@shared/models/window-message.model';
 import { TranslateService } from '@ngx-translate/core';
 import { customTranslationsPrefix } from '@app/shared/models/constants';
-import { DataKey, Datasource, DatasourceType, KeyInfo, Widget } from '@shared/models/widget.models';
+import { DataKey, Datasource, DatasourceType, KeyInfo } from '@shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { DataKeyType } from '@app/shared/models/telemetry/telemetry.models';
 import { alarmFields } from '@shared/models/alarm.models';
 import { materialColors } from '@app/shared/models/material.models';
 import { WidgetInfo } from '@home/models/widget-component.models';
+import jsonSchemaDefaults from 'json-schema-defaults';
 
 const varsRegex = /\$\{([^}]*)\}/g;
+
+const predefinedFunctions: {[func: string]: string} = {
+  Sin: 'return Math.round(1000*Math.sin(time/5000));',
+  Cos: 'return Math.round(1000*Math.cos(time/5000));',
+  Random: 'var value = prevValue + Math.random() * 100 - 50;\n' +
+    'var multiplier = Math.pow(10, 2 || 0);\n' +
+    'var value = Math.round(value * multiplier) / multiplier;\n' +
+    'if (value < -1000) {\n' +
+    '	value = -1000;\n' +
+    '} else if (value > 1000) {\n' +
+    '	value = 1000;\n' +
+    '}\n' +
+    'return value;'
+};
+
+const predefinedFunctionsList: Array<string> = [];
+for (const func of Object.keys(predefinedFunctions)) {
+  predefinedFunctionsList.push(func);
+}
 
 @Injectable({
   providedIn: 'root'
@@ -38,6 +58,22 @@ export class UtilsService {
   iframeMode = false;
   widgetEditMode = false;
   editWidgetInfo: WidgetInfo = null;
+
+  defaultDataKey: DataKey = {
+    name: 'f(x)',
+    type: DataKeyType.function,
+    label: 'Sin',
+    color: this.getMaterialColor(0),
+    funcBody: this.getPredefinedFunctionBody('Sin'),
+    settings: {},
+    _hash: Math.random()
+  };
+
+  defaultDatasource: Datasource = {
+    type: DatasourceType.function,
+    name: DatasourceType.function,
+    dataKeys: [deepClone(this.defaultDataKey)]
+  };
 
   constructor(@Inject(WINDOW) private window: Window,
               private translate: TranslateService) {
@@ -55,6 +91,28 @@ export class UtilsService {
         this.widgetEditMode = true;
       }
     }
+  }
+
+  public getPredefinedFunctionsList(): Array<string> {
+    return predefinedFunctionsList;
+  }
+
+  public getPredefinedFunctionBody(func: string): string {
+    return predefinedFunctions[func];
+  }
+
+  public getDefaultDatasource(dataKeySchema: any): Datasource {
+    const datasource = deepClone(this.defaultDatasource);
+    if (isDefined(dataKeySchema)) {
+      datasource.dataKeys[0].settings = this.generateObjectFromJsonSchema(dataKeySchema);
+    }
+    return datasource;
+  }
+
+  public generateObjectFromJsonSchema(schema: any): any {
+    const obj = jsonSchemaDefaults(schema);
+    deleteNullProperties(obj);
+    return obj;
   }
 
   public hashCode(str: string): number {
@@ -192,7 +250,7 @@ export class UtilsService {
     return datasources;
   }
 
-  public getMaterialColor(index) {
+  public getMaterialColor(index: number) {
     const colorIndex = index % materialColors.length;
     return materialColors[colorIndex].value;
   }

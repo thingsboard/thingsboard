@@ -18,7 +18,6 @@
 <form [formGroup]="widgetFormGroup">
   <fieldset [disabled]="isLoading$ | async">
     <tb-widget-config
-      [widgetType]="widget.type"
       [typeParameters]="typeParameters"
       [actionSources]="actionSources"
       [isDataEnabled]="isDataEnabled"

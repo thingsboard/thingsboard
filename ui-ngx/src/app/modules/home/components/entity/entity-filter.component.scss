@@ -14,13 +14,24 @@
  * limitations under the License.
  */
 :host {
-}
+  .tb-entity-filter {
+    #relationsQueryFilter {
+      padding-top: 20px;
 
-:host ::ng-deep {
-  tb-entity-list {
-    &.tb-not-empty {
-      .mat-form-field-flex {
-        padding-top: 0;
+      tb-entity-select {
+        min-height: 92px;
+      }
+    }
+
+    .tb-root-state-entity-switch {
+      padding-left: 10px;
+
+      .root-state-entity-switch {
+        margin: 0;
+      }
+
+      .root-state-entity-label {
+        margin: 5px 0 5px 10px;
       }
     }
   }

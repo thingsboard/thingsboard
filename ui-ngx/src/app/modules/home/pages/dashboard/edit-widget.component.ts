@@ -28,7 +28,7 @@ import { IAliasController } from '@core/api/widget-api.models';
 import { Widget, WidgetActionSource, WidgetTypeParameters } from '@shared/models/widget.models';
 import { WidgetComponentService } from '@home/components/widget/widget-component.service';
 import { WidgetConfigComponentData } from '../../models/widget-component.models';
-import { isString } from '@core/utils';
+import { isDefined, isString } from '@core/utils';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 
 @Component({
@@ -92,13 +92,14 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
     const widgetInfo = this.widgetComponentService.getInstantWidgetInfo(this.widget);
     this.widgetConfig = {
       config: this.widget.config,
-      layout: this.widgetLayout
+      layout: this.widgetLayout,
+      widgetType: this.widget.type
     };
     const settingsSchema = widgetInfo.typeSettingsSchema || widgetInfo.settingsSchema;
     const dataKeySettingsSchema = widgetInfo.typeDataKeySettingsSchema || widgetInfo.dataKeySettingsSchema;
     this.typeParameters = widgetInfo.typeParameters;
     this.actionSources = widgetInfo.actionSources;
-    this.isDataEnabled = widgetInfo.typeParameters && !widgetInfo.typeParameters.useCustomDatasources;
+    this.isDataEnabled = isDefined(widgetInfo.typeParameters) ? !widgetInfo.typeParameters.useCustomDatasources : true;
     if (!settingsSchema || settingsSchema === '') {
       this.settingsSchema = {};
     } else {

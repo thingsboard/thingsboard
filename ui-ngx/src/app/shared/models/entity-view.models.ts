@@ -20,6 +20,7 @@ import {TenantId} from '@shared/models/id/tenant-id';
 import {CustomerId} from '@shared/models/id/customer-id';
 import {EntityViewId} from '@shared/models/id/entity-view-id';
 import {EntityId} from '@shared/models/id/entity-id';
+import { EntitySearchQuery } from '@shared/models/relation.models';
 
 export interface AttributesEntityView {
   cs: Array<string>;
@@ -47,4 +48,8 @@ export interface EntityView extends BaseData<EntityViewId> {
 export interface EntityViewInfo extends EntityView {
   customerTitle: string;
   customerIsPublic: boolean;
+}
+
+export interface EntityViewSearchQuery extends EntitySearchQuery {
+  entityViewTypes: Array<string>;
 }

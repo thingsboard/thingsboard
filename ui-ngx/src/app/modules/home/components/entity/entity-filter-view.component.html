@@ -15,15 +15,11 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="entityTypeFormGroup">
-  <mat-label *ngIf="showLabel">{{ 'entity.type' | translate }}</mat-label>
-  <mat-select [required]="required"
-              class="tb-entity-type-select" matInput formControlName="entityType">
-    <mat-option *ngFor="let type of entityTypes" [value]="type">
-      {{ displayEntityTypeFn(type) }}
-    </mat-option>
-  </mat-select>
-  <mat-error *ngIf="entityTypeFormGroup.get('entityType').hasError('required')">
-    {{ 'entity.type-required' | translate }}
-  </mat-error>
-</mat-form-field>
+<div fxLayout="column" class="tb-entity-filter-view">
+  <div *ngIf="!filter || !filter.type; else filterView" class="entity-filter-empty" translate>alias.no-entity-filter-specified</div>
+  <ng-template #filterView>
+    <div fxLayout="column">
+      <div class="entity-filter-value">{{ filterDisplayValue }}</div>
+    </div>
+  </ng-template>
+</div>

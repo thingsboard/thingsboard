@@ -103,6 +103,23 @@ export function isString(value: any): boolean {
   return typeof value === 'string';
 }
 
+export function deleteNullProperties(obj: any) {
+  if (isUndefined(obj) || obj == null) {
+    return;
+  }
+  Object.keys(obj).forEach((propName) => {
+    if (obj[propName] === null || isUndefined(obj[propName])) {
+      delete obj[propName];
+    } else if (isObject(obj[propName])) {
+      deleteNullProperties(obj[propName]);
+    } else if (obj[propName] instanceof Array) {
+      (obj[propName] as any[]).forEach((elem) => {
+        deleteNullProperties(elem);
+      });
+    }
+  });
+}
+
 export function objToBase64(obj: any): string {
   const json = JSON.stringify(obj);
   const encoded = utf8Encode(json);

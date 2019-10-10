@@ -21,7 +21,8 @@ import {HttpClient} from '@angular/common/http';
 import {PageLink} from '@shared/models/page/page-link';
 import {PageData} from '@shared/models/page/page-data';
 import {EntitySubtype} from '@app/shared/models/entity-type.models';
-import {EntityView, EntityViewInfo} from '@app/shared/models/entity-view.models';
+import { EntityView, EntityViewInfo, EntityViewSearchQuery } from '@app/shared/models/entity-view.models';
+import { Asset, AssetSearchQuery } from '@shared/models/asset.models';
 
 @Injectable({
   providedIn: 'root'
@@ -78,6 +79,11 @@ export class EntityViewService {
 
   public unassignEntityViewFromCustomer(entityViewId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false) {
     return this.http.delete(`/api/customer/entityView/${entityViewId}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  }
+
+  public findByQuery(query: EntityViewSearchQuery,
+                     ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Array<EntityView>> {
+    return this.http.post<Array<EntityView>>('/api/entityViews', query, defaultHttpOptions(ignoreLoading, ignoreErrors));
   }
 
 }

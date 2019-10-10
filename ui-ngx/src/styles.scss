@@ -246,6 +246,15 @@ div {
   color: #808080;
 }
 
+.mat-caption {
+  &.tb-required::after {
+    font-size: 10px;
+    color: rgba(0, 0, 0, .54);
+    vertical-align: top;
+    content: " *";
+  }
+}
+
 pre.tb-highlight {
   display: block;
   padding: 15px;
@@ -301,6 +310,15 @@ pre.tb-highlight {
   position: relative;
   padding: 10px 0;
   margin-top: 32px;
+}
+
+.tb-prompt {
+  display: flex;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 18px;
+  color: rgba(0, 0, 0, .38);
+  text-transform: uppercase;
 }
 
 .tb-fullscreen {

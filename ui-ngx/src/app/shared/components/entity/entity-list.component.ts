@@ -20,8 +20,8 @@ import {
   Component,
   ElementRef,
   forwardRef,
-  Input,
-  OnInit,
+  Input, OnChanges,
+  OnInit, SimpleChanges,
   SkipSelf,
   ViewChild
 } from '@angular/core';
@@ -49,7 +49,7 @@ import { emptyPageData } from '@shared/models/page/page-data';
 @Component({
   selector: 'tb-entity-list',
   templateUrl: './entity-list.component.html',
-  styleUrls: [],
+  styleUrls: ['./entity-list.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -58,21 +58,14 @@ import { emptyPageData } from '@shared/models/page/page-data';
     }
   ]
 })
-export class EntityListComponent implements ControlValueAccessor, OnInit, AfterViewInit {
+export class EntityListComponent implements ControlValueAccessor, OnInit, AfterViewInit, OnChanges {
 
   entityListFormGroup: FormGroup;
 
   modelValue: Array<string> | null;
 
-  entityTypeValue: EntityType;
-
   @Input()
-  set entityType(entityType: EntityType) {
-    if (this.entityTypeValue !== entityType) {
-      this.entityTypeValue = entityType;
-      this.reset();
-    }
-  }
+  entityType: EntityType;
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -143,6 +136,17 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
     );
   }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    for (const propName of Object.keys(changes)) {
+      const change = changes[propName];
+      if (!change.firstChange && change.currentValue !== change.previousValue) {
+        if (propName === 'entityType') {
+          this.reset();
+        }
+      }
+    }
+  }
+
   ngAfterViewInit(): void {
   }
 
@@ -159,7 +163,7 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
     this.searchText = '';
     if (value != null && value.length > 0) {
       this.modelValue = [...value];
-      this.entityService.getEntities(this.entityTypeValue, value).subscribe(
+      this.entityService.getEntities(this.entityType, value).subscribe(
         (entities) => {
           this.entities = entities;
           this.entityListFormGroup.get('entities').setValue(this.entities);
@@ -218,7 +222,7 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
 
   fetchEntities(searchText?: string): Observable<Array<BaseData<EntityId>>> {
     this.searchText = searchText;
-    return this.entityService.getEntitiesByNameFilter(this.entityTypeValue, searchText,
+    return this.entityService.getEntitiesByNameFilter(this.entityType, searchText,
       50, '', false, true).pipe(
       map((data) => data ? data : []));
   }

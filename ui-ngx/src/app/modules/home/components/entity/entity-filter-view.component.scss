@@ -14,14 +14,23 @@
  * limitations under the License.
  */
 :host {
-}
+  .tb-entity-filter-view {
+    .entity-filter-empty {
+      font-size: 14px;
+      line-height: 16px;
+      color: rgba(221, 44, 0, .87);
+    }
 
-:host ::ng-deep {
-  tb-entity-list {
-    &.tb-not-empty {
-      .mat-form-field-flex {
-        padding-top: 0;
-      }
+    .entity-filter-type {
+      font-size: 14px;
+      line-height: 16px;
+      color: rgba(0, 0, 0, .570588);
+    }
+
+    .entity-filter-value {
+      font-size: 14px;
+      line-height: 16px;
+      color: rgba(0, 0, 0, .570588);
     }
   }
 }

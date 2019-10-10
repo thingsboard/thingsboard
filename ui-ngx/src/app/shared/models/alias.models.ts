@@ -14,7 +14,10 @@
 /// limitations under the License.
 ///
 
-import { EntityType } from '@shared/models/entity-type.models';
+import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
+import { EntityId } from '@shared/models/id/entity-id';
+import { EntitySearchDirection, EntityTypeFilter } from '@shared/models/relation.models';
+import { EntityInfo } from './entity.models';
 
 export enum AliasFilterType {
   singleEntity = 'singleEntity',
@@ -46,15 +49,87 @@ export const aliasFilterTypeTranslationMap = new Map<AliasFilterType, string>(
   ]
 );
 
-export interface EntityAliasFilter {
-  type: AliasFilterType;
-  entityType: EntityType;
-  resolveMultiple: boolean;
-  entityList?: string[];
-  entityNameFilter?: string;
-  [key: string]: any;
-  // TODO:
+export interface SingleEntityFilter {
+  singleEntity?: EntityId;
+}
 
+export interface EntityListFilter {
+  entityType?: EntityType;
+  entityList?: string[];
+}
+
+export interface EntityNameFilter {
+  entityType?: EntityType;
+  entityNameFilter?: string;
+}
+
+export interface StateEntityFilter {
+  stateEntityParamName?: string;
+  defaultStateEntity?: EntityId;
+}
+
+export interface AssetTypeFilter {
+  assetType?: string;
+  assetNameFilter?: string;
+}
+
+export interface DeviceTypeFilter {
+  deviceType?: string;
+  deviceNameFilter?: string;
+}
+
+export interface EntityViewFilter {
+  entityViewType?: string;
+  entityViewNameFilter?: string;
+}
+
+export interface RelationsQueryFilter {
+  rootStateEntity?: boolean;
+  stateEntityParamName?: string;
+  defaultStateEntity?: EntityId;
+  rootEntity?: EntityId;
+  direction?: EntitySearchDirection;
+  filters?: Array<EntityTypeFilter>;
+  maxLevel?: number;
+}
+
+export interface EntitySearchQueryFilter {
+  rootStateEntity?: boolean;
+  stateEntityParamName?: string;
+  defaultStateEntity?: EntityId;
+  rootEntity?: EntityId;
+  relationType?: string;
+  direction?: EntitySearchDirection;
+}
+
+export interface AssetSearchQueryFilter extends EntitySearchQueryFilter {
+  assetTypes?: string[];
+}
+
+export interface DeviceSearchQueryFilter extends EntitySearchQueryFilter {
+  deviceTypes?: string[];
+}
+
+export interface EntityViewSearchQueryFilter extends EntitySearchQueryFilter {
+  entityViewTypes?: string[];
+}
+
+export type EntityFilters =
+  SingleEntityFilter &
+  EntityListFilter &
+  EntityNameFilter &
+  StateEntityFilter &
+  AssetTypeFilter &
+  DeviceTypeFilter &
+  EntityViewFilter &
+  RelationsQueryFilter &
+  AssetSearchQueryFilter &
+  DeviceSearchQueryFilter &
+  EntityViewSearchQueryFilter;
+
+export interface EntityAliasFilter extends EntityFilters {
+  type?: AliasFilterType;
+  resolveMultiple: boolean;
 }
 
 export interface EntityAlias {
@@ -62,9 +137,14 @@ export interface EntityAlias {
   alias: string;
   filter: EntityAliasFilter;
   [key: string]: any;
-  // TODO:
 }
 
 export interface EntityAliases {
   [id: string]: EntityAlias;
+}
+
+export interface EntityAliasFilterResult {
+  entities: Array<EntityInfo>;
+  stateEntity: boolean;
+  entityParamName?: string;
 }

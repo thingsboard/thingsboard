@@ -121,6 +121,7 @@ export interface WidgetInfo extends WidgetTypeDescriptor, WidgetControllerDescri
 export interface WidgetConfigComponentData {
   config: WidgetConfig;
   layout: WidgetLayout;
+  widgetType: widgetType;
 }
 
 export const MissingWidgetType: WidgetInfo = {

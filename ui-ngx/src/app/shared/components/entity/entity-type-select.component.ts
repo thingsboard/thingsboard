@@ -45,8 +45,14 @@ export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, 
   @Input()
   useAliasEntityTypes: boolean;
 
+  private showLabelValue: boolean;
+  get showLabel(): boolean {
+    return this.showLabelValue;
+  }
   @Input()
-  showLabel: boolean;
+  set showLabel(value: boolean) {
+    this.showLabelValue = coerceBooleanProperty(value);
+  }
 
   private requiredValue: boolean;
   get required(): boolean {

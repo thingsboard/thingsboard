@@ -16,26 +16,121 @@
 
 -->
 <mat-tab-group [ngClass]="{'tb-headless': (widgetType === widgetTypes.static && !displayAdvanced())}"
-               fxFlex class="tb-widget-config tb-absolute-fill" [selectedIndex]="selectedTab">
+               fxFlex class="tb-widget-config tb-absolute-fill" [(selectedIndex)]="selectedTab">
   <mat-tab label="{{ 'widget-config.data' | translate }}" [fxShow]="widgetType !== widgetTypes.static">
-    <div class="mat-content mat-padding" fxLayout="column">
-      <div [fxShow]="widgetType === widgetTypes.timeseries || widgetType === widgetTypes.alarm"
-            fxLayout="column" fxLayoutAlign="center" fxLayout.gt-sm="row" fxLayoutAlign.gt-sm="start center">
-        <div fxLayout="column" fxFlex>
-          <mat-checkbox fxFlex [(ngModel)]="useDashboardTimewindow" (ngModelChange)="updateModel()">
+    <div [formGroup]="dataSettings" class="mat-content mat-padding" fxLayout="column" fxLayoutGap="8px">
+      <div *ngIf="widgetType === widgetTypes.timeseries || widgetType === widgetTypes.alarm"
+            fxLayout="column" fxLayoutGap="8px" fxLayoutAlign="center" fxLayout.gt-sm="row" fxLayoutAlign.gt-sm="start center">
+        <div fxLayout="column" fxLayoutGap="8px" fxFlex>
+          <mat-checkbox fxFlex formControlName="useDashboardTimewindow">
             {{ 'widget-config.use-dashboard-timewindow' | translate }}
           </mat-checkbox>
-          <mat-checkbox [disabled]="useDashboardTimewindow" fxFlex [(ngModel)]="displayTimewindow" (ngModelChange)="updateModel()">
+          <mat-checkbox fxFlex
+                        formControlName="displayTimewindow">
             {{ 'widget-config.display-timewindow' | translate }}
           </mat-checkbox>
         </div>
         <section fxFlex fxLayout="row" fxLayoutAlign="start center" style="margin-bottom: 16px;">
           <span [ngClass]="{'tb-disabled-label': useDashboardTimewindow}" translate style="padding-right: 8px;">widget-config.timewindow</span>
-          <tb-timewindow [disabled]="useDashboardTimewindow" asButton="true"
+          <tb-timewindow asButton="true"
                          aggregation="{{ widgetType === widgetTypes.timeseries }}"
-                         fxFlex [(ngModel)]="timewindow" (ngModelChange)="updateModel()"></tb-timewindow>
+                         fxFlex formControlName="timewindow"></tb-timewindow>
         </section>
       </div>
+      <div *ngIf="widgetType === widgetTypes.alarm" fxLayout="column" fxLayoutGap="8px" fxLayoutAlign="center"
+           fxLayout.gt-sm="row" fxLayoutAlign.gt-sm="start center">
+        <mat-form-field fxFlex class="mat-block">
+          <mat-label translate>alarm.alarm-status</mat-label>
+          <mat-select matInput formControlName="alarmSearchStatus">
+            <mat-option *ngFor="let searchStatus of alarmSearchStatuses" [value]="searchStatus">
+              {{ ('alarm.search-status.' + searchStatus) | translate }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field fxFlex class="mat-block">
+          <mat-label translate>alarm.polling-interval</mat-label>
+          <input matInput required
+                 formControlName="alarmsPollingInterval"
+                 type="number"
+                 step="1"/>
+          <mat-error *ngIf="dataSettings.get('alarmsPollingInterval').hasError('required')">
+            {{ 'alarm.polling-interval-required' | translate }}
+          </mat-error>
+          <mat-error *ngIf="dataSettings.get('alarmsPollingInterval').hasError('min')">
+            {{ 'alarm.min-polling-interval-message' | translate }}
+          </mat-error>
+        </mat-form-field>
+      </div>
+      <mat-expansion-panel class="tb-datasources" *ngIf="widgetType !== widgetTypes.rpc &&
+                                  widgetType !== widgetTypes.alarm &&
+                                  widgetType !== widgetTypes.static &&
+                                  isDataEnabled" [expanded]="true">
+        <mat-expansion-panel-header>
+          <mat-panel-title fxLayout="column">
+            <div class="tb-panel-title" translate>widget-config.datasources</div>
+            <div *ngIf="typeParameters && typeParameters.maxDatasources > -1"
+                 class="tb-hint">{{ 'widget-config.maximum-datasources' | translate:{count: typeParameters.maxDatasources} }}</div>
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+        <div *ngIf="dataSettings.get('datasources').length === 0; else datasourcesTemplate">
+              <span translate fxLayoutAlign="center center"
+                    class="tb-prompt">datasource.add-datasource-prompt</span>
+        </div>
+        <ng-template #datasourcesTemplate>
+          <div fxFlex fxLayout="row" fxLayoutAlign="start center">
+            <span fxFlex="5"></span>
+            <div fxFlex fxLayout="row" fxLayoutAlign="start center"
+                 style="padding: 0 0 0 10px; margin: 5px;">
+              <span translate style="min-width: 110px;">widget-config.datasource-type</span>
+              <span fxHide fxShow.gt-sm translate fxFlex
+                    style="padding-left: 10px;">widget-config.datasource-parameters</span>
+              <span style="min-width: 40px;"></span>
+            </div>
+          </div>
+          <div style="overflow: auto; padding-bottom: 15px;">
+            <div fxFlex fxLayout="row" fxLayoutAlign="start center"
+                 formArrayName="datasources"
+                 *ngFor="let datasourceControl of dataSettings.get('datasources').controls; let $index = index">
+              <span fxFlex="5">{{$index + 1}}.</span>
+              <div class="mat-elevation-z4" fxFlex fxLayout="row" fxLayoutAlign="start center"
+                   style="padding: 0 0 0 10px; margin: 5px;">
+                <div fxFlex>TODO: datasource: {{ datasourceControl.value | json }}</div>
+                <button [disabled]="isLoading$ | async"
+                        mat-button mat-icon-button color="primary"
+                        style="min-width: 40px;"
+                        (click)="removeDatasource($index)"
+                        matTooltip="{{ 'widget-config.remove-datasource' | translate }}"
+                        matTooltipPosition="above">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        </ng-template>
+        <div fxFlex fxLayout="row" fxLayoutAlign="start center">
+          <button [disabled]="isLoading$ | async"
+                  mat-button mat-raised-button color="primary"
+                  [fxShow]="typeParameters &&
+                            (typeParameters.maxDatasources == -1 || dataSettings.get('datasources').controls.length < typeParameters.maxDatasources)"
+                  (click)="addDatasource()"
+                  matTooltip="{{ 'widget-config.add-datasource' | translate }}"
+                  matTooltipPosition="above">
+            <mat-icon>add</mat-icon>
+            <span translate>action.add</span>
+          </button>
+        </div>
+      </mat-expansion-panel>
+      <mat-expansion-panel class="tb-datasources" *ngIf="widgetType === widgetTypes.rpc &&
+                                  isDataEnabled" [expanded]="true">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            {{ 'widget-config.target-device' | translate }}
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+        <div style="padding: 0 5px;">
+
+        </div>
+      </mat-expansion-panel>
     </div>
   </mat-tab>
   <mat-tab label="{{ 'widget-config.settings' | translate }}">

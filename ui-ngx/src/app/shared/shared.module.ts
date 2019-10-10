@@ -96,6 +96,9 @@ import { DashboardSelectPanelComponent } from '@shared/components/dashboard-sele
 import { DashboardSelectComponent } from '@shared/components/dashboard-select.component';
 import { WidgetsBundleSelectComponent } from './components/widgets-bundle-select.component';
 import { KeyboardShortcutPipe } from './pipe/keyboard-shortcut.pipe';
+import { TbErrorComponent } from './components/tb-error.component';
+import { EntityTypeListComponent } from './components/entity/entity-type-list.component';
+import { EntitySubTypeListComponent } from './components/entity/entity-subtype-list.component';
 
 @NgModule({
   providers: [
@@ -122,6 +125,7 @@ import { KeyboardShortcutPipe } from './pipe/keyboard-shortcut.pipe';
     HelpComponent,
     TbCheckboxComponent,
     TbSnackBarComponent,
+    TbErrorComponent,
     BreadcrumbComponent,
     UserMenuComponent,
     TimewindowComponent,
@@ -135,12 +139,14 @@ import { KeyboardShortcutPipe } from './pipe/keyboard-shortcut.pipe';
     DashboardAutocompleteComponent,
     EntitySubTypeAutocompleteComponent,
     EntitySubTypeSelectComponent,
+    EntitySubTypeListComponent,
     EntityAutocompleteComponent,
     EntityListComponent,
     EntityTypeSelectComponent,
     EntitySelectComponent,
     EntityKeysListComponent,
     EntityListSelectComponent,
+    EntityTypeListComponent,
     RelationTypeAutocompleteComponent,
     SocialSharePanelComponent,
     JsonObjectEditComponent,
@@ -207,6 +213,7 @@ import { KeyboardShortcutPipe } from './pipe/keyboard-shortcut.pipe';
     TbAnchorComponent,
     HelpComponent,
     TbCheckboxComponent,
+    TbErrorComponent,
     BreadcrumbComponent,
     UserMenuComponent,
     TimewindowComponent,
@@ -218,12 +225,14 @@ import { KeyboardShortcutPipe } from './pipe/keyboard-shortcut.pipe';
     DashboardAutocompleteComponent,
     EntitySubTypeAutocompleteComponent,
     EntitySubTypeSelectComponent,
+    EntitySubTypeListComponent,
     EntityAutocompleteComponent,
     EntityListComponent,
     EntityTypeSelectComponent,
     EntitySelectComponent,
     EntityKeysListComponent,
     EntityListSelectComponent,
+    EntityTypeListComponent,
     RelationTypeAutocompleteComponent,
     SocialSharePanelComponent,
     JsonObjectEditComponent,

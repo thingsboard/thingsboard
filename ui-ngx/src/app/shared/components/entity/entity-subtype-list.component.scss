@@ -13,15 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-}
-
 :host ::ng-deep {
-  tb-entity-list {
-    &.tb-not-empty {
-      .mat-form-field-flex {
-        padding-top: 0;
-      }
+  .mat-form-field {
+    .mat-form-field-infix {
+      border-top: none;
     }
   }
 }

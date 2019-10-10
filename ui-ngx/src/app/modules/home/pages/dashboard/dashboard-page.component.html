@@ -18,7 +18,8 @@
 <div class="tb-dashboard-page mat-content" style="padding-top: 150px;"
      fxFlex tb-fullscreen [fullscreen]="widgetEditMode || iframeMode || forceFullscreen || isFullscreen">
   <section class="tb-dashboard-toolbar"
-           [ngClass]="{ 'tb-dashboard-toolbar-opened': toolbarOpened, 'tb-dashboard-toolbar-closed': !toolbarOpened }">
+           [ngClass]="{ 'tb-dashboard-toolbar-opened': toolbarOpened,
+                        'tb-dashboard-toolbar-closed': !toolbarOpened }">
     <tb-dashboard-toolbar [fxShow]="!widgetEditMode" [forceFullscreen]="forceFullscreen"
                           [toolbarOpened]="toolbarOpened" (triggerClick)="openToolbar()">
       <div class="tb-dashboard-action-panels" fxLayout="column-reverse" fxLayout.gt-sm="row-reverse"
@@ -117,6 +118,7 @@
   <section class="tb-dashboard-container tb-absolute-fill"
            [ngClass]="{ 'is-fullscreen': forceFullscreen,
            'tb-dashboard-toolbar-opened': toolbarOpened,
+           'tb-dashboard-toolbar-animated': isToolbarOpenedAnimate,
            'tb-dashboard-toolbar-closed': !toolbarOpened }">
     <section *ngIf="!widgetEditMode" class="tb-dashboard-title" fxLayout="row" fxLayoutAlign="center center"
              [ngStyle]="{'color': dashboard.configuration.settings.titleColor}">

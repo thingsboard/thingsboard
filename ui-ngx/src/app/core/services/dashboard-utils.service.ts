@@ -278,6 +278,17 @@ export class DashboardUtilsService {
     }
   }
 
+  public getWidgetsArray(dashboard: Dashboard): Array<Widget> {
+    const widgetsArray: Array<Widget> = [];
+    const dashboardConfiguration = dashboard.configuration;
+    const widgets = dashboardConfiguration.widgets;
+    for (const widgetId of Object.keys(widgets)) {
+      const widget = widgets[widgetId];
+      widgetsArray.push(widget);
+    }
+    return widgetsArray;
+  }
+
   private validateAndUpdateEntityAliases(configuration: DashboardConfiguration,
                                          datasourcesByAliasId: {[aliasId: string]: Array<Datasource>},
                                          targetDevicesByAliasId: {[aliasId: string]: Array<Array<string>>}): DashboardConfiguration {

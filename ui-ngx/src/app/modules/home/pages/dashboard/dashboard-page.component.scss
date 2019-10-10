@@ -93,15 +93,18 @@ div.tb-dashboard-page {
         @media #{$mat-gt-sm} {
           margin-top: $toolbar-height;
         }
-
-        transition: margin-top .3s cubic-bezier(.55, 0, .55, .2);
+        &.tb-dashboard-toolbar-animated {
+          transition: margin-top .3s cubic-bezier(.55, 0, .55, .2);
+        }
       }
     }
 
     &.tb-dashboard-toolbar-closed {
       margin-top: 0;
 
-      transition: margin-top .3s cubic-bezier(.55, 0, .55, .2) .2s;
+      &.tb-dashboard-toolbar-animated {
+        transition: margin-top .3s cubic-bezier(.55, 0, .55, .2) .2s;
+      }
     }
 
     .tb-dashboard-layouts {

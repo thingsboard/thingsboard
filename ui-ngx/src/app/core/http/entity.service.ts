@@ -33,16 +33,29 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Authority } from '@shared/models/authority.enum';
 import { Tenant } from '@shared/models/tenant.model';
-import { catchError, concatMap, expand, map, toArray } from 'rxjs/operators';
+import { catchError, concatMap, expand, map, mergeMap, toArray } from 'rxjs/operators';
 import { Customer } from '@app/shared/models/customer.model';
 import { AssetService } from '@core/http/asset.service';
 import { EntityViewService } from '@core/http/entity-view.service';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { defaultHttpOptions } from '@core/http/http-utils';
 import { RuleChainService } from '@core/http/rule-chain.service';
-import { SubscriptionInfo } from '@core/api/widget-api.models';
+import { StateParams, SubscriptionInfo } from '@core/api/widget-api.models';
 import { Datasource, DatasourceType, KeyInfo } from '@app/shared/models/widget.models';
 import { UtilsService } from '@core/services/utils.service';
+import { AliasFilterType, EntityAliasFilter, EntityAliasFilterResult } from '@shared/models/alias.models';
+import { EntityInfo } from '@shared/models/entity.models';
+import {
+  EntityRelationInfo,
+  EntityRelationsQuery,
+  EntitySearchDirection,
+  EntitySearchQuery
+} from '@shared/models/relation.models';
+import { EntityRelationService } from '@core/http/entity-relation.service';
+import { isDefined } from '../utils';
+import { AssetSearchQuery } from '@shared/models/asset.models';
+import { DeviceSearchQuery } from '@shared/models/device.models';
+import { EntityViewSearchQuery } from '@shared/models/entity-view.models';
 
 @Injectable({
   providedIn: 'root'
@@ -60,6 +73,7 @@ export class EntityService {
     private userService: UserService,
     private ruleChainService: RuleChainService,
     private dashboardService: DashboardService,
+    private entityRelationService: EntityRelationService,
     private utils: UtilsService
   ) { }
 
@@ -348,8 +362,62 @@ export class EntityService {
     }
   }
 
+  public getAliasFilterTypesByEntityTypes(entityTypes: Array<EntityType | AliasEntityType>): Array<AliasFilterType> {
+    const allAliasFilterTypes: Array<AliasFilterType> = Object.keys(AliasFilterType).map((key) => AliasFilterType[key]);
+    if (!entityTypes || !entityTypes.length) {
+      return allAliasFilterTypes;
+    }
+    const result = [];
+    for (const aliasFilterType of allAliasFilterTypes) {
+      if (this.filterAliasFilterTypeByEntityTypes(aliasFilterType, entityTypes)) {
+        result.push(aliasFilterType);
+      }
+    }
+    return result;
+  }
+
+  private filterAliasFilterTypeByEntityTypes(aliasFilterType: AliasFilterType,
+                                             entityTypes: Array<EntityType | AliasEntityType>): boolean {
+    if (!entityTypes || !entityTypes.length) {
+      return true;
+    }
+    let valid = false;
+    entityTypes.forEach((entityType) => {
+      valid = valid || this.filterAliasFilterTypeByEntityType(aliasFilterType, entityType);
+    });
+    return valid;
+  }
+
+  private filterAliasFilterTypeByEntityType(aliasFilterType: AliasFilterType, entityType: EntityType | AliasEntityType): boolean {
+    switch (aliasFilterType) {
+      case AliasFilterType.singleEntity:
+        return true;
+      case AliasFilterType.entityList:
+        return true;
+      case AliasFilterType.entityName:
+        return true;
+      case AliasFilterType.stateEntity:
+        return true;
+      case AliasFilterType.assetType:
+        return entityType === EntityType.ASSET;
+      case AliasFilterType.deviceType:
+        return entityType === EntityType.DEVICE;
+      case AliasFilterType.entityViewType:
+        return entityType === EntityType.ENTITY_VIEW;
+      case AliasFilterType.relationsQuery:
+        return true;
+      case AliasFilterType.assetSearchQuery:
+        return entityType === EntityType.ASSET;
+      case AliasFilterType.deviceSearchQuery:
+        return entityType === EntityType.DEVICE;
+      case AliasFilterType.entityViewSearchQuery:
+        return entityType === EntityType.ENTITY_VIEW;
+    }
+    return false;
+  }
+
   public prepareAllowedEntityTypesList(allowedEntityTypes: Array<EntityType | AliasEntityType>,
-                                       useAliasEntityTypes: boolean): Array<EntityType | AliasEntityType> {
+                                       useAliasEntityTypes?: boolean): Array<EntityType | AliasEntityType> {
     const authUser = getCurrentAuthUser(this.store);
     const entityTypes: Array<EntityType | AliasEntityType> = [];
     switch (authUser.authority) {
@@ -442,6 +510,285 @@ export class EntityService {
     } else {
       return throwError(null);
     }
+  }
+
+  public resolveAliasFilter(filter: EntityAliasFilter, stateParams: StateParams,
+                            maxItems: number, failOnEmpty: boolean): Observable<EntityAliasFilterResult> {
+    const result: EntityAliasFilterResult = {
+      entities: [],
+      stateEntity: false
+    };
+    if (filter.stateEntityParamName && filter.stateEntityParamName.length) {
+      result.entityParamName = filter.stateEntityParamName;
+    }
+    const stateEntityId = this.getStateEntityId(filter, stateParams);
+    switch (filter.type) {
+      case AliasFilterType.singleEntity:
+        const aliasEntityId = this.resolveAliasEntityId(filter.singleEntity.entityType, filter.singleEntity.id);
+        return this.getEntity(aliasEntityId.entityType as EntityType, aliasEntityId.id, true, true).pipe(
+          map((entity) => {
+            result.entities = this.entitiesToEntitiesInfo([entity]);
+            return result;
+          }
+        ));
+        break;
+      case AliasFilterType.entityList:
+        return this.getEntities(filter.entityType, filter.entityList, true, true).pipe(
+          map((entities) => {
+              if (entities && entities.length || !failOnEmpty) {
+                result.entities = this.entitiesToEntitiesInfo(entities);
+                return result;
+              } else {
+                throw new Error();
+              }
+            }
+          ));
+        break;
+      case AliasFilterType.entityName:
+        return this.getEntitiesByNameFilter(filter.entityType, filter.entityNameFilter, maxItems,
+          '', true, true).pipe(
+            map((entities) => {
+              if (entities && entities.length || !failOnEmpty) {
+                result.entities = this.entitiesToEntitiesInfo(entities);
+                return result;
+              } else {
+                throw new Error();
+              }
+            }
+          )
+        );
+        break;
+      case AliasFilterType.stateEntity:
+        result.stateEntity = true;
+        if (stateEntityId) {
+          return this.getEntity(stateEntityId.entityType as EntityType, stateEntityId.id, true, true).pipe(
+            map((entity) => {
+                result.entities = this.entitiesToEntitiesInfo([entity]);
+                return result;
+              }
+            ));
+        } else {
+          return of(result);
+        }
+        break;
+      case AliasFilterType.assetType:
+        return this.getEntitiesByNameFilter(EntityType.ASSET, filter.assetNameFilter, maxItems,
+          filter.assetType, true, true).pipe(
+          map((entities) => {
+              if (entities && entities.length || !failOnEmpty) {
+                result.entities = this.entitiesToEntitiesInfo(entities);
+                return result;
+              } else {
+                throw new Error();
+              }
+            }
+          )
+        );
+        break;
+      case AliasFilterType.deviceType:
+        return this.getEntitiesByNameFilter(EntityType.DEVICE, filter.deviceNameFilter, maxItems,
+          filter.deviceType, true, true).pipe(
+          map((entities) => {
+              if (entities && entities.length || !failOnEmpty) {
+                result.entities = this.entitiesToEntitiesInfo(entities);
+                return result;
+              } else {
+                throw new Error();
+              }
+            }
+          )
+        );
+        break;
+      case AliasFilterType.entityViewType:
+        return this.getEntitiesByNameFilter(EntityType.ENTITY_VIEW, filter.entityViewNameFilter, maxItems,
+          filter.entityViewType, true, true).pipe(
+          map((entities) => {
+              if (entities && entities.length || !failOnEmpty) {
+                result.entities = this.entitiesToEntitiesInfo(entities);
+                return result;
+              } else {
+                throw new Error();
+              }
+            }
+          )
+        );
+        break;
+      case AliasFilterType.relationsQuery:
+        result.stateEntity = filter.rootStateEntity;
+        let rootEntityType;
+        let rootEntityId;
+        if (result.stateEntity && stateEntityId) {
+          rootEntityType = stateEntityId.entityType;
+          rootEntityId = stateEntityId.id;
+        } else if (!result.stateEntity) {
+          rootEntityType = filter.rootEntity.entityType;
+          rootEntityId = filter.rootEntity.id;
+        }
+        if (rootEntityType && rootEntityId) {
+          const relationQueryRootEntityId = this.resolveAliasEntityId(rootEntityType, rootEntityId);
+          const searchQuery: EntityRelationsQuery = {
+            parameters: {
+              rootId: relationQueryRootEntityId.id,
+              rootType: relationQueryRootEntityId.entityType as EntityType,
+              direction: filter.direction
+            },
+            filters: filter.filters
+          };
+          searchQuery.parameters.maxLevel = filter.maxLevel && filter.maxLevel > 0 ? filter.maxLevel : -1;
+          return this.entityRelationService.findInfoByQuery(searchQuery, true, true).pipe(
+            mergeMap((allRelations) => {
+              if (allRelations && allRelations.length || !failOnEmpty) {
+                if (isDefined(maxItems) && maxItems > 0 && allRelations) {
+                  const limit = Math.min(allRelations.length, maxItems);
+                  allRelations.length = limit;
+                }
+                return this.entityRelationInfosToEntitiesInfo(allRelations, filter.direction).pipe(
+                  map((entities) => {
+                    result.entities = entities;
+                    return result;
+                  })
+                );
+              } else {
+                return throwError(null);
+              }
+            })
+          );
+        } else {
+          return of(result);
+        }
+        break;
+      case AliasFilterType.assetSearchQuery:
+      case AliasFilterType.deviceSearchQuery:
+      case AliasFilterType.entityViewSearchQuery:
+        result.stateEntity = filter.rootStateEntity;
+        if (result.stateEntity && stateEntityId) {
+          rootEntityType = stateEntityId.entityType;
+          rootEntityId = stateEntityId.id;
+        } else if (!result.stateEntity) {
+          rootEntityType = filter.rootEntity.entityType;
+          rootEntityId = filter.rootEntity.id;
+        }
+        if (rootEntityType && rootEntityId) {
+          const searchQueryRootEntityId = this.resolveAliasEntityId(rootEntityType, rootEntityId);
+          const searchQuery: EntitySearchQuery = {
+            parameters: {
+              rootId: searchQueryRootEntityId.id,
+              rootType: searchQueryRootEntityId.entityType as EntityType,
+              direction: filter.direction
+            },
+            relationType: filter.relationType
+          };
+          let findByQueryObservable: Observable<Array<BaseData<EntityId>>>;
+          if (filter.type === AliasFilterType.assetSearchQuery) {
+            const assetSearchQuery = searchQuery as AssetSearchQuery;
+            assetSearchQuery.assetTypes = filter.assetTypes;
+            findByQueryObservable = this.assetService.findByQuery(assetSearchQuery, true, true);
+          } else if (filter.type === AliasFilterType.deviceSearchQuery) {
+            const deviceSearchQuery = searchQuery as DeviceSearchQuery;
+            deviceSearchQuery.deviceTypes = filter.deviceTypes;
+            findByQueryObservable = this.deviceService.findByQuery(deviceSearchQuery, true, true);
+          } else if (filter.type === AliasFilterType.entityViewSearchQuery) {
+            const entityViewSearchQuery = searchQuery as EntityViewSearchQuery;
+            entityViewSearchQuery.entityViewTypes = filter.entityViewTypes;
+            findByQueryObservable = this.entityViewService.findByQuery(entityViewSearchQuery, true, true);
+          }
+          return findByQueryObservable.pipe(
+            map((entities) => {
+              if (entities && entities.length || !failOnEmpty) {
+                if (isDefined(maxItems) && maxItems > 0 && entities) {
+                  const limit = Math.min(entities.length, maxItems);
+                  entities.length = limit;
+                }
+                result.entities = this.entitiesToEntitiesInfo(entities);
+                return result;
+              } else {
+                throw Error();
+              }
+            })
+          );
+        } else {
+          return of(result);
+        }
+        break;
+    }
+  }
+
+  private entitiesToEntitiesInfo(entities: Array<BaseData<EntityId>>): Array<EntityInfo> {
+    const entitiesInfo = [];
+    if (entities) {
+      entities.forEach((entity) => {
+        entitiesInfo.push(this.entityToEntityInfo(entity));
+      });
+    }
+    return entitiesInfo;
+  }
+
+  private entityToEntityInfo(entity: BaseData<EntityId>): EntityInfo {
+    return {
+      origEntity: entity,
+      name: entity.name,
+      label: (entity as any).label ? (entity as any).label : '',
+      entityType: entity.id.entityType as EntityType,
+      id: entity.id.id,
+      entityDescription: (entity as any).additionalInfo ? (entity as any).additionalInfo.description : ''
+    };
+  }
+
+  private entityRelationInfosToEntitiesInfo(entityRelations: Array<EntityRelationInfo>,
+                                            direction: EntitySearchDirection): Observable<Array<EntityInfo>> {
+    if (entityRelations) {
+      const tasks: Observable<EntityInfo>[] = [];
+      entityRelations.forEach((entityRelation) => {
+        tasks.push(this.entityRelationInfoToEntityInfo(entityRelation, direction));
+      });
+      return forkJoin(tasks);
+    } else {
+      return of([]);
+    }
+  }
+
+  private entityRelationInfoToEntityInfo(entityRelationInfo: EntityRelationInfo, direction: EntitySearchDirection): Observable<EntityInfo> {
+    const entityId = direction === EntitySearchDirection.FROM ? entityRelationInfo.to : entityRelationInfo.from;
+    return this.getEntity(entityId.entityType as EntityType, entityId.id, true, true).pipe(
+      map((entity) => {
+        return this.entityToEntityInfo(entity);
+      })
+    );
+  }
+
+  private getStateEntityId(filter: EntityAliasFilter, stateParams: StateParams): EntityId {
+    let entityId = null;
+    if (stateParams) {
+      if (filter.stateEntityParamName && filter.stateEntityParamName.length) {
+        if (stateParams[filter.stateEntityParamName]) {
+          entityId = stateParams[filter.stateEntityParamName].entityId;
+        }
+      } else {
+        entityId = stateParams.entityId;
+      }
+    }
+    if (!entityId) {
+      entityId = filter.defaultStateEntity;
+    }
+    if (entityId) {
+      entityId = this.resolveAliasEntityId(entityId.entityType, entityId.id);
+    }
+    return entityId;
+  }
+
+  private resolveAliasEntityId(entityType: EntityType | AliasEntityType, id: string): EntityId {
+    const entityId: EntityId = {
+      entityType,
+      id
+    };
+    if (entityType === AliasEntityType.CURRENT_CUSTOMER) {
+      const authUser = getCurrentAuthUser(this.store);
+      entityId.entityType = EntityType.CUSTOMER;
+      if (authUser.authority === Authority.CUSTOMER_USER) {
+        entityId.id = authUser.customerId;
+      }
+    }
+    return entityId;
   }
 
   private createDatasourcesFromSubscriptionInfo(subscriptionInfo: SubscriptionInfo): Observable<Array<Datasource>> {
