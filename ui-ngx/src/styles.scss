@@ -389,4 +389,15 @@ mat-label {
       white-space: normal !important;
     }
   }
+  .mat-option.tb-not-found {
+    padding: 0;
+    border-bottom: none;
+    .mat-option-text {
+      display: block;
+      .tb-not-found-content {
+        padding: 8px 16px 7px;
+        border-bottom: 1px solid #eee;
+      }
+    }
+  }
 }

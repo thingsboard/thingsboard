@@ -17,7 +17,7 @@
 import { Inject, Injectable } from '@angular/core';
 import { WINDOW } from '@core/services/window.service';
 import { ExceptionData } from '@app/shared/models/error.models';
-import { deepClone, isDefined, isUndefined, deleteNullProperties } from '@core/utils';
+import { deepClone, deleteNullProperties, isDefined, isUndefined } from '@core/utils';
 import { WindowMessage } from '@shared/models/window-message.model';
 import { TranslateService } from '@ngx-translate/core';
 import { customTranslationsPrefix } from '@app/shared/models/constants';
@@ -50,6 +50,14 @@ for (const func of Object.keys(predefinedFunctions)) {
   predefinedFunctionsList.push(func);
 }
 
+const defaultAlarmFields: Array<string> = [
+  alarmFields.createdTime.keyName,
+  alarmFields.originator.keyName,
+  alarmFields.type.keyName,
+  alarmFields.severity.keyName,
+  alarmFields.status.keyName
+];
+
 @Injectable({
   providedIn: 'root'
 })
@@ -74,6 +82,8 @@ export class UtilsService {
     name: DatasourceType.function,
     dataKeys: [deepClone(this.defaultDataKey)]
   };
+
+  defaultAlarmDataKeys: Array<DataKey> = [];
 
   constructor(@Inject(WINDOW) private window: Window,
               private translate: TranslateService) {
@@ -107,6 +117,28 @@ export class UtilsService {
       datasource.dataKeys[0].settings = this.generateObjectFromJsonSchema(dataKeySchema);
     }
     return datasource;
+  }
+
+  private initDefaultAlarmDataKeys() {
+    for (let i = 0; i < defaultAlarmFields.length; i++) {
+      const name = defaultAlarmFields[i];
+      const dataKey: DataKey = {
+        name,
+        type: DataKeyType.alarm,
+        label: this.translate.instant(alarmFields[name].name),
+        color: this.getMaterialColor(i),
+        settings: {},
+        _hash: Math.random()
+      };
+      this.defaultAlarmDataKeys.push(dataKey);
+    }
+  }
+
+  public getDefaultAlarmDataKeys(): Array<DataKey> {
+    if (!this.defaultAlarmDataKeys.length) {
+      this.initDefaultAlarmDataKeys();
+    }
+    return deepClone(this.defaultAlarmDataKeys);
   }
 
   public generateObjectFromJsonSchema(schema: any): any {
@@ -290,6 +322,30 @@ export class UtilsService {
       dataKey.postFuncBody = keyInfo.postFuncBody;
     }
     return dataKey;
+  }
+
+  public createLabelFromDatasource(datasource: Datasource, pattern: string) {
+    let label = deepClone(pattern);
+    let match = varsRegex.exec(pattern);
+    while (match !== null) {
+      const variable = match[0];
+      const variableName = match[1];
+      if (variableName === 'dsName') {
+        label = label.split(variable).join(datasource.name);
+      } else if (variableName === 'entityName') {
+        label = label.split(variable).join(datasource.entityName);
+      } else if (variableName === 'deviceName') {
+        label = label.split(variable).join(datasource.entityName);
+      } else if (variableName === 'entityLabel') {
+        label = label.split(variable).join(datasource.entityLabel);
+      } else if (variableName === 'aliasName') {
+        label = label.split(variable).join(datasource.aliasName);
+      } else if (variableName === 'entityDescription') {
+        label = label.split(variable).join(datasource.entityDescription);
+      }
+      match = varsRegex.exec(pattern);
+    }
+    return label;
   }
 
   public generateColors(datasources: Array<Datasource>) {

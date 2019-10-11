@@ -99,13 +99,15 @@ import { KeyboardShortcutPipe } from './pipe/keyboard-shortcut.pipe';
 import { TbErrorComponent } from './components/tb-error.component';
 import { EntityTypeListComponent } from './components/entity/entity-type-list.component';
 import { EntitySubTypeListComponent } from './components/entity/entity-subtype-list.component';
+import { TruncatePipe } from './pipe/truncate.pipe';
 
 @NgModule({
   providers: [
     DatePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
-    HighlightPipe
+    HighlightPipe,
+    TruncatePipe
   ],
   entryComponents: [
     TbSnackBarComponent,
@@ -158,6 +160,7 @@ import { EntitySubTypeListComponent } from './components/entity/entity-subtype-l
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
     HighlightPipe,
+    TruncatePipe,
     KeyboardShortcutPipe
   ],
   imports: [
@@ -283,6 +286,7 @@ import { EntitySubTypeListComponent } from './components/entity/entity-subtype-l
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
     HighlightPipe,
+    TruncatePipe,
     KeyboardShortcutPipe,
     TranslateModule
   ]

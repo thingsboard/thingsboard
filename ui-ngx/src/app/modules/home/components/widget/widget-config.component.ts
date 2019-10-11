@@ -21,7 +21,7 @@ import { AppState } from '@core/core.state';
 import {
   DataKey,
   Datasource,
-  DatasourceType,
+  DatasourceType, datasourceTypeTranslationMap,
   LegendConfig,
   WidgetActionDescriptor,
   WidgetActionSource,
@@ -30,6 +30,7 @@ import {
   WidgetTypeParameters
 } from '@shared/models/widget.models';
 import {
+  AbstractControl,
   ControlValueAccessor,
   FormArray,
   FormBuilder,
@@ -44,10 +45,19 @@ import { WidgetConfigComponentData } from '@home/models/widget-component.models'
 import { deepClone, isDefined, isObject } from '@app/core/utils';
 import { alarmFields, AlarmSearchStatus } from '@shared/models/alarm.models';
 import { IAliasController } from '@core/api/widget-api.models';
-import { EntityAlias } from '@shared/models/alias.models';
+import { EntityAlias, EntityAliases } from '@shared/models/alias.models';
 import { UtilsService } from '@core/services/utils.service';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { TranslateService } from '@ngx-translate/core';
+import { EntityType } from '@shared/models/entity-type.models';
+import { Observable, of, Subscription } from 'rxjs';
+import { WidgetConfigCallbacks } from '@home/components/widget/widget-config.component.models';
+import {
+  EntityAliasDialogComponent,
+  EntityAliasDialogData
+} from '@home/components/alias/entity-alias-dialog.component';
+import { tap } from 'rxjs/operators';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
   selector: 'tb-widget-config',
@@ -70,6 +80,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
 
   widgetTypes = widgetType;
 
+  entityTypes = EntityType;
+
   alarmSearchStatuses = Object.keys(AlarmSearchStatus);
 
   @Input()
@@ -88,6 +100,9 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   aliasController: IAliasController;
 
   @Input()
+  entityAliases: EntityAliases;
+
+  @Input()
   widgetSettingsSchema: any;
 
   @Input()
@@ -99,6 +114,17 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   @Input() disabled: boolean;
 
   widgetType: widgetType;
+
+  datasourceType = DatasourceType;
+  datasourceTypes: Array<DatasourceType>;
+  datasourceTypesTranslations = datasourceTypeTranslationMap;
+
+  widgetConfigCallbacks: WidgetConfigCallbacks = {
+    createEntityAlias: this.createEntityAlias.bind(this),
+    generateDataKey: this.generateDataKey.bind(this)
+  };
+
+  widgetEditMode = this.utils.widgetEditMode;
 
   selectedTab: number;
   title: string;
@@ -120,7 +146,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   showLegend: boolean;
   legendConfig: LegendConfig;
   actions: {[actionSourceId: string]: Array<WidgetActionDescriptor>};
-  targetDeviceAlias: EntityAlias;
   alarmSource: Datasource;
   settings: WidgetConfigSettings;
   mobileOrder: number;
@@ -149,20 +174,50 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   private propagateChange = null;
 
   public dataSettings: FormGroup;
+  public targetDeviceSettings: FormGroup;
+
+  private dataSettingsChangesSubscription: Subscription;
+  private targetDeviceSettingsSubscription: Subscription;
 
   constructor(protected store: Store<AppState>,
               private utils: UtilsService,
+              private dialog: MatDialog,
               private translate: TranslateService,
               private fb: FormBuilder) {
     super(store);
   }
 
   ngOnInit(): void {
+    if (this.functionsOnly) {
+      this.datasourceTypes = [DatasourceType.function];
+    } else {
+      this.datasourceTypes = [DatasourceType.function, DatasourceType.entity];
+    }
+  }
 
+  private removeChangeSubscriptions() {
+    if (this.dataSettingsChangesSubscription) {
+      this.dataSettingsChangesSubscription.unsubscribe();
+      this.dataSettingsChangesSubscription = null;
+    }
+    if (this.targetDeviceSettingsSubscription) {
+      this.targetDeviceSettingsSubscription.unsubscribe();
+      this.targetDeviceSettingsSubscription = null;
+    }
+  }
+
+  private createChangeSubscriptions() {
+    this.dataSettingsChangesSubscription = this.dataSettings.valueChanges.subscribe(
+      () => this.updateDataSettings()
+    );
+    this.targetDeviceSettingsSubscription = this.targetDeviceSettings.valueChanges.subscribe(
+      () => this.updateTargetDeviceSettings()
+    );
   }
 
   private buildForms() {
     this.dataSettings = this.fb.group({});
+    this.targetDeviceSettings = this.fb.group({});
     if (this.widgetType === widgetType.timeseries || this.widgetType === widgetType.alarm) {
       this.dataSettings.addControl('useDashboardTimewindow', this.fb.control(null));
       this.dataSettings.addControl('displayTimewindow', this.fb.control(null));
@@ -188,11 +243,12 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
         this.widgetType !== widgetType.static) {
         this.dataSettings.addControl('datasources',
           this.fb.array([]));
+      } else if (this.widgetType === widgetType.rpc) {
+        this.targetDeviceSettings.addControl('targetDeviceAliasId',
+          this.fb.control(null,
+            this.widgetEditMode ? [] : [Validators.required]));
       }
     }
-    this.dataSettings.valueChanges.subscribe(
-      () => this.updateModel()
-    );
   }
 
   registerOnChange(fn: any): void {
@@ -208,6 +264,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
 
   writeValue(value: WidgetConfigComponentData): void {
     this.modelValue = value;
+    this.removeChangeSubscriptions();
     if (this.modelValue) {
       if (this.widgetType !== this.modelValue.widgetType) {
         this.widgetType = this.modelValue.widgetType;
@@ -268,25 +325,28 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
             this.widgetType !== widgetType.alarm &&
             this.widgetType !== widgetType.static) {
             const datasourcesFormArray = this.dataSettings.get('datasources') as FormArray;
-            datasourcesFormArray.controls.length = 0;
+            datasourcesFormArray.clear();
             if (config.datasources) {
               config.datasources.forEach((datasource) => {
-                datasourcesFormArray.controls.push(this.fb.control(datasource));
+                datasourcesFormArray.push(this.buildDatasourceForm(datasource));
               });
-              datasourcesFormArray.setValue(config.datasources, {emitEvent: false});
             }
           } else if (this.widgetType === widgetType.rpc) {
+            let targetDeviceAliasId: string;
             if (config.targetDeviceAliasIds && config.targetDeviceAliasIds.length > 0) {
               const aliasId = config.targetDeviceAliasIds[0];
               const entityAliases = this.aliasController.getEntityAliases();
               if (entityAliases[aliasId]) {
-                this.targetDeviceAlias = entityAliases[aliasId];
+                targetDeviceAliasId = entityAliases[aliasId].id;
               } else {
-                this.targetDeviceAlias = null;
+                targetDeviceAliasId = null;
               }
             } else {
-              this.targetDeviceAlias = null;
+              targetDeviceAliasId = null;
             }
+            this.targetDeviceSettings.patchValue({
+              targetDeviceAliasId
+            }, {emitEvent: false});
           } else if (this.widgetType === widgetType.alarm) {
             this.dataSettings.patchValue(
               { alarmSearchStatus: isDefined(config.alarmSearchStatus) ?
@@ -315,7 +375,36 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
           this.mobileHeight = undefined;
         }
       }
+      this.createChangeSubscriptions();
     }
+  }
+
+  private buildDatasourceForm(datasource?: Datasource): AbstractControl {
+    const datasourceFormGroup = this.fb.group(
+      {
+        type: [datasource ? datasource.type : null, [Validators.required]],
+        name: [datasource ? datasource.name : null, []],
+        entityAliasId: [datasource ? datasource.entityAliasId : null,
+          datasource && datasource.type === DatasourceType.entity ? [Validators.required] : []],
+        dataKeys: [datasource ? datasource.name : null, []]
+      }
+    );
+    datasourceFormGroup.get('type').valueChanges.subscribe((type: DatasourceType) => {
+      let dataKeys;
+      if (this.widgetType === widgetType.alarm) {
+        dataKeys = this.utils.getDefaultAlarmDataKeys();
+      } else {
+        dataKeys = [];
+      }
+      datasourceFormGroup.patchValue({
+        dataKeys
+      });
+      datasourceFormGroup.get('entityAliasId').setValidators(
+        type === DatasourceType.entity ? [Validators.required] : []
+      );
+      datasourceFormGroup.get('entityAliasId').updateValueAndValidity();
+    });
+    return datasourceFormGroup;
   }
 
   private updateSchemaForm() {
@@ -332,10 +421,24 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     }
   }
 
-  private updateModel() {
+  private updateDataSettings() {
     if (this.modelValue) {
       if (this.modelValue.config) {
         Object.assign(this.modelValue.config, this.dataSettings.value);
+      }
+      this.propagateChange(this.modelValue);
+    }
+  }
+
+  private updateTargetDeviceSettings() {
+    if (this.modelValue) {
+      if (this.modelValue.config) {
+        const targetDeviceAliasId: string = this.targetDeviceSettings.get('targetDeviceAliasId').value;
+        if (targetDeviceAliasId) {
+          this.modelValue.config.targetDeviceAliasIds = [targetDeviceAliasId];
+        } else {
+          this.modelValue.config.targetDeviceAliasIds = [];
+        }
       }
       this.propagateChange(this.modelValue);
     }
@@ -360,7 +463,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
       };
     }
     const datasourcesFormArray = this.dataSettings.get('datasources') as FormArray;
-    datasourcesFormArray.push(this.fb.control(newDatasource));
+    datasourcesFormArray.push(this.buildDatasourceForm(newDatasource));
   }
 
   public generateDataKey(chip: any, type: DataKeyType): DataKey {
@@ -433,6 +536,28 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
       });
     }
     return this.utils.getMaterialColor(i);
+  }
+
+  private createEntityAlias(alias: string, allowedEntityTypes: Array<EntityType>): Observable<EntityAlias> {
+    const singleEntityAlias: EntityAlias = {id: null, alias, filter: {resolveMultiple: false}};
+    return this.dialog.open<EntityAliasDialogComponent, EntityAliasDialogData,
+      EntityAlias>(EntityAliasDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        isAdd: true,
+        allowedEntityTypes,
+        entityAliases: this.entityAliases,
+        alias: singleEntityAlias
+      }
+    }).afterClosed().pipe(
+      tap((entityAlias) => {
+        if (entityAlias) {
+          this.entityAliases[entityAlias.id] = entityAlias;
+          this.aliasController.updateEntityAliases(this.entityAliases);
+        }
+      })
+    );
   }
 
   public validate(c: FormControl) {

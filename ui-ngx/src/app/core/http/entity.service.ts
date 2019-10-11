@@ -40,10 +40,10 @@ import { EntityViewService } from '@core/http/entity-view.service';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { defaultHttpOptions } from '@core/http/http-utils';
 import { RuleChainService } from '@core/http/rule-chain.service';
-import { StateParams, SubscriptionInfo } from '@core/api/widget-api.models';
+import { AliasInfo, StateParams, SubscriptionInfo } from '@core/api/widget-api.models';
 import { Datasource, DatasourceType, KeyInfo } from '@app/shared/models/widget.models';
 import { UtilsService } from '@core/services/utils.service';
-import { AliasFilterType, EntityAliasFilter, EntityAliasFilterResult } from '@shared/models/alias.models';
+import { AliasFilterType, EntityAlias, EntityAliasFilter, EntityAliasFilterResult } from '@shared/models/alias.models';
 import { EntityInfo } from '@shared/models/entity.models';
 import {
   EntityRelationInfo,
@@ -376,6 +376,55 @@ export class EntityService {
     return result;
   }
 
+  public filterAliasByEntityTypes(entityAlias: EntityAlias, entityTypes: Array<EntityType | AliasEntityType>): boolean {
+    const filter = entityAlias.filter;
+    if (this.filterAliasFilterTypeByEntityTypes(filter.type, entityTypes)) {
+      switch (filter.type) {
+        case AliasFilterType.singleEntity:
+          return entityTypes.indexOf(filter.singleEntity.entityType) > -1 ? true : false;
+        case AliasFilterType.entityList:
+          return entityTypes.indexOf(filter.entityType) > -1 ? true : false;
+        case AliasFilterType.entityName:
+          return entityTypes.indexOf(filter.entityType) > -1 ? true : false;
+        case AliasFilterType.stateEntity:
+          return true;
+        case AliasFilterType.assetType:
+          return entityTypes.indexOf(EntityType.ASSET)  > -1 ? true : false;
+        case AliasFilterType.deviceType:
+          return entityTypes.indexOf(EntityType.DEVICE)  > -1 ? true : false;
+        case AliasFilterType.entityViewType:
+          return entityTypes.indexOf(EntityType.ENTITY_VIEW)  > -1 ? true : false;
+        case AliasFilterType.relationsQuery:
+          if (filter.filters && filter.filters.length) {
+            let match = false;
+            for (const relationFilter of filter.filters) {
+              if (relationFilter.entityTypes && relationFilter.entityTypes.length) {
+                for (const relationFilterEntityType of relationFilter.entityTypes) {
+                  if (entityTypes.indexOf(relationFilterEntityType) > -1) {
+                    match = true;
+                    break;
+                  }
+                }
+              } else {
+                match = true;
+                break;
+              }
+            }
+            return match;
+          } else {
+            return true;
+          }
+        case AliasFilterType.assetSearchQuery:
+          return entityTypes.indexOf(EntityType.ASSET)  > -1 ? true : false;
+        case AliasFilterType.deviceSearchQuery:
+          return entityTypes.indexOf(EntityType.DEVICE)  > -1 ? true : false;
+        case AliasFilterType.entityViewSearchQuery:
+          return entityTypes.indexOf(EntityType.ENTITY_VIEW)  > -1 ? true : false;
+      }
+    }
+    return false;
+  }
+
   private filterAliasFilterTypeByEntityTypes(aliasFilterType: AliasFilterType,
                                              entityTypes: Array<EntityType | AliasEntityType>): boolean {
     if (!entityTypes || !entityTypes.length) {
@@ -510,6 +559,26 @@ export class EntityService {
     } else {
       return throwError(null);
     }
+  }
+
+  public resolveAlias(entityAlias: EntityAlias, stateParams: StateParams): Observable<AliasInfo> {
+    const filter = entityAlias.filter;
+    return this.resolveAliasFilter(filter, stateParams, -1, false).pipe(
+      map((result) => {
+        const aliasInfo: AliasInfo = {
+          alias: entityAlias.alias,
+          stateEntity: result.stateEntity,
+          entityParamName: result.entityParamName,
+          resolveMultiple: filter.resolveMultiple
+        };
+        aliasInfo.resolvedEntities = result.entities;
+        aliasInfo.currentEntity = null;
+        if (aliasInfo.resolvedEntities.length) {
+          aliasInfo.currentEntity = aliasInfo.resolvedEntities[0];
+        }
+        return aliasInfo;
+      })
+    );
   }
 
   public resolveAliasFilter(filter: EntityAliasFilter, stateParams: StateParams,

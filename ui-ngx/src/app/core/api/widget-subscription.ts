@@ -206,8 +206,8 @@ export class WidgetSubscription implements IWidgetSubscription {
           subscriptionSubject.next(this);
           subscriptionSubject.complete();
         },
-        () => {
-          subscriptionSubject.error(null);
+        (err) => {
+          subscriptionSubject.error(err);
         });
     }
  }
@@ -279,8 +279,8 @@ export class WidgetSubscription implements IWidgetSubscription {
             initDataSubscriptionSubject.next();
             initDataSubscriptionSubject.complete();
           },
-          () => {
-            initDataSubscriptionSubject.error(null);
+          (err) => {
+            initDataSubscriptionSubject.error(err);
           }
         );
       }
@@ -462,6 +462,7 @@ export class WidgetSubscription implements IWidgetSubscription {
         }
       }
       let index = 0;
+      let forceUpdate = !this.datasources.length;
       this.datasources.forEach((datasource) => {
         const listener: DatasourceListener = {
           subscriptionType: this.type,
@@ -488,18 +489,17 @@ export class WidgetSubscription implements IWidgetSubscription {
         if (datasource.dataKeys.length) {
           this.ctx.datasourceService.subscribeToDatasource(listener);
         }
-        let forceUpdate = false;
         if (datasource.unresolvedStateEntity ||
           !datasource.dataKeys.length ||
           (datasource.type === DatasourceType.entity && !datasource.entityId)
         ) {
           forceUpdate = true;
         }
-        if (forceUpdate) {
-          this.notifyDataLoaded();
-          this.onDataUpdated();
-        }
       });
+      if (forceUpdate) {
+        this.notifyDataLoaded();
+        this.onDataUpdated();
+      }
     }
   }
 

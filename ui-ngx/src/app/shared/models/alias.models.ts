@@ -129,7 +129,7 @@ export type EntityFilters =
 
 export interface EntityAliasFilter extends EntityFilters {
   type?: AliasFilterType;
-  resolveMultiple: boolean;
+  resolveMultiple?: boolean;
 }
 
 export interface EntityAlias {

@@ -246,7 +246,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     this.dashboardCtx.dashboardTimewindow = this.dashboardConfiguration.timewindow;
     this.dashboardCtx.aliasController = new AliasController(this.utils,
       this.entityService,
-      this.dashboardCtx.stateController,
+      () => this.dashboardCtx.stateController,
       this.dashboardConfiguration.entityAliases);
 
     if (this.widgetEditMode) {

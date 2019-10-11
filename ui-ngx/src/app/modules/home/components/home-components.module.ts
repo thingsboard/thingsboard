@@ -46,6 +46,7 @@ import { EntityFilterViewComponent } from './entity/entity-filter-view.component
 import { EntityAliasDialogComponent } from './alias/entity-alias-dialog.component';
 import { EntityFilterComponent } from './entity/entity-filter.component';
 import { RelationFiltersComponent } from './relation/relation-filters.component';
+import { EntityAliasSelectComponent } from './alias/entity-alias-select.component';
 
 @NgModule({
   entryComponents: [
@@ -90,7 +91,8 @@ import { RelationFiltersComponent } from './relation/relation-filters.component'
       LegendComponent,
       WidgetConfigComponent,
       EntityFilterViewComponent,
-      EntityFilterComponent
+      EntityFilterComponent,
+      EntityAliasSelectComponent
     ],
   imports: [
     CommonModule,
@@ -117,7 +119,8 @@ import { RelationFiltersComponent } from './relation/relation-filters.component'
     LegendComponent,
     WidgetConfigComponent,
     EntityFilterViewComponent,
-    EntityFilterComponent
+    EntityFilterComponent,
+    EntityAliasSelectComponent
   ],
   providers: [
     WidgetComponentService

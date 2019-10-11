@@ -92,9 +92,44 @@
                  formArrayName="datasources"
                  *ngFor="let datasourceControl of dataSettings.get('datasources').controls; let $index = index">
               <span fxFlex="5">{{$index + 1}}.</span>
-              <div class="mat-elevation-z4" fxFlex fxLayout="row" fxLayoutAlign="start center"
+              <div [formGroupName]="$index" class="mat-elevation-z4" fxFlex fxLayout="row" fxLayoutAlign="start center"
                    style="padding: 0 0 0 10px; margin: 5px;">
-                <div fxFlex>TODO: datasource: {{ datasourceControl.value | json }}</div>
+                <mat-form-field class="tb-datasource-type">
+                  <mat-select matInput formControlName="type">
+                    <mat-option *ngFor="let datasourceType of datasourceTypes" [value]="datasourceType">
+                      {{ datasourceTypesTranslations.get(datasourceType) | translate }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <section fxFlex class="tb-datasource" [ngSwitch]="datasourceControl.get('type').value">
+                  <ng-template [ngSwitchCase]="datasourceType.function">
+                    <mat-form-field floatLabel="always" [fxShow]="widgetType !== widgetTypes.alarm"
+                                    class="tb-datasource-name" style="min-width: 200px;">
+                      <mat-label></mat-label>
+                      <input matInput
+                             placeholder="{{ 'datasource.name' | translate }}"
+                             formControlName="name">
+                    </mat-form-field>
+                  </ng-template>
+                  <ng-template [ngSwitchCase]="datasourceType.entity">
+                    <tb-entity-alias-select
+                      [required]="datasourceControl.get('type').value === datasourceType.entity"
+                      [aliasController]="aliasController"
+                      formControlName="entityAliasId"
+                      [callbacks]="widgetConfigCallbacks">
+                    </tb-entity-alias-select>
+                  </ng-template>
+                </section>
+                <!--tb-datasource fxFlex
+                               [widgetType]="widgetType"
+                               [maxDataKeys]="typeParameters?.maxDataKeys"
+                               [optDataKeys]="typeParameters?.dataKeysOptional"
+                               [aliasController]="aliasController"
+                               [functionsOnly]="functionsOnly"
+                               [datakeySettingsSchema]="dataKeySettingsSchema"
+                               [callbacks]="widgetConfigCallbacks"
+                               [formControl]="datasourceControl"
+                ></tb-datasource-->
                 <button [disabled]="isLoading$ | async"
                         mat-button mat-icon-button color="primary"
                         style="min-width: 40px;"
@@ -127,8 +162,14 @@
             {{ 'widget-config.target-device' | translate }}
           </mat-panel-title>
         </mat-expansion-panel-header>
-        <div style="padding: 0 5px;">
-
+        <div [formGroup]="targetDeviceSettings" style="padding: 0 5px;">
+          <tb-entity-alias-select fxFlex
+            [required]="!widgetEditMode"
+            [aliasController]="aliasController"
+            [allowedEntityTypes]="[entityTypes.DEVICE]"
+            [callbacks]="widgetConfigCallbacks"
+            formControlName="targetDeviceAliasId">
+          </tb-entity-alias-select>
         </div>
       </mat-expansion-panel>
     </div>

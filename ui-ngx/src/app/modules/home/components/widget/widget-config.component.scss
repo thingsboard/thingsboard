@@ -13,10 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+@import '../../../../../scss/constants';
+
 :host {
   .tb-widget-config {
     .tb-advanced-widget-config {
       height: 100%;
+    }
+    .tb-datasource-type {
+      min-width: 110px;
+    }
+    .tb-datasource {
+      @media #{$mat-gt-sm} {
+        padding-left: 8px;
+      }
+    }
+    .tb-datasource-name {
+      @media #{$mat-gt-sm} {
+        width: 200px;
+        max-width: 200px;
+      }
     }
   }
 }
@@ -28,8 +45,34 @@
         height: 100%;
       }
     }
-    .mat-expansion-panel.tb-datasources.mat-expanded {
-      overflow: visible;
+    .mat-expansion-panel {
+      &.tb-datasources.mat-expanded {
+        overflow: visible;
+      }
+      .mat-expansion-panel-content {
+        font: inherit;
+      }
+    }
+    .tb-datasource-type {
+      .mat-form-field-infix {
+        width: 100%;
+      }
+      .mat-select-value {
+        min-width: 92px;
+      }
+    }
+    .tb-datasource {
+      tb-entity-alias-select {
+        .mat-form-field {
+          margin-top: 13px;
+        }
+        @media #{$mat-gt-sm} {
+          .mat-form-field {
+            width: 200px;
+            max-width: 200px;
+          }
+        }
+      }
     }
   }
 }

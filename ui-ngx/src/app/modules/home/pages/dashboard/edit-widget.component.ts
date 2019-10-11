@@ -28,8 +28,21 @@ import { IAliasController } from '@core/api/widget-api.models';
 import { Widget, WidgetActionSource, WidgetTypeParameters } from '@shared/models/widget.models';
 import { WidgetComponentService } from '@home/components/widget/widget-component.service';
 import { WidgetConfigComponentData } from '../../models/widget-component.models';
-import { isDefined, isString } from '@core/utils';
+import { deepClone, isDefined, isString } from '@core/utils';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { EntityType } from '@shared/models/entity-type.models';
+import { Observable, of } from 'rxjs';
+import { EntityAlias, EntityAliases } from '@shared/models/alias.models';
+import { WidgetConfigCallbacks } from '@home/components/widget/widget-config.component.models';
+import {
+  EntityAliasesDialogComponent,
+  EntityAliasesDialogData
+} from '@home/components/alias/entity-aliases-dialog.component';
+import {
+  EntityAliasDialogComponent,
+  EntityAliasDialogData
+} from '@home/components/alias/entity-alias-dialog.component';
+import { tap } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-edit-widget',
@@ -65,6 +78,7 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
   functionsOnly: boolean;
 
   constructor(protected store: Store<AppState>,
+              private dialog: MatDialog,
               private widgetComponentService: WidgetComponentService) {
     super(store);
   }
@@ -112,5 +126,27 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
     }
     this.functionsOnly = this.dashboard ? false : true;
     this.widgetFormGroup.reset({widgetConfig: this.widgetConfig});
+  }
+
+  private createEntityAlias(alias: string, allowedEntityTypes: Array<EntityType>): Observable<EntityAlias> {
+    const singleEntityAlias: EntityAlias = {id: null, alias, filter: {resolveMultiple: false}};
+    return this.dialog.open<EntityAliasDialogComponent, EntityAliasDialogData,
+      EntityAlias>(EntityAliasDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        isAdd: true,
+        allowedEntityTypes,
+        entityAliases: this.dashboard.configuration.entityAliases,
+        alias: singleEntityAlias
+      }
+    }).afterClosed().pipe(
+      tap((entityAlias) => {
+        if (entityAlias) {
+          this.dashboard.configuration.entityAliases[entityAlias.id] = entityAlias;
+          this.aliasController.updateEntityAliases(this.dashboard.configuration.entityAliases);
+        }
+      })
+    );
   }
 }

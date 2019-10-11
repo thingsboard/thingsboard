@@ -86,7 +86,7 @@ export class EntityAliasDialogComponent extends DialogComponent<EntityAliasDialo
         this.entityAliases.push(data.entityAliases[aliasId]);
       }
     }
-    if (this.isAdd) {
+    if (this.isAdd && !this.data.alias) {
       this.alias = {
         id: null,
         alias: '',

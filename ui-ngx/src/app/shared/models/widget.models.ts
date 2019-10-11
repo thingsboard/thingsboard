@@ -22,6 +22,7 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { AlarmSearchStatus } from '@shared/models/alarm.models';
 import { Data } from '@angular/router';
 import { DataKeyType } from './telemetry/telemetry.models';
+import { EntityId } from '@shared/models/id/entity-id';
 
 export enum widgetType {
   timeseries = 'timeseries',
@@ -227,9 +228,17 @@ export enum DatasourceType {
   entity = 'entity'
 }
 
+export const datasourceTypeTranslationMap = new Map<DatasourceType, string>(
+  [
+    [ DatasourceType.function, 'function.function' ],
+    [ DatasourceType.entity, 'entity.entity' ]
+  ]
+);
+
 export interface Datasource {
   type?: DatasourceType | any;
   name?: string;
+  aliasName?: string;
   dataKeys?: Array<DataKey>;
   entityType?: EntityType;
   entityId?: string;
@@ -237,6 +246,10 @@ export interface Datasource {
   entityAliasId?: string;
   unresolvedStateEntity?: boolean;
   dataReceived?: boolean;
+  entity?: BaseData<EntityId>;
+  entityLabel?: string;
+  entityDescription?: string;
+  generated?: boolean;
   [key: string]: any;
   // TODO:
 }

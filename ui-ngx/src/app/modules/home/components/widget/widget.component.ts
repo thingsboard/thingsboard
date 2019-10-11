@@ -459,6 +459,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     this.initialize().subscribe(
       () => {
         this.onInit();
+      },
+      (err) => {
+        // console.log(err);
       }
     );
   }
@@ -606,9 +609,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           initSubject.next();
           initSubject.complete();
         },
-        () => {
+        (err) => {
           this.subscriptionInited = true;
-          initSubject.error(null);
+          initSubject.error(err);
         }
       );
     } else {
@@ -675,8 +678,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         createSubscriptionSubject.next(subscription);
         createSubscriptionSubject.complete();
       },
-      () => {
-        createSubscriptionSubject.error(null);
+      (err) => {
+        createSubscriptionSubject.error(err);
       }
     );
     return createSubscriptionSubject.asObservable();
@@ -716,13 +719,13 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
             createSubscriptionSubject.next(subscription);
             createSubscriptionSubject.complete();
           },
-          () => {
-            createSubscriptionSubject.error(null);
+          (err) => {
+            createSubscriptionSubject.error(err);
           }
         );
       },
-      () => {
-        createSubscriptionSubject.error(null);
+      (err) => {
+        createSubscriptionSubject.error(err);
       }
     );
     return createSubscriptionSubject.asObservable();
@@ -806,8 +809,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           createSubscriptionSubject.next();
           createSubscriptionSubject.complete();
         },
-        () => {
-          createSubscriptionSubject.error(null);
+        (err) => {
+          createSubscriptionSubject.error(err);
         }
       );
     } else if (this.widget.type === widgetType.rpc) {
@@ -842,8 +845,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           createSubscriptionSubject.next();
           createSubscriptionSubject.complete();
         },
-        () => {
-          createSubscriptionSubject.error(null);
+        (err) => {
+          createSubscriptionSubject.error(err);
         }
       );
       this.cd.detectChanges();

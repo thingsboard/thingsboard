@@ -73,22 +73,27 @@ export interface AliasInfo {
   currentEntity?: EntityInfo;
   selectedId?: string;
   resolvedEntities?: Array<EntityInfo>;
-  [key: string]: any | null;
-  // TODO:
+  entityParamName?: string;
+  resolveMultiple?: boolean;
+}
+
+export interface StateEntityInfo {
+  entityParamName: string;
+  entityId: EntityId;
 }
 
 export interface IAliasController {
   entityAliasesChanged: Observable<Array<string>>;
   entityAliasResolved: Observable<string>;
   getAliasInfo(aliasId: string): Observable<AliasInfo>;
+  getEntityAliasId(aliasName: string): string;
   getInstantAliasInfo(aliasId: string): AliasInfo;
   resolveDatasources(datasources: Array<Datasource>): Observable<Array<Datasource>>;
+  resolveAlarmSource(alarmSource: Datasource): Observable<Datasource>;
   getEntityAliases(): EntityAliases;
   updateCurrentAliasEntity(aliasId: string, currentEntity: EntityInfo);
   updateEntityAliases(entityAliases: EntityAliases);
   dashboardStateChanged();
-  [key: string]: any | null;
-  // TODO:
 }
 
 export interface StateObject {
@@ -102,6 +107,8 @@ export interface StateParams {
   entityId?: EntityId;
   [key: string]: any | null;
 }
+
+export type StateControllerHolder = () => IStateController;
 
 export interface IStateController {
   getStateParams(): StateParams;
@@ -131,7 +138,11 @@ export interface SubscriptionInfo {
   attributes?: Array<KeyInfo>;
   functions?: Array<KeyInfo>;
   alarmFields?: Array<KeyInfo>;
-  [key: string]: any;
+
+  deviceId?: string;
+  deviceName?: string;
+  deviceNamePrefix?: string;
+  deviceIds?: Array<string>;
 }
 
 export interface WidgetSubscriptionContext {
@@ -178,8 +189,6 @@ export interface WidgetSubscriptionOptions {
   decimals?: number;
   units?: string;
   callbacks?: WidgetSubscriptionCallbacks;
-  [key: string]: any;
-  // TODO:
 }
 
 export interface SubscriptionEntityInfo {

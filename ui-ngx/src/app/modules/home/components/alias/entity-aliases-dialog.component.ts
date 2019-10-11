@@ -178,6 +178,7 @@ export class EntityAliasesDialogComponent extends DialogComponent<EntityAliasesD
         message, this.translate.instant('action.close'), true);
     } else {
       (this.entityAliasesFormGroup.get('entityAliases') as FormArray).removeAt(index);
+      this.entityAliasesFormGroup.markAsDirty();
     }
   }
 
@@ -217,6 +218,7 @@ export class EntityAliasesDialogComponent extends DialogComponent<EntityAliasesD
           aliasFormControl.get('filter').patchValue(entityAlias.filter);
           aliasFormControl.get('resolveMultiple').patchValue(entityAlias.filter.resolveMultiple);
         }
+        this.entityAliasesFormGroup.markAsDirty();
       }
     });
   }
