@@ -23,6 +23,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
+import org.thingsboard.server.service.install.DatabaseTsUpgradeService;
 import org.thingsboard.server.service.install.DatabaseUpgradeService;
 import org.thingsboard.server.service.install.EntityDatabaseSchemaService;
 import org.thingsboard.server.service.install.SystemDataLoaderService;
@@ -51,6 +52,9 @@ public class ThingsboardInstallService {
 
     @Autowired
     private DatabaseUpgradeService databaseUpgradeService;
+
+    @Autowired
+    private DatabaseTsUpgradeService databaseTsUpgradeService;
 
     @Autowired
     private ComponentDiscoveryService componentDiscoveryService;
@@ -135,6 +139,9 @@ public class ThingsboardInstallService {
                         systemDataLoaderService.deleteSystemWidgetBundle("date");
 
                         systemDataLoaderService.loadSystemWidgets();
+                    case "2.4.1":
+                        log.info("Upgrading ThingsBoard from version 2.4.1 to 2.4.2 ...");
+                        databaseTsUpgradeService.upgradeDatabase("2.4.1");
                         break;
                     default:
                         throw new RuntimeException("Unable to upgrade ThingsBoard, unsupported fromVersion: " + upgradeFromVersion);
