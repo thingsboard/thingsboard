@@ -384,6 +384,7 @@
         "public-devices": "Public Devices",
         "public-assets": "Public Assets",
         "public-entity-views": "Public Entity Views",
+        "public-edges": "Public Edges",
         "add": "Add Customer",
         "delete": "Delete customer",
         "manage-customer-users": "Manage customer users",
@@ -392,7 +393,9 @@
         "manage-public-devices": "Manage public devices",
         "manage-public-dashboards": "Manage public dashboards",
         "manage-customer-assets": "Manage customer assets",
+        "manage-customer-edges": "Manage customer edges",
         "manage-public-assets": "Manage public assets",
+        "manage-public-edges": "Manage public edges",
         "add-customer-text": "Add new customer",
         "no-customers-text": "No customers found",
         "customer-details": "Customer details",
@@ -417,7 +420,8 @@
         "customer-required": "Customer is required",
         "select-default-customer": "Select default customer",
         "default-customer": "Default customer",
-        "default-customer-required": "Default customer is required in order to debug dashboard on Tenant level"
+        "default-customer-required": "Default customer is required in order to debug dashboard on Tenant level",
+        "edges": "Customer Edges"
     },
     "datetime": {
         "date-from": "Date from",
@@ -564,7 +568,8 @@
         "show-details": "Show details",
         "hide-details": "Hide details",
         "select-state": "Select target state",
-        "state-controller": "State controller"
+        "state-controller": "State controller",
+        "manage-assigned-edges": "Manage assigned edges"
     },
     "datakey": {
         "settings": "Settings",
@@ -729,13 +734,32 @@
         "description": "Description",
         "events": "Events",
         "details": "Details",
-        "copyId": "Copy role Id",
-        "idCopiedMessage": "Edge Id has been copied to clipboard",
+        "copy-id": "Copy Edge Id",
+        "id-copied-message": "Edge Id has been copied to clipboard",
         "permissions": "Permissions",
         "edge-required": "Edge required",
         "edge-type": "Edge type",
         "edge-type-required": "Edge type is required.",
-        "select-edge-type": "Select edge type"
+        "select-edge-type": "Select edge type",
+        "assign-to-customer": "Assign to customer",
+        "assign-to-customer-text": "Please select the customer to assign the edge(s)",
+        "assign-edge-to-customer": "Assign Edge(s) To Customer",
+        "assign-edge-to-customer-text": "Please select the edges to assign to the customer",
+        "assigned-to-customer": "Assigned to customer",
+        "unassign-from-customer": "Unassign from customer",
+        "assign-edges-text": "Assign { count, plural, 1 {1 edge} other {# edges} } to customer",
+        "unassign-edge-title": "Are you sure you want to unassign the edge '{{edgeName}}'?",
+        "unassign-edge-text": "After the confirmation the edge will be unassigned and won't be accessible by the customer.",
+        "make-public": "Make edge public",
+        "make-public-edge-title": "Are you sure you want to make the edge '{{edgeName}}' public?",
+        "make-public-edge-text": "After the confirmation the edge and all its data will be made public and accessible by others.",
+        "make-private": "Make edge private",
+        "public": "Public",
+        "make-private-edge-title": "Are you sure you want to make the edge '{{edgeName}}' private?",
+        "make-private-edge-text": "After the confirmation the edge and all its data will be made private and won't be accessible by others.",
+        "import": "Import edge",
+        "label": "Label",
+        "assign-new-edge": "Assign new edge"
     },
     "error": {
         "unable-to-connect": "Unable to connect to the server! Please check your internet connection.",

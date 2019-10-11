@@ -42,6 +42,7 @@ import DashboardController from './dashboard.controller';
 import DashboardSettingsController from './dashboard-settings.controller';
 import AddDashboardsToCustomerController from './add-dashboards-to-customer.controller';
 import ManageAssignedCustomersController from './manage-assigned-customers.controller';
+import ManageAssignedEdgesController from './manage-assigned-edges.controller';
 import AddWidgetController from './add-widget.controller';
 import DashboardDirective from './dashboard.directive';
 import EditWidgetDirective from './edit-widget.directive';
@@ -76,6 +77,7 @@ export default angular.module('thingsboard.dashboard', [
     .controller('DashboardSettingsController', DashboardSettingsController)
     .controller('AddDashboardsToCustomerController', AddDashboardsToCustomerController)
     .controller('ManageAssignedCustomersController', ManageAssignedCustomersController)
+    .controller('ManageAssignedEdgesController', ManageAssignedEdgesController)
     .controller('AddWidgetController', AddWidgetController)
     .directive('tbDashboardDetails', DashboardDirective)
     .directive('tbEditWidget', EditWidgetDirective)

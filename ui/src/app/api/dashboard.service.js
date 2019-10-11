@@ -42,7 +42,10 @@ function DashboardService($rootScope, $http, $q, $location, $filter) {
         removeDashboardCustomers: removeDashboardCustomers,
         makeDashboardPublic: makeDashboardPublic,
         makeDashboardPrivate: makeDashboardPrivate,
-        getPublicDashboardLink: getPublicDashboardLink
+        getPublicDashboardLink: getPublicDashboardLink,
+        updateDashboardEdges: updateDashboardEdges,
+        addDashboardEdges: addDashboardEdges,
+        removeDashboardEdges: removeDashboardEdges
     }
 
     return service;
@@ -292,4 +295,36 @@ function DashboardService($rootScope, $http, $q, $location, $filter) {
         return dashboard;
     }
 
+    function updateDashboardEdges(dashboardId, edgeIds) {
+        var deferred = $q.defer();
+        var url = '/api/dashboard/' + dashboardId + '/edges';
+        $http.post(url, edgeIds).then(function success(response) {
+            deferred.resolve(prepareDashboard(response.data));
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function addDashboardEdges(dashboardId, edgeIds) {
+        var deferred = $q.defer();
+        var url = '/api/dashboard/' + dashboardId + '/edges/add';
+        $http.post(url, edgeIds).then(function success(response) {
+            deferred.resolve(prepareDashboard(response.data));
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function removeDashboardEdges(dashboardId, edgeIds) {
+        var deferred = $q.defer();
+        var url = '/api/dashboard/' + dashboardId + '/edges/remove';
+        $http.post(url, edgeIds).then(function success(response) {
+            deferred.resolve(prepareDashboard(response.data));
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
 }

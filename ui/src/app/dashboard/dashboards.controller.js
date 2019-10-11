@@ -20,6 +20,7 @@ import dashboardCard from './dashboard-card.tpl.html';
 import addDashboardsToCustomerTemplate from './add-dashboards-to-customer.tpl.html';
 import makeDashboardPublicDialogTemplate from './make-dashboard-public-dialog.tpl.html';
 import manageAssignedCustomersTemplate from './manage-assigned-customers.tpl.html';
+import manageAssignedEdgesTemplate from './manage-assigned-edges.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
 
@@ -204,6 +205,17 @@ export function DashboardsController(userService, dashboardService, customerServ
                 name: function() { return $translate.instant('action.assign') },
                 details: function() { return $translate.instant('dashboard.manage-assigned-customers') },
                 icon: "assignment_ind",
+                isEnabled: function(dashboard) {
+                    return dashboard;
+                }
+            });
+            dashboardActionsList.push({
+                onAction: function ($event, item) {
+                    manageAssignedEdges($event, item);
+                },
+                name: function() { return $translate.instant('action.assign') },
+                details: function() { return $translate.instant('dashboard.manage-assigned-edges') },
+                icon: "assignment",
                 isEnabled: function(dashboard) {
                     return dashboard;
                 }
@@ -610,5 +622,43 @@ export function DashboardsController(userService, dashboardService, customerServ
         } else {
             $state.go('home.dashboards.dashboard', {dashboardId: dashboard.id.id});
         }
+    }
+
+    function manageAssignedEdges($event, dashboard) {
+        showManageAssignedEdgesDialog($event, [dashboard.id.id], 'manage', dashboard.assignedEdgesIds);
+    }
+
+    // function assignDashboardsToEdges($event, items) {
+    //     var dashboardIds = [];
+    //     for (var id in items.selections) {
+    //         dashboardIds.push(id);
+    //     }
+    //     showManageAssignedEdgesDialog($event, dashboardIds, 'assign');
+    // }
+    //
+    // function unassignDashboardsFromEdges($event, items) {
+    //     var dashboardIds = [];
+    //     for (var id in items.selections) {
+    //         dashboardIds.push(id);
+    //     }
+    //     showManageAssignedEdgesDialog($event, dashboardIds, 'unassign');
+    // }
+
+    function showManageAssignedEdgesDialog($event, dashboardIds, actionType, assignedEdges) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        $mdDialog.show({
+            controller: 'ManageAssignedEdgesController',
+            controllerAs: 'vm',
+            templateUrl: manageAssignedEdgesTemplate,
+            locals: {actionType: actionType, dashboardIds: dashboardIds, assignedEdges: assignedEdges},
+            parent: angular.element($document[0].body),
+            fullscreen: true,
+            targetEvent: $event
+        }).then(function () {
+            vm.grid.refreshList();
+        }, function () {
+        });
     }
 }

@@ -31,14 +31,14 @@
                data-clipboard-text="{{edge.id.id}}" ng-show="!isEdit"
                class="md-raised">
         <md-icon md-svg-icon="mdi:clipboard-arrow-left"></md-icon>
-        <span translate>edge.copyId</span>
+        <span translate>edge.copy-id</span>
     </md-button>
 </div>
 
 <md-content class="md-padding" layout="column">
     <md-input-container class="md-block"
                         ng-show="!isEdit && isAssignedToCustomer && !isPublic && edgeScope === 'tenant'">
-        <label translate>edge.assignedToCustomer</label>
+        <label translate>edge.assigned-to-customer</label>
         <input ng-model="assignedCustomer.title" disabled>
     </md-input-container>
     <div class="tb-small" style="padding-bottom: 10px; padding-left: 2px;"

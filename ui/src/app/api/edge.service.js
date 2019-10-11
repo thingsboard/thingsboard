@@ -28,6 +28,7 @@ function EdgeService($http, $q, customerService) {
         saveEdge: saveEdge,
         getEdgeTypes: getEdgeTypes,
         getTenantEdges: getTenantEdges,
+        getCustomerEdges: getCustomerEdges,
         assignEdgeToCustomer: assignEdgeToCustomer,
         unassignEdgeFromCustomer: unassignEdgeFromCustomer,
         makeEdgePublic: makeEdgePublic
@@ -157,6 +158,42 @@ function EdgeService($http, $q, customerService) {
         }, function fail() {
             deferred.reject();
         });
+        return deferred.promise;
+    }
+
+    function getCustomerEdges(customerId, pageLink, applyCustomersInfo, config, type) {
+        var deferred = $q.defer();
+        var url = '/api/customer/' + customerId + '/edges?limit=' + pageLink.limit;
+        if (angular.isDefined(pageLink.textSearch)) {
+            url += '&textSearch=' + pageLink.textSearch;
+        }
+        if (angular.isDefined(pageLink.idOffset)) {
+            url += '&idOffset=' + pageLink.idOffset;
+        }
+        if (angular.isDefined(pageLink.textOffset)) {
+            url += '&textOffset=' + pageLink.textOffset;
+        }
+        if (angular.isDefined(type) && type.length) {
+            url += '&type=' + type;
+        }
+        $http.get(url, config).then(function success(response) {
+            if (applyCustomersInfo) {
+                customerService.applyAssignedCustomerInfo(response.data.data, customerId).then(
+                    function success(data) {
+                        response.data.data = data;
+                        deferred.resolve(response.data);
+                    },
+                    function fail() {
+                        deferred.reject();
+                    }
+                );
+            } else {
+                deferred.resolve(response.data);
+            }
+        }, function fail() {
+            deferred.reject();
+        });
+
         return deferred.promise;
     }
 

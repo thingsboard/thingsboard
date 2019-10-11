@@ -18,6 +18,6 @@
 <div flex layout="column">
     <div style="text-transform: uppercase; padding-bottom: 5px;">{{vm.item.type}}</div>
     <div class="tb-card-description">{{vm.item.additionalInfo.description}}</div>
-    <div style="padding-top: 5px;" class="tb-small" ng-show="vm.isAssignedToCustomer()">{{'edge.assignedToCustomer' | translate}} '{{vm.item.assignedCustomer.title}}'</div>
+    <div style="padding-top: 5px;" class="tb-small" ng-show="vm.isAssignedToCustomer()">{{'edge.assigned-to-customer' | translate}} '{{vm.item.assignedCustomer.title}}'</div>
     <div style="padding-top: 5px;" class="tb-small" ng-show="vm.isPublic()">{{'edge.public' | translate}}</div>
 </div>

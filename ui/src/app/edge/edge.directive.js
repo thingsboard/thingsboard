@@ -49,7 +49,7 @@ export default function EdgeDirective($compile, $templateCache, $translate, $mdD
         });
 
         scope.onEdgeIdCopied = function() {
-            toast.showSuccess($translate.instant('edge.idCopiedMessage'), 750, angular.element(element).parent().parent(), 'bottom left');
+            toast.showSuccess($translate.instant('edge.id-copied-message'), 750, angular.element(element).parent().parent(), 'bottom left');
         };
 
         $compile(element.contents())(scope);
