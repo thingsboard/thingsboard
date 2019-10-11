@@ -54,7 +54,7 @@ import static org.thingsboard.server.service.install.DatabaseHelper.TYPE;
 @Profile("install")
 @Slf4j
 @SqlDao
-public class SqlDatabaseUpgradeService implements DatabaseUpgradeService {
+public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService {
 
     private static final String SCHEMA_UPDATE_SQL = "schema_update.sql";
 

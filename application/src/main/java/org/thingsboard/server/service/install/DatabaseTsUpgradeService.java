@@ -15,4 +15,8 @@
  */
 package org.thingsboard.server.service.install;
 
-public interface DatabaseTsUpgradeService extends DatabaseUpgradeService { }
+public interface DatabaseTsUpgradeService {
+
+    void upgradeDatabase(String fromVersion) throws Exception;
+
+}
