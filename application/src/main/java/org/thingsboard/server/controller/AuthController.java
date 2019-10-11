@@ -112,7 +112,7 @@ public class AuthController extends BaseController {
             if (!passwordEncoder.matches(currentPassword, userCredentials.getPassword())) {
                 throw new ThingsboardException("Current password doesn't match!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
             }
-            systemSecurityService.validatePassword(securityUser.getTenantId(), newPassword);
+            systemSecurityService.validatePassword(securityUser.getTenantId(), newPassword, userCredentials);
             if (passwordEncoder.matches(newPassword, userCredentials.getPassword())) {
                 throw new ThingsboardException("New password should be different from existing!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
             }
@@ -206,7 +206,7 @@ public class AuthController extends BaseController {
         try {
             String activateToken = activateRequest.get("activateToken").asText();
             String password = activateRequest.get("password").asText();
-            systemSecurityService.validatePassword(TenantId.SYS_TENANT_ID, password);
+            systemSecurityService.validatePassword(TenantId.SYS_TENANT_ID, password, null);
             String encodedPassword = passwordEncoder.encode(password);
             UserCredentials credentials = userService.activateUserCredentials(TenantId.SYS_TENANT_ID, activateToken, encodedPassword);
             User user = userService.findUserById(TenantId.SYS_TENANT_ID, credentials.getUserId());
@@ -246,7 +246,7 @@ public class AuthController extends BaseController {
             String password = resetPasswordRequest.get("password").asText();
             UserCredentials userCredentials = userService.findUserCredentialsByResetToken(TenantId.SYS_TENANT_ID, resetToken);
             if (userCredentials != null) {
-                systemSecurityService.validatePassword(TenantId.SYS_TENANT_ID, password);
+                systemSecurityService.validatePassword(TenantId.SYS_TENANT_ID, password, userCredentials);
                 if (passwordEncoder.matches(password, userCredentials.getPassword())) {
                     throw new ThingsboardException("New password should be different from existing!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
                 }
