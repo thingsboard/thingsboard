@@ -268,7 +268,8 @@
         "select-asset": "Seleziona asset",
         "no-assets-matching": "Nessun asset corrispondente a '{{entity}}' è stato trovato.",
         "asset-required": "Asset obbligatorio",
-        "name-starts-with": "Asset con nome che inizia per"
+        "name-starts-with": "Asset con nome che inizia per",
+        "label": "Etichetta"
     },
     "attribute": {
         "attributes": "Attributi",

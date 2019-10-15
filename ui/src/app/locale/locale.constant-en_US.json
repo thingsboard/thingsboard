@@ -271,7 +271,8 @@
         "asset-required": "Asset is required",
         "name-starts-with": "Asset name starts with",
         "import": "Import assets",
-        "asset-file": "Asset file"
+        "asset-file": "Asset file",
+        "label": "Label"
     },
     "attribute": {
         "attributes": "Attributes",
