@@ -188,7 +188,7 @@ function Menu(userService, $state, $rootScope) {
                             name: 'edge.edges',
                             type: 'link',
                             state: 'home.edges',
-                            icon: 'toys'
+                            icon: 'router'
                         },
                         {
                             name: 'widget.widget-library',
@@ -265,7 +265,7 @@ function Menu(userService, $state, $rootScope) {
                                 places: [
                                     {
                                         name: 'edge.edges',
-                                        icon: 'toys',
+                                        icon: 'router',
                                         state: 'home.edges'
                                     }
                                 ]
@@ -326,7 +326,7 @@ function Menu(userService, $state, $rootScope) {
                             name: 'edge.edges',
                             type: 'link',
                             state: 'home.edges',
-                            icon: 'toys'
+                            icon: 'router'
                         },
                         {
                             name: 'dashboard.dashboards',
@@ -371,7 +371,7 @@ function Menu(userService, $state, $rootScope) {
                             places: [
                                 {
                                     name: 'edge.edges',
-                                    icon: 'toys',
+                                    icon: 'router',
                                     state: 'home.edges'
                                 }
                             ]

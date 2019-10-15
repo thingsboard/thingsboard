@@ -47,6 +47,7 @@ import AddWidgetController from './add-widget.controller';
 import DashboardDirective from './dashboard.directive';
 import EditWidgetDirective from './edit-widget.directive';
 import DashboardToolbar from './dashboard-toolbar.directive';
+import AddDashboardsToEdgeController from './add-dashboards-to-edge.controller';
 
 export default angular.module('thingsboard.dashboard', [
     uiRouter,
@@ -79,6 +80,7 @@ export default angular.module('thingsboard.dashboard', [
     .controller('ManageAssignedCustomersController', ManageAssignedCustomersController)
     .controller('ManageAssignedEdgesController', ManageAssignedEdgesController)
     .controller('AddWidgetController', AddWidgetController)
+    .controller('AddDashboardsToEdgeController', AddDashboardsToEdgeController)
     .directive('tbDashboardDetails', DashboardDirective)
     .directive('tbEditWidget', EditWidgetDirective)
     .directive('tbDashboardToolbar', DashboardToolbar)

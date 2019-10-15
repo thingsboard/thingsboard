@@ -689,4 +689,26 @@ public class DashboardController extends BaseController {
             throw handleException(e);
         }
     }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/edge/{edgeId}/dashboards", params = { "limit" }, method = RequestMethod.GET)
+    @ResponseBody
+    public TimePageData<DashboardInfo> getEdgeDashboards(
+            @PathVariable("edgeId") String strEdgeId,
+            @RequestParam int limit,
+            @RequestParam(required = false) Long startTime,
+            @RequestParam(required = false) Long endTime,
+            @RequestParam(required = false, defaultValue = "false") boolean ascOrder,
+            @RequestParam(required = false) String offset) throws ThingsboardException {
+        checkParameter("edgeId", strEdgeId);
+        try {
+            TenantId tenantId = getCurrentUser().getTenantId();
+            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+            checkEdgeId(edgeId, Operation.READ);
+            TimePageLink pageLink = createPageLink(limit, startTime, endTime, ascOrder, offset);
+            return checkNotNull(dashboardService.findDashboardsByTenantIdAndEdgeId(tenantId, edgeId, pageLink).get());
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
 }

@@ -299,6 +299,23 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         new EdgeDashboardsUpdater(edge).removeEntities(tenantId, edge);
     }
 
+    @Override
+    public ListenableFuture<TimePageData<DashboardInfo>> findDashboardsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink) {
+        log.trace("Executing findDashboardsByTenantIdAndEdgeId, tenantId [{}], edgeId [{}], pageLink [{}]", tenantId, edgeId, pageLink);
+        Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        Validator.validateId(edgeId, "Incorrect customerId " + edgeId);
+        Validator.validatePageLink(pageLink, "Incorrect page link " + pageLink);
+        ListenableFuture<List<DashboardInfo>> dashboards = dashboardInfoDao.findDashboardsByTenantIdAndEdgeId(tenantId.getId(), edgeId.getId(), pageLink);
+
+        return Futures.transform(dashboards, new Function<List<DashboardInfo>, TimePageData<DashboardInfo>>() {
+            @Nullable
+            @Override
+            public TimePageData<DashboardInfo> apply(@Nullable List<DashboardInfo> dashboards) {
+                return new TimePageData<>(dashboards, pageLink);
+            }
+        });
+    }
+
     private Dashboard updateAssignedEdge(TenantId tenantId, DashboardId dashboardId, Edge edge) {
         Dashboard dashboard = findDashboardById(tenantId, dashboardId);
         if (dashboard.updateAssignedEdge(edge)) {

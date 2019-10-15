@@ -219,6 +219,19 @@ export function EdgeController($rootScope, userService, edgeService, customerSer
             edgeActionsList.push(
                 {
                     onAction: function ($event, item) {
+                        openEdgeDashboards($event, item);
+                    },
+                    name: function() { return $translate.instant('dashboard.dashboards') },
+                    details: function() {
+                        return $translate.instant('edge.manage-edge-dashboards');
+                    },
+                    icon: "dashboard"
+                }
+            );
+
+            edgeActionsList.push(
+                {
+                    onAction: function ($event, item) {
                         vm.grid.deleteItem($event, item);
                     },
                     name: function() { return $translate.instant('action.delete') },
@@ -239,6 +252,8 @@ export function EdgeController($rootScope, userService, edgeService, customerSer
                     icon: "assignment_ind"
                 }
             );
+
+
 
             edgeGroupActionsList.push(
                 {
@@ -531,4 +546,18 @@ export function EdgeController($rootScope, userService, edgeService, customerSer
             });
         });
     }
+
+    function openEdgeDashboards($event, edge) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        $state.go('home.edges.dashboards', {edgeId: edge.id.id});
+    }
+
+    // function openEdgeRuleChains($event, edge) {
+    //     if ($event) {
+    //         $event.stopPropagation();
+    //     }
+    //     $state.go('home.edges.rule-chains', {edgeId: edge.id.id});
+    // }
 }

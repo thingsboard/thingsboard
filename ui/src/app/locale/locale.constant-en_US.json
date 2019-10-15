@@ -569,7 +569,20 @@
         "hide-details": "Hide details",
         "select-state": "Select target state",
         "state-controller": "State controller",
-        "manage-assigned-edges": "Manage assigned edges"
+        "manage-assigned-edges": "Manage assigned edges",
+        "unassign-dashboard-from-edge-text": "After the confirmation the dashboard will be unassigned and won't be accessible by the edge.",
+        "assigned-edges": "Assigned edges",
+        "unassign-from-edge": "Unassign from edge",
+        "unassign-dashboards-from-edge-action-title": "Unassign { count, plural, 1 {1 dashboard} other {# dashboards} } from edge",
+        "unassign-dashboards-from-edge-text": "After the confirmation all selected dashboards will be unassigned and won't be accessible by the edge.",
+        "assign-dashboard-to-edge": "Assign Dashboard(s) To Edge",
+        "assign-dashboard-to-edge-text": "Please select the dashboards to assign to the edge",
+        "assign-dashboards-to-edge-text": "Assign { count, plural, 1 {1 dashboard} other {# dashboards} } to edges",
+        "unassign-dashboards-from-edge-action-text": "Unassign { count, plural, 1 {1 dashboard} other {# dashboards} } from edges",
+        "assign-to-edges": "Assign Dashboard(s) To Edges",
+        "assign-to-edges-text": "Please select the edges to assign the dashboard(s)",
+        "unassign-from-edges": "Unassign Dashboard(s) From Edges",
+        "unassign-from-edges-text": "Please select the edges to unassign from the dashboard(s)"
     },
     "datakey": {
         "settings": "Settings",
@@ -759,7 +772,10 @@
         "make-private-edge-text": "After the confirmation the edge and all its data will be made private and won't be accessible by others.",
         "import": "Import edge",
         "label": "Label",
-        "assign-new-edge": "Assign new edge"
+        "assign-new-edge": "Assign new edge",
+        "manage-edge-dashboards": "Manage edge dashboards",
+        "unassign-from-edge": "Unassign from edge",
+        "dashboards": "Edge Dashboards"
     },
     "error": {
         "unable-to-connect": "Unable to connect to the server! Please check your internet connection.",

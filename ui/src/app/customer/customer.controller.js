@@ -89,7 +89,7 @@ export default function CustomerController(customerService, $state, $stateParams
                     return $translate.instant('customer.manage-customer-edges')
                 }
             },
-            icon: "toys"
+            icon: "wifi_tethering"
         },
         {
             onAction: function ($event, item) {

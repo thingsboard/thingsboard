@@ -124,4 +124,25 @@ export default function DashboardRoutes($stateProvider) {
                 label: '{"icon": "dashboard", "label": "customer.dashboard"}'
             }
         })
+        .state('home.edges.dashboards', {
+            url: '/:edgeId/dashboards',
+            params: {'topIndex': 0},
+            module: 'private',
+            auth: ['TENANT_ADMIN'],
+            views: {
+                "content@home": {
+                    templateUrl: dashboardsTemplate,
+                    controllerAs: 'vm',
+                    controller: 'DashboardsController'
+                }
+            },
+            data: {
+                dashboardsType: 'edge',
+                searchEnabled: true,
+                pageTitle: 'edge.dashboards'
+            },
+            ncyBreadcrumb: {
+                label: '{"icon": "dashboard", "label": "{{ vm.edgeDashboardsTitle }}", "translate": "false"}'
+            }
+        })
 }
