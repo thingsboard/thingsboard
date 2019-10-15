@@ -1365,6 +1365,7 @@
         "column-type": {
             "name": "Назва",
             "type": "Тип",
+            "label": "Мітка",
             "column-type": "Тип колонки",
             "client-attribute": "Атрибут клієнта",
             "shared-attribute": "Спільний атрибут",

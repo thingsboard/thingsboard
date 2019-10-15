@@ -1139,6 +1139,7 @@
         "column-type": {
             "name": "Name",
             "type": "Type",
+            "label": "Label",
             "column-type": "Column type",
             "client-attribute": "Client attribute",
             "shared-attribute": "Shared attribute",

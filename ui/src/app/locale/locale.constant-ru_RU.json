@@ -1113,6 +1113,7 @@
         "column-type": {
             "name": "Название",
             "type": "Тип",
+            "label": "Метка",
             "column-type": "Тип колонки",
             "client-attribute": "Клиентский атрибут",
             "shared-attribute": "Общий атрибут",

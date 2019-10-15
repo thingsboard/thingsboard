@@ -1130,7 +1130,8 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         let statisticalInfo = {};
         let newEntity = {
             name: entityParameters.name,
-            type: entityParameters.type
+            type: entityParameters.type,
+            label: entityParameters.label
         };
         let promise;
         switch (entityType) {
