@@ -275,7 +275,7 @@ caffeine:
       maxSize: 1
 
 redis:
-  # standalone or cluster.
+  # standalone or cluster
   connection:
     type: standalone
   standalone:
