@@ -67,12 +67,6 @@ public class TBRedisCacheConfiguration {
     @Value("${redis.cluster.max-redirects}")
     private Integer maxRedirects;
 
-    @Value("${redis.sentinel.master}")
-    private String masterName;
-
-    @Value("${redis.sentinel.nodes}")
-    private String sentinelNodes;
-
     @Value("${redis.db}")
     private Integer db;
 
