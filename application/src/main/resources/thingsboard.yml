@@ -245,7 +245,7 @@ actors:
 
 cache:
   # caffeine or redis
-  type: "${CACHE_TYPE:caffeine}"
+  type: "${CACHE_TYPE:redis}"
 
 caffeine:
   specs:
@@ -275,13 +275,21 @@ caffeine:
       maxSize: 1
 
 redis:
-  # standalone or cluster
+  # standalone or cluster.
   connection:
-    type: standalone
+    type: cluster
+  standalone:
     host: "${REDIS_HOST:localhost}"
     port: "${REDIS_PORT:6379}"
-    db: "${REDIS_DB:0}"
-    password: "${REDIS_PASSWORD:}"
+  cluster:
+    # Comma-separated list of "host:port" pairs to bootstrap from.
+    nodes: "${REDIS_NODES:192.168.1.201:6379,192.168.1.83:6380,192.168.1.40:6381}"
+    # Maximum number of redirects to follow when executing commands across the cluster.
+    max-redirects: "${REDIS_MAX_REDIRECTS:12}"
+  # db index
+  db: "${REDIS_DB:0}"
+  # db password
+  password: "${REDIS_PASSWORD:}"
 
 # Check new version updates parameters
 updates:
@@ -325,7 +333,7 @@ spring:
     database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}"
   datasource:
     driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.postgresql.Driver}"
-    url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard}"
+    url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard_test_redis}"
     username: "${SPRING_DATASOURCE_USERNAME:postgres}"
     password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
     hikari:

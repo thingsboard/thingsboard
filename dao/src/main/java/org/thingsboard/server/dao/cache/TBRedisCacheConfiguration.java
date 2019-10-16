@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.cache;
 
 import lombok.Data;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
@@ -26,11 +27,18 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.ConverterRegistry;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
+import org.springframework.data.redis.connection.RedisClusterConfiguration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisNode;
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.format.support.DefaultFormattingConversionService;
 import org.springframework.util.Assert;
 import org.thingsboard.server.common.data.id.EntityId;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @Configuration
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis", matchIfMissing = false)
@@ -38,26 +46,58 @@ import org.thingsboard.server.common.data.id.EntityId;
 @Data
 public class TBRedisCacheConfiguration {
 
-    @Value("${redis.connection.host}")
+
+    private static final String COMMA = ",";
+    private static final String COLON = ":";
+    private static final String STANDALONE_TYPE = "standalone";
+    private static final String CLUSTER_TYPE = "cluster";
+    public static final String SENTINEL_TYPE = "sentinel";
+
+    @Value("${redis.connection.type}")
+    private String connectionType;
+
+    @Value("${redis.standalone.host}")
     private String host;
 
-    @Value("${redis.connection.port}")
+    @Value("${redis.standalone.port}")
     private Integer port;
 
-    @Value("${redis.connection.db}")
+    @Value("${redis.cluster.nodes}")
+    private String clusterNodes;
+
+    @Value("${redis.cluster.max-redirects}")
+    private Integer maxRedirects;
+
+    @Value("${redis.sentinel.master}")
+    private String masterName;
+
+    @Value("${redis.sentinel.nodes}")
+    private String sentinelNodes;
+
+    @Value("${redis.db}")
     private Integer db;
 
-    @Value("${redis.connection.password}")
+    @Value("${redis.password}")
     private String password;
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
-        JedisConnectionFactory factory = new JedisConnectionFactory();
-        factory.setHostName(host);
-        factory.setPort(port);
-        factory.setDatabase(db);
-        factory.setPassword(password);
-        return factory;
+        if (connectionType.equalsIgnoreCase(STANDALONE_TYPE)) {
+            RedisStandaloneConfiguration standaloneConfiguration = new RedisStandaloneConfiguration();
+            standaloneConfiguration.setHostName(host);
+            standaloneConfiguration.setPort(port);
+            standaloneConfiguration.setDatabase(db);
+            standaloneConfiguration.setPassword(password);
+            return new JedisConnectionFactory(standaloneConfiguration);
+        } else if (connectionType.equalsIgnoreCase(CLUSTER_TYPE)) {
+            RedisClusterConfiguration clusterConfiguration = new RedisClusterConfiguration();
+            clusterConfiguration.setClusterNodes(getNodes(clusterNodes));
+            clusterConfiguration.setMaxRedirects(maxRedirects);
+            clusterConfiguration.setPassword(password);
+            return new JedisConnectionFactory(clusterConfiguration);
+        } else {
+            throw new RuntimeException("Unsupported Redis Connection type: [" + connectionType + "]!");
+        }
     }
 
     @Bean
@@ -72,6 +112,21 @@ public class TBRedisCacheConfiguration {
     @Bean
     public KeyGenerator previousDeviceCredentialsId() {
         return new PreviousDeviceCredentialsIdKeyGenerator();
+    }
+
+    private List<RedisNode> getNodes(String nodes) {
+        List<RedisNode> result;
+        if (StringUtils.isBlank(nodes)) {
+            result = Collections.emptyList();
+        } else {
+            result = new ArrayList<>();
+            for (String hostPort : nodes.split(COMMA)) {
+                String host = hostPort.split(COLON)[0];
+                Integer port = Integer.valueOf(hostPort.split(COLON)[1]);
+                result.add(new RedisNode(host, port));
+            }
+        }
+        return result;
     }
 
     private static void registerDefaultConverters(ConverterRegistry registry) {
