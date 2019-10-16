@@ -73,7 +73,7 @@ public abstract class TBRedisCacheConfiguration {
     private boolean blockWhenExhausted;
 
     @Bean
-    public RedisConnectionFactory redisConnectionFactory(){
+    public RedisConnectionFactory redisConnectionFactory() {
         return loadFactory();
     }
 
