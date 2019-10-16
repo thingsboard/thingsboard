@@ -16,7 +16,6 @@
 package org.thingsboard.server.dao.cache;
 
 import lombok.Data;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
@@ -27,71 +26,58 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.ConverterRegistry;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
-import org.springframework.data.redis.connection.RedisClusterConfiguration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.connection.RedisNode;
-import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.format.support.DefaultFormattingConversionService;
 import org.springframework.util.Assert;
 import org.thingsboard.server.common.data.id.EntityId;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import redis.clients.jedis.JedisPoolConfig;
 
 @Configuration
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis", matchIfMissing = false)
 @EnableCaching
 @Data
-public class TBRedisCacheConfiguration {
+public abstract class TBRedisCacheConfiguration {
 
+    @Value("${redis.pool_config.maxTotal}")
+    private int maxTotal;
 
-    private static final String COMMA = ",";
-    private static final String COLON = ":";
-    private static final String STANDALONE_TYPE = "standalone";
-    private static final String CLUSTER_TYPE = "cluster";
+    @Value("${redis.pool_config.maxIdle}")
+    private int maxIdle;
 
-    @Value("${redis.connection.type}")
-    private String connectionType;
+    @Value("${redis.pool_config.minIdle}")
+    private int minIdle;
 
-    @Value("${redis.standalone.host}")
-    private String host;
+    @Value("${redis.pool_config.testOnBorrow}")
+    private boolean testOnBorrow;
 
-    @Value("${redis.standalone.port}")
-    private Integer port;
+    @Value("${redis.pool_config.testOnReturn}")
+    private boolean testOnReturn;
 
-    @Value("${redis.cluster.nodes}")
-    private String clusterNodes;
+    @Value("${redis.pool_config.testWhileIdle}")
+    private boolean testWhileIdle;
 
-    @Value("${redis.cluster.max-redirects}")
-    private Integer maxRedirects;
+    @Value("${redis.pool_config.minEvictableMs}")
+    private long minEvictableMs;
 
-    @Value("${redis.db}")
-    private Integer db;
+    @Value("${redis.pool_config.evictionRunsMs}")
+    private long evictionRunsMs;
 
-    @Value("${redis.password}")
-    private String password;
+    @Value("${redis.pool_config.maxWaitMills}")
+    private long maxWaitMills;
+
+    @Value("${redis.pool_config.numberTestsPerEvictionRun}")
+    private int numberTestsPerEvictionRun;
+
+    @Value("${redis.pool_config.blockWhenExhausted}")
+    private boolean blockWhenExhausted;
 
     @Bean
-    public RedisConnectionFactory redisConnectionFactory() {
-        if (connectionType.equalsIgnoreCase(STANDALONE_TYPE)) {
-            RedisStandaloneConfiguration standaloneConfiguration = new RedisStandaloneConfiguration();
-            standaloneConfiguration.setHostName(host);
-            standaloneConfiguration.setPort(port);
-            standaloneConfiguration.setDatabase(db);
-            standaloneConfiguration.setPassword(password);
-            return new JedisConnectionFactory(standaloneConfiguration);
-        } else if (connectionType.equalsIgnoreCase(CLUSTER_TYPE)) {
-            RedisClusterConfiguration clusterConfiguration = new RedisClusterConfiguration();
-            clusterConfiguration.setClusterNodes(getNodes(clusterNodes));
-            clusterConfiguration.setMaxRedirects(maxRedirects);
-            clusterConfiguration.setPassword(password);
-            return new JedisConnectionFactory(clusterConfiguration);
-        } else {
-            throw new RuntimeException("Unsupported Redis Connection type: [" + connectionType + "]!");
-        }
+    public RedisConnectionFactory redisConnectionFactory(){
+        return loadFactory();
     }
+
+    protected abstract JedisConnectionFactory loadFactory();
 
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory cf) {
@@ -107,23 +93,24 @@ public class TBRedisCacheConfiguration {
         return new PreviousDeviceCredentialsIdKeyGenerator();
     }
 
-    private List<RedisNode> getNodes(String nodes) {
-        List<RedisNode> result;
-        if (StringUtils.isBlank(nodes)) {
-            result = Collections.emptyList();
-        } else {
-            result = new ArrayList<>();
-            for (String hostPort : nodes.split(COMMA)) {
-                String host = hostPort.split(COLON)[0];
-                Integer port = Integer.valueOf(hostPort.split(COLON)[1]);
-                result.add(new RedisNode(host, port));
-            }
-        }
-        return result;
-    }
-
     private static void registerDefaultConverters(ConverterRegistry registry) {
         Assert.notNull(registry, "ConverterRegistry must not be null!");
         registry.addConverter(EntityId.class, String.class, EntityId::toString);
+    }
+
+    protected JedisPoolConfig buildPoolConfig() {
+        final JedisPoolConfig poolConfig = new JedisPoolConfig();
+        poolConfig.setMaxTotal(maxTotal);
+        poolConfig.setMaxIdle(maxIdle);
+        poolConfig.setMinIdle(minIdle);
+        poolConfig.setTestOnBorrow(testOnBorrow);
+        poolConfig.setTestOnReturn(testOnReturn);
+        poolConfig.setTestWhileIdle(testWhileIdle);
+        poolConfig.setMinEvictableIdleTimeMillis(minEvictableMs);
+        poolConfig.setTimeBetweenEvictionRunsMillis(evictionRunsMs);
+        poolConfig.setMaxWaitMillis(maxWaitMills);
+        poolConfig.setNumTestsPerEvictionRun(numberTestsPerEvictionRun);
+        poolConfig.setBlockWhenExhausted(blockWhenExhausted);
+        return poolConfig;
     }
 }
