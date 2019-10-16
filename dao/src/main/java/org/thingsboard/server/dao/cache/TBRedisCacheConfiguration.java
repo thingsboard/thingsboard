@@ -51,7 +51,6 @@ public class TBRedisCacheConfiguration {
     private static final String COLON = ":";
     private static final String STANDALONE_TYPE = "standalone";
     private static final String CLUSTER_TYPE = "cluster";
-    public static final String SENTINEL_TYPE = "sentinel";
 
     @Value("${redis.connection.type}")
     private String connectionType;
