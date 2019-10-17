@@ -250,7 +250,8 @@
         "asset-required": "Актив обязателен",
         "name-starts-with": "Название актива, начинающееся с",
         "import": "Импортировать активы",
-        "asset-file": "Файл с активами"
+        "asset-file": "Файл с активами",
+        "label": "Метка"
     },
     "attribute": {
         "attributes": "Атрибуты",
@@ -1113,6 +1114,7 @@
         "column-type": {
             "name": "Название",
             "type": "Тип",
+            "label": "Метка",
             "column-type": "Тип колонки",
             "client-attribute": "Клиентский атрибут",
             "shared-attribute": "Общий атрибут",

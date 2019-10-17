@@ -267,7 +267,8 @@
     "select-asset": "Objekt auswählen",
     "no-assets-matching": "Es wurden keine zu '{{entity}}' passenden Objekte gefunden.",
     "asset-required": "Objekt ist erforderlich",
-    "name-starts-with": "Name des Objekts beginnt mit"
+    "name-starts-with": "Name des Objekts beginnt mit",
+    "label": "Bezeichnung"
   },
   "attribute": {
     "attributes": "Eigenschaften",

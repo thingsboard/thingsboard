@@ -271,7 +271,8 @@
         "asset-required": "Asset is required",
         "name-starts-with": "Asset name starts with",
         "import": "Import assets",
-        "asset-file": "Asset file"
+        "asset-file": "Asset file",
+        "label": "Label"
     },
     "attribute": {
         "attributes": "Attributes",
@@ -1139,6 +1140,7 @@
         "column-type": {
             "name": "Name",
             "type": "Type",
+            "label": "Label",
             "column-type": "Column type",
             "client-attribute": "Client attribute",
             "shared-attribute": "Shared attribute",
