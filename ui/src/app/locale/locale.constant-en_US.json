@@ -1195,7 +1195,13 @@
         "min": "min",
         "max": "max",
         "avg": "avg",
-        "total": "total"
+        "total": "total",
+        "comparison-time-ago": {
+            "days": "(day ago)",
+            "weeks": "(week ago)",
+            "months": "(month ago)",
+            "years": "(year ago)"
+        }
     },
     "login": {
         "login": "Login",
