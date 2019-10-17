@@ -14,26 +14,28 @@
  * limitations under the License.
  */
 
-:host {
-  position: relative;
-
-  .fill-height {
-    height: 100%;
+@mixin tb-mat-icon-size($size) {
+  width: #{$size}px;
+  min-width: #{$size}px;
+  height: #{$size}px;
+  min-height: #{$size}px;
+  font-size: #{$size}px;
+  line-height: #{$size}px;
+  svg {
+    width: 24px;
+    height: 24px;
+    transform: scale($size/24);
+    transform-origin: top;
   }
 }
 
-.tb-json-object-panel {
-  height: 100%;
-  margin-left: 15px;
-  border: 1px solid #c0c0c0;
-
-  #tb-json-input {
-    width: 100%;
-    min-width: 200px;
-    height: 100%;
-
-    &:not(.fill-height) {
-      min-height: 200px;
-    }
+@mixin tb-mat-icon-button-size($size) {
+  width: #{$size}px;
+  height: #{$size}px;
+  line-height: #{$size}px;
+  padding: 0 !important;
+  .mat-icon {
+    display: block;
+    margin: auto;
   }
 }

@@ -2,7 +2,7 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "outDir": "../out-tsc/app",
-    "types": ["node", "jquery", "flot", "tinycolor2", "js-beautify"]
+    "types": ["node", "jquery", "flot", "tinycolor2", "js-beautify", "react", "react-dom"]
   },
   "exclude": [
     "test.ts",

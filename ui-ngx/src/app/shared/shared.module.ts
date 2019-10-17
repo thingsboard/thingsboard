@@ -58,6 +58,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ShareModule as ShareButtonsModule } from '@ngx-share/core';
 import { HotkeyModule } from 'angular2-hotkeys';
+import { ColorPickerModule } from 'ngx-color-picker';
 import { UserMenuComponent } from '@shared/components/user-menu.component';
 import { NospacePipe } from './pipe/nospace.pipe';
 import { TranslateModule } from '@ngx-translate/core';
@@ -100,6 +101,11 @@ import { TbErrorComponent } from './components/tb-error.component';
 import { EntityTypeListComponent } from './components/entity/entity-type-list.component';
 import { EntitySubTypeListComponent } from './components/entity/entity-subtype-list.component';
 import { TruncatePipe } from './pipe/truncate.pipe';
+import { ColorPickerDialogComponent } from './components/dialog/color-picker-dialog.component';
+import { MatChipDraggableDirective } from './components/mat-chip-draggable.directive';
+import { ColorInputComponent } from './components/color-input.component';
+import { JsFuncComponent } from './components/js-func.component';
+import { JsonFormComponent } from './components/json-form/json-form.component';
 
 @NgModule({
   providers: [
@@ -114,7 +120,8 @@ import { TruncatePipe } from './pipe/truncate.pipe';
     TbAnchorComponent,
     TimewindowPanelComponent,
     DashboardSelectPanelComponent,
-    MatSpinner
+    MatSpinner,
+    ColorPickerDialogComponent
   ],
   declarations: [
     FooterComponent,
@@ -123,6 +130,7 @@ import { TruncatePipe } from './pipe/truncate.pipe';
     ToastDirective,
     FullscreenDirective,
     CircularProgressDirective,
+    MatChipDraggableDirective,
     TbAnchorComponent,
     HelpComponent,
     TbCheckboxComponent,
@@ -152,10 +160,14 @@ import { TruncatePipe } from './pipe/truncate.pipe';
     RelationTypeAutocompleteComponent,
     SocialSharePanelComponent,
     JsonObjectEditComponent,
+    JsFuncComponent,
     FabTriggerDirective,
     FabActionsDirective,
     FabToolbarComponent,
     WidgetsBundleSelectComponent,
+    ColorPickerDialogComponent,
+    ColorInputComponent,
+    JsonFormComponent,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
@@ -204,7 +216,8 @@ import { TruncatePipe } from './pipe/truncate.pipe';
     ReactiveFormsModule,
     OverlayModule,
     ShareButtonsModule,
-    HotkeyModule
+    HotkeyModule,
+    ColorPickerModule
   ],
   exports: [
     FooterComponent,
@@ -213,6 +226,7 @@ import { TruncatePipe } from './pipe/truncate.pipe';
     ToastDirective,
     FullscreenDirective,
     CircularProgressDirective,
+    MatChipDraggableDirective,
     TbAnchorComponent,
     HelpComponent,
     TbCheckboxComponent,
@@ -239,6 +253,7 @@ import { TruncatePipe } from './pipe/truncate.pipe';
     RelationTypeAutocompleteComponent,
     SocialSharePanelComponent,
     JsonObjectEditComponent,
+    JsFuncComponent,
     FabTriggerDirective,
     FabActionsDirective,
     FabToolbarComponent,
@@ -282,6 +297,10 @@ import { TruncatePipe } from './pipe/truncate.pipe';
     OverlayModule,
     ShareButtonsModule,
     HotkeyModule,
+    ColorPickerModule,
+    ColorPickerDialogComponent,
+    ColorInputComponent,
+    JsonFormComponent,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,

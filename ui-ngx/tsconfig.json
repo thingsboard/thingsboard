@@ -9,8 +9,10 @@
     "moduleResolution": "node",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
     "importHelpers": true,
     "target": "es5",
+    "jsx": "react",
     "typeRoots": [
       "node_modules/@types",
       "src/typings/jquery.typings.d.ts",

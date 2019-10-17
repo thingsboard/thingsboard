@@ -50,14 +50,15 @@ import { UtilsService } from '@core/services/utils.service';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityType } from '@shared/models/entity-type.models';
-import { Observable, of, Subscription } from 'rxjs';
+import { forkJoin, Observable, of, Subscription } from 'rxjs';
 import { WidgetConfigCallbacks } from '@home/components/widget/widget-config.component.models';
 import {
   EntityAliasDialogComponent,
   EntityAliasDialogData
 } from '@home/components/alias/entity-alias-dialog.component';
-import { tap } from 'rxjs/operators';
+import { tap, mergeMap, map, catchError } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
+import { EntityService } from '@core/http/entity.service';
 
 @Component({
   selector: 'tb-widget-config',
@@ -121,7 +122,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
 
   widgetConfigCallbacks: WidgetConfigCallbacks = {
     createEntityAlias: this.createEntityAlias.bind(this),
-    generateDataKey: this.generateDataKey.bind(this)
+    generateDataKey: this.generateDataKey.bind(this),
+    fetchEntityKeys: this.fetchEntityKeys.bind(this)
   };
 
   widgetEditMode = this.utils.widgetEditMode;
@@ -181,6 +183,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
 
   constructor(protected store: Store<AppState>,
               private utils: UtilsService,
+              private entityService: EntityService,
               private dialog: MatDialog,
               private translate: TranslateService,
               private fb: FormBuilder) {
@@ -380,25 +383,17 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   }
 
   private buildDatasourceForm(datasource?: Datasource): AbstractControl {
+    const dataKeysRequired = !this.typeParameters || !this.typeParameters.dataKeysOptional;
     const datasourceFormGroup = this.fb.group(
       {
         type: [datasource ? datasource.type : null, [Validators.required]],
         name: [datasource ? datasource.name : null, []],
         entityAliasId: [datasource ? datasource.entityAliasId : null,
           datasource && datasource.type === DatasourceType.entity ? [Validators.required] : []],
-        dataKeys: [datasource ? datasource.name : null, []]
+        dataKeys: [datasource ? datasource.dataKeys : null, dataKeysRequired ? [Validators.required] : []]
       }
     );
     datasourceFormGroup.get('type').valueChanges.subscribe((type: DatasourceType) => {
-      let dataKeys;
-      if (this.widgetType === widgetType.alarm) {
-        dataKeys = this.utils.getDefaultAlarmDataKeys();
-      } else {
-        dataKeys = [];
-      }
-      datasourceFormGroup.patchValue({
-        dataKeys
-      });
       datasourceFormGroup.get('entityAliasId').setValidators(
         type === DatasourceType.entity ? [Validators.required] : []
       );
@@ -557,6 +552,49 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
           this.aliasController.updateEntityAliases(this.entityAliases);
         }
       })
+    );
+  }
+
+  private fetchEntityKeys(entityAliasId: string, query: string, dataKeyTypes: Array<DataKeyType>): Observable<Array<DataKey>> {
+    return this.aliasController.getAliasInfo(entityAliasId).pipe(
+      mergeMap((aliasInfo) => {
+        const entity = aliasInfo.currentEntity;
+        if (entity) {
+          const fetchEntityTasks: Array<Observable<Array<DataKey>>> = [];
+          for (const dataKeyType of dataKeyTypes) {
+            fetchEntityTasks.push(
+              this.entityService.getEntityKeys(
+                {entityType: entity.entityType, id: entity.id},
+                query,
+                dataKeyType,
+                true,
+                true
+              ).pipe(
+                map((keys) => {
+                  const dataKeys: Array<DataKey> = [];
+                  for (const key of keys) {
+                    dataKeys.push({name: key, type: dataKeyType});
+                  }
+                  return dataKeys;
+                }
+                ),
+                catchError(val => of([]))
+            ));
+          }
+          return forkJoin(fetchEntityTasks).pipe(
+            map(arrayOfDataKeys => {
+              const result = new Array<DataKey>();
+              arrayOfDataKeys.forEach((dataKeyArray) => {
+                result.push(...dataKeyArray);
+              });
+              return result;
+            }
+          ));
+        } else {
+          return of([]);
+        }
+      }),
+      catchError(val => of([] as Array<DataKey>))
     );
   }
 

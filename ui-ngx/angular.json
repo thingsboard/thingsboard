@@ -32,8 +32,15 @@
             ],
             "styles": [
               "src/styles.scss",
-              "node_modules/jquery.terminal/css/jquery.terminal.min.css"
+              "node_modules/jquery.terminal/css/jquery.terminal.min.css",
+              "src/app/shared/components/json-form/react/json-form.scss",
+              "node_modules/rc-select/assets/index.css"
             ],
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                  "src/scss"
+              ]
+            },
             "scripts": [
               "node_modules/javascript-detect-element-resize/detect-element-resize.js",
               "node_modules/jquery/dist/jquery.min.js",
@@ -95,8 +102,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "2mb",
-                  "maximumError": "5mb"
+                  "maximumWarning": "5mb",
+                  "maximumError": "10mb"
                 }
               ]
             }

@@ -13,27 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 :host {
-  position: relative;
-
-  .fill-height {
-    height: 100%;
-  }
-}
-
-.tb-json-object-panel {
-  height: 100%;
-  margin-left: 15px;
-  border: 1px solid #c0c0c0;
-
-  #tb-json-input {
-    width: 100%;
-    min-width: 200px;
-    height: 100%;
-
-    &:not(.fill-height) {
-      min-height: 200px;
-    }
+  .mat-dialog-content {
+    padding: 0 !important;
+    margin: 0 !important;
   }
 }

@@ -35,6 +35,11 @@
         max-width: 200px;
       }
     }
+    .tb-data-keys {
+      @media #{$mat-gt-sm} {
+        padding-left: 8px;
+      }
+    }
   }
 }
 
@@ -71,6 +76,13 @@
             width: 200px;
             max-width: 200px;
           }
+        }
+      }
+    }
+    .tb-data-keys {
+      @media #{$mat-gt-sm} {
+        .mat-input-element {
+          min-height: 32px;
         }
       }
     }

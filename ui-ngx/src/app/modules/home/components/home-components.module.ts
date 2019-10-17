@@ -47,6 +47,9 @@ import { EntityAliasDialogComponent } from './alias/entity-alias-dialog.componen
 import { EntityFilterComponent } from './entity/entity-filter.component';
 import { RelationFiltersComponent } from './relation/relation-filters.component';
 import { EntityAliasSelectComponent } from './alias/entity-alias-select.component';
+import { DataKeysComponent } from '@home/components/widget/data-keys.component';
+import { DataKeyConfigDialogComponent } from './widget/data-key-config-dialog.component';
+import { DataKeyConfigComponent } from './widget/data-key-config.component';
 
 @NgModule({
   entryComponents: [
@@ -60,7 +63,8 @@ import { EntityAliasSelectComponent } from './alias/entity-alias-select.componen
     EditAttributeValuePanelComponent,
     AliasesEntitySelectPanelComponent,
     EntityAliasesDialogComponent,
-    EntityAliasDialogComponent
+    EntityAliasDialogComponent,
+    DataKeyConfigDialogComponent
   ],
   declarations:
     [
@@ -92,7 +96,10 @@ import { EntityAliasSelectComponent } from './alias/entity-alias-select.componen
       WidgetConfigComponent,
       EntityFilterViewComponent,
       EntityFilterComponent,
-      EntityAliasSelectComponent
+      EntityAliasSelectComponent,
+      DataKeysComponent,
+      DataKeyConfigComponent,
+      DataKeyConfigDialogComponent
     ],
   imports: [
     CommonModule,
@@ -120,7 +127,10 @@ import { EntityAliasSelectComponent } from './alias/entity-alias-select.componen
     WidgetConfigComponent,
     EntityFilterViewComponent,
     EntityFilterComponent,
-    EntityAliasSelectComponent
+    EntityAliasSelectComponent,
+    DataKeysComponent,
+    DataKeyConfigComponent,
+    DataKeyConfigDialogComponent
   ],
   providers: [
     WidgetComponentService

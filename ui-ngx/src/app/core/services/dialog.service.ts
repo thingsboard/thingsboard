@@ -22,6 +22,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { AlertDialogComponent } from '@core/services/dialog/alert-dialog.component';
 import { TodoDialogComponent } from '@core/services/dialog/todo-dialog.component';
 import { AuthService } from '@core/auth/auth.service';
+import {
+  ColorPickerDialogComponent,
+  ColorPickerDialogData
+} from '@shared/components/dialog/color-picker-dialog.component';
 
 @Injectable(
   {
@@ -68,6 +72,17 @@ export class DialogService {
     }
     const dialogRef = this.dialog.open(AlertDialogComponent, dialogConfig);
     return dialogRef.afterClosed();
+  }
+
+  colorPicker(color: string): Observable<string> {
+    return this.dialog.open<ColorPickerDialogComponent, ColorPickerDialogData, string>(ColorPickerDialogComponent,
+      {
+        disableClose: true,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        data: {
+          color
+        }
+    }).afterClosed();
   }
 
   private permissionDenied() {
