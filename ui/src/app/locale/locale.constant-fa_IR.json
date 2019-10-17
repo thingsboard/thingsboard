@@ -246,7 +246,8 @@
         "select-asset": "انتخاب دارايي",
         "no-assets-matching": ".يافت نشد '{{entity}}' هيچ دارايي منطبق بر",
         "asset-required": "دارايي مود نياز است",
-        "name-starts-with": "نام دارايي شروع مي شود با"
+        "name-starts-with": "نام دارايي شروع مي شود با",
+        "label": "برچسب"
     },
     "attribute": {
         "attributes": "ويژگي ها",

@@ -241,7 +241,8 @@
         "select-asset": "选择资产",
         "no-assets-matching": "没有找到匹配 '{{entity}}' 的资产。",
         "asset-required": "资产必填",
-        "name-starts-with": "资产名称以此开头"
+        "name-starts-with": "资产名称以此开头",
+        "label": "标签"
     },
     "attribute": {
         "attributes": "属性",
