@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.cache;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
@@ -25,6 +26,7 @@ import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import java.time.Duration;
 
 @Configuration
+@ConditionalOnMissingBean(CaffeineCacheConfiguration.class)
 @ConditionalOnProperty(prefix = "redis.connection", value = "type", havingValue = "standalone")
 public class TBRedisStandaloneConfiguration extends TBRedisCacheConfiguration {
 

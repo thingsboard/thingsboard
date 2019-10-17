@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.cache;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisClusterConfiguration;
@@ -28,6 +29,7 @@ import java.util.Collections;
 import java.util.List;
 
 @Configuration
+@ConditionalOnMissingBean(CaffeineCacheConfiguration.class)
 @ConditionalOnProperty(prefix = "redis.connection", value = "type", havingValue = "cluster")
 public class TBRedisClusterConfiguration extends TBRedisCacheConfiguration {
 
