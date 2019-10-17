@@ -101,7 +101,28 @@
             "password-was-reset": "Пароль було надіслано повідомленням"
         },
         "mail-subject": "Тема повідомлення",
-        "mail-body": "Вміст повідомлення"
+        "mail-body": "Вміст повідомлення",
+        "security-settings": "Налаштування безпеки",
+        "password-policy": "Політика щодо паролів",
+        "minimum-password-length": "Мінімальна довжина пароля",
+        "minimum-password-length-required": "Потрібна мінімальна довжина пароля",
+        "minimum-password-length-range": "Мінімальна довжина пароля повинна бути в межах від 5 до 50",
+        "minimum-uppercase-letters": "Мінімальна кількість великих літер",
+        "minimum-uppercase-letters-range": "Мінімальна кількість великих літер не може бути негативною",
+        "minimum-lowercase-letters": "Мінімальна кількість малих літер",
+        "minimum-lowercase-letters-range": "Мінімальна кількість малих літер не може бути негативною",
+        "minimum-digits": "Мінімальна кількість цифр",
+        "minimum-digits-range": "Мінімальна кількість цифр не може бути негативною",
+        "minimum-special-characters": "Мінімальна кількість спеціальних символів",
+        "minimum-special-characters-range": "Мінімальна кількість спеціальних символів не може бути негативною",
+        "password-expiration-period-days": "Термін дії пароля в днях",
+        "password-expiration-period-days-range": "Термін дії пароля в днях не може бути негативним",
+        "password-reuse-frequency-days": "Частота повторного використання пароля в днях",
+        "password-reuse-frequency-days-range": "Частота повторного використання пароля в днях не може бути негативною",
+        "general-policy": "Загальна політика",
+        "max-failed-login-attempts": "Максимальна кількість невдалих спроб входу, перш ніж обліковий запис заблоковано",
+        "minimum-max-failed-login-attempts-range": "Максимальна кількість невдалих спроб входу не може бути негативною",
+        "user-lockout-notification-email": "У разі блокування облікового запису користувача, надішліть сповіщення на електронну пошту"
     },
     "alarm": {
         "alarm": "Сигнал тривоги",
@@ -341,6 +362,9 @@
         "type-relations-delete": "Всі відношення видалено",
         "type-alarm-ack": "Визнано",
         "type-alarm-clear": "Очищено",
+        "type-login": "Вхід",
+        "type-logout": "Вихід",
+        "type-lockout": "Заблокований",
         "type-rest-api-rule-engine-call": "Rule engine REST API call",
         "status-success": "Успішно",
         "status-failure": "Невдало",
@@ -1620,6 +1644,7 @@
     },
     "profile": {
         "profile": "Профіль",
+        "last-login-time": "Час останнього входу",
         "change-password": "Змінити пароль",
         "current-password": "Поточний пароль"
     },
@@ -2015,7 +2040,11 @@
         "search": "Пошук користувачів",
         "details": "Подробиці",
         "login-as-tenant-admin": "Увійти як адміністратор власника",
-        "login-as-customer-user": "Увійти як користувач клієнта"
+        "login-as-customer-user": "Увійти як користувач клієнта",
+        "disable-account": "Вимкнути обліковий запис користувача",
+        "enable-account": "Увімкнути обліковий запис користувача",
+        "enable-account-message": "Обліковий запис користувача успішно увімкнено!",
+        "disabled-account-message": "Обліковий запис користувача успішно вимкнено!"
     },
     "value": {
         "type": "Тип значення",
@@ -2248,6 +2277,7 @@
         },
         "input-widgets": {
             "attribute-not-allowed": "Атрибут не може бути вибраний в цьому віджеті",
+            "date": "Дата",
             "blocked-location": "Геолокація заблокована у вашому браузері",
             "claim-device": "Підтвердити пристрій",
             "claim-failed": "Не вдалося підтвердити пристрій!",
@@ -2264,14 +2294,20 @@
             "longitude": "Довгота",
             "not-allowed-entity": "Обрана сутність не має спільних атрибутів",
             "no-attribute-selected": "Атрибут не вибрано",
+            "no-datakey-selected": "Ні один datakey не обраний",
             "no-entity-selected": "Сутність не вибрано",
             "no-coordinate-specified": "Ключ для широти/довготи не вказаний",
             "no-support-geolocation": "Ваш браузер не підтримує геолокацію",
+            "no-image": "Немає зображення",
+            "no-support-web-camera": "Нет поддерживаемой веб-камеры",
             "no-timeseries-selected": "Параметр телеметрії не вибрано",
             "secret-key": "Секретний ключ",
             "secret-key-required": "Необхідно вказати секретний ключ",
             "switch-attribute-value": "Змінити значення атрибута",
+            "switch-camera": "Змінити камеру",
             "switch-timeseries-value": "Змінити значення телеметрії",
+            "take-photo": "Зробити фото",
+            "time": "Час",
             "timeseries-not-allowed": "Телеметрія не може бути вибрана в цьому віджеті",
             "update-failed": "Не вдалося оновити",
             "update-successful": "Успішно оновлено",
@@ -2324,7 +2360,11 @@
             "row-click": "Клацніть на рядок",
             "marker-click": "Клацніть на маркер",
             "polygon-click": "Дія при натисканні на полігон",
-            "tooltip-tag-action": "Дія при натисканні на посилання в підказці"
+            "tooltip-tag-action": "Дія при натисканні на посилання в підказці",
+            "node-selected": "Дії при виборі ноди",
+            "element-click": "Дії при натисканні на HTML елементі",
+            "pie-slice-click": "Дії при натисканні на секції кругової діаграми",
+            "row-double-click": "Дії при подвійному натисканні на рядок"
         }
     },
     "language": {

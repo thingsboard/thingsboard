@@ -85,7 +85,28 @@
         "timeout-required": "Таймаут обязателен.",
         "timeout-invalid": "Недействительный таймаут.",
         "enable-tls": "Включить TLS",
-        "send-test-mail": "Отправить пробное письмо"
+        "send-test-mail": "Отправить пробное письмо",
+        "security-settings": "Настройки безопасности",
+        "password-policy": "Политика паролей",
+        "minimum-password-length": "Минимальная длина пароля",
+        "minimum-password-length-required": "Требуется минимальная длина пароля",
+        "minimum-password-length-range": "Минимальная длина пароля должна быть в диапазоне от 5 до 50",
+        "minimum-uppercase-letters": "Минимальное количество прописных букв",
+        "minimum-uppercase-letters-range": "Минимальное количество прописных букв не может быть отрицательным",
+        "minimum-lowercase-letters": "Минимальное количество строчных букв",
+        "minimum-lowercase-letters-range": "Минимальное количество строчных букв не может быть отрицательным",
+        "minimum-digits": "Минимальное количество цифр",
+        "minimum-digits-range": "Минимальное количество цифр не может быть отрицательным",
+        "minimum-special-characters": "Минимальное количество специальных символов",
+        "minimum-special-characters-range": "Минимальное количество специальных символов не может быть отрицательным",
+        "password-expiration-period-days": "Срок действия пароля в днях",
+        "password-expiration-period-days-range": "Срок действия пароля в днях не может быть отрицательным",
+        "password-reuse-frequency-days": "Частота повторного использования пароля в днях",
+        "password-reuse-frequency-days-range": "Частота повторного использования пароля в днях не может быть отрицательной",
+        "general-policy": "Общая политика",
+        "max-failed-login-attempts": "Максимальное количество неудачных попыток входа в систему, прежде чем учетная запись заблокирована",
+        "minimum-max-failed-login-attempts-range": "Максимальное количество неудачных попыток входа в систему не может быть отрицательным",
+        "user-lockout-notification-email": "В случае блокировки учетной записи пользователя отправьте уведомление на электронную почту"
     },
     "alarm": {
         "alarm": "Оповещение",
@@ -308,6 +329,9 @@
         "type-relations-delete": "Удалены все отношения",
         "type-alarm-ack": "Подтвержден",
         "type-alarm-clear": "Сброшен",
+        "type-login": "Вход",
+        "type-logout": "Выход",
+        "type-lockout": "Заблокирован",
         "status-success": "Успех",
         "status-failure": "Сбой",
         "audit-log-details": "Подробности аудит лога",
@@ -1205,6 +1229,7 @@
     },
     "profile": {
         "profile": "Профиль",
+        "last-login-time": "Время последнего входа в систему",
         "change-password": "Изменить пароль",
         "current-password": "Текущий пароль"
     },
@@ -1445,7 +1470,11 @@
         "activation-link-copied-message": "Ссылка для активации пользователя скопировано в буфер обмена",
         "details": "Подробности",
         "login-as-tenant-admin": "Войти как администратор владельца",
-        "login-as-customer-user": "Войти как пользователь клиента"
+        "login-as-customer-user": "Войти как пользователь клиента",
+        "disable-account": "Отключить учетную запись пользователя",
+        "enable-account": "Включить учетную запись пользователя",
+        "enable-account-message": "Учетная запись пользователя была успешно включена!",
+        "disable-account-message": "Учетная запись пользователя была успешно отключена!"
     },
     "value": {
         "type": "Тип значения",
@@ -1674,6 +1703,7 @@
         },
         "input-widgets": {
             "attribute-not-allowed": "Атрибут не может быть выбран в этом виджете",
+            "date": "Дата",
             "blocked-location": "Геолокация заблокирована в вашем браузере",
             "claim-device": "Подтвердить устройство",
             "claim-failed": "Не удалось подтвердить устройство!",
@@ -1690,14 +1720,20 @@
             "longitude": "Долгота",
             "not-allowed-entity": "Выбраный объект не имеет общих атрибутов",
             "no-attribute-selected": "Атрибут не выбран",
+            "no-datakey-selected": "Ни один datakey не выбран",
             "no-entity-selected": "Объект не выбран",
             "no-coordinate-specified": "Ключ для широты/долготы не указан",
             "no-support-geolocation": "Ваш браузер не поддерживает геолокацию",
+            "no-image": "Нет изображения",
+            "no-support-web-camera": "Нет поддерживаемой веб-камеры",
             "no-timeseries-selected": "Параметр телеметрии не выбран",
             "secret-key": "Секретный ключ",
             "secret-key-required": "Необходимо указать секретный ключ",
             "switch-attribute-value": "Изменить значение атрибута",
+            "switch-camera": "Изменить камеру",
             "switch-timeseries-value": "Изменить значение телеметрии",
+            "take-photo": "Сделать фото",
+            "time": "Время",
             "timeseries-not-allowed": "Телеметрия не может быть выбрана в этом виджете",
             "update-failed": "Не удалось обновить",
             "update-successful": "Успешно обновлено",
@@ -1718,7 +1754,11 @@
             "row-click": "Действий при щелчке на строку",
             "marker-click": "Действия при щелчке на маркер",
             "polygon-click": "Действия при щелчке на полигон",
-            "tooltip-tag-action": "Действие при нажатии на ссылку в подсказке"
+            "tooltip-tag-action": "Действие при нажатии на ссылку в подсказке",
+            "node-selected": "Действий при выборе ноды",
+            "element-click": "Действий при щелчке на HTML элементе",
+            "pie-slice-click": "Действий при щелчке на секции круговой диаграммы",
+            "row-double-click": "Действий при двойном щелчке на строку"
         }
     },
     "language": {
