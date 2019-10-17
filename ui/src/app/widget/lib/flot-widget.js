@@ -230,6 +230,7 @@ export default class TbFlot {
 
         ctx.tooltipIndividual = this.chartType === 'pie' || (angular.isDefined(settings.tooltipIndividual) ? settings.tooltipIndividual : false);
         ctx.tooltipCumulative = angular.isDefined(settings.tooltipCumulative) ? settings.tooltipCumulative : false;
+        ctx.hideZeros = angular.isDefined(settings.hideZeros) ? settings.hideZeros : false;
 
         var font = {
             color: settings.fontColor || "#545454",
@@ -1000,6 +1001,11 @@ export default class TbFlot {
             "type": "string",
             "default": ""
         };
+        properties["hideZeros"] = {
+            "title": "Hide zero/false dataKey values from tooltip",
+            "type": "boolean",
+            "default": false
+        };
 
         properties["grid"] = {
             "title": "Grid settings",
@@ -1127,6 +1133,7 @@ export default class TbFlot {
             "key": "tooltipValueFormatter",
             "type": "javascript"
         });
+        schema["form"].push("hideZeros");
         schema["form"].push({
             "key": "grid",
             "items": [
@@ -1617,22 +1624,24 @@ export default class TbFlot {
                 if (series.stack || (series.curvedLines && series.curvedLines.apply)) {
                     hoverIndex = this.findHoverIndexFromDataPoints(posx, series, hoverIndex);
                 }
-                hoverData = {
-                    value: value,
-                    hoverIndex: hoverIndex,
-                    color: series.dataKey.color,
-                    label: series.dataKey.label,
-                    units: series.dataKey.units,
-                    decimals: series.dataKey.decimals,
-                    tooltipValueFormatFunction: series.dataKey.tooltipValueFormatFunction,
-                    time: pointTime,
-                    distance: hoverDistance,
-                    index: i
-                };
-                if (series.datasource.isAdditional) {
-                    results[1].seriesHover.push(hoverData);
-                } else {
-                    results[0].seriesHover.push(hoverData);
+                if (!this.ctx.hideZeros || value) {
+                    hoverData = {
+                        value: value,
+                        hoverIndex: hoverIndex,
+                        color: series.dataKey.color,
+                        label: series.dataKey.label,
+                        units: series.dataKey.units,
+                        decimals: series.dataKey.decimals,
+                        tooltipValueFormatFunction: series.dataKey.tooltipValueFormatFunction,
+                        time: pointTime,
+                        distance: hoverDistance,
+                        index: i
+                    };
+                    if (series.datasource.isAdditional) {
+                        results[1].seriesHover.push(hoverData);
+                    } else {
+                        results[0].seriesHover.push(hoverData);
+                    }
                 }
             }
         }
