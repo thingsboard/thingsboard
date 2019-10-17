@@ -75,6 +75,8 @@ public class PsqlTsDatabaseUpgradeService implements DatabaseTsUpgradeService {
                         log.info("PostgreSQL version should be at least more than 10!");
                         log.info("Please upgrade your PostgreSQL and restart the script!");
                     } else {
+                        log.info("PostgreSQL version is valid!");
+                        log.info("Updating schema ...");
                         executeFunction(conn, CREATE_PARTITION_TABLE);
                         executeFunction(conn, CREATE_PARTITIONS);
                         executeFunction(conn, CREATE_TS_KV_DICTIONARY_TABLE);
@@ -120,7 +122,7 @@ public class PsqlTsDatabaseUpgradeService implements DatabaseTsUpgradeService {
     }
 
     private void executeFunction(Connection conn, String query) {
-        log.info("... {}", query);
+        log.info("{} ... ", query);
         try {
             CallableStatement callableStatement = conn.prepareCall("{" + query + "}");
             callableStatement.execute();
