@@ -23,6 +23,7 @@ import 'flot/src/plugins/jquery.flot.selection';
 import 'flot/src/plugins/jquery.flot.pie';
 import 'flot/src/plugins/jquery.flot.crosshair';
 import 'flot/src/plugins/jquery.flot.stack';
+import 'flot/src/plugins/jquery.flot.symbol';
 import 'flot.curvedlines/curvedLines';
 
 /* eslint-disable angular/angularelement */
@@ -522,8 +523,17 @@ export default class TbFlot {
             };
             if (keySettings.showPoints === true) {
                 series.points.show = true;
-                series.points.lineWidth = 5;
+                series.points.lineWidth = angular.isDefined(keySettings.showPointsLineWidth) ? keySettings.showPointsLineWidth : 5;
                 series.points.radius = angular.isDefined(keySettings.showPointsRadius) ? keySettings.showPointsRadius : 3;
+                series.points.symbol = angular.isDefined(keySettings.showPointShape) ? keySettings.showPointShape : 'circle';
+                if (series.points.symbol == 'custom' && keySettings.pointShapeFormatter) {
+                    try {
+                        series.points.symbol = new Function('ctx, x, y, radius, shadow', keySettings.pointShapeFormatter);
+                    } catch (e) {
+                        series.points.symbol = 'circle';
+                    }
+                }
+
             }
 
             if (this.chartType === 'line' && this.ctx.settings.smoothLines && !series.points.show) {
@@ -1002,7 +1012,7 @@ export default class TbFlot {
             "default": ""
         };
         properties["hideZeros"] = {
-            "title": "Hide zero/false dataKey values from tooltip",
+            "title": "Hide zero/false values from tooltip",
             "type": "boolean",
             "default": false
         };
@@ -1213,6 +1223,11 @@ export default class TbFlot {
                 "type": "object",
                 "title": "DataKeySettings",
                 "properties": {
+                    "excludeFromStacking": {
+                        "title": "Exclude from stacking(available in \"Stacking\" mode)",
+                        "type": "boolean",
+                        "default": false
+                    },
                     "showLines": {
                         "title": "Show lines",
                         "type": "boolean",
@@ -1228,10 +1243,24 @@ export default class TbFlot {
                         "type": "boolean",
                         "default": false
                     },
-                    "excludeFromStacking": {
-                        "title": "Exclude from stacking(available in \"Stacking\" mode)",
-                        "type": "boolean",
-                        "default": false
+                    "showPointShape": {
+                        "title": "Select point shape:",
+                        "type": "string",
+                        "default": "circle"
+                    },
+                    "pointShapeFormatter": {
+                        "title": "Point shape format function, f(ctx, x, y, radius, shadow)",
+                        "type": "string",
+                        "default": "var size = radius * Math.sqrt(Math.PI) / 2;\n" +
+                            "ctx.moveTo(x - size, y - size);\n" +
+                            "ctx.lineTo(x + size, y + size);\n" +
+                            "ctx.moveTo(x - size, y + size);\n" +
+                            "ctx.lineTo(x + size, y - size);"
+                    },
+                    "showPointsLineWidth": {
+                        "title": "Line width of points",
+                        "type": "number",
+                        "default": 5
                     },
                     "showPointsRadius": {
                         "title": "Radius of points",
@@ -1287,10 +1316,46 @@ export default class TbFlot {
                 "required": ["showLines", "fillLines", "showPoints"]
             },
             "form": [
+                "excludeFromStacking",
                 "showLines",
                 "fillLines",
                 "showPoints",
-                "excludeFromStacking",
+                {
+                    "key": "showPointShape",
+                    "type": "rc-select",
+                    "multiple": false,
+                    "items": [
+                        {
+                            "value": "circle",
+                            "label": "Circle"
+                        },
+                        {
+                            "value": "cross",
+                            "label": "Cross"
+                        },
+                        {
+                            "value": "diamond",
+                            "label": "Diamond"
+                        },
+                        {
+                            "value": "square",
+                            "label": "Square"
+                        },
+                        {
+                            "value": "triangle",
+                            "label": "Triangle"
+                        },
+                        {
+                            "value": "custom",
+                            "label": "Custom function"
+                        }
+                    ]
+                },
+                {
+                    "key": "pointShapeFormatter",
+                    "type": "javascript"
+                },
+                "showPointsLineWidth",
                 "showPointsRadius",
                 {
                     "key": "tooltipValueFormatter",
