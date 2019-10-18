@@ -17,7 +17,13 @@
 import * as tv from 'tv4';
 import ObjectPath from 'objectpath';
 import _ from 'lodash';
-import { SchemaValidationResult, DefaultsFormOptions, FormOption } from './json-form.models';
+import {
+  SchemaValidationResult,
+  DefaultsFormOptions,
+  FormOption,
+  JsonSchemaData,
+  JsonFormData
+} from './json-form.models';
 import { isDefined, isString, isUndefined } from '@core/utils';
 import * as equal from 'deep-equal';
 
@@ -433,7 +439,7 @@ function merge(schema: any, form: any[], ignore: { [key: string]: boolean }, opt
   }));
 }
 
-function selectOrSet(projection: string | string[], obj: any, valueToSet?: any): any {
+function selectOrSet(projection: string | (string | number)[], obj: any, valueToSet?: any): any {
   const numRe = /^\d+$/;
 
   if (!obj) {
@@ -474,7 +480,7 @@ function selectOrSet(projection: string | string[], obj: any, valueToSet?: any):
   return value;
 }
 
-function updateValue(projection: string | string[], obj: any, valueToSet: any): boolean {
+function updateValue(projection: string | (string | number)[], obj: any, valueToSet: any): boolean {
   const numRe = /^\d+$/;
 
   if (!obj) {
@@ -531,12 +537,55 @@ function setValue(obj: any, key: string, val: any): boolean {
   return changed;
 }
 
+function traverseSchema(schema: JsonSchemaData, fn: (prop: any, path: string[]) => any, path?: string[], ignoreArrays?: boolean) {
+  ignoreArrays = typeof ignoreArrays !== 'undefined' ? ignoreArrays : true;
+
+  path = path || [];
+
+  const traverse = ($schema: JsonSchemaData, $fn: (prop: any, path: string[]) => any, $path: string[]) => {
+    $fn($schema, $path);
+    for (const k of Object.keys($schema.properties)) {
+      if ($schema.properties.hasOwnProperty(k)) {
+        const currentPath = $path.slice();
+        currentPath.push(k);
+        traverse($schema.properties[k], $fn, currentPath);
+      }
+    }
+    if (!ignoreArrays && $schema.items) {
+      const arrPath = $path.slice();
+      arrPath.push('');
+      traverse($schema.items, $fn, arrPath);
+    }
+  };
+
+  traverse(schema, fn, path || []);
+}
+
+function traverseForm(form: JsonFormData, fn: (form: JsonFormData) => any) {
+  fn(form);
+  if (form.items) {
+    form.items.forEach((f) => {
+      traverseForm(f, fn);
+    });
+  }
+
+  if (form.tabs) {
+    form.tabs.forEach((tab) => {
+      tab.items.forEach((f) => {
+        traverseForm(f, fn);
+      });
+    });
+  }
+}
+
 
 const utils = {
   validateBySchema,
   validate,
   merge,
   updateValue,
-  selectOrSet
+  selectOrSet,
+  traverseSchema,
+  traverseForm
 };
 export default utils;

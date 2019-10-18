@@ -159,7 +159,7 @@ export class JsonFormComponent implements OnInit, ControlValueAccessor, Validato
 
   onFullscreenChanged() {}
 
-  private onModelChange(key: string | string[], val: any) {
+  private onModelChange(key: (string | number)[], val: any) {
     if (isString(val) && val === '') {
       val = undefined;
     }

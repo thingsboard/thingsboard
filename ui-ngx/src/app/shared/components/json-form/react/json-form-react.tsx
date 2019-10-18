@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './json-form.scss';
-
 import * as React from 'react';
 import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
 import thingsboardTheme from './styles/thingsboardTheme';

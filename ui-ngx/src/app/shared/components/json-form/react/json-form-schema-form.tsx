@@ -16,8 +16,8 @@
 import * as React from 'react';
 import JsonFormUtils from './json-form-utils';
 
-/*import ThingsboardArray from './json-form-array.jsx';
-import ThingsboardJavaScript from './json-form-javascript.jsx';
+import ThingsboardArray from './json-form-array';
+/*import ThingsboardJavaScript from './json-form-javascript.jsx';
 import ThingsboardJson from './json-form-json.jsx';
 import ThingsboardHtml from './json-form-html.jsx';
 import ThingsboardCss from './json-form-css.jsx';
@@ -27,11 +27,11 @@ import ThingsboardNumber from './json-form-number';
 import ThingsboardText from './json-form-text';
 import ThingsboardSelect from './json-form-select';
 import ThingsboardRadios from './json-form-radios';
-/*import ThingsboardDate from './json-form-date.jsx';
-import ThingsboardImage from './json-form-image.jsx';*/
+import ThingsboardDate from './json-form-date';
+/*import ThingsboardImage from './json-form-image.jsx';*/
 import ThingsboardCheckbox from './json-form-checkbox';
 import ThingsboardHelp from './json-form-help';
-/*import ThingsboardFieldSet from './json-form-fieldset.jsx';*/
+import ThingsboardFieldSet from './json-form-fieldset';
 import { JsonFormProps, GroupInfo, JsonFormData } from './json-form.models';
 
 import _ from 'lodash';
@@ -51,18 +51,18 @@ class ThingsboardSchemaForm extends React.Component<JsonFormProps, any> {
       textarea: ThingsboardText,
       select: ThingsboardSelect,
       radios: ThingsboardRadios,
-      // date: ThingsboardDate,
+      date: ThingsboardDate,
       // image: ThingsboardImage,
       checkbox: ThingsboardCheckbox,
       help: ThingsboardHelp,
-      // array: ThingsboardArray,
+      array: ThingsboardArray,
       // javascript: ThingsboardJavaScript,
       // json: ThingsboardJson,
       // html: ThingsboardHtml,
       // css: ThingsboardCss,
       // color: ThingsboardColor,
       'rc-select': ThingsboardRcSelect,
-      // fieldset: ThingsboardFieldSet
+      fieldset: ThingsboardFieldSet
     };
 
     this.onChange = this.onChange.bind(this);
@@ -71,7 +71,7 @@ class ThingsboardSchemaForm extends React.Component<JsonFormProps, any> {
     this.hasConditions = false;
   }
 
-  onChange(key: string | string[], val: any) {
+  onChange(key: (string | number)[], val: any) {
     this.props.onModelChange(key, val);
     if (this.hasConditions) {
       this.forceUpdate();
@@ -90,7 +90,7 @@ class ThingsboardSchemaForm extends React.Component<JsonFormProps, any> {
   builder(form: JsonFormData,
           model: any,
           index: number,
-          onChange: (key: string | string[], val: any) => void,
+          onChange: (key: (string | number)[], val: any) => void,
           onColorClick: (event: MouseEvent, key: string, val: string) => void,
           onToggleFullscreen: () => void,
           mapper: {[type: string]: any}): JSX.Element {

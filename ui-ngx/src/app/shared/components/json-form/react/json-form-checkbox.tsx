@@ -26,7 +26,7 @@ class ThingsboardCheckbox extends React.Component<JsonFormFieldProps, JsonFormFi
           <FormControlLabel
             control={
               <Checkbox
-                name={this.props.form.key.slice(-1)[0]}
+                name={this.props.form.key.slice(-1)[0] + ''}
                 value={this.props.form.key.slice(-1)[0]}
                 defaultChecked={this.props.value || false}
                 disabled={this.props.form.readonly}

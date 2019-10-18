@@ -39,7 +39,7 @@ class ThingsboardRcSelect extends React.Component<JsonFormFieldProps, Thingsboar
         this.onFocus = this.onFocus.bind(this);
         this.state = {
             currentValue: this.keyToCurrentValue(this.props.value, this.props.form.schema.type === 'array'),
-            items: this.props.form.items,
+            items: this.props.form.items as KeyLabelItem[],
             focused: false
         };
     }

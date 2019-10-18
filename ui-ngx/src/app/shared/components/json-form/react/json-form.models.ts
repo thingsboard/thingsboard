@@ -55,7 +55,7 @@ export interface JsonFormProps {
   isFullscreen: boolean;
   ignore?: {[key: string]: boolean};
   option: FormOption;
-  onModelChange?: (key: string | string[], val: any) => void;
+  onModelChange?: (key: (string | number)[], val: any) => void;
   onColorClick?: (event: MouseEvent, key: string, val: string) => void;
   onToggleFullscreen?: () => void;
   mapper?: {[type: string]: any};
@@ -67,9 +67,16 @@ export interface KeyLabelItem {
   value?: string;
 }
 
+export interface JsonSchemaData {
+  type: string;
+  default: any;
+  items?: JsonSchemaData;
+  properties?: any;
+}
+
 export interface JsonFormData {
   type: string;
-  key: string | string[];
+  key: (string | number)[];
   title: string;
   readonly: boolean;
   required: boolean;
@@ -79,16 +86,15 @@ export interface JsonFormData {
   rows?: number;
   rowsMax?: number;
   placeholder?: string;
-  schema: {
-    type: string;
-    default: any;
-  };
+  schema: JsonSchemaData;
   titleMap: {
     value: any;
     name: string;
   }[];
-  items?: Array<KeyLabelItem>;
+  items?: Array<KeyLabelItem> | Array<JsonFormData>;
+  tabs?: Array<JsonFormData>;
   tags?: any;
+  startEmpty?: boolean;
   [key: string]: any;
 }
 
@@ -99,17 +105,20 @@ export interface JsonFormFieldProps {
   builder: (form: JsonFormData,
             model: any,
             index: number,
-            onChange: (key: string | string[], val: any) => void,
+            onChange: (key: (string | number)[], val: any) => void,
             onColorClick: (event: MouseEvent, key: string, val: string) => void,
             onToggleFullscreen: () => void,
             mapper: {[type: string]: any}) => JSX.Element;
   mapper?: {[type: string]: any};
-  onChange?: (key: string | string[], val: any) => void;
+  onChange?: (key: (string | number)[], val: any) => void;
   onColorClick?: (event: MouseEvent, key: string, val: string) => void;
   onChangeValidate?: (e: any) => void;
   onToggleFullscreen?: () => void;
   valid?: boolean;
   error?: string;
+  options?: {
+    setSchemaDefaults?: boolean;
+  };
 }
 
 export interface JsonFormFieldState {
