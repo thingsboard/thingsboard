@@ -69,11 +69,16 @@ public class TbClearAlarmNode extends TbAbstractAlarmNode<TbClearAlarmNodeConfig
         return Futures.transformAsync(asyncDetails, details -> {
             ListenableFuture<Boolean> clearFuture = ctx.getAlarmService().clearAlarm(ctx.getTenantId(), alarm.getId(), details, System.currentTimeMillis());
             return Futures.transformAsync(clearFuture, cleared -> {
-                if (cleared && details != null) {
-                    alarm.setDetails(details);
-                }
-                alarm.setStatus(alarm.getStatus().isAck() ? AlarmStatus.CLEARED_ACK : AlarmStatus.CLEARED_UNACK);
-                return Futures.immediateFuture(new AlarmResult(false, false, true, alarm));
+                ListenableFuture<Alarm> savedAlarmFuture = ctx.getAlarmService().findAlarmByIdAsync(ctx.getTenantId(), alarm.getId());
+                return Futures.transformAsync(savedAlarmFuture, savedAlarm -> {
+                    if (cleared && savedAlarm != null) {
+                        alarm.setDetails(savedAlarm.getDetails());
+                        alarm.setEndTs(savedAlarm.getEndTs());
+                        alarm.setClearTs(savedAlarm.getClearTs());
+                    }
+                    alarm.setStatus(alarm.getStatus().isAck() ? AlarmStatus.CLEARED_ACK : AlarmStatus.CLEARED_UNACK);
+                    return Futures.immediateFuture(new AlarmResult(false, false, true, alarm));
+                });
             });
         }, ctx.getDbCallbackExecutor());
     }

@@ -236,7 +236,8 @@
 		"select-asset": "アセットを選択",
 		"no-assets-matching": "'{{entity}}'発見されました。",
 		"asset-required": "資産が必要です",
-		"name-starts-with": "アセット名はで始まります"
+		"name-starts-with": "アセット名はで始まります",
+		"label": "ラベル"
 	},
 	"attribute": {
 		"attributes": "属性",

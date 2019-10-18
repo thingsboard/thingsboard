@@ -353,6 +353,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
         ids.sort(function (id1, id2) {
             return id1.localeCompare(id2);
         });
+        sortWidgets();
         if (angular.equals(ids, vm.widgetIds)) {
             return;
         }
@@ -388,7 +389,6 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
                 delete vm.widgetLayoutInfo[widgetId];
             }
         }
-        sortWidgets();
         $mdUtil.nextTick(function () {
             if (autofillHeight()) {
                 updateMobileOpts();

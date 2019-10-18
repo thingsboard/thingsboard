@@ -357,8 +357,10 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
         if (widget.type !== types.widgetType.rpc.value && widget.type !== types.widgetType.static.value) {
             options = {
                 type: widget.type,
-                stateData: vm.typeParameters.stateData
-            }
+                stateData: vm.typeParameters.stateData,
+                comparisonEnabled: widgetContext.settings.comparisonEnabled,
+                timeForComparison: widgetContext.settings.timeForComparison
+            };
             if (widget.type == types.widgetType.alarm.value) {
                 options.alarmSource = angular.copy(widget.config.alarmSource);
                 options.alarmSearchStatus = angular.isDefined(widget.config.alarmSearchStatus) ?
