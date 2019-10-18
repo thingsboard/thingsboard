@@ -67,6 +67,7 @@ public class PsqlTsDatabaseUpgradeService implements DatabaseTsUpgradeService {
         switch (fromVersion) {
             case "2.4.1":
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+                    log.info("Updating timeseries schema ...");
                     log.info("Load upgrade functions ...");
                     loadSql(conn);
                     log.info("Upgrade functions successfully loaded!");
@@ -83,7 +84,7 @@ public class PsqlTsDatabaseUpgradeService implements DatabaseTsUpgradeService {
                         executeFunction(conn, INSERT_INTO_DICTIONARY);
                         executeFunction(conn, INSERT_INTO_TS_KV);
                         dropOldTable(conn, DROP_OLD_TABLE);
-                        log.info("schema updated!");
+                        log.info("schema timeseries updated!");
                     }
                 }
                 break;
