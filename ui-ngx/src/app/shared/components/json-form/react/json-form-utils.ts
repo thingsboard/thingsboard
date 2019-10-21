@@ -544,11 +544,13 @@ function traverseSchema(schema: JsonSchemaData, fn: (prop: any, path: string[]) 
 
   const traverse = ($schema: JsonSchemaData, $fn: (prop: any, path: string[]) => any, $path: string[]) => {
     $fn($schema, $path);
-    for (const k of Object.keys($schema.properties)) {
-      if ($schema.properties.hasOwnProperty(k)) {
-        const currentPath = $path.slice();
-        currentPath.push(k);
-        traverse($schema.properties[k], $fn, currentPath);
+    if ($schema.properties) {
+      for (const k of Object.keys($schema.properties)) {
+        if ($schema.properties.hasOwnProperty(k)) {
+          const currentPath = $path.slice();
+          currentPath.push(k);
+          traverse($schema.properties[k], $fn, currentPath);
+        }
       }
     }
     if (!ignoreArrays && $schema.items) {

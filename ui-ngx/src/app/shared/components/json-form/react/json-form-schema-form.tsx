@@ -17,24 +17,25 @@ import * as React from 'react';
 import JsonFormUtils from './json-form-utils';
 
 import ThingsboardArray from './json-form-array';
-/*import ThingsboardJavaScript from './json-form-javascript.jsx';
-import ThingsboardJson from './json-form-json.jsx';
-import ThingsboardHtml from './json-form-html.jsx';
-import ThingsboardCss from './json-form-css.jsx';
-import ThingsboardColor from './json-form-color.jsx'*/
+import ThingsboardJavaScript from './json-form-javascript';
+import ThingsboardJson from './json-form-json';
+import ThingsboardHtml from './json-form-html';
+import ThingsboardCss from './json-form-css';
+import ThingsboardColor from './json-form-color';
 import ThingsboardRcSelect from './json-form-rc-select';
 import ThingsboardNumber from './json-form-number';
 import ThingsboardText from './json-form-text';
 import ThingsboardSelect from './json-form-select';
 import ThingsboardRadios from './json-form-radios';
 import ThingsboardDate from './json-form-date';
-/*import ThingsboardImage from './json-form-image.jsx';*/
+import ThingsboardImage from './json-form-image';
 import ThingsboardCheckbox from './json-form-checkbox';
 import ThingsboardHelp from './json-form-help';
 import ThingsboardFieldSet from './json-form-fieldset';
-import { JsonFormProps, GroupInfo, JsonFormData } from './json-form.models';
+import { JsonFormProps, GroupInfo, JsonFormData, onChangeFn, OnColorClickFn } from './json-form.models';
 
 import _ from 'lodash';
+import * as tinycolor from 'tinycolor2';
 
 class ThingsboardSchemaForm extends React.Component<JsonFormProps, any> {
 
@@ -52,15 +53,15 @@ class ThingsboardSchemaForm extends React.Component<JsonFormProps, any> {
       select: ThingsboardSelect,
       radios: ThingsboardRadios,
       date: ThingsboardDate,
-      // image: ThingsboardImage,
+      image: ThingsboardImage,
       checkbox: ThingsboardCheckbox,
       help: ThingsboardHelp,
       array: ThingsboardArray,
-      // javascript: ThingsboardJavaScript,
-      // json: ThingsboardJson,
-      // html: ThingsboardHtml,
-      // css: ThingsboardCss,
-      // color: ThingsboardColor,
+      javascript: ThingsboardJavaScript,
+      json: ThingsboardJson,
+      html: ThingsboardHtml,
+      css: ThingsboardCss,
+      color: ThingsboardColor,
       'rc-select': ThingsboardRcSelect,
       fieldset: ThingsboardFieldSet
     };
@@ -78,20 +79,21 @@ class ThingsboardSchemaForm extends React.Component<JsonFormProps, any> {
     }
   }
 
-  onColorClick(event, key, val) {
-    this.props.onColorClick(event, key, val);
+  onColorClick(key: (string | number)[], val: tinycolor.ColorFormats.RGBA,
+               colorSelectedFn: (color: tinycolor.ColorFormats.RGBA) => void) {
+    this.props.onColorClick(key, val, colorSelectedFn);
   }
 
-  onToggleFullscreen() {
-    this.props.onToggleFullscreen();
+  onToggleFullscreen(element: HTMLElement, fullscreenFinishFn?: () => void) {
+    this.props.onToggleFullscreen(element, fullscreenFinishFn);
   }
 
 
   builder(form: JsonFormData,
           model: any,
           index: number,
-          onChange: (key: (string | number)[], val: any) => void,
-          onColorClick: (event: MouseEvent, key: string, val: string) => void,
+          onChange: onChangeFn,
+          onColorClick: OnColorClickFn,
           onToggleFullscreen: () => void,
           mapper: {[type: string]: any}): JSX.Element {
     const type = form.type;
@@ -173,9 +175,9 @@ class ThingsboardSchemaGroup extends React.Component<ThingsboardSchemaGroupProps
   }
 
   render() {
-    const theCla = 'pull-right fa fa-chevron-down md-toggle-icon' + (this.state.showGroup ? '' : ' tb-toggled');
+    const theCla = 'pull-right fa fa-chevron-down tb-toggle-icon' + (this.state.showGroup ? '' : ' tb-toggled');
     return (<section className='mat-elevation-z1' style={{marginTop: '10px'}}>
-      <div className='SchemaGroupname md-button-toggle'
+      <div className='SchemaGroupname tb-button-toggle'
            onClick={this.toogleGroup.bind(this)}>{this.props.info.GroupTitle}<span className={theCla}></span></div>
       <div style={{padding: '20px'}} className={this.state.showGroup ? '' : 'invisible'}>{this.props.forms}</div>
     </section>);

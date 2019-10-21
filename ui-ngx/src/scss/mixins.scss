@@ -39,3 +39,12 @@
     margin: auto;
   }
 }
+
+@mixin tb-checkered-bg() {
+  background-color: #fff;
+  background-image:
+    linear-gradient(45deg, #ddd 25%, transparent 25%, transparent 75%, #ddd 75%, #ddd),
+    linear-gradient(45deg, #ddd 25%, transparent 25%, transparent 75%, #ddd 75%, #ddd);
+  background-position: 0 0, 4px 4px;
+  background-size: 8px 8px;
+}

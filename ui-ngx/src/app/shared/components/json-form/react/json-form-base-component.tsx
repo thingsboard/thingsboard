@@ -17,7 +17,8 @@ import * as React from 'react';
 import JsonFormUtils from './json-form-utils';
 import { JsonFormFieldProps, JsonFormFieldState } from '@shared/components/json-form/react/json-form.models';
 
-export default ThingsboardBaseComponent => class extends React.Component<JsonFormFieldProps, JsonFormFieldState> {
+export default ThingsboardBaseComponent => class<P extends JsonFormFieldProps>
+  extends React.Component<P, JsonFormFieldState> {
 
     constructor(props) {
         super(props);

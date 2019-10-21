@@ -18,12 +18,13 @@ import { isUndefined, isDefined, isString } from '@app/core/utils';
 import * as equal from 'deep-equal';
 import ObjectPath from 'objectpath';
 import * as React from 'react';
+import * as tinycolor from 'tinycolor2';
 
 export interface SchemaValidationResult {
   valid: boolean;
   error?: {
     message?: string;
-  }
+  };
 }
 
 export interface FormOption {
@@ -47,6 +48,11 @@ export interface GroupInfo {
   GroupTitle: string;
 }
 
+export type onChangeFn = (key: (string | number)[], val: any) => void;
+export type OnColorClickFn = (key: (string | number)[], val: tinycolor.ColorFormats.RGBA,
+                              colorSelectedFn: (color: tinycolor.ColorFormats.RGBA) => void) => void;
+export type onToggleFullscreenFn = (element: HTMLElement, fullscreenFinishFn?: () => void) => void;
+
 export interface JsonFormProps {
   model?: any;
   schema?: any;
@@ -55,9 +61,9 @@ export interface JsonFormProps {
   isFullscreen: boolean;
   ignore?: {[key: string]: boolean};
   option: FormOption;
-  onModelChange?: (key: (string | number)[], val: any) => void;
-  onColorClick?: (event: MouseEvent, key: string, val: string) => void;
-  onToggleFullscreen?: () => void;
+  onModelChange?: onChangeFn;
+  onColorClick?: OnColorClickFn;
+  onToggleFullscreen?: onToggleFullscreenFn;
   mapper?: {[type: string]: any};
 }
 
@@ -98,22 +104,24 @@ export interface JsonFormData {
   [key: string]: any;
 }
 
+export type ComponentBuilderFn = (form: JsonFormData,
+                                  model: any,
+                                  index: number,
+                                  onChange: onChangeFn,
+                                  onColorClick: OnColorClickFn,
+                                  onToggleFullscreen: onToggleFullscreenFn,
+                                  mapper: {[type: string]: any}) => JSX.Element;
+
 export interface JsonFormFieldProps {
   value: any;
   model: any;
   form: JsonFormData;
-  builder: (form: JsonFormData,
-            model: any,
-            index: number,
-            onChange: (key: (string | number)[], val: any) => void,
-            onColorClick: (event: MouseEvent, key: string, val: string) => void,
-            onToggleFullscreen: () => void,
-            mapper: {[type: string]: any}) => JSX.Element;
+  builder: ComponentBuilderFn;
   mapper?: {[type: string]: any};
-  onChange?: (key: (string | number)[], val: any) => void;
-  onColorClick?: (event: MouseEvent, key: string, val: string) => void;
+  onChange?: onChangeFn;
+  onColorClick?: OnColorClickFn;
   onChangeValidate?: (e: any) => void;
-  onToggleFullscreen?: () => void;
+  onToggleFullscreen?: onToggleFullscreenFn;
   valid?: boolean;
   error?: string;
   options?: {

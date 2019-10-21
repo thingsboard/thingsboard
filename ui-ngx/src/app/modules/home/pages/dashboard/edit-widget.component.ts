@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, OnInit, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, OnInit, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -29,7 +29,7 @@ import { Widget, WidgetActionSource, WidgetTypeParameters } from '@shared/models
 import { WidgetComponentService } from '@home/components/widget/widget-component.service';
 import { WidgetConfigComponentData } from '../../models/widget-component.models';
 import { deepClone, isDefined, isString } from '@core/utils';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, NgForm, Validators } from '@angular/forms';
 import { EntityType } from '@shared/models/entity-type.models';
 import { Observable, of } from 'rxjs';
 import { EntityAlias, EntityAliases } from '@shared/models/alias.models';
@@ -66,21 +66,20 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
   @Input()
   widgetLayout: WidgetLayout;
 
-  @Input()
+  @ViewChild('widgetForm', {static: true}) widgetForm: NgForm;
+
   widgetFormGroup: FormGroup;
 
   widgetConfig: WidgetConfigComponentData;
-  typeParameters: WidgetTypeParameters;
-  actionSources: {[key: string]: WidgetActionSource};
-  isDataEnabled: boolean;
-  settingsSchema: any;
-  dataKeySettingsSchema: any;
-  functionsOnly: boolean;
 
   constructor(protected store: Store<AppState>,
               private dialog: MatDialog,
+              private fb: FormBuilder,
               private widgetComponentService: WidgetComponentService) {
     super(store);
+    this.widgetFormGroup = this.fb.group({
+      widgetConfig: [null]
+    });
   }
 
   ngOnInit(): void {
@@ -104,27 +103,33 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
 
   private loadWidgetConfig() {
     const widgetInfo = this.widgetComponentService.getInstantWidgetInfo(this.widget);
+    const rawSettingsSchema = widgetInfo.typeSettingsSchema || widgetInfo.settingsSchema;
+    const rawDataKeySettingsSchema = widgetInfo.typeDataKeySettingsSchema || widgetInfo.dataKeySettingsSchema;
+    const typeParameters = widgetInfo.typeParameters;
+    const actionSources = widgetInfo.actionSources;
+    const isDataEnabled = isDefined(widgetInfo.typeParameters) ? !widgetInfo.typeParameters.useCustomDatasources : true;
+    let settingsSchema;
+    if (!rawSettingsSchema || rawSettingsSchema === '') {
+      settingsSchema = {};
+    } else {
+      settingsSchema = isString(rawSettingsSchema) ? JSON.parse(rawSettingsSchema) : rawSettingsSchema;
+    }
+    let dataKeySettingsSchema;
+    if (!rawDataKeySettingsSchema || rawDataKeySettingsSchema === '') {
+      dataKeySettingsSchema = {};
+    } else {
+      dataKeySettingsSchema = isString(rawDataKeySettingsSchema) ? JSON.parse(rawDataKeySettingsSchema) : rawDataKeySettingsSchema;
+    }
     this.widgetConfig = {
       config: this.widget.config,
       layout: this.widgetLayout,
-      widgetType: this.widget.type
+      widgetType: this.widget.type,
+      typeParameters,
+      actionSources,
+      isDataEnabled,
+      settingsSchema,
+      dataKeySettingsSchema
     };
-    const settingsSchema = widgetInfo.typeSettingsSchema || widgetInfo.settingsSchema;
-    const dataKeySettingsSchema = widgetInfo.typeDataKeySettingsSchema || widgetInfo.dataKeySettingsSchema;
-    this.typeParameters = widgetInfo.typeParameters;
-    this.actionSources = widgetInfo.actionSources;
-    this.isDataEnabled = isDefined(widgetInfo.typeParameters) ? !widgetInfo.typeParameters.useCustomDatasources : true;
-    if (!settingsSchema || settingsSchema === '') {
-      this.settingsSchema = {};
-    } else {
-      this.settingsSchema = isString(settingsSchema) ? JSON.parse(settingsSchema) : settingsSchema;
-    }
-    if (!dataKeySettingsSchema || dataKeySettingsSchema === '') {
-      this.dataKeySettingsSchema = {};
-    } else {
-      this.dataKeySettingsSchema = isString(dataKeySettingsSchema) ? JSON.parse(dataKeySettingsSchema) : dataKeySettingsSchema;
-    }
-    this.functionsOnly = this.dashboard ? false : true;
     this.widgetFormGroup.reset({widgetConfig: this.widgetConfig});
   }
 

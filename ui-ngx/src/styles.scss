@@ -852,4 +852,25 @@ mat-label {
       }
     }
   }
+
+  .tb-color-preview {
+    cursor: pointer;
+    box-sizing: border-box;
+    position: relative;
+    width: 24px;
+    min-width: 24px;
+    height: 24px;
+    overflow: hidden;
+    content: "";
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 3px 1px -2px rgba(0, 0, 0, .14), 0 2px 2px 0 rgba(0, 0, 0, .098), 0 1px 5px 0 rgba(0, 0, 0, .084);
+
+    @include tb-checkered-bg();
+
+    .tb-color-result {
+      width: 100%;
+      height: 100%;
+    }
+  }
 }

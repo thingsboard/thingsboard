@@ -283,11 +283,6 @@ export interface LegendData {
   data: Array<LegendKeyData>;
 }
 
-export interface WidgetConfigSettings {
-  [key: string]: any;
-  // TODO:
-}
-
 export enum WidgetActionType {
   openDashboardState = 'openDashboardState',
   updateDashboardState = 'updateDashboardState',
@@ -347,7 +342,7 @@ export interface WidgetConfig {
   units?: string;
   decimals?: number;
   actions?: {[actionSourceId: string]: Array<WidgetActionDescriptor>};
-  settings?: WidgetConfigSettings;
+  settings?: any;
   alarmSource?: Datasource;
   alarmSearchStatus?: AlarmSearchStatus;
   alarmsPollingInterval?: number;

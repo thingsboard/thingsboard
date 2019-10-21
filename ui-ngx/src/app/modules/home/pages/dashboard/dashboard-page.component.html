@@ -172,7 +172,7 @@
                   [opened]="isEditingWidget"
                   mode="over"
                   position="end">
-        <tb-details-panel fxFlex
+        <tb-details-panel *ngIf="isEditingWidget" fxFlex
                           headerTitle="{{editingWidget?.config.title}}"
                           headerSubtitle="{{ editingWidgetSubtitle }}"
                           [isReadOnly]="false"
@@ -180,20 +180,17 @@
                           (closeDetails)="onEditWidgetClosed()"
                           (toggleDetailsEditMode)="onRevertWidgetEdit()"
                           (applyDetails)="saveWidget()"
-                          [theForm]="widgetForm">
+                          [theForm]="tbEditWidget.widgetForm">
           <div class="details-buttons">
             <div [tb-help]="helpLinkIdForWidgetType()"></div>
           </div>
-          <form #widgetForm="ngForm" [formGroup]="editingWidgetFormGroup">
-            <tb-edit-widget *ngIf="isEditingWidget"
-               [dashboard]="dashboard"
-               [aliasController]="dashboardCtx.aliasController"
-               [widgetEditMode]="widgetEditMode"
-               [widget]="editingWidget"
-               [widgetLayout]="editingWidgetLayout"
-               [widgetFormGroup]="editingWidgetFormGroup">
-            </tb-edit-widget>
-          </form>
+          <tb-edit-widget #tbEditWidget
+             [dashboard]="dashboard"
+             [aliasController]="dashboardCtx.aliasController"
+             [widgetEditMode]="widgetEditMode"
+             [widget]="editingWidget"
+             [widgetLayout]="editingWidgetLayout">
+          </tb-edit-widget>
         </tb-details-panel>
       </mat-drawer>
     </mat-drawer-container>

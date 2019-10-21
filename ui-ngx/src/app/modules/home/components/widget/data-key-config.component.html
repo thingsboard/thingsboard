@@ -16,9 +16,8 @@
 
 -->
 <mat-tab-group class="tb-datakey-config" [ngClass]="{'tb-headless': !displayAdvanced}"
-               [formGroup]="dataKeyFormGroup"
                class="tb-datakey-config">
-  <mat-tab label="{{ 'datakey.settings' | translate }}">
+  <mat-tab [formGroup]="dataKeyFormGroup" label="{{ 'datakey.settings' | translate }}">
     <div class="mat-content mat-padding" fxLayout="column">
       <mat-form-field class="mat-block" *ngIf="modelValue.type !== dataKeyTypes.function">
         <mat-label>{{ 'entity.key' | translate }}</mat-label>
@@ -94,12 +93,10 @@
       </section>
     </div>
   </mat-tab>
-  <mat-tab label="{{ 'datakey.advanced' | translate }}" *ngIf="displayAdvanced">
+  <mat-tab [formGroup]="dataKeySettingsFormGroup" label="{{ 'datakey.advanced' | translate }}" *ngIf="displayAdvanced">
     <div class="mat-content mat-padding" fxLayout="column">
       <div style="overflow: auto;">
         <tb-json-form
-          [schema]="dataKeySchema"
-          [form]="dataKeyForm"
           formControlName="settings">
         </tb-json-form>
       </div>

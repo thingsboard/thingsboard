@@ -21,7 +21,7 @@
          #entityAliasInput
          formControlName="entityAlias"
          (focusin)="onFocus()"
-         [required]="required"
+         [required]="tbRequired"
          (keydown)="entityAliasEnter($event)"
          (keypress)="entityAliasEnter($event)"
          [matAutocomplete]="entityAliasAutocomplete">
@@ -54,7 +54,7 @@
       </div>
     </mat-option>
   </mat-autocomplete>
-  <mat-error *ngIf="!modelValue && required">
+  <mat-error *ngIf="!modelValue && tbRequired">
     {{ 'entity.alias-required' | translate }}
   </mat-error>
 </mat-form-field>

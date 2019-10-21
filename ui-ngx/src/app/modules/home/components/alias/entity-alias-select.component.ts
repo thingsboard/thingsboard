@@ -75,11 +75,11 @@ export class EntityAliasSelectComponent implements ControlValueAccessor, OnInit,
 
 
   private requiredValue: boolean;
-  get required(): boolean {
+  get tbRequired(): boolean {
     return this.requiredValue;
   }
   @Input()
-  set required(value: boolean) {
+  set tbRequired(value: boolean) {
     this.requiredValue = coerceBooleanProperty(value);
   }
 
@@ -151,7 +151,7 @@ export class EntityAliasSelectComponent implements ControlValueAccessor, OnInit,
 
   isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
-    const customErrorState = this.required && !this.modelValue;
+    const customErrorState = this.tbRequired && !this.modelValue;
     return originalErrorState || customErrorState;
   }
 

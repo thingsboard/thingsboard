@@ -25,7 +25,6 @@ import {
   LegendConfig,
   WidgetActionDescriptor,
   WidgetActionSource,
-  WidgetConfigSettings,
   widgetType,
   WidgetTypeParameters
 } from '@shared/models/widget.models';
@@ -38,7 +37,7 @@ import {
   FormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
-  Validator,
+  Validator, ValidatorFn,
   Validators
 } from '@angular/forms';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
@@ -59,6 +58,16 @@ import {
 import { tap, mergeMap, map, catchError } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
 import { EntityService } from '@core/http/entity.service';
+import { JsonFormComponentData } from '@shared/components/json-form/json-form-component.models';
+
+const emptySettingsSchema = {
+  type: 'object',
+  properties: {}
+};
+const emptySettingsGroupInfoes = [];
+const defaultSettingsForm = [
+  '*'
+];
 
 @Component({
   selector: 'tb-widget-config',
@@ -89,25 +98,10 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   forceExpandDatasources: boolean;
 
   @Input()
-  isDataEnabled: boolean;
-
-  @Input()
-  typeParameters: WidgetTypeParameters;
-
-  @Input()
-  actionSources: {[key: string]: WidgetActionSource};
-
-  @Input()
   aliasController: IAliasController;
 
   @Input()
   entityAliases: EntityAliases;
-
-  @Input()
-  widgetSettingsSchema: any;
-
-  @Input()
-  dataKeySettingsSchema: any;
 
   @Input()
   functionsOnly: boolean;
@@ -149,27 +143,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   legendConfig: LegendConfig;
   actions: {[actionSourceId: string]: Array<WidgetActionDescriptor>};
   alarmSource: Datasource;
-  settings: WidgetConfigSettings;
   mobileOrder: number;
   mobileHeight: number;
-
-  emptySettingsSchema = {
-    type: 'object',
-    properties: {}
-  };
-
-  emptySettingsGroupInfoes = [];
-
-  defaultSettingsForm = [
-    '*'
-  ];
-
-  currentSettingsSchema = deepClone(this.emptySettingsSchema);
-
-  currentSettings: WidgetConfigSettings = {};
-  currentSettingsGroupInfoes = deepClone(this.emptySettingsGroupInfoes);
-
-  currentSettingsForm: any;
 
   private modelValue: WidgetConfigComponentData;
 
@@ -177,9 +152,11 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
 
   public dataSettings: FormGroup;
   public targetDeviceSettings: FormGroup;
+  public advancedSettings: FormGroup;
 
   private dataSettingsChangesSubscription: Subscription;
   private targetDeviceSettingsSubscription: Subscription;
+  private advancedSettingsSubscription: Subscription;
 
   constructor(protected store: Store<AppState>,
               private utils: UtilsService,
@@ -207,6 +184,10 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
       this.targetDeviceSettingsSubscription.unsubscribe();
       this.targetDeviceSettingsSubscription = null;
     }
+    if (this.advancedSettingsSubscription) {
+      this.advancedSettingsSubscription.unsubscribe();
+      this.advancedSettingsSubscription = null;
+    }
   }
 
   private createChangeSubscriptions() {
@@ -216,11 +197,15 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     this.targetDeviceSettingsSubscription = this.targetDeviceSettings.valueChanges.subscribe(
       () => this.updateTargetDeviceSettings()
     );
+    this.advancedSettingsSubscription = this.advancedSettings.valueChanges.subscribe(
+      () => this.updateAdvancedSettings()
+    );
   }
 
   private buildForms() {
     this.dataSettings = this.fb.group({});
     this.targetDeviceSettings = this.fb.group({});
+    this.advancedSettings = this.fb.group({});
     if (this.widgetType === widgetType.timeseries || this.widgetType === widgetType.alarm) {
       this.dataSettings.addControl('useDashboardTimewindow', this.fb.control(null));
       this.dataSettings.addControl('displayTimewindow', this.fb.control(null));
@@ -240,7 +225,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
           [Validators.required, Validators.min(1)]));
       }
     }
-    if (this.isDataEnabled) {
+    if (this.modelValue.isDataEnabled) {
       if (this.widgetType !== widgetType.rpc &&
         this.widgetType !== widgetType.alarm &&
         this.widgetType !== widgetType.static) {
@@ -252,6 +237,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
             this.widgetEditMode ? [] : [Validators.required]));
       }
     }
+    this.advancedSettings.addControl('settings',
+      this.fb.control(null, []));
   }
 
   registerOnChange(fn: any): void {
@@ -323,7 +310,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
             { timewindow: config.timewindow }, {emitEvent: false}
           );
         }
-        if (this.isDataEnabled) {
+        if (this.modelValue.isDataEnabled) {
           if (this.widgetType !== widgetType.rpc &&
             this.widgetType !== widgetType.alarm &&
             this.widgetType !== widgetType.static) {
@@ -366,9 +353,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
             }
           }
         }
-        this.settings = config.settings;
 
-        this.updateSchemaForm();
+        this.updateSchemaForm(config.settings);
 
         if (layout) {
           this.mobileOrder = layout.mobileOrder;
@@ -383,7 +369,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   }
 
   private buildDatasourceForm(datasource?: Datasource): AbstractControl {
-    const dataKeysRequired = !this.typeParameters || !this.typeParameters.dataKeysOptional;
+    const dataKeysRequired = !this.modelValue.typeParameters || !this.modelValue.typeParameters.dataKeysOptional;
     const datasourceFormGroup = this.fb.group(
       {
         type: [datasource ? datasource.type : null, [Validators.required]],
@@ -402,18 +388,20 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     return datasourceFormGroup;
   }
 
-  private updateSchemaForm() {
-    if (this.widgetSettingsSchema && this.widgetSettingsSchema.schema) {
-      this.currentSettingsSchema = this.widgetSettingsSchema.schema;
-      this.currentSettingsForm = this.widgetSettingsSchema.form || deepClone(this.defaultSettingsForm);
-      this.currentSettingsGroupInfoes = this.widgetSettingsSchema.groupInfoes;
-      this.currentSettings = this.settings;
+  private updateSchemaForm(settings?: any) {
+    const widgetSettingsFormData: JsonFormComponentData = {};
+    if (this.modelValue.settingsSchema && this.modelValue.settingsSchema.schema) {
+      widgetSettingsFormData.schema = this.modelValue.settingsSchema.schema;
+      widgetSettingsFormData.form = this.modelValue.settingsSchema.form || deepClone(defaultSettingsForm);
+      widgetSettingsFormData.groupInfoes = this.modelValue.settingsSchema.groupInfoes;
+      widgetSettingsFormData.model = settings;
     } else {
-      this.currentSettingsForm = deepClone(this.defaultSettingsForm);
-      this.currentSettingsSchema = deepClone(this.emptySettingsSchema);
-      this.currentSettingsGroupInfoes = deepClone(this.emptySettingsGroupInfoes);
-      this.currentSettings = {};
+      widgetSettingsFormData.schema = deepClone(emptySettingsSchema);
+      widgetSettingsFormData.form = deepClone(defaultSettingsForm);
+      widgetSettingsFormData.groupInfoes = deepClone(emptySettingsGroupInfoes);
+      widgetSettingsFormData.model = {};
     }
+    this.advancedSettings.patchValue({ settings: widgetSettingsFormData }, {emitEvent: false});
   }
 
   private updateDataSettings() {
@@ -439,8 +427,18 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     }
   }
 
+  private updateAdvancedSettings() {
+    if (this.modelValue) {
+      if (this.modelValue.config) {
+        const settings = this.advancedSettings.get('settings').value.model;
+        this.modelValue.config.settings = settings;
+      }
+      this.propagateChange(this.modelValue);
+    }
+  }
+
   public displayAdvanced(): boolean {
-    return this.widgetSettingsSchema && this.widgetSettingsSchema.schema;
+    return this.modelValue.settingsSchema && this.modelValue.settingsSchema.schema;
   }
 
   public removeDatasource(index: number) {
@@ -450,7 +448,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   public addDatasource() {
     let newDatasource: Datasource;
     if (this.functionsOnly) {
-      newDatasource = deepClone(this.utils.getDefaultDatasource(this.dataKeySettingsSchema.schema));
+      newDatasource = deepClone(this.utils.getDefaultDatasource(this.modelValue.dataKeySettingsSchema.schema));
       newDatasource.dataKeys = [this.generateDataKey('Sin', DataKeyType.function)];
     } else {
       newDatasource = { type: DatasourceType.entity,
@@ -489,8 +487,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
           result.funcBody = 'return prevValue + 1;';
         }
       }
-      if (isDefined(this.dataKeySettingsSchema.schema)) {
-        result.settings = this.utils.generateObjectFromJsonSchema(this.dataKeySettingsSchema.schema);
+      if (isDefined(this.modelValue.dataKeySettingsSchema.schema)) {
+        result.settings = this.utils.generateObjectFromJsonSchema(this.modelValue.dataKeySettingsSchema.schema);
       }
       return result;
     }
@@ -605,9 +603,15 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
           valid: false
         }
       };
+    } else if (!this.advancedSettings.valid) {
+      return {
+        advancedSettings: {
+          valid: false
+        }
+      };
     } else {
       const config = this.modelValue.config;
-      if (this.widgetType === widgetType.rpc && this.isDataEnabled) {
+      if (this.widgetType === widgetType.rpc && this.modelValue.isDataEnabled) {
         if (!config.targetDeviceAliasIds || !config.targetDeviceAliasIds.length) {
           return {
             targetDeviceAliasIds: {
@@ -615,7 +619,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
             }
           };
         }
-      } else if (this.widgetType === widgetType.alarm && this.isDataEnabled) {
+      } else if (this.widgetType === widgetType.alarm && this.modelValue.isDataEnabled) {
         if (!config.alarmSource) {
           return {
             alarmSource: {
@@ -623,7 +627,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
             }
           };
         }
-      } else if (this.widgetType !== widgetType.static && this.isDataEnabled) {
+      } else if (this.widgetType !== widgetType.static && this.modelValue.isDataEnabled) {
         if (!config.datasources || !config.datasources.length) {
           return {
             datasources: {

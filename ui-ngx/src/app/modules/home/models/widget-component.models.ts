@@ -22,7 +22,6 @@ import {
   WidgetActionDescriptor,
   WidgetActionSource,
   WidgetConfig,
-  WidgetConfigSettings,
   WidgetControllerDescriptor,
   WidgetType,
   widgetType,
@@ -74,7 +73,7 @@ export interface WidgetContext {
   isMobile?: boolean;
   dashboard?: IDashboardComponent;
   widgetConfig?: WidgetConfig;
-  settings?: WidgetConfigSettings;
+  settings?: any;
   units?: string;
   decimals?: number;
   subscriptions?: {[id: string]: IWidgetSubscription};
@@ -122,6 +121,11 @@ export interface WidgetConfigComponentData {
   config: WidgetConfig;
   layout: WidgetLayout;
   widgetType: widgetType;
+  typeParameters: WidgetTypeParameters;
+  actionSources: {[key: string]: WidgetActionSource};
+  isDataEnabled: boolean;
+  settingsSchema: any;
+  dataKeySettingsSchema: any;
 }
 
 export const MissingWidgetType: WidgetInfo = {

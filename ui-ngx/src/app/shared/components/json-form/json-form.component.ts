@@ -40,6 +40,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import ReactSchemaForm from './react/json-form-react';
 import JsonFormUtils from './react/json-form-utils';
+import { JsonFormComponentData } from './json-form-component.models';
 
 @Component({
   selector: 'tb-json-form',
@@ -64,12 +65,6 @@ export class JsonFormComponent implements OnInit, ControlValueAccessor, Validato
   @ViewChild('reactRoot', {static: true})
   reactRootElmRef: ElementRef<HTMLElement>;
 
-  @Input() schema: any;
-
-  @Input() form: any;
-
-  @Input() groupInfoes: any[];
-
   private readonlyValue: boolean;
   get readonly(): boolean {
     return this.readonlyValue;
@@ -91,11 +86,18 @@ export class JsonFormComponent implements OnInit, ControlValueAccessor, Validato
     onToggleFullscreen: this.onToggleFullscreen.bind(this)
   };
 
+  data: JsonFormComponentData;
+
   model: any;
+  schema: any;
+  form: any;
+  groupInfoes: any[];
 
   isModelValid = true;
 
   isFullscreen = false;
+  targetFullscreenElement: HTMLElement;
+  fullscreenFinishFn: () => void;
 
   private propagateChange = null;
 
@@ -128,36 +130,40 @@ export class JsonFormComponent implements OnInit, ControlValueAccessor, Validato
     };
   }
 
-  writeValue(value: any): void {
-    this.model = value || {};
+  writeValue(data: JsonFormComponentData): void {
+    this.data = data;
+    this.schema = this.data && this.data.schema ? deepClone(this.data.schema) : {
+      type: 'object'
+    };
+    this.schema.strict = true;
+    this.form = this.data && this.data.form ? deepClone(this.data.form) : [ '*' ];
+    this.groupInfoes = this.data && this.data.groupInfoes ? deepClone(this.data.groupInfoes) : [];
+    this.model = this.data && this.data.model || {};
     this.model = inspector.sanitize(this.schema, this.model).data;
     this.updateAndRender();
     this.isModelValid = this.validateModel();
     if (!this.isModelValid) {
       this.updateView();
     }
-  }
+}
 
   updateView() {
-    this.propagateChange(this.model);
+    if (this.data) {
+      this.data.model = this.model;
+      this.propagateChange(this.data);
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     for (const propName of Object.keys(changes)) {
       const change = changes[propName];
       if (!change.firstChange && change.currentValue !== change.previousValue) {
-        if (propName === 'schema') {
-          this.model = inspector.sanitize(this.schema, this.model).data;
-          this.isModelValid = this.validateModel();
-        }
-        if (['readonly', 'schema', 'form', 'groupInfoes'].includes(propName)) {
+        if (propName === 'readonly') {
           this.updateAndRender();
         }
       }
     }
   }
-
-  onFullscreenChanged() {}
 
   private onModelChange(key: (string | number)[], val: any) {
     if (isString(val) && val === '') {
@@ -165,40 +171,50 @@ export class JsonFormComponent implements OnInit, ControlValueAccessor, Validato
     }
     if (JsonFormUtils.updateValue(key, this.model, val)) {
       this.formProps.model = this.model;
+      this.isModelValid = this.validateModel();
       this.updateView();
     }
   }
 
-  private onColorClick(event: MouseEvent, key: string, val: string) {
+  private onColorClick(key: (string | number)[],
+                       val: tinycolor.ColorFormats.RGBA,
+                       colorSelectedFn: (color: tinycolor.ColorFormats.RGBA) => void) {
     this.dialogs.colorPicker(tinycolor(val).toRgbString()).subscribe((color) => {
-      const e = event as any;
-      if (e.data && e.data.onValueChanged) {
-        e.data.onValueChanged(tinycolor(color).toRgb());
+      if (colorSelectedFn) {
+        colorSelectedFn(tinycolor(color).toRgb());
       }
     });
   }
 
-  private onToggleFullscreen() {
+  private onToggleFullscreen(element: HTMLElement, fullscreenFinishFn?: () => void) {
+    this.targetFullscreenElement = element;
     this.isFullscreen = !this.isFullscreen;
-    this.formProps.isFullscreen = this.isFullscreen;
+    this.fullscreenFinishFn = fullscreenFinishFn;
+  }
+
+  onFullscreenChanged(fullscreen: boolean) {
+    this.formProps.isFullscreen = fullscreen;
+    this.renderReactSchemaForm(false);
+    if (this.fullscreenFinishFn) {
+      this.fullscreenFinishFn();
+      this.fullscreenFinishFn = null;
+    }
   }
 
   private updateAndRender() {
-    const schema = this.schema ? deepClone(this.schema) : {
-      type: 'object'
-    };
-    schema.strict = true;
-    const form = this.form ? deepClone(this.form) : [ '*' ];
-    const groupInfoes = this.groupInfoes ? deepClone(this.groupInfoes) : [];
+
     this.formProps.option.formDefaults.readonly = this.readonly;
-    this.formProps.schema = schema;
-    this.formProps.form = form;
-    this.formProps.groupInfoes = groupInfoes;
+    this.formProps.schema = this.schema;
+    this.formProps.form = this.form;
+    this.formProps.groupInfoes = this.groupInfoes;
     this.formProps.model = deepClone(this.model);
     this.renderReactSchemaForm();
   }
 
-  private renderReactSchemaForm() {
+  private renderReactSchemaForm(destroy: boolean = true) {
+    if (destroy) {
+      this.destroyReactSchemaForm();
+    }
     ReactDOM.render(React.createElement(ReactSchemaForm, this.formProps), this.reactRootElmRef.nativeElement);
   }
 

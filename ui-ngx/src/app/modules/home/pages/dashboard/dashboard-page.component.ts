@@ -71,6 +71,7 @@ import {
   EntityAliasesDialogData
 } from '@home/components/alias/entity-aliases-dialog.component';
 import { EntityAliases } from '@app/shared/models/alias.models';
+import { EditWidgetComponent } from '@home/pages/dashboard/edit-widget.component';
 
 @Component({
   selector: 'tb-dashboard-page',
@@ -109,7 +110,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   editingWidgetLayoutOriginal: WidgetLayout = null;
   editingWidgetSubtitle: string = null;
   editingLayoutCtx: DashboardPageLayoutContext = null;
-  editingWidgetFormGroup: FormGroup;
 
   thingsboardVersion: string = env.tbVersion;
 
@@ -188,6 +188,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   set rightLayoutOpened(rightLayoutOpened: boolean) {
   }
 
+  @ViewChild('tbEditWidget', {static: false}) editWidgetComponent: EditWidgetComponent;
+
   constructor(protected store: Store<AppState>,
               @Inject(WINDOW) private window: Window,
               private breakpointObserver: BreakpointObserver,
@@ -204,10 +206,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
               private fb: FormBuilder,
               private dialog: MatDialog) {
     super(store);
-
-    this.editingWidgetFormGroup = this.fb.group({
-      widgetConfig: [null]
-    });
 
     this.rxSubscriptions.push(this.route.data.subscribe(
       (data) => {
@@ -630,15 +628,15 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   }
 
   onRevertWidgetEdit() {
-    if (this.editingWidgetFormGroup.dirty) {
-      this.editingWidgetFormGroup.markAsPristine();
+    if (this.editWidgetComponent.widgetFormGroup.dirty) {
+      this.editWidgetComponent.widgetFormGroup.markAsPristine();
       this.editingWidget = deepClone(this.editingWidgetOriginal);
       this.editingWidgetLayout = deepClone(this.editingWidgetLayoutOriginal);
     }
   }
 
   saveWidget() {
-    this.editingWidgetFormGroup.markAsPristine();
+    this.editWidgetComponent.widgetFormGroup.markAsPristine();
     const widget = deepClone(this.editingWidget);
     const widgetLayout = deepClone(this.editingWidgetLayout);
     const id = this.editingWidgetOriginal.id;

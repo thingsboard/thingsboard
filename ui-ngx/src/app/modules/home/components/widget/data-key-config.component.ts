@@ -39,6 +39,7 @@ import { Observable, of } from 'rxjs';
 import { map, mergeMap, tap } from 'rxjs/operators';
 import { alarmFields } from '@shared/models/alarm.models';
 import { JsFuncComponent } from '@shared/components/js-func.component';
+import { JsonFormComponentData } from '@shared/components/json-form/json-form-component.models';
 
 @Component({
   selector: 'tb-data-key-config',
@@ -77,14 +78,15 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
 
   displayAdvanced = false;
 
-  dataKeySchema: any;
-  dataKeyForm: any;
-
   private modelValue: DataKey;
 
   private propagateChange = null;
 
   public dataKeyFormGroup: FormGroup;
+
+  public dataKeySettingsFormGroup: FormGroup;
+
+  private dataKeySettingsData: JsonFormComponentData;
 
   private alarmKeys: Array<DataKey>;
 
@@ -112,8 +114,16 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
     }
     if (this.dataKeySettingsSchema && this.dataKeySettingsSchema.schema) {
       this.displayAdvanced = true;
-      this.dataKeySchema = this.dataKeySettingsSchema.schema;
-      this.dataKeyForm = this.dataKeySettingsSchema.form || ['*'];
+      this.dataKeySettingsData = {
+        schema: this.dataKeySettingsSchema.schema,
+        form: this.dataKeySettingsSchema.form || ['*']
+      };
+      this.dataKeySettingsFormGroup = this.fb.group({
+        settings: [null, []]
+      });
+      this.dataKeySettingsFormGroup.valueChanges.subscribe(() => {
+        this.updateModel();
+      });
     }
     this.dataKeyFormGroup = this.fb.group({
       name: [null, []],
@@ -123,8 +133,7 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
       decimals: [null, [Validators.min(0), Validators.max(15), Validators.pattern(/^\d*$/)]],
       funcBody: [null, []],
       usePostProcessing: [null, []],
-      postFuncBody: [null, []],
-      settings: [null, []]
+      postFuncBody: [null, []]
     });
 
     this.dataKeyFormGroup.valueChanges.subscribe(() => {
@@ -162,10 +171,19 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
     this.dataKeyFormGroup.patchValue(this.modelValue, {emitEvent: false});
     this.dataKeyFormGroup.get('name').setValidators(this.modelValue.type !== DataKeyType.function ? [Validators.required] : []);
     this.dataKeyFormGroup.get('name').updateValueAndValidity({emitEvent: false});
+    if (this.displayAdvanced) {
+      this.dataKeySettingsData.model = this.modelValue.settings;
+      this.dataKeySettingsFormGroup.patchValue({
+        settings: this.dataKeySettingsData
+      }, {emitEvent: false});
+    }
   }
 
   private updateModel() {
     this.modelValue = {...this.modelValue, ...this.dataKeyFormGroup.value};
+    if (this.displayAdvanced) {
+      this.modelValue.settings = this.dataKeySettingsFormGroup.get('settings').value.model;
+    }
     this.propagateChange(this.modelValue);
   }
 
@@ -218,6 +236,13 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
     if (!this.dataKeyFormGroup.valid) {
       return {
         dataKey: {
+          valid: false
+        }
+      };
+    }
+    if (this.displayAdvanced && !this.dataKeySettingsFormGroup.valid) {
+      return {
+        dataKeySettings: {
           valid: false
         }
       };

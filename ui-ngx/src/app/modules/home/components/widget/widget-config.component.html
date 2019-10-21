@@ -31,7 +31,7 @@
           </mat-checkbox>
         </div>
         <section fxFlex fxLayout="row" fxLayoutAlign="start center" style="margin-bottom: 16px;">
-          <span [ngClass]="{'tb-disabled-label': useDashboardTimewindow}" translate style="padding-right: 8px;">widget-config.timewindow</span>
+          <span [ngClass]="{'tb-disabled-label': dataSettings.get('useDashboardTimewindow').value}" translate style="padding-right: 8px;">widget-config.timewindow</span>
           <tb-timewindow asButton="true"
                          aggregation="{{ widgetType === widgetTypes.timeseries }}"
                          fxFlex formControlName="timewindow"></tb-timewindow>
@@ -64,12 +64,12 @@
       <mat-expansion-panel class="tb-datasources" *ngIf="widgetType !== widgetTypes.rpc &&
                                   widgetType !== widgetTypes.alarm &&
                                   widgetType !== widgetTypes.static &&
-                                  isDataEnabled" [expanded]="true">
+                                  modelValue?.isDataEnabled" [expanded]="true">
         <mat-expansion-panel-header>
           <mat-panel-title fxLayout="column">
             <div class="tb-panel-title" translate>widget-config.datasources</div>
-            <div *ngIf="typeParameters && typeParameters.maxDatasources > -1"
-                 class="tb-hint">{{ 'widget-config.maximum-datasources' | translate:{count: typeParameters.maxDatasources} }}</div>
+            <div *ngIf="modelValue?.typeParameters && modelValue?.typeParameters.maxDatasources > -1"
+                 class="tb-hint">{{ 'widget-config.maximum-datasources' | translate:{count: modelValue?.typeParameters.maxDatasources} }}</div>
           </mat-panel-title>
         </mat-expansion-panel-header>
         <div *ngIf="dataSettings.get('datasources').length === 0; else datasourcesTemplate">
@@ -90,7 +90,7 @@
           <div style="overflow: auto; padding-bottom: 15px;">
             <div fxFlex fxLayout="row" fxLayoutAlign="start center"
                  formArrayName="datasources"
-                 *ngFor="let datasourceControl of dataSettings.get('datasources').controls; let $index = index">
+                 *ngFor="let datasourceControl of dataSettings.get('datasources').controls; let $index = index;">
               <span fxFlex="5">{{$index + 1}}.</span>
               <div [formGroupName]="$index" class="mat-elevation-z4" fxFlex
                    fxLayout="row"
@@ -120,7 +120,7 @@
                     </ng-template>
                     <ng-template [ngSwitchCase]="datasourceType.entity">
                       <tb-entity-alias-select
-                        [required]="datasourceControl.get('type').value === datasourceType.entity"
+                        [tbRequired]="datasourceControl.get('type').value === datasourceType.entity"
                         [aliasController]="aliasController"
                         formControlName="entityAliasId"
                         [callbacks]="widgetConfigCallbacks">
@@ -130,25 +130,15 @@
                   <tb-data-keys class="tb-data-keys" fxFlex
                                 [widgetType]="widgetType"
                                 [datasourceType]="datasourceControl.get('type').value"
-                                [maxDataKeys]="typeParameters?.maxDataKeys"
-                                [optDataKeys]="typeParameters?.dataKeysOptional"
+                                [maxDataKeys]="modelValue?.typeParameters?.maxDataKeys"
+                                [optDataKeys]="modelValue?.typeParameters?.dataKeysOptional"
                                 [aliasController]="aliasController"
-                                [datakeySettingsSchema]="dataKeySettingsSchema"
+                                [datakeySettingsSchema]="modelValue?.dataKeySettingsSchema"
                                 [callbacks]="widgetConfigCallbacks"
                                 [entityAliasId]="datasourceControl.get('entityAliasId').value"
                                 formControlName="dataKeys">
                   </tb-data-keys>
                 </section>
-                <!--tb-datasource fxFlex
-                               [widgetType]="widgetType"
-                               [maxDataKeys]="typeParameters?.maxDataKeys"
-                               [optDataKeys]="typeParameters?.dataKeysOptional"
-                               [aliasController]="aliasController"
-                               [functionsOnly]="functionsOnly"
-                               [datakeySettingsSchema]="dataKeySettingsSchema"
-                               [callbacks]="widgetConfigCallbacks"
-                               [formControl]="datasourceControl"
-                ></tb-datasource-->
                 <button [disabled]="isLoading$ | async"
                         mat-button mat-icon-button color="primary"
                         style="min-width: 40px;"
@@ -164,8 +154,8 @@
         <div fxFlex fxLayout="row" fxLayoutAlign="start center">
           <button [disabled]="isLoading$ | async"
                   mat-button mat-raised-button color="primary"
-                  [fxShow]="typeParameters &&
-                            (typeParameters.maxDatasources == -1 || dataSettings.get('datasources').controls.length < typeParameters.maxDatasources)"
+                  [fxShow]="modelValue?.typeParameters &&
+                            (modelValue?.typeParameters.maxDatasources == -1 || dataSettings.get('datasources').controls.length < modelValue?.typeParameters.maxDatasources)"
                   (click)="addDatasource()"
                   matTooltip="{{ 'widget-config.add-datasource' | translate }}"
                   matTooltipPosition="above">
@@ -175,7 +165,7 @@
         </div>
       </mat-expansion-panel>
       <mat-expansion-panel class="tb-datasources" *ngIf="widgetType === widgetTypes.rpc &&
-                                  isDataEnabled" [expanded]="true">
+                                  modelValue?.isDataEnabled" [expanded]="true">
         <mat-expansion-panel-header>
           <mat-panel-title>
             {{ 'widget-config.target-device' | translate }}
@@ -183,7 +173,7 @@
         </mat-expansion-panel-header>
         <div [formGroup]="targetDeviceSettings" style="padding: 0 5px;">
           <tb-entity-alias-select fxFlex
-            [required]="!widgetEditMode"
+            [tbRequired]="!widgetEditMode"
             [aliasController]="aliasController"
             [allowedEntityTypes]="[entityTypes.DEVICE]"
             [callbacks]="widgetConfigCallbacks"
@@ -193,6 +183,14 @@
       </mat-expansion-panel>
     </div>
   </mat-tab>
-  <mat-tab label="{{ 'widget-config.settings' | translate }}">
+  <mat-tab *ngIf="displayAdvanced()" label="{{ 'widget-config.advanced' | translate }}">
+    <div [formGroup]="advancedSettings" class="mat-content mat-padding tb-advanced-widget-config"
+         fxLayout="column">
+        <tb-json-form
+          formControlName="settings">
+        </tb-json-form>
+    </div>
+  </mat-tab>
+  <mat-tab label="{{ 'widget-config.actions' | translate }}">
   </mat-tab>
 </mat-tab-group>

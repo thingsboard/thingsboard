@@ -18,8 +18,8 @@ import {
   Directive,
   ElementRef,
   EventEmitter,
-  Input,
-  Output,
+  Input, OnChanges,
+  Output, SimpleChanges,
   ViewContainerRef
 } from '@angular/core';
 import { Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
@@ -29,7 +29,7 @@ import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 @Directive({
   selector: '[tb-fullscreen]'
 })
-export class FullscreenDirective {
+export class FullscreenDirective implements OnChanges {
 
   fullscreenValue = false;
 
@@ -37,16 +37,10 @@ export class FullscreenDirective {
   private parentElement: HTMLElement;
 
   @Input()
-  set fullscreen(fullscreen: boolean) {
-    if (this.fullscreenValue !== fullscreen) {
-      this.fullscreenValue = fullscreen;
-      if (this.fullscreenValue) {
-        this.enterFullscreen();
-      } else {
-        this.exitFullscreen();
-      }
-    }
-  }
+  fullscreen: boolean;
+
+  @Input()
+  fullscreenElement: HTMLElement;
 
   @Output()
   fullscreenChanged = new EventEmitter<boolean>();
@@ -56,11 +50,30 @@ export class FullscreenDirective {
               private overlay: Overlay) {
   }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    let updateFullscreen = false;
+    for (const propName of Object.keys(changes)) {
+      const change = changes[propName];
+      if (!change.firstChange && change.currentValue !== change.previousValue) {
+        if (propName === 'fullscreen') {
+          updateFullscreen = true;
+        }
+      }
+    }
+    if (updateFullscreen) {
+      if (this.fullscreen) {
+        this.enterFullscreen();
+      } else {
+        this.exitFullscreen();
+      }
+    }
+  }
+
   enterFullscreen() {
-    const targetElement = this.elementRef;
-    this.parentElement = targetElement.nativeElement.parentElement;
-    this.parentElement.removeChild(targetElement.nativeElement);
-    targetElement.nativeElement.classList.add('tb-fullscreen');
+    const targetElement: HTMLElement = this.fullscreenElement || this.elementRef.nativeElement;
+    this.parentElement = targetElement.parentElement;
+    this.parentElement.removeChild(targetElement);
+    targetElement.classList.add('tb-fullscreen');
     const position = this.overlay.position();
     const config = new OverlayConfig({
       hasBackdrop: false,
@@ -73,19 +86,19 @@ export class FullscreenDirective {
 
     this.overlayRef = this.overlay.create(config);
     this.overlayRef.attach(new EmptyPortal());
-    this.overlayRef.overlayElement.append( targetElement.nativeElement );
+    this.overlayRef.overlayElement.append( targetElement );
     this.fullscreenChanged.emit(true);
   }
 
   exitFullscreen() {
-    const targetElement = this.elementRef;
+    const targetElement: HTMLElement = this.fullscreenElement || this.elementRef.nativeElement;
     if (this.parentElement) {
-      this.overlayRef.overlayElement.removeChild( targetElement.nativeElement );
-      this.parentElement.append(targetElement.nativeElement);
+      this.overlayRef.overlayElement.removeChild( targetElement );
+      this.parentElement.append(targetElement);
       this.parentElement = null;
     }
-    targetElement.nativeElement.classList.remove('tb-fullscreen');
-    if (this.elementRef !== targetElement) {
+    targetElement.classList.remove('tb-fullscreen');
+    if (this.elementRef) {
       this.elementRef.nativeElement.classList.remove('tb-fullscreen');
     }
     this.overlayRef.dispose();
