@@ -17,12 +17,19 @@
 
 import addRuleChainTemplate from './add-rulechain.tpl.html';
 import ruleChainCard from './rulechain-card.tpl.html';
+import manageAssignedEdgesTemplate from "./manage-assigned-edges.tpl.html";
+import addRuleChainsToEdgeTemplate from "./add-rulechains-to-edge.tpl.html";
 
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
 export default function RuleChainsController(ruleChainService, userService, importExport, $state,
-                                             $stateParams, $filter, $translate, $mdDialog, types) {
+                                             $stateParams, $filter, $translate, $mdDialog, $document, $q, types) {
+
+    var vm = this;
+    var edgeId = $stateParams.edgeId;
+
+    vm.ruleChainsScope = $state.$current.data.ruleChainsType;
 
     var ruleChainActionsList = [
         {
@@ -40,52 +47,10 @@ export default function RuleChainsController(ruleChainService, userService, impo
             name: function() { $translate.instant('action.export') },
             details: function() { return $translate.instant('rulechain.export') },
             icon: "file_download"
-        },
-        {
-            onAction: function ($event, item) {
-                setRootRuleChain($event, item);
-            },
-            name: function() { return $translate.instant('rulechain.set-root') },
-            details: function() { return $translate.instant('rulechain.set-root') },
-            icon: "flag",
-            isEnabled: isNonRootRuleChain
-        },
-        {
-            onAction: function ($event, item) {
-                vm.grid.deleteItem($event, item);
-            },
-            name: function() { return $translate.instant('action.delete') },
-            details: function() { return $translate.instant('rulechain.delete') },
-            icon: "delete",
-            isEnabled: isNonRootRuleChain
         }
     ];
 
-    var ruleChainAddItemActionsList = [
-        {
-            onAction: function ($event) {
-                vm.grid.addItem($event);
-            },
-            name: function() { return $translate.instant('action.create') },
-            details: function() { return $translate.instant('rulechain.create-new-rulechain') },
-            icon: "insert_drive_file"
-        },
-        {
-            onAction: function ($event) {
-                importExport.importRuleChain($event).then(
-                    function(ruleChainImport) {
-                        $state.go('home.ruleChains.importRuleChain', {ruleChainImport:ruleChainImport});
-                    }
-                );
-            },
-            name: function() { return $translate.instant('action.import') },
-            details: function() { return $translate.instant('rulechain.import') },
-            icon: "file_upload"
-        }
-    ];
-
-    var vm = this;
-
+    var ruleChainGroupActionsList = [];
     vm.types = types;
 
     vm.ruleChainGridConfig = {
@@ -98,17 +63,15 @@ export default function RuleChainsController(ruleChainService, userService, impo
         deleteItemsActionTitleFunc: deleteRuleChainsActionTitle,
         deleteItemsContentFunc: deleteRuleChainsText,
 
-        fetchItemsFunc: fetchRuleChains,
         saveItemFunc: saveRuleChain,
         clickItemFunc: openRuleChain,
-        deleteItemFunc: deleteRuleChain,
 
         getItemTitleFunc: getRuleChainTitle,
         itemCardTemplateUrl: ruleChainCard,
         parentCtl: vm,
 
         actionsList: ruleChainActionsList,
-        addItemActions: ruleChainAddItemActionsList,
+        groupActionsList: ruleChainGroupActionsList,
 
         onGridInited: gridInited,
 
@@ -133,7 +96,160 @@ export default function RuleChainsController(ruleChainService, userService, impo
 
     vm.exportRuleChain = exportRuleChain;
     vm.setRootRuleChain = setRootRuleChain;
+    
+    initController();
 
+    function initController() {
+        var fetchRuleChainsFunction = null;
+        var deleteRuleChainFunction = null;
+
+        if (edgeId) {
+            vm.edgeRuleChainsTitle = $translate.instant('edge.rulechains');
+        }
+
+        if (vm.ruleChainsScope === 'tenant') {
+            fetchRuleChainsFunction = function (pageLink) {
+                return fetchRuleChains(pageLink);
+            };
+            deleteRuleChainFunction = function (ruleChainId) {
+                return deleteRuleChain(ruleChainId);
+            };
+
+            ruleChainActionsList.push({
+                onAction: function ($event, item) {
+                    setRootRuleChain($event, item);
+                },
+                name: function() { return $translate.instant('rulechain.set-root') },
+                details: function() { return $translate.instant('rulechain.set-root') },
+                icon: "flag",
+                isEnabled: isNonRootRuleChain
+            });
+
+            ruleChainActionsList.push({
+                onAction: function ($event, item) {
+                    manageAssignedEdges($event, item);
+                },
+                name: function() { return $translate.instant('action.assign') },
+                details: function() { return $translate.instant('rulechain.manage-assigned-edges') },
+                icon: "wifi_tethering",
+                isEnabled: isNonRootRuleChain
+            });
+
+            ruleChainActionsList.push({
+                onAction: function ($event, item) {
+                    vm.grid.deleteItem($event, item);
+                },
+                name: function() { return $translate.instant('action.delete') },
+                details: function() { return $translate.instant('rulechain.delete') },
+                icon: "delete",
+                isEnabled: isNonRootRuleChain
+            });
+
+            ruleChainGroupActionsList.push(
+                {
+                    onAction: function ($event, items) {
+                        assignRuleChainsToEdges($event, items);
+                    },
+                    name: function() { return $translate.instant('rulechain.assign-rulechains') },
+                    details: function(selectedCount) {
+                        return $translate.instant('rulechain.assign-rulechains-to-edge-text', {count: selectedCount}, "messageformat");
+                    },
+                    icon: "wifi_tethering"
+                }
+            );
+
+            ruleChainGroupActionsList.push(
+                {
+                    onAction: function ($event, items) {
+                        unassignRuleChainsFromEdges($event, items);
+                    },
+                    name: function() { return $translate.instant('rulechain.unassign-rulechains') },
+                    details: function(selectedCount) {
+                        return $translate.instant('rulechain.unassign-rulechains-from-edge-action-text', {count: selectedCount}, "messageformat");
+                    },
+                    icon: "portable_wifi_off"
+                }
+            );
+
+            ruleChainGroupActionsList.push(
+                {
+                    onAction: function ($event) {
+                        vm.grid.deleteItems($event);
+                    },
+                    name: function() { return $translate.instant('rulechain.delete-rulechains') },
+                    details: deleteRuleChainsActionTitle,
+                    icon: "delete"
+                }
+            );
+
+            vm.ruleChainGridConfig.addItemActions = [];
+            vm.ruleChainGridConfig.addItemActions.push({
+                onAction: function ($event) {
+                    vm.grid.addItem($event);
+                },
+                name: function() { return $translate.instant('action.create') },
+                details: function() { return $translate.instant('rulechain.create-new-rulechain') },
+                icon: "insert_drive_file"
+            });
+            vm.ruleChainGridConfig.addItemActions.push({
+                onAction: function ($event) {
+                    importExport.importRuleChain($event).then(
+                        function(ruleChainImport) {
+                            $state.go('home.ruleChains.importRuleChain', {ruleChainImport:ruleChainImport});
+                        }
+                    );
+                },
+                name: function() { return $translate.instant('action.import') },
+                details: function() { return $translate.instant('rulechain.import') },
+                icon: "file_upload"
+            });
+
+        } else if (vm.ruleChainsScope === 'edge') {
+            fetchRuleChainsFunction = function (pageLink) {
+                return ruleChainService.getEdgeRuleChains(edgeId, pageLink);
+            };
+            deleteRuleChainFunction = function (ruleChainId) {
+                return ruleChainService.unassignRuleChainFromEdge(edgeId, ruleChainId);
+            };
+
+            ruleChainActionsList.push(
+                {
+                    onAction: function ($event, item) {
+                        unassignFromEdge($event, item, edgeId);
+                    },
+                    name: function() { return $translate.instant('action.unassign') },
+                    details: function() { return $translate.instant('rulechain.unassign-from-edge') },
+                    icon: "assignment_return"
+                }
+            );
+
+            ruleChainGroupActionsList.push(
+                {
+                    onAction: function ($event, items) {
+                        unassignRuleChainsFromEdge($event, items, edgeId);
+                    },
+                    name: function() { return $translate.instant('rulechain.unassign-rulechains') },
+                    details: function(selectedCount) {
+                        return $translate.instant('rulechain.unassign-rulechains-from-edge-action-title', {count: selectedCount}, "messageformat");
+                    },
+                    icon: "assignment_return"
+                }
+            );
+
+            vm.ruleChainGridConfig.addItemAction = {
+                onAction: function ($event) {
+                    addRuleChainsToEdge($event);
+                },
+                name: function() { return $translate.instant('rulechain.assign-rulechains') },
+                details: function() { return $translate.instant('rulechain.assign-new-rulechain') },
+                icon: "add"
+            }
+        }
+
+        vm.ruleChainGridConfig.fetchItemsFunc = fetchRuleChainsFunction;
+        vm.ruleChainGridConfig.deleteItemFunc = deleteRuleChainFunction;
+    }
+    
     function deleteRuleChainTitle(ruleChain) {
         return $translate.instant('rulechain.delete-rulechain-title', {ruleChainName: ruleChain.name});
     }
@@ -210,6 +326,123 @@ export default function RuleChainsController(ruleChainService, userService, impo
                 }
             );
         });
+    }
 
+    function manageAssignedEdges($event, ruleChain) {
+        showManageAssignedEdgesDialog($event, [ruleChain.id.id], 'manage', ruleChain.assignedEdgesIds);
+    }
+
+    function assignRuleChainsToEdges($event, items) {
+        var ruleChainIds = [];
+        for (var id in items.selections) {
+            ruleChainIds.push(id);
+        }
+        showManageAssignedEdgesDialog($event, ruleChainIds, 'assign');
+    }
+
+    function unassignRuleChainsFromEdges($event, items) {
+        var ruleChainIds = [];
+        for (var id in items.selections) {
+            ruleChainIds.push(id);
+        }
+        showManageAssignedEdgesDialog($event, ruleChainIds, 'unassign');
+    }
+
+    function unassignRuleChainsFromEdge($event, items, edgeId) {
+        var confirm = $mdDialog.confirm()
+            .targetEvent($event)
+            .title($translate.instant('rulechain.unassign-rulechains-title', {count: items.selectedCount}, 'messageformat'))
+            .htmlContent($translate.instant('rulechain.unassign-rulechains-from-edge-text'))
+            .ariaLabel($translate.instant('rulechain.unassign-rulechains'))
+            .cancel($translate.instant('action.no'))
+            .ok($translate.instant('action.yes'));
+        $mdDialog.show(confirm).then(function () {
+            var tasks = [];
+            for (var id in items.selections) {
+                tasks.push(ruleChainService.unassignRuleChainFromEdge(edgeId, id));
+            }
+            $q.all(tasks).then(function () {
+                vm.grid.refreshList();
+            });
+        });
+    }
+
+    function showManageAssignedEdgesDialog($event, ruleChainIds, actionType, assignedEdges) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        $mdDialog.show({
+            controller: 'ManageAssignedEdgesToRuleChainController',
+            controllerAs: 'vm',
+            templateUrl: manageAssignedEdgesTemplate,
+            locals: {actionType: actionType, ruleChainIds: ruleChainIds, assignedEdges: assignedEdges},
+            parent: angular.element($document[0].body),
+            fullscreen: true,
+            targetEvent: $event
+        }).then(function () {
+            vm.grid.refreshList();
+        }, function () {
+        });
+    }
+
+    function addRuleChainsToEdge($event) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        var pageSize = 10;
+        ruleChainService.getRuleChains({limit: pageSize, textSearch: ''}).then(
+            function success(_ruleChains) {
+                var ruleChains = {
+                    pageSize: pageSize,
+                    data: filterNonRootRuleChains(_ruleChains.data),
+                    nextPageLink: _ruleChains.nextPageLink,
+                    selections: {},
+                    selectedCount: 0,
+                    hasNext: _ruleChains.hasNext,
+                    pending: false
+                };
+                if (ruleChains.hasNext) {
+                    ruleChains.nextPageLink.limit = pageSize;
+                }
+                $mdDialog.show({
+                    controller: 'AddRuleChainsToEdgeController',
+                    controllerAs: 'vm',
+                    templateUrl: addRuleChainsToEdgeTemplate,
+                    locals: {edgeId: edgeId, ruleChains: ruleChains},
+                    parent: angular.element($document[0].body),
+                    fullscreen: true,
+                    targetEvent: $event
+                }).then(function () {
+                    vm.grid.refreshList();
+                }, function () {
+                });
+            },
+            function fail() {
+            });
+    }
+
+    function filterNonRootRuleChains(ruleChains) {
+        return $filter('filter')(ruleChains, isNonRootRuleChain);
+    }
+
+    function unassignFromEdge($event, ruleChain, edgeId) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        var title = $translate.instant('rulechain.unassign-rulechain-title', {ruleChainTitle: ruleChain.name});
+        var content = $translate.instant('rulechain.unassign-rulechain-from-edge-text');
+        var label = $translate.instant('rulechain.unassign-rulechain');
+        var confirm = $mdDialog.confirm()
+            .targetEvent($event)
+            .title(title)
+            .htmlContent(content)
+            .ariaLabel(label)
+            .cancel($translate.instant('action.no'))
+            .ok($translate.instant('action.yes'));
+        $mdDialog.show(confirm).then(function () {
+            ruleChainService.unassignRuleChainFromEdge(edgeId, ruleChain.id.id).then(function success() {
+                vm.grid.refreshList();
+            });
+        });
     }
 }

@@ -775,7 +775,9 @@
         "assign-new-edge": "Assign new edge",
         "manage-edge-dashboards": "Manage edge dashboards",
         "unassign-from-edge": "Unassign from edge",
-        "dashboards": "Edge Dashboards"
+        "dashboards": "Edge Dashboards",
+        "manage-edge-rulechains": "Manage edge rule chains",
+        "rulechains": "Edge Rule Chains"
     },
     "error": {
         "unable-to-connect": "Unable to connect to the server! Please check your internet connection.",
@@ -1380,7 +1382,28 @@
         "no-rulechains-matching": "No rule chains matching '{{entity}}' were found.",
         "rulechain-required": "Rule chain is required",
         "management": "Rules management",
-        "debug-mode": "Debug mode"
+        "debug-mode": "Debug mode",
+        "assign-rulechains": "Assign rulechains",
+        "assign-new-rulechain": "Assign new rulechain",
+        "delete-rulechains": "Delete rulechains",
+        "unassign-rulechain": "Unassign rulechain",
+        "unassign-rulechains": "Unassign rulechains",
+        "unassign-rulechain-title": "Are you sure you want to unassign the rulechain '{{ruleChainTitle}}'?",
+        "unassign-rulechains-title": "Are you sure you want to unassign { count, plural, 1 {1 rulechain} other {# rulechains} }?",
+        "manage-assigned-edges": "Manage assigned edges",
+        "unassign-rulechain-from-edge-text": "After the confirmation the rulechain will be unassigned and won't be accessible by the edge.",
+        "assigned-edges": "Assigned edges",
+        "unassign-from-edge": "Unassign from edge",
+        "unassign-rulechains-from-edge-action-title": "Unassign { count, plural, 1 {1 rulechain} other {# rulechains} } from edge",
+        "unassign-rulechains-from-edge-text": "After the confirmation all selected rulechains will be unassigned and won't be accessible by the edge.",
+        "assign-rulechains-to-edge-text": "Assign { count, plural, 1 {1 rulechain} other {# rulechains} } to edges",
+        "assign-rulechain-to-edge": "Assign Rule Chain(s) To Edge",
+        "assign-rulechain-to-edge-text": "Please select the rulechains to assign to the edge",
+        "unassign-rulechains-from-edge-action-text": "Unassign { count, plural, 1 {1 rulechain} other {# rulechains} } from edges",
+        "assign-to-edges": "Assign Rule Chain(s) To Edges",
+        "assign-to-edges-text": "Please select the edges to assign the rulechain(s)",
+        "unassign-from-edges": "Unassign Rule Chain(s) From Edges",
+        "unassign-from-edges-text": "Please select the edges to unassign from the rulechain(s)"
     },
     "rulenode": {
         "details": "Details",

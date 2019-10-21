@@ -15,16 +15,26 @@
  */
 package org.thingsboard.server.dao.rule;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.nosql.RuleChainEntity;
 import org.thingsboard.server.dao.nosql.CassandraAbstractSearchTextDao;
+import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.util.NoSqlDao;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -38,6 +48,9 @@ import static org.thingsboard.server.dao.model.ModelConstants.RULE_CHAIN_TENANT_
 @Slf4j
 @NoSqlDao
 public class CassandraRuleChainDao extends CassandraAbstractSearchTextDao<RuleChainEntity, RuleChain> implements RuleChainDao {
+
+    @Autowired
+    private RelationDao relationDao;
 
     @Override
     protected Class<RuleChainEntity> getColumnFamilyClass() {
@@ -58,6 +71,19 @@ public class CassandraRuleChainDao extends CassandraAbstractSearchTextDao<RuleCh
 
         log.trace("Found rule chains [{}] by tenantId [{}] and pageLink [{}]", ruleChainEntities, tenantId, pageLink);
         return DaoUtil.convertDataList(ruleChainEntities);
+    }
+
+    @Override
+    public ListenableFuture<List<RuleChain>> findRuleChainsByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, TimePageLink pageLink) {
+        log.debug("Try to find rule chains by tenantId [{}], edgeId [{}] and pageLink [{}]", tenantId, edgeId, pageLink);
+        ListenableFuture<List<EntityRelation>> relations = relationDao.findRelations(new TenantId(tenantId), new EdgeId(edgeId), EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE, EntityType.DASHBOARD, pageLink);
+        return Futures.transformAsync(relations, input -> {
+            List<ListenableFuture<RuleChain>> ruleChainFutures = new ArrayList<>(input.size());
+            for (EntityRelation relation : input) {
+                ruleChainFutures.add(findByIdAsync(new TenantId(tenantId), relation.getTo().getId()));
+            }
+            return Futures.successfulAsList(ruleChainFutures);
+        });
     }
 
 }

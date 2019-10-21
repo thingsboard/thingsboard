@@ -690,7 +690,7 @@ public class DashboardController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}/dashboards", params = { "limit" }, method = RequestMethod.GET)
     @ResponseBody
     public TimePageData<DashboardInfo> getEdgeDashboards(

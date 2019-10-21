@@ -232,6 +232,19 @@ export function EdgeController($rootScope, userService, edgeService, customerSer
             edgeActionsList.push(
                 {
                     onAction: function ($event, item) {
+                        openEdgeRuleChains($event, item);
+                    },
+                    name: function() { return $translate.instant('rulechain.rulechains') },
+                    details: function() {
+                        return $translate.instant('edge.manage-edge-rulechains');
+                    },
+                    icon: "settings_ethernet"
+                }
+            );
+
+            edgeActionsList.push(
+                {
+                    onAction: function ($event, item) {
                         vm.grid.deleteItem($event, item);
                     },
                     name: function() { return $translate.instant('action.delete') },
@@ -554,10 +567,10 @@ export function EdgeController($rootScope, userService, edgeService, customerSer
         $state.go('home.edges.dashboards', {edgeId: edge.id.id});
     }
 
-    // function openEdgeRuleChains($event, edge) {
-    //     if ($event) {
-    //         $event.stopPropagation();
-    //     }
-    //     $state.go('home.edges.rule-chains', {edgeId: edge.id.id});
-    // }
+    function openEdgeRuleChains($event, edge) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        $state.go('home.edges.ruleChains', {edgeId: edge.id.id});
+    }
 }

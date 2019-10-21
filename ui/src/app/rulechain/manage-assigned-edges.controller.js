@@ -14,29 +14,29 @@
  * limitations under the License.
  */
 /*@ngInject*/
-export default function ManageAssignedEdgesToDashboardController($mdDialog, $q, types, dashboardService, actionType, dashboardIds, assignedEdges) {
+export default function ManageAssignedEdgesToRuleChainController($mdDialog, $q, types, ruleChainService, actionType, ruleChainIds, assignedEdges) {
 
     var vm = this;
 
     vm.types = types;
     vm.actionType = actionType;
-    vm.dashboardIds = dashboardIds;
+    vm.ruleChainIds = ruleChainIds;
     vm.assignedEdges = assignedEdges;
     if (actionType != 'manage') {
         vm.assignedEdges = [];
     }
 
     if (actionType == 'manage') {
-        vm.titleText = 'dashboard.manage-assigned-edges';
-        vm.labelText = 'dashboard.assigned-edges';
+        vm.titleText = 'rulechain.manage-assigned-edges';
+        vm.labelText = 'rulechain.assigned-edges';
         vm.actionName = 'action.update';
     } else if (actionType == 'assign') {
-        vm.titleText = 'dashboard.assign-to-edges';
-        vm.labelText = 'dashboard.assign-to-edges-text';
+        vm.titleText = 'rulechain.assign-to-edges';
+        vm.labelText = 'rulechain.assign-to-edges-text';
         vm.actionName = 'action.assign';
     } else if (actionType == 'unassign') {
-        vm.titleText = 'dashboard.unassign-from-edges';
-        vm.labelText = 'dashboard.unassign-from-edges-text';
+        vm.titleText = 'rulechain.unassign-from-edges';
+        vm.labelText = 'rulechain.unassign-from-edges-text';
         vm.actionName = 'action.unassign';
     }
 
@@ -49,15 +49,15 @@ export default function ManageAssignedEdgesToDashboardController($mdDialog, $q, 
 
     function submit () {
         var tasks = [];
-        for (var i=0;i<vm.dashboardIds.length;i++) {
-            var dashboardId = vm.dashboardIds[i];
+        for (var i=0;i<vm.ruleChainIds.length;i++) {
+            var ruleChainId = vm.ruleChainIds[i];
             var promise;
             if (vm.actionType == 'manage') {
-                promise = dashboardService.updateDashboardEdges(dashboardId, vm.assignedEdges);
+                promise = ruleChainService.updateRuleChainEdges(ruleChainId, vm.assignedEdges);
             } else if (vm.actionType == 'assign') {
-                promise = dashboardService.addDashboardEdges(dashboardId, vm.assignedEdges);
+                promise = ruleChainService.addRuleChainEdges(ruleChainId, vm.assignedEdges);
             } else if (vm.actionType == 'unassign') {
-                promise = dashboardService.removeDashboardEdges(dashboardId, vm.assignedEdges);
+                promise = ruleChainService.removeRuleChainEdges(ruleChainId, vm.assignedEdges);
             }
             tasks.push(promise);
         }

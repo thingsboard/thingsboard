@@ -309,7 +309,7 @@ function DashboardService($rootScope, $http, $q, $location, $filter) {
         delete dashboard.publicCustomerId;
         delete dashboard.assignedCustomersText;
         delete dashboard.assignedCustomersIds;
-        delete dashboard.assignedEdgeIds;
+        delete dashboard.assignedEdgesIds;
         return dashboard;
     }
 

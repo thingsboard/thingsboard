@@ -23,9 +23,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
+import org.thingsboard.server.common.data.ShortEdgeInfo;
+import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -40,6 +46,8 @@ public class RuleChain extends SearchTextBasedWithAdditionalInfo<RuleChainId> im
     private boolean root;
     private boolean debugMode;
     private transient JsonNode configuration;
+    private Set<ShortEdgeInfo> assignedEdges;
+
     @JsonIgnore
     private byte[] configurationBytes;
 
@@ -57,6 +65,11 @@ public class RuleChain extends SearchTextBasedWithAdditionalInfo<RuleChainId> im
         this.name = ruleChain.getName();
         this.firstRuleNodeId = ruleChain.getFirstRuleNodeId();
         this.root = ruleChain.isRoot();
+
+        // TODO: VOBA - check that this is needed
+        // this.debugMode = ruleChain.isDebugMode();
+
+        this.assignedEdges = ruleChain.getAssignedEdges();
         this.setConfiguration(ruleChain.getConfiguration());
     }
 
@@ -78,4 +91,52 @@ public class RuleChain extends SearchTextBasedWithAdditionalInfo<RuleChainId> im
         setJson(data, json -> this.configuration = json, bytes -> this.configurationBytes = bytes);
     }
 
+    public boolean isAssignedToEdge(EdgeId edgeId) {
+        return this.assignedEdges != null && this.assignedEdges.contains(new ShortEdgeInfo(edgeId, null));
+    }
+
+    public ShortEdgeInfo getAssignedEdgeInfo(EdgeId edgeId) {
+        if (this.assignedEdges != null) {
+            for (ShortEdgeInfo edgeInfo : this.assignedEdges) {
+                if (edgeInfo.getEdgeId().equals(edgeId)) {
+                    return edgeInfo;
+                }
+            }
+        }
+        return null;
+    }
+
+    public boolean addAssignedEdge(Edge edge) {
+        ShortEdgeInfo edgeInfo = edge.toShortEdgeInfo();
+        if (this.assignedEdges != null && this.assignedEdges.contains(edgeInfo)) {
+            return false;
+        } else {
+            if (this.assignedEdges == null) {
+                this.assignedEdges = new HashSet<>();
+            }
+            this.assignedEdges.add(edgeInfo);
+            return true;
+        }
+    }
+
+    public boolean updateAssignedEdge(Edge edge) {
+        ShortEdgeInfo edgeInfo = edge.toShortEdgeInfo();
+        if (this.assignedEdges != null && this.assignedEdges.contains(edgeInfo)) {
+            this.assignedEdges.remove(edgeInfo);
+            this.assignedEdges.add(edgeInfo);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public boolean removeAssignedEdge(Edge edge) {
+        ShortEdgeInfo edgeInfo = edge.toShortEdgeInfo();
+        if (this.assignedEdges != null && this.assignedEdges.contains(edgeInfo)) {
+            this.assignedEdges.remove(edgeInfo);
+            return true;
+        } else {
+            return false;
+        }
+    }
 }

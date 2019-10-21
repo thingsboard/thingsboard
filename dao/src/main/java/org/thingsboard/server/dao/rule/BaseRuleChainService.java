@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.dao.rule;
 
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -23,12 +25,16 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.TimePageData;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
@@ -36,13 +42,16 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.dao.edge.EdgeDao;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
+import org.thingsboard.server.dao.service.TimePaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -65,6 +74,9 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
 
     @Autowired
     private TenantDao tenantDao;
+
+    @Autowired
+    private EdgeDao edgeDao;
 
     @Override
     public RuleChain saveRuleChain(RuleChain ruleChain) {
@@ -352,6 +364,89 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         tenantRuleChainsRemover.removeEntities(tenantId, tenantId);
     }
 
+    @Override
+    public RuleChain assignRuleChainToEdge(TenantId tenantId, RuleChainId ruleChainId, EdgeId edgeId) {
+        RuleChain ruleChain = findRuleChainById(tenantId, ruleChainId);
+        Edge edge = edgeDao.findById(tenantId, edgeId.getId());
+        if (edge == null) {
+            throw new DataValidationException("Can't assign ruleChain to non-existent edge!");
+        }
+        if (!edge.getTenantId().getId().equals(ruleChain.getTenantId().getId())) {
+            throw new DataValidationException("Can't assign ruleChain to edge from different tenant!");
+        }
+        if (ruleChain.addAssignedEdge(edge)) {
+            try {
+                createRelation(tenantId, new EntityRelation(edgeId, ruleChainId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
+            } catch (ExecutionException | InterruptedException e) {
+                log.warn("[{}] Failed to create ruleChain relation. Edge Id: [{}]", ruleChainId, edgeId);
+                throw new RuntimeException(e);
+            }
+            return saveRuleChain(ruleChain);
+        } else {
+            return ruleChain;
+        }
+    }
+
+    @Override
+    public RuleChain unassignRuleChainFromEdge(TenantId tenantId, RuleChainId ruleChainId, EdgeId edgeId) {
+        RuleChain ruleChain = findRuleChainById(tenantId, ruleChainId);
+        Edge edge = edgeDao.findById(tenantId, edgeId.getId());
+        if (edge == null) {
+            throw new DataValidationException("Can't unassign ruleChain from non-existent edge!");
+        }
+        if (ruleChain.removeAssignedEdge(edge)) {
+            try {
+                deleteRelation(tenantId, new EntityRelation(edgeId, ruleChainId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
+            } catch (ExecutionException | InterruptedException e) {
+                log.warn("[{}] Failed to delete ruleChain relation. Edge Id: [{}]", ruleChainId, edgeId);
+                throw new RuntimeException(e);
+            }
+            return saveRuleChain(ruleChain);
+        } else {
+            return ruleChain;
+        }
+    }
+
+    @Override
+    public void unassignEdgeRuleChains(TenantId tenantId, EdgeId edgeId) {
+        log.trace("Executing unassignEdgeRuleChains, edgeId [{}]", edgeId);
+        Validator.validateId(edgeId, "Incorrect edgeId " + edgeId);
+        Edge edge = edgeDao.findById(tenantId, edgeId.getId());
+        if (edge == null) {
+            throw new DataValidationException("Can't unassign ruleChains from non-existent edge!");
+        }
+        new EdgeRuleChainsUnassigner(edge).removeEntities(tenantId, edge);
+    }
+
+    @Override
+    public void updateEdgeRuleChains(TenantId tenantId, EdgeId edgeId) {
+        log.trace("Executing updateEdgeRuleChains, edgeId [{}]", edgeId);
+        Validator.validateId(edgeId, "Incorrect edgeId " + edgeId);
+        Edge edge = edgeDao.findById(tenantId, edgeId.getId());
+        if (edge == null) {
+            throw new DataValidationException("Can't update ruleChains for non-existent edge!");
+        }
+        new EdgeRuleChainsUpdater(edge).removeEntities(tenantId, edge);
+    }
+
+
+    @Override
+    public ListenableFuture<TimePageData<RuleChain>> findRuleChainsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink) {
+        log.trace("Executing findRuleChainsByTenantIdAndEdgeId, tenantId [{}], edgeId [{}], pageLink [{}]", tenantId, edgeId, pageLink);
+        Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
+        Validator.validateId(edgeId, "Incorrect customerId " + edgeId);
+        Validator.validatePageLink(pageLink, "Incorrect page link " + pageLink);
+        ListenableFuture<List<RuleChain>> dashboards = ruleChainDao.findRuleChainsByTenantIdAndEdgeId(tenantId.getId(), edgeId.getId(), pageLink);
+
+        return Futures.transform(dashboards, new Function<List<RuleChain>, TimePageData<RuleChain>>() {
+            @Nullable
+            @Override
+            public TimePageData<RuleChain> apply(@Nullable List<RuleChain> RuleChain) {
+                return new TimePageData<>(RuleChain, pageLink);
+            }
+        });
+    }
+
     private void checkRuleNodesAndDelete(TenantId tenantId, RuleChainId ruleChainId) {
         List<EntityRelation> nodeRelations = getRuleChainToNodeRelations(tenantId, ruleChainId);
         for (EntityRelation relation : nodeRelations) {
@@ -382,6 +477,15 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     private void deleteRelation(TenantId tenantId, EntityRelation relation) throws ExecutionException, InterruptedException {
         log.debug("Deleting relation: {}", relation);
         relationService.deleteRelation(tenantId, relation);
+    }
+
+    private RuleChain updateAssignedEdge(TenantId tenantId, RuleChainId ruleChainId, Edge edge) {
+        RuleChain ruleChain = findRuleChainById(tenantId, ruleChainId);
+        if (ruleChain.updateAssignedEdge(edge)) {
+            return saveRuleChain(ruleChain);
+        } else {
+            return ruleChain;
+        }
     }
 
     private DataValidator<RuleChain> ruleChainValidator =
@@ -420,4 +524,54 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                     checkRuleNodesAndDelete(tenantId, entity.getId());
                 }
             };
+
+    private class EdgeRuleChainsUnassigner extends TimePaginatedRemover<Edge, RuleChain> {
+
+        private Edge edge;
+
+        EdgeRuleChainsUnassigner(Edge edge) {
+            this.edge = edge;
+        }
+
+        @Override
+        protected List<RuleChain> findEntities(TenantId tenantId, Edge edge, TimePageLink pageLink) {
+            try {
+                return ruleChainDao.findRuleChainsByTenantIdAndEdgeId(edge.getTenantId().getId(), edge.getId().getId(), pageLink).get();
+            } catch (InterruptedException | ExecutionException e) {
+                log.warn("Failed to get ruleChains by tenantId [{}] and edgeId [{}].", edge.getTenantId().getId(), edge.getId().getId());
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        protected void removeEntity(TenantId tenantId, RuleChain entity) {
+            unassignRuleChainFromEdge(edge.getTenantId(), new RuleChainId(entity.getUuidId()), this.edge.getId());
+        }
+
+    }
+
+    private class EdgeRuleChainsUpdater extends TimePaginatedRemover<Edge, RuleChain> {
+
+        private Edge edge;
+
+        EdgeRuleChainsUpdater(Edge edge) {
+            this.edge = edge;
+        }
+
+        @Override
+        protected List<RuleChain> findEntities(TenantId tenantId, Edge edge, TimePageLink pageLink) {
+            try {
+                return ruleChainDao.findRuleChainsByTenantIdAndEdgeId(edge.getTenantId().getId(), edge.getId().getId(), pageLink).get();
+            } catch (InterruptedException | ExecutionException e) {
+                log.warn("Failed to get ruleChains by tenantId [{}] and edgeId [{}].", edge.getTenantId().getId(), edge.getId().getId());
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        protected void removeEntity(TenantId tenantId, RuleChain entity) {
+            updateAssignedEdge(edge.getTenantId(), new RuleChainId(entity.getUuidId()), this.edge);
+        }
+
+    }
 }

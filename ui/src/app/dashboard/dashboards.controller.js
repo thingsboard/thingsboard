@@ -157,6 +157,10 @@ export function DashboardsController(userService, dashboardService, customerServ
             );
         }
 
+        if (edgeId) {
+            vm.edgeDashboardsTitle = $translate.instant('edge.dashboards');
+        }
+
         if (vm.dashboardsScope === 'tenant') {
             fetchDashboardsFunction = function (pageLink) {
                 return dashboardService.getTenantDashboards(pageLink);
@@ -217,10 +221,7 @@ export function DashboardsController(userService, dashboardService, customerServ
                 },
                 name: function() { return $translate.instant('action.assign') },
                 details: function() { return $translate.instant('dashboard.manage-assigned-edges') },
-                icon: "wifi_tethering",
-                isEnabled: function(dashboard) {
-                    return dashboard;
-                }
+                icon: "wifi_tethering"
             });
 
             /*dashboardActionsList.push({
@@ -750,7 +751,7 @@ export function DashboardsController(userService, dashboardService, customerServ
             $event.stopPropagation();
         }
         $mdDialog.show({
-            controller: 'ManageAssignedEdgesController',
+            controller: 'ManageAssignedEdgesToDashboardController',
             controllerAs: 'vm',
             templateUrl: manageAssignedEdgesTemplate,
             locals: {actionType: actionType, dashboardIds: dashboardIds, assignedEdges: assignedEdges},
