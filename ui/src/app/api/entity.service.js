@@ -78,7 +78,7 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                 $log.error('Get Alarm Entity is not implemented!');
                 break;
             case types.entityType.edge:
-                promise = edgeService.getEdge(entityId, true, config);
+                promise = edgeService.getEdge(entityId, config);
                 break;
         }
         return promise;

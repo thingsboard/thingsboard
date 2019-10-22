@@ -57,8 +57,8 @@ export function DashboardCardController(types) {
 }
 
 /*@ngInject*/
-export function DashboardsController(userService, dashboardService, customerService, importExport, types,
-                                             $state, $stateParams, $mdDialog, $document, $q, $translate) {
+export function DashboardsController(userService, dashboardService, customerService, importExport, edgeService,
+                                             $state, $stateParams, $mdDialog, $document, $q, $translate, types) {
 
     var customerId = $stateParams.customerId;
     var edgeId = $stateParams.edgeId;
@@ -159,6 +159,13 @@ export function DashboardsController(userService, dashboardService, customerServ
 
         if (edgeId) {
             vm.edgeDashboardsTitle = $translate.instant('edge.dashboards');
+            edgeService.getEdge(edgeId).then(
+                function success(edge) {
+                    if (edge.customerId) {
+                        vm.edgeCustomerId = edge.customerId;
+                    }
+                }
+            )
         }
 
         if (vm.dashboardsScope === 'tenant') {
@@ -769,7 +776,14 @@ export function DashboardsController(userService, dashboardService, customerServ
             $event.stopPropagation();
         }
         var pageSize = 10;
-        dashboardService.getTenantDashboards({limit: pageSize, textSearch: ''}).then(
+        var fetchDashboardsPromise;
+        if (vm.edgeCustomerId.id === vm.types.id.nullUid) {
+            fetchDashboardsPromise = dashboardService.getTenantDashboards({limit: pageSize, textSearch: ''});
+        } else {
+            fetchDashboardsPromise = dashboardService.getCustomerDashboards(vm.edgeCustomerId.id, {limit: pageSize, textSearch: ''});
+        }
+
+        fetchDashboardsPromise.then(
             function success(_dashboards) {
                 var dashboards = {
                     pageSize: pageSize,
@@ -787,7 +801,7 @@ export function DashboardsController(userService, dashboardService, customerServ
                     controller: 'AddDashboardsToEdgeController',
                     controllerAs: 'vm',
                     templateUrl: addDashboardsToEdgeTemplate,
-                    locals: {edgeId: edgeId, dashboards: dashboards},
+                    locals: {edgeId: edgeId, edgeCustomerId: vm.edgeCustomerId.id, dashboards: dashboards},
                     parent: angular.element($document[0].body),
                     fullscreen: true,
                     targetEvent: $event

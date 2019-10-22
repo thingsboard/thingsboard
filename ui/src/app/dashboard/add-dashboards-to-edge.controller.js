@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 /*@ngInject*/
-export default function AddDashboardsToEdgeController(dashboardService, $mdDialog, $q, edgeId, dashboards) {
+export default function AddDashboardsToEdgeController(dashboardService, types, $mdDialog, $q, edgeId, edgeCustomerId, dashboards) {
 
     var vm = this;
 
+    vm.types = types;
     vm.dashboards = dashboards;
     vm.searchText = '';
 
@@ -52,7 +53,13 @@ export default function AddDashboardsToEdgeController(dashboardService, $mdDialo
         fetchMoreItems_: function () {
             if (vm.dashboards.hasNext && !vm.dashboards.pending) {
                 vm.dashboards.pending = true;
-                dashboardService.getTenantDashboards(vm.dashboards.nextPageLink).then(
+                var fetchDashboardsPromise;
+                if (edgeCustomerId === vm.types.id.nullUid) {
+                    fetchDashboardsPromise = dashboardService.getTenantDashboards(vm.dashboards.nextPageLink);
+                } else {
+                    fetchDashboardsPromise = dashboardService.getCustomerDashboards(edgeCustomerId, vm.dashboards.nextPageLink);
+                }
+                fetchDashboardsPromise.then(
                     function success(dashboards) {
                         vm.dashboards.data = vm.dashboards.data.concat(dashboards.data);
                         vm.dashboards.nextPageLink = dashboards.nextPageLink;
