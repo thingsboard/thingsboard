@@ -28,15 +28,22 @@ import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
 import org.springframework.web.client.AsyncRestTemplate;
 import org.springframework.web.client.HttpClientErrorException;
+import org.thingsboard.rule.engine.api.RuleNode;
+import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
+import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import javax.net.ssl.SSLException;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @RuleNode(
@@ -61,11 +68,15 @@ public class TbRestApiCallNode implements TbNode {
     private static final String STATUS_REASON = "statusReason";
     private static final String ERROR = "error";
     private static final String ERROR_BODY = "error_body";
+    private static final int MAX_QUEUE_SIZE = Integer.MAX_VALUE;
 
     private TbRestApiCallNodeConfiguration config;
 
     private EventLoopGroup eventLoopGroup;
     private AsyncRestTemplate httpClient;
+
+    private boolean useRedisQueueForMsgPersistence;
+    private RedisQueueParams params;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -79,6 +90,18 @@ public class TbRestApiCallNode implements TbNode {
                 nettyFactory.setSslContext(SslContextBuilder.forClient().build());
                 httpClient = new AsyncRestTemplate(nettyFactory);
             }
+            useRedisQueueForMsgPersistence = config.isUseRedisQueueForMsgPersistence();
+            if (useRedisQueueForMsgPersistence) {
+                if (ctx.getRedisTemplate() == null) {
+                    throw new RuntimeException("Redis cache type must be used!");
+                }
+                params = new RedisQueueParams(
+                        ctx.getRedisTemplate().opsForList(),
+                        constructRedisKey(ctx),
+                        config.isTrimQueue(),
+                        config.getMaxQueueSize());
+                startQueueProcessing(ctx);
+            }
         } catch (SSLException e) {
             throw new TbNodeException(e);
         }
@@ -86,32 +109,14 @@ public class TbRestApiCallNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        String endpointUrl = TbNodeUtils.processPattern(config.getRestEndpointUrlPattern(), msg.getMetaData());
-        HttpHeaders headers = prepareHeaders(msg.getMetaData());
-        HttpMethod method = HttpMethod.valueOf(config.getRequestMethod());
-        HttpEntity<String> entity = new HttpEntity<>(msg.getData(), headers);
-
-        ListenableFuture<ResponseEntity<String>> future = httpClient.exchange(
-                endpointUrl, method, entity, String.class);
-
-        future.addCallback(new ListenableFutureCallback<ResponseEntity<String>>() {
-            @Override
-            public void onFailure(Throwable throwable) {
-                TbMsg next = processException(ctx, msg, throwable);
-                ctx.tellFailure(next, throwable);
+        if (useRedisQueueForMsgPersistence) {
+            params.getListOperations().leftPush(params.getRedisKey(), TbMsg.toByteArray(msg));
+            if (params.isTrimQueue()) {
+                params.getListOperations().trim(params.getRedisKey(), 0, validateMaxQueueSize(params.getMaxQueueSize()));
             }
-
-            @Override
-            public void onSuccess(ResponseEntity<String> responseEntity) {
-                if (responseEntity.getStatusCode().is2xxSuccessful()) {
-                    TbMsg next = processResponse(ctx, msg, responseEntity);
-                    ctx.tellNext(next, TbRelationTypes.SUCCESS);
-                } else {
-                    TbMsg next = processFailureResponse(ctx, msg, responseEntity);
-                    ctx.tellNext(next, TbRelationTypes.FAILURE);
-                }
-            }
-        });
+        } else {
+            processMessage(ctx, msg, null);
+        }
     }
 
     @Override
@@ -119,12 +124,15 @@ public class TbRestApiCallNode implements TbNode {
         if (this.eventLoopGroup != null) {
             this.eventLoopGroup.shutdownGracefully(0, 5, TimeUnit.SECONDS);
         }
+        if (params != null) {
+            params.destroy();
+        }
     }
 
     private TbMsg processResponse(TbContext ctx, TbMsg origMsg, ResponseEntity<String> response) {
         TbMsgMetaData metaData = origMsg.getMetaData();
         metaData.putValue(STATUS, response.getStatusCode().name());
-        metaData.putValue(STATUS_CODE, response.getStatusCode().value()+"");
+        metaData.putValue(STATUS_CODE, response.getStatusCode().value() + "");
         metaData.putValue(STATUS_REASON, response.getStatusCode().getReasonPhrase());
         response.getHeaders().toSingleValueMap().forEach(metaData::putValue);
         return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, response.getBody());
@@ -133,7 +141,7 @@ public class TbRestApiCallNode implements TbNode {
     private TbMsg processFailureResponse(TbContext ctx, TbMsg origMsg, ResponseEntity<String> response) {
         TbMsgMetaData metaData = origMsg.getMetaData();
         metaData.putValue(STATUS, response.getStatusCode().name());
-        metaData.putValue(STATUS_CODE, response.getStatusCode().value()+"");
+        metaData.putValue(STATUS_CODE, response.getStatusCode().value() + "");
         metaData.putValue(STATUS_REASON, response.getStatusCode().getReasonPhrase());
         metaData.putValue(ERROR_BODY, response.getBody());
         return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, origMsg.getData());
@@ -143,9 +151,9 @@ public class TbRestApiCallNode implements TbNode {
         TbMsgMetaData metaData = origMsg.getMetaData();
         metaData.putValue(ERROR, e.getClass() + ": " + e.getMessage());
         if (e instanceof HttpClientErrorException) {
-            HttpClientErrorException httpClientErrorException = (HttpClientErrorException)e;
+            HttpClientErrorException httpClientErrorException = (HttpClientErrorException) e;
             metaData.putValue(STATUS, httpClientErrorException.getStatusText());
-            metaData.putValue(STATUS_CODE, httpClientErrorException.getRawStatusCode()+"");
+            metaData.putValue(STATUS_CODE, httpClientErrorException.getRawStatusCode() + "");
             metaData.putValue(ERROR_BODY, httpClientErrorException.getResponseBodyAsString());
         }
         return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, origMsg.getData());
@@ -153,10 +161,93 @@ public class TbRestApiCallNode implements TbNode {
 
     private HttpHeaders prepareHeaders(TbMsgMetaData metaData) {
         HttpHeaders headers = new HttpHeaders();
-        config.getHeaders().forEach((k,v) -> {
-            headers.add(TbNodeUtils.processPattern(k, metaData), TbNodeUtils.processPattern(v, metaData));
-        });
+        config.getHeaders().forEach((k, v) -> headers.add(TbNodeUtils.processPattern(k, metaData), TbNodeUtils.processPattern(v, metaData)));
         return headers;
+    }
+
+    private void startQueueProcessing(TbContext ctx) {
+        AtomicInteger failuresCounter = new AtomicInteger(0);
+        params.setFuture(params.getExecutor().submit(() -> {
+            while (true) {
+                if (failuresCounter.get() != 0 && failuresCounter.get() % 50 == 0) {
+                    sleep("Target HTTP server is down...", 3);
+                }
+                if (params.getListOperations().size(params.getRedisKey()) > 0) {
+                    List<Object> list = params.getListOperations().range(params.getRedisKey(), -10, -1);
+                    list.forEach(obj -> {
+                        TbMsg msg = TbMsg.fromBytes((byte[]) obj);
+                        log.debug("Trying to send the message: {}", msg);
+                        params.getListOperations().remove(params.getRedisKey(), -1, obj);
+                        processMessage(ctx, msg, failuresCounter);
+                    });
+                } else {
+                    sleep("Queue is empty, waiting for tasks!", 1);
+                }
+            }
+        }));
+    }
+
+    private void processMessage(TbContext ctx, TbMsg msg, AtomicInteger failuresCounter) {
+        String endpointUrl = TbNodeUtils.processPattern(config.getRestEndpointUrlPattern(), msg.getMetaData());
+        HttpHeaders headers = prepareHeaders(msg.getMetaData());
+        HttpMethod method = HttpMethod.valueOf(config.getRequestMethod());
+        HttpEntity<String> entity = new HttpEntity<>(msg.getData(), headers);
+
+        ListenableFuture<ResponseEntity<String>> future = httpClient.exchange(
+                endpointUrl, method, entity, String.class);
+        future.addCallback(new ListenableFutureCallback<ResponseEntity<String>>() {
+            @Override
+            public void onFailure(Throwable throwable) {
+                if (useRedisQueueForMsgPersistence) {
+                    params.getListOperations().rightPush(params.getRedisKey(), TbMsg.toByteArray(msg));
+                    if (failuresCounter != null) {
+                        failuresCounter.incrementAndGet();
+                    }
+                }
+                TbMsg next = processException(ctx, msg, throwable);
+                ctx.tellFailure(next, throwable);
+            }
+
+            @Override
+            public void onSuccess(ResponseEntity<String> responseEntity) {
+                if (responseEntity.getStatusCode().is2xxSuccessful()) {
+                    if (useRedisQueueForMsgPersistence && failuresCounter != null) {
+                        failuresCounter.set(0);
+                    }
+                    TbMsg next = processResponse(ctx, msg, responseEntity);
+                    ctx.tellNext(next, TbRelationTypes.SUCCESS);
+                } else {
+                    if (useRedisQueueForMsgPersistence) {
+                        params.getListOperations().rightPush(params.getRedisKey(), TbMsg.toByteArray(msg));
+                        if (failuresCounter != null) {
+                            failuresCounter.incrementAndGet();
+                        }
+                    }
+                    TbMsg next = processFailureResponse(ctx, msg, responseEntity);
+                    ctx.tellNext(next, TbRelationTypes.FAILURE);
+                }
+            }
+        });
+    }
+
+    private String constructRedisKey(TbContext ctx) {
+        return ctx.getServerAddress() + ctx.getSelfId();
+    }
+
+    private int validateMaxQueueSize(int maxQueueSize) {
+        if (maxQueueSize != 0) {
+            return maxQueueSize;
+        }
+        return MAX_QUEUE_SIZE;
+    }
+
+    private void sleep(String logMessage, int sleepSeconds) {
+        try {
+            log.debug(logMessage);
+            TimeUnit.SECONDS.sleep(sleepSeconds);
+        } catch (InterruptedException e) {
+            throw new IllegalStateException("Thread interrupted!", e);
+        }
     }
 
 }

@@ -28,6 +28,7 @@ import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.format.support.DefaultFormattingConversionService;
 import org.springframework.util.Assert;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -91,6 +92,13 @@ public abstract class TBRedisCacheConfiguration {
     @Bean
     public KeyGenerator previousDeviceCredentialsId() {
         return new PreviousDeviceCredentialsIdKeyGenerator();
+    }
+
+    @Bean
+    public RedisTemplate<String, Object> redisTemplate() {
+        RedisTemplate<String, Object> template = new RedisTemplate<>();
+        template.setConnectionFactory(redisConnectionFactory());
+        return template;
     }
 
     private static void registerDefaultConverters(ConverterRegistry registry) {
