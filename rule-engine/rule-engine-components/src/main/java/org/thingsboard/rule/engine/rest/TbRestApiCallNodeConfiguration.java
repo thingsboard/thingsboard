@@ -28,6 +28,9 @@ public class TbRestApiCallNodeConfiguration implements NodeConfiguration<TbRestA
     private String requestMethod;
     private Map<String, String> headers;
     private boolean useSimpleClientHttpFactory;
+    private boolean useRedisQueueForMsgPersistence;
+    private boolean trimQueue;
+    private int maxQueueSize;
 
     @Override
     public TbRestApiCallNodeConfiguration defaultConfiguration() {
@@ -36,6 +39,8 @@ public class TbRestApiCallNodeConfiguration implements NodeConfiguration<TbRestA
         configuration.setRequestMethod("POST");
         configuration.setHeaders(Collections.emptyMap());
         configuration.setUseSimpleClientHttpFactory(false);
+        configuration.setUseRedisQueueForMsgPersistence(false);
+        configuration.setTrimQueue(false);
         return configuration;
     }
 }
