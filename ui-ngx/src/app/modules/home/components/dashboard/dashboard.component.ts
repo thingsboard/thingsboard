@@ -15,12 +15,12 @@
 ///
 
 import {
-  AfterViewInit,
+  AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef,
   Component,
   DoCheck,
   Input,
   IterableDiffers,
-  KeyValueDiffers,
+  KeyValueDiffers, NgZone,
   OnChanges,
   OnInit,
   SimpleChanges,
@@ -162,7 +162,8 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
               private dialogService: DialogService,
               private breakpointObserver: BreakpointObserver,
               private differs: IterableDiffers,
-              private kvDiffers: KeyValueDiffers) {
+              private kvDiffers: KeyValueDiffers,
+              private ngZone: NgZone) {
     super(store);
     this.authUser = getCurrentAuthUser(store);
   }
@@ -259,20 +260,24 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
   }
 
   onUpdateTimewindow(startTimeMs: number, endTimeMs: number, interval?: number): void {
-    if (!this.originalDashboardTimewindow) {
-      this.originalDashboardTimewindow = deepClone(this.dashboardTimewindow);
-    }
-    this.dashboardTimewindow = toHistoryTimewindow(this.dashboardTimewindow,
-                                                   startTimeMs, endTimeMs, interval, this.timeService);
-    this.dashboardTimewindowChangedSubject.next(this.dashboardTimewindow);
+    this.ngZone.run(() => {
+      if (!this.originalDashboardTimewindow) {
+        this.originalDashboardTimewindow = deepClone(this.dashboardTimewindow);
+      }
+      this.dashboardTimewindow = toHistoryTimewindow(this.dashboardTimewindow,
+        startTimeMs, endTimeMs, interval, this.timeService);
+      this.dashboardTimewindowChangedSubject.next(this.dashboardTimewindow);
+    });
   }
 
   onResetTimewindow(): void {
-    if (this.originalDashboardTimewindow) {
-      this.dashboardTimewindow = deepClone(this.originalDashboardTimewindow);
-      this.originalDashboardTimewindow = null;
-      this.dashboardTimewindowChangedSubject.next(this.dashboardTimewindow);
-    }
+    this.ngZone.run(() => {
+      if (this.originalDashboardTimewindow) {
+        this.dashboardTimewindow = deepClone(this.originalDashboardTimewindow);
+        this.originalDashboardTimewindow = null;
+        this.dashboardTimewindowChangedSubject.next(this.dashboardTimewindow);
+      }
+    });
   }
 
   isAutofillHeight(): boolean {
@@ -456,7 +461,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
     this.gridsterOpts.draggable.enabled = this.isEdit;
   }
 
-  private notifyGridsterOptionsChanged() {
+  public notifyGridsterOptionsChanged() {
     if (this.gridster && this.gridster.options) {
       this.gridster.optionsChanged();
     }

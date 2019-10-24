@@ -16,5 +16,6 @@
 
 import { EntityAliasSelectCallbacks } from '../alias/entity-alias-select.component.models';
 import { DataKeysCallbacks } from './data-keys.component.models';
+import { WidgetActionCallbacks } from './action/manage-widget-actions.component.models';
 
-export type WidgetConfigCallbacks = EntityAliasSelectCallbacks & DataKeysCallbacks;
+export type WidgetConfigCallbacks = EntityAliasSelectCallbacks & DataKeysCallbacks & WidgetActionCallbacks;

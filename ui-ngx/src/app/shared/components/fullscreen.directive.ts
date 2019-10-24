@@ -18,7 +18,7 @@ import {
   Directive,
   ElementRef,
   EventEmitter,
-  Input, OnChanges,
+  Input, OnChanges, OnDestroy,
   Output, SimpleChanges,
   ViewContainerRef
 } from '@angular/core';
@@ -29,7 +29,7 @@ import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 @Directive({
   selector: '[tb-fullscreen]'
 })
-export class FullscreenDirective implements OnChanges {
+export class FullscreenDirective implements OnChanges, OnDestroy {
 
   fullscreenValue = false;
 
@@ -66,6 +66,12 @@ export class FullscreenDirective implements OnChanges {
       } else {
         this.exitFullscreen();
       }
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.fullscreen) {
+      this.exitFullscreen();
     }
   }
 

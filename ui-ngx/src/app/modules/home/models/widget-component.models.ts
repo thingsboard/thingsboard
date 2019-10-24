@@ -68,7 +68,6 @@ export interface WidgetContext {
   width?: number;
   height?: number;
   $scope?: IDynamicWidgetComponent;
-  hideTitlePanel?: boolean;
   isEdit?: boolean;
   isMobile?: boolean;
   dashboard?: IDashboardComponent;
@@ -87,15 +86,18 @@ export interface WidgetContext {
   stateController?: IStateController;
   aliasController?: IAliasController;
   activeEntityInfo?: SubscriptionEntityInfo;
-  widgetTitleTemplate?: string;
-  widgetTitle?: string;
-  customHeaderActions?: Array<WidgetHeaderAction>;
-  widgetActions?: Array<WidgetAction>;
 
   datasources?: Array<Datasource>;
   data?: Array<DatasourceData>;
   hiddenData?: Array<{data: DataSet}>;
   timeWindow?: WidgetTimewindow;
+
+  hideTitlePanel?: boolean;
+  widgetTitleTemplate?: string;
+  widgetTitle?: string;
+  customHeaderActions?: Array<WidgetHeaderAction>;
+  widgetActions?: Array<WidgetAction>;
+
 }
 
 export interface IDynamicWidgetComponent {
@@ -122,7 +124,7 @@ export interface WidgetConfigComponentData {
   layout: WidgetLayout;
   widgetType: widgetType;
   typeParameters: WidgetTypeParameters;
-  actionSources: {[key: string]: WidgetActionSource};
+  actionSources: {[actionSourceId: string]: WidgetActionSource};
   isDataEnabled: boolean;
   settingsSchema: any;
   dataKeySettingsSchema: any;
@@ -178,7 +180,7 @@ export interface WidgetTypeInstance {
   getDataKeySettingsSchema?: () => string;
   typeParameters?: () => WidgetTypeParameters;
   useCustomDatasources?: () => boolean;
-  actionSources?: () => {[key: string]: WidgetActionSource};
+  actionSources?: () => {[actionSourceId: string]: WidgetActionSource};
 
   onInit?: () => void;
   onDataUpdated?: () => void;

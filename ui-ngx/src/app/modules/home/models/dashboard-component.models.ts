@@ -78,6 +78,7 @@ export interface IDashboardComponent {
   selectWidget(index: number, delay?: number);
   getSelectedWidget(): Widget;
   getEventGridPosition(event: Event): WidgetPosition;
+  notifyGridsterOptionsChanged();
 }
 
 declare type DashboardWidgetUpdateOperation = 'add' | 'remove' | 'update';
@@ -185,7 +186,7 @@ export class DashboardWidgets implements Iterable<DashboardWidget> {
 
   highlightWidget(index: number): DashboardWidget {
     const widget = this.findWidgetAtIndex(index);
-    if (widget && (!this.highlightedMode || !widget.highlighted)) {
+    if (widget && (!this.highlightedMode || !widget.highlighted || this.highlightedMode && widget.highlighted)) {
       this.highlightedMode = true;
       widget.highlighted = true;
       this.dashboardWidgets.forEach((dashboardWidget) => {
@@ -248,6 +249,7 @@ export class DashboardWidgets implements Iterable<DashboardWidget> {
     });
     this.sortWidgets();
     this.dashboard.gridsterOpts.maxRows = maxRows;
+    this.dashboard.notifyGridsterOptionsChanged();
   }
 
   sortWidgets() {

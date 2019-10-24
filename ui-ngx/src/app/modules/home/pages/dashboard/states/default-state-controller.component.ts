@@ -90,7 +90,7 @@ export class DefaultStateControllerComponent extends StateControllerComponent im
 
   protected onStateChanged() {
     this.stateObject = this.parseState(this.currentState);
-    this.gotoState(this.stateObject[0].id, true);
+    this.gotoState(this.stateObject[0].id, false);
   }
 
   protected stateControllerId(): string {

@@ -14,19 +14,17 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, forwardRef, Input, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
   DataKey,
   Datasource,
-  DatasourceType, datasourceTypeTranslationMap,
-  LegendConfig,
+  DatasourceType,
+  datasourceTypeTranslationMap, defaultLegendConfig,
   WidgetActionDescriptor,
-  WidgetActionSource,
-  widgetType,
-  WidgetTypeParameters
+  widgetType
 } from '@shared/models/widget.models';
 import {
   AbstractControl,
@@ -37,7 +35,7 @@ import {
   FormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
-  Validator, ValidatorFn,
+  Validator,
   Validators
 } from '@angular/forms';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
@@ -55,10 +53,12 @@ import {
   EntityAliasDialogComponent,
   EntityAliasDialogData
 } from '@home/components/alias/entity-alias-dialog.component';
-import { tap, mergeMap, map, catchError } from 'rxjs/operators';
+import { catchError, map, mergeMap, tap } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
 import { EntityService } from '@core/http/entity.service';
 import { JsonFormComponentData } from '@shared/components/json-form/json-form-component.models';
+import { WidgetActionsData } from './action/manage-widget-actions.component.models';
+import { Dashboard } from '@shared/models/dashboard.models';
 
 const emptySettingsSchema = {
   type: 'object',
@@ -106,6 +106,9 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   @Input()
   functionsOnly: boolean;
 
+  @Input()
+  dashboardStates: Array<string>;
+
   @Input() disabled: boolean;
 
   widgetType: widgetType;
@@ -117,34 +120,13 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   widgetConfigCallbacks: WidgetConfigCallbacks = {
     createEntityAlias: this.createEntityAlias.bind(this),
     generateDataKey: this.generateDataKey.bind(this),
-    fetchEntityKeys: this.fetchEntityKeys.bind(this)
+    fetchEntityKeys: this.fetchEntityKeys.bind(this),
+    fetchDashboardStates: this.fetchDashboardStates.bind(this)
   };
 
   widgetEditMode = this.utils.widgetEditMode;
 
   selectedTab: number;
-  title: string;
-  showTitleIcon: boolean;
-  titleIcon: string;
-  iconColor: string;
-  iconSize: string;
-  showTitle: boolean;
-  dropShadow: boolean;
-  enableFullscreen: boolean;
-  backgroundColor: string;
-  color: string;
-  padding: string;
-  margin: string;
-  widgetStyle: string;
-  titleStyle: string;
-  units: string;
-  decimals: number;
-  showLegend: boolean;
-  legendConfig: LegendConfig;
-  actions: {[actionSourceId: string]: Array<WidgetActionDescriptor>};
-  alarmSource: Datasource;
-  mobileOrder: number;
-  mobileHeight: number;
 
   private modelValue: WidgetConfigComponentData;
 
@@ -152,11 +134,19 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
 
   public dataSettings: FormGroup;
   public targetDeviceSettings: FormGroup;
+  public alarmSourceSettings: FormGroup;
+  public widgetSettings: FormGroup;
+  public layoutSettings: FormGroup;
   public advancedSettings: FormGroup;
+  public actionsSettings: FormGroup;
 
   private dataSettingsChangesSubscription: Subscription;
   private targetDeviceSettingsSubscription: Subscription;
+  private alarmSourceSettingsSubscription: Subscription;
+  private widgetSettingsSubscription: Subscription;
+  private layoutSettingsSubscription: Subscription;
   private advancedSettingsSubscription: Subscription;
+  private actionsSettingsSubscription: Subscription;
 
   constructor(protected store: Store<AppState>,
               private utils: UtilsService,
@@ -173,6 +163,47 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     } else {
       this.datasourceTypes = [DatasourceType.function, DatasourceType.entity];
     }
+    this.widgetSettings = this.fb.group({
+      title: [null, []],
+      showTitleIcon: [null, []],
+      titleIcon: [null, []],
+      iconColor: [null, []],
+      iconSize: [null, []],
+      showTitle: [null, []],
+      dropShadow: [null, []],
+      enableFullscreen: [null, []],
+      backgroundColor: [null, []],
+      color: [null, []],
+      padding: [null, []],
+      margin: [null, []],
+      widgetStyle: [null, []],
+      titleStyle: [null, []],
+      units: [null, []],
+      decimals: [null, [Validators.min(0), Validators.max(15), Validators.pattern(/^\d*$/)]],
+      showLegend: [null, []],
+      legendConfig: [null, []]
+    });
+    this.widgetSettings.get('showTitleIcon').valueChanges.subscribe((value: boolean) => {
+      if (value) {
+        this.widgetSettings.get('titleIcon').enable({emitEvent: false});
+      } else {
+        this.widgetSettings.get('titleIcon').disable({emitEvent: false});
+      }
+    });
+    this.widgetSettings.get('showLegend').valueChanges.subscribe((value: boolean) => {
+      if (value) {
+        this.widgetSettings.get('legendConfig').enable({emitEvent: false});
+      } else {
+        this.widgetSettings.get('legendConfig').disable({emitEvent: false});
+      }
+    });
+    this.layoutSettings = this.fb.group({
+      mobileOrder: [null, [Validators.pattern(/^-?[0-9]+$/)]],
+      mobileHeight: [null, [Validators.min(1), Validators.max(10), Validators.pattern(/^\d*$/)]]
+    });
+    this.actionsSettings = this.fb.group({
+      actionsData: [null, []]
+    });
   }
 
   private removeChangeSubscriptions() {
@@ -184,9 +215,25 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
       this.targetDeviceSettingsSubscription.unsubscribe();
       this.targetDeviceSettingsSubscription = null;
     }
+    if (this.alarmSourceSettingsSubscription) {
+      this.alarmSourceSettingsSubscription.unsubscribe();
+      this.alarmSourceSettingsSubscription = null;
+    }
+    if (this.widgetSettingsSubscription) {
+      this.widgetSettingsSubscription.unsubscribe();
+      this.widgetSettingsSubscription = null;
+    }
+    if (this.layoutSettingsSubscription) {
+      this.layoutSettingsSubscription.unsubscribe();
+      this.layoutSettingsSubscription = null;
+    }
     if (this.advancedSettingsSubscription) {
       this.advancedSettingsSubscription.unsubscribe();
       this.advancedSettingsSubscription = null;
+    }
+    if (this.actionsSettingsSubscription) {
+      this.actionsSettingsSubscription.unsubscribe();
+      this.actionsSettingsSubscription = null;
     }
   }
 
@@ -197,14 +244,27 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     this.targetDeviceSettingsSubscription = this.targetDeviceSettings.valueChanges.subscribe(
       () => this.updateTargetDeviceSettings()
     );
+    this.alarmSourceSettingsSubscription = this.alarmSourceSettings.valueChanges.subscribe(
+      () => this.updateAlarmSourceSettings()
+    );
+    this.widgetSettingsSubscription = this.widgetSettings.valueChanges.subscribe(
+      () => this.updateWidgetSettings()
+    );
+    this.layoutSettingsSubscription = this.layoutSettings.valueChanges.subscribe(
+      () => this.updateLayoutSettings()
+    );
     this.advancedSettingsSubscription = this.advancedSettings.valueChanges.subscribe(
       () => this.updateAdvancedSettings()
+    );
+    this.actionsSettingsSubscription = this.actionsSettings.valueChanges.subscribe(
+      () => this.updateActionSettings()
     );
   }
 
   private buildForms() {
     this.dataSettings = this.fb.group({});
     this.targetDeviceSettings = this.fb.group({});
+    this.alarmSourceSettings = this.fb.group({});
     this.advancedSettings = this.fb.group({});
     if (this.widgetType === widgetType.timeseries || this.widgetType === widgetType.alarm) {
       this.dataSettings.addControl('useDashboardTimewindow', this.fb.control(null));
@@ -235,6 +295,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
         this.targetDeviceSettings.addControl('targetDeviceAliasId',
           this.fb.control(null,
             this.widgetEditMode ? [] : [Validators.required]));
+      } else if (this.widgetType === widgetType.alarm) {
+        this.alarmSourceSettings = this.buildDatasourceForm();
       }
     }
     this.advancedSettings.addControl('settings',
@@ -264,31 +326,54 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
       const layout = this.modelValue.layout;
       if (config) {
         this.selectedTab = 0;
-        this.title = config.title;
-        this.showTitleIcon = isDefined(config.showTitleIcon) ? config.showTitleIcon : false;
-        this.titleIcon = isDefined(config.titleIcon) ? config.titleIcon : '';
-        this.iconColor = isDefined(config.iconColor) ? config.iconColor : 'rgba(0, 0, 0, 0.87)';
-        this.iconSize = isDefined(config.iconSize) ? config.iconSize : '24px';
-        this.showTitle = config.showTitle;
-        this.dropShadow = isDefined(config.dropShadow) ? config.dropShadow : true;
-        this.enableFullscreen = isDefined(config.enableFullscreen) ? config.enableFullscreen : true;
-        this.backgroundColor = config.backgroundColor;
-        this.color = config.color;
-        this.padding = config.padding;
-        this.margin = config.margin;
-        this.widgetStyle =
-          JSON.stringify(isDefined(config.widgetStyle) ? config.widgetStyle : {}, null, 2);
-        this.titleStyle =
-          JSON.stringify(isDefined(config.titleStyle) ? config.titleStyle : {
-            fontSize: '16px',
-            fontWeight: 400
-          }, null, 2);
-        this.units = config.units;
-        this.decimals = config.decimals;
-        this.actions = config.actions;
-        if (!this.actions) {
-          this.actions = {};
+        this.widgetSettings.patchValue({
+            title: config.title,
+            showTitleIcon: isDefined(config.showTitleIcon) ? config.showTitleIcon : false,
+            titleIcon: isDefined(config.titleIcon) ? config.titleIcon : '',
+            iconColor: isDefined(config.iconColor) ? config.iconColor : 'rgba(0, 0, 0, 0.87)',
+            iconSize: isDefined(config.iconSize) ? config.iconSize : '24px',
+            showTitle: config.showTitle,
+            dropShadow: isDefined(config.dropShadow) ? config.dropShadow : true,
+            enableFullscreen: isDefined(config.enableFullscreen) ? config.enableFullscreen : true,
+            backgroundColor: config.backgroundColor,
+            color: config.color,
+            padding: config.padding,
+            margin: config.margin,
+            widgetStyle: isDefined(config.widgetStyle) ? config.widgetStyle : {},
+            titleStyle: isDefined(config.titleStyle) ? config.titleStyle : {
+              fontSize: '16px',
+              fontWeight: 400
+            },
+            units: config.units,
+            decimals: config.decimals,
+            showLegend: isDefined(config.showLegend) ? config.showLegend :
+              this.widgetType === widgetType.timeseries,
+            legendConfig: config.legendConfig || defaultLegendConfig(this.widgetType)
+          },
+          {emitEvent: false}
+        );
+        const showTitleIcon: boolean = this.widgetSettings.get('showTitleIcon').value;
+        if (showTitleIcon) {
+          this.widgetSettings.get('titleIcon').enable({emitEvent: false});
+        } else {
+          this.widgetSettings.get('titleIcon').disable({emitEvent: false});
         }
+        const showLegend: boolean = this.widgetSettings.get('showLegend').value;
+        if (showLegend) {
+          this.widgetSettings.get('legendConfig').enable({emitEvent: false});
+        } else {
+          this.widgetSettings.get('legendConfig').disable({emitEvent: false});
+        }
+        const actionsData: WidgetActionsData = {
+          actionsMap: config.actions || {},
+          actionSources: this.modelValue.actionSources || {}
+        };
+        this.actionsSettings.patchValue(
+          {
+            actionsData
+          },
+          {emitEvent: false}
+        );
         if (this.widgetType === widgetType.timeseries || this.widgetType === widgetType.alarm) {
           const useDashboardTimewindow = isDefined(config.useDashboardTimewindow) ?
             config.useDashboardTimewindow : true;
@@ -346,29 +431,42 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
               { alarmsPollingInterval: isDefined(config.alarmsPollingInterval) ?
                   config.alarmsPollingInterval : 5}, {emitEvent: false}
             );
-            if (config.alarmSource) {
-              this.alarmSource = config.alarmSource;
-            } else {
-              this.alarmSource = null;
-            }
+            this.alarmSourceSettings.patchValue(
+              config.alarmSource, {emitEvent: false}
+            );
+            const alarmSourceType: DatasourceType = this.alarmSourceSettings.get('type').value;
+            this.alarmSourceSettings.get('entityAliasId').setValidators(
+              alarmSourceType === DatasourceType.entity ? [Validators.required] : []
+            );
+            this.alarmSourceSettings.get('entityAliasId').updateValueAndValidity({emitEvent: false});
           }
         }
 
         this.updateSchemaForm(config.settings);
 
         if (layout) {
-          this.mobileOrder = layout.mobileOrder;
-          this.mobileHeight = layout.mobileHeight;
+          this.layoutSettings.patchValue(
+            {
+              mobileOrder: layout.mobileOrder,
+              mobileHeight: layout.mobileHeight
+            },
+            {emitEvent: false}
+          );
         } else {
-          this.mobileOrder = undefined;
-          this.mobileHeight = undefined;
+          this.layoutSettings.patchValue(
+            {
+              mobileOrder: null,
+              mobileHeight: null
+            },
+            {emitEvent: false}
+          );
         }
       }
       this.createChangeSubscriptions();
     }
   }
 
-  private buildDatasourceForm(datasource?: Datasource): AbstractControl {
+  private buildDatasourceForm(datasource?: Datasource): FormGroup {
     const dataKeysRequired = !this.modelValue.typeParameters || !this.modelValue.typeParameters.dataKeysOptional;
     const datasourceFormGroup = this.fb.group(
       {
@@ -427,11 +525,49 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     }
   }
 
+  private updateAlarmSourceSettings() {
+    if (this.modelValue) {
+      if (this.modelValue.config) {
+        const alarmSource: Datasource = this.alarmSourceSettings.value;
+        this.modelValue.config.alarmSource = alarmSource;
+      }
+      this.propagateChange(this.modelValue);
+    }
+  }
+
+  private updateWidgetSettings() {
+    if (this.modelValue) {
+      if (this.modelValue.config) {
+        Object.assign(this.modelValue.config, this.widgetSettings.value);
+      }
+      this.propagateChange(this.modelValue);
+    }
+  }
+
+  private updateLayoutSettings() {
+    if (this.modelValue) {
+      if (this.modelValue.layout) {
+        Object.assign(this.modelValue.layout, this.layoutSettings.value);
+      }
+      this.propagateChange(this.modelValue);
+    }
+  }
+
   private updateAdvancedSettings() {
     if (this.modelValue) {
       if (this.modelValue.config) {
         const settings = this.advancedSettings.get('settings').value.model;
         this.modelValue.config.settings = settings;
+      }
+      this.propagateChange(this.modelValue);
+    }
+  }
+
+  private updateActionSettings() {
+    if (this.modelValue) {
+      if (this.modelValue.config) {
+        const actions = (this.actionsSettings.get('actionsData').value as WidgetActionsData).actionsMap;
+        this.modelValue.config.actions = actions;
       }
       this.propagateChange(this.modelValue);
     }
@@ -596,10 +732,37 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     );
   }
 
+  private fetchDashboardStates(query: string): Array<string> {
+    const stateIds = Object.keys(this.dashboardStates);
+    const result = query ? stateIds.filter(this.createFilterForDashboardState(query)) : stateIds;
+    if (result && result.length) {
+      return result;
+    } else {
+      return [query];
+    }
+  }
+
+  private createFilterForDashboardState(query: string): (stateId: string) => boolean {
+    const lowercaseQuery = query.toLowerCase();
+    return stateId => stateId.toLowerCase().indexOf(lowercaseQuery) === 0;
+  }
+
   public validate(c: FormControl) {
     if (!this.dataSettings.valid) {
       return {
         dataSettings: {
+          valid: false
+        }
+      };
+    } else if (!this.widgetSettings.valid) {
+      return {
+        widgetSettings: {
+          valid: false
+        }
+      };
+    } else if (!this.layoutSettings.valid) {
+      return {
+        widgetSettings: {
           valid: false
         }
       };
@@ -635,24 +798,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
             }
           };
         }
-      }
-      try {
-        JSON.parse(this.widgetStyle);
-      } catch (e) {
-        return {
-          widgetStyle: {
-            valid: false
-          }
-        };
-      }
-      try {
-        JSON.parse(this.titleStyle);
-      } catch (e) {
-        return {
-          titleStyle: {
-            valid: false
-          }
-        };
       }
     }
     return null;

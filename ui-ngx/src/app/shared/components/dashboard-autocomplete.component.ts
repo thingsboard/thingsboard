@@ -120,7 +120,7 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
   }
 
   ngAfterViewInit(): void {
-    this.selectFirstDashboardIfNeeded();
+    // this.selectFirstDashboardIfNeeded();
   }
 
   selectFirstDashboardIfNeeded(): void {
@@ -159,6 +159,7 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
     } else {
       this.modelValue = null;
       this.selectDashboardFormGroup.get('dashboard').patchValue(null, {emitEvent: true});
+      this.selectFirstDashboardIfNeeded();
     }
   }
 

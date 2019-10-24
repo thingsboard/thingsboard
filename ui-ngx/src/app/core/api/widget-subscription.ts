@@ -15,7 +15,8 @@
 ///
 
 import {
-  IWidgetSubscription, SubscriptionEntityInfo,
+  IWidgetSubscription,
+  SubscriptionEntityInfo,
   WidgetSubscriptionCallbacks,
   WidgetSubscriptionContext,
   WidgetSubscriptionOptions
@@ -48,6 +49,7 @@ import { deepClone, isDefined } from '@core/utils';
 import { AlarmSourceListener } from '@core/http/alarm.service';
 import { DatasourceListener } from '@core/api/datasource.service';
 import * as deepEqual from 'deep-equal';
+import { EntityId } from '@app/shared/models/id/entity-id';
 
 export class WidgetSubscription implements IWidgetSubscription {
 
@@ -339,7 +341,44 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   getFirstEntityInfo(): SubscriptionEntityInfo {
-    return undefined;
+    let entityId: EntityId;
+    let entityName: string;
+    if (this.type === widgetType.rpc) {
+      if (this.targetDeviceId) {
+        entityId = {
+          entityType: EntityType.DEVICE,
+          id: this.targetDeviceId
+        };
+        entityName = this.targetDeviceName;
+      }
+    } else if (this.type === widgetType.alarm) {
+      if (this.alarmSource && this.alarmSource.entityType && this.alarmSource.entityId) {
+        entityId = {
+          entityType: this.alarmSource.entityType,
+          id: this.alarmSource.entityId
+        };
+        entityName = this.alarmSource.entityName;
+      }
+    } else {
+      for (const datasource of this.datasources) {
+        if (datasource && datasource.entityType && datasource.entityId) {
+          entityId = {
+            entityType: datasource.entityType,
+            id: datasource.entityId
+          };
+          entityName = datasource.entityName;
+          break;
+        }
+      }
+    }
+    if (entityId) {
+      return {
+        entityId,
+        entityName
+      };
+    } else {
+      return null;
+    }
   }
 
   onAliasesChanged(aliasIds: Array<string>): boolean {

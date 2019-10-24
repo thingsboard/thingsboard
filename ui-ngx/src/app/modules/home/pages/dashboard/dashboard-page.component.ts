@@ -14,7 +14,16 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnDestroy, OnInit, ViewEncapsulation, ViewChild, NgZone } from '@angular/core';
+import {
+  Component,
+  Inject,
+  OnDestroy,
+  OnInit,
+  ViewEncapsulation,
+  ViewChild,
+  NgZone,
+  ChangeDetectorRef, ChangeDetectionStrategy, ApplicationRef
+} from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -77,7 +86,8 @@ import { EditWidgetComponent } from '@home/pages/dashboard/edit-widget.component
   selector: 'tb-dashboard-page',
   templateUrl: './dashboard-page.component.html',
   styleUrls: ['./dashboard-page.component.scss'],
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
+  // changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DashboardPageComponent extends PageComponent implements IDashboardController, OnDestroy {
 
@@ -149,7 +159,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     dashboardTimewindow: null,
     state: null,
     stateController: null,
-    aliasController: null
+    aliasController: null,
+    runChangeDetection: this.runChangeDetection.bind(this)
   };
 
   addWidgetFabButtons: FooterFabButtons = {
@@ -204,12 +215,15 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
               private dashboardService: DashboardService,
               private itembuffer: ItemBufferService,
               private fb: FormBuilder,
-              private dialog: MatDialog) {
+              private dialog: MatDialog,
+              private ngZone: NgZone,
+              private cd: ChangeDetectorRef) {
     super(store);
 
     this.rxSubscriptions.push(this.route.data.subscribe(
       (data) => {
         this.init(data);
+        this.runChangeDetection();
       }
     ));
 
@@ -292,6 +306,12 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       subscription.unsubscribe();
     });
     this.rxSubscriptions.length = 0;
+  }
+
+  public runChangeDetection() {
+    /*setTimeout(() => {
+      this.cd.detectChanges();
+    });*/
   }
 
   public openToolbar() {
@@ -646,7 +666,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     this.editingWidgetLayoutOriginal = widgetLayout;
     this.editingLayoutCtx.widgets[index] = widget;
     this.editingLayoutCtx.widgetLayouts[widget.id] = widgetLayout;
-    this.editingLayoutCtx.ctrl.highlightWidget(index, 0);
+    setTimeout(() => {
+      this.editingLayoutCtx.ctrl.highlightWidget(index, 0);
+    }, 0);
   }
 
   onEditWidgetClosed() {

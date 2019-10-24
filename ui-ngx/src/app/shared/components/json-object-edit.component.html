@@ -32,6 +32,6 @@
   </div>
   <div fxFlex="0%" id="tb-json-panel" tb-toast toastTarget="jsonObjectEditor"
        class="tb-json-object-panel" fxLayout="column">
-    <div fxFlex #jsonEditor id="tb-json-input" [ngClass]="{'fill-height': fillHeight}"></div>
+    <div #jsonEditor id="tb-json-input" [ngStyle]="editorStyle" [ngClass]="{'fill-height': fillHeight}"></div>
   </div>
 </div>

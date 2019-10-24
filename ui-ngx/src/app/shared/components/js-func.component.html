@@ -17,7 +17,7 @@
 -->
 <div class="tb-js-func" style="background: #fff;" [ngClass]="{'tb-disabled': disabled, 'fill-height': fillHeight}"
      tb-fullscreen
-     [fullscreen]="fullscreen" (fullscreenChanged)="onFullscreen()" fxLayout="column">
+     [fullscreen]="fullscreen" fxLayout="column">
   <div fxLayout="row" fxLayoutAlign="start center" style="height: 40px;" class="tb-js-func-toolbar">
     <label class="tb-title no-padding">{{'function ' + (functionName ? functionName : '') + '(' + functionArgsString + ') {'}}</label>
     <span fxFlex></span>
@@ -25,6 +25,7 @@
       {{'js-func.tidy' | translate }}
     </button>
     <button type='button' mat-button mat-icon-button (click)="fullscreen = !fullscreen"
+            class="tb-mat-32"
             matTooltip="{{(fullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
             matTooltipPosition="above">
       <mat-icon class="material-icons">{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>

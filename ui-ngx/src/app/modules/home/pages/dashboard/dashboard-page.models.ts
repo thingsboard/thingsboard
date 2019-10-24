@@ -25,6 +25,7 @@ import {
   WidgetPosition
 } from '@home/models/dashboard-component.models';
 import { Observable } from 'rxjs';
+import { ChangeDetectorRef } from '@angular/core';
 
 export declare type DashboardPageScope = 'tenant' | 'customer';
 
@@ -34,6 +35,7 @@ export interface DashboardContext {
   dashboardTimewindow: Timewindow;
   aliasController: IAliasController;
   stateController: IStateController;
+  runChangeDetection: () => void;
 }
 
 export interface IDashboardController {

@@ -88,7 +88,7 @@
               <tb-timewindow *ngIf="widget.hasTimewindow"
                              #timewindowComponent
                              aggregation="{{widget.hasAggregation}}"
-                             [ngModel]="widget.widget.config.timewindow"
+                             [ngModel]="widgetComponent.widget.config.timewindow"
                              (ngModelChange)="widgetComponent.onTimewindowChanged($event)">
               </tb-timewindow>
             </div>

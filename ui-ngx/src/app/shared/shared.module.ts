@@ -106,6 +106,8 @@ import { MatChipDraggableDirective } from './components/mat-chip-draggable.direc
 import { ColorInputComponent } from './components/color-input.component';
 import { JsFuncComponent } from './components/js-func.component';
 import { JsonFormComponent } from './components/json-form/json-form.component';
+import { MaterialIconsDialogComponent } from '@shared/components/dialog/material-icons-dialog.component';
+import { MaterialIconSelectComponent } from '@shared/components/material-icon-select.component';
 
 @NgModule({
   providers: [
@@ -121,7 +123,8 @@ import { JsonFormComponent } from './components/json-form/json-form.component';
     TimewindowPanelComponent,
     DashboardSelectPanelComponent,
     MatSpinner,
-    ColorPickerDialogComponent
+    ColorPickerDialogComponent,
+    MaterialIconsDialogComponent
   ],
   declarations: [
     FooterComponent,
@@ -166,7 +169,9 @@ import { JsonFormComponent } from './components/json-form/json-form.component';
     FabToolbarComponent,
     WidgetsBundleSelectComponent,
     ColorPickerDialogComponent,
+    MaterialIconsDialogComponent,
     ColorInputComponent,
+    MaterialIconSelectComponent,
     JsonFormComponent,
     NospacePipe,
     MillisecondsToTimeStringPipe,
@@ -299,7 +304,9 @@ import { JsonFormComponent } from './components/json-form/json-form.component';
     HotkeyModule,
     ColorPickerModule,
     ColorPickerDialogComponent,
+    MaterialIconsDialogComponent,
     ColorInputComponent,
+    MaterialIconSelectComponent,
     JsonFormComponent,
     NospacePipe,
     MillisecondsToTimeStringPipe,

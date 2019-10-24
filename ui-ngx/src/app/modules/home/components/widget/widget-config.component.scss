@@ -21,6 +21,9 @@
     .tb-advanced-widget-config {
       height: 100%;
     }
+    .tb-advanced-widget-config {
+      height: 100%;
+    }
     .tb-datasource-type {
       min-width: 110px;
     }
@@ -45,6 +48,13 @@
 
 :host ::ng-deep {
   .tb-widget-config {
+    .mat-tab-body-wrapper {
+      position: absolute;
+      top: 49px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+    }
     .mat-tab-body.mat-tab-body-active {
       .mat-tab-body-content > div {
         height: 100%;

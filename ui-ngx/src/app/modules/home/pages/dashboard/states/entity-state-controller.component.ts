@@ -95,7 +95,7 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
   protected onStateChanged() {
     this.stateObject = this.parseState(this.currentState);
     this.selectedStateIndex = this.stateObject.length - 1;
-    this.gotoState(this.stateObject[this.stateObject.length - 1].id, true);
+    this.gotoState(this.stateObject[this.stateObject.length - 1].id, false);
   }
 
   protected stateControllerId(): string {

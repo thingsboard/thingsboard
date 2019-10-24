@@ -121,7 +121,7 @@ export interface WidgetActionSource {
   multiple: boolean;
 }
 
-export const widgetActionSources: {[key: string]: WidgetActionSource} = {
+export const widgetActionSources: {[acionSourceId: string]: WidgetActionSource} = {
     headerButton:
     {
       name: 'widget-action.header-button',
@@ -156,7 +156,7 @@ export interface WidgetControllerDescriptor {
   settingsSchema?: string | any;
   dataKeySettingsSchema?: string | any;
   typeParameters?: WidgetTypeParameters;
-  actionSources?: {[key: string]: WidgetActionSource};
+  actionSources?: {[actionSourceId: string]: WidgetActionSource};
 }
 
 export interface WidgetType extends BaseData<WidgetTypeId> {
@@ -202,6 +202,17 @@ export interface LegendConfig {
   showMax: boolean;
   showAvg: boolean;
   showTotal: boolean;
+}
+
+export function defaultLegendConfig(wType: widgetType): LegendConfig {
+  return {
+    direction: LegendDirection.column,
+    position: LegendPosition.bottom,
+    showMin: false,
+    showMax: false,
+    showAvg: wType === widgetType.timeseries,
+    showTotal: false
+  };
 }
 
 export interface KeyInfo {
@@ -301,7 +312,15 @@ export const widgetActionTypeTranslationMap = new Map<WidgetActionType, string>(
   ]
 );
 
-export interface WidgetActionDescriptor {
+export interface CustomActionDescriptor {
+  customFunction?: string;
+  customResources?: Array<WidgetResource>;
+  customHtml?: string;
+  customCss?: string;
+}
+
+export interface WidgetActionDescriptor extends CustomActionDescriptor {
+  id: string;
   name: string;
   icon: string;
   displayName?: string;
@@ -311,10 +330,6 @@ export interface WidgetActionDescriptor {
   openRightLayout?: boolean;
   setEntityId?: boolean;
   stateEntityParamName?: string;
-  customFunction?: string;
-  customResources?: Array<WidgetResource>;
-  customHtml?: string;
-  customCss?: string;
 }
 
 export interface WidgetConfig {

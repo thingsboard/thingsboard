@@ -50,6 +50,12 @@ import { EntityAliasSelectComponent } from './alias/entity-alias-select.componen
 import { DataKeysComponent } from '@home/components/widget/data-keys.component';
 import { DataKeyConfigDialogComponent } from './widget/data-key-config-dialog.component';
 import { DataKeyConfigComponent } from './widget/data-key-config.component';
+import { LegendConfigPanelComponent } from './widget/legend-config-panel.component';
+import { LegendConfigComponent } from './widget/legend-config.component';
+import { ManageWidgetActionsComponent } from './widget/action/manage-widget-actions.component';
+import { WidgetActionDialogComponent } from './widget/action/widget-action-dialog.component';
+import { CustomActionPrettyResourcesTabsComponent } from './widget/action/custom-action-pretty-resources-tabs.component';
+import { CustomActionPrettyEditorComponent } from './widget/action/custom-action-pretty-editor.component';
 
 @NgModule({
   entryComponents: [
@@ -64,7 +70,9 @@ import { DataKeyConfigComponent } from './widget/data-key-config.component';
     AliasesEntitySelectPanelComponent,
     EntityAliasesDialogComponent,
     EntityAliasDialogComponent,
-    DataKeyConfigDialogComponent
+    DataKeyConfigDialogComponent,
+    LegendConfigPanelComponent,
+    WidgetActionDialogComponent
   ],
   declarations:
     [
@@ -99,7 +107,13 @@ import { DataKeyConfigComponent } from './widget/data-key-config.component';
       EntityAliasSelectComponent,
       DataKeysComponent,
       DataKeyConfigComponent,
-      DataKeyConfigDialogComponent
+      DataKeyConfigDialogComponent,
+      LegendConfigPanelComponent,
+      LegendConfigComponent,
+      ManageWidgetActionsComponent,
+      WidgetActionDialogComponent,
+      CustomActionPrettyResourcesTabsComponent,
+      CustomActionPrettyEditorComponent
     ],
   imports: [
     CommonModule,
@@ -130,7 +144,12 @@ import { DataKeyConfigComponent } from './widget/data-key-config.component';
     EntityAliasSelectComponent,
     DataKeysComponent,
     DataKeyConfigComponent,
-    DataKeyConfigDialogComponent
+    DataKeyConfigDialogComponent,
+    LegendConfigComponent,
+    ManageWidgetActionsComponent,
+    WidgetActionDialogComponent,
+    CustomActionPrettyResourcesTabsComponent,
+    CustomActionPrettyEditorComponent
   ],
   providers: [
     WidgetComponentService

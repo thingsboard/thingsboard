@@ -26,6 +26,10 @@ import {
   ColorPickerDialogComponent,
   ColorPickerDialogData
 } from '@shared/components/dialog/color-picker-dialog.component';
+import {
+  MaterialIconsDialogComponent,
+  MaterialIconsDialogData
+} from '@shared/components/dialog/material-icons-dialog.component';
 
 @Injectable(
   {
@@ -83,6 +87,17 @@ export class DialogService {
           color
         }
     }).afterClosed();
+  }
+
+  materialIconPicker(icon: string): Observable<string> {
+    return this.dialog.open<MaterialIconsDialogComponent, MaterialIconsDialogData, string>(MaterialIconsDialogComponent,
+      {
+        disableClose: true,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        data: {
+          icon
+        }
+      }).afterClosed();
   }
 
   private permissionDenied() {

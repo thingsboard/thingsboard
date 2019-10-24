@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Inject, Injectable } from '@angular/core';
+import { Inject, Injectable, NgZone } from '@angular/core';
 import { WINDOW } from '@core/services/window.service';
 import { ExceptionData } from '@app/shared/models/error.models';
 import { deepClone, deleteNullProperties, isDefined, isUndefined } from '@core/utils';
@@ -28,6 +28,8 @@ import { alarmFields } from '@shared/models/alarm.models';
 import { materialColors } from '@app/shared/models/material.models';
 import { WidgetInfo } from '@home/models/widget-component.models';
 import jsonSchemaDefaults from 'json-schema-defaults';
+import * as materialIconsCodepoints from '!raw-loader!material-design-icons/iconfont/codepoints';
+import { Observable, of, ReplaySubject } from 'rxjs';
 
 const varsRegex = /\$\{([^}]*)\}/g;
 
@@ -58,6 +60,13 @@ const defaultAlarmFields: Array<string> = [
   alarmFields.status.keyName
 ];
 
+const commonMaterialIcons: Array<string> = [ 'more_horiz', 'more_vert', 'open_in_new',
+  'visibility', 'play_arrow', 'arrow_back', 'arrow_downward',
+  'arrow_forward', 'arrow_upwards', 'close', 'refresh', 'menu', 'show_chart', 'multiline_chart', 'pie_chart', 'insert_chart', 'people',
+  'person', 'domain', 'devices_other', 'now_widgets', 'dashboards', 'map', 'pin_drop', 'my_location', 'extension', 'search',
+  'settings', 'notifications', 'notifications_active', 'info', 'info_outline', 'warning', 'list', 'file_download', 'import_export',
+  'share', 'add', 'edit', 'done' ];
+
 @Injectable({
   providedIn: 'root'
 })
@@ -85,7 +94,10 @@ export class UtilsService {
 
   defaultAlarmDataKeys: Array<DataKey> = [];
 
+  materialIcons: Array<string> = [];
+
   constructor(@Inject(WINDOW) private window: Window,
+              private zone: NgZone,
               private translate: TranslateService) {
     let frame: Element = null;
     try {
@@ -280,6 +292,31 @@ export class UtilsService {
       }
     });
     return datasources;
+  }
+
+  public getMaterialIcons(): Observable<Array<string>> {
+    if (this.materialIcons.length) {
+      return of(this.materialIcons);
+    } else {
+      const materialIconsSubject = new ReplaySubject<Array<string>>();
+      this.zone.runOutsideAngular(() => {
+        const codepointsArray = materialIconsCodepoints
+          .split('\n')
+          .filter((codepoint) => codepoint && codepoint.length);
+        codepointsArray.forEach((codepoint) => {
+            const values = codepoint.split(' ');
+            if (values && values.length === 2) {
+              this.materialIcons.push(values[0]);
+            }
+        });
+        materialIconsSubject.next(this.materialIcons);
+      });
+      return materialIconsSubject.asObservable();
+    }
+  }
+
+  public getCommonMaterialIcons(): Array<string> {
+    return commonMaterialIcons;
   }
 
   public getMaterialColor(index: number) {

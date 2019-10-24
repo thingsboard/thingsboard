@@ -16,7 +16,7 @@
 
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import {
-  AfterViewInit,
+  AfterViewInit, ChangeDetectionStrategy,
   Component,
   ElementRef,
   forwardRef,
@@ -413,7 +413,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
       let fetchObservable: Observable<Array<DataKey>> = null;
       if (this.datasourceType === DatasourceType.function || this.widgetType === widgetType.alarm) {
         const dataKeyFilter = this.createDataKeyFilter(this.searchText);
-        const targetKeysList = this.datasourceType === DatasourceType.function ? this.functionTypeKeys : this.alarmKeys;
+        const targetKeysList = this.widgetType === widgetType.alarm ? this.alarmKeys : this.functionTypeKeys;
         fetchObservable = of(targetKeysList.filter(dataKeyFilter));
       } else {
         if (this.entityAliasId) {

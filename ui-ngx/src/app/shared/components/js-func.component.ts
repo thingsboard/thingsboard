@@ -14,7 +14,16 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  forwardRef,
+  Input, OnDestroy,
+  OnInit,
+  ViewChild,
+  ViewEncapsulation
+} from '@angular/core';
 import { ControlValueAccessor, FormControl, NG_VALIDATORS, NG_VALUE_ACCESSOR, Validator } from '@angular/forms';
 import * as ace from 'ace-builds';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
@@ -24,6 +33,7 @@ import { AppState } from '@core/core.state';
 import { UtilsService } from '@core/services/utils.service';
 import { isUndefined } from '@app/core/utils';
 import { TranslateService } from '@ngx-translate/core';
+import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 
 @Component({
   selector: 'tb-js-func',
@@ -43,12 +53,14 @@ import { TranslateService } from '@ngx-translate/core';
   ],
   encapsulation: ViewEncapsulation.None
 })
-export class JsFuncComponent implements OnInit, ControlValueAccessor, Validator {
+export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator {
 
   @ViewChild('javascriptEditor', {static: true})
   javascriptEditorElmRef: ElementRef;
 
   private jsEditor: ace.Ace.Editor;
+  private editorsResizeCaf: CancelAnimationFrame;
+  private editorResizeListener: any;
 
   @Input() functionName: string;
 
@@ -100,7 +112,8 @@ export class JsFuncComponent implements OnInit, ControlValueAccessor, Validator 
   constructor(public elementRef: ElementRef,
               private utils: UtilsService,
               private translate: TranslateService,
-              protected store: Store<AppState>) {
+              protected store: Store<AppState>,
+              private raf: RafService) {
   }
 
   ngOnInit(): void {
@@ -136,6 +149,28 @@ export class JsFuncComponent implements OnInit, ControlValueAccessor, Validator 
     this.jsEditor.on('change', () => {
       this.cleanupJsErrors();
       this.updateView();
+    });
+    this.editorResizeListener = this.onAceEditorResize.bind(this);
+    // @ts-ignore
+    addResizeListener(editorElement, this.editorResizeListener);
+  }
+
+  ngOnDestroy(): void {
+    if (this.editorResizeListener) {
+      const editorElement = this.javascriptEditorElmRef.nativeElement;
+      // @ts-ignore
+      removeResizeListener(editorElement, this.editorResizeListener);
+    }
+  }
+
+  private onAceEditorResize() {
+    if (this.editorsResizeCaf) {
+      this.editorsResizeCaf();
+      this.editorsResizeCaf = null;
+    }
+    this.editorsResizeCaf = this.raf.raf(() => {
+      this.jsEditor.resize();
+      this.jsEditor.renderer.updateFull();
     });
   }
 
@@ -295,14 +330,6 @@ export class JsFuncComponent implements OnInit, ControlValueAccessor, Validator 
       this.modelValue = editorValue;
       this.functionValid = true;
       this.propagateChange(this.modelValue);
-    }
-  }
-
-  onFullscreen() {
-    if (this.jsEditor) {
-      setTimeout(() => {
-        this.jsEditor.resize();
-      }, 0);
     }
   }
 

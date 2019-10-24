@@ -181,6 +181,188 @@
           </tb-entity-alias-select>
         </div>
       </mat-expansion-panel>
+      <mat-expansion-panel class="tb-datasources" *ngIf="widgetType === widgetTypes.alarm &&
+                                  modelValue?.isDataEnabled" [expanded]="true">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            {{ 'widget-config.alarm-source' | translate }}
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+        <div [formGroup]="alarmSourceSettings" style="padding: 0 5px;">
+          <section fxFlex
+                   fxLayout="column"
+                   fxLayoutAlign="center"
+                   fxLayout.gt-sm="row"
+                   fxLayoutAlign.gt-sm="start center">
+            <mat-form-field class="tb-datasource-type">
+              <mat-select matInput formControlName="type">
+                <mat-option *ngFor="let datasourceType of datasourceTypes" [value]="datasourceType">
+                  {{ datasourceTypesTranslations.get(datasourceType) | translate }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <section class="tb-datasource" [ngSwitch]="alarmSourceSettings.get('type').value">
+              <ng-template [ngSwitchCase]="datasourceType.function">
+                <mat-form-field floatLabel="always" [fxShow]="widgetType !== widgetTypes.alarm"
+                                class="tb-datasource-name" style="min-width: 200px;">
+                  <mat-label></mat-label>
+                  <input matInput
+                         placeholder="{{ 'datasource.name' | translate }}"
+                         formControlName="name">
+                </mat-form-field>
+              </ng-template>
+              <ng-template [ngSwitchCase]="datasourceType.entity">
+                <tb-entity-alias-select
+                  [tbRequired]="alarmSourceSettings.get('type').value === datasourceType.entity"
+                  [aliasController]="aliasController"
+                  formControlName="entityAliasId"
+                  [callbacks]="widgetConfigCallbacks">
+                </tb-entity-alias-select>
+              </ng-template>
+            </section>
+            <tb-data-keys class="tb-data-keys" fxFlex
+                          [widgetType]="widgetType"
+                          [datasourceType]="alarmSourceSettings.get('type').value"
+                          [aliasController]="aliasController"
+                          [datakeySettingsSchema]="modelValue?.dataKeySettingsSchema"
+                          [callbacks]="widgetConfigCallbacks"
+                          [entityAliasId]="alarmSourceSettings.get('entityAliasId').value"
+                          formControlName="dataKeys">
+            </tb-data-keys>
+          </section>
+        </div>
+      </mat-expansion-panel>
+    </div>
+  </mat-tab>
+  <mat-tab label="{{ 'widget-config.settings' | translate }}">
+    <div class="mat-content mat-padding"
+         fxLayout="column" fxLayoutGap="8px">
+      <div [formGroup]="widgetSettings" fxLayout="column" fxLayoutGap="8px">
+        <span translate>widget-config.general-settings</span>
+        <div fxLayout="column" fxLayoutAlign="center" fxLayout.gt-sm="row" fxLayoutAlign.gt-sm="start center">
+          <mat-form-field fxFlex class="mat-block">
+            <mat-label translate>widget-config.title</mat-label>
+            <input matInput formControlName="title">
+          </mat-form-field>
+          <div fxFlex [fxShow]="widgetSettings.get('showTitle').value">
+            <tb-json-object-edit
+              [editorStyle]="{minHeight: '100px'}"
+              required
+              label="{{ 'widget-config.title-style' | translate }}"
+              formControlName="titleStyle"
+            ></tb-json-object-edit>
+          </div>
+        </div>
+        <div fxLayout="column" fxLayoutAlign="center" fxLayout.gt-sm="row" fxLayoutAlign.gt-sm="start center"
+             fxLayoutGap="8px">
+          <div fxLayout="row" fxFlex>
+            <mat-checkbox formControlName="showTitleIcon">
+              {{ 'widget-config.display-icon' | translate }}
+            </mat-checkbox>
+          </div>
+          <div fxFlex>
+            <tb-material-icon-select
+              formControlName="titleIcon">
+            </tb-material-icon-select>
+          </div>
+          <tb-color-input fxFlex
+                          label="{{'widget-config.icon-color' | translate}}"
+                          icon="format_color_fill"
+                          openOnInput
+                          formControlName="iconColor">
+          </tb-color-input>
+          <mat-form-field fxFlex>
+            <mat-label translate>widget-config.icon-size</mat-label>
+            <input matInput formControlName="iconSize">
+          </mat-form-field>
+        </div>
+        <div fxLayout="column" fxLayoutAlign="center" fxLayout.gt-sm="row" fxLayoutAlign.gt-sm="start center"
+             fxLayoutGap="8px">
+          <div fxLayout="row">
+            <mat-checkbox formControlName="showTitle">
+              {{ 'widget-config.display-title' | translate }}
+            </mat-checkbox>
+          </div>
+          <div fxLayout="row">
+            <mat-checkbox formControlName="dropShadow">
+              {{ 'widget-config.drop-shadow' | translate }}
+            </mat-checkbox>
+          </div>
+          <div fxLayout="row">
+            <mat-checkbox formControlName="enableFullscreen">
+              {{ 'widget-config.enable-fullscreen' | translate }}
+            </mat-checkbox>
+          </div>
+          <div fxFlex>
+            <tb-json-object-edit
+              [editorStyle]="{minHeight: '100px'}"
+              required
+              label="{{ 'widget-config.widget-style' | translate }}"
+              formControlName="widgetStyle"
+            ></tb-json-object-edit>
+          </div>
+        </div>
+        <div fxLayout="column" fxLayoutAlign="center" fxLayout.gt-sm="row" fxLayoutAlign.gt-sm="start center"
+             fxLayoutGap="8px">
+          <tb-color-input fxFlex
+                          label="{{'widget-config.background-color' | translate}}"
+                          icon="format_color_fill"
+                          openOnInput
+                          formControlName="backgroundColor">
+          </tb-color-input>
+          <tb-color-input fxFlex
+                          label="{{'widget-config.text-color' | translate}}"
+                          icon="format_color_fill"
+                          openOnInput
+                          formControlName="color">
+          </tb-color-input>
+          <mat-form-field fxFlex>
+            <mat-label translate>widget-config.padding</mat-label>
+            <input matInput formControlName="padding">
+          </mat-form-field>
+          <mat-form-field fxFlex>
+            <mat-label translate>widget-config.margin</mat-label>
+            <input matInput formControlName="margin">
+          </mat-form-field>
+        </div>
+        <div fxLayout="column" fxLayoutAlign="center" fxLayout.gt-sm="row" fxLayoutAlign.gt-sm="start center"
+             fxLayoutGap="8px">
+          <mat-form-field fxFlex>
+            <mat-label translate>widget-config.units</mat-label>
+            <input matInput formControlName="units">
+          </mat-form-field>
+          <mat-form-field fxFlex>
+            <mat-label translate>widget-config.decimals</mat-label>
+            <input matInput formControlName="decimals" type="number" min="0" max="15" step="1">
+          </mat-form-field>
+        </div>
+        <div [fxShow]="widgetType === widgetTypes.timeseries ||
+                       widgetType === widgetTypes.latest"
+             fxLayout="column" fxLayoutAlign="center" fxLayout.gt-sm="row" fxLayoutAlign.gt-sm="start center"
+             fxLayoutGap="8px">
+          <mat-checkbox fxFlex formControlName="showLegend">
+            {{ 'widget-config.display-legend' | translate }}
+          </mat-checkbox>
+          <section fxFlex fxLayout="row" fxLayoutAlign="start center" style="margin-bottom: 16px;">
+            <tb-legend-config formControlName="legendConfig">
+            </tb-legend-config>
+          </section>
+        </div>
+      </div>
+      <div [formGroup]="layoutSettings" fxLayout="column" fxLayoutGap="8px">
+        <span translate>widget-config.mobile-mode-settings</span>
+        <div fxLayout="column" fxLayoutAlign="center" fxLayout.gt-sm="row" fxLayoutAlign.gt-sm="start center"
+             fxLayoutGap="8px">
+          <mat-form-field fxFlex>
+            <mat-label translate>widget-config.order</mat-label>
+            <input matInput formControlName="mobileOrder" type="number" step="1">
+          </mat-form-field>
+          <mat-form-field fxFlex>
+            <mat-label translate>widget-config.height</mat-label>
+            <input matInput formControlName="mobileHeight" type="number" min="1" max="10" step="1">
+          </mat-form-field>
+        </div>
+      </div>
     </div>
   </mat-tab>
   <mat-tab *ngIf="displayAdvanced()" label="{{ 'widget-config.advanced' | translate }}">
@@ -191,6 +373,10 @@
         </tb-json-form>
     </div>
   </mat-tab>
-  <mat-tab label="{{ 'widget-config.actions' | translate }}">
+  <mat-tab label="{{ 'widget-config.actions' | translate }}" [formGroup]="actionsSettings">
+    <tb-manage-widget-actions
+      [callbacks]="widgetConfigCallbacks"
+      formControlName="actionsData">
+    </tb-manage-widget-actions>
   </mat-tab>
 </mat-tab-group>

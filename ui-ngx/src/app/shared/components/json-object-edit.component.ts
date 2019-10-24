@@ -15,7 +15,7 @@
 ///
 
 import {
-  Attribute,
+  Attribute, ChangeDetectionStrategy,
   Component,
   ElementRef,
   forwardRef,
@@ -59,6 +59,8 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
   @Input() disabled: boolean;
 
   @Input() fillHeight: boolean;
+
+  @Input() editorStyle: {[klass: string]: any};
 
   private requiredValue: boolean;
   get required(): boolean {

@@ -85,8 +85,8 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
     this.rxSubscriptions.push(this.dashboard.dashboardTimewindowChanged.subscribe(
       (dashboardTimewindow) => {
         this.dashboardCtx.dashboardTimewindow = dashboardTimewindow;
-      }
-      )
+        this.dashboardCtx.runChangeDetection();
+      })
     );
     this.initHotKeys();
   }

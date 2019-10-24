@@ -1,0 +1,304 @@
+<!--=======================================================================-->
+<!--=====  There are two example templates: for edit and add entity   =====-->
+<!--=======================================================================-->
+<!--========================  Edit entity example  ========================-->
+<!--=======================================================================-->
+<!-- -->
+<!--<md-dialog aria-label="Edit entity">-->
+<!--    <form name="editEntityForm" class="edit-entity-form" ng-submit="vm.save()">-->
+<!--        <md-toolbar>-->
+<!--            <div class="md-toolbar-tools">-->
+<!--                <h2>Edit {{vm.entityType.toLowerCase()}} {{vm.entityName}}</h2>-->
+<!--                <span flex></span>-->
+<!--                <md-button class="md-icon-button" ng-click="vm.cancel()">-->
+<!--                    <ng-md-icon icon="close" aria-label="Close"></ng-md-icon>-->
+<!--                </md-button>-->
+<!--            </div>-->
+<!--        </md-toolbar>-->
+<!--        <md-dialog-content>-->
+<!--            <div class="md-dialog-content">-->
+<!--                <div layout="row">-->
+<!--                    <md-input-container flex class="md-block">-->
+<!--                        <label>Entity Name</label>-->
+<!--                        <input ng-model="vm.entityName" readonly>-->
+<!--                    </md-input-container>-->
+<!--                    <md-input-container flex class="md-block">-->
+<!--                        <label>Entity Type</label>-->
+<!--                        <input ng-model="vm.entityType" readonly>-->
+<!--                    </md-input-container>-->
+<!--                    <md-input-container flex class="md-block">-->
+<!--                        <label>Type</label>-->
+<!--                        <input ng-model="vm.type" readonly>-->
+<!--                    </md-input-container>-->
+<!--                </div>-->
+<!--                <div layout="row">-->
+<!--                    <md-input-container flex class="md-block">-->
+<!--                        <label>Latitude</label>-->
+<!--                        <input name="latitude" type="number" step="any" ng-model="vm.attributes.latitude">-->
+<!--                    </md-input-container>-->
+<!--                    <md-input-container flex class="md-block">-->
+<!--                        <label>Longitude</label>-->
+<!--                        <input name="longitude" type="number" step="any" ng-model="vm.attributes.longitude">-->
+<!--                    </md-input-container>-->
+<!--                </div>-->
+<!--                 <div layout="row">-->
+<!--                    <md-input-container flex class="md-block">-->
+<!--                        <label>Address</label>-->
+<!--                        <input ng-model="vm.attributes.address">-->
+<!--                    </md-input-container>-->
+<!--                    <md-input-container flex class="md-block">-->
+<!--                        <label>Owner</label>-->
+<!--                        <input ng-model="vm.attributes.owner">-->
+<!--                    </md-input-container>-->
+<!--                </div>-->
+<!--                <div layout="row">-->
+<!--                    <md-input-container flex class="md-block">-->
+<!--                        <label>Integer Value</label>-->
+<!--                        <input name="integerNumber" type="number" step="1" ng-pattern="/^-?[0-9]+$/" ng-model="vm.attributes.number">-->
+<!--                        <div ng-messages="editEntityForm.integerNumber.$error">-->
+<!--                            <div ng-message="pattern">Invalid integer value.</div>-->
+<!--                        </div>-->
+<!--                    </md-input-container>-->
+<!--                    <div class="boolean-value-input" layout="column" layout-align="center start" flex>-->
+<!--                        <label class="checkbox-label">Boolean Value</label>-->
+<!--                        <md-checkbox ng-model="vm.attributes.booleanValue" style="margin-bottom: 40px;">-->
+<!--                            {{ (vm.attributes.booleanValue ? "value.true" : "value.false") | translate }}-->
+<!--                        </md-checkbox>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--                <div class="relations-list old-relations">-->
+<!--                    <div class="md-body-1" style="padding-bottom: 10px; color: rgba(0,0,0,0.57);">Relations</div>-->
+<!--                    <div class="body" ng-show="vm.relations.length">-->
+<!--                        <div class="row" layout="row" layout-align="start center" ng-repeat="relation in vm.relations track by $index">-->
+<!--                            <div class="md-whiteframe-1dp" flex layout="row" style="padding-left: 5px; margin-bottom: 3px;">-->
+<!--                                <div flex layout="column">-->
+<!--                                    <div layout="row">-->
+<!--                                        <md-input-container class="md-block" style="min-width: 100px;">-->
+<!--                                            <label>Direction</label>-->
+<!--                                            <md-select ng-disabled="true" required ng-model="relation.direction">-->
+<!--                                                <md-option ng-repeat="direction in vm.entitySearchDirection" ng-value="direction">-->
+<!--                                                    {{ ("relation.search-direction." + direction) | translate}}-->
+<!--                                                </md-option>-->
+<!--                                            </md-select>-->
+<!--                                        </md-input-container>-->
+<!--                                        <tb-relation-type-autocomplete ng-disabled="true" flex class="md-block"-->
+<!--                                           the-form="editEntityForm"-->
+<!--                                           ng-model="relation.relationType"-->
+<!--                                           tb-required="true">-->
+<!--                                        </tb-relation-type-autocomplete>-->
+<!--                                    </div>-->
+<!--                                    <div layout="row">-->
+<!--                                        <tb-entity-select flex class="md-block"-->
+<!--                                            the-form="editEntityForm"-->
+<!--                                            ng-disabled="true"-->
+<!--                                            tb-required="true"-->
+<!--                                            ng-model="relation.relatedEntity">-->
+<!--                                        </tb-entity-select>-->
+<!--                                    </div>-->
+<!--                                </div>-->
+<!--                                <div layout="column" layout-align="center center">-->
+<!--                                    <md-button class="md-icon-button md-primary" style="width: 40px; min-width: 40px;"-->
+<!--                                               ng-click="vm.removeOldRelation($index,relation)" aria-label="Remove">-->
+<!--                                        <md-tooltip md-direction="top">Remove relation</md-tooltip>-->
+<!--                                        <md-icon aria-label="Remove" class="material-icons">-->
+<!--                                            close-->
+<!--                                        </md-icon>-->
+<!--                                    </md-button>-->
+<!--                                </div>-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--                <div class="relations-list">-->
+<!--                    <div class="md-body-1" style="padding-bottom: 10px; color: rgba(0,0,0,0.57);">New Relations</div>-->
+<!--                    <div class="body" ng-show="vm.newRelations.length">-->
+<!--                        <div class="row" layout="row" layout-align="start center" ng-repeat="relation in vm.newRelations track by $index">-->
+<!--                            <div class="md-whiteframe-1dp" flex layout="row" style="padding-left: 5px; margin-bottom: 3px;">-->
+<!--                                <div flex layout="column">-->
+<!--                                    <div layout="row">-->
+<!--                                        <md-input-container class="md-block" style="min-width: 100px;">-->
+<!--                                            <label>Direction</label>-->
+<!--                                            <md-select name="direction" required ng-model="relation.direction">-->
+<!--                                                <md-option ng-repeat="direction in vm.entitySearchDirection" ng-value="direction">-->
+<!--                                                    {{ ("relation.search-direction." + direction) | translate}}-->
+<!--                                                </md-option>-->
+<!--                                            </md-select>-->
+<!--                                            <div ng-messages="editEntityForm.direction.$error">-->
+<!--                                                <div ng-message="required">Relation direction is required.</div>-->
+<!--                                            </div>-->
+<!--                                        </md-input-container>-->
+<!--                                        <tb-relation-type-autocomplete flex class="md-block"-->
+<!--                                           the-form="editEntityForm"-->
+<!--                                           ng-model="relation.relationType"-->
+<!--                                           tb-required="true">-->
+<!--                                        </tb-relation-type-autocomplete>-->
+<!--                                    </div>-->
+<!--                                    <div layout="row">-->
+<!--                                        <tb-entity-select flex class="md-block"-->
+<!--                                            the-form="editEntityForm"-->
+<!--                                            tb-required="true"-->
+<!--                                            ng-model="relation.relatedEntity">-->
+<!--                                        </tb-entity-select>-->
+<!--                                    </div>-->
+<!--                                </div>-->
+<!--                                <div layout="column" layout-align="center center">-->
+<!--                                    <md-button class="md-icon-button md-primary" style="width: 40px; min-width: 40px;"-->
+<!--                                               ng-click="vm.removeRelation($index)" aria-label="Remove">-->
+<!--                                        <md-tooltip md-direction="top">Remove relation</md-tooltip>-->
+<!--                                        <md-icon aria-label="Remove" class="material-icons">-->
+<!--                                            close-->
+<!--                                        </md-icon>-->
+<!--                                    </md-button>-->
+<!--                                </div>-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                   <div>-->
+<!--                       <md-button class="md-primary md-raised" ng-click="vm.addRelation()" aria-label="Add">-->
+<!--                           <md-tooltip md-direction="top">Add Relation</md-tooltip>-->
+<!--                           Add-->
+<!--                       </md-button>-->
+<!--                   </div> -->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </md-dialog-content>-->
+<!--        <md-dialog-actions>-->
+<!--            <md-button type="submit" ng-disabled="editEntityForm.$invalid || !editEntityForm.$dirty" class="md-raised md-primary">Save</md-button>-->
+<!--            <md-button ng-click="vm.cancel()" class="md-primary">Cancel</md-button>-->
+<!--        </md-dialog-actions>-->
+<!--    </form>-->
+<!--</md-dialog>-->
+<!---->
+<!--========================================================================-->
+<!--=========================  Add entity example  =========================-->
+<!--========================================================================-->
+<!---->
+<!--<md-dialog aria-label="Add entity">-->
+<!--    <form name="addEntityForm" class="add-entity-form" ng-submit="vm.save()">-->
+<!--        <md-toolbar>-->
+<!--            <div class="md-toolbar-tools">-->
+<!--                <h2>Add entity</h2>-->
+<!--                <span flex></span>-->
+<!--                <md-button class="md-icon-button" ng-click="vm.cancel()">-->
+<!--                    <ng-md-icon icon="close" aria-label="Close"></ng-md-icon>-->
+<!--                </md-button>-->
+<!--            </div>-->
+<!--        </md-toolbar>-->
+<!--        <md-dialog-content>-->
+<!--            <div class="md-dialog-content">-->
+<!--                <div layout="row">-->
+<!--                    <md-input-container flex class="md-block">-->
+<!--                        <label>Entity Name</label>-->
+<!--                        <input ng-model="vm.entityName" name=entityName required>-->
+<!--                        <div ng-messages="addEntityForm.entityName.$error">-->
+<!--                            <div ng-message="required">Entity name is required.</div>-->
+<!--                        </div>-->
+<!--                    </md-input-container>-->
+<!--                    <tb-entity-type-select class="md-block" style="min-width: 100px; width: 100px;"-->
+<!--                       the-form="addEntityForm"-->
+<!--                       tb-required="true"-->
+<!--                       allowed-entity-types="vm.allowedEntityTypes"-->
+<!--                       ng-model="vm.entityType">-->
+<!--                    </tb-entity-type-select>-->
+<!--                    <md-input-container flex class="md-block">-->
+<!--                        <label>Entity Subtype</label>-->
+<!--                        <input ng-model="vm.type" name=type required>-->
+<!--                        <div ng-messages="addEntityForm.type.$error">-->
+<!--                            <div ng-message="required">Entity subtype is required.</div>-->
+<!--                        </div>-->
+<!--                    </md-input-container>-->
+<!--                </div>-->
+<!--                <div layout="row">-->
+<!--                    <md-input-container flex class="md-block">-->
+<!--                        <label>Latitude</label>-->
+<!--                        <input name="latitude" type="number" step="any" ng-model="vm.attributes.latitude">-->
+<!--                    </md-input-container>-->
+<!--                    <md-input-container flex class="md-block">-->
+<!--                        <label>Longitude</label>-->
+<!--                        <input name="longitude" type="number" step="any" ng-model="vm.attributes.longitude">-->
+<!--                    </md-input-container>-->
+<!--                </div>-->
+<!--                 <div layout="row">-->
+<!--                    <md-input-container flex class="md-block">-->
+<!--                        <label>Address</label>-->
+<!--                        <input ng-model="vm.attributes.address">-->
+<!--                    </md-input-container>-->
+<!--                    <md-input-container flex class="md-block">-->
+<!--                        <label>Owner</label>-->
+<!--                        <input ng-model="vm.attributes.owner">-->
+<!--                    </md-input-container>-->
+<!--                </div>-->
+<!--                <div layout="row">-->
+<!--                    <md-input-container flex class="md-block">-->
+<!--                        <label>Integer Value</label>-->
+<!--                        <input name="integerNumber" type="number" step="1" ng-pattern="/^-?[0-9]+$/" ng-model="vm.attributes.number">-->
+<!--                        <div ng-messages="addEntityForm.integerNumber.$error">-->
+<!--                            <div ng-message="pattern">Invalid integer value.</div>-->
+<!--                        </div>-->
+<!--                    </md-input-container>-->
+<!--                    <div class="boolean-value-input" layout="column" layout-align="center start" flex>-->
+<!--                        <label class="checkbox-label">Boolean Value</label>-->
+<!--                        <md-checkbox ng-model="vm.attributes.booleanValue" style="margin-bottom: 40px;">-->
+<!--                            {{ (vm.attributes.booleanValue ? "value.true" : "value.false") | translate }}-->
+<!--                        </md-checkbox>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--                <div class="relations-list">-->
+<!--                    <div class="md-body-1" style="padding-bottom: 10px; color: rgba(0,0,0,0.57);">Relations</div>-->
+<!--                    <div class="body" ng-show="vm.relations.length">-->
+<!--                        <div class="row" layout="row" layout-align="start center" ng-repeat="relation in vm.relations track by $index">-->
+<!--                            <div class="md-whiteframe-1dp" flex layout="row" style="padding-left: 5px;">-->
+<!--                                <div flex layout="column">-->
+<!--                                    <div layout="row">-->
+<!--                                        <md-input-container class="md-block" style="min-width: 100px;">-->
+<!--                                            <label>Direction</label>-->
+<!--                                            <md-select name="direction" required ng-model="relation.direction">-->
+<!--                                                <md-option ng-repeat="direction in vm.entitySearchDirection" ng-value="direction">-->
+<!--                                                    {{ ("relation.search-direction." + direction) | translate}}-->
+<!--                                                </md-option>-->
+<!--                                            </md-select>-->
+<!--                                            <div ng-messages="addEntityForm.direction.$error">-->
+<!--                                                <div ng-message="required">Relation direction is required.</div>-->
+<!--                                            </div>-->
+<!--                                        </md-input-container>-->
+<!--                                        <tb-relation-type-autocomplete flex class="md-block"-->
+<!--                                           the-form="addEntityForm"-->
+<!--                                           ng-model="relation.relationType"-->
+<!--                                           tb-required="true">-->
+<!--                                        </tb-relation-type-autocomplete>-->
+<!--                                    </div>-->
+<!--                                    <div layout="row">-->
+<!--                                        <tb-entity-select flex class="md-block"-->
+<!--                                            the-form="addEntityForm"-->
+<!--                                            tb-required="true"-->
+<!--                                            ng-model="relation.relatedEntity">-->
+<!--                                        </tb-entity-select>-->
+<!--                                    </div>-->
+<!--                                </div>-->
+<!--                                <div layout="column" layout-align="center center">-->
+<!--                                    <md-button class="md-icon-button md-primary" style="width: 40px; min-width: 40px;"-->
+<!--                                               ng-click="vm.removeRelation($index)" aria-label="Remove">-->
+<!--                                        <md-tooltip md-direction="top">Remove relation</md-tooltip>-->
+<!--                                        <md-icon aria-label="Remove" class="material-icons">-->
+<!--                                            close-->
+<!--                                        </md-icon>-->
+<!--                                    </md-button>-->
+<!--                                </div>-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                   <div>-->
+<!--                       <md-button class="md-primary md-raised" ng-click="vm.addRelation()" aria-label="Add">-->
+<!--                           <md-tooltip md-direction="top">Add Relation</md-tooltip>-->
+<!--                           Add-->
+<!--                       </md-button>-->
+<!--                   </div> -->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </md-dialog-content>-->
+<!--        <md-dialog-actions>-->
+<!--            <md-button type="submit" ng-disabled="addEntityForm.$invalid || !addEntityForm.$dirty" class="md-raised md-primary">Create</md-button>-->
+<!--            <md-button ng-click="vm.cancel()" class="md-primary">Cancel</md-button>-->
+<!--        </md-dialog-actions>-->
+<!--    </form>-->
+<!--</md-dialog>-->

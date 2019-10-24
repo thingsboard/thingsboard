@@ -38,6 +38,7 @@ import {
   Datasource,
   LegendConfig,
   LegendData,
+  LegendDirection,
   LegendPosition,
   Widget,
   WidgetActionDescriptor,
@@ -45,7 +46,8 @@ import {
   WidgetActionType,
   WidgetResource,
   widgetType,
-  WidgetTypeParameters
+  WidgetTypeParameters,
+  defaultLegendConfig
 } from '@shared/models/widget.models';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
@@ -165,6 +167,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
               private ngZone: NgZone,
               private cd: ChangeDetectorRef) {
     super(store);
+    this.cssParser.testMode = false;
   }
 
   ngOnInit(): void {
@@ -179,14 +182,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     this.legendContainerLayoutType = 'column';
 
     if (this.displayLegend) {
-      this.legendConfig = this.widget.config.legendConfig ||
-        {
-          position: LegendPosition.bottom,
-          showMin: false,
-          showMax: false,
-          showAvg: this.widget.type === widgetType.timeseries,
-          showTotal: false
-        };
+      this.legendConfig = this.widget.config.legendConfig || defaultLegendConfig(this.widget.type);
       this.legendData = {
         keys: [],
         data: []
@@ -194,8 +190,10 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       if (this.legendConfig.position === LegendPosition.top ||
         this.legendConfig.position === LegendPosition.bottom) {
         this.legendContainerLayoutType = 'column';
+        this.isLegendFirst = this.legendConfig.position === LegendPosition.top;
       } else {
         this.legendContainerLayoutType = 'row';
+        this.isLegendFirst = this.legendConfig.position === LegendPosition.left;
       }
       switch (this.legendConfig.position) {
         case LegendPosition.top:
@@ -352,7 +350,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         this.loadFromWidgetInfo();
       }
     );
-
+    setTimeout(() => {
+      this.dashboardWidget.updateWidgetParams();
+    }, 0);
   }
 
   ngAfterViewInit(): void {
@@ -764,6 +764,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       timeWindowUpdated: (subscription, timeWindowConfig) => {
         this.ngZone.run(() => {
           this.widget.config.timewindow = timeWindowConfig;
+          this.cd.detectChanges();
         });
       }
     };
@@ -924,24 +925,16 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         if (targetDashboardStateId) {
           stateObject.id = targetDashboardStateId;
         }
-        const stateParams = {
-          dashboardId: targetDashboardId,
-          state: objToBase64([ stateObject ])
-        };
         const state = objToBase64([ stateObject ]);
-        const currentUrl = this.route.snapshot.url;
+        const isSinglePage = this.route.snapshot.data.singlePageMode;
         let url;
-        if (currentUrl.length > 1) {
-          if (currentUrl[currentUrl.length - 2].path === 'dashboard') {
-            url = `/dashboard/${targetDashboardId}?state=${state}`;
-          } else {
-            url = `/dashboards/${targetDashboardId}?state=${state}`;
-          }
+        if (isSinglePage) {
+          url = `/dashboard/${targetDashboardId}?state=${state}`;
+        } else {
+          url = `/dashboards/${targetDashboardId}?state=${state}`;
         }
-        if (url) {
-          const urlTree = this.router.parseUrl(url);
-          this.router.navigateByUrl(url);
-        }
+        const urlTree = this.router.parseUrl(url);
+        this.router.navigateByUrl(url);
         break;
       case WidgetActionType.custom:
         const customFunction = descriptor.customFunction;

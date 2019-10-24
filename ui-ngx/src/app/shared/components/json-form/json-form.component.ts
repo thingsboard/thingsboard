@@ -15,6 +15,7 @@
 ///
 
 import {
+  ChangeDetectionStrategy,
   Component,
   ElementRef,
   forwardRef,
