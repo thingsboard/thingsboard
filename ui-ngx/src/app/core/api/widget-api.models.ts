@@ -36,6 +36,9 @@ import { DatasourceService } from '@core/api/datasource.service';
 import { RafService } from '@core/services/raf.service';
 import { EntityAliases } from '@shared/models/alias.models';
 import { EntityInfo } from '@app/shared/models/entity.models';
+import { Type } from '@angular/core';
+import { AssetService } from '@core/http/asset.service';
+import { DialogService } from '@core/services/dialog.service';
 
 export interface TimewindowFunctions {
   onUpdateTimewindow: (startTimeMs: number, endTimeMs: number, interval?: number) => void;

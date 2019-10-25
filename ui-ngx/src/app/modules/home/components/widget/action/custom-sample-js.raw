@@ -1,3 +1,43 @@
+/*================================================================================*/
+/*=======================  New TB 3.0 / Angular 8 Example  =======================*/
+/*================================================================================*/
+//
+//let $injector = widgetContext.$scope.$injector;
+//let deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));
+//
+//deviceService.getDevice(entityId.id).subscribe(function(device) {
+//   console.log(device);
+//});
+//
+//
+//let customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));
+//
+//customDialog.customDialog(htmlTemplate, EditEntityDialogController).subscribe(
+//    function(res) {
+//        console.log(res);
+//    }
+//);
+//
+//function EditEntityDialogController(instance) {
+//    let vm = instance;
+//    vm.entityId = entityId;
+//    vm.entityName = entityName;
+//    vm.entityType = entityId.entityType;
+//
+//    vm.editEntityFormGroup = vm.fb.group({
+//      entityName: [vm.entityName, [vm.Validators.required]]
+//    });
+//
+//    vm.cancel = function() {
+//        vm.dialogRef.close(null);
+//    };
+//
+//    vm.save = function() {
+//        const newVal = vm.editEntityFormGroup.value;
+//        vm.dialogRef.close(newVal);
+//    };
+//}
+//
 /*=======================================================================*/
 /*=====  There are three examples: for delete, edit and add entity  =====*/
 /*=======================================================================*/

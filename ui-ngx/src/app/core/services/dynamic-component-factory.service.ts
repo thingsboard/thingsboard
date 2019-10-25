@@ -31,7 +31,6 @@ import { CommonModule } from '@angular/common';
 export abstract class DynamicComponentModule implements OnDestroy {
 
   ngOnDestroy(): void {
-    console.log('Module destroyed!');
   }
 
 }

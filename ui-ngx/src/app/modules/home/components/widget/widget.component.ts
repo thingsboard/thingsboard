@@ -28,7 +28,7 @@ import {
   OnChanges,
   OnDestroy,
   OnInit,
-  SimpleChanges,
+  SimpleChanges, Type,
   ViewChild,
   ViewContainerRef,
   ViewEncapsulation
@@ -90,6 +90,15 @@ import { DashboardService } from '@core/http/dashboard.service';
 import { DatasourceService } from '@core/api/datasource.service';
 import { WidgetSubscription } from '@core/api/widget-subscription';
 import { EntityService } from '@core/http/entity.service';
+import { AssetService } from '@core/http/asset.service';
+import { DialogService } from '@core/services/dialog.service';
+import { CustomDialogService } from '@home/components/widget/dialog/custom-dialog.service';
+
+const ServicesMap = new Map<string, Type<any>>();
+ServicesMap.set('deviceService', DeviceService);
+ServicesMap.set('assetService', AssetService);
+ServicesMap.set('dialogs', DialogService);
+ServicesMap.set('customDialog', CustomDialogService);
 
 @Component({
   selector: 'tb-widget',
@@ -242,6 +251,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     }
 
     this.widgetContext = this.dashboardWidget.widgetContext;
+    this.widgetContext.servicesMap = ServicesMap;
     this.widgetContext.inited = false;
     this.widgetContext.hideTitlePanel = false;
     this.widgetContext.isEdit = this.isEdit;
@@ -647,6 +657,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       this.dynamicWidgetComponent.errorMessages = this.errorMessages;
 
       this.widgetContext.$scope = this.dynamicWidgetComponent;
+      this.widgetContext.$scope.$injector = this.injector;
 
       const containerElement = $(this.elementRef.nativeElement.querySelector('#widget-container'));
 

@@ -92,7 +92,7 @@ export class FullscreenDirective implements OnChanges, OnDestroy {
 
     this.overlayRef = this.overlay.create(config);
     this.overlayRef.attach(new EmptyPortal());
-    this.overlayRef.overlayElement.append( targetElement );
+    this.overlayRef.overlayElement.appendChild( targetElement );
     this.fullscreenChanged.emit(true);
   }
 
@@ -100,7 +100,7 @@ export class FullscreenDirective implements OnChanges, OnDestroy {
     const targetElement: HTMLElement = this.fullscreenElement || this.elementRef.nativeElement;
     if (this.parentElement) {
       this.overlayRef.overlayElement.removeChild( targetElement );
-      this.parentElement.append(targetElement);
+      this.parentElement.appendChild(targetElement);
       this.parentElement = null;
     }
     targetElement.classList.remove('tb-fullscreen');

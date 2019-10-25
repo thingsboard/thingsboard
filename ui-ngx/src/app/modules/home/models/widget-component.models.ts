@@ -39,12 +39,16 @@ import {
   WidgetActionsApi,
   WidgetSubscriptionApi
 } from '@core/api/widget-api.models';
-import { ComponentFactory } from '@angular/core';
+import { ComponentFactory, Type } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RafService } from '@core/services/raf.service';
 import { WidgetTypeId } from '@shared/models/id/widget-type-id';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { WidgetLayout } from '@shared/models/dashboard.models';
+import { DeviceService } from '@core/http/device.service';
+import { AssetService } from '@app/core/http/asset.service';
+import { DialogService } from '@core/services/dialog.service';
+import { CustomDialogService } from '@home/components/widget/dialog/custom-dialog.service';
 
 export interface IWidgetAction {
   name: string;
@@ -98,6 +102,7 @@ export interface WidgetContext {
   customHeaderActions?: Array<WidgetHeaderAction>;
   widgetActions?: Array<WidgetAction>;
 
+  servicesMap?: Map<string, Type<any>>;
 }
 
 export interface IDynamicWidgetComponent {
