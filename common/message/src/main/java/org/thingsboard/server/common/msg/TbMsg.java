@@ -69,49 +69,7 @@ public final class TbMsg implements Serializable {
         this(id, type, originator, metaData, dataType, data, new TbMsgTransactionData(id, originator), UUID.randomUUID(), ruleChainId, ruleNodeId, clusterPartition);
     }
 
-    public static ByteBuffer toBytes(TbMsg msg) {
-        MsgProtos.TbMsgProto.Builder builder = MsgProtos.TbMsgProto.newBuilder();
-        builder.setId(msg.getId().toString());
-        builder.setType(msg.getType());
-        builder.setEntityType(msg.getOriginator().getEntityType().name());
-        builder.setEntityIdMSB(msg.getOriginator().getId().getMostSignificantBits());
-        builder.setEntityIdLSB(msg.getOriginator().getId().getLeastSignificantBits());
-
-        if (msg.getRuleChainId() != null) {
-            builder.setRuleChainIdMSB(msg.getRuleChainId().getId().getMostSignificantBits());
-            builder.setRuleChainIdLSB(msg.getRuleChainId().getId().getLeastSignificantBits());
-        }
-
-        if (msg.getRuleNodeId() != null) {
-            builder.setRuleNodeIdMSB(msg.getRuleNodeId().getId().getMostSignificantBits());
-            builder.setRuleNodeIdLSB(msg.getRuleNodeId().getId().getLeastSignificantBits());
-        }
-
-        if (msg.getMetaData() != null) {
-            builder.setMetaData(MsgProtos.TbMsgMetaDataProto.newBuilder().putAllData(msg.getMetaData().getData()).build());
-        }
-
-        TbMsgTransactionData transactionData = msg.getTransactionData();
-        if (transactionData != null) {
-            MsgProtos.TbMsgTransactionDataProto.Builder transactionBuilder = MsgProtos.TbMsgTransactionDataProto.newBuilder();
-            transactionBuilder.setId(transactionData.getTransactionId().toString());
-            transactionBuilder.setEntityType(transactionData.getOriginatorId().getEntityType().name());
-            transactionBuilder.setEntityIdMSB(transactionData.getOriginatorId().getId().getMostSignificantBits());
-            transactionBuilder.setEntityIdLSB(transactionData.getOriginatorId().getId().getLeastSignificantBits());
-            builder.setTransactionData(transactionBuilder.build());
-        }
-
-        if (msg.getTbMsgPackId() != null) {
-            builder.setTbMsgPackId(msg.getTbMsgPackId().toString());
-        }
-
-        builder.setDataType(msg.getDataType().ordinal());
-        builder.setData(msg.getData());
-        byte[] bytes = builder.build().toByteArray();
-        return ByteBuffer.wrap(bytes);
-    }
-
-    public static byte[] toBytesArray(TbMsg msg) {
+    public static byte[] toByteArray(TbMsg msg) {
         MsgProtos.TbMsgProto.Builder builder = MsgProtos.TbMsgProto.newBuilder();
         builder.setId(msg.getId().toString());
         builder.setType(msg.getType());
@@ -150,32 +108,20 @@ public final class TbMsg implements Serializable {
         builder.setDataType(msg.getDataType().ordinal());
         builder.setData(msg.getData());
         return builder.build().toByteArray();
+
+    }
+
+    public static ByteBuffer toBytes(TbMsg msg) {
+        return ByteBuffer.wrap(toByteArray(msg));
+    }
+
+    public static TbMsg fromBytes(byte[] data) {
+        return fromBytes(ByteBuffer.wrap(data));
     }
 
     public static TbMsg fromBytes(ByteBuffer buffer) {
         try {
             MsgProtos.TbMsgProto proto = MsgProtos.TbMsgProto.parseFrom(buffer.array());
-            TbMsgMetaData metaData = new TbMsgMetaData(proto.getMetaData().getDataMap());
-            EntityId transactionEntityId = EntityIdFactory.getByTypeAndUuid(proto.getTransactionData().getEntityType(),
-                    new UUID(proto.getTransactionData().getEntityIdMSB(), proto.getTransactionData().getEntityIdLSB()));
-            TbMsgTransactionData transactionData = new TbMsgTransactionData(UUID.fromString(proto.getTransactionData().getId()), transactionEntityId);
-            EntityId entityId = EntityIdFactory.getByTypeAndUuid(proto.getEntityType(), new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB()));
-            RuleChainId ruleChainId = new RuleChainId(new UUID(proto.getRuleChainIdMSB(), proto.getRuleChainIdLSB()));
-            RuleNodeId ruleNodeId = null;
-            if (proto.getRuleNodeIdMSB() != 0L && proto.getRuleNodeIdLSB() != 0L) {
-                ruleNodeId = new RuleNodeId(new UUID(proto.getRuleNodeIdMSB(), proto.getRuleNodeIdLSB()));
-            }
-            TbMsgDataType dataType = TbMsgDataType.values()[proto.getDataType()];
-            return new TbMsg(UUID.fromString(proto.getId()), proto.getType(), entityId, metaData, dataType, proto.getData(), transactionData, UUID.fromString(proto.getTbMsgPackId()),
-                    ruleChainId, ruleNodeId, proto.getClusterPartition());
-        } catch (InvalidProtocolBufferException e) {
-            throw new IllegalStateException("Could not parse protobuf for TbMsg", e);
-        }
-    }
-
-    public static TbMsg fromBytesArray(byte[] bytes) {
-        try {
-            MsgProtos.TbMsgProto proto = MsgProtos.TbMsgProto.parseFrom(bytes);
             TbMsgMetaData metaData = new TbMsgMetaData(proto.getMetaData().getDataMap());
             EntityId transactionEntityId = EntityIdFactory.getByTypeAndUuid(proto.getTransactionData().getEntityType(),
                     new UUID(proto.getTransactionData().getEntityIdMSB(), proto.getTransactionData().getEntityIdLSB()));

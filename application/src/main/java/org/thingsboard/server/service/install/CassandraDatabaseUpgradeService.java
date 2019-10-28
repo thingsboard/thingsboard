@@ -276,23 +276,34 @@ public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
                 try {
                     cluster.getSession().execute(updateDeviceTableStmt);
                     Thread.sleep(2500);
-                } catch (InvalidQueryException e) {}
+                } catch (InvalidQueryException e) {
+                }
                 log.info("Schema updated.");
                 break;
-            case "2.4.0":
+            case "2.4.1":
+                log.info("Updating schema ...");
+                String updateAssetTableStmt = "alter table asset add label text";
+                try {
+                    cluster.getSession().execute(updateAssetTableStmt);
+                    Thread.sleep(2500);
+                } catch (InvalidQueryException e) {
+                }
+                log.info("Schema updated.");
+                break;
+            case "2.5.0":
                 log.info("Updating schema ...");
                 String updateTenantTableStmt = "alter table tenant add rule_engine_settings text";
                 try {
                     cluster.getSession().execute(updateTenantTableStmt);
                     Thread.sleep(2500);
-
                     TextPageData<Tenant> tenants = tenantService.findTenants(new TextPageLink(1000));
                     for (Tenant tenant : tenants.getData()) {
                         tenant.setRuleEngineSettings(new RuleEngineSettings("shared", partitionsNumber));
                         tenantService.saveTenant(tenant);
                     }
-                } catch (InvalidQueryException e) {}
-                log.info("Schema updated.");
+                    log.info("Schema updated.");
+                } catch (InvalidQueryException ignored) {
+                }
                 break;
             default:
                 throw new RuntimeException("Unable to upgrade Cassandra database, unsupported fromVersion: " + fromVersion);
@@ -306,7 +317,8 @@ public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
             installCluster.getSession().execute(statement);
             try {
                 Thread.sleep(2500);
-            } catch (InterruptedException e) {}
+            } catch (InterruptedException e) {
+            }
         });
         Thread.sleep(5000);
     }

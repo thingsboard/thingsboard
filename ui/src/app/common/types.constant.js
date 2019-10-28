@@ -369,6 +369,10 @@ export default angular.module('thingsboard.types', [])
                     name: 'import.column-type.type',
                     value: 'type'
                 },
+                label: {
+                    name: 'import.column-type.label',
+                    value: 'label'
+                },
                 clientAttribute: {
                     name: 'import.column-type.client-attribute',
                     value: 'CLIENT_ATTRIBUTE'
