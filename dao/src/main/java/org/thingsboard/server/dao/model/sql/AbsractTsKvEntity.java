@@ -16,7 +16,6 @@
 package org.thingsboard.server.dao.model.sql;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
@@ -27,57 +26,49 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.model.ToData;
 
 import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.Id;
-import javax.persistence.IdClass;
-import javax.persistence.Table;
+import javax.persistence.MappedSuperclass;
 
 import static org.thingsboard.server.dao.model.ModelConstants.BOOLEAN_VALUE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.DOUBLE_VALUE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_ID_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_TYPE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.KEY_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.LONG_VALUE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.STRING_VALUE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.TS_COLUMN;
 
 @Data
-@Entity
-@Table(name = "ts_kv_latest")
-@IdClass(TsKvLatestCompositeKey.class)
-public final class TsKvLatestEntity implements ToData<TsKvEntry> {
+@MappedSuperclass
+public abstract class AbsractTsKvEntity implements ToData<TsKvEntry> {
 
-
-    //TODO: reafctor this and TsKvEntity to avoid code duplicates
-    @Id
-    @Enumerated(EnumType.STRING)
-    @Column(name = ENTITY_TYPE_COLUMN)
-    private EntityType entityType;
+    protected static final String SUM = "SUM";
+    protected static final String AVG = "AVG";
+    protected static final String MIN = "MIN";
+    protected static final String MAX = "MAX";
 
     @Id
     @Column(name = ENTITY_ID_COLUMN)
-    private String entityId;
+    protected String entityId;
+
+    @Id
+    @Column(name = TS_COLUMN)
+    protected Long ts;
 
     @Id
     @Column(name = KEY_COLUMN)
-    private String key;
-
-    @Column(name = TS_COLUMN)
-    private long ts;
+    protected String key;
 
     @Column(name = BOOLEAN_VALUE_COLUMN)
-    private Boolean booleanValue;
+    protected Boolean booleanValue;
 
     @Column(name = STRING_VALUE_COLUMN)
-    private String strValue;
+    protected String strValue;
 
     @Column(name = LONG_VALUE_COLUMN)
-    private Long longValue;
+    protected Long longValue;
 
     @Column(name = DOUBLE_VALUE_COLUMN)
-    private Double doubleValue;
+    protected Double doubleValue;
 
     @Override
     public TsKvEntry toData() {
@@ -92,5 +83,16 @@ public final class TsKvLatestEntity implements ToData<TsKvEntry> {
             kvEntry = new BooleanDataEntry(key, booleanValue);
         }
         return new BasicTsKvEntry(ts, kvEntry);
+    }
+
+    public abstract boolean isNotEmpty();
+
+    protected static boolean isAllNull(Object... args) {
+        for (Object arg : args) {
+            if(arg != null) {
+                return false;
+            }
+        }
+        return true;
     }
 }

@@ -29,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -273,7 +274,7 @@ public class CassandraAuditLogDao extends CassandraAbstractSearchTimeDao<AuditLo
     }
 
     @Override
-    public List<AuditLog> findAuditLogsByTenantIdAndEntityId(UUID tenantId, EntityId entityId, TimePageLink pageLink) {
+    public List<AuditLog> findAuditLogsByTenantIdAndEntityId(UUID tenantId, EntityId entityId, List<ActionType> actionTypes, TimePageLink pageLink) {
         log.trace("Try to find audit logs by tenant [{}], entity [{}] and pageLink [{}]", tenantId, entityId, pageLink);
         List<AuditLogEntity> entities = findPageWithTimeSearch(new TenantId(tenantId), AUDIT_LOG_BY_ENTITY_ID_CF,
                 Arrays.asList(eq(ModelConstants.AUDIT_LOG_TENANT_ID_PROPERTY, tenantId),
@@ -285,7 +286,7 @@ public class CassandraAuditLogDao extends CassandraAbstractSearchTimeDao<AuditLo
     }
 
     @Override
-    public List<AuditLog> findAuditLogsByTenantIdAndCustomerId(UUID tenantId, CustomerId customerId, TimePageLink pageLink) {
+    public List<AuditLog> findAuditLogsByTenantIdAndCustomerId(UUID tenantId, CustomerId customerId, List<ActionType> actionTypes, TimePageLink pageLink) {
         log.trace("Try to find audit logs by tenant [{}], customer [{}] and pageLink [{}]", tenantId, customerId, pageLink);
         List<AuditLogEntity> entities = findPageWithTimeSearch(new TenantId(tenantId), AUDIT_LOG_BY_CUSTOMER_ID_CF,
                 Arrays.asList(eq(ModelConstants.AUDIT_LOG_TENANT_ID_PROPERTY, tenantId),
@@ -296,7 +297,7 @@ public class CassandraAuditLogDao extends CassandraAbstractSearchTimeDao<AuditLo
     }
 
     @Override
-    public List<AuditLog> findAuditLogsByTenantIdAndUserId(UUID tenantId, UserId userId, TimePageLink pageLink) {
+    public List<AuditLog> findAuditLogsByTenantIdAndUserId(UUID tenantId, UserId userId, List<ActionType> actionTypes, TimePageLink pageLink) {
         log.trace("Try to find audit logs by tenant [{}], user [{}] and pageLink [{}]", tenantId, userId, pageLink);
         List<AuditLogEntity> entities = findPageWithTimeSearch(new TenantId(tenantId), AUDIT_LOG_BY_USER_ID_CF,
                 Arrays.asList(eq(ModelConstants.AUDIT_LOG_TENANT_ID_PROPERTY, tenantId),
@@ -307,7 +308,7 @@ public class CassandraAuditLogDao extends CassandraAbstractSearchTimeDao<AuditLo
     }
 
     @Override
-    public List<AuditLog> findAuditLogsByTenantId(UUID tenantId, TimePageLink pageLink) {
+    public List<AuditLog> findAuditLogsByTenantId(UUID tenantId, List<ActionType> actionTypes, TimePageLink pageLink) {
         log.trace("Try to find audit logs by tenant [{}] and pageLink [{}]", tenantId, pageLink);
 
         long minPartition;

@@ -19,16 +19,16 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.TenantId;
-
-import com.fasterxml.jackson.databind.JsonNode;
+import org.thingsboard.server.common.data.rule.RuleEngineSettings;
 
 @EqualsAndHashCode(callSuper = true)
-public class Tenant extends ContactBased<TenantId> implements HasName, HasTenantId {
+public class Tenant extends ContactBased<TenantId> implements HasTenantId {
 
     private static final long serialVersionUID = 8057243243859922101L;
-    
+
     private String title;
     private String region;
+    private RuleEngineSettings ruleEngineSettings;
 
     public Tenant() {
         super();
@@ -37,11 +37,12 @@ public class Tenant extends ContactBased<TenantId> implements HasName, HasTenant
     public Tenant(TenantId id) {
         super(id);
     }
-    
+
     public Tenant(Tenant tenant) {
         super(tenant);
         this.title = tenant.getTitle();
         this.region = tenant.getRegion();
+        this.ruleEngineSettings = tenant.getRuleEngineSettings();
     }
 
     public String getTitle() {
@@ -77,6 +78,14 @@ public class Tenant extends ContactBased<TenantId> implements HasName, HasTenant
         return getTitle();
     }
 
+    public RuleEngineSettings getRuleEngineSettings() {
+        return ruleEngineSettings;
+    }
+
+    public void setRuleEngineSettings(RuleEngineSettings ruleEngineSettings) {
+        this.ruleEngineSettings = ruleEngineSettings;
+    }
+
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
@@ -102,6 +111,8 @@ public class Tenant extends ContactBased<TenantId> implements HasName, HasTenant
         builder.append(phone);
         builder.append(", email=");
         builder.append(email);
+        builder.append(", ruleEngineSettings=");
+        builder.append(ruleEngineSettings);
         builder.append(", createdTime=");
         builder.append(createdTime);
         builder.append(", id=");

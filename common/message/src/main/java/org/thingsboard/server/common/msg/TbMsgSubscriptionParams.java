@@ -22,7 +22,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 public final class TbMsgSubscriptionParams {
 
     private final TenantId tenantId;
-    private final long clusterPartition;
     private final String topic;
     private final long duration;
 

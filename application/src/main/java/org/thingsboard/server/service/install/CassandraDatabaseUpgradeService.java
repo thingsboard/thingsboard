@@ -20,11 +20,17 @@ import com.datastax.driver.core.exceptions.InvalidQueryException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.page.TextPageData;
+import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.rule.RuleEngineSettings;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
 import org.thingsboard.server.dao.cassandra.CassandraInstallCluster;
 import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.util.NoSqlDao;
 import org.thingsboard.server.service.install.cql.CQLStatementsParser;
 import org.thingsboard.server.service.install.cql.CassandraDbHelper;
@@ -63,6 +69,9 @@ public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
 
     private static final String SCHEMA_UPDATE_CQL = "schema_update.cql";
 
+    @Value("${tenant.rule_engine.partitions_number}")
+    private int partitionsNumber;
+
     @Autowired
     private CassandraCluster cluster;
 
@@ -75,6 +84,9 @@ public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
 
     @Autowired
     private InstallScripts installScripts;
+
+    @Autowired
+    private TenantService tenantService;
 
     @Override
     public void upgradeDatabase(String fromVersion) throws Exception {
@@ -264,8 +276,34 @@ public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
                 try {
                     cluster.getSession().execute(updateDeviceTableStmt);
                     Thread.sleep(2500);
-                } catch (InvalidQueryException e) {}
+                } catch (InvalidQueryException e) {
+                }
                 log.info("Schema updated.");
+                break;
+            case "2.4.1":
+                log.info("Updating schema ...");
+                String updateAssetTableStmt = "alter table asset add label text";
+                try {
+                    cluster.getSession().execute(updateAssetTableStmt);
+                    Thread.sleep(2500);
+                } catch (InvalidQueryException e) {
+                }
+                log.info("Schema updated.");
+                break;
+            case "2.5.0":
+                log.info("Updating schema ...");
+                String updateTenantTableStmt = "alter table tenant add rule_engine_settings text";
+                try {
+                    cluster.getSession().execute(updateTenantTableStmt);
+                    Thread.sleep(2500);
+                    TextPageData<Tenant> tenants = tenantService.findTenants(new TextPageLink(1000));
+                    for (Tenant tenant : tenants.getData()) {
+                        tenant.setRuleEngineSettings(new RuleEngineSettings("shared", partitionsNumber));
+                        tenantService.saveTenant(tenant);
+                    }
+                    log.info("Schema updated.");
+                } catch (InvalidQueryException ignored) {
+                }
                 break;
             default:
                 throw new RuntimeException("Unable to upgrade Cassandra database, unsupported fromVersion: " + fromVersion);
@@ -279,7 +317,8 @@ public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
             installCluster.getSession().execute(statement);
             try {
                 Thread.sleep(2500);
-            } catch (InterruptedException e) {}
+            } catch (InterruptedException e) {
+            }
         });
         Thread.sleep(5000);
     }

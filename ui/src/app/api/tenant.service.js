@@ -25,6 +25,7 @@ function TenantService($http, $q) {
         getTenant: getTenant,
         getTenants: getTenants,
         saveTenant: saveTenant,
+        getTenantPartitionsNumber: getTenantPartitionsNumber
     }
 
     return service;
@@ -76,6 +77,17 @@ function TenantService($http, $q) {
         var url = '/api/tenant/' + tenantId;
         $http.delete(url).then(function success() {
             deferred.resolve();
+        }, function fail(response) {
+            deferred.reject(response.data);
+        });
+        return deferred.promise;
+    }
+
+    function getTenantPartitionsNumber () {
+        var deferred = $q.defer();
+        var url = '/api/tenant/partitionsNumber';
+        $http.get(url).then(function success(response) {
+            deferred.resolve(response.data);
         }, function fail(response) {
             deferred.reject(response.data);
         });

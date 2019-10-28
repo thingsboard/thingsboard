@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS asset (
     additional_info varchar,
     customer_id varchar(31),
     name varchar(255),
+    label varchar(255),
     search_text varchar(255),
     tenant_id varchar(31),
     type varchar(255)
@@ -177,7 +178,8 @@ CREATE TABLE IF NOT EXISTS tenant (
     search_text varchar(255),
     state varchar(255),
     title varchar(255),
-    zip varchar(255)
+    zip varchar(255),
+    rule_engine_settings varchar(10000000)
 );
 
 CREATE TABLE IF NOT EXISTS user_credentials (

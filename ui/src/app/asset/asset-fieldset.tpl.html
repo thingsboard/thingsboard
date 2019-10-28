@@ -64,6 +64,10 @@
                 entity-type="types.entityType.asset">
         </tb-entity-subtype-autocomplete>
         <md-input-container class="md-block">
+            <label translate>asset.label</label>
+            <input name="label" ng-model="asset.label">
+        </md-input-container>
+        <md-input-container class="md-block">
             <label translate>asset.description</label>
             <textarea ng-model="asset.additionalInfo.description" rows="2"></textarea>
         </md-input-container>

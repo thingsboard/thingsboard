@@ -40,6 +40,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.ASSET_CUSTOMER_ID_
 import static org.thingsboard.server.dao.model.ModelConstants.ASSET_NAME_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ASSET_TENANT_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ASSET_TYPE_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ASSET_LABEL_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPERTY;
 
 @Data
@@ -60,6 +61,9 @@ public final class AssetEntity extends BaseSqlEntity<Asset> implements SearchTex
 
     @Column(name = ASSET_TYPE_PROPERTY)
     private String type;
+
+    @Column(name = ASSET_LABEL_PROPERTY)
+    private String label;
 
     @Column(name = SEARCH_TEXT_PROPERTY)
     private String searchText;
@@ -84,6 +88,7 @@ public final class AssetEntity extends BaseSqlEntity<Asset> implements SearchTex
         }
         this.name = asset.getName();
         this.type = asset.getType();
+        this.label = asset.getLabel();
         this.additionalInfo = asset.getAdditionalInfo();
     }
 
@@ -113,6 +118,7 @@ public final class AssetEntity extends BaseSqlEntity<Asset> implements SearchTex
         }
         asset.setName(name);
         asset.setType(type);
+        asset.setLabel(label);
         asset.setAdditionalInfo(additionalInfo);
         return asset;
     }

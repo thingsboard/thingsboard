@@ -37,6 +37,7 @@ export default class Subscription {
         this.id = this.ctx.utils.guid();
         this.cafs = {};
         this.registrations = [];
+        this.hasResolvedData = false;
 
         var subscription = this;
         var deferred = this.ctx.$q.defer();
@@ -131,6 +132,13 @@ export default class Subscription {
             }
 
             this.subscriptionTimewindow = null;
+            this.comparisonEnabled = options.comparisonEnabled;
+            if (this.comparisonEnabled) {
+                this.timeForComparison = options.timeForComparison;
+
+                this.comparisonTimeWindow = {};
+                this.timewindowForComparison = null;
+            }
 
             this.units = options.units || '';
             this.decimals = angular.isDefined(options.decimals) ? options.decimals : 2;
@@ -235,12 +243,16 @@ export default class Subscription {
         var subscription = this;
         this.loadStDiff().then(() => {
             if (!subscription.ctx.aliasController) {
+                subscription.hasResolvedData = true;
                 subscription.configureAlarmsData();
                 deferred.resolve();
             } else {
                 subscription.ctx.aliasController.resolveAlarmSource(subscription.alarmSource).then(
                     function success(alarmSource) {
                         subscription.alarmSource = alarmSource;
+                        if (alarmSource) {
+                            subscription.hasResolvedData = true;
+                        }
                         subscription.configureAlarmsData();
                         deferred.resolve();
                     },
@@ -282,16 +294,21 @@ export default class Subscription {
         var subscription = this;
         this.loadStDiff().then(() => {
             if (!subscription.ctx.aliasController) {
+                subscription.hasResolvedData = true;
                 subscription.configureData();
                 deferred.resolve();
             } else {
                 subscription.ctx.aliasController.resolveDatasources(subscription.datasources).then(
                     function success(datasources) {
                         subscription.datasources = datasources;
+                        if (datasources && datasources.length) {
+                            subscription.hasResolvedData = true;
+                        }
                         subscription.configureData();
                         deferred.resolve();
                     },
                     function fail() {
+                        subscription.notifyDataLoaded();
                         deferred.reject();
                     }
                 );
@@ -301,13 +318,28 @@ export default class Subscription {
     }
 
     configureData() {
+        var additionalDatasources = [];
         var dataIndex = 0;
+        var additionalKeysNumber = 0;
         for (var i = 0; i < this.datasources.length; i++) {
             var datasource = this.datasources[i];
+            var additionalDataKeys = [];
+            let datasourceAdditionalKeysNumber = 0;
+
             for (var a = 0; a < datasource.dataKeys.length; a++) {
                 var dataKey = datasource.dataKeys[a];
                 dataKey.hidden = false;
                 dataKey.pattern = angular.copy(dataKey.label);
+
+                if (this.comparisonEnabled && dataKey.settings.comparisonSettings && dataKey.settings.comparisonSettings.showValuesForComparison) {
+                    datasourceAdditionalKeysNumber++;
+                    additionalKeysNumber++;
+                    let additionalDataKey = this.ctx.utils.createAdditionalDataKey(dataKey,datasource, this.timeForComparison,this.datasources,additionalKeysNumber);
+                    dataKey.settings.comparisonSettings.color = additionalDataKey.color;
+
+                    additionalDataKeys.push(additionalDataKey);
+                }
+
                 var datasourceData = {
                     datasource: datasource,
                     dataKey: dataKey,
@@ -331,7 +363,45 @@ export default class Subscription {
                     this.legendData.data.push(legendKeyData);
                 }
             }
+
+            if (datasourceAdditionalKeysNumber > 0) {
+                let additionalDatasource = angular.copy(datasource);
+                additionalDatasource.dataKeys = additionalDataKeys;
+                additionalDatasource.isAdditional = true;
+                additionalDatasources.push(additionalDatasource);
+            }
         }
+
+        for (var j=0; j < additionalDatasources.length; j++) {
+            let additionalDatasource = additionalDatasources[j];
+            for (var k=0; k < additionalDatasource.dataKeys.length; k++) {
+                let additionalDataKey = additionalDatasource.dataKeys[k];
+                var additionalDatasourceData = {
+                    datasource: additionalDatasource,
+                    dataKey: additionalDataKey,
+                    data: []
+                };
+                this.data.push(additionalDatasourceData);
+                this.hiddenData.push({data: []});
+                if (this.displayLegend) {
+                    var additionalLegendKey = {
+                        dataKey: additionalDataKey,
+                        dataIndex: dataIndex++
+                    };
+                    this.legendData.keys.push(additionalLegendKey);
+                    var additionalLegendKeyData = {
+                        min: null,
+                        max: null,
+                        avg: null,
+                        total: null,
+                        hidden: false
+                    };
+                    this.legendData.data.push(additionalLegendKeyData);
+                }
+            }
+        }
+
+        this.datasources = this.datasources.concat(additionalDatasources);
 
         var subscription = this;
         var registration;
@@ -419,6 +489,7 @@ export default class Subscription {
                         } else {
                             subscription.rpcEnabled = subscription.ctx.$scope.widgetEditMode ? true : false;
                         }
+                        subscription.hasResolvedData = subscription.rpcEnabled;
                         subscription.callbacks.rpcStateChanged(subscription);
                         deferred.resolve();
                     } else {
@@ -442,6 +513,7 @@ export default class Subscription {
             } else {
                 this.rpcEnabled = this.ctx.$scope.widgetEditMode ? true : false;
             }
+            this.hasResolvedData = true;
             this.callbacks.rpcStateChanged(this);
             deferred.resolve();
         }
@@ -626,7 +698,7 @@ export default class Subscription {
     updateTimewindow() {
         this.timeWindow.interval = this.subscriptionTimewindow.aggregation.interval || 1000;
         if (this.subscriptionTimewindow.realtimeWindowMs) {
-            this.timeWindow.maxTime = (new Date).getTime() + this.timeWindow.stDiff;
+            this.timeWindow.maxTime = (moment()).valueOf() + this.timeWindow.stDiff;//eslint-disable-line
             this.timeWindow.minTime = this.timeWindow.maxTime - this.subscriptionTimewindow.realtimeWindowMs;
         } else if (this.subscriptionTimewindow.fixedWindow) {
             this.timeWindow.maxTime = this.subscriptionTimewindow.fixedWindow.endTimeMs;
@@ -645,6 +717,26 @@ export default class Subscription {
         }
         this.updateTimewindow();
         return this.subscriptionTimewindow;
+    }
+
+    updateComparisonTimewindow() {
+        this.comparisonTimeWindow.interval = this.timewindowForComparison.aggregation.interval || 1000;
+        if (this.timewindowForComparison.realtimeWindowMs) {
+            this.comparisonTimeWindow.maxTime = moment(this.timeWindow.maxTime).subtract(1, this.timeForComparison).valueOf(); //eslint-disable-line
+            this.comparisonTimeWindow.minTime = this.comparisonTimeWindow.maxTime - this.timewindowForComparison.realtimeWindowMs;
+        } else if (this.timewindowForComparison.fixedWindow) {
+            this.comparisonTimeWindow.maxTime = this.timewindowForComparison.fixedWindow.endTimeMs;
+            this.comparisonTimeWindow.minTime = this.timewindowForComparison.fixedWindow.startTimeMs;
+        }
+    }
+
+    updateSubscriptionForComparison() {
+        if (!this.subscriptionTimewindow) {
+            this.subscriptionTimewindow = this.updateRealtimeSubscription();
+        }
+        this.timewindowForComparison = this.ctx.timeService.createTimewindowForComparison(this.subscriptionTimewindow, this.timeForComparison);
+        this.updateComparisonTimewindow();
+        return this.timewindowForComparison;
     }
 
     dataUpdated(sourceData, datasourceIndex, dataKeyIndex, apply) {
@@ -677,6 +769,9 @@ export default class Subscription {
         if (update) {
             if (this.subscriptionTimewindow && this.subscriptionTimewindow.realtimeWindowMs) {
                 this.updateTimewindow();
+                if (this.timewindowForComparison && this.timewindowForComparison.realtimeWindowMs) {
+                    this.updateComparisonTimewindow();
+                }
             }
             currentData.data = sourceData.data;
             if (this.caulculateLegendData) {
@@ -733,6 +828,9 @@ export default class Subscription {
             this.notifyDataLoading();
             if (this.type === this.ctx.types.widgetType.timeseries.value && this.timeWindowConfig) {
                 this.updateRealtimeSubscription();
+                if (this.comparisonEnabled) {
+                    this.updateSubscriptionForComparison();
+                }
                 if (this.subscriptionTimewindow.fixedWindow) {
                     this.onDataUpdated();
                 }
@@ -763,6 +861,17 @@ export default class Subscription {
                     },
                     datasourceIndex: index
                 };
+
+                if (this.comparisonEnabled && datasource.isAdditional) {
+                    listener.subscriptionTimewindow = this.timewindowForComparison;
+                    listener.updateRealtimeSubscription = function () {
+                        this.subscriptionTimewindow = subscription.updateSubscriptionForComparison();
+                        return this.subscriptionTimewindow;
+                    };
+                    listener.setRealtimeSubscription = function () {
+                      subscription.updateSubscriptionForComparison();
+                    };
+                }
 
                 for (var a = 0; a < datasource.dataKeys.length; a++) {
                     this.data[index + a].data = [];
@@ -879,6 +988,10 @@ export default class Subscription {
         return subscriptionsChanged;
     }
 
+    isDataResolved() {
+        return this.hasResolvedData;
+    }
+
     destroy() {
         this.unsubscribe();
         for (var cafId in this.cafs) {
@@ -892,7 +1005,6 @@ export default class Subscription {
         });
         this.registrations = [];
     }
-
 }
 
 function calculateMin(data) {

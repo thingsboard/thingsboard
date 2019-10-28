@@ -429,8 +429,6 @@ pre.tb-highlight {
             width: 72px;
             min-width: 72px;
             max-width: 72px;
-            overflow: hidden;
-            text-overflow: ellipsis;
             white-space: nowrap;
 
             .md-button {
@@ -481,6 +479,15 @@ pre.tb-highlight {
   color: rgba(0, 0, 0, .54);
 
   @include line-clamp(2, 1.1);
+}
+
+.tb-tooltip-multiline {
+  max-width: 400px;
+  height: auto !important;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  line-height: 1.5;
+  white-space: normal !important;
 }
 
 /***********************

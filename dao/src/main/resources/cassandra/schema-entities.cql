@@ -110,6 +110,7 @@ CREATE TABLE IF NOT EXISTS thingsboard.tenant (
 	phone text,
 	email text,
 	additional_info text,
+	rule_engine_settings text,
 	PRIMARY KEY (id, region)
 );
 
@@ -244,6 +245,7 @@ CREATE TABLE IF NOT EXISTS thingsboard.asset (
     customer_id timeuuid,
     name text,
     type text,
+    label text,
     search_text text,
     additional_info text,
     PRIMARY KEY (id, tenant_id, customer_id, type)

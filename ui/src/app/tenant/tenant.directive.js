@@ -20,8 +20,35 @@ import tenantFieldsetTemplate from './tenant-fieldset.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function TenantDirective($compile, $templateCache, $translate, toast) {
+export default function TenantDirective($compile, $templateCache, $translate, toast, $mdExpansionPanel, tenantService, types) {
+
     var linker = function (scope, element) {
+        scope.ruleEngineSettingsId = (Math.random()*1000).toFixed(0);
+        scope.$mdExpansionPanel = $mdExpansionPanel;
+        scope.$mdExpansionPanel().waitFor(scope.ruleEngineSettingsId).then((instance) => {
+            instance.expand();
+        });
+
+        scope.types = types;
+
+        let tenantPartitionsNumber = 10;
+        scope.changeExecutionType = function() {
+            if (scope.tenant.ruleEngineSettings.executionType == types.ruleEngine.executionTypes.shared.value) {
+                scope.tenant.ruleEngineSettings.partitionsNumber = tenantPartitionsNumber;
+            } else {
+                scope.tenant.ruleEngineSettings.partitionsNumber = undefined;
+            }
+        };
+
+        tenantService.getTenantPartitionsNumber().then(
+            function (response) {
+                if (response) {
+                    tenantPartitionsNumber = response;
+                    scope.tenant.ruleEngineSettings.partitionsNumber = tenantPartitionsNumber;
+                }
+            }
+        );
+
         var template = $templateCache.get(tenantFieldsetTemplate);
         element.html(template);
 

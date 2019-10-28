@@ -119,8 +119,9 @@ database:
   entities:
     type: "${DATABASE_ENTITIES_TYPE:sql}" # cassandra OR sql
   ts:
-    type: "${DATABASE_TS_TYPE:sql}" # cassandra OR sql (for hybrid mode, only this value should be cassandra)
+    type: "${DATABASE_TS_TYPE:sql}" # cassandra, sql, or timescale (for hybrid mode, DATABASE_TS_TYPE value should be cassandra, or timescale)
 
+# note: timescale works only with postgreSQL database for DATABASE_ENTITIES_TYPE.
 
 # Cassandra driver configuration parameters
 cassandra:
@@ -189,10 +190,10 @@ cassandra:
 
 # SQL configuration parameters
 sql:
-    # Specify executor service type used to perform timeseries insert tasks: SINGLE FIXED CACHED
+    # Specify executor service type used to perform timeseries insert tasks: SINGLE or FIXED
     ts_inserts_executor_type: "${SQL_TS_INSERTS_EXECUTOR_TYPE:fixed}"
     # Specify thread pool size for FIXED executor service type
-    ts_inserts_fixed_thread_pool_size: "${SQL_TS_INSERTS_FIXED_THREAD_POOL_SIZE:10}"
+    ts_inserts_fixed_thread_pool_size: "${SQL_TS_INSERTS_FIXED_THREAD_POOL_SIZE:200}"
 
 # Actor system parameters
 actors:
@@ -221,7 +222,7 @@ actors:
       error_persist_frequency: "${ACTORS_RULE_CHAIN_ERROR_FREQUENCY:3000}"
       debug_mode_rate_limits_per_tenant:
         enabled: "${ACTORS_RULE_CHAIN_DEBUG_MODE_RATE_LIMITS_PER_TENANT_ENABLED:true}"
-        configuration: "${ACTORS_RULE_CHAIN_DEBUG_MODE_RATE_LIMITS_PER_TENANT_CONFIGURATION:500:3600}"
+        configuration: "${ACTORS_RULE_CHAIN_DEBUG_MODE_RATE_LIMITS_PER_TENANT_CONFIGURATION:50000:3600}"
     node:
       # Errors for particular actor are persisted once per specified amount of milliseconds
       error_persist_frequency: "${ACTORS_RULE_NODE_ERROR_FREQUENCY:3000}"
@@ -277,10 +278,41 @@ redis:
   # standalone or cluster
   connection:
     type: standalone
+  standalone:
     host: "${REDIS_HOST:localhost}"
     port: "${REDIS_PORT:6379}"
-    db: "${REDIS_DB:0}"
-    password: "${REDIS_PASSWORD:}"
+    useDefaultClientConfig: "${REDIS_USE_DEFAULT_CLIENT_CONFIG:true}"
+    # this value may be used only if you used not default ClientConfig
+    clientName: "${REDIS_CLIENT_NAME:standalone}"
+    # this value may be used only if you used not default ClientConfig
+    connectTimeout: "${REDIS_CLIENT_CONNECT_TIMEOUT:30000}"
+    # this value may be used only if you used not default ClientConfig
+    readTimeout: "${REDIS_CLIENT_READ_TIMEOUT:60000}"
+    # this value may be used only if you used not default ClientConfig
+    usePoolConfig: "${REDIS_CLIENT_USE_POOL_CONFIG:false}"
+  cluster:
+    # Comma-separated list of "host:port" pairs to bootstrap from.
+    nodes: "${REDIS_NODES:}"
+    # Maximum number of redirects to follow when executing commands across the cluster.
+    max-redirects: "${REDIS_MAX_REDIRECTS:12}"
+    useDefaultPoolConfig: "${REDIS_USE_DEFAULT_POOL_CONFIG:true}"
+  # db index
+  db: "${REDIS_DB:0}"
+  # db password
+  password: "${REDIS_PASSWORD:}"
+  # pool config
+  pool_config:
+    maxTotal: "${REDIS_POOL_CONFIG_MAX_TOTAL:128}"
+    maxIdle: "${REDIS_POOL_CONFIG_MAX_IDLE:128}"
+    minIdle: "${REDIS_POOL_CONFIG_MIN_IDLE:16}"
+    testOnBorrow: "${REDIS_POOL_CONFIG_TEST_ON_BORROW:true}"
+    testOnReturn: "${REDIS_POOL_CONFIG_TEST_ON_RETURN:true}"
+    testWhileIdle: "${REDIS_POOL_CONFIG_TEST_WHILE_IDLE:true}"
+    minEvictableMs: "${REDIS_POOL_CONFIG_MIN_EVICTABLE_MS:60000}"
+    evictionRunsMs: "${REDIS_POOL_CONFIG_EVICTION_RUNS_MS:30000}"
+    maxWaitMills: "${REDIS_POOL_CONFIG_MAX_WAIT_MS:60000}"
+    numberTestsPerEvictionRun: "${REDIS_POOL_CONFIG_NUMBER_TESTS_PER_EVICTION_RUN:3}"
+    blockWhenExhausted: "${REDIS_POOL_CONFIG_BLOCK_WHEN_EXHAUSTED:true}"
 
 # Check new version updates parameters
 updates:
@@ -327,6 +359,8 @@ spring:
     url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard}"
     username: "${SPRING_DATASOURCE_USERNAME:postgres}"
     password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
+    hikari:
+      maximumPoolSize: "${SPRING_DATASOURCE_MAXIMUM_POOL_SIZE:50}"
 
 # Audit log parameters
 audit-log:
@@ -369,6 +403,10 @@ state:
   defaultInactivityTimeoutInSec: "${DEFAULT_INACTIVITY_TIMEOUT:10}"
   defaultStateCheckIntervalInSec: "${DEFAULT_STATE_CHECK_INTERVAL:10}"
 
+tenant:
+  rule_engine:
+    partitions_number: "${TENANT_RULE_ENGINE_PARTITIONS_NUMBER:10}"
+
 kafka:
   enabled: true
   bootstrap.servers: "${TB_KAFKA_SERVERS:localhost:9092}"
@@ -390,6 +428,18 @@ kafka:
     auto_commit_interval: "${TB_RULE_ENGINE_AUTO_COMMIT_INTERVAL_MS:100}"
   notifications:
     topic: "${TB_TRANSPORT_NOTIFICATIONS_TOPIC:tb.transport.notifications}"
+  queue:
+    producer:
+      acks: "${TB_KAFKA_PRODUCER_ACKS:all}"
+      buffer_memory: "${TB_KAFKA_PRODUCER_BUFFER_MEMORY:33554432}"
+      retries: "${TB_KAFKA_PRODUCER_RETRIES:1}"
+      batch_size: "${TB_KAFKA_PRODUCER_BATCH_SIZE:16384}"
+      linger_ms: "${TB_KAFKA_PRODUCER_LINGER_MS:1}"
+    consumer:
+      max_poll_records: "${TB_KAFKA_CONSUMER_MAX_POLL_RECORDS:1000}"
+      fetch_max_wait_ms: "${TB_KAFKA_CONSUMER_FETCH_MAX_WAIT_MS:1000}"
+      session_timeout_ms: "${TB_KAFKA_CONSUMER_SESSION_TIMEOUT_MS:10000}"
+      heartbeat_interval_ms: "${TB_KAFKA_CONSUMER_HEARTBEAT_INTERVAL_MS:3000}"
 
 js:
   evaluator: "${JS_EVALUATOR:local}" # local/remote
@@ -488,3 +538,18 @@ transport:
     bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"
     bind_port: "${COAP_BIND_PORT:5683}"
     timeout: "${COAP_TIMEOUT:10000}"
+
+swagger:
+  api_path_regex: "${SWAGGER_API_PATH_REGEX:/api.*}"
+  security_path_regex: "${SWAGGER_SECURITY_PATH_REGEX:/api.*}"
+  non_security_path_regex: "${SWAGGER_NON_SECURITY_PATH_REGEX:/api/noauth.*}"
+  title: "${SWAGGER_TITLE:Thingsboard REST API}"
+  description: "${SWAGGER_DESCRIPTION:For instructions how to authorize requests please visit <a href='http://thingsboard.io/docs/reference/rest-api/'>REST API documentation page</a>.}"
+  contact:
+    name: "${SWAGGER_CONTACT_NAME:Thingsboard team}"
+    url: "${SWAGGER_CONTACT_URL:http://thingsboard.io}"
+    email: "${SWAGGER_CONTACT_EMAIL:info@thingsboard.io}"
+  license:
+    title: "${SWAGGER_LICENSE_TITLE:Apache License Version 2.0}"
+    url: "${SWAGGER_LICENSE_URL:https://github.com/thingsboard/thingsboard/blob/master/LICENSE}"
+  version: "${SWAGGER_VERSION:2.0}"

@@ -236,7 +236,8 @@
         "select-asset": "Varlık seç",
         "no-assets-matching": "'{{entity}}' isimli varlık bulunamadı.",
         "asset-required": "Varlık gerekli",
-        "name-starts-with": "... ile başlayan varlık adı"
+        "name-starts-with": "... ile başlayan varlık adı",
+        "label": "Etiket"
     },
     "attribute": {
         "attributes": "Öznitelikler",

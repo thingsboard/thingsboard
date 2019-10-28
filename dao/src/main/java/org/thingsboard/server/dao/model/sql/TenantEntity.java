@@ -17,12 +17,15 @@ package org.thingsboard.server.dao.model.sql;
 
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.rule.RuleEngineSettings;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
@@ -31,13 +34,17 @@ import org.thingsboard.server.dao.util.mapping.JsonStringType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+import java.io.IOException;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ModelConstants.TENANT_COLUMN_FAMILY_NAME)
+@Slf4j
 public final class TenantEntity extends BaseSqlEntity<Tenant> implements SearchTextEntity<Tenant> {
+
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     @Column(name = ModelConstants.TENANT_TITLE_PROPERTY)
     private String title;
@@ -76,6 +83,9 @@ public final class TenantEntity extends BaseSqlEntity<Tenant> implements SearchT
     @Column(name = ModelConstants.TENANT_ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
 
+    @Column(name = ModelConstants.TENANT_RULE_ENGINE_SETTINGS_PROPERTY)
+    private String ruleEngineSettings;
+
     public TenantEntity() {
         super();
     }
@@ -95,6 +105,11 @@ public final class TenantEntity extends BaseSqlEntity<Tenant> implements SearchT
         this.phone = tenant.getPhone();
         this.email = tenant.getEmail();
         this.additionalInfo = tenant.getAdditionalInfo();
+        try {
+            this.ruleEngineSettings = mapper.writeValueAsString(tenant.getRuleEngineSettings());
+        } catch (IOException e) {
+            log.error("Unable to serialize tenant rule engine settings!", e);
+        }
     }
 
     @Override
@@ -126,6 +141,11 @@ public final class TenantEntity extends BaseSqlEntity<Tenant> implements SearchT
         tenant.setPhone(phone);
         tenant.setEmail(email);
         tenant.setAdditionalInfo(additionalInfo);
+        try {
+            tenant.setRuleEngineSettings(mapper.readValue(ruleEngineSettings, RuleEngineSettings.class));
+        } catch (IOException e) {
+            log.error("Unable to read tenant rule engine settings!", e);
+        }
         return tenant;
     }
 
