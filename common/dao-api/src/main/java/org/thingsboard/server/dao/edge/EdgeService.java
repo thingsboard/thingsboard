@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface EdgeService {
 
@@ -34,6 +35,8 @@ public interface EdgeService {
     ListenableFuture<Edge> findEdgeByIdAsync(TenantId tenantId, EdgeId edgeId);
 
     Edge findEdgeByTenantIdAndName(TenantId tenantId, String name);
+
+    Optional<Edge> findEdgeByRoutingKey(TenantId tenantId, String routingKey);
 
     Edge saveEdge(Edge edge);
 

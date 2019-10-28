@@ -44,6 +44,8 @@ public class Edge extends SearchTextBasedWithAdditionalInfo<EdgeId> implements H
     private String name;
     private String type;
     private String label;
+    private String routingKey;
+    private String secret;
     private transient JsonNode configuration;
 
     public Edge() {
@@ -60,6 +62,8 @@ public class Edge extends SearchTextBasedWithAdditionalInfo<EdgeId> implements H
         this.customerId = edge.getCustomerId();
         this.type = edge.getType();
         this.name = edge.getName();
+        this.routingKey = edge.getRoutingKey();
+        this.secret = edge.getSecret();
         this.configuration = edge.getConfiguration();
     }
 

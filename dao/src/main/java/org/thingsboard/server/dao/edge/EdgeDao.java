@@ -116,5 +116,12 @@ public interface EdgeDao extends Dao<Edge> {
      */
     ListenableFuture<List<EntitySubtype>> findTenantEdgeTypesAsync(UUID tenantId);
 
+    /**
+     * Find edge by routing Key.
+     *
+     * @param routingKey the edge routingKey
+     * @return the optional edge object
+     */
+    Optional<Edge> findByRoutingKey(UUID tenantId, String routingKey);
 
 }

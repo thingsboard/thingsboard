@@ -46,6 +46,7 @@ import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
+import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
 import javax.annotation.Nullable;
@@ -109,6 +110,13 @@ public class BaseEdgeService extends AbstractEntityService implements EdgeServic
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         Optional<Edge> edgeOpt = edgeDao.findEdgeByTenantIdAndName(tenantId.getId(), name);
         return edgeOpt.orElse(null);
+    }
+
+    @Override
+    public Optional<Edge> findEdgeByRoutingKey(TenantId tenantId, String routingKey) {
+        log.trace("Executing findEdgeByRoutingKey [{}]", routingKey);
+        Validator.validateString(routingKey, "Incorrect edge routingKey for search request.");
+        return edgeDao.findByRoutingKey(tenantId.getId(), routingKey);
     }
 
     @CacheEvict(cacheNames = EDGE_CACHE, key = "{#edge.tenantId, #edge.name}")

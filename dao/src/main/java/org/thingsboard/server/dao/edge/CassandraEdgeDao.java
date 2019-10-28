@@ -86,4 +86,9 @@ public class CassandraEdgeDao extends CassandraAbstractSearchTextDao<EdgeEntity,
     public ListenableFuture<List<EntitySubtype>> findTenantEdgeTypesAsync(UUID tenantId) {
         return null;
     }
+
+    @Override
+    public Optional<Edge> findByRoutingKey(UUID tenantId, String routingKey) {
+        return Optional.empty();
+    }
 }

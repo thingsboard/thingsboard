@@ -361,7 +361,8 @@ public class ModelConstants {
     public static final String EDGE_CONFIGURATION_PROPERTY = "configuration";
     public static final String EDGE_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
 
-    public static final String EDGE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "edge_by_tenant_and_search_text";
+    public static final String EDGE_ROUTING_KEY_PROPERTY = "routing_key";
+    public static final String EDGE_SECRET_PROPERTY = "secret";
 
 
     /**

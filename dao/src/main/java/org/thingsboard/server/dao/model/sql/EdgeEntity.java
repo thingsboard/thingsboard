@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -35,11 +35,12 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 
-import static org.thingsboard.server.dao.model.ModelConstants.ASSET_CUSTOMER_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_COLUMN_FAMILY_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_CUSTOMER_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_LABEL_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_NAME_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.EDGE_ROUTING_KEY_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.EDGE_SECRET_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_TENANT_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_TYPE_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPERTY;
@@ -69,6 +70,12 @@ public class EdgeEntity extends BaseSqlEntity<Edge> implements SearchTextEntity<
     @Column(name = SEARCH_TEXT_PROPERTY)
     private String searchText;
 
+    @Column(name = EDGE_ROUTING_KEY_PROPERTY)
+    private String routingKey;
+
+    @Column(name = EDGE_SECRET_PROPERTY)
+    private String secret;
+
     @Type(type = "json")
     @Column(name = ModelConstants.EDGE_CONFIGURATION_PROPERTY)
     private JsonNode configuration;
@@ -94,6 +101,8 @@ public class EdgeEntity extends BaseSqlEntity<Edge> implements SearchTextEntity<
         this.type = edge.getType();
         this.name = edge.getName();
         this.label = edge.getLabel();
+        this.routingKey = edge.getRoutingKey();
+        this.secret = edge.getSecret();
         this.configuration = edge.getConfiguration();
         this.additionalInfo = edge.getAdditionalInfo();
     }
@@ -125,6 +134,8 @@ public class EdgeEntity extends BaseSqlEntity<Edge> implements SearchTextEntity<
         edge.setType(type);
         edge.setName(name);
         edge.setLabel(label);
+        edge.setRoutingKey(routingKey);
+        edge.setSecret(secret);
         edge.setConfiguration(configuration);
         edge.setAdditionalInfo(additionalInfo);
         return edge;

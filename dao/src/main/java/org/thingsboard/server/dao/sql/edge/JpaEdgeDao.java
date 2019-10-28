@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -124,6 +124,12 @@ public class JpaEdgeDao extends JpaAbstractSearchTextDao<EdgeEntity, Edge> imple
     @Override
     public ListenableFuture<List<EntitySubtype>> findTenantEdgeTypesAsync(UUID tenantId) {
         return service.submit(() -> convertTenantEdgeTypesToDto(tenantId, edgeRepository.findTenantEdgeTypes(fromTimeUUID(tenantId))));
+    }
+
+    @Override
+    public Optional<Edge> findByRoutingKey(UUID tenantId, String routingKey) {
+        Edge edge = DaoUtil.getData(edgeRepository.findByRoutingKey(routingKey));
+        return Optional.ofNullable(edge);
     }
 
     private List<EntitySubtype> convertTenantEdgeTypesToDto(UUID tenantId, List<String> types) {

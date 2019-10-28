@@ -257,6 +257,8 @@ CREATE TABLE IF NOT EXISTS edge (
     type varchar(255),
     name varchar(255),
     label varchar(255),
+    routing_key varchar(255),
+    secret varchar(255),
     search_text varchar(255),
     tenant_id varchar(31)
 );

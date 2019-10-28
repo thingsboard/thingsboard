@@ -777,7 +777,13 @@
         "unassign-from-edge": "Unassign from edge",
         "dashboards": "Edge Dashboards",
         "manage-edge-rulechains": "Manage edge rule chains",
-        "rulechains": "Edge Rule Chains"
+        "rulechains": "Edge Rule Chains",
+        "edge-key": "Edge key",
+        "copy-edge-key": "Copy edge key",
+        "edge-key-copied-message": "Edge key has been copied to clipboard",
+        "edge-secret": "Edge secret",
+        "copy-edge-secret": "Copy edge secret",
+        "edge-secret-copied-message": "Edge secret has been copied to clipboard"
     },
     "error": {
         "unable-to-connect": "Unable to connect to the server! Please check your internet connection.",

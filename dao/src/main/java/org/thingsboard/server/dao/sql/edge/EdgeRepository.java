@@ -76,4 +76,5 @@ public interface EdgeRepository extends CrudRepository<EdgeEntity, String> {
 
     List<EdgeEntity> findEdgesByTenantIdAndIdIn(String tenantId, List<String> edgeIds);
 
+    EdgeEntity findByRoutingKey(String routingKey);
 }

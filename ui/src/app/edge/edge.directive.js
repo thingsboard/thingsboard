@@ -20,7 +20,7 @@ import edgeFieldsetTemplate from './edge-fieldset.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function EdgeDirective($compile, $templateCache, $translate, $mdDialog, $document, toast, types, customerService) {
+export default function EdgeDirective($compile, $templateCache, $translate, $mdDialog, $document, utils, toast, types, customerService) {
     var linker = function (scope, element) {
         var template = $templateCache.get(edgeFieldsetTemplate);
         element.html(template);
@@ -32,6 +32,10 @@ export default function EdgeDirective($compile, $templateCache, $translate, $mdD
 
         scope.$watch('edge', function(newVal) {
             if (newVal) {
+                if (!scope.edge.id) {
+                    scope.edge.routingKey = utils.guid('');
+                    scope.edge.secret = generateSecret(20);
+                }
                 if (scope.edge.customerId && scope.edge.customerId.id !== types.id.nullUid) {
                     scope.isAssignedToCustomer = true;
                     customerService.getShortCustomerInfo(scope.edge.customerId.id).then(
@@ -48,11 +52,37 @@ export default function EdgeDirective($compile, $templateCache, $translate, $mdD
             }
         });
 
+        function generateSecret(length) {
+            if (angular.isUndefined(length) || length == null) {
+                length = 1;
+            }
+            var l = length > 10 ? 10 : length;
+            var str = Math.random().toString(36).substr(2, l);
+            if(str.length >= length){
+                return str;
+            }
+            return str.concat(generateSecret(length - str.length));
+        }
+
         scope.onEdgeIdCopied = function() {
             toast.showSuccess($translate.instant('edge.id-copied-message'), 750, angular.element(element).parent().parent(), 'bottom left');
         };
 
         $compile(element.contents())(scope);
+
+        scope.onEdgeInfoCopied = function(type) {
+            let translateInstant = "";
+            switch (type) {
+                case 'key':
+                    translateInstant = "edge.edge-key-copied-message";
+                    break;
+                case 'secret':
+                    translateInstant = "edge.edge-secret-copied-message";
+                    break;
+            }
+            toast.showSuccess($translate.instant(translateInstant), 750, angular.element(element).parent().parent(), 'top left');
+        };
+
 
     };
     return {
