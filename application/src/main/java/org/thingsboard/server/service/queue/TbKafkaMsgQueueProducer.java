@@ -48,7 +48,7 @@ public class TbKafkaMsgQueueProducer implements TbMsgQueueProducer {
 
     @Override
     public void publish(TbMsgPublishParams publishParams, TbMsg msg, FutureCallback<Void> callback) {
-        byte[] data = TbMsg.toBytesArray(msg);
+        byte[] data = TbMsg.toByteArray(msg);
         producer.send(new ProducerRecord<>(publishParams.getTopic(), msg.getOriginator().toString(), data), new ProducerCallbackAdaptor(callback));
     }
 

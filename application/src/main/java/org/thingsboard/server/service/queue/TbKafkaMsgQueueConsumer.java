@@ -90,7 +90,7 @@ public class TbKafkaMsgQueueConsumer implements TbMsgQueueConsumer {
 
                     if (record.topic().equals(subscriptionParams.getTopic())) {
 
-                        TbMsg msg = TbMsg.fromBytesArray(record.value());
+                        TbMsg msg = TbMsg.fromBytes(record.value());
                         tbMsgs.add(msg.copy(msg.getId(), tbMsgPackId, msg.getRuleChainId(), msg.getRuleNodeId(), msg.getClusterPartition()));
 
                         set.add(msg.getId());
