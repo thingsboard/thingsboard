@@ -23,12 +23,24 @@ import io.grpc.stub.StreamObserver;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.edge.gen.EdgeProtos;
-import org.thingsboard.server.common.edge.gen.EdgeRpcServiceGrpc;
+import org.thingsboard.edge.exception.EdgeConnectionException;
+import org.thingsboard.server.gen.edge.CloudDownlinkDataProto;
+import org.thingsboard.server.gen.edge.ConnectRequestMsg;
+import org.thingsboard.server.gen.edge.ConnectResponseCode;
+import org.thingsboard.server.gen.edge.ConnectResponseMsg;
+import org.thingsboard.server.gen.edge.EdgeConfigurationProto;
+import org.thingsboard.server.gen.edge.EdgeRpcServiceGrpc;
+import org.thingsboard.server.gen.edge.RequestMsg;
+import org.thingsboard.server.gen.edge.RequestMsgType;
+import org.thingsboard.server.gen.edge.ResponseMsg;
+import org.thingsboard.server.gen.edge.UplinkMsg;
+import org.thingsboard.server.gen.edge.UplinkResponseMsg;
 
 import javax.net.ssl.SSLException;
 import java.io.File;
 import java.net.URISyntaxException;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 @Service
 @Slf4j
@@ -47,10 +59,15 @@ public class EdgeGrpcClient implements EdgeRpcClient {
 
     private ManagedChannel channel;
 
-    private StreamObserver<EdgeProtos.UplinkMsg> inputStream;
+    private StreamObserver<RequestMsg> inputStream;
 
     @Override
-    public void connect() {
+    public void connect(String edgeKey,
+                        String edgeSecret,
+                        Consumer<UplinkResponseMsg> onUplinkResponse,
+                        Consumer<EdgeConfigurationProto> onEdgeUpdate,
+                        Consumer<CloudDownlinkDataProto> onDownlink,
+                        Consumer<Exception> onError) {
         NettyChannelBuilder builder = NettyChannelBuilder.forAddress(rpcHost, rpcPort).usePlaintext();
         if (sslEnabled) {
             try {
@@ -62,23 +79,62 @@ public class EdgeGrpcClient implements EdgeRpcClient {
         }
         channel = builder.build();
         EdgeRpcServiceGrpc.EdgeRpcServiceStub stub = EdgeRpcServiceGrpc.newStub(channel);
-        StreamObserver<EdgeProtos.DownlinkMsg> responseObserver = new StreamObserver<EdgeProtos.DownlinkMsg>() {
+        log.info("[{}] Sending a connect request to the TB!", edgeKey);
+        this.inputStream = stub.handleMsgs(initOutputStream(edgeKey, onUplinkResponse, onEdgeUpdate, onDownlink, onError));
+        this.inputStream.onNext(RequestMsg.newBuilder()
+                .setMsgType(RequestMsgType.CONNECT_RPC_MESSAGE)
+                .setConnectRequestMsg(ConnectRequestMsg.newBuilder().setEdgeRoutingKey(edgeKey).setEdgeSecret(edgeSecret).build())
+                .build());
+    }
+
+    @Override
+    public void disconnect() throws InterruptedException {
+        inputStream.onCompleted();
+        if (channel != null) {
+            channel.shutdown().awaitTermination(timeoutSecs, TimeUnit.SECONDS);
+        }
+    }
+
+    @Override
+    public void sendUplinkMsg(UplinkMsg msg) {
+        this.inputStream.onNext(RequestMsg.newBuilder()
+                .setMsgType(RequestMsgType.UPLINK_RPC_MESSAGE)
+                .setUplinkMsg(msg)
+                .build());
+    }
+
+    private StreamObserver<ResponseMsg> initOutputStream(String edgeKey, Consumer<UplinkResponseMsg> onUplinkResponse, Consumer<EdgeConfigurationProto> onEdgeUpdate, Consumer<CloudDownlinkDataProto> onDownlink, Consumer<Exception> onError) {
+        return new StreamObserver<ResponseMsg>() {
             @Override
-            public void onNext(EdgeProtos.DownlinkMsg downlinkMsg) {
-                log.info("onNext [{}]", downlinkMsg);
+            public void onNext(ResponseMsg responseMsg) {
+                if (responseMsg.hasConnectResponseMsg()) {
+                    ConnectResponseMsg connectResponseMsg = responseMsg.getConnectResponseMsg();
+                    if (connectResponseMsg.getResponseCode().equals(ConnectResponseCode.ACCEPTED)) {
+                        log.info("[{}] Configuration received: {}", edgeKey, connectResponseMsg.getConfiguration());
+                        onEdgeUpdate.accept(connectResponseMsg.getConfiguration());
+                    } else {
+                        log.error("[{}] Failed to establish the connection! Code: {}. Error message: {}.", edgeKey, connectResponseMsg.getResponseCode(), connectResponseMsg.getErrorMsg());
+                        onError.accept(new EdgeConnectionException("Failed to establish the connection! Response code: " + connectResponseMsg.getResponseCode().name()));
+                    }
+                } else if (responseMsg.hasUplinkResponseMsg()) {
+                    log.debug("[{}] Uplink response message received {}", edgeKey, responseMsg.getUplinkResponseMsg());
+                    onUplinkResponse.accept(responseMsg.getUplinkResponseMsg());
+                } else if (responseMsg.hasDownlinkMsg()) {
+                    log.debug("[{}] Downlink message received for device {}", edgeKey, responseMsg.getDownlinkMsg().getCloudData().getDeviceName());
+                    onDownlink.accept(responseMsg.getDownlinkMsg().getCloudData());
+                }
             }
 
             @Override
-            public void onError(Throwable throwable) {
-
+            public void onError(Throwable t) {
+                log.debug("[{}] The rpc session received an error!", edgeKey, t);
+                onError.accept(new RuntimeException(t));
             }
 
             @Override
             public void onCompleted() {
-
+                log.debug("[{}] The rpc session was closed!", edgeKey);
             }
         };
-        inputStream = stub.sendUplink(responseObserver);
-        inputStream.onNext(EdgeProtos.UplinkMsg.newBuilder().setMsgType(EdgeProtos.UplinkMsgType.DELETE_DEVICE_MESSAGE).build());
     }
 }

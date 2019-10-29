@@ -15,35 +15,90 @@
  */
 syntax = "proto3";
 
-option java_package = "org.thingsboard.server.common.edge.gen";
+option java_package = "org.thingsboard.server.gen.edge";
+option java_multiple_files = true;
 option java_outer_classname = "EdgeProtos";
 
 package edge;
 
-// Interface exported by the ThingsBoard PRC Edge.
+// Interface exported by the ThingsBoard Edge Transport.
 service EdgeRpcService {
 
-  rpc sendUplink(stream UplinkMsg) returns (stream DownlinkMsg) {}
+  rpc handleMsgs(stream RequestMsg) returns (stream ResponseMsg) {}
 
 }
 
 /**
  * Data Structures;
  */
+message RequestMsg {
+  RequestMsgType msgType = 1;
+  ConnectRequestMsg connectRequestMsg = 2;
+  UplinkMsg uplinkMsg = 3;
+}
+
+message ResponseMsg {
+  ResponseMsgType msgType = 1;
+  ConnectResponseMsg connectResponseMsg = 2;
+  UplinkResponseMsg uplinkResponseMsg = 3;
+  DownlinkMsg downlinkMsg = 4;
+}
+
+
+enum RequestMsgType {
+  CONNECT_RPC_MESSAGE = 0;
+  UPLINK_RPC_MESSAGE = 1;
+}
+
+message ConnectRequestMsg {
+  string edgeRoutingKey = 1;
+  string edgeSecret = 2;
+}
+
+enum ConnectResponseCode {
+  ACCEPTED = 0;
+  BAD_CREDENTIALS = 1;
+  SERVER_UNAVAILABLE = 2;
+}
+
+message ConnectResponseMsg {
+  ConnectResponseCode responseCode = 1;
+  string errorMsg = 2;
+  EdgeConfigurationProto configuration = 3;
+}
+
+message EdgeConfigurationProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  string name = 5;
+  string routingKey = 6;
+  string type = 7;
+}
+
+enum ResponseMsgType {
+  SAVE_ENTITY_MESSAGE = 0;
+  DELETE_ENTITY_MESSAGE = 1;
+}
+
+message CloudDownlinkDataProto {
+  string deviceName = 1;
+  string deviceType = 2;
+  bytes tbMsg = 3;
+}
+
+/**
+ * Main Messages;
+ */
+
 message UplinkMsg {
-  UplinkMsgType msgType = 1;
+  int32 uplinkMsgId = 1;
+}
+
+message UplinkResponseMsg {
+  bool success = 1;
+  string errorMsg = 2;
 }
 
 message DownlinkMsg {
-  DownlinkMsgType msgType = 1;
-}
-
-enum UplinkMsgType {
-  SAVE_DEVICE_MESSAGE = 0;
-  DELETE_DEVICE_MESSAGE = 1;
-}
-
-enum DownlinkMsgType {
-  SAVE_ENTITY_MESSAGE = 0;
-  DELETE_ENTITY_MESSAGE = 1;
+  CloudDownlinkDataProto cloudData = 1;
 }

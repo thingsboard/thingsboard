@@ -15,7 +15,24 @@
  */
 package org.thingsboard.edge.rpc;
 
+import org.thingsboard.server.gen.edge.CloudDownlinkDataProto;
+import org.thingsboard.server.gen.edge.EdgeConfigurationProto;
+import org.thingsboard.server.gen.edge.UplinkMsg;
+import org.thingsboard.server.gen.edge.UplinkResponseMsg;
+
+import java.util.function.Consumer;
+
 public interface EdgeRpcClient {
 
-    void connect();
+    void connect(String integrationKey,
+                 String integrationSecret,
+                 Consumer<UplinkResponseMsg> onUplinkResponse,
+                 Consumer<EdgeConfigurationProto> onEdgeUpdate,
+                 Consumer<CloudDownlinkDataProto> onDownlink,
+                 Consumer<Exception> onError);
+
+
+    void disconnect() throws InterruptedException;
+
+    void sendUplinkMsg(UplinkMsg uplinkMsg) throws InterruptedException;
 }

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,21 +20,29 @@ import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.edge.gen.EdgeProtos;
-import org.thingsboard.server.common.edge.gen.EdgeRpcServiceGrpc;
+import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.gen.edge.EdgeRpcServiceGrpc;
+import org.thingsboard.server.gen.edge.RequestMsg;
+import org.thingsboard.server.gen.edge.ResponseMsg;
+import org.thingsboard.server.service.edge.EdgeContextComponent;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @Slf4j
 @ConditionalOnProperty(prefix = "edges.rpc", value = "enabled", havingValue = "true")
 public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase {
+
+    private final Map<EdgeId, EdgeGrpcSession> sessions = new ConcurrentHashMap<>();
 
     @Value("${edges.rpc.port}")
     private int rpcPort;
@@ -44,6 +52,9 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase {
     private String certFileResource;
     @Value("${edges.rpc.ssl.privateKey}")
     private String privateKeyResource;
+
+    @Autowired
+    private EdgeContextComponent ctx;
 
     private Server server;
 
@@ -81,24 +92,15 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase {
     }
 
     @Override
-    public StreamObserver<EdgeProtos.UplinkMsg> sendUplink(StreamObserver<EdgeProtos.DownlinkMsg> responseObserver) {
-        log.info("sendUplink [{}]", responseObserver);
-        return new StreamObserver<EdgeProtos.UplinkMsg>() {
+    public StreamObserver<RequestMsg> handleMsgs(StreamObserver<ResponseMsg> responseObserver) {
+        return new EdgeGrpcSession(ctx, responseObserver, this::onEdgeConnect, this::onEdgeDisconnect).getInputStream();
+    }
 
-            @Override
-            public void onNext(EdgeProtos.UplinkMsg uplinkMsg) {
-                log.info("onNext [{}]", uplinkMsg);
-            }
+    private void onEdgeConnect(EdgeId edgeId, EdgeGrpcSession edgeGrpcSession) {
+        sessions.put(edgeId, edgeGrpcSession);
+    }
 
-            @Override
-            public void onError(Throwable throwable) {
-                log.info("onError", throwable);
-            }
-
-            @Override
-            public void onCompleted() {
-                log.info("onCompleted");
-            }
-        };
+    private void onEdgeDisconnect(EdgeId edgeId) {
+        sessions.remove(edgeId);
     }
 }
