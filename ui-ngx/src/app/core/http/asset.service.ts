@@ -21,7 +21,8 @@ import {HttpClient} from '@angular/common/http';
 import {PageLink} from '@shared/models/page/page-link';
 import {PageData} from '@shared/models/page/page-data';
 import {EntitySubtype} from '@app/shared/models/entity-type.models';
-import {Asset, AssetInfo} from '@app/shared/models/asset.models';
+import {Asset, AssetInfo, AssetSearchQuery} from '@app/shared/models/asset.models';
+import { Device, DeviceSearchQuery } from '@shared/models/device.models';
 
 @Injectable({
   providedIn: 'root'
@@ -79,6 +80,11 @@ export class AssetService {
 
   public unassignAssetFromCustomer(assetId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false) {
     return this.http.delete(`/api/customer/asset/${assetId}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  }
+
+  public findByQuery(query: AssetSearchQuery,
+                     ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Array<Asset>> {
+    return this.http.post<Array<Asset>>('/api/assets', query, defaultHttpOptions(ignoreLoading, ignoreErrors));
   }
 
 }

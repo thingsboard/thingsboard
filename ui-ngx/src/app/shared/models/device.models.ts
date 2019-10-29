@@ -19,6 +19,7 @@ import {DeviceId} from './id/device-id';
 import {TenantId} from '@shared/models/id/tenant-id';
 import {CustomerId} from '@shared/models/id/customer-id';
 import {DeviceCredentialsId} from '@shared/models/id/device-credentials-id';
+import { EntitySearchQuery } from '@shared/models/relation.models';
 
 export interface Device extends BaseData<DeviceId> {
   tenantId: TenantId;
@@ -51,4 +52,8 @@ export interface DeviceCredentials extends BaseData<DeviceCredentialsId> {
   credentialsType: DeviceCredentialsType;
   credentialsId: string;
   credentialsValue: string;
+}
+
+export interface DeviceSearchQuery extends EntitySearchQuery {
+  deviceTypes: Array<string>;
 }

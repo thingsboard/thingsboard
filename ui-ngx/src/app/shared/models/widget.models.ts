@@ -22,6 +22,7 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { AlarmSearchStatus } from '@shared/models/alarm.models';
 import { Data } from '@angular/router';
 import { DataKeyType } from './telemetry/telemetry.models';
+import { EntityId } from '@shared/models/id/entity-id';
 
 export enum widgetType {
   timeseries = 'timeseries',
@@ -38,6 +39,9 @@ export interface WidgetTypeTemplate {
 
 export interface WidgetTypeData {
   name: string;
+  icon: string;
+  isMdiIcon?: boolean;
+  configHelpLinkId: string;
   template: WidgetTypeTemplate;
 }
 
@@ -47,6 +51,8 @@ export const widgetTypesData = new Map<widgetType, WidgetTypeData>(
       widgetType.timeseries,
       {
         name: 'widget.timeseries',
+        icon: 'timeline',
+        configHelpLinkId: 'widgetsConfigTimeseries',
         template: {
           bundleAlias: 'charts',
           alias: 'basic_timeseries'
@@ -57,6 +63,8 @@ export const widgetTypesData = new Map<widgetType, WidgetTypeData>(
       widgetType.latest,
       {
         name: 'widget.latest-values',
+        icon: 'track_changes',
+        configHelpLinkId: 'widgetsConfigLatest',
         template: {
           bundleAlias: 'cards',
           alias: 'attributes_card'
@@ -67,6 +75,9 @@ export const widgetTypesData = new Map<widgetType, WidgetTypeData>(
       widgetType.rpc,
       {
         name: 'widget.rpc',
+        icon: 'mdi:developer-board',
+        configHelpLinkId: 'widgetsConfigRpc',
+        isMdiIcon: true,
         template: {
           bundleAlias: 'gpio_widgets',
           alias: 'basic_gpio_control'
@@ -77,6 +88,8 @@ export const widgetTypesData = new Map<widgetType, WidgetTypeData>(
       widgetType.alarm,
       {
         name: 'widget.alarm',
+        icon: 'error',
+        configHelpLinkId: 'widgetsConfigAlarm',
         template: {
           bundleAlias: 'alarm_widgets',
           alias: 'alarms_table'
@@ -87,6 +100,8 @@ export const widgetTypesData = new Map<widgetType, WidgetTypeData>(
       widgetType.static,
       {
         name: 'widget.static',
+        icon: 'font_download',
+        configHelpLinkId: 'widgetsConfigStatic',
         template: {
           bundleAlias: 'cards',
           alias: 'html_card'
@@ -106,7 +121,7 @@ export interface WidgetActionSource {
   multiple: boolean;
 }
 
-export const widgetActionSources: {[key: string]: WidgetActionSource} = {
+export const widgetActionSources: {[acionSourceId: string]: WidgetActionSource} = {
     headerButton:
     {
       name: 'widget-action.header-button',
@@ -121,8 +136,8 @@ export interface WidgetTypeDescriptor {
   templateHtml: string;
   templateCss: string;
   controllerScript: string;
-  settingsSchema?: string;
-  dataKeySettingsSchema?: string;
+  settingsSchema?: string | any;
+  dataKeySettingsSchema?: string | any;
   defaultConfig: string;
   sizeX: number;
   sizeY: number;
@@ -138,10 +153,10 @@ export interface WidgetTypeParameters {
 
 export interface WidgetControllerDescriptor {
   widgetTypeFunction?: any;
-  settingsSchema?: string;
-  dataKeySettingsSchema?: string;
+  settingsSchema?: string | any;
+  dataKeySettingsSchema?: string | any;
   typeParameters?: WidgetTypeParameters;
-  actionSources?: {[key: string]: WidgetActionSource};
+  actionSources?: {[actionSourceId: string]: WidgetActionSource};
 }
 
 export interface WidgetType extends BaseData<WidgetTypeId> {
@@ -189,6 +204,17 @@ export interface LegendConfig {
   showTotal: boolean;
 }
 
+export function defaultLegendConfig(wType: widgetType): LegendConfig {
+  return {
+    direction: LegendDirection.column,
+    position: LegendPosition.bottom,
+    showMin: false,
+    showMax: false,
+    showAvg: wType === widgetType.timeseries,
+    showTotal: false
+  };
+}
+
 export interface KeyInfo {
   name: string;
   label?: string;
@@ -213,9 +239,17 @@ export enum DatasourceType {
   entity = 'entity'
 }
 
+export const datasourceTypeTranslationMap = new Map<DatasourceType, string>(
+  [
+    [ DatasourceType.function, 'function.function' ],
+    [ DatasourceType.entity, 'entity.entity' ]
+  ]
+);
+
 export interface Datasource {
-  type: DatasourceType;
+  type?: DatasourceType | any;
   name?: string;
+  aliasName?: string;
   dataKeys?: Array<DataKey>;
   entityType?: EntityType;
   entityId?: string;
@@ -223,6 +257,10 @@ export interface Datasource {
   entityAliasId?: string;
   unresolvedStateEntity?: boolean;
   dataReceived?: boolean;
+  entity?: BaseData<EntityId>;
+  entityLabel?: string;
+  entityDescription?: string;
+  generated?: boolean;
   [key: string]: any;
   // TODO:
 }
@@ -256,11 +294,6 @@ export interface LegendData {
   data: Array<LegendKeyData>;
 }
 
-export interface WidgetConfigSettings {
-  [key: string]: any;
-  // TODO:
-}
-
 export enum WidgetActionType {
   openDashboardState = 'openDashboardState',
   updateDashboardState = 'updateDashboardState',
@@ -279,7 +312,15 @@ export const widgetActionTypeTranslationMap = new Map<WidgetActionType, string>(
   ]
 );
 
-export interface WidgetActionDescriptor {
+export interface CustomActionDescriptor {
+  customFunction?: string;
+  customResources?: Array<WidgetResource>;
+  customHtml?: string;
+  customCss?: string;
+}
+
+export interface WidgetActionDescriptor extends CustomActionDescriptor {
+  id: string;
   name: string;
   icon: string;
   displayName?: string;
@@ -289,10 +330,6 @@ export interface WidgetActionDescriptor {
   openRightLayout?: boolean;
   setEntityId?: boolean;
   stateEntityParamName?: string;
-  customFunction?: string;
-  customResources?: Array<WidgetResource>;
-  customHtml?: string;
-  customCss?: string;
 }
 
 export interface WidgetConfig {
@@ -301,7 +338,7 @@ export interface WidgetConfig {
   showTitle?: boolean;
   showTitleIcon?: boolean;
   iconColor?: string;
-  iconSize?: number;
+  iconSize?: string;
   dropShadow?: boolean;
   enableFullscreen?: boolean;
   useDashboardTimewindow?: boolean;
@@ -320,7 +357,7 @@ export interface WidgetConfig {
   units?: string;
   decimals?: number;
   actions?: {[actionSourceId: string]: Array<WidgetActionDescriptor>};
-  settings?: WidgetConfigSettings;
+  settings?: any;
   alarmSource?: Datasource;
   alarmSearchStatus?: AlarmSearchStatus;
   alarmsPollingInterval?: number;
@@ -333,7 +370,7 @@ export interface WidgetConfig {
 
 export interface Widget {
   id?: string;
-  typeId: WidgetTypeId;
+  typeId?: WidgetTypeId;
   isSystemType: boolean;
   bundleAlias: string;
   typeAlias: string;

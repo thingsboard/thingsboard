@@ -48,7 +48,7 @@ export class DynamicWidgetComponent extends PageComponent implements IDynamicWid
   }
 
   ngOnDestroy(): void {
-    console.log('Widget component destroyed!');
+
   }
 
   clearRpcError() {

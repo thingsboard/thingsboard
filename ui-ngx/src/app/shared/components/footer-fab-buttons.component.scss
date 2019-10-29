@@ -15,12 +15,14 @@
  */
 
 :host {
-  section.tb-footer-buttons {
-    position: fixed;
-    right: 20px;
-    bottom: 20px;
-    z-index: 30;
-    pointer-events: none;
+  section.tb-footer-fab-buttons {
+    &:not(.relative-buttons) {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      z-index: 30;
+      pointer-events: none;
+    }
 
     .fab-container {
       display: flex;
@@ -30,7 +32,6 @@
         display: flex;
         flex-direction: column-reverse;
         align-items: center;
-        margin-bottom: 5px;
 
         button {
           margin-bottom: 17px;
@@ -39,6 +40,9 @@
     }
 
     .tb-btn-footer {
+      &.fab-toggler {
+        margin-top: 0px;
+      }
       position: relative !important;
       display: inline-block !important;
       animation: tbMoveFromBottomFade .3s ease both;

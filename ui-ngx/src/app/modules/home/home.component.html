@@ -38,7 +38,7 @@
         <button mat-button mat-icon-button id="main" fxHide.gt-sm (click)="sidenav.toggle()">
           <mat-icon class="material-icons">menu</mat-icon>
         </button>
-        <div fxFlex tb-breadcrumb class="mat-toolbar-tools">
+        <div fxFlex tb-breadcrumb [activeComponent]="activeComponent" class="mat-toolbar-tools">
         </div>
         <button *ngIf="fullscreenEnabled" mat-button mat-icon-button fxHide.xs fxHide.sm (click)="toggleFullscreen()">
           <mat-icon class="material-icons">{{ isFullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
@@ -49,7 +49,7 @@
                         *ngIf="isLoading$ | async">
       </mat-progress-bar>
       <div fxFlex fxLayout="column" tb-toast class="tb-main-content">
-        <router-outlet></router-outlet>
+        <router-outlet (activate)="activeComponent = $event;"></router-outlet>
       </div>
     </div>
   </mat-sidenav-content>

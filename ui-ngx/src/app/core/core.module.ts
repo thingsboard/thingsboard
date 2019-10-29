@@ -39,6 +39,7 @@ import { TranslateDefaultCompiler } from '@core/translate/translate-default-comp
 import { AlertDialogComponent } from '@core/services/dialog/alert-dialog.component';
 import { WINDOW_PROVIDERS } from '@core/services/window.service';
 import {TodoDialogComponent} from "@core/services/dialog/todo-dialog.component";
+import { HotkeyModule } from 'angular2-hotkeys';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/locale/locale.constant-', '.json');
@@ -79,6 +80,7 @@ export function HttpLoaderFactory(http: HttpClient) {
         useClass: TranslateDefaultCompiler
       }
     }),
+    HotkeyModule.forRoot(),
 
     // ngrx
     StoreModule.forRoot(reducers, { metaReducers }),

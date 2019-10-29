@@ -16,27 +16,29 @@
 
 import {
   AfterViewInit,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   ComponentFactoryResolver,
   ComponentRef,
   ElementRef,
   Injector,
   Input,
+  NgZone,
   OnChanges,
   OnDestroy,
   OnInit,
-  SimpleChanges,
+  SimpleChanges, Type,
   ViewChild,
   ViewContainerRef,
-  ViewEncapsulation,
-  ChangeDetectorRef,
-  ChangeDetectionStrategy, NgZone
+  ViewEncapsulation
 } from '@angular/core';
 import { DashboardWidget, IDashboardComponent } from '@home/models/dashboard-component.models';
 import {
   Datasource,
   LegendConfig,
   LegendData,
+  LegendDirection,
   LegendPosition,
   Widget,
   WidgetActionDescriptor,
@@ -44,7 +46,8 @@ import {
   WidgetActionType,
   WidgetResource,
   widgetType,
-  WidgetTypeParameters
+  WidgetTypeParameters,
+  defaultLegendConfig
 } from '@shared/models/widget.models';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
@@ -52,7 +55,7 @@ import { AppState } from '@core/core.state';
 import { WidgetService } from '@core/http/widget.service';
 import { UtilsService } from '@core/services/utils.service';
 import { forkJoin, Observable, of, ReplaySubject, Subscription, throwError } from 'rxjs';
-import { isDefined, objToBase64, deepClone } from '@core/utils';
+import { deepClone, isDefined, objToBase64 } from '@core/utils';
 import {
   IDynamicWidgetComponent,
   WidgetContext,
@@ -61,10 +64,10 @@ import {
   WidgetTypeInstance
 } from '@home/models/widget-component.models';
 import {
-  EntityInfo,
   IWidgetSubscription,
   StateObject,
   StateParams,
+  SubscriptionEntityInfo,
   SubscriptionInfo,
   WidgetSubscriptionContext,
   WidgetSubscriptionOptions
@@ -87,7 +90,15 @@ import { DashboardService } from '@core/http/dashboard.service';
 import { DatasourceService } from '@core/api/datasource.service';
 import { WidgetSubscription } from '@core/api/widget-subscription';
 import { EntityService } from '@core/http/entity.service';
-import { TimewindowComponent } from '@shared/components/time/timewindow.component';
+import { AssetService } from '@core/http/asset.service';
+import { DialogService } from '@core/services/dialog.service';
+import { CustomDialogService } from '@home/components/widget/dialog/custom-dialog.service';
+
+const ServicesMap = new Map<string, Type<any>>();
+ServicesMap.set('deviceService', DeviceService);
+ServicesMap.set('assetService', AssetService);
+ServicesMap.set('dialogs', DialogService);
+ServicesMap.set('customDialog', CustomDialogService);
 
 @Component({
   selector: 'tb-widget',
@@ -165,6 +176,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
               private ngZone: NgZone,
               private cd: ChangeDetectorRef) {
     super(store);
+    this.cssParser.testMode = false;
   }
 
   ngOnInit(): void {
@@ -179,14 +191,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     this.legendContainerLayoutType = 'column';
 
     if (this.displayLegend) {
-      this.legendConfig = this.widget.config.legendConfig ||
-        {
-          position: LegendPosition.bottom,
-          showMin: false,
-          showMax: false,
-          showAvg: this.widget.type === widgetType.timeseries,
-          showTotal: false
-        };
+      this.legendConfig = this.widget.config.legendConfig || defaultLegendConfig(this.widget.type);
       this.legendData = {
         keys: [],
         data: []
@@ -194,8 +199,10 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       if (this.legendConfig.position === LegendPosition.top ||
         this.legendConfig.position === LegendPosition.bottom) {
         this.legendContainerLayoutType = 'column';
+        this.isLegendFirst = this.legendConfig.position === LegendPosition.top;
       } else {
         this.legendContainerLayoutType = 'row';
+        this.isLegendFirst = this.legendConfig.position === LegendPosition.left;
       }
       switch (this.legendConfig.position) {
         case LegendPosition.top:
@@ -244,6 +251,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     }
 
     this.widgetContext = this.dashboardWidget.widgetContext;
+    this.widgetContext.servicesMap = ServicesMap;
     this.widgetContext.inited = false;
     this.widgetContext.hideTitlePanel = false;
     this.widgetContext.isEdit = this.isEdit;
@@ -352,7 +360,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         this.loadFromWidgetInfo();
       }
     );
-
+    setTimeout(() => {
+      this.dashboardWidget.updateWidgetParams();
+    }, 0);
   }
 
   ngAfterViewInit(): void {
@@ -363,10 +373,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       const change = changes[propName];
       if (!change.firstChange && change.currentValue !== change.previousValue) {
         if (propName === 'isEdit') {
-          console.log(`isEdit changed: ${this.isEdit}`);
           this.onEditModeChanged();
         } else if (propName === 'isMobile') {
-          console.log(`isMobile changed: ${this.isMobile}`);
           this.onMobileModeChanged();
         }
       }
@@ -461,6 +469,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     this.initialize().subscribe(
       () => {
         this.onInit();
+      },
+      (err) => {
+        // console.log(err);
       }
     );
   }
@@ -608,9 +619,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           initSubject.next();
           initSubject.complete();
         },
-        () => {
+        (err) => {
           this.subscriptionInited = true;
-          initSubject.error(null);
+          initSubject.error(err);
         }
       );
     } else {
@@ -646,6 +657,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       this.dynamicWidgetComponent.errorMessages = this.errorMessages;
 
       this.widgetContext.$scope = this.dynamicWidgetComponent;
+      this.widgetContext.$scope.$injector = this.injector;
 
       const containerElement = $(this.elementRef.nativeElement.querySelector('#widget-container'));
 
@@ -677,8 +689,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         createSubscriptionSubject.next(subscription);
         createSubscriptionSubject.complete();
       },
-      () => {
-        createSubscriptionSubject.error(null);
+      (err) => {
+        createSubscriptionSubject.error(err);
       }
     );
     return createSubscriptionSubject.asObservable();
@@ -718,13 +730,13 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
             createSubscriptionSubject.next(subscription);
             createSubscriptionSubject.complete();
           },
-          () => {
-            createSubscriptionSubject.error(null);
+          (err) => {
+            createSubscriptionSubject.error(err);
           }
         );
       },
-      () => {
-        createSubscriptionSubject.error(null);
+      (err) => {
+        createSubscriptionSubject.error(err);
       }
     );
     return createSubscriptionSubject.asObservable();
@@ -763,6 +775,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       timeWindowUpdated: (subscription, timeWindowConfig) => {
         this.ngZone.run(() => {
           this.widget.config.timewindow = timeWindowConfig;
+          this.cd.detectChanges();
         });
       }
     };
@@ -808,8 +821,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           createSubscriptionSubject.next();
           createSubscriptionSubject.complete();
         },
-        () => {
-          createSubscriptionSubject.error(null);
+        (err) => {
+          createSubscriptionSubject.error(err);
         }
       );
     } else if (this.widget.type === widgetType.rpc) {
@@ -844,17 +857,20 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           createSubscriptionSubject.next();
           createSubscriptionSubject.complete();
         },
-        () => {
-          createSubscriptionSubject.error(null);
+        (err) => {
+          createSubscriptionSubject.error(err);
         }
       );
+      this.cd.detectChanges();
     } else if (this.widget.type === widgetType.static) {
       this.loadingData = false;
       createSubscriptionSubject.next();
       createSubscriptionSubject.complete();
+      this.cd.detectChanges();
     } else {
       createSubscriptionSubject.next();
       createSubscriptionSubject.complete();
+      this.cd.detectChanges();
     }
     return createSubscriptionSubject.asObservable();
   }
@@ -920,24 +936,16 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         if (targetDashboardStateId) {
           stateObject.id = targetDashboardStateId;
         }
-        const stateParams = {
-          dashboardId: targetDashboardId,
-          state: objToBase64([ stateObject ])
-        };
         const state = objToBase64([ stateObject ]);
-        const currentUrl = this.route.snapshot.url;
+        const isSinglePage = this.route.snapshot.data.singlePageMode;
         let url;
-        if (currentUrl.length > 1) {
-          if (currentUrl[currentUrl.length - 2].path === 'dashboard') {
-            url = `/dashboard/${targetDashboardId}?state=${state}`;
-          } else {
-            url = `/dashboards/${targetDashboardId}?state=${state}`;
-          }
+        if (isSinglePage) {
+          url = `/dashboard/${targetDashboardId}?state=${state}`;
+        } else {
+          url = `/dashboards/${targetDashboardId}?state=${state}`;
         }
-        if (url) {
-          const urlTree = this.router.parseUrl(url);
-          this.router.navigateByUrl(url);
-        }
+        const urlTree = this.router.parseUrl(url);
+        this.router.navigateByUrl(url);
         break;
       case WidgetActionType.custom:
         const customFunction = descriptor.customFunction;
@@ -1065,7 +1073,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     this.store.dispatch(new ActionNotificationShow({message: messageToShow, type: 'error'}));
   }
 
-  private getActiveEntityInfo(): EntityInfo {
+  private getActiveEntityInfo(): SubscriptionEntityInfo {
     let entityInfo = this.widgetContext.activeEntityInfo;
     if (!entityInfo) {
       for (const id of Object.keys(this.widgetContext.subscriptions)) {

@@ -62,13 +62,18 @@ export interface RelationsSearchParameters {
   rootId: string;
   rootType: EntityType;
   direction: EntitySearchDirection;
-  relationTypeGroup: RelationTypeGroup;
-  maxLevel: number;
+  relationTypeGroup?: RelationTypeGroup;
+  maxLevel?: number;
 }
 
 export interface EntityRelationsQuery {
   parameters: RelationsSearchParameters;
   filters: Array<EntityTypeFilter>;
+}
+
+export interface EntitySearchQuery {
+  parameters: RelationsSearchParameters;
+  relationType: string;
 }
 
 export interface EntityRelation {

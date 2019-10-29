@@ -268,11 +268,11 @@ export class DatasourceSubscription {
                     data = subscriptionUpdate;
                   }
                 } else {
-                  for (const key of Object.keys(data.data)) {
-                    const keyData = data.data[key];
+                  for (const key of Object.keys(subscriptionUpdate.data)) {
+                    const keyData = subscriptionUpdate.data[key];
                     keyData.sort((set1, set2) => set1[0] - set2[0]);
                   }
-                  this.onData(data.data, DataKeyType.timeseries, true);
+                  this.onData(subscriptionUpdate.data, DataKeyType.timeseries, true);
                 }
               }
             }

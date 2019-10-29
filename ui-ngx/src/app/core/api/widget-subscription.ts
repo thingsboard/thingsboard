@@ -15,8 +15,8 @@
 ///
 
 import {
-  EntityInfo,
   IWidgetSubscription,
+  SubscriptionEntityInfo,
   WidgetSubscriptionCallbacks,
   WidgetSubscriptionContext,
   WidgetSubscriptionOptions
@@ -49,6 +49,7 @@ import { deepClone, isDefined } from '@core/utils';
 import { AlarmSourceListener } from '@core/http/alarm.service';
 import { DatasourceListener } from '@core/api/datasource.service';
 import * as deepEqual from 'deep-equal';
+import { EntityId } from '@app/shared/models/id/entity-id';
 
 export class WidgetSubscription implements IWidgetSubscription {
 
@@ -207,8 +208,8 @@ export class WidgetSubscription implements IWidgetSubscription {
           subscriptionSubject.next(this);
           subscriptionSubject.complete();
         },
-        () => {
-          subscriptionSubject.error(null);
+        (err) => {
+          subscriptionSubject.error(err);
         });
     }
  }
@@ -280,8 +281,8 @@ export class WidgetSubscription implements IWidgetSubscription {
             initDataSubscriptionSubject.next();
             initDataSubscriptionSubject.complete();
           },
-          () => {
-            initDataSubscriptionSubject.error(null);
+          (err) => {
+            initDataSubscriptionSubject.error(err);
           }
         );
       }
@@ -339,8 +340,45 @@ export class WidgetSubscription implements IWidgetSubscription {
     this.onDataUpdated();
   }
 
-  getFirstEntityInfo(): EntityInfo {
-    return undefined;
+  getFirstEntityInfo(): SubscriptionEntityInfo {
+    let entityId: EntityId;
+    let entityName: string;
+    if (this.type === widgetType.rpc) {
+      if (this.targetDeviceId) {
+        entityId = {
+          entityType: EntityType.DEVICE,
+          id: this.targetDeviceId
+        };
+        entityName = this.targetDeviceName;
+      }
+    } else if (this.type === widgetType.alarm) {
+      if (this.alarmSource && this.alarmSource.entityType && this.alarmSource.entityId) {
+        entityId = {
+          entityType: this.alarmSource.entityType,
+          id: this.alarmSource.entityId
+        };
+        entityName = this.alarmSource.entityName;
+      }
+    } else {
+      for (const datasource of this.datasources) {
+        if (datasource && datasource.entityType && datasource.entityId) {
+          entityId = {
+            entityType: datasource.entityType,
+            id: datasource.entityId
+          };
+          entityName = datasource.entityName;
+          break;
+        }
+      }
+    }
+    if (entityId) {
+      return {
+        entityId,
+        entityName
+      };
+    } else {
+      return null;
+    }
   }
 
   onAliasesChanged(aliasIds: Array<string>): boolean {
@@ -463,6 +501,7 @@ export class WidgetSubscription implements IWidgetSubscription {
         }
       }
       let index = 0;
+      let forceUpdate = !this.datasources.length;
       this.datasources.forEach((datasource) => {
         const listener: DatasourceListener = {
           subscriptionType: this.type,
@@ -489,23 +528,23 @@ export class WidgetSubscription implements IWidgetSubscription {
         if (datasource.dataKeys.length) {
           this.ctx.datasourceService.subscribeToDatasource(listener);
         }
-        let forceUpdate = false;
         if (datasource.unresolvedStateEntity ||
           !datasource.dataKeys.length ||
           (datasource.type === DatasourceType.entity && !datasource.entityId)
         ) {
           forceUpdate = true;
         }
-        if (forceUpdate) {
-          this.notifyDataLoaded();
-          this.onDataUpdated();
-        }
       });
+      if (forceUpdate) {
+        this.notifyDataLoaded();
+        this.onDataUpdated();
+      }
     }
   }
 
   private alarmsSubscribe() {
     // TODO:
+    this.notifyDataLoaded();
   }
 
 

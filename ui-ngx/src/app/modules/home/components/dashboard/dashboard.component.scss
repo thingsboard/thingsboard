@@ -39,6 +39,7 @@
     gridster-item {
       transition: none;
       overflow: visible;
+      background: none;
     }
   }
 
@@ -122,4 +123,8 @@ div.tb-widget {
   &.tb-not-highlighted {
     opacity: .5;
   }
+}
+
+.tb-dashboard-context-menu-items {
+  min-width: 256px;
 }

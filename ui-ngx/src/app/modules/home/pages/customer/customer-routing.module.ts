@@ -24,6 +24,9 @@ import {CustomersTableConfigResolver} from './customers-table-config.resolver';
 import {DevicesTableConfigResolver} from '@modules/home/pages/device/devices-table-config.resolver';
 import {AssetsTableConfigResolver} from '../asset/assets-table-config.resolver';
 import {DashboardsTableConfigResolver} from '@modules/home/pages/dashboard/dashboards-table-config.resolver';
+import { DashboardPageComponent } from '@home/pages/dashboard/dashboard-page.component';
+import { BreadCrumbConfig } from '@shared/components/breadcrumb';
+import { dashboardBreadcumbLabelFunction, DashboardResolver } from '@home/pages/dashboard/dashboard-routing.module';
 
 const routes: Routes = [
   {
@@ -95,19 +98,42 @@ const routes: Routes = [
       },
       {
         path: ':customerId/dashboards',
-        component: EntitiesTableComponent,
         data: {
-          auth: [Authority.TENANT_ADMIN],
-          title: 'customer.assets',
-          dashboardsType: 'customer',
           breadcrumb: {
             label: 'customer.dashboards',
             icon: 'dashboard'
           }
         },
-        resolve: {
-          entitiesTableConfig: DashboardsTableConfigResolver
-        }
+        children: [
+          {
+            path: '',
+            component: EntitiesTableComponent,
+            data: {
+              auth: [Authority.TENANT_ADMIN],
+              title: 'customer.dashboards',
+              dashboardsType: 'customer'
+            },
+            resolve: {
+              entitiesTableConfig: DashboardsTableConfigResolver
+            }
+          },
+          {
+            path: ':dashboardId',
+            component: DashboardPageComponent,
+            data: {
+              breadcrumb: {
+                labelFunction: dashboardBreadcumbLabelFunction,
+                icon: 'dashboard'
+              } as BreadCrumbConfig,
+              auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+              title: 'customer.dashboard',
+              widgetEditMode: false
+            },
+            resolve: {
+              dashboard: DashboardResolver
+            }
+          }
+        ]
       }
     ]
   }

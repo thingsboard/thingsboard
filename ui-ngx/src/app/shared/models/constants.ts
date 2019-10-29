@@ -65,7 +65,13 @@ export const HelpLinks = {
     entityViews: helpBaseUrl + '/docs/user-guide/ui/entity-views',
     rulechains: helpBaseUrl + '/docs/user-guide/ui/rule-chains',
     dashboards: helpBaseUrl + '/docs/user-guide/ui/dashboards',
-    widgetsBundles: helpBaseUrl + '/docs/user-guide/ui/widget-library#bundles'
+    widgetsBundles: helpBaseUrl + '/docs/user-guide/ui/widget-library#bundles',
+    widgetsConfig:  helpBaseUrl + '/docs/user-guide/ui/dashboards#widget-configuration',
+    widgetsConfigTimeseries:  helpBaseUrl + '/docs/user-guide/ui/dashboards#timeseries',
+    widgetsConfigLatest: helpBaseUrl +  '/docs/user-guide/ui/dashboards#latest',
+    widgetsConfigRpc: helpBaseUrl +  '/docs/user-guide/ui/dashboards#rpc',
+    widgetsConfigAlarm: helpBaseUrl +  '/docs/user-guide/ui/dashboards#alarm',
+    widgetsConfigStatic: helpBaseUrl +  '/docs/user-guide/ui/dashboards#static'
   }
 };
 

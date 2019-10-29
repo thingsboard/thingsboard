@@ -21,14 +21,22 @@ import {WidgetsBundleComponent} from '@modules/home/pages/widget/widgets-bundle.
 import {WidgetLibraryRoutingModule} from '@modules/home/pages/widget/widget-library-routing.module';
 import {HomeComponentsModule} from '@modules/home/components/home-components.module';
 import { WidgetLibraryComponent } from './widget-library.component';
+import { WidgetEditorComponent } from '@home/pages/widget/widget-editor.component';
+import { SelectWidgetTypeDialogComponent } from '@home/pages/widget/select-widget-type-dialog.component';
+import { SaveWidgetTypeAsDialogComponent } from './save-widget-type-as-dialog.component';
 
 @NgModule({
   entryComponents: [
-    WidgetsBundleComponent
+    WidgetsBundleComponent,
+    SelectWidgetTypeDialogComponent,
+    SaveWidgetTypeAsDialogComponent
   ],
   declarations: [
     WidgetsBundleComponent,
-    WidgetLibraryComponent
+    WidgetLibraryComponent,
+    WidgetEditorComponent,
+    SelectWidgetTypeDialogComponent,
+    SaveWidgetTypeAsDialogComponent
   ],
   imports: [
     CommonModule,

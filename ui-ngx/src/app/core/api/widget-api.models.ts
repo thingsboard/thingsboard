@@ -34,6 +34,11 @@ import { AlarmSearchStatus } from '@shared/models/alarm.models';
 import { HttpErrorResponse } from '@angular/common/http';
 import { DatasourceService } from '@core/api/datasource.service';
 import { RafService } from '@core/services/raf.service';
+import { EntityAliases } from '@shared/models/alias.models';
+import { EntityInfo } from '@app/shared/models/entity.models';
+import { Type } from '@angular/core';
+import { AssetService } from '@core/http/asset.service';
+import { DialogService } from '@core/services/dialog.service';
 
 export interface TimewindowFunctions {
   onUpdateTimewindow: (startTimeMs: number, endTimeMs: number, interval?: number) => void;
@@ -66,22 +71,32 @@ export interface WidgetActionsApi {
 }
 
 export interface AliasInfo {
+  alias?: string;
   stateEntity?: boolean;
-  currentEntity?: {
-    id: string;
-    entityType: EntityType;
-    name?: string;
-  };
-  [key: string]: any | null;
-  // TODO:
+  currentEntity?: EntityInfo;
+  selectedId?: string;
+  resolvedEntities?: Array<EntityInfo>;
+  entityParamName?: string;
+  resolveMultiple?: boolean;
+}
+
+export interface StateEntityInfo {
+  entityParamName: string;
+  entityId: EntityId;
 }
 
 export interface IAliasController {
   entityAliasesChanged: Observable<Array<string>>;
-  getAliasInfo(aliasId): Observable<AliasInfo>;
+  entityAliasResolved: Observable<string>;
+  getAliasInfo(aliasId: string): Observable<AliasInfo>;
+  getEntityAliasId(aliasName: string): string;
+  getInstantAliasInfo(aliasId: string): AliasInfo;
   resolveDatasources(datasources: Array<Datasource>): Observable<Array<Datasource>>;
-  [key: string]: any | null;
-  // TODO:
+  resolveAlarmSource(alarmSource: Datasource): Observable<Datasource>;
+  getEntityAliases(): EntityAliases;
+  updateCurrentAliasEntity(aliasId: string, currentEntity: EntityInfo);
+  updateEntityAliases(entityAliases: EntityAliases);
+  dashboardStateChanged();
 }
 
 export interface StateObject {
@@ -96,16 +111,22 @@ export interface StateParams {
   [key: string]: any | null;
 }
 
-export interface IStateController {
-  getStateParams: () => StateParams;
-  openState: (id: string, params?: StateParams, openRightLayout?: boolean) => void;
-  updateState: (id?: string, params?: StateParams, openRightLayout?: boolean) => void;
-  // TODO:
-}
+export type StateControllerHolder = () => IStateController;
 
-export interface EntityInfo {
-  entityId: EntityId;
-  entityName: string;
+export interface IStateController {
+  getStateParams(): StateParams;
+  getStateParamsByStateId(stateId: string): StateParams;
+  openState(id: string, params?: StateParams, openRightLayout?: boolean): void;
+  updateState(id?: string, params?: StateParams, openRightLayout?: boolean): void;
+  resetState(): void;
+  openRightLayout(): void;
+  preserveState(): void;
+  cleanupPreservedStates(): void;
+  navigatePrevState(index: number): void;
+  getStateId(): string;
+  getStateIndex(): number;
+  getStateIdAtIndex(index: number): string;
+  getEntityId(entityParamName: string): EntityId;
 }
 
 export interface SubscriptionInfo {
@@ -120,7 +141,11 @@ export interface SubscriptionInfo {
   attributes?: Array<KeyInfo>;
   functions?: Array<KeyInfo>;
   alarmFields?: Array<KeyInfo>;
-  [key: string]: any;
+
+  deviceId?: string;
+  deviceName?: string;
+  deviceNamePrefix?: string;
+  deviceIds?: Array<string>;
 }
 
 export interface WidgetSubscriptionContext {
@@ -167,8 +192,11 @@ export interface WidgetSubscriptionOptions {
   decimals?: number;
   units?: string;
   callbacks?: WidgetSubscriptionCallbacks;
-  [key: string]: any;
-  // TODO:
+}
+
+export interface SubscriptionEntityInfo {
+  entityId: EntityId;
+  entityName: string;
 }
 
 export interface IWidgetSubscription {
@@ -201,7 +229,7 @@ export interface IWidgetSubscription {
   rpcErrorText?: string;
   rpcRejection?: HttpErrorResponse;
 
-  getFirstEntityInfo(): EntityInfo;
+  getFirstEntityInfo(): SubscriptionEntityInfo;
 
   onAliasesChanged(aliasIds: Array<string>): boolean;
 

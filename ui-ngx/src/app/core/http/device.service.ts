@@ -23,7 +23,7 @@ import { PageData } from '@shared/models/page/page-data';
 import { Tenant } from '@shared/models/tenant.model';
 import {DashboardInfo, Dashboard} from '@shared/models/dashboard.models';
 import {map} from 'rxjs/operators';
-import {DeviceInfo, Device, DeviceCredentials} from '@app/shared/models/device.models';
+import { DeviceInfo, Device, DeviceCredentials, DeviceSearchQuery } from '@app/shared/models/device.models';
 import {EntitySubtype} from '@app/shared/models/entity-type.models';
 import {AuthService} from '../auth/auth.service';
 
@@ -113,6 +113,11 @@ export class DeviceService {
 
   public unassignDeviceFromCustomer(deviceId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false) {
     return this.http.delete(`/api/customer/device/${deviceId}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  }
+
+  public findByQuery(query: DeviceSearchQuery,
+                     ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Array<Device>> {
+    return this.http.post<Array<Device>>('/api/devices', query, defaultHttpOptions(ignoreLoading, ignoreErrors));
   }
 
 }

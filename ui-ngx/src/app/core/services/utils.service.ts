@@ -14,10 +14,10 @@
 /// limitations under the License.
 ///
 
-import { Inject, Injectable } from '@angular/core';
+import { Inject, Injectable, NgZone } from '@angular/core';
 import { WINDOW } from '@core/services/window.service';
 import { ExceptionData } from '@app/shared/models/error.models';
-import { isUndefined, isDefined } from '@core/utils';
+import { deepClone, deleteNullProperties, isDefined, isUndefined } from '@core/utils';
 import { WindowMessage } from '@shared/models/window-message.model';
 import { TranslateService } from '@ngx-translate/core';
 import { customTranslationsPrefix } from '@app/shared/models/constants';
@@ -26,6 +26,46 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { DataKeyType } from '@app/shared/models/telemetry/telemetry.models';
 import { alarmFields } from '@shared/models/alarm.models';
 import { materialColors } from '@app/shared/models/material.models';
+import { WidgetInfo } from '@home/models/widget-component.models';
+import jsonSchemaDefaults from 'json-schema-defaults';
+import * as materialIconsCodepoints from '!raw-loader!material-design-icons/iconfont/codepoints';
+import { Observable, of, ReplaySubject } from 'rxjs';
+
+const varsRegex = /\$\{([^}]*)\}/g;
+
+const predefinedFunctions: {[func: string]: string} = {
+  Sin: 'return Math.round(1000*Math.sin(time/5000));',
+  Cos: 'return Math.round(1000*Math.cos(time/5000));',
+  Random: 'var value = prevValue + Math.random() * 100 - 50;\n' +
+    'var multiplier = Math.pow(10, 2 || 0);\n' +
+    'var value = Math.round(value * multiplier) / multiplier;\n' +
+    'if (value < -1000) {\n' +
+    '	value = -1000;\n' +
+    '} else if (value > 1000) {\n' +
+    '	value = 1000;\n' +
+    '}\n' +
+    'return value;'
+};
+
+const predefinedFunctionsList: Array<string> = [];
+for (const func of Object.keys(predefinedFunctions)) {
+  predefinedFunctionsList.push(func);
+}
+
+const defaultAlarmFields: Array<string> = [
+  alarmFields.createdTime.keyName,
+  alarmFields.originator.keyName,
+  alarmFields.type.keyName,
+  alarmFields.severity.keyName,
+  alarmFields.status.keyName
+];
+
+const commonMaterialIcons: Array<string> = [ 'more_horiz', 'more_vert', 'open_in_new',
+  'visibility', 'play_arrow', 'arrow_back', 'arrow_downward',
+  'arrow_forward', 'arrow_upwards', 'close', 'refresh', 'menu', 'show_chart', 'multiline_chart', 'pie_chart', 'insert_chart', 'people',
+  'person', 'domain', 'devices_other', 'now_widgets', 'dashboards', 'map', 'pin_drop', 'my_location', 'extension', 'search',
+  'settings', 'notifications', 'notifications_active', 'info', 'info_outline', 'warning', 'list', 'file_download', 'import_export',
+  'share', 'add', 'edit', 'done' ];
 
 @Injectable({
   providedIn: 'root'
@@ -34,9 +74,30 @@ export class UtilsService {
 
   iframeMode = false;
   widgetEditMode = false;
-  editWidgetInfo: any = null;
+  editWidgetInfo: WidgetInfo = null;
+
+  defaultDataKey: DataKey = {
+    name: 'f(x)',
+    type: DataKeyType.function,
+    label: 'Sin',
+    color: this.getMaterialColor(0),
+    funcBody: this.getPredefinedFunctionBody('Sin'),
+    settings: {},
+    _hash: Math.random()
+  };
+
+  defaultDatasource: Datasource = {
+    type: DatasourceType.function,
+    name: DatasourceType.function,
+    dataKeys: [deepClone(this.defaultDataKey)]
+  };
+
+  defaultAlarmDataKeys: Array<DataKey> = [];
+
+  materialIcons: Array<string> = [];
 
   constructor(@Inject(WINDOW) private window: Window,
+              private zone: NgZone,
               private translate: TranslateService) {
     let frame: Element = null;
     try {
@@ -52,6 +113,50 @@ export class UtilsService {
         this.widgetEditMode = true;
       }
     }
+  }
+
+  public getPredefinedFunctionsList(): Array<string> {
+    return predefinedFunctionsList;
+  }
+
+  public getPredefinedFunctionBody(func: string): string {
+    return predefinedFunctions[func];
+  }
+
+  public getDefaultDatasource(dataKeySchema: any): Datasource {
+    const datasource = deepClone(this.defaultDatasource);
+    if (isDefined(dataKeySchema)) {
+      datasource.dataKeys[0].settings = this.generateObjectFromJsonSchema(dataKeySchema);
+    }
+    return datasource;
+  }
+
+  private initDefaultAlarmDataKeys() {
+    for (let i = 0; i < defaultAlarmFields.length; i++) {
+      const name = defaultAlarmFields[i];
+      const dataKey: DataKey = {
+        name,
+        type: DataKeyType.alarm,
+        label: this.translate.instant(alarmFields[name].name),
+        color: this.getMaterialColor(i),
+        settings: {},
+        _hash: Math.random()
+      };
+      this.defaultAlarmDataKeys.push(dataKey);
+    }
+  }
+
+  public getDefaultAlarmDataKeys(): Array<DataKey> {
+    if (!this.defaultAlarmDataKeys.length) {
+      this.initDefaultAlarmDataKeys();
+    }
+    return deepClone(this.defaultAlarmDataKeys);
+  }
+
+  public generateObjectFromJsonSchema(schema: any): any {
+    const obj = jsonSchemaDefaults(schema);
+    deleteNullProperties(obj);
+    return obj;
   }
 
   public hashCode(str: string): number {
@@ -81,13 +186,13 @@ export class UtilsService {
   }
 
   public processWidgetException(exception: any): ExceptionData {
-    const data = this.parseException(exception, -5);
+    const data = this.parseException(exception, -6);
     if (this.widgetEditMode) {
       const message: WindowMessage = {
         type: 'widgetException',
         data
       };
-      this.window.parent.postMessage(message, '*');
+      this.window.parent.postMessage(JSON.stringify(message), '*');
     }
     return data;
   }
@@ -143,6 +248,20 @@ export class UtilsService {
     return result;
   }
 
+  public insertVariable(pattern: string, name: string, value: any): string {
+    let result = deepClone(pattern);
+    let match = varsRegex.exec(pattern);
+    while (match !== null) {
+      const variable = match[0];
+      const variableName = match[1];
+      if (variableName === name) {
+        result = result.split(variable).join(value);
+      }
+      match = varsRegex.exec(pattern);
+    }
+    return result;
+  }
+
   public guid(): string {
     function s4(): string {
       return Math.floor((1 + Math.random()) * 0x10000)
@@ -175,7 +294,32 @@ export class UtilsService {
     return datasources;
   }
 
-  public getMaterialColor(index) {
+  public getMaterialIcons(): Observable<Array<string>> {
+    if (this.materialIcons.length) {
+      return of(this.materialIcons);
+    } else {
+      const materialIconsSubject = new ReplaySubject<Array<string>>();
+      this.zone.runOutsideAngular(() => {
+        const codepointsArray = materialIconsCodepoints
+          .split('\n')
+          .filter((codepoint) => codepoint && codepoint.length);
+        codepointsArray.forEach((codepoint) => {
+            const values = codepoint.split(' ');
+            if (values && values.length === 2) {
+              this.materialIcons.push(values[0]);
+            }
+        });
+        materialIconsSubject.next(this.materialIcons);
+      });
+      return materialIconsSubject.asObservable();
+    }
+  }
+
+  public getCommonMaterialIcons(): Array<string> {
+    return commonMaterialIcons;
+  }
+
+  public getMaterialColor(index: number) {
     const colorIndex = index % materialColors.length;
     return materialColors[colorIndex].value;
   }
@@ -215,6 +359,30 @@ export class UtilsService {
       dataKey.postFuncBody = keyInfo.postFuncBody;
     }
     return dataKey;
+  }
+
+  public createLabelFromDatasource(datasource: Datasource, pattern: string) {
+    let label = deepClone(pattern);
+    let match = varsRegex.exec(pattern);
+    while (match !== null) {
+      const variable = match[0];
+      const variableName = match[1];
+      if (variableName === 'dsName') {
+        label = label.split(variable).join(datasource.name);
+      } else if (variableName === 'entityName') {
+        label = label.split(variable).join(datasource.entityName);
+      } else if (variableName === 'deviceName') {
+        label = label.split(variable).join(datasource.entityName);
+      } else if (variableName === 'entityLabel') {
+        label = label.split(variable).join(datasource.entityLabel);
+      } else if (variableName === 'aliasName') {
+        label = label.split(variable).join(datasource.aliasName);
+      } else if (variableName === 'entityDescription') {
+        label = label.split(variable).join(datasource.entityDescription);
+      }
+      match = varsRegex.exec(pattern);
+    }
+    return label;
   }
 
   public generateColors(datasources: Array<Datasource>) {

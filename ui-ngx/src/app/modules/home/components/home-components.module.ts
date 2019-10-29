@@ -38,6 +38,26 @@ import { DashboardComponent } from '@home/components/dashboard/dashboard.compone
 import { WidgetComponent } from '@home/components/widget/widget.component';
 import { WidgetComponentService } from './widget/widget-component.service';
 import { LegendComponent } from '@home/components/widget/legend.component';
+import { AliasesEntitySelectPanelComponent } from '@home/components/alias/aliases-entity-select-panel.component';
+import { AliasesEntitySelectComponent } from '@home/components/alias/aliases-entity-select.component';
+import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
+import { EntityAliasesDialogComponent } from '@home/components/alias/entity-aliases-dialog.component';
+import { EntityFilterViewComponent } from './entity/entity-filter-view.component';
+import { EntityAliasDialogComponent } from './alias/entity-alias-dialog.component';
+import { EntityFilterComponent } from './entity/entity-filter.component';
+import { RelationFiltersComponent } from './relation/relation-filters.component';
+import { EntityAliasSelectComponent } from './alias/entity-alias-select.component';
+import { DataKeysComponent } from '@home/components/widget/data-keys.component';
+import { DataKeyConfigDialogComponent } from './widget/data-key-config-dialog.component';
+import { DataKeyConfigComponent } from './widget/data-key-config.component';
+import { LegendConfigPanelComponent } from './widget/legend-config-panel.component';
+import { LegendConfigComponent } from './widget/legend-config.component';
+import { ManageWidgetActionsComponent } from './widget/action/manage-widget-actions.component';
+import { WidgetActionDialogComponent } from './widget/action/widget-action-dialog.component';
+import { CustomActionPrettyResourcesTabsComponent } from './widget/action/custom-action-pretty-resources-tabs.component';
+import { CustomActionPrettyEditorComponent } from './widget/action/custom-action-pretty-editor.component';
+import { CustomDialogService } from './widget/dialog/custom-dialog.service';
+import { CustomDialogContainerComponent } from './widget/dialog/custom-dialog-container.component';
 
 @NgModule({
   entryComponents: [
@@ -48,7 +68,14 @@ import { LegendComponent } from '@home/components/widget/legend.component';
     AlarmTableHeaderComponent,
     AlarmDetailsDialogComponent,
     AddAttributeDialogComponent,
-    EditAttributeValuePanelComponent
+    EditAttributeValuePanelComponent,
+    AliasesEntitySelectPanelComponent,
+    EntityAliasesDialogComponent,
+    EntityAliasDialogComponent,
+    DataKeyConfigDialogComponent,
+    LegendConfigPanelComponent,
+    WidgetActionDialogComponent,
+    CustomDialogContainerComponent
   ],
   declarations:
     [
@@ -63,15 +90,34 @@ import { LegendComponent } from '@home/components/widget/legend.component';
       EventTableComponent,
       RelationTableComponent,
       RelationDialogComponent,
+      RelationFiltersComponent,
       AlarmTableHeaderComponent,
       AlarmTableComponent,
       AlarmDetailsDialogComponent,
       AttributeTableComponent,
       AddAttributeDialogComponent,
       EditAttributeValuePanelComponent,
+      AliasesEntitySelectPanelComponent,
+      AliasesEntitySelectComponent,
+      EntityAliasesDialogComponent,
+      EntityAliasDialogComponent,
       DashboardComponent,
       WidgetComponent,
-      LegendComponent
+      LegendComponent,
+      WidgetConfigComponent,
+      EntityFilterViewComponent,
+      EntityFilterComponent,
+      EntityAliasSelectComponent,
+      DataKeysComponent,
+      DataKeyConfigComponent,
+      DataKeyConfigDialogComponent,
+      LegendConfigPanelComponent,
+      LegendConfigComponent,
+      ManageWidgetActionsComponent,
+      WidgetActionDialogComponent,
+      CustomActionPrettyResourcesTabsComponent,
+      CustomActionPrettyEditorComponent,
+      CustomDialogContainerComponent
     ],
   imports: [
     CommonModule,
@@ -86,15 +132,33 @@ import { LegendComponent } from '@home/components/widget/legend.component';
     AuditLogTableComponent,
     EventTableComponent,
     RelationTableComponent,
+    RelationFiltersComponent,
     AlarmTableComponent,
     AlarmDetailsDialogComponent,
     AttributeTableComponent,
+    AliasesEntitySelectComponent,
+    EntityAliasesDialogComponent,
+    EntityAliasDialogComponent,
     DashboardComponent,
     WidgetComponent,
-    LegendComponent
+    LegendComponent,
+    WidgetConfigComponent,
+    EntityFilterViewComponent,
+    EntityFilterComponent,
+    EntityAliasSelectComponent,
+    DataKeysComponent,
+    DataKeyConfigComponent,
+    DataKeyConfigDialogComponent,
+    LegendConfigComponent,
+    ManageWidgetActionsComponent,
+    WidgetActionDialogComponent,
+    CustomActionPrettyResourcesTabsComponent,
+    CustomActionPrettyEditorComponent,
+    CustomDialogContainerComponent
   ],
   providers: [
-    WidgetComponentService
+    WidgetComponentService,
+    CustomDialogService
   ]
 })
 export class HomeComponentsModule { }

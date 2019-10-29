@@ -14,9 +14,9 @@
 /// limitations under the License.
 ///
 
-export type WindowMessageType = 'widgetException';
+export type WindowMessageType = 'widgetException' | 'widgetEditModeInited' | 'widgetEditUpdated';
 
 export interface WindowMessage {
   type: WindowMessageType;
-  data: any;
+  data?: any;
 }

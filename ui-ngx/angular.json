@@ -32,8 +32,15 @@
             ],
             "styles": [
               "src/styles.scss",
-              "node_modules/jquery.terminal/css/jquery.terminal.min.css"
+              "node_modules/jquery.terminal/css/jquery.terminal.min.css",
+              "src/app/shared/components/json-form/react/json-form.scss",
+              "node_modules/rc-select/assets/index.css"
             ],
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                  "src/scss"
+              ]
+            },
             "scripts": [
               "node_modules/javascript-detect-element-resize/detect-element-resize.js",
               "node_modules/jquery/dist/jquery.min.js",
@@ -47,6 +54,10 @@
               "node_modules/flot/src/plugins/jquery.flot.stack.js",
               "node_modules/flot.curvedlines/curvedLines.js",
               "node_modules/tinycolor2/dist/tinycolor-min.js",
+              "node_modules/split.js/dist/split.js",
+              "node_modules/js-beautify/js/lib/beautify.js",
+              "node_modules/js-beautify/js/lib/beautify-css.js",
+              "node_modules/js-beautify/js/lib/beautify-html.js",
               "node_modules/ace-builds/src-min/ace.js",
               "node_modules/ace-builds/src-min/ext-language_tools.js",
               "node_modules/ace-builds/src-min/ext-searchbox.js",
@@ -91,8 +102,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "2mb",
-                  "maximumError": "5mb"
+                  "maximumWarning": "5mb",
+                  "maximumError": "10mb"
                 }
               ]
             }

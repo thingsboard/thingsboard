@@ -61,11 +61,15 @@ export function animatedScroll(element: HTMLElement, scrollTop: number, delay?: 
   const duration = delay ? delay : 0;
   const remaining = to - start;
   const animateScroll = () => {
-    currentTime += increment;
-    const val = easeInOut(currentTime, start, remaining, duration);
-    element.scrollTop = val;
-    if (currentTime < duration) {
-      setTimeout(animateScroll, increment);
+    if (duration === 0) {
+      element.scrollTop = to;
+    } else {
+      currentTime += increment;
+      const val = easeInOut(currentTime, start, remaining, duration);
+      element.scrollTop = val;
+      if (currentTime < duration) {
+        setTimeout(animateScroll, increment);
+      }
     }
   };
   animateScroll();
@@ -93,6 +97,27 @@ export function isObject(value: any): boolean {
 
 export function isNumber(value: any): boolean {
   return typeof value === 'number';
+}
+
+export function isString(value: any): boolean {
+  return typeof value === 'string';
+}
+
+export function deleteNullProperties(obj: any) {
+  if (isUndefined(obj) || obj == null) {
+    return;
+  }
+  Object.keys(obj).forEach((propName) => {
+    if (obj[propName] === null || isUndefined(obj[propName])) {
+      delete obj[propName];
+    } else if (isObject(obj[propName])) {
+      deleteNullProperties(obj[propName]);
+    } else if (obj[propName] instanceof Array) {
+      (obj[propName] as any[]).forEach((elem) => {
+        deleteNullProperties(elem);
+      });
+    }
+  });
 }
 
 export function objToBase64(obj: any): string {

@@ -31,7 +31,7 @@
       </button>
     </div>
     <section *ngIf="!isReadOnly" fxLayout="row" class="layout-wrap tb-header-buttons">
-      <button [disabled]="(isLoading$ | async) || theForm.invalid || !theForm.dirty"
+      <button [disabled]="(isLoading$ | async) || theForm?.invalid || !theForm?.dirty"
               mat-fab
               matTooltip="{{ 'action.apply-changes' | translate }}"
               matTooltipPosition="above"
@@ -40,7 +40,7 @@
               (click)="onApplyDetails()">
         <mat-icon class="material-icons">done</mat-icon>
       </button>
-      <button [disabled]="(isLoading$ | async) || (isAlwaysEdit && !theForm.dirty)"
+      <button [disabled]="(isLoading$ | async) || (isAlwaysEdit && !theForm?.dirty)"
               mat-fab
               matTooltip="{{ (isAlwaysEdit ? 'action.decline-changes' : 'details.toggle-edit-mode') | translate }}"
               matTooltipPosition="above"

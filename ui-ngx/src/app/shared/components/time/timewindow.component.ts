@@ -15,6 +15,7 @@
 ///
 
 import {
+  ChangeDetectionStrategy,
   Component,
   forwardRef, Inject,
   Input,

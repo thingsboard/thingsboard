@@ -14,26 +14,34 @@
 /// limitations under the License.
 ///
 
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
 import { AuthUser } from '@shared/models/user.model';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Authority } from '@shared/models/authority.enum';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { Widget, widgetType } from '@app/shared/models/widget.models';
 import { WidgetService } from '@core/http/widget.service';
-import { map, share } from 'rxjs/operators';
+import { map, mergeMap, share } from 'rxjs/operators';
 import { DialogService } from '@core/services/dialog.service';
 import { FooterFabButtons } from '@app/shared/components/footer-fab-buttons.component';
-import { DashboardCallbacks, WidgetsData } from '@home/models/dashboard-component.models';
+import { DashboardCallbacks, IDashboardComponent, WidgetsData } from '@home/models/dashboard-component.models';
 import { IAliasController } from '@app/core/api/widget-api.models';
 import { toWidgetInfo } from '@home/models/widget-component.models';
 import { DummyAliasController } from '@core/api/alias-controller';
+import {
+  DeviceCredentialsDialogComponent,
+  DeviceCredentialsDialogData
+} from '@home/pages/device/device-credentials-dialog.component';
+import { DeviceCredentials } from '@shared/models/device.models';
+import { MatDialog } from '@angular/material/dialog';
+import { SelectWidgetTypeDialogComponent } from '@home/pages/widget/select-widget-type-dialog.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'tb-widget-library',
@@ -48,7 +56,7 @@ export class WidgetLibraryComponent extends PageComponent implements OnInit {
 
   widgetsBundle: WidgetsBundle;
 
-  widgetTypes$: Observable<Array<Widget>>;
+  widgetsData: WidgetsData;
 
   footerFabButtons: FooterFabButtons = {
     fabTogglerName: 'widget.add-widget-type',
@@ -77,82 +85,27 @@ export class WidgetLibraryComponent extends PageComponent implements OnInit {
     onRemoveWidget: this.removeWidgetType.bind(this)
   };
 
-  widgetsData: Observable<WidgetsData>;
-
   aliasController: IAliasController = new DummyAliasController();
+
+  @ViewChild('dashboard', {static: true}) dashboard: IDashboardComponent;
 
   constructor(protected store: Store<AppState>,
               private route: ActivatedRoute,
+              private router: Router,
               private widgetService: WidgetService,
-              private dialogService: DialogService) {
+              private dialogService: DialogService,
+              private dialog: MatDialog,
+              private translate: TranslateService) {
     super(store);
 
     this.authUser = getCurrentAuthUser(store);
     this.widgetsBundle = this.route.snapshot.data.widgetsBundle;
+    this.widgetsData = this.route.snapshot.data.widgetsData;
     if (this.authUser.authority === Authority.TENANT_ADMIN) {
       this.isReadOnly = !this.widgetsBundle || this.widgetsBundle.tenantId.id === NULL_UUID;
     } else {
       this.isReadOnly = this.authUser.authority !== Authority.SYS_ADMIN;
     }
-    this.loadWidgetTypes();
-    this.widgetsData = this.widgetTypes$.pipe(
-      map(widgets => ({ widgets })));
-  }
-
-  loadWidgetTypes() {
-    const bundleAlias = this.widgetsBundle.alias;
-    const isSystem = this.widgetsBundle.tenantId.id === NULL_UUID;
-    this.widgetTypes$ = this.widgetService.getBundleWidgetTypes(bundleAlias,
-      isSystem).pipe(
-      map((types) => {
-          types = types.sort((a, b) => {
-            let result = widgetType[b.descriptor.type].localeCompare(widgetType[a.descriptor.type]);
-            if (result === 0) {
-              result = b.createdTime - a.createdTime;
-            }
-            return result;
-          });
-          const widgetTypes = new Array<Widget>(types.length);
-          let top = 0;
-          const lastTop = [0, 0, 0];
-          let col = 0;
-          let column = 0;
-          types.forEach((type) => {
-            const widgetTypeInfo = toWidgetInfo(type);
-            const sizeX = 8;
-            const sizeY = Math.floor(widgetTypeInfo.sizeY);
-            const widget: Widget = {
-              typeId: type.id,
-              isSystemType: isSystem,
-              bundleAlias,
-              typeAlias: widgetTypeInfo.alias,
-              type: widgetTypeInfo.type,
-              title: widgetTypeInfo.widgetName,
-              sizeX,
-              sizeY,
-              row: top,
-              col,
-              config: JSON.parse(widgetTypeInfo.defaultConfig)
-            };
-
-            widget.config.title = widgetTypeInfo.widgetName;
-
-            widgetTypes.push(widget);
-            top += sizeY;
-            if (top > lastTop[column] + 10) {
-              lastTop[column] = top;
-              column++;
-              if (column > 2) {
-                column = 0;
-              }
-              top = lastTop[column];
-              col = column * 8;
-            }
-          });
-          return widgetTypes;
-        }
-      ),
-      share());
   }
 
   ngOnInit(): void {
@@ -163,35 +116,66 @@ export class WidgetLibraryComponent extends PageComponent implements OnInit {
   }
 
   importWidgetType($event: Event): void {
-    if (event) {
-      event.stopPropagation();
+    if ($event) {
+      $event.stopPropagation();
     }
     this.dialogService.todo();
   }
 
   openWidgetType($event: Event, widget?: Widget): void {
-    if (event) {
-      event.stopPropagation();
+    if ($event) {
+      $event.stopPropagation();
     }
     if (widget) {
-      this.dialogService.todo();
+      this.router.navigate([widget.typeId.id], {relativeTo: this.route});
     } else {
-      this.dialogService.todo();
+      this.dialog.open<SelectWidgetTypeDialogComponent, any,
+        widgetType>(SelectWidgetTypeDialogComponent, {
+        disableClose: true,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog']
+      }).afterClosed().subscribe(
+        (type) => {
+          if (type) {
+            this.router.navigate(['add', type], {relativeTo: this.route});
+          }
+        }
+      );
     }
   }
 
   exportWidgetType($event: Event, widget: Widget): void {
-    if (event) {
-      event.stopPropagation();
+    if ($event) {
+      $event.stopPropagation();
     }
     this.dialogService.todo();
   }
 
-  removeWidgetType($event: Event, widget: Widget): void {
-    if (event) {
-      event.stopPropagation();
+  removeWidgetType($event: Event, widget: Widget): Observable<boolean> {
+    if ($event) {
+      $event.stopPropagation();
     }
-    this.dialogService.todo();
+    return this.dialogService.confirm(
+      this.translate.instant('widget.remove-widget-type-title', {widgetName: widget.config.title}),
+      this.translate.instant('widget.remove-widget-type-text'),
+      this.translate.instant('action.no'),
+      this.translate.instant('action.yes'),
+    ).pipe(
+      mergeMap((result) => {
+        if (result) {
+          return this.widgetService.deleteWidgetType(widget.bundleAlias, widget.typeAlias, widget.isSystemType);
+        } else {
+          return of(false);
+        }
+      }),
+      map((result) => {
+        if (result !== false) {
+          this.widgetsData.widgets.splice(this.widgetsData.widgets.indexOf(widget), 1);
+          return true;
+        } else {
+          return false;
+        }
+      }
+    ));
   }
 
 }

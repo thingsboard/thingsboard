@@ -19,6 +19,7 @@ import { TranslateService } from '@ngx-translate/core';
 
 export interface BreadCrumb {
   label: string;
+  labelFunction?: () => string;
   ignoreTranslate: boolean;
   icon: string;
   isMdiIcon: boolean;
@@ -26,7 +27,7 @@ export interface BreadCrumb {
   queryParams: Params;
 }
 
-export type BreadCrumbLabelFunction = (route: ActivatedRouteSnapshot, translate: TranslateService) => string;
+export type BreadCrumbLabelFunction = (route: ActivatedRouteSnapshot, translate: TranslateService, component: any) => string;
 
 export interface BreadCrumbConfig {
   labelFunction: BreadCrumbLabelFunction;

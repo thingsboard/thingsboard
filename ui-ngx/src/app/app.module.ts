@@ -24,6 +24,7 @@ import { LoginModule } from './modules/login/login.module';
 import { HomeModule } from './modules/home/home.module';
 
 import { AppComponent } from './app.component';
+import { DashboardRoutingModule } from './modules/dashboard/dashboard-routing.module';
 
 @NgModule({
   declarations: [
@@ -35,7 +36,8 @@ import { AppComponent } from './app.component';
     AppRoutingModule,
     CoreModule,
     LoginModule,
-    HomeModule
+    HomeModule,
+    DashboardRoutingModule
   ],
   providers: [],
   bootstrap: [AppComponent]

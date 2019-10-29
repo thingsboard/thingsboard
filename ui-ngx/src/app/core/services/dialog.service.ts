@@ -22,6 +22,15 @@ import { TranslateService } from '@ngx-translate/core';
 import { AlertDialogComponent } from '@core/services/dialog/alert-dialog.component';
 import { TodoDialogComponent } from '@core/services/dialog/todo-dialog.component';
 import { AuthService } from '@core/auth/auth.service';
+import {
+  ColorPickerDialogComponent,
+  ColorPickerDialogData
+} from '@shared/components/dialog/color-picker-dialog.component';
+import {
+  MaterialIconsDialogComponent,
+  MaterialIconsDialogData
+} from '@shared/components/dialog/material-icons-dialog.component';
+import { DynamicComponentFactoryService } from '@core/services/dynamic-component-factory.service';
 
 @Injectable(
   {
@@ -33,6 +42,7 @@ export class DialogService {
   constructor(
     private translate: TranslateService,
     private authService: AuthService,
+    private dynamicComponentFactoryService: DynamicComponentFactoryService,
     public dialog: MatDialog
   ) {
   }
@@ -68,6 +78,28 @@ export class DialogService {
     }
     const dialogRef = this.dialog.open(AlertDialogComponent, dialogConfig);
     return dialogRef.afterClosed();
+  }
+
+  colorPicker(color: string): Observable<string> {
+    return this.dialog.open<ColorPickerDialogComponent, ColorPickerDialogData, string>(ColorPickerDialogComponent,
+      {
+        disableClose: true,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        data: {
+          color
+        }
+    }).afterClosed();
+  }
+
+  materialIconPicker(icon: string): Observable<string> {
+    return this.dialog.open<MaterialIconsDialogComponent, MaterialIconsDialogData, string>(MaterialIconsDialogComponent,
+      {
+        disableClose: true,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        data: {
+          icon
+        }
+      }).afterClosed();
   }
 
   private permissionDenied() {

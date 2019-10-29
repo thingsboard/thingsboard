@@ -31,7 +31,6 @@ import { CommonModule } from '@angular/common';
 export abstract class DynamicComponentModule implements OnDestroy {
 
   ngOnDestroy(): void {
-    console.log('Module destroyed!');
   }
 
 }
@@ -106,7 +105,8 @@ export class DynamicComponentFactoryService {
   private createDynamicComponent<T>(componentType: Type<T>, template: string): Type<T> {
     // noinspection AngularMissingOrInvalidDeclarationInModule
     return Component({
-      template
+      template,
+      jit: true
     })(componentType);
   }
 
