@@ -21,10 +21,12 @@ import TbImageMap from './image-map';
 import TbTencentMap from './tencent-map';
 
 import {processPattern, arraysEqual, toLabelValueMap, fillPattern, fillPatternWithActions} from './widget-utils';
+import addEntityPanelTemplate from './add-entity-panel.tpl.html';
+import './add-entity-panel.scss';
 
 export default class TbMapWidgetV2 {
 
-	constructor(mapProvider, drawRoutes, ctx, useDynamicLocations, $element) {
+	constructor(mapProvider, drawRoutes, ctx, useDynamicLocations, $element, isEdit) {
 		var tbMap = this;
 		this.ctx = ctx;
 		this.mapProvider = mapProvider;
@@ -33,6 +35,7 @@ export default class TbMapWidgetV2 {
 		}
 		this.utils = ctx.$scope.$injector.get('utils');
 		this.drawRoutes = drawRoutes;
+		this.isEdit = isEdit ? isEdit : false;
 		this.markers = [];
 		this.polygons = [];
 		if (this.drawRoutes) {
@@ -292,6 +295,112 @@ export default class TbMapWidgetV2 {
 		}
 	}
 
+	selectEntity($event) {
+		var tbMap = this;
+
+		function setDefaultPosition(entity) {
+			let position = tbMap.map.getCenter();
+			if (tbMap.mapProvider === "image-map") {
+				position = tbMap.map.latLngToPoint(position);
+				position.lat = position.x / tbMap.map.width;
+				position.lng = position.y / tbMap.map.height;
+			}
+
+			tbMap.saveMarkerLocation(
+				entity,
+				locationsWithoutMarker[entitiesWithoutPosition.indexOf(entity)],
+				position
+			);
+		}
+
+		const element = angular.element($event.target);
+		const $mdPanel = this.ctx.$scope.$injector.get('$mdPanel');
+		const $document = this.ctx.$scope.$injector.get('$document');
+		let position = $mdPanel.newPanelPosition()
+			.relativeTo(element)
+			.addPanelPosition($mdPanel.xPosition.ALIGN_END, $mdPanel.yPosition.BELOW);
+
+		let locationsWithoutMarker = this.locations.filter((location) => !location.marker);
+		let entitiesWithoutPosition = [];
+		for (let i = 0; i < locationsWithoutMarker.length; i++) {
+			entitiesWithoutPosition.push(this.subscription.datasources[locationsWithoutMarker[i].dsIndex]);
+		}
+
+		if(entitiesWithoutPosition.length === 1){
+			setDefaultPosition(entitiesWithoutPosition[0]);
+		} else {
+			let config = {
+				attachTo: angular.element($document[0].body),
+				controller: addEntityPanelController,
+				controllerAs: 'vm',
+				templateUrl: addEntityPanelTemplate,
+				panelClass: 'tb-add-entity-panel',
+				position: position,
+				fullscreen: false,
+				locals: {
+					'entities': entitiesWithoutPosition,
+					'onClose': setDefaultPosition
+				},
+				openFrom: $event,
+				clickOutsideToClose: true,
+				escapeToClose: true,
+				focusOnOpen: false
+			};
+			$mdPanel.open(config);
+		}
+	}
+
+	saveMarkerLocation(datasource, location, coordinate) {
+		var tbMap = this;
+
+		const types = tbMap.ctx.$scope.$injector.get('types');
+		const $q = tbMap.ctx.$scope.$injector.get('$q');
+		const attributeService = tbMap.ctx.$scope.$injector.get('attributeService');
+
+		let attributesLocation = [];
+		let timeseriesLocation = [];
+		let promises = [];
+
+		let dataKeys = datasource.dataKeys;
+		for (let i = 0; i < dataKeys.length; i++) {
+			if (dataKeys[i].name === location.settings.latKeyName || dataKeys[i].name === location.settings.lngKeyName) {
+				let newLocation = {
+					key: dataKeys[i].name,
+					value: dataKeys[i].name === location.settings.latKeyName ? coordinate.lat : coordinate.lng
+				};
+				if (dataKeys[i].type === types.dataKeyType.attribute) {
+					attributesLocation.push(newLocation);
+				} else if (dataKeys[i].type === types.dataKeyType.timeseries) {
+					timeseriesLocation.push(newLocation);
+				}
+			}
+		}
+
+		if (attributesLocation.length > 0) {
+			promises.push(attributeService.saveEntityAttributes(
+				datasource.entityType,
+				datasource.entityId,
+				types.attributesScope.server.value,
+				attributesLocation,
+				{
+					ignoreLoading: true
+				}
+			))
+		}
+		if (timeseriesLocation.length > 0) {
+			promises.push(attributeService.saveEntityTimeseries(
+				datasource.entityType,
+				datasource.entityId,
+				"scope",
+				timeseriesLocation,
+				{
+					ignoreLoading: true
+				}
+			))
+		}
+		return $q.all([promises]);
+	}
+
 	update() {
 		var tbMap = this;
 
@@ -411,7 +520,10 @@ export default class TbMapWidgetV2 {
 					function (event) {
 						tbMap.callbacks.onLocationClick(location);
 						locationRowClick(event, location);
-					}, [location.dsIndex]);
+					}, [location.dsIndex],
+					function (event) {
+						markerDragend(event, location)
+					});
 				tbMap.markers.push(location.marker);
 				changed = true;
 			} else {
@@ -422,6 +534,22 @@ export default class TbMapWidgetV2 {
 				}
 			}
 			return changed;
+		}
+
+        function markerDragend($event, location) {
+			if (location.settings.drraggable) {
+				let position = tbMap.map.getMarkerPosition(location.marker);
+				if (tbMap.mapProvider === "image-map") {
+					position.lat = position.x;
+					position.lng = position.y;
+					delete position.x;
+					delete position.y;
+				} else if (tbMap.mapProvider === "google-map") {
+					position = position.toJSON();
+				}
+
+				tbMap.saveMarkerLocation(tbMap.subscription.datasources[location.dsIndex], location, position);
+			}
 		}
 
 		function locationRowClick($event, location) {
@@ -567,6 +695,7 @@ export default class TbMapWidgetV2 {
 						location.settings.tooltipPattern = tbMap.utils.createLabelFromDatasource(currentDatasource, location.settings.tooltipPattern);
 						location.settings.tooltipReplaceInfo = processPattern(location.settings.tooltipPattern, datasources, currentDatasourceIndex);
 					}
+					location.settings.drraggable = tbMap.isEdit;
 					tbMap.locations.push(location);
 					updateLocation(location, data, dataMap);
 					if (!tbMap.locationSettings.useDefaultCenterPosition) {
@@ -1626,3 +1755,16 @@ const imageMapSettingsSchema =
 			}
 		]
 	};
+
+/*@ngInject*/
+function addEntityPanelController(mdPanelRef, entities) {
+	var vm = this;
+	vm.entities = entities;
+	vm.selectEntity = selectEntity;
+
+	function selectEntity(entity) {
+		mdPanelRef.close().then(() => {
+			this.onClose(entity);
+		});
+	}
+}

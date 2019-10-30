@@ -28,7 +28,7 @@ export default class TbTencentMap {
 		this.tooltips = [];
 		this.defaultMapType = tmDefaultMapType;
 		this.defaultCenterPosition =defaultCenterPosition;
-		this.isMarketCluster = markerClusteringSetting.isMarketCluster;
+		this.isMarketCluster = markerClusteringSetting && markerClusteringSetting.isMarketCluster;
 
 		function clearGlobalId() {
 			if (tmGlobals.loadingTmId && tmGlobals.loadingTmId === tbMap.mapId) {
@@ -239,7 +239,7 @@ export default class TbTencentMap {
 	/* eslint-enable no-undef */
 
 	/* eslint-disable no-undef */
-	createMarker(location, dsIndex, settings, onClickListener, markerArgs) {
+	createMarker(location, dsIndex, settings, onClickListener, markerArgs, onDragendListener) {
 		var marker = new qq.maps.Marker({
 			position: location
 		});
@@ -260,7 +260,8 @@ export default class TbTencentMap {
 					visible: true,
 					position: location,
 					map: tMap.map,
-					zIndex: 1000
+					zIndex: 1000,
+					draggable: settings.drraggable
 				});
 			}
 		});
@@ -271,6 +272,10 @@ export default class TbTencentMap {
 
 		if (onClickListener) {
 			qq.maps.event.addListener(marker, 'click', onClickListener);
+		}
+
+		if (onDragendListener) {
+			qq.maps.event.addListener(marker, 'dragend', onDragendListener);
 		}
 
 		return marker;
@@ -485,6 +490,10 @@ export default class TbTencentMap {
 
 	getTooltips() {
 		return this.tooltips;
+	}
+
+	getCenter() {
+		return this.map.getCenter();
 	}
 
 }
