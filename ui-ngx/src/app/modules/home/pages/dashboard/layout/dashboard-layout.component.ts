@@ -34,6 +34,7 @@ import { Hotkey, HotkeysService } from 'angular2-hotkeys';
 import { getCurrentIsLoading } from '@core/interceptors/load.selectors';
 import { TranslateService } from '@ngx-translate/core';
 import { ItemBufferService } from '@app/core/services/item-buffer.service';
+import { DomSanitizer, SafeStyle } from '@angular/platform-browser';
 
 @Component({
   selector: 'tb-dashboard-layout',
@@ -43,12 +44,17 @@ import { ItemBufferService } from '@app/core/services/item-buffer.service';
 export class DashboardLayoutComponent extends PageComponent implements ILayoutController, DashboardCallbacks, OnInit, OnDestroy {
 
   layoutCtxValue: DashboardPageLayoutContext;
+  dashboardStyle: {[klass: string]: any} = null;
+  backgroundImage: SafeStyle | string;
 
   @Input()
   set layoutCtx(val: DashboardPageLayoutContext) {
     this.layoutCtxValue = val;
     if (this.layoutCtxValue) {
       this.layoutCtxValue.ctrl = this;
+      if (this.dashboardStyle == null) {
+        this.loadDashboardStyle();
+      }
     }
   }
   get layoutCtx(): DashboardPageLayoutContext {
@@ -77,7 +83,8 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
   constructor(protected store: Store<AppState>,
               private hotkeysService: HotkeysService,
               private translate: TranslateService,
-              private itembuffer: ItemBufferService) {
+              private itembuffer: ItemBufferService,
+              private sanitizer: DomSanitizer) {
     super(store);
   }
 
@@ -165,54 +172,67 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
     );
   }
 
-  reload() {
+  private loadDashboardStyle() {
+    this.dashboardStyle = {'background-color': this.layoutCtx.gridSettings.backgroundColor,
+      'background-repeat': 'no-repeat',
+      'background-attachment': 'scroll',
+      'background-size': this.layoutCtx.gridSettings.backgroundSizeMode || '100%',
+      'background-position': '0% 0%'};
+    this.backgroundImage = this.layoutCtx.gridSettings.backgroundImageUrl ?
+      this.sanitizer.bypassSecurityTrustStyle('url(' + this.layoutCtx.gridSettings.backgroundImageUrl + ')') : 'none';
   }
 
-  setResizing(layoutVisibilityChanged: boolean) {
+  reload() {
+    this.loadDashboardStyle();
+    this.dashboard.pauseChangeNotifications();
+    setTimeout(() => {
+       this.dashboard.resumeChangeNotifications();
+       this.dashboard.notifyLayoutUpdated();
+    }, 0);
   }
 
   resetHighlight() {
     this.dashboard.resetHighlight();
   }
 
-  highlightWidget(index: number, delay?: number) {
-    this.dashboard.highlightWidget(index, delay);
+  highlightWidget(widgetId: string, delay?: number) {
+    this.dashboard.highlightWidget(widgetId, delay);
   }
 
-  selectWidget(index: number, delay?: number) {
-    this.dashboard.selectWidget(index, delay);
+  selectWidget(widgetId: string, delay?: number) {
+    this.dashboard.selectWidget(widgetId, delay);
   }
 
   addWidget($event: Event) {
     this.layoutCtx.dashboardCtrl.addWidget($event, this.layoutCtx);
   }
 
-  onEditWidget($event: Event, widget: Widget, index: number): void {
-    this.layoutCtx.dashboardCtrl.editWidget($event, this.layoutCtx, widget, index);
+  onEditWidget($event: Event, widget: Widget): void {
+    this.layoutCtx.dashboardCtrl.editWidget($event, this.layoutCtx, widget);
   }
 
-  onExportWidget($event: Event, widget: Widget, index: number): void {
-    this.layoutCtx.dashboardCtrl.exportWidget($event, this.layoutCtx, widget, index);
+  onExportWidget($event: Event, widget: Widget): void {
+    this.layoutCtx.dashboardCtrl.exportWidget($event, this.layoutCtx, widget);
   }
 
-  onRemoveWidget($event: Event, widget: Widget, index: number): void {
+  onRemoveWidget($event: Event, widget: Widget): void {
     return this.layoutCtx.dashboardCtrl.removeWidget($event, this.layoutCtx, widget);
   }
 
-  onWidgetMouseDown($event: Event, widget: Widget, index: number): void {
-    this.layoutCtx.dashboardCtrl.widgetMouseDown($event, this.layoutCtx, widget, index);
+  onWidgetMouseDown($event: Event, widget: Widget): void {
+    this.layoutCtx.dashboardCtrl.widgetMouseDown($event, this.layoutCtx, widget);
   }
 
-  onWidgetClicked($event: Event, widget: Widget, index: number): void {
-    this.layoutCtx.dashboardCtrl.widgetClicked($event, this.layoutCtx, widget, index);
+  onWidgetClicked($event: Event, widget: Widget): void {
+    this.layoutCtx.dashboardCtrl.widgetClicked($event, this.layoutCtx, widget);
   }
 
   prepareDashboardContextMenu($event: Event): Array<DashboardContextMenuItem> {
     return this.layoutCtx.dashboardCtrl.prepareDashboardContextMenu(this.layoutCtx);
   }
 
-  prepareWidgetContextMenu($event: Event, widget: Widget, index: number): Array<WidgetContextMenuItem> {
-    return this.layoutCtx.dashboardCtrl.prepareWidgetContextMenu(this.layoutCtx, widget, index);
+  prepareWidgetContextMenu($event: Event, widget: Widget): Array<WidgetContextMenuItem> {
+    return this.layoutCtx.dashboardCtrl.prepareWidgetContextMenu(this.layoutCtx, widget);
   }
 
   copyWidget($event: Event, widget: Widget) {

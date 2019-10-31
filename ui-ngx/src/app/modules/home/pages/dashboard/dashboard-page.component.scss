@@ -136,6 +136,10 @@ div.tb-dashboard-page {
     }
   }
 
+  mat-drawer-container.tb-select-widget-sidenav {
+    position: initial;
+  }
+
   section.tb-powered-by-footer {
     position: absolute;
     right: 25px;

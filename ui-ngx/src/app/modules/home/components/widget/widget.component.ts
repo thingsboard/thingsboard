@@ -996,11 +996,11 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   }
 
   private elementClick($event: Event) {
-    $event.stopPropagation();
     const e = ($event.target || $event.srcElement) as Element;
     if (e.id) {
       const descriptors = this.getActionDescriptors('elementClick');
       if (descriptors.length) {
+        $event.stopPropagation();
         descriptors.forEach((descriptor) => {
           if (descriptor.name === e.id) {
             const entityInfo = this.getActiveEntityInfo();

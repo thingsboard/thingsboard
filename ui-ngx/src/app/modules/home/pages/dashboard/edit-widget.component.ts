@@ -132,26 +132,4 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
     };
     this.widgetFormGroup.reset({widgetConfig: this.widgetConfig});
   }
-
-  private createEntityAlias(alias: string, allowedEntityTypes: Array<EntityType>): Observable<EntityAlias> {
-    const singleEntityAlias: EntityAlias = {id: null, alias, filter: {resolveMultiple: false}};
-    return this.dialog.open<EntityAliasDialogComponent, EntityAliasDialogData,
-      EntityAlias>(EntityAliasDialogComponent, {
-      disableClose: true,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data: {
-        isAdd: true,
-        allowedEntityTypes,
-        entityAliases: this.dashboard.configuration.entityAliases,
-        alias: singleEntityAlias
-      }
-    }).afterClosed().pipe(
-      tap((entityAlias) => {
-        if (entityAlias) {
-          this.dashboard.configuration.entityAliases[entityAlias.id] = entityAlias;
-          this.aliasController.updateEntityAliases(this.dashboard.configuration.entityAliases);
-        }
-      })
-    );
-  }
 }

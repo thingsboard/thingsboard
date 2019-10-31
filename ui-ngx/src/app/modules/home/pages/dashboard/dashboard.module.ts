@@ -29,13 +29,22 @@ import { DashboardToolbarComponent } from './dashboard-toolbar.component';
 import { StatesControllerModule } from '@home/pages/dashboard/states/states-controller.module';
 import { DashboardLayoutComponent } from './layout/dashboard-layout.component';
 import { EditWidgetComponent } from './edit-widget.component';
+import { DashboardWidgetSelectComponent } from './dashboard-widget-select.component';
+import { AddWidgetDialogComponent } from './add-widget-dialog.component';
+import { ManageDashboardLayoutsDialogComponent } from './layout/manage-dashboard-layouts-dialog.component';
+import { SelectTargetLayoutDialogComponent } from './layout/select-target-layout-dialog.component';
+import { DashboardSettingsDialogComponent } from './dashboard-settings-dialog.component';
 
 @NgModule({
   entryComponents: [
     DashboardFormComponent,
     DashboardTabsComponent,
     ManageDashboardCustomersDialogComponent,
-    MakeDashboardPublicDialogComponent
+    MakeDashboardPublicDialogComponent,
+    AddWidgetDialogComponent,
+    ManageDashboardLayoutsDialogComponent,
+    SelectTargetLayoutDialogComponent,
+    DashboardSettingsDialogComponent
   ],
   declarations: [
     DashboardFormComponent,
@@ -45,7 +54,12 @@ import { EditWidgetComponent } from './edit-widget.component';
     DashboardToolbarComponent,
     DashboardPageComponent,
     DashboardLayoutComponent,
-    EditWidgetComponent
+    EditWidgetComponent,
+    DashboardWidgetSelectComponent,
+    AddWidgetDialogComponent,
+    ManageDashboardLayoutsDialogComponent,
+    SelectTargetLayoutDialogComponent,
+    DashboardSettingsDialogComponent
   ],
   imports: [
     CommonModule,

@@ -20,8 +20,8 @@ tb-widgets-bundle-select {
   }
 
   .tb-bundle-item {
-    height: 24px;
-    line-height: 24px;
+    height: 26px;
+    line-height: 26px;
   }
 }
 
@@ -63,28 +63,43 @@ tb-widgets-bundle-select,
 
 mat-toolbar {
   tb-widgets-bundle-select {
-    mat-select {
-      background: rgba(255, 255, 255, .2);
-      padding: 5px 20px;
+    .mat-form-field-wrapper {
+      padding-bottom: 0 !important;
+      .mat-form-field-infix {
+        background: rgba(255, 255, 255, .2);
+        padding: 5px 20px !important;
+        border: none;
 
-      .mat-select-value-text {
-        font-size: 1.2rem;
-        color: #fff;
+        mat-select {
+          .mat-select-value-text {
+            font-size: 1.2rem;
+            color: #fff;
 
-        span:first-child::after {
-          color: #fff;
+            span:first-child::after {
+              color: #fff;
+            }
+          }
+
+          .mat-select-value {
+            vertical-align: middle;
+            min-height: 30px;
+            height: 30px;
+            padding: 2px 2px 1px;
+            .mat-select-placeholder {
+              color: #fff;
+              opacity: .8;
+            }
+          }
+        }
+
+        .mat-select.mat-select-invalid {
+          .mat-select-arrow {
+            color: #fff !important;
+          }
         }
       }
-
-      .mat-select-value.mat-select-placeholder {
-        color: #fff;
-        opacity: .8;
-      }
-    }
-
-    mat-select.ng-invalid.ng-touched {
-      .mat-select-value-text {
-        color: #fff !important;
+      .mat-form-field-underline {
+        display: none;
       }
     }
   }

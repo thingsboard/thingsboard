@@ -24,7 +24,7 @@ import {
   DashboardState,
   DashboardConfiguration,
   DashboardLayoutInfo,
-  DashboardLayoutsInfo
+  DashboardLayoutsInfo, DashboardLayoutId, WidgetLayout, GridSettings
 } from '@shared/models/dashboard.models';
 import { isUndefined, isDefined, isString } from '@core/utils';
 import { DatasourceType, Widget, Datasource } from '@app/shared/models/widget.models';
@@ -91,6 +91,7 @@ export class DashboardUtilsService {
         } else if (state.root) {
           rootFound = true;
         }
+        this.validateAndUpdateState(state);
       }
       if (!rootFound) {
         const firstStateId = Object.keys(states)[0];
@@ -216,13 +217,17 @@ export class DashboardUtilsService {
   public createDefaultLayoutData(): DashboardLayout {
     return {
       widgets: {},
-      gridSettings: {
-        backgroundColor: '#eeeeee',
-        color: 'rgba(0,0,0,0.870588)',
-        columns: 24,
-        margins: [10, 10],
-        backgroundSizeMode: '100%'
-      }
+      gridSettings: this.createDefaultGridSettings()
+    };
+  }
+
+  private createDefaultGridSettings(): GridSettings {
+    return {
+      backgroundColor: '#eeeeee',
+      color: 'rgba(0,0,0,0.870588)',
+      columns: 24,
+      margin: 10,
+      backgroundSizeMode: '100%'
     };
   }
 
@@ -238,6 +243,65 @@ export class DashboardUtilsService {
       root,
       layouts: this.createDefaultLayouts()
     };
+  }
+
+  private validateAndUpdateState(state: DashboardState) {
+    if (!state.layouts) {
+      state.layouts = this.createDefaultLayouts();
+    }
+    for (const l of Object.keys(state.layouts)) {
+      const layout = state.layouts[l as DashboardLayoutId];
+      this.validateAndUpdateLayout(layout);
+    }
+  }
+
+  private validateAndUpdateLayout(layout: DashboardLayout) {
+    if (!layout.gridSettings) {
+      layout.gridSettings = this.createDefaultGridSettings();
+    }
+    if (layout.gridSettings.margins && layout.gridSettings.margins.length === 2) {
+      layout.gridSettings.margin = layout.gridSettings.margins[0];
+      delete layout.gridSettings.margins;
+    }
+    layout.gridSettings.margin = layout.gridSettings.margin || 10;
+  }
+
+  public setLayouts(dashboard: Dashboard, targetState: string, newLayouts: DashboardStateLayouts) {
+    const dashboardConfiguration = dashboard.configuration;
+    const states = dashboardConfiguration.states;
+    const state = states[targetState];
+    let addedCount = 0;
+    let removedCount = 0;
+    for (const l of Object.keys(state.layouts)) {
+      if (!newLayouts[l]) {
+        removedCount++;
+      }
+    }
+    for (const l of Object.keys(newLayouts)) {
+      if (!state.layouts[l]) {
+        addedCount++;
+      }
+    }
+    state.layouts = newLayouts;
+    const layoutsCount = Object.keys(state.layouts).length;
+    let newColumns;
+    if (addedCount) {
+      for (const l of Object.keys(state.layouts)) {
+        newColumns = state.layouts[l].gridSettings.columns * (layoutsCount - addedCount) / layoutsCount;
+        if (newColumns > 0) {
+          state.layouts[l].gridSettings.columns = newColumns;
+        }
+      }
+    }
+    if (removedCount) {
+      for (const l of Object.keys(state.layouts)) {
+        newColumns = state.layouts[l].gridSettings.columns * (layoutsCount + removedCount) / layoutsCount;
+        if (newColumns > 0) {
+          state.layouts[l].gridSettings.columns = newColumns;
+        }
+      }
+    }
+    this.removeUnusedWidgets(dashboard);
   }
 
   public getRootStateId(states: {[id: string]: DashboardState }): string {
@@ -261,12 +325,12 @@ export class DashboardUtilsService {
         const layout: DashboardLayout = state.layouts[l];
         if (layout) {
           result[l] = {
-            widgets: [],
+            widgetIds: [],
             widgetLayouts: {},
             gridSettings: {}
           } as DashboardLayoutInfo;
           for (const id of Object.keys(layout.widgets)) {
-            result[l].widgets.push(allWidgets[id]);
+            result[l].widgetIds.push(id);
           }
           result[l].widgetLayouts = layout.widgets;
           result[l].gridSettings = layout.gridSettings;
@@ -287,6 +351,154 @@ export class DashboardUtilsService {
       widgetsArray.push(widget);
     }
     return widgetsArray;
+  }
+
+  public addWidgetToLayout(dashboard: Dashboard,
+                           targetState: string,
+                           targetLayout: DashboardLayoutId,
+                           widget: Widget,
+                           originalColumns?: number,
+                           originalSize?: {sizeX: number, sizeY: number},
+                           row?: number,
+                           column?: number): void {
+    const dashboardConfiguration = dashboard.configuration;
+    const states = dashboardConfiguration.states;
+    const state = states[targetState];
+    const layout = state.layouts[targetLayout];
+    const layoutCount = Object.keys(state.layouts).length;
+    if (!widget.id) {
+      widget.id = this.utils.guid();
+    }
+    if (!dashboardConfiguration.widgets[widget.id]) {
+      dashboardConfiguration.widgets[widget.id] = widget;
+    }
+    const widgetLayout: WidgetLayout = {
+      sizeX: originalSize ? originalSize.sizeX : widget.sizeX,
+      sizeY: originalSize ? originalSize.sizeY : widget.sizeY,
+      mobileOrder: widget.config.mobileOrder,
+      mobileHeight: widget.config.mobileHeight
+    };
+    if (isUndefined(originalColumns)) {
+      originalColumns = 24;
+    }
+    const gridSettings = layout.gridSettings;
+    let columns = 24;
+    if (gridSettings && gridSettings.columns) {
+      columns = gridSettings.columns;
+    }
+    columns = columns * layoutCount;
+    if (columns !== originalColumns) {
+      const ratio = columns / originalColumns;
+      widgetLayout.sizeX *= ratio;
+      widgetLayout.sizeY *= ratio;
+    }
+
+    if (row > -1 && column > - 1) {
+      widgetLayout.row = row;
+      widgetLayout.col = column;
+    } else {
+      row = 0;
+      for (const w of Object.keys(layout.widgets)) {
+        const existingLayout = layout.widgets[w];
+        const wRow = existingLayout.row ? existingLayout.row : 0;
+        const wSizeY = existingLayout.sizeY ? existingLayout.sizeY : 1;
+        const bottom = wRow + wSizeY;
+        row = Math.max(row, bottom);
+      }
+      widgetLayout.row = row;
+      widgetLayout.col = 0;
+    }
+    layout.widgets[widget.id] = widgetLayout;
+  }
+
+  public removeWidgetFromLayout(dashboard: Dashboard,
+                                targetState: string,
+                                targetLayout: DashboardLayoutId,
+                                widgetId: string) {
+    const dashboardConfiguration = dashboard.configuration;
+    const states = dashboardConfiguration.states;
+    const state = states[targetState];
+    const layout = state.layouts[targetLayout];
+    delete layout.widgets[widgetId];
+    this.removeUnusedWidgets(dashboard);
+  }
+
+  public isSingleLayoutDashboard(dashboard: Dashboard): {state: string, layout: DashboardLayoutId} {
+    const dashboardConfiguration = dashboard.configuration;
+    const states = dashboardConfiguration.states;
+    const stateKeys = Object.keys(states);
+    if (stateKeys.length === 1) {
+      const state = states[stateKeys[0]];
+      const layouts = state.layouts;
+      const layoutKeys = Object.keys(layouts);
+      if (layoutKeys.length === 1) {
+        return {
+          state: stateKeys[0],
+          layout: layoutKeys[0] as DashboardLayoutId
+        };
+      }
+    }
+    return null;
+  }
+
+  public updateLayoutSettings(layout: DashboardLayout, gridSettings: GridSettings) {
+    const prevGridSettings = layout.gridSettings;
+    let prevColumns = prevGridSettings ? prevGridSettings.columns : 24;
+    if (!prevColumns) {
+      prevColumns = 24;
+    }
+    const columns = gridSettings.columns || 24;
+    const ratio = columns / prevColumns;
+    layout.gridSettings = gridSettings;
+    let maxRow = 0;
+    for (const w of Object.keys(layout.widgets)) {
+      const widget = layout.widgets[w];
+      if (!widget.sizeX) {
+        widget.sizeX = 1;
+      }
+      if (!widget.sizeY) {
+        widget.sizeY = 1;
+      }
+      maxRow = Math.max(maxRow, widget.row + widget.sizeY);
+    }
+    const newMaxRow = Math.round(maxRow * ratio);
+    for (const w of Object.keys(layout.widgets)) {
+      const widget = layout.widgets[w];
+      if (widget.row + widget.sizeY === maxRow) {
+        widget.row = Math.round(widget.row * ratio);
+        widget.sizeY = newMaxRow - widget.row;
+      } else {
+        widget.row = Math.round(widget.row * ratio);
+        widget.sizeY = Math.round(widget.sizeY * ratio);
+      }
+      widget.sizeX = Math.round(widget.sizeX * ratio);
+      widget.col = Math.round(widget.col * ratio);
+      if (widget.col + widget.sizeX > columns) {
+        widget.sizeX = columns - widget.col;
+      }
+    }
+  }
+
+  private removeUnusedWidgets(dashboard: Dashboard) {
+    const dashboardConfiguration = dashboard.configuration;
+    const states = dashboardConfiguration.states;
+    const widgets = dashboardConfiguration.widgets;
+    for (const widgetId of Object.keys(widgets)) {
+      let found = false;
+      for (const s of Object.keys(states)) {
+        const state = states[s];
+        for (const l of Object.keys(state.layouts)) {
+          const layout = state.layouts[l];
+          if (layout.widgets[widgetId]) {
+            found = true;
+            break;
+          }
+        }
+      }
+      if (!found) {
+        delete dashboardConfiguration.widgets[widgetId];
+      }
+    }
   }
 
   private validateAndUpdateEntityAliases(configuration: DashboardConfiguration,

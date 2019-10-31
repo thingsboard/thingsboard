@@ -15,14 +15,13 @@
 ///
 
 import { DashboardLayoutId, GridSettings, WidgetLayout, Dashboard, WidgetLayouts } from '@app/shared/models/dashboard.models';
-import { Widget } from '@app/shared/models/widget.models';
+import { Widget, WidgetPosition } from '@app/shared/models/widget.models';
 import { Timewindow } from '@shared/models/time/time.models';
 import { IAliasController, IStateController } from '@core/api/widget-api.models';
 import { ILayoutController } from './layout/layout.models';
 import {
   DashboardContextMenuItem,
-  WidgetContextMenuItem,
-  WidgetPosition
+  WidgetContextMenuItem
 } from '@home/models/dashboard-component.models';
 import { Observable } from 'rxjs';
 import { ChangeDetectorRef } from '@angular/core';
@@ -43,13 +42,13 @@ export interface IDashboardController {
   openRightLayout();
   openDashboardState(stateId: string, openRightLayout: boolean);
   addWidget($event: Event, layoutCtx: DashboardPageLayoutContext);
-  editWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget, index: number);
-  exportWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget, index: number);
+  editWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget);
+  exportWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget);
   removeWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget);
-  widgetMouseDown($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget, index: number);
-  widgetClicked($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget, index: number);
+  widgetMouseDown($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget);
+  widgetClicked($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget);
   prepareDashboardContextMenu(layoutCtx: DashboardPageLayoutContext): Array<DashboardContextMenuItem>;
-  prepareWidgetContextMenu(layoutCtx: DashboardPageLayoutContext, widget: Widget, index: number): Array<WidgetContextMenuItem>;
+  prepareWidgetContextMenu(layoutCtx: DashboardPageLayoutContext, widget: Widget): Array<WidgetContextMenuItem>;
   copyWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget);
   copyWidgetReference($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget);
   pasteWidget($event: Event, layoutCtx: DashboardPageLayoutContext, pos: WidgetPosition);
@@ -58,7 +57,7 @@ export interface IDashboardController {
 
 export interface DashboardPageLayoutContext {
   id: DashboardLayoutId;
-  widgets: Array<Widget>;
+  widgets: LayoutWidgetsArray;
   widgetLayouts: WidgetLayouts;
   gridSettings: GridSettings;
   ctrl: ILayoutController;
@@ -73,3 +72,69 @@ export interface DashboardPageLayout {
 
 export declare type DashboardPageLayouts = {[key in DashboardLayoutId]: DashboardPageLayout};
 
+export class LayoutWidgetsArray implements Iterable<Widget> {
+
+  private widgetIds: string[] = [];
+  private pointer = 0;
+
+  constructor(private dashboard: Dashboard) {
+  }
+
+  size() {
+    return this.widgetIds.length;
+  }
+
+  setWidgetIds(widgetIds: string[]) {
+    this.widgetIds = widgetIds;
+  }
+
+  addWidgetId(widgetId: string) {
+    this.widgetIds.push(widgetId);
+  }
+
+  removeWidgetId(widgetId: string): boolean {
+    const index = this.widgetIds.indexOf(widgetId);
+    if (index > -1) {
+      this.widgetIds.splice(index, 1);
+      return true;
+    }
+    return false;
+  }
+
+  [Symbol.iterator](): Iterator<Widget> {
+    let pointer = 0;
+    const widgetIds = this.widgetIds;
+    const dashboard = this.dashboard;
+    return {
+      next(value?: any): IteratorResult<Widget> {
+        if (pointer < widgetIds.length) {
+          const widgetId = widgetIds[pointer++];
+          const widget = dashboard.configuration.widgets[widgetId];
+          return {
+            done: false,
+            value: widget
+          };
+        } else {
+          return {
+            done: true,
+            value: null
+          };
+        }
+      }
+    };
+  }
+
+  public widgetByIndex(index: number): Widget {
+    const widgetId = this.widgetIds[index];
+    if (widgetId) {
+      return this.widgetById(widgetId);
+    } else {
+      return null;
+    }
+  }
+
+  private widgetById(widgetId: string): Widget {
+    return this.dashboard.configuration.widgets[widgetId];
+  }
+
+}

@@ -1,0 +1,45 @@
+<!--
+
+    Copyright © 2016-2019 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-container">
+  <label class="tb-title">{{label}}</label>
+  <ng-container #flow="flow"
+                [flowConfig]="{singleFile: true}">
+    <div class="tb-image-select-container">
+      <div class="tb-image-preview-container">
+        <div *ngIf="!safeImageUrl" translate>dashboard.no-image</div>
+        <img *ngIf="safeImageUrl" class="tb-image-preview" [src]="safeImageUrl" />
+      </div>
+      <div class="tb-image-clear-container">
+        <button mat-button mat-icon-button color="primary"
+                type="button"
+                (click)="clearImage()"
+                class="tb-image-clear-btn"
+                matTooltip="{{ 'action.remove' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+      <div class="drop-area tb-flow-drop"
+           flowDrop
+           [flow]="flow.flowJs">
+        <label for="select" translate>dashboard.drop-image</label>
+        <input class="file-input" flowButton [flow]="flow.flowJs" [flowAttributes]="{accept: 'image/*'}" id="select">
+      </div>
+    </div>
+  </ng-container>
+</div>

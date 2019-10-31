@@ -20,6 +20,8 @@ import { FooterComponent } from './components/footer.component';
 import { LogoComponent } from './components/logo.component';
 import { TbSnackBarComponent, ToastDirective } from './components/toast.directive';
 import { BreadcrumbComponent } from '@app/shared/components/breadcrumb.component';
+import { NgxFlowModule, FlowInjectionToken } from '@flowjs/ngx-flow';
+import Flow from '@flowjs/flow.js';
 
 import {
   MatAutocompleteModule,
@@ -108,6 +110,7 @@ import { JsFuncComponent } from './components/js-func.component';
 import { JsonFormComponent } from './components/json-form/json-form.component';
 import { MaterialIconsDialogComponent } from '@shared/components/dialog/material-icons-dialog.component';
 import { MaterialIconSelectComponent } from '@shared/components/material-icon-select.component';
+import { ImageInputComponent } from './components/image-input.component';
 
 @NgModule({
   providers: [
@@ -115,7 +118,11 @@ import { MaterialIconSelectComponent } from '@shared/components/material-icon-se
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
     HighlightPipe,
-    TruncatePipe
+    TruncatePipe,
+    {
+      provide: FlowInjectionToken,
+      useValue: Flow
+    }
   ],
   entryComponents: [
     TbSnackBarComponent,
@@ -173,6 +180,7 @@ import { MaterialIconSelectComponent } from '@shared/components/material-icon-se
     ColorInputComponent,
     MaterialIconSelectComponent,
     JsonFormComponent,
+    ImageInputComponent,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
@@ -222,7 +230,8 @@ import { MaterialIconSelectComponent } from '@shared/components/material-icon-se
     OverlayModule,
     ShareButtonsModule,
     HotkeyModule,
-    ColorPickerModule
+    ColorPickerModule,
+    NgxFlowModule
   ],
   exports: [
     FooterComponent,
@@ -308,6 +317,7 @@ import { MaterialIconSelectComponent } from '@shared/components/material-icon-se
     ColorInputComponent,
     MaterialIconSelectComponent,
     JsonFormComponent,
+    ImageInputComponent,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,

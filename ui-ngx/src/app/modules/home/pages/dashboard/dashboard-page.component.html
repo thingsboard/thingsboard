@@ -132,26 +132,13 @@
     </section>
     <div class="tb-absolute-fill tb-dashboard-layouts" fxLayout="{{forceDashboardMobileMode ? 'column' : 'row'}}"
          [ngClass]="{ 'tb-padded' : !widgetEditMode && (isEdit || displayTitle()), 'tb-shrinked' : isEditingWidget }">
-      <div [fxShow]="layouts.main.show"
-           id="tb-main-layout"
-           [ngStyle]="{width: mainLayoutWidth(),
-                       height: mainLayoutHeight()}">
-        <tb-dashboard-layout
-          [layoutCtx]="layouts.main.layoutCtx"
-          [dashboardCtx]="dashboardCtx"
-          [isEdit]="isEdit"
-          [isEditingWidget]="isEditingWidget"
-          [isMobile]="forceDashboardMobileMode"
-          [widgetEditMode]="widgetEditMode">
-        </tb-dashboard-layout>
-      </div>
-      <mat-drawer-container *ngIf="layouts.right.show"
-                             id="tb-right-layout">
-        <mat-drawer
-            [ngStyle]="{minWidth: rightLayoutWidth(),
-                        maxWidth: rightLayoutWidth(),
-                        height: rightLayoutHeight(),
-                        zIndex: 25}"
+      <mat-drawer-container class="tb-absolute-fill">
+        <mat-drawer *ngIf="layouts.right.show"
+                    id="tb-right-layout"
+                    [ngStyle]="{minWidth: rightLayoutWidth(),
+                                maxWidth: rightLayoutWidth(),
+                                height: rightLayoutHeight(),
+                                borderLeft: 'none'}"
             disableClose="true"
             position="end"
             [mode]="isMobile ? 'over' : 'side'"
@@ -165,6 +152,19 @@
             [widgetEditMode]="widgetEditMode">
           </tb-dashboard-layout>
         </mat-drawer>
+        <mat-drawer-content [fxShow]="layouts.main.show"
+                            id="tb-main-layout"
+                            [ngStyle]="{width: mainLayoutWidth(),
+                            height: mainLayoutHeight()}">
+          <tb-dashboard-layout
+            [layoutCtx]="layouts.main.layoutCtx"
+            [dashboardCtx]="dashboardCtx"
+            [isEdit]="isEdit"
+            [isEditingWidget]="isEditingWidget"
+            [isMobile]="forceDashboardMobileMode"
+            [widgetEditMode]="widgetEditMode">
+          </tb-dashboard-layout>
+        </mat-drawer-content>
       </mat-drawer-container>
     </div>
     <mat-drawer-container hasBackdrop="false" class="tb-widget-details-sidenav">
@@ -191,6 +191,37 @@
              [widget]="editingWidget"
              [widgetLayout]="editingWidgetLayout">
           </tb-edit-widget>
+        </tb-details-panel>
+      </mat-drawer>
+    </mat-drawer-container>
+    <mat-drawer-container *ngIf="!widgetEditMode" hasBackdrop="false" class="tb-select-widget-sidenav">
+      <mat-drawer class="tb-details-drawer"
+                  [opened]="isAddingWidget"
+                  mode="over"
+                  position="end">
+        <tb-details-panel *ngIf="isAddingWidget" fxFlex
+                          headerTitle="{{'dashboard.select-widget-title' | translate}}"
+                          headerHeightPx="120"
+                          [isReadOnly]="true"
+                          [isEdit]="false"
+                          (closeDetails)="onAddWidgetClosed()">
+          <div class="header-pane" *ngIf="isAddingWidget">
+            <div fxLayout="row">
+              <span class="tb-details-subtitle">{{ 'widgets-bundle.current' | translate }}</span>
+              <tb-widgets-bundle-select fxFlexOffset="5"
+                                        fxFlex
+                                        required
+                                        [selectFirstBundle]="false"
+                                        [ngModel]="widgetsBundle"
+                                        (ngModelChange)="widgetsBundle = $event">
+              </tb-widgets-bundle-select>
+            </div>
+          </div>
+          <tb-dashboard-widget-select *ngIf="isAddingWidget"
+             [aliasController]="dashboardCtx.aliasController"
+             [widgetsBundle]="widgetsBundle"
+             (widgetSelected)="addWidgetFromType($event)">
+          </tb-dashboard-widget-select>
         </tb-details-panel>
       </mat-drawer>
     </mat-drawer-container>

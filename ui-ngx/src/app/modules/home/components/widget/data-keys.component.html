@@ -29,7 +29,7 @@
         <div class="tb-color-preview" (click)="showColorPicker(key)" style="margin-right: 5px;">
           <div class="tb-color-result" [ngStyle]="{background: key.color}"></div>
         </div>
-        <div fxLayout="row">
+        <div style="flex: 1; min-width: 0px;" fxLayout="row">
           <div class="tb-chip-label">
             <span *ngIf="datasourceType !== datasourceTypes.function && widgetType !== widgetTypes.alarm">
               <span *ngIf="key.type === dataKeyTypes.attribute"
@@ -54,7 +54,9 @@
             </ng-template>
           </div>
         </div>
-        <button *ngIf="!disabled" (click)="editDataKey(key, $index)" mat-button mat-icon-button class="tb-mat-32">
+        <button *ngIf="!disabled"
+                type="button"
+                (click)="editDataKey(key, $index)" mat-button mat-icon-button class="tb-mat-32">
           <mat-icon class="tb-mat-20">edit</mat-icon>
         </button>
         <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>

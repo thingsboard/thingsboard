@@ -17,7 +17,7 @@
 import { Inject, Injectable, NgZone } from '@angular/core';
 import { WINDOW } from '@core/services/window.service';
 import { ExceptionData } from '@app/shared/models/error.models';
-import { deepClone, deleteNullProperties, isDefined, isUndefined } from '@core/utils';
+import { deepClone, deleteNullProperties, guid, isDefined, isUndefined } from '@core/utils';
 import { WindowMessage } from '@shared/models/window-message.model';
 import { TranslateService } from '@ngx-translate/core';
 import { customTranslationsPrefix } from '@app/shared/models/constants';
@@ -263,13 +263,7 @@ export class UtilsService {
   }
 
   public guid(): string {
-    function s4(): string {
-      return Math.floor((1 + Math.random()) * 0x10000)
-        .toString(16)
-        .substring(1);
-    }
-    return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
-      s4() + '-' + s4() + s4() + s4();
+    return guid();
   }
 
   public validateDatasources(datasources: Array<Datasource>): Array<Datasource> {

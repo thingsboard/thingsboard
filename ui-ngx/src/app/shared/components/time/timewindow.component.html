@@ -16,6 +16,7 @@
 
 -->
 <button *ngIf="asButton" cdkOverlayOrigin #timewindowPanelOrigin="cdkOverlayOrigin" [disabled]="disabled"
+        type="button"
         mat-raised-button color="primary" (click)="openEditMode($event)">
   <mat-icon class="material-icons">query_builder</mat-icon>
   <span>{{innerValue?.displayValue}}</span>
@@ -23,6 +24,7 @@
 <section *ngIf="!asButton" cdkOverlayOrigin #timewindowPanelOrigin="cdkOverlayOrigin"
          class="tb-timewindow" fxLayout="row" fxLayoutAlign="start center">
   <button *ngIf="direction === 'left'" [disabled]="disabled" mat-button mat-icon-button class="tb-mat-32"
+          type="button"
           (click)="openEditMode($event)"
           matTooltip="{{ 'timewindow.edit' | translate }}"
           [matTooltipPosition]="tooltipPosition">
@@ -35,6 +37,7 @@
     {{innerValue?.displayValue}}
   </span>
   <button *ngIf="direction === 'right'" [disabled]="disabled" mat-button mat-icon-button class="tb-mat-32"
+          type="button"
           (click)="openEditMode($event)"
           matTooltip="{{ 'timewindow.edit' | translate }}"
           [matTooltipPosition]="tooltipPosition">

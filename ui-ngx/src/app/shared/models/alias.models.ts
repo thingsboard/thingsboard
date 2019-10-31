@@ -132,10 +132,13 @@ export interface EntityAliasFilter extends EntityFilters {
   resolveMultiple?: boolean;
 }
 
-export interface EntityAlias {
-  id: string;
+export interface EntityAliasInfo {
   alias: string;
   filter: EntityAliasFilter;
+}
+
+export interface EntityAlias extends EntityAliasInfo {
+  id: string;
   [key: string]: any;
 }
 

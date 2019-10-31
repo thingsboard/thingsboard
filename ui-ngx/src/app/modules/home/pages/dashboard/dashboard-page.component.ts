@@ -14,16 +14,7 @@
 /// limitations under the License.
 ///
 
-import {
-  Component,
-  Inject,
-  OnDestroy,
-  OnInit,
-  ViewEncapsulation,
-  ViewChild,
-  NgZone,
-  ChangeDetectorRef, ChangeDetectionStrategy, ApplicationRef
-} from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, NgZone, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -33,47 +24,42 @@ import { AuthService } from '@core/auth/auth.service';
 import {
   Dashboard,
   DashboardConfiguration,
-  WidgetLayout,
+  DashboardLayoutId,
   DashboardLayoutInfo,
-  DashboardLayoutsInfo
+  DashboardLayoutsInfo,
+  DashboardStateLayouts, GridSettings,
+  WidgetLayout
 } from '@app/shared/models/dashboard.models';
 import { WINDOW } from '@core/services/window.service';
 import { WindowMessage } from '@shared/models/window-message.model';
 import { deepClone, isDefined } from '@app/core/utils';
 import {
-  DashboardContext, DashboardPageLayout,
+  DashboardContext,
+  DashboardPageLayout,
   DashboardPageLayoutContext,
   DashboardPageLayouts,
-  DashboardPageScope, IDashboardController
+  DashboardPageScope,
+  IDashboardController,
+  LayoutWidgetsArray
 } from './dashboard-page.models';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { AuthUser } from '@shared/models/user.model';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
-import { Widget, widgetTypesData } from '@app/shared/models/widget.models';
+import { Widget, WidgetConfig, WidgetPosition, widgetTypesData } from '@app/shared/models/widget.models';
 import { environment as env } from '@env/environment';
 import { Authority } from '@shared/models/authority.enum';
 import { DialogService } from '@core/services/dialog.service';
 import { EntityService } from '@core/http/entity.service';
 import { AliasController } from '@core/api/alias-controller';
-import { Observable, Subscription, of } from 'rxjs';
+import { Observable, of, Subscription } from 'rxjs';
 import { FooterFabButtons } from '@shared/components/footer-fab-buttons.component';
-import { IStateController } from '@core/api/widget-api.models';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { DashboardService } from '@core/http/dashboard.service';
-import {
-  WidgetContextMenuItem,
-  DashboardContextMenuItem,
-  IDashboardComponent, WidgetPosition
-} from '../../models/dashboard-component.models';
+import { DashboardContextMenuItem, WidgetContextMenuItem } from '../../models/dashboard-component.models';
 import { WidgetComponentService } from '../../components/widget/widget-component.service';
-import { FormBuilder, FormGroup, NgForm } from '@angular/forms';
+import { FormBuilder } from '@angular/forms';
 import { ItemBufferService } from '@core/services/item-buffer.service';
-import {
-  DeviceCredentialsDialogComponent,
-  DeviceCredentialsDialogData
-} from '@home/pages/device/device-credentials-dialog.component';
-import { DeviceCredentials } from '@shared/models/device.models';
 import { MatDialog } from '@angular/material/dialog';
 import {
   EntityAliasesDialogComponent,
@@ -81,6 +67,18 @@ import {
 } from '@home/components/alias/entity-aliases-dialog.component';
 import { EntityAliases } from '@app/shared/models/alias.models';
 import { EditWidgetComponent } from '@home/pages/dashboard/edit-widget.component';
+import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
+import { AddWidgetDialogComponent, AddWidgetDialogData } from '@home/pages/dashboard/add-widget-dialog.component';
+import { TranslateService } from '@ngx-translate/core';
+import {
+  ManageDashboardLayoutsDialogComponent,
+  ManageDashboardLayoutsDialogData
+} from '@home/pages/dashboard/layout/manage-dashboard-layouts-dialog.component';
+import { SelectTargetLayoutDialogComponent } from '@home/pages/dashboard/layout/select-target-layout-dialog.component';
+import {
+  DashboardSettingsDialogComponent,
+  DashboardSettingsDialogData
+} from '@home/pages/dashboard/dashboard-settings-dialog.component';
 
 @Component({
   selector: 'tb-dashboard-page',
@@ -109,6 +107,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   isMobile = !this.breakpointObserver.isMatched(MediaBreakpoints['gt-sm']);
   forceDashboardMobileMode = false;
   isAddingWidget = false;
+  widgetsBundle: WidgetsBundle = null;
 
   isToolbarOpened = false;
   isToolbarOpenedAnimate = false;
@@ -127,12 +126,14 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   currentCustomerId: string;
   currentDashboardScope: DashboardPageScope;
 
+  addingLayoutCtx: DashboardPageLayoutContext;
+
   layouts: DashboardPageLayouts = {
     main: {
       show: false,
       layoutCtx: {
         id: 'main',
-        widgets: [],
+        widgets: null,
         widgetLayouts: {},
         gridSettings: {},
         ignoreLoading: false,
@@ -144,7 +145,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       show: false,
       layoutCtx: {
         id: 'right',
-        widgets: [],
+        widgets: null,
         widgetLayouts: {},
         gridSettings: {},
         ignoreLoading: false,
@@ -216,6 +217,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
               private itembuffer: ItemBufferService,
               private fb: FormBuilder,
               private dialog: MatDialog,
+              private translate: TranslateService,
               private ngZone: NgZone,
               private cd: ChangeDetectorRef) {
     super(store);
@@ -251,6 +253,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
     this.dashboard = data.dashboard;
     this.dashboardConfiguration = this.dashboard.configuration;
+    this.layouts.main.layoutCtx.widgets = new LayoutWidgetsArray(this.dashboard);
+    this.layouts.right.layoutCtx.widgets = new LayoutWidgetsArray(this.dashboard);
     this.widgetEditMode = data.widgetEditMode;
     this.singlePageMode = data.singlePageMode;
 
@@ -282,6 +286,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     this.isEditingWidget = false;
     this.forceDashboardMobileMode = false;
     this.isAddingWidget = false;
+    this.widgetsBundle = null;
 
     this.isToolbarOpened = false;
     this.isToolbarOpenedAnimate = false;
@@ -475,8 +480,30 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     if ($event) {
       $event.stopPropagation();
     }
-    // TODO:
-    this.dialogService.todo();
+    let gridSettings: GridSettings = null;
+    const layoutKeys = this.dashboardUtils.isSingleLayoutDashboard(this.dashboard);
+    if (layoutKeys) {
+      gridSettings = deepClone(this.dashboard.configuration.states[layoutKeys.state].layouts[layoutKeys.layout].gridSettings);
+    }
+    this.dialog.open<DashboardSettingsDialogComponent, DashboardSettingsDialogData,
+      DashboardSettingsDialogData>(DashboardSettingsDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        settings: deepClone(this.dashboard.configuration.settings),
+        gridSettings
+      }
+    }).afterClosed().subscribe((data) => {
+      if (data) {
+        this.dashboard.configuration.settings = data.settings;
+        const newGridSettings = data.gridSettings;
+        if (newGridSettings) {
+          const layout = this.dashboard.configuration.states[layoutKeys.state].layouts[layoutKeys.layout];
+          this.dashboardUtils.updateLayoutSettings(layout, newGridSettings);
+          this.updateLayouts();
+       }
+      }
+    });
   }
 
   public manageDashboardStates($event: Event) {
@@ -491,8 +518,23 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     if ($event) {
       $event.stopPropagation();
     }
-    // TODO:
-    this.dialogService.todo();
+    this.dialog.open<ManageDashboardLayoutsDialogComponent, ManageDashboardLayoutsDialogData,
+      DashboardStateLayouts>(ManageDashboardLayoutsDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        layouts: deepClone(this.dashboard.configuration.states[this.dashboardCtx.state].layouts)
+      }
+    }).afterClosed().subscribe((layouts) => {
+      if (layouts) {
+        this.updateDashboardLayouts(layouts);
+      }
+    });
+  }
+
+  private updateDashboardLayouts(newLayouts: DashboardStateLayouts) {
+    this.dashboardUtils.setLayouts(this.dashboard, this.dashboardCtx.state, newLayouts);
+    this.updateLayouts();
   }
 
   private importWidget($event: Event) {
@@ -526,7 +568,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     this.notifyDashboardUpdated();
   }
 
-  public openDashboardState(state: string, openRightLayout: boolean) {
+  public openDashboardState(state: string, openRightLayout?: boolean) {
     const layoutsData = this.dashboardUtils.getStateLayoutsData(this.dashboard, state);
     if (layoutsData) {
       this.dashboardCtx.state = state;
@@ -546,21 +588,21 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         }
       }
       this.isRightLayoutOpened = openRightLayout ? true : false;
-      this.updateLayouts(layoutsData, layoutVisibilityChanged);
+      this.updateLayouts(layoutsData);
     }
   }
 
-  private updateLayouts(layoutsData: DashboardLayoutsInfo, layoutVisibilityChanged: boolean) {
+  private updateLayouts(layoutsData?: DashboardLayoutsInfo) {
+    if (!layoutsData) {
+      layoutsData = this.dashboardUtils.getStateLayoutsData(this.dashboard, this.dashboardCtx.state);
+    }
     for (const l of Object.keys(this.layouts)) {
       const layout: DashboardPageLayout = this.layouts[l];
       if (layoutsData[l]) {
         const layoutInfo: DashboardLayoutInfo = layoutsData[l];
-        if (layout.layoutCtx.id === 'main') {
-          layout.layoutCtx.ctrl.setResizing(layoutVisibilityChanged);
-        }
         this.updateLayout(layout, layoutInfo);
       } else {
-        this.updateLayout(layout, {widgets: [], widgetLayouts: {}, gridSettings: null});
+        this.updateLayout(layout, {widgetIds: [], widgetLayouts: {}, gridSettings: null});
       }
     }
   }
@@ -569,7 +611,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     if (layoutInfo.gridSettings) {
       layout.layoutCtx.gridSettings = layoutInfo.gridSettings;
     }
-    layout.layoutCtx.widgets = layoutInfo.widgets;
+    layout.layoutCtx.widgets.setWidgetIds(layoutInfo.widgetIds);
     layout.layoutCtx.widgetLayouts = layoutInfo.widgetLayouts;
     if (layout.show && layout.layoutCtx.ctrl) {
       layout.layoutCtx.ctrl.reload();
@@ -594,6 +636,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
           this.dashboardConfiguration = this.dashboard.configuration;
           this.dashboardCtx.dashboardTimewindow = this.dashboardConfiguration.timewindow;
           this.entityAliasesUpdated();
+          this.updateLayouts();
         } else {
           this.dashboard.configuration.timewindow = this.dashboardCtx.dashboardTimewindow;
         }
@@ -617,7 +660,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   private notifyDashboardUpdated() {
     if (this.widgetEditMode) {
-      const widget = this.layouts.main.layoutCtx.widgets[0];
+      const widget = this.layouts.main.layoutCtx.widgets.widgetByIndex(0);
       const layout = this.layouts.main.layoutCtx.widgetLayouts[widget.id];
       widget.sizeX = layout.sizeX;
       widget.sizeY = layout.sizeY;
@@ -643,8 +686,86 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     if ($event) {
       $event.stopPropagation();
     }
-    // TODO:
-    this.dialogService.todo();
+    this.isAddingWidget = true;
+    this.addingLayoutCtx = layoutCtx;
+  }
+
+  onAddWidgetClosed() {
+    this.isAddingWidget = false;
+  }
+
+  private addWidgetToLayout(widget: Widget, layoutId: DashboardLayoutId) {
+    this.dashboardUtils.addWidgetToLayout(this.dashboard, this.dashboardCtx.state, layoutId, widget);
+    this.layouts[layoutId].layoutCtx.widgets.addWidgetId(widget.id);
+  }
+
+  private selectTargetLayout(): Observable<DashboardLayoutId> {
+    const layouts = this.dashboardConfiguration.states[this.dashboardCtx.state].layouts;
+    const layoutIds = Object.keys(layouts);
+    if (layoutIds.length > 1) {
+      return this.dialog.open<SelectTargetLayoutDialogComponent, any,
+        DashboardLayoutId>(SelectTargetLayoutDialogComponent, {
+        disableClose: true,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog']
+      }).afterClosed();
+    } else {
+      return of(layoutIds[0] as DashboardLayoutId);
+    }
+  }
+
+  private addWidgetToDashboard(widget: Widget) {
+    if (this.addingLayoutCtx) {
+      this.addWidgetToLayout(widget, this.addingLayoutCtx.id);
+      this.addingLayoutCtx = null;
+    } else {
+      this.selectTargetLayout().subscribe((layoutId) => {
+        if (layoutId) {
+          this.addWidgetToLayout(widget, layoutId);
+        }
+      });
+    }
+  }
+
+  addWidgetFromType(widget: Widget) {
+    this.onAddWidgetClosed();
+    this.widgetComponentService.getWidgetInfo(widget.bundleAlias, widget.typeAlias, widget.isSystemType).subscribe(
+      (widgetTypeInfo) => {
+        const config: WidgetConfig = JSON.parse(widgetTypeInfo.defaultConfig);
+        config.title = 'New ' + widgetTypeInfo.widgetName;
+        config.datasources = [];
+        const newWidget: Widget = {
+          isSystemType: widget.isSystemType,
+          bundleAlias: widget.bundleAlias,
+          typeAlias: widgetTypeInfo.alias,
+          type: widgetTypeInfo.type,
+          title: 'New widget',
+          sizeX: widgetTypeInfo.sizeX,
+          sizeY: widgetTypeInfo.sizeY,
+          config,
+          row: 0,
+          col: 0
+        };
+        if (widgetTypeInfo.typeParameters.useCustomDatasources) {
+          this.addWidgetToDashboard(newWidget);
+        } else {
+          this.dialog.open<AddWidgetDialogComponent, AddWidgetDialogData,
+            Widget>(AddWidgetDialogComponent, {
+            disableClose: true,
+            panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+            data: {
+              dashboard: this.dashboard,
+              aliasController: this.dashboardCtx.aliasController,
+              widget: newWidget,
+              widgetInfo: widgetTypeInfo
+            }
+          }).afterClosed().subscribe((addedWidget) => {
+            if (addedWidget) {
+              this.addWidgetToDashboard(addedWidget);
+            }
+          });
+        }
+      }
+    );
   }
 
   onRevertWidgetEdit() {
@@ -660,14 +781,12 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     const widget = deepClone(this.editingWidget);
     const widgetLayout = deepClone(this.editingWidgetLayout);
     const id = this.editingWidgetOriginal.id;
-    const index = this.editingLayoutCtx.widgets.indexOf(this.editingWidgetOriginal);
     this.dashboardConfiguration.widgets[id] = widget;
     this.editingWidgetOriginal = widget;
     this.editingWidgetLayoutOriginal = widgetLayout;
-    this.editingLayoutCtx.widgets[index] = widget;
     this.editingLayoutCtx.widgetLayouts[widget.id] = widgetLayout;
     setTimeout(() => {
-      this.editingLayoutCtx.ctrl.highlightWidget(index, 0);
+      this.editingLayoutCtx.ctrl.highlightWidget(widget.id, 0);
     }, 0);
   }
 
@@ -683,7 +802,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     this.forceDashboardMobileMode = false;
   }
 
-  editWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget, index: number) {
+  editWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget) {
     $event.stopPropagation();
     if (this.editingWidgetOriginal === widget) {
       this.onEditWidgetClosed();
@@ -701,52 +820,73 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         const delayOffset = transition ? 350 : 0;
         const delay = transition ? 400 : 300;
         setTimeout(() => {
-          layoutCtx.ctrl.highlightWidget(index, delay);
+          layoutCtx.ctrl.highlightWidget(widget.id, delay);
         }, delayOffset);
       }
     }
   }
 
   copyWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget) {
-    // TODO:
-    this.dialogService.todo();
+    this.itembuffer.copyWidget(this.dashboard,
+      this.dashboardCtx.state, layoutCtx.id, widget);
   }
 
   copyWidgetReference($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget) {
-    // TODO:
-    this.dialogService.todo();
+    this.itembuffer.copyWidgetReference(this.dashboard,
+      this.dashboardCtx.state, layoutCtx.id, widget);
   }
 
   pasteWidget($event: Event, layoutCtx: DashboardPageLayoutContext, pos: WidgetPosition) {
-    // TODO:
-    this.dialogService.todo();
+    this.itembuffer.pasteWidget(this.dashboard, this.dashboardCtx.state, layoutCtx.id,
+            pos, this.entityAliasesUpdated.bind(this)).subscribe(
+      (widget) => {
+        layoutCtx.widgets.addWidgetId(widget.id);
+      });
   }
 
   pasteWidgetReference($event: Event, layoutCtx: DashboardPageLayoutContext, pos: WidgetPosition) {
-    // TODO:
-    this.dialogService.todo();
+    this.itembuffer.pasteWidgetReference(this.dashboard, this.dashboardCtx.state, layoutCtx.id,
+      pos).subscribe(
+      (widget) => {
+        layoutCtx.widgets.addWidgetId(widget.id);
+      });
   }
 
   removeWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget) {
-    // TODO:
-    this.dialogService.todo();
+    let title = widget.config.title;
+    if (!title || title.length === 0) {
+      title = this.widgetComponentService.getInstantWidgetInfo(widget).widgetName;
+    }
+    const confirmTitle = this.translate.instant('widget.remove-widget-title', {widgetTitle: title});
+    const confirmContent = this.translate.instant('widget.remove-widget-text');
+    this.dialogService.confirm(confirmTitle,
+      confirmContent,
+      this.translate.instant('action.no'),
+      this.translate.instant('action.yes'),
+    ).subscribe((res) => {
+      if (res) {
+        if (layoutCtx.widgets.removeWidgetId(widget.id)) {
+          this.dashboardUtils.removeWidgetFromLayout(this.dashboard, this.dashboardCtx.state, layoutCtx.id, widget.id);
+        }
+      }
+    });
   }
 
-  exportWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget, index: number) {
+  exportWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget) {
     $event.stopPropagation();
     // TODO:
     this.dialogService.todo();
   }
 
-  widgetClicked($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget, index: number) {
+  widgetClicked($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget) {
     if (this.isEditingWidget) {
-      this.editWidget($event, layoutCtx, widget, index);
+      this.editWidget($event, layoutCtx, widget);
     }
   }
 
-  widgetMouseDown($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget, index: number) {
+  widgetMouseDown($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget) {
     if (this.isEdit && !this.isEditingWidget) {
-      layoutCtx.ctrl.selectWidget(index, 0);
+      layoutCtx.ctrl.selectWidget(widget.id, 0);
     }
   }
 
@@ -795,13 +935,13 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     return dashboardContextActions;
   }
 
-  prepareWidgetContextMenu(layoutCtx: DashboardPageLayoutContext, widget: Widget, index: number): Array<WidgetContextMenuItem> {
+  prepareWidgetContextMenu(layoutCtx: DashboardPageLayoutContext, widget: Widget): Array<WidgetContextMenuItem> {
     const widgetContextActions: Array<WidgetContextMenuItem> = [];
     if (this.isEdit && !this.isEditingWidget) {
       widgetContextActions.push(
         {
           action: (event, currentWidget) => {
-            this.editWidget(event, layoutCtx, currentWidget, index);
+            this.editWidget(event, layoutCtx, currentWidget);
           },
           enabled: true,
           value: 'action.edit',

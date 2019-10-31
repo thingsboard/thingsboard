@@ -17,14 +17,9 @@
 -->
 <hotkeys-cheatsheet></hotkeys-cheatsheet>
 <div class="mat-content" style="position: relative; width: 100%; height: 100%;"
-     [ngStyle]="{'background-color': layoutCtx.gridSettings.backgroundColor,
-                    'background-image': layoutCtx.gridSettings.backgroundImageUrl ?
-                                      'url('+layoutCtx.gridSettings.backgroundImageUrl+')' : 'none',
-                    'background-repeat': 'no-repeat',
-                    'background-attachment': 'scroll',
-                    'background-size': layoutCtx.gridSettings.backgroundSizeMode || '100%',
-                    'background-position': '0% 0%'}">
-  <section *ngIf="layoutCtx.widgets.length === 0" fxLayoutAlign="center center"
+          [style.backgroundImage]="backgroundImage"
+          [ngStyle]="dashboardStyle">
+  <section *ngIf="layoutCtx.widgets.size() === 0" fxLayoutAlign="center center"
            [ngStyle]="{'color': layoutCtx.gridSettings.color}"
            style="text-transform: uppercase; display: flex; z-index: 1; pointer-events: none;"
            class="mat-headline tb-absolute-fill">
@@ -37,18 +32,12 @@
       {{ 'dashboard.add-widget' | translate }}
     </button>
   </section>
-  <tb-dashboard #dashboard [dashboardStyle]="{'background-color': layoutCtx.gridSettings.backgroundColor,
-                            'background-image': layoutCtx.gridSettings.backgroundImageUrl ?
-                                      'url('+layoutCtx.gridSettings.backgroundImageUrl+')' : 'none',
-                            'background-repeat': 'no-repeat',
-                            'background-attachment': 'scroll',
-                            'background-size': layoutCtx.gridSettings.backgroundSizeMode || '100%',
-                            'background-position': '0% 0%'}"
+  <tb-dashboard #dashboard [dashboardStyle]="dashboardStyle"
+                [backgroundImage]="backgroundImage"
                 [widgets]="layoutCtx.widgets"
                 [widgetLayouts]="layoutCtx.widgetLayouts"
                 [columns]="layoutCtx.gridSettings.columns"
-                [horizontalMargin]="layoutCtx.gridSettings.margins ? layoutCtx.gridSettings.margins[0] : 10"
-                [verticalMargin]="layoutCtx.gridSettings.margins ? layoutCtx.gridSettings.margins[1]: 10"
+                [margin]="layoutCtx.gridSettings.margin"
                 [aliasController]="dashboardCtx.aliasController"
                 [stateController]="dashboardCtx.stateController"
                 [dashboardTimewindow]="dashboardCtx.dashboardTimewindow"

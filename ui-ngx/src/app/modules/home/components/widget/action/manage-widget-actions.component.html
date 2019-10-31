@@ -22,12 +22,14 @@
         <span class="tb-entity-table-title" translate>widget-config.actions</span>
         <span fxFlex></span>
         <button mat-button mat-icon-button [disabled]="isLoading$ | async"
+                type="button"
                 (click)="addAction($event)"
                 matTooltip="{{ 'widget-config.add-action' | translate }}"
                 matTooltipPosition="above">
           <mat-icon>add</mat-icon>
         </button>
         <button mat-button mat-icon-button [disabled]="isLoading$ | async" (click)="enterFilterMode()"
+                type="button"
                 matTooltip="{{ 'action.search' | translate }}"
                 matTooltipPosition="above">
           <mat-icon>search</mat-icon>
@@ -37,6 +39,7 @@
     <mat-toolbar class="mat-table-toolbar" [fxShow]="textSearchMode">
       <div class="mat-toolbar-tools">
         <button mat-button mat-icon-button
+                type="button"
                 matTooltip="{{ 'widget-config.search-actions' | translate }}"
                 matTooltipPosition="above">
           <mat-icon>search</mat-icon>
@@ -48,6 +51,7 @@
                  placeholder="{{ 'widget-config.search-actions' | translate }}"/>
         </mat-form-field>
         <button mat-button mat-icon-button (click)="exitFilterMode()"
+                type="button"
                 matTooltip="{{ 'action.close' | translate }}"
                 matTooltipPosition="above">
           <mat-icon>close</mat-icon>
@@ -87,12 +91,14 @@
           <mat-cell *matCellDef="let action" [ngStyle]="{ minWidth: '80px', maxWidth: '80px' }">
             <div fxFlex fxLayout="row" fxLayoutAlign="end">
               <button mat-button mat-icon-button [disabled]="isLoading$ | async"
+                      type="button"
                       matTooltip="{{ 'widget-config.edit-action' | translate }}"
                       matTooltipPosition="above"
                       (click)="editAction($event, action)">
                 <mat-icon>edit</mat-icon>
               </button>
               <button mat-button mat-icon-button [disabled]="isLoading$ | async"
+                      type="button"
                       matTooltip="{{ 'widget-config.delete-action' | translate }}"
                       matTooltipPosition="above"
                       (click)="deleteAction($event, action)">

@@ -392,3 +392,13 @@ export interface JsonSettingsSchema {
   };
   form?: any[];
 }
+
+export interface WidgetPosition {
+  row: number;
+  column: number;
+}
+
+export interface WidgetSize {
+  sizeX: number;
+  sizeY: number;
+}

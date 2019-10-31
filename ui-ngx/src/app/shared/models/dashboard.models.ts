@@ -30,12 +30,12 @@ export interface DashboardInfo extends BaseData<DashboardId> {
 }
 
 export interface WidgetLayout {
-  sizeX: number;
-  sizeY: number;
+  sizeX?: number;
+  sizeY?: number;
   mobileHeight?: number;
   mobileOrder?: number;
-  col: number;
-  row: number;
+  col?: number;
+  row?: number;
 }
 
 export interface WidgetLayouts {
@@ -46,14 +46,13 @@ export interface GridSettings {
   backgroundColor?: string;
   color?: string;
   columns?: number;
-  margins?: [number, number];
+  margin?: number;
   backgroundSizeMode?: string;
   backgroundImageUrl?: string;
   autoFillHeight?: boolean;
   mobileAutoFillHeight?: boolean;
   mobileRowHeight?: number;
   [key: string]: any;
-  // TODO:
 }
 
 export interface DashboardLayout {
@@ -62,7 +61,7 @@ export interface DashboardLayout {
 }
 
 export interface DashboardLayoutInfo {
-  widgets?: Array<Widget>;
+  widgetIds?: string[];
   widgetLayouts?: WidgetLayouts;
   gridSettings?: GridSettings;
 }

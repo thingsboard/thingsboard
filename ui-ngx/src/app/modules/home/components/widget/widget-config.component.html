@@ -140,6 +140,7 @@
                   </tb-data-keys>
                 </section>
                 <button [disabled]="isLoading$ | async"
+                        type="button"
                         mat-button mat-icon-button color="primary"
                         style="min-width: 40px;"
                         (click)="removeDatasource($index)"
@@ -153,6 +154,7 @@
         </ng-template>
         <div fxFlex fxLayout="row" fxLayoutAlign="start center">
           <button [disabled]="isLoading$ | async"
+                  type="button"
                   mat-button mat-raised-button color="primary"
                   [fxShow]="modelValue?.typeParameters &&
                             (modelValue?.typeParameters.maxDatasources == -1 || dataSettings.get('datasources').controls.length < modelValue?.typeParameters.maxDatasources)"

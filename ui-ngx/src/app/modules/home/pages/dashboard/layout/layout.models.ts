@@ -19,10 +19,9 @@ import { WidgetLayout } from '@shared/models/dashboard.models';
 
 export interface ILayoutController {
   reload();
-  setResizing(layoutVisibilityChanged: boolean);
   resetHighlight();
-  highlightWidget(index: number, delay?: number);
-  selectWidget(index: number, delay?: number);
+  highlightWidget(widgetId: string, delay?: number);
+  selectWidget(widgetId: string, delay?: number);
   pasteWidget($event: MouseEvent);
   pasteWidgetReference($event: MouseEvent);
 }

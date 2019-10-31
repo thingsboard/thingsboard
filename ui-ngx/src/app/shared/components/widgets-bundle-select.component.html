@@ -24,10 +24,16 @@
               panelClass="tb-widgets-bundle-select"
               placeholder="{{ 'widget.select-widgets-bundle' | translate }}"
               (ngModelChange)="widgetsBundleChanged()">
+    <mat-select-trigger>
+      <div class="tb-bundle-item">
+        <span>{{widgetsBundle?.title}}</span>
+        <span translate class="tb-bundle-system" *ngIf="isSystem(widgetsBundle)">widgets-bundle.system</span>
+      </div>
+    </mat-select-trigger>
     <mat-option *ngFor="let widgetsBundle of widgetsBundles$ | async" [value]="widgetsBundle">
       <div class="tb-bundle-item">
         <span>{{widgetsBundle.title}}</span>
-        <span translate class="tb-bundle-system" *ngIf="isSystem(item)">widgets-bundle.system</span>
+        <span translate class="tb-bundle-system" *ngIf="isSystem(widgetsBundle)">widgets-bundle.system</span>
       </div>
     </mat-option>
   </mat-select>
