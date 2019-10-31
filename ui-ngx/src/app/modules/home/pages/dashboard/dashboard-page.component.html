@@ -120,59 +120,90 @@
            'tb-dashboard-toolbar-opened': toolbarOpened,
            'tb-dashboard-toolbar-animated': isToolbarOpenedAnimate,
            'tb-dashboard-toolbar-closed': !toolbarOpened }">
-    <section *ngIf="!widgetEditMode" class="tb-dashboard-title" fxLayout="row" fxLayoutAlign="center center"
-             [ngStyle]="{'color': dashboard.configuration.settings.titleColor}">
-      <h3 [fxShow]="!isEdit && displayTitle()">{{ dashboard.title }}</h3>
-      <mat-form-field [fxShow]="isEdit" class="mat-block" style="height: 30px;">
-        <mat-label translate [ngStyle]="{'color': dashboard.configuration.settings.titleColor}">dashboard.title</mat-label>
-        <input matInput class="tb-dashboard-title"
-               [ngStyle]="{'color': dashboard.configuration.settings.titleColor}"
-               required name="title" [(ngModel)]="dashboard.title">
-      </mat-form-field>
-    </section>
-    <div class="tb-absolute-fill tb-dashboard-layouts" fxLayout="{{forceDashboardMobileMode ? 'column' : 'row'}}"
-         [ngClass]="{ 'tb-padded' : !widgetEditMode && (isEdit || displayTitle()), 'tb-shrinked' : isEditingWidget }">
-      <mat-drawer-container class="tb-absolute-fill">
-        <mat-drawer *ngIf="layouts.right.show"
-                    id="tb-right-layout"
-                    [ngStyle]="{minWidth: rightLayoutWidth(),
-                                maxWidth: rightLayoutWidth(),
-                                height: rightLayoutHeight(),
-                                borderLeft: 'none'}"
-            disableClose="true"
-            position="end"
-            [mode]="isMobile ? 'over' : 'side'"
-            [(opened)]="rightLayoutOpened">
-          <tb-dashboard-layout style="height: 100%;"
-            [layoutCtx]="layouts.right.layoutCtx"
-            [dashboardCtx]="dashboardCtx"
-            [isEdit]="isEdit"
-            [isEditingWidget]="isEditingWidget"
-            [isMobile]="forceDashboardMobileMode"
-            [widgetEditMode]="widgetEditMode">
-          </tb-dashboard-layout>
-        </mat-drawer>
-        <mat-drawer-content [fxShow]="layouts.main.show"
-                            id="tb-main-layout"
-                            [ngStyle]="{width: mainLayoutWidth(),
-                            height: mainLayoutHeight()}">
-          <tb-dashboard-layout
-            [layoutCtx]="layouts.main.layoutCtx"
-            [dashboardCtx]="dashboardCtx"
-            [isEdit]="isEdit"
-            [isEditingWidget]="isEditingWidget"
-            [isMobile]="forceDashboardMobileMode"
-            [widgetEditMode]="widgetEditMode">
-          </tb-dashboard-layout>
-        </mat-drawer-content>
-      </mat-drawer-container>
-    </div>
-    <mat-drawer-container hasBackdrop="false" class="tb-widget-details-sidenav">
+    <mat-drawer-container hasBackdrop="false" class="tb-absolute-fill tb-dashboard-drawer-container">
+      <mat-drawer-content fxLayout="column" fxLayoutAlign="center start">
+        <section *ngIf="!widgetEditMode" class="tb-dashboard-title"
+                 [ngStyle]="{'color': dashboard.configuration.settings.titleColor}">
+          <h3 [fxShow]="!isEdit && displayTitle()">{{ dashboard.title }}</h3>
+          <mat-form-field [fxShow]="isEdit" class="mat-block">
+            <mat-label translate [ngStyle]="{'color': dashboard.configuration.settings.titleColor}">dashboard.title</mat-label>
+            <input matInput class="tb-dashboard-title"
+                   [ngStyle]="{'color': dashboard.configuration.settings.titleColor}"
+                   required name="title" [(ngModel)]="dashboard.title">
+          </mat-form-field>
+        </section>
+        <mat-drawer-container class="tb-dashboard-layouts" fxFlex
+                              [ngClass]="{ 'tb-shrinked' : isEditingWidget }">
+          <mat-drawer *ngIf="layouts.right.show"
+                      id="tb-right-layout"
+                      [ngStyle]="{minWidth: rightLayoutWidth(),
+                                  maxWidth: rightLayoutWidth(),
+                                  height: rightLayoutHeight(),
+                                  borderLeft: 'none'}"
+              disableClose="true"
+              position="end"
+              [mode]="isMobile ? 'over' : 'side'"
+              [(opened)]="rightLayoutOpened">
+            <tb-dashboard-layout style="height: 100%;"
+              [layoutCtx]="layouts.right.layoutCtx"
+              [dashboardCtx]="dashboardCtx"
+              [isEdit]="isEdit"
+              [isEditingWidget]="isEditingWidget"
+              [isMobile]="forceDashboardMobileMode"
+              [widgetEditMode]="widgetEditMode">
+            </tb-dashboard-layout>
+          </mat-drawer>
+          <mat-drawer-content [fxShow]="layouts.main.show"
+                              id="tb-main-layout"
+                              [ngStyle]="{width: mainLayoutWidth(),
+                              height: mainLayoutHeight()}">
+            <tb-dashboard-layout
+              [layoutCtx]="layouts.main.layoutCtx"
+              [dashboardCtx]="dashboardCtx"
+              [isEdit]="isEdit"
+              [isEditingWidget]="isEditingWidget"
+              [isMobile]="forceDashboardMobileMode"
+              [widgetEditMode]="widgetEditMode">
+            </tb-dashboard-layout>
+          </mat-drawer-content>
+        </mat-drawer-container>
+        <section fxLayout="row" class="layout-wrap tb-footer-buttons" fxLayoutAlign="start end">
+          <tb-footer-fab-buttons [fxShow]="!isAddingWidget && isEdit && !widgetEditMode"
+                                 relative
+                                 [footerFabButtons]="addWidgetFabButtons">
+          </tb-footer-fab-buttons>
+          <button *ngIf="(isTenantAdmin() || isSystemAdmin()) && !forceFullscreen"
+                  mat-fab color="accent" class="tb-btn-footer"
+                  [ngClass]="{'tb-hide': !isEdit || isAddingWidget}"
+                  [disabled]="isLoading$ | async"
+                  (click)="saveDashboard()"
+                  matTooltip="{{ 'action.apply-changes' | translate }}"
+                  matTooltipPosition="above">
+            <mat-icon>done</mat-icon>
+          </button>
+          <button *ngIf="(isTenantAdmin() || isSystemAdmin()) && !forceFullscreen"
+                  mat-fab color="accent" class="tb-btn-footer"
+                  [ngClass]="{'tb-hide': isAddingWidget || (isLoading$ | async)}"
+                  [disabled]="isLoading$ | async"
+                  (click)="toggleDashboardEditMode()"
+                  matTooltip="{{ (isEdit ? 'action.decline-changes': 'action.enter-edit-mode') | translate }}"
+                  matTooltipPosition="above">
+            <mat-icon>{{ isEdit ? 'close' : 'edit' }}</mat-icon>
+          </button>
+        </section>
+        <section class="tb-powered-by-footer" [ngStyle]="{'color': dashboard.configuration.settings.titleColor}">
+          <span>Powered by <a href="https://thingsboard.io" target="_blank">Thingsboard v.{{ thingsboardVersion }}</a></span>
+        </section>
+      </mat-drawer-content>
       <mat-drawer class="tb-details-drawer"
-                  [opened]="isEditingWidget"
+                  [opened]="isEditingWidget || isAddingWidget"
+                  (openedStart)="detailsDrawerOpenedStart()"
+                  (opened)="detailsDrawerOpened()"
+                  (closedStart)="detailsDrawerClosedStart()"
+                  (closed)="detailsDrawerClosed()"
                   mode="over"
                   position="end">
-        <tb-details-panel *ngIf="isEditingWidget" fxFlex
+        <tb-details-panel *ngIf="!isEditingWidgetClosed" fxFlex
                           headerTitle="{{editingWidget?.config.title}}"
                           headerSubtitle="{{ editingWidgetSubtitle }}"
                           [isReadOnly]="false"
@@ -185,21 +216,14 @@
             <div [tb-help]="helpLinkIdForWidgetType()"></div>
           </div>
           <tb-edit-widget #tbEditWidget
-             [dashboard]="dashboard"
-             [aliasController]="dashboardCtx.aliasController"
-             [widgetEditMode]="widgetEditMode"
-             [widget]="editingWidget"
-             [widgetLayout]="editingWidgetLayout">
+                          [dashboard]="dashboard"
+                          [aliasController]="dashboardCtx.aliasController"
+                          [widgetEditMode]="widgetEditMode"
+                          [widget]="editingWidget"
+                          [widgetLayout]="editingWidgetLayout">
           </tb-edit-widget>
         </tb-details-panel>
-      </mat-drawer>
-    </mat-drawer-container>
-    <mat-drawer-container *ngIf="!widgetEditMode" hasBackdrop="false" class="tb-select-widget-sidenav">
-      <mat-drawer class="tb-details-drawer"
-                  [opened]="isAddingWidget"
-                  mode="over"
-                  position="end">
-        <tb-details-panel *ngIf="isAddingWidget" fxFlex
+        <tb-details-panel *ngIf="!isAddingWidgetClosed && !widgetEditMode" fxFlex
                           headerTitle="{{'dashboard.select-widget-title' | translate}}"
                           headerHeightPx="120"
                           [isReadOnly]="true"
@@ -218,40 +242,12 @@
             </div>
           </div>
           <tb-dashboard-widget-select *ngIf="isAddingWidget"
-             [aliasController]="dashboardCtx.aliasController"
-             [widgetsBundle]="widgetsBundle"
-             (widgetSelected)="addWidgetFromType($event)">
+                                      [aliasController]="dashboardCtx.aliasController"
+                                      [widgetsBundle]="widgetsBundle"
+                                      (widgetSelected)="addWidgetFromType($event)">
           </tb-dashboard-widget-select>
         </tb-details-panel>
       </mat-drawer>
     </mat-drawer-container>
-    <!--tb-details-sidenav TODO -->
-    <section fxLayout="row" class="layout-wrap tb-footer-buttons" fxLayoutAlign="start end">
-      <tb-footer-fab-buttons [fxShow]="!isAddingWidget && isEdit && !widgetEditMode"
-                             relative
-                             [footerFabButtons]="addWidgetFabButtons">
-      </tb-footer-fab-buttons>
-      <button *ngIf="(isTenantAdmin() || isSystemAdmin()) && !forceFullscreen"
-              mat-fab color="accent" class="tb-btn-footer"
-              [ngClass]="{'tb-hide': !isEdit || isAddingWidget}"
-              [disabled]="isLoading$ | async"
-              (click)="saveDashboard()"
-              matTooltip="{{ 'action.apply-changes' | translate }}"
-              matTooltipPosition="above">
-        <mat-icon>done</mat-icon>
-      </button>
-      <button *ngIf="(isTenantAdmin() || isSystemAdmin()) && !forceFullscreen"
-              mat-fab color="accent" class="tb-btn-footer"
-              [ngClass]="{'tb-hide': isAddingWidget || (isLoading$ | async)}"
-              [disabled]="isLoading$ | async"
-              (click)="toggleDashboardEditMode()"
-              matTooltip="{{ (isEdit ? 'action.decline-changes': 'action.enter-edit-mode') | translate }}"
-              matTooltipPosition="above">
-        <mat-icon>{{ isEdit ? 'close' : 'edit' }}</mat-icon>
-      </button>
-    </section>
-  </section>
-  <section class="tb-powered-by-footer" [ngStyle]="{'color': dashboard.configuration.settings.titleColor}">
-    <span>Powered by <a href="https://thingsboard.io" target="_blank">Thingsboard v.{{ thingsboardVersion }}</a></span>
   </section>
 </div>

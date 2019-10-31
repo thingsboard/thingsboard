@@ -104,9 +104,11 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   isFullscreen = false;
   isEdit = false;
   isEditingWidget = false;
+  isEditingWidgetClosed = true;
   isMobile = !this.breakpointObserver.isMatched(MediaBreakpoints['gt-sm']);
   forceDashboardMobileMode = false;
   isAddingWidget = false;
+  isAddingWidgetClosed = true;
   widgetsBundle: WidgetsBundle = null;
 
   isToolbarOpened = false;
@@ -284,8 +286,10 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     this.isFullscreen = false;
     this.isEdit = false;
     this.isEditingWidget = false;
+    this.isEditingWidgetClosed = true;
     this.forceDashboardMobileMode = false;
     this.isAddingWidget = false;
+    this.isAddingWidgetClosed = true;
     this.widgetsBundle = null;
 
     this.isToolbarOpened = false;
@@ -692,6 +696,31 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   onAddWidgetClosed() {
     this.isAddingWidget = false;
+  }
+
+  detailsDrawerOpenedStart() {
+    if (this.isEditingWidget) {
+      this.isEditingWidgetClosed = false;
+    } else if (this.isAddingWidget) {
+      this.isAddingWidgetClosed = false;
+    }
+    setTimeout(() => {
+      this.cd.detach();
+    }, 0);
+  }
+
+  detailsDrawerOpened() {
+    this.cd.reattach();
+  }
+
+  detailsDrawerClosedStart() {
+    this.cd.detach();
+  }
+
+  detailsDrawerClosed() {
+    this.isEditingWidgetClosed = true;
+    this.isAddingWidgetClosed = true;
+    this.cd.reattach();
   }
 
   private addWidgetToLayout(widget: Widget, layoutId: DashboardLayoutId) {

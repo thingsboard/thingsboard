@@ -102,6 +102,9 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
   }
 
   private loadWidgetConfig() {
+    if (!this.widget) {
+      return;
+    }
     const widgetInfo = this.widgetComponentService.getInstantWidgetInfo(this.widget);
     const rawSettingsSchema = widgetInfo.typeSettingsSchema || widgetInfo.settingsSchema;
     const rawDataKeySettingsSchema = widgetInfo.typeDataKeySettingsSchema || widgetInfo.dataKeySettingsSchema;

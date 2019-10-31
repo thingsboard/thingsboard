@@ -32,9 +32,9 @@ div.tb-dashboard-page {
     background-color: #eee;
   }
   section.tb-dashboard-title {
-    position: absolute;
-    top: 0;
-    left: 20px;
+    position: relative;
+    padding-left: 20px;
+    max-height: 60px;
     mat-form-field {
       .mat-form-field-infix {
         width: 100%;
@@ -46,17 +46,6 @@ div.tb-dashboard-page {
       font-weight: 500;
       letter-spacing: .005em;
     }
-  }
-  div.tb-padded {
-    top: 60px;
-  }
-
-  section.tb-padded {
-    top: 60px;
-  }
-
-  div.tb-shrinked {
-    width: 40%;
   }
 
   section.tb-dashboard-toolbar {
@@ -106,21 +95,16 @@ div.tb-dashboard-page {
         transition: margin-top .3s cubic-bezier(.55, 0, .55, .2) .2s;
       }
     }
-
-    .tb-dashboard-layouts {
-      /*md-backdrop {
-        z-index: 1;
-      }*/
-      #tb-right-layout {
-        mat-drawer {
-          z-index: 1;
-        }
-      }
-    }
   }
 
-  mat-drawer-container.tb-widget-details-sidenav {
-    position: initial;
+  mat-drawer-container.tb-dashboard-drawer-container {
+    mat-drawer-container.tb-dashboard-layouts {
+      width: 100%;
+      &.tb-shrinked {
+        width: 40%;
+      }
+    }
+
     mat-drawer.tb-details-drawer {
       @media #{$mat-gt-sm} {
         width: 85% !important;
@@ -134,10 +118,6 @@ div.tb-dashboard-page {
         width: 60% !important;
       }
     }
-  }
-
-  mat-drawer-container.tb-select-widget-sidenav {
-    position: initial;
   }
 
   section.tb-powered-by-footer {

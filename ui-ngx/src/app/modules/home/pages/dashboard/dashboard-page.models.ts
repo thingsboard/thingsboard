@@ -77,6 +77,8 @@ export class LayoutWidgetsArray implements Iterable<Widget> {
   private widgetIds: string[] = [];
   private pointer = 0;
 
+  private loaded = false;
+
   constructor(private dashboard: Dashboard) {
   }
 
@@ -84,8 +86,17 @@ export class LayoutWidgetsArray implements Iterable<Widget> {
     return this.widgetIds.length;
   }
 
+  isLoading() {
+    return !this.loaded;
+  }
+
+  isEmpty() {
+    return this.loaded && this.widgetIds.length === 0;
+  }
+
   setWidgetIds(widgetIds: string[]) {
     this.widgetIds = widgetIds;
+    this.loaded = true;
   }
 
   addWidgetId(widgetId: string) {

@@ -29,7 +29,7 @@
         <div class="tb-color-preview" (click)="showColorPicker(key)" style="margin-right: 5px;">
           <div class="tb-color-result" [ngStyle]="{background: key.color}"></div>
         </div>
-        <div style="flex: 1; min-width: 0px;" fxLayout="row">
+        <div class="tb-chip-labels">
           <div class="tb-chip-label">
             <span *ngIf="datasourceType !== datasourceTypes.function && widgetType !== widgetTypes.alarm">
               <span *ngIf="key.type === dataKeyTypes.attribute"

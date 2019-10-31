@@ -22,11 +22,10 @@
       <div *ngIf="widgetType === widgetTypes.timeseries || widgetType === widgetTypes.alarm"
             fxLayout="column" fxLayoutGap="8px" fxLayoutAlign="center" fxLayout.gt-sm="row" fxLayoutAlign.gt-sm="start center">
         <div fxLayout="column" fxLayoutGap="8px" fxFlex>
-          <mat-checkbox fxFlex formControlName="useDashboardTimewindow">
+          <mat-checkbox formControlName="useDashboardTimewindow">
             {{ 'widget-config.use-dashboard-timewindow' | translate }}
           </mat-checkbox>
-          <mat-checkbox fxFlex
-                        formControlName="displayTimewindow">
+          <mat-checkbox formControlName="displayTimewindow">
             {{ 'widget-config.display-timewindow' | translate }}
           </mat-checkbox>
         </div>

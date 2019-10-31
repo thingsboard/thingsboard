@@ -163,6 +163,10 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     } else {
       this.datasourceTypes = [DatasourceType.function, DatasourceType.entity];
     }
+    this.dataSettings = this.fb.group({});
+    this.targetDeviceSettings = this.fb.group({});
+    this.alarmSourceSettings = this.fb.group({});
+    this.advancedSettings = this.fb.group({});
     this.widgetSettings = this.fb.group({
       title: [null, []],
       showTitleIcon: [null, []],
@@ -574,7 +578,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   }
 
   public displayAdvanced(): boolean {
-    return this.modelValue.settingsSchema && this.modelValue.settingsSchema.schema;
+    return this.modelValue && this.modelValue.settingsSchema && this.modelValue.settingsSchema.schema;
   }
 
   public removeDatasource(index: number) {
@@ -772,7 +776,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
           valid: false
         }
       };
-    } else {
+    } else if (this.modelValue) {
       const config = this.modelValue.config;
       if (this.widgetType === widgetType.rpc && this.modelValue.isDataEnabled) {
         if (!config.targetDeviceAliasIds || !config.targetDeviceAliasIds.length) {

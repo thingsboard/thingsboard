@@ -144,7 +144,7 @@ class DraggableChip {
       const dataTransfer = event.dataTransfer;
       dataTransfer.effectAllowed = 'copyMove';
       dataTransfer.dropEffect = 'move';
-      dataTransfer.setData('text/plain', this.index() + '');
+      dataTransfer.setData('text', this.index() + '');
     }
   }
 
@@ -222,7 +222,7 @@ class DraggableChip {
       return;
     }
     event = (event as any).originalEvent || event;
-    const droppedItemIndex = parseInt(event.dataTransfer.getData('text/plain'), 10);
+    const droppedItemIndex = parseInt(event.dataTransfer.getData('text'), 10);
     const currentIndex = this.index();
     let newIndex;
     if (this.dropPosition === 'before') {

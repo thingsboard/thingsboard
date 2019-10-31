@@ -26,6 +26,9 @@
     }
     .tb-datasource-type {
       min-width: 110px;
+      @media #{$mat-gt-sm} {
+        max-width: 110px;
+      }
     }
     .tb-datasource {
       @media #{$mat-gt-sm} {

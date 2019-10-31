@@ -299,14 +299,16 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
 
   writeValue(obj: WidgetActionsData): void {
     this.innerValue = obj;
-    setTimeout(() => {
-      this.dataSource.setActions(this.innerValue);
-      if (this.viewsInited) {
-        this.resetSortAndFilter(true);
-      } else {
-        this.dirtyValue = true;
-      }
-    }, 0);
+    if (this.innerValue) {
+      setTimeout(() => {
+        this.dataSource.setActions(this.innerValue);
+        if (this.viewsInited) {
+          this.resetSortAndFilter(true);
+        } else {
+          this.dirtyValue = true;
+        }
+      }, 0);
+    }
   }
 
   private onActionsUpdated() {

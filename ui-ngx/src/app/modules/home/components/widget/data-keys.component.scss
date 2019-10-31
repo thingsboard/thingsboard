@@ -30,14 +30,19 @@
         }
       }
 
-      .tb-chip-label {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
+      .tb-chip-labels {
+        display: flex;
+        flex-direction: row;
+        min-width: 0px;
+        .tb-chip-label {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
 
-      .tb-chip-separator {
-        white-space: pre;
+        .tb-chip-separator {
+          white-space: pre;
+        }
       }
 
       .mat-chip-remove.mat-icon {
