@@ -441,6 +441,11 @@ kafka:
       session_timeout_ms: "${TB_KAFKA_CONSUMER_SESSION_TIMEOUT_MS:10000}"
       heartbeat_interval_ms: "${TB_KAFKA_CONSUMER_HEARTBEAT_INTERVAL_MS:3000}"
 
+back.pressure:
+  strategy: "${BACK_PRESSURE_STRATEGY:ignore}"
+  attempt: "${BACK_PRESSURE_ATTEMPT:3}"
+  timeout: "${BACK_PRESSURE_TIMEOUT_MS:10000}"
+
 js:
   evaluator: "${JS_EVALUATOR:local}" # local/remote
   # Built-in JVM JavaScript environment properties

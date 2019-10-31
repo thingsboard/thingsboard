@@ -15,15 +15,13 @@
  */
 package org.thingsboard.rule.engine.api;
 
-import com.google.common.util.concurrent.FutureCallback;
-import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.TbMsgPack;
 import org.thingsboard.server.common.msg.TbMsgSubscriptionParams;
+
+import java.util.UUID;
 
 public interface TbMsgQueueConsumer {
 
-    void subscribe(TbMsgSubscriptionParams subscriptionParams, FutureCallback<TbMsgPack> callback);
+    void init(TbMsgSubscriptionParams subscriptionParams);
 
-    void ack(TbMsg tbMsg);
-
+    void ack(UUID msgId);
 }

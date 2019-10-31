@@ -15,127 +15,154 @@
  */
 package org.thingsboard.server.service.queue;
 
-import com.google.common.util.concurrent.FutureCallback;
-import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.common.TopicPartition;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.TbMsgQueueConsumer;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgPack;
 import org.thingsboard.server.common.msg.TbMsgSubscriptionParams;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
 @Slf4j
+@Service
 public class TbKafkaMsgQueueConsumer implements TbMsgQueueConsumer {
 
-    private final KafkaConsumer<String, byte[]> consumer;
+    private CountDownLatch countDownLatch;
 
-    private final Map<String, Set<UUID>> map = new ConcurrentHashMap<>();
-    private final Set<UUID> set = new HashSet<>();
+    private KafkaConsumer<String, byte[]> consumer;
 
-    private volatile boolean prevPackAcknowledged = true;
+    private final Map<UUID, TbMsg> map = new ConcurrentHashMap<>();
 
-    @Builder
-    private TbKafkaMsgQueueConsumer(TbConsumerSettings settings, String clientId, String groupId) {
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+
+    @Autowired
+    private TbConsumerSettings settings;
+
+    @Value("${back.pressure.timeout}")
+    private long timeout;
+
+    @Value("${back.pressure.strategy}")
+    private Strategy strategy;
+
+    @Value("${back.pressure.attempt}")
+    private int attempt;
+
+    private final AtomicInteger currentAttempt = new AtomicInteger(0);
+
+    @PostConstruct
+    private void init() {
         Properties props = settings.toProps();
-        if (clientId != null) {
-            props.put(ConsumerConfig.CLIENT_ID_CONFIG, clientId);
-        }
-        if (groupId != null) {
-            props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
-        }
-        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+
+        props.put(ConsumerConfig.CLIENT_ID_CONFIG, "tb_rule-engine_client");
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, "tb_rule-engine_group");
+
+        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true);
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArrayDeserializer");
-        this.consumer = new KafkaConsumer<>(props);
-    }
 
-    public void subscribeTopics() {
+        this.consumer = new KafkaConsumer<>(props);
         consumer.subscribe(Pattern.compile("tb.rule-engine.*"));
     }
 
-    public void unsubscribeTopics() {
-        consumer.unsubscribe();
-    }
+    public void init(TbMsgSubscriptionParams subscriptionParams) {
 
-    @Override
-    public void subscribe(TbMsgSubscriptionParams subscriptionParams, FutureCallback<TbMsgPack> callback) {
+        executor.execute(() -> {
+            while (true) {
+                if (map.isEmpty()) {
+                    currentAttempt.set(0);
+                    ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(subscriptionParams.getDuration()));
+                    if (records.count() > 0) {
 
-        long currTs = System.currentTimeMillis();
+                        UUID tbMsgPackId = UUID.randomUUID();
 
-        if (prevPackAcknowledged) {
-            prevPackAcknowledged = false;
-            ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(subscriptionParams.getDuration()));
-            if (records.count() > 0) {
+                        List<TbMsg> tbMsgs = new ArrayList<>();
+                        for (ConsumerRecord<String, byte[]> record : records) {
+                            TbMsg msg = TbMsg.fromBytes(record.value());
+                            tbMsgs.add(msg.copy(msg.getId(), tbMsgPackId, msg.getRuleChainId(), msg.getRuleNodeId(), msg.getClusterPartition()));
+                            map.put(msg.getId(), msg);
+                        }
 
-                UUID tbMsgPackId = UUID.randomUUID();
-
-                List<TbMsg> tbMsgs = new ArrayList<>();
-                for (ConsumerRecord<String, byte[]> record : records) {
-
-                    if (record.topic().equals(subscriptionParams.getTopic())) {
-
-                        TbMsg msg = TbMsg.fromBytes(record.value());
-                        tbMsgs.add(msg.copy(msg.getId(), tbMsgPackId, msg.getRuleChainId(), msg.getRuleNodeId(), msg.getClusterPartition()));
-
-                        set.add(msg.getId());
+                        TbMsgPack tbMsgPack = new TbMsgPack(tbMsgPackId, tbMsgs);
+                        send(tbMsgPack);
                     }
-
-                }
-
-                TbMsgPack tbMsgPack = new TbMsgPack(tbMsgPackId, tbMsgs);
-                if (callback != null) {
-                    callback.onSuccess(tbMsgPack);
-                }
-            } else {
-                log.debug("No messages fetched from topic {}", subscriptionParams.getTopic());
-                if (callback != null) {
-                    callback.onFailure(new RuntimeException());
                 }
             }
-
-            map.put(subscriptionParams.getTopic(), set);
-        } else {
-
-
-            sleep(1);
-            //autoAcknowledgePack or add to queue?
-        }
+        });
     }
 
     @Override
-    public void ack(TbMsg tbMsg) {
-        set.remove(tbMsg.getId());
-        if (set.size() == 0) {
-            consumer.commitSync(Collections.singletonMap(new TopicPartition("", 0), null));
-            prevPackAcknowledged = true;
+    public void ack(UUID msgId) {
+        map.remove(msgId);
+        if (map.isEmpty()) {
+            countDownLatch.countDown();
         }
     }
+
+    private void processingAfterSend() {
+        if (!map.isEmpty()) {
+            switch (strategy) {
+                case RETRY:
+                    retry();
+                    break;
+                case IGNORE:
+                    autoAcknowledgePack();
+                    break;
+            }
+        }
+    }
+
+    private void retry() {
+        if (currentAttempt.get() < attempt) {
+            currentAttempt.incrementAndGet();
+            List<TbMsg> msgs = new ArrayList<>(map.size());
+            map.forEach((k, v) -> msgs.add(v));
+            TbMsgPack pack = new TbMsgPack(UUID.randomUUID(), msgs);
+            send(pack);
+        }
+    }
+
+    private void send(TbMsgPack msgPack) {
+        //sending
+
+        try {
+            countDownLatch = new CountDownLatch(1);
+            countDownLatch.await(timeout, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        processingAfterSend();
+    }
+
 
     private void autoAcknowledgePack() {
-
+        map.clear();
     }
 
-    private void sleep(long sleepInterval) {
-        try {
-            Thread.sleep(sleepInterval);
-        } catch (InterruptedException e) {
-            log.warn("Failed to sleep a bit!", e);
-        }
+    @PreDestroy
+    private void destroy() {
+        executor.shutdown();
+        consumer.close();
     }
 }

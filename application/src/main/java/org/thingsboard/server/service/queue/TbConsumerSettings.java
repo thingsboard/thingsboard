@@ -33,13 +33,13 @@ public class TbConsumerSettings {
     private int maxPollRecords;
 
     @Value("${kafka.queue.consumer.fetch_max_wait_ms}")
-    private long fetchMaxWaitMs;
+    private int fetchMaxWaitMs;
 
     @Value("${kafka.queue.consumer.session_timeout_ms}")
-    private long sessionTimeoutMs;
+    private int sessionTimeoutMs;
 
     @Value("${kafka.queue.consumer.heartbeat_interval_ms}")
-    private long heartbeatIntervalMs;
+    private int heartbeatIntervalMs;
 
     public Properties toProps() {
         Properties props = new Properties();
