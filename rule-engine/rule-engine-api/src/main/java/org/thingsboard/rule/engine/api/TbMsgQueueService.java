@@ -15,13 +15,12 @@
  */
 package org.thingsboard.rule.engine.api;
 
-import org.thingsboard.server.common.msg.TbMsgSubscriptionParams;
+import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.UUID;
 
-public interface TbMsgQueueConsumer {
-
-    void init(TbMsgSubscriptionParams subscriptionParams);
-
+public interface TbMsgQueueService {
     void ack(UUID msgId);
+
+    void add(TbMsg msg);
 }

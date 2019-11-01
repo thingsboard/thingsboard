@@ -435,16 +435,25 @@ kafka:
       retries: "${TB_KAFKA_PRODUCER_RETRIES:1}"
       batch_size: "${TB_KAFKA_PRODUCER_BATCH_SIZE:16384}"
       linger_ms: "${TB_KAFKA_PRODUCER_LINGER_MS:1}"
+      client_id: "${TB_KAFKA_PRODUCER_client_id:tb.rule-engine.producer}"
+      topic: "${TB_KAFKA_PRODUCER_TOPIC:tb.rule-engine.queue}"
     consumer:
       max_poll_records: "${TB_KAFKA_CONSUMER_MAX_POLL_RECORDS:1000}"
       fetch_max_wait_ms: "${TB_KAFKA_CONSUMER_FETCH_MAX_WAIT_MS:1000}"
       session_timeout_ms: "${TB_KAFKA_CONSUMER_SESSION_TIMEOUT_MS:10000}"
       heartbeat_interval_ms: "${TB_KAFKA_CONSUMER_HEARTBEAT_INTERVAL_MS:3000}"
+      enable_auto_commit: "${TB_KAFKA_CONSUMER_ENABLE_AUTO_COMMIT: true}"
+      client_id: "${TB_KAFKA_CONSUMER_CLIENT_ID_id: tb.rule-engine.consumer}"
+      group_id: "${TB_KAFKA_CONSUMER_GROUP_ID: tb_group}"
+      topic_pattern: "${TB_KAFKA_CONSUMER_TOPIC_PATTERN: tb.rule-engine.*}"
 
-back.pressure:
+
+backpressure:
+  type: "${BACK_PRESSURE_TYPE:memory}" #kafka/memory
   strategy: "${BACK_PRESSURE_STRATEGY:ignore}"
   attempt: "${BACK_PRESSURE_ATTEMPT:3}"
   timeout: "${BACK_PRESSURE_TIMEOUT_MS:10000}"
+  pack_size: "${BACK_PRESSURE_pack_size:1000}"
 
 js:
   evaluator: "${JS_EVALUATOR:local}" # local/remote
