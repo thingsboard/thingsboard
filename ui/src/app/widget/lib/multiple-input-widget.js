@@ -72,6 +72,12 @@ function MultipleInputWidgetController($q, $scope, $translate, attributeService,
         }
     });
 
+    $scope.$on('multiple-input-resize', function(event, formId) {
+        if (vm.formId == formId) {
+            updateWidgetDisplaying();
+        }
+    });
+
     function discardAll() {
         for (var i = 0; i < vm.data.length; i++) {
             vm.data[i].data.currentValue = vm.data[i].data.originalValue;
@@ -81,7 +87,9 @@ function MultipleInputWidgetController($q, $scope, $translate, attributeService,
 
     function inputChanged(key) {
         if (!vm.settings.showActionButtons) {
-             vm.save(key);
+            if (!key.settings.required || (key.settings.required && key.data && angular.isDefined(key.data.currentValue))) {
+                vm.save(key);
+            }
         }
     }
 
@@ -96,7 +104,6 @@ function MultipleInputWidgetController($q, $scope, $translate, attributeService,
         }
         for (let i = 0; i < data.length; i++) {
             var item = data[i];
-            console.log(item);//eslint-disable-line
             if (item.data.currentValue !== item.data.originalValue) {
                 var attribute = {
                     key: item.name
@@ -107,15 +114,11 @@ function MultipleInputWidgetController($q, $scope, $translate, attributeService,
                         attribute.value = item.data.currentValue.getTime();
                         break;
                     case 'time':
-                        console.log(item.data.currentValue.getTime(), item.data.currentValue);//eslint-disable-line
                         attribute.value = item.data.currentValue.getTime() - moment().startOf('day').valueOf();//eslint-disable-line
-                        // console.log(item.data.currentValue.getTime());//eslint-disable-line
-                        // console.log(item.data.currentValue.valueOf());//eslint-disable-line
                         break;
                     default:
                         attribute.value = item.data.currentValue;
                 }
-                console.log(attribute);//eslint-disable-line
 
                 switch (item.settings.dataKeyType) {
                     case 'shared':
@@ -129,9 +132,6 @@ function MultipleInputWidgetController($q, $scope, $translate, attributeService,
                 }
             }
         }
-        // console.log(serverAttributes);//eslint-disable-line
-        // console.log(sharedAttributes);//eslint-disable-line
-        // console.log(telemetry);//eslint-disable-line
         for (let i = 0; i < serverAttributes.length; i++) {
             tasks.push(attributeService.saveEntityAttributes(
                 vm.datasources[0].entityType,
@@ -179,6 +179,12 @@ function MultipleInputWidgetController($q, $scope, $translate, attributeService,
         }
 
         vm.ctx.widgetTitle = vm.widgetTitle;
+
+        vm.isVerticalAlignment = !(vm.settings.fieldsAlignment === 'row');
+
+        if (!vm.isVerticalAlignment && vm.settings.fieldsInRow) {
+            vm.inputWidthSettings = 100 / vm.settings.fieldsInRow + '%';
+        }
     }
 
     function updateDatasources() {
@@ -190,7 +196,7 @@ function MultipleInputWidgetController($q, $scope, $translate, attributeService,
                         vm.isAllParametersValid = false;
                     }
                     vm.data.push(datasource.dataKeys[i]);
-                    // vm.data[i].data = {};
+                    vm.data[i].data = {};
                 }
                 vm.entityDetected = true;
             }
@@ -218,13 +224,31 @@ function MultipleInputWidgetController($q, $scope, $translate, attributeService,
                         value = keyData[0][1];
                 }
 
-                // vm.data[i].data.currentValue = vm.data[i].data.originalValue = value;
                 vm.data[i].data = {
                     currentValue: value,
                     originalValue: value
+                };
+
+                if (vm.data[i].settings.isEditable === 'editable' && vm.data[i].settings.disabledOnDataKey) {
+                    var conditions = data.filter((item) => {
+                        return item.dataKey.name === vm.data[i].settings.disabledOnDataKey;
+                    });
+                    if (conditions && conditions.length) {
+                        if (conditions[0].data.length) {
+                            if (conditions[0].data[0][1] === 'false') {
+                                vm.data[i].settings.disabledOnCondition = true;
+                            } else {
+                                vm.data[i].settings.disabledOnCondition = !conditions[0].data[0][1];
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 
+    function updateWidgetDisplaying() {
+        vm.changeAlignment = (vm.ctx.$container[0].offsetWidth < 620);
+        vm.smallWidthContainer = (vm.ctx.$container[0].offsetWidth < 420);
+    }
 }
