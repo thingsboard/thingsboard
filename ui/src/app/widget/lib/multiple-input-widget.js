@@ -96,6 +96,9 @@ function MultipleInputWidgetController($q, $scope, $translate, attributeService,
     function save(key) {
         var tasks = [];
         var serverAttributes = [], sharedAttributes = [], telemetry = [];
+        var config = {
+            ignoreLoading: !vm.settings.showActionButtons
+        };
         var data;
         if (key) {
             data = [key];
@@ -137,21 +140,24 @@ function MultipleInputWidgetController($q, $scope, $translate, attributeService,
                 vm.datasources[0].entityType,
                 vm.datasources[0].entityId,
                 types.attributesScope.server.value,
-                serverAttributes));
+                serverAttributes,
+                config));
         }
         for (let i = 0; i < sharedAttributes.length; i++) {
             tasks.push(attributeService.saveEntityAttributes(
                 vm.datasources[0].entityType,
                 vm.datasources[0].entityId,
                 types.attributesScope.shared.value,
-                sharedAttributes));
+                sharedAttributes,
+                config));
         }
         for (let i = 0; i < telemetry.length; i++) {
             tasks.push(attributeService.saveEntityTimeseries(
                 vm.datasources[0].entityType,
                 vm.datasources[0].entityId,
                 types.latestTelemetry.value,
-                telemetry));
+                telemetry,
+                config));
         }
         if (tasks.length) {
             $q.all(tasks).then(

@@ -109,7 +109,7 @@
                                          ng-disabled="key.settings.isEditable === 'disabled' || key.settings.disabledOnCondition"
                                          ng-readonly="key.settings.isEditable === 'readonly'"
                                          ng-model="key.data.currentValue"
-                                         ng-required="key.settings.required"
+                                         require="key.settings.required"
                                          ng-change="vm.inputChanged(key)"
                                          mdp-placeholder="{{ 'widgets.input-widgets.date' | translate }}">
                             <div ng-messages="multipleInputForm[key.name].$error">
@@ -121,7 +121,7 @@
                                          ng-disabled="key.settings.isEditable === 'disabled' || key.settings.disabledOnCondition"
                                          ng-readonly="key.settings.isEditable === 'readonly'"
                                          ng-model="key.data.currentValue"
-                                         ng-required="key.settings.required"
+                                         require="key.settings.required"
                                          ng-change="vm.inputChanged(key)"
                                          mdp-placeholder="{{ 'widgets.input-widgets.time' | translate }}"
                                          mdp-auto-switch="true">
