@@ -41,7 +41,7 @@ public abstract class TbAbstractMsgQueueService implements TbMsgQueueService {
     @Value("${backpressure.strategy}")
     private Strategy strategy;
 
-    @Value("${back-pressure.attempt}")
+    @Value("${backpressure.attempt}")
     private int attempt;
 
     private CountDownLatch countDownLatch;
