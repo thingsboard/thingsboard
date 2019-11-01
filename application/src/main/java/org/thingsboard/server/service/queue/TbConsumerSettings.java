@@ -41,6 +41,15 @@ public class TbConsumerSettings {
     @Value("${kafka.queue.consumer.heartbeat_interval_ms}")
     private int heartbeatIntervalMs;
 
+    @Value("${kafka.queue.consumer.client_id}")
+    private String clientId;
+
+    @Value("${kafka.queue.consumer.group_id}")
+    private String groupId;
+
+    @Value("${kafka.queue.consumer.enable_auto_commit}")
+    private boolean enableAutoCommit;
+
     public Properties toProps() {
         Properties props = new Properties();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, servers);
@@ -48,6 +57,11 @@ public class TbConsumerSettings {
         props.put(ConsumerConfig.FETCH_MAX_WAIT_MS_CONFIG, fetchMaxWaitMs);
         props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, sessionTimeoutMs);
         props.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, heartbeatIntervalMs);
+        props.put(ConsumerConfig.CLIENT_ID_CONFIG, clientId);
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, enableAutoCommit);
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArrayDeserializer");
         return props;
     }
 }

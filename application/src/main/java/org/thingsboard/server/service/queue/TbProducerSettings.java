@@ -44,6 +44,9 @@ public class TbProducerSettings {
     @Value("${kafka.queue.producer.linger_ms}")
     private long lingerMs;
 
+    @Value("${kafka.queue.producer.client_id}")
+    protected String clientId;
+
     public Properties toProps() {
         Properties props = new Properties();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, servers);
@@ -52,6 +55,9 @@ public class TbProducerSettings {
         props.put(ProducerConfig.RETRIES_CONFIG, retries);
         props.put(ProducerConfig.BATCH_SIZE_CONFIG, batchSize);
         props.put(ProducerConfig.LINGER_MS_CONFIG, lingerMs);
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArraySerializer");
+        props.put(ProducerConfig.CLIENT_ID_CONFIG, clientId);
         return props;
     }
 }
