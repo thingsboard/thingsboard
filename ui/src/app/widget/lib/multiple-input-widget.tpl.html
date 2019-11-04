@@ -106,10 +106,8 @@
                     <div layout="row" ng-class="{'vertically-aligned': vm.smallWidthContainer}">
                         <mdp-date-picker name="{{key.name + 'Date'}}"
                                          ng-if="key.settings.dataKeyValueType !== 'time'"
-                                         ng-disabled="key.settings.isEditable === 'disabled' || key.settings.disabledOnCondition"
-                                         ng-readonly="key.settings.isEditable === 'readonly'"
+                                         mdp-disabled="key.settings.isEditable === 'disabled' || key.settings.disabledOnCondition"
                                          ng-model="key.data.currentValue"
-                                         require="key.settings.required"
                                          ng-change="vm.inputChanged(key)"
                                          mdp-placeholder="{{ 'widgets.input-widgets.date' | translate }}">
                             <div ng-messages="multipleInputForm[key.name].$error">
@@ -118,10 +116,8 @@
                         </mdp-date-picker>
                         <mdp-time-picker name="{{key.name + 'Time'}}"
                                          ng-if="key.settings.dataKeyValueType !== 'date'"
-                                         ng-disabled="key.settings.isEditable === 'disabled' || key.settings.disabledOnCondition"
-                                         ng-readonly="key.settings.isEditable === 'readonly'"
+                                         mdp-disabled="key.settings.isEditable === 'disabled' || key.settings.disabledOnCondition"
                                          ng-model="key.data.currentValue"
-                                         require="key.settings.required"
                                          ng-change="vm.inputChanged(key)"
                                          mdp-placeholder="{{ 'widgets.input-widgets.time' | translate }}"
                                          mdp-auto-switch="true">
