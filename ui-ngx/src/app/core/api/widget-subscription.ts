@@ -382,6 +382,13 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   onAliasesChanged(aliasIds: Array<string>): boolean {
+    if (this.type === widgetType.rpc) {
+      return this.checkRpcTarget(aliasIds);
+    } else if (this.type === widgetType.alarm) {
+      return this.checkAlarmSource(aliasIds);
+    } else {
+      return this.checkSubscriptions(aliasIds);
+    }
     return false;
   }
 
@@ -564,6 +571,35 @@ export class WidgetSubscription implements IWidgetSubscription {
 
   private alarmsUnsubscribe() {
     // TODO:
+  }
+
+  private checkRpcTarget(aliasIds: Array<string>): boolean {
+    if (aliasIds.indexOf(this.targetDeviceAliasId) > -1) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  private checkAlarmSource(aliasIds: Array<string>): boolean {
+    if (this.alarmSource && this.alarmSource.entityAliasId) {
+      return aliasIds.indexOf(this.alarmSource.entityAliasId) > -1;
+    } else {
+      return false;
+    }
+  }
+
+  private checkSubscriptions(aliasIds: Array<string>): boolean {
+    let subscriptionsChanged = false;
+    for (const listener of this.datasourceListeners) {
+      if (listener.datasource.entityAliasId) {
+        if (aliasIds.indexOf(listener.datasource.entityAliasId) > -1) {
+          subscriptionsChanged = true;
+          break;
+        }
+      }
+    }
+    return subscriptionsChanged;
   }
 
   destroy(): void {

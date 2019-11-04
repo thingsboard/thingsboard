@@ -116,9 +116,6 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   isMobile: boolean;
 
   @Input()
-  dashboard: IDashboardComponent;
-
-  @Input()
   dashboardWidget: DashboardWidget;
 
   @ViewChild('widgetContent', {read: ViewContainerRef, static: true}) widgetContentContainer: ViewContainerRef;
@@ -146,11 +143,12 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   subscriptionContext: WidgetSubscriptionContext;
 
   subscriptionInited = false;
+  destroyed = false;
   widgetSizeDetected = false;
 
   cafs: {[cafId: string]: CancelAnimationFrame} = {};
 
-  onResizeListener = this.onResize.bind(this);
+  onResizeListener = null;
 
   private cssParser = new cssjs();
 
@@ -252,30 +250,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
 
     this.widgetContext = this.dashboardWidget.widgetContext;
     this.widgetContext.servicesMap = ServicesMap;
-    this.widgetContext.inited = false;
-    this.widgetContext.hideTitlePanel = false;
     this.widgetContext.isEdit = this.isEdit;
     this.widgetContext.isMobile = this.isMobile;
-    this.widgetContext.dashboard = this.dashboard;
-    this.widgetContext.widgetConfig = this.widget.config;
-    this.widgetContext.settings = this.widget.config.settings;
-    this.widgetContext.units = this.widget.config.units || '';
-    this.widgetContext.decimals = isDefined(this.widget.config.decimals) ? this.widget.config.decimals : 2;
-    this.widgetContext.subscriptions = {};
-    this.widgetContext.defaultSubscription = null;
-    this.widgetContext.dashboardTimewindow = this.dashboard.dashboardTimewindow;
-    this.widgetContext.timewindowFunctions = {
-      onUpdateTimewindow: (startTimeMs, endTimeMs, interval) => {
-        if (this.widgetContext.defaultSubscription) {
-          this.widgetContext.defaultSubscription.onUpdateTimewindow(startTimeMs, endTimeMs, interval);
-        }
-      },
-      onResetTimewindow: () => {
-        if (this.widgetContext.defaultSubscription) {
-          this.widgetContext.defaultSubscription.onResetTimewindow();
-        }
-      }
-    };
+
     this.widgetContext.subscriptionApi = {
       createSubscription: this.createSubscription.bind(this),
       createSubscriptionFromInfo: this.createSubscriptionFromInfo.bind(this),
@@ -287,33 +264,13 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         }
       }
     };
-    this.widgetContext.controlApi = {
-      sendOneWayCommand: (method, params, timeout) => {
-        if (this.widgetContext.defaultSubscription) {
-            return this.widgetContext.defaultSubscription.sendOneWayCommand(method, params, timeout);
-        } else {
-          return of(null);
-        }
-      },
-      sendTwoWayCommand: (method, params, timeout) => {
-        if (this.widgetContext.defaultSubscription) {
-          return this.widgetContext.defaultSubscription.sendTwoWayCommand(method, params, timeout);
-        } else {
-          return of(null);
-        }
-      }
-    };
-    this.widgetContext.utils = {
-      formatValue: this.formatValue.bind(this)
-    };
+
     this.widgetContext.actionsApi = {
       actionDescriptorsBySourceId,
       getActionDescriptors: this.getActionDescriptors.bind(this),
       handleWidgetAction: this.handleWidgetAction.bind(this),
       elementClick: this.elementClick.bind(this)
     };
-    this.widgetContext.stateController = this.dashboard.stateController;
-    this.widgetContext.aliasController = this.dashboard.aliasController;
 
     this.widgetContext.customHeaderActions = [];
     const headerActionsDescriptors = this.getActionDescriptors(widgetActionSources.headerButton.value);
@@ -333,21 +290,15 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       this.widgetContext.customHeaderActions.push(headerAction);
     });
 
-    this.subscriptionContext = {
-      timeService: this.timeService,
-      deviceService: this.deviceService,
-      alarmService: this.alarmService,
-      datasourceService: this.datasourceService,
-      utils: this.utils,
-      raf: this.raf,
-      widgetUtils: this.widgetContext.utils,
-      dashboardTimewindowApi: {
-        onResetTimewindow: this.dashboard.onResetTimewindow.bind(this.dashboard),
-        onUpdateTimewindow: this.dashboard.onUpdateTimewindow.bind(this.dashboard)
-      },
-      getServerTimeDiff: this.dashboardService.getServerTimeDiff.bind(this.dashboardService),
-      aliasController: this.dashboard.aliasController
-    };
+    this.subscriptionContext = new WidgetSubscriptionContext(this.widgetContext.dashboard);
+    this.subscriptionContext.timeService = this.timeService;
+    this.subscriptionContext.deviceService = this.deviceService;
+    this.subscriptionContext.alarmService = this.alarmService;
+    this.subscriptionContext.datasourceService = this.datasourceService;
+    this.subscriptionContext.utils = this.utils;
+    this.subscriptionContext.raf = this.raf;
+    this.subscriptionContext.widgetUtils = this.widgetContext.utils;
+    this.subscriptionContext.getServerTimeDiff = this.dashboardService.getServerTimeDiff.bind(this.dashboardService);
 
     this.widgetComponentService.getWidgetInfo(this.widget.bundleAlias, this.widget.typeAlias, this.widget.isSystemType).subscribe(
       (widgetInfo) => {
@@ -382,6 +333,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
     this.rxSubscriptions.forEach((subscription) => {
       subscription.unsubscribe();
     });
@@ -481,7 +433,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   }
 
   private onInit(skipSizeCheck?: boolean) {
-    if (!this.widgetContext.$containerParent) {
+    if (!this.widgetContext.$containerParent || this.destroyed) {
       return;
     }
     if (!skipSizeCheck) {
@@ -565,17 +517,35 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   }
 
   private reInit() {
+    if (this.cafs.reinit) {
+      this.cafs.reinit();
+      this.cafs.reinit = null;
+    }
+    this.cafs.reinit = this.raf.raf(() => {
+      this.reInitImpl();
+    });
+  }
+
+  private reInitImpl() {
     this.onDestroy();
     this.configureDynamicWidgetComponent();
     if (!this.typeParameters.useCustomDatasources) {
       this.createDefaultSubscription().subscribe(
         () => {
-          this.subscriptionInited = true;
-          this.onInit();
+          if (this.destroyed) {
+            this.onDestroy();
+          } else {
+            this.subscriptionInited = true;
+            this.onInit();
+          }
         },
         () => {
-          this.subscriptionInited = true;
-          this.onInit();
+          if (this.destroyed) {
+            this.onDestroy();
+          } else {
+            this.subscriptionInited = true;
+            this.onInit();
+          }
         }
       );
     } else {
@@ -588,7 +558,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
 
     const initSubject = new ReplaySubject();
 
-    this.rxSubscriptions.push(this.dashboard.aliasController.entityAliasesChanged.subscribe(
+    this.rxSubscriptions.push(this.widgetContext.aliasController.entityAliasesChanged.subscribe(
       (aliasIds) => {
         let subscriptionChanged = false;
         for (const id of Object.keys(this.widgetContext.subscriptions)) {
@@ -601,7 +571,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       }
     ));
 
-    this.rxSubscriptions.push(this.dashboard.dashboardTimewindowChanged.subscribe(
+    this.rxSubscriptions.push(this.widgetContext.dashboard.dashboardTimewindowChanged.subscribe(
       (dashboardTimewindow) => {
         for (const id of Object.keys(this.widgetContext.subscriptions)) {
           const subscription = this.widgetContext.subscriptions[id];
@@ -634,9 +604,10 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   }
 
   private destroyDynamicWidgetComponent() {
-    if (this.widgetContext.$containerParent) {
+    if (this.widgetContext.$containerParent && this.onResizeListener) {
       // @ts-ignore
       removeResizeListener(this.widgetContext.$containerParent[0], this.onResizeListener);
+      this.onResizeListener = null;
     }
     if (this.dynamicWidgetComponentRef) {
       this.dynamicWidgetComponentRef.destroy();
@@ -661,7 +632,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
 
       const containerElement = $(this.elementRef.nativeElement.querySelector('#widget-container'));
 
-      this.widgetContext.$container = $('> ng-component', containerElement);
+      // this.widgetContext.$container = $('> ng-component:not([id="container"])', containerElement);
+      this.widgetContext.$container = $(this.dynamicWidgetComponentRef.location.nativeElement);
       this.widgetContext.$container.css('display', 'block');
       this.widgetContext.$container.css('user-select', 'none');
       this.widgetContext.$container.attr('id', 'container');
@@ -672,13 +644,14 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         this.widgetContext.$container.css('width', this.widgetContext.width + 'px');
       }
 
+      this.onResizeListener = this.onResize.bind(this);
       // @ts-ignore
       addResizeListener(this.widgetContext.$containerParent[0], this.onResizeListener);
   }
 
   private createSubscription(options: WidgetSubscriptionOptions, subscribe?: boolean): Observable<IWidgetSubscription> {
     const createSubscriptionSubject = new ReplaySubject<IWidgetSubscription>();
-    options.dashboardTimewindow = this.dashboard.dashboardTimewindow;
+    options.dashboardTimewindow = this.widgetContext.dashboardTimewindow;
     const subscription: IWidgetSubscription = new WidgetSubscription(this.subscriptionContext, options);
     subscription.init$.subscribe(
       () => {
@@ -747,7 +720,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           ? this.widget.config.useDashboardTimewindow : true;
     options.displayTimewindow = isDefined(this.widget.config.displayTimewindow)
       ? this.widget.config.displayTimewindow : !options.useDashboardTimewindow;
-    options.timeWindowConfig = options.useDashboardTimewindow ? this.dashboard.dashboardTimewindow : this.widget.config.timewindow;
+    options.timeWindowConfig = options.useDashboardTimewindow ? this.widgetContext.dashboardTimewindow : this.widget.config.timewindow;
     options.legendConfig = null;
     if (this.displayLegend) {
       options.legendConfig = this.legendConfig;
@@ -873,30 +846,6 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       this.cd.detectChanges();
     }
     return createSubscriptionSubject.asObservable();
-  }
-
-  private isNumeric(value: any): boolean {
-    return (value - parseFloat( value ) + 1) >= 0;
-  }
-
-  private formatValue(value: any, dec?: number, units?: string, showZeroDecimals?: boolean): string | undefined {
-    if (isDefined(value) &&
-      value != null && this.isNumeric(value)) {
-      let formatted: string | number = Number(value);
-      if (isDefined(dec)) {
-        formatted = formatted.toFixed(dec);
-      }
-      if (!showZeroDecimals) {
-        formatted = (Number(formatted) * 1);
-      }
-      formatted = formatted.toString();
-      if (isDefined(units) && units.length > 0) {
-        formatted += ' ' + units;
-      }
-      return formatted;
-    } else {
-      return value;
-    }
   }
 
   private getActionDescriptors(actionSourceId: string): Array<WidgetActionDescriptor> {

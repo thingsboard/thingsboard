@@ -141,6 +141,7 @@
                                   height: rightLayoutHeight(),
                                   borderLeft: 'none'}"
               disableClose="true"
+              [@.disabled]="!isMobile"
               position="end"
               [mode]="isMobile ? 'over' : 'side'"
               [(opened)]="rightLayoutOpened">

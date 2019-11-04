@@ -26,7 +26,7 @@ import {
   DashboardConfiguration,
   DashboardLayoutId,
   DashboardLayoutInfo,
-  DashboardLayoutsInfo,
+  DashboardLayoutsInfo, DashboardState,
   DashboardStateLayouts, GridSettings,
   WidgetLayout
 } from '@app/shared/models/dashboard.models';
@@ -79,6 +79,10 @@ import {
   DashboardSettingsDialogComponent,
   DashboardSettingsDialogData
 } from '@home/pages/dashboard/dashboard-settings-dialog.component';
+import {
+  ManageDashboardStatesDialogComponent,
+  ManageDashboardStatesDialogData
+} from '@home/pages/dashboard/states/manage-dashboard-states-dialog.component';
 
 @Component({
   selector: 'tb-dashboard-page',
@@ -130,6 +134,16 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   addingLayoutCtx: DashboardPageLayoutContext;
 
+
+  dashboardCtx: DashboardContext = {
+    getDashboard: () => this.dashboard,
+    dashboardTimewindow: null,
+    state: null,
+    stateController: null,
+    aliasController: null,
+    runChangeDetection: this.runChangeDetection.bind(this)
+  };
+
   layouts: DashboardPageLayouts = {
     main: {
       show: false,
@@ -155,15 +169,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         dashboardCtrl: this
       }
     }
-  };
-
-  dashboardCtx: DashboardContext = {
-    dashboard: null,
-    dashboardTimewindow: null,
-    state: null,
-    stateController: null,
-    aliasController: null,
-    runChangeDetection: this.runChangeDetection.bind(this)
   };
 
   addWidgetFabButtons: FooterFabButtons = {
@@ -255,13 +260,12 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
     this.dashboard = data.dashboard;
     this.dashboardConfiguration = this.dashboard.configuration;
-    this.layouts.main.layoutCtx.widgets = new LayoutWidgetsArray(this.dashboard);
-    this.layouts.right.layoutCtx.widgets = new LayoutWidgetsArray(this.dashboard);
+    this.dashboardCtx.dashboardTimewindow = this.dashboardConfiguration.timewindow;
+    this.layouts.main.layoutCtx.widgets = new LayoutWidgetsArray(this.dashboardCtx);
+    this.layouts.right.layoutCtx.widgets = new LayoutWidgetsArray(this.dashboardCtx);
     this.widgetEditMode = data.widgetEditMode;
     this.singlePageMode = data.singlePageMode;
 
-    this.dashboardCtx.dashboard = this.dashboard;
-    this.dashboardCtx.dashboardTimewindow = this.dashboardConfiguration.timewindow;
     this.dashboardCtx.aliasController = new AliasController(this.utils,
       this.entityService,
       () => this.dashboardCtx.stateController,
@@ -514,8 +518,18 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     if ($event) {
       $event.stopPropagation();
     }
-    // TODO:
-    this.dialogService.todo();
+    this.dialog.open<ManageDashboardStatesDialogComponent, ManageDashboardStatesDialogData,
+      {[id: string]: DashboardState }>(ManageDashboardStatesDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        states: deepClone(this.dashboard.configuration.states)
+      }
+    }).afterClosed().subscribe((states) => {
+      if (states) {
+        this.updateStates(states);
+      }
+    });
   }
 
   public manageDashboardLayouts($event: Event) {
@@ -539,6 +553,16 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   private updateDashboardLayouts(newLayouts: DashboardStateLayouts) {
     this.dashboardUtils.setLayouts(this.dashboard, this.dashboardCtx.state, newLayouts);
     this.updateLayouts();
+  }
+
+  private updateStates(states: {[id: string]: DashboardState }) {
+    this.dashboard.configuration.states = states;
+    this.dashboardUtils.removeUnusedWidgets(this.dashboard);
+    let targetState = this.dashboardCtx.state;
+    if (!this.dashboard.configuration.states[targetState]) {
+      targetState = this.dashboardUtils.getRootStateId(this.dashboardConfiguration.states);
+    }
+    this.openDashboardState(targetState);
   }
 
   private importWidget($event: Event) {
@@ -577,20 +601,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     if (layoutsData) {
       this.dashboardCtx.state = state;
       this.dashboardCtx.aliasController.dashboardStateChanged();
-      let layoutVisibilityChanged = false;
-      for (const l of Object.keys(this.layouts)) {
-        const layout: DashboardPageLayout = this.layouts[l];
-        let showLayout;
-        if (layoutsData[l]) {
-          showLayout = true;
-        } else {
-          showLayout = false;
-        }
-        if (layout.show !== showLayout) {
-          layout.show = showLayout;
-          layoutVisibilityChanged = !this.isMobile;
-        }
-      }
       this.isRightLayoutOpened = openRightLayout ? true : false;
       this.updateLayouts(layoutsData);
     }
@@ -603,9 +613,11 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     for (const l of Object.keys(this.layouts)) {
       const layout: DashboardPageLayout = this.layouts[l];
       if (layoutsData[l]) {
+        layout.show = true;
         const layoutInfo: DashboardLayoutInfo = layoutsData[l];
         this.updateLayout(layout, layoutInfo);
       } else {
+        layout.show = false;
         this.updateLayout(layout, {widgetIds: [], widgetLayouts: {}, gridSettings: null});
       }
     }

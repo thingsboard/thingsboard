@@ -302,7 +302,7 @@ export class DashboardWidget implements GridsterItem {
   customHeaderActions: Array<WidgetHeaderAction>;
   widgetActions: Array<WidgetAction>;
 
-  widgetContext: WidgetContext = {};
+  widgetContext = new WidgetContext(this.dashboard, this.widget);
 
   widgetId: string;
 

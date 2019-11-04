@@ -14,15 +14,32 @@
  * limitations under the License.
  */
 :host {
-  mat-select.default-state-controller {
-    margin: 0;
+  .manage-dashboard-states {
+    .tb-entity-table {
+      .tb-entity-table-content {
+        width: 100%;
+        height: 100%;
+        background: #fff;
+
+        .tb-entity-table-title {
+          padding-right: 20px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .table-container {
+          overflow: auto;
+        }
+      }
+    }
   }
 }
 
 :host ::ng-deep {
-  mat-select.default-state-controller {
-    .mat-select-value {
-      max-width: 200px;
+  .manage-dashboard-states {
+    .mat-sort-header-sorted .mat-sort-header-arrow {
+      opacity: 1 !important;
     }
   }
 }

@@ -557,6 +557,7 @@
         "edit-state": "Edit dashboard state",
         "delete-state": "Delete dashboard state",
         "add-state": "Add dashboard state",
+        "no-states-text": "No states found",
         "state": "Dashboard state",
         "state-name": "Name",
         "state-name-required": "Dashboard state name is required.",

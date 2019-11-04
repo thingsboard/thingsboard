@@ -22,26 +22,29 @@ import {PageLink} from '@shared/models/page/page-link';
 import {PageData} from '@shared/models/page/page-data';
 import {Dashboard, DashboardInfo} from '@shared/models/dashboard.models';
 import {WINDOW} from '@core/services/window.service';
-import { ActivationEnd, Router } from '@angular/router';
-import { filter } from 'rxjs/operators';
+import { ActivationEnd, NavigationEnd, Router } from '@angular/router';
+import { filter, map, publishReplay, refCount } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DashboardService {
 
-  stDiffSubject: Subject<number>;
+  stDiffObservable: Observable<number>;
+  currentUrl: string;
 
   constructor(
     private http: HttpClient,
     private router: Router,
     @Inject(WINDOW) private window: Window
   ) {
-    this.router.events.pipe(filter(event => event instanceof ActivationEnd)).subscribe(
+    this.currentUrl = this.router.url.split('?')[0];
+    this.router.events.pipe(filter(event => event instanceof NavigationEnd)).subscribe(
       () => {
-        if (this.stDiffSubject) {
-          this.stDiffSubject.complete();
-          this.stDiffSubject = null;
+        const newUrl = this.router.url.split('?')[0];
+        if (this.currentUrl !== newUrl) {
+          this.stDiffObservable = null;
+          this.currentUrl = newUrl;
         }
       }
     );
@@ -139,24 +142,20 @@ export class DashboardService {
   }
 
   public getServerTimeDiff(): Observable<number> {
-    if (this.stDiffSubject) {
-      return this.stDiffSubject.asObservable();
-    } else {
-      this.stDiffSubject = new ReplaySubject<number>(1);
+    if (!this.stDiffObservable) {
       const url = '/api/dashboard/serverTime';
       const ct1 = Date.now();
-      this.http.get<number>(url, defaultHttpOptions(true)).subscribe(
-        (st) => {
+      this.stDiffObservable = this.http.get<number>(url, defaultHttpOptions(true)).pipe(
+        map((st) => {
           const ct2 = Date.now();
           const stDiff = Math.ceil(st - (ct1 + ct2) / 2);
-          this.stDiffSubject.next(stDiff);
-        },
-        () => {
-          this.stDiffSubject.error(null);
-        }
+          return stDiff;
+        }),
+        publishReplay(1),
+        refCount()
       );
-      return this.stDiffSubject.asObservable();
     }
+    return this.stDiffObservable;
   }
 
 }

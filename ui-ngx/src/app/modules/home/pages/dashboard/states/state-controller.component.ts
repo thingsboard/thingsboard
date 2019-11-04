@@ -84,6 +84,8 @@ export abstract class StateControllerComponent implements IStateControllerCompon
 
   currentState: string;
 
+  currentUrl: string;
+
   private rxSubscriptions = new Array<Subscription>();
 
   private inited = false;
@@ -94,12 +96,16 @@ export abstract class StateControllerComponent implements IStateControllerCompon
   }
 
   ngOnInit(): void {
+    this.currentUrl = this.router.url.split('?')[0];
     this.rxSubscriptions.push(this.route.queryParamMap.subscribe((paramMap) => {
-      const newState = paramMap.get('state');
-      if (this.currentState !== newState) {
-        this.currentState = newState;
-        if (this.inited) {
-          this.onStateChanged();
+      const newUrl = this.router.url.split('?')[0];
+      if (this.currentUrl === newUrl) {
+        const newState = paramMap.get('state');
+        if (this.currentState !== newState) {
+          this.currentState = newState;
+          if (this.inited) {
+            this.onStateChanged();
+          }
         }
       }
     }));

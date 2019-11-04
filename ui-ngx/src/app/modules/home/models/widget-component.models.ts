@@ -26,7 +26,8 @@ import {
   WidgetType,
   widgetType,
   WidgetTypeDescriptor,
-  WidgetTypeParameters
+  WidgetTypeParameters,
+  Widget
 } from '@shared/models/widget.models';
 import { Timewindow, WidgetTimewindow } from '@shared/models/time/time.models';
 import {
@@ -34,10 +35,10 @@ import {
   IStateController,
   IWidgetSubscription,
   IWidgetUtils,
-  RpcApi, SubscriptionEntityInfo,
+  RpcApi, SubscriptionEntityInfo, SubscriptionInfo,
   TimewindowFunctions,
   WidgetActionsApi,
-  WidgetSubscriptionApi
+  WidgetSubscriptionApi, WidgetSubscriptionContext, WidgetSubscriptionOptions
 } from '@core/api/widget-api.models';
 import { ComponentFactory, Type } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -49,6 +50,9 @@ import { DeviceService } from '@core/http/device.service';
 import { AssetService } from '@app/core/http/asset.service';
 import { DialogService } from '@core/services/dialog.service';
 import { CustomDialogService } from '@home/components/widget/dialog/custom-dialog.service';
+import { isDefined, formatValue } from '@core/utils';
+import { Observable, of, ReplaySubject } from 'rxjs';
+import { WidgetSubscription } from '@core/api/widget-subscription';
 
 export interface IWidgetAction {
   name: string;
@@ -65,30 +69,89 @@ export interface WidgetAction extends IWidgetAction {
   show: boolean;
 }
 
-export interface WidgetContext {
-  inited?: boolean;
-  $container?: JQuery<any>;
-  $containerParent?: JQuery<any>;
-  width?: number;
-  height?: number;
-  $scope?: IDynamicWidgetComponent;
-  isEdit?: boolean;
-  isMobile?: boolean;
-  dashboard?: IDashboardComponent;
-  widgetConfig?: WidgetConfig;
-  settings?: any;
-  units?: string;
-  decimals?: number;
-  subscriptions?: {[id: string]: IWidgetSubscription};
-  defaultSubscription?: IWidgetSubscription;
-  dashboardTimewindow?: Timewindow;
-  timewindowFunctions?: TimewindowFunctions;
+export class WidgetContext {
+
+  constructor(public dashboard: IDashboardComponent,
+              private widget: Widget) {}
+
+  get stateController(): IStateController {
+    return this.dashboard.stateController;
+  }
+
+  get aliasController(): IAliasController {
+    return this.dashboard.aliasController;
+  }
+
+  get dashboardTimewindow(): Timewindow {
+    return this.dashboard.dashboardTimewindow;
+  }
+
+  get widgetConfig(): WidgetConfig {
+    return this.widget.config;
+  }
+
+  get settings(): any {
+    return this.widget.config.settings;
+  }
+
+  get units(): string {
+    return this.widget.config.units || '';
+  }
+
+  get decimals(): number {
+    return isDefined(this.widget.config.decimals) ? this.widget.config.decimals : 2;
+  }
+
+  inited = false;
+
+  subscriptions: {[id: string]: IWidgetSubscription} = {};
+  defaultSubscription: IWidgetSubscription = null;
+
+  timewindowFunctions: TimewindowFunctions = {
+    onUpdateTimewindow: (startTimeMs, endTimeMs, interval) => {
+      if (this.defaultSubscription) {
+        this.defaultSubscription.onUpdateTimewindow(startTimeMs, endTimeMs, interval);
+      }
+    },
+    onResetTimewindow: () => {
+      if (this.defaultSubscription) {
+        this.defaultSubscription.onResetTimewindow();
+      }
+    }
+  };
+
+  controlApi: RpcApi = {
+    sendOneWayCommand: (method, params, timeout) => {
+      if (this.defaultSubscription) {
+        return this.defaultSubscription.sendOneWayCommand(method, params, timeout);
+      } else {
+        return of(null);
+      }
+    },
+    sendTwoWayCommand: (method, params, timeout) => {
+      if (this.defaultSubscription) {
+        return this.defaultSubscription.sendTwoWayCommand(method, params, timeout);
+      } else {
+        return of(null);
+      }
+    }
+  };
+
+  utils: IWidgetUtils = {
+    formatValue
+  };
+
+  $container: JQuery<any>;
+  $containerParent: JQuery<any>;
+  width: number;
+  height: number;
+  $scope: IDynamicWidgetComponent;
+  isEdit: boolean;
+  isMobile: boolean;
+
   subscriptionApi?: WidgetSubscriptionApi;
-  controlApi?: RpcApi;
-  utils?: IWidgetUtils;
+
   actionsApi?: WidgetActionsApi;
-  stateController?: IStateController;
-  aliasController?: IAliasController;
   activeEntityInfo?: SubscriptionEntityInfo;
 
   datasources?: Array<Datasource>;
@@ -96,7 +159,8 @@ export interface WidgetContext {
   hiddenData?: Array<{data: DataSet}>;
   timeWindow?: WidgetTimewindow;
 
-  hideTitlePanel?: boolean;
+  hideTitlePanel = false;
+
   widgetTitleTemplate?: string;
   widgetTitle?: string;
   customHeaderActions?: Array<WidgetHeaderAction>;

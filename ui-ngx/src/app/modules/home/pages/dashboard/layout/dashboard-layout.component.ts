@@ -147,7 +147,7 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
     this.hotkeysService.add(
       new Hotkey('ctrl+i', (event: KeyboardEvent) => {
           if (this.isEdit && !this.isEditingWidget && !this.widgetEditMode) {
-            if (this.itembuffer.canPasteWidgetReference(this.dashboardCtx.dashboard,
+            if (this.itembuffer.canPasteWidgetReference(this.dashboardCtx.getDashboard(),
               this.dashboardCtx.state, this.layoutCtx.id)) {
               event.preventDefault();
               this.pasteWidgetReference(event);

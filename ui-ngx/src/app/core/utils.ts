@@ -99,8 +99,32 @@ export function isNumber(value: any): boolean {
   return typeof value === 'number';
 }
 
+export function isNumeric(value: any): boolean {
+  return (value - parseFloat( value ) + 1) >= 0;
+}
+
 export function isString(value: any): boolean {
   return typeof value === 'string';
+}
+
+export function formatValue(value: any, dec?: number, units?: string, showZeroDecimals?: boolean): string | undefined {
+  if (isDefined(value) &&
+    value != null && isNumeric(value)) {
+    let formatted: string | number = Number(value);
+    if (isDefined(dec)) {
+      formatted = formatted.toFixed(dec);
+    }
+    if (!showZeroDecimals) {
+      formatted = (Number(formatted) * 1);
+    }
+    formatted = formatted.toString();
+    if (isDefined(units) && units.length > 0) {
+      formatted += ' ' + units;
+    }
+    return formatted;
+  } else {
+    return value;
+  }
 }
 
 export function deleteNullProperties(obj: any) {

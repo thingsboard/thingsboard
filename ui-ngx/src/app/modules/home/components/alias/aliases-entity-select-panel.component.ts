@@ -52,7 +52,7 @@ export class AliasesEntitySelectPanelComponent {
     const resolvedEntities = this.entityAliasesInfo[aliasId].resolvedEntities;
     const selected = resolvedEntities.find((entity) => entity.id === selectedId);
     if (selected) {
-      this.data.aliasController.updateCurrentAliasEntity(aliasId, selected[0]);
+      this.data.aliasController.updateCurrentAliasEntity(aliasId, selected);
     }
   }
 

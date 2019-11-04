@@ -479,7 +479,7 @@ export class DashboardUtilsService {
     }
   }
 
-  private removeUnusedWidgets(dashboard: Dashboard) {
+  public removeUnusedWidgets(dashboard: Dashboard) {
     const dashboardConfiguration = dashboard.configuration;
     const states = dashboardConfiguration.states;
     const widgets = dashboardConfiguration.widgets;

@@ -30,7 +30,7 @@ export declare type DashboardPageScope = 'tenant' | 'customer';
 
 export interface DashboardContext {
   state: string;
-  dashboard: Dashboard;
+  getDashboard: () => Dashboard;
   dashboardTimewindow: Timewindow;
   aliasController: IAliasController;
   stateController: IStateController;
@@ -79,7 +79,7 @@ export class LayoutWidgetsArray implements Iterable<Widget> {
 
   private loaded = false;
 
-  constructor(private dashboard: Dashboard) {
+  constructor(private dashboardCtx: DashboardContext) {
   }
 
   size() {
@@ -115,7 +115,7 @@ export class LayoutWidgetsArray implements Iterable<Widget> {
   [Symbol.iterator](): Iterator<Widget> {
     let pointer = 0;
     const widgetIds = this.widgetIds;
-    const dashboard = this.dashboard;
+    const dashboard = this.dashboardCtx.getDashboard();
     return {
       next(value?: any): IteratorResult<Widget> {
         if (pointer < widgetIds.length) {
@@ -145,7 +145,7 @@ export class LayoutWidgetsArray implements Iterable<Widget> {
   }
 
   private widgetById(widgetId: string): Widget {
-    return this.dashboard.configuration.widgets[widgetId];
+    return this.dashboardCtx.getDashboard().configuration.widgets[widgetId];
   }
 
 }

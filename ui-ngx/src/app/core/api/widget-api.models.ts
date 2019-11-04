@@ -39,6 +39,7 @@ import { EntityInfo } from '@app/shared/models/entity.models';
 import { Type } from '@angular/core';
 import { AssetService } from '@core/http/asset.service';
 import { DialogService } from '@core/services/dialog.service';
+import { IDashboardComponent } from '@home/models/dashboard-component.models';
 
 export interface TimewindowFunctions {
   onUpdateTimewindow: (startTimeMs: number, endTimeMs: number, interval?: number) => void;
@@ -148,7 +149,19 @@ export interface SubscriptionInfo {
   deviceIds?: Array<string>;
 }
 
-export interface WidgetSubscriptionContext {
+export class WidgetSubscriptionContext {
+
+  constructor(private dashboard: IDashboardComponent) {}
+
+  get aliasController(): IAliasController {
+    return this.dashboard.aliasController;
+  }
+
+  dashboardTimewindowApi: TimewindowFunctions = {
+    onResetTimewindow: this.dashboard.onResetTimewindow.bind(this.dashboard),
+    onUpdateTimewindow: this.dashboard.onUpdateTimewindow.bind(this.dashboard)
+  };
+
   timeService: TimeService;
   deviceService: DeviceService;
   alarmService: AlarmService;
@@ -156,11 +169,7 @@ export interface WidgetSubscriptionContext {
   utils: UtilsService;
   raf: RafService;
   widgetUtils: IWidgetUtils;
-  dashboardTimewindowApi: TimewindowFunctions;
   getServerTimeDiff: () => Observable<number>;
-  aliasController: IAliasController;
-  [key: string]: any;
-  // TODO:
 }
 
 export interface WidgetSubscriptionCallbacks {

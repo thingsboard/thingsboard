@@ -180,6 +180,8 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
     this.gridsterOpts = {
       gridType: 'scrollVertical',
       keepFixedHeightInMobile: true,
+      disableWarnings: false,
+      disableAutoPositionOnConflict: false,
       pushItems: false,
       swap: false,
       maxRows: 100,
@@ -228,7 +230,9 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
   }
 
   ngDoCheck() {
-    this.dashboardWidgets.doCheck();
+    if (!this.optionsChangeNotificationsPaused) {
+      this.dashboardWidgets.doCheck();
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
