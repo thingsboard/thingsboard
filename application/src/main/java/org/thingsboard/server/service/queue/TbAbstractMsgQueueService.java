@@ -16,13 +16,13 @@
 package org.thingsboard.server.service.queue;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.thingsboard.rule.engine.api.TbMsgQueueService;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgPack;
+import org.thingsboard.server.service.queue.strategy.TbMsgQueueHandlerStrategy;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -38,11 +38,8 @@ public abstract class TbAbstractMsgQueueService implements TbMsgQueueService {
     @Value("${backpressure.timeout}")
     private long timeout;
 
-    @Value("${backpressure.strategy}")
-    private Strategy strategy;
-
-    @Value("${backpressure.attempt}")
-    private int attempt;
+    @Autowired
+    private TbMsgQueueHandlerStrategy handlerStrategy;
 
     private CountDownLatch countDownLatch;
 
@@ -50,7 +47,7 @@ public abstract class TbAbstractMsgQueueService implements TbMsgQueueService {
 
     protected final ExecutorService executor = Executors.newSingleThreadExecutor();
 
-    protected final AtomicInteger currentAttempt = new AtomicInteger(0);
+    public final AtomicInteger currentAttempt = new AtomicInteger(0);
 
     @Override
     public void ack(UUID msgId) {
@@ -60,7 +57,7 @@ public abstract class TbAbstractMsgQueueService implements TbMsgQueueService {
         }
     }
 
-    protected void send(TbMsgPack msgPack) {
+    public void send(TbMsgPack msgPack) {
         //sending
 
         try {
@@ -70,33 +67,8 @@ public abstract class TbAbstractMsgQueueService implements TbMsgQueueService {
             throw new RuntimeException(e);
         }
 
-        processingAfterSend();
-    }
-
-    private void processingAfterSend() {
         if (!map.isEmpty()) {
-            switch (strategy) {
-                case RETRY:
-                    retry();
-                    break;
-                case IGNORE:
-                    autoAcknowledgePack();
-                    break;
-            }
+            handlerStrategy.handleFailureMsgs(map);
         }
-    }
-
-    private void retry() {
-        if (currentAttempt.get() < attempt) {
-            currentAttempt.incrementAndGet();
-            List<TbMsg> msgs = new ArrayList<>(map.size());
-            map.forEach((k, v) -> msgs.add(v));
-            TbMsgPack pack = new TbMsgPack(UUID.randomUUID(), msgs);
-            send(pack);
-        }
-    }
-
-    private void autoAcknowledgePack() {
-        map.clear();
     }
 }

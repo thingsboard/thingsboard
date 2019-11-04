@@ -13,8 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.queue;
+package org.thingsboard.server.service.queue.strategy;
 
-public enum Strategy {
-    IGNORE, RETRY
+import org.thingsboard.server.common.msg.TbMsg;
+
+import java.util.Map;
+import java.util.UUID;
+
+public interface TbMsgQueueHandlerStrategy {
+
+    void handleFailureMsgs(Map<UUID, TbMsg> msgMap);
 }
