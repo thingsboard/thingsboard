@@ -26,15 +26,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.TbMsgPack;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
 @Service
@@ -84,28 +83,29 @@ public class TbKafkaMsgQueueService extends TbAbstractMsgQueueService {
 
         executor.execute(() -> {
             while (true) {
-                if (map.isEmpty()) {
-                    currentAttempt.set(0);
+                if (isAck.get()) {
                     ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(timeout));
                     if (records.count() > 0) {
-                        createAndSendTbMsgPack(records);
+                        isAck.set(false);
+                        createAndSendTbMsgQueuePack(records);
                     }
                 }
             }
         });
     }
 
-    private void createAndSendTbMsgPack(ConsumerRecords<String, byte[]> records) {
-        UUID tbMsgPackId = UUID.randomUUID();
-        List<TbMsg> tbMsgs = new ArrayList<>();
+    private void createAndSendTbMsgQueuePack(ConsumerRecords<String, byte[]> records) {
+        UUID packId = UUID.randomUUID();
+        currentPack = new TbMsgQueuePack(packId, new AtomicInteger(0), new AtomicInteger(0), new AtomicInteger(0), new AtomicBoolean(false));
         for (ConsumerRecord<String, byte[]> record : records) {
             TbMsg msg = TbMsg.fromBytes(record.value());
-            tbMsgs.add(msg.copy(msg.getId(), tbMsgPackId, msg.getRuleChainId(), msg.getRuleNodeId(), msg.getClusterPartition()));
-            map.put(msg.getId(), msg);
+            TbMsgQueueState msgQueueState = new TbMsgQueueState(
+                    msg.copy(msg.getId(), packId, msg.getRuleChainId(), msg.getRuleNodeId(), msg.getClusterPartition()),
+                    new AtomicInteger(0),
+                    new AtomicBoolean(false));
+            currentPack.addMsg(msgQueueState);
         }
-
-        TbMsgPack tbMsgPack = new TbMsgPack(tbMsgPackId, tbMsgs);
-        send(tbMsgPack);
+        send(currentPack);
     }
 
     @PreDestroy

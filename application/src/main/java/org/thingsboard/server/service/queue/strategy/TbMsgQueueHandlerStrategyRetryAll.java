@@ -18,14 +18,31 @@ package org.thingsboard.server.service.queue.strategy;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.service.queue.TbMsgQueuePack;
+import org.thingsboard.server.service.queue.TbMsgQueueState;
+
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
-@ConditionalOnProperty(prefix = "backpressure", value = "strategy", havingValue = "ignore")
-public class TbMsgQueueHandlerStrategyIgnore implements TbMsgQueueHandlerStrategy {
+@ConditionalOnProperty(prefix = "backpressure", value = "strategy", havingValue = "retry_all")
 
+public class TbMsgQueueHandlerStrategyRetryAll implements TbMsgQueueHandlerStrategy {
     @Override
     public TbMsgQueuePack handleFailureMsgs(TbMsgQueuePack msgQueuePack) {
-        msgQueuePack.getAck().set(true);
-        return msgQueuePack;
+        UUID packId = UUID.randomUUID();
+        TbMsgQueuePack newPack = new TbMsgQueuePack(
+                packId,
+                new AtomicInteger(msgQueuePack.getRetryAttempt().get()),
+                new AtomicInteger(0),
+                new AtomicInteger(0),
+                new AtomicBoolean(false));
+
+        msgQueuePack.getMsgs().forEach((k, v) -> {
+            TbMsgQueueState msg = v;
+            msg.setAck(new AtomicBoolean(false));
+            newPack.addMsg(msg);
+        });
+        return newPack;
     }
 }

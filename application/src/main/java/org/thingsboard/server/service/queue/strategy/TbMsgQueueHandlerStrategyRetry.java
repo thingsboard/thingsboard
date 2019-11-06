@@ -15,38 +15,36 @@
  */
 package org.thingsboard.server.service.queue.strategy;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.TbMsgPack;
-import org.thingsboard.server.service.queue.TbAbstractMsgQueueService;
+import org.thingsboard.server.service.queue.TbMsgQueuePack;
+import org.thingsboard.server.service.queue.TbMsgQueueState;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 @ConditionalOnProperty(prefix = "backpressure", value = "strategy", havingValue = "retry")
 public class TbMsgQueueHandlerStrategyRetry implements TbMsgQueueHandlerStrategy {
-    @Autowired
-    private TbAbstractMsgQueueService msgQueueService;
-
-    @Value("${backpressure.attempt}")
-    private int attempt;
 
     @Override
-    public void handleFailureMsgs(Map<UUID, TbMsg> msgMap) {
-        if (msgQueueService.currentAttempt.get() < attempt) {
-            msgQueueService.currentAttempt.incrementAndGet();
-            List<TbMsg> msgs = new ArrayList<>(msgMap.size());
-            msgMap.forEach((k, v) -> msgs.add(v));
-            TbMsgPack pack = new TbMsgPack(UUID.randomUUID(), msgs);
-            msgQueueService.send(pack);
-        } else {
-            msgMap.clear();
-        }
+    public TbMsgQueuePack handleFailureMsgs(TbMsgQueuePack msgQueuePack) {
+        UUID packId = UUID.randomUUID();
+        TbMsgQueuePack newPack = new TbMsgQueuePack(
+                packId,
+                new AtomicInteger(msgQueuePack.getRetryAttempt().get()),
+                new AtomicInteger(0),
+                new AtomicInteger(0),
+                new AtomicBoolean(false));
+
+        msgQueuePack.getMsgs().forEach((k, v) -> {
+            if (!v.getAck().get()) {
+                TbMsgQueueState msg = v;
+                msg.setAck(new AtomicBoolean(false));
+                newPack.addMsg(msg);
+            }
+        });
+        return newPack;
     }
 }

@@ -36,6 +36,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.RuleChainTransactionService;
+import org.thingsboard.rule.engine.api.TbMsgQueueService;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.actors.tenant.DebugTbRateLimits;
 import org.thingsboard.server.common.data.DataConstants;
@@ -340,6 +341,10 @@ public class ActorSystemContext {
     @Autowired(required = false)
     @Getter
     private RedisTemplate<String, Object> redisTemplate;
+
+    @Autowired(required = false)
+    @Getter
+    private TbMsgQueueService msgQueueService;
 
     public ActorSystemContext() {
         config = ConfigFactory.parseResources(AKKA_CONF_FILE_NAME).withFallback(ConfigFactory.load());

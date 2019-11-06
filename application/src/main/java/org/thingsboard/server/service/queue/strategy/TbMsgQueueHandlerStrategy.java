@@ -15,12 +15,9 @@
  */
 package org.thingsboard.server.service.queue.strategy;
 
-import org.thingsboard.server.common.msg.TbMsg;
-
-import java.util.Map;
-import java.util.UUID;
+import org.thingsboard.server.service.queue.TbMsgQueuePack;
 
 public interface TbMsgQueueHandlerStrategy {
 
-    void handleFailureMsgs(Map<UUID, TbMsg> msgMap);
+    TbMsgQueuePack handleFailureMsgs(TbMsgQueuePack msgQueuePack);
 }
