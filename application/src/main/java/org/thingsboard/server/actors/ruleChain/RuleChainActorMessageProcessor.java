@@ -24,6 +24,7 @@ import com.datastax.driver.core.utils.UUIDs;
 import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.rule.engine.api.TbMsgQueueService;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.device.DeviceActorToRuleEngineMsg;
 import org.thingsboard.server.actors.service.DefaultActorService;
@@ -65,6 +66,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     private final Map<RuleNodeId, RuleNodeCtx> nodeActors;
     private final Map<RuleNodeId, List<RuleNodeRelation>> nodeRoutes;
     private final RuleChainService service;
+    private final TbMsgQueueService msgQueueService;
 
     private RuleNodeId firstId;
     private RuleNodeCtx firstNode;
@@ -80,6 +82,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         this.nodeRoutes = new HashMap<>();
         this.service = systemContext.getRuleChainService();
         this.ruleChainName = ruleChainId.toString();
+        this.msgQueueService = systemContext.getMsgQueueService();
     }
 
     @Override
@@ -278,6 +281,8 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
                         break;
                 }
             }
+
+            msgQueueService.ack(msg.getId());
             //TODO: Ideally this should happen in async way when all targets confirm that the copied messages are successfully written to corresponding target queues.
             if (ackId != null) {
 //                TODO: Ack this message in Kafka
@@ -301,7 +306,8 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     private void enqueueAndForwardMsgCopyToChain(TbMsg msg, EntityId target, String fromRelationType) {
         RuleChainId targetRCId = new RuleChainId(target.getId());
         TbMsg copyMsg = msg.copy(UUIDs.timeBased(), msg.getTbMsgPackId(), targetRCId, null, DEFAULT_CLUSTER_PARTITION);
-        parent.tell(new RuleChainToRuleChainMsg(new RuleChainId(target.getId()), entityId, copyMsg, fromRelationType, true), self);
+//        parent.tell(new RuleChainToRuleChainMsg(new RuleChainId(target.getId()), entityId, copyMsg, fromRelationType, true), self);
+        msgQueueService.add(copyMsg);
     }
 
     private void enqueueAndForwardMsgCopyToNode(TbMsg msg, EntityId target, String fromRelationType) {
@@ -309,6 +315,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         RuleNodeCtx targetNodeCtx = nodeActors.get(targetId);
         TbMsg copy = msg.copy(UUIDs.timeBased(), msg.getTbMsgPackId(), entityId, targetId, DEFAULT_CLUSTER_PARTITION);
         pushMsgToNode(targetNodeCtx, copy, fromRelationType);
+        msgQueueService.add(copy);
     }
 
     private void pushToTarget(TbMsg msg, EntityId target, String fromRelationType) {

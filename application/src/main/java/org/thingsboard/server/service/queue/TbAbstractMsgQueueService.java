@@ -19,18 +19,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.thingsboard.rule.engine.api.TbMsgQueueService;
-import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.TbMsgPack;
 import org.thingsboard.server.service.queue.strategy.TbMsgQueueHandlerStrategy;
 
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 public abstract class TbAbstractMsgQueueService implements TbMsgQueueService {
@@ -38,26 +34,30 @@ public abstract class TbAbstractMsgQueueService implements TbMsgQueueService {
     @Value("${backpressure.timeout}")
     private long timeout;
 
+    @Value("${backpressure.attempt}")
+    private int attempt;
+
     @Autowired
     private TbMsgQueueHandlerStrategy handlerStrategy;
 
     private CountDownLatch countDownLatch;
 
-    protected final Map<UUID, TbMsg> map = new ConcurrentHashMap<>();
+    protected TbMsgQueuePack currentPack;
+
+    protected final AtomicBoolean isAck = new AtomicBoolean(true);
 
     protected final ExecutorService executor = Executors.newSingleThreadExecutor();
 
-    public final AtomicInteger currentAttempt = new AtomicInteger(0);
-
     @Override
     public void ack(UUID msgId) {
-        map.remove(msgId);
-        if (map.isEmpty()) {
+        currentPack.ackMsg(msgId);
+        if (currentPack.getAck().get()) {
             countDownLatch.countDown();
+            isAck.set(true);
         }
     }
 
-    public void send(TbMsgPack msgPack) {
+    public void send(TbMsgQueuePack msgPack) {
         //sending
 
         try {
@@ -67,8 +67,24 @@ public abstract class TbAbstractMsgQueueService implements TbMsgQueueService {
             throw new RuntimeException(e);
         }
 
-        if (!map.isEmpty()) {
-            handlerStrategy.handleFailureMsgs(map);
+        if (currentPack.getAck().get()) {
+            isAck.set(true);
+        } else {
+            currentPack = handlerStrategy.handleFailureMsgs(msgPack);
+            retry(currentPack);
+        }
+    }
+
+    private void retry(TbMsgQueuePack msgQueuePack) {
+        if (msgQueuePack.getAck().get()) {
+            isAck.set(true);
+        } else if (msgQueuePack.getRetryAttempt().get() < attempt) {
+            msgQueuePack.incrementRetryAttempt();
+            msgQueuePack.getMsgs().forEach((id, msg) -> msg.incrementRetryAttempt());
+            send(msgQueuePack);
+        } else {
+            msgQueuePack.getAck().set(true);
+            isAck.set(true);
         }
     }
 }

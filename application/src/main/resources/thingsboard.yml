@@ -450,7 +450,7 @@ kafka:
 
 backpressure:
   type: "${BACK_PRESSURE_TYPE:memory}" #kafka/memory
-  strategy: "${BACK_PRESSURE_STRATEGY:ignore}" #ignore/retry
+  strategy: "${BACK_PRESSURE_STRATEGY:ignore}" #ignore/retry/retry_all
   attempt: "${BACK_PRESSURE_ATTEMPT:3}"
   timeout: "${BACK_PRESSURE_TIMEOUT_MS:10000}"
   pack_size: "${BACK_PRESSURE_pack_size:1000}"
