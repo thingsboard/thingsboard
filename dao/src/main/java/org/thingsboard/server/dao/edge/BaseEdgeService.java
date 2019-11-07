@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,9 +15,12 @@
  */
 package org.thingsboard.server.dao.edge;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
@@ -27,10 +30,14 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.Event;
+import org.thingsboard.server.common.data.ShortEdgeInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeQueueEntry;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -38,23 +45,31 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.TimePageData;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
 import javax.annotation.Nullable;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.CacheConstants.EDGE_CACHE;
@@ -68,6 +83,8 @@ import static org.thingsboard.server.dao.service.Validator.validateString;
 @Service
 @Slf4j
 public class BaseEdgeService extends AbstractEntityService implements EdgeService {
+
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     public static final String INCORRECT_PAGE_LINK = "Incorrect page link ";
@@ -87,7 +104,13 @@ public class BaseEdgeService extends AbstractEntityService implements EdgeServic
     private CacheManager cacheManager;
 
     @Autowired
+    private EventService eventService;
+
+    @Autowired
     private DashboardService dashboardService;
+
+    @Autowired
+    private RuleChainService ruleChainService;
 
     @Override
     public Edge findEdgeById(TenantId tenantId, EdgeId edgeId) {
@@ -150,7 +173,8 @@ public class BaseEdgeService extends AbstractEntityService implements EdgeServic
 
         Edge edge = edgeDao.findById(tenantId, edgeId.getId());
 
-        deleteEntityRelations(tenantId, edgeId);
+        dashboardService.unassignEdgeDashboards(tenantId, edgeId);
+        ruleChainService.unassignEdgeRuleChains(tenantId, edgeId);
 
         List<Object> list = new ArrayList<>();
         list.add(edge.getTenantId());
@@ -158,7 +182,7 @@ public class BaseEdgeService extends AbstractEntityService implements EdgeServic
         Cache cache = cacheManager.getCache(EDGE_CACHE);
         cache.evict(list);
 
-        dashboardService.unassignEdgeDashboards(tenantId, edgeId);
+        deleteEntityRelations(tenantId, edgeId);
 
         edgeDao.removeById(tenantId, edgeId.getId());
     }
@@ -273,6 +297,106 @@ public class BaseEdgeService extends AbstractEntityService implements EdgeServic
                     edgeTypes.sort(Comparator.comparing(EntitySubtype::getType));
                     return edgeTypes;
                 });
+    }
+
+    @Override
+    public void pushEventToEdge(TenantId tenantId, TbMsg tbMsg) {
+        try {
+            switch (tbMsg.getOriginator().getEntityType()) {
+                case ASSET:
+                    processAsset(tenantId, tbMsg);
+                    break;
+                case DEVICE:
+                    processDevice(tenantId, tbMsg);
+                    break;
+                case DASHBOARD:
+                    processDashboard(tenantId, tbMsg);
+                    break;
+                case RULE_CHAIN:
+                    processRuleChain(tenantId, tbMsg);
+                    break;
+                case ENTITY_VIEW:
+                    processEntityView(tenantId, tbMsg);
+                    break;
+                default:
+                    log.debug("Entity type [{}] is not designed to be pushed to edge", tbMsg.getOriginator().getEntityType());
+            }
+        } catch (IOException e) {
+            log.error("Can't push to edge updates, entity type [{}], data [{}]", tbMsg.getOriginator().getEntityType(), tbMsg.getData(), e);
+        }
+
+
+    }
+
+    private void processDevice(TenantId tenantId, TbMsg tbMsg) {
+        // TODO
+    }
+
+    private void processDashboard(TenantId tenantId, TbMsg tbMsg) {
+        processAssignedEntity(tenantId, tbMsg, EntityType.DASHBOARD);
+    }
+
+    private void processEntityView(TenantId tenantId, TbMsg tbMsg) {
+        // TODO
+    }
+
+    private void processAsset(TenantId tenantId, TbMsg tbMsg) {
+        // TODO
+    }
+
+    private void processAssignedEntity(TenantId tenantId, TbMsg tbMsg, EntityType entityType) {
+        EdgeId edgeId;
+        switch (tbMsg.getType()) {
+            case DataConstants.ENTITY_ASSIGNED_TO_EDGE:
+                edgeId = new EdgeId(UUID.fromString(tbMsg.getMetaData().getValue("assignedEdgeId")));
+                pushEventToEdge(tenantId, edgeId, tbMsg.getType(), entityType, tbMsg.getData());
+                break;
+            case DataConstants.ENTITY_UNASSIGNED_FROM_EDGE:
+                edgeId = new EdgeId(UUID.fromString(tbMsg.getMetaData().getValue("unassignedEdgeId")));
+                pushEventToEdge(tenantId, edgeId, tbMsg.getType(), entityType, tbMsg.getData());
+                break;
+        }
+    }
+
+    private void processRuleChain(TenantId tenantId, TbMsg tbMsg) throws IOException {
+        switch (tbMsg.getType()) {
+            case DataConstants.ENTITY_ASSIGNED_TO_EDGE:
+            case DataConstants.ENTITY_UNASSIGNED_FROM_EDGE:
+                processAssignedEntity(tenantId, tbMsg, EntityType.RULE_CHAIN);
+                break;
+            case DataConstants.ENTITY_DELETED:
+            case DataConstants.ENTITY_CREATED:
+            case DataConstants.ENTITY_UPDATED:
+                RuleChain ruleChain = mapper.readValue(tbMsg.getData(), RuleChain.class);
+                for (ShortEdgeInfo assignedEdge : ruleChain.getAssignedEdges()) {
+                    pushEventToEdge(tenantId, assignedEdge.getEdgeId(), tbMsg.getType(), EntityType.RULE_CHAIN, tbMsg.getData());
+                }
+                break;
+            default:
+                log.warn("Unsupported message type " + tbMsg.getType());
+        }
+
+    }
+
+    private void pushEventToEdge(TenantId tenantId, EdgeId edgeId, String type, EntityType entityType, String data) {
+        log.debug("Pushing event to edge queue. tenantId [{}], edgeId [{}], type [{}], data [{}]", tenantId, edgeId, type, data);
+
+        EdgeQueueEntry queueEntry = new EdgeQueueEntry();
+        queueEntry.setType(type);
+        queueEntry.setEntityType(entityType);
+        queueEntry.setData(data);
+
+        Event event = new Event();
+        event.setEntityId(edgeId);
+        event.setTenantId(tenantId);
+        event.setType(DataConstants.EDGE_QUEUE_EVENT_TYPE);
+        event.setBody(mapper.valueToTree(queueEntry));
+        eventService.saveAsync(event);
+    }
+
+    @Override
+    public TimePageData<Event> findQueueEvents(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink) {
+        return eventService.findEvents(tenantId, edgeId, DataConstants.EDGE_QUEUE_EVENT_TYPE, pageLink);
     }
 
     private DataValidator<Edge> edgeValidator =

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.edge.rpc;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.Resources;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
@@ -24,7 +25,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.Event;
+import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.TimePageData;
+import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.dao.asset.AssetService;
+import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.gen.edge.EdgeRpcServiceGrpc;
 import org.thingsboard.server.gen.edge.RequestMsg;
 import org.thingsboard.server.gen.edge.ResponseMsg;
@@ -36,6 +48,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
@@ -43,6 +58,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase {
 
     private final Map<EdgeId, EdgeGrpcSession> sessions = new ConcurrentHashMap<>();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @Value("${edges.rpc.port}")
     private int rpcPort;
@@ -56,7 +72,21 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase {
     @Autowired
     private EdgeContextComponent ctx;
 
+    @Autowired
+    private EdgeService edgeService;
+
+    @Autowired
+    private AssetService assetService;
+
+    @Autowired
+    private DeviceService deviceService;
+
+    @Autowired
+    private AttributesService attributesService;
+
     private Server server;
+
+    private ExecutorService executor;
 
     @PostConstruct
     public void init() {
@@ -81,8 +111,9 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase {
             throw new RuntimeException("Failed to start Edge RPC server!");
         }
         log.info("Edge RPC service initialized!");
+        executor = Executors.newSingleThreadExecutor();
+        processHandleMessages();
     }
-
 
     @PreDestroy
     public void destroy() {
@@ -92,12 +123,26 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase {
     }
 
     @Override
-    public StreamObserver<RequestMsg> handleMsgs(StreamObserver<ResponseMsg> responseObserver) {
-        return new EdgeGrpcSession(ctx, responseObserver, this::onEdgeConnect, this::onEdgeDisconnect).getInputStream();
+    public StreamObserver<RequestMsg> handleMsgs(StreamObserver<ResponseMsg> outputStream) {
+        return new EdgeGrpcSession(ctx, outputStream, this::onEdgeConnect, this::onEdgeDisconnect, edgeService, assetService, deviceService, attributesService, objectMapper).getInputStream();
     }
 
     private void onEdgeConnect(EdgeId edgeId, EdgeGrpcSession edgeGrpcSession) {
         sessions.put(edgeId, edgeGrpcSession);
+    }
+
+    private void processHandleMessages() {
+        executor.submit(() -> {
+            while (!Thread.interrupted()) {
+                try {
+                    for (EdgeGrpcSession session : sessions.values()) {
+                        session.processHandleMessages();
+                    }
+                } catch (Exception e) {
+                    log.warn("Failed to process messages handling!", e);
+                }
+            }
+        });
     }
 
     private void onEdgeDisconnect(EdgeId edgeId) {

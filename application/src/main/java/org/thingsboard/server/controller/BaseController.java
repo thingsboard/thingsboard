@@ -610,6 +610,12 @@ public abstract class BaseController {
             case ALARM_CLEAR:
                 msgType = DataConstants.ALARM_CLEAR;
                 break;
+            case ASSIGNED_TO_EDGE:
+                msgType = DataConstants.ENTITY_ASSIGNED_TO_EDGE;
+                break;
+            case UNASSIGNED_FROM_EDGE:
+                msgType = DataConstants.ENTITY_UNASSIGNED_FROM_EDGE;
+                break;
         }
         if (!StringUtils.isEmpty(msgType)) {
             try {
@@ -629,6 +635,12 @@ public abstract class BaseController {
                     String strCustomerName = extractParameter(String.class, 2, additionalInfo);
                     metaData.putValue("unassignedCustomerId", strCustomerId);
                     metaData.putValue("unassignedCustomerName", strCustomerName);
+                } if (actionType == ActionType.ASSIGNED_TO_EDGE) {
+                    String strEdgeId = extractParameter(String.class, 1, additionalInfo);
+                    metaData.putValue("assignedEdgeId", strEdgeId);
+                } else if (actionType == ActionType.UNASSIGNED_FROM_EDGE) {
+                    String strEdgeId = extractParameter(String.class, 1, additionalInfo);
+                    metaData.putValue("unassignedEdgeId", strEdgeId);
                 }
                 ObjectNode entityNode;
                 if (entity != null) {

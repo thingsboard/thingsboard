@@ -24,15 +24,20 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.edge.exception.EdgeConnectionException;
-import org.thingsboard.server.gen.edge.CloudDownlinkDataProto;
+import org.thingsboard.server.gen.edge.AssetUpdateMsg;
 import org.thingsboard.server.gen.edge.ConnectRequestMsg;
 import org.thingsboard.server.gen.edge.ConnectResponseCode;
 import org.thingsboard.server.gen.edge.ConnectResponseMsg;
-import org.thingsboard.server.gen.edge.EdgeConfigurationProto;
+import org.thingsboard.server.gen.edge.DashboardUpdateMsg;
+import org.thingsboard.server.gen.edge.DeviceUpdateMsg;
+import org.thingsboard.server.gen.edge.DownlinkMsg;
+import org.thingsboard.server.gen.edge.EdgeConfiguration;
 import org.thingsboard.server.gen.edge.EdgeRpcServiceGrpc;
+import org.thingsboard.server.gen.edge.EntityViewUpdateMsg;
 import org.thingsboard.server.gen.edge.RequestMsg;
 import org.thingsboard.server.gen.edge.RequestMsgType;
 import org.thingsboard.server.gen.edge.ResponseMsg;
+import org.thingsboard.server.gen.edge.RuleChainUpdateMsg;
 import org.thingsboard.server.gen.edge.UplinkMsg;
 import org.thingsboard.server.gen.edge.UplinkResponseMsg;
 
@@ -65,8 +70,13 @@ public class EdgeGrpcClient implements EdgeRpcClient {
     public void connect(String edgeKey,
                         String edgeSecret,
                         Consumer<UplinkResponseMsg> onUplinkResponse,
-                        Consumer<EdgeConfigurationProto> onEdgeUpdate,
-                        Consumer<CloudDownlinkDataProto> onDownlink,
+                        Consumer<EdgeConfiguration> onEdgeUpdate,
+                        Consumer<DeviceUpdateMsg> onDeviceUpdate,
+                        Consumer<AssetUpdateMsg> onAssetUpdate,
+                        Consumer<EntityViewUpdateMsg> onEntityViewUpdate,
+                        Consumer<RuleChainUpdateMsg> onRuleChainUpdate,
+                        Consumer<DashboardUpdateMsg> onDashboardUpdate,
+                        Consumer<DownlinkMsg> onDownlink,
                         Consumer<Exception> onError) {
         NettyChannelBuilder builder = NettyChannelBuilder.forAddress(rpcHost, rpcPort).usePlaintext();
         if (sslEnabled) {
@@ -80,7 +90,7 @@ public class EdgeGrpcClient implements EdgeRpcClient {
         channel = builder.build();
         EdgeRpcServiceGrpc.EdgeRpcServiceStub stub = EdgeRpcServiceGrpc.newStub(channel);
         log.info("[{}] Sending a connect request to the TB!", edgeKey);
-        this.inputStream = stub.handleMsgs(initOutputStream(edgeKey, onUplinkResponse, onEdgeUpdate, onDownlink, onError));
+        this.inputStream = stub.handleMsgs(initOutputStream(edgeKey, onUplinkResponse, onEdgeUpdate, onDeviceUpdate, onAssetUpdate, onEntityViewUpdate, onRuleChainUpdate, onDashboardUpdate, onDownlink, onError));
         this.inputStream.onNext(RequestMsg.newBuilder()
                 .setMsgType(RequestMsgType.CONNECT_RPC_MESSAGE)
                 .setConnectRequestMsg(ConnectRequestMsg.newBuilder().setEdgeRoutingKey(edgeKey).setEdgeSecret(edgeSecret).build())
@@ -103,7 +113,16 @@ public class EdgeGrpcClient implements EdgeRpcClient {
                 .build());
     }
 
-    private StreamObserver<ResponseMsg> initOutputStream(String edgeKey, Consumer<UplinkResponseMsg> onUplinkResponse, Consumer<EdgeConfigurationProto> onEdgeUpdate, Consumer<CloudDownlinkDataProto> onDownlink, Consumer<Exception> onError) {
+    private StreamObserver<ResponseMsg> initOutputStream(String edgeKey,
+                                                         Consumer<UplinkResponseMsg> onUplinkResponse,
+                                                         Consumer<EdgeConfiguration> onEdgeUpdate,
+                                                         Consumer<DeviceUpdateMsg> onDeviceUpdate,
+                                                         Consumer<AssetUpdateMsg> onAssetUpdate,
+                                                         Consumer<EntityViewUpdateMsg> onEntityViewUpdate,
+                                                         Consumer<RuleChainUpdateMsg> onRuleChainUpdate,
+                                                         Consumer<DashboardUpdateMsg> onDashboardUpdate,
+                                                         Consumer<DownlinkMsg> onDownlink,
+                                                         Consumer<Exception> onError) {
         return new StreamObserver<ResponseMsg>() {
             @Override
             public void onNext(ResponseMsg responseMsg) {
@@ -119,9 +138,24 @@ public class EdgeGrpcClient implements EdgeRpcClient {
                 } else if (responseMsg.hasUplinkResponseMsg()) {
                     log.debug("[{}] Uplink response message received {}", edgeKey, responseMsg.getUplinkResponseMsg());
                     onUplinkResponse.accept(responseMsg.getUplinkResponseMsg());
+                }  else if (responseMsg.hasDeviceUpdateMsg()) {
+                    log.debug("[{}] Device update message received {}", edgeKey, responseMsg.getDeviceUpdateMsg());
+                    onDeviceUpdate.accept(responseMsg.getDeviceUpdateMsg());
+                } else if (responseMsg.hasAssetUpdateMsg()) {
+                    log.debug("[{}] Asset update message received {}", edgeKey, responseMsg.getAssetUpdateMsg());
+                    onAssetUpdate.accept(responseMsg.getAssetUpdateMsg());
+                } else if (responseMsg.hasEntityViewUpdateMsg()) {
+                    log.debug("[{}] EntityView update message received {}", edgeKey, responseMsg.getEntityViewUpdateMsg());
+                    onEntityViewUpdate.accept(responseMsg.getEntityViewUpdateMsg());
+                } else if (responseMsg.hasRuleChainUpdateMsg()) {
+                    log.debug("[{}] Rule Chain udpate message received {}", edgeKey, responseMsg.getRuleChainUpdateMsg());
+                    onRuleChainUpdate.accept(responseMsg.getRuleChainUpdateMsg());
+                } else if (responseMsg.hasDashboardUpdateMsg()) {
+                    log.debug("[{}] Dashboard message received {}", edgeKey, responseMsg.getDashboardUpdateMsg());
+                    onDashboardUpdate.accept(responseMsg.getDashboardUpdateMsg());
                 } else if (responseMsg.hasDownlinkMsg()) {
-                    log.debug("[{}] Downlink message received for device {}", edgeKey, responseMsg.getDownlinkMsg().getCloudData().getDeviceName());
-                    onDownlink.accept(responseMsg.getDownlinkMsg().getCloudData());
+                    log.debug("[{}] Downlink message received for rule chain {}", edgeKey, responseMsg.getDownlinkMsg());
+                    onDownlink.accept(responseMsg.getDownlinkMsg());
                 }
             }
 

@@ -28,7 +28,9 @@ import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.device.DeviceActorToRuleEngineMsg;
 import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.actors.shared.ComponentMsgProcessor;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.ShortEdgeInfo;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
@@ -43,6 +45,7 @@ import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
+import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 
 import java.util.ArrayList;
@@ -65,6 +68,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     private final Map<RuleNodeId, RuleNodeCtx> nodeActors;
     private final Map<RuleNodeId, List<RuleNodeRelation>> nodeRoutes;
     private final RuleChainService service;
+    private final EdgeService edgeService;
 
     private RuleNodeId firstId;
     private RuleNodeCtx firstNode;
@@ -79,6 +83,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         this.nodeActors = new HashMap<>();
         this.nodeRoutes = new HashMap<>();
         this.service = systemContext.getRuleChainService();
+        this.edgeService = systemContext.getEdgeService();
         this.ruleChainName = ruleChainId.toString();
     }
 
@@ -326,6 +331,19 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         if (nodeCtx != null) {
             nodeCtx.getSelfActor().tell(new RuleChainToRuleNodeMsg(new DefaultTbContext(systemContext, nodeCtx), msg, fromRelationType), self);
         }
+        pushUpdatesToEdges(msg);
+    }
+
+    private void pushUpdatesToEdges(TbMsg msg) {
+        switch (msg.getType()) {
+            case DataConstants.ENTITY_CREATED:
+            case DataConstants.ENTITY_UPDATED:
+            case DataConstants.ENTITY_DELETED:
+            case DataConstants.ENTITY_ASSIGNED_TO_EDGE:
+            case DataConstants.ENTITY_UNASSIGNED_FROM_EDGE:
+                edgeService.pushEventToEdge(tenantId, msg);
+        }
+
     }
 
     private TbMsg enrichWithRuleChainId(TbMsg tbMsg) {

@@ -15,8 +15,13 @@
  */
 package org.thingsboard.edge.rpc;
 
-import org.thingsboard.server.gen.edge.CloudDownlinkDataProto;
-import org.thingsboard.server.gen.edge.EdgeConfigurationProto;
+import org.thingsboard.server.gen.edge.AssetUpdateMsg;
+import org.thingsboard.server.gen.edge.DashboardUpdateMsg;
+import org.thingsboard.server.gen.edge.DeviceUpdateMsg;
+import org.thingsboard.server.gen.edge.DownlinkMsg;
+import org.thingsboard.server.gen.edge.EdgeConfiguration;
+import org.thingsboard.server.gen.edge.EntityViewUpdateMsg;
+import org.thingsboard.server.gen.edge.RuleChainUpdateMsg;
 import org.thingsboard.server.gen.edge.UplinkMsg;
 import org.thingsboard.server.gen.edge.UplinkResponseMsg;
 
@@ -27,10 +32,14 @@ public interface EdgeRpcClient {
     void connect(String integrationKey,
                  String integrationSecret,
                  Consumer<UplinkResponseMsg> onUplinkResponse,
-                 Consumer<EdgeConfigurationProto> onEdgeUpdate,
-                 Consumer<CloudDownlinkDataProto> onDownlink,
+                 Consumer<EdgeConfiguration> onEdgeUpdate,
+                 Consumer<DeviceUpdateMsg> onDeviceUpdate,
+                 Consumer<AssetUpdateMsg> onAssetUpdate,
+                 Consumer<EntityViewUpdateMsg> onEntityViewUpdate,
+                 Consumer<RuleChainUpdateMsg> onRuleChainUpdate,
+                 Consumer<DashboardUpdateMsg> onDashboardUpdate,
+                 Consumer<DownlinkMsg> onDownlink,
                  Consumer<Exception> onError);
-
 
     void disconnect() throws InterruptedException;
 

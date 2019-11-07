@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.rule;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -43,6 +44,7 @@ import org.thingsboard.server.common.data.rule.RuleChainConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.dao.edge.EdgeDao;
+import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -66,6 +68,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class BaseRuleChainService extends AbstractEntityService implements RuleChainService {
 
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
     @Autowired
     private RuleChainDao ruleChainDao;
 
@@ -77,6 +81,9 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
 
     @Autowired
     private EdgeDao edgeDao;
+
+    @Autowired
+    private EdgeService edgeService;
 
     @Override
     public RuleChain saveRuleChain(RuleChain ruleChain) {
@@ -381,10 +388,9 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                 log.warn("[{}] Failed to create ruleChain relation. Edge Id: [{}]", ruleChainId, edgeId);
                 throw new RuntimeException(e);
             }
-            return saveRuleChain(ruleChain);
-        } else {
-            return ruleChain;
+            ruleChain = saveRuleChain(ruleChain);
         }
+        return ruleChain;
     }
 
     @Override

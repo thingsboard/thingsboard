@@ -34,16 +34,20 @@ service EdgeRpcService {
 message RequestMsg {
   RequestMsgType msgType = 1;
   ConnectRequestMsg connectRequestMsg = 2;
-  UplinkMsg uplinkMsg = 3;
+  DeviceUpdateMsg deviceUpdateMsg = 3;
+  UplinkMsg uplinkMsg = 4;
 }
 
 message ResponseMsg {
-  ResponseMsgType msgType = 1;
-  ConnectResponseMsg connectResponseMsg = 2;
-  UplinkResponseMsg uplinkResponseMsg = 3;
-  DownlinkMsg downlinkMsg = 4;
+  ConnectResponseMsg connectResponseMsg = 1;
+  UplinkResponseMsg uplinkResponseMsg = 2;
+  DeviceUpdateMsg deviceUpdateMsg = 3;
+  RuleChainUpdateMsg ruleChainUpdateMsg = 4;
+  DashboardUpdateMsg dashboardUpdateMsg = 5;
+  AssetUpdateMsg assetUpdateMsg = 6;
+  EntityViewUpdateMsg entityViewUpdateMsg = 7;
+  DownlinkMsg downlinkMsg = 8;
 }
-
 
 enum RequestMsgType {
   CONNECT_RPC_MESSAGE = 0;
@@ -64,10 +68,10 @@ enum ConnectResponseCode {
 message ConnectResponseMsg {
   ConnectResponseCode responseCode = 1;
   string errorMsg = 2;
-  EdgeConfigurationProto configuration = 3;
+  EdgeConfiguration configuration = 3;
 }
 
-message EdgeConfigurationProto {
+message EdgeConfiguration {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
   string name = 5;
@@ -75,15 +79,85 @@ message EdgeConfigurationProto {
   string type = 7;
 }
 
-enum ResponseMsgType {
-  SAVE_ENTITY_MESSAGE = 0;
-  DELETE_ENTITY_MESSAGE = 1;
+enum UpdateMsgType {
+  ENTITY_CREATED_RPC_MESSAGE = 0;
+  ENTITY_UPDATED_RPC_MESSAGE = 1;
+  ENTITY_DELETED_RPC_MESSAGE = 2;
 }
 
-message CloudDownlinkDataProto {
+message DeviceData {
   string deviceName = 1;
   string deviceType = 2;
   bytes tbMsg = 3;
+}
+
+message AssetData {
+  string assetName = 1;
+  string assetType = 2;
+  bytes tbMsg = 3;
+}
+
+message EntityViewData {
+  string entityViewName = 1;
+  string entityViewType = 2;
+  bytes tbMsg = 3;
+}
+
+message RuleChainData {
+  string ruleChainName = 1;
+  string ruleChainType = 2;
+  bytes tbMsg = 3;
+}
+
+message DashboardData {
+  string dashboardName = 1;
+  string dashboardType = 2;
+  bytes tbMsg = 3;
+}
+
+message RuleChainUpdateMsg {
+  UpdateMsgType msgType = 1;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  string name = 4;
+  int64 firstRuleNodeIdMSB = 5;
+  int64 firstRuleNodeIdLSB = 6;
+  bool root = 7;
+  bool debugMode = 8;
+  string configuration = 9;
+}
+
+message DashboardUpdateMsg {
+  UpdateMsgType msgType = 1;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  string name = 4;
+}
+
+message DeviceUpdateMsg {
+  UpdateMsgType msgType = 1;
+  string name = 2;
+  string type = 3;
+}
+
+message AssetUpdateMsg {
+  UpdateMsgType msgType = 1;
+  string name = 2;
+  string type = 3;
+}
+
+message EntityViewUpdateMsg {
+  UpdateMsgType msgType = 1;
+  string name = 2;
+  string type = 3;
+  string relatedName = 4;
+  string relatedType = 5;
+  EntityType relatedEntityType = 6;
+}
+
+enum EntityType {
+    DEVICE = 0;
+    ASSET = 1;
 }
 
 /**
@@ -92,6 +166,11 @@ message CloudDownlinkDataProto {
 
 message UplinkMsg {
   int32 uplinkMsgId = 1;
+  repeated DeviceData deviceData = 2;
+  repeated AssetData assetData = 3;
+  repeated EntityViewData entityViewData = 4;
+  repeated RuleChainData ruleChainData = 5;
+  repeated DashboardData dashboardData = 6;
 }
 
 message UplinkResponseMsg {
@@ -100,5 +179,11 @@ message UplinkResponseMsg {
 }
 
 message DownlinkMsg {
-  CloudDownlinkDataProto cloudData = 1;
+  int32 downlinkMsgId = 1;
+  repeated DeviceData deviceData = 2;
+  repeated AssetData assetData = 3;
+  repeated EntityViewData entityViewData = 4;
+  repeated RuleChainData ruleChainData = 5;
+  repeated DashboardData dashboardData = 6;
 }
+
