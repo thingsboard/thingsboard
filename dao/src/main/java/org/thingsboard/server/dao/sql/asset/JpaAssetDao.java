@@ -139,4 +139,29 @@ public class JpaAssetDao extends JpaAbstractSearchTextDao<AssetEntity, Asset> im
         }
         return list;
     }
+
+    @Override
+    public List<Asset> findAssetsByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, TextPageLink pageLink) {
+        return DaoUtil.convertDataList(assetRepository
+                .findByTenantIdAndEdgeId(
+                        fromTimeUUID(tenantId),
+                        fromTimeUUID(edgeId),
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
+                        new PageRequest(0, pageLink.getLimit())));
+    }
+
+
+    @Override
+    public List<Asset> findAssetsByTenantIdAndEdgeIdAndType(UUID tenantId, UUID edgeId, String type, TextPageLink pageLink) {
+        return DaoUtil.convertDataList(assetRepository
+                .findByTenantIdAndEdgeIdAndType(
+                        fromTimeUUID(tenantId),
+                        fromTimeUUID(edgeId),
+                        type,
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
+                        new PageRequest(0, pageLink.getLimit())));
+    }
+
 }

@@ -33,7 +33,10 @@ function AssetService($http, $q, customerService, userService) {
         findByQuery: findByQuery,
         fetchAssetsByNameFilter: fetchAssetsByNameFilter,
         getAssetTypes: getAssetTypes,
-        findByName: findByName
+        findByName: findByName,
+        assignAssetToEdge: assignAssetToEdge,
+        unassignAssetFromEdge: unassignAssetFromEdge,
+        getEdgeAssets: getEdgeAssets
     }
 
     return service;
@@ -289,4 +292,57 @@ function AssetService($http, $q, customerService, userService) {
         return deferred.promise;
     }
 
+    function assignAssetToEdge(edgeId, assetId, ignoreErrors, config) {
+        var deferred = $q.defer();
+        var url = '/api/edge/' + edgeId + '/asset/' + assetId;
+        if (!config) {
+            config = {};
+        }
+        config = Object.assign(config, { ignoreErrors: ignoreErrors });
+        $http.post(url, null, config).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function unassignAssetFromEdge(assetId, ignoreErrors, config) {
+        var deferred = $q.defer();
+        var url = '/api/edge/asset/' + assetId;
+        if (!config) {
+            config = {};
+        }
+        config = Object.assign(config, { ignoreErrors: ignoreErrors });
+        $http.delete(url, config).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function getEdgeAssets(edgeId, pageLink, config, type) {
+        var deferred = $q.defer();
+        var url = '/api/edge/' + edgeId + '/assets?limit=' + pageLink.limit;
+        if (angular.isDefined(pageLink.textSearch)) {
+            url += '&textSearch=' + pageLink.textSearch;
+        }
+        if (angular.isDefined(pageLink.idOffset)) {
+            url += '&idOffset=' + pageLink.idOffset;
+        }
+        if (angular.isDefined(pageLink.textOffset)) {
+            url += '&textOffset=' + pageLink.textOffset;
+        }
+        if (angular.isDefined(type) && type.length) {
+            url += '&type=' + type;
+        }
+        $http.get(url, config).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
+        });
+
+        return deferred.promise;
+    }
 }

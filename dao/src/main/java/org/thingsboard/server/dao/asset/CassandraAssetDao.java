@@ -188,4 +188,31 @@ public class CassandraAssetDao extends CassandraAbstractSearchTextDao<AssetEntit
         });
     }
 
+    @Override
+    public List<Asset> findAssetsByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, TextPageLink pageLink) {
+//        log.debug("Try to find assets by tenantId [{}], customerId[{}] and pageLink [{}]", tenantId, customerId, pageLink);
+//        List<AssetEntity> assetEntities = findPageWithTextSearch(new TenantId(tenantId), ASSET_BY_CUSTOMER_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
+//                Arrays.asList(eq(ASSET_CUSTOMER_ID_PROPERTY, customerId),
+//                        eq(ASSET_TENANT_ID_PROPERTY, tenantId)),
+//                pageLink);
+//
+//        log.trace("Found assets [{}] by tenantId [{}], customerId [{}] and pageLink [{}]", assetEntities, tenantId, customerId, pageLink);
+//        return DaoUtil.convertDataList(assetEntities);
+        throw new UnsupportedOperationException("Cassandra is not supported yet");
+    }
+
+    @Override
+    public List<Asset> findAssetsByTenantIdAndEdgeIdAndType(UUID tenantId, UUID edgeId, String type, TextPageLink pageLink) {
+//        log.debug("Try to find assets by tenantId [{}], customerId [{}], type [{}] and pageLink [{}]", tenantId, customerId, type, pageLink);
+//        List<AssetEntity> assetEntities = findPageWithTextSearch(new TenantId(tenantId), ASSET_BY_CUSTOMER_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
+//                Arrays.asList(eq(ASSET_TYPE_PROPERTY, type),
+//                        eq(ASSET_CUSTOMER_ID_PROPERTY, customerId),
+//                        eq(ASSET_TENANT_ID_PROPERTY, tenantId)),
+//                pageLink);
+//
+//        log.trace("Found assets [{}] by tenantId [{}], customerId [{}], type [{}] and pageLink [{}]", assetEntities, tenantId, customerId, type, pageLink);
+//        return DaoUtil.convertDataList(assetEntities);
+        throw new UnsupportedOperationException("Cassandra is not supported yet");
+    }
+
 }

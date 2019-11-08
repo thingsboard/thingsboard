@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetSearchQuery;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
@@ -70,6 +71,8 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
     public static final String INCORRECT_PAGE_LINK = "Incorrect page link ";
     public static final String INCORRECT_CUSTOMER_ID = "Incorrect customerId ";
     public static final String INCORRECT_ASSET_ID = "Incorrect assetId ";
+    public static final String INCORRECT_EDGE_ID = "Incorrect edgeId ";
+
     @Autowired
     private AssetDao assetDao;
 
@@ -258,6 +261,41 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
                     assetTypes.sort(Comparator.comparing(EntitySubtype::getType));
                     return assetTypes;
                 });
+    }
+
+    @Override
+    public Asset assignAssetToEdge(TenantId tenantId, AssetId assetId, EdgeId edgeId) {
+        Asset asset = findAssetById(tenantId, assetId);
+        asset.setEdgeId(edgeId);
+        return saveAsset(asset);
+    }
+
+    @Override
+    public Asset unassignAssetFromEdge(TenantId tenantId, AssetId assetId) {
+        Asset asset = findAssetById(tenantId, assetId);
+        asset.setEdgeId(null);
+        return saveAsset(asset);
+    }
+
+    @Override
+    public TextPageData<Asset> findAssetsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, TextPageLink pageLink) {
+        log.trace("Executing findAssetsByTenantIdAndEdgeId, tenantId [{}], edgeId [{}], pageLink [{}]", tenantId, edgeId, pageLink);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(edgeId, INCORRECT_EDGE_ID + edgeId);
+        validatePageLink(pageLink, INCORRECT_PAGE_LINK + pageLink);
+        List<Asset> assets = assetDao.findAssetsByTenantIdAndEdgeId(tenantId.getId(), edgeId.getId(), pageLink);
+        return new TextPageData<>(assets, pageLink);
+    }
+
+    @Override
+    public TextPageData<Asset> findAssetsByTenantIdAndEdgeIdAndType(TenantId tenantId, EdgeId edgeId, String type, TextPageLink pageLink) {
+        log.trace("Executing findAssetsByTenantIdAndEdgeIdAndType, tenantId [{}], edgeId [{}], type [{}], pageLink [{}]", tenantId, edgeId, type, pageLink);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(edgeId, INCORRECT_EDGE_ID + edgeId);
+        validateString(type, "Incorrect type " + type);
+        validatePageLink(pageLink, INCORRECT_PAGE_LINK + pageLink);
+        List<Asset> assets = assetDao.findAssetsByTenantIdAndEdgeIdAndType(tenantId.getId(), edgeId.getId(), type, pageLink);
+        return new TextPageData<>(assets, pageLink);
     }
 
     private DataValidator<Asset> assetValidator =

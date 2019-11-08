@@ -25,6 +25,7 @@ import lombok.ToString;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.model.type.JsonCodec;
@@ -34,6 +35,7 @@ import java.util.UUID;
 import static org.thingsboard.server.dao.model.ModelConstants.ASSET_ADDITIONAL_INFO_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ASSET_COLUMN_FAMILY_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.ASSET_CUSTOMER_ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ASSET_EDGE_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ASSET_NAME_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ASSET_TENANT_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ASSET_TYPE_PROPERTY;
@@ -61,6 +63,10 @@ public final class AssetEntity implements SearchTextEntity<Asset> {
     @Column(name = ASSET_TYPE_PROPERTY)
     private String type;
 
+    @PartitionKey(value = 4)
+    @Column(name = ASSET_EDGE_ID_PROPERTY)
+    private UUID edgeId;
+
     @Column(name = ASSET_NAME_PROPERTY)
     private String name;
 
@@ -83,6 +89,9 @@ public final class AssetEntity implements SearchTextEntity<Asset> {
         }
         if (asset.getCustomerId() != null) {
             this.customerId = asset.getCustomerId().getId();
+        }
+        if (asset.getEdgeId() != null) {
+            this.edgeId = asset.getEdgeId().getId();
         }
         this.name = asset.getName();
         this.type = asset.getType();
@@ -111,6 +120,14 @@ public final class AssetEntity implements SearchTextEntity<Asset> {
 
     public void setCustomerId(UUID customerId) {
         this.customerId = customerId;
+    }
+
+    public UUID getEdgeId() {
+        return edgeId;
+    }
+
+    public void setEdgeId(UUID edgeId) {
+        this.edgeId = edgeId;
     }
 
     public String getName() {
@@ -160,6 +177,9 @@ public final class AssetEntity implements SearchTextEntity<Asset> {
         }
         if (customerId != null) {
             asset.setCustomerId(new CustomerId(customerId));
+        }
+        if (edgeId != null) {
+            asset.setEdgeId(new EdgeId(edgeId));
         }
         asset.setName(name);
         asset.setType(type);

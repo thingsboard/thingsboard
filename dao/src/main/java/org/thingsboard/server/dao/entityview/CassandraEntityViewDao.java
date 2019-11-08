@@ -183,4 +183,32 @@ public class CassandraEntityViewDao extends CassandraAbstractSearchTextDao<Entit
             }
         });
     }
+
+    @Override
+    public List<EntityView> findEntityViewsByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, TextPageLink pageLink) {
+//        log.debug("Try to find entity views by tenantId [{}], customerId[{}] and pageLink [{}]",
+//                tenantId, customerId, pageLink);
+//        List<EntityViewEntity> entityViewEntities = findPageWithTextSearch(new TenantId(tenantId),
+//                ENTITY_VIEW_BY_TENANT_AND_CUSTOMER_CF,
+//                Arrays.asList(eq(CUSTOMER_ID_PROPERTY, customerId), eq(TENANT_ID_PROPERTY, tenantId)),
+//                pageLink);
+//        log.trace("Found find entity views [{}] by tenantId [{}], customerId [{}] and pageLink [{}]",
+//                entityViewEntities, tenantId, customerId, pageLink);
+//        return DaoUtil.convertDataList(entityViewEntities);
+        throw new UnsupportedOperationException("Cassandra is not supported yet");
+    }
+
+    @Override
+    public List<EntityView> findEntityViewsByTenantIdAndEdgeIdAndType(UUID tenantId, UUID edgeId, String type, TextPageLink pageLink) {
+//        log.debug("Try to find entity views by tenantId [{}], customerId[{}], type [{}] and pageLink [{}]",
+//                tenantId, customerId, type, pageLink);
+//        List<EntityViewEntity> entityViewEntities = findPageWithTextSearch(new TenantId(tenantId),
+//                ENTITY_VIEW_BY_TENANT_AND_CUSTOMER_AND_TYPE_CF,
+//                Arrays.asList(eq(DEVICE_TYPE_PROPERTY, type), eq(CUSTOMER_ID_PROPERTY, customerId), eq(TENANT_ID_PROPERTY, tenantId)),
+//                pageLink);
+//        log.trace("Found find entity views [{}] by tenantId [{}], customerId [{}], type [{}] and pageLink [{}]",
+//                entityViewEntities, tenantId, customerId, type, pageLink);
+//        return DaoUtil.convertDataList(entityViewEntities);
+        throw new UnsupportedOperationException("Cassandra is not supported yet");
+    }
 }

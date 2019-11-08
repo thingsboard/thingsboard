@@ -138,4 +138,32 @@ public class JpaEntityViewDao extends JpaAbstractSearchTextDao<EntityViewEntity,
         }
         return list;
     }
+
+    @Override
+    public List<EntityView> findEntityViewsByTenantIdAndEdgeId(UUID tenantId,
+                                                               UUID edgeId,
+                                                               TextPageLink pageLink) {
+        return DaoUtil.convertDataList(
+                entityViewRepository.findByTenantIdAndEdgeId(
+                        fromTimeUUID(tenantId),
+                        fromTimeUUID(edgeId),
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
+                        new PageRequest(0, pageLink.getLimit())
+                ));
+    }
+
+    @Override
+    public List<EntityView> findEntityViewsByTenantIdAndEdgeIdAndType(UUID tenantId, UUID edgeId, String type, TextPageLink pageLink) {
+        return DaoUtil.convertDataList(
+                entityViewRepository.findByTenantIdAndEdgeIdAndType(
+                        fromTimeUUID(tenantId),
+                        fromTimeUUID(edgeId),
+                        type,
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
+                        new PageRequest(0, pageLink.getLimit())
+                ));
+    }
+
 }

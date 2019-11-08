@@ -219,6 +219,45 @@ export function EdgeController($rootScope, userService, edgeService, customerSer
             edgeActionsList.push(
                 {
                     onAction: function ($event, item) {
+                        openEdgeAssets($event, item);
+                    },
+                    name: function() { return $translate.instant('asset.assets') },
+                    details: function() {
+                        return $translate.instant('edge.manage-edge-assets');
+                    },
+                    icon: "domain"
+                }
+            );
+
+            edgeActionsList.push(
+                {
+                    onAction: function ($event, item) {
+                        openEdgeDevices($event, item);
+                    },
+                    name: function() { return $translate.instant('device.devices') },
+                    details: function() {
+                        return $translate.instant('edge.manage-edge-devices');
+                    },
+                    icon: "devices_other"
+                }
+            );
+
+            edgeActionsList.push(
+                {
+                    onAction: function ($event, item) {
+                        openEdgeEntityViews($event, item);
+                    },
+                    name: function() { return $translate.instant('entity-view.entity-views') },
+                    details: function() {
+                        return $translate.instant('edge.manage-edge-entity-views');
+                    },
+                    icon: "view_quilt"
+                }
+            );
+
+            edgeActionsList.push(
+                {
+                    onAction: function ($event, item) {
                         openEdgeDashboards($event, item);
                     },
                     name: function() { return $translate.instant('dashboard.dashboards') },
@@ -573,4 +612,27 @@ export function EdgeController($rootScope, userService, edgeService, customerSer
         }
         $state.go('home.edges.ruleChains', {edgeId: edge.id.id});
     }
+
+
+    function openEdgeAssets($event, edge) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        $state.go('home.edges.assets', {edgeId: edge.id.id});
+    }
+
+    function openEdgeDevices($event, edge) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        $state.go('home.edges.devices', {edgeId: edge.id.id});
+    }
+
+    function openEdgeEntityViews($event, edge) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        $state.go('home.edges.entityViews', {edgeId: edge.id.id});
+    }
+
 }

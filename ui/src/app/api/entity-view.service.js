@@ -35,7 +35,10 @@ function EntityViewService($http, $q, $window, userService, attributeService, cu
         unsubscribeForEntityViewAttributes: unsubscribeForEntityViewAttributes,
         findByQuery: findByQuery,
         getEntityViewTypes: getEntityViewTypes,
-        makeEntityViewPublic: makeEntityViewPublic
+        makeEntityViewPublic: makeEntityViewPublic,
+        assignEntityViewToEdge: assignEntityViewToEdge,
+        unassignEntityViewFromEdge: unassignEntityViewFromEdge,
+        getEdgeEntityViews: getEdgeEntityViews
     }
 
     return service;
@@ -220,5 +223,49 @@ function EntityViewService($http, $q, $window, userService, attributeService, cu
         return deferred.promise;
     }
 
+    function assignEntityViewToEdge(edgeId, entityViewId) {
+        var deferred = $q.defer();
+        var url = '/api/edge/' + edgeId + '/entityView/' + entityViewId;
+        $http.post(url, null).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
 
+    function unassignEntityViewFromEdge(entityViewId) {
+        var deferred = $q.defer();
+        var url = '/api/edge/entityView/' + entityViewId;
+        $http.delete(url).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function getEdgeEntityViews(edgeId, pageLink, config, type) {
+        var deferred = $q.defer();
+        var url = '/api/edge/' + edgeId + '/entityViews?limit=' + pageLink.limit;
+        if (angular.isDefined(pageLink.textSearch)) {
+            url += '&textSearch=' + pageLink.textSearch;
+        }
+        if (angular.isDefined(pageLink.idOffset)) {
+            url += '&idOffset=' + pageLink.idOffset;
+        }
+        if (angular.isDefined(pageLink.textOffset)) {
+            url += '&textOffset=' + pageLink.textOffset;
+        }
+        if (angular.isDefined(type) && type.length) {
+            url += '&type=' + type;
+        }
+        $http.get(url, config).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
+        });
+
+        return deferred.promise;
+    }
 }

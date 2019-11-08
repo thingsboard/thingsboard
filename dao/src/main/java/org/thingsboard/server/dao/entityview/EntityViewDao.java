@@ -16,7 +16,6 @@
 package org.thingsboard.server.dao.entityview;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -102,5 +101,31 @@ public interface EntityViewDao extends Dao<EntityView> {
      * @return the list of tenant entity view type objects
      */
     ListenableFuture<List<EntitySubtype>> findTenantEntityViewTypesAsync(UUID tenantId);
+
+    /**
+     * Find entity views by tenantId, edgeId and page link.
+     *
+     * @param tenantId the tenantId
+     * @param edgeId   the edgeId
+     * @param pageLink the page link
+     * @return the list of entity view objects
+     */
+    List<EntityView> findEntityViewsByTenantIdAndEdgeId(UUID tenantId,
+                                                        UUID edgeId,
+                                                        TextPageLink pageLink);
+
+    /**
+     * Find entity views by tenantId, edgeId, type and page link.
+     *
+     * @param tenantId the tenantId
+     * @param edgeId   the edgeId
+     * @param type     the type
+     * @param pageLink the page link
+     * @return the list of entity view objects
+     */
+    List<EntityView> findEntityViewsByTenantIdAndEdgeIdAndType(UUID tenantId,
+                                                               UUID edgeId,
+                                                               String type,
+                                                               TextPageLink pageLink);
 
 }

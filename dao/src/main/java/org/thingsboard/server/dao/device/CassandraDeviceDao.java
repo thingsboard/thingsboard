@@ -188,4 +188,31 @@ public class CassandraDeviceDao extends CassandraAbstractSearchTextDao<DeviceEnt
         });
     }
 
+    @Override
+    public List<Device> findDevicesByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, TextPageLink pageLink) {
+//        log.debug("Try to find devices by tenantId [{}], customerId[{}] and pageLink [{}]", tenantId, customerId, pageLink);
+//        List<DeviceEntity> deviceEntities = findPageWithTextSearch(new TenantId(tenantId), DEVICE_BY_CUSTOMER_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
+//                Arrays.asList(eq(DEVICE_CUSTOMER_ID_PROPERTY, customerId),
+//                        eq(DEVICE_TENANT_ID_PROPERTY, tenantId)),
+//                pageLink);
+//
+//        log.trace("Found devices [{}] by tenantId [{}], customerId [{}] and pageLink [{}]", deviceEntities, tenantId, customerId, pageLink);
+//        return DaoUtil.convertDataList(deviceEntities);
+        throw new UnsupportedOperationException("Cassandra is not supported yet");
+    }
+
+    @Override
+    public List<Device> findDevicesByTenantIdAndEdgeIdAndType(UUID tenantId, UUID edgeId, String type, TextPageLink pageLink) {
+//        log.debug("Try to find devices by tenantId [{}], customerId [{}], type [{}] and pageLink [{}]", tenantId, customerId, type, pageLink);
+//        List<DeviceEntity> deviceEntities = findPageWithTextSearch(new TenantId(tenantId), DEVICE_BY_CUSTOMER_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
+//                Arrays.asList(eq(DEVICE_TYPE_PROPERTY, type),
+//                        eq(DEVICE_CUSTOMER_ID_PROPERTY, customerId),
+//                        eq(DEVICE_TENANT_ID_PROPERTY, tenantId)),
+//                pageLink);
+//
+//        log.trace("Found devices [{}] by tenantId [{}], customerId [{}], type [{}] and pageLink [{}]", deviceEntities, tenantId, customerId, type, pageLink);
+//        return DaoUtil.convertDataList(deviceEntities);
+        throw new UnsupportedOperationException("Cassandra is not supported yet");
+    }
+
 }

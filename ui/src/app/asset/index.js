@@ -24,6 +24,8 @@ import {AssetController, AssetCardController} from './asset.controller';
 import AssignAssetToCustomerController from './assign-to-customer.controller';
 import AddAssetsToCustomerController from './add-assets-to-customer.controller';
 import AssetDirective from './asset.directive';
+import AssignAssetToEdgeController from './assign-to-edge.controller';
+import AddAssetsToEdgeController from './add-assets-to-edge.controller';
 
 export default angular.module('thingsboard.asset', [
     uiRouter,
@@ -37,5 +39,7 @@ export default angular.module('thingsboard.asset', [
     .controller('AssetCardController', AssetCardController)
     .controller('AssignAssetToCustomerController', AssignAssetToCustomerController)
     .controller('AddAssetsToCustomerController', AddAssetsToCustomerController)
+    .controller('AssignAssetToEdgeController', AssignAssetToEdgeController)
+    .controller('AddAssetsToEdgeController', AddAssetsToEdgeController)
     .directive('tbAsset', AssetDirective)
     .name;

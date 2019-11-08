@@ -43,7 +43,10 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
         sendTwoWayRpcCommand: sendTwoWayRpcCommand,
         findByQuery: findByQuery,
         getDeviceTypes: getDeviceTypes,
-        findByName: findByName
+        findByName: findByName,
+        assignDeviceToEdge: assignDeviceToEdge,
+        unassignDeviceFromEdge: unassignDeviceFromEdge,
+        getEdgeDevices: getEdgeDevices
     };
 
     return service;
@@ -332,4 +335,51 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
         });
         return deferred.promise;
     }
+
+    function assignDeviceToEdge(edgeId, deviceId) {
+        var deferred = $q.defer();
+        var url = '/api/edge/' + edgeId + '/device/' + deviceId;
+        $http.post(url, null).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function unassignDeviceFromEdge(deviceId) {
+        var deferred = $q.defer();
+        var url = '/api/edge/device/' + deviceId;
+        $http.delete(url).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function getEdgeDevices(edgeId, pageLink, config, type) {
+        var deferred = $q.defer();
+        var url = '/api/edge/' + edgeId + '/devices?limit=' + pageLink.limit;
+        if (angular.isDefined(pageLink.textSearch)) {
+            url += '&textSearch=' + pageLink.textSearch;
+        }
+        if (angular.isDefined(pageLink.idOffset)) {
+            url += '&idOffset=' + pageLink.idOffset;
+        }
+        if (angular.isDefined(pageLink.textOffset)) {
+            url += '&textOffset=' + pageLink.textOffset;
+        }
+        if (angular.isDefined(type) && type.length) {
+            url += '&type=' + type;
+        }
+        $http.get(url, config).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
+        });
+
+        return deferred.promise;
+    }
+
 }

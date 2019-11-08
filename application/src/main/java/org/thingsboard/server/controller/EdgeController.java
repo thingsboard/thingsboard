@@ -54,7 +54,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/api")
 public class EdgeController extends BaseController {
 
-    private static final String EDGE_ID = "edgeId";
+    public static final String EDGE_ID = "edgeId";
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}", method = RequestMethod.GET)
@@ -114,6 +114,22 @@ public class EdgeController extends BaseController {
                     null,
                     ActionType.DELETED, e, strEdgeId);
 
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/edges", params = {"limit"}, method = RequestMethod.GET)
+    @ResponseBody
+    public TextPageData<Edge> getEdges(@RequestParam int limit,
+                                               @RequestParam(required = false) String textSearch,
+                                               @RequestParam(required = false) String idOffset,
+                                               @RequestParam(required = false) String textOffset) throws ThingsboardException {
+        try {
+            TextPageLink pageLink = createPageLink(limit, textSearch, idOffset, textOffset);
+            TenantId tenantId = getCurrentUser().getTenantId();
+            return checkNotNull(edgeService.findEdgesByTenantId(tenantId, pageLink));
+        } catch (Exception e) {
             throw handleException(e);
         }
     }

@@ -19,6 +19,8 @@ import addAssetTemplate from './add-asset.tpl.html';
 import assetCard from './asset-card.tpl.html';
 import assignToCustomerTemplate from './assign-to-customer.tpl.html';
 import addAssetsToCustomerTemplate from './add-assets-to-customer.tpl.html';
+import assignToEdgeTemplate from './assign-to-edge.tpl.html';
+import addAssetsToEdgeTemplate from './add-assets-to-edge.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
 
@@ -47,10 +49,11 @@ export function AssetCardController(types) {
 
 
 /*@ngInject*/
-export function AssetController($rootScope, userService, assetService, customerService, $state, $stateParams,
+export function AssetController($rootScope, userService, assetService, customerService, edgeService, $state, $stateParams,
                                 $document, $mdDialog, $q, $translate, types, importExport) {
 
     var customerId = $stateParams.customerId;
+    var edgeId = $stateParams.edgeId;
 
     var assetActionsList = [];
 
@@ -216,6 +219,32 @@ export function AssetController($rootScope, userService, assetService, customerS
                 }
             });
 
+            assetActionsList.push({
+                    onAction: function ($event, item) {
+                        assignToEdge($event, [ item.id.id ]);
+                    },
+                    name: function() { return $translate.instant('action.assign') },
+                    details: function() { return $translate.instant('asset.assign-to-edge') },
+                    icon: "wifi_tethering",
+                    isEnabled: function(asset) {
+                        return asset && (!asset.edgeId || asset.edgeId.id === types.id.nullUid);
+                    }
+                }
+            );
+
+            assetActionsList.push({
+                    onAction: function ($event, item) {
+                        unassignFromEdge($event, item, false);
+                    },
+                    name: function() { return $translate.instant('action.unassign') },
+                    details: function() { return $translate.instant('asset.unassign-from-edge') },
+                    icon: "portable_wifi_off",
+                    isEnabled: function(asset) {
+                        return asset && asset.edgeId && asset.edgeId.id !== types.id.nullUid;
+                    }
+                }
+            );
+
             assetActionsList.push(
                 {
                     onAction: function ($event, item) {
@@ -237,6 +266,19 @@ export function AssetController($rootScope, userService, assetService, customerS
                         return $translate.instant('asset.assign-assets-text', {count: selectedCount}, "messageformat");
                     },
                     icon: "assignment_ind"
+                }
+            );
+
+            assetGroupActionsList.push(
+                {
+                    onAction: function ($event, items) {
+                        assignAssetsToEdge($event, items);
+                    },
+                    name: function() { return $translate.instant('asset.assign-assets') },
+                    details: function(selectedCount) {
+                        return $translate.instant('asset.assign-assets-text', {count: selectedCount}, "messageformat");
+                    },
+                    icon: "wifi_tethering"
                 }
             );
 
@@ -318,6 +360,51 @@ export function AssetController($rootScope, userService, assetService, customerS
             } else if (vm.assetsScope === 'customer_user') {
                 vm.assetGridConfig.addItemAction = {};
             }
+            vm.assetGridConfig.addItemActions = [];
+
+        } else if (vm.assetsScope === 'edge') {
+            fetchAssetsFunction = function (pageLink, assetType) {
+                return assetService.getEdgeAssets(edgeId, pageLink, null, assetType);
+            };
+            deleteAssetFunction = function (assetId) {
+                return assetService.unassignAssetFromEdge(assetId);
+            };
+            refreshAssetsParamsFunction = function () {
+                return {"edgeId": edgeId, "topIndex": vm.topIndex};
+            };
+
+            assetActionsList.push(
+                {
+                    onAction: function ($event, item) {
+                        unassignFromEdge($event, item, false);
+                    },
+                    name: function() { return $translate.instant('action.unassign') },
+                    details: function() { return $translate.instant('asset.unassign-from-edge') },
+                    icon: "assignment_return"
+                }
+            );
+
+            assetGroupActionsList.push(
+                {
+                    onAction: function ($event, items) {
+                        unassignAssetsFromEdge($event, items);
+                    },
+                    name: function() { return $translate.instant('asset.unassign-assets') },
+                    details: function(selectedCount) {
+                        return $translate.instant('asset.unassign-assets-action-title', {count: selectedCount}, "messageformat");
+                    },
+                    icon: "assignment_return"
+                }
+            );
+
+            vm.assetGridConfig.addItemAction = {
+                onAction: function ($event) {
+                    addAssetsToEdge($event);
+                },
+                name: function() { return $translate.instant('asset.assign-assets') },
+                details: function() { return $translate.instant('asset.assign-new-asset') },
+                icon: "add"
+            };
             vm.assetGridConfig.addItemActions = [];
 
         }
@@ -531,4 +618,124 @@ export function AssetController($rootScope, userService, assetService, customerS
             });
         });
     }
+
+    function assignToEdge($event, assetIds) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        var pageSize = 10;
+        edgeService.getEdges({limit: pageSize, textSearch: ''}).then(
+            function success(_edges) {
+                var edges = {
+                    pageSize: pageSize,
+                    data: _edges.data,
+                    nextPageLink: _edges.nextPageLink,
+                    selection: null,
+                    hasNext: _edges.hasNext,
+                    pending: false
+                };
+                if (edges.hasNext) {
+                    edges.nextPageLink.limit = pageSize;
+                }
+                $mdDialog.show({
+                    controller: 'AssignAssetToEdgeController',
+                    controllerAs: 'vm',
+                    templateUrl: assignToEdgeTemplate,
+                    locals: {assetIds: assetIds, edges: edges},
+                    parent: angular.element($document[0].body),
+                    fullscreen: true,
+                    targetEvent: $event
+                }).then(function () {
+                    vm.grid.refreshList();
+                }, function () {
+                });
+            },
+            function fail() {
+            });
+    }
+
+    function addAssetsToEdge($event) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        var pageSize = 10;
+        assetService.getTenantAssets({limit: pageSize, textSearch: ''}, false).then(
+            function success(_assets) {
+                var assets = {
+                    pageSize: pageSize,
+                    data: _assets.data,
+                    nextPageLink: _assets.nextPageLink,
+                    selections: {},
+                    selectedCount: 0,
+                    hasNext: _assets.hasNext,
+                    pending: false
+                };
+                if (assets.hasNext) {
+                    assets.nextPageLink.limit = pageSize;
+                }
+                $mdDialog.show({
+                    controller: 'AddAssetsToEdgeController',
+                    controllerAs: 'vm',
+                    templateUrl: addAssetsToEdgeTemplate,
+                    locals: {edgeId: edgeId, assets: assets},
+                    parent: angular.element($document[0].body),
+                    fullscreen: true,
+                    targetEvent: $event
+                }).then(function () {
+                    vm.grid.refreshList();
+                }, function () {
+                });
+            },
+            function fail() {
+            });
+    }
+
+    function assignAssetsToEdge($event, items) {
+        var assetIds = [];
+        for (var id in items.selections) {
+            assetIds.push(id);
+        }
+        assignToEdge($event, assetIds);
+    }
+
+    function unassignFromEdge($event, asset) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        var title = $translate.instant('asset.unassign-asset-from-edge-title', {assetName: asset.name});
+        var content = $translate.instant('asset.unassign-asset-from-edge-text');
+        var label = $translate.instant('asset.unassign-asset');
+        var confirm = $mdDialog.confirm()
+            .targetEvent($event)
+            .title(title)
+            .htmlContent(content)
+            .ariaLabel(label)
+            .cancel($translate.instant('action.no'))
+            .ok($translate.instant('action.yes'));
+        $mdDialog.show(confirm).then(function () {
+            assetService.unassignAssetFromEdge(asset.id.id).then(function success() {
+                vm.grid.refreshList();
+            });
+        });
+    }
+
+    function unassignAssetsFromEdge($event, items) {
+        var confirm = $mdDialog.confirm()
+            .targetEvent($event)
+            .title($translate.instant('asset.unassign-assets-title', {count: items.selectedCount}, 'messageformat'))
+            .htmlContent($translate.instant('asset.unassign-assets-text'))
+            .ariaLabel($translate.instant('asset.unassign-asset'))
+            .cancel($translate.instant('action.no'))
+            .ok($translate.instant('action.yes'));
+        $mdDialog.show(confirm).then(function () {
+            var tasks = [];
+            for (var id in items.selections) {
+                tasks.push(assetService.unassignAssetFromEdge(id));
+            }
+            $q.all(tasks).then(function () {
+                vm.grid.refreshList();
+            });
+        });
+    }
+
 }
