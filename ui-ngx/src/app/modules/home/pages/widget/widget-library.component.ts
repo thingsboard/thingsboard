@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
@@ -24,7 +24,7 @@ import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Authority } from '@shared/models/authority.enum';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
-import { Observable, of } from 'rxjs';
+import { Observable, of, Subscription } from 'rxjs';
 import { Widget, widgetType } from '@app/shared/models/widget.models';
 import { WidgetService } from '@core/http/widget.service';
 import { map, mergeMap, share } from 'rxjs/operators';
@@ -42,6 +42,7 @@ import { DeviceCredentials } from '@shared/models/device.models';
 import { MatDialog } from '@angular/material/dialog';
 import { SelectWidgetTypeDialogComponent } from '@home/pages/widget/select-widget-type-dialog.component';
 import { TranslateService } from '@ngx-translate/core';
+import { ImportExportService } from '@home/components/import-export/import-export.service';
 
 @Component({
   selector: 'tb-widget-library',
@@ -94,11 +95,12 @@ export class WidgetLibraryComponent extends PageComponent implements OnInit {
               private router: Router,
               private widgetService: WidgetService,
               private dialogService: DialogService,
+              private importExport: ImportExportService,
               private dialog: MatDialog,
               private translate: TranslateService) {
     super(store);
 
-    this.authUser = getCurrentAuthUser(store);
+    this.authUser = getCurrentAuthUser(this.store);
     this.widgetsBundle = this.route.snapshot.data.widgetsBundle;
     this.widgetsData = this.route.snapshot.data.widgetsData;
     if (this.authUser.authority === Authority.TENANT_ADMIN) {
@@ -119,7 +121,23 @@ export class WidgetLibraryComponent extends PageComponent implements OnInit {
     if ($event) {
       $event.stopPropagation();
     }
-    this.dialogService.todo();
+    this.importExport.importWidgetType(this.widgetsBundle.alias).subscribe(
+      (widgetTypeInstance) => {
+        if (widgetTypeInstance) {
+          this.reload();
+        }
+      }
+    );
+  }
+
+  private reload() {
+    const bundleAlias = this.widgetsBundle.alias;
+    const isSystem = this.widgetsBundle.tenantId.id === NULL_UUID;
+    this.widgetService.loadBundleLibraryWidgets(bundleAlias, isSystem).subscribe(
+      (widgets) => {
+        this.widgetsData = {widgets};
+      }
+    );
   }
 
   openWidgetType($event: Event, widget?: Widget): void {
@@ -147,14 +165,14 @@ export class WidgetLibraryComponent extends PageComponent implements OnInit {
     if ($event) {
       $event.stopPropagation();
     }
-    this.dialogService.todo();
+    this.importExport.exportWidgetType(widget.typeId.id);
   }
 
-  removeWidgetType($event: Event, widget: Widget): Observable<boolean> {
+  removeWidgetType($event: Event, widget: Widget): void {
     if ($event) {
       $event.stopPropagation();
     }
-    return this.dialogService.confirm(
+    this.dialogService.confirm(
       this.translate.instant('widget.remove-widget-type-title', {widgetName: widget.config.title}),
       this.translate.instant('widget.remove-widget-type-text'),
       this.translate.instant('action.no'),
@@ -169,13 +187,13 @@ export class WidgetLibraryComponent extends PageComponent implements OnInit {
       }),
       map((result) => {
         if (result !== false) {
-          this.widgetsData.widgets.splice(this.widgetsData.widgets.indexOf(widget), 1);
+          this.reload();
           return true;
         } else {
           return false;
         }
       }
-    ));
+    )).subscribe();
   }
 
 }

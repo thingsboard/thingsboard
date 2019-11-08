@@ -21,7 +21,7 @@ import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
-import { WidgetType, widgetType, WidgetTypeData, widgetTypesData } from '@shared/models/widget.models';
+import { Widget, WidgetType, widgetType, WidgetTypeData, widgetTypesData } from '@shared/models/widget.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ResourcesService } from '../services/resources.service';
@@ -117,6 +117,59 @@ export class WidgetService {
                               ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Array<WidgetType>> {
     return this.http.get<Array<WidgetType>>(`/api/widgetTypes?isSystem=${isSystem}&bundleAlias=${bundleAlias}`,
       defaultHttpOptions(ignoreLoading, ignoreErrors));
+  }
+
+  public loadBundleLibraryWidgets(bundleAlias: string, isSystem: boolean,
+                                  ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Array<Widget>> {
+    return this.getBundleWidgetTypes(bundleAlias, isSystem, ignoreErrors, ignoreLoading).pipe(
+      map((types) => {
+        types = types.sort((a, b) => {
+          let result = widgetType[b.descriptor.type].localeCompare(widgetType[a.descriptor.type]);
+          if (result === 0) {
+            result = b.createdTime - a.createdTime;
+          }
+          return result;
+        });
+        const widgetTypes = new Array<Widget>();
+        let top = 0;
+        const lastTop = [0, 0, 0];
+        let col = 0;
+        let column = 0;
+        types.forEach((type) => {
+          const widgetTypeInfo = toWidgetInfo(type);
+          const sizeX = 8;
+          const sizeY = Math.floor(widgetTypeInfo.sizeY);
+          const widget: Widget = {
+            typeId: type.id,
+            isSystemType: isSystem,
+            bundleAlias,
+            typeAlias: widgetTypeInfo.alias,
+            type: widgetTypeInfo.type,
+            title: widgetTypeInfo.widgetName,
+            sizeX,
+            sizeY,
+            row: top,
+            col,
+            config: JSON.parse(widgetTypeInfo.defaultConfig)
+          };
+
+          widget.config.title = widgetTypeInfo.widgetName;
+
+          widgetTypes.push(widget);
+          top += sizeY;
+          if (top > lastTop[column] + 10) {
+            lastTop[column] = top;
+            column++;
+            if (column > 2) {
+              column = 0;
+            }
+            top = lastTop[column];
+            col = column * 8;
+          }
+        });
+        return widgetTypes;
+      })
+    );
   }
 
   public getWidgetType(bundleAlias: string, widgetTypeAlias: string, isSystem: boolean,

@@ -21,12 +21,12 @@
   min-height: #{$size}px;
   font-size: #{$size}px;
   line-height: #{$size}px;
-  svg {
+/*  svg {
     width: 24px;
     height: 24px;
     transform: scale($size/24);
     transform-origin: top;
-  }
+  }*/
 }
 
 @mixin tb-mat-icon-button-size($size) {

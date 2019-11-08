@@ -36,6 +36,7 @@ import {AppState} from '@core/core.state';
 import {getCurrentAuthUser} from '@app/core/auth/auth.selectors';
 import {Authority} from '@shared/models/authority.enum';
 import {DialogService} from '@core/services/dialog.service';
+import { ImportExportService } from '@home/components/import-export/import-export.service';
 
 @Injectable()
 export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableConfig<WidgetsBundle>> {
@@ -46,6 +47,7 @@ export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableCon
               private dialogService: DialogService,
               private widgetsService: WidgetService,
               private translate: TranslateService,
+              private importExport: ImportExportService,
               private datePipe: DatePipe,
               private router: Router) {
 
@@ -124,11 +126,13 @@ export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableCon
   }
 
   importWidgetsBundle($event: Event) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    // TODO:
-    this.dialogService.todo();
+    this.importExport.importWidgetsBundle().subscribe(
+      (widgetsBundle) => {
+        if (widgetsBundle) {
+          this.config.table.updateData();
+        }
+      }
+    );
   }
 
   openWidgetsBundle($event: Event, widgetsBundle: WidgetsBundle) {
@@ -142,8 +146,7 @@ export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableCon
     if ($event) {
       $event.stopPropagation();
     }
-    // TODO:
-    this.dialogService.todo();
+    this.importExport.exportWidgetsBundle(widgetsBundle.id.id);
   }
 
   onWidgetsBundleAction(action: EntityAction<WidgetsBundle>): boolean {

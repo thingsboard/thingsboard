@@ -14,10 +14,16 @@
 /// limitations under the License.
 ///
 
-import { Widget } from '@app/shared/models/widget.models';
+import { Widget, WidgetType } from '@app/shared/models/widget.models';
 import { DashboardLayoutId } from '@shared/models/dashboard.models';
+import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 
 export interface ImportWidgetResult {
   widget: Widget;
   layoutId: DashboardLayoutId;
+}
+
+export interface WidgetsBundleItem {
+  widgetsBundle: WidgetsBundle;
+  widgetTypes: WidgetType[];
 }

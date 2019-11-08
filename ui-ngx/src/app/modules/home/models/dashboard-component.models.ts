@@ -114,7 +114,7 @@ export class DashboardWidgets implements Iterable<DashboardWidget> {
         updateRecords.push({
           widget: added.item,
           widgetId: added.item.id,
-          widgetLayout: this.widgetLayouts[added.item.id],
+          widgetLayout: this.widgetLayouts ? this.widgetLayouts[added.item.id] : null,
           operation: 'add'
         });
       });
