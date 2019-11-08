@@ -41,25 +41,18 @@ function MultipleInputWidget() {
 }
 
 /*@ngInject*/
-function MultipleInputWidgetController($q, $scope, attributeService, toast, types, utils) {
+function MultipleInputWidgetController($q, $scope, $translate, attributeService, toast, types, utils) {
     var vm = this;
 
-    vm.dataKeyDetected = false;
-    vm.hasAnyChange = false;
     vm.entityDetected = false;
-    vm.isValidParameter = true;
-    vm.message = 'No entity selected';
+    vm.isAllParametersValid = true;
 
-    vm.rows = [];
-    vm.rowIndex = 0;
-
+    vm.data = [];
     vm.datasources = null;
 
-    vm.cellStyle = cellStyle;
-    vm.textColor = textColor;
     vm.discardAll = discardAll;
     vm.inputChanged = inputChanged;
-    vm.postData = postData;
+    vm.save = save;
 
     $scope.$watch('vm.ctx', function() {
         if (vm.ctx && vm.ctx.defaultSubscription) {
@@ -74,127 +67,109 @@ function MultipleInputWidgetController($q, $scope, attributeService, toast, type
 
     $scope.$on('multiple-input-data-updated', function(event, formId) {
         if (vm.formId == formId) {
-            updateRowData(vm.subscription.data);
+            updateWidgetData(vm.subscription.data);
             $scope.$digest();
         }
     });
 
-    function defaultStyle() {
-        return {};
-    }
-
-    function cellStyle(key, rowIndex, firstKey, lastKey) {
-        var style = {};
-        if (key) {
-            var styleInfo = vm.stylesInfo[key.label];
-            var value = key.currentValue;
-            if (styleInfo.useCellStyleFunction && styleInfo.cellStyleFunction) {
-                try {
-                    style = styleInfo.cellStyleFunction(value);
-                } catch (e) {
-                    style = {};
-                }
-            } else {
-                style = defaultStyle();
-            }
+    $scope.$on('multiple-input-resize', function(event, formId) {
+        if (vm.formId == formId) {
+            updateWidgetDisplaying();
         }
-        if (vm.settings.rowMargin) {
-            if (angular.isUndefined(style.marginTop) && rowIndex != 0) {
-                style.marginTop = (vm.settings.rowMargin / 2) + 'px';
-            }
-            if (angular.isUndefined(style.marginBottom)) {
-                style.marginBottom = (vm.settings.rowMargin / 2) + 'px';
-            }
-        }
-        if (vm.settings.columnMargin) {
-            if (angular.isUndefined(style.marginLeft) && !firstKey) {
-                style.marginLeft = (vm.settings.columnMargin / 2) + 'px';
-            }
-            if (angular.isUndefined(style.marginRight) && !lastKey) {
-                style.marginRight = (vm.settings.columnMargin / 2) + 'px';
-            }
-        }
-        return style;
-    }
-
-    function textColor(key) {
-        var style = {};
-        if (key) {
-            var styleInfo = vm.stylesInfo[key.label];
-            if (styleInfo.color) {
-                style = { color: styleInfo.color };
-            }
-        }
-        return style;
-    }
+    });
 
     function discardAll() {
-        for (var r = 0; r < vm.rows.length; r++) {
-            var row = vm.rows[r];
-            for (var d = 0; d < row.data.length; d++ ) {
-                row.data[d].currentValue = row.data[d].originalValue;
-            }
+        for (var i = 0; i < vm.data.length; i++) {
+            vm.data[i].data.currentValue = vm.data[i].data.originalValue;
         }
-        vm.hasAnyChange = false;
+        $scope.multipleInputForm.$setPristine();
     }
 
-    function inputChanged() {
-        var newValue = false;
-        for (var r = 0; r < vm.rows.length; r++) {
-            var row = vm.rows[r];
-            for (var d = 0; d < row.data.length; d++ ) {
-                if (!row.data[d].currentValue) {
-                    return;
-                }
-                if (row.data[d].currentValue !== row.data[d].originalValue) {
-                    newValue = true;
-                }
+    function inputChanged(key) {
+        if (!vm.settings.showActionButtons) {
+            if (!key.settings.required || (key.settings.required && key.data && angular.isDefined(key.data.currentValue))) {
+                vm.save(key);
             }
         }
-        vm.hasAnyChange = newValue;
     }
 
-    function postData() {
-        var promises = [];
-        for (var r = 0; r < vm.rows.length; r++) {
-            var row = vm.rows[r];
-            var datasource = row.datasource;
-            var attributes = [];
-            var newValues = false;
+    function save(key) {
+        var tasks = [];
+        var serverAttributes = [], sharedAttributes = [], telemetry = [];
+        var config = {
+            ignoreLoading: !vm.settings.showActionButtons
+        };
+        var data;
+        if (key) {
+            data = [key];
+        } else {
+            data = vm.data;
+        }
+        for (let i = 0; i < data.length; i++) {
+            var item = data[i];
+            if (item.data.currentValue !== item.data.originalValue) {
+                var attribute = {
+                    key: item.name
+                };
+                switch (item.settings.dataKeyValueType) {
+                    case 'dateTime':
+                    case 'date':
+                        attribute.value = item.data.currentValue.getTime();
+                        break;
+                    case 'time':
+                        attribute.value = item.data.currentValue.getTime() - moment().startOf('day').valueOf();//eslint-disable-line
+                        break;
+                    default:
+                        attribute.value = item.data.currentValue;
+                }
 
-            for (var d = 0; d < row.data.length; d++ ) {
-                if (row.data[d].currentValue !== row.data[d].originalValue) {
-                    attributes.push({
-                        key : row.data[d].name,
-                        value : row.data[d].currentValue,
-                    });
-                    newValues = true;
+                switch (item.settings.dataKeyType) {
+                    case 'shared':
+                        sharedAttributes.push(attribute);
+                        break;
+                    case 'timeseries':
+                        telemetry.push(attribute);
+                        break;
+                    default:
+                        serverAttributes.push(attribute);
                 }
             }
-
-            if (newValues) {
-                promises.push(attributeService.saveEntityAttributes(
-                                datasource.entityType,
-                                datasource.entityId,
-                                vm.attributeScope,
-                                attributes));
-            }
         }
-
-        if (promises.length) {
-            $q.all(promises).then(
+        for (let i = 0; i < serverAttributes.length; i++) {
+            tasks.push(attributeService.saveEntityAttributes(
+                vm.datasources[0].entityType,
+                vm.datasources[0].entityId,
+                types.attributesScope.server.value,
+                serverAttributes,
+                config));
+        }
+        for (let i = 0; i < sharedAttributes.length; i++) {
+            tasks.push(attributeService.saveEntityAttributes(
+                vm.datasources[0].entityType,
+                vm.datasources[0].entityId,
+                types.attributesScope.shared.value,
+                sharedAttributes,
+                config));
+        }
+        for (let i = 0; i < telemetry.length; i++) {
+            tasks.push(attributeService.saveEntityTimeseries(
+                vm.datasources[0].entityType,
+                vm.datasources[0].entityId,
+                types.latestTelemetry.value,
+                telemetry,
+                config));
+        }
+        if (tasks.length) {
+            $q.all(tasks).then(
                 function success() {
-                    for (var d = 0; d < row.data.length; d++ ) {
-                        row.data[d].originalValue = row.data[d].currentValue;
-                    }
-                    vm.hasAnyChange = false;
+                    $scope.multipleInputForm.$setPristine();
                     if (vm.settings.showResultMessage) {
-                        toast.showSuccess('Update successful', 1000, angular.element(vm.ctx.$container), 'bottom left');
+                        toast.showSuccess($translate.instant('widgets.input-widgets.update-successful'), 1000, angular.element(vm.ctx.$container), 'bottom left');
                     }
                 },
                 function fail() {
                     if (vm.settings.showResultMessage) {
-                        toast.showError('Update failed', angular.element(vm.ctx.$container), 'bottom left');
+                        toast.showError($translate.instant('widgets.input-widgets.update-failed'), angular.element(vm.ctx.$container), 'bottom left');
                     }
                 }
             );
@@ -211,78 +186,75 @@ function MultipleInputWidgetController($q, $scope, attributeService, toast, type
 
         vm.ctx.widgetTitle = vm.widgetTitle;
 
-        vm.attributeScope = vm.settings.attributesShared ? types.attributesScope.shared.value : types.attributesScope.server.value;
+        vm.isVerticalAlignment = !(vm.settings.fieldsAlignment === 'row');
+
+        if (!vm.isVerticalAlignment && vm.settings.fieldsInRow) {
+            vm.inputWidthSettings = 100 / vm.settings.fieldsInRow + '%';
+        }
     }
 
     function updateDatasources() {
+        if (vm.datasources && vm.datasources.length) {
+            var datasource = vm.datasources[0];
+            if (datasource.type === types.datasourceType.entity) {
+                for (var i = 0; i < datasource.dataKeys.length; i++) {
+                    if ((datasource.entityType !== types.entityType.device) && (datasource.dataKeys[i].settings.dataKeyType !== 'server')) {
+                        vm.isAllParametersValid = false;
+                    }
+                    vm.data.push(datasource.dataKeys[i]);
+                    vm.data[i].data = {};
+                }
+                vm.entityDetected = true;
+            }
+        }
+    }
 
-        vm.stylesInfo = {};
-        vm.rows = [];
-        vm.rowIndex = 0;
+    function updateWidgetData(data) {
+        for (var i = 0; i < vm.data.length; i++) {
+            var keyData = data[i].data;
+            if (keyData && keyData.length) {
+                var value;
+                switch (vm.data[i].settings.dataKeyValueType) {
+                    case 'dateTime':
+                    case 'date':
+                        value = moment(keyData[0][1]).toDate(); // eslint-disable-line
+                        break;
+                    case 'time':
+                        value = moment().startOf('day').add(keyData[0][1], 'ms').toDate(); // eslint-disable-line
+                        break;
+                    case 'booleanCheckbox':
+                    case 'booleanSwitch':
+                        value = (keyData[0][1] === 'true');
+                        break;
+                    default:
+                        value = keyData[0][1];
+                }
 
-        if (vm.datasources) {
-            vm.entityDetected = true;
-            for (var ds = 0; ds < vm.datasources.length; ds++) {
-                var row = {};
-                var datasource = vm.datasources[ds];
-                row.datasource = datasource;
-                row.data = [];
-                if (datasource.dataKeys) {
-                    vm.dataKeyDetected = true;
-                    for (var a = 0; a < datasource.dataKeys.length; a++ ) {
-                        var dataKey = datasource.dataKeys[a];
+                vm.data[i].data = {
+                    currentValue: value,
+                    originalValue: value
+                };
 
-                        if (dataKey.units) {
-                            dataKey.label += ' (' + dataKey.units + ')';
-                        }
-
-                        var keySettings = dataKey.settings;
-                        if (keySettings.inputTypeNumber) {
-                            keySettings.inputType = 'number';
-                        } else {
-                            keySettings.inputType = 'text';
-                        }
-
-                        var cellStyleFunction = null;
-                        var useCellStyleFunction = false;
-
-                        if (keySettings.useCellStyleFunction === true) {
-                            if (angular.isDefined(keySettings.cellStyleFunction) && keySettings.cellStyleFunction.length > 0) {
-                                try {
-                                    cellStyleFunction = new Function('value', keySettings.cellStyleFunction);
-                                    useCellStyleFunction = true;
-                                } catch (e) {
-                                    cellStyleFunction = null;
-                                    useCellStyleFunction = false;
-                                }
+                if (vm.data[i].settings.isEditable === 'editable' && vm.data[i].settings.disabledOnDataKey) {
+                    var conditions = data.filter((item) => {
+                        return item.dataKey.name === vm.data[i].settings.disabledOnDataKey;
+                    });
+                    if (conditions && conditions.length) {
+                        if (conditions[0].data.length) {
+                            if (conditions[0].data[0][1] === 'false') {
+                                vm.data[i].settings.disabledOnCondition = true;
+                            } else {
+                                vm.data[i].settings.disabledOnCondition = !conditions[0].data[0][1];
                             }
                         }
-
-                        vm.stylesInfo[dataKey.label] = {
-                            useCellStyleFunction: useCellStyleFunction,
-                            cellStyleFunction: cellStyleFunction,
-                            color: keySettings.color
-                        };
-
-                        row.data.push(dataKey);
                     }
-                    vm.rows.push(row);
                 }
             }
         }
     }
 
-    function updateRowData(data) {
-        var dataIndex = 0;
-        for (var r = 0; r < vm.rows.length; r++) {
-            var row = vm.rows[r];
-            for (var d = 0; d < row.data.length; d++ ) {
-                var keyData = data[dataIndex++].data;
-                if (keyData && keyData.length && keyData[0].length > 1) {
-                    row.data[d].currentValue = row.data[d].originalValue = keyData[0][1];
-                }
-            }
-        }
+    function updateWidgetDisplaying() {
+        vm.changeAlignment = (vm.ctx.$container[0].offsetWidth < 620);
+        vm.smallWidthContainer = (vm.ctx.$container[0].offsetWidth < 420);
     }
-
 }
