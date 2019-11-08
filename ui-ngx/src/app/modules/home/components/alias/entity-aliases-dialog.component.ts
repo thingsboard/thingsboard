@@ -37,14 +37,14 @@ import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { DialogService } from '@core/services/dialog.service';
-import { deepClone } from '@core/utils';
+import { deepClone, isUndefined } from '@core/utils';
 import { MatDialog } from '@angular/material/dialog';
 import { EntityAliasDialogComponent, EntityAliasDialogData } from './entity-alias-dialog.component';
 
 export interface EntityAliasesDialogData {
   entityAliases: EntityAliases;
   widgets: Array<Widget>;
-  isSingleEntityAlias: boolean;
+  isSingleEntityAlias?: boolean;
   isSingleWidget?: boolean;
   allowedEntityTypes?: Array<AliasEntityType>;
   disableAdd?: boolean;
@@ -125,14 +125,13 @@ export class EntityAliasesDialogComponent extends DialogComponent<EntityAliasesD
     const entityAliasControls: Array<AbstractControl> = [];
     for (const aliasId of Object.keys(this.data.entityAliases)) {
       const entityAlias = this.data.entityAliases[aliasId];
-      let filter = entityAlias.filter;
-      if (!filter) {
-        filter = {
+      if (!entityAlias.filter) {
+        entityAlias.filter = {
           resolveMultiple: false
         };
       }
-      if (!filter.resolveMultiple) {
-        filter.resolveMultiple = false;
+      if (isUndefined(entityAlias.filter.resolveMultiple)) {
+        entityAlias.filter.resolveMultiple = false;
       }
       entityAliasControls.push(this.createEntityAliasFormControl(aliasId, entityAlias));
     }

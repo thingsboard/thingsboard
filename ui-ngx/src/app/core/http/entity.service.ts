@@ -782,6 +782,24 @@ export class EntityService {
     }
   }
 
+  public checkEntityAlias(entityAlias: EntityAlias): Observable<boolean> {
+    return this.resolveAliasFilter(entityAlias.filter, null, 1, true).pipe(
+      map((result) => {
+        if (result.stateEntity) {
+          return true;
+        } else {
+          const entities = result.entities;
+          if (entities && entities.length) {
+            return true;
+          } else {
+            return false;
+          }
+        }
+      }),
+      catchError(err => of(false))
+    );
+  }
+
   private entitiesToEntitiesInfo(entities: Array<BaseData<EntityId>>): Array<EntityInfo> {
     const entitiesInfo = [];
     if (entities) {

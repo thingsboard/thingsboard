@@ -63,6 +63,7 @@ import {
   MakeDashboardPublicDialogData
 } from '@modules/home/pages/dashboard/make-dashboard-public-dialog.component';
 import { DashboardTabsComponent } from '@home/pages/dashboard/dashboard-tabs.component';
+import { ImportExportService } from '@home/components/import-export/import-export.service';
 
 @Injectable()
 export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<DashboardInfo | Dashboard>> {
@@ -73,6 +74,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
               private dashboardService: DashboardService,
               private customerService: CustomerService,
               private dialogService: DialogService,
+              private importExport: ImportExportService,
               private translate: TranslateService,
               private datePipe: DatePipe,
               private router: Router,
@@ -311,19 +313,20 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
   }
 
   importDashboard($event: Event) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    // TODO:
-    this.dialogService.todo();
+    this.importExport.importDashboard().subscribe(
+      (dashboard) => {
+        if (dashboard) {
+          this.config.table.updateData();
+        }
+      }
+    );
   }
 
   exportDashboard($event: Event, dashboard: DashboardInfo) {
     if ($event) {
       $event.stopPropagation();
     }
-    // TODO:
-    this.dialogService.todo();
+    this.importExport.exportDashboard(dashboard.id.id);
   }
 
   addDashboardsToCustomer($event: Event) {

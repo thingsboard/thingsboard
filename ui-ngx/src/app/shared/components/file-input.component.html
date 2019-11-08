@@ -16,19 +16,15 @@
 
 -->
 <div class="tb-container">
-  <label class="tb-title">{{label}}</label>
+  <label class="tb-title">{{ label }}</label>
   <ng-container #flow="flow"
                 [flowConfig]="{singleFile: true, allowDuplicateUploads: true}">
-    <div class="tb-image-select-container">
-      <div class="tb-image-preview-container">
-        <div *ngIf="!safeImageUrl" translate>dashboard.no-image</div>
-        <img *ngIf="safeImageUrl" class="tb-image-preview" [src]="safeImageUrl" />
-      </div>
-      <div class="tb-image-clear-container">
+    <div class="tb-file-select-container">
+      <div class="tb-file-clear-container">
         <button mat-button mat-icon-button color="primary"
                 type="button"
-                (click)="clearImage()"
-                class="tb-image-clear-btn"
+                (click)="clearFile()"
+                class="tb-file-clear-btn"
                 matTooltip="{{ 'action.remove' | translate }}"
                 matTooltipPosition="above">
           <mat-icon>close</mat-icon>
@@ -37,9 +33,13 @@
       <div class="drop-area tb-flow-drop"
            flowDrop
            [flow]="flow.flowJs">
-        <label for="select" translate>dashboard.drop-image</label>
-        <input class="file-input" flowButton [flow]="flow.flowJs" [flowAttributes]="{accept: 'image/*'}" id="select">
+        <label for="select">{{ dropLabel }}</label>
+        <input class="file-input" flowButton [flow]="flow.flowJs" [flowAttributes]="{accept: accept}" id="select">
       </div>
     </div>
   </ng-container>
+</div>
+<div>
+  <div *ngIf="!fileName" translate>import.no-file</div>
+  <div *ngIf="fileName">{{ fileName }}</div>
 </div>

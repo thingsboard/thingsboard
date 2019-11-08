@@ -16,7 +16,7 @@
 
 import { Injectable } from '@angular/core';
 import { Dashboard, DashboardLayoutId } from '@app/shared/models/dashboard.models';
-import { EntityAlias, EntityAliasFilter, EntityAliases, EntityAliasInfo } from '@shared/models/alias.models';
+import { EntityAlias, EntityAliasFilter, EntityAliases, EntityAliasInfo, AliasesInfo } from '@shared/models/alias.models';
 import { DatasourceType, Widget, WidgetPosition, WidgetSize } from '@shared/models/widget.models';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { deepClone } from '@core/utils';
@@ -28,11 +28,6 @@ import { map } from 'rxjs/operators';
 const WIDGET_ITEM = 'widget_item';
 const WIDGET_REFERENCE = 'widget_reference';
 const RULE_NODES = 'rule_nodes';
-
-export interface AliasesInfo {
-  datasourceAliases: {[datasourceIndex: number]: EntityAliasInfo};
-  targetDeviceAliases: {[targetDeviceAliasIndex: number]: EntityAliasInfo};
-}
 
 export interface WidgetItem {
   widget: Widget;

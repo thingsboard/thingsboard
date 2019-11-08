@@ -83,6 +83,7 @@ import {
   ManageDashboardStatesDialogComponent,
   ManageDashboardStatesDialogData
 } from '@home/pages/dashboard/states/manage-dashboard-states-dialog.component';
+import { ImportExportService } from '@home/components/import-export/import-export.service';
 
 @Component({
   selector: 'tb-dashboard-page',
@@ -222,6 +223,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
               private widgetComponentService: WidgetComponentService,
               private dashboardService: DashboardService,
               private itembuffer: ItemBufferService,
+              private importExport: ImportExportService,
               private fb: FormBuilder,
               private dialog: MatDialog,
               private translate: TranslateService,
@@ -459,8 +461,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     if ($event) {
       $event.stopPropagation();
     }
-    // TODO:
-    this.dialogService.todo();
+    this.importExport.exportDashboard(this.currentDashboardId);
   }
 
   public openEntityAliases($event: Event) {
@@ -569,8 +570,16 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     if ($event) {
       $event.stopPropagation();
     }
-    // TODO:
-    this.dialogService.todo();
+    this.importExport.importWidget(this.dashboard, this.dashboardCtx.state,
+      this.selectTargetLayout.bind(this), this.entityAliasesUpdated.bind(this)).subscribe(
+      (importData) => {
+        if (importData) {
+          const widget = importData.widget;
+          const layoutId = importData.layoutId;
+          this.layouts[layoutId].layoutCtx.widgets.addWidgetId(widget.id);
+        }
+      }
+    );
   }
 
   public currentDashboardIdChanged(dashboardId: string) {
@@ -915,8 +924,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   exportWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget) {
     $event.stopPropagation();
-    // TODO:
-    this.dialogService.todo();
+    this.importExport.exportWidget(this.dashboard, this.dashboardCtx.state, layoutCtx.id, widget);
   }
 
   widgetClicked($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget) {

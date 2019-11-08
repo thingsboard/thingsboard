@@ -135,11 +135,16 @@ export interface EntityAliasFilter extends EntityFilters {
 export interface EntityAliasInfo {
   alias: string;
   filter: EntityAliasFilter;
+  [key: string]: any;
+}
+
+export interface AliasesInfo {
+  datasourceAliases: {[datasourceIndex: number]: EntityAliasInfo};
+  targetDeviceAliases: {[targetDeviceAliasIndex: number]: EntityAliasInfo};
 }
 
 export interface EntityAlias extends EntityAliasInfo {
   id: string;
-  [key: string]: any;
 }
 
 export interface EntityAliases {

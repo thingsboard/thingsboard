@@ -111,6 +111,7 @@ import { JsonFormComponent } from './components/json-form/json-form.component';
 import { MaterialIconsDialogComponent } from '@shared/components/dialog/material-icons-dialog.component';
 import { MaterialIconSelectComponent } from '@shared/components/material-icon-select.component';
 import { ImageInputComponent } from './components/image-input.component';
+import { FileInputComponent } from './components/file-input.component';
 
 @NgModule({
   providers: [
@@ -181,6 +182,7 @@ import { ImageInputComponent } from './components/image-input.component';
     MaterialIconSelectComponent,
     JsonFormComponent,
     ImageInputComponent,
+    FileInputComponent,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
@@ -318,6 +320,7 @@ import { ImageInputComponent } from './components/image-input.component';
     MaterialIconSelectComponent,
     JsonFormComponent,
     ImageInputComponent,
+    FileInputComponent,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,

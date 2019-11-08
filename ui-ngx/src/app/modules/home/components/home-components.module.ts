@@ -58,6 +58,8 @@ import { CustomActionPrettyResourcesTabsComponent } from './widget/action/custom
 import { CustomActionPrettyEditorComponent } from './widget/action/custom-action-pretty-editor.component';
 import { CustomDialogService } from './widget/dialog/custom-dialog.service';
 import { CustomDialogContainerComponent } from './widget/dialog/custom-dialog-container.component';
+import { ImportExportService } from './import-export/import-export.service';
+import { ImportDialogComponent } from './import-export/import-dialog.component';
 
 @NgModule({
   entryComponents: [
@@ -75,7 +77,8 @@ import { CustomDialogContainerComponent } from './widget/dialog/custom-dialog-co
     DataKeyConfigDialogComponent,
     LegendConfigPanelComponent,
     WidgetActionDialogComponent,
-    CustomDialogContainerComponent
+    CustomDialogContainerComponent,
+    ImportDialogComponent
   ],
   declarations:
     [
@@ -117,7 +120,8 @@ import { CustomDialogContainerComponent } from './widget/dialog/custom-dialog-co
       WidgetActionDialogComponent,
       CustomActionPrettyResourcesTabsComponent,
       CustomActionPrettyEditorComponent,
-      CustomDialogContainerComponent
+      CustomDialogContainerComponent,
+      ImportDialogComponent
     ],
   imports: [
     CommonModule,
@@ -154,11 +158,13 @@ import { CustomDialogContainerComponent } from './widget/dialog/custom-dialog-co
     WidgetActionDialogComponent,
     CustomActionPrettyResourcesTabsComponent,
     CustomActionPrettyEditorComponent,
-    CustomDialogContainerComponent
+    CustomDialogContainerComponent,
+    ImportDialogComponent
   ],
   providers: [
     WidgetComponentService,
-    CustomDialogService
+    CustomDialogService,
+    ImportExportService
   ]
 })
 export class HomeComponentsModule { }
