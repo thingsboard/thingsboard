@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
+import org.thingsboard.server.common.msg.system.TbMsgQueueToRuleEngineMsg;
 import scala.concurrent.duration.Duration;
 
 public class RuleChainActor extends ComponentActor<RuleChainId, RuleChainActorMessageProcessor> {

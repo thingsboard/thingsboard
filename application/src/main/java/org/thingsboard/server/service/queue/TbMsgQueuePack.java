@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Data
 public class TbMsgQueuePack {
     private final UUID packId;
-    private final Map<UUID, TbMsgQueueState> msgs = new HashMap<>();
+    private final Map<UUID, TbMsgQueueState> msgs = new ConcurrentHashMap<>();
     private final Set<UUID> ackMsgIds = ConcurrentHashMap.newKeySet();
 
     private final AtomicInteger retryAttempt;

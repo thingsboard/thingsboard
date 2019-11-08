@@ -106,6 +106,8 @@ public enum MsgType {
     /**
      * Message that is sent by TransportRuleEngineService to Device Actor. Represents messages from the device itself.
      */
-    TRANSPORT_TO_DEVICE_ACTOR_MSG;
+    TRANSPORT_TO_DEVICE_ACTOR_MSG,
+
+    MSQ_QUEUE_TO_RULE_ENGINE_MSG;
 
 }

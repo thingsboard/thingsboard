@@ -18,11 +18,7 @@ package org.thingsboard.server.actors.ruleChain;
 import akka.actor.ActorContext;
 import akka.actor.ActorRef;
 import akka.actor.Props;
-import akka.event.LoggingAdapter;
 import com.datastax.driver.core.utils.UUIDs;
-
-import java.util.Optional;
-
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.TbMsgQueueService;
 import org.thingsboard.server.actors.ActorSystemContext;
@@ -44,13 +40,17 @@ import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
+import org.thingsboard.server.common.msg.system.TbMsgQueueToRuleEngineMsg;
 import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.service.queue.TbMsgQueuePack;
+import org.thingsboard.server.service.queue.TbMsgQueueState;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -204,6 +204,15 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         }
     }
 
+    void onQueueToRuleEngineMsg(TbMsgQueueToRuleEngineMsg envelope) {
+        log.trace("[{}][{}] Processing message [{}]: {}", entityId, firstId, envelope.getTbMsg().getId(), envelope.getTbMsg());
+        checkActive();
+        if (firstNode != null) {
+            log.trace("[{}][{}] Pushing message to first rule node", entityId, firstId);
+            pushMsgToNode(firstNode, enrichWithRuleChainId(envelope.getTbMsg()), "");
+        }
+    }
+
     void onDeviceActorToRuleEngineMsg(DeviceActorToRuleEngineMsg envelope) {
         checkActive();
         if (firstNode != null) {
@@ -262,6 +271,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
             if (ackId != null) {
 //                TODO: Ack this message in Kafka
 //                queue.ack(tenantId, msg, ackId.getId(), msg.getClusterPartition());
+                msgQueueService.ack(msg.getId());
             }
         } else if (relationsCount == 1) {
             for (RuleNodeRelation relation : relations) {

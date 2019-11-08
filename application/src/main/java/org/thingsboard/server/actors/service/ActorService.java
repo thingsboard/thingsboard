@@ -24,6 +24,7 @@ import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import org.thingsboard.server.common.transport.SessionMsgProcessor;
 import org.thingsboard.server.service.cluster.discovery.DiscoveryServiceListener;
 import org.thingsboard.server.service.cluster.rpc.RpcMsgListener;
+import org.thingsboard.server.service.queue.TbMsgQueuePack;
 
 public interface ActorService extends SessionMsgProcessor, RpcMsgListener, DiscoveryServiceListener {
 
@@ -34,5 +35,7 @@ public interface ActorService extends SessionMsgProcessor, RpcMsgListener, Disco
     void onCredentialsUpdate(TenantId tenantId, DeviceId deviceId);
 
     void onDeviceNameOrTypeUpdate(TenantId tenantId, DeviceId deviceId, String deviceName, String deviceType);
+
+    void onMsgFromTbMsgQueue(TbMsgQueuePack pack);
 
 }

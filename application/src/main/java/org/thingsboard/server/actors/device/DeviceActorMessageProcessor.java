@@ -326,7 +326,8 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         JsonObject json = getJsonObject(postAttributes.getKvList());
         TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), SessionMsgType.POST_ATTRIBUTES_REQUEST.name(), deviceId, defaultMetaData.copy(),
                 TbMsgDataType.JSON, gson.toJson(json), null, null, 0L);
-        pushToRuleEngine(context, tbMsg);
+        systemContext.getMsgQueueService().add(tbMsg);
+//        pushToRuleEngine(context, tbMsg);
     }
 
     private void handlePostTelemetryRequest(ActorContext context, SessionInfoProto sessionInfo, PostTelemetryMsg postTelemetry) {
@@ -335,7 +336,8 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             TbMsgMetaData metaData = defaultMetaData.copy();
             metaData.putValue("ts", tsKv.getTs() + "");
             TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, metaData, TbMsgDataType.JSON, gson.toJson(json), null, null, 0L);
-            pushToRuleEngine(context, tbMsg);
+            systemContext.getMsgQueueService().add(tbMsg);
+            //            pushToRuleEngine(context, tbMsg);
         }
     }
 

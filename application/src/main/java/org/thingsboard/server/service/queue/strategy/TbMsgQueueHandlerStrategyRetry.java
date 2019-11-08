@@ -18,7 +18,6 @@ package org.thingsboard.server.service.queue.strategy;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.service.queue.TbMsgQueuePack;
-import org.thingsboard.server.service.queue.TbMsgQueueState;
 
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -38,13 +37,12 @@ public class TbMsgQueueHandlerStrategyRetry implements TbMsgQueueHandlerStrategy
                 new AtomicInteger(0),
                 new AtomicBoolean(false));
 
-        msgQueuePack.getMsgs().forEach((k, v) -> {
-            if (!v.getAck().get()) {
-                TbMsgQueueState msg = v;
-                msg.setAck(new AtomicBoolean(false));
-                newPack.addMsg(msg);
-            }
-        });
+        msgQueuePack.getMsgs().values().parallelStream()
+                .filter(msg -> msg.getAck().get())
+                .forEach(msg -> {
+                    msg.setAck(new AtomicBoolean(false));
+                    newPack.addMsg(msg);
+                });
         return newPack;
     }
 }

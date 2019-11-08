@@ -18,7 +18,9 @@ package org.thingsboard.server.service.queue;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.thingsboard.rule.engine.api.TbMsgQueueService;
+import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.service.queue.strategy.TbMsgQueueHandlerStrategy;
 
 import java.util.UUID;
@@ -40,6 +42,10 @@ public abstract class TbAbstractMsgQueueService implements TbMsgQueueService {
     @Autowired
     private TbMsgQueueHandlerStrategy handlerStrategy;
 
+    @Autowired
+    @Lazy
+    private ActorService actorService;
+
     private CountDownLatch countDownLatch;
 
     protected TbMsgQueuePack currentPack;
@@ -59,6 +65,7 @@ public abstract class TbAbstractMsgQueueService implements TbMsgQueueService {
 
     public void send(TbMsgQueuePack msgPack) {
         //sending
+        actorService.onMsgFromTbMsgQueue(msgPack);
 
         try {
             countDownLatch = new CountDownLatch(1);
@@ -66,7 +73,7 @@ public abstract class TbAbstractMsgQueueService implements TbMsgQueueService {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-
+        printStats();
         if (currentPack.getAck().get()) {
             isAck.set(true);
         } else {
@@ -86,5 +93,14 @@ public abstract class TbAbstractMsgQueueService implements TbMsgQueueService {
             msgQueuePack.getAck().set(true);
             isAck.set(true);
         }
+    }
+
+    private void printStats() {
+        log.info("packId: [{}] ack:[{}] totalCount:[{}] ackCount:[{}] retryAttempt:[{}]",
+                currentPack.getPackId(),
+                currentPack.getAck().get(),
+                currentPack.getTotalCount().get(),
+                currentPack.getAckCount().get(),
+                currentPack.getRetryAttempt().get());
     }
 }
