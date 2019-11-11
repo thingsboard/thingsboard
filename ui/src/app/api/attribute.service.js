@@ -343,8 +343,8 @@ function AttributeService($http, $q, $filter, types, telemetryWebsocketService) 
             keys += timeseries[i].key;
         }
         var url = '/api/plugins/telemetry/' + entityType + '/' + entityId + '/timeseries/delete' +
-            '?keys=' + keys
-            + '&deleteAllDataForKeys=' + deleteAllDataForKeys;
+            '?keys=' + keys +
+            '&deleteAllDataForKeys=' + deleteAllDataForKeys;
         $http.delete(url, config).then(function success() {
             deferred.resolve();
         }, function fail() {
