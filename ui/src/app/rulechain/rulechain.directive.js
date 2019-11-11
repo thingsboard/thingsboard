@@ -37,11 +37,12 @@ export default function RuleChainDirective($compile, $templateCache, $mdDialog, 
         scope: {
             ruleChain: '=',
             isEdit: '=',
+            ruleChainScope: '=',
             isReadOnly: '=',
             theForm: '=',
             onSetRootRuleChain: '&',
             onExportRuleChain: '&',
-            onDeleteRuleChain: '&'
+            onDeleteRuleChain: '&',
         }
     };
 }

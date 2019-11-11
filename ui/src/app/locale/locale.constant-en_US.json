@@ -1436,7 +1436,8 @@
         "assign-to-edges": "Assign Rule Chain(s) To Edges",
         "assign-to-edges-text": "Please select the edges to assign the rulechain(s)",
         "unassign-from-edges": "Unassign Rule Chain(s) From Edges",
-        "unassign-from-edges-text": "Please select the edges to unassign from the rulechain(s)"
+        "unassign-from-edges-text": "Please select the edges to unassign from the rulechain(s)",
+        "assigned-to-edges": "Assigned to edges"
     },
     "rulenode": {
         "details": "Details",

@@ -22,6 +22,8 @@ import addRuleChainsToEdgeTemplate from "./add-rulechains-to-edge.tpl.html";
 
 /* eslint-enable import/no-unresolved, import/default */
 
+import './rulechain-card.scss';
+
 /*@ngInject*/
 export default function RuleChainsController(ruleChainService, userService, importExport, $state,
                                              $stateParams, $filter, $translate, $mdDialog, $document, $q, types) {

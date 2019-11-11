@@ -251,6 +251,7 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
             ruleChain.firstRuleNodeId = null;
         }
         ruleChain.root = false;
+        delete ruleChain.assignedEdgesText;
         return ruleChain;
     }
 

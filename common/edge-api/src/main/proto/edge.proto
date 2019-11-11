@@ -43,10 +43,11 @@ message ResponseMsg {
   UplinkResponseMsg uplinkResponseMsg = 2;
   DeviceUpdateMsg deviceUpdateMsg = 3;
   RuleChainUpdateMsg ruleChainUpdateMsg = 4;
-  DashboardUpdateMsg dashboardUpdateMsg = 5;
-  AssetUpdateMsg assetUpdateMsg = 6;
-  EntityViewUpdateMsg entityViewUpdateMsg = 7;
-  DownlinkMsg downlinkMsg = 8;
+  RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = 5;
+  DashboardUpdateMsg dashboardUpdateMsg = 6;
+  AssetUpdateMsg assetUpdateMsg = 7;
+  EntityViewUpdateMsg entityViewUpdateMsg = 8;
+  DownlinkMsg downlinkMsg = 9;
 }
 
 enum RequestMsgType {
@@ -125,6 +126,38 @@ message RuleChainUpdateMsg {
   bool root = 7;
   bool debugMode = 8;
   string configuration = 9;
+}
+
+message RuleChainMetadataUpdateMsg {
+  UpdateMsgType msgType = 1;
+  int64 ruleChainIdMSB = 2;
+  int64 ruleChainIdLSB = 3;
+  int32 firstNodeIndex = 4;
+  repeated RuleNodeProto nodes =  5;
+  repeated NodeConnectionInfoProto connections =  6;
+  repeated RuleChainConnectionInfoProto ruleChainConnections =  7;
+}
+
+message RuleNodeProto {
+  string type = 1;
+  string name = 2;
+  bool debugMode = 3;
+  string configuration = 4;
+  string additionalInfo = 5;
+}
+
+message NodeConnectionInfoProto {
+  int32 fromIndex = 1;
+  int32 toIndex = 2;
+  string type = 3;
+}
+
+message RuleChainConnectionInfoProto {
+  int32 fromIndex = 1;
+  int64 targetRuleChainIdMSB = 2;
+  int64 targetRuleChainIdLSB = 3;
+  string type = 4;
+  string additionalInfo = 5;
 }
 
 message DashboardUpdateMsg {

@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.edge;
-
-import lombok.Data;
-
-@Data
-public class EdgeQueueEntry {
-    private String type;
-    private EdgeQueueEntityType entityType;
-    private String data;
+.tb-rule-chain-assigned-edges {
+  display: block;
+  display: -webkit-box; /* stylelint-disable-line value-no-vendor-prefix */
+  height: 34px;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical; /* stylelint-disable-line property-no-vendor-prefix */
 }

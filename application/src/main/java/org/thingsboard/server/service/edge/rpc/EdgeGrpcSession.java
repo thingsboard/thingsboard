@@ -41,7 +41,11 @@ import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainConnectionInfo;
+import org.thingsboard.server.common.data.rule.RuleChainMetaData;
+import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.DeviceService;
@@ -55,16 +59,20 @@ import org.thingsboard.server.gen.edge.DashboardUpdateMsg;
 import org.thingsboard.server.gen.edge.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.EdgeConfiguration;
 import org.thingsboard.server.gen.edge.EntityViewUpdateMsg;
+import org.thingsboard.server.gen.edge.NodeConnectionInfoProto;
 import org.thingsboard.server.gen.edge.RequestMsg;
 import org.thingsboard.server.gen.edge.RequestMsgType;
 import org.thingsboard.server.gen.edge.ResponseMsg;
+import org.thingsboard.server.gen.edge.RuleChainConnectionInfoProto;
+import org.thingsboard.server.gen.edge.RuleChainMetadataUpdateMsg;
 import org.thingsboard.server.gen.edge.RuleChainUpdateMsg;
+import org.thingsboard.server.gen.edge.RuleNodeProto;
 import org.thingsboard.server.gen.edge.UpdateMsgType;
 import org.thingsboard.server.gen.edge.UplinkMsg;
 import org.thingsboard.server.gen.edge.UplinkResponseMsg;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -146,7 +154,7 @@ public final class EdgeGrpcSession implements Cloneable {
 
     void processHandleMessages() throws ExecutionException, InterruptedException {
         Long queueStartTs = getQueueStartTs().get();
-        // TODO: this 100 value must be chagned properly
+        // TODO: this 100 value must be changed properly
         TimePageLink pageLink = new TimePageLink(30, queueStartTs + 1000);
         TimePageData<Event> pageData;
         UUID ifOffset = null;
@@ -178,6 +186,10 @@ public final class EdgeGrpcSession implements Cloneable {
                             case RULE_CHAIN:
                                 RuleChain ruleChain = objectMapper.readValue(entry.getData(), RuleChain.class);
                                 onRuleChainUpdated(msgType, ruleChain);
+                                break;
+                            case RULE_CHAIN_METADATA:
+                                RuleChainMetaData ruleChainMetaData = objectMapper.readValue(entry.getData(), RuleChainMetaData.class);
+                                onRuleChainMetadataUpdated(msgType, ruleChainMetaData);
                                 break;
                         }
                     } catch (Exception e) {
@@ -244,6 +256,15 @@ public final class EdgeGrpcSession implements Cloneable {
                 .build());
     }
 
+    private void onRuleChainMetadataUpdated(UpdateMsgType msgType, RuleChainMetaData ruleChainMetaData) {
+        RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = constructRuleChainMetadataUpdatedMsg(msgType, ruleChainMetaData);
+        if (ruleChainMetadataUpdateMsg != null) {
+            outputStream.onNext(ResponseMsg.newBuilder()
+                    .setRuleChainMetadataUpdateMsg(ruleChainMetadataUpdateMsg)
+                    .build());
+        }
+    }
+
     private void onDashboardUpdated(UpdateMsgType msgType, Dashboard dashboard) {
         outputStream.onNext(ResponseMsg.newBuilder()
                 .setDashboardUpdateMsg(constructDashboardUpdatedMsg(msgType, dashboard))
@@ -279,6 +300,83 @@ public final class EdgeGrpcSession implements Cloneable {
                     .setFirstRuleNodeIdLSB(ruleChain.getFirstRuleNodeId().getId().getLeastSignificantBits());
         }
         return builder.build();
+    }
+
+    private RuleChainMetadataUpdateMsg constructRuleChainMetadataUpdatedMsg(UpdateMsgType msgType, RuleChainMetaData ruleChainMetaData) {
+        try {
+            RuleChainMetadataUpdateMsg.Builder builder = RuleChainMetadataUpdateMsg.newBuilder()
+                    .setRuleChainIdMSB(ruleChainMetaData.getRuleChainId().getId().getMostSignificantBits())
+                    .setRuleChainIdLSB(ruleChainMetaData.getRuleChainId().getId().getLeastSignificantBits())
+                    .addAllNodes(constructNodes(ruleChainMetaData.getNodes()))
+                    .addAllConnections(constructConnections(ruleChainMetaData.getConnections()))
+                    .addAllRuleChainConnections(constructRuleChainConnections(ruleChainMetaData.getRuleChainConnections()));
+            if (ruleChainMetaData.getFirstNodeIndex() != null) {
+                builder.setFirstNodeIndex(ruleChainMetaData.getFirstNodeIndex());
+            }
+            builder.setMsgType(msgType);
+            return builder.build();
+        } catch (JsonProcessingException ex) {
+            log.error("Can't construct RuleChainMetadataUpdateMsg", ex);
+        }
+        return null;
+    }
+
+    private List<RuleChainConnectionInfoProto> constructRuleChainConnections(List<RuleChainConnectionInfo> ruleChainConnections) throws JsonProcessingException {
+        List<RuleChainConnectionInfoProto> result = new ArrayList<>();
+        if (ruleChainConnections != null && !ruleChainConnections.isEmpty()) {
+            for (RuleChainConnectionInfo ruleChainConnectionInfo : ruleChainConnections) {
+                result.add(constructRuleChainConnection(ruleChainConnectionInfo));
+            }
+        }
+        return result;
+    }
+
+    private RuleChainConnectionInfoProto constructRuleChainConnection(RuleChainConnectionInfo ruleChainConnectionInfo) throws JsonProcessingException {
+        return RuleChainConnectionInfoProto.newBuilder()
+                .setFromIndex(ruleChainConnectionInfo.getFromIndex())
+                .setTargetRuleChainIdMSB(ruleChainConnectionInfo.getTargetRuleChainId().getId().getMostSignificantBits())
+                .setTargetRuleChainIdLSB(ruleChainConnectionInfo.getTargetRuleChainId().getId().getLeastSignificantBits())
+                .setType(ruleChainConnectionInfo.getType())
+                .setAdditionalInfo(objectMapper.writeValueAsString(ruleChainConnectionInfo.getAdditionalInfo()))
+                .build();
+    }
+
+    private List<NodeConnectionInfoProto> constructConnections(List<NodeConnectionInfo> connections) {
+        List<NodeConnectionInfoProto> result = new ArrayList<>();
+        if (connections != null && !connections.isEmpty()) {
+            for (NodeConnectionInfo connection : connections) {
+                result.add(constructConnection(connection));
+            }
+        }
+        return result;
+    }
+
+    private NodeConnectionInfoProto constructConnection(NodeConnectionInfo connection) {
+        return NodeConnectionInfoProto.newBuilder()
+                .setFromIndex(connection.getFromIndex())
+                .setToIndex(connection.getToIndex())
+                .setType(connection.getType())
+                .build();
+    }
+
+    private List<RuleNodeProto> constructNodes(List<RuleNode> nodes) throws JsonProcessingException {
+        List<RuleNodeProto> result = new ArrayList<>();
+        if (nodes != null && !nodes.isEmpty()) {
+            for (RuleNode node : nodes) {
+                result.add(constructNode(node));
+            }
+        }
+        return result;
+    }
+
+    private RuleNodeProto constructNode(RuleNode node) throws JsonProcessingException {
+        return RuleNodeProto.newBuilder()
+                .setType(node.getType())
+                .setName(node.getName())
+                .setDebugMode(node.isDebugMode())
+                .setConfiguration(objectMapper.writeValueAsString(node.getConfiguration()))
+                .setAdditionalInfo(objectMapper.writeValueAsString(node.getAdditionalInfo()))
+                .build();
     }
 
     private DashboardUpdateMsg constructDashboardUpdatedMsg(UpdateMsgType msgType, Dashboard dashboard) {

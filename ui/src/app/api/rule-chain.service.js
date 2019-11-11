@@ -388,17 +388,24 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
     }
 
     function prepareRuleChain(ruleChain) {
+        ruleChain.assignedEdgesText = "";
         ruleChain.assignedEdgesIds = [];
+
         if (ruleChain.assignedEdges && ruleChain.assignedEdges.length) {
+            var assignedEdgesTitles = [];
             for (var j = 0; j < ruleChain.assignedEdges.length; j++) {
                 var assignedEdge = ruleChain.assignedEdges[j];
                 ruleChain.assignedEdgesIds.push(assignedEdge.edgeId.id);
+                assignedEdgesTitles.push(assignedEdge.title);
             }
+            ruleChain.assignedEdgesText = assignedEdgesTitles.join(', ');
         }
+
         return ruleChain;
     }
 
     function cleanRuleChain(ruleChain) {
+        delete ruleChain.assignedEdgesText;
         delete ruleChain.assignedEdgesIds;
         return ruleChain;
     }

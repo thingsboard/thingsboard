@@ -37,6 +37,7 @@ import org.thingsboard.server.gen.edge.EntityViewUpdateMsg;
 import org.thingsboard.server.gen.edge.RequestMsg;
 import org.thingsboard.server.gen.edge.RequestMsgType;
 import org.thingsboard.server.gen.edge.ResponseMsg;
+import org.thingsboard.server.gen.edge.RuleChainMetadataUpdateMsg;
 import org.thingsboard.server.gen.edge.RuleChainUpdateMsg;
 import org.thingsboard.server.gen.edge.UplinkMsg;
 import org.thingsboard.server.gen.edge.UplinkResponseMsg;
@@ -75,6 +76,7 @@ public class EdgeGrpcClient implements EdgeRpcClient {
                         Consumer<AssetUpdateMsg> onAssetUpdate,
                         Consumer<EntityViewUpdateMsg> onEntityViewUpdate,
                         Consumer<RuleChainUpdateMsg> onRuleChainUpdate,
+                        Consumer<RuleChainMetadataUpdateMsg> onRuleChainMetadataUpdate,
                         Consumer<DashboardUpdateMsg> onDashboardUpdate,
                         Consumer<DownlinkMsg> onDownlink,
                         Consumer<Exception> onError) {
@@ -90,7 +92,7 @@ public class EdgeGrpcClient implements EdgeRpcClient {
         channel = builder.build();
         EdgeRpcServiceGrpc.EdgeRpcServiceStub stub = EdgeRpcServiceGrpc.newStub(channel);
         log.info("[{}] Sending a connect request to the TB!", edgeKey);
-        this.inputStream = stub.handleMsgs(initOutputStream(edgeKey, onUplinkResponse, onEdgeUpdate, onDeviceUpdate, onAssetUpdate, onEntityViewUpdate, onRuleChainUpdate, onDashboardUpdate, onDownlink, onError));
+        this.inputStream = stub.handleMsgs(initOutputStream(edgeKey, onUplinkResponse, onEdgeUpdate, onDeviceUpdate, onAssetUpdate, onEntityViewUpdate, onRuleChainUpdate, onRuleChainMetadataUpdate, onDashboardUpdate, onDownlink, onError));
         this.inputStream.onNext(RequestMsg.newBuilder()
                 .setMsgType(RequestMsgType.CONNECT_RPC_MESSAGE)
                 .setConnectRequestMsg(ConnectRequestMsg.newBuilder().setEdgeRoutingKey(edgeKey).setEdgeSecret(edgeSecret).build())
@@ -120,6 +122,7 @@ public class EdgeGrpcClient implements EdgeRpcClient {
                                                          Consumer<AssetUpdateMsg> onAssetUpdate,
                                                          Consumer<EntityViewUpdateMsg> onEntityViewUpdate,
                                                          Consumer<RuleChainUpdateMsg> onRuleChainUpdate,
+                                                         Consumer<RuleChainMetadataUpdateMsg> onRuleChainMetadataUpdate,
                                                          Consumer<DashboardUpdateMsg> onDashboardUpdate,
                                                          Consumer<DownlinkMsg> onDownlink,
                                                          Consumer<Exception> onError) {
@@ -150,6 +153,9 @@ public class EdgeGrpcClient implements EdgeRpcClient {
                 } else if (responseMsg.hasRuleChainUpdateMsg()) {
                     log.debug("[{}] Rule Chain udpate message received {}", edgeKey, responseMsg.getRuleChainUpdateMsg());
                     onRuleChainUpdate.accept(responseMsg.getRuleChainUpdateMsg());
+                } else if (responseMsg.hasRuleChainMetadataUpdateMsg()) {
+                    log.debug("[{}] Rule Chain Metadata udpate message received {}", edgeKey, responseMsg.getRuleChainMetadataUpdateMsg());
+                    onRuleChainMetadataUpdate.accept(responseMsg.getRuleChainMetadataUpdateMsg());
                 } else if (responseMsg.hasDashboardUpdateMsg()) {
                     log.debug("[{}] Dashboard message received {}", edgeKey, responseMsg.getDashboardUpdateMsg());
                     onDashboardUpdate.accept(responseMsg.getDashboardUpdateMsg());
