@@ -42,6 +42,7 @@ public class RuleChain extends SearchTextBasedWithAdditionalInfo<RuleChainId> im
 
     private TenantId tenantId;
     private String name;
+    private RuleChainType type;
     private RuleNodeId firstRuleNodeId;
     private boolean root;
     private boolean debugMode;
@@ -63,6 +64,7 @@ public class RuleChain extends SearchTextBasedWithAdditionalInfo<RuleChainId> im
         super(ruleChain);
         this.tenantId = ruleChain.getTenantId();
         this.name = ruleChain.getName();
+        this.type = ruleChain.getType();
         this.firstRuleNodeId = ruleChain.getFirstRuleNodeId();
         this.root = ruleChain.isRoot();
 

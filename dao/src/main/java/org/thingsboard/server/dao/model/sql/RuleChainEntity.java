@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -40,9 +41,13 @@ import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Table;
 import java.io.IOException;
 import java.util.HashSet;
+
+import static org.thingsboard.server.dao.model.ModelConstants.RULE_CHAIN_TYPE_PROPERTY;
 
 @Data
 @Slf4j
@@ -61,6 +66,10 @@ public class RuleChainEntity extends BaseSqlEntity<RuleChain> implements SearchT
 
     @Column(name = ModelConstants.RULE_CHAIN_NAME_PROPERTY)
     private String name;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = RULE_CHAIN_TYPE_PROPERTY)
+    private RuleChainType type;
 
     @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
     private String searchText;
@@ -94,6 +103,11 @@ public class RuleChainEntity extends BaseSqlEntity<RuleChain> implements SearchT
         }
         this.tenantId = toString(DaoUtil.getId(ruleChain.getTenantId()));
         this.name = ruleChain.getName();
+        if (ruleChain.getType() != null) {
+            this.type = ruleChain.getType();
+        } else {
+            this.type = RuleChainType.SYSTEM;
+        }
         this.searchText = ruleChain.getName();
         if (ruleChain.getFirstRuleNodeId() != null) {
             this.firstRuleNodeId = UUIDConverter.fromTimeUUID(ruleChain.getFirstRuleNodeId().getId());
@@ -127,6 +141,11 @@ public class RuleChainEntity extends BaseSqlEntity<RuleChain> implements SearchT
         ruleChain.setCreatedTime(UUIDs.unixTimestamp(getId()));
         ruleChain.setTenantId(new TenantId(toUUID(tenantId)));
         ruleChain.setName(name);
+        if (type != null) {
+            ruleChain.setType(type);
+        } else {
+            ruleChain.setType(RuleChainType.SYSTEM);
+        }
         if (firstRuleNodeId != null) {
             ruleChain.setFirstRuleNodeId(new RuleNodeId(UUIDConverter.fromString(firstRuleNodeId)));
         }

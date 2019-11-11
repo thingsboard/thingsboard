@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS thingsboard.edge (
   configuration text,
   additional_info text,
   PRIMARY KEY (id, tenant_id)
-  );
+);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.edge_by_tenant_and_name AS
   SELECT *
@@ -59,3 +59,5 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.edge_by_customer_by_type_and_
   WHERE tenant_id IS NOT NULL AND customer_id IS NOT NULL AND type IS NOT NULL AND search_text IS NOT NULL AND id IS NOT NULL
   PRIMARY KEY ( customer_id, tenant_id, type, search_text, id )
   WITH CLUSTERING ORDER BY ( tenant_id DESC, type ASC, search_text ASC, id DESC );
+
+-- VOBA ADD changes for the MATERIALIZED view for DEVICE ASSET ENTITY_VIEW RULE_CHAIN

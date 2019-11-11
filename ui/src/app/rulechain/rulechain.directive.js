@@ -22,8 +22,15 @@ import ruleChainFieldsetTemplate from './rulechain-fieldset.tpl.html';
 /*@ngInject*/
 export default function RuleChainDirective($compile, $templateCache, $mdDialog, $document, $q, $translate, types, toast) {
     var linker = function (scope, element) {
+
         var template = $templateCache.get(ruleChainFieldsetTemplate);
         element.html(template);
+
+        scope.ruleChainTypes = types.ruleChainTypes;
+
+        if (angular.isDefined(scope.ruleChain) && scope.ruleChain != null && angular.isUndefined(scope.ruleChain.type)) {
+            scope.ruleChain.type = types.systemRuleChainType;
+        }
 
         scope.onRuleChainIdCopied = function() {
             toast.showSuccess($translate.instant('rulechain.idCopiedMessage'), 750, angular.element(element).parent().parent(), 'bottom left');

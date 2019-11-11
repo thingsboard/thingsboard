@@ -1386,6 +1386,7 @@
         "root": "Root",
         "delete": "Delete rule chain",
         "name": "Name",
+        "type": "Type",
         "name-required": "Name is required.",
         "description": "Description",
         "add": "Add Rule Chain",

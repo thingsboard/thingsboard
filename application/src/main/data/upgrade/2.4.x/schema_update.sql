@@ -23,10 +23,3 @@ CREATE TABLE IF NOT EXISTS edge (
     search_text varchar(255),
     tenant_id varchar(31)
 );
-
-ALTER TABLE asset ADD edge_id varchar(31);
-ALTER TABLE device ADD edge_id varchar(31);
-ALTER TABLE entity_view ADD edge_id varchar(31);
-
-ALTER TABLE dashboard ADD assigned_edges varchar(1000000);
-ALTER TABLE rule_chain ADD assigned_edges varchar(1000000);

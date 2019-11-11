@@ -35,9 +35,11 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.model.type.JsonCodec;
+import org.thingsboard.server.dao.model.type.RuleChainTypeCodec;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -53,6 +55,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.RULE_CHAIN_FIRST_R
 import static org.thingsboard.server.dao.model.ModelConstants.RULE_CHAIN_NAME_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.RULE_CHAIN_ROOT_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.RULE_CHAIN_TENANT_ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.RULE_CHAIN_TYPE_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPERTY;
 
 @Slf4j
@@ -73,6 +76,8 @@ public class RuleChainEntity implements SearchTextEntity<RuleChain> {
     private UUID tenantId;
     @Column(name = RULE_CHAIN_NAME_PROPERTY)
     private String name;
+    @Column(name = RULE_CHAIN_TYPE_PROPERTY, codec = RuleChainTypeCodec.class)
+    private RuleChainType type;
     @Column(name = SEARCH_TEXT_PROPERTY)
     private String searchText;
     @Column(name = RULE_CHAIN_FIRST_RULE_NODE_ID_PROPERTY)
@@ -101,6 +106,11 @@ public class RuleChainEntity implements SearchTextEntity<RuleChain> {
         }
         this.tenantId = DaoUtil.getId(ruleChain.getTenantId());
         this.name = ruleChain.getName();
+        if (ruleChain.getType() != null) {
+            this.type = ruleChain.getType();
+        } else {
+            this.type = RuleChainType.SYSTEM;
+        }
         this.searchText = ruleChain.getName();
         this.firstRuleNodeId = DaoUtil.getId(ruleChain.getFirstRuleNodeId());
         this.root = ruleChain.isRoot();
@@ -194,6 +204,11 @@ public class RuleChainEntity implements SearchTextEntity<RuleChain> {
         ruleChain.setCreatedTime(UUIDs.unixTimestamp(id));
         ruleChain.setTenantId(new TenantId(tenantId));
         ruleChain.setName(name);
+        if (type != null) {
+            ruleChain.setType(type);
+        } else {
+            ruleChain.setType(RuleChainType.SYSTEM);
+        }
         if (this.firstRuleNodeId != null) {
             ruleChain.setFirstRuleNodeId(new RuleNodeId(this.firstRuleNodeId));
         }

@@ -606,6 +606,8 @@ export default angular.module('thingsboard.types', [])
                     clientSide: false
                 }
             },
+            systemRuleChainType: "SYSTEM",
+            ruleChainTypes: ["SYSTEM", "EDGE"],
             ruleNodeTypeComponentTypes: ["FILTER", "ENRICHMENT", "TRANSFORMATION", "ACTION", "EXTERNAL"],
             ruleChainNodeComponent: {
                 type: 'RULE_CHAIN',

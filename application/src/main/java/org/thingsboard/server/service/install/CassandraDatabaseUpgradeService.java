@@ -272,6 +272,32 @@ public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
                 log.info("Updating schema ...");
                 schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "2.4.x", SCHEMA_UPDATE_CQL);
                 loadCql(schemaUpdateFile);
+
+                try {
+                    cluster.getSession().execute("alter table asset add edge_id text");
+                    Thread.sleep(2500);
+                } catch (InvalidQueryException e) {}
+                try {
+                    cluster.getSession().execute("alter table device add edge_id text");
+                    Thread.sleep(2500);
+                } catch (InvalidQueryException e) {}
+                try {
+                    cluster.getSession().execute("alter table entity_view add edge_id text");
+                    Thread.sleep(2500);
+                } catch (InvalidQueryException e) {}
+                try {
+                    cluster.getSession().execute("alter table dashboard add assigned_edges text");
+                    Thread.sleep(2500);
+                } catch (InvalidQueryException e) {}
+                try {
+                    cluster.getSession().execute("alter table rule_chain add assigned_edges text");
+                    Thread.sleep(2500);
+                } catch (InvalidQueryException e) {}
+                try {
+                    cluster.getSession().execute("alter table rule_chain add type text");
+                    Thread.sleep(2500);
+                } catch (InvalidQueryException e) {}
+
                 log.info("Schema updated.");
 
                 break;

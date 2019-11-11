@@ -214,6 +214,7 @@ CREATE TABLE IF NOT EXISTS rule_chain (
     additional_info varchar,
     configuration varchar(10000000),
     name varchar(255),
+    type varchar(255),
     first_rule_node_id varchar(31),
     root boolean,
     debug_mode boolean,
