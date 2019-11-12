@@ -19,6 +19,7 @@ import addEdgeTemplate from './add-edge.tpl.html';
 import edgeCard from './edge-card.tpl.html';
 import assignToCustomerTemplate from './assign-to-customer.tpl.html';
 import addEdgesToCustomerTemplate from './add-edges-to-customer.tpl.html';
+import setRootRuleChainToEdgesTemplate from './set-root-rule-chain-to-edges.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
 
@@ -47,8 +48,8 @@ export function EdgeCardController(types) {
 
 
 /*@ngInject*/
-export function EdgeController($rootScope, userService, edgeService, customerService, $state, $stateParams,
-                                $document, $mdDialog, $q, $translate, types, importExport) {
+export function EdgeController($rootScope, userService, edgeService, customerService, ruleChainService,
+                               $state, $stateParams, $document, $mdDialog, $q, $translate, types, importExport) {
 
     var customerId = $stateParams.customerId;
 
@@ -295,6 +296,19 @@ export function EdgeController($rootScope, userService, edgeService, customerSer
             edgeGroupActionsList.push(
                 {
                     onAction: function ($event, items) {
+                        setRootRuleChainToEdges($event, items);
+                    },
+                    name: function() { return $translate.instant('edge.set-root-rule-chain-to-edges') },
+                    details: function(selectedCount) {
+                        return $translate.instant('edge.set-root-rule-chain-to-edges-text', {count: selectedCount}, "messageformat");
+                    },
+                    icon: "flag"
+                }
+            );
+
+            edgeGroupActionsList.push(
+                {
+                    onAction: function ($event, items) {
                         assignEdgesToCustomer($event, items);
                     },
                     name: function() { return $translate.instant('edge.assign-edges') },
@@ -304,8 +318,6 @@ export function EdgeController($rootScope, userService, edgeService, customerSer
                     icon: "assignment_ind"
                 }
             );
-
-
 
             edgeGroupActionsList.push(
                 {
@@ -318,9 +330,7 @@ export function EdgeController($rootScope, userService, edgeService, customerSer
                 }
             );
 
-
-
-        } else if (vm.edgesScope === 'customer' || vm.edgesScope === 'customer_user') {
+       } else if (vm.edgesScope === 'customer' || vm.edgesScope === 'customer_user') {
             fetchEdgesFunction = function (pageLink, edgeType) {
                 return edgeService.getCustomerEdges(customerId, pageLink, true, null, edgeType);
             };
@@ -523,6 +533,50 @@ export function EdgeController($rootScope, userService, edgeService, customerSer
             function fail() {
             });
     }
+
+    function setRootRuleChainToEdges($event, items) {
+        var edgeIds = [];
+        for (var id in items.selections) {
+            edgeIds.push(id);
+        }
+        setRootRuleChain($event, edgeIds);
+    }
+
+    function setRootRuleChain($event, edgeIds) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        var pageSize = 10;
+        ruleChainService.getRuleChains({limit: pageSize, textSearch: ''}).then(
+            function success(_ruleChains) {
+                var ruleChains = {
+                    pageSize: pageSize,
+                    data: _ruleChains.data,
+                    nextPageLink: _ruleChains.nextPageLink,
+                    selection: null,
+                    hasNext: _ruleChains.hasNext,
+                    pending: false
+                };
+                if (ruleChains.hasNext) {
+                    ruleChains.nextPageLink.limit = pageSize;
+                }
+                $mdDialog.show({
+                    controller: 'SetRootRuleChainToEdgesController',
+                    controllerAs: 'vm',
+                    templateUrl: setRootRuleChainToEdgesTemplate,
+                    locals: {edgeIds: edgeIds, ruleChains: ruleChains},
+                    parent: angular.element($document[0].body),
+                    fullscreen: true,
+                    targetEvent: $event
+                }).then(function () {
+                    vm.grid.refreshList();
+                }, function () {
+                });
+            },
+            function fail() {
+            });
+    }
+
 
     function assignEdgesToCustomer($event, items) {
         var edgeIds = [];

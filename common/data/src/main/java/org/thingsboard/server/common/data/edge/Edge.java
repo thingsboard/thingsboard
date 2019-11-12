@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.ShortEdgeInfo;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 @EqualsAndHashCode(callSuper = true)
@@ -41,6 +42,7 @@ public class Edge extends SearchTextBasedWithAdditionalInfo<EdgeId> implements H
 
     private TenantId tenantId;
     private CustomerId customerId;
+    private RuleChainId rootRuleChainId;
     private String name;
     private String type;
     private String label;
@@ -60,6 +62,7 @@ public class Edge extends SearchTextBasedWithAdditionalInfo<EdgeId> implements H
         super(edge);
         this.tenantId = edge.getTenantId();
         this.customerId = edge.getCustomerId();
+        this.rootRuleChainId = edge.getRootRuleChainId();
         this.type = edge.getType();
         this.name = edge.getName();
         this.routingKey = edge.getRoutingKey();
@@ -69,7 +72,7 @@ public class Edge extends SearchTextBasedWithAdditionalInfo<EdgeId> implements H
 
     @JsonIgnore
     public ShortEdgeInfo toShortEdgeInfo() {
-        return new ShortEdgeInfo(id, name);
+        return new ShortEdgeInfo(id, name, rootRuleChainId);
     }
 
     @Override

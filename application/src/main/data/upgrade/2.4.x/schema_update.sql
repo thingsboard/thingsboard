@@ -18,8 +18,13 @@ CREATE TABLE IF NOT EXISTS edge (
     id varchar(31) NOT NULL CONSTRAINT edge_pkey PRIMARY KEY,
     additional_info varchar,
     customer_id varchar(31),
+    root_rule_chain_id varchar(31),
     configuration varchar(10000000),
+    type varchar(255),
     name varchar(255),
+    label varchar(255),
+    routing_key varchar(255),
+    secret varchar(255),
     search_text varchar(255),
     tenant_id varchar(31)
 );

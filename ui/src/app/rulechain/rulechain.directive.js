@@ -49,7 +49,7 @@ export default function RuleChainDirective($compile, $templateCache, $mdDialog, 
             theForm: '=',
             onSetRootRuleChain: '&',
             onExportRuleChain: '&',
-            onDeleteRuleChain: '&',
+            onDeleteRuleChain: '&'
         }
     };
 }

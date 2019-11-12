@@ -94,7 +94,7 @@ public class RuleChain extends SearchTextBasedWithAdditionalInfo<RuleChainId> im
     }
 
     public boolean isAssignedToEdge(EdgeId edgeId) {
-        return this.assignedEdges != null && this.assignedEdges.contains(new ShortEdgeInfo(edgeId, null));
+        return this.assignedEdges != null && this.assignedEdges.contains(new ShortEdgeInfo(edgeId, null, null));
     }
 
     public ShortEdgeInfo getAssignedEdgeInfo(EdgeId edgeId) {

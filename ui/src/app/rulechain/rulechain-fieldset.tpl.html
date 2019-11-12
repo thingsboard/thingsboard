@@ -51,7 +51,7 @@
         </md-input-container>
         <md-input-container class="md-block">
             <label translate>rulechain.type</label>
-            <md-select ng-disabled="$root.loading || !isEdit" name="type" ng-model="ruleChain.type">
+            <md-select ng-disabled="$root.loading || !isEdit || ruleChainScope !== 'tenant' || ruleChain.root === true" name="type" ng-model="ruleChain.type">
                 <md-option ng-repeat="ruleChainType in ruleChainTypes" value="{{ruleChainType}}">
                     {{ruleChainType}}
                 </md-option>

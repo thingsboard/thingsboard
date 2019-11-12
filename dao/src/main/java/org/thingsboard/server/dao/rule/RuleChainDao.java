@@ -47,5 +47,4 @@ public interface RuleChainDao extends Dao<RuleChain> {
      * @return the list of rule chain objects
      */
     ListenableFuture<List<RuleChain>> findRuleChainsByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, TimePageLink pageLink);
-
 }

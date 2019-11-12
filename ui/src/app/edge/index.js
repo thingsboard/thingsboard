@@ -23,6 +23,7 @@ import EdgeRoutes from './edge.routes';
 import {EdgeController, EdgeCardController} from './edge.controller';
 import AssignEdgeToCustomerController from './assign-to-customer.controller';
 import AddEdgesToCustomerController from './add-edges-to-customer.controller';
+import SetRootRuleChainToEdgesController from './set-root-rule-chain-to-edges.controller';
 import EdgeDirective from './edge.directive';
 
 export default angular.module('thingsboard.edge', [
@@ -37,5 +38,6 @@ export default angular.module('thingsboard.edge', [
     .controller('EdgeCardController', EdgeCardController)
     .controller('AssignEdgeToCustomerController', AssignEdgeToCustomerController)
     .controller('AddEdgesToCustomerController', AddEdgesToCustomerController)
+    .controller('SetRootRuleChainToEdgesController', SetRootRuleChainToEdgesController)
     .directive('tbEdge', EdgeDirective)
     .name;

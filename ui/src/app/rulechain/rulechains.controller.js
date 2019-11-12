@@ -25,7 +25,7 @@ import addRuleChainsToEdgeTemplate from "./add-rulechains-to-edge.tpl.html";
 import './rulechain-card.scss';
 
 /*@ngInject*/
-export default function RuleChainsController(ruleChainService, userService, importExport, $state,
+export default function RuleChainsController(ruleChainService, userService, edgeService, importExport, $state,
                                              $stateParams, $filter, $translate, $mdDialog, $document, $q, types) {
 
     var vm = this;
@@ -107,6 +107,11 @@ export default function RuleChainsController(ruleChainService, userService, impo
 
         if (edgeId) {
             vm.edgeRuleChainsTitle = $translate.instant('edge.rulechains');
+            edgeService.getEdge(edgeId).then(
+                function success(edge) {
+                    vm.edge = edge;
+                }
+            );
         }
 
         if (vm.ruleChainsScope === 'tenant') {
@@ -133,8 +138,7 @@ export default function RuleChainsController(ruleChainService, userService, impo
                 },
                 name: function() { return $translate.instant('action.assign') },
                 details: function() { return $translate.instant('rulechain.manage-assigned-edges') },
-                icon: "wifi_tethering",
-                isEnabled: isNonRootRuleChain
+                icon: "wifi_tethering"
             });
 
             ruleChainActionsList.push({
@@ -214,6 +218,16 @@ export default function RuleChainsController(ruleChainService, userService, impo
                 return ruleChainService.unassignRuleChainFromEdge(edgeId, ruleChainId);
             };
 
+            ruleChainActionsList.push({
+                onAction: function ($event, item) {
+                    setRootRuleChain($event, item);
+                },
+                name: function() { return $translate.instant('rulechain.set-root') },
+                details: function() { return $translate.instant('rulechain.set-root') },
+                icon: "flag",
+                isEnabled: isNonRootRuleChain
+            });
+
             ruleChainActionsList.push(
                 {
                     onAction: function ($event, item) {
@@ -221,7 +235,8 @@ export default function RuleChainsController(ruleChainService, userService, impo
                     },
                     name: function() { return $translate.instant('action.unassign') },
                     details: function() { return $translate.instant('rulechain.unassign-from-edge') },
-                    icon: "assignment_return"
+                    icon: "assignment_return",
+                    isEnabled: isNonRootRuleChain
                 }
             );
 
@@ -288,7 +303,13 @@ export default function RuleChainsController(ruleChainService, userService, impo
         if ($event) {
             $event.stopPropagation();
         }
-        $state.go('home.ruleChains.ruleChain', {ruleChainId: ruleChain.id.id});
+        if (vm.ruleChainsScope === 'edge') {
+            $state.go('home.edges.ruleChains.ruleChain', {
+                ruleChainId: ruleChain.id.id
+            });
+        } else {
+            $state.go('home.ruleChains.ruleChain', {ruleChainId: ruleChain.id.id});
+        }
     }
 
     function deleteRuleChain(ruleChainId) {
@@ -300,11 +321,19 @@ export default function RuleChainsController(ruleChainService, userService, impo
     }
 
     function isRootRuleChain(ruleChain) {
-        return ruleChain && ruleChain.root;
+        if (angular.isDefined(vm.edge) && vm.edge != null) {
+            return angular.isDefined(vm.edge.rootRuleChainId) && vm.edge.rootRuleChainId != null && vm.edge.rootRuleChainId.id === ruleChain.id.id;
+        } else {
+            return ruleChain && ruleChain.root;
+        }
     }
 
     function isNonRootRuleChain(ruleChain) {
-        return ruleChain && !ruleChain.root;
+        if (angular.isDefined(vm.edge) && vm.edge != null) {
+            return angular.isDefined(vm.edge.rootRuleChainId) && vm.edge.rootRuleChainId != null && vm.edge.rootRuleChainId.id !== ruleChain.id.id;
+        } else {
+            return ruleChain && !ruleChain.root;
+        }
     }
 
     function exportRuleChain($event, ruleChain) {
@@ -322,11 +351,20 @@ export default function RuleChainsController(ruleChainService, userService, impo
             .cancel($translate.instant('action.no'))
             .ok($translate.instant('action.yes'));
         $mdDialog.show(confirm).then(function () {
-            ruleChainService.setRootRuleChain(ruleChain.id.id).then(
-                () => {
-                    vm.grid.refreshList();
-                }
-            );
+            if (angular.isDefined(vm.edge) && vm.edge != null) {
+                edgeService.setRootRuleChain(vm.edge.id.id, ruleChain.id.id).then(
+                    (edge) => {
+                        vm.edge = edge;
+                        vm.grid.refreshList();
+                    }
+                );
+            } else {
+                ruleChainService.setRootRuleChain(ruleChain.id.id).then(
+                    () => {
+                        vm.grid.refreshList();
+                    }
+                );
+            }
         });
     }
 
@@ -396,7 +434,7 @@ export default function RuleChainsController(ruleChainService, userService, impo
             function success(_ruleChains) {
                 var ruleChains = {
                     pageSize: pageSize,
-                    data: filterNonRootRuleChains(_ruleChains.data),
+                    data: _ruleChains.data,
                     nextPageLink: _ruleChains.nextPageLink,
                     selections: {},
                     selectedCount: 0,
@@ -421,10 +459,6 @@ export default function RuleChainsController(ruleChainService, userService, impo
             },
             function fail() {
             });
-    }
-
-    function filterNonRootRuleChains(ruleChains) {
-        return $filter('filter')(ruleChains, isNonRootRuleChain);
     }
 
     function unassignFromEdge($event, ruleChain, edgeId) {

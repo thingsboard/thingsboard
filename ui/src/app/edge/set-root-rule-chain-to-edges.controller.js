@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /*@ngInject*/
-export default function AddRuleChainsToEdgeController(ruleChainService, $mdDialog, $q, $filter, edgeId, ruleChains) {
+export default function SetRootRuleChainToEdgesController(ruleChainService, edgeService, $mdDialog, $q, edgeIds, ruleChains) {
 
     var vm = this;
 
@@ -23,6 +23,7 @@ export default function AddRuleChainsToEdgeController(ruleChainService, $mdDialo
 
     vm.assign = assign;
     vm.cancel = cancel;
+    vm.isRuleChainSelected = isRuleChainSelected;
     vm.hasData = hasData;
     vm.noData = noData;
     vm.searchRuleChainTextUpdated = searchRuleChainTextUpdated;
@@ -54,7 +55,7 @@ export default function AddRuleChainsToEdgeController(ruleChainService, $mdDialo
                 vm.ruleChains.pending = true;
                 ruleChainService.getRuleChains(vm.ruleChains.nextPageLink).then(
                     function success(ruleChains) {
-                        vm.ruleChains.data = ruleChains.data;
+                        vm.ruleChains.data = vm.ruleChains.data.concat(ruleChains.data);
                         vm.ruleChains.nextPageLink = ruleChains.nextPageLink;
                         vm.ruleChains.hasNext = ruleChains.hasNext;
                         if (vm.ruleChains.hasNext) {
@@ -68,44 +69,51 @@ export default function AddRuleChainsToEdgeController(ruleChainService, $mdDialo
                     });
             }
         }
-    }
+    };
 
-    function cancel () {
+    function cancel() {
         $mdDialog.cancel();
     }
 
-    function assign () {
-        var tasks = [];
-        for (var ruleChainId in vm.ruleChains.selections) {
-            tasks.push(ruleChainService.assignRuleChainToEdge(edgeId, ruleChainId));
+    function assign() {
+        var assignTasks = [];
+        for (var i=0;i<edgeIds.length;i++) {
+            assignTasks.push(ruleChainService.assignRuleChainToEdge(edgeIds[i], vm.ruleChains.selection.id.id));
         }
-        $q.all(tasks).then(function () {
-            $mdDialog.hide();
+        $q.all(assignTasks).then(function () {
+            var setRootTasks = [];
+            for (var j=0;j<edgeIds.length;j++) {
+                setRootTasks.push(edgeService.setRootRuleChain(edgeIds[j], vm.ruleChains.selection.id.id));
+            }
+            $q.all(setRootTasks).then(function () {
+                $mdDialog.hide();
+            });
         });
     }
 
-    function noData () {
+    function noData() {
         return vm.ruleChains.data.length == 0 && !vm.ruleChains.hasNext;
     }
 
-    function hasData () {
+    function hasData() {
         return vm.ruleChains.data.length > 0;
     }
 
-    function toggleRuleChainSelection ($event, ruleChain) {
+    function toggleRuleChainSelection($event, ruleChain) {
         $event.stopPropagation();
-        var selected = angular.isDefined(ruleChain.selected) && ruleChain.selected;
-        ruleChain.selected = !selected;
-        if (ruleChain.selected) {
-            vm.ruleChains.selections[ruleChain.id.id] = true;
-            vm.ruleChains.selectedCount++;
+        if (vm.isRuleChainSelected(ruleChain)) {
+            vm.ruleChains.selection = null;
         } else {
-            delete vm.ruleChains.selections[ruleChain.id.id];
-            vm.ruleChains.selectedCount--;
+            vm.ruleChains.selection = ruleChain;
         }
     }
 
-    function searchRuleChainTextUpdated () {
+    function isRuleChainSelected(ruleChain) {
+        return vm.ruleChains.selection != null && ruleChain &&
+            ruleChain.id.id === vm.ruleChains.selection.id.id;
+    }
+
+    function searchRuleChainTextUpdated() {
         vm.ruleChains = {
             pageSize: vm.ruleChains.pageSize,
             data: [],
@@ -113,8 +121,7 @@ export default function AddRuleChainsToEdgeController(ruleChainService, $mdDialo
                 limit: vm.ruleChains.pageSize,
                 textSearch: vm.searchText
             },
-            selections: {},
-            selectedCount: 0,
+            selection: null,
             hasNext: true,
             pending: false
         };

@@ -44,6 +44,7 @@ import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
@@ -470,6 +471,14 @@ public class BaseEdgeService extends AbstractEntityService implements EdgeServic
     @Override
     public TimePageData<Event> findQueueEvents(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink) {
         return eventService.findEvents(tenantId, edgeId, DataConstants.EDGE_QUEUE_EVENT_TYPE, pageLink);
+    }
+
+    @Override
+    public Edge setRootRuleChain(TenantId tenantId, Edge edge, RuleChainId ruleChainId) {
+        edge.setRootRuleChainId(ruleChainId);
+        Edge saveEdge = saveEdge(edge);
+        ruleChainService.updateEdgeRuleChains(tenantId, saveEdge.getId());
+        return saveEdge;
     }
 
     private DataValidator<Edge> edgeValidator =

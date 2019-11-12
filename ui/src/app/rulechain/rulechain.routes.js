@@ -145,5 +145,43 @@ export default function RuleChainRoutes($stateProvider, NodeTemplatePathProvider
         ncyBreadcrumb: {
             label: '{"icon": "settings_ethernet", "label": "{{ vm.edgeRuleChainsTitle }}", "translate": "false"}'
         }
+    })
+    .state('home.edges.ruleChains.ruleChain', {
+        url: '/:ruleChainId',
+        reloadOnSearch: false,
+        module: 'private',
+        auth: ['SYS_ADMIN', 'TENANT_ADMIN'],
+        views: {
+            "content@home": {
+                templateUrl: ruleChainTemplate,
+                controller: 'RuleChainController',
+                controllerAs: 'vm'
+            }
+        },
+        resolve: {
+            ruleChain:
+            /*@ngInject*/
+                function($stateParams, ruleChainService) {
+                    return ruleChainService.getRuleChain($stateParams.ruleChainId);
+                },
+            ruleChainMetaData:
+            /*@ngInject*/
+                function($stateParams, ruleChainService) {
+                    return ruleChainService.getRuleChainMetaData($stateParams.ruleChainId);
+                },
+            ruleNodeComponents:
+            /*@ngInject*/
+                function($stateParams, ruleChainService) {
+                    return ruleChainService.getRuleNodeComponents();
+                }
+        },
+        data: {
+            import: false,
+            searchEnabled: false,
+            pageTitle: 'edge.rulechain'
+        },
+        ncyBreadcrumb: {
+            label: '{"icon": "settings_ethernet", "label": "edge.rulechain"}'
+        }
     });
 }

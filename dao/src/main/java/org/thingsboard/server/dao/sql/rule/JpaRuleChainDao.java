@@ -88,5 +88,4 @@ public class JpaRuleChainDao extends JpaAbstractSearchTextDao<RuleChainEntity, R
             return Futures.successfulAsList(ruleChainFutures);
         });
     }
-
 }

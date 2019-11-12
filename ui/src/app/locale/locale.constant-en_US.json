@@ -792,6 +792,7 @@
         "dashboards": "Edge Dashboards",
         "manage-edge-rulechains": "Manage edge rule chains",
         "rulechains": "Edge Rule Chains",
+        "rulechain": "Edge Rule Chain",
         "edge-key": "Edge key",
         "copy-edge-key": "Copy edge key",
         "edge-key-copied-message": "Edge key has been copied to clipboard",
@@ -803,7 +804,10 @@
         "manage-edge-entity-views": "Manage edge entity views",
         "assets": "Edge assets",
         "devices": "Edge devices",
-        "entity-views": "Edge entity views"
+        "entity-views": "Edge entity views",
+        "set-root-rule-chain-text": "Please select root rule chain for edge(s)",
+        "set-root-rule-chain-to-edges": "Set root rule chain for Edge(s)",
+        "set-root-rule-chain-to-edges-text": "Set root rule chain for { count, plural, 1 {1 edge} other {# edges} }"
     },
     "error": {
         "unable-to-connect": "Unable to connect to the server! Please check your internet connection.",

@@ -25,6 +25,7 @@ import lombok.Data;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.model.type.JsonCodec;
@@ -37,6 +38,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.EDGE_CONFIGURATION
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_CUSTOMER_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_LABEL_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_NAME_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.EDGE_ROOT_RULE_CHAIN_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_ROUTING_KEY_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_SECRET_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_TENANT_ID_PROPERTY;
@@ -59,6 +61,9 @@ public class EdgeEntity implements SearchTextEntity<Edge> {
     @ClusteringColumn
     @Column(name = EDGE_CUSTOMER_ID_PROPERTY)
     private UUID customerId;
+
+    @Column(name = EDGE_ROOT_RULE_CHAIN_ID_PROPERTY)
+    private UUID rootRuleChainId;
 
     @Column(name = EDGE_TYPE_PROPERTY)
     private String type;
@@ -95,6 +100,12 @@ public class EdgeEntity implements SearchTextEntity<Edge> {
         if (edge.getTenantId() != null) {
             this.tenantId = edge.getTenantId().getId();
         }
+        if (edge.getCustomerId() != null) {
+            this.customerId = edge.getCustomerId().getId();
+        }
+        if (edge.getRootRuleChainId() != null) {
+            this.rootRuleChainId = edge.getRootRuleChainId().getId();
+        }
         this.type = edge.getType();
         this.name = edge.getName();
         this.label = edge.getLabel();
@@ -118,6 +129,9 @@ public class EdgeEntity implements SearchTextEntity<Edge> {
         }
         if (customerId != null) {
             edge.setCustomerId(new CustomerId(customerId));
+        }
+        if (rootRuleChainId != null) {
+            edge.setRootRuleChainId(new RuleChainId(rootRuleChainId));
         }
         edge.setType(type);
         edge.setName(name);

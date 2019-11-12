@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -37,9 +38,12 @@ import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -74,7 +78,8 @@ public class EdgeController extends BaseController {
     @ResponseBody
     public Edge saveEdge(@RequestBody Edge edge) throws ThingsboardException {
         try {
-            edge.setTenantId(getCurrentUser().getTenantId());
+            TenantId tenantId = getCurrentUser().getTenantId();
+            edge.setTenantId(tenantId);
             boolean created = edge.getId() == null;
 
             Operation operation = created ? Operation.CREATE : Operation.WRITE;
@@ -83,6 +88,12 @@ public class EdgeController extends BaseController {
                     edge.getId(), edge);
 
             Edge result = checkNotNull(edgeService.saveEdge(edge));
+
+            if (created) {
+                RuleChain rootTenantRuleChain = ruleChainService.getRootTenantRuleChain(tenantId);
+                ruleChainService.assignRuleChainToEdge(tenantId, rootTenantRuleChain.getId(), result.getId());
+                edgeService.setRootRuleChain(tenantId, result, rootTenantRuleChain.getId());
+            }
 
             logEntityAction(result.getId(), result, null, created ? ActionType.ADDED : ActionType.UPDATED, null);
             return result;
@@ -246,6 +257,36 @@ public class EdgeController extends BaseController {
             TenantId tenantId = getCurrentUser().getTenantId();
             return checkNotNull(edgeService.findEdgeByTenantIdAndName(tenantId, edgeName));
         } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/edge/{edgeId}/{ruleChainId}/root", method = RequestMethod.POST)
+    @ResponseBody
+    public Edge setRootRuleChain(@PathVariable(EDGE_ID) String strEdgeId,
+                                      @PathVariable("ruleChainId") String strRuleChainId) throws ThingsboardException {
+        checkParameter(EDGE_ID, strEdgeId);
+        checkParameter("ruleChainId", strRuleChainId);
+        try {
+            RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
+            checkRuleChain(ruleChainId, Operation.WRITE);
+
+            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+            Edge edge = checkEdgeId(edgeId, Operation.WRITE);
+            accessControlService.checkPermission(getCurrentUser(), Resource.EDGE, Operation.WRITE,
+                    edge.getId(), edge);
+
+            Edge updatedEdge = edgeService.setRootRuleChain(getTenantId(), edge, ruleChainId);
+
+            logEntityAction(updatedEdge.getId(), updatedEdge, null, ActionType.UPDATED, null);
+
+            return updatedEdge;
+        } catch (Exception e) {
+            logEntityAction(emptyId(EntityType.EDGE),
+                    null,
+                    null,
+                    ActionType.UPDATED, e, strEdgeId);
             throw handleException(e);
         }
     }

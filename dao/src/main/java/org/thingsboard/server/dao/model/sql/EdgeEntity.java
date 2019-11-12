@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -39,6 +40,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.EDGE_COLUMN_FAMILY
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_CUSTOMER_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_LABEL_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_NAME_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.EDGE_ROOT_RULE_CHAIN_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_ROUTING_KEY_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_SECRET_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_TENANT_ID_PROPERTY;
@@ -57,6 +59,9 @@ public class EdgeEntity extends BaseSqlEntity<Edge> implements SearchTextEntity<
 
     @Column(name = EDGE_CUSTOMER_ID_PROPERTY)
     private String customerId;
+
+    @Column(name = EDGE_ROOT_RULE_CHAIN_ID_PROPERTY)
+    private String rootRuleChainId;
 
     @Column(name = EDGE_TYPE_PROPERTY)
     private String type;
@@ -98,6 +103,9 @@ public class EdgeEntity extends BaseSqlEntity<Edge> implements SearchTextEntity<
         if (edge.getCustomerId() != null) {
             this.customerId = UUIDConverter.fromTimeUUID(edge.getCustomerId().getId());
         }
+        if (edge.getRootRuleChainId() != null) {
+            this.rootRuleChainId = UUIDConverter.fromTimeUUID(edge.getRootRuleChainId().getId());
+        }
         this.type = edge.getType();
         this.name = edge.getName();
         this.label = edge.getLabel();
@@ -130,6 +138,9 @@ public class EdgeEntity extends BaseSqlEntity<Edge> implements SearchTextEntity<
         }
         if (customerId != null) {
             edge.setCustomerId(new CustomerId(UUIDConverter.fromString(customerId)));
+        }
+        if (rootRuleChainId != null) {
+            edge.setRootRuleChainId(new RuleChainId(UUIDConverter.fromString(rootRuleChainId)));
         }
         edge.setType(type);
         edge.setName(name);

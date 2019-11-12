@@ -19,6 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.RuleChainId;
 
 @AllArgsConstructor
 public class ShortEdgeInfo {
@@ -28,6 +29,9 @@ public class ShortEdgeInfo {
 
     @Getter @Setter
     private String title;
+
+    @Getter @Setter
+    private RuleChainId rootRuleChainId;
 
     @Override
     public boolean equals(Object o) {

@@ -139,7 +139,7 @@ public class TenantActor extends RuleChainManagerActor {
         RuleChain ruleChain = null;
         if (msg.getEntityId().getEntityType() == EntityType.RULE_CHAIN) {
             ruleChain = systemContext.getRuleChainService().findRuleChainById(tenantId, new RuleChainId(msg.getEntityId().getId()));
-            if (RuleChainType.SYSTEM.equals(ruleChain.getType())) {
+            if (ruleChain !=null && !RuleChainType.SYSTEM.equals(ruleChain.getType())) {
                 log.debug("[{}] Non SYSTEM rule chains are ignored and not started. Current rule chain type [{}]", tenantId, ruleChain.getType());
                 return;
             }

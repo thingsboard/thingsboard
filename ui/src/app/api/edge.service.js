@@ -31,7 +31,8 @@ function EdgeService($http, $q, customerService) {
         getCustomerEdges: getCustomerEdges,
         assignEdgeToCustomer: assignEdgeToCustomer,
         unassignEdgeFromCustomer: unassignEdgeFromCustomer,
-        makeEdgePublic: makeEdgePublic
+        makeEdgePublic: makeEdgePublic,
+        setRootRuleChain: setRootRuleChain
     };
 
     return service;
@@ -223,6 +224,17 @@ function EdgeService($http, $q, customerService) {
         var deferred = $q.defer();
         var url = '/api/customer/public/edge/' + edgeId;
         $http.post(url, null).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function setRootRuleChain(edgeId, ruleChainId) {
+        var deferred = $q.defer();
+        var url = '/api/edge/' + edgeId + '/' + ruleChainId + '/root';
+        $http.post(url).then(function success(response) {
             deferred.resolve(response.data);
         }, function fail() {
             deferred.reject();

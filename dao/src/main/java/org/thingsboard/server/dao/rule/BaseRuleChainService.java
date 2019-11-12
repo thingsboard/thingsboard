@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.ShortEdgeInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -42,6 +43,7 @@ import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.dao.edge.EdgeDao;
 import org.thingsboard.server.dao.edge.EdgeService;
@@ -116,6 +118,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                     createRelation(tenantId, new EntityRelation(ruleChain.getTenantId(), ruleChain.getId(),
                             EntityRelation.CONTAINS_TYPE, RelationTypeGroup.RULE_CHAIN));
                     ruleChain.setRoot(true);
+                    ruleChain.setType(RuleChainType.SYSTEM);
                     ruleChainDao.save(tenantId, ruleChain);
                     return true;
                 } catch (ExecutionException | InterruptedException e) {
@@ -359,8 +362,17 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     public void deleteRuleChainById(TenantId tenantId, RuleChainId ruleChainId) {
         Validator.validateId(ruleChainId, "Incorrect rule chain id for delete request.");
         RuleChain ruleChain = ruleChainDao.findById(tenantId, ruleChainId.getId());
-        if (ruleChain != null && ruleChain.isRoot()) {
-            throw new DataValidationException("Deletion of Root Tenant Rule Chain is prohibited!");
+        if (ruleChain != null) {
+            if (ruleChain.isRoot()) {
+                throw new DataValidationException("Deletion of Root Tenant Rule Chain is prohibited!");
+            }
+            if (ruleChain.getAssignedEdges() != null && !ruleChain.getAssignedEdges().isEmpty()) {
+                for (ShortEdgeInfo assignedEdge : ruleChain.getAssignedEdges()) {
+                    if (assignedEdge.getRootRuleChainId() != null && assignedEdge.getRootRuleChainId().equals(ruleChainId)) {
+                        throw new DataValidationException("Can't delete rule chain that is root for edge [" + assignedEdge.getTitle() + "]. Please assign another root rule chain first to the edge!");
+                    }
+                }
+            }
         }
         checkRuleNodesAndDelete(tenantId, ruleChainId);
     }
@@ -398,13 +410,16 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         RuleChain ruleChain = findRuleChainById(tenantId, ruleChainId);
         Edge edge = edgeDao.findById(tenantId, edgeId.getId());
         if (edge == null) {
-            throw new DataValidationException("Can't unassign ruleChain from non-existent edge!");
+            throw new DataValidationException("Can't unassign rule chain from non-existent edge!");
+        }
+        if (edge.getRootRuleChainId() != null && edge.getRootRuleChainId().equals(ruleChainId)) {
+            throw new DataValidationException("Can't unassign root rule chain from edge [" + edge.getName() + "]. Please assign another root rule chain first!");
         }
         if (ruleChain.removeAssignedEdge(edge)) {
             try {
                 deleteRelation(tenantId, new EntityRelation(edgeId, ruleChainId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
             } catch (ExecutionException | InterruptedException e) {
-                log.warn("[{}] Failed to delete ruleChain relation. Edge Id: [{}]", ruleChainId, edgeId);
+                log.warn("[{}] Failed to delete rule chain relation. Edge Id: [{}]", ruleChainId, edgeId);
                 throw new RuntimeException(e);
             }
             return saveRuleChain(ruleChain);
@@ -442,13 +457,13 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
         Validator.validateId(edgeId, "Incorrect customerId " + edgeId);
         Validator.validatePageLink(pageLink, "Incorrect page link " + pageLink);
-        ListenableFuture<List<RuleChain>> dashboards = ruleChainDao.findRuleChainsByTenantIdAndEdgeId(tenantId.getId(), edgeId.getId(), pageLink);
+        ListenableFuture<List<RuleChain>> ruleChains = ruleChainDao.findRuleChainsByTenantIdAndEdgeId(tenantId.getId(), edgeId.getId(), pageLink);
 
-        return Futures.transform(dashboards, new Function<List<RuleChain>, TimePageData<RuleChain>>() {
+        return Futures.transform(ruleChains, new Function<List<RuleChain>, TimePageData<RuleChain>>() {
             @Nullable
             @Override
-            public TimePageData<RuleChain> apply(@Nullable List<RuleChain> RuleChain) {
-                return new TimePageData<>(RuleChain, pageLink);
+            public TimePageData<RuleChain> apply(@Nullable List<RuleChain> ruleChain) {
+                return new TimePageData<>(ruleChain, pageLink);
             }
         });
     }
