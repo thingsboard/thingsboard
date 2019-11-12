@@ -198,7 +198,7 @@ function MultipleInputWidgetController($q, $scope, $translate, attributeService,
             var datasource = vm.datasources[0];
             if (datasource.type === types.datasourceType.entity) {
                 for (var i = 0; i < datasource.dataKeys.length; i++) {
-                    if ((datasource.entityType !== types.entityType.device) && (datasource.dataKeys[i].settings.dataKeyType !== 'server')) {
+                    if ((datasource.entityType !== types.entityType.device) && (datasource.dataKeys[i].settings.dataKeyType == 'shared')) {
                         vm.isAllParametersValid = false;
                     }
                     vm.data.push(datasource.dataKeys[i]);
@@ -234,18 +234,18 @@ function MultipleInputWidgetController($q, $scope, $translate, attributeService,
                     currentValue: value,
                     originalValue: value
                 };
+            }
 
-                if (vm.data[i].settings.isEditable === 'editable' && vm.data[i].settings.disabledOnDataKey) {
-                    var conditions = data.filter((item) => {
-                        return item.dataKey.name === vm.data[i].settings.disabledOnDataKey;
-                    });
-                    if (conditions && conditions.length) {
-                        if (conditions[0].data.length) {
-                            if (conditions[0].data[0][1] === 'false') {
-                                vm.data[i].settings.disabledOnCondition = true;
-                            } else {
-                                vm.data[i].settings.disabledOnCondition = !conditions[0].data[0][1];
-                            }
+            if (vm.data[i].settings.isEditable === 'editable' && vm.data[i].settings.disabledOnDataKey) {
+                var conditions = data.filter((item) => {
+                    return item.dataKey.name === vm.data[i].settings.disabledOnDataKey;
+                });
+                if (conditions && conditions.length) {
+                    if (conditions[0].data.length) {
+                        if (conditions[0].data[0][1] === 'false') {
+                            vm.data[i].settings.disabledOnCondition = true;
+                        } else {
+                            vm.data[i].settings.disabledOnCondition = !conditions[0].data[0][1];
                         }
                     }
                 }
