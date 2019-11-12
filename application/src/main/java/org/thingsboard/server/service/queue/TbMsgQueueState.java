@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.queue;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -24,11 +25,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Data
 public class TbMsgQueueState {
     private final TbMsg msg;
+    private final TenantId tenantId;
     private AtomicInteger retryAttempt;
     private AtomicBoolean ack;
 
-    public TbMsgQueueState(TbMsg msg, AtomicInteger retryAttempt, AtomicBoolean ack) {
+    public TbMsgQueueState(TbMsg msg, TenantId tenantId, AtomicInteger retryAttempt, AtomicBoolean ack) {
         this.msg = msg;
+        this.tenantId = tenantId;
         this.retryAttempt = retryAttempt;
         this.ack = ack;
     }

@@ -35,7 +35,8 @@ public class TbMsgQueueHandlerStrategyRetry implements TbMsgQueueHandlerStrategy
                 new AtomicInteger(msgQueuePack.getRetryAttempt().get()),
                 new AtomicInteger(0),
                 new AtomicInteger(0),
-                new AtomicBoolean(false));
+                new AtomicBoolean(false),
+                msgQueuePack.getTenantId());
 
         msgQueuePack.getMsgs().values().parallelStream()
                 .filter(msg -> msg.getAck().get())

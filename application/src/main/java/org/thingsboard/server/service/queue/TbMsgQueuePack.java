@@ -16,8 +16,8 @@
 package org.thingsboard.server.service.queue;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.id.TenantId;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -35,23 +35,29 @@ public class TbMsgQueuePack {
     private final AtomicInteger totalCount;
     private final AtomicInteger ackCount;
     private final AtomicBoolean ack;
+    private final TenantId tenantId;
 
-    public TbMsgQueuePack(UUID packId, AtomicInteger retryAttempt, AtomicInteger totalCount, AtomicInteger ackCount, AtomicBoolean ack) {
+    public TbMsgQueuePack(UUID packId, AtomicInteger retryAttempt, AtomicInteger totalCount, AtomicInteger ackCount, AtomicBoolean ack, TenantId tenantId) {
         this.packId = packId;
         this.retryAttempt = retryAttempt;
         this.totalCount = totalCount;
         this.ackCount = ackCount;
         this.ack = ack;
+        this.tenantId = tenantId;
     }
 
     public void addMsg(TbMsgQueueState msg) {
+
         msgs.put(msg.getMsg().getId(), msg);
         totalCount.set(msgs.size());
     }
 
     public void ackMsg(UUID msgId) {
-        ackMsgIds.add(msgId);
-        msgs.get(msgId).ack();
+        TbMsgQueueState msg = msgs.get(msgId);
+        if (msg != null) {
+            ackMsgIds.add(msgId);
+            msg.ack();
+        }
         ackCount.set(ackMsgIds.size());
         ack.set(totalCount.get() == ackCount.get());
     }

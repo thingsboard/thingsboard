@@ -40,7 +40,6 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbActorMsg;
-import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
@@ -52,7 +51,6 @@ import org.thingsboard.server.service.cluster.discovery.DiscoveryService;
 import org.thingsboard.server.service.cluster.discovery.ServerInstance;
 import org.thingsboard.server.service.cluster.rpc.ClusterRpcService;
 import org.thingsboard.server.service.queue.TbMsgQueuePack;
-import org.thingsboard.server.service.queue.TbMsgQueueState;
 import org.thingsboard.server.service.state.DeviceStateService;
 import scala.concurrent.Await;
 import scala.concurrent.Future;
@@ -177,13 +175,10 @@ public class DefaultActorService implements ActorService {
 
     @Override
     public void onMsgFromTbMsgQueue(TbMsgQueuePack pack) {
-//        log.trace("[{}] Processing onDeviceNameOrTypeUpdate event, deviceName: {}, deviceType: {}", deviceId, deviceName, deviceType);
-
         pack.getMsgs().values()
                 .parallelStream()
-                .map(TbMsgQueueState::getMsg)
-                .forEach(msg -> {
-            appActor.tell(new TbMsgQueueToRuleEngineMsg(msg), ActorRef.noSender());
+                .forEach(msgState -> {
+            appActor.tell(new TbMsgQueueToRuleEngineMsg(msgState.getMsg(), msgState.getTenantId()), ActorRef.noSender());
         });
     }
 

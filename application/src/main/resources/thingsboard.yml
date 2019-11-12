@@ -356,7 +356,7 @@ spring:
     database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}"
   datasource:
     driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.postgresql.Driver}"
-    url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard4}"
+    url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard}"
     username: "${SPRING_DATASOURCE_USERNAME:postgres}"
     password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
     hikari:
@@ -442,10 +442,10 @@ kafka:
       fetch_max_wait_ms: "${TB_KAFKA_CONSUMER_FETCH_MAX_WAIT_MS:1000}"
       session_timeout_ms: "${TB_KAFKA_CONSUMER_SESSION_TIMEOUT_MS:10000}"
       heartbeat_interval_ms: "${TB_KAFKA_CONSUMER_HEARTBEAT_INTERVAL_MS:3000}"
-      enable_auto_commit: "${TB_KAFKA_CONSUMER_ENABLE_AUTO_COMMIT: true}"
-      client_id: "${TB_KAFKA_CONSUMER_CLIENT_ID_id: tb.rule-engine.consumer}"
-      group_id: "${TB_KAFKA_CONSUMER_GROUP_ID: tb_group}"
-      topic_pattern: "${TB_KAFKA_CONSUMER_TOPIC_PATTERN: tb.rule-engine.*}"
+      enable_auto_commit: "${TB_KAFKA_CONSUMER_ENABLE_AUTO_COMMIT:true}"
+      client_id: "${TB_KAFKA_CONSUMER_CLIENT_ID_id:tb.rule-engine.consumer}"
+      group_id: "${TB_KAFKA_CONSUMER_GROUP_ID:tb_group}"
+      topic_pattern: "${TB_KAFKA_CONSUMER_TOPIC_PATTERN:tb.rule-engine.*}"
 
 
 backpressure:

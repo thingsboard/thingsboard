@@ -27,6 +27,7 @@ import java.io.Serializable;
 public final class TbMsgQueueToRuleEngineMsg implements TbActorMsg, Serializable {
 
     private final TbMsg tbMsg;
+    private final TenantId tenantId;
 
     @Override
     public MsgType getMsgType() {

@@ -46,6 +46,7 @@ import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
+import org.thingsboard.server.common.msg.system.TbMsgQueueToRuleEngineMsg;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.tenant.TenantService;
 import scala.concurrent.duration.Duration;
@@ -109,6 +110,9 @@ public class AppActor extends RuleChainManagerActor {
             case REMOTE_TO_RULE_CHAIN_TELL_NEXT_MSG:
                 onToDeviceActorMsg((TenantAwareMsg) msg);
                 break;
+            case MSQ_QUEUE_TO_RULE_ENGINE_MSG:
+                onQueueToRuleEngineMsg((TbMsgQueueToRuleEngineMsg) msg);
+                break;
             default:
                 return false;
         }
@@ -150,6 +154,10 @@ public class AppActor extends RuleChainManagerActor {
         } else {
             getOrCreateTenantActor(msg.getTenantId()).tell(msg, self());
         }
+    }
+
+    private void onQueueToRuleEngineMsg(TbMsgQueueToRuleEngineMsg msg) {
+            getOrCreateTenantActor(msg.getTenantId()).tell(msg, self());
     }
 
     @Override

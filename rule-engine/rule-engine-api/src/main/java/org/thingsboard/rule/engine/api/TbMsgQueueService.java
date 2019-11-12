@@ -15,12 +15,13 @@
  */
 package org.thingsboard.rule.engine.api;
 
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.UUID;
 
 public interface TbMsgQueueService {
-    void ack(UUID msgId);
+    void ack(UUID msgId, TenantId tenantId);
 
-    void add(TbMsg msg);
+    void add(TbMsg msg, TenantId tenantId);
 }

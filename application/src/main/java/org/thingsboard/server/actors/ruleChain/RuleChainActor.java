@@ -62,6 +62,9 @@ public class RuleChainActor extends ComponentActor<RuleChainId, RuleChainActorMe
             case STATS_PERSIST_TICK_MSG:
                 onStatsPersistTick(id);
                 break;
+            case MSQ_QUEUE_TO_RULE_ENGINE_MSG:
+                processor.onQueueToRuleEngineMsg((TbMsgQueueToRuleEngineMsg) msg);
+                break;
             default:
                 return false;
         }

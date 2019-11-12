@@ -271,7 +271,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
             if (ackId != null) {
 //                TODO: Ack this message in Kafka
 //                queue.ack(tenantId, msg, ackId.getId(), msg.getClusterPartition());
-                msgQueueService.ack(msg.getId());
+                msgQueueService.ack(msg.getId(), tenantId);
             }
         } else if (relationsCount == 1) {
             for (RuleNodeRelation relation : relations) {
@@ -292,7 +292,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
                 }
             }
 
-            msgQueueService.ack(msg.getId());
+            msgQueueService.ack(msg.getId(), tenantId);
             //TODO: Ideally this should happen in async way when all targets confirm that the copied messages are successfully written to corresponding target queues.
             if (ackId != null) {
 //                TODO: Ack this message in Kafka
@@ -317,15 +317,15 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         RuleChainId targetRCId = new RuleChainId(target.getId());
         TbMsg copyMsg = msg.copy(UUIDs.timeBased(), msg.getTbMsgPackId(), targetRCId, null, DEFAULT_CLUSTER_PARTITION);
 //        parent.tell(new RuleChainToRuleChainMsg(new RuleChainId(target.getId()), entityId, copyMsg, fromRelationType, true), self);
-        msgQueueService.add(copyMsg);
+        msgQueueService.add(copyMsg, tenantId);
     }
 
     private void enqueueAndForwardMsgCopyToNode(TbMsg msg, EntityId target, String fromRelationType) {
         RuleNodeId targetId = new RuleNodeId(target.getId());
         RuleNodeCtx targetNodeCtx = nodeActors.get(targetId);
         TbMsg copy = msg.copy(UUIDs.timeBased(), msg.getTbMsgPackId(), entityId, targetId, DEFAULT_CLUSTER_PARTITION);
-        pushMsgToNode(targetNodeCtx, copy, fromRelationType);
-        msgQueueService.add(copy);
+//        pushMsgToNode(targetNodeCtx, copy, fromRelationType);
+        msgQueueService.add(copy, tenantId);
     }
 
     private void pushToTarget(TbMsg msg, EntityId target, String fromRelationType) {
