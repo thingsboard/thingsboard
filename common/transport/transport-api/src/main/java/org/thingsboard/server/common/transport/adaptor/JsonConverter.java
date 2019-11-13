@@ -43,8 +43,11 @@ import org.thingsboard.server.gen.transport.TransportProtos.KeyValueProto;
 import org.thingsboard.server.gen.transport.TransportProtos.KeyValueType;
 import org.thingsboard.server.gen.transport.TransportProtos.PostAttributeMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostTelemetryMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceProfileCredentialsMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvListProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
+import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -53,6 +56,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -245,6 +249,15 @@ public class JsonConverter {
                 throw new JsonSyntaxException("Big integer values are not supported!");
             }
         }
+    }
+
+    public static JsonObject toJson(ProvisionDeviceResponseMsg payload) {
+        JsonObject result = new JsonObject();
+        result.addProperty("deviceId", new DeviceId(new UUID(payload.getDeviceIdMSB(), payload.getDeviceIdLSB())).toString());
+        result.addProperty("credentialsType", payload.getCredentialsType().name());
+        result.addProperty("credentialsId", payload.getCredentialsId());
+        result.addProperty("credentialsValue", StringUtils.isEmpty(payload.getCredentialsValue()) ? null : payload.getCredentialsValue());
+        return result;
     }
 
     public static JsonObject toJson(GetAttributeResponseMsg payload) {
@@ -507,4 +520,37 @@ public class JsonConverter {
         maxStringValueLength = length;
     }
 
+    public static ProvisionDeviceRequestMsg convertToProvisionRequestMsg(String json) {
+        JsonElement jsonElement = new JsonParser().parse(json);
+        if (jsonElement.isJsonObject()) {
+            return buildProvisionRequestMsg(jsonElement.getAsJsonObject());
+        } else {
+            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + jsonElement);
+        }
+    }
+
+    private static ProvisionDeviceRequestMsg buildProvisionRequestMsg(JsonObject jo) {
+        return ProvisionDeviceRequestMsg.newBuilder()
+                .setDeviceName(getStrValue(jo, "deviceName"))
+                .setDeviceType(getStrValue(jo, "deviceType"))
+                .setProvisionProfileCredentialsMsg(buildProvisionProfileCredentialsMsg(
+                        getStrValue(jo, "provisionProfileKey"),
+                        getStrValue(jo, "provisionProfileSecret")))
+                .build();
+    }
+
+    private static ProvisionDeviceProfileCredentialsMsg buildProvisionProfileCredentialsMsg(String provisionProfileKey, String provisionProfileSecret) {
+        return ProvisionDeviceProfileCredentialsMsg.newBuilder()
+                .setProvisionProfileKey(provisionProfileKey)
+                .setProvisionProfileSecret(provisionProfileSecret)
+                .build();
+    }
+
+    private static String getStrValue(JsonObject jo, String field) {
+        if (jo.has(field)) {
+            return jo.get(field).getAsString();
+        } else {
+            throw new RuntimeException("Failed to find the field " + field + " in JSON body " + jo + "!");
+        }
+    }
 }

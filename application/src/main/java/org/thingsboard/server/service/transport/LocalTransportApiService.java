@@ -21,8 +21,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Device;
@@ -32,29 +30,26 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
+import org.thingsboard.server.dao.device.DeviceProvisionService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.device.provision.ProvisionProfileCredentials;
+import org.thingsboard.server.dao.device.provision.ProvisionRequest;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
+import org.thingsboard.server.gen.transport.TransportProtos.CredentialsType;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
-import org.thingsboard.server.kafka.TBKafkaConsumerTemplate;
-import org.thingsboard.server.kafka.TBKafkaProducerTemplate;
-import org.thingsboard.server.kafka.TbKafkaResponseTemplate;
-import org.thingsboard.server.kafka.TbKafkaSettings;
-import org.thingsboard.server.service.cluster.discovery.DiscoveryService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.state.DeviceStateService;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -79,6 +74,9 @@ public class LocalTransportApiService implements TransportApiService {
     private DeviceStateService deviceStateService;
 
     @Autowired
+    private DeviceProvisionService deviceProvisionService;
+
+    @Autowired
     private DbCallbackExecutorService dbCallbackExecutorService;
 
     private ReentrantLock deviceCreationLock = new ReentrantLock();
@@ -93,6 +91,8 @@ public class LocalTransportApiService implements TransportApiService {
             return validateCredentials(msg.getHash(), DeviceCredentialsType.X509_CERTIFICATE);
         } else if (transportApiRequestMsg.hasGetOrCreateDeviceRequestMsg()) {
             return handle(transportApiRequestMsg.getGetOrCreateDeviceRequestMsg());
+        } else if (transportApiRequestMsg.hasProvisionRequestMsg()) {
+            return handle(transportApiRequestMsg.getProvisionRequestMsg());
         }
         return getEmptyTransportApiResponseFuture();
     }
@@ -135,6 +135,25 @@ public class LocalTransportApiService implements TransportApiService {
         }, dbCallbackExecutorService);
     }
 
+    private ListenableFuture<TransportApiResponseMsg> handle(ProvisionDeviceRequestMsg requestMsg) {
+        DeviceCredentials deviceCredentials = deviceProvisionService.provisionDevice(
+                new ProvisionRequest(
+                        requestMsg.getDeviceName(),
+                        requestMsg.getDeviceType(),
+                        new ProvisionProfileCredentials(
+                                requestMsg.getProvisionProfileCredentialsMsg().getProvisionProfileKey(),
+                                requestMsg.getProvisionProfileCredentialsMsg().getProvisionProfileSecret())));
+        return Futures.immediateFuture(TransportApiResponseMsg.newBuilder()
+                .setProvisionDeviceResponseMsg(TransportProtos.ProvisionDeviceResponseMsg.newBuilder()
+                        .setDeviceIdMSB(deviceCredentials.getDeviceId().getId().getMostSignificantBits())
+                        .setDeviceIdLSB(deviceCredentials.getDeviceId().getId().getLeastSignificantBits())
+                        .setCredentialsType(deviceCredentials.getCredentialsType() == DeviceCredentialsType.ACCESS_TOKEN ?
+                                CredentialsType.ACCESS_TOKEN : CredentialsType.X509_CERTIFICATE)
+                        .setCredentialsId(deviceCredentials.getCredentialsId())
+                        .setCredentialsValue(deviceCredentials.getCredentialsValue() != null ? deviceCredentials.getCredentialsValue() : "")
+                        .build())
+                .build());
+    }
 
     private ListenableFuture<TransportApiResponseMsg> getDeviceInfo(DeviceId deviceId, DeviceCredentials credentials) {
         return Futures.transform(deviceService.findDeviceByIdAsync(TenantId.SYS_TENANT_ID, deviceId), device -> {

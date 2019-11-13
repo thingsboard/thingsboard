@@ -32,7 +32,9 @@ import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
+import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -42,6 +44,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+
+import static org.thingsboard.server.common.msg.session.SessionMsgType.POST_ATTRIBUTES_REQUEST;
+import static org.thingsboard.server.common.msg.session.SessionMsgType.POST_TELEMETRY_REQUEST;
 
 @Slf4j
 public class CoapTransportResource extends CoapResource {
@@ -108,10 +113,10 @@ public class CoapTransportResource extends CoapResource {
         } else {
             switch (featureType.get()) {
                 case ATTRIBUTES:
-                    processRequest(exchange, SessionMsgType.POST_ATTRIBUTES_REQUEST);
+                    processRequest(exchange, POST_ATTRIBUTES_REQUEST);
                     break;
                 case TELEMETRY:
-                    processRequest(exchange, SessionMsgType.POST_TELEMETRY_REQUEST);
+                    processRequest(exchange, POST_TELEMETRY_REQUEST);
                     break;
                 case RPC:
                     Optional<Integer> requestId = getRequestId(exchange.advanced().getRequest());
@@ -124,7 +129,22 @@ public class CoapTransportResource extends CoapResource {
                 case CLAIM:
                     processRequest(exchange, SessionMsgType.CLAIM_REQUEST);
                     break;
+                case PROVISION:
+                    processProvision(exchange);
+                    break;
             }
+        }
+    }
+
+    private void processProvision(CoapExchange exchange) {
+        log.trace("Processing {}", exchange.advanced().getRequest());
+        exchange.accept();
+        try {
+            transportService.process(transportContext.getAdaptor().convertToProvisionRequestMsg(exchange.advanced().getRequest()),
+                    new DeviceProvisionCallback(exchange));
+        } catch (AdaptorException e) {
+            log.trace("Failed to decode message: ", e);
+            exchange.respond(ResponseCode.BAD_REQUEST);
         }
     }
 
@@ -308,6 +328,25 @@ public class CoapTransportResource extends CoapResource {
             } else {
                 exchange.respond(ResponseCode.UNAUTHORIZED);
             }
+        }
+
+        @Override
+        public void onError(Throwable e) {
+            log.warn("Failed to process request", e);
+            exchange.respond(ResponseCode.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private static class DeviceProvisionCallback implements TransportServiceCallback<ProvisionDeviceResponseMsg> {
+        private final CoapExchange exchange;
+
+        DeviceProvisionCallback(CoapExchange exchange) {
+            this.exchange = exchange;
+        }
+
+        @Override
+        public void onSuccess(TransportProtos.ProvisionDeviceResponseMsg msg) {
+            exchange.respond(JsonConverter.toJson(msg).toString());
         }
 
         @Override

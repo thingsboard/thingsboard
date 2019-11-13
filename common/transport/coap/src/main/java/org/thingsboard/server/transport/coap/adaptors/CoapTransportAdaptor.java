@@ -45,4 +45,5 @@ public interface CoapTransportAdaptor {
 
     Response convertToPublish(CoapTransportResource.CoapSessionListener coapSessionListener, TransportProtos.ToServerRpcResponseMsg msg) throws AdaptorException;
 
+    TransportProtos.ProvisionDeviceRequestMsg convertToProvisionRequestMsg(Request inbound) throws AdaptorException;
 }

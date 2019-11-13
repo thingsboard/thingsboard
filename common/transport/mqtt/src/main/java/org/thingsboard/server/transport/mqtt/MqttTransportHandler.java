@@ -44,9 +44,12 @@ import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
+import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.common.transport.service.AbstractTransportService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
+import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionEvent;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
@@ -232,6 +235,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             } else if (topicName.equals(MqttTopics.DEVICE_CLAIM_TOPIC)) {
                 TransportProtos.ClaimDeviceMsg claimDeviceMsg = adaptor.convertToClaimDevice(deviceSessionCtx, mqttMsg);
                 transportService.process(sessionInfo, claimDeviceMsg, getPubAckCallback(ctx, msgId, claimDeviceMsg));
+            } else if (topicName.equals(MqttTopics.DEVICE_PROVISION_TOPIC)) {
+                ProvisionDeviceRequestMsg provisionRequestMsg = adaptor.convertToProvisionRequestMsg(deviceSessionCtx, mqttMsg);
+                transportService.process(provisionRequestMsg, new DeviceProvisionCallback(ctx, msgId, provisionRequestMsg));
             }
         } catch (AdaptorException e) {
             log.warn("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
@@ -256,6 +262,32 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 processDisconnect(ctx);
             }
         };
+    }
+
+    private class DeviceProvisionCallback implements TransportServiceCallback<ProvisionDeviceResponseMsg> {
+        private final ChannelHandlerContext ctx;
+        private final int msgId;
+        private final ProvisionDeviceRequestMsg msg;
+
+        DeviceProvisionCallback(ChannelHandlerContext ctx, int msgId, ProvisionDeviceRequestMsg msg) {
+            this.ctx = ctx;
+            this.msgId = msgId;
+            this.msg = msg;
+        }
+
+        @Override
+        public void onSuccess(ProvisionDeviceResponseMsg provisionResponseMsg) {
+            log.trace("[{}] Published msg: {}", sessionId, msg);
+            if (msgId > 0) {
+                // TODO: 11/11/2019
+            }
+        }
+
+        @Override
+        public void onError(Throwable e) {
+            log.trace("[{}] Failed to publish msg: {}", sessionId, msg, e);
+            processDisconnect(ctx);
+        }
     }
 
     private void processSubscribe(ChannelHandlerContext ctx, MqttSubscribeMessage mqttMsg) {

@@ -13,8 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.session;
+package org.thingsboard.server.dao.device;
 
-public enum FeatureType {
-    ATTRIBUTES, TELEMETRY, RPC, CLAIM, PROVISION
+import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.dao.device.provision.ProvisionRequest;
+
+public interface DeviceProvisionService {
+
+    DeviceCredentials provisionDevice(ProvisionRequest provisionRequest);
+
 }
