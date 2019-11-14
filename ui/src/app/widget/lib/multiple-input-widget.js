@@ -47,14 +47,14 @@ function MultipleInputWidgetController($q, $scope, $translate, attributeService,
     vm.entityDetected = false;
     vm.isAllParametersValid = true;
 
-    vm.data = [];
+    vm.sources = [];
     vm.datasources = null;
 
     vm.discardAll = discardAll;
     vm.inputChanged = inputChanged;
     vm.save = save;
 
-    $scope.$watch('vm.ctx', function() {
+    $scope.$watch('vm.ctx', function () {
         if (vm.ctx && vm.ctx.defaultSubscription) {
             vm.settings = vm.ctx.settings;
             vm.widgetConfig = vm.ctx.widgetConfig;
@@ -65,100 +65,113 @@ function MultipleInputWidgetController($q, $scope, $translate, attributeService,
         }
     });
 
-    $scope.$on('multiple-input-data-updated', function(event, formId) {
+    $scope.$on('multiple-input-data-updated', function (event, formId) {
         if (vm.formId == formId) {
             updateWidgetData(vm.subscription.data);
             $scope.$digest();
         }
     });
 
-    $scope.$on('multiple-input-resize', function(event, formId) {
+    $scope.$on('multiple-input-resize', function (event, formId) {
         if (vm.formId == formId) {
             updateWidgetDisplaying();
         }
     });
 
     function discardAll() {
-        for (var i = 0; i < vm.data.length; i++) {
-            vm.data[i].data.currentValue = vm.data[i].data.originalValue;
+        for (var i = 0; i < vm.sources.length; i++) {
+            for (var j = 0; j < vm.sources[i].keys.length; j++) {
+                vm.sources[i].keys[j].data.currentValue = vm.sources[i].keys[j].data.originalValue;
+            }
         }
         $scope.multipleInputForm.$setPristine();
     }
 
-    function inputChanged(key) {
+    function inputChanged(source, key) {
         if (!vm.settings.showActionButtons) {
             if (!key.settings.required || (key.settings.required && key.data && angular.isDefined(key.data.currentValue))) {
-                vm.save(key);
+                var dataToSave = {
+                    datasource: source.datasource,
+                    keys: [key]
+                };
+                vm.save(dataToSave);
             }
         }
     }
 
-    function save(key) {
+    function save(dataToSave) {
         var tasks = [];
-        var serverAttributes = [], sharedAttributes = [], telemetry = [];
         var config = {
             ignoreLoading: !vm.settings.showActionButtons
         };
         var data;
-        if (key) {
-            data = [key];
+        if (dataToSave) {
+            data = [dataToSave];
         } else {
-            data = vm.data;
+            data = vm.sources;
         }
         for (let i = 0; i < data.length; i++) {
-            var item = data[i];
-            if (item.data.currentValue !== item.data.originalValue) {
-                var attribute = {
-                    key: item.name
-                };
-                switch (item.settings.dataKeyValueType) {
-                    case 'dateTime':
-                    case 'date':
-                        attribute.value = item.data.currentValue.getTime();
-                        break;
-                    case 'time':
-                        attribute.value = item.data.currentValue.getTime() - moment().startOf('day').valueOf();//eslint-disable-line
-                        break;
-                    default:
-                        attribute.value = item.data.currentValue;
-                }
+            var serverAttributes = [], sharedAttributes = [], telemetry = [];
+            for (let j = 0; j < data[i].keys.length; j++) {
+                var key = data[i].keys[j];
+                if (key.data.currentValue !== key.data.originalValue) {
+                    var attribute = {
+                        key: key.name
+                    };
+                    if (key.data.currentValue) {
+                        switch (key.settings.dataKeyValueType) {
+                            case 'dateTime':
+                            case 'date':
+                                attribute.value = key.data.currentValue.getTime();
+                                break;
+                            case 'time':
+                                attribute.value = key.data.currentValue.getTime() - moment().startOf('day').valueOf();//eslint-disable-line
+                                break;
+                            default:
+                                attribute.value = key.data.currentValue;
+                        }
+                    } else {
+                        attribute.value = key.data.currentValue;
+                    }
 
-                switch (item.settings.dataKeyType) {
-                    case 'shared':
-                        sharedAttributes.push(attribute);
-                        break;
-                    case 'timeseries':
-                        telemetry.push(attribute);
-                        break;
-                    default:
-                        serverAttributes.push(attribute);
+                    switch (key.settings.dataKeyType) {
+                        case 'shared':
+                            sharedAttributes.push(attribute);
+                            break;
+                        case 'timeseries':
+                            telemetry.push(attribute);
+                            break;
+                        default:
+                            serverAttributes.push(attribute);
+                    }
                 }
             }
+            if (serverAttributes.length) {
+                tasks.push(attributeService.saveEntityAttributes(
+                    data[i].datasource.entityType,
+                    data[i].datasource.entityId,
+                    types.attributesScope.server.value,
+                    serverAttributes,
+                    config));
+            }
+            if (sharedAttributes.length) {
+                tasks.push(attributeService.saveEntityAttributes(
+                    data[i].datasource.entityType,
+                    data[i].datasource.entityId,
+                    types.attributesScope.shared.value,
+                    sharedAttributes,
+                    config));
+            }
+            if (telemetry.length) {
+                tasks.push(attributeService.saveEntityTimeseries(
+                    data[i].datasource.entityType,
+                    data[i].datasource.entityId,
+                    types.latestTelemetry.value,
+                    telemetry,
+                    config));
+            }
         }
-        for (let i = 0; i < serverAttributes.length; i++) {
-            tasks.push(attributeService.saveEntityAttributes(
-                vm.datasources[0].entityType,
-                vm.datasources[0].entityId,
-                types.attributesScope.server.value,
-                serverAttributes,
-                config));
-        }
-        for (let i = 0; i < sharedAttributes.length; i++) {
-            tasks.push(attributeService.saveEntityAttributes(
-                vm.datasources[0].entityType,
-                vm.datasources[0].entityId,
-                types.attributesScope.shared.value,
-                sharedAttributes,
-                config));
-        }
-        for (let i = 0; i < telemetry.length; i++) {
-            tasks.push(attributeService.saveEntityTimeseries(
-                vm.datasources[0].entityType,
-                vm.datasources[0].entityId,
-                types.latestTelemetry.value,
-                telemetry,
-                config));
-        }
+
         if (tasks.length) {
             $q.all(tasks).then(
                 function success() {
@@ -173,6 +186,8 @@ function MultipleInputWidgetController($q, $scope, $translate, attributeService,
                     }
                 }
             );
+        } else {
+            $scope.multipleInputForm.$setPristine();
         }
     }
 
@@ -186,6 +201,18 @@ function MultipleInputWidgetController($q, $scope, $translate, attributeService,
 
         vm.ctx.widgetTitle = vm.widgetTitle;
 
+        //For backward compatibility
+        if (angular.isUndefined(vm.settings.showActionButtons)) {
+            vm.settings.showActionButtons = true;
+        }
+        if (angular.isUndefined(vm.settings.fieldsAlignment)) {
+            vm.settings.fieldsAlignment = 'row';
+        }
+        if (angular.isUndefined(vm.settings.fieldsInRow)) {
+            vm.settings.fieldsInRow = 2;
+        }
+        //For backward compatibility
+
         vm.isVerticalAlignment = !(vm.settings.fieldsAlignment === 'row');
 
         if (!vm.isVerticalAlignment && vm.settings.fieldsInRow) {
@@ -195,60 +222,105 @@ function MultipleInputWidgetController($q, $scope, $translate, attributeService,
 
     function updateDatasources() {
         if (vm.datasources && vm.datasources.length) {
-            var datasource = vm.datasources[0];
-            if (datasource.type === types.datasourceType.entity) {
-                for (var i = 0; i < datasource.dataKeys.length; i++) {
-                    if ((datasource.entityType !== types.entityType.device) && (datasource.dataKeys[i].settings.dataKeyType == 'shared')) {
-                        vm.isAllParametersValid = false;
+            vm.entityDetected = true;
+            for (var i = 0; i < vm.datasources.length; i++) {
+                var datasource = vm.datasources[i];
+                var source = {
+                    datasource: datasource,
+                    keys: []
+                };
+                if (datasource.type === types.datasourceType.entity) {
+                    for (var j = 0; j < datasource.dataKeys.length; j++) {
+                        if ((datasource.entityType !== types.entityType.device) && (datasource.dataKeys[j].settings.dataKeyType == 'shared')) {
+                            vm.isAllParametersValid = false;
+                        }
+                        source.keys.push(datasource.dataKeys[j]);
+                        if (source.keys[j].units) {
+                            source.keys[j].label += ' (' + source.keys[j].units + ')';
+                        }
+                        source.keys[j].data = {};
+
+                        //For backward compatibility
+                        if (angular.isUndefined(source.keys[j].settings.dataKeyType)) {
+                            if (vm.settings.attributesShared === true) {
+                                source.keys[j].settings.dataKeyType = 'shared';
+                            } else {
+                                source.keys[j].settings.dataKeyType = 'server';
+                            }
+                        }
+
+                        if (angular.isUndefined(source.keys[j].settings.dataKeyValueType)) {
+                            if (source.keys[j].settings.inputTypeNumber === true) {
+                                source.keys[j].settings.dataKeyValueType = 'double';
+                            } else {
+                                source.keys[j].settings.dataKeyValueType = 'string';
+                            }
+                        }
+
+                        if (angular.isUndefined(source.keys[j].settings.isEditable)) {
+                            if (source.keys[j].settings.readOnly === true) {
+                                source.keys[j].settings.isEditable = 'readonly';
+                            } else {
+                                source.keys[j].settings.isEditable = 'editable';
+                            }
+                        }
+                        //For backward compatibility
+
                     }
-                    vm.data.push(datasource.dataKeys[i]);
-                    vm.data[i].data = {};
+                } else {
+                    vm.entityDetected = false;
                 }
-                vm.entityDetected = true;
+                vm.sources.push(source);
             }
         }
     }
 
     function updateWidgetData(data) {
-        for (var i = 0; i < vm.data.length; i++) {
-            var keyData = data[i].data;
-            if (keyData && keyData.length) {
-                var value;
-                switch (vm.data[i].settings.dataKeyValueType) {
-                    case 'dateTime':
-                    case 'date':
-                        value = moment(keyData[0][1]).toDate(); // eslint-disable-line
-                        break;
-                    case 'time':
-                        value = moment().startOf('day').add(keyData[0][1], 'ms').toDate(); // eslint-disable-line
-                        break;
-                    case 'booleanCheckbox':
-                    case 'booleanSwitch':
-                        value = (keyData[0][1] === 'true');
-                        break;
-                    default:
-                        value = keyData[0][1];
+        var dataIndex = 0;
+        for (var i = 0; i < vm.sources.length; i++) {
+            var source = vm.sources[i];
+            for (var j = 0; j < source.keys.length; j++) {
+                var keyData = data[dataIndex].data;
+                var key = source.keys[j];
+                if (keyData && keyData.length) {
+                    var value;
+                    switch (key.settings.dataKeyValueType) {
+                        case 'dateTime':
+                        case 'date':
+                            value = moment(keyData[0][1]).toDate(); // eslint-disable-line
+                            break;
+                        case 'time':
+                            value = moment().startOf('day').add(keyData[0][1], 'ms').toDate(); // eslint-disable-line
+                            break;
+                        case 'booleanCheckbox':
+                        case 'booleanSwitch':
+                            value = (keyData[0][1] === 'true');
+                            break;
+                        default:
+                            value = keyData[0][1];
+                    }
+
+                    key.data = {
+                        currentValue: value,
+                        originalValue: value
+                    };
                 }
 
-                vm.data[i].data = {
-                    currentValue: value,
-                    originalValue: value
-                };
-            }
-
-            if (vm.data[i].settings.isEditable === 'editable' && vm.data[i].settings.disabledOnDataKey) {
-                var conditions = data.filter((item) => {
-                    return item.dataKey.name === vm.data[i].settings.disabledOnDataKey;
-                });
-                if (conditions && conditions.length) {
-                    if (conditions[0].data.length) {
-                        if (conditions[0].data[0][1] === 'false') {
-                            vm.data[i].settings.disabledOnCondition = true;
-                        } else {
-                            vm.data[i].settings.disabledOnCondition = !conditions[0].data[0][1];
+                if (key.settings.isEditable === 'editable' && key.settings.disabledOnDataKey) {
+                    var conditions = data.filter((item) => {
+                        return item.dataKey.name === key.settings.disabledOnDataKey;
+                    });
+                    if (conditions && conditions.length) {
+                        if (conditions[0].data.length) {
+                            if (conditions[0].data[0][1] === 'false') {
+                                key.settings.disabledOnCondition = true;
+                            } else {
+                                key.settings.disabledOnCondition = !conditions[0].data[0][1];
+                            }
                         }
                     }
                 }
+                dataIndex++;
             }
         }
     }
