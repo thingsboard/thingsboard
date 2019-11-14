@@ -18,6 +18,16 @@
   overflow-x: hidden;
   overflow-y: auto;
 
+  .fields-group {
+    padding: 0 8px;
+    margin: 10px 0;
+    border: 1px groove rgba(0, 0, 0, .25);
+
+    legend {
+      color: rgba(0, 0, 0, .7);
+    }
+  }
+
   .input-field {
     padding-right: 10px;
 
