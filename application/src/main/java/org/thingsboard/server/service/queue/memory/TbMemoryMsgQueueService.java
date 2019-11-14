@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.queue.memory;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -25,7 +24,6 @@ import org.thingsboard.server.service.queue.TbAbstractMsgQueueService;
 import org.thingsboard.server.service.queue.TbMsgQueuePack;
 import org.thingsboard.server.service.queue.TbMsgQueueState;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.Map;
 import java.util.Queue;
@@ -39,9 +37,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 @ConditionalOnProperty(prefix = "backpressure", value = "type", havingValue = "memory")
 public class TbMemoryMsgQueueService extends TbAbstractMsgQueueService {
-
-    @Value("${backpressure.pack_size}")
-    private int msgPackSize;
 
     private final Map<TenantId, Queue<TbMsgQueueState>> msgQueueMap = new ConcurrentHashMap<>();
 
@@ -71,6 +66,7 @@ public class TbMemoryMsgQueueService extends TbAbstractMsgQueueService {
     @Override
     public void add(TbMsg msg, TenantId tenantId) {
         log.info("Add new message: [{}] for tenant: [{}]", msg, tenantId.getId());
+
         TenantId queueTenantId = specialTenants.contains(tenantId) ? tenantId : collectiveTenantId;
         Queue<TbMsgQueueState> msgQueue = msgQueueMap.get(queueTenantId);
 

@@ -44,6 +44,9 @@ public abstract class TbAbstractMsgQueueService implements TbMsgQueueService {
     @Value("${backpressure.attempt}")
     private int attempt;
 
+    @Value("${backpressure.pack_size}")
+    protected int msgPackSize;
+
     @Autowired
     private TbMsgQueueHandlerStrategy handlerStrategy;
 
@@ -65,10 +68,6 @@ public abstract class TbAbstractMsgQueueService implements TbMsgQueueService {
 
     protected final TenantId collectiveTenantId = new TenantId(UUIDs.random());
 
-    protected final AtomicBoolean isAck = new AtomicBoolean(true);
-
-    protected TbMsgQueuePack currentPack;
-
     @Override
     public void ack(UUID msgId, TenantId tenantId) {
         TenantId queueTenantId = specialTenants.contains(tenantId) ? tenantId : collectiveTenantId;
@@ -80,7 +79,6 @@ public abstract class TbAbstractMsgQueueService implements TbMsgQueueService {
             if (pack.getAck().get()) {
                 countDownLatch.countDown();
                 ackMap.get(queueTenantId).set(true);
-//            isAck.set(true);
             }
         }
     }
@@ -98,7 +96,7 @@ public abstract class TbAbstractMsgQueueService implements TbMsgQueueService {
         }
         printStats(pack);
         if (pack.getAck().get()) {
-           ackMap.get(pack.getTenantId()).set(true);
+            ackMap.get(pack.getTenantId()).set(true);
         } else {
             TbMsgQueuePack handlePack = handlerStrategy.handleFailureMsgs(pack);
             packMap.put(handlePack.getTenantId(), handlePack);
@@ -120,13 +118,13 @@ public abstract class TbAbstractMsgQueueService implements TbMsgQueueService {
     }
 
     private void printStats(TbMsgQueuePack pack) {
-            log.info("INFO about pack after sending - tenantId: [{}] packId: [{}] ack:[{}] totalCount:[{}] ackCount:[{}] retryAttempt:[{}]",
-                    pack.getTenantId(),
-                    pack.getPackId(),
-                    pack.getAck().get(),
-                    pack.getTotalCount().get(),
-                    pack.getAckCount().get(),
-                    pack.getRetryAttempt().get());
+        log.info("INFO about pack after sending - tenantId: [{}] packId: [{}] ack:[{}] totalCount:[{}] ackCount:[{}] retryAttempt:[{}]",
+                pack.getTenantId(),
+                pack.getPackId(),
+                pack.getAck().get(),
+                pack.getTotalCount().get(),
+                pack.getAckCount().get(),
+                pack.getRetryAttempt().get());
     }
 
     protected void destroy() {

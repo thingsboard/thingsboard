@@ -449,11 +449,16 @@ kafka:
 
 
 backpressure:
-  type: "${BACK_PRESSURE_TYPE:memory}" #kafka/memory
+  type: "${BACK_PRESSURE_TYPE:aws}" #memory/kafka/aws
   strategy: "${BACK_PRESSURE_STRATEGY:ignore}" #ignore/retry/retry_all
   attempt: "${BACK_PRESSURE_ATTEMPT:3}"
   timeout: "${BACK_PRESSURE_TIMEOUT_MS:10000}"
-  pack_size: "${BACK_PRESSURE_pack_size:1000}"
+  pack_size: "${BACK_PRESSURE_PACK_SIZE:1000}"
+  aws_sqs:
+    access_key_id: "${BACK_PRESSURE_AWS_SQS_ACCESS_KEY_ID:YOUR_KEY}"
+    secret_access_key: "${BACK_PRESSURE_AWS_SQS_SECRET_ACCESS_KEY:YOUR_SECRET}"
+    region: "${BACK_PRESSURE_AWS_SQS_REGION:YOUR_REGION}"
+    queue_url: "${BACK_PRESSURE_AWS_SQS_QUEUE_URL:YOUR_URL}"
 
 js:
   evaluator: "${JS_EVALUATOR:local}" # local/remote
