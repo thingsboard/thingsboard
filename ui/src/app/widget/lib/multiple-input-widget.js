@@ -53,6 +53,7 @@ function MultipleInputWidgetController($q, $scope, $translate, attributeService,
     vm.discardAll = discardAll;
     vm.inputChanged = inputChanged;
     vm.save = save;
+    vm.getGroupTitle = getGroupTitle;
 
     $scope.$watch('vm.ctx', function () {
         if (vm.ctx && vm.ctx.defaultSubscription) {
@@ -114,7 +115,7 @@ function MultipleInputWidgetController($q, $scope, $translate, attributeService,
             var serverAttributes = [], sharedAttributes = [], telemetry = [];
             for (let j = 0; j < data[i].keys.length; j++) {
                 var key = data[i].keys[j];
-                if (key.data.currentValue !== key.data.originalValue) {
+                if ((key.data.currentValue !== key.data.originalValue) || vm.settings.updateAllValues) {
                     var attribute = {
                         key: key.name
                     };
@@ -131,7 +132,11 @@ function MultipleInputWidgetController($q, $scope, $translate, attributeService,
                                 attribute.value = key.data.currentValue;
                         }
                     } else {
-                        attribute.value = key.data.currentValue;
+                        if (key.data.currentValue === '') {
+                            attribute.value = null;
+                        } else {
+                            attribute.value = key.data.currentValue;
+                        }
                     }
 
                     switch (key.settings.dataKeyType) {
@@ -200,6 +205,8 @@ function MultipleInputWidgetController($q, $scope, $translate, attributeService,
         }
 
         vm.ctx.widgetTitle = vm.widgetTitle;
+
+        vm.settings.groupTitle = vm.settings.groupTitle || "${entityName}";
 
         //For backward compatibility
         if (angular.isUndefined(vm.settings.showActionButtons)) {
@@ -328,5 +335,9 @@ function MultipleInputWidgetController($q, $scope, $translate, attributeService,
     function updateWidgetDisplaying() {
         vm.changeAlignment = (vm.ctx.$container[0].offsetWidth < 620);
         vm.smallWidthContainer = (vm.ctx.$container[0].offsetWidth < 420);
+    }
+
+    function getGroupTitle(datasource) {
+        return utils.createLabelFromDatasource(datasource, vm.settings.groupTitle);
     }
 }
