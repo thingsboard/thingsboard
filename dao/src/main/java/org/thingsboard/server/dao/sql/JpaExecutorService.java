@@ -13,15 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api;
+package org.thingsboard.server.dao.sql;
 
-import com.google.common.util.concurrent.ListenableFuture;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.AbstractListeningExecutor;
+import org.thingsboard.server.dao.util.SqlDao;
 
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executor;
+@Component
+@SqlDao
+public class JpaExecutorService extends AbstractListeningExecutor {
 
-public interface ListeningExecutor extends Executor {
+    @Value("${spring.datasource.hikari.maximumPoolSize}")
+    private int poolSize;
 
-    <T> ListenableFuture<T> executeAsync(Callable<T> task);
+    @Override
+    protected int getThreadPollSize() {
+        return poolSize;
+    }
 
 }
