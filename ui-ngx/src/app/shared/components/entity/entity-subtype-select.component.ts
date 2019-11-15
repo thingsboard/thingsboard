@@ -211,13 +211,13 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
     if (!this.subTypes) {
       switch (this.entityType) {
         case EntityType.ASSET:
-          this.subTypes = this.assetService.getAssetTypes(false, true);
+          this.subTypes = this.assetService.getAssetTypes({ignoreLoading: true});
           break;
         case EntityType.DEVICE:
-          this.subTypes = this.deviceService.getDeviceTypes(false,  true);
+          this.subTypes = this.deviceService.getDeviceTypes({ignoreLoading: true});
           break;
         case EntityType.ENTITY_VIEW:
-          this.subTypes = this.entityViewService.getEntityViewTypes(false, true);
+          this.subTypes = this.entityViewService.getEntityViewTypes({ignoreLoading: true});
           break;
       }
       if (this.subTypes) {
@@ -226,6 +226,20 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
               allSubtypes.unshift('');
               this.subTypesLoaded = true;
               return allSubtypes;
+          }),
+          tap((subTypes) => {
+            const type: EntitySubtype | string = this.subTypeFormGroup.get('subType').value;
+            const strType = typeof type === 'string' ? type : type.type;
+            const found = subTypes.find((subType) => {
+              if (typeof subType === 'string') {
+                return subType === type;
+              } else {
+                return subType.type === strType;
+              }
+            });
+            if (found) {
+              this.subTypeFormGroup.get('subType').patchValue(found);
+            }
           }),
           publishReplay(1),
           refCount()

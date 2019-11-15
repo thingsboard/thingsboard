@@ -104,20 +104,26 @@
       </div>
     </mat-toolbar>
     <mat-toolbar class="mat-table-toolbar" color="primary" [fxShow]="mode === 'widget'">
-      <div class="mat-toolbar-tools">
+      <div class="mat-toolbar-tools" fxLayoutGap="8px">
         <div fxFlex fxLayout="row" fxLayoutAlign="start">
           <span class="tb-details-subtitle">{{ 'widgets-bundle.current' | translate }}</span>
-          <span fxFlex>TODO:</span>
+          <tb-widgets-bundle-select fxFlexOffset="5"
+                                    fxFlex
+                                    [selectFirstBundle]="false"
+                                    [selectBundleAlias]="selectedWidgetsBundleAlias"
+                                    [(ngModel)]="widgetsBundle"
+                                    (ngModelChange)="onWidgetsBundleChanged($event)">
+          </tb-widgets-bundle-select>
         </div>
-        <!--button mat-button mat-raised-button
+        <button mat-button mat-raised-button [fxShow]="widgetsList.length > 0"
                 color="accent"
                 [disabled]="isLoading$ | async"
-                matTooltip="{{ 'attribute.show-on-widget' | translate }}"
+                matTooltip="{{ 'attribute.add-to-dashboard' | translate }}"
                 matTooltipPosition="above"
-                (click)="enterWidgetMode()">
-          <mat-icon>now_widgets</mat-icon>
-          <span translate>attribute.show-on-widget</span>
-        </button-->
+                (click)="addWidgetToDashboard()">
+          <mat-icon>dashboard</mat-icon>
+          <span translate>attribute.add-to-dashboard</span>
+        </button>
         <button mat-button mat-icon-button
                 [disabled]="isLoading$ | async"
                 matTooltip="{{ 'action.close' | translate }}"
@@ -186,8 +192,61 @@
                    [pageIndex]="pageLink.page"
                    [pageSize]="pageLink.pageSize"
                    [pageSizeOptions]="[10, 20, 30]"></mat-paginator>
-    <div fxFlex [fxShow]="mode === 'widget'">
-      Coming soon!
-    </div>
+    <ngx-hm-carousel fxFlex *ngIf="mode === 'widget' && widgetsList.length > 0"
+                     #carousel
+                     [(ngModel)]="widgetsCarouselIndex"
+                     (ngModelChange)="onWidgetsCarouselIndexChanged($event)"
+                     [data]="widgetsList"
+                     [infinite]="false"
+                     class="carousel c-accent">
+      <section ngx-hm-carousel-container class="content">
+        <article class="item cursor-pointer"
+                 ngx-hm-carousel-item
+                 *ngFor="let widgets of widgetsList">
+          <tb-dashboard class="tb-absolute-fill"
+            [aliasController]="aliasController"
+            [widgets]="widgets"
+            [columns]="20"
+            [isEdit]="false"
+            [isMobileDisabled]="true"
+            [isEditActionEnabled]="false"
+            [isRemoveActionEnabled]="false">
+          </tb-dashboard>
+        </article>
+      </section>
+
+      <ng-template #carouselPrev>
+        <button mat-button mat-icon-button *ngIf="widgetsCarouselIndex > 0"
+                matTooltip="{{ 'attribute.prev-widget' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>keyboard_arrow_left</mat-icon>
+        </button>
+      </ng-template>
+      <ng-template #carouselNext>
+        <button mat-button mat-icon-button *ngIf="widgetsCarouselIndex < widgetsList.length - 1"
+                matTooltip="{{ 'attribute.next-widget' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>keyboard_arrow_right</mat-icon>
+        </button>
+      </ng-template>
+
+      <ng-template #carouselDot let-model>
+        <div class="ball"
+             [class.visible]="model.index === model.currentIndex"></div>
+      </ng-template>
+
+    </ngx-hm-carousel>
+    <span translate *ngIf="mode === 'widget' && widgetsLoaded &&
+                           widgetsList.length === 0 &&
+                           widgetsBundle"
+          fxLayoutAlign="center center"
+          fxFlex
+          style="text-transform: uppercase; display: flex;"
+          class="mat-headline">widgets-bundle.empty</span>
+    <span translate *ngIf="mode === 'widget' && !widgetsBundle"
+          fxLayoutAlign="center center"
+          fxFlex
+          style="text-transform: uppercase; display: flex;"
+          class="mat-headline">widget.select-widgets-bundle</span>
   </div>
 </div>

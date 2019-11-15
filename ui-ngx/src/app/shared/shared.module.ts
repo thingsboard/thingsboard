@@ -61,6 +61,7 @@ import { RouterModule } from '@angular/router';
 import { ShareModule as ShareButtonsModule } from '@ngx-share/core';
 import { HotkeyModule } from 'angular2-hotkeys';
 import { ColorPickerModule } from 'ngx-color-picker';
+import { NgxHmCarouselModule } from 'ngx-hm-carousel';
 import { UserMenuComponent } from '@shared/components/user-menu.component';
 import { NospacePipe } from './pipe/nospace.pipe';
 import { TranslateModule } from '@ngx-translate/core';
@@ -233,6 +234,7 @@ import { FileInputComponent } from './components/file-input.component';
     ShareButtonsModule,
     HotkeyModule,
     ColorPickerModule,
+    NgxHmCarouselModule,
     NgxFlowModule
   ],
   exports: [
@@ -314,6 +316,7 @@ import { FileInputComponent } from './components/file-input.component';
     ShareButtonsModule,
     HotkeyModule,
     ColorPickerModule,
+    NgxHmCarouselModule,
     ColorPickerDialogComponent,
     MaterialIconsDialogComponent,
     ColorInputComponent,

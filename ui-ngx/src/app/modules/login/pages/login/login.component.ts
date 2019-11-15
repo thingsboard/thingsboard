@@ -29,7 +29,10 @@ import { FormBuilder } from '@angular/forms';
 })
 export class LoginComponent extends PageComponent implements OnInit {
 
-  loginFormGroup = this.fb.group(new LoginRequest('', ''));
+  loginFormGroup = this.fb.group({
+    username: '',
+    password: ''
+  });
 
   constructor(protected store: Store<AppState>,
               private authService: AuthService,

@@ -20,12 +20,15 @@ import { AuthActions, AuthActionTypes } from './auth.actions';
 const emptyUserAuthState: AuthPayload = {
   authUser: null,
   userDetails: null,
-  userTokenAccessEnabled: false
+  userTokenAccessEnabled: false,
+  forceFullscreen: false,
+  allowedDashboardIds: []
 };
 
 export const initialState: AuthState = {
   isAuthenticated: false,
   isUserLoaded: false,
+  lastPublicDashboardId: null,
   ...emptyUserAuthState
 };
 
@@ -45,6 +48,9 @@ export function authReducer(
         ...action.payload.isUserLoaded ? {} : emptyUserAuthState };
 
     case AuthActionTypes.UPDATE_USER_DETAILS:
+      return { ...state, ...action.payload};
+
+    case AuthActionTypes.UPDATE_LAST_PUBLIC_DASHBOARD_ID:
       return { ...state, ...action.payload};
 
     default:

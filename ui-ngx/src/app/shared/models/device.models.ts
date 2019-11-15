@@ -22,11 +22,11 @@ import {DeviceCredentialsId} from '@shared/models/id/device-credentials-id';
 import { EntitySearchQuery } from '@shared/models/relation.models';
 
 export interface Device extends BaseData<DeviceId> {
-  tenantId: TenantId;
-  customerId: CustomerId;
+  tenantId?: TenantId;
+  customerId?: CustomerId;
   name: string;
   type: string;
-  label: string;
+  label?: string;
   additionalInfo?: any;
 }
 

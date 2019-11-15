@@ -192,19 +192,22 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
     const authUser = getCurrentAuthUser(this.store);
     if (this.dashboardsScope === 'customer' || authUser.authority === Authority.CUSTOMER_USER) {
       if (this.customerId) {
-        dashboardsObservable = this.dashboardService.getCustomerDashboards(this.customerId, pageLink, false, true);
+        dashboardsObservable = this.dashboardService.getCustomerDashboards(this.customerId, pageLink,
+          {ignoreLoading: true});
       } else {
         dashboardsObservable = of(emptyPageData());
       }
     } else {
       if (authUser.authority === Authority.SYS_ADMIN) {
         if (this.tenantId) {
-          dashboardsObservable = this.dashboardService.getTenantDashboardsByTenantId(this.tenantId, pageLink, false, true);
+          dashboardsObservable = this.dashboardService.getTenantDashboardsByTenantId(this.tenantId, pageLink,
+            {ignoreLoading: true});
         } else {
           dashboardsObservable = of(emptyPageData());
         }
       } else {
-        dashboardsObservable = this.dashboardService.getTenantDashboards(pageLink, false, true);
+        dashboardsObservable = this.dashboardService.getTenantDashboards(pageLink,
+          {ignoreLoading: true});
       }
     }
     return dashboardsObservable;

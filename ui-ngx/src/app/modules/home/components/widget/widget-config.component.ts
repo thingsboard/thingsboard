@@ -705,8 +705,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
                 {entityType: entity.entityType, id: entity.id},
                 query,
                 dataKeyType,
-                true,
-                true
+                {ignoreLoading: true, ignoreErrors: true}
               ).pipe(
                 map((keys) => {
                   const dataKeys: Array<DataKey> = [];

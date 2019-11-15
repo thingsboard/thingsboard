@@ -15,10 +15,10 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { defaultHttpOptions } from './http-utils';
+import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { Observable } from 'rxjs/index';
 import { HttpClient } from '@angular/common/http';
-import {AdminSettings, MailServerSettings, SecuritySettings} from '@shared/models/settings.models';
+import { AdminSettings, MailServerSettings, SecuritySettings, UpdateMessage } from '@shared/models/settings.models';
 
 @Injectable({
   providedIn: 'root'
@@ -29,27 +29,31 @@ export class AdminService {
     private http: HttpClient
   ) { }
 
-  public getAdminSettings<T>(key: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<AdminSettings<T>> {
-    return this.http.get<AdminSettings<T>>(`/api/admin/settings/${key}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public getAdminSettings<T>(key: string, config?: RequestConfig): Observable<AdminSettings<T>> {
+    return this.http.get<AdminSettings<T>>(`/api/admin/settings/${key}`, defaultHttpOptionsFromConfig(config));
   }
 
   public saveAdminSettings<T>(adminSettings: AdminSettings<T>,
-                              ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<AdminSettings<T>> {
-    return this.http.post<AdminSettings<T>>('/api/admin/settings', adminSettings, defaultHttpOptions(ignoreLoading, ignoreErrors));
+                              config?: RequestConfig): Observable<AdminSettings<T>> {
+    return this.http.post<AdminSettings<T>>('/api/admin/settings', adminSettings, defaultHttpOptionsFromConfig(config));
   }
 
   public sendTestMail(adminSettings: AdminSettings<MailServerSettings>,
-                      ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<void> {
-    return this.http.post<void>('/api/admin/settings/testMail', adminSettings, defaultHttpOptions(ignoreLoading, ignoreErrors));
+                      config?: RequestConfig): Observable<void> {
+    return this.http.post<void>('/api/admin/settings/testMail', adminSettings, defaultHttpOptionsFromConfig(config));
   }
 
-  public getSecuritySettings(ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<SecuritySettings> {
-    return this.http.get<SecuritySettings>(`/api/admin/securitySettings`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public getSecuritySettings(config?: RequestConfig): Observable<SecuritySettings> {
+    return this.http.get<SecuritySettings>(`/api/admin/securitySettings`, defaultHttpOptionsFromConfig(config));
   }
 
   public saveSecuritySettings(securitySettings: SecuritySettings,
-                              ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<SecuritySettings> {
+                              config?: RequestConfig): Observable<SecuritySettings> {
     return this.http.post<SecuritySettings>('/api/admin/securitySettings', securitySettings,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public checkUpdates(config?: RequestConfig): Observable<UpdateMessage> {
+    return this.http.get<UpdateMessage>(`/api/admin/updates`, defaultHttpOptionsFromConfig(config));
   }
 }

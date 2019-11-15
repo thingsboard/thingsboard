@@ -15,7 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { defaultHttpOptions } from './http-utils';
+import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { User } from '../../shared/models/user.model';
 import { Observable } from 'rxjs/index';
 import { HttpClient, HttpResponse } from '@angular/common/http';
@@ -33,39 +33,39 @@ export class UserService {
   ) { }
 
   public getTenantAdmins(tenantId: string, pageLink: PageLink,
-                         ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<PageData<User>> {
+                         config?: RequestConfig): Observable<PageData<User>> {
     return this.http.get<PageData<User>>(`/api/tenant/${tenantId}/users${pageLink.toQuery()}`,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
   public getCustomerUsers(customerId: string, pageLink: PageLink,
-                          ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<PageData<User>> {
+                          config?: RequestConfig): Observable<PageData<User>> {
     return this.http.get<PageData<User>>(`/api/customer/${customerId}/users${pageLink.toQuery()}`,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
-  public getUser(userId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<User> {
-    return this.http.get<User>(`/api/user/${userId}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public getUser(userId: string, config?: RequestConfig): Observable<User> {
+    return this.http.get<User>(`/api/user/${userId}`, defaultHttpOptionsFromConfig(config));
   }
 
   public saveUser(user: User, sendActivationMail: boolean = false,
-                  ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<User> {
+                  config?: RequestConfig): Observable<User> {
     let url = '/api/user';
     url += '?sendActivationMail=' + sendActivationMail;
-    return this.http.post<User>(url, user, defaultHttpOptions(ignoreLoading, ignoreErrors));
+    return this.http.post<User>(url, user, defaultHttpOptionsFromConfig(config));
   }
 
-  public deleteUser(userId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false) {
-    return this.http.delete(`/api/user/${userId}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public deleteUser(userId: string, config?: RequestConfig) {
+    return this.http.delete(`/api/user/${userId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public getActivationLink(userId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<string> {
+  public getActivationLink(userId: string, config?: RequestConfig): Observable<string> {
     return this.http.get(`/api/user/${userId}/activationLink`,
-      {...{responseType: 'text'}, ...defaultHttpOptions(ignoreLoading, ignoreErrors)});
+      {...{responseType: 'text'}, ...defaultHttpOptionsFromConfig(config)});
   }
 
-  public sendActivationEmail(email: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false) {
-    return this.http.post(`/api/user/sendActivationMail?email=${email}`, null, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public sendActivationEmail(email: string, config?: RequestConfig) {
+    return this.http.post(`/api/user/sendActivationMail?email=${email}`, null, defaultHttpOptionsFromConfig(config));
   }
 
 }

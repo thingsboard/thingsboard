@@ -107,7 +107,9 @@ export class FullscreenDirective implements OnChanges, OnDestroy {
     if (this.elementRef) {
       this.elementRef.nativeElement.classList.remove('tb-fullscreen');
     }
-    this.overlayRef.dispose();
+    if (this.overlayRef) {
+      this.overlayRef.dispose();
+    }
     this.fullscreenChanged.emit(false);
   }
 }

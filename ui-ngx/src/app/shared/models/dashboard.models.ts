@@ -98,7 +98,6 @@ export interface DashboardConfiguration {
   states?: {[id: string]: DashboardState };
   entityAliases?: EntityAliases;
   [key: string]: any;
-  // TODO:
 }
 
 export interface Dashboard extends DashboardInfo {

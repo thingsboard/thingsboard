@@ -36,6 +36,7 @@ import { SelectTargetLayoutDialogComponent } from './layout/select-target-layout
 import { DashboardSettingsDialogComponent } from './dashboard-settings-dialog.component';
 import { ManageDashboardStatesDialogComponent } from './states/manage-dashboard-states-dialog.component';
 import { DashboardStateDialogComponent } from './states/dashboard-state-dialog.component';
+import { SelectTargetStateDialogComponent } from './states/select-target-state-dialog.component';
 
 @NgModule({
   entryComponents: [
@@ -48,7 +49,8 @@ import { DashboardStateDialogComponent } from './states/dashboard-state-dialog.c
     SelectTargetLayoutDialogComponent,
     DashboardSettingsDialogComponent,
     ManageDashboardStatesDialogComponent,
-    DashboardStateDialogComponent
+    DashboardStateDialogComponent,
+    SelectTargetStateDialogComponent
   ],
   declarations: [
     DashboardFormComponent,
@@ -65,7 +67,8 @@ import { DashboardStateDialogComponent } from './states/dashboard-state-dialog.c
     SelectTargetLayoutDialogComponent,
     DashboardSettingsDialogComponent,
     ManageDashboardStatesDialogComponent,
-    DashboardStateDialogComponent
+    DashboardStateDialogComponent,
+    SelectTargetStateDialogComponent
   ],
   imports: [
     CommonModule,

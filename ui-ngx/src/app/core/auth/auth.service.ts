@@ -14,35 +14,40 @@
 /// limitations under the License.
 ///
 
-import {Injectable, NgZone} from '@angular/core';
-import {JwtHelperService} from '@auth0/angular-jwt';
-import {HttpClient} from '@angular/common/http';
+import { Injectable, NgZone } from '@angular/core';
+import { JwtHelperService } from '@auth0/angular-jwt';
+import { HttpClient } from '@angular/common/http';
 
-import {combineLatest, forkJoin, Observable, of} from 'rxjs';
-import {distinctUntilChanged, filter, map, skip, tap} from 'rxjs/operators';
+import { combineLatest, forkJoin, Observable, of, throwError } from 'rxjs';
+import { catchError, distinctUntilChanged, filter, map, mergeMap, skip, tap } from 'rxjs/operators';
 
-import {LoginRequest, LoginResponse} from '../../shared/models/login.models';
-import {ActivatedRoute, Router, UrlTree} from '@angular/router';
-import {defaultHttpOptions} from '../http/http-utils';
-import {ReplaySubject} from 'rxjs/internal/ReplaySubject';
-import {UserService} from '../http/user.service';
-import {select, Store} from '@ngrx/store';
-import {AppState} from '../core.state';
-import {ActionAuthAuthenticated, ActionAuthLoadUser, ActionAuthUnauthenticated} from './auth.actions';
-import {getCurrentAuthUser, selectIsAuthenticated, selectIsUserLoaded} from './auth.selectors';
-import {Authority} from '../../shared/models/authority.enum';
-import {ActionSettingsChangeLanguage} from '@app/core/settings/settings.actions';
-import {AuthPayload} from '@core/auth/auth.models';
-import {TranslateService} from '@ngx-translate/core';
-import {AuthUser} from '@shared/models/user.model';
-import {TimeService} from '@core/services/time.service';
+import { LoginRequest, LoginResponse, PublicLoginRequest } from '../../shared/models/login.models';
+import { ActivatedRoute, Router, UrlTree } from '@angular/router';
+import { defaultHttpOptions } from '../http/http-utils';
+import { ReplaySubject } from 'rxjs/internal/ReplaySubject';
+import { UserService } from '../http/user.service';
+import { select, Store } from '@ngrx/store';
+import { AppState } from '../core.state';
+import { ActionAuthAuthenticated, ActionAuthLoadUser, ActionAuthUnauthenticated } from './auth.actions';
+import { getCurrentAuthState, getCurrentAuthUser, selectIsAuthenticated, selectIsUserLoaded } from './auth.selectors';
+import { Authority } from '../../shared/models/authority.enum';
+import { ActionSettingsChangeLanguage } from '@app/core/settings/settings.actions';
+import { AuthPayload, AuthState } from '@core/auth/auth.models';
+import { TranslateService } from '@ngx-translate/core';
+import { AuthUser } from '@shared/models/user.model';
+import { TimeService } from '@core/services/time.service';
+import { UtilsService } from '@core/services/utils.service';
+import { DashboardService } from '@core/http/dashboard.service';
+import { PageLink } from '@shared/models/page/page-link';
+import { DashboardInfo } from '@shared/models/dashboard.models';
+import { PageData } from '@app/shared/models/page/page-data';
+import { AdminService } from '@core/http/admin.service';
+import { ActionNotificationShow } from '@core/notification/notification.actions';
 
 @Injectable({
     providedIn: 'root'
 })
 export class AuthService {
-
-  forceFullscreen = false; // TODO:
 
   constructor(
     private store: Store<AppState>,
@@ -52,6 +57,9 @@ export class AuthService {
     private router: Router,
     private route: ActivatedRoute,
     private zone: NgZone,
+    private utils: UtilsService,
+    private dashboardService: DashboardService,
+    private adminService: AdminService,
     private translate: TranslateService
   ) {
     combineLatest(
@@ -119,6 +127,13 @@ export class AuthService {
       ));
   }
 
+  public publicLogin(publicId: string): Observable<LoginResponse> {
+    const publicLoginRequest: PublicLoginRequest = {
+      publicId
+    };
+    return this.http.post<LoginResponse>('/api/auth/login/public', publicLoginRequest, defaultHttpOptions());
+  }
+
   public sendResetPasswordLink(email: string) {
     return this.http.post('/api/noauth/resetPasswordByEmail',
       {email}, defaultHttpOptions());
@@ -182,39 +197,118 @@ export class AuthService {
   }
 
   public gotoDefaultPlace(isAuthenticated: boolean) {
-    const url = this.defaultUrl(isAuthenticated);
+    const authState = getCurrentAuthState(this.store);
+    const url = this.defaultUrl(isAuthenticated, authState);
     this.zone.run(() => {
       this.router.navigateByUrl(url);
     });
   }
 
-  public defaultUrl(isAuthenticated: boolean): UrlTree {
+  private forceDefaultPlace(authState?: AuthState, path?: string, params?: any): boolean {
+    if (authState && authState.authUser) {
+      if (authState.authUser.authority === Authority.TENANT_ADMIN || authState.authUser.authority === Authority.CUSTOMER_USER) {
+        if ((this.userHasDefaultDashboard(authState) && authState.forceFullscreen) || authState.authUser.isPublic) {
+          if (path === 'profile') {
+            if (this.userHasProfile(authState.authUser)) {
+              return false;
+            } else {
+              return true;
+            }
+          } else if (path.startsWith('dashboard.') || path.startsWith('dashboards.') &&
+              authState.allowedDashboardIds.indexOf(params.dashboardId) > -1) {
+            return false;
+          } else {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  public defaultUrl(isAuthenticated: boolean, authState?: AuthState, path?: string, params?: any): UrlTree {
+    let result: UrlTree = null;
     if (isAuthenticated) {
-      if (this.redirectUrl) {
-        const redirectUrl = this.redirectUrl;
-        this.redirectUrl = null;
-        return this.router.parseUrl(redirectUrl);
-      } else {
-
-        // TODO:
-
-        return this.router.parseUrl('home');
+      if (!path || path === 'login' || this.forceDefaultPlace(authState, path, params)) {
+        if (this.redirectUrl) {
+          const redirectUrl = this.redirectUrl;
+          this.redirectUrl = null;
+          result = this.router.parseUrl(redirectUrl);
+        } else {
+          result = this.router.parseUrl('home');
+        }
+        if (authState.authUser.authority === Authority.TENANT_ADMIN || authState.authUser.authority === Authority.CUSTOMER_USER) {
+          if (this.userHasDefaultDashboard(authState)) {
+            const dashboardId = authState.userDetails.additionalInfo.defaultDashboardId;
+            if (authState.forceFullscreen) {
+              result = this.router.parseUrl(`dashboard/${dashboardId}`);
+            } else {
+              result = this.router.parseUrl(`dashboards/${dashboardId}`);
+            }
+          } else if (authState.authUser.isPublic) {
+            result = this.router.parseUrl(`dashboard/${authState.lastPublicDashboardId}`);
+          }
+        } else if (authState.authUser.authority === Authority.SYS_ADMIN) {
+          this.adminService.checkUpdates().subscribe((updateMessage) => {
+            if (updateMessage && updateMessage.updateAvailable) {
+              this.store.dispatch(new ActionNotificationShow(
+                {message: updateMessage.message,
+                           type: 'info',
+                           verticalPosition: 'bottom',
+                           horizontalPosition: 'right'}));
+            }
+          });
+        }
       }
     } else {
-      return this.router.parseUrl('login');
+      result = this.router.parseUrl('login');
     }
+    return result;
   }
 
   private loadUser(doTokenRefresh): Observable<AuthPayload> {
     const authUser = getCurrentAuthUser(this.store);
     if (!authUser) {
+      const publicId = this.utils.getQueryParam('publicId');
+      const accessToken = this.utils.getQueryParam('accessToken');
+      const refreshToken = this.utils.getQueryParam('refreshToken');
+      if (publicId) {
+        return this.publicLogin(publicId).pipe(
+          mergeMap((response) => {
+            this.updateAndValidateToken(response.token, 'jwt_token', false);
+            this.updateAndValidateToken(response.refreshToken, 'refresh_token', false);
+            return this.procceedJwtTokenValidate();
+          }),
+          catchError((err) => {
+            this.utils.updateQueryParam('publicId', null);
+            throw Error();
+          })
+        );
+      } else if (accessToken) {
+        this.utils.updateQueryParam('accessToken', null);
+        if (refreshToken) {
+          this.utils.updateQueryParam('refreshToken', null);
+        }
+        try {
+          this.updateAndValidateToken(accessToken, 'jwt_token', false);
+          if (refreshToken) {
+            this.updateAndValidateToken(refreshToken, 'refresh_token', false);
+          } else {
+            localStorage.removeItem('refresh_token');
+            localStorage.removeItem('refresh_token_expiration');
+          }
+        } catch (e) {
+          return throwError(e);
+        }
+        return this.procceedJwtTokenValidate();
+      }
       return this.procceedJwtTokenValidate(doTokenRefresh);
     } else {
       return of({} as AuthPayload);
     }
   }
 
-  private procceedJwtTokenValidate(doTokenRefresh: boolean): Observable<AuthPayload> {
+  private procceedJwtTokenValidate(doTokenRefresh?: boolean): Observable<AuthPayload> {
     const loadUserSubject = new ReplaySubject<AuthPayload>();
     this.validateJwtToken(doTokenRefresh).subscribe(
       () => {
@@ -226,18 +320,31 @@ export class AuthService {
         } else if (authPayload.authUser) {
           authPayload.authUser.authority = Authority.ANONYMOUS;
         }
-        const sysParamsObservable = this.loadSystemParams(authPayload.authUser);
         if (authPayload.authUser.isPublic) {
-
-          // TODO:
-
+          authPayload.forceFullscreen = true;
+        }
+        if (authPayload.authUser.isPublic) {
+          this.loadSystemParams(authPayload).subscribe(
+            (sysParams) => {
+              authPayload = {...authPayload, ...sysParams};
+              loadUserSubject.next(authPayload);
+              loadUserSubject.complete();
+            },
+            (err) => {
+              loadUserSubject.error(err);
+            }
+          );
         } else if (authPayload.authUser.userId) {
           this.userService.getUser(authPayload.authUser.userId).subscribe(
             (user) => {
-              sysParamsObservable.subscribe(
+              authPayload.userDetails = user;
+              authPayload.forceFullscreen = false;
+              if (this.userForceFullscreen(authPayload)) {
+                authPayload.forceFullscreen = true;
+              }
+              this.loadSystemParams(authPayload).subscribe(
                 (sysParams) => {
                   authPayload = {...authPayload, ...sysParams};
-                  authPayload.userDetails = user;
                   let userLang;
                   if (authPayload.userDetails.additionalInfo && authPayload.userDetails.additionalInfo.lang) {
                     userLang = authPayload.userDetails.additionalInfo.lang;
@@ -278,13 +385,15 @@ export class AuthService {
     }
   }
 
-  private loadSystemParams(authUser: AuthUser): Observable<any> {
-    const sources: Array<Observable<any>> = [this.loadIsUserTokenAccessEnabled(authUser),
+  private loadSystemParams(authPayload: AuthPayload): Observable<any> {
+    const sources: Array<Observable<any>> = [this.loadIsUserTokenAccessEnabled(authPayload.authUser),
+                                             this.fetchAllowedDashboardIds(authPayload),
                                              this.timeService.loadMaxDatapointsLimit()];
     return forkJoin(sources)
       .pipe(map((data) => {
         const userTokenAccessEnabled: boolean = data[0];
-        return {userTokenAccessEnabled};
+        const allowedDashboardIds: string[] = data[1];
+        return {userTokenAccessEnabled, allowedDashboardIds};
       }));
   }
 
@@ -369,9 +478,20 @@ export class AuthService {
           }
         );
       } else {
-        this.loadUser(false);
+        this.loadUser(false).subscribe();
       }
     }
+  }
+
+  public parsePublicId(): string {
+    const token = AuthService.getJwtToken();
+    if (token) {
+      const tokenData = this.jwtHelper.decodeToken(token);
+      if (tokenData && tokenData.isPublic) {
+        return tokenData.sub;
+      }
+    }
+    return null;
   }
 
   private notifyUnauthenticated() {
@@ -409,4 +529,44 @@ export class AuthService {
     this.setUserFromJwtToken(null, null, true);
   }
 
+  private userForceFullscreen(authPayload: AuthPayload): boolean {
+    return (authPayload.authUser && authPayload.authUser.isPublic) ||
+      (authPayload.userDetails && authPayload.userDetails.additionalInfo &&
+        authPayload.userDetails.additionalInfo.defaultDashboardFullscreen &&
+        authPayload.userDetails.additionalInfo.defaultDashboardFullscreen === true);
+  }
+
+  private userHasProfile(authUser: AuthUser): boolean {
+    return authUser && !authUser.isPublic;
+  }
+
+  private userHasDefaultDashboard(authState: AuthState): boolean {
+    if (authState && authState.userDetails && authState.userDetails.additionalInfo
+      && authState.userDetails.additionalInfo.defaultDashboardId) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  private fetchAllowedDashboardIds(authPayload: AuthPayload): Observable<string[]> {
+    if (authPayload.forceFullscreen && (authPayload.authUser.authority === Authority.TENANT_ADMIN ||
+      authPayload.authUser.authority === Authority.CUSTOMER_USER)) {
+      const pageLink = new PageLink(100);
+      let fetchDashboardsObservable: Observable<PageData<DashboardInfo>>;
+      if (authPayload.authUser.authority === Authority.TENANT_ADMIN) {
+        fetchDashboardsObservable = this.dashboardService.getTenantDashboards(pageLink);
+      } else {
+        fetchDashboardsObservable = this.dashboardService.getCustomerDashboards(authPayload.authUser.customerId, pageLink);
+      }
+      return fetchDashboardsObservable.pipe(
+        map((result) => {
+          const dashboards = result.data;
+          return dashboards.map(dashboard => dashboard.id.id);
+        })
+      );
+    } else {
+      return of([]);
+    }
+  }
 }

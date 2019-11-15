@@ -32,6 +32,7 @@ import { enterZone } from '@core/operator/enterZone';
 import { Authority } from '@shared/models/authority.enum';
 import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
+import { UtilsService } from '@core/services/utils.service';
 
 @Injectable({
   providedIn: 'root'
@@ -41,6 +42,7 @@ export class AuthGuard implements CanActivate, CanActivateChild {
   constructor(private store: Store<AppState>,
               private authService: AuthService,
               private dialogService: DialogService,
+              private utils: UtilsService,
               private translate: TranslateService,
               private zone: NgZone) {}
 
@@ -61,14 +63,28 @@ export class AuthGuard implements CanActivate, CanActivateChild {
         const url: string = state.url;
 
         let lastChild = state.root;
+        const urlSegments: string[] = [];
+        if (lastChild.url) {
+          urlSegments.push(...lastChild.url.map(segment => segment.path));
+        }
         while (lastChild.children.length) {
           lastChild = lastChild.children[0];
+          if (lastChild.url) {
+            urlSegments.push(...lastChild.url.map(segment => segment.path));
+          }
         }
+        const path = urlSegments.join('.');
+        const publicId = this.utils.getQueryParam('publicId');
         const data = lastChild.data || {};
+        const params = lastChild.params || {};
         const isPublic = data.module === 'public';
 
         if (!authState.isAuthenticated) {
-          if (!isPublic) {
+          if (publicId && publicId.length > 0) {
+            this.authService.setUserFromJwtToken(null, null, false);
+            this.authService.reloadUser();
+            return false;
+          } else if (!isPublic) {
             this.authService.redirectUrl = url;
             // this.authService.gotoDefaultPlace(false);
             return this.authService.defaultUrl(false);
@@ -76,9 +92,21 @@ export class AuthGuard implements CanActivate, CanActivateChild {
             return true;
           }
         } else {
-          if (url === '/login') {
+          if (authState.authUser.isPublic) {
+            if (this.authService.parsePublicId() !== publicId) {
+              if (publicId && publicId.length > 0) {
+                this.authService.setUserFromJwtToken(null, null, false);
+                this.authService.reloadUser();
+              } else {
+                this.authService.logout();
+              }
+              return false;
+            }
+          }
+          const defaultUrl = this.authService.defaultUrl(true, authState, path, params);
+          if (defaultUrl) {
             // this.authService.gotoDefaultPlace(true);
-            return this.authService.defaultUrl(true);
+            return defaultUrl;
           } else {
             const authority = Authority[authState.authUser.authority];
             if (data.auth && data.auth.indexOf(authority) === -1) {

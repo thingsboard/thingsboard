@@ -198,7 +198,7 @@ export class EntityKeysListComponent implements ControlValueAccessor, OnInit, Af
   fetchKeys(searchText?: string): Observable<Array<string>> {
     this.searchText = searchText;
     return this.entityIdValue ? this.entityService.getEntityKeys(this.entityIdValue, searchText,
-      this.dataKeyType, false, true).pipe(
+      this.dataKeyType, {ignoreLoading: true}).pipe(
       map((data) => data ? data : [])) : of([]);
   }
 

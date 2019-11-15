@@ -31,6 +31,7 @@ import {
 } from '@shared/models/telemetry/telemetry.models';
 import { AttributeService } from '@core/http/attribute.service';
 import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service';
+import { NgZone } from '@angular/core';
 
 export class AttributeDatasource implements DataSource<AttributeData> {
 
@@ -46,6 +47,7 @@ export class AttributeDatasource implements DataSource<AttributeData> {
 
   constructor(private attributeService: AttributeService,
               private telemetryWsService: TelemetryWebsocketService,
+              private zone: NgZone,
               private translate: TranslateService) {}
 
   connect(collectionViewer: CollectionViewer): Observable<AttributeData[] | ReadonlyArray<AttributeData>> {
@@ -96,7 +98,7 @@ export class AttributeDatasource implements DataSource<AttributeData> {
       let attributesObservable: Observable<Array<AttributeData>>;
       if (isClientSideTelemetryType.get(attributesScope)) {
         this.telemetrySubscriber = TelemetrySubscriber.createEntityAttributesSubscription(
-          this.telemetryWsService, entityId, attributesScope);
+          this.telemetryWsService, entityId, attributesScope, this.zone);
         this.telemetrySubscriber.subscribe();
         attributesObservable = this.telemetrySubscriber.attributeData$();
       } else {
@@ -144,4 +146,5 @@ export class AttributeDatasource implements DataSource<AttributeData> {
       take(1)
     ).subscribe();
   }
+
 }

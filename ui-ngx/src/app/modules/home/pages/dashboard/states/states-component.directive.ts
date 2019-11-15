@@ -72,6 +72,7 @@ export class StatesComponentDirective implements OnInit, OnDestroy, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    let reInitController = false;
     for (const propName of Object.keys(changes)) {
       const change = changes[propName];
       if (!change.firstChange && change.currentValue !== change.previousValue) {
@@ -81,12 +82,16 @@ export class StatesComponentDirective implements OnInit, OnDestroy, OnChanges {
           this.stateControllerComponent.states = this.states;
         } else if (propName === 'dashboardId') {
           this.stateControllerComponent.dashboardId = this.dashboardId;
+          reInitController = true;
         } else if (propName === 'isMobile') {
           this.stateControllerComponent.isMobile = this.isMobile;
         } else if (propName === 'state') {
           this.stateControllerComponent.state = this.state;
         }
       }
+    }
+    if (reInitController) {
+      this.stateControllerComponent.reInit();
     }
   }
 

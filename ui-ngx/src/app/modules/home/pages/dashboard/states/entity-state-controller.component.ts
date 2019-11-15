@@ -301,7 +301,7 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
         return of(params.entityName);
       } else {
         return this.entityService.getEntity(params.entityId.entityType as EntityType,
-          params.entityId.id, true, true).pipe(
+          params.entityId.id, {ignoreLoading: true, ignoreErrors: true}).pipe(
           map((entity) => entity.name)
         );
       }

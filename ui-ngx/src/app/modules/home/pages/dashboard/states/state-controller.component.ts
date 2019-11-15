@@ -60,9 +60,10 @@ export abstract class StateControllerComponent implements IStateControllerCompon
   set dashboardId(val: string) {
     if (this.dashboardIdValue !== val) {
       this.dashboardIdValue = val;
-      if (this.inited) {
+/*      if (this.inited) {
+        this.currentState = this.route.snapshot.queryParamMap.get('state');
         this.init();
-      }
+      }*/
     }
   }
   get dashboardId(): string {
@@ -84,8 +85,6 @@ export abstract class StateControllerComponent implements IStateControllerCompon
 
   currentState: string;
 
-  currentUrl: string;
-
   private rxSubscriptions = new Array<Subscription>();
 
   private inited = false;
@@ -96,10 +95,9 @@ export abstract class StateControllerComponent implements IStateControllerCompon
   }
 
   ngOnInit(): void {
-    this.currentUrl = this.router.url.split('?')[0];
     this.rxSubscriptions.push(this.route.queryParamMap.subscribe((paramMap) => {
-      const newUrl = this.router.url.split('?')[0];
-      if (this.currentUrl === newUrl) {
+      const dashboardId = this.route.snapshot.params.dashboardId;
+      if (this.dashboardId === dashboardId) {
         const newState = paramMap.get('state');
         if (this.currentState !== newState) {
           this.currentState = newState;
@@ -142,6 +140,11 @@ export abstract class StateControllerComponent implements IStateControllerCompon
 
   public cleanupPreservedStates() {
     this.statesControllerService.cleanupPreservedStates();
+  }
+
+  public reInit() {
+    this.currentState = this.route.snapshot.queryParamMap.get('state');
+    this.init();
   }
 
   protected abstract init();

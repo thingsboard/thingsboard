@@ -15,7 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { defaultHttpOptions } from './http-utils';
+import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { Observable } from 'rxjs/index';
 import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
@@ -31,20 +31,20 @@ export class TenantService {
     private http: HttpClient
   ) { }
 
-  public getTenants(pageLink: PageLink, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<PageData<Tenant>> {
-    return this.http.get<PageData<Tenant>>(`/api/tenants${pageLink.toQuery()}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public getTenants(pageLink: PageLink, config?: RequestConfig): Observable<PageData<Tenant>> {
+    return this.http.get<PageData<Tenant>>(`/api/tenants${pageLink.toQuery()}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public getTenant(tenantId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Tenant> {
-    return this.http.get<Tenant>(`/api/tenant/${tenantId}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public getTenant(tenantId: string, config?: RequestConfig): Observable<Tenant> {
+    return this.http.get<Tenant>(`/api/tenant/${tenantId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public saveTenant(tenant: Tenant, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Tenant> {
-    return this.http.post<Tenant>('/api/tenant', tenant, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public saveTenant(tenant: Tenant, config?: RequestConfig): Observable<Tenant> {
+    return this.http.post<Tenant>('/api/tenant', tenant, defaultHttpOptionsFromConfig(config));
   }
 
-  public deleteTenant(tenantId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false) {
-    return this.http.delete(`/api/tenant/${tenantId}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public deleteTenant(tenantId: string, config?: RequestConfig) {
+    return this.http.delete(`/api/tenant/${tenantId}`, defaultHttpOptionsFromConfig(config));
   }
 
 }

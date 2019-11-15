@@ -60,6 +60,9 @@ import { CustomDialogService } from './widget/dialog/custom-dialog.service';
 import { CustomDialogContainerComponent } from './widget/dialog/custom-dialog-container.component';
 import { ImportExportService } from './import-export/import-export.service';
 import { ImportDialogComponent } from './import-export/import-dialog.component';
+import { AddWidgetToDashboardDialogComponent } from './attribute/add-widget-to-dashboard-dialog.component';
+import { ImportDialogCsvComponent } from './import-export/import-dialog-csv.component';
+import { TableColumnsAssignmentComponent } from './import-export/table-columns-assignment.component';
 
 @NgModule({
   entryComponents: [
@@ -78,7 +81,9 @@ import { ImportDialogComponent } from './import-export/import-dialog.component';
     LegendConfigPanelComponent,
     WidgetActionDialogComponent,
     CustomDialogContainerComponent,
-    ImportDialogComponent
+    ImportDialogComponent,
+    ImportDialogCsvComponent,
+    AddWidgetToDashboardDialogComponent
   ],
   declarations:
     [
@@ -121,7 +126,10 @@ import { ImportDialogComponent } from './import-export/import-dialog.component';
       CustomActionPrettyResourcesTabsComponent,
       CustomActionPrettyEditorComponent,
       CustomDialogContainerComponent,
-      ImportDialogComponent
+      ImportDialogComponent,
+      ImportDialogCsvComponent,
+      AddWidgetToDashboardDialogComponent,
+      TableColumnsAssignmentComponent
     ],
   imports: [
     CommonModule,
@@ -159,7 +167,9 @@ import { ImportDialogComponent } from './import-export/import-dialog.component';
     CustomActionPrettyResourcesTabsComponent,
     CustomActionPrettyEditorComponent,
     CustomDialogContainerComponent,
-    ImportDialogComponent
+    ImportDialogComponent,
+    ImportDialogCsvComponent,
+    TableColumnsAssignmentComponent
   ],
   providers: [
     WidgetComponentService,

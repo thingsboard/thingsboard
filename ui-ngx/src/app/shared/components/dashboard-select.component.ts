@@ -202,12 +202,13 @@ export class DashboardSelectComponent implements ControlValueAccessor, OnInit {
     const authUser = getCurrentAuthUser(this.store);
     if (this.dashboardsScope === 'customer' || authUser.authority === Authority.CUSTOMER_USER) {
       if (this.customerId && this.customerId !== NULL_UUID) {
-        dashboardsObservable = this.dashboardService.getCustomerDashboards(this.customerId, pageLink, false, true);
+        dashboardsObservable = this.dashboardService.getCustomerDashboards(this.customerId, pageLink,
+          {ignoreLoading: true});
       } else {
         dashboardsObservable = of(emptyPageData());
       }
     } else {
-      dashboardsObservable = this.dashboardService.getTenantDashboards(pageLink, false, true);
+      dashboardsObservable = this.dashboardService.getTenantDashboards(pageLink, {ignoreLoading: true});
     }
     return dashboardsObservable;
   }

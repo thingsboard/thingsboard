@@ -15,7 +15,7 @@
 ///
 
 import {Injectable} from '@angular/core';
-import {defaultHttpOptions} from './http-utils';
+import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import {Observable} from 'rxjs/index';
 import {HttpClient} from '@angular/common/http';
 import {PageLink} from '@shared/models/page/page-link';
@@ -31,26 +31,25 @@ export class RuleChainService {
     private http: HttpClient
   ) { }
 
-  public getRuleChains(pageLink: PageLink, ignoreErrors: boolean = false,
-                       ignoreLoading: boolean = false): Observable<PageData<RuleChain>> {
+  public getRuleChains(pageLink: PageLink, config?: RequestConfig): Observable<PageData<RuleChain>> {
     return this.http.get<PageData<RuleChain>>(`/api/ruleChains${pageLink.toQuery()}`,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
-  public getRuleChain(ruleChainId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<RuleChain> {
-    return this.http.get<RuleChain>(`/api/ruleChain/${ruleChainId}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public getRuleChain(ruleChainId: string, config?: RequestConfig): Observable<RuleChain> {
+    return this.http.get<RuleChain>(`/api/ruleChain/${ruleChainId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public saveRuleChain(ruleChain: RuleChain, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<RuleChain> {
-    return this.http.post<RuleChain>('/api/ruleChain', ruleChain, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public saveRuleChain(ruleChain: RuleChain, config?: RequestConfig): Observable<RuleChain> {
+    return this.http.post<RuleChain>('/api/ruleChain', ruleChain, defaultHttpOptionsFromConfig(config));
   }
 
-  public deleteRuleChain(ruleChainId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false) {
-    return this.http.delete(`/api/ruleChain/${ruleChainId}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public deleteRuleChain(ruleChainId: string, config?: RequestConfig) {
+    return this.http.delete(`/api/ruleChain/${ruleChainId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public setRootRuleChain(ruleChainId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<RuleChain> {
-    return this.http.post<RuleChain>(`/api/ruleChain/${ruleChainId}/root`, null, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public setRootRuleChain(ruleChainId: string, config?: RequestConfig): Observable<RuleChain> {
+    return this.http.post<RuleChain>(`/api/ruleChain/${ruleChainId}/root`, null, defaultHttpOptionsFromConfig(config));
   }
 
 }

@@ -15,7 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { defaultHttpOptions } from './http-utils';
+import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { Observable } from 'rxjs/index';
 import { HttpClient } from '@angular/common/http';
 import { PageData } from '@shared/models/page/page-data';
@@ -55,34 +55,34 @@ export class AlarmService {
     private http: HttpClient
   ) { }
 
-  public getAlarm(alarmId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Alarm> {
-    return this.http.get<Alarm>(`/api/alarm/${alarmId}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public getAlarm(alarmId: string, config?: RequestConfig): Observable<Alarm> {
+    return this.http.get<Alarm>(`/api/alarm/${alarmId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public getAlarmInfo(alarmId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<AlarmInfo> {
-    return this.http.get<AlarmInfo>(`/api/alarm/info/${alarmId}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public getAlarmInfo(alarmId: string, config?: RequestConfig): Observable<AlarmInfo> {
+    return this.http.get<AlarmInfo>(`/api/alarm/info/${alarmId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public saveAlarm(alarm: Alarm, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Alarm> {
-    return this.http.post<Alarm>('/api/alarm', alarm, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public saveAlarm(alarm: Alarm, config?: RequestConfig): Observable<Alarm> {
+    return this.http.post<Alarm>('/api/alarm', alarm, defaultHttpOptionsFromConfig(config));
   }
 
-  public ackAlarm(alarmId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<void> {
-    return this.http.post<void>(`/api/alarm/${alarmId}/ack`, null, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public ackAlarm(alarmId: string, config?: RequestConfig): Observable<void> {
+    return this.http.post<void>(`/api/alarm/${alarmId}/ack`, null, defaultHttpOptionsFromConfig(config));
   }
 
-  public clearAlarm(alarmId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<void> {
-    return this.http.post<void>(`/api/alarm/${alarmId}/clear`, null, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public clearAlarm(alarmId: string, config?: RequestConfig): Observable<void> {
+    return this.http.post<void>(`/api/alarm/${alarmId}/clear`, null, defaultHttpOptionsFromConfig(config));
   }
 
   public getAlarms(query: AlarmQuery,
-                   ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<PageData<AlarmInfo>> {
+                   config?: RequestConfig): Observable<PageData<AlarmInfo>> {
     return this.http.get<PageData<AlarmInfo>>(`/api/alarm${query.toQuery()}`,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
   public getHighestAlarmSeverity(entityId: EntityId, alarmSearchStatus: AlarmSearchStatus, alarmStatus: AlarmStatus,
-                                 ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<AlarmSeverity> {
+                                 config?: RequestConfig): Observable<AlarmSeverity> {
     let url = `/api/alarm/highestSeverity/${entityId.entityType}/${entityId.entityType}`;
     if (alarmSearchStatus) {
       url += `?searchStatus=${alarmSearchStatus}`;
@@ -90,6 +90,6 @@ export class AlarmService {
       url += `?status=${alarmStatus}`;
     }
     return this.http.get<AlarmSeverity>(url,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 }

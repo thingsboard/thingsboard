@@ -59,6 +59,7 @@
     "moment": "^2.24.0",
     "ngx-clipboard": "^12.2.0",
     "ngx-color-picker": "^8.2.0",
+    "ngx-hm-carousel": "^1.7.2",
     "ngx-translate-messageformat-compiler": "^4.5.0",
     "objectpath": "^1.2.2",
     "prop-types": "^15.7.2",

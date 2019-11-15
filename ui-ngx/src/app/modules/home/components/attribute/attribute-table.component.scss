@@ -60,4 +60,36 @@
       color: #757575
     }
   }
+
+  .carousel {
+    .aniT {
+      transition: all 1s linear;
+    }
+
+    .transition {
+      transition: all 0.3s ease-in-out !important;
+    }
+    .content {
+      display: flex;
+      height: 100%;
+      .item {
+        position: relative;
+      }
+    }
+    .direction {
+      width: 60px;
+    }
+    .ball {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: black;
+      border: 2px solid;
+      opacity: 0.5;
+
+      &.visible {
+        opacity: 1;
+      }
+    }
+  }
 }

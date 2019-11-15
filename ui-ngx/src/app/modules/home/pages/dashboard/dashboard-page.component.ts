@@ -45,7 +45,7 @@ import {
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { AuthUser } from '@shared/models/user.model';
-import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { getCurrentAuthState, getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Widget, WidgetConfig, WidgetPosition, widgetTypesData } from '@app/shared/models/widget.models';
 import { environment as env } from '@env/environment';
 import { Authority } from '@shared/models/authority.enum';
@@ -84,6 +84,7 @@ import {
   ManageDashboardStatesDialogData
 } from '@home/pages/dashboard/states/manage-dashboard-states-dialog.component';
 import { ImportExportService } from '@home/components/import-export/import-export.service';
+import { AuthState } from '@app/core/auth/auth.models';
 
 @Component({
   selector: 'tb-dashboard-page',
@@ -94,7 +95,9 @@ import { ImportExportService } from '@home/components/import-export/import-expor
 })
 export class DashboardPageComponent extends PageComponent implements IDashboardController, OnDestroy {
 
-  authUser: AuthUser = getCurrentAuthUser(this.store);
+  authState: AuthState = getCurrentAuthState(this.store);
+
+  authUser: AuthUser = this.authState.authUser;
 
   dashboard: Dashboard;
   dashboardConfiguration: DashboardConfiguration;
@@ -104,7 +107,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   iframeMode = this.utils.iframeMode;
   widgetEditMode: boolean;
   singlePageMode: boolean;
-  forceFullscreen = this.authService.forceFullscreen;
+  forceFullscreen = this.authState.forceFullscreen;
 
   isFullscreen = false;
   isEdit = false;

@@ -230,7 +230,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
         if (targetEntityType === AliasEntityType.CURRENT_CUSTOMER) {
           targetEntityType = EntityType.CUSTOMER;
         }
-        this.entityService.getEntity(targetEntityType, value, true).subscribe(
+        this.entityService.getEntity(targetEntityType, value, {ignoreLoading: true}).subscribe(
           (entity) => {
             this.modelValue = entity.id.id;
             this.selectEntityFormGroup.get('entity').patchValue(entity, {emitEvent: false});
@@ -238,7 +238,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
         );
       } else {
         const targetEntityType = value.entityType as EntityType;
-        this.entityService.getEntity(targetEntityType, value.id, true).subscribe(
+        this.entityService.getEntity(targetEntityType, value.id, {ignoreLoading: true}).subscribe(
           (entity) => {
             this.modelValue = entity.id.id;
             this.selectEntityFormGroup.get('entity').patchValue(entity, {emitEvent: false});
@@ -281,7 +281,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
       targetEntityType = EntityType.CUSTOMER;
     }
     return this.entityService.getEntitiesByNameFilter(targetEntityType, searchText,
-      50, this.entitySubtypeValue, false, true).pipe(
+      50, this.entitySubtypeValue, {ignoreLoading: true}).pipe(
       map((data) => {
         if (data) {
           if (this.excludeEntityIds && this.excludeEntityIds.length) {

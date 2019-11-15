@@ -262,7 +262,6 @@ export interface Datasource {
   entityDescription?: string;
   generated?: boolean;
   [key: string]: any;
-  // TODO:
 }
 
 export type DataSet = [number, any][];

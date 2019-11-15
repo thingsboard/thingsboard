@@ -19,17 +19,21 @@ import { UtilsService } from '@core/services/utils.service';
 import { TimeService } from '@core/services/time.service';
 import {
   Dashboard,
-  DashboardLayout,
-  DashboardStateLayouts,
-  DashboardState,
   DashboardConfiguration,
+  DashboardLayout,
+  DashboardLayoutId,
   DashboardLayoutInfo,
-  DashboardLayoutsInfo, DashboardLayoutId, WidgetLayout, GridSettings
+  DashboardLayoutsInfo,
+  DashboardState,
+  DashboardStateLayouts,
+  GridSettings,
+  WidgetLayout
 } from '@shared/models/dashboard.models';
-import { isUndefined, isDefined, isString } from '@core/utils';
-import { DatasourceType, Widget, Datasource } from '@app/shared/models/widget.models';
+import { isDefined, isString, isUndefined } from '@core/utils';
+import { Datasource, DatasourceType, Widget } from '@app/shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
-import { EntityAlias, AliasFilterType } from '@app/shared/models/alias.models';
+import { AliasFilterType, EntityAlias, EntityAliasFilter } from '@app/shared/models/alias.models';
+import { EntityId } from '@app/shared/models/id/entity-id';
 
 @Injectable({
   providedIn: 'root'
@@ -207,7 +211,7 @@ export class DashboardUtilsService {
         delete datasource.deviceAliasId;
       }
     });
-    // TODO: Temp workaround
+    // Temp workaround
     if (widget.isSystemType  && widget.bundleAlias === 'charts' && widget.typeAlias === 'timeseries') {
       widget.typeAlias = 'basic_timeseries';
     }
@@ -242,6 +246,14 @@ export class DashboardUtilsService {
       name,
       root,
       layouts: this.createDefaultLayouts()
+    };
+  }
+
+  public createSingleEntityFilter(entityId: EntityId): EntityAliasFilter {
+    return {
+      type: AliasFilterType.singleEntity,
+      singleEntity: entityId,
+      resolveMultiple: false
     };
   }
 

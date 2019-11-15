@@ -14,15 +14,14 @@
 /// limitations under the License.
 ///
 
-import {Injectable} from '@angular/core';
-import {defaultHttpOptions} from './http-utils';
-import {Observable} from 'rxjs/index';
-import {HttpClient} from '@angular/common/http';
-import {PageLink} from '@shared/models/page/page-link';
-import {PageData} from '@shared/models/page/page-data';
-import {EntitySubtype} from '@app/shared/models/entity-type.models';
-import {Asset, AssetInfo, AssetSearchQuery} from '@app/shared/models/asset.models';
-import { Device, DeviceSearchQuery } from '@shared/models/device.models';
+import { Injectable } from '@angular/core';
+import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
+import { Observable } from 'rxjs/index';
+import { HttpClient } from '@angular/common/http';
+import { PageLink } from '@shared/models/page/page-link';
+import { PageData } from '@shared/models/page/page-data';
+import { EntitySubtype } from '@app/shared/models/entity-type.models';
+import { Asset, AssetInfo, AssetSearchQuery } from '@app/shared/models/asset.models';
 
 @Injectable({
   providedIn: 'root'
@@ -33,58 +32,61 @@ export class AssetService {
     private http: HttpClient
   ) { }
 
-  public getTenantAssetInfos(pageLink: PageLink, type: string = '', ignoreErrors: boolean = false,
-                             ignoreLoading: boolean = false): Observable<PageData<AssetInfo>> {
+  public getTenantAssetInfos(pageLink: PageLink, type: string = '', config?: RequestConfig): Observable<PageData<AssetInfo>> {
     return this.http.get<PageData<AssetInfo>>(`/api/tenant/assetInfos${pageLink.toQuery()}&type=${type}`,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
-  public getCustomerAssetInfos(customerId: string, pageLink: PageLink, type: string = '', ignoreErrors: boolean = false,
-                               ignoreLoading: boolean = false): Observable<PageData<AssetInfo>> {
+  public getCustomerAssetInfos(customerId: string, pageLink: PageLink, type: string = '',
+                               config?: RequestConfig): Observable<PageData<AssetInfo>> {
     return this.http.get<PageData<AssetInfo>>(`/api/customer/${customerId}/assetInfos${pageLink.toQuery()}&type=${type}`,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
-  public getAsset(assetId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Asset> {
-    return this.http.get<Asset>(`/api/asset/${assetId}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public getAsset(assetId: string, config?: RequestConfig): Observable<Asset> {
+    return this.http.get<Asset>(`/api/asset/${assetId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public getAssets(assetIds: Array<string>, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Array<Asset>> {
-    return this.http.get<Array<Asset>>(`/api/assets?assetIds=${assetIds.join(',')}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public getAssets(assetIds: Array<string>, config?: RequestConfig): Observable<Array<Asset>> {
+    return this.http.get<Array<Asset>>(`/api/assets?assetIds=${assetIds.join(',')}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public getAssetInfo(assetId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<AssetInfo> {
-    return this.http.get<AssetInfo>(`/api/asset/info/${assetId}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public getAssetInfo(assetId: string, config?: RequestConfig): Observable<AssetInfo> {
+    return this.http.get<AssetInfo>(`/api/asset/info/${assetId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public saveAsset(asset: Asset, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Asset> {
-    return this.http.post<Asset>('/api/asset', asset, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public saveAsset(asset: Asset, config?: RequestConfig): Observable<Asset> {
+    return this.http.post<Asset>('/api/asset', asset, defaultHttpOptionsFromConfig(config));
   }
 
-  public deleteAsset(assetId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false) {
-    return this.http.delete(`/api/asset/${assetId}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public deleteAsset(assetId: string, config?: RequestConfig) {
+    return this.http.delete(`/api/asset/${assetId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public getAssetTypes(ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Array<EntitySubtype>> {
-    return this.http.get<Array<EntitySubtype>>('/api/asset/types', defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public getAssetTypes(config?: RequestConfig): Observable<Array<EntitySubtype>> {
+    return this.http.get<Array<EntitySubtype>>('/api/asset/types', defaultHttpOptionsFromConfig(config));
   }
 
-  public makeAssetPublic(assetId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Asset> {
-    return this.http.post<Asset>(`/api/customer/public/asset/${assetId}`, null, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public makeAssetPublic(assetId: string, config?: RequestConfig): Observable<Asset> {
+    return this.http.post<Asset>(`/api/customer/public/asset/${assetId}`, null, defaultHttpOptionsFromConfig(config));
   }
 
   public assignAssetToCustomer(customerId: string, assetId: string,
-                               ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Asset> {
-    return this.http.post<Asset>(`/api/customer/${customerId}/asset/${assetId}`, null, defaultHttpOptions(ignoreLoading, ignoreErrors));
+                               config?: RequestConfig): Observable<Asset> {
+    return this.http.post<Asset>(`/api/customer/${customerId}/asset/${assetId}`, null, defaultHttpOptionsFromConfig(config));
   }
 
-  public unassignAssetFromCustomer(assetId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false) {
-    return this.http.delete(`/api/customer/asset/${assetId}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public unassignAssetFromCustomer(assetId: string, config?: RequestConfig) {
+    return this.http.delete(`/api/customer/asset/${assetId}`, defaultHttpOptionsFromConfig(config));
   }
 
   public findByQuery(query: AssetSearchQuery,
-                     ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Array<Asset>> {
-    return this.http.post<Array<Asset>>('/api/assets', query, defaultHttpOptions(ignoreLoading, ignoreErrors));
+                     config?: RequestConfig): Observable<Array<Asset>> {
+    return this.http.post<Array<Asset>>('/api/assets', query, defaultHttpOptionsFromConfig(config));
+  }
+
+  public findByName(assetName: string, config?: RequestConfig): Observable<Asset> {
+    return this.http.get<Asset>(`/api/tenant/assets?assetName=${assetName}`, defaultHttpOptionsFromConfig(config));
   }
 
 }
