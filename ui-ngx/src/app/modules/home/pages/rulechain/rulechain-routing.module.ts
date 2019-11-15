@@ -14,12 +14,44 @@
 /// limitations under the License.
 ///
 
-import {NgModule} from '@angular/core';
-import {RouterModule, Routes} from '@angular/router';
+import { Injectable, NgModule } from '@angular/core';
+import { ActivatedRouteSnapshot, Resolve, RouterModule, Routes } from '@angular/router';
 
 import {EntitiesTableComponent} from '../../components/entity/entities-table.component';
 import {Authority} from '@shared/models/authority.enum';
 import {RuleChainsTableConfigResolver} from '@modules/home/pages/rulechain/rulechains-table-config.resolver';
+import { Dashboard } from '@shared/models/dashboard.models';
+import { DashboardService } from '@core/http/dashboard.service';
+import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { BreadCrumbConfig, BreadCrumbLabelFunction } from '@shared/components/breadcrumb';
+import { RuleChain } from '@shared/models/rule-chain.models';
+import { RuleChainService } from '@core/http/rule-chain.service';
+import { DashboardPageComponent } from '@home/pages/dashboard/dashboard-page.component';
+import { dashboardBreadcumbLabelFunction, DashboardResolver } from '@home/pages/dashboard/dashboard-routing.module';
+import { RuleChainPageComponent } from '@home/pages/rulechain/rulechain-page.component';
+
+
+@Injectable()
+export class RuleChainResolver implements Resolve<RuleChain> {
+
+  constructor(private ruleChainService: RuleChainService) {
+  }
+
+  resolve(route: ActivatedRouteSnapshot): Observable<RuleChain> {
+    const ruleChainId = route.params.ruleChainId;
+    return this.ruleChainService.getRuleChain(ruleChainId);
+  }
+}
+
+export const ruleChainBreadcumbLabelFunction: BreadCrumbLabelFunction = ((route, translate, component) => {
+  let label: string = component.ruleChain.name;
+  if (component.ruleChain.root) {
+    label += ` (${translate.instant('rulechain.root')})`;
+  }
+  return label;
+});
 
 const routes: Routes = [
   {
@@ -41,6 +73,22 @@ const routes: Routes = [
         resolve: {
           entitiesTableConfig: RuleChainsTableConfigResolver
         }
+      },
+      {
+        path: ':ruleChainId',
+        component: RuleChainPageComponent,
+        data: {
+          breadcrumb: {
+            labelFunction: ruleChainBreadcumbLabelFunction,
+            icon: 'settings_ethernet'
+          } as BreadCrumbConfig,
+          auth: [Authority.TENANT_ADMIN],
+          title: 'rulechain.rulechain',
+          widgetEditMode: false
+        },
+        resolve: {
+          ruleChain: RuleChainResolver
+        }
       }
     ]
   }
@@ -50,7 +98,8 @@ const routes: Routes = [
   imports: [RouterModule.forChild(routes)],
   exports: [RouterModule],
   providers: [
-    RuleChainsTableConfigResolver
+    RuleChainsTableConfigResolver,
+    RuleChainResolver
   ]
 })
 export class RuleChainRoutingModule { }

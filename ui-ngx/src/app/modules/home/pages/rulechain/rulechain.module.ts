@@ -21,6 +21,7 @@ import {RuleChainComponent} from '@modules/home/pages/rulechain/rulechain.compon
 import {RuleChainRoutingModule} from '@modules/home/pages/rulechain/rulechain-routing.module';
 import {HomeComponentsModule} from '@modules/home/components/home-components.module';
 import { RuleChainTabsComponent } from '@home/pages/rulechain/rulechain-tabs.component';
+import { RuleChainPageComponent } from './rulechain-page.component';
 
 @NgModule({
   entryComponents: [
@@ -29,7 +30,8 @@ import { RuleChainTabsComponent } from '@home/pages/rulechain/rulechain-tabs.com
   ],
   declarations: [
     RuleChainComponent,
-    RuleChainTabsComponent
+    RuleChainTabsComponent,
+    RuleChainPageComponent
   ],
   imports: [
     CommonModule,

@@ -21,6 +21,7 @@ import { LogoComponent } from './components/logo.component';
 import { TbSnackBarComponent, ToastDirective } from './components/toast.directive';
 import { BreadcrumbComponent } from '@app/shared/components/breadcrumb.component';
 import { NgxFlowModule, FlowInjectionToken } from '@flowjs/ngx-flow';
+import { NgxFlowchartModule } from 'ngx-flowchart/dist/ngx-flowchart';
 import Flow from '@flowjs/flow.js';
 
 import {
@@ -235,7 +236,8 @@ import { FileInputComponent } from './components/file-input.component';
     HotkeyModule,
     ColorPickerModule,
     NgxHmCarouselModule,
-    NgxFlowModule
+    NgxFlowModule,
+    NgxFlowchartModule
   ],
   exports: [
     FooterComponent,
@@ -317,6 +319,7 @@ import { FileInputComponent } from './components/file-input.component';
     HotkeyModule,
     ColorPickerModule,
     NgxHmCarouselModule,
+    NgxFlowchartModule,
     ColorPickerDialogComponent,
     MaterialIconsDialogComponent,
     ColorInputComponent,

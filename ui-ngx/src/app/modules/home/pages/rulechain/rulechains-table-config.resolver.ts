@@ -128,9 +128,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     if ($event) {
       $event.stopPropagation();
     }
-    // TODO:
-    // this.router.navigateByUrl(`customers/${customer.id.id}/users`);
-    this.dialogService.todo();
+    this.router.navigateByUrl(`ruleChains/${ruleChain.id.id}`);
   }
 
   exportRuleChain($event: Event, ruleChain: RuleChain) {
