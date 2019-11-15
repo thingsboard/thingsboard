@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -90,7 +90,7 @@ public class TbKafkaMsgQueueService extends TbAbstractMsgQueueService {
         consumer.subscribe(Pattern.compile(topicPattern));
 
         executor.execute(() -> {
-            while (true) {
+            while (!STOPPED) {
                 if (ackMap.get(collectiveTenantId).get()) {
                     ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(timeout));
                     if (records.count() > 0) {
@@ -122,8 +122,12 @@ public class TbKafkaMsgQueueService extends TbAbstractMsgQueueService {
     @PreDestroy
     @Override
     protected void destroy() {
-        producer.close();
-        consumer.close();
         super.destroy();
+        if (producer != null) {
+            producer.close();
+        }
+        if (consumer != null) {
+            consumer.close();
+        }
     }
 }

@@ -68,6 +68,10 @@ public abstract class TbAbstractMsgQueueService implements TbMsgQueueService {
 
     protected final TenantId collectiveTenantId = new TenantId(UUIDs.random());
 
+    public static final String TENANT_KEY = "TENANT_ID";
+
+    public static volatile boolean STOPPED = false;
+
     @Override
     public void ack(UUID msgId, TenantId tenantId) {
         TenantId queueTenantId = specialTenants.contains(tenantId) ? tenantId : collectiveTenantId;
@@ -128,6 +132,7 @@ public abstract class TbAbstractMsgQueueService implements TbMsgQueueService {
     }
 
     protected void destroy() {
+        STOPPED = true;
         executor.shutdown();
         sendExecutor.shutdown();
     }

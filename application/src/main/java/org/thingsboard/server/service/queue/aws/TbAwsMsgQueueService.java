@@ -37,6 +37,7 @@ import org.thingsboard.server.service.queue.TbMsgQueuePack;
 import org.thingsboard.server.service.queue.TbMsgQueueState;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -90,8 +91,8 @@ public class TbAwsMsgQueueService extends TbAbstractMsgQueueService {
                     ReceiveMessageRequest request = new ReceiveMessageRequest();
                     request
                             .withQueueUrl(queueUrl)
-                            .withMessageAttributeNames("tenantId");
-//                            .withMaxNumberOfMessages(msgPackSize);
+                            .withMessageAttributeNames(TENANT_KEY)
+                            .withMaxNumberOfMessages(msgPackSize);
                     List<Message> messages = sqsClient.receiveMessage(request).getMessages();
                     if (messages.size() > 0) {
                         ackMap.get(collectiveTenantId).set(false);
@@ -115,7 +116,7 @@ public class TbAwsMsgQueueService extends TbAbstractMsgQueueService {
         }
 
         Map<String, MessageAttributeValue> messageAttributes = new HashMap<>();
-        messageAttributes.put("tenantId", new MessageAttributeValue().withDataType("String").withStringValue(tenantId.toString()));
+        messageAttributes.put(TENANT_KEY, new MessageAttributeValue().withDataType("String").withStringValue(tenantId.toString()));
         sendMsgRequest.setMessageAttributes(messageAttributes);
 
         sendMsgRequest.withMessageDeduplicationId(msg.getId().toString());
@@ -151,7 +152,9 @@ public class TbAwsMsgQueueService extends TbAbstractMsgQueueService {
     }
 
     @Override
+    @PreDestroy
     protected void destroy() {
+        super.destroy();
         if (sqsClient != null) {
             try {
                 sqsClient.shutdown();
@@ -159,6 +162,5 @@ public class TbAwsMsgQueueService extends TbAbstractMsgQueueService {
                 log.error("Failed to shutdown SQS client during destroy()", e);
             }
         }
-        super.destroy();
     }
 }

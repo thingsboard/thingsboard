@@ -89,7 +89,7 @@ public class TbMemoryMsgQueueService extends TbAbstractMsgQueueService {
         executor.submit(() -> {
             Queue<TbMsgQueueState> queue = msgQueueMap.get(tenantId);
             AtomicBoolean ack = ackMap.get(tenantId);
-            while (true) {
+            while (!STOPPED) {
                 if (ack.get() && !queue.isEmpty()) {
                     ack.set(false);
                     int currentMsgPackSize = Math.min(msgPackSize, msgQueueMap.get(tenantId).size());
