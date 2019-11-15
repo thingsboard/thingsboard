@@ -23,6 +23,7 @@ import com.datastax.driver.core.utils.UUIDs;
 
 import java.util.Optional;
 
+import com.google.common.util.concurrent.FutureCallback;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.device.DeviceActorToRuleEngineMsg;
@@ -49,6 +50,7 @@ import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -348,7 +350,17 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
             case DataConstants.ENTITY_DELETED:
             case DataConstants.ENTITY_ASSIGNED_TO_EDGE:
             case DataConstants.ENTITY_UNASSIGNED_FROM_EDGE:
-                edgeService.pushEventToEdge(tenantId, msg);
+                edgeService.pushEventToEdge(tenantId, msg, new FutureCallback<Void>() {
+                    @Override
+                    public void onSuccess(@Nullable Void aVoid) {
+                        log.debug("Event saved successfully!");
+                    }
+
+                    @Override
+                    public void onFailure(Throwable t) {
+                        log.debug("Failure during event save", t);
+                    }
+                });
         }
 
     }

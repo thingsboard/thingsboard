@@ -18,8 +18,10 @@ package org.thingsboard.server.service.edge.rpc;
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -33,23 +35,29 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeQueueEntry;
 import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
-import org.thingsboard.server.dao.asset.AssetService;
-import org.thingsboard.server.dao.attributes.AttributesService;
-import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
+import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 import org.thingsboard.server.gen.edge.AssetUpdateMsg;
 import org.thingsboard.server.gen.edge.ConnectRequestMsg;
@@ -57,7 +65,9 @@ import org.thingsboard.server.gen.edge.ConnectResponseCode;
 import org.thingsboard.server.gen.edge.ConnectResponseMsg;
 import org.thingsboard.server.gen.edge.DashboardUpdateMsg;
 import org.thingsboard.server.gen.edge.DeviceUpdateMsg;
+import org.thingsboard.server.gen.edge.DownlinkMsg;
 import org.thingsboard.server.gen.edge.EdgeConfiguration;
+import org.thingsboard.server.gen.edge.EntityDataProto;
 import org.thingsboard.server.gen.edge.EntityViewUpdateMsg;
 import org.thingsboard.server.gen.edge.NodeConnectionInfoProto;
 import org.thingsboard.server.gen.edge.RequestMsg;
@@ -72,18 +82,22 @@ import org.thingsboard.server.gen.edge.UplinkMsg;
 import org.thingsboard.server.gen.edge.UplinkResponseMsg;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 @Slf4j
 @Data
 public final class EdgeGrpcSession implements Cloneable {
+
+    private static final ReentrantLock entityCreationLock = new ReentrantLock();
 
     private final UUID sessionId;
     private final BiConsumer<EdgeId, EdgeGrpcSession> sessionOpenListener;
@@ -96,24 +110,14 @@ public final class EdgeGrpcSession implements Cloneable {
     private StreamObserver<ResponseMsg> outputStream;
     private boolean connected;
 
-    private EdgeService edgeService;
-    private AssetService assetService;
-    private DeviceService deviceService;
-    private AttributesService attributesService;
-
-    EdgeGrpcSession(EdgeContextComponent ctx, StreamObserver<ResponseMsg> outputStream,
-                    BiConsumer<EdgeId, EdgeGrpcSession> sessionOpenListener, Consumer<EdgeId> sessionCloseListener,
-                    EdgeService edgeService, AssetService assetService,  DeviceService deviceService, AttributesService attributesService, ObjectMapper objectMapper) {
+    EdgeGrpcSession(EdgeContextComponent ctx, StreamObserver<ResponseMsg> outputStream, BiConsumer<EdgeId, EdgeGrpcSession> sessionOpenListener,
+                    Consumer<EdgeId> sessionCloseListener, ObjectMapper objectMapper) {
         this.sessionId = UUID.randomUUID();
         this.ctx = ctx;
         this.outputStream = outputStream;
         this.sessionOpenListener = sessionOpenListener;
         this.sessionCloseListener = sessionCloseListener;
         this.objectMapper = objectMapper;
-        this.edgeService = edgeService;
-        this.assetService = assetService;
-        this.deviceService = deviceService;
-        this.attributesService = attributesService;
         initInputStream();
     }
 
@@ -132,6 +136,11 @@ public final class EdgeGrpcSession implements Cloneable {
                 }
                 if (connected) {
                     if (requestMsg.getMsgType().equals(RequestMsgType.UPLINK_RPC_MESSAGE) && requestMsg.hasUplinkMsg()) {
+                        outputStream.onNext(ResponseMsg.newBuilder()
+                                .setUplinkResponseMsg(processUplinkMsg(requestMsg.getUplinkMsg()))
+                                .build());
+                    }
+                    if (requestMsg.getMsgType().equals(RequestMsgType.DEVICE_UPDATE_RPC_MESSAGE) && requestMsg.hasDeviceUpdateMsg()) {
                         outputStream.onNext(ResponseMsg.newBuilder()
                                 .setUplinkResponseMsg(processUplinkMsg(requestMsg.getUplinkMsg()))
                                 .build());
@@ -159,37 +168,23 @@ public final class EdgeGrpcSession implements Cloneable {
         TimePageData<Event> pageData;
         UUID ifOffset = null;
         do {
-            pageData =  edgeService.findQueueEvents(edge.getTenantId(), edge.getId(), pageLink);
+            pageData =  ctx.getEdgeService().findQueueEvents(edge.getTenantId(), edge.getId(), pageLink);
             if (!pageData.getData().isEmpty()) {
+                edge = ctx.getEdgeService().findEdgeById(edge.getTenantId(), edge.getId());
                 for (Event event : pageData.getData()) {
                     EdgeQueueEntry entry;
                     try {
                         entry = objectMapper.treeToValue(event.getBody(), EdgeQueueEntry.class);
+
                         UpdateMsgType msgType = getResponseMsgType(entry.getType());
-                        switch (entry.getEntityType()) {
-                            case DEVICE:
-                                Device device = objectMapper.readValue(entry.getData(), Device.class);
-                                onDeviceUpdated(msgType, device);
+                        switch (msgType) {
+                            case ENTITY_DELETED_RPC_MESSAGE:
+                            case ENTITY_UPDATED_RPC_MESSAGE:
+                            case ENTITY_CREATED_RPC_MESSAGE:
+                                processEntityCRUDMessage(entry, msgType);
                                 break;
-                            case ASSET:
-                                Asset asset = objectMapper.readValue(entry.getData(), Asset.class);
-                                onAssetUpdated(msgType, asset);
-                                break;
-                            case ENTITY_VIEW:
-                                EntityView entityView = objectMapper.readValue(entry.getData(), EntityView.class);
-                                onEntityViewUpdated(msgType, entityView);
-                                break;
-                            case DASHBOARD:
-                                Dashboard dashboard = objectMapper.readValue(entry.getData(), Dashboard.class);
-                                onDashboardUpdated(msgType, dashboard);
-                                break;
-                            case RULE_CHAIN:
-                                RuleChain ruleChain = objectMapper.readValue(entry.getData(), RuleChain.class);
-                                onRuleChainUpdated(msgType, ruleChain);
-                                break;
-                            case RULE_CHAIN_METADATA:
-                                RuleChainMetaData ruleChainMetaData = objectMapper.readValue(entry.getData(), RuleChainMetaData.class);
-                                onRuleChainMetadataUpdated(msgType, ruleChainMetaData);
+                            case RULE_CHAIN_CUSTOM_MESSAGE:
+                                processCustomDownlinkMessage(entry);
                                 break;
                         }
                     } catch (Exception e) {
@@ -214,14 +209,71 @@ public final class EdgeGrpcSession implements Cloneable {
         }
     }
 
+    private void processCustomDownlinkMessage(EdgeQueueEntry entry) throws IOException {
+        log.trace("Executing processCustomDownlinkMessage, entry [{}], msgType [{}]", entry);
+        TbMsg tbMsg = objectMapper.readValue(entry.getData(), TbMsg.class);
+        String entityName = null;
+        switch (entry.getEntityType()) {
+            case DEVICE:
+                Device device = ctx.getDeviceService().findDeviceById(edge.getTenantId(), new DeviceId(tbMsg.getOriginator().getId()));
+                entityName = device.getName();
+                break;
+            case ASSET:
+                Asset asset = ctx.getAssetService().findAssetById(edge.getTenantId(), new AssetId(tbMsg.getOriginator().getId()));
+                entityName = asset.getName();
+                break;
+            case ENTITY_VIEW:
+                EntityView entityView = ctx.getEntityViewService().findEntityViewById(edge.getTenantId(), new EntityViewId(tbMsg.getOriginator().getId()));
+                entityName = entityView.getName();
+                break;
+
+        }
+        if (entityName != null) {
+            log.debug("Sending donwlink entity data msg, entityName [{}], tbMsg [{}]", entityName, tbMsg);
+            outputStream.onNext(ResponseMsg.newBuilder()
+                    .setDownlinkMsg(constructDownlinkEntityDataMsg(entityName, tbMsg))
+                    .build());
+        }
+    }
+
+    private void processEntityCRUDMessage(EdgeQueueEntry entry, UpdateMsgType msgType) throws java.io.IOException {
+        log.trace("Executing processEntityCRUDMessage, entry [{}], msgType [{}]", entry, msgType);
+        switch (entry.getEntityType()) {
+            case DEVICE:
+                Device device = objectMapper.readValue(entry.getData(), Device.class);
+                onDeviceUpdated(msgType, device);
+                break;
+            case ASSET:
+                Asset asset = objectMapper.readValue(entry.getData(), Asset.class);
+                onAssetUpdated(msgType, asset);
+                break;
+            case ENTITY_VIEW:
+                EntityView entityView = objectMapper.readValue(entry.getData(), EntityView.class);
+                onEntityViewUpdated(msgType, entityView);
+                break;
+            case DASHBOARD:
+                Dashboard dashboard = objectMapper.readValue(entry.getData(), Dashboard.class);
+                onDashboardUpdated(msgType, dashboard);
+                break;
+            case RULE_CHAIN:
+                RuleChain ruleChain = objectMapper.readValue(entry.getData(), RuleChain.class);
+                onRuleChainUpdated(msgType, ruleChain);
+                break;
+            case RULE_CHAIN_METADATA:
+                RuleChainMetaData ruleChainMetaData = objectMapper.readValue(entry.getData(), RuleChainMetaData.class);
+                onRuleChainMetadataUpdated(msgType, ruleChainMetaData);
+                break;
+        }
+    }
+
     private void updateQueueStartTs(Long newStartTs) {
         List<AttributeKvEntry> attributes = Collections.singletonList(new BaseAttributeKvEntry(new LongDataEntry("queueStartTs", newStartTs), System.currentTimeMillis()));
-        attributesService.save(edge.getTenantId(), edge.getId(), DataConstants.SERVER_SCOPE, attributes);
+        ctx.getAttributesService().save(edge.getTenantId(), edge.getId(), DataConstants.SERVER_SCOPE, attributes);
     }
 
     private ListenableFuture<Long> getQueueStartTs() {
         ListenableFuture<Optional<AttributeKvEntry>> future =
-                attributesService.find(edge.getTenantId(), edge.getId(), DataConstants.SERVER_SCOPE, "queueStartTs");
+                ctx.getAttributesService().find(edge.getTenantId(), edge.getId(), DataConstants.SERVER_SCOPE, "queueStartTs");
         return Futures.transform(future, attributeKvEntryOpt -> {
                     if (attributeKvEntryOpt != null && attributeKvEntryOpt.isPresent()) {
                         AttributeKvEntry attributeKvEntry = attributeKvEntryOpt.get();
@@ -272,17 +324,24 @@ public final class EdgeGrpcSession implements Cloneable {
     }
 
     private UpdateMsgType getResponseMsgType(String msgType) {
-        switch (msgType) {
-            case DataConstants.ENTITY_UPDATED:
-                return UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE;
-            case DataConstants.ENTITY_CREATED:
-            case DataConstants.ENTITY_ASSIGNED_TO_EDGE:
-                return UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE;
-            case DataConstants.ENTITY_DELETED:
-            case DataConstants.ENTITY_UNASSIGNED_FROM_EDGE:
-                return UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE;
-            default:
-                throw new RuntimeException("Unsupported mstType [" + msgType + "]");
+        if (msgType.equals(SessionMsgType.POST_TELEMETRY_REQUEST.name()) ||
+                msgType.equals(SessionMsgType.POST_ATTRIBUTES_REQUEST.name()) ||
+                msgType.equals(DataConstants.ATTRIBUTES_UPDATED) ||
+                msgType.equals(DataConstants.ATTRIBUTES_DELETED)) {
+            return UpdateMsgType.RULE_CHAIN_CUSTOM_MESSAGE;
+        } else {
+            switch (msgType) {
+                case DataConstants.ENTITY_UPDATED:
+                    return UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE;
+                case DataConstants.ENTITY_CREATED:
+                case DataConstants.ENTITY_ASSIGNED_TO_EDGE:
+                    return UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE;
+                case DataConstants.ENTITY_DELETED:
+                case DataConstants.ENTITY_UNASSIGNED_FROM_EDGE:
+                    return UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE;
+                default:
+                    throw new RuntimeException("Unsupported msgType [" + msgType + "]");
+            }
         }
     }
 
@@ -292,13 +351,24 @@ public final class EdgeGrpcSession implements Cloneable {
                 .setIdMSB(ruleChain.getId().getId().getMostSignificantBits())
                 .setIdLSB(ruleChain.getId().getId().getLeastSignificantBits())
                 .setName(ruleChain.getName())
-                .setRoot(ruleChain.isRoot())
+                .setRoot(ruleChain.getId().equals(edge.getRootRuleChainId()))
                 .setDebugMode(ruleChain.isDebugMode())
                 .setConfiguration(JacksonUtil.toString(ruleChain.getConfiguration()));
         if (ruleChain.getFirstRuleNodeId() != null) {
              builder.setFirstRuleNodeIdMSB(ruleChain.getFirstRuleNodeId().getId().getMostSignificantBits())
                     .setFirstRuleNodeIdLSB(ruleChain.getFirstRuleNodeId().getId().getLeastSignificantBits());
         }
+        return builder.build();
+    }
+
+    private DownlinkMsg constructDownlinkEntityDataMsg(String entityName, TbMsg tbMsg) {
+        EntityDataProto entityData = EntityDataProto.newBuilder()
+                .setEntityName(entityName)
+                .setTbMsg(ByteString.copyFrom(TbMsg.toBytes(tbMsg))).build();
+
+        DownlinkMsg.Builder builder = DownlinkMsg.newBuilder()
+                .addAllEntityData(Collections.singletonList(entityData));
+
         return builder.build();
     }
 
@@ -409,12 +479,12 @@ public final class EdgeGrpcSession implements Cloneable {
         String relatedType;
         org.thingsboard.server.gen.edge.EntityType relatedEntityType;
         if (entityView.getEntityId().getEntityType().equals(EntityType.DEVICE)) {
-            Device device = deviceService.findDeviceById(entityView.getTenantId(), new DeviceId(entityView.getEntityId().getId()));
+            Device device = ctx.getDeviceService().findDeviceById(entityView.getTenantId(), new DeviceId(entityView.getEntityId().getId()));
             relatedName = device.getName();
             relatedType = device.getType();
             relatedEntityType = org.thingsboard.server.gen.edge.EntityType.DEVICE;
         } else {
-            Asset asset = assetService.findAssetById(entityView.getTenantId(), new AssetId(entityView.getEntityId().getId()));
+            Asset asset = ctx.getAssetService().findAssetById(entityView.getTenantId(), new AssetId(entityView.getEntityId().getId()));
             relatedName = asset.getName();
             relatedType = asset.getType();
             relatedEntityType = org.thingsboard.server.gen.edge.EntityType.ASSET;
@@ -430,7 +500,103 @@ public final class EdgeGrpcSession implements Cloneable {
     }
     
     private UplinkResponseMsg processUplinkMsg(UplinkMsg uplinkMsg) {
-        return null;
+        try {
+            if (uplinkMsg.getEntityDataList() != null && !uplinkMsg.getEntityDataList().isEmpty()) {
+                for (EntityDataProto entityData : uplinkMsg.getEntityDataList()) {
+                    TbMsg tbMsg = null;
+                    TbMsg tmp = TbMsg.fromBytes(entityData.getTbMsg().toByteArray());
+                    switch (tmp.getOriginator().getEntityType()) {
+                        case DEVICE:
+                            String deviceName = entityData.getEntityName();
+                            String deviceType = entityData.getEntityType();
+                            Device device = getOrCreateDevice(deviceName, deviceType);
+                            if (device != null) {
+                                tbMsg = new TbMsg(UUIDs.timeBased(), tmp.getType(), device.getId(), tmp.getMetaData().copy(),
+                                        tmp.getDataType(), tmp.getData(), null, null, 0L);
+                            }
+                            break;
+                        case ASSET:
+                            String assetName = entityData.getEntityName();
+                            Asset asset = ctx.getAssetService().findAssetByTenantIdAndName(edge.getTenantId(), assetName);
+                            if (asset != null) {
+                                tbMsg = new TbMsg(UUIDs.timeBased(), tmp.getType(), asset.getId(), tmp.getMetaData().copy(),
+                                        tmp.getDataType(), tmp.getData(), null, null, 0L);
+                            }
+                            break;
+                        case ENTITY_VIEW:
+                            String entityViewName = entityData.getEntityName();
+                            EntityView entityView = ctx.getEntityViewService().findEntityViewByTenantIdAndName(edge.getTenantId(), entityViewName);
+                            if (entityView != null) {
+                                tbMsg = new TbMsg(UUIDs.timeBased(), tmp.getType(), entityView.getId(), tmp.getMetaData().copy(),
+                                        tmp.getDataType(), tmp.getData(), null, null, 0L);
+                            }
+                            break;
+                    }
+                    if (tbMsg != null) {
+                        ctx.getActorService().onMsg(new SendToClusterMsg(tbMsg.getOriginator(), new ServiceToRuleEngineMsg(edge.getTenantId(), tbMsg)));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            return UplinkResponseMsg.newBuilder().setSuccess(false).setErrorMsg(e.getMessage()).build();
+        }
+
+        return UplinkResponseMsg.newBuilder().setSuccess(true).build();
+    }
+
+    private Device getOrCreateDevice(String deviceName, String deviceType) {
+        Device device = ctx.getDeviceService().findDeviceByTenantIdAndName(edge.getTenantId(), deviceName);
+        if (device == null) {
+            entityCreationLock.lock();
+            try {
+                return processGetOrCreateDevice(deviceName, deviceType);
+            } finally {
+                entityCreationLock.unlock();
+            }
+        }
+        return device;
+    }
+
+    private Device processGetOrCreateDevice(String deviceName, String deviceType) {
+        Device device = ctx.getDeviceService().findDeviceByTenantIdAndName(edge.getTenantId(), deviceName);
+        if (device == null) {
+            device = new Device();
+            device.setName(deviceName);
+            device.setType(deviceType);
+            device.setTenantId(edge.getTenantId());
+            device.setCustomerId(edge.getCustomerId());
+            device = ctx.getDeviceService().saveDevice(device);
+            createRelationFromEdge(device.getId());
+            ctx.getActorService().onDeviceAdded(device);
+            pushDeviceCreatedEventToRuleEngine(device);
+        }
+        return device;
+    }
+
+    private void pushDeviceCreatedEventToRuleEngine(Device device) {
+        try {
+            ObjectNode entityNode = objectMapper.valueToTree(device);
+            TbMsg msg = new TbMsg(UUIDs.timeBased(), DataConstants.ENTITY_CREATED, device.getId(), deviceActionTbMsgMetaData(device), objectMapper.writeValueAsString(entityNode), null, null, 0L);
+            ctx.getActorService().onMsg(new SendToClusterMsg(device.getId(), new ServiceToRuleEngineMsg(edge.getTenantId(), msg)));
+        } catch (JsonProcessingException | IllegalArgumentException e) {
+            log.warn("[{}] Failed to push device action to rule engine: {}", device.getId(), DataConstants.ENTITY_CREATED, e);
+        }
+    }
+
+    private TbMsgMetaData deviceActionTbMsgMetaData(Device device) {
+        TbMsgMetaData metaData = getTbMsgMetaData();
+        CustomerId customerId = device.getCustomerId();
+        if (customerId != null && !customerId.isNullUid()) {
+            metaData.putValue("customerId", customerId.toString());
+        }
+        return metaData;
+    }
+
+    private TbMsgMetaData getTbMsgMetaData() {
+        TbMsgMetaData metaData = new TbMsgMetaData();
+        metaData.putValue("edgeId", edge.getId().toString());
+        metaData.putValue("edgeName", edge.getName());
+        return metaData;
     }
 
     private ConnectResponseMsg processConnect(ConnectRequestMsg request) {
@@ -462,6 +628,15 @@ public final class EdgeGrpcSession implements Cloneable {
                 .setResponseCode(ConnectResponseCode.BAD_CREDENTIALS)
                 .setErrorMsg("Failed to find the edge! Routing key: " + request.getEdgeRoutingKey())
                 .setConfiguration(EdgeConfiguration.getDefaultInstance()).build();
+    }
+
+    private void createRelationFromEdge(EntityId entityId) {
+        EntityRelation relation = new EntityRelation();
+        relation.setFrom(edge.getId());
+        relation.setTo(entityId);
+        relation.setTypeGroup(RelationTypeGroup.COMMON);
+        relation.setType(EntityRelation.EDGE_TYPE);
+        ctx.getRelationService().saveRelation(edge.getTenantId(), relation);
     }
 
     private EdgeConfiguration constructEdgeConfigProto(Edge edge) throws JsonProcessingException {

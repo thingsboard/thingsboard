@@ -105,6 +105,10 @@ public final class TbMsg implements Serializable {
         return ByteBuffer.wrap(bytes);
     }
 
+    public static TbMsg fromBytes(byte[] data) {
+        return fromBytes(ByteBuffer.wrap(data));
+    }
+
     public static TbMsg fromBytes(ByteBuffer buffer) {
         try {
             MsgProtos.TbMsgProto proto = MsgProtos.TbMsgProto.parseFrom(buffer.array());

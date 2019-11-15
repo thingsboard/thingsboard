@@ -53,6 +53,7 @@ message ResponseMsg {
 enum RequestMsgType {
   CONNECT_RPC_MESSAGE = 0;
   UPLINK_RPC_MESSAGE = 1;
+  DEVICE_UPDATE_RPC_MESSAGE = 2;
 }
 
 message ConnectRequestMsg {
@@ -84,35 +85,12 @@ enum UpdateMsgType {
   ENTITY_CREATED_RPC_MESSAGE = 0;
   ENTITY_UPDATED_RPC_MESSAGE = 1;
   ENTITY_DELETED_RPC_MESSAGE = 2;
+  RULE_CHAIN_CUSTOM_MESSAGE = 3;
 }
 
-message DeviceData {
-  string deviceName = 1;
-  string deviceType = 2;
-  bytes tbMsg = 3;
-}
-
-message AssetData {
-  string assetName = 1;
-  string assetType = 2;
-  bytes tbMsg = 3;
-}
-
-message EntityViewData {
-  string entityViewName = 1;
-  string entityViewType = 2;
-  bytes tbMsg = 3;
-}
-
-message RuleChainData {
-  string ruleChainName = 1;
-  string ruleChainType = 2;
-  bytes tbMsg = 3;
-}
-
-message DashboardData {
-  string dashboardName = 1;
-  string dashboardType = 2;
+message EntityDataProto {
+  string entityName = 1;
+  string entityType = 2;
   bytes tbMsg = 3;
 }
 
@@ -199,11 +177,7 @@ enum EntityType {
 
 message UplinkMsg {
   int32 uplinkMsgId = 1;
-  repeated DeviceData deviceData = 2;
-  repeated AssetData assetData = 3;
-  repeated EntityViewData entityViewData = 4;
-  repeated RuleChainData ruleChainData = 5;
-  repeated DashboardData dashboardData = 6;
+  repeated EntityDataProto entityData = 2;
 }
 
 message UplinkResponseMsg {
@@ -213,10 +187,6 @@ message UplinkResponseMsg {
 
 message DownlinkMsg {
   int32 downlinkMsgId = 1;
-  repeated DeviceData deviceData = 2;
-  repeated AssetData assetData = 3;
-  repeated EntityViewData entityViewData = 4;
-  repeated RuleChainData ruleChainData = 5;
-  repeated DashboardData dashboardData = 6;
+  repeated EntityDataProto entityData = 2;
 }
 
