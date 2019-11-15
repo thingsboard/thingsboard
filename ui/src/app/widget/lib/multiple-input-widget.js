@@ -249,7 +249,7 @@ function MultipleInputWidgetController($q, $scope, $translate, attributeService,
 
                         //For backward compatibility
                         if (angular.isUndefined(source.keys[j].settings.dataKeyType)) {
-                            if (vm.settings.attributesShared === true) {
+                            if (vm.settings.attributesShared) {
                                 source.keys[j].settings.dataKeyType = 'shared';
                             } else {
                                 source.keys[j].settings.dataKeyType = 'server';
@@ -257,7 +257,7 @@ function MultipleInputWidgetController($q, $scope, $translate, attributeService,
                         }
 
                         if (angular.isUndefined(source.keys[j].settings.dataKeyValueType)) {
-                            if (source.keys[j].settings.inputTypeNumber === true) {
+                            if (source.keys[j].settings.inputTypeNumber) {
                                 source.keys[j].settings.dataKeyValueType = 'double';
                             } else {
                                 source.keys[j].settings.dataKeyValueType = 'string';
@@ -265,7 +265,7 @@ function MultipleInputWidgetController($q, $scope, $translate, attributeService,
                         }
 
                         if (angular.isUndefined(source.keys[j].settings.isEditable)) {
-                            if (source.keys[j].settings.readOnly === true) {
+                            if (source.keys[j].settings.readOnly) {
                                 source.keys[j].settings.isEditable = 'readonly';
                             } else {
                                 source.keys[j].settings.isEditable = 'editable';
