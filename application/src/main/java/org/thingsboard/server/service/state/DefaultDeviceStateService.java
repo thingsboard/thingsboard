@@ -37,7 +37,7 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.page.TextPageLink;
@@ -476,8 +476,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
         if (useTelemetry) {
             tsSubService.saveAndNotify(
                     TenantId.SYS_TENANT_ID, deviceId,
-                    DataConstants.SERVER_SCOPE,
-                    Collections.singletonList(new BaseAttributeKvEntry(new LongDataEntry(key, value), System.currentTimeMillis())),
+                    Collections.singletonList(new BasicTsKvEntry(System.currentTimeMillis(), new LongDataEntry(key, value))),
                     new AttributeSaveCallback(deviceId, key, value));
         } else {
             tsSubService.saveAttrAndNotify(TenantId.SYS_TENANT_ID, deviceId, DataConstants.SERVER_SCOPE, key, value, new AttributeSaveCallback(deviceId, key, value));
@@ -488,8 +487,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
         if (useTelemetry) {
             tsSubService.saveAndNotify(
                     TenantId.SYS_TENANT_ID, deviceId,
-                    DataConstants.SERVER_SCOPE,
-                    Collections.singletonList(new BaseAttributeKvEntry(new BooleanDataEntry(key, value), System.currentTimeMillis())),
+                    Collections.singletonList(new BasicTsKvEntry(System.currentTimeMillis(), new BooleanDataEntry(key, value))),
                     new AttributeSaveCallback(deviceId, key, value));
         } else {
             tsSubService.saveAttrAndNotify(TenantId.SYS_TENANT_ID, deviceId, DataConstants.SERVER_SCOPE, key, value, new AttributeSaveCallback(deviceId, key, value));
