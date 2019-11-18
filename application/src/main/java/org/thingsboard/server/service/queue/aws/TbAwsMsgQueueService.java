@@ -69,6 +69,11 @@ public class TbAwsMsgQueueService extends TbAbstractMsgQueueService {
 
     @PostConstruct
     private void init() {
+        //max value for aws
+        if (msgPackSize > 10) {
+            msgPackSize = 10;
+        }
+
         ackMap.put(collectiveTenantId, new AtomicBoolean(true));
         specialTenants.forEach(tenantId -> ackMap.put(tenantId, new AtomicBoolean(true)));
 

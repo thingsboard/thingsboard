@@ -77,7 +77,6 @@ public class TbRabbitMqMsgQueueService extends TbAbstractMsgQueueService {
         ackMap.put(collectiveTenantId, new AtomicBoolean(true));
         specialTenants.forEach(tenantId -> ackMap.put(tenantId, new AtomicBoolean(true)));
 
-
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost(host);
         factory.setPort(port);
