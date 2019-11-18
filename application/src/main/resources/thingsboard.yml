@@ -403,6 +403,7 @@ audit-log:
 state:
   defaultInactivityTimeoutInSec: "${DEFAULT_INACTIVITY_TIMEOUT:10}"
   defaultStateCheckIntervalInSec: "${DEFAULT_STATE_CHECK_INTERVAL:10}"
+  useTelemetry: "${USE_TELEMETRY:true}"
 
 kafka:
   enabled: true
