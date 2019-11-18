@@ -350,6 +350,8 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
             case DataConstants.ENTITY_DELETED:
             case DataConstants.ENTITY_ASSIGNED_TO_EDGE:
             case DataConstants.ENTITY_UNASSIGNED_FROM_EDGE:
+            case DataConstants.ALARM_ACK:
+            case DataConstants.ALARM_CLEAR:
                 edgeService.pushEventToEdge(tenantId, msg, new FutureCallback<Void>() {
                     @Override
                     public void onSuccess(@Nullable Void aVoid) {

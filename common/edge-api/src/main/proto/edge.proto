@@ -34,26 +34,29 @@ service EdgeRpcService {
 message RequestMsg {
   RequestMsgType msgType = 1;
   ConnectRequestMsg connectRequestMsg = 2;
-  DeviceUpdateMsg deviceUpdateMsg = 3;
-  UplinkMsg uplinkMsg = 4;
+  UplinkMsg uplinkMsg = 3;
 }
 
 message ResponseMsg {
   ConnectResponseMsg connectResponseMsg = 1;
   UplinkResponseMsg uplinkResponseMsg = 2;
-  DeviceUpdateMsg deviceUpdateMsg = 3;
-  RuleChainUpdateMsg ruleChainUpdateMsg = 4;
-  RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = 5;
-  DashboardUpdateMsg dashboardUpdateMsg = 6;
-  AssetUpdateMsg assetUpdateMsg = 7;
-  EntityViewUpdateMsg entityViewUpdateMsg = 8;
-  DownlinkMsg downlinkMsg = 9;
+  EntityUpdateMsg entityUpdateMsg = 3;
+  DownlinkMsg downlinkMsg = 4;
+}
+
+message EntityUpdateMsg {
+  DeviceUpdateMsg deviceUpdateMsg = 1;
+  RuleChainUpdateMsg ruleChainUpdateMsg = 2;
+  RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = 3;
+  DashboardUpdateMsg dashboardUpdateMsg = 4;
+  AssetUpdateMsg assetUpdateMsg = 5;
+  EntityViewUpdateMsg entityViewUpdateMsg = 6;
+  AlarmUpdateMsg alarmUpdateMsg = 7;
 }
 
 enum RequestMsgType {
   CONNECT_RPC_MESSAGE = 0;
   UPLINK_RPC_MESSAGE = 1;
-  DEVICE_UPDATE_RPC_MESSAGE = 2;
 }
 
 message ConnectRequestMsg {
@@ -85,7 +88,9 @@ enum UpdateMsgType {
   ENTITY_CREATED_RPC_MESSAGE = 0;
   ENTITY_UPDATED_RPC_MESSAGE = 1;
   ENTITY_DELETED_RPC_MESSAGE = 2;
-  RULE_CHAIN_CUSTOM_MESSAGE = 3;
+  ALARM_ACK_RPC_MESSAGE = 3;
+  ALARM_CLEARK_RPC_MESSAGE = 4;
+  RULE_CHAIN_CUSTOM_MESSAGE = 5;
 }
 
 message EntityDataProto {
@@ -166,6 +171,22 @@ message EntityViewUpdateMsg {
   EntityType relatedEntityType = 6;
 }
 
+message AlarmUpdateMsg {
+  UpdateMsgType msgType = 1;
+  string name = 2;
+  string type = 3;
+  string originatorType = 4;
+  string originatorName = 5;
+  string severity = 6;
+  string status = 7;
+  int64 startTs = 8;
+  int64 endTs = 9;
+  int64 ackTs = 10;
+  int64 clearTs = 11;
+  string details = 12;
+  bool propagate = 13;
+}
+
 enum EntityType {
     DEVICE = 0;
     ASSET = 1;
@@ -178,6 +199,8 @@ enum EntityType {
 message UplinkMsg {
   int32 uplinkMsgId = 1;
   repeated EntityDataProto entityData = 2;
+  repeated DeviceUpdateMsg deviceUpdateMsg = 3;
+  repeated AlarmUpdateMsg alarmUpdatemsg = 4;
 }
 
 message UplinkResponseMsg {

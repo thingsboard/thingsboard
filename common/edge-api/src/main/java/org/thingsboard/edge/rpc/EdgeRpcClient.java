@@ -15,14 +15,9 @@
  */
 package org.thingsboard.edge.rpc;
 
-import org.thingsboard.server.gen.edge.AssetUpdateMsg;
-import org.thingsboard.server.gen.edge.DashboardUpdateMsg;
-import org.thingsboard.server.gen.edge.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.DownlinkMsg;
 import org.thingsboard.server.gen.edge.EdgeConfiguration;
-import org.thingsboard.server.gen.edge.EntityViewUpdateMsg;
-import org.thingsboard.server.gen.edge.RuleChainMetadataUpdateMsg;
-import org.thingsboard.server.gen.edge.RuleChainUpdateMsg;
+import org.thingsboard.server.gen.edge.EntityUpdateMsg;
 import org.thingsboard.server.gen.edge.UplinkMsg;
 import org.thingsboard.server.gen.edge.UplinkResponseMsg;
 
@@ -34,12 +29,7 @@ public interface EdgeRpcClient {
                  String integrationSecret,
                  Consumer<UplinkResponseMsg> onUplinkResponse,
                  Consumer<EdgeConfiguration> onEdgeUpdate,
-                 Consumer<DeviceUpdateMsg> onDeviceUpdate,
-                 Consumer<AssetUpdateMsg> onAssetUpdate,
-                 Consumer<EntityViewUpdateMsg> onEntityViewUpdate,
-                 Consumer<RuleChainUpdateMsg> onRuleChainUpdate,
-                 Consumer<RuleChainMetadataUpdateMsg> onRuleChainMetadataUpdate,
-                 Consumer<DashboardUpdateMsg> onDashboardUpdate,
+                 Consumer<EntityUpdateMsg> onEntityUpdate,
                  Consumer<DownlinkMsg> onDownlink,
                  Consumer<Exception> onError);
 

@@ -25,20 +25,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.actors.service.ActorService;
-import org.thingsboard.server.common.data.Event;
-import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.TimePageData;
-import org.thingsboard.server.common.data.page.TimePageLink;
-import org.thingsboard.server.dao.asset.AssetService;
-import org.thingsboard.server.dao.attributes.AttributesService;
-import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.edge.EdgeService;
-import org.thingsboard.server.dao.entityview.EntityViewService;
-import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.gen.edge.EdgeRpcServiceGrpc;
 import org.thingsboard.server.gen.edge.RequestMsg;
 import org.thingsboard.server.gen.edge.ResponseMsg;
@@ -52,7 +41,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
@@ -73,24 +61,6 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase {
 
     @Autowired
     private EdgeContextComponent ctx;
-
-    @Autowired
-    private EdgeService edgeService;
-
-    @Autowired
-    private AssetService assetService;
-
-    @Autowired
-    private DeviceService deviceService;
-
-    @Autowired
-    private EntityViewService entityViewService;
-
-    @Autowired
-    private AttributesService attributesService;
-
-    @Autowired
-    private ActorService actorService;
 
     private Server server;
 
@@ -156,4 +126,5 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase {
     private void onEdgeDisconnect(EdgeId edgeId) {
         sessions.remove(edgeId);
     }
+
 }
