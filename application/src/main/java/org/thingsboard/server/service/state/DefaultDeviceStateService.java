@@ -125,7 +125,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
     @Getter
     private long defaultStateCheckIntervalInSec;
 
-    @Value("${state.persistToTelemetry}")
+    @Value("${state.persistToTelemetry:false}")
     @Getter
     private boolean persistToTelemetry;
 
