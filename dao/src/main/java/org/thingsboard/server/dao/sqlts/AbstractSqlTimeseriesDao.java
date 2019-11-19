@@ -70,7 +70,7 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
                 if (poolSize <= 0) {
                     poolSize = maximumPoolSize * 4;
                 }
-                insertService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(poolSize));
+                insertService = MoreExecutors.listeningDecorator(Executors.newWorkStealingPool(poolSize));
                 break;
         }
     }
