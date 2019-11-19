@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,31 +17,31 @@ package org.thingsboard.server.dao.sqlts.ts;
 
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
-import org.thingsboard.server.dao.model.sqlts.ts.TsKvEntity;
-import org.thingsboard.server.dao.sqlts.AbstractTimeseriesInsertRepository;
-import org.thingsboard.server.dao.util.PsqlDao;
+import org.thingsboard.server.dao.model.sqlts.ts.TsKvLatestEntity;
+import org.thingsboard.server.dao.sqlts.AbstractLatestInsertRepository;
+import org.thingsboard.server.dao.util.HsqlDao;
 import org.thingsboard.server.dao.util.SqlTsDao;
 
 @SqlTsDao
-@PsqlDao
+@HsqlDao
 @Repository
 @Transactional
-public class PsqlTimeseriesInsertRepository extends AbstractTimeseriesInsertRepository<TsKvEntity> {
+public class HsqlLatestInsertRepository extends AbstractLatestInsertRepository {
 
-    private static final String TS_KV_CONSTRAINT = "(entity_type, entity_id, key, ts)";
+    private static final String TS_KV_LATEST_CONSTRAINT = "(ts_kv_latest.entity_type=A.entity_type AND ts_kv_latest.entity_id=A.entity_id AND ts_kv_latest.key=A.key)";
 
-    private static final String INSERT_OR_UPDATE_BOOL_STATEMENT = getInsertOrUpdateStringPsql(TS_KV_TABLE, TS_KV_CONSTRAINT, BOOL_V, PSQL_ON_BOOL_VALUE_UPDATE_SET_NULLS);
-    private static final String INSERT_OR_UPDATE_STR_STATEMENT = getInsertOrUpdateStringPsql(TS_KV_TABLE, TS_KV_CONSTRAINT, STR_V, PSQL_ON_STR_VALUE_UPDATE_SET_NULLS);
-    private static final String INSERT_OR_UPDATE_LONG_STATEMENT = getInsertOrUpdateStringPsql(TS_KV_TABLE, TS_KV_CONSTRAINT, LONG_V, PSQL_ON_LONG_VALUE_UPDATE_SET_NULLS);
-    private static final String INSERT_OR_UPDATE_DBL_STATEMENT = getInsertOrUpdateStringPsql(TS_KV_TABLE, TS_KV_CONSTRAINT, DBL_V, PSQL_ON_DBL_VALUE_UPDATE_SET_NULLS);
+    private static final String INSERT_OR_UPDATE_BOOL_STATEMENT = getInsertOrUpdateStringHsql(TS_KV_LATEST_TABLE, TS_KV_LATEST_CONSTRAINT, BOOL_V, HSQL_LATEST_ON_BOOL_VALUE_UPDATE_SET_NULLS);
+    private static final String INSERT_OR_UPDATE_STR_STATEMENT = getInsertOrUpdateStringHsql(TS_KV_LATEST_TABLE, TS_KV_LATEST_CONSTRAINT, STR_V, HSQL_LATEST_ON_STR_VALUE_UPDATE_SET_NULLS);
+    private static final String INSERT_OR_UPDATE_LONG_STATEMENT = getInsertOrUpdateStringHsql(TS_KV_LATEST_TABLE, TS_KV_LATEST_CONSTRAINT, LONG_V, HSQL_LATEST_ON_LONG_VALUE_UPDATE_SET_NULLS);
+    private static final String INSERT_OR_UPDATE_DBL_STATEMENT = getInsertOrUpdateStringHsql(TS_KV_LATEST_TABLE, TS_KV_LATEST_CONSTRAINT, DBL_V, HSQL_LATEST_ON_DBL_VALUE_UPDATE_SET_NULLS);
 
     @Override
-    public void saveOrUpdate(TsKvEntity entity) {
+    public void saveOrUpdate(TsKvLatestEntity entity) {
         processSaveOrUpdate(entity, INSERT_OR_UPDATE_BOOL_STATEMENT, INSERT_OR_UPDATE_STR_STATEMENT, INSERT_OR_UPDATE_LONG_STATEMENT, INSERT_OR_UPDATE_DBL_STATEMENT);
     }
 
     @Override
-    protected void saveOrUpdateBoolean(TsKvEntity entity, String query) {
+    protected void saveOrUpdateBoolean(TsKvLatestEntity entity, String query) {
         entityManager.createNativeQuery(query)
                 .setParameter("entity_type", entity.getEntityType().name())
                 .setParameter("entity_id", entity.getEntityId())
@@ -52,7 +52,7 @@ public class PsqlTimeseriesInsertRepository extends AbstractTimeseriesInsertRepo
     }
 
     @Override
-    protected void saveOrUpdateString(TsKvEntity entity, String query) {
+    protected void saveOrUpdateString(TsKvLatestEntity entity, String query) {
         entityManager.createNativeQuery(query)
                 .setParameter("entity_type", entity.getEntityType().name())
                 .setParameter("entity_id", entity.getEntityId())
@@ -63,7 +63,7 @@ public class PsqlTimeseriesInsertRepository extends AbstractTimeseriesInsertRepo
     }
 
     @Override
-    protected void saveOrUpdateLong(TsKvEntity entity, String query) {
+    protected void saveOrUpdateLong(TsKvLatestEntity entity, String query) {
         entityManager.createNativeQuery(query)
                 .setParameter("entity_type", entity.getEntityType().name())
                 .setParameter("entity_id", entity.getEntityId())
@@ -74,7 +74,7 @@ public class PsqlTimeseriesInsertRepository extends AbstractTimeseriesInsertRepo
     }
 
     @Override
-    protected void saveOrUpdateDouble(TsKvEntity entity, String query) {
+    protected void saveOrUpdateDouble(TsKvLatestEntity entity, String query) {
         entityManager.createNativeQuery(query)
                 .setParameter("entity_type", entity.getEntityType().name())
                 .setParameter("entity_id", entity.getEntityId())

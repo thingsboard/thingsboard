@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.model.sqlts.ts;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.model.ToData;
 import org.thingsboard.server.dao.model.sql.AbsractTsKvEntity;
@@ -30,6 +31,7 @@ import javax.persistence.IdClass;
 import javax.persistence.Table;
 
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_TYPE_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.TS_COLUMN;
 
 @Data
 @Entity
@@ -41,6 +43,10 @@ public final class TsKvEntity extends AbsractTsKvEntity implements ToData<TsKvEn
     @Enumerated(EnumType.STRING)
     @Column(name = ENTITY_TYPE_COLUMN)
     private EntityType entityType;
+
+    @Id
+    @Column(name = TS_COLUMN)
+    protected Long ts;
 
     public TsKvEntity() {
     }
@@ -100,9 +106,13 @@ public final class TsKvEntity extends AbsractTsKvEntity implements ToData<TsKvEn
         }
     }
 
-
     @Override
     public boolean isNotEmpty() {
         return strValue != null || longValue != null || doubleValue != null || booleanValue != null;
+    }
+
+    @Override
+    public TsKvEntry toData() {
+        return new BasicTsKvEntry(ts, getKvEntry());
     }
 }
