@@ -125,9 +125,9 @@ public class DefaultDeviceStateService implements DeviceStateService {
     @Getter
     private long defaultStateCheckIntervalInSec;
 
-    @Value("${state.useTelemetry}")
+    @Value("${state.persistToTelemetry}")
     @Getter
-    private boolean useTelemetry;
+    private boolean persistToTelemetry;
 
 // TODO in v2.1
 //    @Value("${state.defaultStatePersistenceIntervalInSec}")
@@ -473,7 +473,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
     }
 
     private void save(DeviceId deviceId, String key, long value) {
-        if (useTelemetry) {
+        if (persistToTelemetry) {
             tsSubService.saveAndNotify(
                     TenantId.SYS_TENANT_ID, deviceId,
                     Collections.singletonList(new BasicTsKvEntry(System.currentTimeMillis(), new LongDataEntry(key, value))),
@@ -484,7 +484,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
     }
 
     private void save(DeviceId deviceId, String key, boolean value) {
-        if (useTelemetry) {
+        if (persistToTelemetry) {
             tsSubService.saveAndNotify(
                     TenantId.SYS_TENANT_ID, deviceId,
                     Collections.singletonList(new BasicTsKvEntry(System.currentTimeMillis(), new BooleanDataEntry(key, value))),
