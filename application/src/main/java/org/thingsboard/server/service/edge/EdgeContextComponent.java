@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.actors.service.ActorService;
+import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.customer.CustomerService;
@@ -59,6 +60,10 @@ public class EdgeContextComponent {
     @Lazy
     @Autowired
     private RelationService relationService;
+
+    @Lazy
+    @Autowired
+    private AlarmService alarmService;
 
     @Lazy
     @Autowired

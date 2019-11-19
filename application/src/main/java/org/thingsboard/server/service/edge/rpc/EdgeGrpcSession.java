@@ -32,6 +32,8 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeQueueEntry;
@@ -180,7 +182,7 @@ public final class EdgeGrpcSession implements Cloneable {
                             case ENTITY_UPDATED_RPC_MESSAGE:
                             case ENTITY_CREATED_RPC_MESSAGE:
                             case ALARM_ACK_RPC_MESSAGE:
-                            case ALARM_CLEARK_RPC_MESSAGE:
+                            case ALARM_CLEAR_RPC_MESSAGE:
                                 processEntityCRUDMessage(entry, msgType);
                                 break;
                             case RULE_CHAIN_CUSTOM_MESSAGE:
@@ -379,7 +381,7 @@ public final class EdgeGrpcSession implements Cloneable {
         AlarmUpdateMsg.Builder builder = AlarmUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setName(alarm.getName())
-                .setType(alarm.getName())
+                .setType(alarm.getType())
                 .setOriginatorName(entityName)
                 .setOriginatorType(alarm.getOriginator().getEntityType().name())
                 .setSeverity(alarm.getSeverity().name())
@@ -409,6 +411,10 @@ public final class EdgeGrpcSession implements Cloneable {
                 case DataConstants.ENTITY_DELETED:
                 case DataConstants.ENTITY_UNASSIGNED_FROM_EDGE:
                     return UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE;
+                case DataConstants.ALARM_ACK:
+                    return UpdateMsgType.ALARM_ACK_RPC_MESSAGE;
+                case DataConstants.ALARM_CLEAR:
+                    return UpdateMsgType.ALARM_CLEAR_RPC_MESSAGE;
                 default:
                     throw new RuntimeException("Unsupported msgType [" + msgType + "]");
             }
@@ -532,7 +538,7 @@ public final class EdgeGrpcSession implements Cloneable {
         DeviceUpdateMsg.Builder builder = DeviceUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setName(device.getName())
-                .setType(device.getName());
+                .setType(device.getType());
         return builder.build();
     }
 
@@ -540,7 +546,7 @@ public final class EdgeGrpcSession implements Cloneable {
         AssetUpdateMsg.Builder builder = AssetUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setName(asset.getName())
-                .setType(asset.getName());
+                .setType(asset.getType());
         return builder.build();
     }
 
@@ -562,7 +568,7 @@ public final class EdgeGrpcSession implements Cloneable {
         EntityViewUpdateMsg.Builder builder = EntityViewUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setName(entityView.getName())
-                .setType(entityView.getName())
+                .setType(entityView.getType())
                 .setRelatedName(relatedName)
                 .setRelatedType(relatedType)
                 .setRelatedEntityType(relatedEntityType);
@@ -618,11 +624,75 @@ public final class EdgeGrpcSession implements Cloneable {
                     }
                 }
             }
+            if (uplinkMsg.getAlarmUpdatemsgList() != null && !uplinkMsg.getAlarmUpdatemsgList().isEmpty()) {
+                for (AlarmUpdateMsg alarmUpdateMsg : uplinkMsg.getAlarmUpdatemsgList()) {
+                    onAlarmUpdate(alarmUpdateMsg);
+                }
+            }
         } catch (Exception e) {
             return UplinkResponseMsg.newBuilder().setSuccess(false).setErrorMsg(e.getMessage()).build();
         }
 
         return UplinkResponseMsg.newBuilder().setSuccess(true).build();
+    }
+
+    private EntityId getAlarmOriginator(String entityName, org.thingsboard.server.common.data.EntityType entityType) {
+        switch (entityType) {
+            case DEVICE:
+                return ctx.getDeviceService().findDeviceByTenantIdAndName(edge.getTenantId(), entityName).getId();
+            case ASSET:
+                return ctx.getAssetService().findAssetByTenantIdAndName(edge.getTenantId(), entityName).getId();
+            case ENTITY_VIEW:
+                return ctx.getEntityViewService().findEntityViewByTenantIdAndName(edge.getTenantId(), entityName).getId();
+            default:
+                return null;
+        }
+    }
+
+    private void onAlarmUpdate(AlarmUpdateMsg alarmUpdateMsg) {
+        EntityId originatorId = getAlarmOriginator(alarmUpdateMsg.getOriginatorName(), org.thingsboard.server.common.data.EntityType.valueOf(alarmUpdateMsg.getOriginatorType()));
+        if (originatorId != null) {
+            try {
+                Alarm existentAlarm = ctx.getAlarmService().findLatestByOriginatorAndType(edge.getTenantId(), originatorId, alarmUpdateMsg.getType()).get();
+                switch (alarmUpdateMsg.getMsgType()) {
+                    case ENTITY_CREATED_RPC_MESSAGE:
+                    case ENTITY_UPDATED_RPC_MESSAGE:
+                        if (existentAlarm == null) {
+                            existentAlarm = new Alarm();
+                            existentAlarm.setTenantId(edge.getTenantId());
+                            existentAlarm.setType(alarmUpdateMsg.getName());
+                            existentAlarm.setOriginator(originatorId);
+                            existentAlarm.setSeverity(AlarmSeverity.valueOf(alarmUpdateMsg.getSeverity()));
+                            existentAlarm.setStatus(AlarmStatus.valueOf(alarmUpdateMsg.getStatus()));
+                            existentAlarm.setStartTs(alarmUpdateMsg.getStartTs());
+                            existentAlarm.setAckTs(alarmUpdateMsg.getAckTs());
+                            existentAlarm.setClearTs(alarmUpdateMsg.getClearTs());
+                            existentAlarm.setPropagate(alarmUpdateMsg.getPropagate());
+                        }
+                        existentAlarm.setEndTs(alarmUpdateMsg.getEndTs());
+                        existentAlarm.setDetails(objectMapper.readTree(alarmUpdateMsg.getDetails()));
+                        ctx.getAlarmService().createOrUpdateAlarm(existentAlarm);
+                        break;
+                    case ALARM_ACK_RPC_MESSAGE:
+                        if (existentAlarm != null) {
+                            ctx.getAlarmService().ackAlarm(edge.getTenantId(), existentAlarm.getId(), alarmUpdateMsg.getAckTs());
+                        }
+                        break;
+                    case ALARM_CLEAR_RPC_MESSAGE:
+                        if (existentAlarm != null) {
+                            ctx.getAlarmService().clearAlarm(edge.getTenantId(), existentAlarm.getId(), objectMapper.readTree(alarmUpdateMsg.getDetails()), alarmUpdateMsg.getAckTs());
+                        }
+                        break;
+                    case ENTITY_DELETED_RPC_MESSAGE:
+                        if (existentAlarm != null) {
+                            ctx.getAlarmService().deleteAlarm(edge.getTenantId(), existentAlarm.getId());
+                        }
+                        break;
+                }
+            } catch (Exception e) {
+                log.error("Error during finding existent alarm", e);
+            }
+        }
     }
 
     private Device getOrCreateDevice(String deviceName, String deviceType) {
@@ -647,6 +717,7 @@ public final class EdgeGrpcSession implements Cloneable {
             device.setTenantId(edge.getTenantId());
             device.setCustomerId(edge.getCustomerId());
             device = ctx.getDeviceService().saveDevice(device);
+            device = ctx.getDeviceService().assignDeviceToEdge(edge.getTenantId(), device.getId(), edge.getId());
             createRelationFromEdge(device.getId());
             ctx.getActorService().onDeviceAdded(device);
             pushDeviceCreatedEventToRuleEngine(device);

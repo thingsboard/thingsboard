@@ -186,14 +186,25 @@ class DefaultTbContext implements TbContext {
     }
 
     public TbMsg alarmCreatedMsg(Alarm alarm, RuleNodeId ruleNodeId) {
-        try {
-            ObjectNode entityNode = mapper.valueToTree(alarm);
-            return new TbMsg(UUIDs.timeBased(), DataConstants.ENTITY_CREATED, alarm.getId(), getActionMetaData(ruleNodeId), mapper.writeValueAsString(entityNode), null, null, 0L);
-        } catch (JsonProcessingException | IllegalArgumentException e) {
-            throw new RuntimeException("Failed to process alarm created msg: " + e);
-        }
+        return alarmMsg(alarm, ruleNodeId, DataConstants.ENTITY_CREATED);
     }
 
+    public TbMsg alarmUpdatedMsg(Alarm alarm, RuleNodeId ruleNodeId) {
+        return alarmMsg(alarm, ruleNodeId, DataConstants.ENTITY_UPDATED);
+    }
+
+    public TbMsg alarmClearedMsg(Alarm alarm, RuleNodeId ruleNodeId) {
+        return alarmMsg(alarm, ruleNodeId, DataConstants.ALARM_CLEAR);
+    }
+
+    private TbMsg alarmMsg(Alarm alarm, RuleNodeId ruleNodeId, String type) {
+        try {
+            ObjectNode entityNode = mapper.valueToTree(alarm);
+            return new TbMsg(UUIDs.timeBased(), type, alarm.getId(), getActionMetaData(ruleNodeId), mapper.writeValueAsString(entityNode), null, null, 0L);
+        } catch (JsonProcessingException | IllegalArgumentException e) {
+            throw new RuntimeException("Failed to process alarm created, updated or cleared msg: " + e);
+        }
+    }
 
     @Override
     public RuleNodeId getSelfId() {
