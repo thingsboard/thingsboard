@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -32,9 +33,18 @@ import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
 import org.thingsboard.server.dao.util.SqlDao;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Queue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
@@ -49,6 +59,36 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
 
     @Autowired
     private AttributeKvInsertRepository attributeKvInsertRepository;
+
+    private final Queue<AttributeKvEntity> attributeQueue = new LinkedBlockingQueue<>();
+
+    @Value("${database.batch.size}")
+    private int batchSize;
+
+    @Value("${database.batch.timeout}")
+    private long batchTimeout;
+
+    private ExecutorService executor = Executors.newSingleThreadExecutor();
+
+    private CountDownLatch latch = new CountDownLatch(batchSize);
+
+    @PostConstruct
+    private void init() {
+        executor.submit(() -> {
+            while (true) {
+                if (attributeQueue.size() > 0) {
+                    latch.await(batchTimeout, TimeUnit.MILLISECONDS);
+                    latch = new CountDownLatch(batchSize);
+                    int size = attributeQueue.size();
+                    List<AttributeKvEntity> entities = new ArrayList<>(size);
+                    for (int i = 0; i < size; i++) {
+                        entities.add(attributeQueue.poll());
+                    }
+                    attributeKvInsertRepository.saveOrUpdate(entities);
+                }
+            }
+        });
+    }
 
     @Override
     public ListenableFuture<Optional<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String attributeType, String attributeKey) {
@@ -90,11 +130,15 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
         entity.setLongValue(attribute.getLongValue().orElse(null));
         entity.setBooleanValue(attribute.getBooleanValue().orElse(null));
         return service.submit(() -> {
-            attributeKvInsertRepository.saveOrUpdate(entity);
+            addToQueue(entity);
             return null;
         });
     }
 
+    private void addToQueue(AttributeKvEntity entity) {
+        attributeQueue.add(entity);
+        latch.countDown();
+    }
 
     @Override
     public ListenableFuture<List<Void>> removeAll(TenantId tenantId, EntityId entityId, String attributeType, List<String> keys) {
@@ -118,5 +162,12 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
                 fromTimeUUID(entityId.getId()),
                 attributeType,
                 attributeKey);
+    }
+
+    @PreDestroy
+    private void destroy() {
+        if (executor != null) {
+            executor.shutdown();
+        }
     }
 }
