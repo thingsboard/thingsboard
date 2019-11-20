@@ -15,6 +15,10 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.commons.collections.CollectionUtils;
@@ -40,11 +44,18 @@ import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
 
 public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeConfiguration, T extends EntityId> implements TbNode {
 
+    private static ObjectMapper mapper = new ObjectMapper();
+
+    private static final String VALUE = "value";
+    private static final String TS = "ts";
+
     protected C config;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = loadGetAttributesNodeConfig(configuration);
+        mapper.configure(JsonGenerator.Feature.QUOTE_FIELD_NAMES, false);
+        mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
     }
 
     protected abstract C loadGetAttributesNodeConfig(TbNodeConfiguration configuration) throws TbNodeException;
@@ -60,6 +71,11 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
             ctx.tellFailure(msg, th);
         }
     }
+
+    @Override
+    public void destroy() { }
+
+    protected abstract ListenableFuture<T> findEntityIdAsync(TbContext ctx, TbMsg msg);
 
     private void safePutAttributes(TbContext ctx, TbMsg msg, T entityId) {
         if (entityId == null || entityId.isNullUid()) {
@@ -106,15 +122,22 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
         ListenableFuture<List<TsKvEntry>> latest = ctx.getTimeseriesService().findLatest(ctx.getTenantId(), entityId, keys);
         return Futures.transform(latest, l -> {
             l.forEach(r -> {
+                boolean getLatestValueWithTs = BooleanUtils.toBooleanDefaultIfNull(this.config.isGetLatestValueWithTs(), false);
                 if (BooleanUtils.toBooleanDefaultIfNull(this.config.isTellFailureIfAbsent(), true)) {
-                    if (r.getValue() != null) {
-                        msg.getMetaData().putValue(r.getKey(), r.getValueAsString());
-                    } else {
+                    if (r.getValue() == null) {
                         throw new RuntimeException("[" + r.getKey() + "] telemetry value is not present in the DB!");
+                    } else if (getLatestValueWithTs) {
+                        putValueWithTs(msg, r);
+                    } else {
+                        msg.getMetaData().putValue(r.getKey(), r.getValueAsString());
                     }
                 } else {
                     if (r.getValue() != null) {
-                        msg.getMetaData().putValue(r.getKey(), r.getValueAsString());
+                        if (getLatestValueWithTs) {
+                            putValueWithTs(msg, r);
+                        } else {
+                            msg.getMetaData().putValue(r.getKey(), r.getValueAsString());
+                        }
                     }
                 }
             });
@@ -122,10 +145,23 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
         });
     }
 
-    @Override
-    public void destroy() {
-
+    private void putValueWithTs(TbMsg msg, TsKvEntry r) {
+        ObjectNode value = mapper.createObjectNode();
+        value.put(TS, r.getTs());
+        switch (r.getDataType()) {
+            case STRING:
+                value.put(VALUE, r.getValueAsString());
+                break;
+            case LONG:
+                value.put(VALUE, r.getLongValue().get());
+                break;
+            case BOOLEAN:
+                value.put(VALUE, r.getBooleanValue().get());
+                break;
+            case DOUBLE:
+                value.put(VALUE, r.getDoubleValue().get());
+                break;
+        }
+        msg.getMetaData().putValue(r.getKey(), value.toString());
     }
-
-    protected abstract ListenableFuture<T> findEntityIdAsync(TbContext ctx, TbMsg msg);
 }
