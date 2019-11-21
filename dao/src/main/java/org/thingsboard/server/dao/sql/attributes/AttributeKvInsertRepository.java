@@ -66,10 +66,6 @@ public abstract class AttributeKvInsertRepository {
     @PersistenceContext
     protected EntityManager entityManager;
 
-    private final ScheduledExecutorService schedulerLogExecutor = Executors.newSingleThreadScheduledExecutor();
-
-    private final AtomicInteger count = new AtomicInteger(0);
-
     public abstract void saveOrUpdate(AttributeKvEntity entity);
 
     protected void processSaveOrUpdate(AttributeKvEntity entity, String requestBoolValue, String requestStrValue, String requestLongValue, String requestDblValue) {
@@ -87,16 +83,6 @@ public abstract class AttributeKvInsertRepository {
         }
     }
 
-    @PostConstruct
-    private void init() {
-        ScheduledFuture<?> scheduledLogFuture = schedulerLogExecutor.scheduleAtFixedRate(() -> {
-            try {
-                log.info("Saved [{}] attributes", count.get());
-            } catch (Exception ignored) {
-            }
-        }, 0, 1, TimeUnit.SECONDS);
-    }
-
     @Modifying
     private void saveOrUpdateBoolean(AttributeKvEntity entity, String query) {
         entityManager.createNativeQuery(query)
@@ -107,7 +93,6 @@ public abstract class AttributeKvInsertRepository {
                 .setParameter("bool_v", entity.getBooleanValue())
                 .setParameter("last_update_ts", entity.getLastUpdateTs())
                 .executeUpdate();
-        count.incrementAndGet();
     }
 
     @Modifying
@@ -120,7 +105,6 @@ public abstract class AttributeKvInsertRepository {
                 .setParameter("str_v", entity.getStrValue())
                 .setParameter("last_update_ts", entity.getLastUpdateTs())
                 .executeUpdate();
-        count.incrementAndGet();
     }
 
     @Modifying
@@ -133,7 +117,6 @@ public abstract class AttributeKvInsertRepository {
                 .setParameter("long_v", entity.getLongValue())
                 .setParameter("last_update_ts", entity.getLastUpdateTs())
                 .executeUpdate();
-        count.incrementAndGet();
     }
 
     @Modifying
@@ -146,39 +129,37 @@ public abstract class AttributeKvInsertRepository {
                 .setParameter("dbl_v", entity.getDoubleValue())
                 .setParameter("last_update_ts", entity.getLastUpdateTs())
                 .executeUpdate();
-        count.incrementAndGet();
     }
 
-    @Modifying
-    protected void saveOrUpdate(List<AttributeKvEntityFutureWrapper> entities) {
+    protected void saveOrUpdate(List<AttributeKvEntity> entities) {
         int[] result = jdbcTemplate.batchUpdate(BATCH_UPDATE, new BatchPreparedStatementSetter() {
             @Override
             public void setValues(PreparedStatement ps, int i) throws SQLException {
-                ps.setString(1, entities.get(i).getEntity().getStrValue());
+                ps.setString(1, entities.get(i).getStrValue());
 
-                if (entities.get(i).getEntity().getLongValue() != null) {
-                    ps.setLong(2, entities.get(i).getEntity().getLongValue());
+                if (entities.get(i).getLongValue() != null) {
+                    ps.setLong(2, entities.get(i).getLongValue());
                 } else {
                     ps.setString(2, null);
                 }
 
-                if (entities.get(i).getEntity().getDoubleValue() != null) {
-                    ps.setDouble(3, entities.get(i).getEntity().getDoubleValue());
+                if (entities.get(i).getDoubleValue() != null) {
+                    ps.setDouble(3, entities.get(i).getDoubleValue());
                 } else {
                     ps.setString(3, null);
                 }
 
-                if (entities.get(i).getEntity().getBooleanValue() != null) {
-                    ps.setBoolean(4, entities.get(i).getEntity().getBooleanValue());
+                if (entities.get(i).getBooleanValue() != null) {
+                    ps.setBoolean(4, entities.get(i).getBooleanValue());
                 } else {
                     ps.setString(4, null);
                 }
 
-                ps.setLong(5, entities.get(i).getEntity().getLastUpdateTs());
-                ps.setString(6, entities.get(i).getEntity().getId().getEntityType().name());
-                ps.setString(7, entities.get(i).getEntity().getId().getEntityId());
-                ps.setString(8, entities.get(i).getEntity().getId().getAttributeType());
-                ps.setString(9, entities.get(i).getEntity().getId().getAttributeKey());
+                ps.setLong(5, entities.get(i).getLastUpdateTs());
+                ps.setString(6, entities.get(i).getId().getEntityType().name());
+                ps.setString(7, entities.get(i).getId().getEntityId());
+                ps.setString(8, entities.get(i).getId().getAttributeType());
+                ps.setString(9, entities.get(i).getId().getAttributeKey());
             }
 
             @Override
@@ -189,11 +170,8 @@ public abstract class AttributeKvInsertRepository {
 
         for (int i = 0; i < result.length; i++) {
             if (result[i] == 0)
-                save(entities.get(i).getEntity());
+                save(entities.get(i));
         }
-
-        entities.forEach(entityFutureWrapper -> entityFutureWrapper.getFuture().set(null));
-        count.addAndGet(entities.size());
     }
 
     private void save(AttributeKvEntity entity) {
