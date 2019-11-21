@@ -34,6 +34,7 @@ import {AuthService} from '@core/auth/auth.service';
 import {ActivatedRoute} from '@angular/router';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { RuleChain } from '@shared/models/rule-chain.models';
+import { FcModel, FlowchartConstants } from 'ngx-flowchart/dist/ngx-flowchart';
 
 @Component({
   selector: 'tb-rulechain-page',
@@ -43,6 +44,13 @@ import { RuleChain } from '@shared/models/rule-chain.models';
 export class RuleChainPageComponent extends PageComponent implements OnInit {
 
   ruleChain: RuleChain;
+
+  flowchartConstants = FlowchartConstants;
+  selected = [];
+  model: FcModel = {
+    nodes: [],
+    edges: []
+  };
 
   constructor(protected store: Store<AppState>,
               private route: ActivatedRoute,
@@ -57,6 +65,109 @@ export class RuleChainPageComponent extends PageComponent implements OnInit {
 
   ngOnInit() {
     this.ruleChain = this.route.snapshot.data.ruleChain;
+    this.testData();
+  }
+
+  onModelChanged() {
+    console.log('Model changed!');
+  }
+
+  private testData() {
+    this.model.nodes.push(...
+      [
+        {
+          name: 'Node 1',
+          readonly: true,
+          id: '2',
+          x: 300,
+          y: 100,
+          color: '#000',
+          borderColor: '#000',
+          connectors: [
+            {
+              type: FlowchartConstants.leftConnectorType,
+              id: '1'
+            },
+            {
+              type: FlowchartConstants.rightConnectorType,
+              id: '2'
+            }
+          ]
+        },
+        {
+          name: 'Node 2',
+          id: '3',
+          x: 600,
+          y: 100,
+          color: '#F15B26',
+          connectors: [
+            {
+              type: FlowchartConstants.leftConnectorType,
+              id: '3'
+            },
+            {
+              type: FlowchartConstants.rightConnectorType,
+              id: '4'
+            }
+          ]
+        },
+        {
+          name: 'Node 3',
+          id: '4',
+          x: 1000,
+          y: 100,
+          color: '#000',
+          borderColor: '#000',
+          connectors: [
+            {
+              type: FlowchartConstants.leftConnectorType,
+              id: '5'
+            },
+            {
+              type: FlowchartConstants.rightConnectorType,
+              id: '6'
+            }
+          ]
+        },
+        {
+          name: 'Node 4',
+          id: '5',
+          x: 1300,
+          y: 100,
+          color: '#000',
+          borderColor: '#000',
+          connectors: [
+            {
+              type: FlowchartConstants.leftConnectorType,
+              id: '7'
+            },
+            {
+              type: FlowchartConstants.rightConnectorType,
+              id: '8'
+            }
+          ]
+        }
+      ]
+    );
+    this.model.edges.push(...
+      [
+        {
+          source: '2',
+          destination: '3',
+          label: 'label1'
+        },
+        {
+          source: '4',
+          destination: '5',
+          label: 'label2'
+        },
+        {
+          source: '6',
+          destination: '7',
+          label: 'label3'
+        }
+      ]
+    );
   }
 
 }

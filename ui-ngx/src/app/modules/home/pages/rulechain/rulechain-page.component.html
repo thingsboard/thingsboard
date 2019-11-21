@@ -15,5 +15,12 @@
     limitations under the License.
 
 -->
-<div>Rule chain</div>
-<fc-canvas></fc-canvas>
+<fc-canvas #fcCanvas
+           id="fc-target-canvas"
+           [model]="model"
+           (modelChanged)="onModelChanged()"
+           [selectedObjects]="selected"
+           [edgeStyle]="flowchartConstants.curvedStyle"
+           [automaticResize]="true"
+           [dragAnimation]="flowchartConstants.dragAnimationRepaint">
+</fc-canvas>
