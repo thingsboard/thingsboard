@@ -120,9 +120,6 @@ database:
     type: "${DATABASE_ENTITIES_TYPE:sql}" # cassandra OR sql
   ts:
     type: "${DATABASE_TS_TYPE:sql}" # cassandra, sql, or timescale (for hybrid mode, DATABASE_TS_TYPE value should be cassandra, or timescale)
-  batch:
-    size: "${DATABASE_BATCH_SIZE:20000}"
-    timeout: "${DATABASE_BATCH_TIMEOUT:1000}" #ms
 
 # note: timescale works only with postgreSQL database for DATABASE_ENTITIES_TYPE.
 
@@ -197,6 +194,10 @@ sql:
     ts_inserts_executor_type: "${SQL_TS_INSERTS_EXECUTOR_TYPE:fixed}"
     # Specify thread pool size for FIXED executor service type
     ts_inserts_fixed_thread_pool_size: "${SQL_TS_INSERTS_FIXED_THREAD_POOL_SIZE:200}"
+    # Specify batch size for persisting attribute updates
+    batch:
+      size: "${DATABASE_BATCH_SIZE:25000}"
+      timeout: "${DATABASE_BATCH_TIMEOUT:1000}"
 
 # Actor system parameters
 actors:

@@ -150,35 +150,35 @@ public abstract class AttributeKvInsertRepository {
     }
 
     @Modifying
-    protected void saveOrUpdate(List<AttributeKvEntity> entities) {
+    protected void saveOrUpdate(List<AttributeKvEntityFutureWrapper> entities) {
         int[] result = jdbcTemplate.batchUpdate(BATCH_UPDATE, new BatchPreparedStatementSetter() {
             @Override
             public void setValues(PreparedStatement ps, int i) throws SQLException {
-                ps.setString(1, entities.get(i).getStrValue());
+                ps.setString(1, entities.get(i).getEntity().getStrValue());
 
-                if (entities.get(i).getLongValue() != null) {
-                    ps.setLong(2, entities.get(i).getLongValue());
+                if (entities.get(i).getEntity().getLongValue() != null) {
+                    ps.setLong(2, entities.get(i).getEntity().getLongValue());
                 } else {
                     ps.setString(2, null);
                 }
 
-                if (entities.get(i).getDoubleValue() != null) {
-                    ps.setDouble(3, entities.get(i).getDoubleValue());
+                if (entities.get(i).getEntity().getDoubleValue() != null) {
+                    ps.setDouble(3, entities.get(i).getEntity().getDoubleValue());
                 } else {
                     ps.setString(3, null);
                 }
 
-                if (entities.get(i).getBooleanValue() != null) {
-                    ps.setBoolean(4, entities.get(i).getBooleanValue());
+                if (entities.get(i).getEntity().getBooleanValue() != null) {
+                    ps.setBoolean(4, entities.get(i).getEntity().getBooleanValue());
                 } else {
                     ps.setString(4, null);
                 }
 
-                ps.setLong(5, entities.get(i).getLastUpdateTs());
-                ps.setString(6, entities.get(i).getId().getEntityType().name());
-                ps.setString(7, entities.get(i).getId().getEntityId());
-                ps.setString(8, entities.get(i).getId().getAttributeType());
-                ps.setString(9, entities.get(i).getId().getAttributeKey());
+                ps.setLong(5, entities.get(i).getEntity().getLastUpdateTs());
+                ps.setString(6, entities.get(i).getEntity().getId().getEntityType().name());
+                ps.setString(7, entities.get(i).getEntity().getId().getEntityId());
+                ps.setString(8, entities.get(i).getEntity().getId().getAttributeType());
+                ps.setString(9, entities.get(i).getEntity().getId().getAttributeKey());
             }
 
             @Override
@@ -189,8 +189,10 @@ public abstract class AttributeKvInsertRepository {
 
         for (int i = 0; i < result.length; i++) {
             if (result[i] == 0)
-                save(entities.get(i));
+                save(entities.get(i).getEntity());
         }
+
+        entities.forEach(entityFutureWrapper -> entityFutureWrapper.getFuture().set(null));
         count.addAndGet(entities.size());
     }
 

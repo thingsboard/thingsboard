@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.sql.attributes;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,14 +40,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.Queue;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
@@ -62,48 +63,61 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     @Autowired
     private AttributeKvInsertRepository attributeKvInsertRepository;
 
-    private final Queue<AttributeKvEntity> attributeQueue = new LinkedBlockingQueue<>();
+    private final BlockingQueue<AttributeKvEntityFutureWrapper> attributeQueue = new LinkedBlockingQueue<>();
 
-    @Value("${database.batch.size}")
+    @Value("${sql.batch.size}")
     private int batchSize;
 
-    @Value("${database.batch.timeout}")
+    @Value("${sql.batch.timeout}")
     private long batchTimeout;
 
-    private ExecutorService executor = Executors.newSingleThreadExecutor();
-
-    private CountDownLatch latch = new CountDownLatch(batchSize);
-
-    private final ScheduledExecutorService schedulerLogExecutor = Executors.newSingleThreadScheduledExecutor();
+    private final AtomicInteger count = new AtomicInteger();
+    private ExecutorService executor;
+    private ScheduledExecutorService schedulerLogExecutor;
 
     @PostConstruct
     private void init() {
+        executor = Executors.newSingleThreadExecutor();
         executor.submit(() -> {
+            List<AttributeKvEntityFutureWrapper> entities = new ArrayList<>(batchSize);
+            long timeSpent = 0L;
             while (true) {
-                if (attributeQueue.size() > 0) {
-                    latch.await(batchTimeout, TimeUnit.MILLISECONDS);
-                    latch = new CountDownLatch(batchSize);
-                    int size = Math.min(attributeQueue.size(), batchSize);
-                    List<AttributeKvEntity> entities = new ArrayList<>(size);
-                    for (int i = 0; i < size; i++) {
-                        entities.add(attributeQueue.poll());
+                    long pollStartTime = System.currentTimeMillis();
+//                    AttributeKvEntityFutureWrapper attr = attributeQueue.poll(Math.max(batchTimeout - timeSpent, 0), TimeUnit.MILLISECONDS);
+                AttributeKvEntityFutureWrapper attr = attributeQueue.take();
+                    timeSpent += System.currentTimeMillis() - pollStartTime;
+                    entities.add(attr);
+                    if (timeSpent > batchTimeout || entities.size() >= batchSize) {
+                        timeSpent = 0L;
+                        log.info("Send attributes to save: [{}]", entities.size());
+                        try {
+                            attributeKvInsertRepository.saveOrUpdate(entities);
+                            entities.clear();
+                        } catch (Throwable t) {
+                            entities.forEach(entityFutureWrapper -> entityFutureWrapper.getFuture().setException(t));
+                            log.error("Failed save attributes", t);
+                        }
                     }
-                    log.info("send attributes to save [{}]", entities.size());
-                    try {
-                        attributeKvInsertRepository.saveOrUpdate(entities);
-                    } catch (Throwable t) {
-                        log.error("Failed save attributes", t);
-                    }
-                }
             }
         });
-
+        schedulerLogExecutor = Executors.newSingleThreadScheduledExecutor();
         ScheduledFuture<?> scheduledLogFuture = schedulerLogExecutor.scheduleAtFixedRate(() -> {
             try {
-                log.info("Queue size [{}]", attributeQueue.size());
+                log.info("Total attributes: [{}]", count.get());
+                log.info("QUEUE SIZE: [{}]", attributeQueue.size());
             } catch (Exception ignored) {
             }
         }, 0, 1, TimeUnit.SECONDS);
+    }
+
+    @PreDestroy
+    private void destroy() {
+        if (executor != null) {
+            executor.shutdownNow();
+        }
+        if (schedulerLogExecutor != null) {
+            schedulerLogExecutor.shutdownNow();
+        }
     }
 
     @Override
@@ -145,16 +159,15 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
         entity.setDoubleValue(attribute.getDoubleValue().orElse(null));
         entity.setLongValue(attribute.getLongValue().orElse(null));
         entity.setBooleanValue(attribute.getBooleanValue().orElse(null));
-        return service.submit(() -> {
-//            attributeKvInsertRepository.saveOrUpdate(entity);
-            addToQueue(entity);
-            return null;
-        });
+        return addToQueue(entity);
     }
 
-    private void addToQueue(AttributeKvEntity entity) {
-        attributeQueue.add(entity);
-        latch.countDown();
+    private ListenableFuture<Void> addToQueue(AttributeKvEntity entity) {
+        //TODO: add wrapper entity + SettableFuture. Invoke SettableFuture when you process all messages.
+        SettableFuture<Void> future = SettableFuture.create();
+        attributeQueue.add(AttributeKvEntityFutureWrapper.create(future, entity));
+        count.incrementAndGet();
+        return future;
     }
 
     @Override
@@ -179,12 +192,5 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
                 fromTimeUUID(entityId.getId()),
                 attributeType,
                 attributeKey);
-    }
-
-    @PreDestroy
-    private void destroy() {
-        if (executor != null) {
-            executor.shutdown();
-        }
     }
 }
