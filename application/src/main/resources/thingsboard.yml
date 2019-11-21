@@ -121,7 +121,7 @@ database:
   ts:
     type: "${DATABASE_TS_TYPE:sql}" # cassandra, sql, or timescale (for hybrid mode, DATABASE_TS_TYPE value should be cassandra, or timescale)
   batch:
-    size: "${DATABASE_BATCH_SIZE:10}"
+    size: "${DATABASE_BATCH_SIZE:20000}"
     timeout: "${DATABASE_BATCH_TIMEOUT:1000}" #ms
 
 # note: timescale works only with postgreSQL database for DATABASE_ENTITIES_TYPE.

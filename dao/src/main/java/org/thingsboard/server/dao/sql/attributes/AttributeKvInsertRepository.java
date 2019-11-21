@@ -26,12 +26,17 @@ import org.springframework.stereotype.Repository;
 import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
 import org.thingsboard.server.dao.util.SqlDao;
 
+import javax.annotation.PostConstruct;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @SqlDao
 @Repository
@@ -41,14 +46,9 @@ public abstract class AttributeKvInsertRepository {
     private static final String BATCH_UPDATE = "UPDATE attribute_kv SET str_v = ?, long_v = ?::bigint, dbl_v = ?::double precision, bool_v = ?::boolean, last_update_ts = ?" +
             " WHERE entity_type = ? and entity_id = ? and attribute_type =? and attribute_key = ?;";
 
-    private static final String BATCH_INSERT_OR_UPDATE = "INSERT INTO attribute_kv (entity_type, entity_id, attribute_type, attribute_key, str_v, long_v, dbl_v, bool_v, last_update_ts)" +
-            " SELECT UNNEST(?), UNNEST(?), UNNEST(?), UNNEST(?), UNNEST(?), UNNEST(?), UNNEST(?), UNNEST(?), UNNEST(?)" +
-            " ON CONFLICT (entity_type, entity_id, attribute_type, attribute_key)" +
-            " DO UPDATE SET str_v = excluded.str_v, long_v = excluded.long_v, dbl_v = excluded.dbl_v, bool_v = excluded.bool_v, last_update_ts = excluded.last_update_ts;";
-
     private static final String INSERT_OR_UPDATE =
             "INSERT INTO attribute_kv (entity_type, entity_id, attribute_type, attribute_key, str_v, long_v, dbl_v, bool_v, last_update_ts) " +
-            "VALUES(:entity_type, :entity_id, :attribute_type, :attribute_key, :str_v, :long_v, :dbl_v, :bool_v, :last_update_ts)" +
+                    "VALUES(:entity_type, :entity_id, :attribute_type, :attribute_key, :str_v, :long_v, :dbl_v, :bool_v, :last_update_ts)" +
                     "ON CONFLICT (entity_type, entity_id, attribute_type, attribute_key) " +
                     "DO UPDATE SET str_v = :str_v, long_v = :long_v, dbl_v = :dbl_v, bool_v = :bool_v, last_update_ts = :last_update_ts;";
 
@@ -65,6 +65,10 @@ public abstract class AttributeKvInsertRepository {
 
     @PersistenceContext
     protected EntityManager entityManager;
+
+    private final ScheduledExecutorService schedulerLogExecutor = Executors.newSingleThreadScheduledExecutor();
+
+    private final AtomicInteger count = new AtomicInteger(0);
 
     public abstract void saveOrUpdate(AttributeKvEntity entity);
 
@@ -83,6 +87,16 @@ public abstract class AttributeKvInsertRepository {
         }
     }
 
+    @PostConstruct
+    private void init() {
+        ScheduledFuture<?> scheduledLogFuture = schedulerLogExecutor.scheduleAtFixedRate(() -> {
+            try {
+                log.info("Saved [{}] attributes", count.get());
+            } catch (Exception ignored) {
+            }
+        }, 0, 1, TimeUnit.SECONDS);
+    }
+
     @Modifying
     private void saveOrUpdateBoolean(AttributeKvEntity entity, String query) {
         entityManager.createNativeQuery(query)
@@ -93,6 +107,7 @@ public abstract class AttributeKvInsertRepository {
                 .setParameter("bool_v", entity.getBooleanValue())
                 .setParameter("last_update_ts", entity.getLastUpdateTs())
                 .executeUpdate();
+        count.incrementAndGet();
     }
 
     @Modifying
@@ -105,6 +120,7 @@ public abstract class AttributeKvInsertRepository {
                 .setParameter("str_v", entity.getStrValue())
                 .setParameter("last_update_ts", entity.getLastUpdateTs())
                 .executeUpdate();
+        count.incrementAndGet();
     }
 
     @Modifying
@@ -117,6 +133,7 @@ public abstract class AttributeKvInsertRepository {
                 .setParameter("long_v", entity.getLongValue())
                 .setParameter("last_update_ts", entity.getLastUpdateTs())
                 .executeUpdate();
+        count.incrementAndGet();
     }
 
     @Modifying
@@ -129,6 +146,7 @@ public abstract class AttributeKvInsertRepository {
                 .setParameter("dbl_v", entity.getDoubleValue())
                 .setParameter("last_update_ts", entity.getLastUpdateTs())
                 .executeUpdate();
+        count.incrementAndGet();
     }
 
     @Modifying
@@ -171,8 +189,9 @@ public abstract class AttributeKvInsertRepository {
 
         for (int i = 0; i < result.length; i++) {
             if (result[i] == 0)
-               save(entities.get(i));
+                save(entities.get(i));
         }
+        count.addAndGet(entities.size());
     }
 
     private void save(AttributeKvEntity entity) {
@@ -188,46 +207,5 @@ public abstract class AttributeKvInsertRepository {
                 .addValue("bool_v", entity.getBooleanValue())
                 .addValue("last_update_ts", entity.getLastUpdateTs());
         namedParameterJdbcTemplate.update(INSERT_OR_UPDATE, param);
-    }
-
-    public void saveOrUpdateBatch(List<AttributeKvEntity> entities) {
-        String[] entityType = new String[entities.size()];
-        String[] entityId = new String[entities.size()];
-        String[] attributeType = new String[entities.size()];
-        String[] attributeKey = new String[entities.size()];
-        String[] strV = new String[entities.size()];
-        Long[] longV = new Long[entities.size()];
-        Double[] dblV = new Double[entities.size()];
-        Boolean[] boolV = new Boolean[entities.size()];
-        Long[] lastUpdateTs = new Long[entities.size()];
-
-        for (int i = 0; i < entities.size(); i++) {
-            entityType[i] = entities.get(i).getId().getEntityType().name();
-            entityId[i] = entities.get(i).getId().getEntityId();
-            attributeType[i] = entities.get(i).getId().getAttributeType();
-            attributeKey[i] = entities.get(i).getId().getAttributeKey();
-            strV[i] = entities.get(i).getStrValue();
-            longV[i] = entities.get(i).getLongValue();
-            dblV[i] = entities.get(i).getDoubleValue();
-            boolV[i] = entities.get(i).getBooleanValue();
-            lastUpdateTs[i] = entities.get(i).getLastUpdateTs();
-        }
-
-        jdbcTemplate.update(BATCH_INSERT_OR_UPDATE, ps -> {
-            try {
-                Connection con = jdbcTemplate.getDataSource().getConnection();
-                ps.setArray(1, con.createArrayOf("varchar", entityType));
-                ps.setArray(2, con.createArrayOf("varchar", entityId));
-                ps.setArray(3, con.createArrayOf("varchar", attributeType));
-                ps.setArray(4, con.createArrayOf("varchar", attributeKey));
-                ps.setArray(5, con.createArrayOf("varchar", strV));
-                ps.setArray(6, con.createArrayOf("bigint", longV));
-                ps.setArray(7, con.createArrayOf("float8", dblV));
-                ps.setArray(8, con.createArrayOf("boolean", boolV));
-                ps.setArray(9, con.createArrayOf("bigint", lastUpdateTs));
-            } catch (SQLException e) {
-                log.error("Failed to save or update batch");
-            }
-        });
     }
 }
