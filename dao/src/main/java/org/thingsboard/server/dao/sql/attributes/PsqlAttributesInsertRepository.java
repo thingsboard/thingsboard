@@ -21,8 +21,6 @@ import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
 import org.thingsboard.server.dao.util.PsqlDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import java.util.List;
-
 @SqlDao
 @PsqlDao
 @Repository
