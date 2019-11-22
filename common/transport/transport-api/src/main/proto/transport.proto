@@ -83,6 +83,14 @@ message DeviceInfoProto {
   string additionalInfo = 7;
 }
 
+message DeviceCredentialsProto {
+  int64 deviceIdMSB = 1;
+  int64 deviceIdLSB = 2;
+  CredentialsType credentialsType = 3;
+  string credentialsId = 4;
+  string credentialsValue = 5;
+}
+
 /**
  * Messages that use Data Structures;
  */
@@ -150,11 +158,13 @@ message ProvisionDeviceProfileCredentialsMsg {
 }
 
 message ProvisionDeviceResponseMsg {
-  int64 deviceIdMSB = 1;
-  int64 deviceIdLSB = 2;
-  CredentialsType credentialsType = 3;
-  string credentialsId = 4;
-  string credentialsValue = 5;
+  DeviceCredentialsProto deviceCredentials = 1;
+  ProvisionResponseStatus provisionResponseStatus = 2;
+}
+
+enum ProvisionResponseStatus {
+  SUCCESS = 0;
+  NOT_FOUND = 1;
 }
 
 message GetOrCreateDeviceFromGatewayResponseMsg {

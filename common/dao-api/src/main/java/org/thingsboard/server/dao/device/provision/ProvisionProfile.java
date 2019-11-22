@@ -15,29 +15,32 @@
  */
 package org.thingsboard.server.dao.device.provision;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.Objects;
 
 @Data
-@AllArgsConstructor
-public class ProvisionProfileCredentials {
+public class ProvisionProfile implements HasTenantId {
 
-    private String provisionProfileKey;
-    private String provisionProfileSecret;
+    private ProvisionProfileCredentials credentials;
+    private TenantId tenantId;
+    private CustomerId customerId;
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        ProvisionProfileCredentials that = (ProvisionProfileCredentials) o;
-        return provisionProfileKey.equals(that.provisionProfileKey) &&
-                provisionProfileSecret.equals(that.provisionProfileSecret);
+        if (!(o instanceof ProvisionProfile)) return false;
+        ProvisionProfile profile = (ProvisionProfile) o;
+        return getCredentials().equals(profile.getCredentials()) &&
+                getTenantId().equals(profile.getTenantId()) &&
+                Objects.equals(getCustomerId(), profile.getCustomerId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(provisionProfileKey, provisionProfileSecret);
+        return Objects.hash(getCredentials(), getTenantId(), getCustomerId());
     }
 }

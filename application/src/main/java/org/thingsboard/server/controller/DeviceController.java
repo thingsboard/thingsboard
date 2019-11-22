@@ -47,6 +47,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.controller.claim.data.ClaimRequest;
 import org.thingsboard.server.dao.device.claim.ClaimResponse;
 import org.thingsboard.server.dao.device.claim.ClaimResult;
+import org.thingsboard.server.dao.device.provision.ProvisionProfile;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -54,7 +55,6 @@ import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import javax.annotation.Nullable;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -472,7 +472,21 @@ public class DeviceController extends BaseController {
         }
     }
 
-    private String getSecretKey(ClaimRequest claimRequest) throws IOException {
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/device/provision", method = RequestMethod.POST)
+    @ResponseBody
+    public ProvisionProfile saveProvisionProfile(@RequestBody ProvisionProfile profile) throws ThingsboardException {
+        try {
+            profile.setTenantId(getTenantId());
+            accessControlService.checkPermission(getCurrentUser(), Resource.DEVICE, Operation.PROVISION_DEVICES,
+                    null, profile);
+            return deviceProvisionService.saveProvisionProfile(profile);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    private String getSecretKey(ClaimRequest claimRequest) {
         String secretKey = claimRequest.getSecretKey();
         if (secretKey != null) {
             return secretKey;

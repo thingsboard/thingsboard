@@ -253,10 +253,16 @@ public class JsonConverter {
 
     public static JsonObject toJson(ProvisionDeviceResponseMsg payload) {
         JsonObject result = new JsonObject();
-        result.addProperty("deviceId", new DeviceId(new UUID(payload.getDeviceIdMSB(), payload.getDeviceIdLSB())).toString());
-        result.addProperty("credentialsType", payload.getCredentialsType().name());
-        result.addProperty("credentialsId", payload.getCredentialsId());
-        result.addProperty("credentialsValue", StringUtils.isEmpty(payload.getCredentialsValue()) ? null : payload.getCredentialsValue());
+        if (payload.getProvisionResponseStatus() == TransportProtos.ProvisionResponseStatus.NOT_FOUND) {
+            result.addProperty("errorMsg", "Provision profile wasn't found!");
+        } else {
+            result.addProperty("deviceId", new DeviceId(
+                    new UUID(payload.getDeviceCredentials().getDeviceIdMSB(), payload.getDeviceCredentials().getDeviceIdLSB())).toString());
+            result.addProperty("credentialsType", payload.getDeviceCredentials().getCredentialsType().name());
+            result.addProperty("credentialsId", payload.getDeviceCredentials().getCredentialsId());
+            result.addProperty("credentialsValue",
+                    StringUtils.isEmpty(payload.getDeviceCredentials().getCredentialsValue()) ? null : payload.getDeviceCredentials().getCredentialsValue());
+        }
         return result;
     }
 

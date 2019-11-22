@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.device;
+package org.thingsboard.server.dao.device.provision;
 
-import org.thingsboard.server.dao.device.provision.ProvisionProfile;
-import org.thingsboard.server.dao.device.provision.ProvisionRequest;
-import org.thingsboard.server.dao.device.provision.ProvisionResponse;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import org.thingsboard.server.common.data.security.DeviceCredentials;
 
-public interface DeviceProvisionService {
+@Data
+@AllArgsConstructor
+public class ProvisionResponse {
 
-    ProvisionProfile saveProvisionProfile(ProvisionProfile provisionProfile);
-
-    ProvisionResponse provisionDevice(ProvisionRequest provisionRequest);
+    private DeviceCredentials deviceCredentials;
+    private ProvisionResponseStatus responseStatus;
 
 }
