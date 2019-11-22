@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2019 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,6 +23,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionCallbackWithoutResult;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
 import org.thingsboard.server.dao.util.SqlDao;
 
@@ -31,6 +35,8 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Types;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -48,9 +54,9 @@ public abstract class AttributeKvInsertRepository {
 
     private static final String INSERT_OR_UPDATE =
             "INSERT INTO attribute_kv (entity_type, entity_id, attribute_type, attribute_key, str_v, long_v, dbl_v, bool_v, last_update_ts) " +
-                    "VALUES(:entity_type, :entity_id, :attribute_type, :attribute_key, :str_v, :long_v, :dbl_v, :bool_v, :last_update_ts)" +
+                    "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)" +
                     "ON CONFLICT (entity_type, entity_id, attribute_type, attribute_key) " +
-                    "DO UPDATE SET str_v = :str_v, long_v = :long_v, dbl_v = :dbl_v, bool_v = :bool_v, last_update_ts = :last_update_ts;";
+                    "DO UPDATE SET str_v = ?, long_v = ?, dbl_v = ?, bool_v = ?, last_update_ts = ?;";
 
     protected static final String BOOL_V = "bool_v";
     protected static final String STR_V = "str_v";
@@ -61,7 +67,7 @@ public abstract class AttributeKvInsertRepository {
     private JdbcTemplate jdbcTemplate;
 
     @Autowired
-    private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+    private TransactionTemplate transactionTemplate;
 
     @PersistenceContext
     protected EntityManager entityManager;
@@ -132,60 +138,104 @@ public abstract class AttributeKvInsertRepository {
     }
 
     protected void saveOrUpdate(List<AttributeKvEntity> entities) {
-        int[] result = jdbcTemplate.batchUpdate(BATCH_UPDATE, new BatchPreparedStatementSetter() {
+        transactionTemplate.execute(new TransactionCallbackWithoutResult() {
             @Override
-            public void setValues(PreparedStatement ps, int i) throws SQLException {
-                ps.setString(1, entities.get(i).getStrValue());
+            protected void doInTransactionWithoutResult(TransactionStatus status) {
+                int[] result = jdbcTemplate.batchUpdate(BATCH_UPDATE, new BatchPreparedStatementSetter() {
+                    @Override
+                    public void setValues(PreparedStatement ps, int i) throws SQLException {
+                        ps.setString(1, entities.get(i).getStrValue());
 
-                if (entities.get(i).getLongValue() != null) {
-                    ps.setLong(2, entities.get(i).getLongValue());
-                } else {
-                    ps.setString(2, null);
+                        if (entities.get(i).getLongValue() != null) {
+                            ps.setLong(2, entities.get(i).getLongValue());
+                        } else {
+                            ps.setNull(2, Types.BIGINT);
+                        }
+
+                        if (entities.get(i).getDoubleValue() != null) {
+                            ps.setDouble(3, entities.get(i).getDoubleValue());
+                        } else {
+                            ps.setNull(3, Types.DOUBLE);
+                        }
+
+                        if (entities.get(i).getBooleanValue() != null) {
+                            ps.setBoolean(4, entities.get(i).getBooleanValue());
+                        } else {
+                            ps.setNull(4, Types.BOOLEAN);
+                        }
+
+                        ps.setLong(5, entities.get(i).getLastUpdateTs());
+                        ps.setString(6, entities.get(i).getId().getEntityType().name());
+                        ps.setString(7, entities.get(i).getId().getEntityId());
+                        ps.setString(8, entities.get(i).getId().getAttributeType());
+                        ps.setString(9, entities.get(i).getId().getAttributeKey());
+                    }
+
+                    @Override
+                    public int getBatchSize() {
+                        return entities.size();
+                    }
+                });
+
+                int updatedCount = 0;
+                for (int i = 0; i < result.length; i++) {
+                    if (result[i] == 0) {
+                        updatedCount++;
+                    }
                 }
 
-                if (entities.get(i).getDoubleValue() != null) {
-                    ps.setDouble(3, entities.get(i).getDoubleValue());
-                } else {
-                    ps.setString(3, null);
+                List<AttributeKvEntity> insertEntities = new ArrayList<>(updatedCount);
+                for (int i = 0; i < result.length; i++) {
+                    if (result[i] == 0) {
+                        insertEntities.add(entities.get(i));
+                    }
                 }
 
-                if (entities.get(i).getBooleanValue() != null) {
-                    ps.setBoolean(4, entities.get(i).getBooleanValue());
-                } else {
-                    ps.setString(4, null);
-                }
+                jdbcTemplate.batchUpdate(INSERT_OR_UPDATE, new BatchPreparedStatementSetter() {
+                    @Override
+                    public void setValues(PreparedStatement ps, int i) throws SQLException {
+                        ps.setString(1, insertEntities.get(i).getId().getEntityType().name());
+                        ps.setString(2, insertEntities.get(i).getId().getEntityId());
+                        ps.setString(3, insertEntities.get(i).getId().getAttributeType());
+                        ps.setString(4, insertEntities.get(i).getId().getAttributeKey());
+                        ps.setString(5, insertEntities.get(i).getStrValue());
+                        ps.setString(10, insertEntities.get(i).getStrValue());
 
-                ps.setLong(5, entities.get(i).getLastUpdateTs());
-                ps.setString(6, entities.get(i).getId().getEntityType().name());
-                ps.setString(7, entities.get(i).getId().getEntityId());
-                ps.setString(8, entities.get(i).getId().getAttributeType());
-                ps.setString(9, entities.get(i).getId().getAttributeKey());
-            }
+                        if (insertEntities.get(i).getLongValue() != null) {
+                            ps.setLong(6, insertEntities.get(i).getLongValue());
+                            ps.setLong(11, insertEntities.get(i).getLongValue());
+                        } else {
+                            ps.setNull(6, Types.BIGINT);
+                            ps.setNull(11, Types.BIGINT);
+                        }
 
-            @Override
-            public int getBatchSize() {
-                return entities.size();
+                        if (insertEntities.get(i).getDoubleValue() != null) {
+                            ps.setDouble(7, insertEntities.get(i).getDoubleValue());
+                            ps.setDouble(12, insertEntities.get(i).getDoubleValue());
+                        } else {
+                            ps.setNull(7, Types.DOUBLE);
+                            ps.setNull(12, Types.DOUBLE);
+                        }
+
+                        if (insertEntities.get(i).getBooleanValue() != null) {
+                            ps.setBoolean(8, insertEntities.get(i).getBooleanValue());
+                            ps.setBoolean(13, insertEntities.get(i).getBooleanValue());
+                        } else {
+                            ps.setNull(8, Types.BOOLEAN);
+                            ps.setNull(13, Types.BOOLEAN);
+                        }
+
+                        ps.setLong(9, insertEntities.get(i).getLastUpdateTs());
+                        ps.setLong(14, insertEntities.get(i).getLastUpdateTs());
+                    }
+
+                    @Override
+                    public int getBatchSize() {
+                        return insertEntities.size();
+                    }
+                });
             }
         });
-
-        for (int i = 0; i < result.length; i++) {
-            if (result[i] == 0)
-                save(entities.get(i));
-        }
     }
 
-    private void save(AttributeKvEntity entity) {
-        MapSqlParameterSource param = new MapSqlParameterSource();
-        param
-                .addValue("entity_type", entity.getId().getEntityType().name())
-                .addValue("entity_id", entity.getId().getEntityId())
-                .addValue("attribute_type", entity.getId().getAttributeType())
-                .addValue("attribute_key", entity.getId().getAttributeKey())
-                .addValue("str_v", entity.getStrValue())
-                .addValue("long_v", entity.getLongValue())
-                .addValue("dbl_v", entity.getDoubleValue())
-                .addValue("bool_v", entity.getBooleanValue())
-                .addValue("last_update_ts", entity.getLastUpdateTs());
-        namedParameterJdbcTemplate.update(INSERT_OR_UPDATE, param);
-    }
 }

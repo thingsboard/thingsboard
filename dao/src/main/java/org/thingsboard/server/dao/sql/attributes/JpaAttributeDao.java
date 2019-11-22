@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2019 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,6 @@ package org.thingsboard.server.dao.sql.attributes;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,21 +31,16 @@ import org.thingsboard.server.dao.attributes.AttributesDao;
 import org.thingsboard.server.dao.model.sql.AttributeKvCompositeKey;
 import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
+import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
+import org.thingsboard.server.dao.sql.TbSqlBlockingQueue;
+import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
@@ -57,12 +51,13 @@ import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
 public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService implements AttributesDao {
 
     @Autowired
+    ScheduledLogExecutorComponent logExecutor;
+
+    @Autowired
     private AttributeKvRepository attributeKvRepository;
 
     @Autowired
     private AttributeKvInsertRepository attributeKvInsertRepository;
-
-    private final BlockingQueue<AttributeKvEntityFutureWrapper> queue = new LinkedBlockingQueue<>();
 
     @Value("${sql.attributes.batch_size:1000}")
     private int batchSize;
@@ -73,60 +68,24 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     @Value("${sql.attributes.stats_print_interval_ms:1000}")
     private long statsPrintIntervalMs;
 
-    private final AtomicInteger addedCount = new AtomicInteger();
-    private final AtomicInteger savedCount = new AtomicInteger();
-    private final AtomicInteger failedCount = new AtomicInteger();
-
-    private ExecutorService executor;
-    private ScheduledExecutorService schedulerLogExecutor;
+    private TbSqlBlockingQueue<AttributeKvEntity> queue;
 
     @PostConstruct
     private void init() {
-        executor = Executors.newSingleThreadExecutor();
-        executor.submit(() -> {
-            List<AttributeKvEntityFutureWrapper> entities = new ArrayList<>(batchSize);
-            while (true) {
-                try {
-                    long currentTs = System.currentTimeMillis();
-                    AttributeKvEntityFutureWrapper attr = queue.poll(maxDelay, TimeUnit.MILLISECONDS);
-                    if (attr == null) {
-                        continue;
-                    }
-                    queue.drainTo(entities, batchSize - 1);
-                    boolean fullPack = entities.size() == batchSize;
-                    log.debug("Going to save {} attributes", entities.size());
-                    attributeKvInsertRepository.saveOrUpdate(entities.stream().map(AttributeKvEntityFutureWrapper::getEntity).collect(Collectors.toList()));
-                    entities.forEach(v -> v.getFuture().set(null));
-                    savedCount.addAndGet(entities.size());
-                    if (!fullPack) {
-                        long remainingDelay = maxDelay - (System.currentTimeMillis() - currentTs);
-                        if (remainingDelay > 0) {
-                            Thread.sleep(remainingDelay);
-                        }
-                    }
-                } catch (Exception e) {
-                    failedCount.addAndGet(entities.size());
-                    entities.forEach(entityFutureWrapper -> entityFutureWrapper.getFuture().setException(e));
-                    log.error("Failed to save {} attributes", entities.size(), e);
-                } finally {
-                    entities.clear();
-                }
-            }
-        });
-        schedulerLogExecutor = Executors.newSingleThreadScheduledExecutor();
-        schedulerLogExecutor.scheduleAtFixedRate(() -> {
-            log.info("Attributes queueSize [{}] totalAdded [{}] totalSaved [{}] totalFailed [{}]",
-                    queue.size(), addedCount.getAndSet(0), savedCount.getAndSet(0), failedCount.getAndSet(0));
-        }, statsPrintIntervalMs, statsPrintIntervalMs, TimeUnit.MILLISECONDS);
+        TbSqlBlockingQueueParams params = TbSqlBlockingQueueParams.builder()
+                .logName("Attributes")
+                .batchSize(batchSize)
+                .maxDelay(maxDelay)
+                .statsPrintIntervalMs(statsPrintIntervalMs)
+                .build();
+        queue = new TbSqlBlockingQueue<>(params);
+        queue.init(logExecutor, v -> attributeKvInsertRepository.saveOrUpdate(v));
     }
 
     @PreDestroy
     private void destroy() {
-        if (executor != null) {
-            executor.shutdownNow();
-        }
-        if (schedulerLogExecutor != null) {
-            schedulerLogExecutor.shutdownNow();
+        if (queue != null) {
+            queue.destroy();
         }
     }
 
@@ -173,11 +132,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     }
 
     private ListenableFuture<Void> addToQueue(AttributeKvEntity entity) {
-        //TODO: add wrapper entity + SettableFuture. Invoke SettableFuture when you process all messages.
-        SettableFuture<Void> future = SettableFuture.create();
-        queue.add(AttributeKvEntityFutureWrapper.create(future, entity));
-        addedCount.incrementAndGet();
-        return future;
+        return queue.add(entity);
     }
 
     @Override
