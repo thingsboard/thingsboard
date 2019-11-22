@@ -351,6 +351,7 @@ spring:
       repositories:
         enabled: "true"
   jpa:
+    open-in-view: "false"
     hibernate:
       ddl-auto: "none"
     database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}"
@@ -402,6 +403,7 @@ audit-log:
 state:
   defaultInactivityTimeoutInSec: "${DEFAULT_INACTIVITY_TIMEOUT:10}"
   defaultStateCheckIntervalInSec: "${DEFAULT_STATE_CHECK_INTERVAL:10}"
+  persistToTelemetry: "${PERSIST_STATE_TO_TELEMETRY:false}"
 
 kafka:
   enabled: true
