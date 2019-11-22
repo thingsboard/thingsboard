@@ -40,6 +40,7 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
@@ -93,7 +94,8 @@ public class DefaultDeviceStateService implements DeviceStateService {
     public static final String INACTIVITY_ALARM_TIME = "inactivityAlarmTime";
     public static final String INACTIVITY_TIMEOUT = "inactivityTimeout";
 
-    public static final List<String> PERSISTENT_ATTRIBUTES = Arrays.asList(ACTIVITY_STATE, LAST_CONNECT_TIME, LAST_DISCONNECT_TIME, LAST_ACTIVITY_TIME, INACTIVITY_ALARM_TIME, INACTIVITY_TIMEOUT);
+    public static final List<String> PERSISTENT_ATTRIBUTES = Arrays.asList(ACTIVITY_STATE, LAST_CONNECT_TIME,
+            LAST_DISCONNECT_TIME, LAST_ACTIVITY_TIME, INACTIVITY_ALARM_TIME, INACTIVITY_TIMEOUT);
 
     @Autowired
     private TenantService tenantService;
@@ -129,17 +131,11 @@ public class DefaultDeviceStateService implements DeviceStateService {
     @Getter
     private boolean persistToTelemetry;
 
-// TODO in v2.1
-//    @Value("${state.defaultStatePersistenceIntervalInSec}")
-//    @Getter
-//    private long defaultStatePersistenceIntervalInSec;
-//
-//    @Value("${state.defaultStatePersistencePack}")
-//    @Getter
-//    private long defaultStatePersistencePack;
+    @Value("${state.initFetchPackSize:1000}")
+    @Getter
+    private int initFetchPackSize;
 
     private ListeningScheduledExecutorService queueExecutor;
-
     private ConcurrentMap<TenantId, Set<DeviceId>> tenantDevices = new ConcurrentHashMap<>();
     private ConcurrentMap<DeviceId, DeviceStateData> deviceStates = new ConcurrentHashMap<>();
 
@@ -250,20 +246,28 @@ public class DefaultDeviceStateService implements DeviceStateService {
     }
 
     private void initStateFromDB() {
-        List<Tenant> tenants = tenantService.findTenants(new TextPageLink(Integer.MAX_VALUE)).getData();
-        for (Tenant tenant : tenants) {
-            List<ListenableFuture<DeviceStateData>> fetchFutures = new ArrayList<>();
-            List<Device> devices = deviceService.findDevicesByTenantId(tenant.getId(), new TextPageLink(Integer.MAX_VALUE)).getData();
-            for (Device device : devices) {
-                if (!routingService.resolveById(device.getId()).isPresent()) {
-                    fetchFutures.add(fetchDeviceState(device));
+        try {
+            List<Tenant> tenants = tenantService.findTenants(new TextPageLink(Integer.MAX_VALUE)).getData();
+            for (Tenant tenant : tenants) {
+                List<ListenableFuture<DeviceStateData>> fetchFutures = new ArrayList<>();
+                TextPageLink pageLink = new TextPageLink(initFetchPackSize);
+                while (pageLink != null) {
+                    TextPageData<Device> page = deviceService.findDevicesByTenantId(tenant.getId(), pageLink);
+                    pageLink = page.getNextPageLink();
+                    for (Device device : page.getData()) {
+                        if (!routingService.resolveById(device.getId()).isPresent()) {
+                            fetchFutures.add(fetchDeviceState(device));
+                        }
+                    }
+                    try {
+                        Futures.successfulAsList(fetchFutures).get().forEach(this::addDeviceUsingState);
+                    } catch (InterruptedException | ExecutionException e) {
+                        log.warn("Failed to init device state service from DB", e);
+                    }
                 }
             }
-            try {
-                Futures.successfulAsList(fetchFutures).get().forEach(this::addDeviceUsingState);
-            } catch (InterruptedException | ExecutionException e) {
-                log.warn("Failed to init device state service from DB", e);
-            }
+        } catch (Throwable t) {
+            log.warn("Failed to init device states from DB", t);
         }
     }
 
