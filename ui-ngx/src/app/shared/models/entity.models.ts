@@ -17,6 +17,7 @@
 import { BaseData } from '@shared/models/base-data';
 import { EntityType } from '@shared/models/entity-type.models';
 import { EntityId } from '@shared/models/id/entity-id';
+import { AttributeData } from './telemetry/telemetry.models';
 
 export interface EntityInfo {
   origEntity?: BaseData<EntityId>;
@@ -25,4 +26,27 @@ export interface EntityInfo {
   entityType?: EntityType;
   id?: string;
   entityDescription?: string;
+}
+
+export interface ImportEntityData {
+  name: string;
+  type: string;
+  accessToken: string;
+  attributes: {
+    server: AttributeData[],
+    shared: AttributeData[]
+  };
+  timeseries: AttributeData[];
+}
+
+export interface ImportEntitiesResultInfo {
+  create?: {
+    entity: number;
+  };
+  update?: {
+    entity: number;
+  };
+  error?: {
+    entity: number;
+  };
 }

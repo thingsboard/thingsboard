@@ -15,7 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { defaultHttpOptions } from './http-utils';
+import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { Observable, Subject, of, ReplaySubject } from 'rxjs/index';
 import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
@@ -57,53 +57,49 @@ export class WidgetService {
     );
   }
 
-  public getAllWidgetsBundles(ignoreErrors: boolean = false,
-                              ignoreLoading: boolean = false): Observable<Array<WidgetsBundle>> {
-    return this.loadWidgetsBundleCache(ignoreErrors, ignoreLoading).pipe(
+  public getAllWidgetsBundles(config?: RequestConfig): Observable<Array<WidgetsBundle>> {
+    return this.loadWidgetsBundleCache(config).pipe(
       map(() => this.allWidgetsBundles)
     );
   }
 
-  public getSystemWidgetsBundles(ignoreErrors: boolean = false,
-                                 ignoreLoading: boolean = false): Observable<Array<WidgetsBundle>> {
-    return this.loadWidgetsBundleCache(ignoreErrors, ignoreLoading).pipe(
+  public getSystemWidgetsBundles(config?: RequestConfig): Observable<Array<WidgetsBundle>> {
+    return this.loadWidgetsBundleCache(config).pipe(
       map(() => this.systemWidgetsBundles)
     );
   }
 
-  public getTenantWidgetsBundles(ignoreErrors: boolean = false,
-                                 ignoreLoading: boolean = false): Observable<Array<WidgetsBundle>> {
-    return this.loadWidgetsBundleCache(ignoreErrors, ignoreLoading).pipe(
+  public getTenantWidgetsBundles(config?: RequestConfig): Observable<Array<WidgetsBundle>> {
+    return this.loadWidgetsBundleCache(config).pipe(
       map(() => this.tenantWidgetsBundles)
     );
   }
 
-  public getWidgetBundles(pageLink: PageLink, ignoreErrors: boolean = false,
-                          ignoreLoading: boolean = false): Observable<PageData<WidgetsBundle>> {
+  public getWidgetBundles(pageLink: PageLink, config?: RequestConfig): Observable<PageData<WidgetsBundle>> {
     return this.http.get<PageData<WidgetsBundle>>(`/api/widgetsBundles${pageLink.toQuery()}`,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
   public getWidgetsBundle(widgetsBundleId: string,
-                          ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<WidgetsBundle> {
-    return this.http.get<WidgetsBundle>(`/api/widgetsBundle/${widgetsBundleId}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+                          config?: RequestConfig): Observable<WidgetsBundle> {
+    return this.http.get<WidgetsBundle>(`/api/widgetsBundle/${widgetsBundleId}`, defaultHttpOptionsFromConfig(config));
   }
 
   public saveWidgetsBundle(widgetsBundle: WidgetsBundle,
-                           ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<WidgetsBundle> {
+                           config?: RequestConfig): Observable<WidgetsBundle> {
     return this.http.post<WidgetsBundle>('/api/widgetsBundle', widgetsBundle,
-      defaultHttpOptions(ignoreLoading, ignoreErrors)).pipe(
+      defaultHttpOptionsFromConfig(config)).pipe(
       tap(() => {
         this.invalidateWidgetsBundleCache();
       })
     );
   }
 
-  public deleteWidgetsBundle(widgetsBundleId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false) {
-    return this.getWidgetsBundle(widgetsBundleId, ignoreErrors, ignoreLoading).pipe(
+  public deleteWidgetsBundle(widgetsBundleId: string, config?: RequestConfig) {
+    return this.getWidgetsBundle(widgetsBundleId, config).pipe(
       mergeMap((widgetsBundle) => {
         return this.http.delete(`/api/widgetsBundle/${widgetsBundleId}`,
-          defaultHttpOptions(ignoreLoading, ignoreErrors)).pipe(
+          defaultHttpOptionsFromConfig(config)).pipe(
           tap(() => {
             this.invalidateWidgetsBundleCache();
             this.widgetsBundleDeletedSubject.next(widgetsBundle);
@@ -114,14 +110,14 @@ export class WidgetService {
   }
 
   public getBundleWidgetTypes(bundleAlias: string, isSystem: boolean,
-                              ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Array<WidgetType>> {
+                              config?: RequestConfig): Observable<Array<WidgetType>> {
     return this.http.get<Array<WidgetType>>(`/api/widgetTypes?isSystem=${isSystem}&bundleAlias=${bundleAlias}`,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
   public loadBundleLibraryWidgets(bundleAlias: string, isSystem: boolean,
-                                  ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Array<Widget>> {
-    return this.getBundleWidgetTypes(bundleAlias, isSystem, ignoreErrors, ignoreLoading).pipe(
+                                  config?: RequestConfig): Observable<Array<Widget>> {
+    return this.getBundleWidgetTypes(bundleAlias, isSystem, config).pipe(
       map((types) => {
         types = types.sort((a, b) => {
           let result = widgetType[b.descriptor.type].localeCompare(widgetType[a.descriptor.type]);
@@ -173,38 +169,38 @@ export class WidgetService {
   }
 
   public getWidgetType(bundleAlias: string, widgetTypeAlias: string, isSystem: boolean,
-                       ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<WidgetType> {
+                       config?: RequestConfig): Observable<WidgetType> {
     return this.http.get<WidgetType>(`/api/widgetType?isSystem=${isSystem}&bundleAlias=${bundleAlias}&alias=${widgetTypeAlias}`,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
   public saveWidgetType(widgetInfo: WidgetInfo,
                         id: WidgetTypeId,
                         bundleAlias: string,
-                        ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<WidgetType> {
+                        config?: RequestConfig): Observable<WidgetType> {
     const widgetTypeInstance = toWidgetType(widgetInfo, id, undefined, bundleAlias);
     return this.http.post<WidgetType>('/api/widgetType', widgetTypeInstance,
-      defaultHttpOptions(ignoreLoading, ignoreErrors)).pipe(
+      defaultHttpOptionsFromConfig(config)).pipe(
       tap((savedWidgetType) => {
         this.widgetTypeUpdatedSubject.next(savedWidgetType);
       }));
   }
 
   public saveImportedWidgetType(widgetTypeInstance: WidgetType,
-                                ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<WidgetType> {
+                                config?: RequestConfig): Observable<WidgetType> {
     return this.http.post<WidgetType>('/api/widgetType', widgetTypeInstance,
-      defaultHttpOptions(ignoreLoading, ignoreErrors)).pipe(
+      defaultHttpOptionsFromConfig(config)).pipe(
       tap((savedWidgetType) => {
         this.widgetTypeUpdatedSubject.next(savedWidgetType);
       }));
   }
 
   public deleteWidgetType(bundleAlias: string, widgetTypeAlias: string, isSystem: boolean,
-                          ignoreErrors: boolean = false, ignoreLoading: boolean = false) {
-    return this.getWidgetType(bundleAlias, widgetTypeAlias, isSystem, ignoreErrors, ignoreLoading).pipe(
+                          config?: RequestConfig) {
+    return this.getWidgetType(bundleAlias, widgetTypeAlias, isSystem, config).pipe(
       mergeMap((widgetTypeInstance) => {
           return this.http.delete(`/api/widgetType/${widgetTypeInstance.id.id}`,
-            defaultHttpOptions(ignoreLoading, ignoreErrors)).pipe(
+            defaultHttpOptionsFromConfig(config)).pipe(
             tap(() => {
               this.widgetTypeUpdatedSubject.next(widgetTypeInstance);
             })
@@ -214,16 +210,16 @@ export class WidgetService {
   }
 
   public getWidgetTypeById(widgetTypeId: string,
-                           ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<WidgetType> {
+                           config?: RequestConfig): Observable<WidgetType> {
     return this.http.get<WidgetType>(`/api/widgetType/${widgetTypeId}`,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
   public getWidgetTemplate(widgetTypeParam: widgetType,
-                           ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<WidgetInfo> {
+                           config?: RequestConfig): Observable<WidgetInfo> {
     const templateWidgetType = widgetTypesData.get(widgetTypeParam);
     return this.getWidgetType(templateWidgetType.template.bundleAlias, templateWidgetType.template.alias, true,
-      ignoreErrors, ignoreLoading).pipe(
+      config).pipe(
         map((result) => {
           const widgetInfo = toWidgetInfo(result);
           widgetInfo.alias = undefined;
@@ -240,11 +236,11 @@ export class WidgetService {
     return this.widgetsBundleDeletedSubject.asObservable();
   }
 
-  private loadWidgetsBundleCache(ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<any> {
+  private loadWidgetsBundleCache(config?: RequestConfig): Observable<any> {
     if (!this.allWidgetsBundles) {
       const loadWidgetsBundleCacheSubject = new ReplaySubject();
       this.http.get<Array<WidgetsBundle>>('/api/widgetsBundles',
-        defaultHttpOptions(ignoreLoading, ignoreErrors)).subscribe(
+        defaultHttpOptionsFromConfig(config)).subscribe(
         (allWidgetsBundles) => {
           this.allWidgetsBundles = allWidgetsBundles;
           this.systemWidgetsBundles = new Array<WidgetsBundle>();

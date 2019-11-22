@@ -21,6 +21,7 @@ import { LogoComponent } from './components/logo.component';
 import { TbSnackBarComponent, ToastDirective } from './components/toast.directive';
 import { BreadcrumbComponent } from '@app/shared/components/breadcrumb.component';
 import { NgxFlowModule, FlowInjectionToken } from '@flowjs/ngx-flow';
+import { NgxFlowchartModule } from 'ngx-flowchart/dist/ngx-flowchart';
 import Flow from '@flowjs/flow.js';
 
 import {
@@ -61,6 +62,7 @@ import { RouterModule } from '@angular/router';
 import { ShareModule as ShareButtonsModule } from '@ngx-share/core';
 import { HotkeyModule } from 'angular2-hotkeys';
 import { ColorPickerModule } from 'ngx-color-picker';
+import { NgxHmCarouselModule } from 'ngx-hm-carousel';
 import { UserMenuComponent } from '@shared/components/user-menu.component';
 import { NospacePipe } from './pipe/nospace.pipe';
 import { TranslateModule } from '@ngx-translate/core';
@@ -233,7 +235,9 @@ import { FileInputComponent } from './components/file-input.component';
     ShareButtonsModule,
     HotkeyModule,
     ColorPickerModule,
-    NgxFlowModule
+    NgxHmCarouselModule,
+    NgxFlowModule,
+    NgxFlowchartModule
   ],
   exports: [
     FooterComponent,
@@ -314,6 +318,8 @@ import { FileInputComponent } from './components/file-input.component';
     ShareButtonsModule,
     HotkeyModule,
     ColorPickerModule,
+    NgxHmCarouselModule,
+    NgxFlowchartModule,
     ColorPickerDialogComponent,
     MaterialIconsDialogComponent,
     ColorInputComponent,

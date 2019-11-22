@@ -37,14 +37,14 @@ import { catchError, concatMap, expand, map, mergeMap, toArray } from 'rxjs/oper
 import { Customer } from '@app/shared/models/customer.model';
 import { AssetService } from '@core/http/asset.service';
 import { EntityViewService } from '@core/http/entity-view.service';
-import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { defaultHttpOptions } from '@core/http/http-utils';
+import { AttributeScope, DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { defaultHttpOptionsFromConfig, RequestConfig } from '@core/http/http-utils';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { AliasInfo, StateParams, SubscriptionInfo } from '@core/api/widget-api.models';
 import { Datasource, DatasourceType, KeyInfo } from '@app/shared/models/widget.models';
 import { UtilsService } from '@core/services/utils.service';
 import { AliasFilterType, EntityAlias, EntityAliasFilter, EntityAliasFilterResult } from '@shared/models/alias.models';
-import { EntityInfo } from '@shared/models/entity.models';
+import { EntityInfo, ImportEntityData, ImportEntitiesResultInfo } from '@shared/models/entity.models';
 import {
   EntityRelationInfo,
   EntityRelationsQuery,
@@ -53,9 +53,10 @@ import {
 } from '@shared/models/relation.models';
 import { EntityRelationService } from '@core/http/entity-relation.service';
 import { isDefined } from '../utils';
-import { AssetSearchQuery } from '@shared/models/asset.models';
-import { DeviceSearchQuery } from '@shared/models/device.models';
+import { Asset, AssetSearchQuery } from '@shared/models/asset.models';
+import { Device, DeviceCredentialsType, DeviceSearchQuery } from '@shared/models/device.models';
 import { EntityViewSearchQuery } from '@shared/models/entity-view.models';
+import { AttributeService } from '@core/http/attribute.service';
 
 @Injectable({
   providedIn: 'root'
@@ -74,37 +75,38 @@ export class EntityService {
     private ruleChainService: RuleChainService,
     private dashboardService: DashboardService,
     private entityRelationService: EntityRelationService,
+    private attributeService: AttributeService,
     private utils: UtilsService
   ) { }
 
   private getEntityObservable(entityType: EntityType, entityId: string,
-                              ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<BaseData<EntityId>> {
+                              config?: RequestConfig): Observable<BaseData<EntityId>> {
 
     let observable: Observable<BaseData<EntityId>>;
     switch (entityType) {
       case EntityType.DEVICE:
-        observable = this.deviceService.getDevice(entityId, ignoreErrors, ignoreLoading);
+        observable = this.deviceService.getDevice(entityId, config);
         break;
       case EntityType.ASSET:
-        observable = this.assetService.getAsset(entityId, ignoreErrors, ignoreLoading);
+        observable = this.assetService.getAsset(entityId, config);
         break;
       case EntityType.ENTITY_VIEW:
-        observable = this.entityViewService.getEntityView(entityId, ignoreErrors, ignoreLoading);
+        observable = this.entityViewService.getEntityView(entityId, config);
         break;
       case EntityType.TENANT:
-        observable = this.tenantService.getTenant(entityId, ignoreErrors, ignoreLoading);
+        observable = this.tenantService.getTenant(entityId, config);
         break;
       case EntityType.CUSTOMER:
-        observable = this.customerService.getCustomer(entityId, ignoreErrors, ignoreLoading);
+        observable = this.customerService.getCustomer(entityId, config);
         break;
       case EntityType.DASHBOARD:
-        observable = this.dashboardService.getDashboardInfo(entityId, ignoreErrors, ignoreLoading);
+        observable = this.dashboardService.getDashboardInfo(entityId, config);
         break;
       case EntityType.USER:
-        observable = this.userService.getUser(entityId, ignoreErrors, ignoreLoading);
+        observable = this.userService.getUser(entityId, config);
         break;
       case EntityType.RULE_CHAIN:
-        observable = this.ruleChainService.getRuleChain(entityId, ignoreErrors, ignoreLoading);
+        observable = this.ruleChainService.getRuleChain(entityId, config);
         break;
       case EntityType.ALARM:
         console.error('Get Alarm Entity is not implemented!');
@@ -113,8 +115,8 @@ export class EntityService {
     return observable;
   }
   public getEntity(entityType: EntityType, entityId: string,
-                   ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<BaseData<EntityId>> {
-    const entityObservable = this.getEntityObservable(entityType, entityId, ignoreErrors, ignoreLoading);
+                   config?: RequestConfig): Observable<BaseData<EntityId>> {
+    const entityObservable = this.getEntityObservable(entityType, entityId, config);
     if (entityObservable) {
       return entityObservable;
     } else {
@@ -146,38 +148,38 @@ export class EntityService {
 
 
   private getEntitiesObservable(entityType: EntityType, entityIds: Array<string>,
-                                ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Array<BaseData<EntityId>>> {
+                                config?: RequestConfig): Observable<Array<BaseData<EntityId>>> {
     let observable: Observable<Array<BaseData<EntityId>>>;
     switch (entityType) {
       case EntityType.DEVICE:
-        observable = this.deviceService.getDevices(entityIds, ignoreErrors, ignoreLoading);
+        observable = this.deviceService.getDevices(entityIds, config);
         break;
       case EntityType.ASSET:
-        observable = this.assetService.getAssets(entityIds, ignoreErrors, ignoreLoading);
+        observable = this.assetService.getAssets(entityIds, config);
         break;
       case EntityType.ENTITY_VIEW:
         observable = this.getEntitiesByIdsObservable(
-          (id) => this.entityViewService.getEntityView(id, ignoreErrors, ignoreLoading),
+          (id) => this.entityViewService.getEntityView(id, config),
           entityIds);
         break;
       case EntityType.TENANT:
         observable = this.getEntitiesByIdsObservable(
-          (id) => this.tenantService.getTenant(id, ignoreErrors, ignoreLoading),
+          (id) => this.tenantService.getTenant(id, config),
           entityIds);
         break;
       case EntityType.CUSTOMER:
         observable = this.getEntitiesByIdsObservable(
-          (id) => this.customerService.getCustomer(id, ignoreErrors, ignoreLoading),
+          (id) => this.customerService.getCustomer(id, config),
           entityIds);
         break;
       case EntityType.DASHBOARD:
         observable = this.getEntitiesByIdsObservable(
-          (id) => this.dashboardService.getDashboardInfo(id, ignoreErrors, ignoreLoading),
+          (id) => this.dashboardService.getDashboardInfo(id, config),
           entityIds);
         break;
       case EntityType.USER:
         observable = this.getEntitiesByIdsObservable(
-          (id) => this.userService.getUser(id, ignoreErrors, ignoreLoading),
+          (id) => this.userService.getUser(id, config),
           entityIds);
         break;
       case EntityType.ALARM:
@@ -188,8 +190,8 @@ export class EntityService {
   }
 
   public getEntities(entityType: EntityType, entityIds: Array<string>,
-                     ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Array<BaseData<EntityId>>> {
-    const entitiesObservable = this.getEntitiesObservable(entityType, entityIds, ignoreErrors, ignoreLoading);
+                     config?: RequestConfig): Observable<Array<BaseData<EntityId>>> {
+    const entitiesObservable = this.getEntitiesObservable(entityType, entityIds, config);
     if (entitiesObservable) {
       return entitiesObservable;
     } else {
@@ -198,11 +200,10 @@ export class EntityService {
   }
 
   private getSingleTenantByPageLinkObservable(pageLink: PageLink,
-                                              ignoreErrors: boolean = false,
-                                              ignoreLoading: boolean = false): Observable<PageData<Tenant>> {
+                                              config?: RequestConfig): Observable<PageData<Tenant>> {
     const authUser = getCurrentAuthUser(this.store);
     const tenantId = authUser.tenantId;
-    return this.tenantService.getTenant(tenantId, ignoreErrors, ignoreLoading).pipe(
+    return this.tenantService.getTenant(tenantId, config).pipe(
       map((tenant) => {
         const result = {
           data: [],
@@ -221,11 +222,10 @@ export class EntityService {
   }
 
   private getSingleCustomerByPageLinkObservable(pageLink: PageLink,
-                                                ignoreErrors: boolean = false,
-                                                ignoreLoading: boolean = false): Observable<PageData<Customer>> {
+                                                config?: RequestConfig): Observable<PageData<Customer>> {
     const authUser = getCurrentAuthUser(this.store);
     const customerId = authUser.customerId;
-    return this.customerService.getCustomer(customerId, ignoreErrors, ignoreLoading).pipe(
+    return this.customerService.getCustomer(customerId, config).pipe(
       map((customer) => {
         const result = {
           data: [],
@@ -244,8 +244,7 @@ export class EntityService {
   }
 
   private getEntitiesByPageLinkObservable(entityType: EntityType, pageLink: PageLink, subType: string = '',
-                                          ignoreErrors: boolean = false,
-                                          ignoreLoading: boolean = false): Observable<PageData<BaseData<EntityId>>> {
+                                          config?: RequestConfig): Observable<PageData<BaseData<EntityId>>> {
     let entitiesObservable: Observable<PageData<BaseData<EntityId>>>;
     const authUser = getCurrentAuthUser(this.store);
     const customerId = authUser.customerId;
@@ -253,54 +252,54 @@ export class EntityService {
       case EntityType.DEVICE:
         pageLink.sortOrder.property = 'name';
         if (authUser.authority === Authority.CUSTOMER_USER) {
-          entitiesObservable = this.deviceService.getCustomerDeviceInfos(customerId, pageLink, subType, ignoreErrors, ignoreLoading);
+          entitiesObservable = this.deviceService.getCustomerDeviceInfos(customerId, pageLink, subType, config);
         } else {
-          entitiesObservable = this.deviceService.getTenantDeviceInfos(pageLink, subType, ignoreErrors, ignoreLoading);
+          entitiesObservable = this.deviceService.getTenantDeviceInfos(pageLink, subType, config);
         }
         break;
       case EntityType.ASSET:
         pageLink.sortOrder.property = 'name';
         if (authUser.authority === Authority.CUSTOMER_USER) {
-          entitiesObservable = this.assetService.getCustomerAssetInfos(customerId, pageLink, subType, ignoreErrors, ignoreLoading);
+          entitiesObservable = this.assetService.getCustomerAssetInfos(customerId, pageLink, subType, config);
         } else {
-          entitiesObservable = this.assetService.getTenantAssetInfos(pageLink, subType, ignoreErrors, ignoreLoading);
+          entitiesObservable = this.assetService.getTenantAssetInfos(pageLink, subType, config);
         }
         break;
       case EntityType.ENTITY_VIEW:
         pageLink.sortOrder.property = 'name';
         if (authUser.authority === Authority.CUSTOMER_USER) {
           entitiesObservable = this.entityViewService.getCustomerEntityViewInfos(customerId, pageLink,
-            subType, ignoreErrors, ignoreLoading);
+            subType, config);
         } else {
-          entitiesObservable = this.entityViewService.getTenantEntityViewInfos(pageLink, subType, ignoreErrors, ignoreLoading);
+          entitiesObservable = this.entityViewService.getTenantEntityViewInfos(pageLink, subType, config);
         }
         break;
       case EntityType.TENANT:
         pageLink.sortOrder.property = 'title';
         if (authUser.authority === Authority.TENANT_ADMIN) {
-          entitiesObservable = this.getSingleTenantByPageLinkObservable(pageLink, ignoreErrors, ignoreLoading);
+          entitiesObservable = this.getSingleTenantByPageLinkObservable(pageLink, config);
         } else {
-          entitiesObservable = this.tenantService.getTenants(pageLink, ignoreErrors, ignoreLoading);
+          entitiesObservable = this.tenantService.getTenants(pageLink, config);
         }
         break;
       case EntityType.CUSTOMER:
         pageLink.sortOrder.property = 'title';
         if (authUser.authority === Authority.CUSTOMER_USER) {
-          entitiesObservable = this.getSingleCustomerByPageLinkObservable(pageLink, ignoreErrors, ignoreLoading);
+          entitiesObservable = this.getSingleCustomerByPageLinkObservable(pageLink, config);
         } else {
-          entitiesObservable = this.customerService.getCustomers(pageLink, ignoreErrors, ignoreLoading);
+          entitiesObservable = this.customerService.getCustomers(pageLink, config);
         }
         break;
       case EntityType.RULE_CHAIN:
         pageLink.sortOrder.property = 'name';
-        entitiesObservable = this.ruleChainService.getRuleChains(pageLink, ignoreErrors, ignoreLoading);
+        entitiesObservable = this.ruleChainService.getRuleChains(pageLink, config);
         break;
       case EntityType.DASHBOARD:
         pageLink.sortOrder.property = 'title';
         if (authUser.authority === Authority.CUSTOMER_USER) {
-          entitiesObservable = this.dashboardService.getCustomerDashboards(customerId, pageLink, ignoreErrors, ignoreLoading);
+          entitiesObservable = this.dashboardService.getCustomerDashboards(customerId, pageLink, config);
         } else {
-          entitiesObservable = this.dashboardService.getTenantDashboards(pageLink, ignoreErrors, ignoreLoading);
+          entitiesObservable = this.dashboardService.getTenantDashboards(pageLink, config);
         }
         break;
       case EntityType.USER:
@@ -314,16 +313,15 @@ export class EntityService {
   }
 
   private getEntitiesByPageLink(entityType: EntityType, pageLink: PageLink, subType: string = '',
-                                ignoreErrors: boolean = false,
-                                ignoreLoading: boolean = false): Observable<Array<BaseData<EntityId>>> {
+                                config?: RequestConfig): Observable<Array<BaseData<EntityId>>> {
     const entitiesObservable: Observable<PageData<BaseData<EntityId>>> =
-      this.getEntitiesByPageLinkObservable(entityType, pageLink, subType, ignoreErrors, ignoreLoading);
+      this.getEntitiesByPageLinkObservable(entityType, pageLink, subType, config);
     if (entitiesObservable) {
       return entitiesObservable.pipe(
         expand((data) => {
           if (data.hasNext) {
             pageLink.page += 1;
-            return this.getEntitiesByPageLinkObservable(entityType, pageLink, subType, ignoreErrors, ignoreLoading);
+            return this.getEntitiesByPageLinkObservable(entityType, pageLink, subType, config);
           } else {
             return EMPTY;
           }
@@ -339,19 +337,19 @@ export class EntityService {
 
   public getEntitiesByNameFilter(entityType: EntityType, entityNameFilter: string,
                                  pageSize: number, subType: string = '',
-                                 ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Array<BaseData<EntityId>>> {
+                                 config?: RequestConfig): Observable<Array<BaseData<EntityId>>> {
     const pageLink = new PageLink(pageSize, 0, entityNameFilter, {
       property: 'name',
       direction: Direction.ASC
     });
     if (pageSize === -1) { // all
       pageLink.pageSize = 100;
-      return this.getEntitiesByPageLink(entityType, pageLink, subType, ignoreErrors, ignoreLoading).pipe(
+      return this.getEntitiesByPageLink(entityType, pageLink, subType, config).pipe(
         map((data) => data && data.length ? data : null)
       );
     } else {
       const entitiesObservable: Observable<PageData<BaseData<EntityId>>> =
-        this.getEntitiesByPageLinkObservable(entityType, pageLink, subType, ignoreErrors, ignoreLoading);
+        this.getEntitiesByPageLinkObservable(entityType, pageLink, subType, config);
       if (entitiesObservable) {
         return entitiesObservable.pipe(
           map((data) => data && data.data.length ? data.data : null)
@@ -506,7 +504,7 @@ export class EntityService {
   }
 
   public getEntityKeys(entityId: EntityId, query: string, type: DataKeyType,
-                       ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Array<string>> {
+                       config?: RequestConfig): Observable<Array<string>> {
     let url = `/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/keys/`;
     if (type === DataKeyType.timeseries) {
       url += 'timeseries';
@@ -514,7 +512,7 @@ export class EntityService {
       url += 'attributes';
     }
     return this.http.get<Array<string>>(url,
-      defaultHttpOptions(ignoreLoading, ignoreErrors))
+      defaultHttpOptionsFromConfig(config))
       .pipe(
         map(
           (dataKeys) => {
@@ -549,7 +547,7 @@ export class EntityService {
   public createAlarmSourceFromSubscriptionInfo(subscriptionInfo: SubscriptionInfo): Observable<Datasource> {
     if (subscriptionInfo.entityId && subscriptionInfo.entityType) {
       return this.getEntity(subscriptionInfo.entityType, subscriptionInfo.entityId,
-        true, true).pipe(
+        {ignoreLoading: true, ignoreErrors: true}).pipe(
         map((entity) => {
           const alarmSource = this.createDatasourceFromSubscription(subscriptionInfo, entity);
           this.utils.generateColors([alarmSource]);
@@ -594,7 +592,7 @@ export class EntityService {
     switch (filter.type) {
       case AliasFilterType.singleEntity:
         const aliasEntityId = this.resolveAliasEntityId(filter.singleEntity.entityType, filter.singleEntity.id);
-        return this.getEntity(aliasEntityId.entityType as EntityType, aliasEntityId.id, true, true).pipe(
+        return this.getEntity(aliasEntityId.entityType as EntityType, aliasEntityId.id, {ignoreLoading: true, ignoreErrors: true}).pipe(
           map((entity) => {
             result.entities = this.entitiesToEntitiesInfo([entity]);
             return result;
@@ -602,7 +600,7 @@ export class EntityService {
         ));
         break;
       case AliasFilterType.entityList:
-        return this.getEntities(filter.entityType, filter.entityList, true, true).pipe(
+        return this.getEntities(filter.entityType, filter.entityList, {ignoreLoading: true, ignoreErrors: true}).pipe(
           map((entities) => {
               if (entities && entities.length || !failOnEmpty) {
                 result.entities = this.entitiesToEntitiesInfo(entities);
@@ -615,7 +613,7 @@ export class EntityService {
         break;
       case AliasFilterType.entityName:
         return this.getEntitiesByNameFilter(filter.entityType, filter.entityNameFilter, maxItems,
-          '', true, true).pipe(
+          '', {ignoreLoading: true, ignoreErrors: true}).pipe(
             map((entities) => {
               if (entities && entities.length || !failOnEmpty) {
                 result.entities = this.entitiesToEntitiesInfo(entities);
@@ -630,7 +628,7 @@ export class EntityService {
       case AliasFilterType.stateEntity:
         result.stateEntity = true;
         if (stateEntityId) {
-          return this.getEntity(stateEntityId.entityType as EntityType, stateEntityId.id, true, true).pipe(
+          return this.getEntity(stateEntityId.entityType as EntityType, stateEntityId.id, {ignoreLoading: true, ignoreErrors: true}).pipe(
             map((entity) => {
                 result.entities = this.entitiesToEntitiesInfo([entity]);
                 return result;
@@ -642,7 +640,7 @@ export class EntityService {
         break;
       case AliasFilterType.assetType:
         return this.getEntitiesByNameFilter(EntityType.ASSET, filter.assetNameFilter, maxItems,
-          filter.assetType, true, true).pipe(
+          filter.assetType, {ignoreLoading: true, ignoreErrors: true}).pipe(
           map((entities) => {
               if (entities && entities.length || !failOnEmpty) {
                 result.entities = this.entitiesToEntitiesInfo(entities);
@@ -656,7 +654,7 @@ export class EntityService {
         break;
       case AliasFilterType.deviceType:
         return this.getEntitiesByNameFilter(EntityType.DEVICE, filter.deviceNameFilter, maxItems,
-          filter.deviceType, true, true).pipe(
+          filter.deviceType, {ignoreLoading: true, ignoreErrors: true}).pipe(
           map((entities) => {
               if (entities && entities.length || !failOnEmpty) {
                 result.entities = this.entitiesToEntitiesInfo(entities);
@@ -670,7 +668,7 @@ export class EntityService {
         break;
       case AliasFilterType.entityViewType:
         return this.getEntitiesByNameFilter(EntityType.ENTITY_VIEW, filter.entityViewNameFilter, maxItems,
-          filter.entityViewType, true, true).pipe(
+          filter.entityViewType, {ignoreLoading: true, ignoreErrors: true}).pipe(
           map((entities) => {
               if (entities && entities.length || !failOnEmpty) {
                 result.entities = this.entitiesToEntitiesInfo(entities);
@@ -704,7 +702,7 @@ export class EntityService {
             filters: filter.filters
           };
           searchQuery.parameters.maxLevel = filter.maxLevel && filter.maxLevel > 0 ? filter.maxLevel : -1;
-          return this.entityRelationService.findInfoByQuery(searchQuery, true, true).pipe(
+          return this.entityRelationService.findInfoByQuery(searchQuery, {ignoreLoading: true, ignoreErrors: true}).pipe(
             mergeMap((allRelations) => {
               if (allRelations && allRelations.length || !failOnEmpty) {
                 if (isDefined(maxItems) && maxItems > 0 && allRelations) {
@@ -751,15 +749,15 @@ export class EntityService {
           if (filter.type === AliasFilterType.assetSearchQuery) {
             const assetSearchQuery = searchQuery as AssetSearchQuery;
             assetSearchQuery.assetTypes = filter.assetTypes;
-            findByQueryObservable = this.assetService.findByQuery(assetSearchQuery, true, true);
+            findByQueryObservable = this.assetService.findByQuery(assetSearchQuery, {ignoreLoading: true, ignoreErrors: true});
           } else if (filter.type === AliasFilterType.deviceSearchQuery) {
             const deviceSearchQuery = searchQuery as DeviceSearchQuery;
             deviceSearchQuery.deviceTypes = filter.deviceTypes;
-            findByQueryObservable = this.deviceService.findByQuery(deviceSearchQuery, true, true);
+            findByQueryObservable = this.deviceService.findByQuery(deviceSearchQuery, {ignoreLoading: true, ignoreErrors: true});
           } else if (filter.type === AliasFilterType.entityViewSearchQuery) {
             const entityViewSearchQuery = searchQuery as EntityViewSearchQuery;
             entityViewSearchQuery.entityViewTypes = filter.entityViewTypes;
-            findByQueryObservable = this.entityViewService.findByQuery(entityViewSearchQuery, true, true);
+            findByQueryObservable = this.entityViewService.findByQuery(entityViewSearchQuery, {ignoreLoading: true, ignoreErrors: true});
           }
           return findByQueryObservable.pipe(
             map((entities) => {
@@ -800,6 +798,115 @@ export class EntityService {
     );
   }
 
+  public saveEntityParameters(entityType: EntityType, entityData: ImportEntityData, update: boolean,
+                              config?: RequestConfig): Observable<ImportEntitiesResultInfo> {
+    let saveEntityObservable: Observable<BaseData<EntityId>>;
+    switch (entityType) {
+      case EntityType.DEVICE:
+        const device: Device = {
+          name: entityData.name,
+          type: entityData.type
+        };
+        saveEntityObservable = this.deviceService.saveDevice(device, config);
+        break;
+      case EntityType.ASSET:
+        const asset: Asset = {
+          name: entityData.name,
+          type: entityData.type
+        };
+        saveEntityObservable = this.assetService.saveAsset(asset, config);
+        break;
+    }
+    return saveEntityObservable.pipe(
+      mergeMap((entity) => {
+        return this.saveEntityData(entity.id, entityData, config).pipe(
+          map(() => {
+            return { create: { entity: 1 } } as ImportEntitiesResultInfo;
+          }),
+          catchError(err => of({ error: { entity: 1 } } as ImportEntitiesResultInfo))
+        );
+      }),
+      catchError(err => {
+        if (update) {
+          let findEntityObservable: Observable<BaseData<EntityId>>;
+          switch (entityType) {
+            case EntityType.DEVICE:
+              findEntityObservable = this.deviceService.findByName(entityData.name, config);
+              break;
+            case EntityType.ASSET:
+              findEntityObservable = this.assetService.findByName(entityData.name, config);
+              break;
+          }
+          return findEntityObservable.pipe(
+            mergeMap((entity) => {
+              return this.saveEntityData(entity.id, entityData, config).pipe(
+                map(() => {
+                  return { update: { entity: 1 } } as ImportEntitiesResultInfo;
+                }),
+                catchError(updateError => of({ error: { entity: 1 } } as ImportEntitiesResultInfo))
+              );
+            }),
+            catchError(findErr => of({ error: { entity: 1 } } as ImportEntitiesResultInfo))
+          );
+        } else {
+          return of({ error: { entity: 1 } } as ImportEntitiesResultInfo);
+        }
+      })
+    );
+  }
+
+  public saveEntityData(entityId: EntityId, entityData: ImportEntityData, config?: RequestConfig): Observable<any> {
+    const observables: Observable<string>[] = [];
+    let observable: Observable<string>;
+    if (entityData.accessToken && entityData.accessToken !== '') {
+      observable = this.deviceService.getDeviceCredentials(entityId.id, false, config).pipe(
+        mergeMap((credentials) => {
+          credentials.credentialsId = entityData.accessToken;
+          credentials.credentialsType = DeviceCredentialsType.ACCESS_TOKEN;
+          credentials.credentialsValue = null;
+          return this.deviceService.saveDeviceCredentials(credentials, config).pipe(
+            map(() => 'ok'),
+            catchError(err => of('error'))
+          );
+        })
+      );
+      observables.push(observable);
+    }
+    if (entityData.attributes.shared && entityData.attributes.shared.length) {
+      observable = this.attributeService.saveEntityAttributes(entityId, AttributeScope.SHARED_SCOPE,
+        entityData.attributes.shared, config).pipe(
+        map(() => 'ok'),
+        catchError(err => of('error'))
+      );
+      observables.push(observable);
+    }
+    if (entityData.attributes.server && entityData.attributes.server.length) {
+      observable = this.attributeService.saveEntityAttributes(entityId, AttributeScope.SERVER_SCOPE,
+        entityData.attributes.server, config).pipe(
+        map(() => 'ok'),
+        catchError(err => of('error'))
+      );
+      observables.push(observable);
+    }
+    if (entityData.timeseries && entityData.timeseries.length) {
+      observable = this.attributeService.saveEntityTimeseries(entityId, 'time', entityData.timeseries, config).pipe(
+        map(() => 'ok'),
+        catchError(err => of('error'))
+      );
+      observables.push(observable);
+    }
+    return forkJoin(observables).pipe(
+      map((response) => {
+        const hasError = response.filter((status) => status === 'error').length > 0;
+        if (hasError) {
+          throw Error();
+        } else {
+          return response;
+        }
+      })
+    );
+  }
+
   private entitiesToEntitiesInfo(entities: Array<BaseData<EntityId>>): Array<EntityInfo> {
     const entitiesInfo = [];
     if (entities) {
@@ -836,7 +943,7 @@ export class EntityService {
 
   private entityRelationInfoToEntityInfo(entityRelationInfo: EntityRelationInfo, direction: EntitySearchDirection): Observable<EntityInfo> {
     const entityId = direction === EntitySearchDirection.FROM ? entityRelationInfo.to : entityRelationInfo.from;
-    return this.getEntity(entityId.entityType as EntityType, entityId.id, true, true).pipe(
+    return this.getEntity(entityId.entityType as EntityType, entityId.id, {ignoreLoading: true, ignoreErrors: true}).pipe(
       map((entity) => {
         return this.entityToEntityInfo(entity);
       })
@@ -907,7 +1014,7 @@ export class EntityService {
         return of([entity]);
       } else {
         return this.getEntity(subscriptionInfo.entityType, subscriptionInfo.entityId,
-          true, true).pipe(
+          {ignoreLoading: true, ignoreErrors: true}).pipe(
           map((entity) => [entity]),
           catchError(e => of([]))
         );
@@ -916,12 +1023,13 @@ export class EntityService {
       let entitiesObservable: Observable<Array<BaseData<EntityId>>>;
       if (subscriptionInfo.entityName) {
         entitiesObservable = this.getEntitiesByNameFilter(subscriptionInfo.entityType, subscriptionInfo.entityName,
-          1, null, true, true);
+          1, null, {ignoreLoading: true, ignoreErrors: true});
       } else if (subscriptionInfo.entityNamePrefix) {
         entitiesObservable = this.getEntitiesByNameFilter(subscriptionInfo.entityType, subscriptionInfo.entityNamePrefix,
-          100, null, true, true);
+          100, null, {ignoreLoading: true, ignoreErrors: true});
       } else if (subscriptionInfo.entityIds) {
-        entitiesObservable = this.getEntities(subscriptionInfo.entityType, subscriptionInfo.entityIds, true, true);
+        entitiesObservable = this.getEntities(subscriptionInfo.entityType, subscriptionInfo.entityIds,
+          {ignoreLoading: true, ignoreErrors: true});
       }
       return entitiesObservable.pipe(
         catchError(e => of([]))

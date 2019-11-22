@@ -20,6 +20,7 @@ import { AggregationType } from '../time/time.models';
 import { Observable, ReplaySubject, Subject } from 'rxjs';
 import { EntityId } from '@shared/models/id/entity-id';
 import { map } from 'rxjs/operators';
+import { NgZone } from '@angular/core';
 
 export enum DataKeyType {
   timeseries = 'timeseries',
@@ -64,7 +65,7 @@ export const isClientSideTelemetryType = new Map<TelemetryType, boolean>(
 );
 
 export interface AttributeData {
-  lastUpdateTs: number;
+  lastUpdateTs?: number;
   key: string;
   value: any;
 }
@@ -231,6 +232,8 @@ export class TelemetrySubscriber {
   private dataSubject = new ReplaySubject<SubscriptionUpdate>();
   private reconnectSubject = new Subject();
 
+  private zone: NgZone;
+
   public subscriptionCommands: Array<TelemetryPluginCmd>;
 
   public data$ = this.dataSubject.asObservable();
@@ -238,7 +241,7 @@ export class TelemetrySubscriber {
 
   public static createEntityAttributesSubscription(telemetryService: TelemetryService,
                                                    entityId: EntityId, attributeScope: TelemetryType,
-                                                   keys: string[] = null): TelemetrySubscriber {
+                                                   zone: NgZone, keys: string[] = null): TelemetrySubscriber {
     let subscriptionCommand: SubscriptionCmd;
     if (attributeScope === LatestTelemetry.LATEST_TELEMETRY) {
       subscriptionCommand = new TimeseriesSubscriptionCmd();
@@ -252,6 +255,7 @@ export class TelemetrySubscriber {
       subscriptionCommand.keys = keys.join(',');
     }
     const subscriber = new TelemetrySubscriber(telemetryService);
+    subscriber.zone = zone;
     subscriber.subscriptionCommands.push(subscriptionCommand);
     return subscriber;
   }
@@ -280,7 +284,15 @@ export class TelemetrySubscriber {
       }
     }
     message.prepareData(keys);
-    this.dataSubject.next(message);
+    if (this.zone) {
+     this.zone.run(
+       () => {
+         this.dataSubject.next(message);
+       }
+     );
+    } else {
+      this.dataSubject.next(message);
+    }
   }
 
   public onReconnected() {

@@ -15,7 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { defaultHttpOptions } from './http-utils';
+import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { Observable } from 'rxjs/index';
 import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
@@ -31,22 +31,21 @@ export class CustomerService {
     private http: HttpClient
   ) { }
 
-  public getCustomers(pageLink: PageLink, ignoreErrors: boolean = false,
-                      ignoreLoading: boolean = false): Observable<PageData<Customer>> {
+  public getCustomers(pageLink: PageLink, config?: RequestConfig): Observable<PageData<Customer>> {
     return this.http.get<PageData<Customer>>(`/api/customers${pageLink.toQuery()}`,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
-  public getCustomer(customerId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Customer> {
-    return this.http.get<Customer>(`/api/customer/${customerId}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public getCustomer(customerId: string, config?: RequestConfig): Observable<Customer> {
+    return this.http.get<Customer>(`/api/customer/${customerId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public saveCustomer(customer: Customer, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Customer> {
-    return this.http.post<Customer>('/api/customer', customer, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public saveCustomer(customer: Customer, config?: RequestConfig): Observable<Customer> {
+    return this.http.post<Customer>('/api/customer', customer, defaultHttpOptionsFromConfig(config));
   }
 
-  public deleteCustomer(customerId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false) {
-    return this.http.delete(`/api/customer/${customerId}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public deleteCustomer(customerId: string, config?: RequestConfig) {
+    return this.http.delete(`/api/customer/${customerId}`, defaultHttpOptionsFromConfig(config));
   }
 
 }

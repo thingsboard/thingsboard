@@ -30,7 +30,6 @@ import {
   MaterialIconsDialogComponent,
   MaterialIconsDialogData
 } from '@shared/components/dialog/material-icons-dialog.component';
-import { DynamicComponentFactoryService } from '@core/services/dynamic-component-factory.service';
 
 @Injectable(
   {
@@ -42,7 +41,6 @@ export class DialogService {
   constructor(
     private translate: TranslateService,
     private authService: AuthService,
-    private dynamicComponentFactoryService: DynamicComponentFactoryService,
     public dialog: MatDialog
   ) {
   }

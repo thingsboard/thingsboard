@@ -19,7 +19,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
-  Input,
+  Input, NgZone,
   OnInit,
   ViewChild,
   ViewContainerRef
@@ -40,7 +40,9 @@ import { EntityId } from '@shared/models/id/entity-id';
 import {
   AttributeData,
   AttributeScope,
-  isClientSideTelemetryType, LatestTelemetry,
+  DataKeyType,
+  isClientSideTelemetryType,
+  LatestTelemetry,
   TelemetryType,
   telemetryTypeTranslations
 } from '@shared/models/telemetry/telemetry.models';
@@ -48,13 +50,11 @@ import { AttributeDatasource } from '@home/models/datasource/attribute-datasourc
 import { AttributeService } from '@app/core/http/attribute.service';
 import { EntityType } from '@shared/models/entity-type.models';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { RelationDialogComponent, RelationDialogData } from '@home/components/relation/relation-dialog.component';
 import {
   AddAttributeDialogComponent,
   AddAttributeDialogData
 } from '@home/components/attribute/add-attribute-dialog.component';
 import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
-import { TIMEWINDOW_PANEL_DATA, TimewindowPanelComponent } from '@shared/components/time/timewindow-panel.component';
 import {
   EDIT_ATTRIBUTE_VALUE_PANEL_DATA,
   EditAttributeValuePanelComponent,
@@ -62,6 +62,24 @@ import {
 } from './edit-attribute-value-panel.component';
 import { ComponentPortal, PortalInjector } from '@angular/cdk/portal';
 import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service';
+import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
+import { DataKey, Datasource, DatasourceType, Widget, widgetType } from '@shared/models/widget.models';
+import { IAliasController, IStateController, StateParams } from '@core/api/widget-api.models';
+import { AliasController, DummyAliasController } from '@core/api/alias-controller';
+import { EntityAlias, EntityAliases } from '@shared/models/alias.models';
+import { UtilsService } from '@core/services/utils.service';
+import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
+import { NULL_UUID } from '@shared/models/id/has-uuid';
+import { WidgetService } from '@core/http/widget.service';
+import { toWidgetInfo } from '../../models/widget-component.models';
+import { EntityService } from '@core/http/entity.service';
+import { SelectTargetLayoutDialogComponent } from '@home/pages/dashboard/layout/select-target-layout-dialog.component';
+import { DashboardLayoutId } from '@shared/models/dashboard.models';
+import {
+  AddWidgetToDashboardDialogComponent,
+  AddWidgetToDashboardDialogData
+} from '@home/components/attribute/add-widget-to-dashboard-dialog.component';
+import { deepClone } from '@core/utils';
 
 
 @Component({
@@ -94,6 +112,15 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
   attributeScopeSelectionReadonly = false;
 
   viewsInited = false;
+
+  selectedWidgetsBundleAlias: string = null;
+  widgetsBundle: WidgetsBundle = null;
+  widgetsLoaded = false;
+  widgetsCarouselIndex = 0;
+  widgetsList: Array<Array<Widget>> = [];
+  widgetsListCache: Array<Array<Widget>> = [];
+  aliasController: IAliasController;
+  private widgetDatasource: Datasource;
 
   private disableAttributeScopeSelectionValue: boolean;
   get disableAttributeScopeSelection(): boolean {
@@ -131,6 +158,9 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
     }
   }
 
+  @Input()
+  entityName: string;
+
   @ViewChild('searchInput', {static: false}) searchInputField: ElementRef;
 
   @ViewChild(MatPaginator, {static: false}) paginator: MatPaginator;
@@ -143,12 +173,17 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
               public dialog: MatDialog,
               private overlay: Overlay,
               private viewContainerRef: ViewContainerRef,
-              private dialogService: DialogService) {
+              private dialogService: DialogService,
+              private entityService: EntityService,
+              private utils: UtilsService,
+              private dashboardUtils: DashboardUtilsService,
+              private widgetService: WidgetService,
+              private zone: NgZone) {
     super(store);
     this.dirtyValue = !this.activeValue;
     const sortOrder: SortOrder = { property: 'key', direction: Direction.ASC };
     this.pageLink = new PageLink(10, 0, null, sortOrder);
-    this.dataSource = new AttributeDatasource(this.attributeService, this.telemetryWsService, this.translate);
+    this.dataSource = new AttributeDatasource(this.attributeService, this.telemetryWsService, this.zone, this.translate);
   }
 
   ngOnInit() {
@@ -329,15 +364,137 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
 
   enterWidgetMode() {
     this.mode = 'widget';
+    this.widgetsList = [];
+    this.widgetsListCache = [];
+    this.widgetsLoaded = false;
+    this.widgetsCarouselIndex = 0;
+    this.widgetsBundle = null;
+    this.selectedWidgetsBundleAlias = 'cards';
 
-    // TODO:
+    const entityAlias: EntityAlias = {
+      id: this.utils.guid(),
+      alias: this.entityName,
+      filter: this.dashboardUtils.createSingleEntityFilter(this.entityIdValue)
+    };
+    const entitiAliases: EntityAliases = {};
+    entitiAliases[entityAlias.id] = entityAlias;
+
+    // @ts-ignore
+    const stateController: IStateController = {
+      getStateParams(): StateParams {
+        return {};
+      }
+    };
+
+    this.aliasController = new AliasController(this.utils,
+      this.entityService,
+      () => stateController, entitiAliases);
+
+    const dataKeyType: DataKeyType = this.attributeScope === LatestTelemetry.LATEST_TELEMETRY ?
+      DataKeyType.timeseries : DataKeyType.attribute;
+
+    this.widgetDatasource = {
+      type: DatasourceType.entity,
+      entityAliasId: entityAlias.id,
+      dataKeys: []
+    };
+
+    for (let i = 0; i < this.dataSource.selection.selected.length; i++) {
+      const attribute = this.dataSource.selection.selected[i];
+      const dataKey: DataKey = {
+        name: attribute.key,
+        label: attribute.key,
+        type: dataKeyType,
+        color: this.utils.getMaterialColor(i),
+        settings: {},
+        _hash: Math.random()
+      };
+      this.widgetDatasource.dataKeys.push(dataKey);
+    }
+  }
+
+  onWidgetsCarouselIndexChanged() {
+    if (this.mode === 'widget') {
+      for (let i = 0; i < this.widgetsList.length; i++) {
+        this.widgetsList[i].splice(0, this.widgetsList[i].length);
+        if (i === this.widgetsCarouselIndex) {
+          this.widgetsList[i].push(this.widgetsListCache[i][0]);
+        }
+      }
+    }
+  }
+
+  onWidgetsBundleChanged() {
+    if (this.mode === 'widget') {
+      this.widgetsList = [];
+      this.widgetsListCache = [];
+      this.widgetsCarouselIndex = 0;
+      if (this.widgetsBundle) {
+        this.widgetsLoaded = false;
+        const bundleAlias = this.widgetsBundle.alias;
+        const isSystem = this.widgetsBundle.tenantId.id === NULL_UUID;
+        this.widgetService.getBundleWidgetTypes(bundleAlias, isSystem).subscribe(
+          (widgetTypes) => {
+            widgetTypes = widgetTypes.sort((a, b) => {
+              let result = widgetType[b.descriptor.type].localeCompare(widgetType[a.descriptor.type]);
+              if (result === 0) {
+                result = b.createdTime - a.createdTime;
+              }
+              return result;
+            });
+            for (const type of widgetTypes) {
+              const widgetInfo = toWidgetInfo(type);
+              if (widgetInfo.type !== widgetType.static) {
+                const sizeX = widgetInfo.sizeX * 2;
+                const sizeY = widgetInfo.sizeY * 2;
+                const col = Math.floor(Math.max(0, (20 - sizeX) / 2));
+                const widget: Widget = {
+                  isSystemType: isSystem,
+                  bundleAlias,
+                  typeAlias: widgetInfo.alias,
+                  type: widgetInfo.type,
+                  title: widgetInfo.widgetName,
+                  sizeX,
+                  sizeY,
+                  row: 0,
+                  col,
+                  config: JSON.parse(widgetInfo.defaultConfig)
+                };
+                widget.config.title = widgetInfo.widgetName;
+                widget.config.datasources = [this.widgetDatasource];
+                if ((this.attributeScope === LatestTelemetry.LATEST_TELEMETRY && widgetInfo.type !== widgetType.rpc) ||
+                      widgetInfo.type === widgetType.latest) {
+                  const length = this.widgetsListCache.push([widget]);
+                  this.widgetsList.push(length === 1 ? [widget] : []);
+                }
+              }
+            }
+            this.widgetsLoaded = true;
+          }
+        );
+      }
+    }
+  }
+
+  addWidgetToDashboard() {
+    if (this.mode === 'widget' && this.widgetsListCache.length > 0) {
+      const widget = this.widgetsListCache[this.widgetsCarouselIndex][0];
+      this.dialog.open<AddWidgetToDashboardDialogComponent, AddWidgetToDashboardDialogData>
+        (AddWidgetToDashboardDialogComponent, {
+        disableClose: true,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        data: {
+          entityId: this.entityIdValue,
+          entityName: this.entityName,
+          widget: deepClone(widget)
+        }
+      }).afterClosed();
+    }
   }
 
   exitWidgetMode() {
+    this.selectedWidgetsBundleAlias = null;
     this.mode = 'default';
-    // this.reloadAttributes();
-
-    // TODO:
   }
 
 }

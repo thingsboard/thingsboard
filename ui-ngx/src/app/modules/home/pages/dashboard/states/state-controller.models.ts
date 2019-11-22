@@ -27,4 +27,5 @@ export interface IStateControllerComponent extends IStateController {
   states: {[id: string]: DashboardState };
   dashboardId: string;
   preservedState: any;
+  reInit(): void;
 }

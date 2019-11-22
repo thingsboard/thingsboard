@@ -223,7 +223,7 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
   fetchEntities(searchText?: string): Observable<Array<BaseData<EntityId>>> {
     this.searchText = searchText;
     return this.entityService.getEntitiesByNameFilter(this.entityType, searchText,
-      50, '', false, true).pipe(
+      50, '', {ignoreLoading: true}).pipe(
       map((data) => data ? data : []));
   }
 

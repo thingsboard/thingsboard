@@ -22,7 +22,8 @@ export enum AuthActionTypes {
   AUTHENTICATED = '[Auth] Authenticated',
   UNAUTHENTICATED = '[Auth] Unauthenticated',
   LOAD_USER = '[Auth] Load User',
-  UPDATE_USER_DETAILS = '[Auth] Update User Details'
+  UPDATE_USER_DETAILS = '[Auth] Update User Details',
+  UPDATE_LAST_PUBLIC_DASHBOARD_ID = '[Auth] Update Last Public Dashboard Id'
 }
 
 export class ActionAuthAuthenticated implements Action {
@@ -47,4 +48,11 @@ export class ActionAuthUpdateUserDetails implements Action {
   constructor(readonly payload: { userDetails: User }) {}
 }
 
-export type AuthActions = ActionAuthAuthenticated | ActionAuthUnauthenticated | ActionAuthLoadUser | ActionAuthUpdateUserDetails;
+export class ActionAuthUpdateLastPublicDashboardId implements Action {
+  readonly type = AuthActionTypes.UPDATE_LAST_PUBLIC_DASHBOARD_ID;
+
+  constructor(readonly payload: { lastPublicDashboardId: string }) {}
+}
+
+export type AuthActions = ActionAuthAuthenticated | ActionAuthUnauthenticated |
+  ActionAuthLoadUser | ActionAuthUpdateUserDetails | ActionAuthUpdateLastPublicDashboardId;

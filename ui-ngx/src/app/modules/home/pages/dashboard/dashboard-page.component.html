@@ -32,7 +32,7 @@
                   (click)="closeToolbar()">
             <mat-icon>arrow_forward</mat-icon>
           </button>
-          <tb-user-menu *ngIf="isPublicUser() && forceFullscreen" fxHide.xs fxHide.sm displayUserInfo="true">
+          <tb-user-menu *ngIf="!isPublicUser() && forceFullscreen" fxHide.xs fxHide.sm displayUserInfo="true">
           </tb-user-menu>
           <button [fxShow]="showRightLayoutSwitch()" mat-button mat-icon-button
                   matTooltip="{{ (isRightLayoutOpened ? 'dashboard.hide-details' : 'dashboard.show-details') | translate }}"

@@ -15,7 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { defaultHttpOptions } from './http-utils';
+import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { Observable, Subject, ReplaySubject } from 'rxjs/index';
 import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
@@ -36,44 +36,43 @@ export class DeviceService {
     private http: HttpClient
   ) { }
 
-  public getTenantDeviceInfos(pageLink: PageLink, type: string = '', ignoreErrors: boolean = false,
-                              ignoreLoading: boolean = false): Observable<PageData<DeviceInfo>> {
+  public getTenantDeviceInfos(pageLink: PageLink, type: string = '',
+                              config?: RequestConfig): Observable<PageData<DeviceInfo>> {
     return this.http.get<PageData<DeviceInfo>>(`/api/tenant/deviceInfos${pageLink.toQuery()}&type=${type}`,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
-  public getCustomerDeviceInfos(customerId: string, pageLink: PageLink, type: string = '', ignoreErrors: boolean = false,
-                                ignoreLoading: boolean = false): Observable<PageData<DeviceInfo>> {
+  public getCustomerDeviceInfos(customerId: string, pageLink: PageLink, type: string = '',
+                                config?: RequestConfig): Observable<PageData<DeviceInfo>> {
     return this.http.get<PageData<DeviceInfo>>(`/api/customer/${customerId}/deviceInfos${pageLink.toQuery()}&type=${type}`,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
-  public getDevice(deviceId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Device> {
-    return this.http.get<Device>(`/api/device/${deviceId}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public getDevice(deviceId: string, config?: RequestConfig): Observable<Device> {
+    return this.http.get<Device>(`/api/device/${deviceId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public getDevices(deviceIds: Array<string>, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Array<Device>> {
-    return this.http.get<Array<Device>>(`/api/devices?deviceIds=${deviceIds.join(',')}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public getDevices(deviceIds: Array<string>, config?: RequestConfig): Observable<Array<Device>> {
+    return this.http.get<Array<Device>>(`/api/devices?deviceIds=${deviceIds.join(',')}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public getDeviceInfo(deviceId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<DeviceInfo> {
-    return this.http.get<DeviceInfo>(`/api/device/info/${deviceId}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public getDeviceInfo(deviceId: string, config?: RequestConfig): Observable<DeviceInfo> {
+    return this.http.get<DeviceInfo>(`/api/device/info/${deviceId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public saveDevice(device: Device, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Device> {
-    return this.http.post<Device>('/api/device', device, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public saveDevice(device: Device, config?: RequestConfig): Observable<Device> {
+    return this.http.post<Device>('/api/device', device, defaultHttpOptionsFromConfig(config));
   }
 
-  public deleteDevice(deviceId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false) {
-    return this.http.delete(`/api/device/${deviceId}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public deleteDevice(deviceId: string, config?: RequestConfig) {
+    return this.http.delete(`/api/device/${deviceId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public getDeviceTypes(ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Array<EntitySubtype>> {
-    return this.http.get<Array<EntitySubtype>>('/api/device/types', defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public getDeviceTypes(config?: RequestConfig): Observable<Array<EntitySubtype>> {
+    return this.http.get<Array<EntitySubtype>>('/api/device/types', defaultHttpOptionsFromConfig(config));
   }
 
-  public getDeviceCredentials(deviceId: string, sync: boolean = false, ignoreErrors: boolean = false,
-                              ignoreLoading: boolean = false): Observable<DeviceCredentials> {
+  public getDeviceCredentials(deviceId: string, sync: boolean = false, config?: RequestConfig): Observable<DeviceCredentials> {
     const url = `/api/device/${deviceId}/credentials`;
     if (sync) {
       const responseSubject = new ReplaySubject<DeviceCredentials>();
@@ -93,31 +92,34 @@ export class DeviceService {
       }
       return responseSubject.asObservable();
     } else {
-      return this.http.get<DeviceCredentials>(url, defaultHttpOptions(ignoreLoading, ignoreErrors));
+      return this.http.get<DeviceCredentials>(url, defaultHttpOptionsFromConfig(config));
     }
   }
 
-  public saveDeviceCredentials(deviceCredentials: DeviceCredentials, ignoreErrors: boolean = false,
-                               ignoreLoading: boolean = false): Observable<DeviceCredentials> {
-    return this.http.post<DeviceCredentials>('/api/device/credentials', deviceCredentials, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public saveDeviceCredentials(deviceCredentials: DeviceCredentials, config?: RequestConfig): Observable<DeviceCredentials> {
+    return this.http.post<DeviceCredentials>('/api/device/credentials', deviceCredentials, defaultHttpOptionsFromConfig(config));
   }
 
-  public makeDevicePublic(deviceId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Device> {
-    return this.http.post<Device>(`/api/customer/public/device/${deviceId}`, null, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public makeDevicePublic(deviceId: string, config?: RequestConfig): Observable<Device> {
+    return this.http.post<Device>(`/api/customer/public/device/${deviceId}`, null, defaultHttpOptionsFromConfig(config));
   }
 
   public assignDeviceToCustomer(customerId: string, deviceId: string,
-                                ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Device> {
-    return this.http.post<Device>(`/api/customer/${customerId}/device/${deviceId}`, null, defaultHttpOptions(ignoreLoading, ignoreErrors));
+                                config?: RequestConfig): Observable<Device> {
+    return this.http.post<Device>(`/api/customer/${customerId}/device/${deviceId}`, null, defaultHttpOptionsFromConfig(config));
   }
 
-  public unassignDeviceFromCustomer(deviceId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false) {
-    return this.http.delete(`/api/customer/device/${deviceId}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public unassignDeviceFromCustomer(deviceId: string, config?: RequestConfig) {
+    return this.http.delete(`/api/customer/device/${deviceId}`, defaultHttpOptionsFromConfig(config));
   }
 
   public findByQuery(query: DeviceSearchQuery,
-                     ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Array<Device>> {
-    return this.http.post<Array<Device>>('/api/devices', query, defaultHttpOptions(ignoreLoading, ignoreErrors));
+                     config?: RequestConfig): Observable<Array<Device>> {
+    return this.http.post<Array<Device>>('/api/devices', query, defaultHttpOptionsFromConfig(config));
+  }
+
+  public findByName(deviceName: string, config?: RequestConfig): Observable<Device> {
+    return this.http.get<Device>(`/api/tenant/devices?deviceName=${deviceName}`, defaultHttpOptionsFromConfig(config));
   }
 
 }

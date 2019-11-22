@@ -14,9 +14,9 @@
 /// limitations under the License.
 ///
 
-import {Injectable} from '@angular/core';
+import { Injectable } from '@angular/core';
 
-import {ActivatedRouteSnapshot, Resolve, Router} from '@angular/router';
+import { ActivatedRouteSnapshot, Resolve, Router } from '@angular/router';
 import {
   CellActionDescriptor,
   checkBoxCell,
@@ -26,22 +26,22 @@ import {
   GroupActionDescriptor,
   HeaderActionDescriptor
 } from '@home/models/entity/entities-table-config.models';
-import {TranslateService} from '@ngx-translate/core';
-import {DatePipe} from '@angular/common';
-import {EntityType, entityTypeResources, entityTypeTranslations} from '@shared/models/entity-type.models';
-import {EntityAction} from '@home/models/entity/entity-component.models';
-import {forkJoin, Observable, of} from 'rxjs';
-import {select, Store} from '@ngrx/store';
-import {selectAuthUser} from '@core/auth/auth.selectors';
-import {map, mergeMap, take, tap} from 'rxjs/operators';
-import {AppState} from '@core/core.state';
-import {Authority} from '@app/shared/models/authority.enum';
-import {CustomerService} from '@core/http/customer.service';
-import {Customer} from '@app/shared/models/customer.model';
-import {NULL_UUID} from '@shared/models/id/has-uuid';
-import {BroadcastService} from '@core/services/broadcast.service';
-import {MatDialog} from '@angular/material';
-import {DialogService} from '@core/services/dialog.service';
+import { TranslateService } from '@ngx-translate/core';
+import { DatePipe } from '@angular/common';
+import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
+import { EntityAction } from '@home/models/entity/entity-component.models';
+import { forkJoin, Observable, of } from 'rxjs';
+import { select, Store } from '@ngrx/store';
+import { selectAuthUser } from '@core/auth/auth.selectors';
+import { map, mergeMap, take, tap } from 'rxjs/operators';
+import { AppState } from '@core/core.state';
+import { Authority } from '@app/shared/models/authority.enum';
+import { CustomerService } from '@core/http/customer.service';
+import { Customer } from '@app/shared/models/customer.model';
+import { NULL_UUID } from '@shared/models/id/has-uuid';
+import { BroadcastService } from '@core/services/broadcast.service';
+import { MatDialog } from '@angular/material';
+import { DialogService } from '@core/services/dialog.service';
 import {
   AssignToCustomerDialogComponent,
   AssignToCustomerDialogData
@@ -50,12 +50,13 @@ import {
   AddEntitiesToCustomerDialogComponent,
   AddEntitiesToCustomerDialogData
 } from '../../dialogs/add-entities-to-customer-dialog.component';
-import {Asset, AssetInfo} from '@app/shared/models/asset.models';
-import {AssetService} from '@app/core/http/asset.service';
-import {AssetComponent} from '@modules/home/pages/asset/asset.component';
-import {AssetTableHeaderComponent} from '@modules/home/pages/asset/asset-table-header.component';
-import {AssetId} from '@app/shared/models/id/asset-id';
+import { Asset, AssetInfo } from '@app/shared/models/asset.models';
+import { AssetService } from '@app/core/http/asset.service';
+import { AssetComponent } from '@modules/home/pages/asset/asset.component';
+import { AssetTableHeaderComponent } from '@modules/home/pages/asset/asset-table-header.component';
+import { AssetId } from '@app/shared/models/id/asset-id';
 import { AssetTabsComponent } from '@home/pages/asset/asset-tabs.component';
+import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
 
 @Injectable()
 export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<AssetInfo>> {
@@ -69,6 +70,7 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
               private assetService: AssetService,
               private customerService: CustomerService,
               private dialogService: DialogService,
+              private homeDialogs: HomeDialogsService,
               private translate: TranslateService,
               private datePipe: DatePipe,
               private router: Router,
@@ -277,11 +279,12 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
   }
 
   importAssets($event: Event) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    // TODO:
-    this.dialogService.todo();
+    this.homeDialogs.importEntities(EntityType.ASSET).subscribe((res) => {
+      if (res) {
+        this.broadcast.broadcast('assetSaved');
+        this.config.table.updateData();
+      }
+    });
   }
 
   addAssetsToCustomer($event: Event) {

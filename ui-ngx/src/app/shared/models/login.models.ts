@@ -14,17 +14,16 @@
 /// limitations under the License.
 ///
 
-export class LoginRequest {
+export interface LoginRequest {
   username: string;
   password: string;
-
-  constructor(username: string, password: string) {
-    this.username = username;
-    this.password = password;
-  }
 }
 
-export class LoginResponse {
+export interface PublicLoginRequest {
+  publicId: string;
+}
+
+export interface LoginResponse {
   token: string;
   refreshToken: string;
 }

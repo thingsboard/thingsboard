@@ -15,7 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { defaultHttpOptions } from './http-utils';
+import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { Observable } from 'rxjs/index';
 import { HttpClient } from '@angular/common/http';
 import { EntityRelation, EntityRelationInfo, EntityRelationsQuery } from '@shared/models/relation.models';
@@ -30,84 +30,84 @@ export class EntityRelationService {
     private http: HttpClient
   ) { }
 
-  public saveRelation(relation: EntityRelation, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<EntityRelation> {
-    return this.http.post<EntityRelation>('/api/relation', relation, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public saveRelation(relation: EntityRelation, config?: RequestConfig): Observable<EntityRelation> {
+    return this.http.post<EntityRelation>('/api/relation', relation, defaultHttpOptionsFromConfig(config));
   }
 
   public deleteRelation(fromId: EntityId, relationType: string, toId: EntityId,
-                        ignoreErrors: boolean = false, ignoreLoading: boolean = false) {
+                        config?: RequestConfig) {
     return this.http.delete(`/api/relation?fromId=${fromId.id}&fromType=${fromId.entityType}` +
       `&relationType=${relationType}&toId=${toId.id}&toType=${toId.entityType}`,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
   public deleteRelations(entityId: EntityId,
-                         ignoreErrors: boolean = false, ignoreLoading: boolean = false) {
+                         config?: RequestConfig) {
     return this.http.delete(`/api/relations?entityId=${entityId.id}&entityType=${entityId.entityType}`,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
   public getRelation(fromId: EntityId, relationType: string, toId: EntityId,
-                     ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<EntityRelation> {
+                     config?: RequestConfig): Observable<EntityRelation> {
     return this.http.get<EntityRelation>(`/api/relation?fromId=${fromId.id}&fromType=${fromId.entityType}` +
       `&relationType=${relationType}&toId=${toId.id}&toType=${toId.entityType}`,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
   public findByFrom(fromId: EntityId,
-                    ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Array<EntityRelation>> {
+                    config?: RequestConfig): Observable<Array<EntityRelation>> {
     return this.http.get<Array<EntityRelation>>(
       `/api/relations?fromId=${fromId.id}&fromType=${fromId.entityType}`,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
   public findInfoByFrom(fromId: EntityId,
-                        ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Array<EntityRelationInfo>> {
+                        config?: RequestConfig): Observable<Array<EntityRelationInfo>> {
     return this.http.get<Array<EntityRelationInfo>>(
       `/api/relations/info?fromId=${fromId.id}&fromType=${fromId.entityType}`,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
   public findByFromAndType(fromId: EntityId, relationType: string,
-                           ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Array<EntityRelation>> {
+                           config?: RequestConfig): Observable<Array<EntityRelation>> {
     return this.http.get<Array<EntityRelation>>(
       `/api/relations?fromId=${fromId.id}&fromType=${fromId.entityType}&relationType=${relationType}`,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
   public findByTo(toId: EntityId,
-                  ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Array<EntityRelation>> {
+                  config?: RequestConfig): Observable<Array<EntityRelation>> {
     return this.http.get<Array<EntityRelation>>(
       `/api/relations?toId=${toId.id}&toType=${toId.entityType}`,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
   public findInfoByTo(toId: EntityId,
-                      ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Array<EntityRelationInfo>> {
+                      config?: RequestConfig): Observable<Array<EntityRelationInfo>> {
     return this.http.get<Array<EntityRelationInfo>>(
       `/api/relations/info?toId=${toId.id}&toType=${toId.entityType}`,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
   public findByToAndType(toId: EntityId, relationType: string,
-                         ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Array<EntityRelation>> {
+                         config?: RequestConfig): Observable<Array<EntityRelation>> {
     return this.http.get<Array<EntityRelation>>(
       `/api/relations?toId=${toId.id}&toType=${toId.entityType}&relationType=${relationType}`,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
   public findByQuery(query: EntityRelationsQuery,
-                     ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Array<EntityRelation>> {
+                     config?: RequestConfig): Observable<Array<EntityRelation>> {
     return this.http.post<Array<EntityRelation>>(
       '/api/relations', query,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
   public findInfoByQuery(query: EntityRelationsQuery,
-                         ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Array<EntityRelationInfo>> {
+                         config?: RequestConfig): Observable<Array<EntityRelationInfo>> {
     return this.http.post<Array<EntityRelationInfo>>(
       '/api/relations/info', query,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
 }

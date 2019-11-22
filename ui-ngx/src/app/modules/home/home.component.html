@@ -19,7 +19,7 @@
   <mat-sidenav #sidenav class="tb-site-sidenav mat-elevation-z2"
                (click)="sidenavClicked()"
                [mode]="sidenavMode"
-               [opened]="sidenavOpened">
+               [opened]="sidenavOpened && !forceFullscreen">
     <header class="tb-nav-header">
       <mat-toolbar color="primary" class="tb-nav-header-toolbar">
         <div fxFlex="auto" fxLayout="row">
@@ -35,8 +35,11 @@
   <mat-sidenav-content>
     <div fxLayout="column" role="main" style="height: 100%;">
       <mat-toolbar fxLayout="row" color="primary" class="mat-elevation-z1 tb-primary-toolbar">
-        <button mat-button mat-icon-button id="main" fxHide.gt-sm (click)="sidenav.toggle()">
+        <button [fxShow]="!forceFullscreen" mat-button mat-icon-button id="main" fxHide.gt-sm (click)="sidenav.toggle()">
           <mat-icon class="material-icons">menu</mat-icon>
+        </button>
+        <button [fxShow]="forceFullscreen" mat-button mat-icon-button (click)="goBack()">
+          <mat-icon class="material-icons">arrow_back</mat-icon>
         </button>
         <div fxFlex tb-breadcrumb [activeComponent]="activeComponent" class="mat-toolbar-tools">
         </div>

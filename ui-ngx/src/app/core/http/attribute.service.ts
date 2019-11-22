@@ -15,7 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { defaultHttpOptions } from './http-utils';
+import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { forkJoin, Observable, of } from 'rxjs/index';
 import { HttpClient } from '@angular/common/http';
 import { EntityId } from '@shared/models/id/entity-id';
@@ -31,22 +31,30 @@ export class AttributeService {
   ) { }
 
   public getEntityAttributes(entityId: EntityId, attributeScope: AttributeScope,
-                             ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Array<AttributeData>> {
+                             config?: RequestConfig): Observable<Array<AttributeData>> {
     return this.http.get<Array<AttributeData>>(`/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/values/attributes/` +
       `${attributeScope}`,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
   public deleteEntityAttributes(entityId: EntityId, attributeScope: AttributeScope, attributes: Array<AttributeData>,
-                                ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<any> {
+                                config?: RequestConfig): Observable<any> {
     const keys = attributes.map(attribute => attribute.key).join(',');
     return this.http.delete(`/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/${attributeScope}` +
       `?keys=${keys}`,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public deleteEntityTimeseries(entityId: EntityId, timeseries: Array<AttributeData>,
+                                config?: RequestConfig): Observable<any> {
+    const keys = timeseries.map(attribute => attribute.key).join(',');
+    return this.http.delete(`/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/timeseries/delete` +
+      `?keys=${keys}`,
+      defaultHttpOptionsFromConfig(config));
   }
 
   public saveEntityAttributes(entityId: EntityId, attributeScope: AttributeScope, attributes: Array<AttributeData>,
-                              ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<any> {
+                              config?: RequestConfig): Observable<any> {
     const attributesData: {[key: string]: any} = {};
     const deleteAttributes: AttributeData[] = [];
     attributes.forEach((attribute) => {
@@ -58,17 +66,45 @@ export class AttributeService {
     });
     let deleteEntityAttributesObservable: Observable<any>;
     if (deleteAttributes.length) {
-      deleteEntityAttributesObservable = this.deleteEntityAttributes(entityId, attributeScope, deleteAttributes);
+      deleteEntityAttributesObservable = this.deleteEntityAttributes(entityId, attributeScope, deleteAttributes, config);
     } else {
       deleteEntityAttributesObservable = of(null);
     }
     let saveEntityAttributesObservable: Observable<any>;
     if (Object.keys(attributesData).length) {
       saveEntityAttributesObservable = this.http.post(`/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/${attributeScope}`,
-        attributesData, defaultHttpOptions(ignoreLoading, ignoreErrors));
+        attributesData, defaultHttpOptionsFromConfig(config));
     } else {
       saveEntityAttributesObservable = of(null);
     }
     return forkJoin(saveEntityAttributesObservable, deleteEntityAttributesObservable);
+  }
+
+  public saveEntityTimeseries(entityId: EntityId, timeseriesScope: string, timeseries: Array<AttributeData>,
+                              config?: RequestConfig): Observable<any> {
+    const timeseriesData: {[key: string]: any} = {};
+    const deleteTimeseries: AttributeData[] = [];
+    timeseries.forEach((attribute) => {
+      if (attribute.value !== null) {
+        timeseriesData[attribute.key] = attribute.value;
+      } else {
+        deleteTimeseries.push(attribute);
+      }
+    });
+    let deleteEntityTimeseriesObservable: Observable<any>;
+    if (deleteTimeseries.length) {
+      deleteEntityTimeseriesObservable = this.deleteEntityTimeseries(entityId, deleteTimeseries, config);
+    } else {
+      deleteEntityTimeseriesObservable = of(null);
+    }
+    let saveEntityTimeseriesObservable: Observable<any>;
+    if (Object.keys(timeseriesData).length) {
+      saveEntityTimeseriesObservable =
+        this.http.post(`/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/timeseries/${timeseriesScope}`,
+        timeseriesData, defaultHttpOptionsFromConfig(config));
+    } else {
+      saveEntityTimeseriesObservable = of(null);
+    }
+    return forkJoin(saveEntityTimeseriesObservable, deleteEntityTimeseriesObservable);
   }
 }

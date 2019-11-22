@@ -15,7 +15,7 @@
 ///
 
 import {Inject, Injectable} from '@angular/core';
-import {defaultHttpOptions} from './http-utils';
+import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { Observable, ReplaySubject, Subject } from 'rxjs/index';
 import {HttpClient} from '@angular/common/http';
 import {PageLink} from '@shared/models/page/page-link';
@@ -50,77 +50,75 @@ export class DashboardService {
     );
   }
 
-  public getTenantDashboards(pageLink: PageLink, ignoreErrors: boolean = false,
-                             ignoreLoading: boolean = false): Observable<PageData<DashboardInfo>> {
+  public getTenantDashboards(pageLink: PageLink, config?: RequestConfig): Observable<PageData<DashboardInfo>> {
     return this.http.get<PageData<DashboardInfo>>(`/api/tenant/dashboards${pageLink.toQuery()}`,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
-  public getTenantDashboardsByTenantId(tenantId: string, pageLink: PageLink, ignoreErrors: boolean = false,
-                                       ignoreLoading: boolean = false): Observable<PageData<DashboardInfo>> {
+  public getTenantDashboardsByTenantId(tenantId: string, pageLink: PageLink,
+                                       config?: RequestConfig): Observable<PageData<DashboardInfo>> {
     return this.http.get<PageData<DashboardInfo>>(`/api/tenant/${tenantId}/dashboards${pageLink.toQuery()}`,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
-  public getCustomerDashboards(customerId: string, pageLink: PageLink, ignoreErrors: boolean = false,
-                               ignoreLoading: boolean = false): Observable<PageData<DashboardInfo>> {
+  public getCustomerDashboards(customerId: string, pageLink: PageLink, config?: RequestConfig): Observable<PageData<DashboardInfo>> {
     return this.http.get<PageData<DashboardInfo>>(`/api/customer/${customerId}/dashboards${pageLink.toQuery()}`,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
-  public getDashboard(dashboardId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Dashboard> {
-    return this.http.get<Dashboard>(`/api/dashboard/${dashboardId}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public getDashboard(dashboardId: string, config?: RequestConfig): Observable<Dashboard> {
+    return this.http.get<Dashboard>(`/api/dashboard/${dashboardId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public getDashboardInfo(dashboardId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<DashboardInfo> {
-    return this.http.get<DashboardInfo>(`/api/dashboard/info/${dashboardId}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public getDashboardInfo(dashboardId: string, config?: RequestConfig): Observable<DashboardInfo> {
+    return this.http.get<DashboardInfo>(`/api/dashboard/info/${dashboardId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public saveDashboard(dashboard: Dashboard, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Dashboard> {
-    return this.http.post<Dashboard>('/api/dashboard', dashboard, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public saveDashboard(dashboard: Dashboard, config?: RequestConfig): Observable<Dashboard> {
+    return this.http.post<Dashboard>('/api/dashboard', dashboard, defaultHttpOptionsFromConfig(config));
   }
 
-  public deleteDashboard(dashboardId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false) {
-    return this.http.delete(`/api/dashboard/${dashboardId}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public deleteDashboard(dashboardId: string, config?: RequestConfig) {
+    return this.http.delete(`/api/dashboard/${dashboardId}`, defaultHttpOptionsFromConfig(config));
   }
 
   public assignDashboardToCustomer(customerId: string, dashboardId: string,
-                                   ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Dashboard> {
+                                   config?: RequestConfig): Observable<Dashboard> {
     return this.http.post<Dashboard>(`/api/customer/${customerId}/dashboard/${dashboardId}`,
-      null, defaultHttpOptions(ignoreLoading, ignoreErrors));
+      null, defaultHttpOptionsFromConfig(config));
   }
 
   public unassignDashboardFromCustomer(customerId: string, dashboardId: string,
-                                       ignoreErrors: boolean = false, ignoreLoading: boolean = false) {
-    return this.http.delete(`/api/customer/${customerId}/dashboard/${dashboardId}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+                                       config?: RequestConfig) {
+    return this.http.delete(`/api/customer/${customerId}/dashboard/${dashboardId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public makeDashboardPublic(dashboardId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Dashboard> {
+  public makeDashboardPublic(dashboardId: string, config?: RequestConfig): Observable<Dashboard> {
     return this.http.post<Dashboard>(`/api/customer/public/dashboard/${dashboardId}`, null,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
-  public makeDashboardPrivate(dashboardId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Dashboard> {
+  public makeDashboardPrivate(dashboardId: string, config?: RequestConfig): Observable<Dashboard> {
     return this.http.delete<Dashboard>(`/api/customer/public/dashboard/${dashboardId}`,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
   public updateDashboardCustomers(dashboardId: string, customerIds: Array<string>,
-                                  ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Dashboard> {
+                                  config?: RequestConfig): Observable<Dashboard> {
     return this.http.post<Dashboard>(`/api/dashboard/${dashboardId}/customers`, customerIds,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
   public addDashboardCustomers(dashboardId: string, customerIds: Array<string>,
-                               ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Dashboard> {
+                               config?: RequestConfig): Observable<Dashboard> {
     return this.http.post<Dashboard>(`/api/dashboard/${dashboardId}/customers/add`, customerIds,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
   public removeDashboardCustomers(dashboardId: string, customerIds: Array<string>,
-                                  ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Dashboard> {
+                                  config?: RequestConfig): Observable<Dashboard> {
     return this.http.post<Dashboard>(`/api/dashboard/${dashboardId}/customers/remove`, customerIds,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
   public getPublicDashboardLink(dashboard: DashboardInfo): string | null {

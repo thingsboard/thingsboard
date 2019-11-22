@@ -15,7 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { defaultHttpOptions } from './http-utils';
+import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { Observable } from 'rxjs/index';
 import { HttpClient } from '@angular/common/http';
 import { PageLink, TimePageLink } from '@shared/models/page/page-link';
@@ -33,27 +33,27 @@ export class AuditLogService {
   ) { }
 
   public getAuditLogs(pageLink: TimePageLink,
-                      ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<PageData<AuditLog>> {
+                      config?: RequestConfig): Observable<PageData<AuditLog>> {
     return this.http.get<PageData<AuditLog>>(`/api/audit/logs${pageLink.toQuery()}`,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
   public getAuditLogsByCustomerId(customerId: string, pageLink: TimePageLink,
-                                  ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<PageData<AuditLog>> {
+                                  config?: RequestConfig): Observable<PageData<AuditLog>> {
     return this.http.get<PageData<AuditLog>>(`/api/audit/logs/customer/${customerId}${pageLink.toQuery()}`,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
   public getAuditLogsByUserId(userId: string, pageLink: TimePageLink,
-                              ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<PageData<AuditLog>> {
+                              config?: RequestConfig): Observable<PageData<AuditLog>> {
     return this.http.get<PageData<AuditLog>>(`/api/audit/logs/user/${userId}${pageLink.toQuery()}`,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
   public getAuditLogsByEntityId(entityId: EntityId, pageLink: TimePageLink,
-                                ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<PageData<AuditLog>> {
+                                config?: RequestConfig): Observable<PageData<AuditLog>> {
     return this.http.get<PageData<AuditLog>>(`/api/audit/logs/entity/${entityId.entityType}/${entityId.id}${pageLink.toQuery()}`,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
 }

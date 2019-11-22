@@ -50,3 +50,8 @@ export interface UserPasswordPolicy {
 export interface SecuritySettings {
   passwordPolicy: UserPasswordPolicy;
 }
+
+export interface UpdateMessage {
+  message: string;
+  updateAvailable: boolean;
+}

@@ -15,7 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { defaultHttpOptions } from './http-utils';
+import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { Observable } from 'rxjs/index';
 import { HttpClient } from '@angular/common/http';
 import { TimePageLink } from '@shared/models/page/page-link';
@@ -33,9 +33,9 @@ export class EventService {
   ) { }
 
   public getEvents(entityId: EntityId, eventType: EventType | DebugEventType, tenantId: string, pageLink: TimePageLink,
-                   ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<PageData<Event>> {
+                   config?: RequestConfig): Observable<PageData<Event>> {
     return this.http.get<PageData<Event>>(`/api/events/${entityId.entityType}/${entityId.id}/${eventType}` +
               `${pageLink.toQuery()}&tenantId=${tenantId}`,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 }

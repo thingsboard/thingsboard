@@ -276,13 +276,13 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
       let subTypesObservable: Observable<Array<EntitySubtype>>;
       switch (this.entityType) {
         case EntityType.ASSET:
-          subTypesObservable = this.assetService.getAssetTypes(false, true);
+          subTypesObservable = this.assetService.getAssetTypes({ignoreLoading: true});
           break;
         case EntityType.DEVICE:
-          subTypesObservable = this.deviceService.getDeviceTypes(false,  true);
+          subTypesObservable = this.deviceService.getDeviceTypes({ignoreLoading: true});
           break;
         case EntityType.ENTITY_VIEW:
-          subTypesObservable = this.entityViewService.getEntityViewTypes(false, true);
+          subTypesObservable = this.entityViewService.getEntityViewTypes({ignoreLoading: true});
           break;
       }
       if (subTypesObservable) {

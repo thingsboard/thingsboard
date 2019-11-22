@@ -19,6 +19,7 @@
          label="{{ 'attribute.attributes' | translate }}" #attributesTab="matTab">
   <tb-attribute-table [active]="attributesTab.isActive"
                       [entityId]="entity.id"
+                      [entityName]="entity.name"
                       [defaultAttributeScope]="attributeScopes.SERVER_SCOPE">
   </tb-attribute-table>
 </mat-tab>
@@ -26,6 +27,7 @@
          label="{{ 'attribute.latest-telemetry' | translate }}" #telemetryTab="matTab">
   <tb-attribute-table [active]="telemetryTab.isActive"
                       [entityId]="entity.id"
+                      [entityName]="entity.name"
                       [defaultAttributeScope]="latestTelemetryTypes.LATEST_TELEMETRY"
                       disableAttributeScopeSelection>
   </tb-attribute-table>

@@ -15,7 +15,7 @@
 ///
 
 import {Injectable} from '@angular/core';
-import {defaultHttpOptions} from './http-utils';
+import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import {Observable} from 'rxjs/index';
 import {HttpClient} from '@angular/common/http';
 import {PageLink} from '@shared/models/page/page-link';
@@ -33,57 +33,55 @@ export class EntityViewService {
     private http: HttpClient
   ) { }
 
-  public getTenantEntityViewInfos(pageLink: PageLink, type: string = '', ignoreErrors: boolean = false,
-                                  ignoreLoading: boolean = false): Observable<PageData<EntityViewInfo>> {
+  public getTenantEntityViewInfos(pageLink: PageLink, type: string = '', config?: RequestConfig): Observable<PageData<EntityViewInfo>> {
     return this.http.get<PageData<EntityViewInfo>>(`/api/tenant/entityViewInfos${pageLink.toQuery()}&type=${type}`,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
-  public getCustomerEntityViewInfos(customerId: string, pageLink: PageLink, type: string = '', ignoreErrors: boolean = false,
-                                    ignoreLoading: boolean = false): Observable<PageData<EntityViewInfo>> {
+  public getCustomerEntityViewInfos(customerId: string, pageLink: PageLink, type: string = '',
+                                    config?: RequestConfig): Observable<PageData<EntityViewInfo>> {
     return this.http.get<PageData<EntityViewInfo>>(`/api/customer/${customerId}/entityViewInfos${pageLink.toQuery()}&type=${type}`,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
-  public getEntityView(entityViewId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<EntityView> {
-    return this.http.get<EntityView>(`/api/entityView/${entityViewId}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public getEntityView(entityViewId: string, config?: RequestConfig): Observable<EntityView> {
+    return this.http.get<EntityView>(`/api/entityView/${entityViewId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public getEntityViewInfo(entityViewId: string, ignoreErrors: boolean = false,
-                           ignoreLoading: boolean = false): Observable<EntityViewInfo> {
-    return this.http.get<EntityViewInfo>(`/api/entityView/info/${entityViewId}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public getEntityViewInfo(entityViewId: string, config?: RequestConfig): Observable<EntityViewInfo> {
+    return this.http.get<EntityViewInfo>(`/api/entityView/info/${entityViewId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public saveEntityView(entityView: EntityView, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<EntityView> {
-    return this.http.post<EntityView>('/api/entityView', entityView, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public saveEntityView(entityView: EntityView, config?: RequestConfig): Observable<EntityView> {
+    return this.http.post<EntityView>('/api/entityView', entityView, defaultHttpOptionsFromConfig(config));
   }
 
-  public deleteEntityView(entityViewId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false) {
-    return this.http.delete(`/api/entityView/${entityViewId}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public deleteEntityView(entityViewId: string, config?: RequestConfig) {
+    return this.http.delete(`/api/entityView/${entityViewId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public getEntityViewTypes(ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Array<EntitySubtype>> {
-    return this.http.get<Array<EntitySubtype>>('/api/entityView/types', defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public getEntityViewTypes(config?: RequestConfig): Observable<Array<EntitySubtype>> {
+    return this.http.get<Array<EntitySubtype>>('/api/entityView/types', defaultHttpOptionsFromConfig(config));
   }
 
-  public makeEntityViewPublic(entityViewId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<EntityView> {
+  public makeEntityViewPublic(entityViewId: string, config?: RequestConfig): Observable<EntityView> {
     return this.http.post<EntityView>(`/api/customer/public/entityView/${entityViewId}`, null,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
   public assignEntityViewToCustomer(customerId: string, entityViewId: string,
-                                    ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<EntityView> {
+                                    config?: RequestConfig): Observable<EntityView> {
     return this.http.post<EntityView>(`/api/customer/${customerId}/entityView/${entityViewId}`, null,
-      defaultHttpOptions(ignoreLoading, ignoreErrors));
+      defaultHttpOptionsFromConfig(config));
   }
 
-  public unassignEntityViewFromCustomer(entityViewId: string, ignoreErrors: boolean = false, ignoreLoading: boolean = false) {
-    return this.http.delete(`/api/customer/entityView/${entityViewId}`, defaultHttpOptions(ignoreLoading, ignoreErrors));
+  public unassignEntityViewFromCustomer(entityViewId: string, config?: RequestConfig) {
+    return this.http.delete(`/api/customer/entityView/${entityViewId}`, defaultHttpOptionsFromConfig(config));
   }
 
   public findByQuery(query: EntityViewSearchQuery,
-                     ignoreErrors: boolean = false, ignoreLoading: boolean = false): Observable<Array<EntityView>> {
-    return this.http.post<Array<EntityView>>('/api/entityViews', query, defaultHttpOptions(ignoreLoading, ignoreErrors));
+                     config?: RequestConfig): Observable<Array<EntityView>> {
+    return this.http.post<Array<EntityView>>('/api/entityViews', query, defaultHttpOptionsFromConfig(config));
   }
 
 }

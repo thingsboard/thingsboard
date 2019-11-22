@@ -14,51 +14,53 @@
 /// limitations under the License.
 ///
 
-import {Injectable} from '@angular/core';
+import { Injectable } from '@angular/core';
 
-import {ActivatedRouteSnapshot, Resolve, Router} from '@angular/router';
+import { ActivatedRouteSnapshot, Resolve, Router } from '@angular/router';
 import {
   CellActionDescriptor,
   checkBoxCell,
   DateEntityTableColumn,
   EntityTableColumn,
-  EntityTableConfig, GroupActionDescriptor,
+  EntityTableConfig,
+  GroupActionDescriptor,
   HeaderActionDescriptor
 } from '@home/models/entity/entities-table-config.models';
-import {TranslateService} from '@ngx-translate/core';
-import {DatePipe} from '@angular/common';
-import {EntityType, entityTypeResources, entityTypeTranslations} from '@shared/models/entity-type.models';
-import {EntityAction} from '@home/models/entity/entity-component.models';
-import {Device, DeviceCredentials, DeviceInfo} from '@app/shared/models/device.models';
-import {DeviceComponent} from '@modules/home/pages/device/device.component';
-import {forkJoin, Observable, of} from 'rxjs';
-import {select, Store} from '@ngrx/store';
-import {selectAuthUser} from '@core/auth/auth.selectors';
-import {map, mergeMap, take, tap} from 'rxjs/operators';
-import {AppState} from '@core/core.state';
-import {DeviceService} from '@app/core/http/device.service';
-import {Authority} from '@app/shared/models/authority.enum';
-import {CustomerService} from '@core/http/customer.service';
-import {Customer} from '@app/shared/models/customer.model';
-import {NULL_UUID} from '@shared/models/id/has-uuid';
-import {BroadcastService} from '@core/services/broadcast.service';
-import {DeviceTableHeaderComponent} from '@modules/home/pages/device/device-table-header.component';
-import {MatDialog} from '@angular/material';
+import { TranslateService } from '@ngx-translate/core';
+import { DatePipe } from '@angular/common';
+import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
+import { EntityAction } from '@home/models/entity/entity-component.models';
+import { Device, DeviceCredentials, DeviceInfo } from '@app/shared/models/device.models';
+import { DeviceComponent } from '@modules/home/pages/device/device.component';
+import { forkJoin, Observable, of } from 'rxjs';
+import { select, Store } from '@ngrx/store';
+import { selectAuthUser } from '@core/auth/auth.selectors';
+import { map, mergeMap, take, tap } from 'rxjs/operators';
+import { AppState } from '@core/core.state';
+import { DeviceService } from '@app/core/http/device.service';
+import { Authority } from '@app/shared/models/authority.enum';
+import { CustomerService } from '@core/http/customer.service';
+import { Customer } from '@app/shared/models/customer.model';
+import { NULL_UUID } from '@shared/models/id/has-uuid';
+import { BroadcastService } from '@core/services/broadcast.service';
+import { DeviceTableHeaderComponent } from '@modules/home/pages/device/device-table-header.component';
+import { MatDialog } from '@angular/material';
 import {
   DeviceCredentialsDialogComponent,
   DeviceCredentialsDialogData
 } from '@modules/home/pages/device/device-credentials-dialog.component';
-import {DialogService} from '@core/services/dialog.service';
+import { DialogService } from '@core/services/dialog.service';
 import {
   AssignToCustomerDialogComponent,
   AssignToCustomerDialogData
 } from '@modules/home/dialogs/assign-to-customer-dialog.component';
-import {DeviceId} from '@app/shared/models/id/device-id';
+import { DeviceId } from '@app/shared/models/id/device-id';
 import {
   AddEntitiesToCustomerDialogComponent,
   AddEntitiesToCustomerDialogData
 } from '../../dialogs/add-entities-to-customer-dialog.component';
 import { DeviceTabsComponent } from '@home/pages/device/device-tabs.component';
+import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
 
 @Injectable()
 export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<DeviceInfo>> {
@@ -72,6 +74,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
               private deviceService: DeviceService,
               private customerService: CustomerService,
               private dialogService: DialogService,
+              private homeDialogs: HomeDialogsService,
               private translate: TranslateService,
               private datePipe: DatePipe,
               private router: Router,
@@ -309,11 +312,12 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
   }
 
   importDevices($event: Event) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    // TODO:
-    this.dialogService.todo();
+    this.homeDialogs.importEntities(EntityType.DEVICE).subscribe((res) => {
+      if (res) {
+        this.broadcast.broadcast('deviceSaved');
+        this.config.table.updateData();
+      }
+    });
   }
 
   addDevicesToCustomer($event: Event) {

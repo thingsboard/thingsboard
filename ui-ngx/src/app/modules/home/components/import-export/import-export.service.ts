@@ -35,7 +35,7 @@ import {
 import { MatDialog } from '@angular/material/dialog';
 import { ImportDialogComponent, ImportDialogData } from '@home/components/import-export/import-dialog.component';
 import { forkJoin, Observable, of } from 'rxjs';
-import { catchError, map, mergeMap } from 'rxjs/operators';
+import { catchError, map, mergeMap, tap } from 'rxjs/operators';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { EntityService } from '@core/http/entity.service';
 import { Widget, WidgetSize, WidgetType } from '@shared/models/widget.models';
@@ -44,12 +44,15 @@ import {
   EntityAliasesDialogData
 } from '@home/components/alias/entity-aliases-dialog.component';
 import { ItemBufferService, WidgetItem } from '@core/services/item-buffer.service';
-import { ImportWidgetResult, WidgetsBundleItem } from './import-export.models';
+import { CsvToJsonConfig, ImportWidgetResult, WidgetsBundleItem, CsvToJsonResult } from './import-export.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { UtilsService } from '@core/services/utils.service';
 import { WidgetService } from '@core/http/widget.service';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
+import { ImportDialogCsvComponent, ImportDialogCsvData } from './import-dialog-csv.component';
+import { ImportEntityData, ImportEntitiesResultInfo } from '@shared/models/entity.models';
+import { RequestConfig } from '@core/http/http-utils';
 
 @Injectable()
 export class ImportExportService {
@@ -322,6 +325,55 @@ export class ImportExportService {
         return of(null);
       })
     );
+  }
+
+  public importEntities(entitiesData: ImportEntityData[], entityType: EntityType, updateData: boolean,
+                        importEntityCompleted?: () => void, config?: RequestConfig): Observable<ImportEntitiesResultInfo> {
+    let partSize = 100;
+    partSize = entitiesData.length > partSize ? partSize : entitiesData.length;
+
+    let statisticalInfo: ImportEntitiesResultInfo = {};
+    const importEntitiesObservables: Observable<ImportEntitiesResultInfo>[] = [];
+    for (let i = 0; i < partSize; i++) {
+      const importEntityPromise =
+        this.entityService.saveEntityParameters(entityType, entitiesData[i], updateData, config).pipe(
+          tap((res) => {
+            if (importEntityCompleted) {
+              importEntityCompleted();
+            }
+          })
+        );
+      importEntitiesObservables.push(importEntityPromise);
+    }
+    return forkJoin(importEntitiesObservables).pipe(
+      mergeMap((responses) => {
+        for (const response of responses) {
+          statisticalInfo = this.sumObject(statisticalInfo, response);
+        }
+        entitiesData.splice(0, partSize);
+        if (entitiesData.length) {
+          return this.importEntities(entitiesData, entityType, updateData, importEntityCompleted, config).pipe(
+            map((response) => {
+              return this.sumObject(statisticalInfo, response) as ImportEntitiesResultInfo;
+            })
+          );
+        } else {
+          return of(statisticalInfo);
+        }
+      })
+    );
+  }
+
+  private sumObject(obj1: any, obj2: any): any {
+    Object.keys(obj2).map((key) => {
+      if (isObject(obj2[key])) {
+        obj1[key] = obj1[key] || {};
+        obj1[key] = {...obj1[key], ...this.sumObject(obj1[key], obj2[key])};
+      } else {
+        obj1[key] = (obj1[key] || 0) + obj2[key];
+      }
+    });
+    return obj1;
   }
 
   private handleExportError(e: any, errorDetailsMessageId: string) {
