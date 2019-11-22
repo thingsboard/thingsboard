@@ -194,6 +194,11 @@ sql:
     ts_inserts_executor_type: "${SQL_TS_INSERTS_EXECUTOR_TYPE:fixed}"
     # Specify thread pool size for FIXED executor service type
     ts_inserts_fixed_thread_pool_size: "${SQL_TS_INSERTS_FIXED_THREAD_POOL_SIZE:200}"
+    # Specify batch size for persisting attribute updates
+    attributes:
+      batch_size: "${SQL_ATTRIBUTES_BATCH_SIZE:10000}"
+      batch_max_delay: "${SQL_ATTRIBUTES_BATCH_MAX_DELAY_MS:100}"
+      stats_print_interval_ms: "${SQL_ATTRIBUTES_BATCH_STATS_PRINT_MS:1000}"
 
 # Actor system parameters
 actors:
