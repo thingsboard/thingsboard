@@ -17,9 +17,9 @@
 -->
 <fc-canvas #fcCanvas
            id="fc-target-canvas"
-           [model]="model"
+           [model]="ruleChainModel"
            (modelChanged)="onModelChanged()"
-           [selectedObjects]="selected"
+           [selectedObjects]="selectedObjects"
            [edgeStyle]="flowchartConstants.curvedStyle"
            [automaticResize]="true"
            [dragAnimation]="flowchartConstants.dragAnimationRepaint">

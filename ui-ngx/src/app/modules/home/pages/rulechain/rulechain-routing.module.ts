@@ -26,11 +26,18 @@ import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { BreadCrumbConfig, BreadCrumbLabelFunction } from '@shared/components/breadcrumb';
-import { RuleChain } from '@shared/models/rule-chain.models';
+import {
+  RuleChain,
+  RuleChainMetaData,
+  RuleChainImport,
+  ResolvedRuleChainMetaData
+} from '@shared/models/rule-chain.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { DashboardPageComponent } from '@home/pages/dashboard/dashboard-page.component';
 import { dashboardBreadcumbLabelFunction, DashboardResolver } from '@home/pages/dashboard/dashboard-routing.module';
 import { RuleChainPageComponent } from '@home/pages/rulechain/rulechain-page.component';
+import { RuleNodeComponentDescriptor } from '@shared/models/rule-node.models';
+import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 
 
 @Injectable()
@@ -45,12 +52,39 @@ export class RuleChainResolver implements Resolve<RuleChain> {
   }
 }
 
+@Injectable()
+export class ResolvedRuleChainMetaDataResolver implements Resolve<ResolvedRuleChainMetaData> {
+
+  constructor(private ruleChainService: RuleChainService) {
+  }
+
+  resolve(route: ActivatedRouteSnapshot): Observable<ResolvedRuleChainMetaData> {
+    const ruleChainId = route.params.ruleChainId;
+    return this.ruleChainService.getResolvedRuleChainMetadata(ruleChainId);
+  }
+}
+
+@Injectable()
+export class RuleNodeComponentsResolver implements Resolve<Array<RuleNodeComponentDescriptor>> {
+
+  constructor(private ruleChainService: RuleChainService) {
+  }
+
+  resolve(route: ActivatedRouteSnapshot): Observable<Array<RuleNodeComponentDescriptor>> {
+    return this.ruleChainService.getRuleNodeComponents();
+  }
+}
+
 export const ruleChainBreadcumbLabelFunction: BreadCrumbLabelFunction = ((route, translate, component) => {
   let label: string = component.ruleChain.name;
   if (component.ruleChain.root) {
     label += ` (${translate.instant('rulechain.root')})`;
   }
   return label;
+});
+
+export const importRuleChainBreadcumbLabelFunction: BreadCrumbLabelFunction = ((route, translate, component) => {
+  return `${translate.instant('rulechain.import')}: ${component.ruleChain.name}`;
 });
 
 const routes: Routes = [
@@ -77,6 +111,7 @@ const routes: Routes = [
       {
         path: ':ruleChainId',
         component: RuleChainPageComponent,
+        canDeactivate: [ConfirmOnExitGuard],
         data: {
           breadcrumb: {
             labelFunction: ruleChainBreadcumbLabelFunction,
@@ -84,10 +119,31 @@ const routes: Routes = [
           } as BreadCrumbConfig,
           auth: [Authority.TENANT_ADMIN],
           title: 'rulechain.rulechain',
-          widgetEditMode: false
+          import: false
         },
         resolve: {
-          ruleChain: RuleChainResolver
+          ruleChain: RuleChainResolver,
+          ruleChainMetaData: ResolvedRuleChainMetaDataResolver,
+          ruleNodeComponents: RuleNodeComponentsResolver
+        }
+      },
+      {
+        path: 'ruleChain/import',
+        component: RuleChainPageComponent,
+        canDeactivate: [ConfirmOnExitGuard],
+        data: {
+          breadcrumb: {
+            labelFunction: importRuleChainBreadcumbLabelFunction,
+            icon: 'settings_ethernet'
+          } as BreadCrumbConfig,
+          auth: [Authority.TENANT_ADMIN],
+          title: 'rulechain.rulechain',
+          import: true
+        },
+        resolve: {
+          ruleChain: 'importRuleChain',
+          ruleChainMetaData: 'importRuleChainMetadata',
+          ruleNodeComponents: RuleNodeComponentsResolver
         }
       }
     ]
@@ -99,7 +155,23 @@ const routes: Routes = [
   exports: [RouterModule],
   providers: [
     RuleChainsTableConfigResolver,
-    RuleChainResolver
+    RuleChainResolver,
+    ResolvedRuleChainMetaDataResolver,
+    RuleNodeComponentsResolver,
+    {
+      provide: 'importRuleChain',
+      useValue: (route: ActivatedRouteSnapshot) => {
+        const ruleChainImport: RuleChainImport = route.params.ruleChainImport;
+        return ruleChainImport.ruleChain;
+      }
+    },
+    {
+      provide: 'importRuleChainMetadata',
+      useValue: (route: ActivatedRouteSnapshot) => {
+        const ruleChainImport: RuleChainImport = route.params.ruleChainImport;
+        return ruleChainImport.metadata;
+      }
+    }
   ]
 })
 export class RuleChainRoutingModule { }
