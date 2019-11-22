@@ -60,7 +60,7 @@ zk:
   # Enable/disable zookeeper discovery service.
   enabled: "${ZOOKEEPER_ENABLED:false}"
   # Zookeeper connect string
-  url: "${ZOOKEEPER_URL:localhost:2181}"
+  url: "${ZOOKEEPER_URL:39.96.44.6:2181}"
   # Zookeeper retry interval in milliseconds
   retry_interval_ms: "${ZOOKEEPER_RETRY_INTERVAL_MS:3000}"
   # Zookeeper connection timeout in milliseconds
@@ -126,7 +126,7 @@ cassandra:
   # Thingsboard keyspace name
   keyspace_name: "${CASSANDRA_KEYSPACE_NAME:thingsboard}"
   # Specify node list
-  url: "${CASSANDRA_URL:127.0.0.1:9042}"
+  url: "${CASSANDRA_URL:39.96.44.6:9042}"
   # Enable/disable secure connection
   ssl: "${CASSANDRA_USE_SSL:false}"
   # Enable/disable JMX
@@ -274,7 +274,7 @@ redis:
   # standalone or cluster
   connection:
     type: standalone
-    host: "${REDIS_HOST:localhost}"
+    host: "${REDIS_HOST:39.96.44.6}"
     port: "${REDIS_PORT:6379}"
     db: "${REDIS_DB:0}"
     password: "${REDIS_PASSWORD:}"
@@ -322,9 +322,9 @@ spring:
     database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}"
   datasource:
     driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.postgresql.Driver}"
-    url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard}"
-    username: "${SPRING_DATASOURCE_USERNAME:postgres}"
-    password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
+    url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://39.96.44.6:5432/thingsboard}"
+    username: "${SPRING_DATASOURCE_USERNAME:turbo}"
+    password: "${SPRING_DATASOURCE_PASSWORD:ATE#8Hw}"
 
 # Audit log parameters
 audit-log:
@@ -369,7 +369,7 @@ state:
 
 kafka:
   enabled: true
-  bootstrap.servers: "${TB_KAFKA_SERVERS:localhost:9092}"
+  bootstrap.servers: "${TB_KAFKA_SERVERS:39.96.44.6:9092}"
   acks: "${TB_KAFKA_ACKS:all}"
   retries: "${TB_KAFKA_RETRIES:1}"
   batch.size: "${TB_KAFKA_BATCH_SIZE:16384}"
