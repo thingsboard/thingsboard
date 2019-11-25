@@ -223,24 +223,28 @@ public class DefaultDeviceStateService implements DeviceStateService {
         List<Tenant> tenants = tenantService.findTenants(new TextPageLink(Integer.MAX_VALUE)).getData();
         for (Tenant tenant : tenants) {
             List<ListenableFuture<DeviceStateData>> fetchFutures = new ArrayList<>();
-            List<Device> devices = deviceService.findDevicesByTenantId(tenant.getId(), new TextPageLink(Integer.MAX_VALUE)).getData();
-            for (Device device : devices) {
-                if (!routingService.resolveById(device.getId()).isPresent()) {
-                    if (!deviceStates.containsKey(device.getId())) {
-                        fetchFutures.add(fetchDeviceState(device));
+            TextPageLink pageLink = new TextPageLink(initFetchPackSize);
+            while (pageLink != null) {
+                TextPageData<Device> page = deviceService.findDevicesByTenantId(tenant.getId(), pageLink);
+                pageLink = page.getNextPageLink();
+                for (Device device : page.getData()) {
+                    if (!routingService.resolveById(device.getId()).isPresent()) {
+                        if (!deviceStates.containsKey(device.getId())) {
+                            fetchFutures.add(fetchDeviceState(device));
+                        }
+                    } else {
+                        Set<DeviceId> tenantDeviceSet = tenantDevices.get(tenant.getId());
+                        if (tenantDeviceSet != null) {
+                            tenantDeviceSet.remove(device.getId());
+                        }
+                        deviceStates.remove(device.getId());
                     }
-                } else {
-                    Set<DeviceId> tenantDeviceSet = tenantDevices.get(tenant.getId());
-                    if (tenantDeviceSet != null) {
-                        tenantDeviceSet.remove(device.getId());
-                    }
-                    deviceStates.remove(device.getId());
                 }
-            }
-            try {
-                Futures.successfulAsList(fetchFutures).get().forEach(this::addDeviceUsingState);
-            } catch (InterruptedException | ExecutionException e) {
-                log.warn("Failed to init device state service from DB", e);
+                try {
+                    Futures.successfulAsList(fetchFutures).get().forEach(this::addDeviceUsingState);
+                } catch (InterruptedException | ExecutionException e) {
+                    log.warn("Failed to init device state service from DB", e);
+                }
             }
         }
     }
