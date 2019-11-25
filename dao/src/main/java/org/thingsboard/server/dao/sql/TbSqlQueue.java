@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api;
+package org.thingsboard.server.dao.sql;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executor;
+import java.util.List;
+import java.util.function.Consumer;
 
-public interface ListeningExecutor extends Executor {
+public interface TbSqlQueue<E> {
 
-    <T> ListenableFuture<T> executeAsync(Callable<T> task);
+    void init(ScheduledLogExecutorComponent logExecutor, Consumer<List<E>> saveFunction);
 
+    void destroy();
+
+    ListenableFuture<Void> add(E element);
 }

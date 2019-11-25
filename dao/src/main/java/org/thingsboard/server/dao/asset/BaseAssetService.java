@@ -20,6 +20,7 @@ import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
@@ -28,6 +29,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
@@ -113,7 +115,22 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
     public Asset saveAsset(Asset asset) {
         log.trace("Executing saveAsset [{}]", asset);
         assetValidator.validate(asset, Asset::getTenantId);
-        return assetDao.save(asset.getTenantId(), asset);
+        Asset savedAsset;
+        if (!sqlDatabaseUsed) {
+            savedAsset = assetDao.save(asset.getTenantId(), asset);
+        } else {
+            try {
+                savedAsset = assetDao.save(asset.getTenantId(), asset);
+            } catch (Exception t) {
+                ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
+                if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("asset_name_unq_key")) {
+                    throw new DataValidationException("Asset with such name already exists!");
+                } else {
+                    throw t;
+                }
+            }
+        }
+        return savedAsset;
     }
 
     @Override
@@ -265,22 +282,26 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
 
                 @Override
                 protected void validateCreate(TenantId tenantId, Asset asset) {
-                    assetDao.findAssetsByTenantIdAndName(asset.getTenantId().getId(), asset.getName()).ifPresent(
-                            d -> {
-                                throw new DataValidationException("Asset with such name already exists!");
-                            }
-                    );
+                    if (!sqlDatabaseUsed) {
+                        assetDao.findAssetsByTenantIdAndName(asset.getTenantId().getId(), asset.getName()).ifPresent(
+                                d -> {
+                                    throw new DataValidationException("Asset with such name already exists!");
+                                }
+                        );
+                    }
                 }
 
                 @Override
                 protected void validateUpdate(TenantId tenantId, Asset asset) {
-                    assetDao.findAssetsByTenantIdAndName(asset.getTenantId().getId(), asset.getName()).ifPresent(
-                            d -> {
-                                if (!d.getId().equals(asset.getId())) {
-                                    throw new DataValidationException("Asset with such name already exists!");
+                    if (!sqlDatabaseUsed) {
+                        assetDao.findAssetsByTenantIdAndName(asset.getTenantId().getId(), asset.getName()).ifPresent(
+                                d -> {
+                                    if (!d.getId().equals(asset.getId())) {
+                                        throw new DataValidationException("Asset with such name already exists!");
+                                    }
                                 }
-                            }
-                    );
+                        );
+                    }
                 }
 
                 @Override

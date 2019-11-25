@@ -143,11 +143,3 @@ message DeviceStateServiceMsgProto {
     bool updated = 6;
     bool deleted = 7;
 }
-
-message TransactionEndServiceMsgProto {
-    string entityType = 1;
-    int64 originatorIdMSB = 2;
-    int64 originatorIdLSB = 3;
-    int64 transactionIdMSB = 4;
-    int64 transactionIdLSB = 5;
-}

@@ -15,16 +15,21 @@
  */
 package org.thingsboard.server.dao.sql;
 
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.AbstractListeningExecutor;
+import org.thingsboard.server.dao.util.SqlDao;
 
-import javax.annotation.PreDestroy;
-import java.util.concurrent.Executors;
+@Component
+@SqlDao
+public class JpaExecutorService extends AbstractListeningExecutor {
 
-public abstract class JpaAbstractDaoListeningExecutorService {
+    @Value("${spring.datasource.hikari.maximumPoolSize}")
+    private int poolSize;
 
-    @Autowired
-    protected JpaExecutorService service;
+    @Override
+    protected int getThreadPollSize() {
+        return poolSize;
+    }
 
 }

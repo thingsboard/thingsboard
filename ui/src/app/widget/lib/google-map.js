@@ -29,7 +29,7 @@ export default class TbGoogleMap {
         this.tooltips = [];
         this.defaultMapType = gmDefaultMapType;
         this.defaultCenterPosition = defaultCenterPosition;
-        this.isMarketCluster = markerClusteringSetting.isMarketCluster;
+        this.isMarketCluster = markerClusteringSetting && markerClusteringSetting.isMarketCluster;
 
         function clearGlobalId() {
             if (gmGlobals.loadingGmId && gmGlobals.loadingGmId === tbMap.mapId) {
@@ -234,17 +234,19 @@ export default class TbGoogleMap {
     /* eslint-enable no-undef */
 
     /* eslint-disable no-undef */
-    createMarker(location, dsIndex, settings, onClickListener, markerArgs) {
+    createMarker(location, dsIndex, settings, onClickListener, markerArgs, onDragendListener) {
         var marker;
         if (settings.showLabel) {
             marker = new MarkerWithLabel({
                 position: location,
                 labelContent: '<div style="color: '+ settings.labelColor +';"><b>'+settings.labelText+'</b></div>',
-                labelClass: "tb-labels"
+                labelClass: "tb-labels",
+                draggable: settings.drraggable,
             });
         } else {
             marker = new google.maps.Marker({
                 position: location,
+                draggable: settings.drraggable,
             });
         }
         var gMap = this;
@@ -266,6 +268,10 @@ export default class TbGoogleMap {
 
         if (onClickListener) {
             marker.addListener('click', onClickListener);
+        }
+
+        if (onDragendListener) {
+            marker.addListener('dragend', onDragendListener);
         }
 
         return marker;
@@ -474,6 +480,10 @@ export default class TbGoogleMap {
 
     getTooltips() {
         return this.tooltips;
+    }
+
+    getCenter() {
+        return this.map.getCenter().toJSON();
     }
 
 }

@@ -18,6 +18,7 @@ package org.thingsboard.rule.engine.api;
 import com.datastax.driver.core.ResultSetFuture;
 import io.netty.channel.EventLoopGroup;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.alarm.Alarm;

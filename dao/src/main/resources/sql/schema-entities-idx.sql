@@ -21,3 +21,15 @@ CREATE INDEX IF NOT EXISTS idx_event_type_entity_id ON event(tenant_id, event_ty
 CREATE INDEX IF NOT EXISTS idx_relation_to_id ON relation(relation_type_group, to_type, to_id);
 
 CREATE INDEX IF NOT EXISTS idx_relation_from_id ON relation(relation_type_group, from_type, from_id);
+
+CREATE INDEX IF NOT EXISTS idx_device_customer_id ON device(tenant_id, customer_id);
+
+CREATE INDEX IF NOT EXISTS idx_device_customer_id_and_type ON device(tenant_id, customer_id, type);
+
+CREATE INDEX IF NOT EXISTS idx_device_type ON device(tenant_id, type);
+
+CREATE INDEX IF NOT EXISTS idx_asset_customer_id ON asset(tenant_id, customer_id);
+
+CREATE INDEX IF NOT EXISTS idx_asset_customer_id_and_type ON asset(tenant_id, customer_id, type);
+
+CREATE INDEX IF NOT EXISTS idx_asset_type ON asset(tenant_id, type);

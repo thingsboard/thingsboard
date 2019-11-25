@@ -13,18 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql;
-
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.annotation.PreDestroy;
-import java.util.concurrent.Executors;
-
-public abstract class JpaAbstractDaoListeningExecutorService {
-
-    @Autowired
-    protected JpaExecutorService service;
-
+.tb-add-entity-panel {
+  min-width: 150px;
+  max-height: 200px;
+  overflow: hidden;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow:
+    0 7px 8px -4px rgba(0, 0, 0, .2),
+    0 13px 19px 2px rgba(0, 0, 0, .14),
+    0 5px 24px 4px rgba(0, 0, 0, .12);
 }

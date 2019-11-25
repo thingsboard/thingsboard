@@ -45,7 +45,8 @@ CREATE TABLE IF NOT EXISTS asset (
     label varchar(255),
     search_text varchar(255),
     tenant_id varchar(31),
-    type varchar(255)
+    type varchar(255),
+    CONSTRAINT asset_name_unq_key UNIQUE (tenant_id, name)
 );
 
 CREATE TABLE IF NOT EXISTS audit_log (
@@ -120,7 +121,8 @@ CREATE TABLE IF NOT EXISTS device (
     name varchar(255),
     label varchar(255),
     search_text varchar(255),
-    tenant_id varchar(31)
+    tenant_id varchar(31),
+    CONSTRAINT device_name_unq_key UNIQUE (tenant_id, name)
 );
 
 CREATE TABLE IF NOT EXISTS device_credentials (
@@ -128,7 +130,8 @@ CREATE TABLE IF NOT EXISTS device_credentials (
     credentials_id varchar,
     credentials_type varchar(255),
     credentials_value varchar,
-    device_id varchar(31)
+    device_id varchar(31),
+    CONSTRAINT device_credentials_id_unq_key UNIQUE (credentials_id)
 );
 
 CREATE TABLE IF NOT EXISTS event (

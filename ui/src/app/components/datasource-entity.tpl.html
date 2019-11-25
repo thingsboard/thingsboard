@@ -125,7 +125,7 @@
 							   <div ng-if="textIsNotEmpty(alarmDataKeySearchText)">
 								   <span translate translate-values='{ key: "{{alarmDataKeySearchText | truncate:true:6:&apos;...&apos;}}" }'>entity.no-key-matching</span>
 								   <span>
-										<a translate ng-click="createKey($event, '#alarm_datakey_chips')">entity.create-new-key</a>
+										<a translate ng-click="createKey($event, types.dataKeyType.alarm, '#alarm_datakey_chips')">entity.create-new-key</a>
 								   </span>
 							   </div>
 						   </div>

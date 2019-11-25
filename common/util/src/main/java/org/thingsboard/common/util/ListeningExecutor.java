@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql;
+package org.thingsboard.common.util;
 
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.google.common.util.concurrent.ListenableFuture;
 
-import javax.annotation.PreDestroy;
-import java.util.concurrent.Executors;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executor;
 
-public abstract class JpaAbstractDaoListeningExecutorService {
+public interface ListeningExecutor extends Executor {
 
-    @Autowired
-    protected JpaExecutorService service;
+    <T> ListenableFuture<T> executeAsync(Callable<T> task);
+
+    default <T> ListenableFuture<T> submit(Callable<T> task) {
+        return executeAsync(task);
+    }
 
 }

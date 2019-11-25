@@ -15,16 +15,17 @@
  */
 package org.thingsboard.server.dao.sql;
 
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.Builder;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.PreDestroy;
-import java.util.concurrent.Executors;
+@Slf4j
+@Data
+@Builder
+public class TbSqlBlockingQueueParams {
 
-public abstract class JpaAbstractDaoListeningExecutorService {
-
-    @Autowired
-    protected JpaExecutorService service;
-
+    private final String logName;
+    private final int batchSize;
+    private final long maxDelay;
+    private final long statsPrintIntervalMs;
 }
