@@ -48,6 +48,7 @@ import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
@@ -615,7 +616,28 @@ public class RestClient implements ClientHttpRequestInterceptor {
         }
     }
 
+    public Optional<ComponentDescriptor> getComponentDescriptorByClazz(String componentDescriptorClazz) {
+        try {
+            ResponseEntity<ComponentDescriptor> componentDescriptor = restTemplate.getForEntity(baseURL + "/component/{componentDescriptorClazz}", ComponentDescriptor.class);
+            return Optional.ofNullable(componentDescriptor.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
 
+    public List<ComponentDescriptor> getComponentDescriptorsByType(String componentType) {
+        return restTemplate.exchange(baseURL + "/components?componentType={componentType}", HttpMethod.GET, HttpEntity.EMPTY, new ParameterizedTypeReference<List<ComponentDescriptor>>() {
+        }, componentType).getBody();
+    }
+
+    public List<ComponentDescriptor> getComponentDescriptorsByTypes(String[] componentTypes) {
+        return restTemplate.exchange(baseURL + "/components?componentTypes={componentTypes}", HttpMethod.GET, HttpEntity.EMPTY, new ParameterizedTypeReference<List<ComponentDescriptor>>() {
+        }, componentTypes).getBody();
+    }
 
     private void addPageLinkToParam(Map<String, String> params, TimePageLink pageLink) {
         params.put("limit", String.valueOf(pageLink.getLimit()));
