@@ -479,6 +479,9 @@ transport:
       poll_records_pack_size: "${TB_RULE_ENGINE_MAX_POLL_RECORDS:1000}"
       max_poll_records_per_second: "${TB_RULE_ENGINE_MAX_POLL_RECORDS_PER_SECOND:10000}"
       max_poll_records_per_minute: "${TB_RULE_ENGINE_MAX_POLL_RECORDS_PER_MINUTE:120000}"
+      stats:
+        enabled: "${TB_RULE_ENGINE_STATS_ENABLED:false}"
+        print_interval_ms: "${TB_RULE_ENGINE_STATS_PRINT_INTERVAL_MS:10000}"
     notifications:
       topic: "${TB_TRANSPORT_NOTIFICATIONS_TOPIC:tb.transport.notifications}"
   sessions:
