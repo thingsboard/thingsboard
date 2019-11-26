@@ -183,6 +183,8 @@ cassandra:
     rate_limit_print_interval_ms: "${CASSANDRA_QUERY_RATE_LIMIT_PRINT_MS:10000}"
     # set all data types values except target to null for the same ts on save
     set_null_values_enabled: "${CASSANDRA_QUERY_SET_NULL_VALUES_ENABLED:false}"
+    # log one of cassandra queries with specified frequency (0 - logging is disabled)
+    print_queries_freq: "${CASSANDRA_QUERY_PRINT_FREQ:0}"
     tenant_rate_limits:
       enabled: "${CASSANDRA_QUERY_TENANT_RATE_LIMITS_ENABLED:false}"
       configuration: "${CASSANDRA_QUERY_TENANT_RATE_LIMITS_CONFIGURATION:1000:1,30000:60}"
