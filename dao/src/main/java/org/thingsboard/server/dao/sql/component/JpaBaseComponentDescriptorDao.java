@@ -52,7 +52,7 @@ public class JpaBaseComponentDescriptorDao extends JpaAbstractSearchTextDao<Comp
     private ComponentDescriptorRepository componentDescriptorRepository;
 
     @Autowired
-    private AbstractComponentDescriptorInsertRepository componentDescriptorInsertRepository;
+    private ComponentDescriptorInsertRepository componentDescriptorInsertRepository;
 
     @Override
     protected Class<ComponentDescriptorEntity> getEntityClass() {
