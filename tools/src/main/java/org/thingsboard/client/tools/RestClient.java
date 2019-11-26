@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
@@ -44,7 +45,9 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.TextPageData;
+import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.page.TimePageData;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
@@ -256,16 +259,17 @@ public class RestClient implements ClientHttpRequestInterceptor {
         restTemplate.postForEntity(baseURL + "/api/settings/testMail", adminSettings, AdminSettings.class);
     }
 
+    //TODO:
 //    @RequestMapping(value = "/securitySettings", method = RequestMethod.GET)
 //    public SecuritySettings getSecuritySettings() {
 //
 //    }
-
+    //TODO:
 //    @RequestMapping(value = "/securitySettings", method = RequestMethod.POST)
 //    public SecuritySettings saveSecuritySettings(SecuritySettings securitySettings) {
 //
 //    }
-
+    //TODO:
 //    @RequestMapping(value = "/updates", method = RequestMethod.GET)
 //    public UpdateMessage checkUpdates() {
 //
@@ -313,27 +317,14 @@ public class RestClient implements ClientHttpRequestInterceptor {
         restTemplate.postForObject(baseURL + "/api/alarm/{alarmId}/clear", new Object(), Object.class, alarmId);
     }
 
-    public Optional<TimePageData<AlarmInfo>> getAlarms(String entityType,
-                                                       String entityId,
-                                                       String searchStatus,
-                                                       String status,
-                                                       int limit,
-                                                       Long startTime,
-                                                       Long endTime,
-                                                       Boolean ascOrder,
-                                                       String offset,
-                                                       Boolean fetchOriginator) {
+    public Optional<TimePageData<AlarmInfo>> getAlarms(String entityType, String entityId, String searchStatus, String status, TimePageLink pageLink, Boolean fetchOriginator) {
         Map<String, String> params = new HashMap<>();
         params.put("entityType", entityType);
         params.put("entityId", entityId);
         params.put("searchStatus", searchStatus);
         params.put("status", status);
-        params.put("limit", String.valueOf(limit));
-        params.put("startTime", String.valueOf(startTime));
-        params.put("endTime", String.valueOf(endTime));
-        params.put("ascOrder", ascOrder == null ? "false" : String.valueOf(ascOrder));
-        params.put("offset", offset);
         params.put("fetchOriginator", String.valueOf(fetchOriginator));
+        addPageLinkToParam(params, pageLink);
 
         StringBuilder url = new StringBuilder(baseURL);
         url.append("/api/alarm/{entityType}/{entityId}?");
@@ -444,13 +435,10 @@ public class RestClient implements ClientHttpRequestInterceptor {
         }
     }
 
-    public TextPageData<Asset> getTenantAssets(int limit, String type, String textSearch, String idOffset, String textOffset) {
+    public TextPageData<Asset> getTenantAssets(TextPageLink pageLink, String type) {
         Map<String, String> params = new HashMap<>();
-        params.put("limit", String.valueOf(limit));
         params.put("type", type);
-        params.put("textSearch", textSearch);
-        params.put("idOffset", idOffset);
-        params.put("textOffset", textOffset);
+        addPageLinkToParam(params, pageLink);
 
         ResponseEntity<TextPageData<Asset>> assets = restTemplate.exchange(
                 baseURL + "/tenant/assets?limit={limit}&type={type}&textSearch{textSearch}&idOffset={idOffset}&textOffset{textOffset}",
@@ -474,14 +462,12 @@ public class RestClient implements ClientHttpRequestInterceptor {
         }
     }
 
-    public TextPageData<Asset> getCustomerAssets(String customerId, int limit, String type, String textSearch, String idOffset, String textOffset) {
+    public TextPageData<Asset> getCustomerAssets(String customerId, TextPageLink pageLink, String type) {
         Map<String, String> params = new HashMap<>();
         params.put("customerId", customerId);
-        params.put("limit", String.valueOf(limit));
         params.put("type", type);
-        params.put("textSearch", textSearch);
-        params.put("idOffset", idOffset);
-        params.put("textOffset", textOffset);
+        addPageLinkToParam(params, pageLink);
+
         ResponseEntity<TextPageData<Asset>> assets = restTemplate.exchange(
                 baseURL + "/customer/{customerId}/assets?limit={limit}&type={type}&textSearch{textSearch}&idOffset={idOffset}&textOffset{textOffset}",
                 HttpMethod.GET,
@@ -507,15 +493,12 @@ public class RestClient implements ClientHttpRequestInterceptor {
         }).getBody();
     }
 
-    public TimePageData<AuditLog> getAuditLogsByCustomerId(String customerId, int limit, Long startTime, Long endTime, Boolean ascOrder, String offset, String actionTypes) {
+    public TimePageData<AuditLog> getAuditLogsByCustomerId(String customerId, TimePageLink pageLink, String actionTypes) {
         Map<String, String> params = new HashMap<>();
         params.put("customerId", customerId);
-        params.put("limit", String.valueOf(limit));
-        params.put("startTime", String.valueOf(startTime));
-        params.put("endTime", String.valueOf(endTime));
-        params.put("ascOrder", ascOrder == null ? "false" : String.valueOf(ascOrder));
-        params.put("offset", offset);
         params.put("actionTypes", actionTypes);
+        addPageLinkToParam(params, pageLink);
+
         ResponseEntity<TimePageData<AuditLog>> auditLog = restTemplate.exchange(
                 baseURL + "/audit/logs/customer/{customerId}?limit={limit}&startTime={startTime}&endTime={endTime}&ascOrder={ascOrder}&offset={offset}&actionTypes={actionTypes}",
                 HttpMethod.GET,
@@ -526,15 +509,12 @@ public class RestClient implements ClientHttpRequestInterceptor {
         return auditLog.getBody();
     }
 
-    public TimePageData<AuditLog> getAuditLogsByUserId(String userId, int limit, Long startTime, Long endTime, Boolean ascOrder, String offset, String actionTypes) {
+    public TimePageData<AuditLog> getAuditLogsByUserId(String userId, TimePageLink pageLink, String actionTypes) {
         Map<String, String> params = new HashMap<>();
         params.put("userId", userId);
-        params.put("limit", String.valueOf(limit));
-        params.put("startTime", String.valueOf(startTime));
-        params.put("endTime", String.valueOf(endTime));
-        params.put("ascOrder", ascOrder == null ? "false" : String.valueOf(ascOrder));
-        params.put("offset", offset);
         params.put("actionTypes", actionTypes);
+        addPageLinkToParam(params, pageLink);
+
         ResponseEntity<TimePageData<AuditLog>> auditLog = restTemplate.exchange(
                 baseURL + "/audit/logs/user/{userId}?limit={limit}&startTime={startTime}&endTime={endTime}&ascOrder={ascOrder}&offset={offset}&actionTypes={actionTypes}",
                 HttpMethod.GET,
@@ -545,16 +525,13 @@ public class RestClient implements ClientHttpRequestInterceptor {
         return auditLog.getBody();
     }
 
-    public TimePageData<AuditLog> getAuditLogsByEntityId(String entityType, String entityId, int limit, Long startTime, Long endTime, Boolean ascOrder, String offset, String actionTypes) {
+    public TimePageData<AuditLog> getAuditLogsByEntityId(String entityType, String entityId, String actionTypes, TimePageLink pageLink) {
         Map<String, String> params = new HashMap<>();
         params.put("entityType", entityType);
         params.put("entityId", entityId);
-        params.put("limit", String.valueOf(limit));
-        params.put("startTime", String.valueOf(startTime));
-        params.put("endTime", String.valueOf(endTime));
-        params.put("ascOrder", ascOrder == null ? "false" : String.valueOf(ascOrder));
-        params.put("offset", offset);
         params.put("actionTypes", actionTypes);
+        addPageLinkToParam(params, pageLink);
+
         ResponseEntity<TimePageData<AuditLog>> auditLog = restTemplate.exchange(
                 baseURL + "/audit/logs/entity/{entityType}/{entityId}?limit={limit}&startTime={startTime}&endTime={endTime}&ascOrder={ascOrder}&offset={offset}&actionTypes={actionTypes}",
                 HttpMethod.GET,
@@ -565,14 +542,11 @@ public class RestClient implements ClientHttpRequestInterceptor {
         return auditLog.getBody();
     }
 
-    public TimePageData<AuditLog> getAuditLogs(int limit, Long startTime, Long endTime, Boolean ascOrder, String offset, String actionTypes) {
+    public TimePageData<AuditLog> getAuditLogs(TimePageLink pageLink, String actionTypes) {
         Map<String, String> params = new HashMap<>();
-        params.put("limit", String.valueOf(limit));
-        params.put("startTime", String.valueOf(startTime));
-        params.put("endTime", String.valueOf(endTime));
-        params.put("ascOrder", ascOrder == null ? "false" : String.valueOf(ascOrder));
-        params.put("offset", offset);
         params.put("actionTypes", actionTypes);
+        addPageLinkToParam(params, pageLink);
+
         ResponseEntity<TimePageData<AuditLog>> auditLog = restTemplate.exchange(
                 baseURL + "/audit/logs?limit={limit}&startTime={startTime}&endTime={endTime}&ascOrder={ascOrder}&offset={offset}&actionTypes={actionTypes}",
                 HttpMethod.GET,
@@ -581,5 +555,80 @@ public class RestClient implements ClientHttpRequestInterceptor {
                 },
                 params);
         return auditLog.getBody();
+    }
+
+    public Optional<User> getUser() {
+        ResponseEntity<User> user = restTemplate.getForEntity(baseURL + "/auth/user", User.class);
+        return Optional.ofNullable(user.getBody());
+    }
+
+    public void logout() {
+        restTemplate.exchange(URI.create(baseURL + "/auth/logout"), HttpMethod.POST, HttpEntity.EMPTY, Object.class);
+    }
+
+    public void changePassword(JsonNode changePasswordRequest) {
+        restTemplate.exchange(URI.create(baseURL + "/auth/changePassword"), HttpMethod.POST, new HttpEntity<>(changePasswordRequest), Object.class);
+    }
+
+    //TODO:
+//    @RequestMapping(value = "/noauth/userPasswordPolicy", method = RequestMethod.GET)
+//    public UserPasswordPolicy getUserPasswordPolicy() {
+//
+//    }
+
+
+    public ResponseEntity<String> checkActivateToken(String activateToken) {
+        return restTemplate.getForEntity(baseURL + "/noauth/activate?activateToken={activateToken}", String.class, activateToken);
+    }
+
+    public void requestResetPasswordByEmail(JsonNode resetPasswordByEmailRequest) {
+        restTemplate.exchange(URI.create(baseURL + "/noauth/resetPasswordByEmail"), HttpMethod.POST, new HttpEntity<>(resetPasswordByEmailRequest), Object.class);
+    }
+
+    public ResponseEntity<String> checkResetToken(String resetToken) {
+        return restTemplate.getForEntity(baseURL + "noauth/resetPassword?resetToken={resetToken}", String.class, resetToken);
+    }
+
+    public Optional<JsonNode> activateUser(JsonNode activateRequest) {
+        try {
+            ResponseEntity<JsonNode> jsonNode = restTemplate.postForEntity(baseURL + "/noauth/activate", activateRequest, JsonNode.class);
+            return Optional.ofNullable(jsonNode.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Optional<JsonNode> resetPassword(JsonNode resetPasswordRequest) {
+        try {
+            ResponseEntity<JsonNode> jsonNode = restTemplate.postForEntity(baseURL + "/noauth/resetPassword", resetPasswordRequest, JsonNode.class);
+            return Optional.ofNullable(jsonNode.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+
+
+    private void addPageLinkToParam(Map<String, String> params, TimePageLink pageLink) {
+        params.put("limit", String.valueOf(pageLink.getLimit()));
+        params.put("startTime", String.valueOf(pageLink.getStartTime()));
+        params.put("endTime", String.valueOf(pageLink.getEndTime()));
+        params.put("ascOrder", String.valueOf(pageLink.isAscOrder()));
+        params.put("offset", pageLink.getIdOffset().toString());
+    }
+
+    private void addPageLinkToParam(Map<String, String> params, TextPageLink pageLink) {
+        params.put("limit", String.valueOf(pageLink.getLimit()));
+        params.put("textSearch", pageLink.getTextSearch());
+        params.put("idOffset", pageLink.getIdOffset().toString());
+        params.put("textOffset", pageLink.getTextOffset());
     }
 }
