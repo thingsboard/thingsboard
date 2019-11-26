@@ -24,7 +24,7 @@ import org.thingsboard.server.dao.util.SqlDao;
 @SqlDao
 @HsqlDao
 @Repository
-public class HsqlEventInsertRepository extends EventInsertRepository {
+public class HsqlEventInsertRepository extends AbstractEventInsertRepository {
 
     private static final String P_KEY_CONFLICT_STATEMENT = "(event.id=I.id)";
     private static final String UNQ_KEY_CONFLICT_STATEMENT = "(event.tenant_id=I.tenant_id AND event.entity_type=I.entity_type AND event.entity_id=I.entity_id AND event.event_type=I.event_type AND event.event_uid=I.event_uid)";
