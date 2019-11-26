@@ -30,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -456,34 +457,40 @@ public class DefaultDeviceStateService implements DeviceStateService {
             @Nullable
             @Override
             public DeviceStateData apply(@Nullable List<T> data) {
-                long lastActivityTime = getAttributeValue(data, LAST_ACTIVITY_TIME, 0L);
-                long inactivityAlarmTime = getAttributeValue(data, INACTIVITY_ALARM_TIME, 0L);
-                long inactivityTimeout = getAttributeValue(data, INACTIVITY_TIMEOUT, TimeUnit.SECONDS.toMillis(defaultInactivityTimeoutInSec));
-                boolean active = System.currentTimeMillis() < lastActivityTime + inactivityTimeout;
-                DeviceState deviceState = DeviceState.builder()
-                        .active(active)
-                        .lastConnectTime(getAttributeValue(data, LAST_CONNECT_TIME, 0L))
-                        .lastDisconnectTime(getAttributeValue(data, LAST_DISCONNECT_TIME, 0L))
-                        .lastActivityTime(lastActivityTime)
-                        .lastInactivityAlarmTime(inactivityAlarmTime)
-                        .inactivityTimeout(inactivityTimeout)
-                        .build();
-                TbMsgMetaData md = new TbMsgMetaData();
-                md.putValue("deviceName", device.getName());
-                md.putValue("deviceType", device.getType());
-                return DeviceStateData.builder()
-                        .tenantId(device.getTenantId())
-                        .deviceId(device.getId())
-                        .metaData(md)
-                        .state(deviceState).build();
+                try {
+                    long lastActivityTime = getEntryValue(data, LAST_ACTIVITY_TIME, 0L);
+                    long inactivityAlarmTime = getEntryValue(data, INACTIVITY_ALARM_TIME, 0L);
+                    long inactivityTimeout = getEntryValue(data, INACTIVITY_TIMEOUT, TimeUnit.SECONDS.toMillis(defaultInactivityTimeoutInSec));
+                    boolean active = System.currentTimeMillis() < lastActivityTime + inactivityTimeout;
+                    DeviceState deviceState = DeviceState.builder()
+                            .active(active)
+                            .lastConnectTime(getEntryValue(data, LAST_CONNECT_TIME, 0L))
+                            .lastDisconnectTime(getEntryValue(data, LAST_DISCONNECT_TIME, 0L))
+                            .lastActivityTime(lastActivityTime)
+                            .lastInactivityAlarmTime(inactivityAlarmTime)
+                            .inactivityTimeout(inactivityTimeout)
+                            .build();
+                    TbMsgMetaData md = new TbMsgMetaData();
+                    md.putValue("deviceName", device.getName());
+                    md.putValue("deviceType", device.getType());
+                    return DeviceStateData.builder()
+                            .tenantId(device.getTenantId())
+                            .deviceId(device.getId())
+                            .metaData(md)
+                            .state(deviceState).build();
+                } catch (Exception e) {
+                    log.warn("[{}] Failed to fetch device state data", device.getId(), e);
+                }
             }
         };
     }
 
-    private long getAttributeValue(List<? extends KvEntry> attributes, String attributeName, long defaultValue) {
-        for (KvEntry attribute : attributes) {
-            if (attribute.getKey().equals(attributeName)) {
-                return attribute.getLongValue().orElse(defaultValue);
+    private long getEntryValue(List<? extends KvEntry> kvEntries, String attributeName, long defaultValue) {
+        if (kvEntries != null) {
+            for (KvEntry entry : kvEntries) {
+                if (entry != null && !StringUtils.isEmpty(entry.getKey()) && entry.getKey().equals(attributeName)) {
+                    return entry.getLongValue().orElse(defaultValue);
+                }
             }
         }
         return defaultValue;
