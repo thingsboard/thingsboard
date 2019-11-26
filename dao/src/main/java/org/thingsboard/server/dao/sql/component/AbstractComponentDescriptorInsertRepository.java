@@ -33,17 +33,13 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
 @Slf4j
-@SqlDao
-@Repository
-public abstract class AbstractComponentDescriptorInsertRepository {
+public abstract class AbstractComponentDescriptorInsertRepository implements ComponentDescriptorInsertRepository {
 
     @PersistenceContext
     protected EntityManager entityManager;
 
     @Autowired
     protected PlatformTransactionManager transactionManager;
-
-    public abstract ComponentDescriptorEntity saveOrUpdate(ComponentDescriptorEntity entity);
 
     protected ComponentDescriptorEntity saveAndGet(ComponentDescriptorEntity entity, String insertOrUpdateOnPrimaryKeyConflict, String insertOrUpdateOnUniqueKeyConflict) {
         ComponentDescriptorEntity componentDescriptorEntity = null;
