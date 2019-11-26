@@ -639,6 +639,71 @@ public class RestClient implements ClientHttpRequestInterceptor {
         }, componentTypes).getBody();
     }
 
+    public Optional<Customer> getCustomerById(String customerId) {
+        try {
+            ResponseEntity<Customer> customer = restTemplate.getForEntity(baseURL + "/customer/{customerId}", Customer.class, customerId);
+            return Optional.ofNullable(customer.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Optional<JsonNode> getShortCustomerInfoById(String customerId) {
+        try {
+            ResponseEntity<JsonNode> info = restTemplate.getForEntity(baseURL + "/customer/{customerId}/shortInfo", JsonNode.class, customerId);
+            return Optional.ofNullable(info.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public String getCustomerTitleById( String customerId) {
+        return restTemplate.getForObject(baseURL + "/customer/{customerId}/title", String.class, customerId);
+    }
+
+    public Customer saveCustomer(Customer customer) {
+        return restTemplate.postForEntity(baseURL + "/customer", customer, Customer.class).getBody();
+    }
+
+    public void deleteCustomer(String customerId) {
+        restTemplate.delete(baseURL + "/customer/{customerId}", customerId);
+    }
+
+    public TextPageData<Customer> getCustomers(TextPageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
+
+        ResponseEntity<TextPageData<Customer>> assets = restTemplate.exchange(
+                baseURL + "/customers?limit={limit}&textSearch{textSearch}&idOffset={idOffset}&textOffset{textOffset}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<TextPageData<Customer>>() {
+                },
+                params);
+        return assets.getBody();
+    }
+
+    public Optional<Customer> getTenantCustomer(String customerTitle) {
+        try {
+            ResponseEntity<Customer> componentDescriptor = restTemplate.getForEntity(baseURL + "/tenant/customers?customerTitle={customerTitle}", Customer.class, customerTitle);
+            return Optional.ofNullable(componentDescriptor.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
     private void addPageLinkToParam(Map<String, String> params, TimePageLink pageLink) {
         params.put("limit", String.valueOf(pageLink.getLimit()));
         params.put("startTime", String.valueOf(pageLink.getStartTime()));
