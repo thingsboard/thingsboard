@@ -17,6 +17,9 @@ package org.thingsboard.client.tools;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,21 +29,31 @@ import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.client.support.HttpRequestWrapper;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.asset.AssetSearchQuery;
+import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.page.TextPageData;
+import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -53,6 +66,13 @@ public class RestClient implements ClientHttpRequestInterceptor {
     private final RestTemplate restTemplate = new RestTemplate();
     private String token;
     private final String baseURL;
+
+    @Override
+    public ClientHttpResponse intercept(HttpRequest request, byte[] bytes, ClientHttpRequestExecution execution) throws IOException {
+        HttpRequest wrapper = new HttpRequestWrapper(request);
+        wrapper.getHeaders().set(JWT_TOKEN_HEADER_PARAM, "Bearer " + token);
+        return execution.execute(wrapper, bytes);
+    }
 
     public void login(String username, String password) {
         Map<String, String> loginRequest = new HashMap<>();
@@ -139,7 +159,8 @@ public class RestClient implements ClientHttpRequestInterceptor {
         Device device = new Device();
         device.setName(name);
         device.setType(type);
-        return restTemplate.postForEntity(baseURL + "/api/device", device, Device.class).getBody();
+        Device result = restTemplate.postForEntity(baseURL + "/api/device", device, Device.class).getBody();
+        return result;
     }
 
     public DeviceCredentials updateDeviceCredentials(DeviceId deviceId, String token) {
@@ -190,7 +211,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
     }
 
     public Asset assignAsset(CustomerId customerId, AssetId assetId) {
-        return restTemplate.postForEntity(baseURL + "/api/customer/{customerId}/asset/{assetId}", null, Asset.class,
+        return restTemplate.postForEntity(baseURL + "/api/customer/{customerId}/asset/{assetId}", HttpEntity.EMPTY, Asset.class,
                 customerId.toString(), assetId.toString()).getBody();
     }
 
@@ -214,10 +235,351 @@ public class RestClient implements ClientHttpRequestInterceptor {
         return token;
     }
 
-    @Override
-    public ClientHttpResponse intercept(HttpRequest request, byte[] bytes, ClientHttpRequestExecution execution) throws IOException {
-        HttpRequest wrapper = new HttpRequestWrapper(request);
-        wrapper.getHeaders().set(JWT_TOKEN_HEADER_PARAM, "Bearer " + token);
-        return execution.execute(wrapper, bytes);
+    public Optional<AdminSettings> getAdminSettings(String key) {
+        try {
+            ResponseEntity<AdminSettings> adminSettings = restTemplate.getForEntity(baseURL + "/api/admin/settings/{key}", AdminSettings.class, key);
+            return Optional.ofNullable(adminSettings.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public AdminSettings saveAdminSettings(AdminSettings adminSettings) {
+        return restTemplate.postForEntity(baseURL + "/api/settings", adminSettings, AdminSettings.class).getBody();
+    }
+
+    public void sendTestMail(AdminSettings adminSettings) {
+        restTemplate.postForEntity(baseURL + "/api/settings/testMail", adminSettings, AdminSettings.class);
+    }
+
+//    @RequestMapping(value = "/securitySettings", method = RequestMethod.GET)
+//    public SecuritySettings getSecuritySettings() {
+//
+//    }
+
+//    @RequestMapping(value = "/securitySettings", method = RequestMethod.POST)
+//    public SecuritySettings saveSecuritySettings(SecuritySettings securitySettings) {
+//
+//    }
+
+//    @RequestMapping(value = "/updates", method = RequestMethod.GET)
+//    public UpdateMessage checkUpdates() {
+//
+//    }
+
+    public Optional<Alarm> getAlarmById(String alarmId) {
+        try {
+            ResponseEntity<Alarm> alarm = restTemplate.getForEntity(baseURL + "/api/alarm/{alarmId}", Alarm.class, alarmId);
+            return Optional.ofNullable(alarm.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Optional<AlarmInfo> getAlarmInfoById(String alarmId) {
+        try {
+            ResponseEntity<AlarmInfo> alarmInfo = restTemplate.getForEntity(baseURL + "/api/alarm/info/{alarmId}", AlarmInfo.class, alarmId);
+            return Optional.ofNullable(alarmInfo.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Alarm saveAlarm(Alarm alarm) {
+        return restTemplate.postForEntity(baseURL + "/api/alarm", alarm, Alarm.class).getBody();
+    }
+
+    public void deleteAlarm(String alarmId) {
+        restTemplate.delete(baseURL + "/api/alarm/{alarmId}", alarmId);
+    }
+
+    public void ackAlarm(String alarmId) {
+        restTemplate.postForObject(baseURL + "/api/alarm/{alarmId}/ack", new Object(), Object.class, alarmId);
+    }
+
+    public void clearAlarm(String alarmId) {
+        restTemplate.postForObject(baseURL + "/api/alarm/{alarmId}/clear", new Object(), Object.class, alarmId);
+    }
+
+    public Optional<TimePageData<AlarmInfo>> getAlarms(String entityType,
+                                                       String entityId,
+                                                       String searchStatus,
+                                                       String status,
+                                                       int limit,
+                                                       Long startTime,
+                                                       Long endTime,
+                                                       Boolean ascOrder,
+                                                       String offset,
+                                                       Boolean fetchOriginator) {
+        Map<String, String> params = new HashMap<>();
+        params.put("entityType", entityType);
+        params.put("entityId", entityId);
+        params.put("searchStatus", searchStatus);
+        params.put("status", status);
+        params.put("limit", String.valueOf(limit));
+        params.put("startTime", String.valueOf(startTime));
+        params.put("endTime", String.valueOf(endTime));
+        params.put("ascOrder", ascOrder == null ? "false" : String.valueOf(ascOrder));
+        params.put("offset", offset);
+        params.put("fetchOriginator", String.valueOf(fetchOriginator));
+
+        StringBuilder url = new StringBuilder(baseURL);
+        url.append("/api/alarm/{entityType}/{entityId}?");
+        url.append("searchStatus={searchStatus}&");
+        url.append("status={status}&");
+        url.append("limit={limit}&");
+        url.append("startTime={startTime}&");
+        url.append("endTime={endTime}&");
+        url.append("ascOrder={ascOrder}&");
+        url.append("offset={offset}&");
+        url.append("fetchOriginator={fetchOriginator}");
+
+        try {
+            ResponseEntity<TimePageData<AlarmInfo>> alarms = restTemplate.exchange(url.toString(), HttpMethod.GET, HttpEntity.EMPTY, new ParameterizedTypeReference<TimePageData<AlarmInfo>>() {
+            }, params);
+
+            return Optional.ofNullable(alarms.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Optional<AlarmSeverity> getHighestAlarmSeverity(String entityType, String entityId, String searchStatus, String status) {
+        Map<String, String> params = new HashMap<>();
+        params.put("entityType", entityType);
+        params.put("entityId", entityId);
+        params.put("searchStatus", searchStatus);
+        params.put("status", status);
+        try {
+            ResponseEntity<AlarmSeverity> alarmSeverity = restTemplate.getForEntity(baseURL + "/api/alarm/highestSeverity/{entityType}/{entityId}?searchStatus={searchStatus}&status={status}", AlarmSeverity.class, params);
+            return Optional.ofNullable(alarmSeverity.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Optional<Asset> getAssetById(String assetId) {
+        try {
+            ResponseEntity<Asset> asset = restTemplate.getForEntity(baseURL + "/api/asset/{assetId}", Asset.class, assetId);
+            return Optional.ofNullable(asset.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Asset saveAsset(Asset asset) {
+        return restTemplate.postForEntity(baseURL + "/api/asset", asset, Asset.class).getBody();
+    }
+
+    public void deleteAsset(String assetId) {
+        restTemplate.delete(baseURL + "/api/asset/{assetId}", assetId);
+    }
+
+    public Optional<Asset> assignAssetToCustomer(String customerId,
+                                                 String assetId) {
+        Map<String, String> params = new HashMap<>();
+        params.put("customerId", customerId);
+        params.put("assetId", assetId);
+
+        try {
+            ResponseEntity<Asset> asset = restTemplate.postForEntity(baseURL + "/api/customer/{customerId}/asset/{assetId}", HttpEntity.EMPTY, Asset.class, params);
+            return Optional.ofNullable(asset.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Optional<Asset> unassignAssetFromCustomer(String assetId) {
+        try {
+            Optional<Asset> asset = getAssetById(assetId);
+            restTemplate.delete(baseURL + "/api/customer/asset/{assetId}", assetId);
+            return asset;
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Optional<Asset> assignAssetToPublicCustomer(String assetId) {
+        try {
+            ResponseEntity<Asset> asset = restTemplate.postForEntity(baseURL + "/api/customer/public/asset/{assetId}", HttpEntity.EMPTY, Asset.class, assetId);
+            return Optional.ofNullable(asset.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public TextPageData<Asset> getTenantAssets(int limit, String type, String textSearch, String idOffset, String textOffset) {
+        Map<String, String> params = new HashMap<>();
+        params.put("limit", String.valueOf(limit));
+        params.put("type", type);
+        params.put("textSearch", textSearch);
+        params.put("idOffset", idOffset);
+        params.put("textOffset", textOffset);
+
+        ResponseEntity<TextPageData<Asset>> assets = restTemplate.exchange(
+                baseURL + "/tenant/assets?limit={limit}&type={type}&textSearch{textSearch}&idOffset={idOffset}&textOffset{textOffset}",
+                HttpMethod.GET, HttpEntity.EMPTY,
+                new ParameterizedTypeReference<TextPageData<Asset>>() {
+                },
+                params);
+        return assets.getBody();
+    }
+
+    public Optional<Asset> getTenantAsset(String assetName) {
+        try {
+            ResponseEntity<Asset> asset = restTemplate.getForEntity(baseURL + "/api/tenant/assets?assetName={assetName}", Asset.class, assetName);
+            return Optional.ofNullable(asset.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public TextPageData<Asset> getCustomerAssets(String customerId, int limit, String type, String textSearch, String idOffset, String textOffset) {
+        Map<String, String> params = new HashMap<>();
+        params.put("customerId", customerId);
+        params.put("limit", String.valueOf(limit));
+        params.put("type", type);
+        params.put("textSearch", textSearch);
+        params.put("idOffset", idOffset);
+        params.put("textOffset", textOffset);
+        ResponseEntity<TextPageData<Asset>> assets = restTemplate.exchange(
+                baseURL + "/customer/{customerId}/assets?limit={limit}&type={type}&textSearch{textSearch}&idOffset={idOffset}&textOffset{textOffset}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<TextPageData<Asset>>() {
+                },
+                params);
+        return assets.getBody();
+    }
+
+    public List<Asset> getAssetsByIds(String[] assetIds) {
+        return restTemplate.exchange(baseURL + "/api/assets?assetIds={assetIds}", HttpMethod.GET, HttpEntity.EMPTY, new ParameterizedTypeReference<List<Asset>>() {
+        }, assetIds).getBody();
+    }
+
+    public List<Asset> findByQuery(AssetSearchQuery query) {
+        return restTemplate.exchange(URI.create(baseURL + "/api/assets"), HttpMethod.POST, new HttpEntity<>(query), new ParameterizedTypeReference<List<Asset>>() {
+        }).getBody();
+    }
+
+    public List<EntitySubtype> getAssetTypes() {
+        return restTemplate.exchange(URI.create(baseURL + "/api/asset/types"), HttpMethod.GET, HttpEntity.EMPTY, new ParameterizedTypeReference<List<EntitySubtype>>() {
+        }).getBody();
+    }
+
+    public TimePageData<AuditLog> getAuditLogsByCustomerId(String customerId, int limit, Long startTime, Long endTime, Boolean ascOrder, String offset, String actionTypes) {
+        Map<String, String> params = new HashMap<>();
+        params.put("customerId", customerId);
+        params.put("limit", String.valueOf(limit));
+        params.put("startTime", String.valueOf(startTime));
+        params.put("endTime", String.valueOf(endTime));
+        params.put("ascOrder", ascOrder == null ? "false" : String.valueOf(ascOrder));
+        params.put("offset", offset);
+        params.put("actionTypes", actionTypes);
+        ResponseEntity<TimePageData<AuditLog>> auditLog = restTemplate.exchange(
+                baseURL + "/audit/logs/customer/{customerId}?limit={limit}&startTime={startTime}&endTime={endTime}&ascOrder={ascOrder}&offset={offset}&actionTypes={actionTypes}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<TimePageData<AuditLog>>() {
+                },
+                params);
+        return auditLog.getBody();
+    }
+
+    public TimePageData<AuditLog> getAuditLogsByUserId(String userId, int limit, Long startTime, Long endTime, Boolean ascOrder, String offset, String actionTypes) {
+        Map<String, String> params = new HashMap<>();
+        params.put("userId", userId);
+        params.put("limit", String.valueOf(limit));
+        params.put("startTime", String.valueOf(startTime));
+        params.put("endTime", String.valueOf(endTime));
+        params.put("ascOrder", ascOrder == null ? "false" : String.valueOf(ascOrder));
+        params.put("offset", offset);
+        params.put("actionTypes", actionTypes);
+        ResponseEntity<TimePageData<AuditLog>> auditLog = restTemplate.exchange(
+                baseURL + "/audit/logs/user/{userId}?limit={limit}&startTime={startTime}&endTime={endTime}&ascOrder={ascOrder}&offset={offset}&actionTypes={actionTypes}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<TimePageData<AuditLog>>() {
+                },
+                params);
+        return auditLog.getBody();
+    }
+
+    public TimePageData<AuditLog> getAuditLogsByEntityId(String entityType, String entityId, int limit, Long startTime, Long endTime, Boolean ascOrder, String offset, String actionTypes) {
+        Map<String, String> params = new HashMap<>();
+        params.put("entityType", entityType);
+        params.put("entityId", entityId);
+        params.put("limit", String.valueOf(limit));
+        params.put("startTime", String.valueOf(startTime));
+        params.put("endTime", String.valueOf(endTime));
+        params.put("ascOrder", ascOrder == null ? "false" : String.valueOf(ascOrder));
+        params.put("offset", offset);
+        params.put("actionTypes", actionTypes);
+        ResponseEntity<TimePageData<AuditLog>> auditLog = restTemplate.exchange(
+                baseURL + "/audit/logs/entity/{entityType}/{entityId}?limit={limit}&startTime={startTime}&endTime={endTime}&ascOrder={ascOrder}&offset={offset}&actionTypes={actionTypes}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<TimePageData<AuditLog>>() {
+                },
+                params);
+        return auditLog.getBody();
+    }
+
+    public TimePageData<AuditLog> getAuditLogs(int limit, Long startTime, Long endTime, Boolean ascOrder, String offset, String actionTypes) {
+        Map<String, String> params = new HashMap<>();
+        params.put("limit", String.valueOf(limit));
+        params.put("startTime", String.valueOf(startTime));
+        params.put("endTime", String.valueOf(endTime));
+        params.put("ascOrder", ascOrder == null ? "false" : String.valueOf(ascOrder));
+        params.put("offset", offset);
+        params.put("actionTypes", actionTypes);
+        ResponseEntity<TimePageData<AuditLog>> auditLog = restTemplate.exchange(
+                baseURL + "/audit/logs?limit={limit}&startTime={startTime}&endTime={endTime}&ascOrder={ascOrder}&offset={offset}&actionTypes={actionTypes}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<TimePageData<AuditLog>>() {
+                },
+                params);
+        return auditLog.getBody();
     }
 }
