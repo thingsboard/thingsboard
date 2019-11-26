@@ -31,6 +31,8 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.User;
@@ -318,7 +320,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
         restTemplate.postForObject(baseURL + "/api/alarm/{alarmId}/clear", new Object(), Object.class, alarmId);
     }
 
-    public Optional<TimePageData<AlarmInfo>> getAlarms(String entityType, String entityId, String searchStatus, String status, TimePageLink pageLink, Boolean fetchOriginator) {
+    public TimePageData<AlarmInfo> getAlarms(String entityType, String entityId, String searchStatus, String status, TimePageLink pageLink, Boolean fetchOriginator) {
         Map<String, String> params = new HashMap<>();
         params.put("entityType", entityType);
         params.put("entityId", entityId);
@@ -338,18 +340,8 @@ public class RestClient implements ClientHttpRequestInterceptor {
         url.append("offset={offset}&");
         url.append("fetchOriginator={fetchOriginator}");
 
-        try {
-            ResponseEntity<TimePageData<AlarmInfo>> alarms = restTemplate.exchange(url.toString(), HttpMethod.GET, HttpEntity.EMPTY, new ParameterizedTypeReference<TimePageData<AlarmInfo>>() {
-            }, params);
-
-            return Optional.ofNullable(alarms.getBody());
-        } catch (HttpClientErrorException exception) {
-            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
-                return Optional.empty();
-            } else {
-                throw exception;
-            }
-        }
+        return restTemplate.exchange(url.toString(), HttpMethod.GET, HttpEntity.EMPTY, new ParameterizedTypeReference<TimePageData<AlarmInfo>>() {
+        }, params).getBody();
     }
 
     public Optional<AlarmSeverity> getHighestAlarmSeverity(String entityType, String entityId, String searchStatus, String status) {
@@ -411,9 +403,8 @@ public class RestClient implements ClientHttpRequestInterceptor {
 
     public Optional<Asset> unassignAssetFromCustomer(String assetId) {
         try {
-            Optional<Asset> asset = getAssetById(assetId);
-            restTemplate.delete(baseURL + "/api/customer/asset/{assetId}", assetId);
-            return asset;
+            ResponseEntity<Asset> asset = restTemplate.exchange(baseURL + "/api/customer/asset/{assetId}", HttpMethod.DELETE, HttpEntity.EMPTY, Asset.class, assetId);
+            return Optional.ofNullable(asset.getBody());
         } catch (HttpClientErrorException exception) {
             if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
                 return Optional.empty();
@@ -654,8 +645,8 @@ public class RestClient implements ClientHttpRequestInterceptor {
 
     public Optional<JsonNode> getShortCustomerInfoById(String customerId) {
         try {
-            ResponseEntity<JsonNode> info = restTemplate.getForEntity(baseURL + "/customer/{customerId}/shortInfo", JsonNode.class, customerId);
-            return Optional.ofNullable(info.getBody());
+            ResponseEntity<JsonNode> customerInfo = restTemplate.getForEntity(baseURL + "/customer/{customerId}/shortInfo", JsonNode.class, customerId);
+            return Optional.ofNullable(customerInfo.getBody());
         } catch (HttpClientErrorException exception) {
             if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
                 return Optional.empty();
@@ -665,7 +656,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
         }
     }
 
-    public String getCustomerTitleById( String customerId) {
+    public String getCustomerTitleById(String customerId) {
         return restTemplate.getForObject(baseURL + "/customer/{customerId}/title", String.class, customerId);
     }
 
@@ -681,20 +672,20 @@ public class RestClient implements ClientHttpRequestInterceptor {
         Map<String, String> params = new HashMap<>();
         addPageLinkToParam(params, pageLink);
 
-        ResponseEntity<TextPageData<Customer>> assets = restTemplate.exchange(
+        ResponseEntity<TextPageData<Customer>> customer = restTemplate.exchange(
                 baseURL + "/customers?limit={limit}&textSearch{textSearch}&idOffset={idOffset}&textOffset{textOffset}",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<TextPageData<Customer>>() {
                 },
                 params);
-        return assets.getBody();
+        return customer.getBody();
     }
 
     public Optional<Customer> getTenantCustomer(String customerTitle) {
         try {
-            ResponseEntity<Customer> componentDescriptor = restTemplate.getForEntity(baseURL + "/tenant/customers?customerTitle={customerTitle}", Customer.class, customerTitle);
-            return Optional.ofNullable(componentDescriptor.getBody());
+            ResponseEntity<Customer> customer = restTemplate.getForEntity(baseURL + "/tenant/customers?customerTitle={customerTitle}", Customer.class, customerTitle);
+            return Optional.ofNullable(customer.getBody());
         } catch (HttpClientErrorException exception) {
             if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
                 return Optional.empty();
@@ -702,6 +693,177 @@ public class RestClient implements ClientHttpRequestInterceptor {
                 throw exception;
             }
         }
+    }
+
+    public Long getServerTime() {
+        return restTemplate.getForObject(baseURL + "/dashboard/serverTime", Long.class);
+    }
+
+    public Long getMaxDatapointsLimit() {
+        return restTemplate.getForObject(baseURL + "/dashboard/maxDatapointsLimit", Long.class);
+    }
+
+    public Optional<DashboardInfo> getDashboardInfoById(String dashboardId) {
+        try {
+            ResponseEntity<DashboardInfo> dashboardInfo = restTemplate.getForEntity(baseURL + "/dashboard/info/{dashboardId}", DashboardInfo.class, dashboardId);
+            return Optional.ofNullable(dashboardInfo.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Optional<Dashboard> getDashboardById(String dashboardId) {
+        try {
+            ResponseEntity<Dashboard> dashboard = restTemplate.getForEntity(baseURL + "/dashboard/{dashboardId}", Dashboard.class, dashboardId);
+            return Optional.ofNullable(dashboard.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Dashboard saveDashboard(Dashboard dashboard) {
+        return restTemplate.postForEntity(baseURL + "/dashboard", dashboard, Dashboard.class).getBody();
+    }
+
+    public void deleteDashboard(String dashboardId) {
+        restTemplate.delete(baseURL + "/dashboard/{dashboardId}", dashboardId);
+    }
+
+    public Optional<Dashboard> assignDashboardToCustomer(String customerId, String dashboardId) {
+        try {
+            ResponseEntity<Dashboard> dashboard = restTemplate.getForEntity(baseURL + "/customer/{customerId}/dashboard/{dashboardId}", Dashboard.class, customerId, dashboardId);
+            return Optional.ofNullable(dashboard.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Optional<Dashboard> unassignDashboardFromCustomer(String customerId, String dashboardId) {
+        try {
+            ResponseEntity<Dashboard> dashboard = restTemplate.exchange(baseURL + "/customer/{customerId}/dashboard/{dashboardId}", HttpMethod.DELETE, HttpEntity.EMPTY, Dashboard.class, customerId, dashboardId);
+            return Optional.ofNullable(dashboard.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Optional<Dashboard> updateDashboardCustomers(String dashboardId, String[] customerIds) {
+        try {
+            ResponseEntity<Dashboard> dashboard = restTemplate.postForEntity(baseURL + "/dashboard/{dashboardId}/customers", customerIds, Dashboard.class, dashboardId);
+            return Optional.ofNullable(dashboard.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Optional<Dashboard> addDashboardCustomers(String dashboardId, String[] customerIds) {
+        try {
+            ResponseEntity<Dashboard> dashboard = restTemplate.postForEntity(baseURL + "/dashboard/{dashboardId}/customers/add", customerIds, Dashboard.class, dashboardId);
+            return Optional.ofNullable(dashboard.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Optional<Dashboard> removeDashboardCustomers(String dashboardId, String[] customerIds) {
+        try {
+            ResponseEntity<Dashboard> dashboard = restTemplate.postForEntity(baseURL + "/dashboard/{dashboardId}/customers/remove", customerIds, Dashboard.class, dashboardId);
+            return Optional.ofNullable(dashboard.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Optional<Dashboard> assignDashboardToPublicCustomer(String dashboardId) {
+        try {
+            ResponseEntity<Dashboard> dashboard = restTemplate.postForEntity(baseURL + "/customer/public/dashboard/{dashboardId}", null, Dashboard.class, dashboardId);
+            return Optional.ofNullable(dashboard.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Optional<Dashboard> unassignDashboardFromPublicCustomer(String dashboardId) {
+        try {
+            ResponseEntity<Dashboard> dashboard = restTemplate.exchange(baseURL + "/customer/public/dashboard/{dashboardId}", HttpMethod.DELETE, HttpEntity.EMPTY, Dashboard.class, dashboardId);
+            return Optional.ofNullable(dashboard.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public TextPageData<DashboardInfo> getTenantDashboards(String tenantId, TextPageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        params.put("tenantId", tenantId);
+        addPageLinkToParam(params, pageLink);
+        return restTemplate.exchange(
+                baseURL + "/tenant/{tenantId}/dashboards?limit={limit}&textSearch{textSearch}&idOffset={idOffset}&textOffset{textOffset}",
+                HttpMethod.GET, HttpEntity.EMPTY,
+                new ParameterizedTypeReference<TextPageData<DashboardInfo>>() {
+                },
+                params
+        ).getBody();
+    }
+
+    public TextPageData<DashboardInfo> getTenantDashboards(TextPageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
+        return restTemplate.exchange(
+                baseURL + "/tenant/dashboards?limit={limit}&textSearch{textSearch}&idOffset={idOffset}&textOffset{textOffset}",
+                HttpMethod.GET, HttpEntity.EMPTY,
+                new ParameterizedTypeReference<TextPageData<DashboardInfo>>() {
+                },
+                params
+        ).getBody();
+    }
+
+    public TimePageData<DashboardInfo> getCustomerDashboards(String customerId, TimePageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        params.put("customerId", customerId);
+        addPageLinkToParam(params, pageLink);
+        return restTemplate.exchange(
+                baseURL + "/customer/{customerId}/dashboards?limit={limit}&startTime={startTime}&endTime={endTime}&ascOrder={ascOrder}&offset={offset}",
+                HttpMethod.GET, HttpEntity.EMPTY,
+                new ParameterizedTypeReference<TimePageData<DashboardInfo>>() {
+                },
+                params
+        ).getBody();
     }
 
     private void addPageLinkToParam(Map<String, String> params, TimePageLink pageLink) {
