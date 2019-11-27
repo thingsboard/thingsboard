@@ -54,6 +54,8 @@ import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.EntityRelationInfo;
+import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 
@@ -1040,6 +1042,160 @@ public class RestClient implements ClientHttpRequestInterceptor {
                 new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
                 },
                 deviceName).getBody();
+    }
+
+    public void saveRelation(EntityRelation relation) {
+        restTemplate.postForEntity(baseURL + "/relation", relation, Object.class);
+    }
+
+    public void deleteRelation(String fromId, String fromType, String relationType, String relationTypeGroup, String toId, String toType) {
+        Map<String, String> params = new HashMap<>();
+        params.put("fromId", fromId);
+        params.put("fromType", fromType);
+        params.put("relationType", relationType);
+        params.put("relationTypeGroup", relationTypeGroup);
+        params.put("toId", toId);
+        params.put("toType", toType);
+        restTemplate.delete(baseURL + "/relation?fromId={fromId}&fromType={fromType}&relationType={relationType}&relationTypeGroup={relationTypeGroup}&toId={toId}&toType={toType}", params);
+    }
+
+    public void deleteRelations(String entityId, String entityType) {
+        restTemplate.delete(baseURL + "/relations?entityId={entityId}&entityType={entityType}", entityId, entityType);
+    }
+
+    public Optional<EntityRelation> getRelation(String fromId, String fromType, String relationType, String relationTypeGroup, String toId, String toType) {
+        Map<String, String> params = new HashMap<>();
+        params.put("fromId", fromId);
+        params.put("fromType", fromType);
+        params.put("relationType", relationType);
+        params.put("relationTypeGroup", relationTypeGroup);
+        params.put("toId", toId);
+        params.put("toType", toType);
+
+        try {
+            ResponseEntity<EntityRelation> entityRelation = restTemplate.getForEntity(
+                    baseURL + "/relation?fromId={fromId}&fromType={fromType}&relationType={relationType}&relationTypeGroup={relationTypeGroup}&toId={toId}&toType={toType}",
+                    EntityRelation.class,
+                    params);
+            return Optional.ofNullable(entityRelation.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public List<EntityRelation> findByFrom(String fromId, String fromType, String relationTypeGroup) {
+        Map<String, String> params = new HashMap<>();
+        params.put("fromId", fromId);
+        params.put("fromType", fromType);
+        params.put("relationTypeGroup", relationTypeGroup);
+
+        return restTemplate.exchange(
+                baseURL + "/relations?fromId={fromId}&fromType={fromType}&relationTypeGroup={relationTypeGroup}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<List<EntityRelation>>() {
+                },
+                params).getBody();
+    }
+
+    public List<EntityRelationInfo> findInfoByFrom(String fromId, String fromType, String relationTypeGroup) {
+
+        Map<String, String> params = new HashMap<>();
+        params.put("fromId", fromId);
+        params.put("fromType", fromType);
+        params.put("relationTypeGroup", relationTypeGroup);
+
+        return restTemplate.exchange(
+                baseURL + "/relations/info?fromId={fromId}&fromType={fromType}&relationTypeGroup={relationTypeGroup}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<List<EntityRelationInfo>>() {
+                },
+                params).getBody();
+    }
+
+    public List<EntityRelation> findByFrom(String fromId, String fromType, String relationType, String relationTypeGroup) {
+        Map<String, String> params = new HashMap<>();
+        params.put("fromId", fromId);
+        params.put("fromType", fromType);
+        params.put("relationType", relationType);
+        params.put("relationTypeGroup", relationTypeGroup);
+
+        return restTemplate.exchange(
+                baseURL + "/relations?fromId={fromId}&fromType={fromType}&relationType={relationType}&relationTypeGroup={relationTypeGroup}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<List<EntityRelation>>() {
+                },
+                params).getBody();
+    }
+
+    public List<EntityRelation> findByTo(String toId, String toType, String relationTypeGroup) {
+        Map<String, String> params = new HashMap<>();
+        params.put("toId", toId);
+        params.put("toType", toType);
+        params.put("relationTypeGroup", relationTypeGroup);
+
+        return restTemplate.exchange(
+                baseURL + "/relations?toId={toId}&toType={toType}&relationTypeGroup={relationTypeGroup}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<List<EntityRelation>>() {
+                },
+                params).getBody();
+    }
+
+    public List<EntityRelationInfo> findInfoByTo(String toId, String toType, String relationTypeGroup) {
+        Map<String, String> params = new HashMap<>();
+        params.put("toId", toId);
+        params.put("toType", toType);
+        params.put("relationTypeGroup", relationTypeGroup);
+
+        return restTemplate.exchange(
+                baseURL + "/relations?toId={toId}&toType={toType}&relationTypeGroup={relationTypeGroup}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<List<EntityRelationInfo>>() {
+                },
+                params).getBody();
+    }
+
+    public List<EntityRelation> findByTo(String toId, String toType, String relationType, String relationTypeGroup) {
+        Map<String, String> params = new HashMap<>();
+        params.put("toId", toId);
+        params.put("toType", toType);
+        params.put("relationType", relationType);
+        params.put("relationTypeGroup", relationTypeGroup);
+
+        return restTemplate.exchange(
+                baseURL + "/relations?toId={toId}&toType={toType}&relationType={relationType}&relationTypeGroup={relationTypeGroup}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<List<EntityRelation>>() {
+                },
+                params).getBody();
+    }
+
+    public List<EntityRelation> findByQuery(EntityRelationsQuery query) {
+        return restTemplate.exchange(
+                baseURL + "/relations",
+                HttpMethod.POST,
+                new HttpEntity<>(query),
+                new ParameterizedTypeReference<List<EntityRelation>>() {
+                }).getBody();
+    }
+
+    public List<EntityRelationInfo> findInfoByQuery(EntityRelationsQuery query) {
+        return restTemplate.exchange(
+                baseURL + "/relations",
+                HttpMethod.POST,
+                new HttpEntity<>(query),
+                new ParameterizedTypeReference<List<EntityRelationInfo>>() {
+                }).getBody();
     }
 
     private void addPageLinkToParam(Map<String, String> params, TimePageLink pageLink) {
