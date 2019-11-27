@@ -27,6 +27,7 @@ import org.springframework.http.client.support.HttpRequestWrapper;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
@@ -50,9 +51,9 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class RestClient implements ClientHttpRequestInterceptor {
     private static final String JWT_TOKEN_HEADER_PARAM = "X-Authorization";
-    private final RestTemplate restTemplate = new RestTemplate();
+    protected final RestTemplate restTemplate = new RestTemplate();
+    protected final String baseURL;
     private String token;
-    private final String baseURL;
 
     public void login(String username, String password) {
         Map<String, String> loginRequest = new HashMap<>();
@@ -200,6 +201,10 @@ public class RestClient implements ClientHttpRequestInterceptor {
         relation.setTo(idTo);
         relation.setType(relationType);
         return restTemplate.postForEntity(baseURL + "/api/relation", relation, EntityRelation.class).getBody();
+    }
+
+    public Dashboard createDashboard(Dashboard dashboard) {
+        return restTemplate.postForEntity(baseURL + "/api/dashboard", dashboard, Dashboard.class).getBody();
     }
 
     public DeviceCredentials getCredentials(DeviceId id) {
