@@ -29,6 +29,7 @@ import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.client.support.HttpRequestWrapper;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
@@ -42,6 +43,7 @@ import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetSearchQuery;
 import org.thingsboard.server.common.data.audit.AuditLog;
+import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -72,6 +74,9 @@ public class RestClient implements ClientHttpRequestInterceptor {
     private final RestTemplate restTemplate = new RestTemplate();
     private String token;
     private final String baseURL;
+    private final static String TIME_PAGE_LINK_URL_PARAMS = "limit={limit}&startTime={startTime}&endTime={endTime}&ascOrder={ascOrder}&offset={offset}";
+    private final static String TEXT_PAGE_LINK_URL_PARAMS = "limit={limit}&textSearch{textSearch}&idOffset={idOffset}&textOffset{textOffset}";
+
 
     @Override
     public ClientHttpResponse intercept(HttpRequest request, byte[] bytes, ClientHttpRequestExecution execution) throws IOException {
@@ -174,10 +179,6 @@ public class RestClient implements ClientHttpRequestInterceptor {
         deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
         deviceCredentials.setCredentialsId(token);
         return saveDeviceCredentials(deviceCredentials);
-    }
-
-    public DeviceCredentials saveDeviceCredentials(DeviceCredentials deviceCredentials) {
-        return restTemplate.postForEntity(baseURL + "/api/device/credentials", deviceCredentials, DeviceCredentials.class).getBody();
     }
 
     public Device createDevice(Device device) {
@@ -390,7 +391,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
         params.put("assetId", assetId);
 
         try {
-            ResponseEntity<Asset> asset = restTemplate.postForEntity(baseURL + "/api/customer/{customerId}/asset/{assetId}", HttpEntity.EMPTY, Asset.class, params);
+            ResponseEntity<Asset> asset = restTemplate.postForEntity(baseURL + "/api/customer/{customerId}/asset/{assetId}", null, Asset.class, params);
             return Optional.ofNullable(asset.getBody());
         } catch (HttpClientErrorException exception) {
             if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
@@ -416,7 +417,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
 
     public Optional<Asset> assignAssetToPublicCustomer(String assetId) {
         try {
-            ResponseEntity<Asset> asset = restTemplate.postForEntity(baseURL + "/api/customer/public/asset/{assetId}", HttpEntity.EMPTY, Asset.class, assetId);
+            ResponseEntity<Asset> asset = restTemplate.postForEntity(baseURL + "/api/customer/public/asset/{assetId}", null, Asset.class, assetId);
             return Optional.ofNullable(asset.getBody());
         } catch (HttpClientErrorException exception) {
             if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
@@ -739,7 +740,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
 
     public Optional<Dashboard> assignDashboardToCustomer(String customerId, String dashboardId) {
         try {
-            ResponseEntity<Dashboard> dashboard = restTemplate.getForEntity(baseURL + "/customer/{customerId}/dashboard/{dashboardId}", Dashboard.class, customerId, dashboardId);
+            ResponseEntity<Dashboard> dashboard = restTemplate.postForEntity(baseURL + "/customer/{customerId}/dashboard/{dashboardId}", null, Dashboard.class, customerId, dashboardId);
             return Optional.ofNullable(dashboard.getBody());
         } catch (HttpClientErrorException exception) {
             if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
@@ -864,6 +865,166 @@ public class RestClient implements ClientHttpRequestInterceptor {
                 },
                 params
         ).getBody();
+    }
+
+    public Optional<Device> getDeviceById(String deviceId) {
+        try {
+            ResponseEntity<Device> device = restTemplate.getForEntity(baseURL + "/device/{deviceId}", Device.class, deviceId);
+            return Optional.ofNullable(device.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Device saveDevice(Device device) {
+        return restTemplate.postForEntity(baseURL + "/device", device, Device.class).getBody();
+    }
+
+    public void deleteDevice(String deviceId) {
+        restTemplate.delete(baseURL + "/device/{deviceId}", deviceId);
+    }
+
+    public Optional<Device> assignDeviceToCustomer(String customerId, String deviceId) {
+        try {
+            ResponseEntity<Device> device = restTemplate.postForEntity(baseURL + "/customer/{customerId}/device/{deviceId}", null, Device.class, customerId, deviceId);
+            return Optional.ofNullable(device.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Optional<Device> unassignDeviceFromCustomer(String deviceId) {
+        try {
+            ResponseEntity<Device> device = restTemplate.exchange(baseURL + "/customer/device/{deviceId}", HttpMethod.DELETE, HttpEntity.EMPTY, Device.class, deviceId);
+            return Optional.ofNullable(device.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Optional<Device> assignDeviceToPublicCustomer(String deviceId) {
+        try {
+            ResponseEntity<Device> device = restTemplate.postForEntity(baseURL + "/customer/public/device/{deviceId}", null, Device.class, deviceId);
+            return Optional.ofNullable(device.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Optional<DeviceCredentials> getDeviceCredentialsByDeviceId(String deviceId) {
+        try {
+            ResponseEntity<DeviceCredentials> deviceCredentials = restTemplate.getForEntity(baseURL + "/device/{deviceId}/credentials", DeviceCredentials.class, deviceId);
+            return Optional.ofNullable(deviceCredentials.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public DeviceCredentials saveDeviceCredentials(DeviceCredentials deviceCredentials) {
+        return restTemplate.postForEntity(baseURL + "/api/device/credentials", deviceCredentials, DeviceCredentials.class).getBody();
+    }
+
+    public TextPageData<Device> getTenantDevices(String type, TextPageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        params.put("type", type);
+        addPageLinkToParam(params, pageLink);
+        return restTemplate.exchange(
+                baseURL + "/tenant/devices?type={type}&" + TEXT_PAGE_LINK_URL_PARAMS,
+                HttpMethod.GET, HttpEntity.EMPTY,
+                new ParameterizedTypeReference<TextPageData<Device>>() {
+                },
+                params)
+                .getBody();
+    }
+
+    public Optional<Device> getTenantDevice(String deviceName) {
+        try {
+            ResponseEntity<Device> device = restTemplate.getForEntity(baseURL + "/tenant/devices?deviceName={deviceName}", Device.class, deviceName);
+            return Optional.ofNullable(device.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public TextPageData<Device> getCustomerDevices(String customerId, String type, TextPageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        params.put("customerId", customerId);
+        params.put("type", type);
+        addPageLinkToParam(params, pageLink);
+        return restTemplate.exchange(
+                baseURL + "/customer/{customerId}/devices?type={type}&" + TEXT_PAGE_LINK_URL_PARAMS,
+                HttpMethod.GET, HttpEntity.EMPTY,
+                new ParameterizedTypeReference<TextPageData<Device>>() {
+                },
+                params)
+                .getBody();
+    }
+
+    public List<Device> getDevicesByIds(String[] deviceIds) {
+        return restTemplate.exchange(baseURL + "/devices?deviceIds={deviceIds}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY, new ParameterizedTypeReference<List<Device>>() {
+                },
+                deviceIds).getBody();
+    }
+
+    public List<Device> findByQuery(DeviceSearchQuery query) {
+        return restTemplate.exchange(
+                baseURL + "/devices",
+                HttpMethod.POST,
+                new HttpEntity<>(query),
+                new ParameterizedTypeReference<List<Device>>() {
+                }).getBody();
+    }
+
+    public List<EntitySubtype> getDeviceTypes() {
+        return restTemplate.exchange(
+                baseURL + "/devices",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<List<EntitySubtype>>() {
+                }).getBody();
+    }
+
+    //TODO: ClaimRequest class
+//    @RequestMapping(value = "/customer/device/{deviceName}/claim", method = RequestMethod.POST)
+//    public DeferredResult<ResponseEntity> claimDevice(String deviceName, ClaimRequest claimRequest) {
+//        return restTemplate.exchange(baseURL + "/customer/device/{deviceName}/claim", HttpMethod.POST, new HttpEntity<>(claimRequest), new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+//        }, deviceName).getBody();
+//    }
+
+    public DeferredResult<ResponseEntity> reClaimDevice(String deviceName) {
+        return restTemplate.exchange(
+                baseURL + "/customer/device/{deviceName}/claim",
+                HttpMethod.DELETE,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                },
+                deviceName).getBody();
     }
 
     private void addPageLinkToParam(Map<String, String> params, TimePageLink pageLink) {
