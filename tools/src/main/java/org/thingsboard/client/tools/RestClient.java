@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
@@ -1312,6 +1313,39 @@ public class RestClient implements ClientHttpRequestInterceptor {
                 throw exception;
             }
         }
+    }
+
+    public TimePageData<Event> getEvents(String entityType, String entityId, String eventType, String tenantId, TimePageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        params.put("entityType", entityType);
+        params.put("entityId", entityId);
+        params.put("eventType", eventType);
+        params.put("tenantId", tenantId);
+        addPageLinkToParam(params, pageLink);
+
+        return restTemplate.exchange(
+                baseURL + "/events/{entityType}/{entityId}/{eventType}?tenantId={tenantId}&" + TIME_PAGE_LINK_URL_PARAMS,
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<TimePageData<Event>>() {
+                },
+                params).getBody();
+    }
+
+    public TimePageData<Event> getEvents(String entityType, String entityId, String tenantId, TimePageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        params.put("entityType", entityType);
+        params.put("entityId", entityId);
+        params.put("tenantId", tenantId);
+        addPageLinkToParam(params, pageLink);
+
+        return restTemplate.exchange(
+                baseURL + "/events/{entityType}/{entityId}?tenantId={tenantId}&" + TIME_PAGE_LINK_URL_PARAMS,
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<TimePageData<Event>>() {
+                },
+                params).getBody();
     }
 
     private void addPageLinkToParam(Map<String, String> params, TimePageLink pageLink) {
