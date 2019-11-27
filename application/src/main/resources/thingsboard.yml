@@ -215,7 +215,7 @@ actors:
       timeout: "${ACTORS_SESSION_SYNC_TIMEOUT:10000}"
   rule:
     # Specify thread pool size for database request callbacks executor service
-    db_callback_thread_pool_size: "${ACTORS_RULE_DB_CALLBACK_THREAD_POOL_SIZE:1}"
+    db_callback_thread_pool_size: "${ACTORS_RULE_DB_CALLBACK_THREAD_POOL_SIZE:50}"
     # Specify thread pool size for javascript executor service
     js_thread_pool_size: "${ACTORS_RULE_JS_THREAD_POOL_SIZE:50}"
     # Specify thread pool size for mail sender executor service
