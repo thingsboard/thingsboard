@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
@@ -44,6 +45,7 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetSearchQuery;
 import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
+import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -1196,6 +1198,121 @@ public class RestClient implements ClientHttpRequestInterceptor {
                 new HttpEntity<>(query),
                 new ParameterizedTypeReference<List<EntityRelationInfo>>() {
                 }).getBody();
+    }
+
+    public Optional<EntityView> getEntityViewById(String entityViewId) {
+        try {
+            ResponseEntity<EntityView> entityView = restTemplate.getForEntity(baseURL + "/entityView/{entityViewId}", EntityView.class, entityViewId);
+            return Optional.ofNullable(entityView.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public EntityView saveEntityView(EntityView entityView) {
+        return restTemplate.postForEntity(baseURL + "entityView", entityView, EntityView.class).getBody();
+    }
+
+    public void deleteEntityView(String entityViewId) {
+        restTemplate.delete(baseURL + "/entityView/{entityViewId}", entityViewId);
+    }
+
+    public Optional<EntityView> getTenantEntityView(String entityViewName) {
+        try {
+            ResponseEntity<EntityView> entityView = restTemplate.getForEntity(baseURL + "/tenant/entityViews?entityViewName={entityViewName}", EntityView.class, entityViewName);
+            return Optional.ofNullable(entityView.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    //    @RequestMapping(value = "/customer/{customerId}/entityView/{entityViewId}", method = RequestMethod.POST)
+    public Optional<EntityView> assignEntityViewToCustomer(String customerId, String entityViewId) {
+        try {
+            ResponseEntity<EntityView> entityView = restTemplate.getForEntity(baseURL + "/customer/{customerId}/entityView/{entityViewId}", EntityView.class, customerId, entityViewId);
+            return Optional.ofNullable(entityView.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Optional<EntityView> unassignEntityViewFromCustomer(String entityViewId) {
+        try {
+            ResponseEntity<EntityView> entityView = restTemplate.exchange(
+                    baseURL + "/customer/entityView/{entityViewId}",
+                    HttpMethod.DELETE,
+                    HttpEntity.EMPTY,
+                    EntityView.class, entityViewId);
+            return Optional.ofNullable(entityView.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public TextPageData<EntityView> getCustomerEntityViews(String customerId, String type, TextPageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        params.put("customerId", customerId);
+        params.put("type", type);
+        addPageLinkToParam(params, pageLink);
+        return restTemplate.exchange(
+                baseURL + "/customer/{customerId}/entityViews?type={type}&" + TEXT_PAGE_LINK_URL_PARAMS,
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<TextPageData<EntityView>>() {
+                },
+                params).getBody();
+    }
+
+    public TextPageData<EntityView> getTenantEntityViews(String type, TextPageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        params.put("type", type);
+        addPageLinkToParam(params, pageLink);
+        return restTemplate.exchange(
+                baseURL + "/tenant/entityViews?type={type}&" + TEXT_PAGE_LINK_URL_PARAMS,
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<TextPageData<EntityView>>() {
+                },
+                params).getBody();
+    }
+
+    public List<EntityView> findByQuery(EntityViewSearchQuery query) {
+        return restTemplate.exchange(baseURL + "/entityViews", HttpMethod.POST, new HttpEntity<>(query), new ParameterizedTypeReference<List<EntityView>>() {
+        }).getBody();
+    }
+
+    public List<EntitySubtype> getEntityViewTypes() {
+        return restTemplate.exchange(baseURL + "/entityView/types", HttpMethod.GET, HttpEntity.EMPTY, new ParameterizedTypeReference<List<EntitySubtype>>() {
+        }).getBody();
+    }
+
+    public Optional<EntityView> assignEntityViewToPublicCustomer(String entityViewId) {
+        try {
+            ResponseEntity<EntityView> entityView = restTemplate.postForEntity(baseURL + "customer/public/entityView/{entityViewId}", null, EntityView.class, entityViewId);
+            return Optional.ofNullable(entityView.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
     }
 
     private void addPageLinkToParam(Map<String, String> params, TimePageLink pageLink) {
