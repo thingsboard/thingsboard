@@ -58,7 +58,7 @@ public class PsqlTimeseriesInsertRepository extends AbstractTimeseriesInsertRepo
                 .setParameter("entity_id", entity.getEntityId())
                 .setParameter("key", entity.getKey())
                 .setParameter("ts", entity.getTs())
-                .setParameter("str_v", entity.getStrValue())
+                .setParameter("str_v", replaceNullChars(entity.getStrValue()))
                 .executeUpdate();
     }
 

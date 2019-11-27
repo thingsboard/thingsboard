@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.sql.attributes;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -34,11 +35,15 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 @SqlDao
 @Repository
 @Slf4j
 public abstract class AttributeKvInsertRepository {
+
+    private static final ThreadLocal<Pattern> PATTERN_THREAD_LOCAL = ThreadLocal.withInitial(() -> Pattern.compile(String.valueOf(Character.MIN_VALUE)));
+    private static final String EMPTY_STR = "";
 
     private static final String BATCH_UPDATE = "UPDATE attribute_kv SET str_v = ?, long_v = ?, dbl_v = ?, bool_v = ?, last_update_ts = ? " +
             "WHERE entity_type = ? and entity_id = ? and attribute_type =? and attribute_key = ?;";
@@ -59,6 +64,9 @@ public abstract class AttributeKvInsertRepository {
 
     @Autowired
     private TransactionTemplate transactionTemplate;
+
+    @Value("${sql.remove_null_chars}")
+    private boolean removeNullChars;
 
     @PersistenceContext
     protected EntityManager entityManager;
@@ -99,7 +107,7 @@ public abstract class AttributeKvInsertRepository {
                 .setParameter("entity_id", entity.getId().getEntityId())
                 .setParameter("attribute_type", entity.getId().getAttributeType())
                 .setParameter("attribute_key", entity.getId().getAttributeKey())
-                .setParameter("str_v", entity.getStrValue())
+                .setParameter("str_v", replaceNullChars(entity.getStrValue()))
                 .setParameter("last_update_ts", entity.getLastUpdateTs())
                 .executeUpdate();
     }
@@ -135,7 +143,7 @@ public abstract class AttributeKvInsertRepository {
                 int[] result = jdbcTemplate.batchUpdate(BATCH_UPDATE, new BatchPreparedStatementSetter() {
                     @Override
                     public void setValues(PreparedStatement ps, int i) throws SQLException {
-                        ps.setString(1, entities.get(i).getStrValue());
+                        ps.setString(1, replaceNullChars(entities.get(i).getStrValue()));
 
                         if (entities.get(i).getLongValue() != null) {
                             ps.setLong(2, entities.get(i).getLongValue());
@@ -189,8 +197,8 @@ public abstract class AttributeKvInsertRepository {
                         ps.setString(2, insertEntities.get(i).getId().getEntityId());
                         ps.setString(3, insertEntities.get(i).getId().getAttributeType());
                         ps.setString(4, insertEntities.get(i).getId().getAttributeKey());
-                        ps.setString(5, insertEntities.get(i).getStrValue());
-                        ps.setString(10, insertEntities.get(i).getStrValue());
+                        ps.setString(5, replaceNullChars(insertEntities.get(i).getStrValue()));
+                        ps.setString(10, replaceNullChars(insertEntities.get(i).getStrValue()));
 
                         if (insertEntities.get(i).getLongValue() != null) {
                             ps.setLong(6, insertEntities.get(i).getLongValue());
@@ -229,4 +237,10 @@ public abstract class AttributeKvInsertRepository {
         });
     }
 
+    private String replaceNullChars(String strValue) {
+        if (removeNullChars && strValue != null) {
+            return PATTERN_THREAD_LOCAL.get().matcher(strValue).replaceAll(EMPTY_STR);
+        }
+        return strValue;
+    }
 }

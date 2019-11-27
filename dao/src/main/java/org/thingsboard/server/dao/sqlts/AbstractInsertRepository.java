@@ -15,13 +15,18 @@
  */
 package org.thingsboard.server.dao.sqlts;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import java.util.regex.Pattern;
 
 @Repository
 public abstract class AbstractInsertRepository {
+
+    private static final ThreadLocal<Pattern> PATTERN_THREAD_LOCAL = ThreadLocal.withInitial(() -> Pattern.compile(String.valueOf(Character.MIN_VALUE)));
+    private static final String EMPTY_STR = "";
 
     protected static final String BOOL_V = "bool_v";
     protected static final String STR_V = "str_v";
@@ -45,6 +50,9 @@ public abstract class AbstractInsertRepository {
     protected static final String PSQL_ON_STR_VALUE_UPDATE_SET_NULLS = "bool_v = null, long_v = null, dbl_v = null";
     protected static final String PSQL_ON_LONG_VALUE_UPDATE_SET_NULLS = "str_v = null, bool_v = null, dbl_v = null";
     protected static final String PSQL_ON_DBL_VALUE_UPDATE_SET_NULLS = "str_v = null, long_v = null, bool_v = null";
+
+    @Value("${sql.remove_null_chars}")
+    private boolean removeNullChars;
 
     @PersistenceContext
     protected EntityManager entityManager;
@@ -70,5 +78,12 @@ public abstract class AbstractInsertRepository {
             default:
                 throw new RuntimeException("Unsupported insert value: [" + notNullValue + "]");
         }
+    }
+
+    protected String replaceNullChars(String strValue) {
+        if (removeNullChars) {
+            return PATTERN_THREAD_LOCAL.get().matcher(strValue).replaceAll(EMPTY_STR);
+        }
+        return strValue;
     }
 }
