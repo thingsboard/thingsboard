@@ -86,8 +86,8 @@ cluster:
   # Queue partition id for current node
   partition_id: "${QUEUE_PARTITION_ID:0}"
   stats:
-    enabled: "${TB_RULE_ENGINE_STATS_ENABLED:false}"
-    print_interval_ms: "${TB_RULE_ENGINE_STATS_PRINT_INTERVAL_MS:10000}"
+    enabled: "${TB_CLUSTER_STATS_ENABLED:false}"
+    print_interval_ms: "${TB_CLUSTER_STATS_PRINT_INTERVAL_MS:10000}"
 
 # Plugins configuration parameters
 plugins:
