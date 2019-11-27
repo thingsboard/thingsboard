@@ -1348,6 +1348,26 @@ public class RestClient implements ClientHttpRequestInterceptor {
                 params).getBody();
     }
 
+    public DeferredResult<ResponseEntity> handleOneWayDeviceRPCRequest(String deviceId, String requestBody) {
+        return restTemplate.exchange(
+                baseURL + "/oneway/{deviceId}",
+                HttpMethod.POST,
+                new HttpEntity<>(requestBody),
+                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                },
+                deviceId).getBody();
+    }
+
+    public DeferredResult<ResponseEntity> handleTwoWayDeviceRPCRequest(String deviceId, String requestBody) {
+        return restTemplate.exchange(
+                baseURL + "/twoway/{deviceId}",
+                HttpMethod.POST,
+                new HttpEntity<>(requestBody),
+                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                },
+                deviceId).getBody();
+    }
+
     private void addPageLinkToParam(Map<String, String> params, TimePageLink pageLink) {
         params.put("limit", String.valueOf(pageLink.getLimit()));
         params.put("startTime", String.valueOf(pageLink.getStartTime()));
