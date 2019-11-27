@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql.component;
+package org.thingsboard.server.dao.sql.event;
 
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
@@ -24,14 +24,14 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.thingsboard.server.common.data.UUIDConverter;
-import org.thingsboard.server.dao.model.sql.ComponentDescriptorEntity;
+import org.thingsboard.server.dao.model.sql.EventEntity;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
 @Slf4j
-public abstract class AbstractComponentDescriptorInsertRepository implements ComponentDescriptorInsertRepository {
+public abstract class AbstractEventInsertRepository implements EventInsertRepository {
 
     @PersistenceContext
     protected EntityManager entityManager;
@@ -39,47 +39,46 @@ public abstract class AbstractComponentDescriptorInsertRepository implements Com
     @Autowired
     protected PlatformTransactionManager transactionManager;
 
-    protected ComponentDescriptorEntity saveAndGet(ComponentDescriptorEntity entity, String insertOrUpdateOnPrimaryKeyConflict, String insertOrUpdateOnUniqueKeyConflict) {
-        ComponentDescriptorEntity componentDescriptorEntity = null;
+    protected EventEntity saveAndGet(EventEntity entity, String insertOrUpdateOnPrimaryKeyConflict, String insertOrUpdateOnUniqueKeyConflict) {
+        EventEntity eventEntity = null;
         TransactionStatus insertTransaction = getTransactionStatus(TransactionDefinition.PROPAGATION_REQUIRED);
         try {
-            componentDescriptorEntity = processSaveOrUpdate(entity, insertOrUpdateOnPrimaryKeyConflict);
+            eventEntity = processSaveOrUpdate(entity, insertOrUpdateOnPrimaryKeyConflict);
             transactionManager.commit(insertTransaction);
         } catch (Throwable throwable) {
             transactionManager.rollback(insertTransaction);
             if (throwable.getCause() instanceof ConstraintViolationException) {
-                log.trace("Insert request leaded in a violation of a defined integrity constraint {} for Component Descriptor with id {}, name {} and entityType {}", throwable.getMessage(), entity.getId(), entity.getName(), entity.getType());
+                log.trace("Insert request leaded in a violation of a defined integrity constraint {} for Entity with entityId {} and entityType {}", throwable.getMessage(), entity.getEventUid(), entity.getEventType());
                 TransactionStatus transaction = getTransactionStatus(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
                 try {
-                    componentDescriptorEntity = processSaveOrUpdate(entity, insertOrUpdateOnUniqueKeyConflict);
+                    eventEntity = processSaveOrUpdate(entity, insertOrUpdateOnUniqueKeyConflict);
                 } catch (Throwable th) {
-                    log.trace("Could not execute the update statement for Component Descriptor with id {}, name {} and entityType {}", entity.getId(), entity.getName(), entity.getType());
+                    log.trace("Could not execute the update statement for Entity with entityId {} and entityType {}", entity.getEventUid(), entity.getEventType());
                     transactionManager.rollback(transaction);
                 }
                 transactionManager.commit(transaction);
             } else {
-                log.trace("Could not execute the insert statement for Component Descriptor with id {}, name {} and entityType {}", entity.getId(), entity.getName(), entity.getType());
+                log.trace("Could not execute the insert statement for Entity with entityId {} and entityType {}", entity.getEventUid(), entity.getEventType());
             }
         }
-        return componentDescriptorEntity;
+        return eventEntity;
     }
 
     @Modifying
-    protected abstract ComponentDescriptorEntity doProcessSaveOrUpdate(ComponentDescriptorEntity entity, String query);
+    protected abstract EventEntity doProcessSaveOrUpdate(EventEntity entity, String query);
 
-    protected Query getQuery(ComponentDescriptorEntity entity, String query) {
-        return entityManager.createNativeQuery(query, ComponentDescriptorEntity.class)
+    protected Query getQuery(EventEntity entity, String query) {
+        return entityManager.createNativeQuery(query, EventEntity.class)
                 .setParameter("id", UUIDConverter.fromTimeUUID(entity.getId()))
-                .setParameter("actions", entity.getActions())
-                .setParameter("clazz", entity.getClazz())
-                .setParameter("configuration_descriptor", entity.getConfigurationDescriptor().toString())
-                .setParameter("name", entity.getName())
-                .setParameter("scope", entity.getScope().name())
-                .setParameter("search_text", entity.getSearchText())
-                .setParameter("type", entity.getType().name());
+                .setParameter("body", entity.getBody().toString())
+                .setParameter("entity_id", entity.getEntityId())
+                .setParameter("entity_type", entity.getEntityType().name())
+                .setParameter("event_type", entity.getEventType())
+                .setParameter("event_uid", entity.getEventUid())
+                .setParameter("tenant_id", entity.getTenantId());
     }
 
-    private ComponentDescriptorEntity processSaveOrUpdate(ComponentDescriptorEntity entity, String query) {
+    private EventEntity processSaveOrUpdate(EventEntity entity, String query) {
         return doProcessSaveOrUpdate(entity, query);
     }
 
