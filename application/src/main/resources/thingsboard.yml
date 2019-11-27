@@ -204,6 +204,8 @@ sql:
       batch_size: "${SQL_ATTRIBUTES_BATCH_SIZE:10000}"
       batch_max_delay: "${SQL_ATTRIBUTES_BATCH_MAX_DELAY_MS:100}"
       stats_print_interval_ms: "${SQL_ATTRIBUTES_BATCH_STATS_PRINT_MS:1000}"
+    # Specify whether to remove null characters from strValue of attributes and timeseries before insert
+    remove_null_chars: "${SQL_REMOVE_NULL_CHARS:true}"
 
 # Actor system parameters
 actors:
