@@ -1234,10 +1234,9 @@ public class RestClient implements ClientHttpRequestInterceptor {
         }
     }
 
-    //    @RequestMapping(value = "/customer/{customerId}/entityView/{entityViewId}", method = RequestMethod.POST)
     public Optional<EntityView> assignEntityViewToCustomer(String customerId, String entityViewId) {
         try {
-            ResponseEntity<EntityView> entityView = restTemplate.getForEntity(baseURL + "/customer/{customerId}/entityView/{entityViewId}", EntityView.class, customerId, entityViewId);
+            ResponseEntity<EntityView> entityView = restTemplate.postForEntity(baseURL + "/customer/{customerId}/entityView/{entityViewId}", null, EntityView.class, customerId, entityViewId);
             return Optional.ofNullable(entityView.getBody());
         } catch (HttpClientErrorException exception) {
             if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
