@@ -85,6 +85,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
     protected final RestTemplate restTemplate = new RestTemplate();
     protected final String baseURL;
     private String token;
+    private String refreshToken;
 
     private final static String TIME_PAGE_LINK_URL_PARAMS = "limit={limit}&startTime={startTime}&endTime={endTime}&ascOrder={ascOrder}&offset={offset}";
     private final static String TEXT_PAGE_LINK_URL_PARAMS = "limit={limit}&textSearch{textSearch}&idOffset={idOffset}&textOffset{textOffset}";
@@ -93,7 +94,23 @@ public class RestClient implements ClientHttpRequestInterceptor {
     public ClientHttpResponse intercept(HttpRequest request, byte[] bytes, ClientHttpRequestExecution execution) throws IOException {
         HttpRequest wrapper = new HttpRequestWrapper(request);
         wrapper.getHeaders().set(JWT_TOKEN_HEADER_PARAM, "Bearer " + token);
-        return execution.execute(wrapper, bytes);
+        ClientHttpResponse response = execution.execute(wrapper, bytes);
+        if (response.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+            synchronized (this) {
+                restTemplate.getInterceptors().remove(this);
+                refreshToken();
+                wrapper.getHeaders().set(JWT_TOKEN_HEADER_PARAM, "Bearer " + token);
+                return execution.execute(wrapper, bytes);
+            }
+        }
+        return response;
+    }
+
+    public void refreshToken() {
+        Map<String, String> refreshTokenRequest = new HashMap<>();
+        refreshTokenRequest.put("refreshToken", refreshToken);
+        ResponseEntity<JsonNode> tokenInfo = restTemplate.postForEntity(baseURL + "/api/auth/token", refreshTokenRequest, JsonNode.class);
+        setTokenInfo(tokenInfo.getBody());
     }
 
     public void login(String username, String password) {
@@ -101,8 +118,13 @@ public class RestClient implements ClientHttpRequestInterceptor {
         loginRequest.put("username", username);
         loginRequest.put("password", password);
         ResponseEntity<JsonNode> tokenInfo = restTemplate.postForEntity(baseURL + "/api/auth/login", loginRequest, JsonNode.class);
-        this.token = tokenInfo.getBody().get("token").asText();
-        restTemplate.setInterceptors(Collections.singletonList(this));
+        setTokenInfo(tokenInfo.getBody());
+    }
+
+    private void setTokenInfo(JsonNode tokenInfo) {
+        this.token = tokenInfo.get("token").asText();
+        this.refreshToken = tokenInfo.get("refreshToken").asText();
+        restTemplate.getInterceptors().add(this);
     }
 
     public Optional<Device> findDevice(String name) {
