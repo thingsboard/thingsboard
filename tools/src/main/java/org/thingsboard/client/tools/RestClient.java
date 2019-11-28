@@ -64,6 +64,7 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
+import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 
 import java.io.IOException;
@@ -1829,6 +1830,58 @@ public class RestClient implements ClientHttpRequestInterceptor {
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<List<WidgetsBundle>>() {
                 }).getBody();
+    }
+
+    public Optional<WidgetType> getWidgetTypeById(String widgetTypeId) {
+        try {
+            ResponseEntity<WidgetType> widgetType =
+                    restTemplate.getForEntity(baseURL + "/widgetType/{widgetTypeId}", WidgetType.class, widgetTypeId);
+            return Optional.ofNullable(widgetType.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public WidgetType saveWidgetType(WidgetType widgetType) {
+        return restTemplate.postForEntity(baseURL + "/widgetType", widgetType, WidgetType.class).getBody();
+    }
+
+    public void deleteWidgetType(String widgetTypeId) {
+        restTemplate.delete(baseURL + "/widgetType/{widgetTypeId}", widgetTypeId);
+    }
+
+    public List<WidgetType> getBundleWidgetTypes(boolean isSystem, String bundleAlias) {
+        return restTemplate.exchange(
+                baseURL + "/widgetTypes?isSystem={isSystem}&bundleAlias={bundleAlias}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<List<WidgetType>>() {
+                },
+                isSystem,
+                bundleAlias).getBody();
+    }
+
+    public Optional<WidgetType> getWidgetType(boolean isSystem, String bundleAlias, String alias) {
+        try {
+            ResponseEntity<WidgetType> widgetType =
+                    restTemplate.getForEntity(
+                            baseURL + "/widgetType?isSystem={isSystem}&bundleAlias={bundleAlias}&alias={alias}",
+                            WidgetType.class,
+                            isSystem,
+                            bundleAlias,
+                            alias);
+            return Optional.ofNullable(widgetType.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
     }
 
     private void addPageLinkToParam(Map<String, String> params, TimePageLink pageLink) {
