@@ -55,7 +55,7 @@ export default class TbGoogleMap {
                     angular.merge({imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'}, markerClusteringSetting));
             }
             if (initCallback) {
-                initCallback();
+                setTimeout(initCallback, 0);// eslint-disable-line
             }
 
         }
