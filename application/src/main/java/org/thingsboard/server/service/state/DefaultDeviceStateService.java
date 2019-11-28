@@ -296,15 +296,21 @@ public class DefaultDeviceStateService implements DeviceStateService {
     private void updateState() {
         long ts = System.currentTimeMillis();
         Set<DeviceId> deviceIds = new HashSet<>(deviceStates.keySet());
+        log.info("Calculating state updates for {} devices", deviceStates.size());
         for (DeviceId deviceId : deviceIds) {
-            DeviceStateData stateData = deviceStates.get(deviceId);
-            DeviceState state = stateData.getState();
-            state.setActive(ts < state.getLastActivityTime() + state.getInactivityTimeout());
-            if (!state.isActive() && (state.getLastInactivityAlarmTime() == 0L || state.getLastInactivityAlarmTime() < state.getLastActivityTime())) {
-                state.setLastInactivityAlarmTime(ts);
-                pushRuleEngineMessage(stateData, INACTIVITY_EVENT);
-                save(deviceId, INACTIVITY_ALARM_TIME, ts);
-                save(deviceId, ACTIVITY_STATE, state.isActive());
+            DeviceStateData stateData = getOrFetchDeviceStateData(deviceId);
+            if (stateData != null) {
+                DeviceState state = stateData.getState();
+                state.setActive(ts < state.getLastActivityTime() + state.getInactivityTimeout());
+                if (!state.isActive() && (state.getLastInactivityAlarmTime() == 0L || state.getLastInactivityAlarmTime() < state.getLastActivityTime())) {
+                    state.setLastInactivityAlarmTime(ts);
+                    pushRuleEngineMessage(stateData, INACTIVITY_EVENT);
+                    save(deviceId, INACTIVITY_ALARM_TIME, ts);
+                    save(deviceId, ACTIVITY_STATE, state.isActive());
+                }
+            } else {
+                log.debug("[{}] Device that belongs to other server is detected and removed.", deviceId);
+                deviceStates.remove(deviceId);
             }
         }
     }
@@ -353,6 +359,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
                 if (device != null) {
                     try {
                         deviceStateData = fetchDeviceState(device).get();
+                        deviceStates.putIfAbsent(deviceId, deviceStateData);
                     } catch (InterruptedException | ExecutionException e) {
                         log.debug("[{}] Failed to fetch device state!", deviceId, e);
                     }
