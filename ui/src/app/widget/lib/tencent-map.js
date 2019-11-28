@@ -58,7 +58,7 @@ export default class TbTencentMap {
 
 
 			if (initCallback) {
-				initCallback();
+				setTimeout(initCallback, 0);// eslint-disable-line
 			}
 		}
 
@@ -427,8 +427,8 @@ export default class TbTencentMap {
 	}
 
 	/* eslint-disable no-undef ,no-unused-vars*/
-	fitBounds(bounds) {
-		if (this.dontFitMapBounds && this.defaultZoomLevel) {
+	fitBounds(bounds, useDefaultZoom) {
+		if ((this.dontFitMapBounds || useDefaultZoom) && this.defaultZoomLevel) {
 			this.map.setZoom(this.defaultZoomLevel);
 			this.map.setCenter(bounds.getCenter());
 		} else {
