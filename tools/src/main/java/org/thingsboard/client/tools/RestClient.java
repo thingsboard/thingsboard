@@ -1459,6 +1459,210 @@ public class RestClient implements ClientHttpRequestInterceptor {
         }
     }
 
+    public DeferredResult<ResponseEntity> getAttributeKeys(String entityType, String entityId) {
+        return restTemplate.exchange(
+                baseURL + "/{entityType}/{entityId}/keys/attributes",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                },
+                entityType,
+                entityId).getBody();
+    }
+
+    public DeferredResult<ResponseEntity> getAttributeKeysByScope(String entityType, String entityId, String scope) {
+        return restTemplate.exchange(
+                baseURL + "/{entityType}/{entityId}/keys/attributes/{scope}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                },
+                entityType,
+                entityId,
+                scope).getBody();
+    }
+
+    //TODO: the same method is present
+//    @RequestMapping(value = "/{entityType}/{entityId}/values/attributes", method = RequestMethod.GET)
+//    public DeferredResult<ResponseEntity> getAttributes(String entityType, String entityId, String keys) {
+//        return restTemplate.exchange(
+//                baseURL + "/{entityType}/{entityId}/values/attributes?keys={keys}",
+//                HttpMethod.GET,
+//                HttpEntity.EMPTY,
+//                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+//                },
+//                entityType,
+//                entityId,
+//                keys).getBody();
+//    }
+
+    public DeferredResult<ResponseEntity> getAttributesByScope(String entityType, String entityId, String scope, String keys) {
+        return restTemplate.exchange(
+                baseURL + "/{entityType}/{entityId}/values/attributes/{scope}?keys={keys}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                },
+                entityType,
+                entityId,
+                scope,
+                keys).getBody();
+    }
+
+    public DeferredResult<ResponseEntity> getTimeseriesKeys(String entityType, String entityId) {
+        return restTemplate.exchange(
+                baseURL + "/{entityType}/{entityId}/keys/timeseries",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                },
+                entityType,
+                entityId).getBody();
+    }
+
+    public DeferredResult<ResponseEntity> getLatestTimeseries(String entityType, String entityId, String keys) {
+        return restTemplate.exchange(
+                baseURL + "/{entityType}/{entityId}/values/timeseries?keys={keys}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                },
+                entityType,
+                entityId,
+                keys).getBody();
+    }
+
+
+    public DeferredResult<ResponseEntity> getTimeseries(String entityType, String entityId, String keys, Long startTs, Long endTs, Long interval, Integer limit, String agg) {
+        Map<String, String> params = new HashMap<>();
+        params.put("entityType", entityType);
+        params.put("entityId", entityId);
+        params.put("keys", keys);
+        params.put("startTs", startTs.toString());
+        params.put("endTs", endTs.toString());
+        params.put("interval", interval == null ? "0" : interval.toString());
+        params.put("limit", limit == null ? "100" : limit.toString());
+        params.put("agg", agg == null ? "NONE" : agg);
+
+        return restTemplate.exchange(
+                baseURL + "/{entityType}/{entityId}/values/timeseries?keys={keys}&startTs={startTs}&endTs={endTs}&interval={interval}&limit={limit}&agg={agg}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                },
+                params).getBody();
+    }
+
+    public DeferredResult<ResponseEntity> saveDeviceAttributes(String deviceId, String scope, JsonNode request) {
+        return restTemplate.exchange(
+                baseURL + "/{deviceId}/{scope}",
+                HttpMethod.POST,
+                new HttpEntity<>(request),
+                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                },
+                deviceId,
+                scope).getBody();
+    }
+
+    public DeferredResult<ResponseEntity> saveEntityAttributesV1(String entityType, String entityId, String scope, JsonNode request) {
+        return restTemplate.exchange(
+                baseURL + "/{entityType}/{entityId}/{scope}",
+                HttpMethod.POST,
+                new HttpEntity<>(request),
+                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                },
+                entityType,
+                entityId,
+                scope).getBody();
+    }
+
+    public DeferredResult<ResponseEntity> saveEntityAttributesV2(String entityType, String entityId, String scope, JsonNode request) {
+        return restTemplate.exchange(
+                baseURL + "/{entityType}/{entityId}/attributes/{scope}",
+                HttpMethod.POST,
+                new HttpEntity<>(request),
+                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                },
+                entityType,
+                entityId,
+                scope).getBody();
+    }
+
+    public DeferredResult<ResponseEntity> saveEntityTelemetry(String entityType, String entityId, String scope, String requestBody) {
+        return restTemplate.exchange(
+                baseURL + "/{entityType}/{entityId}/timeseries/{scope}",
+                HttpMethod.POST,
+                new HttpEntity<>(requestBody),
+                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                },
+                entityType,
+                entityId,
+                scope).getBody();
+    }
+
+    public DeferredResult<ResponseEntity> saveEntityTelemetryWithTTL(String entityType, String entityId, String scope, Long ttl, String requestBody) {
+        return restTemplate.exchange(
+                baseURL + "/{entityType}/{entityId}/timeseries/{scope}/{ttl}",
+                HttpMethod.POST,
+                new HttpEntity<>(requestBody),
+                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                },
+                entityType,
+                entityId,
+                scope,
+                ttl).getBody();
+    }
+
+    public DeferredResult<ResponseEntity> deleteEntityTimeseries(String entityType,
+                                                                 String entityId,
+                                                                 String keys,
+                                                                 boolean deleteAllDataForKeys,
+                                                                 Long startTs,
+                                                                 Long endTs,
+                                                                 boolean rewriteLatestIfDeleted) {
+        Map<String, String> params = new HashMap<>();
+        params.put("entityType", entityType);
+        params.put("entityId", entityId);
+        params.put("keys", keys);
+        params.put("deleteAllDataForKeys", String.valueOf(deleteAllDataForKeys));
+        params.put("startTs", startTs.toString());
+        params.put("endTs", endTs.toString());
+        params.put("rewriteLatestIfDeleted", String.valueOf(rewriteLatestIfDeleted));
+
+        return restTemplate.exchange(
+                baseURL + "/{entityType}/{entityId}/timeseries/delete?keys={keys}&deleteAllDataForKeys={deleteAllDataForKeys}&startTs={startTs}&endTs={endTs}&rewriteLatestIfDeleted={rewriteLatestIfDeleted}",
+                HttpMethod.DELETE,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                },
+                params).getBody();
+    }
+
+    public DeferredResult<ResponseEntity> deleteEntityAttributes(String deviceId, String scope, String keys) {
+        return restTemplate.exchange(
+                baseURL + "/{deviceId}/{scope}?keys={keys}",
+                HttpMethod.DELETE,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                },
+                deviceId,
+                scope,
+                keys).getBody();
+    }
+
+    public DeferredResult<ResponseEntity> deleteEntityAttributes(String entityType, String entityId, String scope, String keys) {
+        return restTemplate.exchange(
+                baseURL + "/{entityType}/{entityId}/{scope}?keys={keys}",
+                HttpMethod.DELETE,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                },
+                entityType,
+                entityId,
+                scope,
+                keys).getBody();
+    }
+
     private void addPageLinkToParam(Map<String, String> params, TimePageLink pageLink) {
         params.put("limit", String.valueOf(pageLink.getLimit()));
         params.put("startTime", String.valueOf(pageLink.getStartTime()));
