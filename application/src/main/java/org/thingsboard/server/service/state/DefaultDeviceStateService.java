@@ -30,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -39,7 +40,9 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
+import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -51,6 +54,7 @@ import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
 import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
 import org.thingsboard.server.service.cluster.rpc.ClusterRpcService;
@@ -105,6 +109,9 @@ public class DefaultDeviceStateService implements DeviceStateService {
 
     @Autowired
     private AttributesService attributesService;
+
+    @Autowired
+    private TimeseriesService tsService;
 
     @Autowired
     @Lazy
@@ -436,39 +443,55 @@ public class DefaultDeviceStateService implements DeviceStateService {
     }
 
     private ListenableFuture<DeviceStateData> fetchDeviceState(Device device) {
-        ListenableFuture<List<AttributeKvEntry>> attributes = attributesService.find(TenantId.SYS_TENANT_ID, device.getId(), DataConstants.SERVER_SCOPE, PERSISTENT_ATTRIBUTES);
-        return Futures.transform(attributes, new Function<List<AttributeKvEntry>, DeviceStateData>() {
-            @Nullable
-            @Override
-            public DeviceStateData apply(@Nullable List<AttributeKvEntry> attributes) {
-                long lastActivityTime = getAttributeValue(attributes, LAST_ACTIVITY_TIME, 0L);
-                long inactivityAlarmTime = getAttributeValue(attributes, INACTIVITY_ALARM_TIME, 0L);
-                long inactivityTimeout = getAttributeValue(attributes, INACTIVITY_TIMEOUT, TimeUnit.SECONDS.toMillis(defaultInactivityTimeoutInSec));
-                boolean active = System.currentTimeMillis() < lastActivityTime + inactivityTimeout;
-                DeviceState deviceState = DeviceState.builder()
-                        .active(active)
-                        .lastConnectTime(getAttributeValue(attributes, LAST_CONNECT_TIME, 0L))
-                        .lastDisconnectTime(getAttributeValue(attributes, LAST_DISCONNECT_TIME, 0L))
-                        .lastActivityTime(lastActivityTime)
-                        .lastInactivityAlarmTime(inactivityAlarmTime)
-                        .inactivityTimeout(inactivityTimeout)
-                        .build();
-                TbMsgMetaData md = new TbMsgMetaData();
-                md.putValue("deviceName", device.getName());
-                md.putValue("deviceType", device.getType());
-                return DeviceStateData.builder()
-                        .tenantId(device.getTenantId())
-                        .deviceId(device.getId())
-                        .metaData(md)
-                        .state(deviceState).build();
-            }
-        });
+        if (persistToTelemetry) {
+            ListenableFuture<List<TsKvEntry>> tsData = tsService.findLatest(TenantId.SYS_TENANT_ID, device.getId(), PERSISTENT_ATTRIBUTES);
+            return Futures.transform(tsData, extractDeviceStateData(device));
+        } else {
+            ListenableFuture<List<AttributeKvEntry>> attrData = attributesService.find(TenantId.SYS_TENANT_ID, device.getId(), DataConstants.SERVER_SCOPE, PERSISTENT_ATTRIBUTES);
+            return Futures.transform(attrData, extractDeviceStateData(device));
+        }
     }
 
-    private long getAttributeValue(List<AttributeKvEntry> attributes, String attributeName, long defaultValue) {
-        for (AttributeKvEntry attribute : attributes) {
-            if (attribute.getKey().equals(attributeName)) {
-                return attribute.getLongValue().orElse(defaultValue);
+    private <T extends KvEntry> Function<List<T>, DeviceStateData> extractDeviceStateData(Device device) {
+        return new Function<List<T>, DeviceStateData>() {
+            @Nullable
+            @Override
+            public DeviceStateData apply(@Nullable List<T> data) {
+                try {
+                    long lastActivityTime = getEntryValue(data, LAST_ACTIVITY_TIME, 0L);
+                    long inactivityAlarmTime = getEntryValue(data, INACTIVITY_ALARM_TIME, 0L);
+                    long inactivityTimeout = getEntryValue(data, INACTIVITY_TIMEOUT, TimeUnit.SECONDS.toMillis(defaultInactivityTimeoutInSec));
+                    boolean active = System.currentTimeMillis() < lastActivityTime + inactivityTimeout;
+                    DeviceState deviceState = DeviceState.builder()
+                            .active(active)
+                            .lastConnectTime(getEntryValue(data, LAST_CONNECT_TIME, 0L))
+                            .lastDisconnectTime(getEntryValue(data, LAST_DISCONNECT_TIME, 0L))
+                            .lastActivityTime(lastActivityTime)
+                            .lastInactivityAlarmTime(inactivityAlarmTime)
+                            .inactivityTimeout(inactivityTimeout)
+                            .build();
+                    TbMsgMetaData md = new TbMsgMetaData();
+                    md.putValue("deviceName", device.getName());
+                    md.putValue("deviceType", device.getType());
+                    return DeviceStateData.builder()
+                            .tenantId(device.getTenantId())
+                            .deviceId(device.getId())
+                            .metaData(md)
+                            .state(deviceState).build();
+                } catch (Exception e) {
+                    log.warn("[{}] Failed to fetch device state data", device.getId(), e);
+                    throw new RuntimeException(e);
+                }
+            }
+        };
+    }
+
+    private long getEntryValue(List<? extends KvEntry> kvEntries, String attributeName, long defaultValue) {
+        if (kvEntries != null) {
+            for (KvEntry entry : kvEntries) {
+                if (entry != null && !StringUtils.isEmpty(entry.getKey()) && entry.getKey().equals(attributeName)) {
+                    return entry.getLongValue().orElse(defaultValue);
+                }
             }
         }
         return defaultValue;

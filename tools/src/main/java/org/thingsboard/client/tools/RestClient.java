@@ -50,6 +50,7 @@ import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.TextPageData;
@@ -81,12 +82,12 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class RestClient implements ClientHttpRequestInterceptor {
     private static final String JWT_TOKEN_HEADER_PARAM = "X-Authorization";
-    private final RestTemplate restTemplate = new RestTemplate();
+    protected final RestTemplate restTemplate = new RestTemplate();
+    protected final String baseURL;
     private String token;
-    private final String baseURL;
+
     private final static String TIME_PAGE_LINK_URL_PARAMS = "limit={limit}&startTime={startTime}&endTime={endTime}&ascOrder={ascOrder}&offset={offset}";
     private final static String TEXT_PAGE_LINK_URL_PARAMS = "limit={limit}&textSearch{textSearch}&idOffset={idOffset}&textOffset{textOffset}";
-
 
     @Override
     public ClientHttpResponse intercept(HttpRequest request, byte[] bytes, ClientHttpRequestExecution execution) throws IOException {
@@ -180,8 +181,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
         Device device = new Device();
         device.setName(name);
         device.setType(type);
-        Device result = restTemplate.postForEntity(baseURL + "/api/device", device, Device.class).getBody();
-        return result;
+        return restTemplate.postForEntity(baseURL + "/api/device", device, Device.class).getBody();
     }
 
     public DeviceCredentials updateDeviceCredentials(DeviceId deviceId, String token) {
@@ -238,6 +238,29 @@ public class RestClient implements ClientHttpRequestInterceptor {
         relation.setTo(idTo);
         relation.setType(relationType);
         return restTemplate.postForEntity(baseURL + "/api/relation", relation, EntityRelation.class).getBody();
+    }
+
+    public Dashboard createDashboard(Dashboard dashboard) {
+        return restTemplate.postForEntity(baseURL + "/api/dashboard", dashboard, Dashboard.class).getBody();
+    }
+
+    public void deleteDashboard(DashboardId dashboardId) {
+        restTemplate.delete(baseURL + "/api/dashboard/{dashboardId}", dashboardId);
+    }
+
+    public List<DashboardInfo> findTenantDashboards() {
+        try {
+            ResponseEntity<TextPageData<DashboardInfo>> dashboards =
+                    restTemplate.exchange(baseURL + "/api/tenant/dashboards?limit=100000", HttpMethod.GET, null, new ParameterizedTypeReference<TextPageData<DashboardInfo>>() {
+                    });
+            return dashboards.getBody().getData();
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Collections.emptyList();
+            } else {
+                throw exception;
+            }
+        }
     }
 
     public DeviceCredentials getCredentials(DeviceId id) {

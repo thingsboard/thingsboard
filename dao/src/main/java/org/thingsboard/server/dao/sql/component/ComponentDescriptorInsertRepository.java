@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql.event;
+package org.thingsboard.server.dao.sql.component;
 
-import org.thingsboard.server.dao.model.sql.EventEntity;
+import org.thingsboard.server.dao.model.sql.ComponentDescriptorEntity;
 
-public interface EventInsertRepository {
+public interface ComponentDescriptorInsertRepository {
 
-    EventEntity saveOrUpdate(EventEntity entity);
+    ComponentDescriptorEntity saveOrUpdate(ComponentDescriptorEntity entity);
 
 }
