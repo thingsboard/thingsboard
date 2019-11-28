@@ -59,6 +59,8 @@ import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationInfo;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
+import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 
@@ -1366,6 +1368,95 @@ public class RestClient implements ClientHttpRequestInterceptor {
                 new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
                 },
                 deviceId).getBody();
+    }
+
+    public Optional<RuleChain> getRuleChainById(String ruleChainId) {
+        try {
+            ResponseEntity<RuleChain> ruleChain = restTemplate.getForEntity(baseURL + "/ruleChain/{ruleChainId}", RuleChain.class, ruleChainId);
+            return Optional.ofNullable(ruleChain.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Optional<RuleChainMetaData> getRuleChainMetaData(String ruleChainId) {
+        try {
+            ResponseEntity<RuleChainMetaData> ruleChainMetaData = restTemplate.getForEntity(baseURL + "/ruleChain/{ruleChainId}/metadata", RuleChainMetaData.class, ruleChainId);
+            return Optional.ofNullable(ruleChainMetaData.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public RuleChain saveRuleChain(RuleChain ruleChain) {
+        return restTemplate.postForEntity(baseURL + "/ruleChain", ruleChain, RuleChain.class).getBody();
+    }
+
+    public Optional<RuleChain> setRootRuleChain(String ruleChainId) {
+        try {
+            ResponseEntity<RuleChain> ruleChain = restTemplate.postForEntity(baseURL + "/ruleChain/{ruleChainId}/root", null, RuleChain.class, ruleChainId);
+            return Optional.ofNullable(ruleChain.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public RuleChainMetaData saveRuleChainMetaData(RuleChainMetaData ruleChainMetaData) {
+        return restTemplate.postForEntity(baseURL + "/ruleChain/metadata", ruleChainMetaData, RuleChainMetaData.class).getBody();
+    }
+
+    public TextPageData<RuleChain> getRuleChains(TextPageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
+        return restTemplate.exchange(
+                baseURL + "/ruleChains" + TEXT_PAGE_LINK_URL_PARAMS,
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<TextPageData<RuleChain>>() {
+                }
+        ).getBody();
+    }
+
+    public void deleteRuleChain(String ruleChainId) {
+        restTemplate.delete(baseURL + "/ruleChain/{ruleChainId}", ruleChainId);
+    }
+
+    public Optional<JsonNode> getLatestRuleNodeDebugInput(String ruleNodeId) {
+        try {
+            ResponseEntity<JsonNode> jsonNode = restTemplate.getForEntity(baseURL + "/ruleNode/{ruleNodeId}/debugIn", JsonNode.class, ruleNodeId);
+            return Optional.ofNullable(jsonNode.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Optional<JsonNode> testScript(JsonNode inputParams) {
+        try {
+            ResponseEntity<JsonNode> jsonNode = restTemplate.postForEntity(baseURL + "/ruleChain/testScript", inputParams, JsonNode.class);
+            return Optional.ofNullable(jsonNode.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
     }
 
     private void addPageLinkToParam(Map<String, String> params, TimePageLink pageLink) {
