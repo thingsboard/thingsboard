@@ -64,6 +64,7 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
+import org.thingsboard.server.common.data.widget.WidgetsBundle;
 
 import java.io.IOException;
 import java.net.URI;
@@ -1786,6 +1787,48 @@ public class RestClient implements ClientHttpRequestInterceptor {
                 Object.class,
                 userId,
                 userCredentialsEnabled);
+    }
+
+    public Optional<WidgetsBundle> getWidgetsBundleById(String widgetsBundleId) {
+        try {
+            ResponseEntity<WidgetsBundle> widgetsBundle =
+                    restTemplate.getForEntity(baseURL + "/widgetsBundle/{widgetsBundleId}", WidgetsBundle.class, widgetsBundleId);
+            return Optional.ofNullable(widgetsBundle.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public WidgetsBundle saveWidgetsBundle(WidgetsBundle widgetsBundle) {
+        return restTemplate.postForEntity(baseURL + "/widgetsBundle", widgetsBundle, WidgetsBundle.class).getBody();
+    }
+
+    public void deleteWidgetsBundle(String widgetsBundleId) {
+        restTemplate.delete(baseURL + "/widgetsBundle/{widgetsBundleId}", widgetsBundleId);
+    }
+
+    public TextPageData<WidgetsBundle> getWidgetsBundles(TextPageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
+        return restTemplate.exchange(
+                baseURL + "/widgetsBundles?" + TEXT_PAGE_LINK_URL_PARAMS,
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<TextPageData<WidgetsBundle>>() {
+                }).getBody();
+    }
+
+    public List<WidgetsBundle> getWidgetsBundles() {
+        return restTemplate.exchange(
+                baseURL + "/widgetsBundles",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<List<WidgetsBundle>>() {
+                }).getBody();
     }
 
     private void addPageLinkToParam(Map<String, String> params, TimePageLink pageLink) {
