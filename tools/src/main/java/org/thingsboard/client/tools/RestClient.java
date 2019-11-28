@@ -1695,6 +1695,99 @@ public class RestClient implements ClientHttpRequestInterceptor {
                 params).getBody();
     }
 
+    public Optional<User> getUserById(String userId) {
+        try {
+            ResponseEntity<User> user = restTemplate.getForEntity(baseURL + "/user/{userId}", User.class, userId);
+            return Optional.ofNullable(user.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Boolean isUserTokenAccessEnabled() {
+        return restTemplate.getForEntity(baseURL + "/user/tokenAccessEnabled", Boolean.class).getBody();
+    }
+
+    public Optional<JsonNode> getUserToken(String userId) {
+        try {
+            ResponseEntity<JsonNode> userToken = restTemplate.getForEntity(baseURL + "/user/{userId}/token", JsonNode.class, userId);
+            return Optional.ofNullable(userToken.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public User saveUser(User user, boolean sendActivationMail) {
+        return restTemplate.postForEntity(baseURL + "/user?sendActivationMail={sendActivationMail}", user, User.class, sendActivationMail).getBody();
+    }
+
+    public void sendActivationEmail(String email) {
+        restTemplate.postForEntity(baseURL + "/user/sendActivationMail?email={email}", null, Object.class, email);
+    }
+
+    public Optional<String> getActivationLink(String userId) {
+        try {
+            ResponseEntity<String> activationLink = restTemplate.getForEntity(baseURL + "/user/{userId}/activationLink", String.class, userId);
+            return Optional.ofNullable(activationLink.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public void deleteUser(String userId) {
+        restTemplate.delete(baseURL + "/user/{userId}", userId);
+    }
+
+    //    @RequestMapping(value = "/tenant/{tenantId}/users", params = {"limit"}, method = RequestMethod.GET)
+    public TextPageData<User> getTenantAdmins(String tenantId, TextPageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        params.put("tenantId", tenantId);
+        addPageLinkToParam(params, pageLink);
+
+        return restTemplate.exchange(
+                baseURL + "/tenant/{tenantId}/users?" + TEXT_PAGE_LINK_URL_PARAMS,
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<TextPageData<User>>() {
+                },
+                params).getBody();
+    }
+
+    public TextPageData<User> getCustomerUsers(String customerId, TextPageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        params.put("customerId", customerId);
+        addPageLinkToParam(params, pageLink);
+
+        return restTemplate.exchange(
+                baseURL + "/customer/{customerId}/users?" + TEXT_PAGE_LINK_URL_PARAMS,
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<TextPageData<User>>() {
+                },
+                params).getBody();
+    }
+
+    public void setUserCredentialsEnabled(String userId, boolean userCredentialsEnabled) {
+        restTemplate.postForEntity(
+                baseURL + "/user/{userId}/userCredentialsEnabled?serCredentialsEnabled={serCredentialsEnabled}",
+                null,
+                Object.class,
+                userId,
+                userCredentialsEnabled);
+    }
+
     private void addPageLinkToParam(Map<String, String> params, TimePageLink pageLink) {
         params.put("limit", String.valueOf(pageLink.getLimit()));
         params.put("startTime", String.valueOf(pageLink.getStartTime()));
