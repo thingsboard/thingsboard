@@ -38,6 +38,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Event;
+import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
@@ -1482,19 +1483,17 @@ public class RestClient implements ClientHttpRequestInterceptor {
                 scope).getBody();
     }
 
-    //TODO: the same method is present
-//    @RequestMapping(value = "/{entityType}/{entityId}/values/attributes", method = RequestMethod.GET)
-//    public DeferredResult<ResponseEntity> getAttributes(String entityType, String entityId, String keys) {
-//        return restTemplate.exchange(
-//                baseURL + "/{entityType}/{entityId}/values/attributes?keys={keys}",
-//                HttpMethod.GET,
-//                HttpEntity.EMPTY,
-//                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
-//                },
-//                entityType,
-//                entityId,
-//                keys).getBody();
-//    }
+    public DeferredResult<ResponseEntity> getAttributesResponseEntity(String entityType, String entityId, String keys) {
+        return restTemplate.exchange(
+                baseURL + "/{entityType}/{entityId}/values/attributes?keys={keys}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                },
+                entityType,
+                entityId,
+                keys).getBody();
+    }
 
     public DeferredResult<ResponseEntity> getAttributesByScope(String entityType, String entityId, String scope, String keys) {
         return restTemplate.exchange(
@@ -1661,6 +1660,39 @@ public class RestClient implements ClientHttpRequestInterceptor {
                 entityId,
                 scope,
                 keys).getBody();
+    }
+
+    public Optional<Tenant> getTenantById(String tenantId) {
+        try {
+            ResponseEntity<Tenant> tenant = restTemplate.getForEntity(baseURL + "/tenant/{tenantId}", Tenant.class, tenantId);
+            return Optional.ofNullable(tenant.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Tenant saveTenant(Tenant tenant) {
+        return restTemplate.postForEntity(baseURL + "/tenant", tenant, Tenant.class).getBody();
+    }
+
+    public void deleteTenant(String tenantId) {
+        restTemplate.delete(baseURL + "/tenant/{tenantId}", tenantId);
+    }
+
+    public TextPageData<Tenant> getTenants(TextPageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
+        return restTemplate.exchange(
+                baseURL + "/tenants?" + TEXT_PAGE_LINK_URL_PARAMS,
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<TextPageData<Tenant>>() {
+                },
+                params).getBody();
     }
 
     private void addPageLinkToParam(Map<String, String> params, TimePageLink pageLink) {
