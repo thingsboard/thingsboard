@@ -131,13 +131,19 @@ public class ConsistentClusterRoutingService implements ClusterRoutingService {
     private void addNode(ServerInstance instance) {
         for (int i = 0; i < virtualNodesSize; i++) {
             circles[instance.getServerAddress().getServerType().ordinal()].put(hash(instance, i).asLong(), instance);
+//            circles[instance.getServerAddress().getServerType().ordinal()].put(classic(instance, i), instance);
         }
     }
 
     private void removeNode(ServerInstance instance) {
         for (int i = 0; i < virtualNodesSize; i++) {
             circles[instance.getServerAddress().getServerType().ordinal()].remove(hash(instance, i).asLong());
+//            circles[instance.getServerAddress().getServerType().ordinal()].remove(classic(instance, i));
         }
+    }
+
+    private long classic(ServerInstance instance, int i) {
+        return (instance.getHost() + instance.getPort() + i).hashCode() * (Long.MAX_VALUE / Integer.MAX_VALUE);
     }
 
     private HashCode hash(ServerInstance instance, int i) {

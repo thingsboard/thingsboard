@@ -53,12 +53,17 @@ public class TbLogNode implements TbNode {
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
         ListeningExecutor jsExecutor = ctx.getJsExecutor();
+        ctx.logJsEvalRequest();
         withCallback(jsExecutor.executeAsync(() -> jsEngine.executeToString(msg)),
                 toString -> {
+                    ctx.logJsEvalResponse();
                     log.info(toString);
                     ctx.tellNext(msg, SUCCESS);
                 },
-                t -> ctx.tellFailure(msg, t));
+                t -> {
+                    ctx.logJsEvalResponse();
+                    ctx.tellFailure(msg, t);
+                });
     }
 
     @Override

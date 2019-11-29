@@ -54,9 +54,16 @@ public class TbJsSwitchNode implements TbNode {
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
         ListeningExecutor jsExecutor = ctx.getJsExecutor();
+        ctx.logJsEvalRequest();
         withCallback(jsExecutor.executeAsync(() -> jsEngine.executeSwitch(msg)),
-                result -> processSwitch(ctx, msg, result),
-                t -> ctx.tellFailure(msg, t));
+                result -> {
+                    ctx.logJsEvalResponse();
+                    processSwitch(ctx, msg, result);
+                },
+                t -> {
+                    ctx.logJsEvalFailure();
+                    ctx.tellFailure(msg, t);
+                }, ctx.getDbCallbackExecutor());
     }
 
     private void processSwitch(TbContext ctx, TbMsg msg, Set<String> nextRelations) {
