@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.Netty4ClientHttpRequestFactory;
 import org.springframework.util.concurrent.ListenableFuture;
@@ -37,6 +38,8 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import javax.net.ssl.SSLException;
+import java.util.Deque;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
 
 @Data
@@ -50,21 +53,24 @@ class TbHttpClient {
     private static final String ERROR_BODY = "error_body";
 
     private final TbRestApiCallNodeConfiguration config;
-    private final boolean useRedisQueueForMsgPersistence;
 
     private EventLoopGroup eventLoopGroup;
     private AsyncRestTemplate httpClient;
+    private Deque<ListenableFuture<ResponseEntity<String>>> pendingFutures;
 
     TbHttpClient(TbRestApiCallNodeConfiguration config) throws TbNodeException {
         try {
             this.config = config;
-            this.useRedisQueueForMsgPersistence = config.isUseRedisQueueForMsgPersistence();
+            if (config.getMaxParallelRequestsCount() > 0) {
+                pendingFutures = new ConcurrentLinkedDeque<>();
+            }
             if (config.isUseSimpleClientHttpFactory()) {
                 httpClient = new AsyncRestTemplate();
             } else {
                 this.eventLoopGroup = new NioEventLoopGroup();
                 Netty4ClientHttpRequestFactory nettyFactory = new Netty4ClientHttpRequestFactory(this.eventLoopGroup);
                 nettyFactory.setSslContext(SslContextBuilder.forClient().build());
+                nettyFactory.setReadTimeout(config.getReadTimeoutMs());
                 httpClient = new AsyncRestTemplate(nettyFactory);
             }
         } catch (SSLException e) {
@@ -89,8 +95,12 @@ class TbHttpClient {
         future.addCallback(new ListenableFutureCallback<ResponseEntity<String>>() {
             @Override
             public void onFailure(Throwable throwable) {
-                if (useRedisQueueForMsgPersistence) {
-                    queueProcessor.pushOnFailure(msg);
+                if (config.isUseRedisQueueForMsgPersistence()) {
+                    if (throwable instanceof HttpClientErrorException) {
+                        processHttpClientError(((HttpClientErrorException) throwable).getStatusCode(), msg, queueProcessor);
+                    } else {
+                        queueProcessor.pushOnFailure(msg);
+                    }
                 }
                 TbMsg next = processException(ctx, msg, throwable);
                 ctx.tellFailure(next, throwable);
@@ -99,20 +109,23 @@ class TbHttpClient {
             @Override
             public void onSuccess(ResponseEntity<String> responseEntity) {
                 if (responseEntity.getStatusCode().is2xxSuccessful()) {
-                    if (useRedisQueueForMsgPersistence) {
+                    if (config.isUseRedisQueueForMsgPersistence()) {
                         queueProcessor.resetCounter();
                     }
                     TbMsg next = processResponse(ctx, msg, responseEntity);
                     ctx.tellNext(next, TbRelationTypes.SUCCESS);
                 } else {
-                    if (useRedisQueueForMsgPersistence) {
-                        queueProcessor.pushOnFailure(msg);
+                    if (config.isUseRedisQueueForMsgPersistence()) {
+                        processHttpClientError(responseEntity.getStatusCode(), msg, queueProcessor);
                     }
                     TbMsg next = processFailureResponse(ctx, msg, responseEntity);
                     ctx.tellNext(next, TbRelationTypes.FAILURE);
                 }
             }
         });
+        if (pendingFutures != null) {
+            processParallelRequests(future);
+        }
     }
 
     private TbMsg processResponse(TbContext ctx, TbMsg origMsg, ResponseEntity<String> response) {
@@ -149,5 +162,32 @@ class TbHttpClient {
         HttpHeaders headers = new HttpHeaders();
         config.getHeaders().forEach((k, v) -> headers.add(TbNodeUtils.processPattern(k, metaData), TbNodeUtils.processPattern(v, metaData)));
         return headers;
+    }
+
+    private void processParallelRequests(ListenableFuture<ResponseEntity<String>> future) {
+        pendingFutures.add(future);
+        if (pendingFutures.size() > config.getMaxParallelRequestsCount()) {
+            for (int i = 0; i < config.getMaxParallelRequestsCount(); i++) {
+                try {
+                    ListenableFuture<ResponseEntity<String>> pendingFuture = pendingFutures.removeFirst();
+                    try {
+                        pendingFuture.get(config.getReadTimeoutMs(), TimeUnit.MILLISECONDS);
+                    } catch (Exception e) {
+                        log.warn("Timeout during waiting for reply!", e);
+                        pendingFuture.cancel(true);
+                    }
+                } catch (Exception e) {
+                    log.warn("Failure during waiting for reply!", e);
+                }
+            }
+        }
+    }
+
+    private void processHttpClientError(HttpStatus statusCode, TbMsg msg, TbRedisQueueProcessor queueProcessor) {
+        if (statusCode.is4xxClientError()) {
+            log.warn("[{}] Client error during message delivering!", msg);
+        } else {
+            queueProcessor.pushOnFailure(msg);
+        }
     }
 }
