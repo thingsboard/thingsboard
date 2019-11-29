@@ -54,7 +54,7 @@ public class ConsistentClusterRoutingServiceTest {
     private DiscoveryService discoveryService;
 
     private String hashFunctionName = "murmur3_128";
-    private Integer virtualNodesSize = 1024*64;
+    private Integer virtualNodesSize = 1024*4;
     private ServerAddress currentServer = new ServerAddress(" 100.96.1.0", 9001, ServerType.CORE);
 
 
@@ -82,19 +82,6 @@ public class ConsistentClusterRoutingServiceTest {
         }
 
         testDevicesDispersion(devices);
-    }
-
-    @Test
-    public void testDispersionOnDevicesFromFile() throws IOException {
-        List<String> deviceIdsStrList = Files.readAllLines(Paths.get("/home/ashvayka/Downloads/deviceIds.out"));
-        List<DeviceId> devices = deviceIdsStrList.stream().map(String::trim).filter(s -> !s.isEmpty()).map(UUIDConverter::fromString).map(DeviceId::new).collect(Collectors.toList());
-        System.out.println("Devices: " + devices.size());
-        testDevicesDispersion(devices);
-        testDevicesDispersion(devices);
-        testDevicesDispersion(devices);
-        testDevicesDispersion(devices);
-        testDevicesDispersion(devices);
-
     }
 
     private void testDevicesDispersion(List<DeviceId> devices) {
