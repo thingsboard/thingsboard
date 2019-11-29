@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.controller.claim.data;
+package org.thingsboard.server.common.data;
 
 import lombok.Data;
 
