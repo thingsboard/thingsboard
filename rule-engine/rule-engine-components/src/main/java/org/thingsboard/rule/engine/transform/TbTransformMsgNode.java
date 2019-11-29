@@ -53,7 +53,7 @@ public class TbTransformMsgNode extends TbAbstractTransformNode {
     @Override
     protected ListenableFuture<TbMsg> transform(TbContext ctx, TbMsg msg) {
         ctx.logJsEvalRequest();
-        return ctx.getJsExecutor().executeAsync(() -> jsEngine.executeUpdate(msg));
+        return jsEngine.executeUpdateAsync(msg);
     }
 
     @Override
