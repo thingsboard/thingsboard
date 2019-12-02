@@ -781,7 +781,10 @@ export default class TbMapWidgetV2 {
 					return !(!ds[tbMap.locationSettings.latKeyName] && !ds[tbMap.locationSettings.lngKeyName]);
 				});
 				tbMap.initBounds = !dataValid;
-				tbMap.map.fitBounds(bounds, tbMap.isEdit && tbMap.markers.length === 1);
+
+				if(!tbMap.isEdit && tbMap.markers.length !== 1 || tbMap.polylines || tbMap.polygons) {
+					tbMap.map.fitBounds(bounds);
+				}
 			}
 		}
 
@@ -845,7 +848,11 @@ export default class TbMapWidgetV2 {
                         })
                     }
                 }
-				map.fitBounds(bounds, map.isEdit && map.markers.length === 1);
+				if((!map.isEdit && map.markers && map.markers.length !== 1) ||
+					(this.polylines && this.polylines.length > 0) ||
+					(this.polygons && this.polygons.length > 0)) {
+					map.fitBounds(bounds);
+				}
 			}
 		}
 	}
