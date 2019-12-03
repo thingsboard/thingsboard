@@ -18,7 +18,6 @@ package org.thingsboard.client.tools;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -702,22 +701,6 @@ public class RestClient implements ClientHttpRequestInterceptor {
         activateRequest.put("password", password);
         try {
             ResponseEntity<JsonNode> jsonNode = restTemplate.postForEntity(baseURL + "/api/noauth/activate", activateRequest, JsonNode.class);
-            return Optional.ofNullable(jsonNode.getBody());
-        } catch (HttpClientErrorException exception) {
-            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
-                return Optional.empty();
-            } else {
-                throw exception;
-            }
-        }
-    }
-
-    public Optional<JsonNode> resetPassword(String resetToken, String resetPassword) {
-        ObjectNode resetPasswordRequest = objectMapper.createObjectNode();
-        resetPasswordRequest.put("resetToken", resetToken);
-        resetPasswordRequest.put("resetPassword", resetPassword);
-        try {
-            ResponseEntity<JsonNode> jsonNode = restTemplate.postForEntity(baseURL + "/api/noauth/resetPassword", resetPasswordRequest, JsonNode.class);
             return Optional.ofNullable(jsonNode.getBody());
         } catch (HttpClientErrorException exception) {
             if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
