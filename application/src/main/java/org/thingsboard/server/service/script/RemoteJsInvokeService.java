@@ -101,22 +101,6 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
         requestBuilder.clientId("producer-js-invoke-" + nodeIdProvider.getNodeId());
         requestBuilder.defaultTopic(requestTopic);
         requestBuilder.encoder(new RemoteJsRequestEncoder());
-        requestBuilder.enricher((request, responseTopic, requestId) -> {
-            JsInvokeProtos.RemoteJsRequest.Builder remoteRequest = JsInvokeProtos.RemoteJsRequest.newBuilder();
-            if (request.hasCompileRequest()) {
-                remoteRequest.setCompileRequest(request.getCompileRequest());
-            }
-            if (request.hasInvokeRequest()) {
-                remoteRequest.setInvokeRequest(request.getInvokeRequest());
-            }
-            if (request.hasReleaseRequest()) {
-                remoteRequest.setReleaseRequest(request.getReleaseRequest());
-            }
-            remoteRequest.setResponseTopic(responseTopic);
-            remoteRequest.setRequestIdMSB(requestId.getMostSignificantBits());
-            remoteRequest.setRequestIdLSB(requestId.getLeastSignificantBits());
-            return remoteRequest.build();
-        });
 
         TBKafkaConsumerTemplate.TBKafkaConsumerTemplateBuilder<JsInvokeProtos.RemoteJsResponse> responseBuilder = TBKafkaConsumerTemplate.builder();
         responseBuilder.settings(kafkaSettings);
