@@ -148,7 +148,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 .build();
 
         log.trace("Post compile request for scriptId [{}]", scriptId);
-        ListenableFuture<JsInvokeProtos.RemoteJsResponse> future = kafkaTemplate.post(scriptId.toString(), jsRequestWrapper);
+        ListenableFuture<JsInvokeProtos.RemoteJsResponse> future = kafkaTemplate.post(UUID.randomUUID().toString(), jsRequestWrapper);
         kafkaPushedMsgs.incrementAndGet();
         Futures.addCallback(future, new FutureCallback<JsInvokeProtos.RemoteJsResponse>() {
             @Override
@@ -199,7 +199,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 .setInvokeRequest(jsRequestBuilder.build())
                 .build();
 
-        ListenableFuture<JsInvokeProtos.RemoteJsResponse> future = kafkaTemplate.post(scriptId.toString(), jsRequestWrapper);
+        ListenableFuture<JsInvokeProtos.RemoteJsResponse> future = kafkaTemplate.post(UUID.randomUUID().toString(), jsRequestWrapper);
         kafkaPushedMsgs.incrementAndGet();
         Futures.addCallback(future, new FutureCallback<JsInvokeProtos.RemoteJsResponse>() {
             @Override
@@ -237,7 +237,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 .setReleaseRequest(jsRequest)
                 .build();
 
-        ListenableFuture<JsInvokeProtos.RemoteJsResponse> future = kafkaTemplate.post(scriptId.toString(), jsRequestWrapper);
+        ListenableFuture<JsInvokeProtos.RemoteJsResponse> future = kafkaTemplate.post(UUID.randomUUID().toString(), jsRequestWrapper);
         JsInvokeProtos.RemoteJsResponse response = future.get();
 
         JsInvokeProtos.JsReleaseResponse compilationResult = response.getReleaseResponse();
