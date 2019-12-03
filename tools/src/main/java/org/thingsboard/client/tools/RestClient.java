@@ -1775,7 +1775,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
         Map<String, String> params = new HashMap<>();
         addPageLinkToParam(params, pageLink);
         return restTemplate.exchange(
-                baseURL + "/tenants?" + TEXT_PAGE_LINK_URL_PARAMS,
+                baseURL + "/api/tenants?" + TEXT_PAGE_LINK_URL_PARAMS,
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<TextPageData<Tenant>>() {
