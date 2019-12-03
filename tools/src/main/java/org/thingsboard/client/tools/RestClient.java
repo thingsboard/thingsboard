@@ -16,6 +16,8 @@
 package org.thingsboard.client.tools;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -27,6 +29,7 @@ import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.client.support.HttpRequestWrapper;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.request.async.DeferredResult;
@@ -90,9 +93,11 @@ public class RestClient implements ClientHttpRequestInterceptor {
     protected final String baseURL;
     private String token;
     private String refreshToken;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private final static String TIME_PAGE_LINK_URL_PARAMS = "limit={limit}&startTime={startTime}&endTime={endTime}&ascOrder={ascOrder}&offset={offset}";
     private final static String TEXT_PAGE_LINK_URL_PARAMS = "limit={limit}&textSearch{textSearch}&idOffset={idOffset}&textOffset{textOffset}";
+    protected static final String ACTIVATE_TOKEN_REGEX = "/api/noauth/activate?activateToken=";
 
     @Override
     public ClientHttpResponse intercept(HttpRequest request, byte[] bytes, ClientHttpRequestExecution execution) throws IOException {
@@ -108,6 +113,14 @@ public class RestClient implements ClientHttpRequestInterceptor {
             }
         }
         return response;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public String getRefreshToken() {
+        return refreshToken;
     }
 
     public void refreshToken() {
@@ -295,10 +308,6 @@ public class RestClient implements ClientHttpRequestInterceptor {
 
     public RestTemplate getRestTemplate() {
         return restTemplate;
-    }
-
-    public String getToken() {
-        return token;
     }
 
     public Optional<AdminSettings> getAdminSettings(String key) {
@@ -629,6 +638,11 @@ public class RestClient implements ClientHttpRequestInterceptor {
         return auditLog.getBody();
     }
 
+    public String getActivateToken(String userId) {
+        String activationLink = getActivationLink(userId);
+        return StringUtils.delete(activationLink, baseURL + ACTIVATE_TOKEN_REGEX);
+    }
+
     public Optional<User> getUser() {
         ResponseEntity<User> user = restTemplate.getForEntity(baseURL + "/api/auth/user", User.class);
         return Optional.ofNullable(user.getBody());
@@ -638,7 +652,10 @@ public class RestClient implements ClientHttpRequestInterceptor {
         restTemplate.exchange(URI.create(baseURL + "/api/auth/logout"), HttpMethod.POST, HttpEntity.EMPTY, Object.class);
     }
 
-    public void changePassword(JsonNode changePasswordRequest) {
+    public void changePassword(String currentPassword, String newPassword) {
+        ObjectNode changePasswordRequest = objectMapper.createObjectNode();
+        changePasswordRequest.put("currentPassword", currentPassword);
+        changePasswordRequest.put("newPassword", newPassword);
         restTemplate.exchange(URI.create(baseURL + "/api/auth/changePassword"), HttpMethod.POST, new HttpEntity<>(changePasswordRequest), Object.class);
     }
 
@@ -655,12 +672,13 @@ public class RestClient implements ClientHttpRequestInterceptor {
         }
     }
 
-
     public ResponseEntity<String> checkActivateToken(String activateToken) {
         return restTemplate.getForEntity(baseURL + "/api/noauth/activate?activateToken={activateToken}", String.class, activateToken);
     }
 
-    public void requestResetPasswordByEmail(JsonNode resetPasswordByEmailRequest) {
+    public void requestResetPasswordByEmail(String email) {
+        ObjectNode resetPasswordByEmailRequest = objectMapper.createObjectNode();
+        resetPasswordByEmailRequest.put("email", email);
         restTemplate.exchange(URI.create(baseURL + "/api/noauth/resetPasswordByEmail"), HttpMethod.POST, new HttpEntity<>(resetPasswordByEmailRequest), Object.class);
     }
 
@@ -668,7 +686,10 @@ public class RestClient implements ClientHttpRequestInterceptor {
         return restTemplate.getForEntity(baseURL + "/api/noauth/resetPassword?resetToken={resetToken}", String.class, resetToken);
     }
 
-    public Optional<JsonNode> activateUser(JsonNode activateRequest) {
+    public Optional<JsonNode> activateUser(String userId, String password) {
+        ObjectNode activateRequest = objectMapper.createObjectNode();
+        activateRequest.put("activateToken", getActivateToken(userId));
+        activateRequest.put("password", password);
         try {
             ResponseEntity<JsonNode> jsonNode = restTemplate.postForEntity(baseURL + "/api/noauth/activate", activateRequest, JsonNode.class);
             return Optional.ofNullable(jsonNode.getBody());
@@ -681,7 +702,10 @@ public class RestClient implements ClientHttpRequestInterceptor {
         }
     }
 
-    public Optional<JsonNode> resetPassword(JsonNode resetPasswordRequest) {
+    public Optional<JsonNode> resetPassword(String resetToken, String resetPassword) {
+        ObjectNode resetPasswordRequest = objectMapper.createObjectNode();
+        resetPasswordRequest.put("resetToken", resetToken);
+        resetPasswordRequest.put("resetPassword", resetPassword);
         try {
             ResponseEntity<JsonNode> jsonNode = restTemplate.postForEntity(baseURL + "/api/noauth/resetPassword", resetPasswordRequest, JsonNode.class);
             return Optional.ofNullable(jsonNode.getBody());
@@ -696,7 +720,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
 
     public Optional<ComponentDescriptor> getComponentDescriptorByClazz(String componentDescriptorClazz) {
         try {
-            ResponseEntity<ComponentDescriptor> componentDescriptor = restTemplate.getForEntity(baseURL + "/api/component/{componentDescriptorClazz}", ComponentDescriptor.class);
+            ResponseEntity<ComponentDescriptor> componentDescriptor = restTemplate.getForEntity(baseURL + "/api/component/{componentDescriptorClazz}", ComponentDescriptor.class, componentDescriptorClazz);
             return Optional.ofNullable(componentDescriptor.getBody());
         } catch (HttpClientErrorException exception) {
             if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
@@ -1807,31 +1831,21 @@ public class RestClient implements ClientHttpRequestInterceptor {
         restTemplate.postForEntity(baseURL + "/api/user/sendActivationMail?email={email}", null, Object.class, email);
     }
 
-    public Optional<String> getActivationLink(String userId) {
-        try {
-            ResponseEntity<String> activationLink = restTemplate.getForEntity(baseURL + "/api/user/{userId}/activationLink", String.class, userId);
-            return Optional.ofNullable(activationLink.getBody());
-        } catch (HttpClientErrorException exception) {
-            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
-                return Optional.empty();
-            } else {
-                throw exception;
-            }
-        }
+    public String getActivationLink(String userId) {
+        return restTemplate.getForEntity(baseURL + "/api/user/{userId}/activationLink", String.class, userId).getBody();
     }
 
     public void deleteUser(String userId) {
         restTemplate.delete(baseURL + "/api/user/{userId}", userId);
     }
 
-    //    @RequestMapping(value = "/tenant/{tenantId}/users", params = {"limit"}, method = RequestMethod.GET)
     public TextPageData<User> getTenantAdmins(String tenantId, TextPageLink pageLink) {
         Map<String, String> params = new HashMap<>();
         params.put("tenantId", tenantId);
         addPageLinkToParam(params, pageLink);
 
         return restTemplate.exchange(
-                baseURL + "/tenant/{tenantId}/users?" + TEXT_PAGE_LINK_URL_PARAMS,
+                baseURL + "/api/tenant/{tenantId}/users?" + TEXT_PAGE_LINK_URL_PARAMS,
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<TextPageData<User>>() {
