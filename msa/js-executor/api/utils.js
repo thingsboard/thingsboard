@@ -18,14 +18,15 @@
 const Long = require('long'),
       uuidParse = require('uuid-parse');
 
-var logger = require('../config/logger')('Utils');
-
 exports.toUUIDString = function(mostSigBits, leastSigBits) {
     var msbBytes = Long.fromValue(mostSigBits, false).toBytes(false);
     var lsbBytes = Long.fromValue(leastSigBits, false).toBytes(false);
     var uuidBytes = msbBytes.concat(lsbBytes);
-    var buff = new Buffer(uuidBytes, 'utf8');
     return uuidParse.unparse(uuidBytes);
+}
+
+exports.UUIDFromBuffer = function(buf) {
+    return uuidParse.unparse(buf);
 }
 
 exports.UUIDToBits = function(uuidString) {
