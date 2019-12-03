@@ -86,10 +86,9 @@ import java.util.Optional;
 /**
  * @author Andrew Shvayka
  */
-@RequiredArgsConstructor
 public class RestClient implements ClientHttpRequestInterceptor {
     private static final String JWT_TOKEN_HEADER_PARAM = "X-Authorization";
-    protected final RestTemplate restTemplate = new RestTemplate();
+    protected final RestTemplate restTemplate;
     protected final String baseURL;
     private String token;
     private String refreshToken;
@@ -97,7 +96,18 @@ public class RestClient implements ClientHttpRequestInterceptor {
 
     private final static String TIME_PAGE_LINK_URL_PARAMS = "limit={limit}&startTime={startTime}&endTime={endTime}&ascOrder={ascOrder}&offset={offset}";
     private final static String TEXT_PAGE_LINK_URL_PARAMS = "limit={limit}&textSearch{textSearch}&idOffset={idOffset}&textOffset{textOffset}";
+
     protected static final String ACTIVATE_TOKEN_REGEX = "/api/noauth/activate?activateToken=";
+
+    public RestClient(String baseURL) {
+        this.restTemplate = new RestTemplate();
+        this.baseURL = baseURL;
+    }
+
+    public RestClient(RestTemplate restTemplate, String baseURL) {
+        this.restTemplate = restTemplate;
+        this.baseURL = baseURL;
+    }
 
     @Override
     public ClientHttpResponse intercept(HttpRequest request, byte[] bytes, ClientHttpRequestExecution execution) throws IOException {
