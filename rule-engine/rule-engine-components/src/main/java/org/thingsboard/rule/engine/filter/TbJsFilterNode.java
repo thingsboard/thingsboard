@@ -51,10 +51,16 @@ public class TbJsFilterNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        ListeningExecutor jsExecutor = ctx.getJsExecutor();
-        withCallback(jsExecutor.executeAsync(() -> jsEngine.executeFilter(msg)),
-                filterResult -> ctx.tellNext(msg, filterResult ? "True" : "False"),
-                t -> ctx.tellFailure(msg, t));
+        ctx.logJsEvalRequest();
+        withCallback(jsEngine.executeFilterAsync(msg),
+                filterResult -> {
+                    ctx.logJsEvalResponse();
+                    ctx.tellNext(msg, filterResult ? "True" : "False");
+                },
+                t -> {
+                    ctx.tellFailure(msg, t);
+                    ctx.logJsEvalFailure();
+                }, ctx.getDbCallbackExecutor());
     }
 
     @Override

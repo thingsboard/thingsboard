@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import javax.script.ScriptException;
@@ -25,9 +26,13 @@ public interface ScriptEngine {
 
     TbMsg executeUpdate(TbMsg msg) throws ScriptException;
 
+    ListenableFuture<TbMsg> executeUpdateAsync(TbMsg msg);
+
     TbMsg executeGenerate(TbMsg prevMsg) throws ScriptException;
 
     boolean executeFilter(TbMsg msg) throws ScriptException;
+
+    ListenableFuture<Boolean> executeFilterAsync(TbMsg msg);
 
     Set<String> executeSwitch(TbMsg msg) throws ScriptException;
 

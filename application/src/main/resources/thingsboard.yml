@@ -246,6 +246,7 @@ actors:
   statistics:
     # Enable/disable actor statistics
     enabled: "${ACTORS_STATISTICS_ENABLED:true}"
+    js_print_interval_ms: "${ACTORS_JS_STATISTICS_PRINT_INTERVAL_MS:10000}"
     persist_frequency: "${ACTORS_STATISTICS_PERSIST_FREQUENCY:3600000}"
   queue:
     # Enable/disable persistence of un-processed messages to the queue
@@ -467,6 +468,9 @@ js:
     response_auto_commit_interval: "${REMOTE_JS_RESPONSE_AUTO_COMMIT_INTERVAL_MS:100}"
     # Maximum allowed JavaScript execution errors before JavaScript will be blacklisted
     max_errors: "${REMOTE_JS_SANDBOX_MAX_ERRORS:3}"
+    stats:
+      enabled: "${TB_JS_REMOTE_STATS_ENABLED:false}"
+      print_interval_ms: "${TB_JS_REMOTE_STATS_PRINT_INTERVAL_MS:10000}"
 
 transport:
   type: "${TRANSPORT_TYPE:local}" # local or remote

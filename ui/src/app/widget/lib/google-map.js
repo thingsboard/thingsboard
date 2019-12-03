@@ -55,7 +55,7 @@ export default class TbGoogleMap {
                     angular.merge({imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'}, markerClusteringSetting));
             }
             if (initCallback) {
-                initCallback();
+                setTimeout(initCallback, 0);// eslint-disable-line
             }
 
         }
@@ -421,8 +421,8 @@ export default class TbGoogleMap {
 
 
     /* eslint-disable no-undef */
-    fitBounds(bounds) {
-        if (this.dontFitMapBounds && this.defaultZoomLevel) {
+    fitBounds(bounds, useDefaultZoom) {
+        if ((this.dontFitMapBounds || useDefaultZoom) && this.defaultZoomLevel) {
             this.map.setZoom(this.defaultZoomLevel);
             this.map.setCenter(bounds.getCenter());
         } else {

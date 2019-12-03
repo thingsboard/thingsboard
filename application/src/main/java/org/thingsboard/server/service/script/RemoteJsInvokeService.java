@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
 import org.thingsboard.server.kafka.TBKafkaConsumerTemplate;
@@ -29,13 +30,14 @@ import org.thingsboard.server.kafka.TBKafkaProducerTemplate;
 import org.thingsboard.server.kafka.TbKafkaRequestTemplate;
 import org.thingsboard.server.kafka.TbKafkaSettings;
 import org.thingsboard.server.kafka.TbNodeIdProvider;
-import org.thingsboard.server.service.cluster.discovery.DiscoveryService;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @ConditionalOnProperty(prefix = "js", value = "evaluator", havingValue = "remote", matchIfMissing = true)
@@ -69,6 +71,25 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
     @Getter
     @Value("${js.remote.max_errors}")
     private int maxErrors;
+
+    @Value("${js.remote.stats.enabled:false}")
+    private boolean statsEnabled;
+
+    private final AtomicInteger kafkaPushedMsgs = new AtomicInteger(0);
+    private final AtomicInteger kafkaInvokeMsgs = new AtomicInteger(0);
+    private final AtomicInteger kafkaEvalMsgs = new AtomicInteger(0);
+    private final AtomicInteger kafkaFailedMsgs = new AtomicInteger(0);
+
+    @Scheduled(fixedDelayString = "${js.remote.stats.print_interval_ms}")
+    public void printStats() {
+        if (statsEnabled) {
+            int invokeMsgs = kafkaInvokeMsgs.getAndSet(0);
+            int evalMsgs = kafkaEvalMsgs.getAndSet(0);
+            int failed = kafkaFailedMsgs.getAndSet(0);
+            log.info("Kafka JS Invoke Stats: pushed [{}] received [{}] invoke [{}] eval [{}] failed [{}]",
+                    kafkaPushedMsgs.getAndSet(0), invokeMsgs + evalMsgs, invokeMsgs, evalMsgs, failed);
+        }
+    }
 
     private TbKafkaRequestTemplate<JsInvokeProtos.RemoteJsRequest, JsInvokeProtos.RemoteJsResponse> kafkaTemplate;
     private Map<UUID, String> scriptIdToBodysMap = new ConcurrentHashMap<>();
@@ -139,14 +160,17 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
 
         log.trace("Post compile request for scriptId [{}]", scriptId);
         ListenableFuture<JsInvokeProtos.RemoteJsResponse> future = kafkaTemplate.post(scriptId.toString(), jsRequestWrapper);
+        kafkaPushedMsgs.incrementAndGet();
         return Futures.transform(future, response -> {
             JsInvokeProtos.JsCompileResponse compilationResult = response.getCompileResponse();
             UUID compiledScriptId = new UUID(compilationResult.getScriptIdMSB(), compilationResult.getScriptIdLSB());
             if (compilationResult.getSuccess()) {
+                kafkaEvalMsgs.incrementAndGet();
                 scriptIdToNameMap.put(scriptId, functionName);
                 scriptIdToBodysMap.put(scriptId, scriptBody);
                 return compiledScriptId;
             } else {
+                kafkaFailedMsgs.incrementAndGet();
                 log.debug("[{}] Failed to compile script due to [{}]: {}", compiledScriptId, compilationResult.getErrorCode().name(), compilationResult.getErrorDetails());
                 throw new RuntimeException(compilationResult.getErrorDetails());
             }
@@ -174,12 +198,16 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 .setInvokeRequest(jsRequestBuilder.build())
                 .build();
 
+
         ListenableFuture<JsInvokeProtos.RemoteJsResponse> future = kafkaTemplate.post(scriptId.toString(), jsRequestWrapper);
+        kafkaPushedMsgs.incrementAndGet();
         return Futures.transform(future, response -> {
             JsInvokeProtos.JsInvokeResponse invokeResult = response.getInvokeResponse();
             if (invokeResult.getSuccess()) {
+                kafkaInvokeMsgs.incrementAndGet();
                 return invokeResult.getResult();
             } else {
+                kafkaFailedMsgs.incrementAndGet();
                 log.debug("[{}] Failed to compile script due to [{}]: {}", scriptId, invokeResult.getErrorCode().name(), invokeResult.getErrorDetails());
                 throw new RuntimeException(invokeResult.getErrorDetails());
             }

@@ -273,9 +273,9 @@ export default class TbOpenStreetMap {
 		polygon.redraw();
 	}
 
-	fitBounds(bounds) {
+	fitBounds(bounds, useDefaultZoom) {
 		if (bounds.isValid()) {
-			if (this.dontFitMapBounds && this.defaultZoomLevel) {
+			if ((this.dontFitMapBounds || useDefaultZoom) && this.defaultZoomLevel) {
 				this.map.setZoom(this.defaultZoomLevel, {animate: false});
 				this.map.panTo(bounds.getCenter(), {animate: false});
 			} else {
