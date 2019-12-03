@@ -562,7 +562,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<List<Asset>>() {
                 },
-                assetIds).getBody();
+                String.join(",", assetIds)).getBody();
     }
 
     public List<Asset> findByQuery(AssetSearchQuery query) {
@@ -737,7 +737,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<List<ComponentDescriptor>>() {
                 },
-                componentTypes).getBody();
+                String.join(",", componentTypes)).getBody();
     }
 
     public Optional<Customer> getCustomerById(String customerId) {
@@ -1098,7 +1098,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
                 HttpMethod.GET,
                 HttpEntity.EMPTY, new ParameterizedTypeReference<List<Device>>() {
                 },
-                deviceIds).getBody();
+                String.join(",", deviceIds)).getBody();
     }
 
     public List<Device> findByQuery(DeviceSearchQuery query) {
