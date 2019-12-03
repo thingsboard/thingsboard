@@ -681,7 +681,8 @@ public class RestClient implements ClientHttpRequestInterceptor {
         }
     }
 
-    public ResponseEntity<String> checkActivateToken(String activateToken) {
+    public ResponseEntity<String> checkActivateToken(String userId) {
+        String activateToken = getActivateToken(userId);
         return restTemplate.getForEntity(baseURL + "/api/noauth/activate?activateToken={activateToken}", String.class, activateToken);
     }
 
@@ -689,10 +690,6 @@ public class RestClient implements ClientHttpRequestInterceptor {
         ObjectNode resetPasswordByEmailRequest = objectMapper.createObjectNode();
         resetPasswordByEmailRequest.put("email", email);
         restTemplate.exchange(URI.create(baseURL + "/api/noauth/resetPasswordByEmail"), HttpMethod.POST, new HttpEntity<>(resetPasswordByEmailRequest), Object.class);
-    }
-
-    public ResponseEntity<String> checkResetToken(String resetToken) {
-        return restTemplate.getForEntity(baseURL + "/api/noauth/resetPassword?resetToken={resetToken}", String.class, resetToken);
     }
 
     public Optional<JsonNode> activateUser(String userId, String password) {
