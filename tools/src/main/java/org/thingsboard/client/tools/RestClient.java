@@ -1962,16 +1962,30 @@ public class RestClient implements ClientHttpRequestInterceptor {
 
     private void addPageLinkToParam(Map<String, String> params, TimePageLink pageLink) {
         params.put("limit", String.valueOf(pageLink.getLimit()));
-        params.put("startTime", String.valueOf(pageLink.getStartTime()));
-        params.put("endTime", String.valueOf(pageLink.getEndTime()));
+        if (pageLink.getStartTime() != null) {
+            params.put("startTime", String.valueOf(pageLink.getStartTime()));
+        }
+        if (pageLink.getEndTime() != null) {
+            params.put("endTime", String.valueOf(pageLink.getEndTime()));
+        }
         params.put("ascOrder", String.valueOf(pageLink.isAscOrder()));
-        params.put("offset", pageLink.getIdOffset().toString());
+        if (pageLink.getIdOffset() != null) {
+            params.put("offset", pageLink.getIdOffset().toString());
+        }
     }
 
     private void addPageLinkToParam(Map<String, String> params, TextPageLink pageLink) {
         params.put("limit", String.valueOf(pageLink.getLimit()));
-        params.put("textSearch", pageLink.getTextSearch());
-        params.put("idOffset", pageLink.getIdOffset().toString());
-        params.put("textOffset", pageLink.getTextOffset());
+        if (pageLink.getTextSearch() != null) {
+            params.put("textSearch", pageLink.getTextSearch());
+        }
+
+        if (pageLink.getIdOffset() != null) {
+            params.put("idOffset", pageLink.getIdOffset().toString());
+
+        }
+        if (pageLink.getTextOffset() != null) {
+            params.put("textOffset", pageLink.getTextOffset());
+        }
     }
 }
