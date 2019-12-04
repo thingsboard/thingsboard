@@ -445,7 +445,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
     }
 
     private String getUrlParams(TextPageLink pageLink) {
-        String urlParams = "limit={limit}&ascOrder={ascOrder}";
+        String urlParams = "limit={limit}";
         if (!isEmpty(pageLink.getTextSearch())) {
             urlParams += "&textSearch={textSearch}";
         }
