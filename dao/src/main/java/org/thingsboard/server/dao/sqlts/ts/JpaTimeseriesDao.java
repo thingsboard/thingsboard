@@ -265,6 +265,7 @@ public class JpaTimeseriesDao extends AbstractSqlTimeseriesDao implements Timese
         entity.setDoubleValue(tsKvEntry.getDoubleValue().orElse(null));
         entity.setLongValue(tsKvEntry.getLongValue().orElse(null));
         entity.setBooleanValue(tsKvEntry.getBooleanValue().orElse(null));
+        entity.setJsonValue(tsKvEntry.getJsonValue().orElse(null));
         log.trace("Saving entity: {}", entity);
         return insertService.submit(() -> {
             insertRepository.saveOrUpdate(entity);
@@ -288,6 +289,7 @@ public class JpaTimeseriesDao extends AbstractSqlTimeseriesDao implements Timese
         latestEntity.setDoubleValue(tsKvEntry.getDoubleValue().orElse(null));
         latestEntity.setLongValue(tsKvEntry.getLongValue().orElse(null));
         latestEntity.setBooleanValue(tsKvEntry.getBooleanValue().orElse(null));
+        latestEntity.setJsonValue(tsKvEntry.getJsonValue().orElse(null));
         return insertService.submit(() -> {
             insertLatestRepository.saveOrUpdate(latestEntity);
             return null;

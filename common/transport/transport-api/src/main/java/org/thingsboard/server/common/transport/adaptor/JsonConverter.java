@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
+import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
@@ -204,6 +205,14 @@ public class JsonConverter {
                 } else if (!value.isJsonNull()) {
                     throw new JsonSyntaxException(CAN_T_PARSE_VALUE + value);
                 }
+            } else if (element.isJsonObject()) {
+                result.add(KeyValueProto
+                        .newBuilder()
+                        .setKey(valueEntry
+                                .getKey())
+                        .setType(KeyValueType.JSON_V)
+                        .setJsonV(element.toString())
+                        .build());
             } else if (!element.isJsonNull()) {
                 throw new JsonSyntaxException(CAN_T_PARSE_VALUE + element);
             }
@@ -464,6 +473,8 @@ public class JsonConverter {
                 } else {
                     throw new JsonSyntaxException(CAN_T_PARSE_VALUE + value);
                 }
+            } else if (element.isJsonObject()) {
+                result.add(new JsonDataEntry(valueEntry.getKey(), element.toString()));
             } else {
                 throw new JsonSyntaxException(CAN_T_PARSE_VALUE + element);
             }

@@ -567,6 +567,10 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                 case STRING_V:
                     json.addProperty(kv.getKey(), kv.getStringV());
                     break;
+                case JSON_V:
+                    JsonParser parser = new JsonParser();
+                    json.add(kv.getKey(), parser.parse(kv.getJsonV()) );
+                    break;
             }
         }
         return json;
@@ -642,6 +646,10 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             case STRING:
                 builder.setType(KeyValueType.STRING_V);
                 builder.setStringV(kvEntry.getStrValue().get());
+                break;
+            case JSON:
+                builder.setType(KeyValueType.JSON_V);
+                builder.setJsonV(kvEntry.getJsonValue().get());
                 break;
         }
         return builder.build();
