@@ -18,7 +18,6 @@ package org.thingsboard.client.tools;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -86,10 +85,9 @@ import java.util.Optional;
 /**
  * @author Andrew Shvayka
  */
-@RequiredArgsConstructor
 public class RestClient implements ClientHttpRequestInterceptor {
     private static final String JWT_TOKEN_HEADER_PARAM = "X-Authorization";
-    protected final RestTemplate restTemplate = new RestTemplate();
+    protected final RestTemplate restTemplate;
     protected final String baseURL;
     private String token;
     private String refreshToken;
@@ -97,7 +95,18 @@ public class RestClient implements ClientHttpRequestInterceptor {
 
     private final static String TIME_PAGE_LINK_URL_PARAMS = "limit={limit}&startTime={startTime}&endTime={endTime}&ascOrder={ascOrder}&offset={offset}";
     private final static String TEXT_PAGE_LINK_URL_PARAMS = "limit={limit}&textSearch{textSearch}&idOffset={idOffset}&textOffset{textOffset}";
+
     protected static final String ACTIVATE_TOKEN_REGEX = "/api/noauth/activate?activateToken=";
+
+    public RestClient(String baseURL) {
+        this.restTemplate = new RestTemplate();
+        this.baseURL = baseURL;
+    }
+
+    public RestClient(RestTemplate restTemplate, String baseURL) {
+        this.restTemplate = restTemplate;
+        this.baseURL = baseURL;
+    }
 
     @Override
     public ClientHttpResponse intercept(HttpRequest request, byte[] bytes, ClientHttpRequestExecution execution) throws IOException {
@@ -553,7 +562,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<List<Asset>>() {
                 },
-                assetIds).getBody();
+                String.join(",", assetIds)).getBody();
     }
 
     public List<Asset> findByQuery(AssetSearchQuery query) {
@@ -672,7 +681,8 @@ public class RestClient implements ClientHttpRequestInterceptor {
         }
     }
 
-    public ResponseEntity<String> checkActivateToken(String activateToken) {
+    public ResponseEntity<String> checkActivateToken(String userId) {
+        String activateToken = getActivateToken(userId);
         return restTemplate.getForEntity(baseURL + "/api/noauth/activate?activateToken={activateToken}", String.class, activateToken);
     }
 
@@ -682,32 +692,12 @@ public class RestClient implements ClientHttpRequestInterceptor {
         restTemplate.exchange(URI.create(baseURL + "/api/noauth/resetPasswordByEmail"), HttpMethod.POST, new HttpEntity<>(resetPasswordByEmailRequest), Object.class);
     }
 
-    public ResponseEntity<String> checkResetToken(String resetToken) {
-        return restTemplate.getForEntity(baseURL + "/api/noauth/resetPassword?resetToken={resetToken}", String.class, resetToken);
-    }
-
     public Optional<JsonNode> activateUser(String userId, String password) {
         ObjectNode activateRequest = objectMapper.createObjectNode();
         activateRequest.put("activateToken", getActivateToken(userId));
         activateRequest.put("password", password);
         try {
             ResponseEntity<JsonNode> jsonNode = restTemplate.postForEntity(baseURL + "/api/noauth/activate", activateRequest, JsonNode.class);
-            return Optional.ofNullable(jsonNode.getBody());
-        } catch (HttpClientErrorException exception) {
-            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
-                return Optional.empty();
-            } else {
-                throw exception;
-            }
-        }
-    }
-
-    public Optional<JsonNode> resetPassword(String resetToken, String resetPassword) {
-        ObjectNode resetPasswordRequest = objectMapper.createObjectNode();
-        resetPasswordRequest.put("resetToken", resetToken);
-        resetPasswordRequest.put("resetPassword", resetPassword);
-        try {
-            ResponseEntity<JsonNode> jsonNode = restTemplate.postForEntity(baseURL + "/api/noauth/resetPassword", resetPasswordRequest, JsonNode.class);
             return Optional.ofNullable(jsonNode.getBody());
         } catch (HttpClientErrorException exception) {
             if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
@@ -747,7 +737,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<List<ComponentDescriptor>>() {
                 },
-                componentTypes).getBody();
+                String.join(",", componentTypes)).getBody();
     }
 
     public Optional<Customer> getCustomerById(String customerId) {
@@ -1108,7 +1098,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
                 HttpMethod.GET,
                 HttpEntity.EMPTY, new ParameterizedTypeReference<List<Device>>() {
                 },
-                deviceIds).getBody();
+                String.join(",", deviceIds)).getBody();
     }
 
     public List<Device> findByQuery(DeviceSearchQuery query) {
@@ -1785,7 +1775,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
         Map<String, String> params = new HashMap<>();
         addPageLinkToParam(params, pageLink);
         return restTemplate.exchange(
-                baseURL + "/tenants?" + TEXT_PAGE_LINK_URL_PARAMS,
+                baseURL + "/api/tenants?" + TEXT_PAGE_LINK_URL_PARAMS,
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<TextPageData<Tenant>>() {
