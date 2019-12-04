@@ -25,4 +25,5 @@ logger:
   filename: "LOGGER_FILENAME"
 
 script:
+  use_sandbox: "SCRIPT_USE_SANDBOX"
   script_body_trace_frequency: "SCRIPT_BODY_TRACE_FREQUENCY"

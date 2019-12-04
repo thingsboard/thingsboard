@@ -63,14 +63,7 @@ import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
@@ -132,7 +125,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
 
     @Value("${state.defaultStateCheckIntervalInSec}")
     @Getter
-    private long defaultStateCheckIntervalInSec;
+    private int defaultStateCheckIntervalInSec;
 
     @Value("${state.persistToTelemetry:false}")
     @Getter
@@ -153,7 +146,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
         // Should be always single threaded due to absence of locks.
         queueExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor());
         queueExecutor.submit(this::initStateFromDB);
-        queueExecutor.scheduleAtFixedRate(this::updateState, defaultStateCheckIntervalInSec, defaultStateCheckIntervalInSec, TimeUnit.SECONDS);
+        queueExecutor.scheduleAtFixedRate(this::updateState, new Random().nextInt(defaultStateCheckIntervalInSec), defaultStateCheckIntervalInSec, TimeUnit.SECONDS);
         //TODO: schedule persistence in v2.1;
     }
 
