@@ -22,6 +22,8 @@ import org.thingsboard.server.dao.sqlts.AbstractLatestInsertRepository;
 import org.thingsboard.server.dao.util.HsqlDao;
 import org.thingsboard.server.dao.util.SqlTsDao;
 
+import java.util.List;
+
 @SqlTsDao
 @HsqlDao
 @Repository
@@ -38,6 +40,11 @@ public class HsqlLatestInsertRepository extends AbstractLatestInsertRepository {
     @Override
     public void saveOrUpdate(TsKvLatestEntity entity) {
         processSaveOrUpdate(entity, INSERT_OR_UPDATE_BOOL_STATEMENT, INSERT_OR_UPDATE_STR_STATEMENT, INSERT_OR_UPDATE_LONG_STATEMENT, INSERT_OR_UPDATE_DBL_STATEMENT);
+    }
+
+    @Override
+    public void saveOrUpdate(List<TsKvLatestEntity> entities) {
+
     }
 
     @Override
