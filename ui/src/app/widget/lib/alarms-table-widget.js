@@ -94,6 +94,24 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
         icon: 'search'
     };
 
+    let columnDisplayAction = {
+        name: 'entity.columns-to-display',
+        show: true,
+        onAction: function($event) {
+            vm.editColumnsToDisplay($event);
+        },
+        icon: 'view_column'
+    };
+
+    let statusFilterAction = {
+        name: 'alarm.alarm-status-filter',
+        show: true,
+        onAction: function($event) {
+            vm.editAlarmStatusFilter($event);
+        },
+        icon: 'filter_list'
+    };
+
     vm.enterFilterMode = enterFilterMode;
     vm.exitFilterMode = exitFilterMode;
     vm.onReorder = onReorder;
@@ -167,7 +185,7 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
 
     function initializeConfig() {
 
-        vm.ctx.widgetActions = [ vm.searchAction ];
+        vm.ctx.widgetActions = [ vm.searchAction, statusFilterAction, columnDisplayAction ];
 
         vm.displayDetails = angular.isDefined(vm.settings.displayDetails) ? vm.settings.displayDetails : true;
         vm.allowAcknowledgment = angular.isDefined(vm.settings.allowAcknowledgment) ? vm.settings.allowAcknowledgment : true;
@@ -215,6 +233,8 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
 
         vm.enableSelection = angular.isDefined(vm.settings.enableSelection) ? vm.settings.enableSelection : true;
         vm.searchAction.show = angular.isDefined(vm.settings.enableSearch) ? vm.settings.enableSearch : true;
+        columnDisplayAction.show = angular.isDefined(vm.settings.enableSelectColumnDisplay) ? vm.settings.enableSelectColumnDisplay : true;
+        statusFilterAction.show = angular.isDefined(vm.settings.enableStatusFilter) ? vm.settings.enableStatusFilter : true;
         if (!vm.allowAcknowledgment && !vm.allowClear) {
             vm.enableSelection = false;
         }

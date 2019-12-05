@@ -26,12 +26,12 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
@@ -81,7 +81,7 @@ public class TbGetTelemetryNode implements TbNode {
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbGetTelemetryNodeConfiguration.class);
         tsKeyNames = config.getLatestTsKeyNames();
-        limit = config.getFetchMode().equals(FETCH_MODE_ALL) ? MAX_FETCH_SIZE : 1;
+        limit = config.getFetchMode().equals(FETCH_MODE_ALL) ? validateLimit(config.getLimit()) : 1;
         fetchMode = config.getFetchMode();
         orderByFetchAll = config.getOrderBy();
         if (StringUtils.isEmpty(orderByFetchAll)) {
@@ -136,7 +136,7 @@ public class TbGetTelemetryNode implements TbNode {
 
     private void process(List<TsKvEntry> entries, TbMsg msg) {
         ObjectNode resultNode = mapper.createObjectNode();
-        if (limit == MAX_FETCH_SIZE) {
+        if (FETCH_MODE_ALL.equals(fetchMode)) {
             entries.forEach(entry -> processArray(resultNode, entry));
         } else {
             entries.forEach(entry -> processSingle(resultNode, entry));
@@ -156,12 +156,10 @@ public class TbGetTelemetryNode implements TbNode {
     private void processArray(ObjectNode node, TsKvEntry entry) {
         if (node.has(entry.getKey())) {
             ArrayNode arrayNode = (ArrayNode) node.get(entry.getKey());
-            ObjectNode obj = buildNode(entry);
-            arrayNode.add(obj);
+            arrayNode.add(buildNode(entry));
         } else {
             ArrayNode arrayNode = mapper.createArrayNode();
-            ObjectNode obj = buildNode(entry);
-            arrayNode.add(obj);
+            arrayNode.add(buildNode(entry));
             node.set(entry.getKey(), arrayNode);
         }
     }
@@ -252,6 +250,14 @@ public class TbGetTelemetryNode implements TbNode {
 
     private String replaceRegex(String pattern) {
         return pattern.replaceAll("[${}]", "");
+    }
+
+    private int validateLimit(int limit) {
+        if (limit != 0) {
+            return limit;
+        } else {
+            return MAX_FETCH_SIZE;
+        }
     }
 
     @Data

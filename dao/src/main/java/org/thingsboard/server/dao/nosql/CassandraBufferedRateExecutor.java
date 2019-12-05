@@ -56,8 +56,9 @@ public class CassandraBufferedRateExecutor extends AbstractBufferedRateExecutor<
             @Value("${cassandra.query.poll_ms:50}") long pollMs,
             @Value("${cassandra.query.tenant_rate_limits.enabled}") boolean tenantRateLimitsEnabled,
             @Value("${cassandra.query.tenant_rate_limits.configuration}") String tenantRateLimitsConfiguration,
-            @Value("${cassandra.query.tenant_rate_limits.print_tenant_names}") boolean printTenantNames) {
-        super(queueLimit, concurrencyLimit, maxWaitTime, dispatcherThreads, callbackThreads, pollMs, tenantRateLimitsEnabled, tenantRateLimitsConfiguration);
+            @Value("${cassandra.query.tenant_rate_limits.print_tenant_names}") boolean printTenantNames,
+            @Value("${cassandra.query.print_queries_freq:0}") int printQueriesFreq) {
+        super(queueLimit, concurrencyLimit, maxWaitTime, dispatcherThreads, callbackThreads, pollMs, tenantRateLimitsEnabled, tenantRateLimitsConfiguration, printQueriesFreq);
         this.printTenantNames = printTenantNames;
     }
 

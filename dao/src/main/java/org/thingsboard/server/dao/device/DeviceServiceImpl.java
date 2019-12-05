@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
@@ -123,7 +124,21 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     public Device saveDevice(Device device) {
         log.trace("Executing saveDevice [{}]", device);
         deviceValidator.validate(device, Device::getTenantId);
-        Device savedDevice = deviceDao.save(device.getTenantId(), device);
+        Device savedDevice;
+        if (!sqlDatabaseUsed) {
+            savedDevice = deviceDao.save(device.getTenantId(), device);
+        } else {
+            try {
+                savedDevice = deviceDao.save(device.getTenantId(), device);
+            } catch (Exception t) {
+                ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
+                if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("device_name_unq_key")) {
+                    throw new DataValidationException("Device with such name already exists!");
+                } else {
+                    throw t;
+                }
+            }
+        }
         if (device.getId() == null) {
             DeviceCredentials deviceCredentials = new DeviceCredentials();
             deviceCredentials.setDeviceId(new DeviceId(savedDevice.getUuidId()));
@@ -296,22 +311,26 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
 
                 @Override
                 protected void validateCreate(TenantId tenantId, Device device) {
-                    deviceDao.findDeviceByTenantIdAndName(device.getTenantId().getId(), device.getName()).ifPresent(
-                            d -> {
-                                throw new DataValidationException("Device with such name already exists!");
-                            }
-                    );
+                    if (!sqlDatabaseUsed) {
+                        deviceDao.findDeviceByTenantIdAndName(device.getTenantId().getId(), device.getName()).ifPresent(
+                                d -> {
+                                    throw new DataValidationException("Device with such name already exists!");
+                                }
+                        );
+                    }
                 }
 
                 @Override
                 protected void validateUpdate(TenantId tenantId, Device device) {
-                    deviceDao.findDeviceByTenantIdAndName(device.getTenantId().getId(), device.getName()).ifPresent(
-                            d -> {
-                                if (!d.getUuidId().equals(device.getUuidId())) {
-                                    throw new DataValidationException("Device with such name already exists!");
+                    if (!sqlDatabaseUsed) {
+                        deviceDao.findDeviceByTenantIdAndName(device.getTenantId().getId(), device.getName()).ifPresent(
+                                d -> {
+                                    if (!d.getUuidId().equals(device.getUuidId())) {
+                                        throw new DataValidationException("Device with such name already exists!");
+                                    }
                                 }
-                            }
-                    );
+                        );
+                    }
                 }
 
                 @Override

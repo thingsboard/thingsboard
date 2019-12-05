@@ -41,6 +41,7 @@
                 <md-input-container md-no-float
                                     ng-if="column.type != vm.columnTypes.name.value &&
                                            column.type != vm.columnTypes.type.value &&
+                                           column.type != vm.columnTypes.label.value &&
                                            column.type != vm.columnTypes.accessToken.value">
                     <input required name="columnKeyName"
                            placeholder="{{ 'import.column-value' | translate }}"

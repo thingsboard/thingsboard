@@ -19,6 +19,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -110,6 +112,19 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
     }
 
     @Override
+    public ListenableFuture<TbMsg> executeUpdateAsync(TbMsg msg) {
+        ListenableFuture<JsonNode> result = executeScriptAsync(msg);
+        return Futures.transformAsync(result, json -> {
+            if (!json.isObject()) {
+                log.warn("Wrong result type: {}", json.getNodeType());
+                return Futures.immediateFailedFuture(new ScriptException("Wrong result type: " + json.getNodeType()));
+            } else {
+                return Futures.immediateFuture(unbindMsg(json, msg));
+            }
+        });
+    }
+
+    @Override
     public TbMsg executeGenerate(TbMsg prevMsg) throws ScriptException {
         JsonNode result = executeScript(prevMsg);
         if (!result.isObject()) {
@@ -145,6 +160,19 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
     }
 
     @Override
+    public ListenableFuture<Boolean> executeFilterAsync(TbMsg msg) {
+        ListenableFuture<JsonNode> result = executeScriptAsync(msg);
+        return Futures.transformAsync(result, json -> {
+            if (!json.isBoolean()) {
+                log.warn("Wrong result type: {}", json.getNodeType());
+                return Futures.immediateFailedFuture(new ScriptException("Wrong result type: " + json.getNodeType()));
+            } else {
+                return Futures.immediateFuture(json.asBoolean());
+            }
+        });
+    }
+
+    @Override
     public Set<String> executeSwitch(TbMsg msg) throws ScriptException {
         JsonNode result = executeScript(msg);
         if (result.isTextual()) {
@@ -173,7 +201,7 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
             return mapper.readTree(eval);
         } catch (ExecutionException e) {
             if (e.getCause() instanceof ScriptException) {
-                throw (ScriptException)e.getCause();
+                throw (ScriptException) e.getCause();
             } else if (e.getCause() instanceof RuntimeException) {
                 throw new ScriptException(e.getCause().getMessage());
             } else {
@@ -182,6 +210,24 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
         } catch (Exception e) {
             throw new ScriptException(e);
         }
+    }
+
+    private ListenableFuture<JsonNode> executeScriptAsync(TbMsg msg) {
+        String[] inArgs = prepareArgs(msg);
+        return Futures.transformAsync(sandboxService.invokeFunction(this.scriptId, inArgs[0], inArgs[1], inArgs[2]),
+                o -> {
+                    try {
+                        return Futures.immediateFuture(mapper.readTree(o.toString()));
+                    } catch (Exception e) {
+                        if (e.getCause() instanceof ScriptException) {
+                            return Futures.immediateFailedFuture(e.getCause());
+                        } else if (e.getCause() instanceof RuntimeException) {
+                            return Futures.immediateFailedFuture(new ScriptException(e.getCause().getMessage()));
+                        } else {
+                            return Futures.immediateFailedFuture(new ScriptException(e));
+                        }
+                    }
+                });
     }
 
     public void destroy() {

@@ -49,9 +49,6 @@ public class TBKafkaProducerTemplate<T> {
     private final KafkaProducer<String, byte[]> producer;
     private final TbKafkaEncoder<T> encoder;
 
-    @Builder.Default
-    private TbKafkaEnricher<T> enricher = ((value, responseTopic, requestId) -> value);
-
     private final TbKafkaPartitioner<T> partitioner;
     private ConcurrentMap<String, List<PartitionInfo>> partitionInfoMap;
     @Getter
@@ -61,7 +58,7 @@ public class TBKafkaProducerTemplate<T> {
     private final TbKafkaSettings settings;
 
     @Builder
-    private TBKafkaProducerTemplate(TbKafkaSettings settings, TbKafkaEncoder<T> encoder, TbKafkaEnricher<T> enricher,
+    private TBKafkaProducerTemplate(TbKafkaSettings settings, TbKafkaEncoder<T> encoder,
                                     TbKafkaPartitioner<T> partitioner, String defaultTopic, String clientId) {
         Properties props = settings.toProps();
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
@@ -72,7 +69,6 @@ public class TBKafkaProducerTemplate<T> {
         this.settings = settings;
         this.producer = new KafkaProducer<>(props);
         this.encoder = encoder;
-        this.enricher = enricher;
         this.partitioner = partitioner;
         this.defaultTopic = defaultTopic;
     }
@@ -90,14 +86,6 @@ public class TBKafkaProducerTemplate<T> {
             }
             //Maybe this should not be cached, but we don't plan to change size of partitions
             this.partitionInfoMap.putIfAbsent(defaultTopic, producer.partitionsFor(defaultTopic));
-        }
-    }
-
-    T enrich(T value, String responseTopic, UUID requestId) {
-        if (enricher != null) {
-            return enricher.enrich(value, responseTopic, requestId);
-        } else {
-            return value;
         }
     }
 

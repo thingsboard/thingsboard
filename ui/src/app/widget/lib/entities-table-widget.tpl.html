@@ -42,18 +42,7 @@
                 <thead fix-head md-head md-order="vm.query.order" md-on-reorder="vm.onReorder">
                 <tr md-row>
                     <th ng-if="column.display" md-column md-order-by="'{{ column.label }}'" ng-repeat="column in vm.columns"><span>{{ column.title }}</span></th>
-                    <th md-column class="tb-action-cell" layout="row" layout-align="end center">
-                        <md-button class="md-icon-button"
-                                   aria-label="{{'entity.columns-to-display' | translate}}"
-                                   ng-click="vm.editColumnsToDisplay($event)">
-                            <md-icon aria-label="{{'entity.columns-to-display' | translate}}"
-                                     class="material-icons">view_column
-                            </md-icon>
-                            <md-tooltip md-direction="top">
-                                {{'entity.columns-to-display' | translate}}
-                            </md-tooltip>
-                        </md-button>
-                    </th>
+                    <th md-column class="tb-action-cell" layout="row" layout-align="end center"></th>
                 </tr>
                 </thead>
                 <tbody md-body>

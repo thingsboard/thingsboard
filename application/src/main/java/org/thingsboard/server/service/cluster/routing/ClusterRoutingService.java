@@ -30,13 +30,6 @@ public interface ClusterRoutingService extends DiscoveryServiceListener {
 
     ServerAddress getCurrentServer();
 
-    Optional<ServerAddress> resolveByUuid(UUID uuid);
-
     Optional<ServerAddress> resolveById(EntityId entityId);
-
-    Optional<ServerAddress> resolveByUuid(ServerType server, UUID uuid);
-
-    Optional<ServerAddress> resolveById(ServerType server, EntityId entityId);
-
 
 }

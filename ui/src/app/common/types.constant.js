@@ -219,6 +219,9 @@ export default angular.module('thingsboard.types', [])
                 },
                 "LOGOUT": {
                     name: "audit-log.type-logout"
+                },
+                "LOCKOUT": {
+                    name: "audit-log.type-lockout"
                 }
             },
             auditLogActionStatus: {
@@ -365,6 +368,10 @@ export default angular.module('thingsboard.types', [])
                 type: {
                     name: 'import.column-type.type',
                     value: 'type'
+                },
+                label: {
+                    name: 'import.column-type.label',
+                    value: 'label'
                 },
                 clientAttribute: {
                     name: 'import.column-type.client-attribute',

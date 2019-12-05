@@ -67,7 +67,7 @@ public final class TbMsg implements Serializable {
         this(id, type, originator, metaData, dataType, data, new TbMsgTransactionData(id, originator), ruleChainId, ruleNodeId, clusterPartition);
     }
 
-    public static ByteBuffer toBytes(TbMsg msg) {
+    public static byte[] toByteArray(TbMsg msg) {
         MsgProtos.TbMsgProto.Builder builder = MsgProtos.TbMsgProto.newBuilder();
         builder.setId(msg.getId().toString());
         builder.setType(msg.getType());
@@ -101,8 +101,16 @@ public final class TbMsg implements Serializable {
 
         builder.setDataType(msg.getDataType().ordinal());
         builder.setData(msg.getData());
-        byte[] bytes = builder.build().toByteArray();
-        return ByteBuffer.wrap(bytes);
+        return builder.build().toByteArray();
+
+    }
+
+    public static ByteBuffer toBytes(TbMsg msg) {
+        return ByteBuffer.wrap(toByteArray(msg));
+    }
+
+    public static TbMsg fromBytes(byte[] data) {
+        return fromBytes(ByteBuffer.wrap(data));
     }
 
     public static TbMsg fromBytes(ByteBuffer buffer) {
@@ -115,8 +123,8 @@ public final class TbMsg implements Serializable {
             EntityId entityId = EntityIdFactory.getByTypeAndUuid(proto.getEntityType(), new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB()));
             RuleChainId ruleChainId = new RuleChainId(new UUID(proto.getRuleChainIdMSB(), proto.getRuleChainIdLSB()));
             RuleNodeId ruleNodeId = null;
-            if(proto.getRuleNodeIdMSB() != 0L && proto.getRuleNodeIdLSB() != 0L) {
-                 ruleNodeId = new RuleNodeId(new UUID(proto.getRuleNodeIdMSB(), proto.getRuleNodeIdLSB()));
+            if (proto.getRuleNodeIdMSB() != 0L && proto.getRuleNodeIdLSB() != 0L) {
+                ruleNodeId = new RuleNodeId(new UUID(proto.getRuleNodeIdMSB(), proto.getRuleNodeIdLSB()));
             }
             TbMsgDataType dataType = TbMsgDataType.values()[proto.getDataType()];
             return new TbMsg(UUID.fromString(proto.getId()), proto.getType(), entityId, metaData, dataType, proto.getData(), transactionData, ruleChainId, ruleNodeId, proto.getClusterPartition());

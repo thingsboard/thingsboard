@@ -42,6 +42,12 @@ public interface DeviceRepository extends CrudRepository<DeviceEntity, String> {
                                                    Pageable pageable);
 
     @Query("SELECT d FROM DeviceEntity d WHERE d.tenantId = :tenantId " +
+            "AND d.id > :idOffset ORDER BY d.id")
+    List<DeviceEntity> findByTenantId(@Param("tenantId") String tenantId,
+                                      @Param("idOffset") String idOffset,
+                                      Pageable pageable);
+
+    @Query("SELECT d FROM DeviceEntity d WHERE d.tenantId = :tenantId " +
             "AND LOWER(d.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
             "AND d.id > :idOffset ORDER BY d.id")
     List<DeviceEntity> findByTenantId(@Param("tenantId") String tenantId,
