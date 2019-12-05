@@ -21,7 +21,7 @@ import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.model.ToData;
-import org.thingsboard.server.dao.model.sql.AbsractTsKvEntity;
+import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
 
 import javax.persistence.Column;
 import javax.persistence.ColumnResult;
@@ -115,7 +115,7 @@ import static org.thingsboard.server.dao.sqlts.timescale.AggregationRepository.F
                 resultSetMapping = "timescaleCountMapping"
         )
 })
-public final class TimescaleTsKvEntity extends AbsractTsKvEntity implements ToData<TsKvEntry> {
+public final class TimescaleTsKvEntity extends AbstractTsKvEntity implements ToData<TsKvEntry> {
 
     @Id
     @Column(name = TENANT_ID_COLUMN)

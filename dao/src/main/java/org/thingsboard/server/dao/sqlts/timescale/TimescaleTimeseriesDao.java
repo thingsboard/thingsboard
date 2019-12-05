@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
@@ -36,11 +37,16 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvQuery;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sqlts.timescale.TimescaleTsKvEntity;
+import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
+import org.thingsboard.server.dao.sql.TbSqlBlockingQueue;
+import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
 import org.thingsboard.server.dao.sqlts.AbstractSqlTimeseriesDao;
 import org.thingsboard.server.dao.sqlts.AbstractTimeseriesInsertRepository;
 import org.thingsboard.server.dao.timeseries.TimeseriesDao;
 import org.thingsboard.server.dao.util.TimescaleDBTsDao;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -65,6 +71,39 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
 
     @Autowired
     private AbstractTimeseriesInsertRepository insertRepository;
+
+    @Autowired
+    ScheduledLogExecutorComponent logExecutor;
+
+    @Value("${sql.ts_timescale.batch_size:1000}")
+    private int batchSize;
+
+    @Value("${sql.ts_timescale.batch_max_delay:100}")
+    private long maxDelay;
+
+    @Value("${sql.ts_timescale.stats_print_interval_ms:1000}")
+    private long statsPrintIntervalMs;
+
+    private TbSqlBlockingQueue<TimescaleTsKvEntity> queue;
+
+    @PostConstruct
+    private void init() {
+        TbSqlBlockingQueueParams params = TbSqlBlockingQueueParams.builder()
+                .logName("TS Timescale")
+                .batchSize(batchSize)
+                .maxDelay(maxDelay)
+                .statsPrintIntervalMs(statsPrintIntervalMs)
+                .build();
+        queue = new TbSqlBlockingQueue<>(params);
+        queue.init(logExecutor, v -> insertRepository.saveOrUpdate(v));
+    }
+
+    @PreDestroy
+    private void destroy() {
+        if (queue != null) {
+            queue.destroy();
+        }
+    }
 
     @Override
     public ListenableFuture<List<TsKvEntry>> findAllAsync(TenantId tenantId, EntityId entityId, List<ReadTsKvQuery> queries) {
@@ -126,11 +165,7 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
         entity.setDoubleValue(tsKvEntry.getDoubleValue().orElse(null));
         entity.setLongValue(tsKvEntry.getLongValue().orElse(null));
         entity.setBooleanValue(tsKvEntry.getBooleanValue().orElse(null));
-        log.trace("Saving entity to timescale db: {}", entity);
-        return insertService.submit(() -> {
-            insertRepository.saveOrUpdate(entity);
-            return null;
-        });
+        return queue.add(entity);
     }
 
     @Override
@@ -209,7 +244,7 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
             if (!CollectionUtils.isEmpty(timescaleTsKvEntities)) {
                 List<Optional<TsKvEntry>> result = new ArrayList<>();
                 timescaleTsKvEntities.forEach(entity -> {
-                    if(entity != null && entity.isNotEmpty()) {
+                    if (entity != null && entity.isNotEmpty()) {
                         entity.setEntityId(entityIdStr);
                         entity.setTenantId(tenantIdStr);
                         entity.setKey(key);
