@@ -45,12 +45,12 @@ public class PsqlLatestInsertRepository extends AbstractLatestInsertRepository {
     private static final String INSERT_OR_UPDATE_DBL_STATEMENT = getInsertOrUpdateStringPsql(TS_KV_LATEST_TABLE, TS_KV_LATEST_CONSTRAINT, DBL_V, PSQL_ON_DBL_VALUE_UPDATE_SET_NULLS);
 
     private static final String BATCH_UPDATE =
-            "UPDATE ts_kv_latest SET ts = ?, bool_v = ?, str_v = ?, long_v = ?, dbl_v = ? WHERE entity_type = ? AND entity_id = ? and key = ?";
+            "UPDATE ts_kv_latest SET ts = ?, bool_v = ?, str_v = ?, long_v = ?, dbl_v = ?, json_v = cast(? AS json) WHERE entity_type = ? AND entity_id = ? and key = ?";
 
 
     private static final String INSERT_OR_UPDATE =
-            "INSERT INTO ts_kv_latest (entity_type, entity_id, key, ts, bool_v, str_v, long_v, dbl_v) VALUES(?, ?, ?, ?, ?, ?, ?, ?) " +
-                    "ON CONFLICT (entity_type, entity_id, key) DO UPDATE SET ts = ?, bool_v = ?, str_v = ?, long_v = ?, dbl_v = ?;";
+            "INSERT INTO ts_kv_latest (entity_type, entity_id, key, ts, bool_v, str_v, long_v, dbl_v, json_v) VALUES(?, ?, ?, ?, ?, ?, ?, ?, cast(? AS json)) " +
+                    "ON CONFLICT (entity_type, entity_id, key) DO UPDATE SET ts = ?, bool_v = ?, str_v = ?, long_v = ?, dbl_v = ?, json_v = cast(? AS json);";
 
     @Override
     public void saveOrUpdate(TsKvLatestEntity entity) {
@@ -87,9 +87,11 @@ public class PsqlLatestInsertRepository extends AbstractLatestInsertRepository {
                             ps.setNull(5, Types.DOUBLE);
                         }
 
-                        ps.setString(6, entities.get(i).getEntityType().name());
-                        ps.setString(7, entities.get(i).getEntityId());
-                        ps.setString(8, entities.get(i).getKey());
+                        ps.setString(6, replaceNullChars(entities.get(i).getJsonValue()));
+
+                        ps.setString(7, entities.get(i).getEntityType().name());
+                        ps.setString(8, entities.get(i).getEntityId());
+                        ps.setString(9, entities.get(i).getKey());
                     }
 
                     @Override
@@ -119,35 +121,38 @@ public class PsqlLatestInsertRepository extends AbstractLatestInsertRepository {
                         ps.setString(2, insertEntities.get(i).getEntityId());
                         ps.setString(3, insertEntities.get(i).getKey());
                         ps.setLong(4, insertEntities.get(i).getTs());
-                        ps.setLong(9, insertEntities.get(i).getTs());
+                        ps.setLong(10, insertEntities.get(i).getTs());
 
                         if (insertEntities.get(i).getBooleanValue() != null) {
                             ps.setBoolean(5, insertEntities.get(i).getBooleanValue());
-                            ps.setBoolean(10, insertEntities.get(i).getBooleanValue());
+                            ps.setBoolean(11, insertEntities.get(i).getBooleanValue());
                         } else {
                             ps.setNull(5, Types.BOOLEAN);
-                            ps.setNull(10, Types.BOOLEAN);
+                            ps.setNull(11, Types.BOOLEAN);
                         }
 
                         ps.setString(6, replaceNullChars(entities.get(i).getStrValue()));
-                        ps.setString(11, replaceNullChars(entities.get(i).getStrValue()));
+                        ps.setString(12, replaceNullChars(entities.get(i).getStrValue()));
 
 
                         if (insertEntities.get(i).getLongValue() != null) {
                             ps.setLong(7, insertEntities.get(i).getLongValue());
-                            ps.setLong(12, insertEntities.get(i).getLongValue());
+                            ps.setLong(13, insertEntities.get(i).getLongValue());
                         } else {
                             ps.setNull(7, Types.BIGINT);
-                            ps.setNull(12, Types.BIGINT);
+                            ps.setNull(13, Types.BIGINT);
                         }
 
                         if (insertEntities.get(i).getDoubleValue() != null) {
                             ps.setDouble(8, insertEntities.get(i).getDoubleValue());
-                            ps.setDouble(13, insertEntities.get(i).getDoubleValue());
+                            ps.setDouble(14, insertEntities.get(i).getDoubleValue());
                         } else {
                             ps.setNull(8, Types.DOUBLE);
-                            ps.setNull(13, Types.DOUBLE);
+                            ps.setNull(14, Types.DOUBLE);
                         }
+
+                        ps.setString(9, replaceNullChars(entities.get(i).getJsonValue()));
+                        ps.setString(15, replaceNullChars(entities.get(i).getJsonValue()));
                     }
 
                     @Override
