@@ -20,6 +20,7 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
+import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
@@ -75,6 +76,8 @@ public class AttributeKvEntity implements ToData<AttributeKvEntry>, Serializable
             kvEntry = new DoubleDataEntry(id.getAttributeKey(), doubleValue);
         } else if (longValue != null) {
             kvEntry = new LongDataEntry(id.getAttributeKey(), longValue);
+        } else if (jsonValue != null) {
+            kvEntry = new JsonDataEntry(id.getAttributeKey(), jsonValue);
         }
         return new BaseAttributeKvEntry(kvEntry, lastUpdateTs);
     }
