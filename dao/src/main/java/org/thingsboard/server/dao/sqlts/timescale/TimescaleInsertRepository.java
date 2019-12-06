@@ -44,8 +44,8 @@ public class TimescaleInsertRepository extends AbstractTimeseriesInsertRepositor
 
 
     private static final String INSERT_OR_UPDATE =
-            "INSERT INTO tenant_ts_kv (tenant_id, entity_id, key, ts, bool_v, str_v, long_v, dbl_v) VALUES(?, ?, ?, ?, ?, ?, ?, ?) " +
-                    "ON CONFLICT (tenant_id, entity_id, key, ts) DO UPDATE SET bool_v = ?, str_v = ?, long_v = ?, dbl_v = ?;";
+            "INSERT INTO tenant_ts_kv (tenant_id, entity_id, key, ts, bool_v, str_v, long_v, dbl_v, json_v) VALUES(?, ?, ?, ?, ?, ?, ?, ?, cast(? AS json)) " +
+                    "ON CONFLICT (tenant_id, entity_id, key, ts) DO UPDATE SET bool_v = ?, str_v = ?, long_v = ?, dbl_v = ?, json_v = cast(? AS json);";
 
     @Override
     public void saveOrUpdate(TimescaleTsKvEntity entity) {
@@ -64,31 +64,34 @@ public class TimescaleInsertRepository extends AbstractTimeseriesInsertRepositor
 
                 if (entities.get(i).getBooleanValue() != null) {
                     ps.setBoolean(5, entities.get(i).getBooleanValue());
-                    ps.setBoolean(9, entities.get(i).getBooleanValue());
+                    ps.setBoolean(10, entities.get(i).getBooleanValue());
                 } else {
                     ps.setNull(5, Types.BOOLEAN);
-                    ps.setNull(9, Types.BOOLEAN);
+                    ps.setNull(10, Types.BOOLEAN);
                 }
 
                 ps.setString(6, replaceNullChars(entities.get(i).getStrValue()));
-                ps.setString(10, replaceNullChars(entities.get(i).getStrValue()));
+                ps.setString(11, replaceNullChars(entities.get(i).getStrValue()));
 
 
                 if (entities.get(i).getLongValue() != null) {
                     ps.setLong(7, entities.get(i).getLongValue());
-                    ps.setLong(11, entities.get(i).getLongValue());
+                    ps.setLong(12, entities.get(i).getLongValue());
                 } else {
                     ps.setNull(7, Types.BIGINT);
-                    ps.setNull(11, Types.BIGINT);
+                    ps.setNull(12, Types.BIGINT);
                 }
 
                 if (entities.get(i).getDoubleValue() != null) {
                     ps.setDouble(8, entities.get(i).getDoubleValue());
-                    ps.setDouble(12, entities.get(i).getDoubleValue());
+                    ps.setDouble(13, entities.get(i).getDoubleValue());
                 } else {
                     ps.setNull(8, Types.DOUBLE);
-                    ps.setNull(12, Types.DOUBLE);
+                    ps.setNull(13, Types.DOUBLE);
                 }
+
+                ps.setString(9, replaceNullChars(entities.get(i).getJsonValue()));
+                ps.setString(14, replaceNullChars(entities.get(i).getJsonValue()));
             }
 
             @Override
