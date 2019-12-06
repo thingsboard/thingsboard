@@ -33,6 +33,7 @@ import java.io.Serializable;
 
 import static org.thingsboard.server.dao.model.ModelConstants.BOOLEAN_VALUE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.DOUBLE_VALUE_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.JSON_VALUE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.LAST_UPDATE_TS_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.LONG_VALUE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.STRING_VALUE_COLUMN;
@@ -56,6 +57,9 @@ public class AttributeKvEntity implements ToData<AttributeKvEntry>, Serializable
 
     @Column(name = DOUBLE_VALUE_COLUMN)
     private Double doubleValue;
+
+    @Column(name = JSON_VALUE_COLUMN)
+    private String jsonValue;
 
     @Column(name = LAST_UPDATE_TS_COLUMN)
     private Long lastUpdateTs;

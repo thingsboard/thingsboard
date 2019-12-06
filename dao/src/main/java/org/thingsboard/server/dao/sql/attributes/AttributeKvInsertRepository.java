@@ -45,14 +45,14 @@ public abstract class AttributeKvInsertRepository {
     private static final ThreadLocal<Pattern> PATTERN_THREAD_LOCAL = ThreadLocal.withInitial(() -> Pattern.compile(String.valueOf(Character.MIN_VALUE)));
     private static final String EMPTY_STR = "";
 
-    private static final String BATCH_UPDATE = "UPDATE attribute_kv SET str_v = ?, long_v = ?, dbl_v = ?, bool_v = ?, last_update_ts = ? " +
+    private static final String BATCH_UPDATE = "UPDATE attribute_kv SET str_v = ?, long_v = ?, dbl_v = ?, bool_v = ?, json_v = cast(? AS json), last_update_ts = ? " +
             "WHERE entity_type = ? and entity_id = ? and attribute_type =? and attribute_key = ?;";
 
     private static final String INSERT_OR_UPDATE =
-            "INSERT INTO attribute_kv (entity_type, entity_id, attribute_type, attribute_key, str_v, long_v, dbl_v, bool_v, last_update_ts) " +
-                    "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+            "INSERT INTO attribute_kv (entity_type, entity_id, attribute_type, attribute_key, str_v, long_v, dbl_v, bool_v, json_v, last_update_ts) " +
+                    "VALUES(?, ?, ?, ?, ?, ?, ?, ?, cast(? AS json), ?) " +
                     "ON CONFLICT (entity_type, entity_id, attribute_type, attribute_key) " +
-                    "DO UPDATE SET str_v = ?, long_v = ?, dbl_v = ?, bool_v = ?, last_update_ts = ?;";
+                    "DO UPDATE SET str_v = ?, long_v = ?, dbl_v = ?, bool_v = ?, json_v = cast(? AS json), last_update_ts = ?;";
 
     protected static final String BOOL_V = "bool_v";
     protected static final String STR_V = "str_v";
@@ -163,11 +163,13 @@ public abstract class AttributeKvInsertRepository {
                             ps.setNull(4, Types.BOOLEAN);
                         }
 
-                        ps.setLong(5, entities.get(i).getLastUpdateTs());
-                        ps.setString(6, entities.get(i).getId().getEntityType().name());
-                        ps.setString(7, entities.get(i).getId().getEntityId());
-                        ps.setString(8, entities.get(i).getId().getAttributeType());
-                        ps.setString(9, entities.get(i).getId().getAttributeKey());
+                        ps.setString(5, replaceNullChars(entities.get(i).getJsonValue()));
+
+                        ps.setLong(6, entities.get(i).getLastUpdateTs());
+                        ps.setString(7, entities.get(i).getId().getEntityType().name());
+                        ps.setString(8, entities.get(i).getId().getEntityId());
+                        ps.setString(9, entities.get(i).getId().getAttributeType());
+                        ps.setString(10, entities.get(i).getId().getAttributeKey());
                     }
 
                     @Override
@@ -198,34 +200,37 @@ public abstract class AttributeKvInsertRepository {
                         ps.setString(3, insertEntities.get(i).getId().getAttributeType());
                         ps.setString(4, insertEntities.get(i).getId().getAttributeKey());
                         ps.setString(5, replaceNullChars(insertEntities.get(i).getStrValue()));
-                        ps.setString(10, replaceNullChars(insertEntities.get(i).getStrValue()));
+                        ps.setString(11, replaceNullChars(insertEntities.get(i).getStrValue()));
 
                         if (insertEntities.get(i).getLongValue() != null) {
                             ps.setLong(6, insertEntities.get(i).getLongValue());
-                            ps.setLong(11, insertEntities.get(i).getLongValue());
+                            ps.setLong(12, insertEntities.get(i).getLongValue());
                         } else {
                             ps.setNull(6, Types.BIGINT);
-                            ps.setNull(11, Types.BIGINT);
+                            ps.setNull(12, Types.BIGINT);
                         }
 
                         if (insertEntities.get(i).getDoubleValue() != null) {
                             ps.setDouble(7, insertEntities.get(i).getDoubleValue());
-                            ps.setDouble(12, insertEntities.get(i).getDoubleValue());
+                            ps.setDouble(13, insertEntities.get(i).getDoubleValue());
                         } else {
                             ps.setNull(7, Types.DOUBLE);
-                            ps.setNull(12, Types.DOUBLE);
+                            ps.setNull(13, Types.DOUBLE);
                         }
 
                         if (insertEntities.get(i).getBooleanValue() != null) {
                             ps.setBoolean(8, insertEntities.get(i).getBooleanValue());
-                            ps.setBoolean(13, insertEntities.get(i).getBooleanValue());
+                            ps.setBoolean(14, insertEntities.get(i).getBooleanValue());
                         } else {
                             ps.setNull(8, Types.BOOLEAN);
-                            ps.setNull(13, Types.BOOLEAN);
+                            ps.setNull(14, Types.BOOLEAN);
                         }
 
-                        ps.setLong(9, insertEntities.get(i).getLastUpdateTs());
-                        ps.setLong(14, insertEntities.get(i).getLastUpdateTs());
+                        ps.setString(9, replaceNullChars(entities.get(i).getJsonValue()));
+                        ps.setString(15, replaceNullChars(entities.get(i).getJsonValue()));
+
+                        ps.setLong(10, insertEntities.get(i).getLastUpdateTs());
+                        ps.setLong(16, insertEntities.get(i).getLastUpdateTs());
                     }
 
                     @Override

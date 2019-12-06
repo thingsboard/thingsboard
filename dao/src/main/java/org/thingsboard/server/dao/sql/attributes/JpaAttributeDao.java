@@ -128,6 +128,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
         entity.setDoubleValue(attribute.getDoubleValue().orElse(null));
         entity.setLongValue(attribute.getLongValue().orElse(null));
         entity.setBooleanValue(attribute.getBooleanValue().orElse(null));
+        entity.setJsonValue(attribute.getJsonValue().orElse(null));
         return addToQueue(entity);
     }
 
