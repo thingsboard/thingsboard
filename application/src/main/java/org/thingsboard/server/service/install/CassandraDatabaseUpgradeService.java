@@ -270,9 +270,16 @@ public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
             case "2.4.1":
                 log.info("Updating schema ...");
                 String updateAssetTableStmt = "alter table asset add label text";
+                String updateAlarmTableStmt = "alter table alarm add propagate_relation_types text";
                 try {
+                    log.info("Updating assets ...");
                     cluster.getSession().execute(updateAssetTableStmt);
                     Thread.sleep(2500);
+                    log.info("Assets updated.");
+                    log.info("Updating alarms ...");
+                    cluster.getSession().execute(updateAlarmTableStmt);
+                    Thread.sleep(2500);
+                    log.info("Alarms updated.");
                 } catch (InvalidQueryException e) {}
                 log.info("Schema updated.");
                 break;

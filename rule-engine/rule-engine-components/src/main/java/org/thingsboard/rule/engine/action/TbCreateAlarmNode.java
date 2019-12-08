@@ -21,11 +21,11 @@ import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -33,6 +33,8 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 
 @Slf4j
 @RuleNode(
@@ -56,7 +58,11 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
 
     @Override
     protected TbCreateAlarmNodeConfiguration loadAlarmNodeConfig(TbNodeConfiguration configuration) throws TbNodeException {
-        return TbNodeUtils.convert(configuration, TbCreateAlarmNodeConfiguration.class);
+        TbCreateAlarmNodeConfiguration nodeConfiguration = TbNodeUtils.convert(configuration, TbCreateAlarmNodeConfiguration.class);
+        if(nodeConfiguration.getRelationTypes() == null) {
+            nodeConfiguration.setRelationTypes(Collections.emptyList());
+        }
+        return nodeConfiguration;
     }
 
     @Override
@@ -66,6 +72,7 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
 
         if (!config.isUseMessageAlarmData()) {
             alarmType = TbNodeUtils.processPattern(this.config.getAlarmType(), msg.getMetaData());
+
             msgAlarm = null;
         } else {
             try {
@@ -98,6 +105,9 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
         if (msgAlarm.getStatus() == null) {
             msgAlarm.setStatus(AlarmStatus.ACTIVE_UNACK);
         }
+        if (msgAlarm.getPropagateRelationTypes() == null) {
+            msgAlarm.setPropagateRelationTypes(Collections.emptyList());
+        }
         return msgAlarm;
     }
 
@@ -125,9 +135,15 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
             if (msgAlarm != null) {
                 existingAlarm.setSeverity(msgAlarm.getSeverity());
                 existingAlarm.setPropagate(msgAlarm.isPropagate());
+                existingAlarm.setPropagateRelationTypes(msgAlarm.getPropagateRelationTypes());
             } else {
                 existingAlarm.setSeverity(config.getSeverity());
                 existingAlarm.setPropagate(config.isPropagate());
+                if(config.getRelationTypes() == null) {
+                    existingAlarm.setPropagateRelationTypes(Collections.emptyList());
+                } else {
+                    existingAlarm.setPropagateRelationTypes(config.getRelationTypes());
+                }
             }
             existingAlarm.setDetails(details);
             existingAlarm.setEndTs(System.currentTimeMillis());
@@ -138,6 +154,10 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
     }
 
     private Alarm buildAlarm(TbMsg msg, JsonNode details, TenantId tenantId) {
+        List<String> relationTypes = this.config.getRelationTypes();
+        if (relationTypes == null) {
+            relationTypes = Collections.emptyList();
+        }
         return Alarm.builder()
                 .tenantId(tenantId)
                 .originator(msg.getOriginator())
@@ -145,6 +165,7 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
                 .severity(config.getSeverity())
                 .propagate(config.isPropagate())
                 .type(TbNodeUtils.processPattern(this.config.getAlarmType(), msg.getMetaData()))
+                .propagateRelationTypes(relationTypes)
                 //todo-vp: alarm date should be taken from Message or current Time should be used?
 //                .startTs(System.currentTimeMillis())
 //                .endTs(System.currentTimeMillis())
