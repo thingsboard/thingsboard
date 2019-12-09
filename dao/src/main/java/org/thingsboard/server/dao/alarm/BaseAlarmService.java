@@ -372,12 +372,14 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         existing.setPropagate(existing.isPropagate() || alarm.isPropagate());
         List<String> existingPropagateRelationTypes = existing.getPropagateRelationTypes();
         List<String> newRelationTypes = alarm.getPropagateRelationTypes();
-        if (!CollectionUtils.isEmpty(existingPropagateRelationTypes) && !CollectionUtils.isEmpty(newRelationTypes)) {
-            existing.setPropagateRelationTypes(Stream.concat(existingPropagateRelationTypes.stream(), newRelationTypes.stream())
-                    .distinct()
-                    .collect(Collectors.toList()));
-        } else {
-            existing.setPropagateRelationTypes(Collections.emptyList());
+        if (!CollectionUtils.isEmpty(newRelationTypes)) {
+            if(!CollectionUtils.isEmpty(existingPropagateRelationTypes)) {
+                existing.setPropagateRelationTypes(Stream.concat(existingPropagateRelationTypes.stream(), newRelationTypes.stream())
+                        .distinct()
+                        .collect(Collectors.toList()));
+            } else {
+                existing.setPropagateRelationTypes(newRelationTypes);
+            }
         }
         return existing;
     }

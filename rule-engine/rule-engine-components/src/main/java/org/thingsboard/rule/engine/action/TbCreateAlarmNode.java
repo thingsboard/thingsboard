@@ -33,7 +33,6 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 
 @Slf4j
@@ -55,13 +54,12 @@ import java.util.List;
 public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConfiguration> {
 
     private static ObjectMapper mapper = new ObjectMapper();
+    private List<String> relationTypes;
 
     @Override
     protected TbCreateAlarmNodeConfiguration loadAlarmNodeConfig(TbNodeConfiguration configuration) throws TbNodeException {
         TbCreateAlarmNodeConfiguration nodeConfiguration = TbNodeUtils.convert(configuration, TbCreateAlarmNodeConfiguration.class);
-        if(nodeConfiguration.getRelationTypes() == null) {
-            nodeConfiguration.setRelationTypes(Collections.emptyList());
-        }
+        relationTypes = nodeConfiguration.getRelationTypes();
         return nodeConfiguration;
     }
 
@@ -72,7 +70,6 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
 
         if (!config.isUseMessageAlarmData()) {
             alarmType = TbNodeUtils.processPattern(this.config.getAlarmType(), msg.getMetaData());
-
             msgAlarm = null;
         } else {
             try {
@@ -105,9 +102,6 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
         if (msgAlarm.getStatus() == null) {
             msgAlarm.setStatus(AlarmStatus.ACTIVE_UNACK);
         }
-        if (msgAlarm.getPropagateRelationTypes() == null) {
-            msgAlarm.setPropagateRelationTypes(Collections.emptyList());
-        }
         return msgAlarm;
     }
 
@@ -139,11 +133,7 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
             } else {
                 existingAlarm.setSeverity(config.getSeverity());
                 existingAlarm.setPropagate(config.isPropagate());
-                if(config.getRelationTypes() == null) {
-                    existingAlarm.setPropagateRelationTypes(Collections.emptyList());
-                } else {
-                    existingAlarm.setPropagateRelationTypes(config.getRelationTypes());
-                }
+                existingAlarm.setPropagateRelationTypes(relationTypes);
             }
             existingAlarm.setDetails(details);
             existingAlarm.setEndTs(System.currentTimeMillis());
@@ -154,10 +144,6 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
     }
 
     private Alarm buildAlarm(TbMsg msg, JsonNode details, TenantId tenantId) {
-        List<String> relationTypes = this.config.getRelationTypes();
-        if (relationTypes == null) {
-            relationTypes = Collections.emptyList();
-        }
         return Alarm.builder()
                 .tenantId(tenantId)
                 .originator(msg.getOriginator())
