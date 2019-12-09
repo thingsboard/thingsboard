@@ -20,7 +20,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.model.ToData;
-import org.thingsboard.server.dao.model.sql.AbsractTsKvEntity;
+import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -37,7 +37,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.TS_COLUMN;
 @Entity
 @Table(name = "ts_kv_latest")
 @IdClass(TsKvLatestCompositeKey.class)
-public final class TsKvLatestEntity extends AbsractTsKvEntity implements ToData<TsKvEntry> {
+public final class TsKvLatestEntity extends AbstractTsKvEntity implements ToData<TsKvEntry> {
 
     @Id
     @Enumerated(EnumType.STRING)

@@ -204,6 +204,18 @@ sql:
       batch_size: "${SQL_ATTRIBUTES_BATCH_SIZE:10000}"
       batch_max_delay: "${SQL_ATTRIBUTES_BATCH_MAX_DELAY_MS:100}"
       stats_print_interval_ms: "${SQL_ATTRIBUTES_BATCH_STATS_PRINT_MS:10000}"
+    ts:
+      batch_size: "${SQL_TS_BATCH_SIZE:10000}"
+      batch_max_delay: "${SQL_TS_BATCH_MAX_DELAY_MS:100}"
+      stats_print_interval_ms: "${SQL_TS_BATCH_STATS_PRINT_MS:10000}"
+    ts_latest:
+      batch_size: "${SQL_TS_LATEST_BATCH_SIZE:10000}"
+      batch_max_delay: "${SQL_TS_LATEST_BATCH_MAX_DELAY_MS:100}"
+      stats_print_interval_ms: "${SQL_TS_LATEST_BATCH_STATS_PRINT_MS:10000}"
+    ts_timescale:
+      batch_size: "${SQL_TS_TIMESCALE_BATCH_SIZE:10000}"
+      batch_max_delay: "${SQL_TS_TIMESCALE_BATCH_MAX_DELAY_MS:100}"
+      stats_print_interval_ms: "${SQL_TS_TIMESCALE_BATCH_STATS_PRINT_MS:10000}"
     # Specify whether to remove null characters from strValue of attributes and timeseries before insert
     remove_null_chars: "${SQL_REMOVE_NULL_CHARS:true}"
 
