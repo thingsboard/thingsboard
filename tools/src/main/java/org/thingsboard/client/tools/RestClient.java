@@ -547,7 +547,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
         addPageLinkToParam(params, pageLink);
 
         ResponseEntity<TextPageData<Asset>> assets = restTemplate.exchange(
-                baseURL + "/tenant/assets?type={type}&" + getUrlParams(pageLink),
+                baseURL + "/api/tenant/assets?type={type}&" + getUrlParams(pageLink),
                 HttpMethod.GET, HttpEntity.EMPTY,
                 new ParameterizedTypeReference<TextPageData<Asset>>() {
                 },
@@ -1470,7 +1470,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
 
     public DeferredResult<ResponseEntity> handleOneWayDeviceRPCRequest(String deviceId, String requestBody) {
         return restTemplate.exchange(
-                baseURL + "/oneway/{deviceId}",
+                baseURL + "/api/plugins/rpc/oneway/{deviceId}",
                 HttpMethod.POST,
                 new HttpEntity<>(requestBody),
                 new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
@@ -1480,7 +1480,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
 
     public DeferredResult<ResponseEntity> handleTwoWayDeviceRPCRequest(String deviceId, String requestBody) {
         return restTemplate.exchange(
-                baseURL + "/twoway/{deviceId}",
+                baseURL + "/api/plugins/rpc/twoway/{deviceId}",
                 HttpMethod.POST,
                 new HttpEntity<>(requestBody),
                 new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
@@ -1579,7 +1579,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
 
     public DeferredResult<ResponseEntity> getAttributeKeys(String entityType, String entityId) {
         return restTemplate.exchange(
-                baseURL + "/{entityType}/{entityId}/keys/attributes",
+                baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/keys/attributes",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
@@ -1590,7 +1590,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
 
     public DeferredResult<ResponseEntity> getAttributeKeysByScope(String entityType, String entityId, String scope) {
         return restTemplate.exchange(
-                baseURL + "/{entityType}/{entityId}/keys/attributes/{scope}",
+                baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/keys/attributes/{scope}",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
@@ -1602,7 +1602,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
 
     public DeferredResult<ResponseEntity> getAttributesResponseEntity(String entityType, String entityId, String keys) {
         return restTemplate.exchange(
-                baseURL + "/{entityType}/{entityId}/values/attributes?keys={keys}",
+                baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/values/attributes?keys={keys}",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
@@ -1614,7 +1614,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
 
     public DeferredResult<ResponseEntity> getAttributesByScope(String entityType, String entityId, String scope, String keys) {
         return restTemplate.exchange(
-                baseURL + "/{entityType}/{entityId}/values/attributes/{scope}?keys={keys}",
+                baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/values/attributes/{scope}?keys={keys}",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
@@ -1627,7 +1627,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
 
     public DeferredResult<ResponseEntity> getTimeseriesKeys(String entityType, String entityId) {
         return restTemplate.exchange(
-                baseURL + "/{entityType}/{entityId}/keys/timeseries",
+                baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/keys/timeseries",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
@@ -1638,7 +1638,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
 
     public DeferredResult<ResponseEntity> getLatestTimeseries(String entityType, String entityId, String keys) {
         return restTemplate.exchange(
-                baseURL + "/{entityType}/{entityId}/values/timeseries?keys={keys}",
+                baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/values/timeseries?keys={keys}",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
@@ -1661,7 +1661,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
         params.put("agg", agg == null ? "NONE" : agg);
 
         return restTemplate.exchange(
-                baseURL + "/{entityType}/{entityId}/values/timeseries?keys={keys}&startTs={startTs}&endTs={endTs}&interval={interval}&limit={limit}&agg={agg}",
+                baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/values/timeseries?keys={keys}&startTs={startTs}&endTs={endTs}&interval={interval}&limit={limit}&agg={agg}",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
@@ -1671,7 +1671,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
 
     public DeferredResult<ResponseEntity> saveDeviceAttributes(String deviceId, String scope, JsonNode request) {
         return restTemplate.exchange(
-                baseURL + "/{deviceId}/{scope}",
+                baseURL + "/api/plugins/telemetry/{deviceId}/{scope}",
                 HttpMethod.POST,
                 new HttpEntity<>(request),
                 new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
@@ -1682,7 +1682,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
 
     public DeferredResult<ResponseEntity> saveEntityAttributesV1(String entityType, String entityId, String scope, JsonNode request) {
         return restTemplate.exchange(
-                baseURL + "/{entityType}/{entityId}/{scope}",
+                baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/{scope}",
                 HttpMethod.POST,
                 new HttpEntity<>(request),
                 new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
@@ -1694,7 +1694,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
 
     public DeferredResult<ResponseEntity> saveEntityAttributesV2(String entityType, String entityId, String scope, JsonNode request) {
         return restTemplate.exchange(
-                baseURL + "/{entityType}/{entityId}/attributes/{scope}",
+                baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/attributes/{scope}",
                 HttpMethod.POST,
                 new HttpEntity<>(request),
                 new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
@@ -1706,7 +1706,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
 
     public DeferredResult<ResponseEntity> saveEntityTelemetry(String entityType, String entityId, String scope, String requestBody) {
         return restTemplate.exchange(
-                baseURL + "/{entityType}/{entityId}/timeseries/{scope}",
+                baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/timeseries/{scope}",
                 HttpMethod.POST,
                 new HttpEntity<>(requestBody),
                 new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
@@ -1718,7 +1718,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
 
     public DeferredResult<ResponseEntity> saveEntityTelemetryWithTTL(String entityType, String entityId, String scope, Long ttl, String requestBody) {
         return restTemplate.exchange(
-                baseURL + "/{entityType}/{entityId}/timeseries/{scope}/{ttl}",
+                baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/timeseries/{scope}/{ttl}",
                 HttpMethod.POST,
                 new HttpEntity<>(requestBody),
                 new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
@@ -1746,7 +1746,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
         params.put("rewriteLatestIfDeleted", String.valueOf(rewriteLatestIfDeleted));
 
         return restTemplate.exchange(
-                baseURL + "/{entityType}/{entityId}/timeseries/delete?keys={keys}&deleteAllDataForKeys={deleteAllDataForKeys}&startTs={startTs}&endTs={endTs}&rewriteLatestIfDeleted={rewriteLatestIfDeleted}",
+                baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/timeseries/delete?keys={keys}&deleteAllDataForKeys={deleteAllDataForKeys}&startTs={startTs}&endTs={endTs}&rewriteLatestIfDeleted={rewriteLatestIfDeleted}",
                 HttpMethod.DELETE,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
@@ -1756,7 +1756,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
 
     public DeferredResult<ResponseEntity> deleteEntityAttributes(String deviceId, String scope, String keys) {
         return restTemplate.exchange(
-                baseURL + "/{deviceId}/{scope}?keys={keys}",
+                baseURL + "/api/plugins/telemetry/{deviceId}/{scope}?keys={keys}",
                 HttpMethod.DELETE,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
@@ -1768,7 +1768,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
 
     public DeferredResult<ResponseEntity> deleteEntityAttributes(String entityType, String entityId, String scope, String keys) {
         return restTemplate.exchange(
-                baseURL + "/{entityType}/{entityId}/{scope}?keys={keys}",
+                baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/{scope}?keys={keys}",
                 HttpMethod.DELETE,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
