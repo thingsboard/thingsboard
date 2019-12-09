@@ -367,6 +367,10 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
                     widget.config.alarmSearchStatus : types.alarmSearchStatus.any;
                 options.alarmsPollingInterval = angular.isDefined(widget.config.alarmsPollingInterval) ?
                     widget.config.alarmsPollingInterval * 1000 : 5000;
+                options.alarmsMaxCountLoad = angular.isDefined(widget.config.alarmsMaxCountLoad) ?
+                    widget.config.alarmsMaxCountLoad : 0;
+                options.alarmsFetchSize = angular.isDefined(widget.config.alarmsFetchSize) ?
+                    widget.config.alarmsFetchSize : 100;
             } else {
                 options.datasources = angular.copy(widget.config.datasources)
             }

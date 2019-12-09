@@ -134,6 +134,15 @@ function AlarmService($http, $q, $interval, $filter, $timeout, utils, types) {
 
     function getAlarms(entityType, entityId, pageLink, alarmSearchStatus, alarmStatus, fetchOriginator, ascOrder, config) {
         var deferred = $q.defer();
+        if (angular.isDefined(pageLink.maxCountLoad) && pageLink.maxCountLoad !== 0) {
+            let leftDownload = pageLink.maxCountLoad - pageLink.limit - (pageLink.idOffset || 0);
+            if (leftDownload === 0) {
+                return deferred.promise.resolve({data: []});
+            }
+            if (leftDownload < 0) {
+                pageLink.limit = Math.abs(leftDownload);
+            }
+        }
         var url = '/api/alarm/' + entityType + '/' + entityId + '?limit=' + pageLink.limit;
 
         if (angular.isDefined(pageLink.startTime) && pageLink.startTime != null) {
@@ -211,16 +220,19 @@ function AlarmService($http, $q, $interval, $filter, $timeout, utils, types) {
         var pageLink;
         if (alarmsQuery.limit) {
             pageLink = {
-                limit: alarmsQuery.limit
+                limit: alarmsQuery.limit,
+                maxCountLoad: alarmsQuery.alarmsMaxCountLoad || 0
             };
         } else if (alarmsQuery.interval) {
             pageLink = {
-                limit: 100,
+                limit: alarmsQuery.alarmsFetchSize || 100,
+                maxCountLoad: alarmsQuery.alarmsMaxCountLoad || 0,
                 startTime: time - alarmsQuery.interval
             };
         } else if (alarmsQuery.startTime) {
             pageLink = {
-                limit: 100,
+                limit: alarmsQuery.alarmsFetchSize || 100,
+                maxCountLoad: alarmsQuery.alarmsMaxCountLoad || 0,
                 startTime: Math.round(alarmsQuery.startTime)
             }
             if (alarmsQuery.endTime) {
@@ -276,8 +288,10 @@ function AlarmService($http, $q, $interval, $filter, $timeout, utils, types) {
                 entityType: alarmSource.entityType,
                 entityId: alarmSource.entityId,
                 alarmSearchStatus: alarmSourceListener.alarmSearchStatus,
-                alarmStatus: null
-            }
+                alarmStatus: null,
+                alarmsMaxCountLoad: alarmSourceListener.alarmsMaxCountLoad,
+                alarmsFetchSize: alarmSourceListener.alarmsFetchSize
+            };
             var originatorKeys = $filter('filter')(alarmSource.dataKeys, {name: 'originator'});
             if (originatorKeys && originatorKeys.length) {
                 alarmSourceListener.alarmsQuery.fetchOriginator = true;
