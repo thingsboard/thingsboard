@@ -22,16 +22,28 @@ import {RuleChainRoutingModule} from '@modules/home/pages/rulechain/rulechain-ro
 import {HomeComponentsModule} from '@modules/home/components/home-components.module';
 import { RuleChainTabsComponent } from '@home/pages/rulechain/rulechain-tabs.component';
 import { RuleChainPageComponent } from './rulechain-page.component';
+import { RuleNodeComponent } from '@home/pages/rulechain/rulenode.component';
+import { FC_NODE_COMPONENT_CONFIG } from 'ngx-flowchart/dist/ngx-flowchart';
 
 @NgModule({
   entryComponents: [
     RuleChainComponent,
-    RuleChainTabsComponent
+    RuleChainTabsComponent,
+    RuleNodeComponent
   ],
   declarations: [
     RuleChainComponent,
     RuleChainTabsComponent,
-    RuleChainPageComponent
+    RuleChainPageComponent,
+    RuleNodeComponent
+  ],
+  providers: [
+    {
+      provide: FC_NODE_COMPONENT_CONFIG,
+      useValue: {
+        nodeComponentType: RuleNodeComponent
+      }
+    }
   ],
   imports: [
     CommonModule,

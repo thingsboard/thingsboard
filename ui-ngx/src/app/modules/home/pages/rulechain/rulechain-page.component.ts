@@ -39,7 +39,7 @@ import { RuleChainService } from '@core/http/rule-chain.service';
 @Component({
   selector: 'tb-rulechain-page',
   templateUrl: './rulechain-page.component.html',
-  styleUrls: []
+  styleUrls: ['./rulechain-page.component.scss']
 })
 export class RuleChainPageComponent extends PageComponent implements OnInit, HasDirtyFlag {
 
