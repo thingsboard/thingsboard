@@ -42,6 +42,7 @@ import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
+import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
@@ -54,6 +55,7 @@ import org.thingsboard.server.dao.util.NoSqlTsDao;
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -337,21 +339,31 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
                 futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.BOOLEAN));
                 futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.DOUBLE));
                 futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.STRING));
+                futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.JSON));
                 break;
             case BOOLEAN:
                 futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.DOUBLE));
                 futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.LONG));
                 futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.STRING));
+                futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.JSON));
                 break;
             case DOUBLE:
                 futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.BOOLEAN));
                 futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.LONG));
                 futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.STRING));
+                futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.JSON));
                 break;
             case STRING:
                 futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.BOOLEAN));
                 futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.DOUBLE));
                 futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.LONG));
+                futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.JSON));
+                break;
+            case JSON:
+                futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.BOOLEAN));
+                futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.DOUBLE));
+                futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.LONG));
+                futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.STRING));
                 break;
         }
     }
@@ -411,6 +423,12 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
                 .set(5, tsKvEntry.getStrValue().orElse(null), String.class)
                 .set(6, tsKvEntry.getLongValue().orElse(null), Long.class)
                 .set(7, tsKvEntry.getDoubleValue().orElse(null), Double.class);
+
+        if (tsKvEntry.getJsonValue().isPresent()) {
+            stmt.setBytes(8, ByteBuffer.wrap(tsKvEntry.getJsonValue().get().getBytes()));
+        } else {
+            stmt.setToNull(8);
+        }
         return getFuture(executeAsyncWrite(tenantId, stmt), rs -> null);
     }
 
@@ -669,7 +687,12 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
                     if (boolV != null) {
                         kvEntry = new BooleanDataEntry(key, boolV);
                     } else {
-                        log.warn("All values in key-value row are nullable ");
+                        ByteBuffer jsonV = row.get(ModelConstants.JSON_VALUE_COLUMN, ByteBuffer.class);
+                        if (jsonV != null) {
+                            kvEntry = new JsonDataEntry(key, new String(jsonV.array()));
+                        } else {
+                            log.warn("All values in key-value row are nullable ");
+                        }
                     }
                 }
             }
@@ -772,12 +795,12 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
                     "," + ModelConstants.BOOLEAN_VALUE_COLUMN +
                     "," + ModelConstants.STRING_VALUE_COLUMN +
                     "," + ModelConstants.LONG_VALUE_COLUMN +
-                    "," + ModelConstants.DOUBLE_VALUE_COLUMN + ")" +
-                    " VALUES(?, ?, ?, ?, ?, ?, ?, ?)");
+                    "," + ModelConstants.DOUBLE_VALUE_COLUMN +
+                    "," + ModelConstants.JSON_VALUE_COLUMN + ")" +
+                    " VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)");
         }
         return latestInsertStmt;
     }
-
 
     private PreparedStatement getPartitionInsertStmt() {
         if (partitionInsertStmt == null) {
@@ -812,7 +835,8 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
                     ModelConstants.STRING_VALUE_COLUMN + "," +
                     ModelConstants.BOOLEAN_VALUE_COLUMN + "," +
                     ModelConstants.LONG_VALUE_COLUMN + "," +
-                    ModelConstants.DOUBLE_VALUE_COLUMN + " " +
+                    ModelConstants.DOUBLE_VALUE_COLUMN + "," +
+                    ModelConstants.JSON_VALUE_COLUMN + " " +
                     "FROM " + ModelConstants.TS_KV_LATEST_CF + " " +
                     "WHERE " + ModelConstants.ENTITY_TYPE_COLUMN + EQUALS_PARAM +
                     "AND " + ModelConstants.ENTITY_ID_COLUMN + EQUALS_PARAM +
@@ -829,7 +853,8 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
                     ModelConstants.STRING_VALUE_COLUMN + "," +
                     ModelConstants.BOOLEAN_VALUE_COLUMN + "," +
                     ModelConstants.LONG_VALUE_COLUMN + "," +
-                    ModelConstants.DOUBLE_VALUE_COLUMN + " " +
+                    ModelConstants.DOUBLE_VALUE_COLUMN + "," +
+                    ModelConstants.JSON_VALUE_COLUMN + " " +
                     "FROM " + ModelConstants.TS_KV_LATEST_CF + " " +
                     "WHERE " + ModelConstants.ENTITY_TYPE_COLUMN + EQUALS_PARAM +
                     "AND " + ModelConstants.ENTITY_ID_COLUMN + EQUALS_PARAM);
@@ -847,6 +872,8 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
                 return ModelConstants.LONG_VALUE_COLUMN;
             case DOUBLE:
                 return ModelConstants.DOUBLE_VALUE_COLUMN;
+            case JSON:
+                return ModelConstants.JSON_VALUE_COLUMN;
             default:
                 throw new RuntimeException("Not implemented!");
         }
@@ -876,6 +903,12 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
                 Optional<Double> doubleValue = kvEntry.getDoubleValue();
                 if (doubleValue.isPresent()) {
                     stmt.setDouble(column, doubleValue.get().doubleValue());
+                }
+                break;
+            case JSON:
+                Optional<String> jsonValue = kvEntry.getJsonValue();
+                if (jsonValue.isPresent()) {
+                    stmt.setBytes(column, ByteBuffer.wrap(jsonValue.get().getBytes()));
                 }
                 break;
         }
