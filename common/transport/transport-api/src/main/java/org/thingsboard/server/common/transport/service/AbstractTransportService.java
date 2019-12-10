@@ -27,6 +27,7 @@ import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
+import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.*;
 
@@ -176,10 +177,23 @@ public abstract class AbstractTransportService implements TransportService {
                 sessions.remove(uuid);
                 sessionMD.getListener().onRemoteSessionCloseCommand(TransportProtos.SessionCloseNotificationProto.getDefaultInstance());
             } else {
-                process(sessionMD.getSessionInfo(), TransportProtos.SubscriptionInfoProto.newBuilder()
-                        .setAttributeSubscription(sessionMD.isSubscribedToAttributes())
-                        .setRpcSubscription(sessionMD.isSubscribedToRPC())
-                        .setLastActivityTime(sessionMD.getLastActivityTime()).build(), null);
+                if (sessionMD.getLastActivityTime() > sessionMD.getLastReportedActivityTime()) {
+                    final long lastActivityTime = sessionMD.getLastActivityTime();
+                    process(sessionMD.getSessionInfo(), TransportProtos.SubscriptionInfoProto.newBuilder()
+                            .setAttributeSubscription(sessionMD.isSubscribedToAttributes())
+                            .setRpcSubscription(sessionMD.isSubscribedToRPC())
+                            .setLastActivityTime(sessionMD.getLastActivityTime()).build(), new TransportServiceCallback<Void>() {
+                        @Override
+                        public void onSuccess(Void msg) {
+                            sessionMD.setLastReportedActivityTime(lastActivityTime);
+                        }
+
+                        @Override
+                        public void onError(Throwable e) {
+                            log.warn("[{}] Failed to report last activity time", uuid, e);
+                        }
+                    });
+                }
             }
         });
     }
@@ -288,7 +302,7 @@ public abstract class AbstractTransportService implements TransportService {
         }
         this.schedulerExecutor = Executors.newSingleThreadScheduledExecutor();
         this.transportCallbackExecutor = Executors.newWorkStealingPool(20);
-        this.schedulerExecutor.scheduleAtFixedRate(this::checkInactivityAndReportActivity, sessionReportTimeout, sessionReportTimeout, TimeUnit.MILLISECONDS);
+        this.schedulerExecutor.scheduleAtFixedRate(this::checkInactivityAndReportActivity, new Random().nextInt((int) sessionReportTimeout), sessionReportTimeout, TimeUnit.MILLISECONDS);
     }
 
     public void destroy() {
