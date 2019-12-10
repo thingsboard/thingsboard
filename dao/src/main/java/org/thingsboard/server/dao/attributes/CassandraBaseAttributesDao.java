@@ -38,6 +38,7 @@ import org.thingsboard.server.dao.util.NoSqlDao;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -137,6 +138,12 @@ public class CassandraBaseAttributesDao extends CassandraAbstractAsyncDao implem
         } else {
             stmt.setToNull(8);
         }
+        Optional<String> jsonValue = attribute.getJsonValue();
+        if (jsonValue.isPresent()) {
+            stmt.setBytes(9, ByteBuffer.wrap(jsonValue.get().getBytes()));
+        } else {
+            stmt.setToNull(9);
+        }
         log.trace("Generated save stmt [{}] for entityId {} and attributeType {} and attribute", stmt, entityId, attributeType, attribute);
         return getFuture(executeAsyncWrite(tenantId, stmt), rs -> null);
     }
@@ -172,8 +179,9 @@ public class CassandraBaseAttributesDao extends CassandraAbstractAsyncDao implem
                     "," + ModelConstants.BOOLEAN_VALUE_COLUMN +
                     "," + ModelConstants.LONG_VALUE_COLUMN +
                     "," + ModelConstants.DOUBLE_VALUE_COLUMN +
+                    "," + ModelConstants.JSON_VALUE_COLUMN +
                     ")" +
-                    " VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                    " VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         }
         return saveStmt;
     }
