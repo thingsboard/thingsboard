@@ -13,7 +13,94 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+:host {
+  width: 100%;
+  height: 100%;
+  .tb-rulechain {
+    width: 100%;
+    height: 100%;
+    section.tb-header-buttons.tb-library-open {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 2;
+      pointer-events: none;
+
+      .mat-button.tb-btn-open-library {
+        top: 0;
+        left: 0;
+        width: 36px;
+        height: 36px;
+        margin: 4px 0 0 4px;
+        line-height: 36px;
+        opacity: .5;
+      }
+    }
+    .tb-rulechain-library {
+      z-index: 1;
+      width: 250px;
+      min-width: 250px;
+
+      .mat-toolbar {
+        height: 48px;
+        min-height: 48px;
+        padding: 0;
+
+        .mat-toolbar-tools {
+          height: 48px;
+          padding: 0 6px;
+          font-size: 14px;
+
+          .mat-button.mat-icon-button {
+            margin: 0;
+
+            &.tb-small {
+              width: 32px;
+              height: 32px;
+              min-height: 32px;
+              padding: 6px;
+              line-height: 20px;
+              mat-icon {
+                width: 20px;
+                min-width: 20px;
+                height: 20px;
+                min-height: 20px;
+                font-size: 20px;
+                line-height: 20px;
+              }
+            }
+          }
+        }
+      }
+    }
+    .tb-rulechain-graph {
+      z-index: 0;
+    }
+  }
+}
+
 :host ::ng-deep {
+  .tb-rulechain {
+    section.tb-header-buttons.tb-library-open {
+      .mat-fab {
+        .mat-button-wrapper {
+          padding: 0;
+        }
+      }
+    }
+    .tb-rulechain-library {
+      .mat-toolbar {
+        .mat-toolbar-tools {
+          .mat-form-field {
+            .mat-form-field-infix {
+              width: auto;
+            }
+          }
+        }
+      }
+    }
+  }
   .fc-canvas {
     .fc-node {
       border-radius: 8px;

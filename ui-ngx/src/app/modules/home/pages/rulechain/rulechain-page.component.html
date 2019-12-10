@@ -15,12 +15,70 @@
     limitations under the License.
 
 -->
-<fc-canvas #fcCanvas
-           id="fc-target-canvas"
-           [model]="ruleChainModel"
-           (modelChanged)="onModelChanged()"
-           [selectedObjects]="selectedObjects"
-           [edgeStyle]="flowchartConstants.curvedStyle"
-           [automaticResize]="true"
-           [dragAnimation]="flowchartConstants.dragAnimationRepaint">
-</fc-canvas>
+<div class="mat-content" fxFlex tb-fullscreen [fullscreen]="isFullscreen"
+  fxLayout="column" class="tb-rulechain">
+  <section class="tb-rulechain-container" fxFlex fxLayout="column">
+    <div class="tb-rulechain-layout" fxFlex fxLayout="row">
+      <section fxLayout="row"
+               class="tb-header-buttons tb-library-open" [fxShow]="!isLibraryOpen">
+        <button mat-button mat-icon-button color="primary"
+                class="tb-btn-header tb-btn-open-library mat-fab"
+                (click)="isLibraryOpen = true"
+                matTooltip="{{ 'rulenode.open-node-library' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>menu</mat-icon>
+        </button>
+      </section>
+      <mat-drawer-container style="width: 100%;">
+        <mat-drawer class="tb-rulechain-library"
+                    disableClose="true"
+                    mode="side"
+                    [opened]="isLibraryOpen"
+                    position="start"
+                    fxLayout="column">
+          <mat-toolbar color="primary" class="tb-dark">
+            <div class="mat-toolbar-tools">
+              <button mat-button mat-icon-button class="tb-small"
+                matTooltip="{{'rulenode.search' | translate}}"
+                matTooltipPosition="above">
+                <mat-icon>search</mat-icon>
+              </button>
+              <mat-form-field fxFlex floatLabel="always">
+                <mat-label></mat-label>
+                <input matInput
+                       [(ngModel)]="ruleNodeSearch"
+                       placeholder="{{'rulenode.search' | translate}}"/>
+              </mat-form-field>
+              <button mat-button mat-icon-button class="tb-small"
+                      [fxShow]="ruleNodeSearch !== ''"
+                      (click)="ruleNodeSearch = ''"
+                      matTooltip="{{'action.clear-search' | translate}}"
+                      matTooltipPosition="above">
+                <mat-icon>close</mat-icon>
+              </button>
+              <button mat-button mat-icon-button class="tb-small"
+                      (click)="isLibraryOpen = false"
+                      matTooltip="{{'action.close' | translate}}"
+                      matTooltipPosition="above">
+                <mat-icon>chevron_left</mat-icon>
+              </button>
+            </div>
+          </mat-toolbar>
+        </mat-drawer>
+        <mat-drawer-content>
+          <div class="tb-absolute-fill tb-rulechain-graph">
+            <fc-canvas #fcCanvas
+                       id="tb-rulchain-canvas"
+                       [model]="ruleChainModel"
+                       (modelChanged)="onModelChanged()"
+                       [selectedObjects]="selectedObjects"
+                       [edgeStyle]="flowchartConstants.curvedStyle"
+                       [automaticResize]="true"
+                       [dragAnimation]="flowchartConstants.dragAnimationRepaint">
+            </fc-canvas>
+          </div>
+        </mat-drawer-content>
+      </mat-drawer-container>
+    </div>
+  </section>
+</div>
