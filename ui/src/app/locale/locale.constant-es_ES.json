@@ -271,7 +271,8 @@
         "asset-required": "El activo es requerido",
         "name-starts-with": "El nombre del activo comienza con",
         "import": "Importar activos",
-        "asset-file": "Archivo del activo"
+        "asset-file": "Archivo del activo",
+        "label": "Etiqueta"
     },
     "attribute": {
         "attributes": "Atributos",
@@ -1756,7 +1757,8 @@
             "tr_TR": "Turco",
             "fa_IR": "Persa",
             "uk_UA": "Ucraniano",
-            "cs_CZ": "Checo"
+            "cs_CZ": "Checo",
+            "el_GR": "Griego"
         }
     }
 }

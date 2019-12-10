@@ -1,7 +1,7 @@
 {
   "name": "thingsboard",
   "private": true,
-  "version": "2.4.1",
+  "version": "2.4.2",
   "description": "ThingsBoard UI",
   "licenses": [
     {
@@ -65,6 +65,7 @@
     "leaflet": "^1.5.1",
     "leaflet-polylinedecorator": "^1.6.0",
     "leaflet-providers": "^1.8.0",
+    "leaflet.markercluster": "^1.4.1",
     "material-steppers": "git://github.com/thingsboard/material-steppers.git#master",
     "material-ui": "^0.16.1",
     "material-ui-number-input": "^5.0.16",

@@ -30,7 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.thingsboard.rule.engine.api.RpcError;
+import org.springframework.util.StringUtils;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -38,8 +38,13 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.BooleanDataEntry;
+import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
-import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -49,22 +54,16 @@ import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
 import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
 import org.thingsboard.server.service.cluster.rpc.ClusterRpcService;
-import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
@@ -92,7 +91,8 @@ public class DefaultDeviceStateService implements DeviceStateService {
     public static final String INACTIVITY_ALARM_TIME = "inactivityAlarmTime";
     public static final String INACTIVITY_TIMEOUT = "inactivityTimeout";
 
-    public static final List<String> PERSISTENT_ATTRIBUTES = Arrays.asList(ACTIVITY_STATE, LAST_CONNECT_TIME, LAST_DISCONNECT_TIME, LAST_ACTIVITY_TIME, INACTIVITY_ALARM_TIME, INACTIVITY_TIMEOUT);
+    public static final List<String> PERSISTENT_ATTRIBUTES = Arrays.asList(ACTIVITY_STATE, LAST_CONNECT_TIME,
+            LAST_DISCONNECT_TIME, LAST_ACTIVITY_TIME, INACTIVITY_ALARM_TIME, INACTIVITY_TIMEOUT);
 
     @Autowired
     private TenantService tenantService;
@@ -102,6 +102,9 @@ public class DefaultDeviceStateService implements DeviceStateService {
 
     @Autowired
     private AttributesService attributesService;
+
+    @Autowired
+    private TimeseriesService tsService;
 
     @Autowired
     @Lazy
@@ -122,19 +125,19 @@ public class DefaultDeviceStateService implements DeviceStateService {
 
     @Value("${state.defaultStateCheckIntervalInSec}")
     @Getter
-    private long defaultStateCheckIntervalInSec;
+    private int defaultStateCheckIntervalInSec;
 
-// TODO in v2.1
-//    @Value("${state.defaultStatePersistenceIntervalInSec}")
-//    @Getter
-//    private long defaultStatePersistenceIntervalInSec;
-//
-//    @Value("${state.defaultStatePersistencePack}")
-//    @Getter
-//    private long defaultStatePersistencePack;
+    @Value("${state.persistToTelemetry:false}")
+    @Getter
+    private boolean persistToTelemetry;
+
+    @Value("${state.initFetchPackSize:1000}")
+    @Getter
+    private int initFetchPackSize;
+
+    private volatile boolean clusterUpdatePending = false;
 
     private ListeningScheduledExecutorService queueExecutor;
-
     private ConcurrentMap<TenantId, Set<DeviceId>> tenantDevices = new ConcurrentHashMap<>();
     private ConcurrentMap<DeviceId, DeviceStateData> deviceStates = new ConcurrentHashMap<>();
 
@@ -143,7 +146,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
         // Should be always single threaded due to absence of locks.
         queueExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor());
         queueExecutor.submit(this::initStateFromDB);
-        queueExecutor.scheduleAtFixedRate(this::updateState, defaultStateCheckIntervalInSec, defaultStateCheckIntervalInSec, TimeUnit.SECONDS);
+        queueExecutor.scheduleAtFixedRate(this::updateState, new Random().nextInt(defaultStateCheckIntervalInSec), defaultStateCheckIntervalInSec, TimeUnit.SECONDS);
         //TODO: schedule persistence in v2.1;
     }
 
@@ -191,7 +194,10 @@ public class DefaultDeviceStateService implements DeviceStateService {
 
     @Override
     public void onClusterUpdate() {
-        queueExecutor.submit(this::onClusterUpdateSync);
+        if (!clusterUpdatePending) {
+            clusterUpdatePending = true;
+            queueExecutor.submit(this::onClusterUpdateSync);
+        }
     }
 
     @Override
@@ -219,46 +225,59 @@ public class DefaultDeviceStateService implements DeviceStateService {
     }
 
     private void onClusterUpdateSync() {
+        clusterUpdatePending = false;
         List<Tenant> tenants = tenantService.findTenants(new TextPageLink(Integer.MAX_VALUE)).getData();
         for (Tenant tenant : tenants) {
             List<ListenableFuture<DeviceStateData>> fetchFutures = new ArrayList<>();
-            List<Device> devices = deviceService.findDevicesByTenantId(tenant.getId(), new TextPageLink(Integer.MAX_VALUE)).getData();
-            for (Device device : devices) {
-                if (!routingService.resolveById(device.getId()).isPresent()) {
-                    if (!deviceStates.containsKey(device.getId())) {
-                        fetchFutures.add(fetchDeviceState(device));
+            TextPageLink pageLink = new TextPageLink(initFetchPackSize);
+            while (pageLink != null) {
+                TextPageData<Device> page = deviceService.findDevicesByTenantId(tenant.getId(), pageLink);
+                pageLink = page.getNextPageLink();
+                for (Device device : page.getData()) {
+                    if (!routingService.resolveById(device.getId()).isPresent()) {
+                        if (!deviceStates.containsKey(device.getId())) {
+                            fetchFutures.add(fetchDeviceState(device));
+                        }
+                    } else {
+                        Set<DeviceId> tenantDeviceSet = tenantDevices.get(tenant.getId());
+                        if (tenantDeviceSet != null) {
+                            tenantDeviceSet.remove(device.getId());
+                        }
+                        deviceStates.remove(device.getId());
                     }
-                } else {
-                    Set<DeviceId> tenantDeviceSet = tenantDevices.get(tenant.getId());
-                    if (tenantDeviceSet != null) {
-                        tenantDeviceSet.remove(device.getId());
-                    }
-                    deviceStates.remove(device.getId());
                 }
-            }
-            try {
-                Futures.successfulAsList(fetchFutures).get().forEach(this::addDeviceUsingState);
-            } catch (InterruptedException | ExecutionException e) {
-                log.warn("Failed to init device state service from DB", e);
+                try {
+                    Futures.successfulAsList(fetchFutures).get().forEach(this::addDeviceUsingState);
+                } catch (InterruptedException | ExecutionException e) {
+                    log.warn("Failed to init device state service from DB", e);
+                }
             }
         }
     }
 
     private void initStateFromDB() {
-        List<Tenant> tenants = tenantService.findTenants(new TextPageLink(Integer.MAX_VALUE)).getData();
-        for (Tenant tenant : tenants) {
-            List<ListenableFuture<DeviceStateData>> fetchFutures = new ArrayList<>();
-            List<Device> devices = deviceService.findDevicesByTenantId(tenant.getId(), new TextPageLink(Integer.MAX_VALUE)).getData();
-            for (Device device : devices) {
-                if (!routingService.resolveById(device.getId()).isPresent()) {
-                    fetchFutures.add(fetchDeviceState(device));
+        try {
+            List<Tenant> tenants = tenantService.findTenants(new TextPageLink(Integer.MAX_VALUE)).getData();
+            for (Tenant tenant : tenants) {
+                List<ListenableFuture<DeviceStateData>> fetchFutures = new ArrayList<>();
+                TextPageLink pageLink = new TextPageLink(initFetchPackSize);
+                while (pageLink != null) {
+                    TextPageData<Device> page = deviceService.findDevicesByTenantId(tenant.getId(), pageLink);
+                    pageLink = page.getNextPageLink();
+                    for (Device device : page.getData()) {
+                        if (!routingService.resolveById(device.getId()).isPresent()) {
+                            fetchFutures.add(fetchDeviceState(device));
+                        }
+                    }
+                    try {
+                        Futures.successfulAsList(fetchFutures).get().forEach(this::addDeviceUsingState);
+                    } catch (InterruptedException | ExecutionException e) {
+                        log.warn("Failed to init device state service from DB", e);
+                    }
                 }
             }
-            try {
-                Futures.successfulAsList(fetchFutures).get().forEach(this::addDeviceUsingState);
-            } catch (InterruptedException | ExecutionException e) {
-                log.warn("Failed to init device state service from DB", e);
-            }
+        } catch (Throwable t) {
+            log.warn("Failed to init device states from DB", t);
         }
     }
 
@@ -270,15 +289,21 @@ public class DefaultDeviceStateService implements DeviceStateService {
     private void updateState() {
         long ts = System.currentTimeMillis();
         Set<DeviceId> deviceIds = new HashSet<>(deviceStates.keySet());
+        log.info("Calculating state updates for {} devices", deviceStates.size());
         for (DeviceId deviceId : deviceIds) {
-            DeviceStateData stateData = deviceStates.get(deviceId);
-            DeviceState state = stateData.getState();
-            state.setActive(ts < state.getLastActivityTime() + state.getInactivityTimeout());
-            if (!state.isActive() && (state.getLastInactivityAlarmTime() == 0L || state.getLastInactivityAlarmTime() < state.getLastActivityTime())) {
-                state.setLastInactivityAlarmTime(ts);
-                pushRuleEngineMessage(stateData, INACTIVITY_EVENT);
-                saveAttribute(deviceId, INACTIVITY_ALARM_TIME, ts);
-                saveAttribute(deviceId, ACTIVITY_STATE, state.isActive());
+            DeviceStateData stateData = getOrFetchDeviceStateData(deviceId);
+            if (stateData != null) {
+                DeviceState state = stateData.getState();
+                state.setActive(ts < state.getLastActivityTime() + state.getInactivityTimeout());
+                if (!state.isActive() && (state.getLastInactivityAlarmTime() == 0L || state.getLastInactivityAlarmTime() < state.getLastActivityTime())) {
+                    state.setLastInactivityAlarmTime(ts);
+                    pushRuleEngineMessage(stateData, INACTIVITY_EVENT);
+                    save(deviceId, INACTIVITY_ALARM_TIME, ts);
+                    save(deviceId, ACTIVITY_STATE, state.isActive());
+                }
+            } else {
+                log.debug("[{}] Device that belongs to other server is detected and removed.", deviceId);
+                deviceStates.remove(deviceId);
             }
         }
     }
@@ -289,7 +314,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
             long ts = System.currentTimeMillis();
             stateData.getState().setLastConnectTime(ts);
             pushRuleEngineMessage(stateData, CONNECT_EVENT);
-            saveAttribute(deviceId, LAST_CONNECT_TIME, ts);
+            save(deviceId, LAST_CONNECT_TIME, ts);
         }
     }
 
@@ -299,7 +324,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
             long ts = System.currentTimeMillis();
             stateData.getState().setLastDisconnectTime(ts);
             pushRuleEngineMessage(stateData, DISCONNECT_EVENT);
-            saveAttribute(deviceId, LAST_DISCONNECT_TIME, ts);
+            save(deviceId, LAST_DISCONNECT_TIME, ts);
         }
     }
 
@@ -308,11 +333,14 @@ public class DefaultDeviceStateService implements DeviceStateService {
         if (stateData != null) {
             DeviceState state = stateData.getState();
             long ts = System.currentTimeMillis();
-            state.setActive(true);
             stateData.getState().setLastActivityTime(ts);
             pushRuleEngineMessage(stateData, ACTIVITY_EVENT);
-            saveAttribute(deviceId, LAST_ACTIVITY_TIME, ts);
-            saveAttribute(deviceId, ACTIVITY_STATE, state.isActive());
+            save(deviceId, LAST_ACTIVITY_TIME, ts);
+
+            if (!state.isActive()) {
+                state.setActive(true);
+                save(deviceId, ACTIVITY_STATE, state.isActive());
+            }
         }
     }
 
@@ -324,6 +352,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
                 if (device != null) {
                     try {
                         deviceStateData = fetchDeviceState(device).get();
+                        deviceStates.putIfAbsent(deviceId, deviceStateData);
                     } catch (InterruptedException | ExecutionException e) {
                         log.debug("[{}] Failed to fetch device state!", deviceId, e);
                     }
@@ -345,7 +374,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
             boolean oldActive = state.isActive();
             state.setActive(ts < state.getLastActivityTime() + state.getInactivityTimeout());
             if (!oldActive && state.isActive() || oldActive && !state.isActive()) {
-                saveAttribute(deviceId, ACTIVITY_STATE, state.isActive());
+                save(deviceId, ACTIVITY_STATE, state.isActive());
             }
         }
     }
@@ -414,39 +443,55 @@ public class DefaultDeviceStateService implements DeviceStateService {
     }
 
     private ListenableFuture<DeviceStateData> fetchDeviceState(Device device) {
-        ListenableFuture<List<AttributeKvEntry>> attributes = attributesService.find(TenantId.SYS_TENANT_ID, device.getId(), DataConstants.SERVER_SCOPE, PERSISTENT_ATTRIBUTES);
-        return Futures.transform(attributes, new Function<List<AttributeKvEntry>, DeviceStateData>() {
-            @Nullable
-            @Override
-            public DeviceStateData apply(@Nullable List<AttributeKvEntry> attributes) {
-                long lastActivityTime = getAttributeValue(attributes, LAST_ACTIVITY_TIME, 0L);
-                long inactivityAlarmTime = getAttributeValue(attributes, INACTIVITY_ALARM_TIME, 0L);
-                long inactivityTimeout = getAttributeValue(attributes, INACTIVITY_TIMEOUT, TimeUnit.SECONDS.toMillis(defaultInactivityTimeoutInSec));
-                boolean active = System.currentTimeMillis() < lastActivityTime + inactivityTimeout;
-                DeviceState deviceState = DeviceState.builder()
-                        .active(active)
-                        .lastConnectTime(getAttributeValue(attributes, LAST_CONNECT_TIME, 0L))
-                        .lastDisconnectTime(getAttributeValue(attributes, LAST_DISCONNECT_TIME, 0L))
-                        .lastActivityTime(lastActivityTime)
-                        .lastInactivityAlarmTime(inactivityAlarmTime)
-                        .inactivityTimeout(inactivityTimeout)
-                        .build();
-                TbMsgMetaData md = new TbMsgMetaData();
-                md.putValue("deviceName", device.getName());
-                md.putValue("deviceType", device.getType());
-                return DeviceStateData.builder()
-                        .tenantId(device.getTenantId())
-                        .deviceId(device.getId())
-                        .metaData(md)
-                        .state(deviceState).build();
-            }
-        });
+        if (persistToTelemetry) {
+            ListenableFuture<List<TsKvEntry>> tsData = tsService.findLatest(TenantId.SYS_TENANT_ID, device.getId(), PERSISTENT_ATTRIBUTES);
+            return Futures.transform(tsData, extractDeviceStateData(device));
+        } else {
+            ListenableFuture<List<AttributeKvEntry>> attrData = attributesService.find(TenantId.SYS_TENANT_ID, device.getId(), DataConstants.SERVER_SCOPE, PERSISTENT_ATTRIBUTES);
+            return Futures.transform(attrData, extractDeviceStateData(device));
+        }
     }
 
-    private long getAttributeValue(List<AttributeKvEntry> attributes, String attributeName, long defaultValue) {
-        for (AttributeKvEntry attribute : attributes) {
-            if (attribute.getKey().equals(attributeName)) {
-                return attribute.getLongValue().orElse(defaultValue);
+    private <T extends KvEntry> Function<List<T>, DeviceStateData> extractDeviceStateData(Device device) {
+        return new Function<List<T>, DeviceStateData>() {
+            @Nullable
+            @Override
+            public DeviceStateData apply(@Nullable List<T> data) {
+                try {
+                    long lastActivityTime = getEntryValue(data, LAST_ACTIVITY_TIME, 0L);
+                    long inactivityAlarmTime = getEntryValue(data, INACTIVITY_ALARM_TIME, 0L);
+                    long inactivityTimeout = getEntryValue(data, INACTIVITY_TIMEOUT, TimeUnit.SECONDS.toMillis(defaultInactivityTimeoutInSec));
+                    boolean active = System.currentTimeMillis() < lastActivityTime + inactivityTimeout;
+                    DeviceState deviceState = DeviceState.builder()
+                            .active(active)
+                            .lastConnectTime(getEntryValue(data, LAST_CONNECT_TIME, 0L))
+                            .lastDisconnectTime(getEntryValue(data, LAST_DISCONNECT_TIME, 0L))
+                            .lastActivityTime(lastActivityTime)
+                            .lastInactivityAlarmTime(inactivityAlarmTime)
+                            .inactivityTimeout(inactivityTimeout)
+                            .build();
+                    TbMsgMetaData md = new TbMsgMetaData();
+                    md.putValue("deviceName", device.getName());
+                    md.putValue("deviceType", device.getType());
+                    return DeviceStateData.builder()
+                            .tenantId(device.getTenantId())
+                            .deviceId(device.getId())
+                            .metaData(md)
+                            .state(deviceState).build();
+                } catch (Exception e) {
+                    log.warn("[{}] Failed to fetch device state data", device.getId(), e);
+                    throw new RuntimeException(e);
+                }
+            }
+        };
+    }
+
+    private long getEntryValue(List<? extends KvEntry> kvEntries, String attributeName, long defaultValue) {
+        if (kvEntries != null) {
+            for (KvEntry entry : kvEntries) {
+                if (entry != null && !StringUtils.isEmpty(entry.getKey()) && entry.getKey().equals(attributeName)) {
+                    return entry.getLongValue().orElse(defaultValue);
+                }
             }
         }
         return defaultValue;
@@ -464,12 +509,26 @@ public class DefaultDeviceStateService implements DeviceStateService {
         }
     }
 
-    private void saveAttribute(DeviceId deviceId, String key, long value) {
-        tsSubService.saveAttrAndNotify(TenantId.SYS_TENANT_ID, deviceId, DataConstants.SERVER_SCOPE, key, value, new AttributeSaveCallback(deviceId, key, value));
+    private void save(DeviceId deviceId, String key, long value) {
+        if (persistToTelemetry) {
+            tsSubService.saveAndNotify(
+                    TenantId.SYS_TENANT_ID, deviceId,
+                    Collections.singletonList(new BasicTsKvEntry(System.currentTimeMillis(), new LongDataEntry(key, value))),
+                    new AttributeSaveCallback(deviceId, key, value));
+        } else {
+            tsSubService.saveAttrAndNotify(TenantId.SYS_TENANT_ID, deviceId, DataConstants.SERVER_SCOPE, key, value, new AttributeSaveCallback(deviceId, key, value));
+        }
     }
 
-    private void saveAttribute(DeviceId deviceId, String key, boolean value) {
-        tsSubService.saveAttrAndNotify(TenantId.SYS_TENANT_ID, deviceId, DataConstants.SERVER_SCOPE, key, value, new AttributeSaveCallback(deviceId, key, value));
+    private void save(DeviceId deviceId, String key, boolean value) {
+        if (persistToTelemetry) {
+            tsSubService.saveAndNotify(
+                    TenantId.SYS_TENANT_ID, deviceId,
+                    Collections.singletonList(new BasicTsKvEntry(System.currentTimeMillis(), new BooleanDataEntry(key, value))),
+                    new AttributeSaveCallback(deviceId, key, value));
+        } else {
+            tsSubService.saveAttrAndNotify(TenantId.SYS_TENANT_ID, deviceId, DataConstants.SERVER_SCOPE, key, value, new AttributeSaveCallback(deviceId, key, value));
+        }
     }
 
     private class AttributeSaveCallback implements FutureCallback<Void> {

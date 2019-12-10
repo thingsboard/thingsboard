@@ -22,8 +22,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.netty.channel.EventLoopGroup;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.util.StringUtils;
-import org.thingsboard.rule.engine.api.ListeningExecutor;
+import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.RuleChainTransactionService;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceRpcRequest;
@@ -60,7 +61,6 @@ import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
-import org.thingsboard.server.dao.nosql.CassandraBufferedRateExecutor;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
@@ -230,6 +230,27 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
+    public void logJsEvalRequest() {
+        if (mainCtx.isStatisticsEnabled()) {
+            mainCtx.getJsInvokeRequestsCount().incrementAndGet();
+        }
+    }
+
+    @Override
+    public void logJsEvalResponse() {
+        if (mainCtx.isStatisticsEnabled()) {
+            mainCtx.getJsInvokeResponsesCount().incrementAndGet();
+        }
+    }
+
+    @Override
+    public void logJsEvalFailure() {
+        if (mainCtx.isStatisticsEnabled()) {
+            mainCtx.getJsInvokeFailuresCount().incrementAndGet();
+        }
+    }
+
+    @Override
     public String getNodeId() {
         return mainCtx.getNodeIdProvider().getNodeId();
     }
@@ -359,6 +380,16 @@ class DefaultTbContext implements TbContext {
     @Override
     public ResultSetFuture submitCassandraTask(CassandraStatementTask task) {
         return mainCtx.getCassandraBufferedRateExecutor().submit(task);
+    }
+
+    @Override
+    public RedisTemplate<String, Object> getRedisTemplate() {
+        return mainCtx.getRedisTemplate();
+    }
+
+    @Override
+    public String getServerAddress() {
+        return mainCtx.getServerAddress();
     }
 
     private TbMsgMetaData getActionMetaData(RuleNodeId ruleNodeId) {

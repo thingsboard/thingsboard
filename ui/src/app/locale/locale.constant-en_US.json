@@ -271,7 +271,8 @@
         "asset-required": "Asset is required",
         "name-starts-with": "Asset name starts with",
         "import": "Import assets",
-        "asset-file": "Asset file"
+        "asset-file": "Asset file",
+        "label": "Label"
     },
     "attribute": {
         "attributes": "Attributes",
@@ -822,7 +823,7 @@
         "no-keys-found": "No keys found.",
         "create-new-alias": "Create a new one!",
         "create-new-key": "Create a new one!",
-        "duplicate-alias-error": "Duplicate alias found '{{alias}}'.<br>Entity View aliases must be unique whithin the dashboard.",
+        "duplicate-alias-error": "Duplicate alias found '{{alias}}'.<br>Entity View aliases must be unique within the dashboard.",
         "configure-alias": "Configure '{{alias}}' alias",
         "no-entity-views-matching": "No entity views matching '{{entity}}' were found.",
         "alias": "Alias",
@@ -845,21 +846,21 @@
         "add-entity-view-text": "Add new entity view",
         "delete": "Delete entity view",
         "assign-entity-views": "Assign entity views",
-        "assign-entity-views-text": "Assign { count, plural, 1 {1 entityView} other {# entityViews} } to customer",
+        "assign-entity-views-text": "Assign { count, plural, 1 {1 entity view} other {# entity views} } to customer",
         "delete-entity-views": "Delete entity views",
         "unassign-from-customer": "Unassign from customer",
         "unassign-entity-views": "Unassign entity views",
-        "unassign-entity-views-action-title": "Unassign { count, plural, 1 {1 entityView} other {# entityViews} } from customer",
+        "unassign-entity-views-action-title": "Unassign { count, plural, 1 {1 entity view} other {# entity views} } from customer",
         "assign-new-entity-view": "Assign new entity view",
         "delete-entity-view-title": "Are you sure you want to delete the entity view '{{entityViewName}}'?",
         "delete-entity-view-text": "Be careful, after the confirmation the entity view and all related data will become unrecoverable.",
-        "delete-entity-views-title": "Are you sure you want to entity view { count, plural, 1 {1 entityView} other {# entityViews} }?",
-        "delete-entity-views-action-title": "Delete { count, plural, 1 {1 entityView} other {# entityViews} }",
+        "delete-entity-views-title": "Are you sure you want to delete { count, plural, 1 {1 entity view} other {# entity views} }?",
+        "delete-entity-views-action-title": "Delete { count, plural, 1 {1 entity view} other {# entity views} }",
         "delete-entity-views-text": "Be careful, after the confirmation all selected entity views will be removed and all related data will become unrecoverable.",
         "unassign-entity-view-title": "Are you sure you want to unassign the entity view '{{entityViewName}}'?",
         "unassign-entity-view-text": "After the confirmation the entity view will be unassigned and won't be accessible by the customer.",
         "unassign-entity-view": "Unassign entity view",
-        "unassign-entity-views-title": "Are you sure you want to unassign { count, plural, 1 {1 entityView} other {# entityViews} }?",
+        "unassign-entity-views-title": "Are you sure you want to unassign { count, plural, 1 {1 entity view} other {# entity views} }?",
         "unassign-entity-views-text": "After the confirmation all selected entity views will be unassigned and won't be accessible by the customer.",
         "entity-view-type": "Entity View type",
         "entity-view-type-required": "Entity View type is required.",
@@ -1139,6 +1140,7 @@
         "column-type": {
             "name": "Name",
             "type": "Type",
+            "label": "Label",
             "column-type": "Column type",
             "client-attribute": "Client attribute",
             "shared-attribute": "Shared attribute",
@@ -1195,7 +1197,13 @@
         "min": "min",
         "max": "max",
         "avg": "avg",
-        "total": "total"
+        "total": "total",
+        "comparison-time-ago": {
+            "days": "(day ago)",
+            "weeks": "(week ago)",
+            "months": "(month ago)",
+            "years": "(year ago)"
+        }
     },
     "login": {
         "login": "Login",
@@ -1699,17 +1707,32 @@
         },
         "input-widgets": {
             "attribute-not-allowed": "Attribute parameter cannot be used in this widget",
+            "blocked-location": "Geolocation is blocked in your browser",
+            "claim-device": "Claim device",
+            "claim-failed": "Failed to claim the device!",
+            "claim-not-found": "Device not found!",
+            "claim-successful": "Device was successfully claimed!",
             "date": "Date",
+            "device-name": "Device name",
+            "device-name-required": "Device name is required",
             "discard-changes": "Discard changes",
             "entity-attribute-required": "Entity attribute is required",
+            "entity-coordinate-required": "Both fields, latitude and longitude, are required",
             "entity-timeseries-required": "Entity timeseries is required",
+            "get-location": "Get current location",
+            "latitude": "Latitude",
+            "longitude": "Longitude",
             "not-allowed-entity": "Selected entity cannot have shared attributes",
             "no-attribute-selected": "No attribute is selected",
             "no-datakey-selected": "No datakey is selected",
+            "no-coordinate-specified": "Datakey for latitude/longitude doesn't specified",
             "no-entity-selected": "No entity selected",
             "no-image": "No image",
+            "no-support-geolocation": "Your browser doesn't support geolocation",
             "no-support-web-camera": "No supported web camera",
             "no-timeseries-selected": "No timeseries selected",
+            "secret-key": "Secret key",
+            "secret-key-required": "Secret key is required",
             "switch-attribute-value": "Switch entity attribute value",
             "switch-camera": "Switch camera",
             "switch-timeseries-value": "Switch entity timeseries value",
@@ -1757,7 +1780,8 @@
             "tr_TR": "Turkish",
             "fa_IR": "Persian",
             "uk_UA": "Ukrainian",
-            "cs_CZ": "Czech"            
+            "cs_CZ": "Czech",
+            "el_GR": "Greek"
         }
     }
 }

@@ -320,28 +320,19 @@ public class RemoteTransportService extends AbstractTransportService {
         send(sessionInfo, toRuleEngineMsg, callback);
     }
 
-    private static class TransportCallbackAdaptor implements Callback {
-        private final TransportServiceCallback<Void> callback;
-
-        TransportCallbackAdaptor(TransportServiceCallback<Void> callback) {
-            this.callback = callback;
-        }
-
-        @Override
-        public void onCompletion(RecordMetadata metadata, Exception exception) {
-            if (exception == null) {
-                if (callback != null) {
-                    callback.onSuccess(null);
-                }
-            } else {
-                if (callback != null) {
-                    callback.onError(exception);
+    private void send(SessionInfoProto sessionInfo, ToRuleEngineMsg toRuleEngineMsg, TransportServiceCallback<Void> callback) {
+        ruleEngineProducer.send(getRoutingKey(sessionInfo), toRuleEngineMsg, (metadata, exception) -> {
+            if (callback != null) {
+                if (exception == null) {
+                    this.transportCallbackExecutor.submit(() -> {
+                        callback.onSuccess(null);
+                    });
+                } else {
+                    this.transportCallbackExecutor.submit(() -> {
+                        callback.onError(exception);
+                    });
                 }
             }
-        }
-    }
-
-    private void send(SessionInfoProto sessionInfo, ToRuleEngineMsg toRuleEngineMsg, TransportServiceCallback<Void> callback) {
-        ruleEngineProducer.send(getRoutingKey(sessionInfo), toRuleEngineMsg, new TransportCallbackAdaptor(callback));
+        });
     }
 }

@@ -271,7 +271,8 @@
         "unassign-assets-text": "Après la confirmation, tous les actifs sélectionnés ne seront pas attribués et ne seront pas accessibles au client.",
         "unassign-assets-title": "Êtes-vous sûr de vouloir retirer l'attribution de {count, plural, 1 {1 asset} other {# assets}}?",
         "unassign-from-customer": "Retirer du client",
-        "view-assets": "Afficher les actifs"
+        "view-assets": "Afficher les actifs",
+        "label": "Label"
     },
     "attribute": {
         "add": "Ajouter un attribut",
@@ -1166,7 +1167,8 @@
             "tr_TR": "Turc",
             "fa_IR": "Persane",
             "uk_UA": "Ukrainien",
-            "cs_CZ": "Tchèque"
+            "cs_CZ": "Tchèque",
+            "el_GR": "Grec"
         }
     },
     "layout": {

@@ -74,7 +74,6 @@
                         <md-icon aria-label="{{ 'dashboard.settings' | translate }}" class="material-icons">settings</md-icon>
                     </md-button>
                     <tb-dashboard-select   ng-show="!vm.isEdit && !vm.widgetEditMode && vm.displayDashboardsSelect()"
-                                           md-theme="tb-dark"
                                            ng-model="vm.currentDashboardId"
                                            dashboards-scope="{{vm.currentDashboardScope}}"
                                            customer-id="vm.currentCustomerId">

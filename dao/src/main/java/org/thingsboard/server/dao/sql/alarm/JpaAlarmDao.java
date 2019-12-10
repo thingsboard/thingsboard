@@ -77,11 +77,9 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     public ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type) {
         return service.submit(() -> {
             List<AlarmEntity> latest = alarmRepository.findLatestByOriginatorAndType(
-                    UUIDConverter.fromTimeUUID(tenantId.getId()),
                     UUIDConverter.fromTimeUUID(originator.getId()),
-                    originator.getEntityType(),
                     type,
-                    new PageRequest(0, 1));
+                    PageRequest.of(0, 1));
             return latest.isEmpty() ? null : DaoUtil.getData(latest.get(0));
         });
     }

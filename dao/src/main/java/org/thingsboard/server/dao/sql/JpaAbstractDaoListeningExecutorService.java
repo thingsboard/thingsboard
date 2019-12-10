@@ -17,16 +17,14 @@ package org.thingsboard.server.dao.sql;
 
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.annotation.PreDestroy;
 import java.util.concurrent.Executors;
 
 public abstract class JpaAbstractDaoListeningExecutorService {
 
-    protected ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
+    @Autowired
+    protected JpaExecutorService service;
 
-    @PreDestroy
-    void onDestroy() {
-        service.shutdown();
-    }
 }

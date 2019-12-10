@@ -201,10 +201,10 @@ public class JsonConverter {
                             .setBoolV(value.getAsBoolean()).build());
                 } else if (value.isNumber()) {
                     result.add(buildNumericKeyValueProto(value, valueEntry.getKey()));
-                } else {
+                } else if (!value.isJsonNull()) {
                     throw new JsonSyntaxException(CAN_T_PARSE_VALUE + value);
                 }
-            } else {
+            } else if (!element.isJsonNull()) {
                 throw new JsonSyntaxException(CAN_T_PARSE_VALUE + element);
             }
         }

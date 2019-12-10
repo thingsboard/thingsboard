@@ -13,12 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.kafka;
+package org.thingsboard.server.dao.sql;
 
-import java.util.UUID;
+import com.google.common.util.concurrent.SettableFuture;
+import lombok.Getter;
 
-public interface TbKafkaEnricher<T> {
+public final class TbSqlQueueElement<E> {
+    @Getter
+    private final SettableFuture<Void> future;
+    @Getter
+    private final E entity;
 
-    T enrich(T value, String responseTopic, UUID requestId);
-
+    public TbSqlQueueElement(SettableFuture<Void> future, E entity) {
+        this.future = future;
+        this.entity = entity;
+    }
 }
+
+

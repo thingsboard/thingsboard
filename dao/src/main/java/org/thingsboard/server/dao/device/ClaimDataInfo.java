@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api;
+package org.thingsboard.server.dao.device;
 
-import com.google.common.util.concurrent.ListenableFuture;
+import lombok.Data;
+import org.thingsboard.server.dao.device.claim.ClaimData;
 
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executor;
+import java.util.List;
 
-public interface ListeningExecutor extends Executor {
+@Data
+public class ClaimDataInfo {
 
-    <T> ListenableFuture<T> executeAsync(Callable<T> task);
+    private final boolean fromCache;
+    private final List<Object> key;
+    private final ClaimData data;
 
 }

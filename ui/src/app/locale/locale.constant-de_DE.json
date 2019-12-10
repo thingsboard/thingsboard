@@ -200,7 +200,7 @@
     "root-entity": "Wurzelentität",
     "state-entity-parameter-name": "Parameter-Name der Statusentität",
     "default-state-entity": "Standard Statusentität",
-    "default-entity-parameter-name": "Standartmäßig",
+    "default-entity-parameter-name": "Standardmäßig",
     "max-relation-level": "Maximale Beziehungstiefe",
     "unlimited-level": "Unbegrenzte Ebenen",
     "state-entity": "Dashboard Status Entität",
@@ -267,7 +267,8 @@
     "select-asset": "Objekt auswählen",
     "no-assets-matching": "Es wurden keine zu '{{entity}}' passenden Objekte gefunden.",
     "asset-required": "Objekt ist erforderlich",
-    "name-starts-with": "Name des Objekts beginnt mit"
+    "name-starts-with": "Name des Objekts beginnt mit",
+    "label": "Bezeichnung"
   },
   "attribute": {
     "attributes": "Eigenschaften",
@@ -1698,7 +1699,8 @@
       "tr_TR": "Türkisch",
       "fa_IR": "Persisch",
       "uk_UA": "Ukrainisch",
-      "cs_CZ": "Tschechisch"      
+      "cs_CZ": "Tschechisch",
+      "el_GR": "Griechisch"
     }
   }
 }

@@ -26,4 +26,5 @@ logger:
   filename: "tb-js-executor-%DATE%.log"
 
 script:
+  use_sandbox: "true"
   script_body_trace_frequency: "1000"

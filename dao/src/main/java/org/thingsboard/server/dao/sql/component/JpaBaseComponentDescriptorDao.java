@@ -51,6 +51,9 @@ public class JpaBaseComponentDescriptorDao extends JpaAbstractSearchTextDao<Comp
     @Autowired
     private ComponentDescriptorRepository componentDescriptorRepository;
 
+    @Autowired
+    private ComponentDescriptorInsertRepository componentDescriptorInsertRepository;
+
     @Override
     protected Class<ComponentDescriptorEntity> getEntityClass() {
         return ComponentDescriptorEntity.class;
@@ -67,7 +70,9 @@ public class JpaBaseComponentDescriptorDao extends JpaAbstractSearchTextDao<Comp
             component.setId(new ComponentDescriptorId(UUIDs.timeBased()));
         }
         if (!componentDescriptorRepository.existsById(UUIDConverter.fromTimeUUID(component.getId().getId()))) {
-            return Optional.of(save(tenantId, component));
+            ComponentDescriptorEntity componentDescriptorEntity = new ComponentDescriptorEntity(component);
+            ComponentDescriptorEntity savedEntity = componentDescriptorInsertRepository.saveOrUpdate(componentDescriptorEntity);
+            return Optional.of(savedEntity.toData());
         }
         return Optional.empty();
     }

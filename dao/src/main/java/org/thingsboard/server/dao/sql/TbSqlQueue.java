@@ -13,13 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.controller.claim.data;
+package org.thingsboard.server.dao.sql;
 
-import lombok.Data;
+import com.google.common.util.concurrent.ListenableFuture;
 
-@Data
-public class ClaimRequest {
+import java.util.List;
+import java.util.function.Consumer;
 
-    private final String secretKey;
+public interface TbSqlQueue<E> {
 
+    void init(ScheduledLogExecutorComponent logExecutor, Consumer<List<E>> saveFunction);
+
+    void destroy();
+
+    ListenableFuture<Void> add(E element);
 }

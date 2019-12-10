@@ -85,6 +85,9 @@ cluster:
   vitrual_nodes_size: "${CLUSTER_VIRTUAL_NODES_SIZE:16}"
   # Queue partition id for current node
   partition_id: "${QUEUE_PARTITION_ID:0}"
+  stats:
+    enabled: "${TB_CLUSTER_STATS_ENABLED:false}"
+    print_interval_ms: "${TB_CLUSTER_STATS_PRINT_INTERVAL_MS:10000}"
 
 # Plugins configuration parameters
 plugins:
@@ -183,6 +186,8 @@ cassandra:
     rate_limit_print_interval_ms: "${CASSANDRA_QUERY_RATE_LIMIT_PRINT_MS:10000}"
     # set all data types values except target to null for the same ts on save
     set_null_values_enabled: "${CASSANDRA_QUERY_SET_NULL_VALUES_ENABLED:false}"
+    # log one of cassandra queries with specified frequency (0 - logging is disabled)
+    print_queries_freq: "${CASSANDRA_QUERY_PRINT_FREQ:0}"
     tenant_rate_limits:
       enabled: "${CASSANDRA_QUERY_TENANT_RATE_LIMITS_ENABLED:false}"
       configuration: "${CASSANDRA_QUERY_TENANT_RATE_LIMITS_CONFIGURATION:1000:1,30000:60}"
@@ -194,6 +199,25 @@ sql:
     ts_inserts_executor_type: "${SQL_TS_INSERTS_EXECUTOR_TYPE:fixed}"
     # Specify thread pool size for FIXED executor service type
     ts_inserts_fixed_thread_pool_size: "${SQL_TS_INSERTS_FIXED_THREAD_POOL_SIZE:200}"
+    # Specify batch size for persisting attribute updates
+    attributes:
+      batch_size: "${SQL_ATTRIBUTES_BATCH_SIZE:10000}"
+      batch_max_delay: "${SQL_ATTRIBUTES_BATCH_MAX_DELAY_MS:100}"
+      stats_print_interval_ms: "${SQL_ATTRIBUTES_BATCH_STATS_PRINT_MS:10000}"
+    ts:
+      batch_size: "${SQL_TS_BATCH_SIZE:10000}"
+      batch_max_delay: "${SQL_TS_BATCH_MAX_DELAY_MS:100}"
+      stats_print_interval_ms: "${SQL_TS_BATCH_STATS_PRINT_MS:10000}"
+    ts_latest:
+      batch_size: "${SQL_TS_LATEST_BATCH_SIZE:10000}"
+      batch_max_delay: "${SQL_TS_LATEST_BATCH_MAX_DELAY_MS:100}"
+      stats_print_interval_ms: "${SQL_TS_LATEST_BATCH_STATS_PRINT_MS:10000}"
+    ts_timescale:
+      batch_size: "${SQL_TS_TIMESCALE_BATCH_SIZE:10000}"
+      batch_max_delay: "${SQL_TS_TIMESCALE_BATCH_MAX_DELAY_MS:100}"
+      stats_print_interval_ms: "${SQL_TS_TIMESCALE_BATCH_STATS_PRINT_MS:10000}"
+    # Specify whether to remove null characters from strValue of attributes and timeseries before insert
+    remove_null_chars: "${SQL_REMOVE_NULL_CHARS:true}"
 
 # Actor system parameters
 actors:
@@ -208,7 +232,7 @@ actors:
       timeout: "${ACTORS_SESSION_SYNC_TIMEOUT:10000}"
   rule:
     # Specify thread pool size for database request callbacks executor service
-    db_callback_thread_pool_size: "${ACTORS_RULE_DB_CALLBACK_THREAD_POOL_SIZE:1}"
+    db_callback_thread_pool_size: "${ACTORS_RULE_DB_CALLBACK_THREAD_POOL_SIZE:50}"
     # Specify thread pool size for javascript executor service
     js_thread_pool_size: "${ACTORS_RULE_JS_THREAD_POOL_SIZE:50}"
     # Specify thread pool size for mail sender executor service
@@ -234,6 +258,7 @@ actors:
   statistics:
     # Enable/disable actor statistics
     enabled: "${ACTORS_STATISTICS_ENABLED:true}"
+    js_print_interval_ms: "${ACTORS_JS_STATISTICS_PRINT_INTERVAL_MS:10000}"
     persist_frequency: "${ACTORS_STATISTICS_PERSIST_FREQUENCY:3600000}"
   queue:
     # Enable/disable persistence of un-processed messages to the queue
@@ -278,10 +303,41 @@ redis:
   # standalone or cluster
   connection:
     type: standalone
+  standalone:
     host: "${REDIS_HOST:localhost}"
     port: "${REDIS_PORT:6379}"
-    db: "${REDIS_DB:0}"
-    password: "${REDIS_PASSWORD:}"
+    useDefaultClientConfig: "${REDIS_USE_DEFAULT_CLIENT_CONFIG:true}"
+    # this value may be used only if you used not default ClientConfig
+    clientName: "${REDIS_CLIENT_NAME:standalone}"
+    # this value may be used only if you used not default ClientConfig
+    connectTimeout: "${REDIS_CLIENT_CONNECT_TIMEOUT:30000}"
+    # this value may be used only if you used not default ClientConfig
+    readTimeout: "${REDIS_CLIENT_READ_TIMEOUT:60000}"
+    # this value may be used only if you used not default ClientConfig
+    usePoolConfig: "${REDIS_CLIENT_USE_POOL_CONFIG:false}"
+  cluster:
+    # Comma-separated list of "host:port" pairs to bootstrap from.
+    nodes: "${REDIS_NODES:}"
+    # Maximum number of redirects to follow when executing commands across the cluster.
+    max-redirects: "${REDIS_MAX_REDIRECTS:12}"
+    useDefaultPoolConfig: "${REDIS_USE_DEFAULT_POOL_CONFIG:true}"
+  # db index
+  db: "${REDIS_DB:0}"
+  # db password
+  password: "${REDIS_PASSWORD:}"
+  # pool config
+  pool_config:
+    maxTotal: "${REDIS_POOL_CONFIG_MAX_TOTAL:128}"
+    maxIdle: "${REDIS_POOL_CONFIG_MAX_IDLE:128}"
+    minIdle: "${REDIS_POOL_CONFIG_MIN_IDLE:16}"
+    testOnBorrow: "${REDIS_POOL_CONFIG_TEST_ON_BORROW:true}"
+    testOnReturn: "${REDIS_POOL_CONFIG_TEST_ON_RETURN:true}"
+    testWhileIdle: "${REDIS_POOL_CONFIG_TEST_WHILE_IDLE:true}"
+    minEvictableMs: "${REDIS_POOL_CONFIG_MIN_EVICTABLE_MS:60000}"
+    evictionRunsMs: "${REDIS_POOL_CONFIG_EVICTION_RUNS_MS:30000}"
+    maxWaitMills: "${REDIS_POOL_CONFIG_MAX_WAIT_MS:60000}"
+    numberTestsPerEvictionRun: "${REDIS_POOL_CONFIG_NUMBER_TESTS_PER_EVICTION_RUN:3}"
+    blockWhenExhausted: "${REDIS_POOL_CONFIG_BLOCK_WHEN_EXHAUSTED:true}"
 
 # Check new version updates parameters
 updates:
@@ -320,6 +376,7 @@ spring:
       repositories:
         enabled: "true"
   jpa:
+    open-in-view: "false"
     hibernate:
       ddl-auto: "none"
     database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}"
@@ -371,6 +428,7 @@ audit-log:
 state:
   defaultInactivityTimeoutInSec: "${DEFAULT_INACTIVITY_TIMEOUT:10}"
   defaultStateCheckIntervalInSec: "${DEFAULT_STATE_CHECK_INTERVAL:10}"
+  persistToTelemetry: "${PERSIST_STATE_TO_TELEMETRY:false}"
 
 kafka:
   enabled: true
@@ -403,7 +461,7 @@ js:
     # Specify thread pool size for JavaScript sandbox resource monitor
     monitor_thread_pool_size: "${LOCAL_JS_SANDBOX_MONITOR_THREAD_POOL_SIZE:4}"
     # Maximum CPU time in milliseconds allowed for script execution
-    max_cpu_time: "${LOCAL_JS_SANDBOX_MAX_CPU_TIME:100}"
+    max_cpu_time: "${LOCAL_JS_SANDBOX_MAX_CPU_TIME:3000}"
     # Maximum allowed JavaScript execution errors before JavaScript will be blacklisted
     max_errors: "${LOCAL_JS_SANDBOX_MAX_ERRORS:3}"
   # Remote JavaScript environment properties
@@ -422,6 +480,9 @@ js:
     response_auto_commit_interval: "${REMOTE_JS_RESPONSE_AUTO_COMMIT_INTERVAL_MS:100}"
     # Maximum allowed JavaScript execution errors before JavaScript will be blacklisted
     max_errors: "${REMOTE_JS_SANDBOX_MAX_ERRORS:3}"
+    stats:
+      enabled: "${TB_JS_REMOTE_STATS_ENABLED:false}"
+      print_interval_ms: "${TB_JS_REMOTE_STATS_PRINT_INTERVAL_MS:10000}"
 
 transport:
   type: "${TRANSPORT_TYPE:local}" # local or remote
@@ -439,6 +500,9 @@ transport:
       poll_records_pack_size: "${TB_RULE_ENGINE_MAX_POLL_RECORDS:1000}"
       max_poll_records_per_second: "${TB_RULE_ENGINE_MAX_POLL_RECORDS_PER_SECOND:10000}"
       max_poll_records_per_minute: "${TB_RULE_ENGINE_MAX_POLL_RECORDS_PER_MINUTE:120000}"
+      stats:
+        enabled: "${TB_RULE_ENGINE_STATS_ENABLED:false}"
+        print_interval_ms: "${TB_RULE_ENGINE_STATS_PRINT_INTERVAL_MS:10000}"
     notifications:
       topic: "${TB_TRANSPORT_NOTIFICATIONS_TOPIC:tb.transport.notifications}"
   sessions:
