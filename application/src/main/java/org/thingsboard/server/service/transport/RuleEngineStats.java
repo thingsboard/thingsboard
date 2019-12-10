@@ -70,11 +70,14 @@ public class RuleEngineStats {
     }
 
     public void printStats() {
-        log.info("Transport total [{}] sessionEvents [{}] telemetry [{}] attributes [{}] getAttr [{}] subToAttr [{}] subToRpc [{}] toDevRpc [{}] " +
-                        "toServerRpc [{}] subInfo [{}] claimDevice [{}] ",
-                totalCounter.getAndSet(0), sessionEventCounter.getAndSet(0), postTelemetryCounter.getAndSet(0),
-                postAttributesCounter.getAndSet(0), getAttributesCounter.getAndSet(0), subscribeToAttributesCounter.getAndSet(0),
-                subscribeToRPCCounter.getAndSet(0), toDeviceRPCCallResponseCounter.getAndSet(0),
-                toServerRPCCallRequestCounter.getAndSet(0), subscriptionInfoCounter.getAndSet(0), claimDeviceCounter.getAndSet(0));
+        int total = totalCounter.getAndSet(0);
+        if (total > 0) {
+            log.info("Transport total [{}] sessionEvents [{}] telemetry [{}] attributes [{}] getAttr [{}] subToAttr [{}] subToRpc [{}] toDevRpc [{}] " +
+                            "toServerRpc [{}] subInfo [{}] claimDevice [{}] ",
+                    total, sessionEventCounter.getAndSet(0), postTelemetryCounter.getAndSet(0),
+                    postAttributesCounter.getAndSet(0), getAttributesCounter.getAndSet(0), subscribeToAttributesCounter.getAndSet(0),
+                    subscribeToRPCCounter.getAndSet(0), toDeviceRPCCallResponseCounter.getAndSet(0),
+                    toServerRPCCallRequestCounter.getAndSet(0), subscriptionInfoCounter.getAndSet(0), claimDeviceCounter.getAndSet(0));
+        }
     }
 }
