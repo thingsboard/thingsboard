@@ -30,7 +30,7 @@ public class JpaDaoTestSuite {
 
     @ClassRule
     public static CustomSqlUnit sqlUnit = new CustomSqlUnit(
-            Arrays.asList("sql/schema-ts.sql", "sql/schema-entities.sql", "sql/system-data.sql"),
+            Arrays.asList("sql/test/schema-ts.sql", "sql/test/schema-entities.sql", "sql/system-data.sql"),
             "sql/drop-all-tables.sql",
             "sql-test.properties"
     );
