@@ -87,12 +87,15 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
     @Scheduled(fixedDelayString = "${js.remote.stats.print_interval_ms}")
     public void printStats() {
         if (statsEnabled) {
+            int pushedMsgs = kafkaPushedMsgs.getAndSet(0);
             int invokeMsgs = kafkaInvokeMsgs.getAndSet(0);
             int evalMsgs = kafkaEvalMsgs.getAndSet(0);
             int failed = kafkaFailedMsgs.getAndSet(0);
             int timedOut = kafkaTimeoutMsgs.getAndSet(0);
-            log.info("Kafka JS Invoke Stats: pushed [{}] received [{}] invoke [{}] eval [{}] failed [{}] timedOut [{}]",
-                    kafkaPushedMsgs.getAndSet(0), invokeMsgs + evalMsgs, invokeMsgs, evalMsgs, failed, timedOut);
+            if (pushedMsgs > 0 || invokeMsgs > 0 || evalMsgs > 0 || failed > 0 || timedOut > 0) {
+                log.info("Kafka JS Invoke Stats: pushed [{}] received [{}] invoke [{}] eval [{}] failed [{}] timedOut [{}]",
+                        pushedMsgs, invokeMsgs + evalMsgs, invokeMsgs, evalMsgs, failed, timedOut);
+            }
         }
     }
 

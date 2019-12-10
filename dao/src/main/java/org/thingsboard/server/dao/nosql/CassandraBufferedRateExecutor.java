@@ -64,12 +64,24 @@ public class CassandraBufferedRateExecutor extends AbstractBufferedRateExecutor<
 
     @Scheduled(fixedDelayString = "${cassandra.query.rate_limit_print_interval_ms}")
     public void printStats() {
-        log.info("Permits queueSize [{}] totalAdded [{}] totalLaunched [{}] totalReleased [{}] totalFailed [{}] totalExpired [{}] totalRejected [{}] " +
-                        "totalRateLimited [{}] totalRateLimitedTenants [{}] currBuffer [{}] ",
-                getQueueSize(),
-                totalAdded.getAndSet(0), totalLaunched.getAndSet(0), totalReleased.getAndSet(0),
-                totalFailed.getAndSet(0), totalExpired.getAndSet(0), totalRejected.getAndSet(0),
-                totalRateLimited.getAndSet(0), rateLimitedTenants.size(), concurrencyLevel.get());
+        int queueSize = getQueueSize();
+        int totalAddedValue = totalAdded.getAndSet(0);
+        int totalLaunchedValue = totalLaunched.getAndSet(0);
+        int totalReleasedValue = totalReleased.getAndSet(0);
+        int totalFailedValue = totalFailed.getAndSet(0);
+        int totalExpiredValue = totalExpired.getAndSet(0);
+        int totalRejectedValue = totalRejected.getAndSet(0);
+        int totalRateLimitedValue = totalRateLimited.getAndSet(0);
+        int rateLimitedTenantsValue = rateLimitedTenants.size();
+        int concurrencyLevelValue = concurrencyLevel.get();
+        if (queueSize > 0 || totalAddedValue > 0 || totalLaunchedValue > 0 || totalReleasedValue > 0 ||
+                totalFailedValue > 0 || totalExpiredValue > 0 || totalRejectedValue > 0 || totalRateLimitedValue > 0 || rateLimitedTenantsValue > 0
+                || concurrencyLevelValue > 0) {
+            log.info("Permits queueSize [{}] totalAdded [{}] totalLaunched [{}] totalReleased [{}] totalFailed [{}] totalExpired [{}] totalRejected [{}] " +
+                            "totalRateLimited [{}] totalRateLimitedTenants [{}] currBuffer [{}] ",
+                    queueSize, totalAddedValue, totalLaunchedValue, totalReleasedValue,
+                    totalFailedValue, totalExpiredValue, totalRejectedValue, totalRateLimitedValue, rateLimitedTenantsValue, concurrencyLevelValue);
+        }
 
         rateLimitedTenants.forEach(((tenantId, counter) -> {
             if (printTenantNames) {

@@ -201,7 +201,11 @@ public class DefaultActorService implements ActorService {
     @Scheduled(fixedDelayString = "${cluster.stats.print_interval_ms}")
     public void printStats() {
         if (statsEnabled) {
-            log.info("Cluster msgs sent [{}] received [{}]", sentClusterMsgs.getAndSet(0), receivedClusterMsgs.getAndSet(0));
+            int sent = sentClusterMsgs.getAndSet(0);
+            int received = receivedClusterMsgs.getAndSet(0);
+            if (sent > 0 || received > 0) {
+                log.info("Cluster msgs sent [{}] received [{}]", sent, received);
+            }
         }
     }
 
