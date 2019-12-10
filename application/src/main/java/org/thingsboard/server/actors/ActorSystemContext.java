@@ -298,8 +298,10 @@ public class ActorSystemContext {
     @Scheduled(fixedDelayString = "${js.remote.stats.print_interval_ms}")
     public void printStats() {
         if (statisticsEnabled) {
-            log.info("Rule Engine JS Invoke Stats: requests [{}] responses [{}] failures [{}]",
-                    jsInvokeRequestsCount.getAndSet(0), jsInvokeResponsesCount.getAndSet(0), jsInvokeFailuresCount.getAndSet(0));
+            if (jsInvokeRequestsCount.get() > 0 || jsInvokeResponsesCount.get() > 0 || jsInvokeFailuresCount.get() > 0) {
+                log.info("Rule Engine JS Invoke Stats: requests [{}] responses [{}] failures [{}]",
+                        jsInvokeRequestsCount.getAndSet(0), jsInvokeResponsesCount.getAndSet(0), jsInvokeFailuresCount.getAndSet(0));
+            }
         }
     }
 

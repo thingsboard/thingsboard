@@ -90,7 +90,7 @@ public abstract class AbstractInsertRepository {
     }
 
     protected String replaceNullChars(String strValue) {
-        if (removeNullChars) {
+        if (removeNullChars && strValue != null) {
             return PATTERN_THREAD_LOCAL.get().matcher(strValue).replaceAll(EMPTY_STR);
         }
         return strValue;
