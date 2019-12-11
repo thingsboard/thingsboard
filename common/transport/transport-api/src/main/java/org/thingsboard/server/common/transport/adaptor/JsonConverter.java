@@ -67,6 +67,8 @@ public class JsonConverter {
 
     private static int maxStringValueLength = 0;
 
+    private static final JsonParser PARSER = new JsonParser();
+
     public static PostTelemetryMsg convertToTelemetryProto(JsonElement jsonElement) throws JsonSyntaxException {
         PostTelemetryMsg.Builder builder = PostTelemetryMsg.newBuilder();
         convertToTelemetry(jsonElement, System.currentTimeMillis(), null, builder);
@@ -363,6 +365,9 @@ public class JsonConverter {
             case LONG_V:
                 json.addProperty(name, entry.getLongV());
                 break;
+            case JSON_V:
+                json.add(name, PARSER.parse(entry.getJsonV()));
+                break;
         }
     }
 
@@ -372,24 +377,25 @@ public class JsonConverter {
 
     private static Consumer<TsKvProto> addToObjectFromProto(JsonObject result) {
         return de -> {
-            JsonPrimitive value;
             switch (de.getKv().getType()) {
                 case BOOLEAN_V:
-                    value = new JsonPrimitive(de.getKv().getBoolV());
+                    result.add(de.getKv().getKey(), new JsonPrimitive(de.getKv().getBoolV()));
                     break;
                 case DOUBLE_V:
-                    value = new JsonPrimitive(de.getKv().getDoubleV());
+                    result.add(de.getKv().getKey(), new JsonPrimitive(de.getKv().getDoubleV()));
                     break;
                 case LONG_V:
-                    value = new JsonPrimitive(de.getKv().getLongV());
+                    result.add(de.getKv().getKey(), new JsonPrimitive(de.getKv().getLongV()));
                     break;
                 case STRING_V:
-                    value = new JsonPrimitive(de.getKv().getStringV());
+                    result.add(de.getKv().getKey(), new JsonPrimitive(de.getKv().getStringV()));
+                    break;
+                case JSON_V:
+                    result.add(de.getKv().getKey(), PARSER.parse(de.getKv().getJsonV()));
                     break;
                 default:
                     throw new IllegalArgumentException("Unsupported data type: " + de.getKv().getType());
             }
-            result.add(de.getKv().getKey(), value);
         };
     }
 
@@ -398,21 +404,23 @@ public class JsonConverter {
             JsonPrimitive value;
             switch (de.getDataType()) {
                 case BOOLEAN:
-                    value = new JsonPrimitive(de.getBooleanValue().get());
+                    result.add(de.getKey(), new JsonPrimitive(de.getBooleanValue().get()));
                     break;
                 case DOUBLE:
-                    value = new JsonPrimitive(de.getDoubleValue().get());
+                    result.add(de.getKey(), new JsonPrimitive(de.getDoubleValue().get()));
                     break;
                 case LONG:
-                    value = new JsonPrimitive(de.getLongValue().get());
+                    result.add(de.getKey(), new JsonPrimitive(de.getLongValue().get()));
                     break;
                 case STRING:
-                    value = new JsonPrimitive(de.getStrValue().get());
+                    result.add(de.getKey(), new JsonPrimitive(de.getStrValue().get()));
+                    break;
+                case JSON:
+                    result.add(de.getKey(), PARSER.parse(de.getStrValue().get()));
                     break;
                 default:
                     throw new IllegalArgumentException("Unsupported data type: " + de.getDataType());
             }
-            result.add(de.getKey(), value);
         };
     }
 

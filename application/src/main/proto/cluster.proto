@@ -125,6 +125,7 @@ message KeyValueProto {
     int64 longValue = 5;
     double doubleValue = 6;
     bool boolValue = 7;
+    string jsonValue = 8;
 }
 
 message FromDeviceRPCResponseProto {

@@ -691,6 +691,10 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
                 Optional<Double> doubleValue = attr.getDoubleValue();
                 doubleValue.ifPresent(dataBuilder::setDoubleValue);
                 break;
+            case JSON:
+                Optional<String> jsonValue = attr.getJsonValue();
+                jsonValue.ifPresent(dataBuilder::setJsonValue);
+                break;
             case STRING:
                 Optional<String> stringValue = attr.getStrValue();
                 stringValue.ifPresent(dataBuilder::setStrValue);
@@ -722,6 +726,9 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
                 break;
             case STRING:
                 entry = new StringDataEntry(proto.getKey(), proto.getStrValue());
+                break;
+            case JSON:
+                entry = new JsonDataEntry(proto.getKey(), proto.getJsonValue());
                 break;
         }
         return entry;

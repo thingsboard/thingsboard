@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -179,6 +180,13 @@ public class TbGetTelemetryNode implements TbNode {
                 break;
             case DOUBLE:
                 obj.put("value", entry.getDoubleValue().get());
+                break;
+            case JSON:
+                try {
+                    obj.set("value", mapper.readTree(entry.getJsonValue().get()));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
                 break;
         }
         return obj;

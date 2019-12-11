@@ -32,8 +32,8 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.msg.TbMsg;
 
+import java.io.IOException;
 import java.util.List;
-
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
 import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
@@ -73,7 +73,8 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
     }
 
     @Override
-    public void destroy() { }
+    public void destroy() {
+    }
 
     protected abstract ListenableFuture<T> findEntityIdAsync(TbContext ctx, TbMsg msg);
 
@@ -160,6 +161,13 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
                 break;
             case DOUBLE:
                 value.put(VALUE, r.getDoubleValue().get());
+                break;
+            case JSON:
+                try {
+                    value.set(VALUE, mapper.readTree(r.getJsonValue().get()));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
                 break;
         }
         msg.getMetaData().putValue(r.getKey(), value.toString());
