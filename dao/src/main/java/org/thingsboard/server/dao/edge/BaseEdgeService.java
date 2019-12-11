@@ -29,6 +29,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
@@ -548,6 +549,16 @@ public class BaseEdgeService extends AbstractEntityService implements EdgeServic
             case DataConstants.ENTITY_UNASSIGNED_FROM_EDGE:
                 edgeId = new EdgeId(UUID.fromString(tbMsg.getMetaData().getValue("unassignedEdgeId")));
                 pushEventToEdge(tenantId, edgeId, entityType, tbMsg, callback);
+                break;
+            case DataConstants.ENTITY_DELETED:
+            case DataConstants.ENTITY_CREATED:
+            case DataConstants.ENTITY_UPDATED:
+                Dashboard dashboard = mapper.readValue(tbMsg.getData(), Dashboard.class);
+                if (dashboard.getAssignedEdges() != null && !dashboard.getAssignedEdges().isEmpty()) {
+                    for (ShortEdgeInfo assignedEdge : dashboard.getAssignedEdges()) {
+                        pushEventToEdge(tenantId, assignedEdge.getEdgeId(), EdgeQueueEntityType.DASHBOARD, tbMsg, callback);
+                    }
+                }
                 break;
         }
     }

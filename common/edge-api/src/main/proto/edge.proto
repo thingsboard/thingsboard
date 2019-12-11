@@ -52,6 +52,8 @@ message EntityUpdateMsg {
   AssetUpdateMsg assetUpdateMsg = 5;
   EntityViewUpdateMsg entityViewUpdateMsg = 6;
   AlarmUpdateMsg alarmUpdateMsg = 7;
+  UserUpdateMsg userUpdateMsg = 8;
+  CustomerUpdateMsg customerUpdateMsg = 9;
 }
 
 enum RequestMsgType {
@@ -82,6 +84,7 @@ message EdgeConfiguration {
   string name = 5;
   string routingKey = 6;
   string type = 7;
+  string cloudType = 8;
 }
 
 enum UpdateMsgType {
@@ -147,7 +150,8 @@ message DashboardUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  string name = 4;
+  string title = 4;
+  string configuration = 5;
 }
 
 message DeviceUpdateMsg {
@@ -185,6 +189,37 @@ message AlarmUpdateMsg {
   int64 clearTs = 11;
   string details = 12;
   bool propagate = 13;
+}
+
+message CustomerUpdateMsg {
+  UpdateMsgType msgType = 1;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  string title = 4;
+  string country = 5;
+  string state = 6;
+  string city = 7;
+  string address = 8;
+  string address2 = 9;
+  string zip = 10;
+  string phone = 11;
+  string email = 12;
+  string additionalInfo = 13;
+}
+
+message UserUpdateMsg {
+  UpdateMsgType msgType = 1;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  int64 customerIdMSB = 4;
+  int64 customerIdLSB = 5;
+  string email = 7;
+  string authority = 8;
+  string firstName = 9;
+  string lastName = 10;
+  string additionalInfo = 11;
+  bool enabled = 12;
+  string password = 13;
 }
 
 enum EntityType {

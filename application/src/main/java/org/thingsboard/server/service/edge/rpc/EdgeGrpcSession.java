@@ -25,12 +25,14 @@ import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Event;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
@@ -67,6 +69,7 @@ import org.thingsboard.server.gen.edge.AssetUpdateMsg;
 import org.thingsboard.server.gen.edge.ConnectRequestMsg;
 import org.thingsboard.server.gen.edge.ConnectResponseCode;
 import org.thingsboard.server.gen.edge.ConnectResponseMsg;
+import org.thingsboard.server.gen.edge.CustomerUpdateMsg;
 import org.thingsboard.server.gen.edge.DashboardUpdateMsg;
 import org.thingsboard.server.gen.edge.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.DownlinkMsg;
@@ -85,6 +88,7 @@ import org.thingsboard.server.gen.edge.RuleNodeProto;
 import org.thingsboard.server.gen.edge.UpdateMsgType;
 import org.thingsboard.server.gen.edge.UplinkMsg;
 import org.thingsboard.server.gen.edge.UplinkResponseMsg;
+import org.thingsboard.server.gen.edge.UserUpdateMsg;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
 
 import java.io.IOException;
@@ -212,7 +216,7 @@ public final class EdgeGrpcSession implements Cloneable {
     }
 
     private void processCustomDownlinkMessage(EdgeQueueEntry entry) throws IOException {
-        log.trace("Executing processCustomDownlinkMessage, entry [{}], msgType [{}]", entry);
+        log.trace("Executing processCustomDownlinkMessage, entry [{}]", entry);
         TbMsg tbMsg = objectMapper.readValue(entry.getData(), TbMsg.class);
         String entityName = null;
         switch (entry.getEntityType()) {
@@ -526,11 +530,25 @@ public final class EdgeGrpcSession implements Cloneable {
     }
 
     private DashboardUpdateMsg constructDashboardUpdatedMsg(UpdateMsgType msgType, Dashboard dashboard) {
+        dashboard = ctx.getDashboardService().findDashboardById(edge.getTenantId(), dashboard.getId());
         DashboardUpdateMsg.Builder builder = DashboardUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setIdMSB(dashboard.getId().getId().getMostSignificantBits())
                 .setIdLSB(dashboard.getId().getId().getLeastSignificantBits())
-                .setName(dashboard.getName());
+                .setTitle(dashboard.getTitle())
+                .setConfiguration(JacksonUtil.toString(dashboard.getConfiguration()));
+        return builder.build();
+    }
+
+    private CustomerUpdateMsg constructCustomerUpdatedMsg(UpdateMsgType msgType, Customer customer) {
+        CustomerUpdateMsg.Builder builder = CustomerUpdateMsg.newBuilder()
+                .setMsgType(msgType);
+        return builder.build();
+    }
+
+    private UserUpdateMsg constructUserUpdatedMsg(UpdateMsgType msgType, User user) {
+        UserUpdateMsg.Builder builder = UserUpdateMsg.newBuilder()
+                .setMsgType(msgType);
         return builder.build();
     }
 
