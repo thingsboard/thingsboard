@@ -38,6 +38,8 @@ public interface ScriptEngine {
 
     JsonNode executeJson(TbMsg msg) throws ScriptException;
 
+    ListenableFuture<JsonNode> executeJsonAsync(TbMsg msg) throws ScriptException;
+
     String executeToString(TbMsg msg) throws ScriptException;
 
     void destroy();

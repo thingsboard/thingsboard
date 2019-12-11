@@ -140,6 +140,11 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
     }
 
     @Override
+    public ListenableFuture<JsonNode> executeJsonAsync(TbMsg msg) throws ScriptException {
+        return executeScriptAsync(msg);
+    }
+
+    @Override
     public String executeToString(TbMsg msg) throws ScriptException {
         JsonNode result = executeScript(msg);
         if (!result.isTextual()) {
