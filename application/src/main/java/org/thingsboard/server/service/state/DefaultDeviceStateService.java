@@ -289,7 +289,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
     private void updateState() {
         long ts = System.currentTimeMillis();
         Set<DeviceId> deviceIds = new HashSet<>(deviceStates.keySet());
-        log.info("Calculating state updates for {} devices", deviceStates.size());
+        log.debug("Calculating state updates for {} devices", deviceStates.size());
         for (DeviceId deviceId : deviceIds) {
             DeviceStateData stateData = getOrFetchDeviceStateData(deviceId);
             if (stateData != null) {
