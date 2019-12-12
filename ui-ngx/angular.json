@@ -33,7 +33,10 @@
             "styles": [
               "src/styles.scss",
               "node_modules/jquery.terminal/css/jquery.terminal.min.css",
+              "node_modules/tooltipster/dist/css/tooltipster.bundle.min.css",
+              "node_modules/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-shadow.min.css",
               "src/app/shared/components/json-form/react/json-form.scss",
+              "src/app/modules/home/pages/rulechain/rulechain-page.tooltipster.scss",
               "node_modules/rc-select/assets/index.css"
             ],
             "stylePreprocessorOptions": {
@@ -54,6 +57,7 @@
               "node_modules/flot/src/plugins/jquery.flot.stack.js",
               "node_modules/flot.curvedlines/curvedLines.js",
               "node_modules/tinycolor2/dist/tinycolor-min.js",
+              "node_modules/tooltipster/dist/js/tooltipster.bundle.min.js",
               "node_modules/split.js/dist/split.js",
               "node_modules/js-beautify/js/lib/beautify.js",
               "node_modules/js-beautify/js/lib/beautify-css.js",

@@ -70,6 +70,15 @@ export enum RuleNodeType {
   INPUT = 'INPUT'
 }
 
+export const ruleNodeTypesLibrary = [
+  RuleNodeType.FILTER,
+  RuleNodeType.ENRICHMENT,
+  RuleNodeType.TRANSFORMATION,
+  RuleNodeType.ACTION,
+  RuleNodeType.EXTERNAL,
+  RuleNodeType.RULE_CHAIN,
+];
+
 export interface RuleNodeTypeDescriptor {
   value: RuleNodeType;
   name: string;

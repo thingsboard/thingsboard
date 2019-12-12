@@ -14,10 +14,10 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnInit, ViewChild } from '@angular/core';
-import { Observable } from 'rxjs';
+import { AfterViewInit, Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
+import { fromEvent, Observable } from 'rxjs';
 import { select, Store } from '@ngrx/store';
-import { map, mergeMap, take } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, map, mergeMap, take, tap } from 'rxjs/operators';
 
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { User } from '@shared/models/user.model';
@@ -34,19 +34,21 @@ import * as screenfull from 'screenfull';
 import { MatSidenav } from '@angular/material';
 import { AuthState } from '@core/auth/auth.models';
 import { WINDOW } from '@core/services/window.service';
+import { ISearchableComponent, instanceOfSearchableComponent } from '@home/models/searchable-component.models';
 
 @Component({
   selector: 'tb-home',
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
 })
-export class HomeComponent extends PageComponent implements OnInit {
+export class HomeComponent extends PageComponent implements AfterViewInit, OnInit {
 
   authState: AuthState = getCurrentAuthState(this.store);
 
   forceFullscreen = this.authState.forceFullscreen;
 
   activeComponent: any;
+  searchableComponent: ISearchableComponent;
 
   sidenavMode = 'side';
   sidenavOpened = true;
@@ -56,12 +58,18 @@ export class HomeComponent extends PageComponent implements OnInit {
   @ViewChild('sidenav', {static: false})
   sidenav: MatSidenav;
 
+  @ViewChild('searchInput', {static: false}) searchInputField: ElementRef;
+
   // @ts-ignore
   fullscreenEnabled = screenfull.enabled;
 
   authUser$: Observable<any>;
   userDetails$: Observable<User>;
   userDetailsString: Observable<string>;
+
+  searchEnabled = false;
+  showSearch = false;
+  searchText = '';
 
   constructor(protected store: Store<AppState>,
               @Inject(WINDOW) private window: Window,
@@ -98,6 +106,18 @@ export class HomeComponent extends PageComponent implements OnInit {
       );
   }
 
+  ngAfterViewInit() {
+    fromEvent(this.searchInputField.nativeElement, 'keyup')
+      .pipe(
+        debounceTime(150),
+        distinctUntilChanged(),
+        tap(() => {
+          this.searchTextUpdated();
+        })
+      )
+      .subscribe();
+  }
+
   sidenavClicked() {
     if (this.sidenavMode === 'over') {
       this.sidenav.toggle();
@@ -119,5 +139,48 @@ export class HomeComponent extends PageComponent implements OnInit {
 
   goBack() {
     this.window.history.back();
+  }
+
+  activeComponentChanged(activeComponent: any) {
+    this.showSearch = false;
+    this.searchText = '';
+    this.activeComponent = activeComponent;
+    if (this.activeComponent && instanceOfSearchableComponent(this.activeComponent)) {
+      this.searchEnabled = true;
+      this.searchableComponent = this.activeComponent;
+    } else {
+      this.searchEnabled = false;
+      this.searchableComponent = null;
+    }
+  }
+
+  displaySearchMode(): boolean {
+    return this.searchEnabled && this.showSearch;
+  }
+
+  openSearch() {
+    if (this.searchEnabled) {
+      this.showSearch = true;
+      setTimeout(() => {
+        this.searchInputField.nativeElement.focus();
+        this.searchInputField.nativeElement.setSelectionRange(0, 0);
+      }, 10);
+    }
+  }
+
+  closeSearch() {
+    if (this.searchEnabled) {
+      this.showSearch = false;
+      if (this.searchText.length) {
+        this.searchText = '';
+        this.searchTextUpdated();
+      }
+    }
+  }
+
+  private searchTextUpdated() {
+    if (this.searchableComponent) {
+      this.searchableComponent.onSearchTextUpdated(this.searchText);
+    }
   }
 }

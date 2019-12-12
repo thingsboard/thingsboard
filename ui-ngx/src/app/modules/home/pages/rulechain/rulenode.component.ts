@@ -14,7 +14,8 @@
 /// limitations under the License.
 ///
 
-import { Component } from '@angular/core';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { Component, OnInit } from '@angular/core';
 import { FcNodeComponent } from 'ngx-flowchart/dist/ngx-flowchart';
 
 @Component({
@@ -22,10 +23,19 @@ import { FcNodeComponent } from 'ngx-flowchart/dist/ngx-flowchart';
   templateUrl: './rulenode.component.html',
   styleUrls: ['./rulenode.component.scss']
 })
-export class RuleNodeComponent extends FcNodeComponent {
+export class RuleNodeComponent extends FcNodeComponent implements OnInit {
 
-  constructor() {
+  iconUrl: SafeResourceUrl;
+
+  constructor(private sanitizer: DomSanitizer) {
     super();
+  }
+
+  ngOnInit(): void {
+    super.ngOnInit();
+    if (this.node.iconUrl) {
+      this.iconUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.node.iconUrl);
+    }
   }
 
 }

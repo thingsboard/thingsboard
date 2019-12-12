@@ -17,6 +17,11 @@
   display: flex;
   width: 100%;
   height: 100%;
+
+  .tb-invisible {
+    display: none !important;
+  }
+
   mat-sidenav-container {
     flex: 1;
   }

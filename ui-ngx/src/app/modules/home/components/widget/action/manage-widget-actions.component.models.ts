@@ -30,9 +30,9 @@ import { entityTypeTranslations } from '@shared/models/entity-type.models';
 import { UtilsService } from '@core/services/utils.service';
 import { deepClone, isUndefined } from '@core/utils';
 
-import * as customSampleJs from '!raw-loader!./custom-sample-js.raw';
-import * as customSampleCss from '!raw-loader!./custom-sample-css.raw';
-import * as customSampleHtml from '!raw-loader!./custom-sample-html.raw';
+import customSampleJs from '!raw-loader!./custom-sample-js.raw';
+import customSampleCss from '!raw-loader!./custom-sample-css.raw';
+import customSampleHtml from '!raw-loader!./custom-sample-html.raw';
 
 export interface WidgetActionCallbacks {
   fetchDashboardStates: (query: string) => Array<string>;

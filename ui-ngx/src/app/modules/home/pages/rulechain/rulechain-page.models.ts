@@ -37,6 +37,7 @@ export interface FcRuleNode extends FcRuleNodeType {
   debugMode?: boolean;
   targetRuleChainId?: string;
   error?: string;
+  highlighted?: boolean;
 }
 
 export interface FcRuleEdge extends FcEdge {

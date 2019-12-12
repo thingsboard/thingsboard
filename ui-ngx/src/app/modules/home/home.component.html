@@ -35,24 +35,48 @@
   <mat-sidenav-content>
     <div fxLayout="column" role="main" style="height: 100%;">
       <mat-toolbar fxLayout="row" color="primary" class="mat-elevation-z1 tb-primary-toolbar">
-        <button [fxShow]="!forceFullscreen" mat-button mat-icon-button id="main" fxHide.gt-sm (click)="sidenav.toggle()">
+        <button [fxShow]="!forceFullscreen" mat-button mat-icon-button id="main"
+                [ngClass]="{'tb-invisible': displaySearchMode()}"
+                fxHide.gt-sm (click)="sidenav.toggle()">
           <mat-icon class="material-icons">menu</mat-icon>
         </button>
-        <button [fxShow]="forceFullscreen" mat-button mat-icon-button (click)="goBack()">
+        <button [fxShow]="forceFullscreen" mat-button mat-icon-button
+                [ngClass]="{'tb-invisible': displaySearchMode()}"
+                (click)="goBack()">
           <mat-icon class="material-icons">arrow_back</mat-icon>
         </button>
-        <div fxFlex tb-breadcrumb [activeComponent]="activeComponent" class="mat-toolbar-tools">
+        <button mat-button mat-icon-button
+                [ngClass]="{'tb-invisible': !displaySearchMode()}"
+                (click)="closeSearch()">
+          <mat-icon class="material-icons">arrow_back</mat-icon>
+        </button>
+        <div [fxShow]="!displaySearchMode()"
+             fxFlex tb-breadcrumb [activeComponent]="activeComponent" class="mat-toolbar-tools">
         </div>
-        <button *ngIf="fullscreenEnabled" mat-button mat-icon-button fxHide.xs fxHide.sm (click)="toggleFullscreen()">
+        <div [fxShow]="displaySearchMode()" fxFlex fxLayout="row" class="tb-dark">
+          <mat-form-field fxFlex floatLabel="always">
+            <mat-label></mat-label>
+            <input #searchInput matInput
+                   [(ngModel)]="searchText"
+                   placeholder="{{ 'common.enter-search' | translate }}"/>
+          </mat-form-field>
+        </div>
+        <button [fxShow]="searchEnabled"
+                mat-button mat-icon-button
+                (click)="openSearch()">
+          <mat-icon class="material-icons">search</mat-icon>
+        </button>
+        <button *ngIf="fullscreenEnabled" [fxShow]="!displaySearchMode()"
+                mat-button mat-icon-button fxHide.xs fxHide.sm (click)="toggleFullscreen()">
           <mat-icon class="material-icons">{{ isFullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
         </button>
-        <tb-user-menu [displayUserInfo]="true"></tb-user-menu>
+        <tb-user-menu [displayUserInfo]="!displaySearchMode()"></tb-user-menu>
       </mat-toolbar>
       <mat-progress-bar color="warn" style="z-index: 10; margin-bottom: -4px; width: 100%;" mode="indeterminate"
                         *ngIf="isLoading$ | async">
       </mat-progress-bar>
       <div fxFlex fxLayout="column" tb-toast class="tb-main-content">
-        <router-outlet (activate)="activeComponent = $event;"></router-outlet>
+        <router-outlet (activate)="activeComponentChanged($event)"></router-outlet>
       </div>
     </div>
   </mat-sidenav-content>

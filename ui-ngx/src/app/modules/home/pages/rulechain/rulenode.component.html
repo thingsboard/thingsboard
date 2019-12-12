@@ -22,8 +22,8 @@
    (mouseleave)="userNodeCallbacks.mouseLeave($event, node)">
   <div class="{{flowchartConstants.nodeOverlayClass}}"></div>
   <div class="tb-rule-node {{node.nodeClass}}" [ngClass]="{'tb-rule-node-highlighted' : node.highlighted, 'tb-rule-node-invalid': node.error }">
-    <mat-icon *ngIf="!node.iconUrl" fxFlex="15">{{node.icon}}</mat-icon>
-    <img *ngIf="node.iconUrl" fxFlex="15" src="{{node.iconUrl}}"/>
+    <mat-icon *ngIf="!iconUrl" fxFlex="15">{{node.icon}}</mat-icon>
+    <img *ngIf="iconUrl" fxFlex="15" [src]="iconUrl"/>
     <div fxLayout="column" fxFlex="85" fxLayoutAlign="center">
       <span class="tb-node-type">{{ node.component.name }}</span>
       <span class="tb-node-title" *ngIf="node.name">{{ node.name }}</span>

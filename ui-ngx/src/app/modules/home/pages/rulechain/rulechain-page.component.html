@@ -30,7 +30,7 @@
         </button>
       </section>
       <mat-drawer-container style="width: 100%;">
-        <mat-drawer class="tb-rulechain-library"
+        <mat-drawer class="tb-rulechain-library mat-elevation-z4"
                     disableClose="true"
                     mode="side"
                     [opened]="isLibraryOpen"
@@ -45,13 +45,13 @@
               </button>
               <mat-form-field fxFlex floatLabel="always">
                 <mat-label></mat-label>
-                <input matInput
-                       [(ngModel)]="ruleNodeSearch"
+                <input #ruleNodeSearchInput matInput
+                       [(ngModel)]="ruleNodeTypeSearch"
                        placeholder="{{'rulenode.search' | translate}}"/>
               </mat-form-field>
               <button mat-button mat-icon-button class="tb-small"
-                      [fxShow]="ruleNodeSearch !== ''"
-                      (click)="ruleNodeSearch = ''"
+                      [fxShow]="ruleNodeTypeSearch !== ''"
+                      (click)="ruleNodeTypeSearch = ''; updateRuleChainLibrary()"
                       matTooltip="{{'action.clear-search' | translate}}"
                       matTooltipPosition="above">
                 <mat-icon>close</mat-icon>
@@ -64,17 +64,43 @@
               </button>
             </div>
           </mat-toolbar>
+          <div class="tb-rulechain-library-panel-group">
+            <mat-expansion-panel #ruleNodeTypeExpansionPanels
+                                 class="mat-elevation-z2"
+                                 [expanded]="true" *ngFor="let ruleNodeType of ruleNodeTypesLibraryArray">
+              <mat-expansion-panel-header expandedHeight="48px"
+                                          (mouseenter)="typeHeaderMouseEnter($event, ruleNodeType)"
+                                          (mouseleave)="destroyTooltips()">
+                <mat-panel-title>
+                  <mat-icon style="margin-right: 8px;">{{ ruleNodeTypeDescriptorsMap.get(ruleNodeType).icon }}</mat-icon>
+                  <div class="tb-panel-title" translate>{{ ruleNodeTypeDescriptorsMap.get(ruleNodeType).name }}</div>
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+              <fc-canvas id="tb-rulchain-{{ruleNodeType}}"
+                         [model]="ruleNodeTypesModel[ruleNodeType].model"
+                         [selectedObjects]="ruleNodeTypesModel[ruleNodeType].selectedObjects"
+                         [automaticResize]="false"
+                         [userCallbacks]="nodeLibCallbacks"
+                         [nodeWidth]="170"
+                         [nodeHeight]="50"
+                         [dropTargetId]="'tb-rulchain-canvas'">
+              </fc-canvas>
+            </mat-expansion-panel>
+          </div>
         </mat-drawer>
         <mat-drawer-content>
           <div class="tb-absolute-fill tb-rulechain-graph">
-            <fc-canvas #fcCanvas
+            <fc-canvas #ruleChainCanvas
                        id="tb-rulchain-canvas"
                        [model]="ruleChainModel"
                        (modelChanged)="onModelChanged()"
                        [selectedObjects]="selectedObjects"
                        [edgeStyle]="flowchartConstants.curvedStyle"
                        [automaticResize]="true"
-                       [dragAnimation]="flowchartConstants.dragAnimationRepaint">
+                       [nodeWidth]="170"
+                       [nodeHeight]="50"
+                       [dragAnimation]="flowchartConstants.dragAnimationRepaint"
+                       [userCallbacks]="editCallbacks">
             </fc-canvas>
           </div>
         </mat-drawer-content>

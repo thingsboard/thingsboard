@@ -73,6 +73,32 @@
           }
         }
       }
+      .tb-rulechain-library-panel-group {
+        overflow-x: hidden;
+        overflow-y: auto;
+        .mat-expansion-panel {
+          border-radius: 0px;
+          &:last-child {
+            margin-bottom: 5px;
+          }
+          .mat-expansion-panel-header {
+            background: #e6e6e6;
+          }
+          &.mat-expanded {
+            .mat-expansion-panel-header {
+              border-bottom: 1px solid;
+              border-color: #909090;
+            }
+          }
+        }
+        .tb-panel-title {
+          min-width: 140px;
+          user-select: none;
+        }
+        .fc-canvas {
+          background: #f9f9f9;
+        }
+      }
     }
     .tb-rulechain-graph {
       z-index: 0;
@@ -97,6 +123,11 @@
               width: auto;
             }
           }
+        }
+      }
+      .tb-rulechain-library-panel-group {
+        .mat-expansion-panel-body {
+          padding: 0;
         }
       }
     }

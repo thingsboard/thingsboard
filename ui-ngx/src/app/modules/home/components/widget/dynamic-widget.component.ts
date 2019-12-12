@@ -15,7 +15,7 @@
 ///
 
 import { PageComponent } from '@shared/components/page.component';
-import { Input, OnDestroy, OnInit } from '@angular/core';
+import { Inject, Input, OnDestroy, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { WidgetContext, IDynamicWidgetComponent } from '@home/models/widget-component.models';
@@ -38,8 +38,8 @@ export class DynamicWidgetComponent extends PageComponent implements IDynamicWid
 
   [key: string]: any;
 
-  constructor(public raf: RafService,
-              protected store: Store<AppState>) {
+  constructor(@Inject(RafService) public raf: RafService,
+              @Inject(Store) protected store: Store<AppState>) {
     super(store);
   }
 
