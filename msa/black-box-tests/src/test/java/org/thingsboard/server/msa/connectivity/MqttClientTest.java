@@ -123,19 +123,23 @@ public class MqttClientTest extends AbstractContainerTest {
         clientAttributes.addProperty("attr2", true);
         clientAttributes.addProperty("attr3", 42.0);
         clientAttributes.addProperty("attr4", 73);
+        JsonObject jsonValue = new JsonObject();
+        jsonValue.addProperty("key", "value");
+        clientAttributes.add("attr5", jsonValue);
         mqttClient.publish("v1/devices/me/attributes", Unpooled.wrappedBuffer(clientAttributes.toString().getBytes())).get();
         WsTelemetryResponse actualLatestTelemetry = wsClient.getLastMessage();
         log.info("Received telemetry: {}", actualLatestTelemetry);
         wsClient.closeBlocking();
 
-        Assert.assertEquals(4, actualLatestTelemetry.getData().size());
-        Assert.assertEquals(Sets.newHashSet("attr1", "attr2", "attr3", "attr4"),
+        Assert.assertEquals(5, actualLatestTelemetry.getData().size());
+        Assert.assertEquals(Sets.newHashSet("attr1", "attr2", "attr3", "attr4", "attr5"),
                 actualLatestTelemetry.getLatestValues().keySet());
 
         Assert.assertTrue(verify(actualLatestTelemetry, "attr1", "value1"));
         Assert.assertTrue(verify(actualLatestTelemetry, "attr2", Boolean.TRUE.toString()));
         Assert.assertTrue(verify(actualLatestTelemetry, "attr3", Double.toString(42.0)));
         Assert.assertTrue(verify(actualLatestTelemetry, "attr4", Long.toString(73)));
+        Assert.assertTrue(verify(actualLatestTelemetry, "attr5", jsonValue.toString()));
 
         restClient.getRestTemplate().delete(HTTPS_URL + "/api/device/" + device.getId());
     }
