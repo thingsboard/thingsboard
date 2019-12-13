@@ -17,6 +17,14 @@
 -->
 <div class="mat-content" fxFlex tb-fullscreen [fullscreen]="isFullscreen"
   fxLayout="column" class="tb-rulechain">
+  <button mat-button
+          type="button"
+          mat-icon-button class="tb-fullscreen-button"
+          (click)="isFullscreen = !isFullscreen"
+          matTooltip="{{(isFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
+          matTooltipPosition="above">
+    <mat-icon>{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+  </button>
   <section class="tb-rulechain-container" fxFlex fxLayout="column">
     <div class="tb-rulechain-layout" fxFlex fxLayout="row">
       <section fxLayout="row"
@@ -89,20 +97,90 @@
           </div>
         </mat-drawer>
         <mat-drawer-content>
-          <div class="tb-absolute-fill tb-rulechain-graph">
-            <fc-canvas #ruleChainCanvas
-                       id="tb-rulchain-canvas"
-                       [model]="ruleChainModel"
-                       (modelChanged)="onModelChanged()"
-                       [selectedObjects]="selectedObjects"
-                       [edgeStyle]="flowchartConstants.curvedStyle"
-                       [automaticResize]="true"
-                       [nodeWidth]="170"
-                       [nodeHeight]="50"
-                       [dragAnimation]="flowchartConstants.dragAnimationRepaint"
-                       [userCallbacks]="editCallbacks">
-            </fc-canvas>
-          </div>
+          <mat-drawer-container style="width: 100%;">
+            <mat-drawer-content>
+              <div class="tb-absolute-fill tb-rulechain-graph">
+                <fc-canvas #ruleChainCanvas
+                           id="tb-rulchain-canvas"
+                           [model]="ruleChainModel"
+                           (modelChanged)="onModelChanged()"
+                           [selectedObjects]="selectedObjects"
+                           [edgeStyle]="flowchartConstants.curvedStyle"
+                           [automaticResize]="true"
+                           [nodeWidth]="170"
+                           [nodeHeight]="50"
+                           [dragAnimation]="flowchartConstants.dragAnimationRepaint"
+                           [userCallbacks]="editCallbacks">
+                </fc-canvas>
+              </div>
+              <section fxLayout="row" class="layout-wrap tb-footer-buttons" fxLayoutAlign="start end">
+                <button [disabled]="isLoading$ | async"
+                        mat-fab color="accent" class="tb-btn-footer"
+                        [ngClass]="{'tb-hide': !objectsSelected()}"
+                        (click)="deleteSelected()"
+                        matTooltip="{{ 'rulenode.delete-selected-objects' | translate }}"
+                        matTooltipPosition="above">
+                  <mat-icon>delete</mat-icon>
+                </button>
+                <button [disabled]="(isLoading$ | async) || !isDebugModeEnabled()"
+                        mat-fab color="accent" class="tb-btn-footer"
+                        (click)="resetDebugModeInAllNodes()"
+                        matTooltip="{{ 'rulenode.reset-debug-mode' | translate }}"
+                        matTooltipPosition="above">
+                  <mat-icon>bug_report</mat-icon>
+                </button>
+                <button [disabled]="(isLoading$ | async) || isInvalid || (!isDirtyValue && !isImport)"
+                        mat-fab color="accent" class="tb-btn-footer"
+                        (click)="saveRuleChain()"
+                        matTooltip="{{ 'action.apply-changes' | translate }}"
+                        matTooltipPosition="above">
+                  <mat-icon>done</mat-icon>
+                </button>
+                <button [disabled]="(isLoading$ | async) || !isDirtyValue"
+                        mat-fab color="accent" class="tb-btn-footer"
+                        (click)="revertRuleChain()"
+                        matTooltip="{{ 'action.decline-changes' | translate }}"
+                        matTooltipPosition="above">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </section>
+            </mat-drawer-content>
+            <mat-drawer class="tb-details-drawer"
+                        [opened]="isEditingRuleNode"
+                        mode="over"
+                        position="end">
+              <tb-details-panel fxFlex
+                                headerTitle="{{editingRuleNode?.name}}"
+                                headerSubtitle="{{ ruleNodeTypeDescriptorsMap.get(editingRuleNode.component.type).name | translate }}"
+                                [isReadOnly]="false"
+                                [isAlwaysEdit]="true"
+                                (closeDetails)="onEditRuleNodeClosed()"
+                                (toggleDetailsEditMode)="onRevertRuleNodeEdit()"
+                                (applyDetails)="saveRuleNode()"
+                                [theForm]="tbEditWidget.widgetForm">
+                <div class="details-buttons">
+                  <div [tb-help]="helpLinkIdForRuleNodeType()"></div>
+                </div>
+                <mat-tab-group fxFlex class="tb-absolute-fill" [(selectedIndex)]="selectedRuleNodeTabIndex">
+                  <mat-tab label="{{ 'rulenode.details' | translate }}">
+                  </mat-tab>
+                  <mat-tab *ngIf="isEditingRuleNode && editingRuleNode.ruleNodeId" label="{{ 'rulenode.events' | translate }}">
+                  </mat-tab>
+                  <mat-tab label="{{ 'rulenode.help' | translate }}">
+                    <div class="tb-rule-node-help">
+                      <div id="tb-node-content" class="mat-padding" fxLayout="column">
+                        <div class="tb-node-title">{{editingRuleNode.component.name}}</div>
+                        <div>&nbsp;</div>
+                        <div class="tb-node-description">{{editingRuleNode.component.configurationDescriptor.nodeDefinition.description}}</div>
+                        <div>&nbsp;</div>
+                        <div class="tb-node-details" [innerHtml]="editingRuleNode.component.configurationDescriptor.nodeDefinition.details"></div>
+                      </div>
+                    </div>
+                  </mat-tab>
+                </mat-tab-group>
+              </tb-details-panel>
+            </mat-drawer>
+          </mat-drawer-container>
         </mat-drawer-content>
       </mat-drawer-container>
     </div>

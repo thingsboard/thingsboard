@@ -14,99 +14,203 @@
  * limitations under the License.
  */
 
-:host {
+.tb-rulechain {
   width: 100%;
   height: 100%;
-  .tb-rulechain {
-    width: 100%;
-    height: 100%;
-    section.tb-header-buttons.tb-library-open {
-      position: absolute;
+  button.mat-button.mat-icon-button.tb-fullscreen-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #ccc;
+    color: #666;
+    opacity: .85;
+    margin: 0 6px;
+    z-index: 2;
+  }
+  section.tb-header-buttons.tb-library-open {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    pointer-events: none;
+
+    .mat-fab {
+      .mat-button-wrapper {
+        padding: 0;
+      }
+    }
+
+    .mat-button.tb-btn-open-library {
       top: 0;
       left: 0;
-      z-index: 2;
-      pointer-events: none;
-
-      .mat-button.tb-btn-open-library {
-        top: 0;
-        left: 0;
-        width: 36px;
-        height: 36px;
-        margin: 4px 0 0 4px;
-        line-height: 36px;
-        opacity: .5;
-      }
+      width: 36px;
+      height: 36px;
+      margin: 4px 0 0 4px;
+      line-height: 36px;
+      opacity: .5;
     }
-    .tb-rulechain-library {
-      z-index: 1;
-      width: 250px;
-      min-width: 250px;
+  }
 
-      .mat-toolbar {
+  .tb-rulechain-library {
+    z-index: 1;
+    width: 250px;
+    min-width: 250px;
+
+    .mat-toolbar {
+      height: 48px;
+      min-height: 48px;
+      padding: 0;
+
+      .mat-toolbar-tools {
         height: 48px;
-        min-height: 48px;
-        padding: 0;
+        padding: 0 6px;
+        font-size: 14px;
 
-        .mat-toolbar-tools {
-          height: 48px;
-          padding: 0 6px;
-          font-size: 14px;
+        .mat-form-field {
+          .mat-form-field-infix {
+            width: auto;
+          }
+        }
 
-          .mat-button.mat-icon-button {
-            margin: 0;
+        .mat-button.mat-icon-button {
+          margin: 0;
 
-            &.tb-small {
-              width: 32px;
-              height: 32px;
-              min-height: 32px;
-              padding: 6px;
+          &.tb-small {
+            width: 32px;
+            height: 32px;
+            min-height: 32px;
+            padding: 6px;
+            line-height: 20px;
+            mat-icon {
+              width: 20px;
+              min-width: 20px;
+              height: 20px;
+              min-height: 20px;
+              font-size: 20px;
               line-height: 20px;
-              mat-icon {
-                width: 20px;
-                min-width: 20px;
-                height: 20px;
-                min-height: 20px;
-                font-size: 20px;
-                line-height: 20px;
-              }
             }
           }
-        }
-      }
-      .tb-rulechain-library-panel-group {
-        overflow-x: hidden;
-        overflow-y: auto;
-        .mat-expansion-panel {
-          border-radius: 0px;
-          &:last-child {
-            margin-bottom: 5px;
-          }
-          .mat-expansion-panel-header {
-            background: #e6e6e6;
-          }
-          &.mat-expanded {
-            .mat-expansion-panel-header {
-              border-bottom: 1px solid;
-              border-color: #909090;
-            }
-          }
-        }
-        .tb-panel-title {
-          min-width: 140px;
-          user-select: none;
-        }
-        .fc-canvas {
-          background: #f9f9f9;
         }
       }
     }
-    .tb-rulechain-graph {
-      z-index: 0;
+    .tb-rulechain-library-panel-group {
+      overflow-x: hidden;
+      overflow-y: auto;
+      .mat-expansion-panel {
+        border-radius: 0px;
+        &:last-child {
+          margin-bottom: 5px;
+        }
+        .mat-expansion-panel-header {
+          background: #e6e6e6;
+          &:hover {
+            background: #dadada;
+          }
+        }
+        &.mat-expanded {
+          .mat-expansion-panel-header {
+            border-bottom: 1px solid;
+            border-color: #909090;
+          }
+        }
+      }
+      .mat-expansion-panel-body {
+        padding: 0;
+      }
+      .tb-panel-title {
+        min-width: 140px;
+        user-select: none;
+      }
+      .fc-canvas {
+        background: #f9f9f9;
+      }
+    }
+  }
+  .tb-rulechain-graph {
+    z-index: 0;
+  }
+  .fc-canvas {
+    .fc-node {
+      border-radius: 8px;
+      &.fc-selected {
+        &:not(.fc-edit) {
+          margin: -3px;
+          border: solid 3px #f00;
+        }
+      }
+    }
+
+    .fc-edit {
+      .fc-nodeedit,
+      .fc-nodedelete {
+        border: solid 2px #fff;
+        background: #f83e05;
+        outline: none;
+      }
+    }
+
+    .fc-arrow-marker {
+      polygon {
+        fill: #808080;
+        stroke: #808080;
+      }
+    }
+
+    .fc-arrow-marker-selected {
+      polygon {
+        fill: #f00;
+        stroke: #f00;
+      }
+    }
+
+    .fc-edge {
+      outline: none;
+      stroke: #808080;
+
+      &.fc-selected {
+        stroke: #f00;
+      }
+
+      &.fc-hover {
+        stroke: #808080;
+      }
+    }
+
+    .edge-endpoint {
+      fill: #808080;
+    }
+
+    .fc-edge-label {
+      opacity: 1 !important;
+      &:focus {
+        outline: 0;
+      }
+
+      &.fc-selected {
+        .fc-edge-label-text {
+          span {
+            color: #fff !important;
+            background-color: #f00 !important;
+            border: solid #f00 !important;
+          }
+        }
+      }
+
+      .fc-edge-label-text {
+        font-size: 14px !important;
+        font-weight: 600 !important;
+
+        span {
+          background-color: #fff !important;
+          color: #003a79 !important;
+          border: solid 2px #003a79 !important;
+        }
+      }
     }
   }
 }
 
-:host ::ng-deep {
+/*:host ::ng-deep {
   .tb-rulechain {
     section.tb-header-buttons.tb-library-open {
       .mat-fab {
@@ -211,4 +315,4 @@
       }
     }
   }
-}
+}*/

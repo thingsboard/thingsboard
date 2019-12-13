@@ -14,7 +14,17 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, ElementRef, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  OnInit,
+  QueryList,
+  ViewChild,
+  ViewChildren,
+  ViewEncapsulation,
+  HostBinding
+} from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -31,7 +41,7 @@ import {
   RuleChain,
   ruleChainNodeComponent
 } from '@shared/models/rule-chain.models';
-import { FlowchartConstants, UserCallbacks, NgxFlowchartComponent } from 'ngx-flowchart/dist/ngx-flowchart';
+import { FlowchartConstants, NgxFlowchartComponent, UserCallbacks } from 'ngx-flowchart/dist/ngx-flowchart';
 import {
   RuleNodeComponentDescriptor,
   RuleNodeType,
@@ -42,13 +52,14 @@ import { FcRuleEdge, FcRuleNode, FcRuleNodeModel, FcRuleNodeType, FcRuleNodeType
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { fromEvent, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
-import Timeout = NodeJS.Timeout;
 import { ISearchableComponent } from '../../models/searchable-component.models';
+import Timeout = NodeJS.Timeout;
 
 @Component({
   selector: 'tb-rulechain-page',
   templateUrl: './rulechain-page.component.html',
-  styleUrls: ['./rulechain-page.component.scss']
+  styleUrls: ['./rulechain-page.component.scss'],
+  encapsulation: ViewEncapsulation.None
 })
 export class RuleChainPageComponent extends PageComponent
   implements AfterViewInit, OnInit, HasDirtyFlag, ISearchableComponent {
@@ -56,6 +67,9 @@ export class RuleChainPageComponent extends PageComponent
   get isDirty(): boolean {
     return this.isDirtyValue || this.isImport;
   }
+
+  @HostBinding('style.width') width = '100%';
+  @HostBinding('style.height') height = '100%';
 
   @ViewChild('ruleNodeSearchInput', {static: false}) ruleNodeSearchInputField: ElementRef;
 
@@ -69,6 +83,7 @@ export class RuleChainPageComponent extends PageComponent
 
   isImport: boolean;
   isDirtyValue: boolean;
+  isInvalid = false;
 
   errorTooltips: {[nodeId: string]: JQueryTooltipster.ITooltipsterInstance} = {};
   isFullscreen = false;
@@ -445,11 +460,14 @@ export class RuleChainPageComponent extends PageComponent
       });
     }
     this.isDirtyValue = false;
+    this.updateRuleNodesHighlight();
+    this.validate();
   }
 
   onModelChanged() {
     console.log('Model changed!');
     this.isDirtyValue = true;
+    this.validate();
   }
 
   typeHeaderMouseEnter(event: MouseEvent, ruleNodeType: RuleNodeType) {
@@ -517,7 +535,7 @@ export class RuleChainPageComponent extends PageComponent
     });
   }
 
-  updateRuleNodesHighlight() {
+  private updateRuleNodesHighlight() {
     for (const ruleNode of this.ruleChainModel.nodes) {
       ruleNode.highlighted = false;
     }
@@ -530,7 +548,98 @@ export class RuleChainPageComponent extends PageComponent
         }
       }
     }
-    this.ruleChainCanvas.modelService.detectChanges();
+    if (this.ruleChainCanvas) {
+      this.ruleChainCanvas.modelService.detectChanges();
+    }
+  }
+
+  objectsSelected(): boolean {
+    return this.ruleChainCanvas.modelService.nodes.getSelectedNodes().length > 0 ||
+      this.ruleChainCanvas.modelService.edges.getSelectedEdges().length > 0;
+  }
+
+  deleteSelected() {
+    this.ruleChainCanvas.modelService.deleteSelected();
+  }
+
+  isDebugModeEnabled(): boolean {
+    const res = this.ruleChainModel.nodes.find((node) => node.debugMode);
+    return typeof res !== 'undefined';
+  }
+
+  resetDebugModeInAllNodes() {
+    this.ruleChainModel.nodes.forEach((node) => {
+      if (node.component.type !== RuleNodeType.INPUT && node.component.type !== RuleNodeType.RULE_CHAIN) {
+        node.debugMode = false;
+      }
+    });
+  }
+
+  validate() {
+    setTimeout(() => {
+      this.isInvalid = false;
+      this.ruleChainModel.nodes.forEach((node) => {
+        if (node.error) {
+          this.isInvalid = true;
+        }
+        this.updateNodeErrorTooltip(node);
+      });
+    }, 0);
+  }
+
+  saveRuleChain() {
+    // TODO:
+  }
+
+  revertRuleChain() {
+    this.createRuleChainModel();
+  }
+
+  private updateNodeErrorTooltip(node: FcRuleNode) {
+    if (node.error) {
+      const element = $('#' + node.id);
+      let tooltip = this.errorTooltips[node.id];
+      if (!tooltip || !element.hasClass('tooltipstered')) {
+        element.tooltipster(
+          {
+            theme: 'tooltipster-shadow',
+            delay: 0,
+            animationDuration: 0,
+            trigger: 'custom',
+            triggerOpen: {
+              click: false,
+              tap: false
+            },
+            triggerClose: {
+              click: false,
+              tap: false,
+              scroll: false
+            },
+            side: 'top',
+            trackOrigin: true
+          }
+        );
+        const content = '<div class="tb-rule-node-error-tooltip">' +
+          '<div id="tooltip-content" layout="column">' +
+          '<div class="tb-node-details">' + node.error + '</div>' +
+          '</div>' +
+          '</div>';
+        const contentElement = $(content);
+        tooltip = element.tooltipster('instance');
+        tooltip.isErrorTooltip = true;
+        tooltip.content(contentElement);
+        this.errorTooltips[node.id] = tooltip;
+      }
+      setTimeout(() => {
+        tooltip.open();
+      }, 0);
+    } else {
+      if (this.errorTooltips[node.id]) {
+        const tooltip = this.errorTooltips[node.id];
+        tooltip.destroy();
+        delete this.errorTooltips[node.id];
+      }
+    }
   }
 
   private displayTooltip(event: MouseEvent, content: string) {
