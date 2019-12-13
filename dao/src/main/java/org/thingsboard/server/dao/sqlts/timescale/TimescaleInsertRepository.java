@@ -57,34 +57,35 @@ public class TimescaleInsertRepository extends AbstractTimeseriesInsertRepositor
         jdbcTemplate.batchUpdate(INSERT_OR_UPDATE, new BatchPreparedStatementSetter() {
             @Override
             public void setValues(PreparedStatement ps, int i) throws SQLException {
-                ps.setString(1, entities.get(i).getTenantId());
-                ps.setString(2, entities.get(i).getEntityId());
-                ps.setString(3, entities.get(i).getKey());
-                ps.setLong(4, entities.get(i).getTs());
+                TimescaleTsKvEntity tsKvEntity = entities.get(i);
+                ps.setString(1, tsKvEntity.getTenantId());
+                ps.setString(2, tsKvEntity.getEntityId());
+                ps.setString(3, tsKvEntity.getKey());
+                ps.setLong(4, tsKvEntity.getTs());
 
-                if (entities.get(i).getBooleanValue() != null) {
-                    ps.setBoolean(5, entities.get(i).getBooleanValue());
-                    ps.setBoolean(9, entities.get(i).getBooleanValue());
+                if (tsKvEntity.getBooleanValue() != null) {
+                    ps.setBoolean(5, tsKvEntity.getBooleanValue());
+                    ps.setBoolean(9, tsKvEntity.getBooleanValue());
                 } else {
                     ps.setNull(5, Types.BOOLEAN);
                     ps.setNull(9, Types.BOOLEAN);
                 }
 
-                ps.setString(6, replaceNullChars(entities.get(i).getStrValue()));
-                ps.setString(10, replaceNullChars(entities.get(i).getStrValue()));
+                ps.setString(6, replaceNullChars(tsKvEntity.getStrValue()));
+                ps.setString(10, replaceNullChars(tsKvEntity.getStrValue()));
 
 
-                if (entities.get(i).getLongValue() != null) {
-                    ps.setLong(7, entities.get(i).getLongValue());
-                    ps.setLong(11, entities.get(i).getLongValue());
+                if (tsKvEntity.getLongValue() != null) {
+                    ps.setLong(7, tsKvEntity.getLongValue());
+                    ps.setLong(11, tsKvEntity.getLongValue());
                 } else {
                     ps.setNull(7, Types.BIGINT);
                     ps.setNull(11, Types.BIGINT);
                 }
 
-                if (entities.get(i).getDoubleValue() != null) {
-                    ps.setDouble(8, entities.get(i).getDoubleValue());
-                    ps.setDouble(12, entities.get(i).getDoubleValue());
+                if (tsKvEntity.getDoubleValue() != null) {
+                    ps.setDouble(8, tsKvEntity.getDoubleValue());
+                    ps.setDouble(12, tsKvEntity.getDoubleValue());
                 } else {
                     ps.setNull(8, Types.DOUBLE);
                     ps.setNull(12, Types.DOUBLE);
