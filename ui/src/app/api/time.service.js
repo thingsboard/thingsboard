@@ -283,6 +283,9 @@ function TimeService($translate, $http, $q, types) {
 
 
         var historyTimewindow = {
+            useDashboardInterval: timewindow.useDashboardInterval || false,
+            useDashboardAggregation: timewindow.useDashboardAggregation || false,
+            useDashboardAggInterval: timewindow.useDashboardAggInterval || false,
             history: {
                 fixedTimewindow: {
                     startTimeMs: startTimeMs,
