@@ -225,18 +225,18 @@ public class RestClient implements ClientHttpRequestInterceptor {
         return restTemplate.postForEntity(baseURL + "/api/customer", customer, Customer.class).getBody();
     }
 
-    public Device createDevice(String name, String type) {
-        Device device = new Device();
-        device.setName(name);
-        device.setType(type);
-        return restTemplate.postForEntity(baseURL + "/api/device", device, Device.class).getBody();
-    }
-
     public DeviceCredentials updateDeviceCredentials(DeviceId deviceId, String token) {
         DeviceCredentials deviceCredentials = getCredentials(deviceId);
         deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
         deviceCredentials.setCredentialsId(token);
         return saveDeviceCredentials(deviceCredentials);
+    }
+
+    public Device createDevice(String name, String type) {
+        Device device = new Device();
+        device.setName(name);
+        device.setType(type);
+        return doCreateDevice(device, null);
     }
 
     public Device createDevice(Device device) {
@@ -248,13 +248,14 @@ public class RestClient implements ClientHttpRequestInterceptor {
     }
 
     private Device doCreateDevice(Device device, String accessToken) {
+        Map<String, String> params = new HashMap<>();
         String deviceCreationUrl = "/api/device";
         if (!StringUtils.isEmpty(accessToken)) {
             deviceCreationUrl = deviceCreationUrl + "?accessToken={accessToken}";
+            params.put("accessToken", accessToken);
         }
-        return restTemplate.postForEntity(baseURL + deviceCreationUrl, device, Device.class, accessToken).getBody();
+        return restTemplate.postForEntity(baseURL + deviceCreationUrl, device, Device.class, params).getBody();
     }
-
     public Asset createAsset(Asset asset) {
         return restTemplate.postForEntity(baseURL + "/api/asset", asset, Asset.class).getBody();
     }
