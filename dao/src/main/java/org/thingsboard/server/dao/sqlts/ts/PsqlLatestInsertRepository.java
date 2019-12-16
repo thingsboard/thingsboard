@@ -65,33 +65,34 @@ public class PsqlLatestInsertRepository extends AbstractLatestInsertRepository {
                 int[] result = jdbcTemplate.batchUpdate(BATCH_UPDATE, new BatchPreparedStatementSetter() {
                     @Override
                     public void setValues(PreparedStatement ps, int i) throws SQLException {
-                        ps.setLong(1, entities.get(i).getTs());
+                        TsKvLatestEntity tsKvLatestEntity = entities.get(i);
+                        ps.setLong(1, tsKvLatestEntity.getTs());
 
                         if (entities.get(i).getBooleanValue() != null) {
-                            ps.setBoolean(2, entities.get(i).getBooleanValue());
+                            ps.setBoolean(2, tsKvLatestEntity.getBooleanValue());
                         } else {
                             ps.setNull(2, Types.BOOLEAN);
                         }
 
-                        ps.setString(3, replaceNullChars(entities.get(i).getStrValue()));
+                        ps.setString(3, replaceNullChars(tsKvLatestEntity.getStrValue()));
 
-                        if (entities.get(i).getLongValue() != null) {
-                            ps.setLong(4, entities.get(i).getLongValue());
+                        if (tsKvLatestEntity.getLongValue() != null) {
+                            ps.setLong(4, tsKvLatestEntity.getLongValue());
                         } else {
                             ps.setNull(4, Types.BIGINT);
                         }
 
-                        if (entities.get(i).getDoubleValue() != null) {
-                            ps.setDouble(5, entities.get(i).getDoubleValue());
+                        if (tsKvLatestEntity.getDoubleValue() != null) {
+                            ps.setDouble(5, tsKvLatestEntity.getDoubleValue());
                         } else {
                             ps.setNull(5, Types.DOUBLE);
                         }
 
-                        ps.setString(6, replaceNullChars(entities.get(i).getJsonValue()));
+                        ps.setString(6, replaceNullChars(tsKvLatestEntity.getJsonValue()));
 
-                        ps.setString(7, entities.get(i).getEntityType().name());
-                        ps.setString(8, entities.get(i).getEntityId());
-                        ps.setString(9, entities.get(i).getKey());
+                        ps.setString(7, tsKvLatestEntity.getEntityType().name());
+                        ps.setString(8, tsKvLatestEntity.getEntityId());
+                        ps.setString(9, tsKvLatestEntity.getKey());
                     }
 
                     @Override
@@ -117,42 +118,44 @@ public class PsqlLatestInsertRepository extends AbstractLatestInsertRepository {
                 jdbcTemplate.batchUpdate(INSERT_OR_UPDATE, new BatchPreparedStatementSetter() {
                     @Override
                     public void setValues(PreparedStatement ps, int i) throws SQLException {
-                        ps.setString(1, insertEntities.get(i).getEntityType().name());
-                        ps.setString(2, insertEntities.get(i).getEntityId());
-                        ps.setString(3, insertEntities.get(i).getKey());
-                        ps.setLong(4, insertEntities.get(i).getTs());
-                        ps.setLong(10, insertEntities.get(i).getTs());
+                        TsKvLatestEntity insertTsKvLatestEntity = insertEntities.get(i);
 
-                        if (insertEntities.get(i).getBooleanValue() != null) {
-                            ps.setBoolean(5, insertEntities.get(i).getBooleanValue());
-                            ps.setBoolean(11, insertEntities.get(i).getBooleanValue());
+                        ps.setString(1, insertTsKvLatestEntity.getEntityType().name());
+                        ps.setString(2, insertTsKvLatestEntity.getEntityId());
+                        ps.setString(3, insertTsKvLatestEntity.getKey());
+                        ps.setLong(4, insertTsKvLatestEntity.getTs());
+                        ps.setLong(10, insertTsKvLatestEntity.getTs());
+
+                        if (insertTsKvLatestEntity.getBooleanValue() != null) {
+                            ps.setBoolean(5, insertTsKvLatestEntity.getBooleanValue());
+                            ps.setBoolean(11, insertTsKvLatestEntity.getBooleanValue());
                         } else {
                             ps.setNull(5, Types.BOOLEAN);
                             ps.setNull(11, Types.BOOLEAN);
                         }
 
-                        ps.setString(6, replaceNullChars(entities.get(i).getStrValue()));
-                        ps.setString(12, replaceNullChars(entities.get(i).getStrValue()));
+                        ps.setString(6, replaceNullChars(insertTsKvLatestEntity.getStrValue()));
+                        ps.setString(12, replaceNullChars(insertTsKvLatestEntity.getStrValue()));
 
 
-                        if (insertEntities.get(i).getLongValue() != null) {
-                            ps.setLong(7, insertEntities.get(i).getLongValue());
-                            ps.setLong(13, insertEntities.get(i).getLongValue());
+                        if (insertTsKvLatestEntity.getLongValue() != null) {
+                            ps.setLong(7, insertTsKvLatestEntity.getLongValue());
+                            ps.setLong(13, insertTsKvLatestEntity.getLongValue());
                         } else {
                             ps.setNull(7, Types.BIGINT);
                             ps.setNull(13, Types.BIGINT);
                         }
 
-                        if (insertEntities.get(i).getDoubleValue() != null) {
-                            ps.setDouble(8, insertEntities.get(i).getDoubleValue());
-                            ps.setDouble(14, insertEntities.get(i).getDoubleValue());
+                        if (insertTsKvLatestEntity.getDoubleValue() != null) {
+                            ps.setDouble(8, insertTsKvLatestEntity.getDoubleValue());
+                            ps.setDouble(14, insertTsKvLatestEntity.getDoubleValue());
                         } else {
                             ps.setNull(8, Types.DOUBLE);
                             ps.setNull(14, Types.DOUBLE);
                         }
 
-                        ps.setString(9, replaceNullChars(entities.get(i).getJsonValue()));
-                        ps.setString(15, replaceNullChars(entities.get(i).getJsonValue()));
+                        ps.setString(9, replaceNullChars(insertTsKvLatestEntity.getJsonValue()));
+                        ps.setString(15, replaceNullChars(insertTsKvLatestEntity.getJsonValue()));
                     }
 
                     @Override

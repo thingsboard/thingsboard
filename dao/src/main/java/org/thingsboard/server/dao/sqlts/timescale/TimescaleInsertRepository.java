@@ -57,41 +57,42 @@ public class TimescaleInsertRepository extends AbstractTimeseriesInsertRepositor
         jdbcTemplate.batchUpdate(INSERT_OR_UPDATE, new BatchPreparedStatementSetter() {
             @Override
             public void setValues(PreparedStatement ps, int i) throws SQLException {
-                ps.setString(1, entities.get(i).getTenantId());
-                ps.setString(2, entities.get(i).getEntityId());
-                ps.setString(3, entities.get(i).getKey());
-                ps.setLong(4, entities.get(i).getTs());
+                TimescaleTsKvEntity timescaleTsKvEntity = entities.get(i);
+                ps.setString(1, timescaleTsKvEntity.getTenantId());
+                ps.setString(2, timescaleTsKvEntity.getEntityId());
+                ps.setString(3, timescaleTsKvEntity.getKey());
+                ps.setLong(4, timescaleTsKvEntity.getTs());
 
-                if (entities.get(i).getBooleanValue() != null) {
-                    ps.setBoolean(5, entities.get(i).getBooleanValue());
-                    ps.setBoolean(10, entities.get(i).getBooleanValue());
+                if (timescaleTsKvEntity.getBooleanValue() != null) {
+                    ps.setBoolean(5, timescaleTsKvEntity.getBooleanValue());
+                    ps.setBoolean(10, timescaleTsKvEntity.getBooleanValue());
                 } else {
                     ps.setNull(5, Types.BOOLEAN);
                     ps.setNull(10, Types.BOOLEAN);
                 }
 
-                ps.setString(6, replaceNullChars(entities.get(i).getStrValue()));
-                ps.setString(11, replaceNullChars(entities.get(i).getStrValue()));
+                ps.setString(6, replaceNullChars(timescaleTsKvEntity.getStrValue()));
+                ps.setString(11, replaceNullChars(timescaleTsKvEntity.getStrValue()));
 
 
-                if (entities.get(i).getLongValue() != null) {
-                    ps.setLong(7, entities.get(i).getLongValue());
-                    ps.setLong(12, entities.get(i).getLongValue());
+                if (timescaleTsKvEntity.getLongValue() != null) {
+                    ps.setLong(7, timescaleTsKvEntity.getLongValue());
+                    ps.setLong(12, timescaleTsKvEntity.getLongValue());
                 } else {
                     ps.setNull(7, Types.BIGINT);
                     ps.setNull(12, Types.BIGINT);
                 }
 
-                if (entities.get(i).getDoubleValue() != null) {
-                    ps.setDouble(8, entities.get(i).getDoubleValue());
-                    ps.setDouble(13, entities.get(i).getDoubleValue());
+                if (timescaleTsKvEntity.getDoubleValue() != null) {
+                    ps.setDouble(8, timescaleTsKvEntity.getDoubleValue());
+                    ps.setDouble(13, timescaleTsKvEntity.getDoubleValue());
                 } else {
                     ps.setNull(8, Types.DOUBLE);
                     ps.setNull(13, Types.DOUBLE);
                 }
 
-                ps.setString(9, replaceNullChars(entities.get(i).getJsonValue()));
-                ps.setString(14, replaceNullChars(entities.get(i).getJsonValue()));
+                ps.setString(9, replaceNullChars(timescaleTsKvEntity.getJsonValue()));
+                ps.setString(14, replaceNullChars(timescaleTsKvEntity.getJsonValue()));
             }
 
             @Override
