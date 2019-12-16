@@ -243,6 +243,10 @@ public class RestClient implements ClientHttpRequestInterceptor {
         return restTemplate.postForEntity(baseURL + "/api/device", device, Device.class).getBody();
     }
 
+    public Device createDevice(Device device, String accessToken) {
+        return restTemplate.postForEntity(baseURL + "/api/device?accessToken={accessToken}", device, Device.class, accessToken).getBody();
+    }
+
     public Asset createAsset(Asset asset) {
         return restTemplate.postForEntity(baseURL + "/api/asset", asset, Asset.class).getBody();
     }
