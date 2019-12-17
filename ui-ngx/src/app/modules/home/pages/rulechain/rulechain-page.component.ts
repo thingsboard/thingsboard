@@ -18,20 +18,20 @@ import {
   AfterViewInit,
   Component,
   ElementRef,
+  HostBinding, Inject,
   OnInit,
-  QueryList,
+  QueryList, SkipSelf,
   ViewChild,
   ViewChildren,
-  ViewEncapsulation,
-  HostBinding
+  ViewEncapsulation
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
 import { HasDirtyFlag } from '@core/guards/confirm-on-exit.guard';
 import { TranslateService } from '@ngx-translate/core';
-import { MatDialog, MatExpansionPanel } from '@angular/material';
+import { MatDialog, MatExpansionPanel, ErrorStateMatcher, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material';
 import { DialogService } from '@core/services/dialog.service';
 import { AuthService } from '@core/auth/auth.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -43,6 +43,8 @@ import {
 } from '@shared/models/rule-chain.models';
 import { FlowchartConstants, NgxFlowchartComponent, UserCallbacks } from 'ngx-flowchart/dist/ngx-flowchart';
 import {
+  getRuleNodeHelpLink,
+  LinkLabel,
   RuleNodeComponentDescriptor,
   RuleNodeType,
   ruleNodeTypeDescriptors,
@@ -50,10 +52,21 @@ import {
 } from '@shared/models/rule-node.models';
 import { FcRuleEdge, FcRuleNode, FcRuleNodeModel, FcRuleNodeType, FcRuleNodeTypeModel } from './rulechain-page.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
-import { fromEvent, of } from 'rxjs';
-import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
+import { fromEvent, never, of, throwError, NEVER, Observable } from 'rxjs';
+import { debounceTime, distinctUntilChanged, map, tap, mergeMap } from 'rxjs/operators';
 import { ISearchableComponent } from '../../models/searchable-component.models';
+import { deepClone, isDefined, isString } from '@core/utils';
+import { RuleNodeDetailsComponent } from '@home/pages/rulechain/rule-node-details.component';
+import { RuleNodeLinkComponent } from './rule-node-link.component';
 import Timeout = NodeJS.Timeout;
+import { Dashboard } from '@shared/models/dashboard.models';
+import { IAliasController } from '@core/api/widget-api.models';
+import { Widget, widgetTypesData } from '@shared/models/widget.models';
+import { WidgetConfigComponentData, WidgetInfo } from '@home/models/widget-component.models';
+import { DialogComponent } from '@shared/components/dialog.component';
+import { UtilsService } from '@core/services/utils.service';
+import { EntityService } from '@core/http/entity.service';
+import { AddWidgetDialogComponent, AddWidgetDialogData } from '@home/pages/dashboard/add-widget-dialog.component';
 
 @Component({
   selector: 'tb-rulechain-page',
@@ -88,11 +101,19 @@ export class RuleChainPageComponent extends PageComponent
   errorTooltips: {[nodeId: string]: JQueryTooltipster.ITooltipsterInstance} = {};
   isFullscreen = false;
 
-  editingRuleNode = null;
+  selectedRuleNodeTabIndex = 0;
+  editingRuleNode: FcRuleNode = null;
   isEditingRuleNode = false;
+  editingRuleNodeIndex = -1;
+  editingRuleNodeAllowCustomLabels = false;
+  editingRuleNodeLinkLabels: {[label: string]: LinkLabel};
 
-  editingRuleNodeLink = null;
+  @ViewChild('tbRuleNode', {static: false}) ruleNodeComponent: RuleNodeDetailsComponent;
+  @ViewChild('tbRuleNodeLink', {static: false}) ruleNodeLinkComponent: RuleNodeLinkComponent;
+
+  editingRuleNodeLink: FcRuleEdge = null;
   isEditingRuleNodeLink = false;
+  editingRuleNodeLinkIndex = -1;
 
   isLibraryOpen = true;
 
@@ -110,17 +131,17 @@ export class RuleChainPageComponent extends PageComponent
 
   editCallbacks: UserCallbacks = {
     edgeDoubleClick: (event, edge) => {
-      console.log('TODO');
+      this.openLinkDetails(edge);
     },
     edgeEdit: (event, edge) => {
-      console.log('TODO');
+      this.openLinkDetails(edge);
     },
     nodeCallbacks: {
-      doubleClick: (event, node) => {
-        console.log('TODO');
+      doubleClick: (event, node: FcRuleNode) => {
+        this.openNodeDetails(node);
       },
-      nodeEdit: (event, node) => {
-        console.log('TODO');
+      nodeEdit: (event, node: FcRuleNode) => {
+        this.openNodeDetails(node);
       },
       mouseEnter: this.displayNodeDescriptionTooltip.bind(this),
       mouseLeave: this.destroyTooltips.bind(this),
@@ -129,9 +150,40 @@ export class RuleChainPageComponent extends PageComponent
     isValidEdge: (source, destination) => {
       return source.type === FlowchartConstants.rightConnectorType && destination.type === FlowchartConstants.leftConnectorType;
     },
-    createEdge: (event, edge) => {
+    createEdge: (event, edge: FcRuleEdge) => {
       console.log('TODO');
-      return of(edge);
+      const sourceNode = this.ruleChainCanvas.modelService.nodes.getNodeByConnectorId(edge.source) as FcRuleNode;
+      if (sourceNode.component.type === RuleNodeType.INPUT) {
+        const destNode = this.ruleChainCanvas.modelService.nodes.getNodeByConnectorId(edge.destination) as FcRuleNode;
+        if (destNode.component.type === RuleNodeType.RULE_CHAIN) {
+          return NEVER;
+        } else {
+          const found = this.ruleChainModel.edges.find(theEdge => theEdge.source === (this.inputConnectorId + ''));
+          if (found) {
+            this.ruleChainCanvas.modelService.edges.delete(found);
+          }
+          return of(edge);
+        }
+      } else {
+        if (edge.label) {
+          if (!edge.labels) {
+            edge.labels = edge.label.split(' / ');
+          }
+          return of(edge);
+        } else {
+          const labels = this.ruleChainService.getRuleNodeSupportedLinks(sourceNode.component);
+          const allowCustomLabels = this.ruleChainService.ruleNodeAllowCustomLinks(sourceNode.component);
+          return this.addRuleNodeLink(edge, labels, allowCustomLabels).pipe(
+            mergeMap((res) => {
+              if (res) {
+                return of(res);
+              } else {
+                return NEVER;
+              }
+            })
+          );
+        }
+      }
     },
     dropNode: (event, node) => {
       console.log('TODO dropNode');
@@ -470,6 +522,88 @@ export class RuleChainPageComponent extends PageComponent
     this.validate();
   }
 
+  helpLinkIdForRuleNodeType(): string {
+    let component: RuleNodeComponentDescriptor = null;
+    if (this.editingRuleNode) {
+      component = this.editingRuleNode.component;
+    }
+    return getRuleNodeHelpLink(component);
+  }
+
+  openNodeDetails(node: FcRuleNode) {
+    if (node.component.type !== RuleNodeType.INPUT) {
+      this.isEditingRuleNodeLink = false;
+      this.editingRuleNodeLink = null;
+      this.isEditingRuleNode = true;
+      this.editingRuleNodeIndex = this.ruleChainModel.nodes.indexOf(node);
+      this.editingRuleNode = deepClone(node);
+      setTimeout(() => {
+        this.ruleNodeComponent.ruleNodeFormGroup.markAsPristine();
+      }, 0);
+    }
+  }
+
+  openLinkDetails(edge: FcRuleEdge) {
+    const sourceNode: FcRuleNode = this.ruleChainCanvas.modelService.nodes.getNodeByConnectorId(edge.source) as FcRuleNode;
+    if (sourceNode.component.type !== RuleNodeType.INPUT) {
+      this.isEditingRuleNode = false;
+      this.editingRuleNode = null;
+      this.editingRuleNodeLinkLabels = this.ruleChainService.getRuleNodeSupportedLinks(sourceNode.component);
+      this.editingRuleNodeAllowCustomLabels = this.ruleChainService.ruleNodeAllowCustomLinks(sourceNode.component);
+      this.isEditingRuleNodeLink = true;
+      this.editingRuleNodeLinkIndex = this.ruleChainModel.edges.indexOf(edge);
+      this.editingRuleNodeLink = deepClone(edge);
+      setTimeout(() => {
+        this.ruleNodeLinkComponent.ruleNodeLinkFormGroup.markAsPristine();
+      }, 0);
+    }
+  }
+
+  onDetailsDrawerClosed() {
+    this.onEditRuleNodeClosed();
+    this.onEditRuleNodeLinkClosed();
+  }
+
+  onEditRuleNodeClosed() {
+    this.editingRuleNode = null;
+    this.isEditingRuleNode = false;
+  }
+
+  onEditRuleNodeLinkClosed() {
+    this.editingRuleNodeLink = null;
+    this.isEditingRuleNodeLink = false;
+  }
+
+  onRevertRuleNodeEdit() {
+    this.ruleNodeComponent.ruleNodeFormGroup.markAsPristine();
+    const node = this.ruleChainModel.nodes[this.editingRuleNodeIndex];
+    this.editingRuleNode = deepClone(node);
+  }
+
+  onRevertRuleNodeLinkEdit() {
+    this.ruleNodeLinkComponent.ruleNodeLinkFormGroup.markAsPristine();
+    const edge = this.ruleChainModel.edges[this.editingRuleNodeLinkIndex];
+    this.editingRuleNodeLink = deepClone(edge);
+  }
+
+  saveRuleNode() {
+    this.ruleNodeComponent.ruleNodeFormGroup.markAsPristine();
+    if (this.editingRuleNode.error) {
+      delete this.editingRuleNode.error;
+    }
+    this.ruleChainModel.nodes[this.editingRuleNodeIndex] = this.editingRuleNode;
+    this.editingRuleNode = deepClone(this.editingRuleNode);
+    this.onModelChanged();
+    this.updateRuleNodesHighlight();
+  }
+
+  saveRuleNodeLink() {
+    this.ruleNodeLinkComponent.ruleNodeLinkFormGroup.markAsPristine();
+    this.ruleChainModel.edges[this.editingRuleNodeLinkIndex] = this.editingRuleNodeLink;
+    this.editingRuleNodeLink = deepClone(this.editingRuleNodeLink);
+    this.onModelChanged();
+  }
+
   typeHeaderMouseEnter(event: MouseEvent, ruleNodeType: RuleNodeType) {
     const type = ruleNodeTypeDescriptors.get(ruleNodeType);
     this.displayTooltip(event,
@@ -568,11 +702,16 @@ export class RuleChainPageComponent extends PageComponent
   }
 
   resetDebugModeInAllNodes() {
+    let changed = false;
     this.ruleChainModel.nodes.forEach((node) => {
       if (node.component.type !== RuleNodeType.INPUT && node.component.type !== RuleNodeType.RULE_CHAIN) {
+        changed = changed || node.debugMode;
         node.debugMode = false;
       }
     });
+    if (changed) {
+      this.onModelChanged();
+    }
   }
 
   validate() {
@@ -593,6 +732,19 @@ export class RuleChainPageComponent extends PageComponent
 
   revertRuleChain() {
     this.createRuleChainModel();
+  }
+
+  addRuleNodeLink(link: FcRuleEdge, labels: {[label: string]: LinkLabel}, allowCustomLabels: boolean): Observable<FcRuleEdge> {
+    return this.dialog.open<AddRuleNodeLinkDialogComponent, AddRuleNodeLinkDialogData,
+      FcRuleEdge>(AddRuleNodeLinkDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        link,
+        labels,
+        allowCustomLabels
+      }
+    }).afterClosed();
   }
 
   private updateNodeErrorTooltip(node: FcRuleNode) {
@@ -670,6 +822,66 @@ export class RuleChainPageComponent extends PageComponent
       tooltip.open();
     }, 500);
   }
+}
 
+export interface AddRuleNodeLinkDialogData {
+  link: FcRuleEdge;
+  labels: {[label: string]: LinkLabel};
+  allowCustomLabels: boolean;
+}
 
+@Component({
+  selector: 'tb-add-rule-node-link-dialog',
+  templateUrl: './add-rule-node-link-dialog.component.html',
+  providers: [{provide: ErrorStateMatcher, useExisting: AddRuleNodeLinkDialogComponent}],
+  styleUrls: ['./add-rule-node-link-dialog.component.scss']
+})
+export class AddRuleNodeLinkDialogComponent extends DialogComponent<AddRuleNodeLinkDialogComponent, FcRuleEdge>
+  implements OnInit, ErrorStateMatcher {
+
+  ruleNodeLinkFormGroup: FormGroup;
+
+  link: FcRuleEdge;
+  labels: {[label: string]: LinkLabel};
+  allowCustomLabels: boolean;
+
+  submitted = false;
+
+  constructor(protected store: Store<AppState>,
+              protected router: Router,
+              @Inject(MAT_DIALOG_DATA) public data: AddRuleNodeLinkDialogData,
+              @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
+              public dialogRef: MatDialogRef<AddRuleNodeLinkDialogComponent, FcRuleEdge>,
+              private fb: FormBuilder) {
+    super(store, router, dialogRef);
+
+    this.link = this.data.link;
+    this.labels = this.data.labels;
+    this.allowCustomLabels = this.data.allowCustomLabels;
+
+    this.ruleNodeLinkFormGroup = this.fb.group({
+        link: [deepClone(this.link), [Validators.required]]
+      }
+    );
+  }
+
+  ngOnInit(): void {
+  }
+
+  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+    const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
+    const customErrorState = !!(control && control.invalid && this.submitted);
+    return originalErrorState || customErrorState;
+  }
+
+  cancel(): void {
+    this.dialogRef.close(null);
+  }
+
+  add(): void {
+    this.submitted = true;
+    const link: FcRuleEdge = this.ruleNodeLinkFormGroup.get('link').value;
+    this.link = {...this.link, ...link};
+    this.dialogRef.close(this.link);
+  }
 }

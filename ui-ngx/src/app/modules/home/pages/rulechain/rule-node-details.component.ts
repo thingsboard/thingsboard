@@ -1,38 +1,41 @@
-import {
-  AfterViewInit,
-  Component,
-  EventEmitter,
-  Input,
-  OnInit,
-  Output,
-  ViewChild,
-  ViewEncapsulation
-} from '@angular/core';
+///
+/// Copyright © 2016-2019 The Thingsboard Authors
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///     http://www.apache.org/licenses/LICENSE-2.0
+///
+/// Unless required by applicable law or agreed to in writing, software
+/// distributed under the License is distributed on an "AS IS" BASIS,
+/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/// See the License for the specific language governing permissions and
+/// limitations under the License.
+///
+
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
-import { HasDirtyFlag } from '@core/guards/confirm-on-exit.guard';
-import { ISearchableComponent } from '@home/models/searchable-component.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormGroup, NgForm } from '@angular/forms';
+import { FormBuilder, FormGroup, NgForm, Validators } from '@angular/forms';
 import { FcRuleNode } from './rulechain-page.models';
 import { RuleNodeType } from '@shared/models/rule-node.models';
 import { EntityType } from '@shared/models/entity-type.models';
+import { Subscription } from 'rxjs';
+import { RuleChainService } from '@core/http/rule-chain.service';
 
 @Component({
   selector: 'tb-rule-node',
   templateUrl: './rule-node-details.component.html',
   styleUrls: []
 })
-export class RuleNodeDetailsComponent extends PageComponent implements OnInit {
+export class RuleNodeDetailsComponent extends PageComponent implements OnInit, OnChanges {
 
   @ViewChild('ruleNodeForm', {static: true}) ruleNodeForm: NgForm;
 
-  ruleNodeValue: FcRuleNode;
-
   @Input()
-  set ruleNode(ruleNode: FcRuleNode) {
-    this.ruleNodeValue = ruleNode;
-  }
+  ruleNode: FcRuleNode;
 
   @Input()
   ruleChainId: string;
@@ -43,28 +46,84 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit {
   @Input()
   isReadOnly: boolean;
 
-  @Output()
-  deleteRuleNode = new EventEmitter();
-
   ruleNodeType = RuleNodeType;
   entityType = EntityType;
 
   ruleNodeFormGroup: FormGroup;
 
+  private ruleNodeFormSubscription: Subscription;
+
   constructor(protected store: Store<AppState>,
-              private fb: FormBuilder) {
+              private fb: FormBuilder,
+              private ruleChainService: RuleChainService) {
     super(store);
     this.ruleNodeFormGroup = this.fb.group({});
   }
 
   private buildForm() {
+    if (this.ruleNodeFormSubscription) {
+      this.ruleNodeFormSubscription.unsubscribe();
+      this.ruleNodeFormSubscription = null;
+    }
+    if (this.ruleNode) {
+      if (this.ruleNode.component.type !== RuleNodeType.RULE_CHAIN) {
+        this.ruleNodeFormGroup = this.fb.group({
+          name: [this.ruleNode.name, [Validators.required]],
+          debugMode: [this.ruleNode.debugMode, []],
+          additionalInfo: this.fb.group(
+            {
+              description: [this.ruleNode.additionalInfo ? this.ruleNode.additionalInfo.description : ''],
+            }
+          )
+        });
+      } else {
+        this.ruleNodeFormGroup = this.fb.group({
+          targetRuleChainId: [this.ruleNode.targetRuleChainId, [Validators.required]],
+          additionalInfo: this.fb.group(
+            {
+              description: [this.ruleNode.additionalInfo ? this.ruleNode.additionalInfo.description : ''],
+            }
+          )
+        });
+      }
+      this.ruleNodeFormSubscription = this.ruleNodeFormGroup.valueChanges.subscribe(() => {
+        this.updateRuleNode();
+      });
+    } else {
+      this.ruleNodeFormGroup = this.fb.group({});
+    }
+  }
+
+  private updateRuleNode() {
+    const formValue = this.ruleNodeFormGroup.value || {};
+    if (this.ruleNode.component.type === RuleNodeType.RULE_CHAIN) {
+      const targetRuleChainId: string = formValue.targetRuleChainId;
+      if (this.ruleNode.targetRuleChainId !== targetRuleChainId && targetRuleChainId) {
+        this.ruleChainService.getRuleChain(targetRuleChainId).subscribe(
+          (ruleChain) => {
+            this.ruleNode.name = ruleChain.name;
+            Object.assign(this.ruleNode, formValue);
+          }
+        );
+      } else {
+        Object.assign(this.ruleNode, formValue);
+      }
+    } else {
+      Object.assign(this.ruleNode, formValue);
+    }
   }
 
   ngOnInit(): void {
   }
 
-  onDeleteRuleNode(event) {
-    this.deleteRuleNode.emit();
+  ngOnChanges(changes: SimpleChanges): void {
+    for (const propName of Object.keys(changes)) {
+      const change = changes[propName];
+      if (change.currentValue !== change.previousValue) {
+        if (propName === 'ruleNode') {
+          this.buildForm();
+        }
+      }
+    }
   }
-
 }

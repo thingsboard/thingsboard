@@ -28,7 +28,7 @@ import {
   ruleNodeTypeComponentTypes, unknownNodeComponent
 } from '@shared/models/rule-chain.models';
 import { ComponentDescriptorService } from './component-descriptor.service';
-import { RuleNodeComponentDescriptor } from '@app/shared/models/rule-node.models';
+import { LinkLabel, RuleNodeComponentDescriptor } from '@app/shared/models/rule-node.models';
 import { ResourcesService } from '../services/resources.service';
 import { catchError, map, mergeMap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
@@ -142,6 +142,22 @@ export class RuleChainService {
       unknownComponent.configurationDescriptor.nodeDefinition.details = 'Unknown Rule Node class: ' + clazz;
       return unknownComponent;
     }
+  }
+
+  public getRuleNodeSupportedLinks(component: RuleNodeComponentDescriptor): {[label: string]: LinkLabel} {
+    const relationTypes = component.configurationDescriptor.nodeDefinition.relationTypes;
+    const linkLabels: {[label: string]: LinkLabel} = {};
+    relationTypes.forEach((label) => {
+      linkLabels[label] = {
+        name: label,
+        value: label
+      };
+    });
+    return linkLabels;
+  }
+
+  public ruleNodeAllowCustomLinks(component: RuleNodeComponentDescriptor): boolean {
+    return component.configurationDescriptor.nodeDefinition.customRelations;
   }
 
   private resolveTargetRuleChains(ruleChainConnections: Array<RuleChainConnectionInfo>): Observable<{[ruleChainId: string]: RuleChain}> {

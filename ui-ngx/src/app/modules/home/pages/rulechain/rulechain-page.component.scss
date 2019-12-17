@@ -126,8 +126,12 @@
       }
     }
   }
-  .tb-rulechain-graph {
-    z-index: 0;
+  .mat-drawer-content.tb-rulechain-graph-content {
+    overflow: hidden;
+    .tb-rulechain-graph {
+      z-index: 0;
+      overflow: auto;
+    }
   }
   .fc-canvas {
     .fc-node {
@@ -210,109 +214,56 @@
   }
 }
 
-/*:host ::ng-deep {
-  .tb-rulechain {
-    section.tb-header-buttons.tb-library-open {
-      .mat-fab {
-        .mat-button-wrapper {
-          padding: 0;
-        }
-      }
+.tb-rule-node-tooltip,
+.tb-rule-node-help {
+  color: #333;
+}
+
+.tb-rule-node-tooltip {
+  max-width: 300px;
+  font-size: 14px;
+
+  &.tb-lib-tooltip {
+    width: 300px;
+  }
+}
+
+.tb-rule-node-help {
+  font-size: 16px;
+}
+
+.tb-rule-node-error-tooltip {
+  font-size: 16px;
+  color: #ea0d0d;
+}
+
+.tb-rule-node-tooltip,
+.tb-rule-node-error-tooltip,
+.tb-rule-node-help {
+  #tb-node-content {
+    .tb-node-title {
+      font-weight: 600;
     }
-    .tb-rulechain-library {
-      .mat-toolbar {
-        .mat-toolbar-tools {
-          .mat-form-field {
-            .mat-form-field-infix {
-              width: auto;
-            }
-          }
-        }
-      }
-      .tb-rulechain-library-panel-group {
-        .mat-expansion-panel-body {
-          padding: 0;
-        }
-      }
+
+    .tb-node-description {
+      font-style: italic;
+      color: #555;
+    }
+
+    .tb-node-details {
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+
+    code {
+      padding: 0 3px 2px 3px;
+      margin: 1px;
+      font-size: 12px;
+      color: #ad1625;
+      white-space: nowrap;
+      background-color: #f7f7f9;
+      border: 1px solid #e1e1e8;
+      border-radius: 2px;
     }
   }
-  .fc-canvas {
-    .fc-node {
-      border-radius: 8px;
-      &.fc-selected {
-        &:not(.fc-edit) {
-          margin: -3px;
-          border: solid 3px #f00;
-        }
-      }
-    }
-
-    .fc-edit {
-      .fc-nodeedit,
-      .fc-nodedelete {
-        border: solid 2px #fff;
-        background: #f83e05;
-        outline: none;
-      }
-    }
-
-    .fc-arrow-marker {
-      polygon {
-        fill: #808080;
-        stroke: #808080;
-      }
-    }
-
-    .fc-arrow-marker-selected {
-      polygon {
-        fill: #f00;
-        stroke: #f00;
-      }
-    }
-
-    .fc-edge {
-      outline: none;
-      stroke: #808080;
-
-      &.fc-selected {
-        stroke: #f00;
-      }
-
-      &.fc-hover {
-        stroke: #808080;
-      }
-    }
-
-    .edge-endpoint {
-      fill: #808080;
-    }
-
-    .fc-edge-label {
-      opacity: 1 !important;
-      &:focus {
-        outline: 0;
-      }
-
-      &.fc-selected {
-        .fc-edge-label-text {
-          span {
-            color: #fff !important;
-            background-color: #f00 !important;
-            border: solid #f00 !important;
-          }
-        }
-      }
-
-      .fc-edge-label-text {
-        font-size: 14px !important;
-        font-weight: 600 !important;
-
-        span {
-          background-color: #fff !important;
-          color: #003a79 !important;
-          border: solid 2px #003a79 !important;
-        }
-      }
-    }
-  }
-}*/
+}
