@@ -115,6 +115,15 @@
                 <activeByDefault>true</activeByDefault>
             </activation>
         </profile>
+        <!-- download sources under target/dependencies -->
+        <!-- mvn package -Pdownload-dependencies -Dclassifier=sources dependency:copy-dependencies -->
+        <profile>
+            <id>download-dependencies</id>
+            <properties>
+                <downloadSources>true</downloadSources>
+                <downloadJavadocs>true</downloadJavadocs>
+            </properties>
+        </profile>
     </profiles>
 
     <build>
