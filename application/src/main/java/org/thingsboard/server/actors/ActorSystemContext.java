@@ -32,6 +32,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.RuleChainTransactionService;
@@ -88,6 +90,7 @@ import java.io.StringWriter;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Component
@@ -285,6 +288,23 @@ public class ActorSystemContext {
     @Getter
     private long statisticsPersistFrequency;
 
+    @Getter
+    private final AtomicInteger jsInvokeRequestsCount = new AtomicInteger(0);
+    @Getter
+    private final AtomicInteger jsInvokeResponsesCount = new AtomicInteger(0);
+    @Getter
+    private final AtomicInteger jsInvokeFailuresCount = new AtomicInteger(0);
+
+    @Scheduled(fixedDelayString = "${js.remote.stats.print_interval_ms}")
+    public void printStats() {
+        if (statisticsEnabled) {
+            if (jsInvokeRequestsCount.get() > 0 || jsInvokeResponsesCount.get() > 0 || jsInvokeFailuresCount.get() > 0) {
+                log.info("Rule Engine JS Invoke Stats: requests [{}] responses [{}] failures [{}]",
+                        jsInvokeRequestsCount.getAndSet(0), jsInvokeResponsesCount.getAndSet(0), jsInvokeFailuresCount.getAndSet(0));
+            }
+        }
+    }
+
     @Value("${actors.tenant.create_components_on_init}")
     @Getter
     private boolean tenantComponentsInitEnabled;
@@ -335,6 +355,10 @@ public class ActorSystemContext {
     @Autowired(required = false)
     @Getter
     private CassandraBufferedRateExecutor cassandraBufferedRateExecutor;
+
+    @Autowired(required = false)
+    @Getter
+    private RedisTemplate<String, Object> redisTemplate;
 
     public ActorSystemContext() {
         config = ConfigFactory.parseResources(AKKA_CONF_FILE_NAME).withFallback(ConfigFactory.load());

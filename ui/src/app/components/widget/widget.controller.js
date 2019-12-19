@@ -357,14 +357,20 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
         if (widget.type !== types.widgetType.rpc.value && widget.type !== types.widgetType.static.value) {
             options = {
                 type: widget.type,
-                stateData: vm.typeParameters.stateData
-            }
+                stateData: vm.typeParameters.stateData,
+                comparisonEnabled: widgetContext.settings.comparisonEnabled,
+                timeForComparison: widgetContext.settings.timeForComparison
+            };
             if (widget.type == types.widgetType.alarm.value) {
                 options.alarmSource = angular.copy(widget.config.alarmSource);
                 options.alarmSearchStatus = angular.isDefined(widget.config.alarmSearchStatus) ?
                     widget.config.alarmSearchStatus : types.alarmSearchStatus.any;
                 options.alarmsPollingInterval = angular.isDefined(widget.config.alarmsPollingInterval) ?
                     widget.config.alarmsPollingInterval * 1000 : 5000;
+                options.alarmsMaxCountLoad = angular.isDefined(widget.config.alarmsMaxCountLoad) ?
+                    widget.config.alarmsMaxCountLoad : 0;
+                options.alarmsFetchSize = angular.isDefined(widget.config.alarmsFetchSize) ?
+                    widget.config.alarmsFetchSize : 100;
             } else {
                 options.datasources = angular.copy(widget.config.datasources)
             }

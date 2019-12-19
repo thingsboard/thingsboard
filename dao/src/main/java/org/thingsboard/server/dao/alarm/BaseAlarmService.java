@@ -52,6 +52,7 @@ import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -325,21 +326,21 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     private AlarmSeverity detectHighestSeverity(List<AlarmInfo> alarms) {
         if (!alarms.isEmpty()) {
             List<AlarmInfo> sorted = new ArrayList(alarms);
-            sorted.sort((p1, p2) -> p1.getSeverity().compareTo(p2.getSeverity()));
+            sorted.sort(Comparator.comparing(Alarm::getSeverity));
             return sorted.get(0).getSeverity();
         } else {
             return null;
         }
     }
 
-    private void deleteRelation(TenantId tenantId, EntityRelation alarmRelation) throws ExecutionException, InterruptedException {
+    private void deleteRelation(TenantId tenantId, EntityRelation alarmRelation) {
         log.debug("Deleting Alarm relation: {}", alarmRelation);
-        relationService.deleteRelationAsync(tenantId, alarmRelation).get();
+        relationService.deleteRelation(tenantId, alarmRelation);
     }
 
-    private void createRelation(TenantId tenantId, EntityRelation alarmRelation) throws ExecutionException, InterruptedException {
+    private void createRelation(TenantId tenantId, EntityRelation alarmRelation) {
         log.debug("Creating Alarm relation: {}", alarmRelation);
-        relationService.saveRelationAsync(tenantId, alarmRelation).get();
+        relationService.saveRelation(tenantId, alarmRelation);
     }
 
     private Alarm merge(Alarm existing, Alarm alarm) {
@@ -376,28 +377,18 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     }
 
     private void createAlarmRelation(TenantId tenantId, EntityId entityId, EntityId alarmId, AlarmStatus status, boolean createAnyRelation) {
-        try {
-            if (createAnyRelation) {
-                createRelation(tenantId, new EntityRelation(entityId, alarmId, ALARM_RELATION_PREFIX + AlarmSearchStatus.ANY.name(), RelationTypeGroup.ALARM));
-            }
-            createRelation(tenantId, new EntityRelation(entityId, alarmId, ALARM_RELATION_PREFIX + status.name(), RelationTypeGroup.ALARM));
-            createRelation(tenantId, new EntityRelation(entityId, alarmId, ALARM_RELATION_PREFIX + status.getClearSearchStatus().name(), RelationTypeGroup.ALARM));
-            createRelation(tenantId, new EntityRelation(entityId, alarmId, ALARM_RELATION_PREFIX + status.getAckSearchStatus().name(), RelationTypeGroup.ALARM));
-        } catch (ExecutionException | InterruptedException e) {
-            log.warn("[{}] Failed to create relation. Status: [{}]", alarmId, status);
-            throw new RuntimeException(e);
+        if (createAnyRelation) {
+            createRelation(tenantId, new EntityRelation(entityId, alarmId, ALARM_RELATION_PREFIX + AlarmSearchStatus.ANY.name(), RelationTypeGroup.ALARM));
         }
+        createRelation(tenantId, new EntityRelation(entityId, alarmId, ALARM_RELATION_PREFIX + status.name(), RelationTypeGroup.ALARM));
+        createRelation(tenantId, new EntityRelation(entityId, alarmId, ALARM_RELATION_PREFIX + status.getClearSearchStatus().name(), RelationTypeGroup.ALARM));
+        createRelation(tenantId, new EntityRelation(entityId, alarmId, ALARM_RELATION_PREFIX + status.getAckSearchStatus().name(), RelationTypeGroup.ALARM));
     }
 
     private void deleteAlarmRelation(TenantId tenantId, EntityId entityId, EntityId alarmId, AlarmStatus status) {
-        try {
-            deleteRelation(tenantId, new EntityRelation(entityId, alarmId, ALARM_RELATION_PREFIX + status.name(), RelationTypeGroup.ALARM));
-            deleteRelation(tenantId, new EntityRelation(entityId, alarmId, ALARM_RELATION_PREFIX + status.getClearSearchStatus().name(), RelationTypeGroup.ALARM));
-            deleteRelation(tenantId, new EntityRelation(entityId, alarmId, ALARM_RELATION_PREFIX + status.getAckSearchStatus().name(), RelationTypeGroup.ALARM));
-        } catch (ExecutionException | InterruptedException e) {
-            log.warn("[{}] Failed to delete relation. Status: [{}]", alarmId, status);
-            throw new RuntimeException(e);
-        }
+        deleteRelation(tenantId, new EntityRelation(entityId, alarmId, ALARM_RELATION_PREFIX + status.name(), RelationTypeGroup.ALARM));
+        deleteRelation(tenantId, new EntityRelation(entityId, alarmId, ALARM_RELATION_PREFIX + status.getClearSearchStatus().name(), RelationTypeGroup.ALARM));
+        deleteRelation(tenantId, new EntityRelation(entityId, alarmId, ALARM_RELATION_PREFIX + status.getAckSearchStatus().name(), RelationTypeGroup.ALARM));
     }
 
     private void updateAlarmRelation(TenantId tenantId, EntityId entityId, EntityId alarmId, AlarmStatus oldStatus, AlarmStatus newStatus) {

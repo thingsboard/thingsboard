@@ -26,12 +26,9 @@ enum JsInvokeErrorCode {
 }
 
 message RemoteJsRequest {
-  string responseTopic = 1;
-  int64 requestIdMSB = 2;
-  int64 requestIdLSB = 3;
-  JsCompileRequest compileRequest = 4;
-  JsInvokeRequest invokeRequest = 5;
-  JsReleaseRequest releaseRequest = 6;
+  JsCompileRequest compileRequest = 1;
+  JsInvokeRequest invokeRequest = 2;
+  JsReleaseRequest releaseRequest = 3;
 }
 
 message RemoteJsResponse {

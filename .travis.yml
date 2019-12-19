@@ -4,9 +4,9 @@ before_install:
   - export MAVEN_OPTS="-Dmaven.repo.local=$HOME/.m2/repository -Xms1024m -Xmx3072m"
   - export HTTP_LOG_CONTROLLER_ERROR_STACK_TRACE=false
 jdk:
- - oraclejdk8
+ - openjdk8
 language: java
 sudo: required
 services:
   - docker
-script: mvn clean verify -Ddockerfile.skip=false -DblackBoxTests.skip=false -DblackBoxTests.skipTailChildContainers=true
+script: mvn clean verify -Ddockerfile.skip=false

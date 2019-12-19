@@ -13,17 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.security.model;
+package org.thingsboard.server.common.data;
 
 import lombok.Data;
 
-import java.io.Serializable;
-
 @Data
-public class SecuritySettings implements Serializable {
+public class ClaimRequest {
 
-    private UserPasswordPolicy passwordPolicy;
+    private final String secretKey;
 
-    private Integer maxFailedLoginAttempts;
-    private String userLockoutNotificationEmail;
 }

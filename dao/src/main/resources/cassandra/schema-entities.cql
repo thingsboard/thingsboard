@@ -244,6 +244,7 @@ CREATE TABLE IF NOT EXISTS thingsboard.asset (
     customer_id timeuuid,
     name text,
     type text,
+    label text,
     search_text text,
     additional_info text,
     PRIMARY KEY (id, tenant_id, customer_id, type)

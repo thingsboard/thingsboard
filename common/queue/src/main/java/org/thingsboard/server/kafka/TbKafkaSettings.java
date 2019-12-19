@@ -32,9 +32,8 @@ import java.util.Properties;
 @Component
 public class TbKafkaSettings {
 
-    public static final String REQUEST_ID_HEADER = "requestId";
-    public static final String RESPONSE_TOPIC_HEADER = "responseTopic";
-
+    static final String REQUEST_ID_HEADER = "requestId";
+    static final String RESPONSE_TOPIC_HEADER = "responseTopic";
 
     @Value("${kafka.bootstrap.servers}")
     private String servers;

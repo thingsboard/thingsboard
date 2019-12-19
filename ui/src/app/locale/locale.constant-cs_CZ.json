@@ -246,7 +246,8 @@
         "select-asset": "Vybrat aktivum",
         "no-assets-matching": "Žádná aktiva odpovídající '{{entity}}' nebyla nalezena.",
         "asset-required": "Aktivum je povinné",
-        "name-starts-with": "Název aktiva začíná"
+        "name-starts-with": "Název aktiva začíná",
+        "label": "Název"
     },
     "attribute": {
         "attributes": "Atributy",
@@ -1650,7 +1651,8 @@
             "tr_TR": "Turkish",
             "fa_IR": "Persian",
             "uk_UA": "Ukrainian",
-            "cs_CZ": "Česky"
+            "cs_CZ": "Česky",
+            "el_GR": "Řečtina"
         }
     }
 }

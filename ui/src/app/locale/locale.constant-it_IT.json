@@ -268,7 +268,8 @@
         "select-asset": "Seleziona asset",
         "no-assets-matching": "Nessun asset corrispondente a '{{entity}}' è stato trovato.",
         "asset-required": "Asset obbligatorio",
-        "name-starts-with": "Asset con nome che inizia per"
+        "name-starts-with": "Asset con nome che inizia per",
+        "label": "Etichetta"
     },
     "attribute": {
         "attributes": "Attributi",
@@ -1713,7 +1714,8 @@
             "tr_TR": "Turco",
             "fa_IR": "Persiana",
             "uk_UA": "Ucraino",
-            "cs_CZ": "Ceco"            
+            "cs_CZ": "Ceco",
+            "el_GR": "Greco"
         }
     }
 }

@@ -165,7 +165,11 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
         };
 
         scope.transformAlarmDataKeyChip = function (chip) {
-            return scope.generateDataKey({chip: chip, type: types.dataKeyType.alarm});
+            if (chip.type) {
+                return scope.generateDataKey({chip: chip.name, type: chip.type});
+            } else {
+                return scope.generateDataKey({chip: chip, type: types.dataKeyType.alarm});
+            }
         };
 
         scope.showColorPicker = function (event, dataKey) {

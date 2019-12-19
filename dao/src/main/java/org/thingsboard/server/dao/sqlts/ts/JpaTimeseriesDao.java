@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
@@ -38,6 +39,10 @@ import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sqlts.ts.TsKvEntity;
 import org.thingsboard.server.dao.model.sqlts.ts.TsKvLatestCompositeKey;
 import org.thingsboard.server.dao.model.sqlts.ts.TsKvLatestEntity;
+import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
+import org.thingsboard.server.dao.sql.TbSqlBlockingQueue;
+import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
+import org.thingsboard.server.dao.sqlts.AbstractLatestInsertRepository;
 import org.thingsboard.server.dao.sqlts.AbstractSqlTimeseriesDao;
 import org.thingsboard.server.dao.sqlts.AbstractTimeseriesInsertRepository;
 import org.thingsboard.server.dao.timeseries.SimpleListenableFuture;
@@ -45,6 +50,8 @@ import org.thingsboard.server.dao.timeseries.TimeseriesDao;
 import org.thingsboard.server.dao.util.SqlTsDao;
 
 import javax.annotation.Nullable;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -68,6 +75,66 @@ public class JpaTimeseriesDao extends AbstractSqlTimeseriesDao implements Timese
 
     @Autowired
     private AbstractTimeseriesInsertRepository insertRepository;
+
+    @Autowired
+    private AbstractLatestInsertRepository insertLatestRepository;
+
+    @Autowired
+    ScheduledLogExecutorComponent logExecutor;
+
+    @Value("${sql.ts.batch_size:1000}")
+    private int tsBatchSize;
+
+    @Value("${sql.ts.batch_max_delay:100}")
+    private long tsMaxDelay;
+
+    @Value("${sql.ts.stats_print_interval_ms:1000}")
+    private long tsStatsPrintIntervalMs;
+
+    @Value("${sql.ts_latest.batch_size:1000}")
+    private int tsLatestBatchSize;
+
+    @Value("${sql.ts_latest.batch_max_delay:100}")
+    private long tsLatestMaxDelay;
+
+    @Value("${sql.ts_latest.stats_print_interval_ms:1000}")
+    private long tsLatestStatsPrintIntervalMs;
+
+    private TbSqlBlockingQueue<TsKvEntity> tsQueue;
+    private TbSqlBlockingQueue<TsKvLatestEntity> tsLatestQueue;
+
+
+    @PostConstruct
+    private void init() {
+        TbSqlBlockingQueueParams tsParams = TbSqlBlockingQueueParams.builder()
+                .logName("TS")
+                .batchSize(tsBatchSize)
+                .maxDelay(tsMaxDelay)
+                .statsPrintIntervalMs(tsStatsPrintIntervalMs)
+                .build();
+        tsQueue = new TbSqlBlockingQueue<>(tsParams);
+        tsQueue.init(logExecutor, v -> insertRepository.saveOrUpdate(v));
+
+        TbSqlBlockingQueueParams tsLatestParams = TbSqlBlockingQueueParams.builder()
+                .logName("TS Latest")
+                .batchSize(tsLatestBatchSize)
+                .maxDelay(tsLatestMaxDelay)
+                .statsPrintIntervalMs(tsLatestStatsPrintIntervalMs)
+                .build();
+        tsLatestQueue = new TbSqlBlockingQueue<>(tsLatestParams);
+        tsLatestQueue.init(logExecutor, v -> insertLatestRepository.saveOrUpdate(v));
+    }
+
+    @PreDestroy
+    private void destroy() {
+        if (tsQueue != null) {
+            tsQueue.destroy();
+        }
+
+        if (tsLatestQueue != null) {
+            tsLatestQueue.destroy();
+        }
+    }
 
     @Override
     public ListenableFuture<List<TsKvEntry>> findAllAsync(TenantId tenantId, EntityId entityId, List<ReadTsKvQuery> queries) {
@@ -262,10 +329,7 @@ public class JpaTimeseriesDao extends AbstractSqlTimeseriesDao implements Timese
         entity.setLongValue(tsKvEntry.getLongValue().orElse(null));
         entity.setBooleanValue(tsKvEntry.getBooleanValue().orElse(null));
         log.trace("Saving entity: {}", entity);
-        return insertService.submit(() -> {
-            insertRepository.saveOrUpdate(entity);
-            return null;
-        });
+        return tsQueue.add(entity);
     }
 
     @Override
@@ -284,10 +348,7 @@ public class JpaTimeseriesDao extends AbstractSqlTimeseriesDao implements Timese
         latestEntity.setDoubleValue(tsKvEntry.getDoubleValue().orElse(null));
         latestEntity.setLongValue(tsKvEntry.getLongValue().orElse(null));
         latestEntity.setBooleanValue(tsKvEntry.getBooleanValue().orElse(null));
-        return insertService.submit(() -> {
-            tsKvLatestRepository.save(latestEntity);
-            return null;
-        });
+        return tsLatestQueue.add(latestEntity);
     }
 
     @Override

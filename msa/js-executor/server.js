@@ -13,14 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+const { logLevel, Kafka } = require('kafkajs');
+
 const config = require('config'),
-      kafka = require('kafka-node'),
-      ConsumerGroup = kafka.ConsumerGroup,
-      Producer = kafka.Producer,
       JsInvokeMessageProcessor = require('./api/jsInvokeMessageProcessor'),
-      logger = require('./config/logger')('main');
+      logger = require('./config/logger')._logger('main'),
+      KafkaJsWinstonLogCreator = require('./config/logger').KafkaJsWinstonLogCreator;
 
 var kafkaClient;
+var consumer;
+var producer;
 
 (async() => {
     try {
@@ -32,49 +35,24 @@ var kafkaClient;
         logger.info('Kafka Bootstrap Servers: %s', kafkaBootstrapServers);
         logger.info('Kafka Requests Topic: %s', kafkaRequestTopic);
 
-        kafkaClient = new kafka.KafkaClient({kafkaHost: kafkaBootstrapServers});
-
-        var consumer = new ConsumerGroup(
-            {
-                kafkaHost: kafkaBootstrapServers,
-                groupId: 'js-executor-group',
-                autoCommit: true,
-                encoding: 'buffer'
-            },
-            kafkaRequestTopic
-        );
-
-        consumer.on('error', (err) => {
-            logger.error('Unexpected kafka consumer error: %s', err.message);
-            logger.error(err.stack);
+        kafkaClient = new Kafka({
+            brokers: kafkaBootstrapServers.split(','),
+            logLevel: logLevel.INFO,
+            logCreator: KafkaJsWinstonLogCreator
         });
 
-        consumer.on('offsetOutOfRange', (err) => {
-            logger.error('Offset out of range error: %s', err.message);
-            logger.error(err.stack);
-        });
+        consumer = kafkaClient.consumer({ groupId: 'js-executor-group' });
+        producer = kafkaClient.producer();
+        const messageProcessor = new JsInvokeMessageProcessor(producer);
+        await consumer.connect();
+        await producer.connect();
+        await consumer.subscribe({ topic: kafkaRequestTopic});
 
-        consumer.on('rebalancing', () => {
-            logger.info('Rebalancing event received.');
-        })
-
-        consumer.on('rebalanced', () => {
-            logger.info('Rebalanced event received.');
-        });
-
-        var producer = new Producer(kafkaClient);
-        producer.on('error', (err) => {
-            logger.error('Unexpected kafka producer error: %s', err.message);
-            logger.error(err.stack);
-        });
-
-        var messageProcessor = new JsInvokeMessageProcessor(producer);
-
-        producer.on('ready', () => {
-            consumer.on('message', (message) => {
+        logger.info('Started ThingsBoard JavaScript Executor Microservice.');
+        await consumer.run({
+            eachMessage: async ({ topic, partition, message }) => {
                 messageProcessor.onJsInvokeMessage(message);
-            });
-            logger.info('Started ThingsBoard JavaScript Executor Microservice.');
+            },
         });
 
     } catch (e) {
@@ -84,21 +62,41 @@ var kafkaClient;
     }
 })();
 
-process.on('exit', function () {
+process.on('exit', () => {
     exit(0);
 });
 
-function exit(status) {
+async function exit(status) {
     logger.info('Exiting with status: %d ...', status);
-    if (kafkaClient) {
-        logger.info('Stopping Kafka Client...');
-        var _kafkaClient = kafkaClient;
-        kafkaClient = null;
-        _kafkaClient.close(() => {
-            logger.info('Kafka Client stopped.');
+    if (consumer) {
+        logger.info('Stopping Kafka Consumer...');
+        var _consumer = consumer;
+        consumer = null;
+        try {
+            await _consumer.disconnect();
+            logger.info('Kafka Consumer stopped.');
+            await disconnectProducer();
             process.exit(status);
-        });
+        } catch (e) {
+            logger.info('Kafka Consumer stop error.');
+            await disconnectProducer();
+            process.exit(status);
+        }
     } else {
         process.exit(status);
+    }
+}
+
+async function disconnectProducer() {
+    if (producer) {
+        logger.info('Stopping Kafka Producer...');
+        var _producer = producer;
+        producer = null;
+        try {
+            await _producer.disconnect();
+            logger.info('Kafka Producer stopped.');
+        } catch (e) {
+            logger.info('Kafka Producer stop error.');
+        }
     }
 }

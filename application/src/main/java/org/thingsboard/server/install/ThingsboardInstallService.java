@@ -119,6 +119,11 @@ public class ThingsboardInstallService {
                     case "2.4.0":
                         log.info("Upgrading ThingsBoard from version 2.4.0 to 2.4.1 ...");
 
+                    case "2.4.1":
+                        log.info("Upgrading ThingsBoard from version 2.4.1 to 2.4.2 ...");
+
+                        databaseUpgradeService.upgradeDatabase("2.4.1");
+
                         log.info("Updating system data...");
 
                         systemDataLoaderService.deleteSystemWidgetBundle("charts");
@@ -133,6 +138,7 @@ public class ThingsboardInstallService {
                         systemDataLoaderService.deleteSystemWidgetBundle("gateway_widgets");
                         systemDataLoaderService.deleteSystemWidgetBundle("input_widgets");
                         systemDataLoaderService.deleteSystemWidgetBundle("date");
+                        systemDataLoaderService.deleteSystemWidgetBundle("entity_admin_widgets");
 
                         systemDataLoaderService.loadSystemWidgets();
                         break;

@@ -409,6 +409,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     private void processDisconnect(ChannelHandlerContext ctx) {
         ctx.close();
+        log.info("[{}] Client disconnected!", sessionId);
         if (deviceSessionCtx.isConnected()) {
             transportService.process(sessionInfo, AbstractTransportService.getSessionEventMsg(SessionEvent.CLOSED), null);
             transportService.deregisterSession(sessionInfo);

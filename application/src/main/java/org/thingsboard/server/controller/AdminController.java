@@ -28,12 +28,12 @@ import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
-import org.thingsboard.server.service.security.model.SecuritySettings;
+import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 import org.thingsboard.server.service.update.UpdateService;
-import org.thingsboard.server.service.update.model.UpdateMessage;
+import org.thingsboard.server.common.data.UpdateMessage;
 
 @RestController
 @RequestMapping("/api/admin")
