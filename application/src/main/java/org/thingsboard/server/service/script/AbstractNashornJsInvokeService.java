@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
@@ -87,7 +88,7 @@ public abstract class AbstractNashornJsInvokeService extends AbstractJsInvokeSer
     @PostConstruct
     public void init() {
         if (maxRequestsTimeout > 0) {
-            timeoutExecutorService = Executors.newSingleThreadScheduledExecutor();
+            timeoutExecutorService = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("nashorn-js-timeout"));
         }
         if (useJsSandbox()) {
             sandbox = NashornSandboxes.create();

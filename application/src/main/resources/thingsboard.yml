@@ -195,10 +195,6 @@ cassandra:
 
 # SQL configuration parameters
 sql:
-    # Specify executor service type used to perform timeseries insert tasks: SINGLE or FIXED
-    ts_inserts_executor_type: "${SQL_TS_INSERTS_EXECUTOR_TYPE:fixed}"
-    # Specify thread pool size for FIXED executor service type
-    ts_inserts_fixed_thread_pool_size: "${SQL_TS_INSERTS_FIXED_THREAD_POOL_SIZE:200}"
     # Specify batch size for persisting attribute updates
     attributes:
       batch_size: "${SQL_ATTRIBUTES_BATCH_SIZE:10000}"

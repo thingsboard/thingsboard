@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.sql;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +50,7 @@ public class TbSqlBlockingQueue<E> implements TbSqlQueue<E> {
     @Override
     public void init(ScheduledLogExecutorComponent logExecutor, Consumer<List<E>> saveFunction) {
         this.logExecutor = logExecutor;
-        executor = Executors.newSingleThreadExecutor();
+        executor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("sql-queue-" + params.getLogName().toLowerCase()));
         executor.submit(() -> {
             String logName = params.getLogName();
             int batchSize = params.getBatchSize();

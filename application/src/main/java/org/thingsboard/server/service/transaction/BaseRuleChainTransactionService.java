@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.RuleChainTransactionService;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -71,7 +72,7 @@ public class BaseRuleChainTransactionService implements RuleChainTransactionServ
 
     @PostConstruct
     public void init() {
-        timeoutExecutor = Executors.newSingleThreadExecutor();
+        timeoutExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("rule-chain-transaction"));
         executeOnTimeout();
     }
 

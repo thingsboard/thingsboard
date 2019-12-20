@@ -170,12 +170,12 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
 
     @Override
     public ListenableFuture<Void> savePartition(TenantId tenantId, EntityId entityId, long tsKvEntryTs, String key, long ttl) {
-        return insertService.submit(() -> null);
+        return Futures.immediateFuture(null);
     }
 
     @Override
     public ListenableFuture<Void> saveLatest(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry) {
-        return insertService.submit(() -> null);
+        return Futures.immediateFuture(null);
     }
 
     @Override
