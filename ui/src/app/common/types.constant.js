@@ -322,7 +322,8 @@ export default angular.module('thingsboard.types', [])
                 timeseries: "timeseries",
                 attribute: "attribute",
                 function: "function",
-                alarm: "alarm"
+                alarm: "alarm",
+                entityField: "entityField"
             },
             contentType: {
                 "JSON": {
@@ -465,6 +466,64 @@ export default angular.module('thingsboard.types', [])
                 "CURRENT_CUSTOMER": {
                     type: 'entity.type-current-customer',
                     list: 'entity.type-current-customer'
+                }
+            },
+            entityField: {
+                name: {
+                    keyName: 'name',
+                    value: 'name'
+                },
+                type: {
+                    keyName: 'type',
+                    value: 'type'
+                },
+                firstName: {
+                    keyName: 'firstName',
+                    value: 'firstName'
+                },
+                lastName: {
+                    keyName: 'lastName',
+                    value: 'lastName'
+                },
+                email: {
+                    keyName: 'email',
+                    value: 'email'
+                },
+                title: {
+                    keyName: 'title',
+                    value: 'title'
+                },
+                country: {
+                    keyName: 'country',
+                    value: 'country'
+                },
+                state: {
+                    keyName: 'state',
+                    value: 'state'
+                },
+                city: {
+                    keyName: 'city',
+                    value: 'city'
+                },
+                address: {
+                    keyName: 'address',
+                    value: 'address'
+                },
+                address2: {
+                    keyName: 'address2',
+                    value: 'address2'
+                },
+                zip: {
+                    keyName: 'zip',
+                    value: 'zip'
+                },
+                phone: {
+                    keyName: 'phone',
+                    value: 'phone'
+                },
+                label: {
+                    keyName: 'label',
+                    value: 'label'
                 }
             },
             entitySearchDirection: {
