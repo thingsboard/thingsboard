@@ -20,6 +20,7 @@ import com.datastax.driver.core.ResultSetFuture;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
@@ -36,7 +37,7 @@ public abstract class CassandraAbstractAsyncDao extends CassandraAbstractDao {
 
     @PostConstruct
     public void startExecutor() {
-        readResultsProcessingExecutor = Executors.newCachedThreadPool();
+        readResultsProcessingExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName("cassandra-callback"));
     }
 
     @PreDestroy

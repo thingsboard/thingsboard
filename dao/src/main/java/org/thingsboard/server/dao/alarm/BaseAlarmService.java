@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.alarm.Alarm;
@@ -81,7 +82,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
 
     @PostConstruct
     public void startExecutor() {
-        readResultsProcessingExecutor = Executors.newCachedThreadPool();
+        readResultsProcessingExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName("alarm-service"));
     }
 
     @PreDestroy
