@@ -306,6 +306,7 @@ CREATE TABLE IF NOT EXISTS thingsboard.alarm (
 	clear_ts bigint,
 	details text,
 	propagate boolean,
+    propagate_relation_types text,
 	PRIMARY KEY ((tenant_id, originator_id, originator_type), type, id)
 ) WITH CLUSTERING ORDER BY ( type ASC, id DESC);
 
