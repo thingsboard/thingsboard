@@ -31,6 +31,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -140,11 +141,13 @@ public class DefaultDeviceStateService implements DeviceStateService {
     private ListeningScheduledExecutorService queueExecutor;
     private ConcurrentMap<TenantId, Set<DeviceId>> tenantDevices = new ConcurrentHashMap<>();
     private ConcurrentMap<DeviceId, DeviceStateData> deviceStates = new ConcurrentHashMap<>();
+    private ConcurrentMap<DeviceId, Long> deviceLastReportedActivity = new ConcurrentHashMap<>();
+    private ConcurrentMap<DeviceId, Long> deviceLastSavedActivity = new ConcurrentHashMap<>();
 
     @PostConstruct
     public void init() {
         // Should be always single threaded due to absence of locks.
-        queueExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor());
+        queueExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("device-state")));
         queueExecutor.submit(this::initStateFromDB);
         queueExecutor.scheduleAtFixedRate(this::updateState, new Random().nextInt(defaultStateCheckIntervalInSec), defaultStateCheckIntervalInSec, TimeUnit.SECONDS);
         //TODO: schedule persistence in v2.1;
@@ -174,6 +177,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
 
     @Override
     public void onDeviceActivity(DeviceId deviceId) {
+        deviceLastReportedActivity.put(deviceId, System.currentTimeMillis());
         queueExecutor.submit(() -> onDeviceActivitySync(deviceId));
     }
 
@@ -244,6 +248,8 @@ public class DefaultDeviceStateService implements DeviceStateService {
                             tenantDeviceSet.remove(device.getId());
                         }
                         deviceStates.remove(device.getId());
+                        deviceLastReportedActivity.remove(device.getId());
+                        deviceLastSavedActivity.remove(device.getId());
                     }
                 }
                 try {
@@ -289,7 +295,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
     private void updateState() {
         long ts = System.currentTimeMillis();
         Set<DeviceId> deviceIds = new HashSet<>(deviceStates.keySet());
-        log.info("Calculating state updates for {} devices", deviceStates.size());
+        log.debug("Calculating state updates for {} devices", deviceStates.size());
         for (DeviceId deviceId : deviceIds) {
             DeviceStateData stateData = getOrFetchDeviceStateData(deviceId);
             if (stateData != null) {
@@ -304,6 +310,8 @@ public class DefaultDeviceStateService implements DeviceStateService {
             } else {
                 log.debug("[{}] Device that belongs to other server is detected and removed.", deviceId);
                 deviceStates.remove(deviceId);
+                deviceLastReportedActivity.remove(deviceId);
+                deviceLastSavedActivity.remove(deviceId);
             }
         }
     }
@@ -329,17 +337,20 @@ public class DefaultDeviceStateService implements DeviceStateService {
     }
 
     private void onDeviceActivitySync(DeviceId deviceId) {
-        DeviceStateData stateData = getOrFetchDeviceStateData(deviceId);
-        if (stateData != null) {
-            DeviceState state = stateData.getState();
-            long ts = System.currentTimeMillis();
-            stateData.getState().setLastActivityTime(ts);
-            pushRuleEngineMessage(stateData, ACTIVITY_EVENT);
-            save(deviceId, LAST_ACTIVITY_TIME, ts);
-
-            if (!state.isActive()) {
-                state.setActive(true);
-                save(deviceId, ACTIVITY_STATE, state.isActive());
+        long lastReportedActivity = deviceLastReportedActivity.getOrDefault(deviceId, 0L);
+        long lastSavedActivity = deviceLastSavedActivity.getOrDefault(deviceId, 0L);
+        if (lastReportedActivity > 0 && lastReportedActivity > lastSavedActivity) {
+            DeviceStateData stateData = getOrFetchDeviceStateData(deviceId);
+            if (stateData != null) {
+                DeviceState state = stateData.getState();
+                stateData.getState().setLastActivityTime(lastReportedActivity);
+                pushRuleEngineMessage(stateData, ACTIVITY_EVENT);
+                save(deviceId, LAST_ACTIVITY_TIME, lastReportedActivity);
+                deviceLastSavedActivity.put(deviceId, lastReportedActivity);
+                if (!state.isActive()) {
+                    state.setActive(true);
+                    save(deviceId, ACTIVITY_STATE, state.isActive());
+                }
             }
         }
     }
@@ -430,6 +441,8 @@ public class DefaultDeviceStateService implements DeviceStateService {
         Optional<ServerAddress> address = routingService.resolveById(deviceId);
         if (!address.isPresent()) {
             deviceStates.remove(deviceId);
+            deviceLastReportedActivity.remove(deviceId);
+            deviceLastSavedActivity.remove(deviceId);
             Set<DeviceId> deviceIds = tenantDevices.get(tenantId);
             if (deviceIds != null) {
                 deviceIds.remove(deviceId);

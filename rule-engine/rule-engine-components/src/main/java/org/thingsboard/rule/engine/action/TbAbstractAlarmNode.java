@@ -17,6 +17,7 @@ package org.thingsboard.rule.engine.action;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.ScriptEngine;
@@ -27,6 +28,9 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+
+import javax.script.ScriptException;
+
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
 
@@ -67,21 +71,24 @@ public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfigura
                         ctx.tellNext(toAlarmMsg(ctx, alarmResult, msg), "Cleared");
                     }
                 },
-                t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
+                t -> ctx.tellFailure(msg, t)
+                , ctx.getDbCallbackExecutor());
     }
 
     protected abstract ListenableFuture<AlarmResult> processAlarm(TbContext ctx, TbMsg msg);
 
     protected ListenableFuture<JsonNode> buildAlarmDetails(TbContext ctx, TbMsg msg, JsonNode previousDetails) {
-        return ctx.getJsExecutor().executeAsync(() -> {
+        try {
             TbMsg dummyMsg = msg;
             if (previousDetails != null) {
                 TbMsgMetaData metaData = msg.getMetaData().copy();
                 metaData.putValue(PREV_ALARM_DETAILS, mapper.writeValueAsString(previousDetails));
                 dummyMsg = ctx.transformMsg(msg, msg.getType(), msg.getOriginator(), metaData, msg.getData());
             }
-            return buildDetailsJsEngine.executeJson(dummyMsg);
-        });
+            return buildDetailsJsEngine.executeJsonAsync(dummyMsg);
+        } catch (Exception e) {
+            return Futures.immediateFailedFuture(e);
+        }
     }
 
     private TbMsg toAlarmMsg(TbContext ctx, AlarmResult alarmResult, TbMsg originalMsg) {

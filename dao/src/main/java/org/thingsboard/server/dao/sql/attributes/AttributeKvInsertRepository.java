@@ -143,31 +143,32 @@ public abstract class AttributeKvInsertRepository {
                 int[] result = jdbcTemplate.batchUpdate(BATCH_UPDATE, new BatchPreparedStatementSetter() {
                     @Override
                     public void setValues(PreparedStatement ps, int i) throws SQLException {
-                        ps.setString(1, replaceNullChars(entities.get(i).getStrValue()));
+                        AttributeKvEntity kvEntity = entities.get(i);
+                        ps.setString(1, replaceNullChars(kvEntity.getStrValue()));
 
-                        if (entities.get(i).getLongValue() != null) {
-                            ps.setLong(2, entities.get(i).getLongValue());
+                        if (kvEntity.getLongValue() != null) {
+                            ps.setLong(2, kvEntity.getLongValue());
                         } else {
                             ps.setNull(2, Types.BIGINT);
                         }
 
-                        if (entities.get(i).getDoubleValue() != null) {
-                            ps.setDouble(3, entities.get(i).getDoubleValue());
+                        if (kvEntity.getDoubleValue() != null) {
+                            ps.setDouble(3, kvEntity.getDoubleValue());
                         } else {
                             ps.setNull(3, Types.DOUBLE);
                         }
 
-                        if (entities.get(i).getBooleanValue() != null) {
-                            ps.setBoolean(4, entities.get(i).getBooleanValue());
+                        if (kvEntity.getBooleanValue() != null) {
+                            ps.setBoolean(4, kvEntity.getBooleanValue());
                         } else {
                             ps.setNull(4, Types.BOOLEAN);
                         }
 
-                        ps.setLong(5, entities.get(i).getLastUpdateTs());
-                        ps.setString(6, entities.get(i).getId().getEntityType().name());
-                        ps.setString(7, entities.get(i).getId().getEntityId());
-                        ps.setString(8, entities.get(i).getId().getAttributeType());
-                        ps.setString(9, entities.get(i).getId().getAttributeKey());
+                        ps.setLong(5, kvEntity.getLastUpdateTs());
+                        ps.setString(6, kvEntity.getId().getEntityType().name());
+                        ps.setString(7, kvEntity.getId().getEntityId());
+                        ps.setString(8, kvEntity.getId().getAttributeType());
+                        ps.setString(9, kvEntity.getId().getAttributeKey());
                     }
 
                     @Override
@@ -193,39 +194,40 @@ public abstract class AttributeKvInsertRepository {
                 jdbcTemplate.batchUpdate(INSERT_OR_UPDATE, new BatchPreparedStatementSetter() {
                     @Override
                     public void setValues(PreparedStatement ps, int i) throws SQLException {
-                        ps.setString(1, insertEntities.get(i).getId().getEntityType().name());
-                        ps.setString(2, insertEntities.get(i).getId().getEntityId());
-                        ps.setString(3, insertEntities.get(i).getId().getAttributeType());
-                        ps.setString(4, insertEntities.get(i).getId().getAttributeKey());
-                        ps.setString(5, replaceNullChars(insertEntities.get(i).getStrValue()));
-                        ps.setString(10, replaceNullChars(insertEntities.get(i).getStrValue()));
+                        AttributeKvEntity kvEntity = insertEntities.get(i);
+                        ps.setString(1, kvEntity.getId().getEntityType().name());
+                        ps.setString(2, kvEntity.getId().getEntityId());
+                        ps.setString(3, kvEntity.getId().getAttributeType());
+                        ps.setString(4, kvEntity.getId().getAttributeKey());
+                        ps.setString(5, replaceNullChars(kvEntity.getStrValue()));
+                        ps.setString(10, replaceNullChars(kvEntity.getStrValue()));
 
-                        if (insertEntities.get(i).getLongValue() != null) {
-                            ps.setLong(6, insertEntities.get(i).getLongValue());
-                            ps.setLong(11, insertEntities.get(i).getLongValue());
+                        if (kvEntity.getLongValue() != null) {
+                            ps.setLong(6, kvEntity.getLongValue());
+                            ps.setLong(11, kvEntity.getLongValue());
                         } else {
                             ps.setNull(6, Types.BIGINT);
                             ps.setNull(11, Types.BIGINT);
                         }
 
-                        if (insertEntities.get(i).getDoubleValue() != null) {
-                            ps.setDouble(7, insertEntities.get(i).getDoubleValue());
-                            ps.setDouble(12, insertEntities.get(i).getDoubleValue());
+                        if (kvEntity.getDoubleValue() != null) {
+                            ps.setDouble(7, kvEntity.getDoubleValue());
+                            ps.setDouble(12, kvEntity.getDoubleValue());
                         } else {
                             ps.setNull(7, Types.DOUBLE);
                             ps.setNull(12, Types.DOUBLE);
                         }
 
-                        if (insertEntities.get(i).getBooleanValue() != null) {
-                            ps.setBoolean(8, insertEntities.get(i).getBooleanValue());
-                            ps.setBoolean(13, insertEntities.get(i).getBooleanValue());
+                        if (kvEntity.getBooleanValue() != null) {
+                            ps.setBoolean(8, kvEntity.getBooleanValue());
+                            ps.setBoolean(13, kvEntity.getBooleanValue());
                         } else {
                             ps.setNull(8, Types.BOOLEAN);
                             ps.setNull(13, Types.BOOLEAN);
                         }
 
-                        ps.setLong(9, insertEntities.get(i).getLastUpdateTs());
-                        ps.setLong(14, insertEntities.get(i).getLastUpdateTs());
+                        ps.setLong(9, kvEntity.getLastUpdateTs());
+                        ps.setLong(14, kvEntity.getLastUpdateTs());
                     }
 
                     @Override

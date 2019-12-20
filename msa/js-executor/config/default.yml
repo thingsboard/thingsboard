@@ -28,3 +28,4 @@ logger:
 script:
   use_sandbox: "true"
   script_body_trace_frequency: "1000"
+  max_active_scripts: "1000"

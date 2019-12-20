@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.sql;
 
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -30,7 +31,7 @@ public class ScheduledLogExecutorComponent {
 
     @PostConstruct
     public void init() {
-        schedulerLogExecutor = Executors.newSingleThreadScheduledExecutor();
+        schedulerLogExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("sql-log"));
     }
 
     @PreDestroy

@@ -334,7 +334,7 @@ public class JpaTimeseriesDao extends AbstractSqlTimeseriesDao implements Timese
 
     @Override
     public ListenableFuture<Void> savePartition(TenantId tenantId, EntityId entityId, long tsKvEntryTs, String key, long ttl) {
-        return insertService.submit(() -> null);
+        return Futures.immediateFuture(null);
     }
 
     @Override
