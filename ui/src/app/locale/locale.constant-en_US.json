@@ -815,6 +815,23 @@
         "no-data": "No data to display",
         "columns-to-display": "Columns to Display"
     },
+    "entity-field": {
+        "created-time": "Created time",
+        "name": "Name",
+        "type": "Type",
+        "first-name": "First name",
+        "last-name": "Last name",
+        "email": "Email",
+        "title": "Title",
+        "country": "Country",
+        "state": "State",
+        "city": "City",
+        "address": "Address",
+        "address2": "Address 2",
+        "zip": "Zip",
+        "phone": "Phone",
+        "label": "Label"
+    },
     "entity-view": {
         "entity-view": "Entity View",
         "entity-view-required": "Entity view is required.",

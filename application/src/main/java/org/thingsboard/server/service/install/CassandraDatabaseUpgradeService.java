@@ -278,7 +278,7 @@ public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
                 } catch (InvalidQueryException e) {}
                 log.info("Schema updated.");
                 break;
-            case "2.4.2.1":
+            case "2.4.2":
                 log.info("Updating schema ...");
                 String updateAlarmTableStmt = "alter table alarm add propagate_relation_types text";
                 try {

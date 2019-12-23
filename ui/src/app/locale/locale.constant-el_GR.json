@@ -1102,6 +1102,22 @@
     "copyId": "Αντιγραφή ID ομάδας οντοτήτων",
     "idCopiedMessage": "Το ID της ομάδας οντοτήτων έχει αντιγραφεί στο πρόχειρο"
   },
+  "entity-field": {
+    "created-time": "Δημιουργήθηκε",
+    "name": "Όνομα",
+    "type": "Τύπος",
+    "first-name": "Όνομα",
+    "last-name": "Επίθετο",
+    "email": "Email",
+    "title": "Τίτλος",
+    "country": "Χώρα",
+    "state": "Νομός",
+    "city": "Πόλη",
+    "address": "Διεύθυνση",
+    "address2": "Διεύθυνση 2",
+    "zip": "Τ.Κ.",
+    "phone": "Τηλέφωνο"
+  },
   "entity-view": {
     "entity-view": "Όψη Οντότητας",
     "entity-view-required": "Απαιτείται προβολή οντότητας.",

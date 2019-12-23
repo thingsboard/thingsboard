@@ -97,7 +97,7 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
         element.html(template);
 
         scope.openEditMode = function (event) {
-            if (scope.disabled) {
+            if (scope.timewindowDisabled) {
                 return;
             }
             var position;
@@ -212,6 +212,10 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
             }
         }
 
+        scope.isTimewindowDisabled = function () {
+            return scope.disabled || (!scope.isEdit && scope.model.hideInterval && scope.model.hideAggregation && scope.model.hideAggInterval);
+        }
+
         ngModelCtrl.$render = function () {
             scope.model = timeService.defaultTimewindow();
             if (ngModelCtrl.$viewValue) {
@@ -243,6 +247,7 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
                 model.hideAggregation = value.hideAggregation;
                 model.hideAggInterval = value.hideAggInterval;
             }
+            scope.timewindowDisabled = scope.isTimewindowDisabled();
             scope.updateDisplayValue();
         };
 
