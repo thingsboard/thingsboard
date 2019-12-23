@@ -44,7 +44,7 @@
 								<ng-md-icon size="16" icon="alpha-a-circle-outline"></ng-md-icon>
 							</span>
 						    <span ng-show="item.type==types.dataKeyType.entityField">
-								<md-tooltip>{{'datakey.entityField' | translate }}</md-tooltip>
+								<md-tooltip>{{'datakey.entity-field' | translate }}</md-tooltip>
 								<ng-md-icon size="16" icon="alpha-e-circle-outline"></ng-md-icon>
 							</span>
 							<span ng-show="item.type==types.dataKeyType.timeseries">
@@ -65,7 +65,7 @@
 									      <ng-md-icon size="16" icon="alpha-a-circle-outline" ng-click="createKey($event, types.dataKeyType.attribute, '#datakey_chips')"></ng-md-icon>
 									  </span>
 									  <span ng-show="widgetType == types.widgetType.latest.value">
-										  <md-tooltip>{{'datakey.entityField' | translate }}</md-tooltip>
+										  <md-tooltip>{{'datakey.entity-field' | translate }}</md-tooltip>
 									      <ng-md-icon size="16" icon="alpha-e-circle-outline" ng-click="createKey($event, types.dataKeyType.entityField, '#datakey_chips')"></ng-md-icon>
 									  </span>
 			                          <span>
@@ -91,7 +91,7 @@
                                           <ng-md-icon size="20" icon="alpha-a-circle-outline"></ng-md-icon>
                                       </span>
 									  <span ng-show="$chip.type==types.dataKeyType.entityField">
-                                          <md-tooltip>{{'datakey.entityField' | translate }}</md-tooltip>
+                                          <md-tooltip>{{'datakey.entity-field' | translate }}</md-tooltip>
                                           <ng-md-icon size="20" icon="alpha-e-circle-outline"></ng-md-icon>
                                       </span>
                                       <span ng-show="$chip.type==types.dataKeyType.timeseries">

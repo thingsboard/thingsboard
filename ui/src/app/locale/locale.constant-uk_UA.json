@@ -699,6 +699,7 @@
         "configuration": "Конфігурація ключа даних",
         "timeseries": "Телеметрія",
         "attributes": "Атрибути",
+        "entity-field": "Поле сутності",
         "alarm": "Поля сигнала тривоги",
         "timeseries-required": "Необхідно вказати Телеметрія.",
         "timeseries-or-attributes-required": "Необхідно вказати телеметрію/атрибути.",
