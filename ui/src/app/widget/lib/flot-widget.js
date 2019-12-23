@@ -139,12 +139,7 @@ export default class TbFlot {
                         return seriesHover.index === seriesIndex;
                     });
                     if (found && found.length) {
-                        let timestamp;
-                        if (!angular.isNumber(hoverInfo[0].time) || (found[0].time < hoverInfo[0].time)) {
-                            timestamp = parseInt(hoverInfo[1].time);
-                        } else {
-                            timestamp = parseInt(hoverInfo[0].time);
-                        }
+                        let timestamp = parseInt(found[0].time);
                         let date = moment(timestamp).format('YYYY-MM-DD HH:mm:ss');
                         let dateDiv = $('<div>' + date + '</div>');
                         dateDiv.css({
