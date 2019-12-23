@@ -583,6 +583,7 @@
         "configuration": "Data key configuration",
         "timeseries": "Timeseries",
         "attributes": "Attributes",
+        "entity-field": "Entity field",
         "alarm": "Alarm fields",
         "timeseries-required": "Entity timeseries are required.",
         "timeseries-or-attributes-required": "Entity timeseries/attributes are required.",
