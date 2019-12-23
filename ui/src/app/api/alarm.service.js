@@ -47,6 +47,7 @@ function AlarmService($http, $q, $interval, $filter, $timeout, utils, types) {
         saveAlarm: saveAlarm,
         ackAlarm: ackAlarm,
         clearAlarm: clearAlarm,
+        deleteAlarm: deleteAlarm,
         getAlarms: getAlarms,
         getHighestAlarmSeverity: getHighestAlarmSeverity,
         pollAlarms: pollAlarms,
@@ -125,6 +126,21 @@ function AlarmService($http, $q, $interval, $filter, $timeout, utils, types) {
         }
         config = Object.assign(config, { ignoreErrors: ignoreErrors });
         $http.post(url, null, config).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function deleteAlarm(alarmId, ignoreErrors, config) {
+        var deferred = $q.defer();
+        var url = '/api/alarm/' + alarmId;
+        if (!config) {
+            config = {};
+        }
+        config = Object.assign(config, { ignoreErrors: ignoreErrors });
+        $http.delete(url, config).then(function success(response) {
             deferred.resolve(response.data);
         }, function fail() {
             deferred.reject();
