@@ -956,6 +956,23 @@
         "list-of-integrations": "{ count, plural, 1 {Одна інтеграція} other {Список # інтеграцій} }",
         "integration-name-starts-with": "Інтеграції, імена яких починаються з '{{prefix}}'"
     },
+    "entity-field": {
+        "created-time": "Час створення",
+        "name": "Ім'я",
+        "type": "Тип",
+        "first-name": "Ім'я",
+        "last-name": "Прізвище",
+        "email": "Електронна пошта",
+        "title": "Назва",
+        "country": "Країна",
+        "state": "Штат",
+        "city": "Місто",
+        "address": "Адреса",
+        "address2": "Адреса 2",
+        "zip": "Zip",
+        "phone": "Телефон",
+        "label": "Мітка"
+    },
     "entity-group": {
         "entity-group": "Група сутності",
         "details": "Деталі",
