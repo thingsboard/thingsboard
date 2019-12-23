@@ -423,10 +423,10 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
             }
 
             var label = chip;
-            if (type === types.dataKeyType.alarm) {
-                var alarmField = types.alarmFields[chip];
-                if (alarmField) {
-                    label = $translate.instant(alarmField.name)+'';
+            if (type === types.dataKeyType.alarm || type === types.dataKeyType.entityField) {
+                var keyField = type === types.dataKeyType.alarm ? types.alarmFields[chip] : types.entityField[chip];
+                if (keyField) {
+                    label = $translate.instant(keyField.name)+'';
                 }
             }
             label = scope.genNextLabel(label);

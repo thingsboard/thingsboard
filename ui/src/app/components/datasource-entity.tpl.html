@@ -43,6 +43,10 @@
 								<md-tooltip>{{'datakey.attributes' | translate }}</md-tooltip>
 								<ng-md-icon size="16" icon="alpha-a-circle-outline"></ng-md-icon>
 							</span>
+						    <span ng-show="item.type==types.dataKeyType.entityField">
+								<md-tooltip>{{'datakey.entityField' | translate }}</md-tooltip>
+								<ng-md-icon size="16" icon="alpha-e-circle-outline"></ng-md-icon>
+							</span>
 							<span ng-show="item.type==types.dataKeyType.timeseries">
 								<md-tooltip>{{'datakey.timeseries' | translate }}</md-tooltip>
 								<ng-md-icon size="16" icon="timeline"></ng-md-icon>
@@ -59,6 +63,10 @@
 									  <span ng-show="widgetType == types.widgetType.latest.value">
 										  <md-tooltip>{{'datakey.attributes' | translate }}</md-tooltip>
 									      <ng-md-icon size="16" icon="alpha-a-circle-outline" ng-click="createKey($event, types.dataKeyType.attribute, '#datakey_chips')"></ng-md-icon>
+									  </span>
+									  <span ng-show="widgetType == types.widgetType.latest.value">
+										  <md-tooltip>{{'datakey.entityField' | translate }}</md-tooltip>
+									      <ng-md-icon size="16" icon="alpha-e-circle-outline" ng-click="createKey($event, types.dataKeyType.entityField, '#datakey_chips')"></ng-md-icon>
 									  </span>
 			                          <span>
 										  <md-tooltip>{{'datakey.timeseries' | translate }}</md-tooltip>
@@ -81,6 +89,10 @@
                                       <span ng-show="$chip.type==types.dataKeyType.attribute">
                                           <md-tooltip>{{'datakey.attributes' | translate }}</md-tooltip>
                                           <ng-md-icon size="20" icon="alpha-a-circle-outline"></ng-md-icon>
+                                      </span>
+									  <span ng-show="$chip.type==types.dataKeyType.entityField">
+                                          <md-tooltip>{{'datakey.entityField' | translate }}</md-tooltip>
+                                          <ng-md-icon size="20" icon="alpha-e-circle-outline"></ng-md-icon>
                                       </span>
                                       <span ng-show="$chip.type==types.dataKeyType.timeseries">
                                           <md-tooltip>{{'datakey.timeseries' | translate }}</md-tooltip>
