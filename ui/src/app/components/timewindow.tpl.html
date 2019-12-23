@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<section class="tb-timewindow" layout='row' layout-align="start center">
+<section class="tb-timewindow" layout='row' layout-align="start center" ng-if="isEdit || (!model.hideInterval || !model.hideAggregation || !model.hideAggInterval)">
     <md-button ng-if="direction === 'left'" ng-disabled="disabled" class="md-icon-button tb-md-32" aria-label="{{ 'timewindow.edit' | translate }}" ng-click="openEditMode($event)">
         <md-tooltip md-direction="{{tooltipDirection}}">
             {{ 'timewindow.edit' | translate }}
