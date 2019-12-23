@@ -39,6 +39,29 @@ import { RuleChainPageComponent } from '@home/pages/rulechain/rulechain-page.com
 import { RuleNodeComponentDescriptor } from '@shared/models/rule-node.models';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 
+import * as AngularCommon from '@angular/common';
+import * as AngularCore from '@angular/core';
+import * as AngularForms from '@angular/forms';
+import * as AngularCdkCoercion from '@angular/cdk/coercion';
+import * as NgrxStore from '@ngrx/store';
+import * as TranslateCore from '@ngx-translate/core';
+import * as TbCore from '@core/public-api';
+import * as TbShared from '@shared/public-api';
+
+declare const SystemJS;
+
+const ruleNodeConfigResourcesModulesMap = {
+  '@angular/core': SystemJS.newModule(AngularCore),
+  '@angular/common': SystemJS.newModule(AngularCommon),
+  '@angular/forms': SystemJS.newModule(AngularForms),
+  '@ngrx/store': SystemJS.newModule(NgrxStore),
+  '@ngx-translate/core': SystemJS.newModule(TranslateCore),
+  '@core/public-api': SystemJS.newModule(TbCore),
+  '@shared/public-api': SystemJS.newModule(TbShared)
+};
+
+const t = SystemJS.newModule(AngularCore);
+
 
 @Injectable()
 export class RuleChainResolver implements Resolve<RuleChain> {
@@ -71,7 +94,7 @@ export class RuleNodeComponentsResolver implements Resolve<Array<RuleNodeCompone
   }
 
   resolve(route: ActivatedRouteSnapshot): Observable<Array<RuleNodeComponentDescriptor>> {
-    return this.ruleChainService.getRuleNodeComponents();
+    return this.ruleChainService.getRuleNodeComponents(ruleNodeConfigResourcesModulesMap);
   }
 }
 
@@ -150,6 +173,7 @@ const routes: Routes = [
   }
 ];
 
+// @dynamic
 @NgModule({
   imports: [RouterModule.forChild(routes)],
   exports: [RouterModule],

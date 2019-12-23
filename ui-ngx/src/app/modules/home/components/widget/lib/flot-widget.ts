@@ -36,11 +36,16 @@ import {
   TbFlotTicksFormatterFunction,
   TooltipValueFormatFunction
 } from './flot-widget.models';
-import * as moment from 'moment';
-import * as tinycolor from 'tinycolor2';
+import * as moment_ from 'moment';
+import * as tinycolor_ from 'tinycolor2';
 import { AggregationType } from '@shared/models/time/time.models';
 import { CancelAnimationFrame } from '@core/services/raf.service';
 import Timeout = NodeJS.Timeout;
+
+const tinycolor = tinycolor_;
+const moment = moment_;
+
+const flotPieSettingsSchemaValue = flotPieSettingsSchema;
 
 export class TbFlot {
 
@@ -89,11 +94,11 @@ export class TbFlot {
   private pieAnimationLastTime: number;
   private pieAnimationCaf: CancelAnimationFrame;
 
-  static get pieSettingsSchema(): JsonSettingsSchema {
-    return flotPieSettingsSchema();
+  static pieSettingsSchema(): JsonSettingsSchema {
+    return flotPieSettingsSchemaValue;
   }
 
-  static get pieDatakeySettingsSchema(): JsonSettingsSchema {
+  static pieDatakeySettingsSchema(): JsonSettingsSchema {
     return {};
   }
 

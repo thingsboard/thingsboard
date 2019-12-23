@@ -18,6 +18,7 @@ import { Injectable } from '@angular/core';
 
 const APP_PREFIX = 'TB-';
 
+// @dynamic
 @Injectable(
   {
     providedIn: 'root'

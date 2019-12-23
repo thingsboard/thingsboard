@@ -102,7 +102,7 @@ export class EntityTypeListComponent implements ControlValueAccessor, OnInit, Af
   placeholder: string;
   secondaryPlaceholder: string;
 
-  private searchText = '';
+  searchText = '';
 
   private dirty = false;
 

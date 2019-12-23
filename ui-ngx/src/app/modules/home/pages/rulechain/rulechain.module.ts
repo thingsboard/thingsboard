@@ -21,19 +21,21 @@ import {RuleChainComponent} from '@modules/home/pages/rulechain/rulechain.compon
 import {RuleChainRoutingModule} from '@modules/home/pages/rulechain/rulechain-routing.module';
 import {HomeComponentsModule} from '@modules/home/components/home-components.module';
 import { RuleChainTabsComponent } from '@home/pages/rulechain/rulechain-tabs.component';
-import { RuleChainPageComponent, AddRuleNodeLinkDialogComponent } from './rulechain-page.component';
+import { RuleChainPageComponent, AddRuleNodeLinkDialogComponent, AddRuleNodeDialogComponent } from './rulechain-page.component';
 import { RuleNodeComponent } from '@home/pages/rulechain/rulenode.component';
 import { FC_NODE_COMPONENT_CONFIG } from 'ngx-flowchart/dist/ngx-flowchart';
 import { RuleNodeDetailsComponent } from './rule-node-details.component';
 import { RuleNodeLinkComponent } from './rule-node-link.component';
 import { LinkLabelsComponent } from '@home/pages/rulechain/link-labels.conponent';
+import { RuleNodeConfigComponent } from './rule-node-config.component';
 
 @NgModule({
   entryComponents: [
     RuleChainComponent,
     RuleChainTabsComponent,
     RuleNodeComponent,
-    AddRuleNodeLinkDialogComponent
+    AddRuleNodeLinkDialogComponent,
+    AddRuleNodeDialogComponent
   ],
   declarations: [
     RuleChainComponent,
@@ -41,9 +43,11 @@ import { LinkLabelsComponent } from '@home/pages/rulechain/link-labels.conponent
     RuleChainPageComponent,
     RuleNodeComponent,
     RuleNodeDetailsComponent,
+    RuleNodeConfigComponent,
     LinkLabelsComponent,
     RuleNodeLinkComponent,
-    AddRuleNodeLinkDialogComponent
+    AddRuleNodeLinkDialogComponent,
+    AddRuleNodeDialogComponent
   ],
   providers: [
     {

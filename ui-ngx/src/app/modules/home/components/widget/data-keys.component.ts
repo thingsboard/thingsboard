@@ -140,7 +140,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
   placeholder: string;
   requiredText: string;
 
-  private searchText = '';
+  searchText = '';
   private latestSearchTextResult: Array<DataKey> = null;
 
   private dirty = false;

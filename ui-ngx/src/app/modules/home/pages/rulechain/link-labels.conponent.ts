@@ -94,9 +94,9 @@ export class LinkLabelsComponent implements ControlValueAccessor, OnInit, OnChan
 
   filteredLabels: Observable<Array<LinkLabel>>;
 
-  private labels: Array<LinkLabel> = [];
+  labels: Array<LinkLabel> = [];
 
-  private searchText = '';
+  searchText = '';
 
   private propagateChange = (v: any) => { };
 
@@ -190,7 +190,7 @@ export class LinkLabelsComponent implements ControlValueAccessor, OnInit, OnChan
   }
 
   add(event: MatChipInputEvent): void {
-    if (!this.matAutocomplete.isOpen) {
+    if (!this.matAutocomplete.isOpen || this.allowCustom) {
       this.transformLinkLabel(event.value);
     }
   }
@@ -250,8 +250,8 @@ export class LinkLabelsComponent implements ControlValueAccessor, OnInit, OnChan
       if (this.required) {
         this.chipList.errorState = false;
       }
+      this.updateModel();
     }
-    this.updateModel();
   }
 
   clear(value: string = '') {

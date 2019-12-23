@@ -48,6 +48,7 @@ import {
 } from '@home/pages/widget/save-widget-type-as-dialog.component';
 import { Subscription } from 'rxjs';
 
+// @dynamic
 @Component({
   selector: 'tb-widget-editor',
   templateUrl: './widget-editor.component.html',

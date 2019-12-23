@@ -128,7 +128,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
 
   selectedTab: number;
 
-  private modelValue: WidgetConfigComponentData;
+  modelValue: WidgetConfigComponentData;
 
   private propagateChange = null;
 
@@ -305,6 +305,10 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     }
     this.advancedSettings.addControl('settings',
       this.fb.control(null, []));
+  }
+
+  datasourcesFormArray(): FormArray {
+    return this.dataSettings.get('datasources') as FormArray;
   }
 
   registerOnChange(fn: any): void {

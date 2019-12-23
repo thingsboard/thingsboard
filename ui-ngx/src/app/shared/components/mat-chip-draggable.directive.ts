@@ -49,7 +49,7 @@ export class MatChipDraggableDirective implements AfterViewInit {
               private elementRef: ElementRef<HTMLElement>) {
   }
 
-  @HostListener('document:mouseup', ['$event'])
+  @HostListener('document:mouseup')
   onDocumentMouseUp() {
     this.draggableChips.forEach((draggableChip) => {
       draggableChip.preventDrag = false;

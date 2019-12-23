@@ -31,8 +31,8 @@ export interface User extends BaseData<UserId> {
 }
 
 export enum ActivationMethod {
-  DISPLAY_ACTIVATION_LINK,
-  SEND_ACTIVATION_MAIL
+  DISPLAY_ACTIVATION_LINK = 'DISPLAY_ACTIVATION_LINK',
+  SEND_ACTIVATION_MAIL = 'SEND_ACTIVATION_MAIL'
 }
 
 export const activationMethodTranslations = new Map<ActivationMethod, string>(

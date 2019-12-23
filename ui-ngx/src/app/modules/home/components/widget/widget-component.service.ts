@@ -38,14 +38,17 @@ import { SharedModule } from '@shared/shared.module';
 import { WidgetComponentsModule } from '@home/components/widget/widget-components.module';
 import { WINDOW } from '@core/services/window.service';
 
-import * as tinycolor from 'tinycolor2';
+import * as tinycolor_ from 'tinycolor2';
 import { TbFlot } from './lib/flot-widget';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { WidgetTypeId } from '@app/shared/models/id/widget-type-id';
 import { TenantId } from '@app/shared/models/id/tenant-id';
 
+const tinycolor = tinycolor_;
+
 // declare var jQuery: any;
 
+// @dynamic
 @Injectable()
 export class WidgetComponentService {
 

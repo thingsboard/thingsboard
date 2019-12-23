@@ -79,7 +79,7 @@ export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor,
 
   private broadcastSubscription: Subscription;
 
-  private searchText = '';
+  searchText = '';
 
   private dirty = false;
 

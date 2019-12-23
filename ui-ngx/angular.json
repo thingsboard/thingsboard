@@ -78,7 +78,8 @@
               "node_modules/ace-builds/src-min/snippets/css.js",
               "node_modules/ace-builds/src-min/snippets/json.js",
               "node_modules/ace-builds/src-min/snippets/java.js",
-              "node_modules/ace-builds/src-min/snippets/javascript.js"
+              "node_modules/ace-builds/src-min/snippets/javascript.js",
+              "node_modules/systemjs/dist/system.js"
             ],
             "es5BrowserSupport": true,
             "customWebpackConfig": {
@@ -116,7 +117,7 @@
           "builder": "@angular-builders/custom-webpack:dev-server",
           "options": {
             "browserTarget": "thingsboard:build",
-            "proxyConfig": "proxy.conf.json"
+            "proxyConfig": "proxy.conf.js"
           },
           "configurations": {
             "production": {

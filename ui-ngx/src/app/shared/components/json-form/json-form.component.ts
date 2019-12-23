@@ -35,13 +35,15 @@ import { deepClone, isString } from '@app/core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import { JsonFormProps } from './react/json-form.models';
 import inspector from 'schema-inspector';
-import * as tinycolor from 'tinycolor2';
+import * as tinycolor_ from 'tinycolor2';
 import { DialogService } from '@app/core/services/dialog.service';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import ReactSchemaForm from './react/json-form-react';
 import JsonFormUtils from './react/json-form-utils';
 import { JsonFormComponentData } from './json-form-component.models';
+
+const tinycolor = tinycolor_;
 
 @Component({
   selector: 'tb-json-form',

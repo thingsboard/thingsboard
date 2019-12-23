@@ -25,6 +25,7 @@ import {WINDOW} from '@core/services/window.service';
 import { ActivationEnd, NavigationEnd, Router } from '@angular/router';
 import { filter, map, publishReplay, refCount } from 'rxjs/operators';
 
+// @dynamic
 @Injectable({
   providedIn: 'root'
 })

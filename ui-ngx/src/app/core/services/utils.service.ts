@@ -14,6 +14,9 @@
 /// limitations under the License.
 ///
 
+// tslint:disable-next-line:no-reference
+/// <reference path="../../../../src/typings/rawloader.typings.d.ts" />
+
 import { Inject, Injectable, NgZone } from '@angular/core';
 import { WINDOW } from '@core/services/window.service';
 import { ExceptionData } from '@app/shared/models/error.models';
@@ -67,6 +70,7 @@ const commonMaterialIcons: Array<string> = [ 'more_horiz', 'more_vert', 'open_in
   'settings', 'notifications', 'notifications_active', 'info', 'info_outline', 'warning', 'list', 'file_download', 'import_export',
   'share', 'add', 'edit', 'done' ];
 
+// @dynamic
 @Injectable({
   providedIn: 'root'
 })

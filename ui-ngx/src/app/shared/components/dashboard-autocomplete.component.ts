@@ -81,7 +81,7 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
 
   filteredDashboards: Observable<Array<DashboardInfo>>;
 
-  private searchText = '';
+  searchText = '';
 
   private propagateChange = (v: any) => { };
 

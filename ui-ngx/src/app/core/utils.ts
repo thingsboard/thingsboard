@@ -387,3 +387,12 @@ export function guid(): string {
   return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
     s4() + '-' + s4() + s4() + s4();
 }
+
+const SNAKE_CASE_REGEXP = /[A-Z]/g;
+
+export function snakeCase(name: string, separator: string): string {
+  separator = separator || '_';
+  return name.replace(SNAKE_CASE_REGEXP, (letter, pos) => {
+    return (pos ? separator : '') + letter.toLowerCase();
+  });
+}

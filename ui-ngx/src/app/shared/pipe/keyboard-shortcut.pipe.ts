@@ -17,6 +17,7 @@
 import { Inject, Pipe, PipeTransform } from '@angular/core';
 import { WINDOW } from '@core/services/window.service';
 
+// @dynamic
 @Pipe({
   name: 'keyboardShortcut'
 })

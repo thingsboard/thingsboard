@@ -106,7 +106,7 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
 
   separatorKeysCodes: number[] = [ENTER, COMMA, SEMICOLON];
 
-  private searchText = '';
+  searchText = '';
 
   private dirty = false;
 

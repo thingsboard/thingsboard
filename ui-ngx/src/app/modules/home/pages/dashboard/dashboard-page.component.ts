@@ -86,6 +86,7 @@ import {
 import { ImportExportService } from '@home/components/import-export/import-export.service';
 import { AuthState } from '@app/core/auth/auth.models';
 
+// @dynamic
 @Component({
   selector: 'tb-dashboard-page',
   templateUrl: './dashboard-page.component.html',

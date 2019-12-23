@@ -54,6 +54,7 @@ import { ImportDialogCsvComponent, ImportDialogCsvData } from './import-dialog-c
 import { ImportEntityData, ImportEntitiesResultInfo } from '@shared/models/entity.models';
 import { RequestConfig } from '@core/http/http-utils';
 
+// @dynamic
 @Injectable()
 export class ImportExportService {
 

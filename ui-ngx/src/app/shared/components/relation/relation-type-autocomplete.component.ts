@@ -69,7 +69,7 @@ export class RelationTypeAutocompleteComponent implements ControlValueAccessor, 
 
   filteredRelationTypes: Observable<Array<string>>;
 
-  private searchText = '';
+  searchText = '';
 
   private dirty = false;
 

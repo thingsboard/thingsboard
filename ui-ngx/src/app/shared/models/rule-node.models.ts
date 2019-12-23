@@ -22,6 +22,12 @@ import {RuleChainId} from '@shared/models/id/rule-chain-id';
 import {RuleNodeId} from '@shared/models/id/rule-node-id';
 import { ComponentDescriptor, ComponentType } from '@shared/models/component-descriptor.models';
 import { EntityType, EntityTypeResource } from '@shared/models/entity-type.models';
+import { Observable } from 'rxjs';
+import { PageComponent } from '@shared/components/page.component';
+import { ComponentFactory, EventEmitter, Inject, OnDestroy, OnInit } from '@angular/core';
+import { RafService } from '@core/services/raf.service';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
 
 export enum MsgDataType {
   JSON = 'JSON',
@@ -48,22 +54,56 @@ export interface LinkLabel {
   value: string;
 }
 
-export interface RuleNodeConfigurationDescriptor {
-  nodeDefinition: {
-    description: string;
-    details: string;
-    inEnabled: boolean;
-    outEnabled: boolean;
-    relationTypes: string[];
-    customRelations: boolean;
-    defaultConfiguration: any;
-    icon?: string;
-    iconUrl?: string;
-    docUrl?: string;
-    uiResources?: string[];
-    uiResourceLoadError?: string;
-  };
+export interface RuleNodeDefinition {
+  description: string;
+  details: string;
+  inEnabled: boolean;
+  outEnabled: boolean;
+  relationTypes: string[];
+  customRelations: boolean;
+  defaultConfiguration: RuleNodeConfiguration;
+  icon?: string;
+  iconUrl?: string;
+  docUrl?: string;
+  uiResources?: string[];
+  uiResourceLoadError?: string;
+  configDirective?: string;
 }
+
+export interface RuleNodeConfigurationDescriptor {
+  nodeDefinition: RuleNodeDefinition;
+}
+
+export interface IRuleNodeConfigurationComponent {
+  ruleNodeId: string;
+  configuration: RuleNodeConfiguration;
+  configurationChanged: Observable<RuleNodeConfiguration>;
+  [key: string]: any;
+}
+
+export abstract class RuleNodeConfigurationComponent extends PageComponent implements
+  IRuleNodeConfigurationComponent, OnInit {
+
+  ruleNodeId: string;
+  configuration: RuleNodeConfiguration;
+  configurationChangedEmiter = new EventEmitter<RuleNodeConfiguration>();
+  configurationChanged = this.configurationChangedEmiter.asObservable();
+
+  protected constructor(@Inject(Store) protected store: Store<AppState>) {
+    super(store);
+  }
+
+  ngOnInit() {
+    this.onConfigurationSet(this.configuration);
+  }
+
+  protected abstract onConfigurationSet(configuration: RuleNodeConfiguration);
+
+  protected notifyConfigurationUpdated(configuration: RuleNodeConfiguration) {
+    this.configurationChangedEmiter.emit(configuration);
+  }
+}
+
 
 export enum RuleNodeType {
   FILTER = 'FILTER',
@@ -187,6 +227,7 @@ export interface RuleNodeComponentDescriptor extends ComponentDescriptor {
 
 const ruleNodeClazzHelpLinkMap = {
   'org.thingsboard.rule.engine.filter.TbCheckRelationNode': 'ruleNodeCheckRelation',
+  'org.thingsboard.rule.engine.filter.TbCheckMessageNode': 'ruleNodeCheckExistenceFields',
   'org.thingsboard.rule.engine.filter.TbJsFilterNode': 'ruleNodeJsFilter',
   'org.thingsboard.rule.engine.filter.TbJsSwitchNode': 'ruleNodeJsSwitch',
   'org.thingsboard.rule.engine.filter.TbMsgTypeFilterNode': 'ruleNodeMessageTypeFilter',

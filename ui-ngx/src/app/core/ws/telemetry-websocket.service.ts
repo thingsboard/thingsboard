@@ -40,6 +40,7 @@ const RECONNECT_INTERVAL = 2000;
 const WS_IDLE_TIMEOUT = 90000;
 const MAX_PUBLISH_COMMANDS = 10;
 
+// @dynamic
 @Injectable({
   providedIn: 'root'
 })

@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Injectable } from '@angular/core';
+import { ComponentFactory, Injectable } from '@angular/core';
 import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { forkJoin, Observable, of } from 'rxjs/index';
 import { HttpClient } from '@angular/common/http';
@@ -28,12 +28,16 @@ import {
   ruleNodeTypeComponentTypes, unknownNodeComponent
 } from '@shared/models/rule-chain.models';
 import { ComponentDescriptorService } from './component-descriptor.service';
-import { LinkLabel, RuleNodeComponentDescriptor } from '@app/shared/models/rule-node.models';
+import {
+  IRuleNodeConfigurationComponent,
+  LinkLabel,
+  RuleNodeComponentDescriptor
+} from '@app/shared/models/rule-node.models';
 import { ResourcesService } from '../services/resources.service';
 import { catchError, map, mergeMap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityType } from '@shared/models/entity-type.models';
-import { deepClone } from '@core/utils';
+import { deepClone, snakeCase } from '@core/utils';
 
 @Injectable({
   providedIn: 'root'
@@ -41,6 +45,7 @@ import { deepClone } from '@core/utils';
 export class RuleChainService {
 
   private ruleNodeComponents: Array<RuleNodeComponentDescriptor>;
+  private ruleNodeConfigFactories: {[directive: string]: ComponentFactory<IRuleNodeConfigurationComponent>} = {};
 
   constructor(
     private http: HttpClient,
@@ -105,13 +110,14 @@ export class RuleChainService {
     );
   }
 
-  public getRuleNodeComponents(config?: RequestConfig): Observable<Array<RuleNodeComponentDescriptor>> {
+  public getRuleNodeComponents(ruleNodeConfigResourcesModulesMap: {[key: string]: any}, config?: RequestConfig):
+    Observable<Array<RuleNodeComponentDescriptor>> {
      if (this.ruleNodeComponents) {
        return of(this.ruleNodeComponents);
      } else {
       return this.loadRuleNodeComponents(config).pipe(
         mergeMap((components) => {
-          return this.resolveRuleNodeComponentsUiResources(components).pipe(
+          return this.resolveRuleNodeComponentsUiResources(components, ruleNodeConfigResourcesModulesMap).pipe(
             map((ruleNodeComponents) => {
               this.ruleNodeComponents = ruleNodeComponents;
               this.ruleNodeComponents.push(ruleChainNodeComponent);
@@ -130,6 +136,10 @@ export class RuleChainService {
         })
       );
     }
+  }
+
+  public getRuleNodeConfigFactory(directive: string): ComponentFactory<IRuleNodeConfigurationComponent> {
+    return this.ruleNodeConfigFactories[directive];
   }
 
   public getRuleNodeComponentByClazz(clazz: string): RuleNodeComponentDescriptor {
@@ -192,11 +202,12 @@ export class RuleChainService {
     );
   }
 
-  private resolveRuleNodeComponentsUiResources(components: Array<RuleNodeComponentDescriptor>):
+  private resolveRuleNodeComponentsUiResources(components: Array<RuleNodeComponentDescriptor>,
+                                               ruleNodeConfigResourcesModulesMap: {[key: string]: any}):
     Observable<Array<RuleNodeComponentDescriptor>> {
     const tasks: Observable<RuleNodeComponentDescriptor>[] = [];
     components.forEach((component) => {
-      tasks.push(this.resolveRuleNodeComponentUiResources(component));
+      tasks.push(this.resolveRuleNodeComponentUiResources(component, ruleNodeConfigResourcesModulesMap));
     });
     return forkJoin(tasks).pipe(
       catchError((err) => {
@@ -205,13 +216,39 @@ export class RuleChainService {
     );
   }
 
-  private resolveRuleNodeComponentUiResources(component: RuleNodeComponentDescriptor): Observable<RuleNodeComponentDescriptor> {
-    const uiResources = component.configurationDescriptor.nodeDefinition.uiResources;
+  private resolveRuleNodeComponentUiResources(component: RuleNodeComponentDescriptor,
+                                              ruleNodeConfigResourcesModulesMap: {[key: string]: any}):
+    Observable<RuleNodeComponentDescriptor> {
+    const nodeDefinition = component.configurationDescriptor.nodeDefinition;
+    const uiResources = nodeDefinition.uiResources;
     if (uiResources && uiResources.length) {
+      const commonResources = uiResources.filter((resource) => !resource.endsWith('.js'));
+      const moduleResource = uiResources.find((resource) => resource.endsWith('.js'));
       const tasks: Observable<any>[] = [];
-      uiResources.forEach((uiResource) => {
-        tasks.push(this.resourcesService.loadResource(uiResource));
-      });
+      if (commonResources && commonResources.length) {
+        commonResources.forEach((resource) => {
+          tasks.push(this.resourcesService.loadResource(resource));
+        });
+      }
+      if (moduleResource) {
+        tasks.push(this.resourcesService.loadModule(moduleResource, ruleNodeConfigResourcesModulesMap).pipe(
+          map((res) => {
+            if (nodeDefinition.configDirective && nodeDefinition.configDirective.length) {
+              const selector = snakeCase(nodeDefinition.configDirective, '-');
+              const componentFactory = res.componentFactories.find((factory) =>
+                factory.selector === selector);
+              if (componentFactory) {
+                this.ruleNodeConfigFactories[nodeDefinition.configDirective] = componentFactory;
+              } else {
+                component.configurationDescriptor.nodeDefinition.uiResourceLoadError =
+                  this.translate.instant('rulenode.directive-is-not-loaded',
+                    {directiveName: nodeDefinition.configDirective});
+              }
+            }
+            return of(component);
+          })
+        ));
+      }
       return forkJoin(tasks).pipe(
         map((res) => {
           return component;
@@ -231,7 +268,7 @@ export class RuleChainService {
       map(ruleChain => ruleChain),
       catchError((err) => {
         const ruleChain = {
-          id: {
+         id: {
             entityType: EntityType.RULE_CHAIN,
             id: ruleChainId
           }

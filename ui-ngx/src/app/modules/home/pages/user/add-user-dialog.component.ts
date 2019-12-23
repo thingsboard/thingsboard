@@ -49,7 +49,7 @@ export class AddUserDialogComponent extends DialogComponent<AddUserDialogCompone
   detailsForm: NgForm;
   user: User;
 
-  activationMethods = ActivationMethod;
+  activationMethods = Object.keys(ActivationMethod);
 
   activationMethodTranslations = activationMethodTranslations;
 

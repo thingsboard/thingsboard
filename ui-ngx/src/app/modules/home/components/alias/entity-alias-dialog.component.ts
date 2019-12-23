@@ -73,7 +73,7 @@ export class EntityAliasDialogComponent extends DialogComponent<EntityAliasDialo
               public dialogRef: MatDialogRef<EntityAliasDialogComponent, EntityAlias>,
               private fb: FormBuilder,
               private utils: UtilsService,
-              private translate: TranslateService,
+              public translate: TranslateService,
               private entityService: EntityService) {
     super(store, router, dialogRef);
     this.isAdd = data.isAdd;

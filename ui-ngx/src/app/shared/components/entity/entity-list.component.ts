@@ -90,7 +90,7 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
   entities: Array<BaseData<EntityId>> = [];
   filteredEntities: Observable<Array<BaseData<EntityId>>>;
 
-  private searchText = '';
+  searchText = '';
 
   private dirty = false;
 

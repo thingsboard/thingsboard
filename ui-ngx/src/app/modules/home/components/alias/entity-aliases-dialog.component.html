@@ -42,7 +42,7 @@
     <fieldset [disabled]="isLoading$ | async">
       <div fxFlex fxLayout="row" fxLayoutAlign="start center"
            formArrayName="entityAliases"
-           *ngFor="let entityAliasControl of entityAliasesFormGroup.get('entityAliases').controls; let $index = index">
+           *ngFor="let entityAliasControl of entityAliasesFormArray().controls; let $index = index">
         <span fxFlex="5">{{$index + 1}}.</span>
         <div class="mat-elevation-z4 tb-alias" fxFlex="95" fxLayout="row" fxLayoutAlign="start center">
           <mat-form-field floatLabel="always" hideRequiredMarker class="mat-block" fxFlex="150px">

@@ -40,6 +40,7 @@ import {
 } from './dashboard-select-panel.component';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 
+// @dynamic
 @Component({
   selector: 'tb-dashboard-select',
   templateUrl: './dashboard-select.component.html',

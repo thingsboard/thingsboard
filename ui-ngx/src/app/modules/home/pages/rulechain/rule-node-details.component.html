@@ -31,7 +31,11 @@
             {{ 'rulenode.debug-mode' | translate }}
           </mat-checkbox>
         </section>
-        TODO: tb-rule-node-config
+        <tb-rule-node-config
+          formControlName="configuration"
+          [ruleNodeId]="ruleNode.ruleNodeId?.id"
+          [nodeDefinition]="ruleNode.component.configurationDescriptor.nodeDefinition">
+        </tb-rule-node-config>
         <div formGroupName="additionalInfo" fxLayout="column">
           <mat-form-field class="mat-block">
             <mat-label translate>rulenode.description</mat-label>

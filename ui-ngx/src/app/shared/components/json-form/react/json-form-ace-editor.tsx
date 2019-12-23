@@ -20,7 +20,6 @@ import reactCSS from 'reactcss';
 import ReactAce from 'react-ace';
 import Button from '@material-ui/core/Button';
 import { JsonFormFieldProps, JsonFormFieldState } from '@shared/components/json-form/react/json-form.models';
-import * as tinycolor from 'tinycolor2';
 import { IEditorProps } from 'react-ace/src/types';
 
 interface ThingsboardAceEditorProps extends JsonFormFieldProps {

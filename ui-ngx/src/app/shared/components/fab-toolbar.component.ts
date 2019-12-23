@@ -63,6 +63,7 @@ export class FabActionsDirective implements OnInit {
 
 }
 
+// @dynamic
 @Component({
   selector: 'mat-fab-toolbar',
   templateUrl: './fab-toolbar.component.html',

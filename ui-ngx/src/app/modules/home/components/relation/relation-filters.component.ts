@@ -69,6 +69,10 @@ export class RelationFiltersComponent extends PageComponent implements ControlVa
       this.fb.array([]));
   }
 
+  relationFiltersFormArray(): FormArray {
+      return this.relationFiltersFormGroup.get('relationFilters') as FormArray;
+  }
+
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
   }

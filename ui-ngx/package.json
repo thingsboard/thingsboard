@@ -74,6 +74,7 @@
     "schema-inspector": "^1.6.8",
     "screenfull": "^5.0.0",
     "split.js": "^1.5.11",
+    "systemjs": "0.21.5",
     "tinycolor2": "^1.4.1",
     "tooltipster": "^4.2.7",
     "tslib": "^1.10.0",

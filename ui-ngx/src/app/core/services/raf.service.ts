@@ -20,6 +20,7 @@ import { WINDOW } from '@core/services/window.service';
 
 export type CancelAnimationFrame = () => void;
 
+// @dynamic
 @Injectable({
   providedIn: 'root'
 })

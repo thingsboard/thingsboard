@@ -14,9 +14,11 @@
 /// limitations under the License.
 ///
 
-import { Injectable, Inject } from '@angular/core';
+import { Injectable, Inject, ModuleWithComponentFactories, Compiler, Injector } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { ReplaySubject, Observable, throwError } from 'rxjs';
+
+declare const SystemJS;
 
 @Injectable({
   providedIn: 'root'
@@ -24,10 +26,13 @@ import { ReplaySubject, Observable, throwError } from 'rxjs';
 export class ResourcesService {
 
   private loadedResources: { [url: string]: ReplaySubject<any> } = {};
+  private loadedModules: { [url: string]: ReplaySubject<ModuleWithComponentFactories<any>> } = {};
 
   private anchor = this.document.getElementsByTagName('head')[0] || this.document.getElementsByTagName('body')[0];
 
-  constructor(@Inject(DOCUMENT) private readonly document: any) {}
+  constructor(@Inject(DOCUMENT) private readonly document: any,
+              private compiler: Compiler,
+              private injector: Injector) {}
 
   public loadResource(url: string): Observable<any> {
     if (this.loadedResources[url]) {
@@ -45,6 +50,49 @@ export class ResourcesService {
       return throwError(new Error(`Unsupported file type: ${fileType}`));
     }
     return this.loadResourceByType(fileType, url);
+  }
+
+  public loadModule(url: string, modulesMap: {[key: string]: any}): Observable<ModuleWithComponentFactories<any>> {
+    if (this.loadedModules[url]) {
+      return this.loadedModules[url].asObservable();
+    }
+    const subject = new ReplaySubject<ModuleWithComponentFactories<any>>();
+    this.loadedModules[url] = subject;
+    if (modulesMap) {
+      for (const moduleId of Object.keys(modulesMap)) {
+        SystemJS.set(moduleId, modulesMap[moduleId]);
+      }
+    }
+    SystemJS.import(url).then(
+      (module) => {
+        if (module.default) {
+          this.compiler.compileModuleAndAllComponentsAsync(module.default).then(
+            (compiled) => {
+              try {
+                compiled.ngModuleFactory.create(this.injector);
+                this.loadedModules[url].next(compiled);
+                this.loadedModules[url].complete();
+              } catch (e) {
+                this.loadedModules[url].error(new Error(`Unable to init module from url: ${url}`));
+                delete this.loadedModules[url];
+              }
+            },
+            (e) => {
+              this.loadedModules[url].error(new Error(`Unable to compile module from url: ${url}`));
+              delete this.loadedModules[url];
+            }
+          );
+        } else {
+          this.loadedModules[url].error(new Error(`Module '${url}' doesn't have default export!`));
+          delete this.loadedModules[url];
+        }
+      },
+      (e) => {
+        this.loadedModules[url].error(new Error(`Unable to load module from url: ${url}`));
+        delete this.loadedModules[url];
+      }
+    );
+    return subject.asObservable();
   }
 
   private loadResourceByType(type: 'css' | 'js', url: string): Observable<any> {

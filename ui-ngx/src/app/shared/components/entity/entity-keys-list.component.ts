@@ -92,7 +92,7 @@ export class EntityKeysListComponent implements ControlValueAccessor, OnInit, Af
 
   separatorKeysCodes: number[] = [ENTER, COMMA, SEMICOLON];
 
-  private searchText = '';
+  searchText = '';
 
   private dirty = false;
 

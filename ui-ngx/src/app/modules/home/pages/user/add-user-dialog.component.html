@@ -34,8 +34,8 @@
     <mat-form-field class="mat-block">
       <mat-label translate>user.activation-method</mat-label>
       <mat-select matInput [ngModelOptions]="{standalone: true}" [(ngModel)]="activationMethod">
-        <mat-option *ngFor="let activationMethod of (activationMethods | enumToArray)" [value]="activationMethods[activationMethod]">
-          {{ activationMethodTranslations.get(activationMethods[activationMethod]) | translate }}
+        <mat-option *ngFor="let activationMethod of activationMethods" [value]="activationMethod">
+          {{ activationMethodTranslations.get(activationMethod) | translate }}
         </mat-option>
       </mat-select>
     </mat-form-field>

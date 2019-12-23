@@ -14,6 +14,9 @@
 /// limitations under the License.
 ///
 
+// tslint:disable-next-line:no-reference
+/// <reference path="../../../../../../../src/typings/jquery.flot.typings.d.ts" />
+
 import { JsonSettingsSchema, DataKey, DatasourceData } from '@shared/models/widget.models';
 
 export declare type ChartType = 'line' | 'pie' | 'bar' | 'state' | 'graph';
@@ -395,8 +398,8 @@ export function flotSettingsSchema(chartType: ChartType): JsonSettingsSchema {
   return schema;
 }
 
-export function flotPieSettingsSchema(): JsonSettingsSchema {
-  return {
+export const flotPieSettingsSchema: JsonSettingsSchema =
+  {
     schema: {
       type: 'object',
       title: 'Settings',
@@ -477,8 +480,7 @@ export function flotPieSettingsSchema(): JsonSettingsSchema {
       },
       'fontSize'
     ]
-  };
-}
+};
 
 export function flotDatakeySettingsSchema(defaultShowLines: boolean): JsonSettingsSchema {
   return {

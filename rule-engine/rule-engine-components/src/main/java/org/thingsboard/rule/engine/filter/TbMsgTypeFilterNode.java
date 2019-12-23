@@ -32,7 +32,7 @@ import org.thingsboard.server.common.msg.TbMsg;
         relationTypes = {"True", "False"},
         nodeDescription = "Filter incoming messages by Message Type",
         nodeDetails = "If incoming MessageType is expected - send Message via <b>True</b> chain, otherwise <b>False</b> chain is used.",
-        uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
+        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbFilterNodeMessageTypeConfig")
 public class TbMsgTypeFilterNode implements TbNode {
 

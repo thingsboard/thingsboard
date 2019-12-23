@@ -47,7 +47,7 @@ import { map } from 'rxjs/operators';
 })
 export class EntityStateControllerComponent extends StateControllerComponent implements OnInit, OnDestroy {
 
-  private selectedStateIndex = -1;
+  selectedStateIndex = -1;
 
   constructor(protected router: Router,
               protected route: ActivatedRoute,

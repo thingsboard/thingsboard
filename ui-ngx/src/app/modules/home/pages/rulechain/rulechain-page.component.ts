@@ -151,7 +151,6 @@ export class RuleChainPageComponent extends PageComponent
       return source.type === FlowchartConstants.rightConnectorType && destination.type === FlowchartConstants.leftConnectorType;
     },
     createEdge: (event, edge: FcRuleEdge) => {
-      console.log('TODO');
       const sourceNode = this.ruleChainCanvas.modelService.nodes.getNodeByConnectorId(edge.source) as FcRuleNode;
       if (sourceNode.component.type === RuleNodeType.INPUT) {
         const destNode = this.ruleChainCanvas.modelService.nodes.getNodeByConnectorId(edge.destination) as FcRuleNode;
@@ -185,9 +184,8 @@ export class RuleChainPageComponent extends PageComponent
         }
       }
     },
-    dropNode: (event, node) => {
-      console.log('TODO dropNode');
-      console.log(node);
+    dropNode: (event, node: FcRuleNode) => {
+      this.addRuleNode(node);
     }
   };
 
@@ -269,7 +267,7 @@ export class RuleChainPageComponent extends PageComponent
     this.createRuleChainModel();
   }
 
-  private updateRuleChainLibrary() {
+  updateRuleChainLibrary() {
     const search = this.ruleNodeTypeSearch.toUpperCase();
     const res = this.ruleNodeComponents.filter(
       (ruleNodeComponent) => ruleNodeComponent.name.toUpperCase().includes(search));
@@ -734,6 +732,46 @@ export class RuleChainPageComponent extends PageComponent
     this.createRuleChainModel();
   }
 
+  addRuleNode(ruleNode: FcRuleNode) {
+    ruleNode.configuration = deepClone(ruleNode.component.configurationDescriptor.nodeDefinition.defaultConfiguration);
+    const ruleChainId = this.ruleChain.id ? this.ruleChain.id.id : null;
+    this.dialog.open<AddRuleNodeDialogComponent, AddRuleNodeDialogData,
+      FcRuleNode>(AddRuleNodeDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        ruleNode,
+        ruleChainId
+      }
+    }).afterClosed().subscribe(
+      (addedRuleNode) => {
+        if (addedRuleNode) {
+          addedRuleNode.id = 'rule-chain-node-' + this.nextNodeID++;
+          addedRuleNode.connectors = [];
+          if (addedRuleNode.component.configurationDescriptor.nodeDefinition.inEnabled) {
+            addedRuleNode.connectors.push(
+              {
+                id: (this.nextConnectorID++) + '',
+                type: FlowchartConstants.leftConnectorType
+              }
+            );
+          }
+          if (addedRuleNode.component.configurationDescriptor.nodeDefinition.outEnabled) {
+            addedRuleNode.connectors.push(
+              {
+                id: (this.nextConnectorID++) + '',
+                type: FlowchartConstants.rightConnectorType
+              }
+            );
+          }
+          this.ruleChainModel.nodes.push(addedRuleNode);
+          this.onModelChanged();
+          this.updateRuleNodesHighlight();
+        }
+      }
+    );
+  }
+
   addRuleNodeLink(link: FcRuleEdge, labels: {[label: string]: LinkLabel}, allowCustomLabels: boolean): Observable<FcRuleEdge> {
     return this.dialog.open<AddRuleNodeLinkDialogComponent, AddRuleNodeLinkDialogData,
       FcRuleEdge>(AddRuleNodeLinkDialogComponent, {
@@ -883,5 +921,58 @@ export class AddRuleNodeLinkDialogComponent extends DialogComponent<AddRuleNodeL
     const link: FcRuleEdge = this.ruleNodeLinkFormGroup.get('link').value;
     this.link = {...this.link, ...link};
     this.dialogRef.close(this.link);
+  }
+}
+
+export interface AddRuleNodeDialogData {
+  ruleNode: FcRuleNode;
+  ruleChainId: string;
+}
+
+@Component({
+  selector: 'tb-add-rule-node-dialog',
+  templateUrl: './add-rule-node-dialog.component.html',
+  providers: [{provide: ErrorStateMatcher, useExisting: AddRuleNodeDialogComponent}],
+  styleUrls: []
+})
+export class AddRuleNodeDialogComponent extends DialogComponent<AddRuleNodeDialogComponent, FcRuleNode>
+  implements OnInit, ErrorStateMatcher {
+
+  ruleNode: FcRuleNode;
+  ruleChainId: string;
+
+  submitted = false;
+
+  constructor(protected store: Store<AppState>,
+              protected router: Router,
+              @Inject(MAT_DIALOG_DATA) public data: AddRuleNodeDialogData,
+              @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
+              public dialogRef: MatDialogRef<AddRuleNodeDialogComponent, FcRuleNode>) {
+    super(store, router, dialogRef);
+
+    this.ruleNode = this.data.ruleNode;
+    this.ruleChainId = this.data.ruleChainId;
+  }
+
+  ngOnInit(): void {
+  }
+
+  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+    const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
+    const customErrorState = !!(control && control.invalid && this.submitted);
+    return originalErrorState || customErrorState;
+  }
+
+  helpLinkIdForRuleNodeType(): string {
+    return getRuleNodeHelpLink(this.ruleNode.component);
+  }
+
+  cancel(): void {
+    this.dialogRef.close(null);
+  }
+
+  add(): void {
+    this.submitted = true;
+    this.dialogRef.close(this.ruleNode);
   }
 }

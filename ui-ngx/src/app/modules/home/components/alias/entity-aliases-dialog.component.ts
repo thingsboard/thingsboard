@@ -154,6 +154,11 @@ export class EntityAliasesDialogComponent extends DialogComponent<EntityAliasesD
     return aliasFormControl;
   }
 
+
+  entityAliasesFormArray(): FormArray {
+    return this.entityAliasesFormGroup.get('entityAliases') as FormArray;
+  }
+
   ngOnInit(): void {
   }
 

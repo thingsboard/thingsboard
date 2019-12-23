@@ -18,7 +18,9 @@ import { isUndefined, isDefined, isString } from '@app/core/utils';
 import * as equal from 'deep-equal';
 import ObjectPath from 'objectpath';
 import * as React from 'react';
-import * as tinycolor from 'tinycolor2';
+import * as tinycolor_ from 'tinycolor2';
+
+const tinycolor = tinycolor_;
 
 export interface SchemaValidationResult {
   valid: boolean;

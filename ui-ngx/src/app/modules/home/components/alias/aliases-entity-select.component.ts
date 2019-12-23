@@ -30,6 +30,7 @@ import {
   AliasesEntitySelectPanelData
 } from './aliases-entity-select-panel.component';
 
+// @dynamic
 @Component({
   selector: 'tb-aliases-entity-select',
   templateUrl: './aliases-entity-select.component.html',

@@ -78,7 +78,7 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
 
   displayAdvanced = false;
 
-  private modelValue: DataKey;
+  modelValue: DataKey;
 
   private propagateChange = null;
 

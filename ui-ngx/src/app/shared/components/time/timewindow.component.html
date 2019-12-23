@@ -17,7 +17,7 @@
 -->
 <button *ngIf="asButton" cdkOverlayOrigin #timewindowPanelOrigin="cdkOverlayOrigin" [disabled]="disabled"
         type="button"
-        mat-raised-button color="primary" (click)="openEditMode($event)">
+        mat-raised-button color="primary" (click)="openEditMode()">
   <mat-icon class="material-icons">query_builder</mat-icon>
   <span>{{innerValue?.displayValue}}</span>
 </button>
@@ -25,20 +25,20 @@
          class="tb-timewindow" fxLayout="row" fxLayoutAlign="start center">
   <button *ngIf="direction === 'left'" [disabled]="disabled" mat-button mat-icon-button class="tb-mat-32"
           type="button"
-          (click)="openEditMode($event)"
+          (click)="openEditMode()"
           matTooltip="{{ 'timewindow.edit' | translate }}"
           [matTooltipPosition]="tooltipPosition">
     <mat-icon class="material-icons">query_builder</mat-icon>
   </button>
   <span [fxHide]="hideLabel()"
-        (click)="openEditMode($event)"
+        (click)="openEditMode()"
         matTooltip="{{ 'timewindow.edit' | translate }}"
         [matTooltipPosition]="tooltipPosition">
     {{innerValue?.displayValue}}
   </span>
   <button *ngIf="direction === 'right'" [disabled]="disabled" mat-button mat-icon-button class="tb-mat-32"
           type="button"
-          (click)="openEditMode($event)"
+          (click)="openEditMode()"
           matTooltip="{{ 'timewindow.edit' | translate }}"
           [matTooltipPosition]="tooltipPosition">
     <mat-icon class="material-icons">query_builder</mat-icon>

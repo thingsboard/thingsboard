@@ -59,6 +59,7 @@ import {
   LegendConfigPanelData
 } from '@home/components/widget/legend-config-panel.component';
 
+// @dynamic
 @Component({
   selector: 'tb-legend-config',
   templateUrl: './legend-config.component.html',

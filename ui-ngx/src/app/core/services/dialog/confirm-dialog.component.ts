@@ -24,6 +24,7 @@ export interface ConfirmDialogData {
   ok: string;
 }
 
+// @dynamic
 @Component({
   selector: 'tb-confirm-dialog',
   templateUrl: './confirm-dialog.component.html',

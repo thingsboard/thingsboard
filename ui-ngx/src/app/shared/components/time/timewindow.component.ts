@@ -54,6 +54,7 @@ import { TimeService } from '@core/services/time.service';
 import { TooltipPosition } from '@angular/material/typings/tooltip';
 import { deepClone } from '@core/utils';
 
+// @dynamic
 @Component({
   selector: 'tb-timewindow',
   templateUrl: './timewindow.component.html',

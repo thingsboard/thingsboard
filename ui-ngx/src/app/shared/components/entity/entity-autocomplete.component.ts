@@ -94,7 +94,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
 
   filteredEntities: Observable<Array<BaseData<EntityId>>>;
 
-  private searchText = '';
+  searchText = '';
 
   private dirty = false;
 

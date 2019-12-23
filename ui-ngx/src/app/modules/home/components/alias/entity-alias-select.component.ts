@@ -92,7 +92,7 @@ export class EntityAliasSelectComponent implements ControlValueAccessor, OnInit,
 
   filteredEntityAliases: Observable<Array<EntityAlias>>;
 
-  private searchText = '';
+  searchText = '';
 
   private dirty = false;
 

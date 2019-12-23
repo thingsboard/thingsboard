@@ -70,6 +70,7 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
         this.ruleNodeFormGroup = this.fb.group({
           name: [this.ruleNode.name, [Validators.required]],
           debugMode: [this.ruleNode.debugMode, []],
+          configuration: [this.ruleNode.configuration, [Validators.required]],
           additionalInfo: this.fb.group(
             {
               description: [this.ruleNode.additionalInfo ? this.ruleNode.additionalInfo.description : ''],
