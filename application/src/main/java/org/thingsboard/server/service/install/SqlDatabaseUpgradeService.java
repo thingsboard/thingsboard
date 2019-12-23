@@ -196,7 +196,7 @@ public class SqlDatabaseUpgradeService implements DatabaseUpgradeService {
                     log.info("Schema updated.");
                 }
                 break;
-            case "2.4.2.1":
+            case "2.4.2":
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
                     log.info("Updating schema ...");
                     try {
