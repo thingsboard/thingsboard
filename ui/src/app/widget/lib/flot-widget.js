@@ -1213,7 +1213,35 @@ export default class TbFlot {
     }
 
     static get pieDatakeySettingsSchema() {
-        return {}
+        return {
+            "schema": {
+                "type": "object",
+                "title": "DataKeySettings",
+                "properties": {
+                    "hideDataByDefault": {
+                        "title": "Data is hidden by default",
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "disableDataHiding": {
+                        "title": "Disable data hiding",
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "removeFromLegend": {
+                        "title": "Remove datakey from legend",
+                        "type": "boolean",
+                        "default": false
+                    }
+                },
+                "required": []
+            },
+            "form": [
+                "hideDataByDefault",
+                "disableDataHiding",
+                "removeFromLegend"
+            ]
+        };
     }
 
     static datakeySettingsSchema(defaultShowLines, chartType) {
@@ -1225,6 +1253,21 @@ export default class TbFlot {
                 "properties": {
                     "excludeFromStacking": {
                         "title": "Exclude from stacking(available in \"Stacking\" mode)",
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "hideDataByDefault": {
+                        "title": "Data is hidden by default",
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "disableDataHiding": {
+                        "title": "Disable data hiding",
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "removeFromLegend": {
+                        "title": "Remove datakey from legend",
                         "type": "boolean",
                         "default": false
                     },
@@ -1316,6 +1359,9 @@ export default class TbFlot {
                 "required": ["showLines", "fillLines", "showPoints"]
             },
             "form": [
+                "hideDataByDefault",
+                "disableDataHiding",
+                "removeFromLegend",
                 "excludeFromStacking",
                 "showLines",
                 "fillLines",
