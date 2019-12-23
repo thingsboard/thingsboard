@@ -71,10 +71,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static org.thingsboard.server.common.data.DataConstants.ACTIVITY_EVENT;
-import static org.thingsboard.server.common.data.DataConstants.CONNECT_EVENT;
-import static org.thingsboard.server.common.data.DataConstants.DISCONNECT_EVENT;
-import static org.thingsboard.server.common.data.DataConstants.INACTIVITY_EVENT;
+import static org.thingsboard.server.common.data.DataConstants.*;
 
 /**
  * Created by ashvayka on 01.05.18.
@@ -344,6 +341,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
             if (stateData != null) {
                 DeviceState state = stateData.getState();
                 stateData.getState().setLastActivityTime(lastReportedActivity);
+                stateData.getMetaData().putValue("scope", SERVER_SCOPE);
                 pushRuleEngineMessage(stateData, ACTIVITY_EVENT);
                 save(deviceId, LAST_ACTIVITY_TIME, lastReportedActivity);
                 deviceLastSavedActivity.put(deviceId, lastReportedActivity);
