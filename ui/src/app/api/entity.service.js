@@ -850,7 +850,7 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
 
     function getEntityFieldKeys (entityType, searchText) {
         let entityFieldKeys = [];
-        let query = searchText.toLowerCase();
+        let query = searchText ? searchText.toLowerCase() : "";
         switch(entityType) {
             case types.entityType.user:
                 entityFieldKeys.push(types.entityField.name.keyName);
