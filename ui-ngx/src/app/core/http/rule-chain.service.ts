@@ -38,6 +38,7 @@ import { catchError, map, mergeMap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityType } from '@shared/models/entity-type.models';
 import { deepClone, snakeCase } from '@core/utils';
+import { DebugRuleNodeEventBody } from '@app/shared/models/event.models';
 
 @Injectable({
   providedIn: 'root'
@@ -168,6 +169,10 @@ export class RuleChainService {
 
   public ruleNodeAllowCustomLinks(component: RuleNodeComponentDescriptor): boolean {
     return component.configurationDescriptor.nodeDefinition.customRelations;
+  }
+
+  public getLatestRuleNodeDebugInput(ruleNodeId: string, config?: RequestConfig): Observable<DebugRuleNodeEventBody> {
+    return this.http.get<DebugRuleNodeEventBody>(`/api/ruleNode/${ruleNodeId}/debugIn`, defaultHttpOptionsFromConfig(config));
   }
 
   private resolveTargetRuleChains(ruleChainConnections: Array<RuleChainConnectionInfo>): Observable<{[ruleChainId: string]: RuleChain}> {

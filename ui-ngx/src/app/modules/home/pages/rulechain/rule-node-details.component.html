@@ -31,7 +31,7 @@
             {{ 'rulenode.debug-mode' | translate }}
           </mat-checkbox>
         </section>
-        <tb-rule-node-config
+        <tb-rule-node-config #ruleNodeConfigComponent
           formControlName="configuration"
           [ruleNodeId]="ruleNode.ruleNodeId?.id"
           [nodeDefinition]="ruleNode.component.configurationDescriptor.nodeDefinition">

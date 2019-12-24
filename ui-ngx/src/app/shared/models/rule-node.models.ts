@@ -78,6 +78,7 @@ export interface IRuleNodeConfigurationComponent {
   ruleNodeId: string;
   configuration: RuleNodeConfiguration;
   configurationChanged: Observable<RuleNodeConfiguration>;
+  validate();
   [key: string]: any;
 }
 
@@ -97,11 +98,17 @@ export abstract class RuleNodeConfigurationComponent extends PageComponent imple
     this.onConfigurationSet(this.configuration);
   }
 
+  validate() {
+    this.onValidate();
+  }
+
   protected abstract onConfigurationSet(configuration: RuleNodeConfiguration);
 
   protected notifyConfigurationUpdated(configuration: RuleNodeConfiguration) {
     this.configurationChangedEmiter.emit(configuration);
   }
+
+  protected onValidate() {}
 }
 
 

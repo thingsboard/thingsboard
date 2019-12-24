@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -24,6 +24,8 @@ import { RuleNodeType } from '@shared/models/rule-node.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { Subscription } from 'rxjs';
 import { RuleChainService } from '@core/http/rule-chain.service';
+import { JsonObjectEditComponent } from '@shared/components/json-object-edit.component';
+import { RuleNodeConfigComponent } from './rule-node-config.component';
 
 @Component({
   selector: 'tb-rule-node',
@@ -33,6 +35,8 @@ import { RuleChainService } from '@core/http/rule-chain.service';
 export class RuleNodeDetailsComponent extends PageComponent implements OnInit, OnChanges {
 
   @ViewChild('ruleNodeForm', {static: true}) ruleNodeForm: NgForm;
+
+  @ViewChild('ruleNodeConfigComponent', {static: false}) ruleNodeConfigComponent: RuleNodeConfigComponent;
 
   @Input()
   ruleNode: FcRuleNode;
@@ -125,6 +129,12 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
           this.buildForm();
         }
       }
+    }
+  }
+
+  validate() {
+    if (this.ruleNode.component.type !== RuleNodeType.RULE_CHAIN) {
+      this.ruleNodeConfigComponent.validate();
     }
   }
 }

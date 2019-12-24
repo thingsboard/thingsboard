@@ -67,6 +67,7 @@ import { DialogComponent } from '@shared/components/dialog.component';
 import { UtilsService } from '@core/services/utils.service';
 import { EntityService } from '@core/http/entity.service';
 import { AddWidgetDialogComponent, AddWidgetDialogData } from '@home/pages/dashboard/add-widget-dialog.component';
+import { RuleNodeConfigComponent } from '@home/pages/rulechain/rule-node-config.component';
 
 @Component({
   selector: 'tb-rulechain-page',
@@ -585,14 +586,17 @@ export class RuleChainPageComponent extends PageComponent
   }
 
   saveRuleNode() {
-    this.ruleNodeComponent.ruleNodeFormGroup.markAsPristine();
-    if (this.editingRuleNode.error) {
-      delete this.editingRuleNode.error;
+    this.ruleNodeComponent.validate();
+    if (this.ruleNodeComponent.ruleNodeFormGroup.valid) {
+      this.ruleNodeComponent.ruleNodeFormGroup.markAsPristine();
+      if (this.editingRuleNode.error) {
+        delete this.editingRuleNode.error;
+      }
+      this.ruleChainModel.nodes[this.editingRuleNodeIndex] = this.editingRuleNode;
+      this.editingRuleNode = deepClone(this.editingRuleNode);
+      this.onModelChanged();
+      this.updateRuleNodesHighlight();
     }
-    this.ruleChainModel.nodes[this.editingRuleNodeIndex] = this.editingRuleNode;
-    this.editingRuleNode = deepClone(this.editingRuleNode);
-    this.onModelChanged();
-    this.updateRuleNodesHighlight();
   }
 
   saveRuleNodeLink() {
@@ -938,6 +942,8 @@ export interface AddRuleNodeDialogData {
 export class AddRuleNodeDialogComponent extends DialogComponent<AddRuleNodeDialogComponent, FcRuleNode>
   implements OnInit, ErrorStateMatcher {
 
+  @ViewChild('tbRuleNode', {static: true}) ruleNodeDetailsComponent: RuleNodeDetailsComponent;
+
   ruleNode: FcRuleNode;
   ruleChainId: string;
 
@@ -973,6 +979,9 @@ export class AddRuleNodeDialogComponent extends DialogComponent<AddRuleNodeDialo
 
   add(): void {
     this.submitted = true;
-    this.dialogRef.close(this.ruleNode);
+    this.ruleNodeDetailsComponent.validate();
+    if (this.ruleNodeDetailsComponent.ruleNodeFormGroup.valid) {
+      this.dialogRef.close(this.ruleNode);
+    }
   }
 }

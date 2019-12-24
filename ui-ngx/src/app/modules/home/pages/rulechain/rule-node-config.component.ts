@@ -205,4 +205,10 @@ export class RuleNodeConfigComponent implements ControlValueAccessor, OnInit, On
       });
     }
   }
+
+  validate() {
+    if (this.useDefinedDirective()) {
+      this.definedConfigComponent.validate();
+    }
+  }
 }

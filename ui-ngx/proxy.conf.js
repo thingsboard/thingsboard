@@ -15,7 +15,7 @@
  */
 
 const ruleNodeUiforwardHost = 'localhost';
-const ruleNodeUiforwardPort = 8080;
+const ruleNodeUiforwardPort = 5000;
 
 const PROXY_CONFIG = {
   '/api': {
