@@ -439,7 +439,7 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         return entityId;
     }
 
-    function getStateEntityId(filter, stateParams) {
+    function getStateEntityInfo(filter, stateParams) {
         var entityId = null;
         if (stateParams) {
             if (filter.stateEntityParamName && filter.stateEntityParamName.length) {
@@ -456,7 +456,9 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         if (entityId) {
             entityId = resolveAliasEntityId(entityId.entityType, entityId.id);
         }
-        return entityId;
+        return {
+            entityId: entityId
+        };
     }
 
     function resolveAliasFilter(filter, stateParams, maxItems, failOnEmpty) {
@@ -468,7 +470,8 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         if (filter.stateEntityParamName && filter.stateEntityParamName.length) {
             result.entityParamName = filter.stateEntityParamName;
         }
-        var stateEntityId = getStateEntityId(filter, stateParams);
+        var stateEntityInfo = getStateEntityInfo(filter, stateParams);
+        var stateEntityId = stateEntityInfo.entityId;
         switch (filter.type) {
             case types.aliasFilterType.singleEntity.value:
                 var aliasEntityId = resolveAliasEntityId(filter.singleEntity.entityType, filter.singleEntity.id);
