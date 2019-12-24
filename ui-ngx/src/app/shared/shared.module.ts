@@ -114,6 +114,7 @@ import { MaterialIconsDialogComponent } from '@shared/components/dialog/material
 import { MaterialIconSelectComponent } from '@shared/components/material-icon-select.component';
 import { ImageInputComponent } from './components/image-input.component';
 import { FileInputComponent } from './components/file-input.component';
+import { NodeScriptTestDialogComponent } from '@shared/components/dialog/node-script-test-dialog.component';
 
 @NgModule({
   providers: [
@@ -134,7 +135,8 @@ import { FileInputComponent } from './components/file-input.component';
     DashboardSelectPanelComponent,
     MatSpinner,
     ColorPickerDialogComponent,
-    MaterialIconsDialogComponent
+    MaterialIconsDialogComponent,
+    NodeScriptTestDialogComponent
   ],
   declarations: [
     FooterComponent,
@@ -182,6 +184,7 @@ import { FileInputComponent } from './components/file-input.component';
     MaterialIconsDialogComponent,
     ColorInputComponent,
     MaterialIconSelectComponent,
+    NodeScriptTestDialogComponent,
     JsonFormComponent,
     ImageInputComponent,
     FileInputComponent,
@@ -324,6 +327,7 @@ import { FileInputComponent } from './components/file-input.component';
     MaterialIconsDialogComponent,
     ColorInputComponent,
     MaterialIconSelectComponent,
+    NodeScriptTestDialogComponent,
     JsonFormComponent,
     ImageInputComponent,
     FileInputComponent,

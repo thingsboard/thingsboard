@@ -17,41 +17,21 @@
 import {
   AfterViewInit,
   Component,
-  ElementRef,
+  ElementRef, HostBinding,
   Inject,
   OnInit,
   QueryList,
   SkipSelf,
-  ViewChild,
-  ViewChildren
+  ViewChildren,
+  ViewEncapsulation
 } from '@angular/core';
 import { ErrorStateMatcher, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import {
-  FormBuilder,
-  FormControl,
-  FormGroup,
-  FormGroupDirective,
-  NgForm,
-  ValidatorFn,
-  Validators
-} from '@angular/forms';
-import { combineLatest, Observable, of } from 'rxjs';
+import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
+import { combineLatest } from 'rxjs';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
-import {
-  toCustomAction,
-  WidgetActionCallbacks,
-  WidgetActionDescriptorInfo,
-  WidgetActionsData
-} from '@home/components/widget/action/manage-widget-actions.component.models';
-import { UtilsService } from '@core/services/utils.service';
-import { WidgetActionSource, WidgetActionType, widgetActionTypeTranslationMap } from '@shared/models/widget.models';
-import { map, mergeMap, startWith, tap } from 'rxjs/operators';
-import { DashboardService } from '@core/http/dashboard.service';
-import { Dashboard } from '@shared/models/dashboard.models';
-import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 
 export interface NodeScriptTestDialogData {
   script: string;
@@ -68,10 +48,14 @@ export interface NodeScriptTestDialogData {
   selector: 'tb-node-script-test-dialog',
   templateUrl: './node-script-test-dialog.component.html',
   providers: [{provide: ErrorStateMatcher, useExisting: NodeScriptTestDialogComponent}],
-  styleUrls: ['./node-script-test-dialog.component.scss']
+  styleUrls: ['./node-script-test-dialog.component.scss'],
+  encapsulation: ViewEncapsulation.None
 })
 export class NodeScriptTestDialogComponent extends DialogComponent<NodeScriptTestDialogComponent,
   string> implements OnInit, AfterViewInit, ErrorStateMatcher {
+
+  @HostBinding('style.width') width = '100%';
+  @HostBinding('style.height') height = '100%';
 
   @ViewChildren('topPanel')
   topPanelElmRef: QueryList<ElementRef<HTMLElement>>;
@@ -88,7 +72,7 @@ export class NodeScriptTestDialogComponent extends DialogComponent<NodeScriptTes
   @ViewChildren('bottomLeftPanel')
   bottomLeftPanelElmRef: QueryList<ElementRef<HTMLElement>>;
 
-  @ViewChildren('bottomLeftPanel')
+  @ViewChildren('bottomRightPanel')
   bottomRightPanelElmRef: QueryList<ElementRef<HTMLElement>>;
 
   nodeScriptTestFormGroup: FormGroup;
@@ -108,11 +92,13 @@ export class NodeScriptTestDialogComponent extends DialogComponent<NodeScriptTes
   }
 
   ngOnInit(): void {
-    this.nodeScriptTestFormGroup = this.fb.group({});
+    this.nodeScriptTestFormGroup = this.fb.group({
+      funcBody: ['', [Validators.required]]
+    });
   }
 
   ngAfterViewInit(): void {
-    combineLatest(this.topPanelElmRef.changes,
+/*    combineLatest(this.topPanelElmRef.changes,
                   this.topLeftPanelElmRef.changes,
                   this.topRightPanelElmRef.changes,
                   this.bottomPanelElmRef.changes,
@@ -120,15 +106,15 @@ export class NodeScriptTestDialogComponent extends DialogComponent<NodeScriptTes
                   this.bottomRightPanelElmRef.changes).subscribe(() => {
       if (this.topPanelElmRef.length && this.topLeftPanelElmRef.length &&
           this.topRightPanelElmRef.length && this.bottomPanelElmRef.length &&
-          this.bottomLeftPanelElmRef.length && this.bottomRightPanelElmRef.length) {
+          this.bottomLeftPanelElmRef.length && this.bottomRightPanelElmRef.length) {*/
         this.initSplitLayout(this.topPanelElmRef.first.nativeElement,
                              this.topLeftPanelElmRef.first.nativeElement,
                              this.topRightPanelElmRef.first.nativeElement,
                              this.bottomPanelElmRef.first.nativeElement,
                              this.bottomLeftPanelElmRef.first.nativeElement,
                              this.bottomRightPanelElmRef.first.nativeElement);
-      }
-    });
+    //  }
+    //});
   }
 
   private initSplitLayout(topPanel: any,

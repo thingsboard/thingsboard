@@ -15,7 +15,8 @@
     limitations under the License.
 
 -->
-<form #nodeScriptTestForm="ngForm" [formGroup]="nodeScriptTestFormGroup" (ngSubmit)="save()" style="width: 800px;">
+<form class="tb-node-script-test-dialog"
+      #nodeScriptTestForm="ngForm" [formGroup]="nodeScriptTestFormGroup" (ngSubmit)="save()">
   <mat-toolbar fxLayout="row" color="primary">
     <h2>{{ 'rulenode.test-script-function' | translate }}</h2>
     <span fxFlex></span>
@@ -43,8 +44,8 @@
           <div tb-toast toastTarget="metadataPanel" class="tb-resize-container">
             <div class="tb-editor-area-title-panel">
               <label translate>rulenode.metadata</label>
-              TODO: metadataForm
             </div>
+            TODO: metadataForm
           </div>
         </div>
       </div>
@@ -72,7 +73,6 @@
     <button mat-button mat-raised-button color="primary"
             type="button"
             (click)="test()"
-            cdkFocusInitial
             [disabled]="(isLoading$ | async) || nodeScriptTestFormGroup.invalid">
       {{ 'rulenode.test' | translate }}
     </button>
@@ -85,6 +85,7 @@
     <button mat-button color="primary"
             style="margin-right: 20px;"
             type="button"
+            cdkFocusInitial
             [disabled]="(isLoading$ | async)"
             (click)="cancel()">
       {{ 'action.cancel' | translate }}

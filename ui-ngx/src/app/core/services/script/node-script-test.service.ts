@@ -18,13 +18,16 @@ import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { map, switchMap } from 'rxjs/operators';
+import { MatDialog } from '@angular/material';
+import { NodeScriptTestDialogComponent, NodeScriptTestDialogData } from '@shared/components/dialog/node-script-test-dialog.component';
 
 @Injectable({
   providedIn: 'root'
 })
 export class NodeScriptTestService {
 
-  constructor(private ruleChainService: RuleChainService) {
+  constructor(private ruleChainService: RuleChainService,
+              public dialog: MatDialog) {
   }
 
   testNodeScript(script: string, scriptType: string, functionTitle: string,
@@ -73,8 +76,21 @@ export class NodeScriptTestService {
     if (!msgType) {
       msgType = 'POST_TELEMETRY_REQUEST';
     }
-    console.log(`testNodeScript TODO: ${script}`);
-    return of(script);
+    return this.dialog.open<NodeScriptTestDialogComponent, NodeScriptTestDialogData, string>(NodeScriptTestDialogComponent,
+      {
+        disableClose: true,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog', 'tb-fullscreen-dialog-gt-sm'],
+        data: {
+          msg,
+          metadata,
+          msgType,
+          functionTitle,
+          functionName,
+          script,
+          scriptType,
+          argNames
+        }
+      }).afterClosed();
   }
 
 }
