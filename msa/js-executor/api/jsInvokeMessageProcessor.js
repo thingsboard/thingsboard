@@ -15,37 +15,47 @@
  */
 'use strict';
 
+const COMPILATION_ERROR = 0;
+const RUNTIME_ERROR = 1;
+const TIMEOUT_ERROR = 2;
+const UNRECOGNIZED = -1;
+
 const config = require('config'),
-      logger = require('../config/logger')('JsInvokeMessageProcessor'),
+      logger = require('../config/logger')._logger('JsInvokeMessageProcessor'),
       Utils = require('./utils'),
-      js = require('./jsinvoke.proto').js,
-      KeyedMessage = require('kafka-node').KeyedMessage,
       JsExecutor = require('./jsExecutor');
 
 const scriptBodyTraceFrequency = Number(config.get('script.script_body_trace_frequency'));
+const useSandbox = config.get('script.use_sandbox') === 'true';
+const maxActiveScripts = Number(config.get('script.max_active_scripts'));
 
 function JsInvokeMessageProcessor(producer) {
     this.producer = producer;
-    this.executor = new JsExecutor();
+    this.executor = new JsExecutor(useSandbox);
     this.scriptMap = {};
+    this.scriptIds = [];
     this.executedScriptsCounter = 0;
 }
 
 JsInvokeMessageProcessor.prototype.onJsInvokeMessage = function(message) {
 
     var requestId;
+    var responseTopic;
     try {
-        var request = js.RemoteJsRequest.decode(message.value);
-        requestId = getRequestId(request);
+        var request = JSON.parse(message.value.toString('utf8'));
+        var buf = message.headers['requestId'];
+        requestId = Utils.UUIDFromBuffer(buf);
+        buf = message.headers['responseTopic'];
+        responseTopic = buf.toString('utf8');
 
-        logger.debug('[%s] Received request, responseTopic: [%s]', requestId, request.responseTopic);
+        logger.debug('[%s] Received request, responseTopic: [%s]', requestId, responseTopic);
 
         if (request.compileRequest) {
-            this.processCompileRequest(requestId, request.responseTopic, request.compileRequest);
+            this.processCompileRequest(requestId, responseTopic, request.compileRequest);
         } else if (request.invokeRequest) {
-            this.processInvokeRequest(requestId, request.responseTopic, request.invokeRequest);
+            this.processInvokeRequest(requestId, responseTopic, request.invokeRequest);
         } else if (request.releaseRequest) {
-            this.processReleaseRequest(requestId, request.responseTopic, request.releaseRequest);
+            this.processReleaseRequest(requestId, responseTopic, request.releaseRequest);
         } else {
             logger.error('[%s] Unknown request recevied!', requestId);
         }
@@ -62,13 +72,13 @@ JsInvokeMessageProcessor.prototype.processCompileRequest = function(requestId, r
 
     this.executor.compileScript(compileRequest.scriptBody).then(
         (script) => {
-            this.scriptMap[scriptId] = script;
+            this.cacheScript(scriptId, script);
             var compileResponse = createCompileResponse(scriptId, true);
             logger.debug('[%s] Sending success compile response, scriptId: [%s]', requestId, scriptId);
             this.sendResponse(requestId, responseTopic, scriptId, compileResponse);
         },
         (err) => {
-            var compileResponse = createCompileResponse(scriptId, false, js.JsInvokeErrorCode.COMPILATION_ERROR, err);
+            var compileResponse = createCompileResponse(scriptId, false, COMPILATION_ERROR, err);
             logger.debug('[%s] Sending failed compile response, scriptId: [%s]', requestId, scriptId);
             this.sendResponse(requestId, responseTopic, scriptId, compileResponse);
         }
@@ -96,9 +106,9 @@ JsInvokeMessageProcessor.prototype.processInvokeRequest = function(requestId, re
                 (err) => {
                     var errorCode;
                     if (err.message.includes('Script execution timed out')) {
-                        errorCode = js.JsInvokeErrorCode.TIMEOUT_ERROR;
+                        errorCode = TIMEOUT_ERROR;
                     } else {
-                        errorCode = js.JsInvokeErrorCode.RUNTIME_ERROR;
+                        errorCode = RUNTIME_ERROR;
                     }
                     var invokeResponse = createInvokeResponse("", false, errorCode, err);
                     logger.debug('[%s] Sending failed invoke response, scriptId: [%s], errorCode: [%s]', requestId, scriptId, errorCode);
@@ -107,8 +117,8 @@ JsInvokeMessageProcessor.prototype.processInvokeRequest = function(requestId, re
             )
         },
         (err) => {
-            var invokeResponse = createInvokeResponse("", false, js.JsInvokeErrorCode.COMPILATION_ERROR, err);
-            logger.debug('[%s] Sending failed invoke response, scriptId: [%s], errorCode: [%s]', requestId, scriptId, js.JsInvokeErrorCode.COMPILATION_ERROR);
+            var invokeResponse = createInvokeResponse("", false, COMPILATION_ERROR, err);
+            logger.debug('[%s] Sending failed invoke response, scriptId: [%s], errorCode: [%s]', requestId, scriptId, COMPILATION_ERROR);
             this.sendResponse(requestId, responseTopic, scriptId, null, invokeResponse);
         }
     );
@@ -118,6 +128,10 @@ JsInvokeMessageProcessor.prototype.processReleaseRequest = function(requestId, r
     var scriptId = getScriptId(releaseRequest);
     logger.debug('[%s] Processing release request, scriptId: [%s]', requestId, scriptId);
     if (this.scriptMap[scriptId]) {
+        var index = this.scriptIds.indexOf(scriptId);
+        if (index > -1) {
+            this.scriptIds.splice(index, 1);
+        }
         delete this.scriptMap[scriptId];
     }
     var releaseResponse = createReleaseResponse(scriptId, true);
@@ -127,15 +141,26 @@ JsInvokeMessageProcessor.prototype.processReleaseRequest = function(requestId, r
 
 JsInvokeMessageProcessor.prototype.sendResponse = function (requestId, responseTopic, scriptId, compileResponse, invokeResponse, releaseResponse) {
     var remoteResponse = createRemoteResponse(requestId, compileResponse, invokeResponse, releaseResponse);
-    var rawResponse = js.RemoteJsResponse.encode(remoteResponse).finish();
-    const message = new KeyedMessage(scriptId, rawResponse);
-    const payloads = [ { topic: responseTopic, messages: message, key: scriptId } ];
-    this.producer.send(payloads, function (err, data) {
-        if (err) {
-            logger.error('[%s] Failed to send response to kafka: %s', requestId, err.message);
-            logger.error(err.stack);
+    var rawResponse = Buffer.from(JSON.stringify(remoteResponse), 'utf8');
+    this.producer.send(
+        {
+            topic: responseTopic,
+            messages: [
+                {
+                    key: scriptId,
+                    value: rawResponse
+                }
+            ]
         }
-    });
+    ).then(
+        () => {},
+        (err) => {
+            if (err) {
+                logger.error('[%s] Failed to send response to kafka: %s', requestId, err.message);
+                logger.error(err.stack);
+            }
+        }
+    );
 }
 
 JsInvokeMessageProcessor.prototype.getOrCompileScript = function(scriptId, scriptBody) {
@@ -146,7 +171,7 @@ JsInvokeMessageProcessor.prototype.getOrCompileScript = function(scriptId, scrip
         } else {
             self.executor.compileScript(scriptBody).then(
                 (script) => {
-                    self.scriptMap[scriptId] = script;
+                    self.cacheScript(scriptId, script);
                     resolve(script);
                 },
                 (err) => {
@@ -157,52 +182,57 @@ JsInvokeMessageProcessor.prototype.getOrCompileScript = function(scriptId, scrip
     });
 }
 
+JsInvokeMessageProcessor.prototype.cacheScript = function(scriptId, script) {
+    if (!this.scriptMap[scriptId]) {
+        this.scriptIds.push(scriptId);
+        while (this.scriptIds.length > maxActiveScripts) {
+            logger.info('Active scripts count [%s] exceeds maximum limit [%s]', this.scriptIds.length, maxActiveScripts);
+            const prevScriptId = this.scriptIds.shift();
+            logger.info('Removing active script with id [%s]', prevScriptId);
+            delete this.scriptMap[prevScriptId];
+        }
+    }
+    this.scriptMap[scriptId] = script;
+}
+
 function createRemoteResponse(requestId, compileResponse, invokeResponse, releaseResponse) {
     const requestIdBits = Utils.UUIDToBits(requestId);
-    return js.RemoteJsResponse.create(
-        {
+    return {
             requestIdMSB: requestIdBits[0],
             requestIdLSB: requestIdBits[1],
             compileResponse: compileResponse,
             invokeResponse: invokeResponse,
             releaseResponse: releaseResponse
-        }
-    );
+    };
 }
 
 function createCompileResponse(scriptId, success, errorCode, err) {
     const scriptIdBits = Utils.UUIDToBits(scriptId);
-    return js.JsCompileResponse.create(
-        {
+    return  {
             errorCode: errorCode,
             success: success,
             errorDetails: parseJsErrorDetails(err),
             scriptIdMSB: scriptIdBits[0],
             scriptIdLSB: scriptIdBits[1]
-        }
-    );
+    };
 }
 
 function createInvokeResponse(result, success, errorCode, err) {
-    return js.JsInvokeResponse.create(
-        {
+    return  {
             errorCode: errorCode,
             success: success,
             errorDetails: parseJsErrorDetails(err),
             result: result
-        }
-    );
+    };
 }
 
 function createReleaseResponse(scriptId, success) {
     const scriptIdBits = Utils.UUIDToBits(scriptId);
-    return js.JsReleaseResponse.create(
-        {
+    return {
             success: success,
             scriptIdMSB: scriptIdBits[0],
             scriptIdLSB: scriptIdBits[1]
-        }
-    );
+    };
 }
 
 function parseJsErrorDetails(err) {
@@ -227,10 +257,6 @@ function parseJsErrorDetails(err) {
 
 function getScriptId(request) {
     return Utils.toUUIDString(request.scriptIdMSB, request.scriptIdLSB);
-}
-
-function getRequestId(request) {
-    return Utils.toUUIDString(request.requestIdMSB, request.requestIdLSB);
 }
 
 module.exports = JsInvokeMessageProcessor;

@@ -129,7 +129,9 @@ public class TbMsgGeneratorNode implements TbNode {
                 prevMsg = ctx.newMsg("", originatorId, new TbMsgMetaData(), "{}");
             }
             if (initialized) {
+                ctx.logJsEvalRequest();
                 TbMsg generated = jsEngine.executeGenerate(prevMsg);
+                ctx.logJsEvalResponse();
                 prevMsg = ctx.newMsg(generated.getType(), originatorId, generated.getMetaData(), generated.getData());
             }
             return prevMsg;

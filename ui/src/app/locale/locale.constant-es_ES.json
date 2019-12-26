@@ -808,6 +808,22 @@
         "no-data": "No hay datos para mostrar",
         "columns-to-display": "Columnas a mostrar"
     },
+    "entity-field": {
+        "created-time": "Tiempo de creación",
+        "name": "Nombre",
+        "type": "Tipo",
+        "first-name": "Nombre",
+        "last-name": "Apellido",
+        "email": "Correo electrónico",
+        "title": "Título",
+        "country": "País",
+        "state": "Estado",
+        "city": "Ciudad",
+        "address": "Dirección",
+        "address2": "Dirección 2",
+        "zip": "Código postal",
+        "phone": "Teléfono"
+    },
     "entity-view": {
         "entity-view": "Vista de entidad",
         "entity-view-required": "Vista de entidad es requerido.",
@@ -1757,7 +1773,8 @@
             "tr_TR": "Turco",
             "fa_IR": "Persa",
             "uk_UA": "Ucraniano",
-            "cs_CZ": "Checo"
+            "cs_CZ": "Checo",
+            "el_GR": "Griego"
         }
     }
 }

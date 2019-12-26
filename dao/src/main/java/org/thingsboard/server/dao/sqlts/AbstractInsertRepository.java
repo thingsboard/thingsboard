@@ -15,13 +15,21 @@
  */
 package org.thingsboard.server.dao.sqlts;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import java.util.regex.Pattern;
 
 @Repository
 public abstract class AbstractInsertRepository {
+
+    private static final ThreadLocal<Pattern> PATTERN_THREAD_LOCAL = ThreadLocal.withInitial(() -> Pattern.compile(String.valueOf(Character.MIN_VALUE)));
+    private static final String EMPTY_STR = "";
 
     protected static final String BOOL_V = "bool_v";
     protected static final String STR_V = "str_v";
@@ -46,8 +54,17 @@ public abstract class AbstractInsertRepository {
     protected static final String PSQL_ON_LONG_VALUE_UPDATE_SET_NULLS = "str_v = null, bool_v = null, dbl_v = null";
     protected static final String PSQL_ON_DBL_VALUE_UPDATE_SET_NULLS = "str_v = null, long_v = null, bool_v = null";
 
+    @Value("${sql.remove_null_chars}")
+    private boolean removeNullChars;
+
     @PersistenceContext
     protected EntityManager entityManager;
+
+    @Autowired
+    protected JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    protected TransactionTemplate transactionTemplate;
 
     protected static String getInsertOrUpdateStringHsql(String tableName, String constraint, String value, String nullValues) {
         return "MERGE INTO " + tableName + " USING(VALUES :entity_type, :entity_id, :key, :ts, :" + value + ") A (entity_type, entity_id, key, ts, " + value + ") ON " + constraint + " WHEN MATCHED THEN UPDATE SET " + tableName + "." + value + " = A." + value + ", " + tableName + ".ts = A.ts," + nullValues + "WHEN NOT MATCHED THEN INSERT (entity_type, entity_id, key, ts, " + value + ") VALUES (A.entity_type, A.entity_id, A.key, A.ts, A." + value + ")";
@@ -70,5 +87,12 @@ public abstract class AbstractInsertRepository {
             default:
                 throw new RuntimeException("Unsupported insert value: [" + notNullValue + "]");
         }
+    }
+
+    protected String replaceNullChars(String strValue) {
+        if (removeNullChars && strValue != null) {
+            return PATTERN_THREAD_LOCAL.get().matcher(strValue).replaceAll(EMPTY_STR);
+        }
+        return strValue;
     }
 }

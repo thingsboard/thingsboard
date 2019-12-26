@@ -13,22 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.security.model;
+package org.thingsboard.server.common.data;
 
 import lombok.Data;
 
-import java.io.Serializable;
-
 @Data
-public class UserPasswordPolicy implements Serializable {
+public class UpdateMessage {
 
-    private Integer minimumLength;
-    private Integer minimumUppercaseLetters;
-    private Integer minimumLowercaseLetters;
-    private Integer minimumDigits;
-    private Integer minimumSpecialCharacters;
-
-    private Integer passwordExpirationPeriodDays;
-    private Integer passwordReuseFrequencyDays;
+    private final String message;
+    private final boolean isUpdateAvailable;
 
 }

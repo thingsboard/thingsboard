@@ -809,6 +809,22 @@
         "use-entity-name-filter": "Utiliser un filtre",
         "user-name-starts-with": "Utilisateurs dont les noms commencent par '{{prefix}}'"
     },
+    "entity-field": {
+        "address": "Adresse",
+        "address2": "Adresse 2",
+        "city": "Ville",
+        "country": "Pays",
+        "created-time": "Heure de création",
+        "email": "Email",
+        "first-name": "Prénom",
+        "last-name": "Nom de famille",
+        "name": "Nom",
+        "phone": "Téléphone",
+        "state": "Prov",
+        "title": "Titre",
+        "type": "Type",
+        "zip": "Code postal"
+    },
     "entity-view": {
         "add": "Ajouter une vue d'entité",
         "add-alias": "Ajouter un alias de vue d'entité",
@@ -1167,7 +1183,8 @@
             "tr_TR": "Turc",
             "fa_IR": "Persane",
             "uk_UA": "Ukrainien",
-            "cs_CZ": "Tchèque"
+            "cs_CZ": "Tchèque",
+            "el_GR": "Grec"
         }
     },
     "layout": {

@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.kafka;
+package org.thingsboard.server.dao.sql.component;
 
-import java.util.UUID;
+import org.thingsboard.server.dao.model.sql.ComponentDescriptorEntity;
 
-public interface TbKafkaEnricher<T> {
+public interface ComponentDescriptorInsertRepository {
 
-    T enrich(T value, String responseTopic, UUID requestId);
+    ComponentDescriptorEntity saveOrUpdate(ComponentDescriptorEntity entity);
 
 }

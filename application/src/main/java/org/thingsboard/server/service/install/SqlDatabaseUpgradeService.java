@@ -182,6 +182,26 @@ public class SqlDatabaseUpgradeService implements DatabaseUpgradeService {
                     try {
                         conn.createStatement().execute("ALTER TABLE asset ADD COLUMN label varchar(255)"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
                     } catch (Exception e) {}
+                    schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "2.4.2", SCHEMA_UPDATE_SQL);
+                    loadSql(schemaUpdateFile, conn);
+                    try {
+                        conn.createStatement().execute("ALTER TABLE device ADD CONSTRAINT device_name_unq_key UNIQUE (tenant_id, name)"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
+                    } catch (Exception e) {}
+                    try {
+                        conn.createStatement().execute("ALTER TABLE device_credentials ADD CONSTRAINT device_credentials_id_unq_key UNIQUE (credentials_id)"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
+                    } catch (Exception e) {}
+                    try {
+                        conn.createStatement().execute("ALTER TABLE asset ADD CONSTRAINT asset_name_unq_key UNIQUE (tenant_id, name)"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
+                    } catch (Exception e) {}
+                    log.info("Schema updated.");
+                }
+                break;
+            case "2.4.2":
+                try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+                    log.info("Updating schema ...");
+                    try {
+                        conn.createStatement().execute("ALTER TABLE alarm ADD COLUMN propagate_relation_types varchar"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
+                    } catch (Exception e) {}
                     log.info("Schema updated.");
                 }
                 break;

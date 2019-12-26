@@ -37,6 +37,8 @@ public interface DeviceService {
 
     Device saveDevice(Device device);
 
+    Device saveDeviceWithAccessToken(Device device, String accessToken);
+
     Device assignDeviceToCustomer(TenantId tenantId, DeviceId deviceId, CustomerId customerId);
 
     Device unassignDeviceFromCustomer(TenantId tenantId, DeviceId deviceId);

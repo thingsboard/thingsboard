@@ -42,14 +42,13 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.UserCredentials;
-import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.user.UserServiceImpl;
 import org.thingsboard.server.service.security.exception.UserPasswordExpiredException;
-import org.thingsboard.server.service.security.model.SecuritySettings;
-import org.thingsboard.server.service.security.model.UserPasswordPolicy;
+import org.thingsboard.server.common.data.security.model.SecuritySettings;
+import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;

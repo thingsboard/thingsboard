@@ -439,7 +439,7 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         return entityId;
     }
 
-    function getStateEntityId(filter, stateParams) {
+    function getStateEntityInfo(filter, stateParams) {
         var entityId = null;
         if (stateParams) {
             if (filter.stateEntityParamName && filter.stateEntityParamName.length) {
@@ -456,7 +456,9 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         if (entityId) {
             entityId = resolveAliasEntityId(entityId.entityType, entityId.id);
         }
-        return entityId;
+        return {
+            entityId: entityId
+        };
     }
 
     function resolveAliasFilter(filter, stateParams, maxItems, failOnEmpty) {
@@ -468,7 +470,8 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         if (filter.stateEntityParamName && filter.stateEntityParamName.length) {
             result.entityParamName = filter.stateEntityParamName;
         }
-        var stateEntityId = getStateEntityId(filter, stateParams);
+        var stateEntityInfo = getStateEntityInfo(filter, stateParams);
+        var stateEntityId = stateEntityInfo.entityId;
         switch (filter.type) {
             case types.aliasFilterType.singleEntity.value:
                 var aliasEntityId = resolveAliasEntityId(filter.singleEntity.entityType, filter.singleEntity.id);
@@ -848,7 +851,50 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         return deferred.promise;
     }
 
+    function getEntityFieldKeys (entityType, searchText) {
+        let entityFieldKeys = [];
+        let query = searchText ? searchText.toLowerCase() : "";
+        switch(entityType) {
+            case types.entityType.user:
+                entityFieldKeys.push(types.entityField.name.keyName);
+                entityFieldKeys.push(types.entityField.email.keyName);
+                entityFieldKeys.push(types.entityField.firstName.keyName);
+                entityFieldKeys.push(types.entityField.lastName.keyName);
+                break;
+            case types.entityType.tenant:
+            case types.entityType.customer:
+                entityFieldKeys.push(types.entityField.title.keyName);
+                entityFieldKeys.push(types.entityField.email.keyName);
+                entityFieldKeys.push(types.entityField.country.keyName);
+                entityFieldKeys.push(types.entityField.state.keyName);
+                entityFieldKeys.push(types.entityField.city.keyName);
+                entityFieldKeys.push(types.entityField.address.keyName);
+                entityFieldKeys.push(types.entityField.address2.keyName);
+                entityFieldKeys.push(types.entityField.zip.keyName);
+                entityFieldKeys.push(types.entityField.phone.keyName);
+                break;
+            case types.entityType.entityView:
+                entityFieldKeys.push(types.entityField.name.keyName);
+                entityFieldKeys.push(types.entityField.type.keyName);
+                break;
+            case types.entityType.device:
+            case types.entityType.asset:
+                entityFieldKeys.push(types.entityField.name.keyName);
+                entityFieldKeys.push(types.entityField.type.keyName);
+                entityFieldKeys.push(types.entityField.label.keyName);
+                break;
+            case types.entityType.dashboard:
+                entityFieldKeys.push(types.entityField.title.keyName);
+                break;
+        }
+
+        return query ? entityFieldKeys.filter((entityField) => entityField.toLowerCase().indexOf(query) === 0) : entityFieldKeys;
+    }
+
     function getEntityKeys(entityType, entityId, query, type, config) {
+        if (type === types.dataKeyType.entityField) {
+            return $q.when(getEntityFieldKeys(entityType, query));
+        }
         var deferred = $q.defer();
         var url = '/api/plugins/telemetry/' + entityType + '/' + entityId + '/keys/';
         if (type === types.dataKeyType.timeseries) {

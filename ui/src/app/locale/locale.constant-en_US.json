@@ -162,7 +162,13 @@
         "clear-alarms-text": "Are you sure you want to clear { count, plural, 1 {1 alarm} other {# alarms} }?",
         "clear-alarm-title": "Clear Alarm",
         "clear-alarm-text": "Are you sure you want to clear Alarm?",
-        "alarm-status-filter": "Alarm Status Filter"
+        "alarm-status-filter": "Alarm Status Filter",
+        "max-count-load": "Maximum number of alarms to load (0 - unlimited)",
+        "max-count-load-required": "Maximum number of alarms to load is required.",
+        "max-count-load-error-min": "Minimum value is 0.",
+        "fetch-size": "Fetch size",
+        "fetch-size-required": "Fetch size is required.",
+        "fetch-size-error-min": "Minimum value is 10."
     },
     "alias": {
         "add": "Add alias",
@@ -577,6 +583,7 @@
         "configuration": "Data key configuration",
         "timeseries": "Timeseries",
         "attributes": "Attributes",
+        "entity-field": "Entity field",
         "alarm": "Alarm fields",
         "timeseries-required": "Entity timeseries are required.",
         "timeseries-or-attributes-required": "Entity timeseries/attributes are required.",
@@ -808,6 +815,23 @@
         "no-entities-prompt": "No entities found",
         "no-data": "No data to display",
         "columns-to-display": "Columns to Display"
+    },
+    "entity-field": {
+        "created-time": "Created time",
+        "name": "Name",
+        "type": "Type",
+        "first-name": "First name",
+        "last-name": "Last name",
+        "email": "Email",
+        "title": "Title",
+        "country": "Country",
+        "state": "State",
+        "city": "City",
+        "address": "Address",
+        "address2": "Address 2",
+        "zip": "Zip",
+        "phone": "Phone",
+        "label": "Label"
     },
     "entity-view": {
         "entity-view": "Entity View",
@@ -1780,7 +1804,8 @@
             "tr_TR": "Turkish",
             "fa_IR": "Persian",
             "uk_UA": "Ukrainian",
-            "cs_CZ": "Czech"            
+            "cs_CZ": "Czech",
+            "el_GR": "Greek"
         }
     }
 }

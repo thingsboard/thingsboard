@@ -88,21 +88,6 @@ public class ConsistentClusterRoutingService implements ClusterRoutingService {
         return resolveByUuid(rootCircle, entityId.getId());
     }
 
-    @Override
-    public Optional<ServerAddress> resolveByUuid(UUID uuid) {
-        return resolveByUuid(rootCircle, uuid);
-    }
-
-    @Override
-    public Optional<ServerAddress> resolveByUuid(ServerType server, UUID uuid) {
-        return resolveByUuid(circles[server.ordinal()], uuid);
-    }
-
-    @Override
-    public Optional<ServerAddress> resolveById(ServerType server, EntityId entityId) {
-        return resolveByUuid(circles[server.ordinal()], entityId.getId());
-    }
-
     private Optional<ServerAddress> resolveByUuid(ConsistentHashCircle circle, UUID uuid) {
         Assert.notNull(uuid);
         if (circle.isEmpty()) {
