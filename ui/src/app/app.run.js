@@ -162,14 +162,12 @@ export default function AppRun($rootScope, $window, $injector, $location, $log, 
         if (forbiddenDialog === null) {
             $translate(['access.access-forbidden',
                 'access.access-forbidden-text',
-                'access.access-forbidden',
                 'action.cancel',
                 'action.sign-in']).then(function (translations) {
                 if (forbiddenDialog === null) {
                     forbiddenDialog = $mdDialog.confirm()
                         .title(translations['access.access-forbidden'])
                         .htmlContent(translations['access.access-forbidden-text'])
-                        .ariaLabel(translations['access.access-forbidden'])
                         .cancel(translations['action.cancel'])
                         .ok(translations['action.sign-in']);
                     $mdDialog.show(forbiddenDialog).then(function () {
