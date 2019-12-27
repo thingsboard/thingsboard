@@ -156,4 +156,41 @@ export const valueTypesMap = new Map<ValueType, ValueTypeData>(
   ]
 );
 
+export interface ContentTypeData {
+  name: string;
+  code: string;
+}
+
+export enum ContentType {
+  JSON = 'JSON',
+  TEXT = 'TEXT',
+  BINARY = 'BINARY'
+}
+
+export const contentTypesMap = new Map<ContentType, ContentTypeData>(
+  [
+    [
+      ContentType.JSON,
+      {
+        name: 'content-type.json',
+        code: 'json'
+      }
+    ],
+    [
+      ContentType.TEXT,
+      {
+        name: 'content-type.text',
+        code: 'text'
+      }
+    ],
+    [
+      ContentType.BINARY,
+      {
+        name: 'content-type.binary',
+        code: 'text'
+      }
+    ]
+  ]
+);
+
 export const customTranslationsPrefix = 'custom.';

@@ -232,6 +232,58 @@ export interface RuleNodeComponentDescriptor extends ComponentDescriptor {
   configurationDescriptor?: RuleNodeConfigurationDescriptor;
 }
 
+export interface TestScriptInputParams {
+  script: string;
+  scriptType: string;
+  argNames: string[];
+  msg: string;
+  metadata: {[key: string]: string};
+  msgType: string;
+}
+
+export interface TestScriptResult {
+  output: string;
+  error: string;
+}
+
+export enum MessageType {
+  POST_ATTRIBUTES_REQUEST = 'POST_ATTRIBUTES_REQUEST',
+  POST_TELEMETRY_REQUEST = 'POST_TELEMETRY_REQUEST',
+  TO_SERVER_RPC_REQUEST = 'TO_SERVER_RPC_REQUEST',
+  RPC_CALL_FROM_SERVER_TO_DEVICE = 'RPC_CALL_FROM_SERVER_TO_DEVICE',
+  ACTIVITY_EVENT = 'ACTIVITY_EVENT',
+  INACTIVITY_EVENT = 'INACTIVITY_EVENT',
+  CONNECT_EVENT = 'CONNECT_EVENT',
+  DISCONNECT_EVENT = 'DISCONNECT_EVENT',
+  ENTITY_CREATED = 'ENTITY_CREATED',
+  ENTITY_UPDATED = 'ENTITY_UPDATED',
+  ENTITY_DELETED = 'ENTITY_DELETED',
+  ENTITY_ASSIGNED = 'ENTITY_ASSIGNED',
+  ENTITY_UNASSIGNED = 'ENTITY_UNASSIGNED',
+  ATTRIBUTES_UPDATED = 'ATTRIBUTES_UPDATED',
+  ATTRIBUTES_DELETED = 'ATTRIBUTES_DELETED'
+}
+
+export const messageTypeNames = new Map<MessageType, string>(
+  [
+    [MessageType.POST_ATTRIBUTES_REQUEST, 'Post attributes'],
+    [MessageType.POST_TELEMETRY_REQUEST, 'Post telemetry'],
+    [MessageType.TO_SERVER_RPC_REQUEST, 'RPC Request from Device'],
+    [MessageType.RPC_CALL_FROM_SERVER_TO_DEVICE, 'RPC Request to Device'],
+    [MessageType.ACTIVITY_EVENT, 'Activity Event'],
+    [MessageType.INACTIVITY_EVENT, 'Inactivity Event'],
+    [MessageType.CONNECT_EVENT, 'Connect Event'],
+    [MessageType.DISCONNECT_EVENT, 'Disconnect Event'],
+    [MessageType.ENTITY_CREATED, 'Entity Created'],
+    [MessageType.ENTITY_UPDATED, 'Entity Updated'],
+    [MessageType.ENTITY_DELETED, 'Entity Deleted'],
+    [MessageType.ENTITY_ASSIGNED, 'Entity Assigned'],
+    [MessageType.ENTITY_UNASSIGNED, 'Entity Unassigned'],
+    [MessageType.ATTRIBUTES_UPDATED, 'Attributes Updated'],
+    [MessageType.ATTRIBUTES_DELETED, 'Attributes Deleted']
+  ]
+);
+
 const ruleNodeClazzHelpLinkMap = {
   'org.thingsboard.rule.engine.filter.TbCheckRelationNode': 'ruleNodeCheckRelation',
   'org.thingsboard.rule.engine.filter.TbCheckMessageNode': 'ruleNodeCheckExistenceFields',

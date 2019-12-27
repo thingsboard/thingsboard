@@ -31,7 +31,7 @@ import { ComponentDescriptorService } from './component-descriptor.service';
 import {
   IRuleNodeConfigurationComponent,
   LinkLabel,
-  RuleNodeComponentDescriptor
+  RuleNodeComponentDescriptor, TestScriptInputParams, TestScriptResult
 } from '@app/shared/models/rule-node.models';
 import { ResourcesService } from '../services/resources.service';
 import { catchError, map, mergeMap } from 'rxjs/operators';
@@ -173,6 +173,10 @@ export class RuleChainService {
 
   public getLatestRuleNodeDebugInput(ruleNodeId: string, config?: RequestConfig): Observable<DebugRuleNodeEventBody> {
     return this.http.get<DebugRuleNodeEventBody>(`/api/ruleNode/${ruleNodeId}/debugIn`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public testScript(inputParams: TestScriptInputParams, config?: RequestConfig): Observable<TestScriptResult> {
+    return this.http.post<TestScriptResult>('/api/ruleChain/testScript', inputParams, defaultHttpOptionsFromConfig(config));
   }
 
   private resolveTargetRuleChains(ruleChainConnections: Array<RuleChainConnectionInfo>): Observable<{[ruleChainId: string]: RuleChain}> {

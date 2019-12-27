@@ -115,6 +115,9 @@ import { MaterialIconSelectComponent } from '@shared/components/material-icon-se
 import { ImageInputComponent } from './components/image-input.component';
 import { FileInputComponent } from './components/file-input.component';
 import { NodeScriptTestDialogComponent } from '@shared/components/dialog/node-script-test-dialog.component';
+import { MessageTypeAutocompleteComponent } from './components/message-type-autocomplete.component';
+import { JsonContentComponent } from './components/json-content.component';
+import { KeyValMapComponent } from './components/kv-map.component';
 
 @NgModule({
   providers: [
@@ -175,6 +178,7 @@ import { NodeScriptTestDialogComponent } from '@shared/components/dialog/node-sc
     RelationTypeAutocompleteComponent,
     SocialSharePanelComponent,
     JsonObjectEditComponent,
+    JsonContentComponent,
     JsFuncComponent,
     FabTriggerDirective,
     FabActionsDirective,
@@ -188,6 +192,8 @@ import { NodeScriptTestDialogComponent } from '@shared/components/dialog/node-sc
     JsonFormComponent,
     ImageInputComponent,
     FileInputComponent,
+    MessageTypeAutocompleteComponent,
+    KeyValMapComponent,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
@@ -276,6 +282,7 @@ import { NodeScriptTestDialogComponent } from '@shared/components/dialog/node-sc
     RelationTypeAutocompleteComponent,
     SocialSharePanelComponent,
     JsonObjectEditComponent,
+    JsonContentComponent,
     JsFuncComponent,
     FabTriggerDirective,
     FabActionsDirective,
@@ -331,6 +338,8 @@ import { NodeScriptTestDialogComponent } from '@shared/components/dialog/node-sc
     JsonFormComponent,
     ImageInputComponent,
     FileInputComponent,
+    MessageTypeAutocompleteComponent,
+    KeyValMapComponent,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,

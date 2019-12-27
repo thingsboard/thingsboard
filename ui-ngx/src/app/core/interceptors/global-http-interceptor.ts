@@ -23,7 +23,7 @@ import {
   HttpResponseBase
 } from '@angular/common/http';
 import { Observable } from 'rxjs/internal/Observable';
-import { Injectable } from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
 import { AuthService } from '../auth/auth.service';
 import { Constants } from '../../shared/models/constants';
 import { InterceptorHttpParams } from './interceptor-http-params';
@@ -52,10 +52,10 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
 
   private activeRequests = 0;
 
-  constructor(private store: Store<AppState>,
-              private dialogService: DialogService,
-              private translate: TranslateService,
-              private authService: AuthService) {
+  constructor(@Inject(Store) private store: Store<AppState>,
+              @Inject(DialogService) private dialogService: DialogService,
+              @Inject(TranslateService) private translate: TranslateService,
+              @Inject(AuthService) private authService: AuthService) {
   }
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {

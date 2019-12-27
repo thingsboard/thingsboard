@@ -36,7 +36,7 @@ export class NodeScriptTestService {
       return this.ruleChainService.getLatestRuleNodeDebugInput(ruleNodeId).pipe(
         switchMap((debugIn) => {
           let msg: any;
-          let metadata: any;
+          let metadata: {[key: string]: string};
           let msgType: string;
           if (debugIn) {
             if (debugIn.data) {
@@ -59,7 +59,7 @@ export class NodeScriptTestService {
 
   private openTestScriptDialog(script: string, scriptType: string,
                                functionTitle: string, functionName: string, argNames: string[],
-                               msg?: any, metadata?: any, msgType?: string): Observable<string> {
+                               msg?: any, metadata?: {[key: string]: string}, msgType?: string): Observable<string> {
     if (!msg) {
       msg = {
         temperature: 22.4,

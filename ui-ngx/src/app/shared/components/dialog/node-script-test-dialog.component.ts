@@ -21,7 +21,7 @@ import {
   Inject,
   OnInit,
   QueryList,
-  SkipSelf,
+  SkipSelf, ViewChild,
   ViewChildren,
   ViewEncapsulation
 } from '@angular/core';
@@ -29,9 +29,16 @@ import { ErrorStateMatcher, MAT_DIALOG_DATA, MatDialogRef } from '@angular/mater
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
-import { combineLatest } from 'rxjs';
+import { combineLatest, never, Observable, of, throwError, NEVER } from 'rxjs';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
+import { ContentType } from '@shared/models/constants';
+import { JsonObjectEditComponent } from '@shared/components/json-object-edit.component';
+import { JsonContentComponent } from '@shared/components/json-content.component';
+import { TestScriptInputParams } from '@shared/models/rule-node.models';
+import { RuleChainService } from '@core/http/rule-chain.service';
+import { map, mergeMap } from 'rxjs/operators';
+import { ActionNotificationShow } from '@core/notification/notification.actions';
 
 export interface NodeScriptTestDialogData {
   script: string;
@@ -40,7 +47,7 @@ export interface NodeScriptTestDialogData {
   functionName: string;
   argNames: string[];
   msg?: any;
-  metadata?: any;
+  metadata?: {[key: string]: string};
   msgType?: string;
 }
 
@@ -75,46 +82,46 @@ export class NodeScriptTestDialogComponent extends DialogComponent<NodeScriptTes
   @ViewChildren('bottomRightPanel')
   bottomRightPanelElmRef: QueryList<ElementRef<HTMLElement>>;
 
+  @ViewChild('payloadContent', {static: true}) payloadContent: JsonContentComponent;
+
   nodeScriptTestFormGroup: FormGroup;
 
   functionTitle: string;
 
   submitted = false;
 
+  contentTypes = ContentType;
+
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: NodeScriptTestDialogData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<NodeScriptTestDialogComponent, string>,
-              public fb: FormBuilder) {
+              public fb: FormBuilder,
+              private ruleChainService: RuleChainService) {
     super(store, router, dialogRef);
     this.functionTitle = this.data.functionTitle;
   }
 
   ngOnInit(): void {
     this.nodeScriptTestFormGroup = this.fb.group({
-      funcBody: ['', [Validators.required]]
+      payload: this.fb.group({
+        msgType: [this.data.msgType, [Validators.required]],
+        msg: [js_beautify(JSON.stringify(this.data.msg), {indent_size: 4}), []],
+      }),
+      metadata: [this.data.metadata, [Validators.required]],
+      script: [this.data.script, []],
+      output: ['', []]
     });
   }
 
   ngAfterViewInit(): void {
-/*    combineLatest(this.topPanelElmRef.changes,
-                  this.topLeftPanelElmRef.changes,
-                  this.topRightPanelElmRef.changes,
-                  this.bottomPanelElmRef.changes,
-                  this.bottomLeftPanelElmRef.changes,
-                  this.bottomRightPanelElmRef.changes).subscribe(() => {
-      if (this.topPanelElmRef.length && this.topLeftPanelElmRef.length &&
-          this.topRightPanelElmRef.length && this.bottomPanelElmRef.length &&
-          this.bottomLeftPanelElmRef.length && this.bottomRightPanelElmRef.length) {*/
-        this.initSplitLayout(this.topPanelElmRef.first.nativeElement,
-                             this.topLeftPanelElmRef.first.nativeElement,
-                             this.topRightPanelElmRef.first.nativeElement,
-                             this.bottomPanelElmRef.first.nativeElement,
-                             this.bottomLeftPanelElmRef.first.nativeElement,
-                             this.bottomRightPanelElmRef.first.nativeElement);
-    //  }
-    //});
+    this.initSplitLayout(this.topPanelElmRef.first.nativeElement,
+                         this.topLeftPanelElmRef.first.nativeElement,
+                         this.topRightPanelElmRef.first.nativeElement,
+                         this.bottomPanelElmRef.first.nativeElement,
+                         this.bottomLeftPanelElmRef.first.nativeElement,
+                         this.bottomRightPanelElmRef.first.nativeElement);
   }
 
   private initSplitLayout(topPanel: any,
@@ -154,9 +161,54 @@ export class NodeScriptTestDialogComponent extends DialogComponent<NodeScriptTes
     this.dialogRef.close(null);
   }
 
+  test(): void {
+    this.testNodeScript().subscribe((output) => {
+      this.nodeScriptTestFormGroup.get('output').setValue(js_beautify(output, {indent_size: 4}));
+    });
+  }
+
+  private testNodeScript(): Observable<string> {
+    if (this.checkInputParamErrors()) {
+      const inputParams: TestScriptInputParams = {
+        argNames: this.data.argNames,
+        scriptType: this.data.scriptType,
+        msgType: this.nodeScriptTestFormGroup.get('payload').get('msgType').value,
+        msg: this.nodeScriptTestFormGroup.get('payload').get('msg').value,
+        metadata: this.nodeScriptTestFormGroup.get('metadata').value,
+        script: this.nodeScriptTestFormGroup.get('script').value
+      };
+      return this.ruleChainService.testScript(inputParams).pipe(
+        mergeMap((result) => {
+          if (result.error) {
+            this.store.dispatch(new ActionNotificationShow(
+              {
+                message: result.error,
+                type: 'error'
+              }));
+            return NEVER;
+          } else {
+            return of(result.output);
+          }
+        })
+      );
+    } else {
+      return NEVER;
+    }
+  }
+
+  private checkInputParamErrors(): boolean {
+    this.payloadContent.validateOnSubmit();
+    if (!this.nodeScriptTestFormGroup.get('payload').valid) {
+      return false;
+    }
+    return true;
+  }
+
   save(): void {
     this.submitted = true;
-    const script: string = this.nodeScriptTestFormGroup.get('funcBody').value;
-    this.dialogRef.close(script);
+    this.testNodeScript().subscribe(() => {
+      this.nodeScriptTestFormGroup.get('script').markAsPristine();
+      this.dialogRef.close(this.nodeScriptTestFormGroup.get('script').value);
+    });
   }
 }
