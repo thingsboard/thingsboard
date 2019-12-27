@@ -179,8 +179,7 @@ export default class Subscription {
     }
 
     getFirstEntityInfo() {
-        var entityId;
-        var entityName;
+        var entityId, entityName, entityLabel = null;
         if (this.type === this.ctx.types.widgetType.rpc.value) {
             if (this.targetDeviceId) {
                 entityId = {
@@ -196,6 +195,7 @@ export default class Subscription {
                     id: this.alarmSource.entityId
                 };
                 entityName = this.alarmSource.entityName;
+                entityLabel = this.alarmSource.entityLabel;
             }
         } else {
             for (var i=0;i<this.datasources.length;i++) {
@@ -206,6 +206,7 @@ export default class Subscription {
                         id: datasource.entityId
                     };
                     entityName = datasource.entityName;
+                    entityLabel = datasource.entityLabel;
                     break;
                 }
             }
@@ -213,7 +214,8 @@ export default class Subscription {
         if (entityId) {
             return {
                 entityId: entityId,
-                entityName: entityName
+                entityName: entityName,
+                entityLabel: entityLabel
             };
         } else {
             return null;

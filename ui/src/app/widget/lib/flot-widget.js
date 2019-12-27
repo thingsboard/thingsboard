@@ -1828,7 +1828,8 @@ export default class TbFlot {
             var entityInfo = this.ctx.actionsApi.getActiveEntityInfo();
             var entityId = entityInfo ? entityInfo.entityId : null;
             var entityName = entityInfo ? entityInfo.entityName : null;
-            this.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, item);
+            var entityLabel = entityInfo && entityInfo.entityLabel ? entityInfo.entityLabel : null;
+            this.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, item, entityLabel);
         }
     }
 }
