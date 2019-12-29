@@ -1794,7 +1794,8 @@
         "locales": {
             "de_DE": "German",
             "fr_FR": "French",
-            "zh_CN": "Chinese",
+            "zh_CN": "Simplified Chinese",
+            "zh_TW": "Traditional Chinese",
             "en_US": "English",
             "it_IT": "Italian",
             "ko_KR": "Korean",
