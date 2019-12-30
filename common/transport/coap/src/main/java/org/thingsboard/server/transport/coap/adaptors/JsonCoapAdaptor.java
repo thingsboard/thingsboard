@@ -124,8 +124,8 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
     }
 
     @Override
-    public TransportProtos.ProvisionDeviceRequestMsg convertToProvisionRequestMsg(Request inbound) throws AdaptorException {
-        String payload = validatePayload(null, inbound, false);
+    public TransportProtos.ProvisionDeviceRequestMsg convertToProvisionRequestMsg(UUID sessionId, Request inbound) throws AdaptorException {
+        String payload = validatePayload(sessionId, inbound, false);
         try {
             return JsonConverter.convertToProvisionRequestMsg(payload);
         } catch (IllegalStateException | JsonSyntaxException ex) {

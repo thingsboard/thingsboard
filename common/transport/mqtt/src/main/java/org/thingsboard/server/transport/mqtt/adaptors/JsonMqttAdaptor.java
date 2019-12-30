@@ -194,6 +194,17 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
         }
     }
 
+    @Override
+    public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.ProvisionDeviceResponseMsg responseMsg) throws AdaptorException {
+        if (responseMsg.getProvisionResponseStatus() == TransportProtos.ProvisionResponseStatus.NOT_FOUND) {
+            throw new AdaptorException("Provision profile was not found!");
+        } else {
+            return Optional.of(createMqttPublishMsg(ctx,
+                    MqttTopics.DEVICE_PROVISION_RESPONSE_TOPIC,
+                    JsonConverter.toJson(responseMsg)));
+        }
+    }
+
     private MqttPublishMessage createMqttPublishMsg(MqttDeviceAwareSessionContext ctx, String topic, JsonElement json) {
         MqttFixedHeader mqttFixedHeader =
                 new MqttFixedHeader(MqttMessageType.PUBLISH, false, ctx.getQoSForTopic(topic), false, 0);

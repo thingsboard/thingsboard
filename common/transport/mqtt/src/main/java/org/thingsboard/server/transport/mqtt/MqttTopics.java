@@ -32,6 +32,7 @@ public class MqttTopics {
     public static final String DEVICE_CLAIM_TOPIC = BASE_DEVICE_API_TOPIC + "/claim";
     public static final String DEVICE_ATTRIBUTES_TOPIC = BASE_DEVICE_API_TOPIC + "/attributes";
     public static final String DEVICE_PROVISION_TOPIC = BASE_DEVICE_API_TOPIC + "/provision";
+    public static final String DEVICE_PROVISION_RESPONSE_TOPIC = BASE_DEVICE_API_TOPIC + "/provision/response";
 
     public static final String BASE_GATEWAY_API_TOPIC = "v1/gateway";
     public static final String GATEWAY_CONNECT_TOPIC = BASE_GATEWAY_API_TOPIC + "/connect";

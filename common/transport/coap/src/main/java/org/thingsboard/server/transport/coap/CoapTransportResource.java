@@ -54,6 +54,7 @@ public class CoapTransportResource extends CoapResource {
     private static final int ACCESS_TOKEN_POSITION = 3;
     private static final int FEATURE_TYPE_POSITION = 4;
     private static final int REQUEST_ID_POSITION = 5;
+    private static final String PROVISION = "provision";
 
     private final CoapTransportContext transportContext;
     private final TransportService transportService;
@@ -140,7 +141,7 @@ public class CoapTransportResource extends CoapResource {
         log.trace("Processing {}", exchange.advanced().getRequest());
         exchange.accept();
         try {
-            transportService.process(transportContext.getAdaptor().convertToProvisionRequestMsg(exchange.advanced().getRequest()),
+            transportService.process(transportContext.getAdaptor().convertToProvisionRequestMsg(UUID.randomUUID(), exchange.advanced().getRequest()),
                     new DeviceProvisionCallback(exchange));
         } catch (AdaptorException e) {
             log.trace("Failed to decode message: ", e);
@@ -275,6 +276,8 @@ public class CoapTransportResource extends CoapResource {
         try {
             if (uriPath.size() >= FEATURE_TYPE_POSITION) {
                 return Optional.of(FeatureType.valueOf(uriPath.get(FEATURE_TYPE_POSITION - 1).toUpperCase()));
+            } else if (uriPath.size() == 3 && uriPath.contains(PROVISION)) {
+                return Optional.of(FeatureType.valueOf(PROVISION.toUpperCase()));
             }
         } catch (RuntimeException e) {
             log.warn("Failed to decode feature type: {}", uriPath);

@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.mqtt.session;
 
 import io.netty.channel.ChannelHandlerContext;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.UUID;
@@ -32,6 +33,9 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
     @Getter
     private ChannelHandlerContext channel;
     private AtomicInteger msgIdSeq = new AtomicInteger(0);
+    @Getter
+    @Setter
+    private boolean provision;
 
     public DeviceSessionCtx(UUID sessionId, ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap) {
         super(sessionId, mqttQoSMap);
