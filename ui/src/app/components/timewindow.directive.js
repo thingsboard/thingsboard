@@ -212,7 +212,7 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
             }
         }
 
-        scope.isTimewindowDisabled = function () {
+        function isTimewindowDisabled () {
             return scope.disabled || (!scope.isEdit && scope.model.hideInterval && scope.model.hideAggregation && scope.model.hideAggInterval);
         }
 
@@ -247,9 +247,15 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
                 model.hideAggregation = value.hideAggregation;
                 model.hideAggInterval = value.hideAggInterval;
             }
-            scope.timewindowDisabled = scope.isTimewindowDisabled();
+            scope.timewindowDisabled = isTimewindowDisabled();
             scope.updateDisplayValue();
         };
+
+        scope.$watchGroup(['disabled', 'isEdit'], function(newValue, oldValue) {
+            if (!angular.equals(newValue, oldValue)) {
+                scope.timewindowDisabled = isTimewindowDisabled();
+            }
+        });
 
         $compile(element.contents())(scope);
     }
