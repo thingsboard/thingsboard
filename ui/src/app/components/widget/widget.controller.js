@@ -490,7 +490,7 @@ export default function WidgetController($scope, $state, $timeout, $window, $ocL
         }
     }
 
-    function handleWidgetAction($event, descriptor, entityId, entityName, additionalParams) {
+    function handleWidgetAction($event, descriptor, entityId, entityName, additionalParams, entityLabel) {
         var type = descriptor.type;
         var targetEntityParamName = descriptor.stateEntityParamName;
         var targetEntityId;
