@@ -190,9 +190,10 @@ function TimeseriesTableWidgetController($element, $scope, $filter, $timeout, ty
         }
         var descriptors = vm.ctx.actionsApi.getActionDescriptors('rowClick');
         if (descriptors.length) {
-						var entityId = vm.ctx.activeEntityInfo.entityId;
+            var entityId = vm.ctx.activeEntityInfo.entityId;
             var entityName = vm.ctx.activeEntityInfo.entityName;
-            vm.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, row);
+            var entityLabel = vm.ctx.activeEntityInfo.entityLabel;
+            vm.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, row, entityLabel);
         }
     }
 
@@ -200,9 +201,10 @@ function TimeseriesTableWidgetController($element, $scope, $filter, $timeout, ty
         if ($event) {
             $event.stopPropagation();
         }
-				var entityId = vm.ctx.activeEntityInfo.entityId;
+        var entityId = vm.ctx.activeEntityInfo.entityId;
         var entityName = vm.ctx.activeEntityInfo.entityName;
-        vm.ctx.actionsApi.handleWidgetAction($event, actionDescriptor, entityId, entityName, row);
+        var entityLabel = vm.ctx.activeEntityInfo.entityLabel;
+        vm.ctx.actionsApi.handleWidgetAction($event, actionDescriptor, entityId, entityName, row, entityLabel);
     }
 
 
