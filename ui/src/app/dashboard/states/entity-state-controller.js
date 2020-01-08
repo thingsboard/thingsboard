@@ -164,11 +164,9 @@ export default function EntityStateController($scope, $timeout, $location, $stat
             let stateName = vm.states[vm.stateObject[index].id].name;
             stateName = utils.customTranslation(stateName, stateName);
             var params = vm.stateObject[index].params;
-            let targetParams = params && params.targetEntityParamName ? params[params.targetEntityParamName] : params;
 
-            let entityName, entityLabel;
-            entityName =targetParams.entityName ? targetParams.entityName : '';
-            entityLabel = targetParams.entityLabel ? targetParams.entityLabel : entityName;
+            let entityName = params && params.entityName ? params.entityName : '';
+            let entityLabel = params && params.entityLabel ? params.entityLabel : entityName;
 
             result = utils.insertVariable(stateName, 'entityName', entityName);
             result = utils.insertVariable(result, 'entityLabel', entityLabel);
