@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -271,8 +271,21 @@ public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
                 log.info("Updating schema ...");
                 String updateAssetTableStmt = "alter table asset add label text";
                 try {
+                    log.info("Updating assets ...");
                     cluster.getSession().execute(updateAssetTableStmt);
                     Thread.sleep(2500);
+                    log.info("Assets updated.");
+                } catch (InvalidQueryException e) {}
+                log.info("Schema updated.");
+                break;
+            case "2.4.2":
+                log.info("Updating schema ...");
+                String updateAlarmTableStmt = "alter table alarm add propagate_relation_types text";
+                try {
+                    log.info("Updating alarms ...");
+                    cluster.getSession().execute(updateAlarmTableStmt);
+                    Thread.sleep(2500);
+                    log.info("Alarms updated.");
                 } catch (InvalidQueryException e) {}
                 log.info("Schema updated.");
                 break;

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceActorToTransportMsg;
@@ -103,7 +104,7 @@ public class RemoteRuleEngineTransportService implements RuleEngineTransportServ
     private TBKafkaConsumerTemplate<ToRuleEngineMsg> ruleEngineConsumer;
     private TBKafkaProducerTemplate<ToTransportMsg> notificationsProducer;
 
-    private ExecutorService mainConsumerExecutor = Executors.newSingleThreadExecutor();
+    private ExecutorService mainConsumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-main-consumer"));
 
     private volatile boolean stopped = false;
 

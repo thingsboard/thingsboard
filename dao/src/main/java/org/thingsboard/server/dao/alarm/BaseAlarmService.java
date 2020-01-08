@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,9 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
-import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmId;
@@ -52,6 +53,7 @@ import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -59,6 +61,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -81,7 +84,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
 
     @PostConstruct
     public void startExecutor() {
-        readResultsProcessingExecutor = Executors.newCachedThreadPool();
+        readResultsProcessingExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName("alarm-service"));
     }
 
     @PreDestroy
@@ -154,8 +157,14 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
 
     private List<EntityId> getParentEntities(Alarm alarm) throws InterruptedException, ExecutionException {
         EntityRelationsQuery query = new EntityRelationsQuery();
-        query.setParameters(new RelationsSearchParameters(alarm.getOriginator(), EntitySearchDirection.TO, Integer.MAX_VALUE, false));
-        return relationService.findByQuery(alarm.getTenantId(), query).get().stream().map(EntityRelation::getFrom).collect(Collectors.toList());
+        RelationsSearchParameters parameters = new RelationsSearchParameters(alarm.getOriginator(), EntitySearchDirection.TO, Integer.MAX_VALUE, false);
+        query.setParameters(parameters);
+        List<String> propagateRelationTypes = alarm.getPropagateRelationTypes();
+        Stream<EntityRelation> relations = relationService.findByQuery(alarm.getTenantId(), query).get().stream();
+        if (!CollectionUtils.isEmpty(propagateRelationTypes)) {
+            relations = relations.filter(entityRelation -> propagateRelationTypes.contains(entityRelation.getType()));
+        }
+        return relations.map(EntityRelation::getFrom).collect(Collectors.toList());
     }
 
     private ListenableFuture<Alarm> updateAlarm(Alarm update) {
@@ -360,13 +369,30 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         existing.setSeverity(alarm.getSeverity());
         existing.setDetails(alarm.getDetails());
         existing.setPropagate(existing.isPropagate() || alarm.isPropagate());
+        List<String> existingPropagateRelationTypes = existing.getPropagateRelationTypes();
+        List<String> newRelationTypes = alarm.getPropagateRelationTypes();
+        if (!CollectionUtils.isEmpty(newRelationTypes)) {
+            if (!CollectionUtils.isEmpty(existingPropagateRelationTypes)) {
+                existing.setPropagateRelationTypes(Stream.concat(existingPropagateRelationTypes.stream(), newRelationTypes.stream())
+                        .distinct()
+                        .collect(Collectors.toList()));
+            } else {
+                existing.setPropagateRelationTypes(newRelationTypes);
+            }
+        }
         return existing;
     }
 
     private void updateRelations(Alarm alarm, AlarmStatus oldStatus, AlarmStatus newStatus) {
         try {
             List<EntityRelation> relations = relationService.findByToAsync(alarm.getTenantId(), alarm.getId(), RelationTypeGroup.ALARM).get();
-            Set<EntityId> parents = relations.stream().map(EntityRelation::getFrom).collect(Collectors.toSet());
+
+            List<String> propagateRelationTypes = alarm.getPropagateRelationTypes();
+            Stream<EntityRelation> relationStream = relations.stream();
+            if (!CollectionUtils.isEmpty(propagateRelationTypes)) {
+                relationStream = relationStream.filter(entityRelation -> propagateRelationTypes.contains(entityRelation.getType()));
+            }
+            Set<EntityId> parents = relationStream.map(EntityRelation::getFrom).collect(Collectors.toSet());
             for (EntityId parentId : parents) {
                 updateAlarmRelation(alarm.getTenantId(), parentId, alarm.getId(), oldStatus, newStatus);
             }

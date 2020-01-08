@@ -178,7 +178,13 @@
         "clear-alarms-text": "Ви впевнені, що хочете деактивувати { count, plural, 1 {1 сигнал тривоги} other {# сигнали тривоги} }?",
         "clear-alarm-title": "Деактивувати сигнал тривоги",
         "clear-alarm-text": "Ви впевнені, що хочете деактивувати сигнал тривоги?",
-        "alarm-status-filter": "Фільтр статусу сигналу тривоги"
+        "alarm-status-filter": "Фільтр статусу сигналу тривоги",
+        "max-count-load": "Максимальна кількість сигналів тривоги для завантаження (0 - необмежено)",
+        "max-count-load-required": "Необхідно задати максимальну кількість сигналів тривоги для завантаження.",
+        "max-count-load-error-min": "Мінімальне значення 0.",
+        "fetch-size": "Розмір пакету для завантаження",
+        "fetch-size-required": "Необхідно задати розмір пакету для завантаження.",
+        "fetch-size-error-min": "Мінімальне значення 10."
     },
     "alias": {
         "add": "Додати псевдонім ",
@@ -693,6 +699,7 @@
         "configuration": "Конфігурація ключа даних",
         "timeseries": "Телеметрія",
         "attributes": "Атрибути",
+        "entity-field": "Поле сутності",
         "alarm": "Поля сигнала тривоги",
         "timeseries-required": "Необхідно вказати Телеметрія.",
         "timeseries-or-attributes-required": "Необхідно вказати телеметрію/атрибути.",
@@ -949,6 +956,23 @@
         "type-integrations": "Інтеграції",
         "list-of-integrations": "{ count, plural, 1 {Одна інтеграція} other {Список # інтеграцій} }",
         "integration-name-starts-with": "Інтеграції, імена яких починаються з '{{prefix}}'"
+    },
+    "entity-field": {
+        "created-time": "Час створення",
+        "name": "Ім'я",
+        "type": "Тип",
+        "first-name": "Ім'я",
+        "last-name": "Прізвище",
+        "email": "Електронна пошта",
+        "title": "Назва",
+        "country": "Країна",
+        "state": "Штат",
+        "city": "Місто",
+        "address": "Адреса",
+        "address2": "Адреса 2",
+        "zip": "Zip",
+        "phone": "Телефон",
+        "label": "Мітка"
     },
     "entity-group": {
         "entity-group": "Група сутності",

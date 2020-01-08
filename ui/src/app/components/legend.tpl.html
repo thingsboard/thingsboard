@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2019 The Thingsboard Authors
+    Copyright © 2016-2020 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -27,7 +27,8 @@
         </tr>
     </thead>
     <tbody>
-        <tr class="tb-legend-keys" ng-repeat="legendKey in legendData.keys" ng-if="!isRowDirection">
+        <tr class="tb-legend-keys" ng-repeat="legendKey in legendData.keys"
+            ng-if="!isRowDirection && legendData.keys[legendKey.dataIndex].dataKey.inLegend">
             <td><span class="tb-legend-line"  ng-style="{backgroundColor: legendKey.dataKey.color}"></span></td>
             <td class="tb-legend-label"
                 ng-click="toggleHideData(legendKey.dataIndex)"
@@ -41,7 +42,7 @@
         </tr>
         <tr class="tb-legend-keys" ng-class="{ 'tb-row-direction': !displayHeader() }" ng-if="isRowDirection">
             <td></td>
-            <td ng-repeat="legendKey in legendData.keys">
+            <td ng-repeat="legendKey in legendData.keys" ng-if="legendData.keys[legendKey.dataIndex].dataKey.inLegend">
                 <span class="tb-legend-line" ng-style="{backgroundColor: legendKey.dataKey.color}"></span>
                 <span class="tb-legend-label"
                       ng-click="toggleHideData(legendKey.dataIndex)"
@@ -52,19 +53,31 @@
         </tr>
         <tr class="tb-legend-keys" ng-if="isRowDirection && legendConfig.showMin === true">
             <td class="tb-legend-type">{{ 'legend.min' | translate }}</td>
-            <td class="tb-legend-value" ng-repeat="legendKey in legendData.keys">{{ legendData.data[legendKey.dataIndex].min }}</td>
+            <td class="tb-legend-value" ng-repeat="legendKey in legendData.keys"
+                ng-if="legendData.keys[legendKey.dataIndex].dataKey.inLegend">
+                {{ legendData.data[legendKey.dataIndex].min }}
+            </td>
         </tr>
         <tr class="tb-legend-keys" ng-if="isRowDirection && legendConfig.showMax === true">
             <td class="tb-legend-type">{{ 'legend.max' | translate }}</td>
-            <td class="tb-legend-value" ng-repeat="legendKey in legendData.keys">{{ legendData.data[legendKey.dataIndex].max }}</td>
+            <td class="tb-legend-value" ng-repeat="legendKey in legendData.keys"
+                ng-if="legendData.keys[legendKey.dataIndex].dataKey.inLegend">
+                {{ legendData.data[legendKey.dataIndex].max }}
+            </td>
         </tr>
         <tr class="tb-legend-keys" ng-if="isRowDirection && legendConfig.showAvg === true">
             <td class="tb-legend-type">{{ 'legend.avg' | translate }}</td>
-            <td class="tb-legend-value" ng-repeat="legendKey in legendData.keys">{{ legendData.data[legendKey.dataIndex].avg }}</td>
+            <td class="tb-legend-value" ng-repeat="legendKey in legendData.keys"
+                ng-if="legendData.keys[legendKey.dataIndex].dataKey.inLegend">
+                {{ legendData.data[legendKey.dataIndex].avg }}
+            </td>
         </tr>
         <tr class="tb-legend-keys" ng-if="isRowDirection && legendConfig.showTotal === true">
             <td class="tb-legend-type">{{ 'legend.total' | translate }}</td>
-            <td class="tb-legend-value" ng-repeat="legendKey in legendData.keys">{{ legendData.data[legendKey.dataIndex].total }}</td>
+            <td class="tb-legend-value" ng-repeat="legendKey in legendData.keys"
+                ng-if="legendData.keys[legendKey.dataIndex].dataKey.inLegend">
+                {{ legendData.data[legendKey.dataIndex].total }}
+            </td>
         </tr>
     </tbody>
 </table>

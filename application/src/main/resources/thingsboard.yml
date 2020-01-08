@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2019 The Thingsboard Authors
+# Copyright © 2016-2020 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -195,10 +195,6 @@ cassandra:
 
 # SQL configuration parameters
 sql:
-    # Specify executor service type used to perform timeseries insert tasks: SINGLE or FIXED
-    ts_inserts_executor_type: "${SQL_TS_INSERTS_EXECUTOR_TYPE:fixed}"
-    # Specify thread pool size for FIXED executor service type
-    ts_inserts_fixed_thread_pool_size: "${SQL_TS_INSERTS_FIXED_THREAD_POOL_SIZE:200}"
     # Specify batch size for persisting attribute updates
     attributes:
       batch_size: "${SQL_ATTRIBUTES_BATCH_SIZE:10000}"
@@ -464,6 +460,11 @@ js:
     max_cpu_time: "${LOCAL_JS_SANDBOX_MAX_CPU_TIME:3000}"
     # Maximum allowed JavaScript execution errors before JavaScript will be blacklisted
     max_errors: "${LOCAL_JS_SANDBOX_MAX_ERRORS:3}"
+    # JS Eval max request timeout. 0 - no timeout
+    max_requests_timeout: "${LOCAL_JS_MAX_REQUEST_TIMEOUT:0}"
+    stats:
+      enabled: "${TB_JS_LOCAL_STATS_ENABLED:false}"
+      print_interval_ms: "${TB_JS_LOCAL_STATS_PRINT_INTERVAL_MS:10000}"
   # Remote JavaScript environment properties
   remote:
     # JS Eval request topic
