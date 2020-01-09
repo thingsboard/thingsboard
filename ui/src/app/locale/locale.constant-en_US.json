@@ -213,7 +213,8 @@
         "unlimited-level": "Unlimited level",
         "state-entity": "Dashboard state entity",
         "all-entities": "All entities",
-        "any-relation": "any"
+        "any-relation": "any",
+        "default-entity": "Default entity"
     },
     "asset": {
         "asset": "Asset",

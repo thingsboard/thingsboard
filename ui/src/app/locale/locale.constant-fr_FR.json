@@ -207,7 +207,8 @@
         "root-state-entity": "Utiliser l'entité d'état du tableau de bord en tant que racine",
         "state-entity": "Entité d'état du tableau de bord",
         "state-entity-parameter-name": "Nom du paramétre d'entité d'état",
-        "unlimited-level": "niveau illimité"
+        "unlimited-level": "niveau illimité",
+        "default-entity": "Entité par défaut"
     },
     "asset": {
         "add": "Ajouter un actif",

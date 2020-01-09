@@ -63,14 +63,17 @@ export default function EntityFilterDirective($compile, $templateCache, $q, $doc
                     break;
                 case types.aliasFilterType.assetType.value:
                     filter.assetType = null;
+                    filter.defaultEntity = null;
                     filter.assetNameFilter = '';
                     break;
                 case types.aliasFilterType.deviceType.value:
                     filter.deviceType = null;
+                    filter.defaultEntity = null;
                     filter.deviceNameFilter = '';
                     break;
                 case types.aliasFilterType.entityViewType.value:
                     filter.entityViewType = null;
+                    filter.defaultEntity = null;
                     filter.entityViewNameFilter = '';
                     break;
                 case types.aliasFilterType.relationsQuery.value:
