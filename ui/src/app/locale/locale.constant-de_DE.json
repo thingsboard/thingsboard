@@ -559,7 +559,11 @@
     "show-details": "Details anzeigen",
     "hide-details": "Details ausblenden",
     "select-state": "Soll-Zustand auswählen",
-    "state-controller": "Zustandssteuerung"
+    "state-controller": "Zustandssteuerung",
+    "dashboard-settings": "Allgemeine Dashboard-Einstellungen",
+    "dashboard-state-settings": "Einstellungen des aktuellen Dashboard-Status",
+    "select-entity-aliases-label": "Objektauswahlbezeichnung",
+    "min-entities-to-show-selection": "Mindestanzahl der aufgelösten Objekte, deren Auswahl angezeigt werden soll"
   },
   "datakey": {
     "settings": "Einstellungen",

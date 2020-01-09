@@ -570,7 +570,11 @@
         "view-dashboards": "Afficher les tableaux de bord",
         "widget-file": "Fichier du Widget",
         "widget-import-missing-aliases-title": "Configurer les alias utilisés par le widget importé",
-        "widgets-margins": "Marge entre les widgets"
+        "widgets-margins": "Marge entre les widgets",
+        "dashboard-settings": "Paramètres généraux du tableau de bord",
+        "dashboard-state-settings": "Paramètres d'état actuel",
+        "select-entity-aliases-label": "Étiquette de la sélection des entités",
+        "min-entities-to-show-selection": "Nombre minimal d'entités résolues pour afficher la sélection"
     },
     "datakey": {
         "advanced": "Avancé",

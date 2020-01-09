@@ -196,6 +196,10 @@ export default function DashboardController(types, utils, dashboardUtils, widget
     vm.displayDashboardTimewindow = displayDashboardTimewindow;
     vm.displayDashboardsSelect = displayDashboardsSelect;
     vm.displayEntitiesSelect = displayEntitiesSelect;
+    vm.getEntityAliasesIcon = getEntityAliasesIcon;
+    vm.getEntityAliasesLabel = getEntityAliasesLabel;
+    vm.getEntityAliasesList = getEntityAliasesList;
+    vm.getMinEntitiesToShowSelect = getMinEntitiesToShowSelect;
     vm.hideFullscreenButton = hideFullscreenButton;
 
     vm.widgetsBundle;
@@ -475,9 +479,18 @@ export default function DashboardController(types, utils, dashboardUtils, widget
 
     function openDashboardSettings($event) {
         var gridSettings = null;
+        var stateSettings = angular.copy(vm.dashboard.configuration.states[vm.dashboardCtx.state].settings);
         var layoutKeys = dashboardUtils.isSingleLayoutDashboard(vm.dashboard);
         if (layoutKeys) {
             gridSettings = angular.copy(vm.dashboard.configuration.states[layoutKeys.state].layouts[layoutKeys.layout].gridSettings)
+        }
+        var entityAliasesList = [];
+        var allEntityAliases = vm.dashboardCtx.aliasController.getEntityAliases();
+        for (var aliasId in allEntityAliases) {
+            var currentAlias = allEntityAliases[aliasId];
+            if (currentAlias.filter && !currentAlias.filter.resolveMultiple) {
+                entityAliasesList.push(currentAlias);
+            }
         }
         $mdDialog.show({
             controller: 'DashboardSettingsController',
@@ -485,7 +498,9 @@ export default function DashboardController(types, utils, dashboardUtils, widget
             templateUrl: dashboardSettingsTemplate,
             locals: {
                 settings: angular.copy(vm.dashboard.configuration.settings),
-                gridSettings: gridSettings
+                gridSettings: gridSettings,
+                stateSettings: stateSettings,
+                entityAliasesList: entityAliasesList
             },
             parent: angular.element($document[0].body),
             multiple: true,
@@ -493,6 +508,7 @@ export default function DashboardController(types, utils, dashboardUtils, widget
             targetEvent: $event
         }).then(function (data) {
             vm.dashboard.configuration.settings = data.settings;
+            vm.dashboard.configuration.states[vm.dashboardCtx.state].settings = data.stateSettings;
             var gridSettings = data.gridSettings;
             if (gridSettings) {
                 updateLayoutGrid(layoutKeys, gridSettings);
@@ -784,30 +800,73 @@ export default function DashboardController(types, utils, dashboardUtils, widget
     }
 
     function displayDashboardTimewindow() {
-        if (vm.dashboard && vm.dashboard.configuration.settings &&
-            angular.isDefined(vm.dashboard.configuration.settings.showDashboardTimewindow)) {
-            return vm.dashboard.configuration.settings.showDashboardTimewindow;
-        } else {
-            return true;
+        if (vm.dashboard && vm.dashboardCtx.state) {
+            var stateSettings = vm.dashboard.configuration.states[vm.dashboardCtx.state].settings;
+            if (stateSettings && angular.isDefined(stateSettings.showDashboardTimewindow)) {
+                return stateSettings.showDashboardTimewindow;
+            }
         }
+        return true;
     }
 
     function displayDashboardsSelect() {
-        if (vm.dashboard && vm.dashboard.configuration.settings &&
-            angular.isDefined(vm.dashboard.configuration.settings.showDashboardsSelect)) {
-            return vm.dashboard.configuration.settings.showDashboardsSelect;
-        } else {
-            return true;
+        if (vm.dashboard && vm.dashboardCtx.state) {
+            var stateSettings = vm.dashboard.configuration.states[vm.dashboardCtx.state].settings;
+            if (stateSettings && angular.isDefined(stateSettings.showDashboardsSelect)) {
+                return stateSettings.showDashboardsSelect;
+            }
         }
+        return true;
     }
 
     function displayEntitiesSelect() {
-        if (vm.dashboard && vm.dashboard.configuration.settings &&
-            angular.isDefined(vm.dashboard.configuration.settings.showEntitiesSelect)) {
-            return vm.dashboard.configuration.settings.showEntitiesSelect;
-        } else {
-            return true;
+        if (vm.dashboard && vm.dashboardCtx.state) {
+            var stateSettings = vm.dashboard.configuration.states[vm.dashboardCtx.state].settings;
+            if (stateSettings && angular.isDefined(stateSettings.showEntitiesSelect)) {
+                return stateSettings.showEntitiesSelect;
+            }
         }
+        return true;
+    }
+
+    function getEntityAliasesIcon() {
+        if (vm.dashboard && vm.dashboardCtx.state) {
+            var stateSettings = vm.dashboard.configuration.states[vm.dashboardCtx.state].settings;
+            if (stateSettings && angular.isDefined(stateSettings.entityAliasesIcon)) {
+                return stateSettings.entityAliasesIcon;
+            }
+        }
+        return 'devices_other';
+    }
+
+    function getEntityAliasesLabel() {
+        if (vm.dashboard && vm.dashboardCtx.state) {
+            var stateSettings = vm.dashboard.configuration.states[vm.dashboardCtx.state].settings;
+            if (stateSettings && angular.isDefined(stateSettings.entityAliasesLabel)) {
+                return stateSettings.entityAliasesLabel;
+            }
+        }
+        return '';
+    }
+
+    function getEntityAliasesList() {
+        if (vm.dashboard && vm.dashboardCtx.state) {
+            var stateSettings = vm.dashboard.configuration.states[vm.dashboardCtx.state].settings;
+            if (stateSettings && angular.isDefined(stateSettings.entityAliasesList)) {
+                return stateSettings.entityAliasesList;
+            }
+        }
+        return null;
+    }
+
+    function getMinEntitiesToShowSelect() {
+        if (vm.dashboard && vm.dashboardCtx.state) {
+            var stateSettings = vm.dashboard.configuration.states[vm.dashboardCtx.state].settings;
+            if (stateSettings && angular.isDefined(stateSettings.minEntitiesToShowSelect)) {
+                return stateSettings.minEntitiesToShowSelect;
+            }
+        }
+        return 1;
     }
 
     function hideFullscreenButton() {
