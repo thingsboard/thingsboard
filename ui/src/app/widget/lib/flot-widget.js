@@ -399,7 +399,8 @@ export default class TbFlot {
                 options.series.bars ={
                         show: true,
                         lineWidth: 0,
-                        fill: 0.9
+                        fill: 0.9,
+                        align: settings.barAlignment || "left"
                 }
                 ctx.defaultBarWidth = settings.defaultBarWidth || 600;
             }
@@ -975,6 +976,11 @@ export default class TbFlot {
                 "type": "number",
                 "default": 600
             };
+            properties["barAlignment"] = {
+                "title": "Bar alignment",
+                "type": "string",
+                "default": "left"
+            };
         }
         properties["shadowSize"] = {
             "title": "Shadow size",
@@ -1125,6 +1131,25 @@ export default class TbFlot {
         }
         if (chartType === 'bar') {
             schema["form"].push("defaultBarWidth");
+            schema["form"].push({
+                "key": "barAlignment",
+                "type": "rc-select",
+                "multiple": false,
+                "items": [
+                    {
+                        "value": "left",
+                        "label": "Left"
+                    },
+                    {
+                        "value": "right",
+                        "label": "Right"
+                    },
+                    {
+                        "value": "center",
+                        "label": "Center"
+                    }
+                ]
+            });
         }
         schema["form"].push("shadowSize");
         schema["form"].push({
