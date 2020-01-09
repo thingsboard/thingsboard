@@ -111,6 +111,10 @@ function MultipleInputWidgetController($q, $scope, $translate, attributeService,
         } else {
             data = vm.sources;
         }
+        if (vm.settings.useOnSaveFunction && angular.isDefined(vm.settings.onSaveFunction)) {
+            var onSaveFunction = new Function('ctx', vm.settings.onSaveFunction);
+            onSaveFunction(vm.ctx);
+        }
         for (let i = 0; i < data.length; i++) {
             var serverAttributes = [], sharedAttributes = [], telemetry = [];
             for (let j = 0; j < data[i].keys.length; j++) {
