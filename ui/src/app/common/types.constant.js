@@ -284,6 +284,10 @@ export default angular.module('thingsboard.types', [])
                 entityViewSearchQuery: {
                     value: 'entityViewSearchQuery',
                     name: 'alias.filter-type-entity-view-search-query'
+                },
+                entitiesCustomSearchFunction: {
+                    value: 'entitiesCustomSearchFunction',
+                    name: "alias.filter-type-entities-custom-search-function"
                 }
             },
             direction: {

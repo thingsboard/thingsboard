@@ -197,6 +197,9 @@ export default function EntityFilterViewDirective($compile, $templateCache, $q, 
                             );
                         }
                         break;
+                    case types.aliasFilterType.entitiesCustomSearchFunction.value:
+                        scope.filterDisplayValue = $translate.instant('alias.filter-type-entities-custom-search-function-description');
+                        break;
                     default:
                         scope.filterDisplayValue = scope.filter.type;
                         break;

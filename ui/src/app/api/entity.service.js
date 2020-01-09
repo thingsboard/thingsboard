@@ -680,6 +680,26 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                     deferred.resolve(result);
                 }
                 break;
+            case types.aliasFilterType.entitiesCustomSearchFunction.value:
+                var entitiesSearchFunction = new Function("filter", filter.entitiesCustomSearchFunction);
+                if (entitiesSearchFunction) {
+                    entitiesSearchFunction(filter).then(
+                        function success(entities) {
+                            if (entities && entities.length || !failOnEmpty) {
+                                result.entities = entitiesToEntitiesInfo(entities);
+                                deferred.resolve(result);
+                            } else {
+                                deferred.reject();
+                            }
+                        },
+                        function fail() {
+                            deferred.reject();
+                        }
+                    );
+                } else {
+                    deferred.reject();
+                }
+                break;
         }
         return deferred.promise;
     }
@@ -729,6 +749,8 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                     return entityTypes.indexOf(types.entityType.device)  > -1 ? true : false;
                 case types.aliasFilterType.entityViewSearchQuery.value:
                     return entityTypes.indexOf(types.entityType.entityView)  > -1 ? true : false;
+                case types.aliasFilterType.entitiesCustomSearchFunction.value:
+                    return entityTypes.indexOf(filter.entityType) > -1 ? true : false;
             }
         }
         return false;
@@ -758,6 +780,8 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                 return entityType === types.entityType.device;
             case types.aliasFilterType.entityViewSearchQuery.value:
                 return entityType === types.entityType.entityView;
+            case types.aliasFilterType.entitiesCustomSearchFunction.value:
+                return true;
         }
         return false;
     }
