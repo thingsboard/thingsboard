@@ -52,7 +52,11 @@ export default function StatesComponent($compile, $templateCache, $controller, s
                     statesControllerService.preserveStateControllerState(scope.statesControllerId, state);
                 }
             }
-
+            
+            stateController.updateEntityParams = function(params, targetEntityParamName, targetEntityId, entityName) {
+                statesControllerService.updateEntityParams(params, targetEntityParamName, targetEntityId, entityName);
+            }
+            
             stateController.cleanupPreservedStates = function() {
                 statesControllerService.cleanupPreservedStates();
             }

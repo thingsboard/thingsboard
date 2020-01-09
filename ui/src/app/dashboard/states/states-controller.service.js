@@ -42,10 +42,31 @@ export default function StatesControllerService() {
         getStateController: getStateController,
         preserveStateControllerState: preserveStateControllerState,
         withdrawStateControllerState: withdrawStateControllerState,
-        cleanupPreservedStates: cleanupPreservedStates
+        cleanupPreservedStates: cleanupPreservedStates,
+        updateEntityParams: updateEntityParams
     };
 
     return service;
+
+    function updateEntityParams(params, targetEntityParamName, targetEntityId, entityName) {
+        if (targetEntityId) {
+            var targetEntityParams;
+            if (targetEntityParamName && targetEntityParamName.length) {
+                targetEntityParams = params[targetEntityParamName];
+                if (!targetEntityParams) {
+                    targetEntityParams = {};
+                    params[targetEntityParamName] = targetEntityParams;
+                    params.targetEntityParamName = targetEntityParamName;
+                }
+            } else {
+                targetEntityParams = params;
+            }
+            targetEntityParams.entityId = targetEntityId;
+            if (entityName) {
+                targetEntityParams.entityName = entityName;
+            }
+        }
+    }
 
     function registerStatesController(id, stateControllerInfo) {
         statesControllers[id] = stateControllerInfo;
