@@ -75,7 +75,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     @Autowired
     private EntityService entityService;
 
-    private EntityId tmpEntityId;
+
 
     protected ExecutorService readResultsProcessingExecutor;
 
@@ -314,26 +314,25 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         if (query.getFetchOriginator() != null && query.getFetchOriginator().booleanValue()) {
             alarms = Futures.transformAsync(alarms, input -> {
                 List<ListenableFuture<AlarmInfo>> alarmFutures = new ArrayList<>(input.size());
-                HashMap<EntityId, String> namesMap = new HashMap<>();
+                ConcurrentMap<EntityId, String> namesMap = new ConcurrentHashMap<>();
                 for (AlarmInfo alarmInfo : input) {
-                    tmpEntityId = alarmInfo.getOriginator();
-                    if (!namesMap.containsKey(tmpEntityId)) {
+                    if (!namesMap.containsKey(alarmInfo.getOriginator())) {
                         alarmFutures.add(Futures.transform(
-                                entityService.fetchEntityNameAsync(tenantId, tmpEntityId), originatorName -> {
+                                entityService.fetchEntityNameAsync(tenantId, alarmInfo.getOriginator()), originatorName -> {
                                     if (originatorName == null) {
                                         originatorName = "Deleted";
                                     }
-                                    namesMap.put(tmpEntityId, originatorName);
+                                    namesMap.put(alarmInfo.getOriginator(), originatorName);
                                     alarmInfo.setOriginatorName(originatorName);
                                     return alarmInfo;
                                 }
                         ));
                     } else {
-                        alarmInfo.setOriginatorName(namesMap.get(tmpEntityId));
+                        alarmInfo.setOriginatorName(namesMap.get(alarmInfo.getOriginator()));
                         alarmFutures.add(Futures.immediateFuture(alarmInfo));
                     }
                 }
-                namesMap.clear();
+//                namesMap.clear();
                 return Futures.successfulAsList(alarmFutures);
             });
         }
