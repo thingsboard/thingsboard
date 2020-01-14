@@ -95,7 +95,10 @@
                     position="end">
           <tb-details-panel *ngIf="editingRuleNode" fxFlex
                             headerTitle="{{editingRuleNode.name}}"
-                            headerSubtitle="{{ ruleNodeTypeDescriptorsMap.get(editingRuleNode.component.type).name | translate }}"
+                            headerSubtitle="{{
+                              (ruleNodeTypeDescriptorsMap.get(editingRuleNode.component.type).name | translate)
+                              + ' - ' + editingRuleNode.component.name
+                            }}"
                             [isReadOnly]="selectedRuleNodeTabIndex > 0"
                             [isAlwaysEdit]="true"
                             (closeDetails)="onEditRuleNodeClosed()"

@@ -152,6 +152,15 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
       }
     ],
     [
+      EntityType.RULE_NODE,
+      {
+        type: 'entity.type-rulenode',
+        typePlural: 'entity.type-rulenodes',
+        list: 'entity.list-of-rulenodes',
+        nameStartsWith: 'entity.rulenode-name-starts-with'
+      }
+    ],
+    [
       EntityType.DASHBOARD,
       {
         type: 'entity.type-dashboard',

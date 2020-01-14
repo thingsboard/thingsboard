@@ -113,7 +113,6 @@ export class JsonContentComponent implements OnInit, ControlValueAccessor, Valid
     }
     let editorOptions: Partial<ace.Ace.EditorOptions> = {
       mode: `ace/mode/${mode}`,
-      theme: 'ace/theme/github',
       showGutter: true,
       showPrintMargin: false,
       readOnly: this.readonly

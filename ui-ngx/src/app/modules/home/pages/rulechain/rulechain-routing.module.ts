@@ -14,39 +14,33 @@
 /// limitations under the License.
 ///
 
+import * as AngularCore from '@angular/core';
 import { Injectable, NgModule } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, RouterModule, Routes } from '@angular/router';
 
-import {EntitiesTableComponent} from '../../components/entity/entities-table.component';
-import {Authority} from '@shared/models/authority.enum';
-import {RuleChainsTableConfigResolver} from '@modules/home/pages/rulechain/rulechains-table-config.resolver';
-import { Dashboard } from '@shared/models/dashboard.models';
-import { DashboardService } from '@core/http/dashboard.service';
-import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
+import { EntitiesTableComponent } from '../../components/entity/entities-table.component';
+import { Authority } from '@shared/models/authority.enum';
+import { RuleChainsTableConfigResolver } from '@modules/home/pages/rulechain/rulechains-table-config.resolver';
+import * as RxJs from 'rxjs';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import * as RxJsOperators from 'rxjs/operators';
 import { BreadCrumbConfig, BreadCrumbLabelFunction } from '@shared/components/breadcrumb';
-import {
-  RuleChain,
-  RuleChainMetaData,
-  RuleChainImport,
-  ResolvedRuleChainMetaData
-} from '@shared/models/rule-chain.models';
+import { ResolvedRuleChainMetaData, RuleChain, RuleChainImport } from '@shared/models/rule-chain.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
-import { DashboardPageComponent } from '@home/pages/dashboard/dashboard-page.component';
-import { dashboardBreadcumbLabelFunction, DashboardResolver } from '@home/pages/dashboard/dashboard-routing.module';
 import { RuleChainPageComponent } from '@home/pages/rulechain/rulechain-page.component';
 import { RuleNodeComponentDescriptor } from '@shared/models/rule-node.models';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 
 import * as AngularCommon from '@angular/common';
-import * as AngularCore from '@angular/core';
 import * as AngularForms from '@angular/forms';
 import * as AngularCdkCoercion from '@angular/cdk/coercion';
+import * as AngularCdkKeycodes from '@angular/cdk/keycodes';
+import * as AngularMaterial from '@angular/material';
 import * as NgrxStore from '@ngrx/store';
 import * as TranslateCore from '@ngx-translate/core';
 import * as TbCore from '@core/public-api';
 import * as TbShared from '@shared/public-api';
+import * as TbHomeComponents from '@home/components/public-api';
 
 declare const SystemJS;
 
@@ -54,10 +48,16 @@ const ruleNodeConfigResourcesModulesMap = {
   '@angular/core': SystemJS.newModule(AngularCore),
   '@angular/common': SystemJS.newModule(AngularCommon),
   '@angular/forms': SystemJS.newModule(AngularForms),
+  '@angular/cdk/keycodes': SystemJS.newModule(AngularCdkKeycodes),
+  '@angular/cdk/coercion': SystemJS.newModule(AngularCdkCoercion),
+  '@angular/material': SystemJS.newModule(AngularMaterial),
   '@ngrx/store': SystemJS.newModule(NgrxStore),
+  rxjs: SystemJS.newModule(RxJs),
+  'rxjs/operators': SystemJS.newModule(RxJsOperators),
   '@ngx-translate/core': SystemJS.newModule(TranslateCore),
   '@core/public-api': SystemJS.newModule(TbCore),
-  '@shared/public-api': SystemJS.newModule(TbShared)
+  '@shared/public-api': SystemJS.newModule(TbShared),
+  '@home/components/public-api': SystemJS.newModule(TbHomeComponents)
 };
 
 const t = SystemJS.newModule(AngularCore);

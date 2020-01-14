@@ -26,7 +26,7 @@ import { RuleNodeComponent } from '@home/pages/rulechain/rulenode.component';
 import { FC_NODE_COMPONENT_CONFIG } from 'ngx-flowchart/dist/ngx-flowchart';
 import { RuleNodeDetailsComponent } from './rule-node-details.component';
 import { RuleNodeLinkComponent } from './rule-node-link.component';
-import { LinkLabelsComponent } from '@home/pages/rulechain/link-labels.conponent';
+import { LinkLabelsComponent } from '@home/pages/rulechain/link-labels.component';
 import { RuleNodeConfigComponent } from './rule-node-config.component';
 
 @NgModule({

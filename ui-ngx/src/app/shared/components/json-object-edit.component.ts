@@ -106,7 +106,6 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
     const editorElement = this.jsonEditorElmRef.nativeElement;
     let editorOptions: Partial<ace.Ace.EditorOptions> = {
       mode: 'ace/mode/json',
-      theme: 'ace/theme/github',
       showGutter: true,
       showPrintMargin: false,
       readOnly: this.readonly

@@ -30,7 +30,7 @@ import { RuleNodeConfigComponent } from './rule-node-config.component';
 @Component({
   selector: 'tb-rule-node',
   templateUrl: './rule-node-details.component.html',
-  styleUrls: []
+  styleUrls: ['./rule-node-details.component.scss']
 })
 export class RuleNodeDetailsComponent extends PageComponent implements OnInit, OnChanges {
 
