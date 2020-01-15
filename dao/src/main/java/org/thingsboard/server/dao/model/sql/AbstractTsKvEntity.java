@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 package org.thingsboard.server.dao.model.sql;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.dao.model.ToData;
 
 import javax.persistence.Column;
 import javax.persistence.Id;
@@ -25,14 +23,13 @@ import javax.persistence.MappedSuperclass;
 
 import static org.thingsboard.server.dao.model.ModelConstants.BOOLEAN_VALUE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.DOUBLE_VALUE_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.KEY_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.LONG_VALUE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.STRING_VALUE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.TS_COLUMN;
 
 @Data
 @MappedSuperclass
-public abstract class AbsractTsKvEntity implements ToData<TsKvEntry> {
+public abstract class AbstractTsKvEntity {
 
     protected static final String SUM = "SUM";
     protected static final String AVG = "AVG";
@@ -55,14 +52,11 @@ public abstract class AbsractTsKvEntity implements ToData<TsKvEntry> {
     @Column(name = DOUBLE_VALUE_COLUMN)
     protected Double doubleValue;
 
-    @Override
-    public abstract TsKvEntry toData();
-
     public abstract boolean isNotEmpty();
 
     protected static boolean isAllNull(Object... args) {
         for (Object arg : args) {
-            if(arg != null) {
+            if (arg != null) {
                 return false;
             }
         }

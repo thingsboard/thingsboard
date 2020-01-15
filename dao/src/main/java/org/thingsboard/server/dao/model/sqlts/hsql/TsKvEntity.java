@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.model.ToData;
-import org.thingsboard.server.dao.model.sql.AbsractTsKvEntity;
+import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -43,8 +43,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.KEY_COLUMN;
 @Entity
 @Table(name = "ts_kv")
 @IdClass(TsKvCompositeKey.class)
-public final class TsKvEntity extends AbsractTsKvEntity implements ToData<TsKvEntry> {
-
+public final class TsKvEntity extends AbstractTsKvEntity implements ToData<TsKvEntry> {
 
     @Id
     @Enumerated(EnumType.STRING)
@@ -58,7 +57,6 @@ public final class TsKvEntity extends AbsractTsKvEntity implements ToData<TsKvEn
     @Id
     @Column(name = KEY_COLUMN)
     private String key;
-
 
     public TsKvEntity() {
     }
@@ -118,6 +116,10 @@ public final class TsKvEntity extends AbsractTsKvEntity implements ToData<TsKvEn
         }
     }
 
+    @Override
+    public boolean isNotEmpty() {
+        return strValue != null || longValue != null || doubleValue != null || booleanValue != null;
+    }
 
     @Override
     public TsKvEntry toData() {
@@ -132,10 +134,5 @@ public final class TsKvEntity extends AbsractTsKvEntity implements ToData<TsKvEn
             kvEntry = new BooleanDataEntry(key, booleanValue);
         }
         return new BasicTsKvEntry(ts, kvEntry);
-    }
-
-    @Override
-    public boolean isNotEmpty() {
-        return strValue != null || longValue != null || doubleValue != null || booleanValue != null;
     }
 }

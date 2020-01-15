@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -223,6 +223,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     }
 
     void process(ActorContext context, TransportToDeviceActorMsgWrapper wrapper) {
+        boolean reportDeviceActivity = false;
         TransportToDeviceActorMsg msg = wrapper.getMsg();
         if (msg.hasSessionEvent()) {
             processSessionStateMsgs(msg.getSessionInfo(), msg.getSessionEvent());
@@ -235,11 +236,11 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         }
         if (msg.hasPostAttributes()) {
             handlePostAttributesRequest(context, msg.getSessionInfo(), msg.getPostAttributes());
-            reportLogicalDeviceActivity();
+            reportDeviceActivity = true;
         }
         if (msg.hasPostTelemetry()) {
             handlePostTelemetryRequest(context, msg.getSessionInfo(), msg.getPostTelemetry());
-            reportLogicalDeviceActivity();
+            reportDeviceActivity = true;
         }
         if (msg.hasGetAttributes()) {
             handleGetAttributesRequest(context, msg.getSessionInfo(), msg.getGetAttributes());
@@ -249,10 +250,13 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         }
         if (msg.hasToServerRPCCallRequest()) {
             handleClientSideRPCRequest(context, msg.getSessionInfo(), msg.getToServerRPCCallRequest());
-            reportLogicalDeviceActivity();
+            reportDeviceActivity = true;
         }
         if (msg.hasSubscriptionInfo()) {
             handleSessionActivity(context, msg.getSessionInfo(), msg.getSubscriptionInfo());
+        }
+        if (reportDeviceActivity) {
+            reportLogicalDeviceActivity();
         }
     }
 

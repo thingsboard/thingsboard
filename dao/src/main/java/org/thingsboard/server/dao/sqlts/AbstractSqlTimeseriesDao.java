@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,7 @@ package org.thingsboard.server.dao.sqlts;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.Aggregation;
@@ -30,95 +27,17 @@ import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
-import org.thingsboard.server.dao.timeseries.PsqlPartition;
-import org.thingsboard.server.dao.timeseries.SqlTsPartitionDate;
-import org.thingsboard.server.dao.timeseries.TsInsertExecutorType;
-import org.thingsboard.server.dao.util.PsqlDao;
 
 import javax.annotation.Nullable;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
-
-import static org.thingsboard.server.dao.timeseries.SqlTsPartitionDate.EPOCH_START;
 
 @Slf4j
 public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningExecutorService {
 
     private static final String DESC_ORDER = "DESC";
-
-    @Value("${sql.ts_inserts_executor_type}")
-    private String insertExecutorType;
-
-    @Value("${sql.ts_inserts_fixed_thread_pool_size}")
-    private int insertFixedThreadPoolSize;
-
-    @PsqlDao
-    @Value("${sql.ts_key_value_partitioning}")
-    private String partitioning;
-
-    @Value("${spring.datasource.hikari.maximumPoolSize}")
-    private int maximumPoolSize;
-
-    private SqlTsPartitionDate tsFormat;
-
-    protected ListeningExecutorService insertService;
-
-    @PostConstruct
-    void init() {
-        Optional<TsInsertExecutorType> executorTypeOptional = TsInsertExecutorType.parse(insertExecutorType);
-        TsInsertExecutorType executorType;
-        executorType = executorTypeOptional.orElse(TsInsertExecutorType.FIXED);
-        switch (executorType) {
-            case SINGLE:
-                insertService = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
-                break;
-            case FIXED:
-            case CACHED:
-                int poolSize = insertFixedThreadPoolSize;
-                if (poolSize <= 0) {
-                    poolSize = maximumPoolSize * 4;
-                }
-                insertService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(poolSize));
-                break;
-        }
-        Optional<SqlTsPartitionDate> partition = SqlTsPartitionDate.parse(partitioning);
-        if (partition.isPresent()) {
-            tsFormat = partition.get();
-        } else {
-            log.warn("Incorrect configuration of partitioning {}", partitioning);
-            throw new RuntimeException("Failed to parse partitioning property: " + partitioning + "!");
-        }
-    }
-
-    @PreDestroy
-    void preDestroy() {
-        if (insertService != null) {
-            insertService.shutdown();
-        }
-    }
-
-    protected PsqlPartition toPartition(long ts) {
-        LocalDateTime time = LocalDateTime.ofInstant(Instant.ofEpochMilli(ts), ZoneOffset.UTC);
-        LocalDateTime localDateTimeStart = tsFormat.trancateTo(time);
-        if (localDateTimeStart == SqlTsPartitionDate.EPOCH_START) {
-            return new PsqlPartition(toMills(EPOCH_START), Long.MAX_VALUE, tsFormat.getPattern());
-        } else {
-            LocalDateTime localDateTimeEnd = tsFormat.plusTo(localDateTimeStart);
-            return new PsqlPartition(toMills(localDateTimeStart), toMills(localDateTimeEnd), tsFormat.getPattern());
-        }
-    }
-
-    private long toMills(LocalDateTime time) {
-        return time.toInstant(ZoneOffset.UTC).toEpochMilli();
-    }
 
     protected ListenableFuture<List<TsKvEntry>> processFindAllAsync(TenantId tenantId, EntityId entityId, List<ReadTsKvQuery> queries) {
         List<ListenableFuture<List<TsKvEntry>>> futures = queries

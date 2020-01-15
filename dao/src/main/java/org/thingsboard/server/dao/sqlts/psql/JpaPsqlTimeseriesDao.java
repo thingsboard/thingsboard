@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionary;
 import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionaryCompositeKey;
 import org.thingsboard.server.dao.model.sqlts.psql.TsKvEntity;
 import org.thingsboard.server.dao.sqlts.AbstractSimpleSqlTimeseriesDao;
-import org.thingsboard.server.dao.sqlts.AbstractTimeseriesInsertRepository;
+import org.thingsboard.server.dao.sqlts.EntityContainer;
 import org.thingsboard.server.dao.sqlts.dictionary.TsKvDictionaryRepository;
 import org.thingsboard.server.dao.timeseries.PsqlPartition;
 import org.thingsboard.server.dao.timeseries.TimeseriesDao;
@@ -71,9 +71,6 @@ public class JpaPsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEnt
     private TsKvPsqlRepository tsKvRepository;
 
     @Autowired
-    private AbstractTimeseriesInsertRepository insertRepository;
-
-    @Autowired
     private PsqlPartitioningRepository partitioningRepository;
 
     @Override
@@ -96,22 +93,21 @@ public class JpaPsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEnt
         PsqlPartition psqlPartition = toPartition(tsKvEntry.getTs());
         savePartition(psqlPartition);
         log.trace("Saving entity: {}", entity);
-        return insertService.submit(() -> {
-            insertRepository.saveOrUpdate(entity, psqlPartition);
-            return null;
-        });
+        return tsQueue.add(new EntityContainer(entity, psqlPartition.getPartitionDate()));
     }
 
     @Override
     public ListenableFuture<Void> remove(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
-        String strKey = query.getKey();
-        Integer keyId = getOrSaveKeyId(strKey);
-        tsKvRepository.delete(
-                entityId.getId(),
-                keyId,
-                query.getStartTs(),
-                query.getEndTs());
-        return insertService.submit(() -> null);
+       return service.submit(() -> {
+           String strKey = query.getKey();
+           Integer keyId = getOrSaveKeyId(strKey);
+           tsKvRepository.delete(
+                   entityId.getId(),
+                   keyId,
+                   query.getStartTs(),
+                   query.getEndTs());
+           return null;
+       });
     }
 
     @Override
@@ -136,12 +132,12 @@ public class JpaPsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEnt
 
     @Override
     public ListenableFuture<Void> savePartition(TenantId tenantId, EntityId entityId, long tsKvEntryTs, String key, long ttl) {
-        return insertService.submit(() -> null);
+        return Futures.immediateFuture(null);
     }
 
     @Override
     public ListenableFuture<Void> removePartition(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
-        return service.submit(() -> null);
+        return Futures.immediateFuture(null);
     }
 
     protected ListenableFuture<Optional<TsKvEntry>> findAndAggregateAsync(EntityId entityId, String key, long startTs, long endTs, long ts, Aggregation aggregation) {

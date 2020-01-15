@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,21 @@
  */
 package org.thingsboard.server.dao.sqlts.timescale;
 
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.model.sqlts.timescale.TimescaleTsKvEntity;
+import org.thingsboard.server.dao.sqlts.AbstractSimpleSqlTimeseriesDao;
 import org.thingsboard.server.dao.sqlts.AbstractTimeseriesInsertRepository;
+import org.thingsboard.server.dao.sqlts.EntityContainer;
 import org.thingsboard.server.dao.timeseries.PsqlPartition;
 import org.thingsboard.server.dao.util.PsqlDao;
 import org.thingsboard.server.dao.util.TimescaleDBTsDao;
+
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Types;
+import java.util.List;
 
 @TimescaleDBTsDao
 @PsqlDao
@@ -29,19 +37,69 @@ import org.thingsboard.server.dao.util.TimescaleDBTsDao;
 @Transactional
 public class TimescaleInsertRepository extends AbstractTimeseriesInsertRepository<TimescaleTsKvEntity> {
 
-    private static final String ON_BOOL_VALUE_UPDATE_SET_NULLS = "str_v = null, long_v = null, dbl_v = null";
-    private static final String ON_STR_VALUE_UPDATE_SET_NULLS = "bool_v = null, long_v = null, dbl_v = null";
-    private static final String ON_LONG_VALUE_UPDATE_SET_NULLS = "str_v = null, bool_v = null, dbl_v = null";
-    private static final String ON_DBL_VALUE_UPDATE_SET_NULLS = "str_v = null, long_v = null, bool_v = null";
+    private static final String INSERT_OR_UPDATE_BOOL_STATEMENT = getInsertOrUpdateString(BOOL_V, PSQL_ON_BOOL_VALUE_UPDATE_SET_NULLS);
+    private static final String INSERT_OR_UPDATE_STR_STATEMENT = getInsertOrUpdateString(STR_V, PSQL_ON_STR_VALUE_UPDATE_SET_NULLS);
+    private static final String INSERT_OR_UPDATE_LONG_STATEMENT = getInsertOrUpdateString(LONG_V, PSQL_ON_LONG_VALUE_UPDATE_SET_NULLS);
+    private static final String INSERT_OR_UPDATE_DBL_STATEMENT = getInsertOrUpdateString(DBL_V, PSQL_ON_DBL_VALUE_UPDATE_SET_NULLS);
 
-    private static final String INSERT_OR_UPDATE_BOOL_STATEMENT = getInsertOrUpdateString(BOOL_V, ON_BOOL_VALUE_UPDATE_SET_NULLS);
-    private static final String INSERT_OR_UPDATE_STR_STATEMENT = getInsertOrUpdateString(STR_V, ON_STR_VALUE_UPDATE_SET_NULLS);
-    private static final String INSERT_OR_UPDATE_LONG_STATEMENT = getInsertOrUpdateString(LONG_V , ON_LONG_VALUE_UPDATE_SET_NULLS);
-    private static final String INSERT_OR_UPDATE_DBL_STATEMENT = getInsertOrUpdateString(DBL_V, ON_DBL_VALUE_UPDATE_SET_NULLS);
+    private static final String BATCH_UPDATE =
+            "UPDATE tenant_ts_kv SET bool_v = ?, str_v = ?, long_v = ?, dbl_v = ? WHERE entity_type = ? AND entity_id = ? and key = ? and ts = ?";
+
+
+    private static final String INSERT_OR_UPDATE =
+            "INSERT INTO tenant_ts_kv (tenant_id, entity_id, key, ts, bool_v, str_v, long_v, dbl_v) VALUES(?, ?, ?, ?, ?, ?, ?, ?) " +
+                    "ON CONFLICT (tenant_id, entity_id, key, ts) DO UPDATE SET bool_v = ?, str_v = ?, long_v = ?, dbl_v = ?;";
 
     @Override
     public void saveOrUpdate(TimescaleTsKvEntity entity, PsqlPartition partition) {
         processSaveOrUpdate(entity, INSERT_OR_UPDATE_BOOL_STATEMENT, INSERT_OR_UPDATE_STR_STATEMENT, INSERT_OR_UPDATE_LONG_STATEMENT, INSERT_OR_UPDATE_DBL_STATEMENT);
+    }
+
+    @Override
+    public void saveOrUpdate(List<EntityContainer<TimescaleTsKvEntity>> entities) {
+        jdbcTemplate.batchUpdate(INSERT_OR_UPDATE, new BatchPreparedStatementSetter() {
+            @Override
+            public void setValues(PreparedStatement ps, int i) throws SQLException {
+                TimescaleTsKvEntity tsKvEntity = entities.get(i).getEntity();
+                ps.setObject(1, tsKvEntity.getTenantId());
+                ps.setObject(2, tsKvEntity.getEntityId());
+                ps.setInt(3, tsKvEntity.getKey());
+                ps.setLong(4, tsKvEntity.getTs());
+
+                if (tsKvEntity.getBooleanValue() != null) {
+                    ps.setBoolean(5, tsKvEntity.getBooleanValue());
+                    ps.setBoolean(9, tsKvEntity.getBooleanValue());
+                } else {
+                    ps.setNull(5, Types.BOOLEAN);
+                    ps.setNull(9, Types.BOOLEAN);
+                }
+
+                ps.setString(6, replaceNullChars(tsKvEntity.getStrValue()));
+                ps.setString(10, replaceNullChars(tsKvEntity.getStrValue()));
+
+
+                if (tsKvEntity.getLongValue() != null) {
+                    ps.setLong(7, tsKvEntity.getLongValue());
+                    ps.setLong(11, tsKvEntity.getLongValue());
+                } else {
+                    ps.setNull(7, Types.BIGINT);
+                    ps.setNull(11, Types.BIGINT);
+                }
+
+                if (tsKvEntity.getDoubleValue() != null) {
+                    ps.setDouble(8, tsKvEntity.getDoubleValue());
+                    ps.setDouble(12, tsKvEntity.getDoubleValue());
+                } else {
+                    ps.setNull(8, Types.DOUBLE);
+                    ps.setNull(12, Types.DOUBLE);
+                }
+            }
+
+            @Override
+            public int getBatchSize() {
+                return entities.size();
+            }
+        });
     }
 
     @Override
@@ -62,7 +120,7 @@ public class TimescaleInsertRepository extends AbstractTimeseriesInsertRepositor
                 .setParameter("entity_id", entity.getEntityId())
                 .setParameter("key", entity.getKey())
                 .setParameter("ts", entity.getTs())
-                .setParameter("str_v", entity.getStrValue())
+                .setParameter("str_v", replaceNullChars(entity.getStrValue()))
                 .executeUpdate();
     }
 

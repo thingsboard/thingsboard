@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -516,14 +516,26 @@ public abstract class BaseController {
 
     protected String constructBaseUrl(HttpServletRequest request) {
         String scheme = request.getScheme();
-        if (request.getHeader("x-forwarded-proto") != null) {
-            scheme = request.getHeader("x-forwarded-proto");
+
+        String forwardedProto = request.getHeader("x-forwarded-proto");
+        if (forwardedProto != null) {
+            scheme = forwardedProto;
         }
+
         int serverPort = request.getServerPort();
         if (request.getHeader("x-forwarded-port") != null) {
             try {
                 serverPort = request.getIntHeader("x-forwarded-port");
             } catch (NumberFormatException e) {
+            }
+        } else if (forwardedProto != null) {
+            switch (forwardedProto) {
+                case "http":
+                    serverPort = 80;
+                    break;
+                case "https":
+                    serverPort = 443;
+                    break;
             }
         }
 

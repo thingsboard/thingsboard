@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,21 +86,6 @@ public class ConsistentClusterRoutingService implements ClusterRoutingService {
     @Override
     public Optional<ServerAddress> resolveById(EntityId entityId) {
         return resolveByUuid(rootCircle, entityId.getId());
-    }
-
-    @Override
-    public Optional<ServerAddress> resolveByUuid(UUID uuid) {
-        return resolveByUuid(rootCircle, uuid);
-    }
-
-    @Override
-    public Optional<ServerAddress> resolveByUuid(ServerType server, UUID uuid) {
-        return resolveByUuid(circles[server.ordinal()], uuid);
-    }
-
-    @Override
-    public Optional<ServerAddress> resolveById(ServerType server, EntityId entityId) {
-        return resolveByUuid(circles[server.ordinal()], entityId.getId());
     }
 
     private Optional<ServerAddress> resolveByUuid(ConsistentHashCircle circle, UUID uuid) {

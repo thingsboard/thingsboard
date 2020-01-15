@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,11 +31,8 @@ import java.util.List;
 @SqlDao
 public interface AlarmRepository extends CrudRepository<AlarmEntity, String> {
 
-    @Query("SELECT a FROM AlarmEntity a WHERE a.tenantId = :tenantId AND a.originatorId = :originatorId " +
-            "AND a.originatorType = :entityType AND a.type = :alarmType ORDER BY a.type ASC, a.id DESC")
-    List<AlarmEntity> findLatestByOriginatorAndType(@Param("tenantId") String tenantId,
-                                                    @Param("originatorId") String originatorId,
-                                                    @Param("entityType") EntityType entityType,
+    @Query("SELECT a FROM AlarmEntity a WHERE a.originatorId = :originatorId AND a.type = :alarmType ORDER BY startTs DESC")
+    List<AlarmEntity> findLatestByOriginatorAndType(@Param("originatorId") String originatorId,
                                                     @Param("alarmType") String alarmType,
                                                     Pageable pageable);
 }

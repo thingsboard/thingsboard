@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.security.model;
-
-import lombok.Data;
-
-import java.io.Serializable;
-
-@Data
-public class SecuritySettings implements Serializable {
-
-    private UserPasswordPolicy passwordPolicy;
-
-    private Integer maxFailedLoginAttempts;
-    private String userLockoutNotificationEmail;
+.tb-add-entity-panel {
+  min-width: 150px;
+  max-height: 200px;
+  overflow: hidden;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow:
+    0 7px 8px -4px rgba(0, 0, 0, .2),
+    0 13px 19px 2px rgba(0, 0, 0, .14),
+    0 5px 24px 4px rgba(0, 0, 0, .12);
 }

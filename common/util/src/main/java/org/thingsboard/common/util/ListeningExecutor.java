@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.security.model;
+package org.thingsboard.common.util;
 
-import lombok.Data;
+import com.google.common.util.concurrent.ListenableFuture;
 
-import java.io.Serializable;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executor;
 
-@Data
-public class UserPasswordPolicy implements Serializable {
+public interface ListeningExecutor extends Executor {
 
-    private Integer minimumLength;
-    private Integer minimumUppercaseLetters;
-    private Integer minimumLowercaseLetters;
-    private Integer minimumDigits;
-    private Integer minimumSpecialCharacters;
+    <T> ListenableFuture<T> executeAsync(Callable<T> task);
 
-    private Integer passwordExpirationPeriodDays;
-    private Integer passwordReuseFrequencyDays;
+    default <T> ListenableFuture<T> submit(Callable<T> task) {
+        return executeAsync(task);
+    }
 
 }

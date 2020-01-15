@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,24 +17,17 @@ package org.thingsboard.server.dao.sqlts;
 
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
-import org.thingsboard.server.dao.model.sql.AbsractTsKvEntity;
 import org.thingsboard.server.dao.timeseries.PsqlPartition;
+import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+import java.util.List;
 
 @Repository
-public abstract class AbstractTimeseriesInsertRepository<T extends AbsractTsKvEntity> {
-
-    protected static final String BOOL_V = "bool_v";
-    protected static final String STR_V = "str_v";
-    protected static final String LONG_V = "long_v";
-    protected static final String DBL_V = "dbl_v";
-
-    @PersistenceContext
-    protected EntityManager entityManager;
+public abstract class AbstractTimeseriesInsertRepository<T extends AbstractTsKvEntity> extends AbstractInsertRepository {
 
     public abstract void saveOrUpdate(T entity, PsqlPartition partition);
+
+    public abstract void saveOrUpdate(List<EntityContainer<T>> entities);
 
     protected void processSaveOrUpdate(T entity, String requestBoolValue, String requestStrValue, String requestLongValue, String requestDblValue) {
         if (entity.getBooleanValue() != null) {

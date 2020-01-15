@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,11 @@
  */
 package org.thingsboard.server.dao.sql;
 
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
-
-import javax.annotation.PreDestroy;
-import java.util.concurrent.Executors;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public abstract class JpaAbstractDaoListeningExecutorService {
 
-    protected ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
+    @Autowired
+    protected JpaExecutorService service;
 
-    @PreDestroy
-    void onDestroy() {
-        service.shutdown();
-    }
 }

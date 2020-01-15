@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api;
+package org.thingsboard.server.dao.sql.component;
 
-import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.dao.model.sql.ComponentDescriptorEntity;
 
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executor;
+public interface ComponentDescriptorInsertRepository {
 
-public interface ListeningExecutor extends Executor {
-
-    <T> ListenableFuture<T> executeAsync(Callable<T> task);
+    ComponentDescriptorEntity saveOrUpdate(ComponentDescriptorEntity entity);
 
 }

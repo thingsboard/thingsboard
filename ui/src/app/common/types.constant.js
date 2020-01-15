@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -322,7 +322,8 @@ export default angular.module('thingsboard.types', [])
                 timeseries: "timeseries",
                 attribute: "attribute",
                 function: "function",
-                alarm: "alarm"
+                alarm: "alarm",
+                entityField: "entityField"
             },
             contentType: {
                 "JSON": {
@@ -465,6 +466,84 @@ export default angular.module('thingsboard.types', [])
                 "CURRENT_CUSTOMER": {
                     type: 'entity.type-current-customer',
                     list: 'entity.type-current-customer'
+                }
+            },
+            entityField: {
+                createdTime: {
+                    keyName: 'createdTime',
+                    name: 'entity-field.created-time',
+                    value: 'createdTime',
+                    time: true
+                },
+                name: {
+                    keyName: 'name',
+                    name: 'entity-field.name',
+                    value: 'name'
+                },
+                type: {
+                    keyName: 'type',
+                    name: 'entity-field.type',
+                    value: 'type'
+                },
+                firstName: {
+                    keyName: 'firstName',
+                    name: 'entity-field.first-name',
+                    value: 'firstName'
+                },
+                lastName: {
+                    keyName: 'lastName',
+                    name: 'entity-field.last-name',
+                    value: 'lastName'
+                },
+                email: {
+                    keyName: 'email',
+                    name: 'entity-field.email',
+                    value: 'email'
+                },
+                title: {
+                    keyName: 'title',
+                    name: 'entity-field.title',
+                    value: 'title'
+                },
+                country: {
+                    keyName: 'country',
+                    name: 'entity-field.country',
+                    value: 'country'
+                },
+                state: {
+                    keyName: 'state',
+                    name: 'entity-field.state',
+                    value: 'state'
+                },
+                city: {
+                    keyName: 'city',
+                    name: 'entity-field.city',
+                    value: 'city'
+                },
+                address: {
+                    keyName: 'address',
+                    name: 'entity-field.address',
+                    value: 'address'
+                },
+                address2: {
+                    keyName: 'address2',
+                    name: 'entity-field.address2',
+                    value: 'address2'
+                },
+                zip: {
+                    keyName: 'zip',
+                    name: 'entity-field.zip',
+                    value: 'zip'
+                },
+                phone: {
+                    keyName: 'phone',
+                    name: 'entity-field.phone',
+                    value: 'phone'
+                },
+                label: {
+                    keyName: 'label',
+                    name: 'entity-field.label',
+                    value: 'label'
                 }
             },
             entitySearchDirection: {

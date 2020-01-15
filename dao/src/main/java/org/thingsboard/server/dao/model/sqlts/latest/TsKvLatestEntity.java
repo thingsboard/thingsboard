@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.model.ToData;
+import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -34,23 +35,16 @@ import javax.persistence.Id;
 import javax.persistence.IdClass;
 import javax.persistence.Table;
 
-import static org.thingsboard.server.dao.model.ModelConstants.BOOLEAN_VALUE_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.DOUBLE_VALUE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_ID_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_TYPE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.KEY_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.LONG_VALUE_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.STRING_VALUE_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.TS_COLUMN;
 
 @Data
 @Entity
 @Table(name = "ts_kv_latest")
 @IdClass(TsKvLatestCompositeKey.class)
-public final class TsKvLatestEntity implements ToData<TsKvEntry> {
+public final class TsKvLatestEntity extends AbstractTsKvEntity implements ToData<TsKvEntry> {
 
-
-    //TODO: reafctor this and TsKvEntity to avoid code duplicates
     @Id
     @Enumerated(EnumType.STRING)
     @Column(name = ENTITY_TYPE_COLUMN)
@@ -64,20 +58,10 @@ public final class TsKvLatestEntity implements ToData<TsKvEntry> {
     @Column(name = KEY_COLUMN)
     private String key;
 
-    @Column(name = TS_COLUMN)
-    private long ts;
-
-    @Column(name = BOOLEAN_VALUE_COLUMN)
-    private Boolean booleanValue;
-
-    @Column(name = STRING_VALUE_COLUMN)
-    private String strValue;
-
-    @Column(name = LONG_VALUE_COLUMN)
-    private Long longValue;
-
-    @Column(name = DOUBLE_VALUE_COLUMN)
-    private Double doubleValue;
+    @Override
+    public boolean isNotEmpty() {
+        return strValue != null || longValue != null || doubleValue != null || booleanValue != null;
+    }
 
     @Override
     public TsKvEntry toData() {
@@ -93,4 +77,5 @@ public final class TsKvLatestEntity implements ToData<TsKvEntry> {
         }
         return new BasicTsKvEntry(ts, kvEntry);
     }
+
 }

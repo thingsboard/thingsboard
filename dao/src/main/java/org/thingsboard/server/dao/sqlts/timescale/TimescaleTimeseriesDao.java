@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
@@ -37,12 +38,18 @@ import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionary;
 import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionaryCompositeKey;
 import org.thingsboard.server.dao.model.sqlts.timescale.TimescaleTsKvEntity;
+import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
+import org.thingsboard.server.dao.sql.TbSqlBlockingQueue;
+import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
 import org.thingsboard.server.dao.sqlts.AbstractSqlTimeseriesDao;
 import org.thingsboard.server.dao.sqlts.AbstractTimeseriesInsertRepository;
+import org.thingsboard.server.dao.sqlts.EntityContainer;
 import org.thingsboard.server.dao.sqlts.dictionary.TsKvDictionaryRepository;
 import org.thingsboard.server.dao.timeseries.TimeseriesDao;
 import org.thingsboard.server.dao.util.TimescaleDBTsDao;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -78,6 +85,39 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
 
     @Autowired
     private AbstractTimeseriesInsertRepository insertRepository;
+
+    @Autowired
+    ScheduledLogExecutorComponent logExecutor;
+
+    @Value("${sql.ts_timescale.batch_size:1000}")
+    private int batchSize;
+
+    @Value("${sql.ts_timescale.batch_max_delay:100}")
+    private long maxDelay;
+
+    @Value("${sql.ts_timescale.stats_print_interval_ms:1000}")
+    private long statsPrintIntervalMs;
+
+    private TbSqlBlockingQueue<EntityContainer<TimescaleTsKvEntity>> queue;
+
+    @PostConstruct
+    private void init() {
+        TbSqlBlockingQueueParams params = TbSqlBlockingQueueParams.builder()
+                .logName("TS Timescale")
+                .batchSize(batchSize)
+                .maxDelay(maxDelay)
+                .statsPrintIntervalMs(statsPrintIntervalMs)
+                .build();
+        queue = new TbSqlBlockingQueue<>(params);
+        queue.init(logExecutor, v -> insertRepository.saveOrUpdate(v));
+    }
+
+    @PreDestroy
+    private void destroy() {
+        if (queue != null) {
+            queue.destroy();
+        }
+    }
 
     @Override
     public ListenableFuture<List<TsKvEntry>> findAllAsync(TenantId tenantId, EntityId entityId, List<ReadTsKvQuery> queries) {
@@ -200,20 +240,17 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
         entity.setLongValue(tsKvEntry.getLongValue().orElse(null));
         entity.setBooleanValue(tsKvEntry.getBooleanValue().orElse(null));
         log.trace("Saving entity to timescale db: {}", entity);
-        return insertService.submit(() -> {
-            insertRepository.saveOrUpdate(entity, null);
-            return null;
-        });
+        return queue.add(new EntityContainer(entity, null));
     }
 
     @Override
     public ListenableFuture<Void> savePartition(TenantId tenantId, EntityId entityId, long tsKvEntryTs, String key, long ttl) {
-        return insertService.submit(() -> null);
+        return Futures.immediateFuture(null);
     }
 
     @Override
     public ListenableFuture<Void> saveLatest(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry) {
-        return insertService.submit(() -> null);
+        return Futures.immediateFuture(null);
     }
 
     @Override

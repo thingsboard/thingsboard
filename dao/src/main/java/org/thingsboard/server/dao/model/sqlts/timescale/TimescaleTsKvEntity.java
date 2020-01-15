@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,15 @@ package org.thingsboard.server.dao.model.sqlts.timescale;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.util.StringUtils;
+import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.BooleanDataEntry;
+import org.thingsboard.server.common.data.kv.DoubleDataEntry;
+import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.model.ToData;
-import org.thingsboard.server.dao.model.sql.PsqlAbsractTsKvEntity;
+import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
 
 import javax.persistence.Column;
 import javax.persistence.ColumnResult;
@@ -33,8 +39,11 @@ import javax.persistence.NamedNativeQuery;
 import javax.persistence.SqlResultSetMapping;
 import javax.persistence.SqlResultSetMappings;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.util.UUID;
 
+import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_ID_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.KEY_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.TENANT_ID_COLUMN;
 import static org.thingsboard.server.dao.sqlts.timescale.AggregationRepository.FIND_AVG;
 import static org.thingsboard.server.dao.sqlts.timescale.AggregationRepository.FIND_AVG_QUERY;
@@ -114,20 +123,33 @@ import static org.thingsboard.server.dao.sqlts.timescale.AggregationRepository.F
                 resultSetMapping = "timescaleCountMapping"
         )
 })
-public final class TimescaleTsKvEntity extends PsqlAbsractTsKvEntity implements ToData<TsKvEntry> {
+public final class TimescaleTsKvEntity extends AbstractTsKvEntity implements ToData<TsKvEntry> {
 
     @Id
     @Column(name = TENANT_ID_COLUMN, columnDefinition = "uuid")
     private UUID tenantId;
 
-    public TimescaleTsKvEntity() { }
+    @Id
+    @Column(name = ENTITY_ID_COLUMN, columnDefinition = "uuid")
+    protected UUID entityId;
+
+    @Id
+    @Column(name = KEY_COLUMN)
+    protected int key;
+
+    @Transient
+    protected String strKey;
+
+
+    public TimescaleTsKvEntity() {
+    }
 
     public TimescaleTsKvEntity(Long tsBucket, Long interval, Long longValue, Double doubleValue, Long longCountValue, Long doubleCountValue, String strValue, String aggType) {
         if (!StringUtils.isEmpty(strValue)) {
             this.strValue = strValue;
         }
         if (!isAllNull(tsBucket, interval, longValue, doubleValue, longCountValue, doubleCountValue)) {
-            this.ts = tsBucket + interval/2;
+            this.ts = tsBucket + interval / 2;
             switch (aggType) {
                 case AVG:
                     double sum = 0.0;
@@ -167,7 +189,7 @@ public final class TimescaleTsKvEntity extends PsqlAbsractTsKvEntity implements 
 
     public TimescaleTsKvEntity(Long tsBucket, Long interval, Long booleanValueCount, Long strValueCount, Long longValueCount, Long doubleValueCount) {
         if (!isAllNull(tsBucket, interval, booleanValueCount, strValueCount, longValueCount, doubleValueCount)) {
-            this.ts = tsBucket + interval/2;
+            this.ts = tsBucket + interval / 2;
             if (booleanValueCount != 0) {
                 this.longValue = booleanValueCount;
             } else if (strValueCount != 0) {
@@ -182,4 +204,20 @@ public final class TimescaleTsKvEntity extends PsqlAbsractTsKvEntity implements 
     public boolean isNotEmpty() {
         return ts != null && (strValue != null || longValue != null || doubleValue != null || booleanValue != null);
     }
+
+    @Override
+    public TsKvEntry toData() {
+        KvEntry kvEntry = null;
+        if (strValue != null) {
+            kvEntry = new StringDataEntry(strKey, strValue);
+        } else if (longValue != null) {
+            kvEntry = new LongDataEntry(strKey, longValue);
+        } else if (doubleValue != null) {
+            kvEntry = new DoubleDataEntry(strKey, doubleValue);
+        } else if (booleanValue != null) {
+            kvEntry = new BooleanDataEntry(strKey, booleanValue);
+        }
+        return new BasicTsKvEntry(ts, kvEntry);
+    }
+
 }

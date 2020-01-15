@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -127,7 +127,16 @@ public class ThingsboardInstallService {
                         log.info("Upgrading ThingsBoard from version 2.4.1 to 2.4.2 ...");
 
                         databaseEntitiesUpgradeService.upgradeDatabase("2.4.1");
-                        databaseTsUpgradeService.upgradeDatabase("2.4.1");
+                    case "2.4.2":
+                        log.info("Upgrading ThingsBoard from version 2.4.2 to 2.4.3 ...");
+
+                        databaseEntitiesUpgradeService.upgradeDatabase("2.4.2");
+
+                    case "2.4.3":
+                        log.info("Upgrading ThingsBoard from version 2.4.3 to 2.5 ...");
+
+                        databaseEntitiesUpgradeService.upgradeDatabase("2.4.3");
+                        databaseTsUpgradeService.upgradeDatabase("2.4.3");
 
                         log.info("Updating system data...");
 
@@ -143,6 +152,7 @@ public class ThingsboardInstallService {
                         systemDataLoaderService.deleteSystemWidgetBundle("gateway_widgets");
                         systemDataLoaderService.deleteSystemWidgetBundle("input_widgets");
                         systemDataLoaderService.deleteSystemWidgetBundle("date");
+                        systemDataLoaderService.deleteSystemWidgetBundle("entity_admin_widgets");
 
                         systemDataLoaderService.loadSystemWidgets();
                         break;
