@@ -893,7 +893,7 @@
     <repositories>
         <repository>
             <id>central</id>
-            <url>http://repo1.maven.org/maven2/</url>
+            <url>https://repo1.maven.org/maven2/</url>
         </repository>
         <repository>
             <id>spring-snapshots</id>
@@ -914,7 +914,7 @@
         <repository>
             <id>typesafe</id>
             <name>Typesafe Repository</name>
-            <url>http://repo.typesafe.com/typesafe/releases/</url>
+            <url>https://repo.typesafe.com/typesafe/releases/</url>
         </repository>
         <repository>
             <id>sonatype</id>
