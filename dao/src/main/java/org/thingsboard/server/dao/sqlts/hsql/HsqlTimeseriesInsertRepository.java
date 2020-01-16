@@ -36,13 +36,6 @@ import java.util.List;
 @Transactional
 public class HsqlTimeseriesInsertRepository extends AbstractTimeseriesInsertRepository<TsKvEntity> {
 
-    private static final String TS_KV_CONSTRAINT = "(ts_kv.entity_type=A.entity_type AND ts_kv.entity_id=A.entity_id AND ts_kv.key=A.key AND ts_kv.ts=A.ts)";
-
-    private static final String INSERT_OR_UPDATE_BOOL_STATEMENT = getInsertOrUpdateStringHsql(TS_KV_TABLE, TS_KV_CONSTRAINT, BOOL_V, HSQL_ON_BOOL_VALUE_UPDATE_SET_NULLS);
-    private static final String INSERT_OR_UPDATE_STR_STATEMENT = getInsertOrUpdateStringHsql(TS_KV_TABLE, TS_KV_CONSTRAINT, STR_V, HSQL_ON_STR_VALUE_UPDATE_SET_NULLS);
-    private static final String INSERT_OR_UPDATE_LONG_STATEMENT = getInsertOrUpdateStringHsql(TS_KV_TABLE, TS_KV_CONSTRAINT, LONG_V, HSQL_ON_LONG_VALUE_UPDATE_SET_NULLS);
-    private static final String INSERT_OR_UPDATE_DBL_STATEMENT = getInsertOrUpdateStringHsql(TS_KV_TABLE, TS_KV_CONSTRAINT, DBL_V, HSQL_ON_DBL_VALUE_UPDATE_SET_NULLS);
-
     private static final String INSERT_OR_UPDATE =
             "MERGE INTO ts_kv USING(VALUES ?, ?, ?, ?, ?, ?, ?, ?) " +
                     "T (entity_type, entity_id, key, ts, bool_v, str_v, long_v, dbl_v) " +
@@ -53,11 +46,6 @@ public class HsqlTimeseriesInsertRepository extends AbstractTimeseriesInsertRepo
                     "WHEN MATCHED THEN UPDATE SET ts_kv.bool_v = T.bool_v, ts_kv.str_v = T.str_v, ts_kv.long_v = T.long_v, ts_kv.dbl_v = T.dbl_v " +
                     "WHEN NOT MATCHED THEN INSERT (entity_type, entity_id, key, ts, bool_v, str_v, long_v, dbl_v) " +
                     "VALUES (T.entity_type, T.entity_id, T.key, T.ts, T.bool_v, T.str_v, T.long_v, T.dbl_v);";
-
-    @Override
-    public void saveOrUpdate(TsKvEntity entity, PsqlPartition partition) {
-        processSaveOrUpdate(entity, INSERT_OR_UPDATE_BOOL_STATEMENT, INSERT_OR_UPDATE_STR_STATEMENT, INSERT_OR_UPDATE_LONG_STATEMENT, INSERT_OR_UPDATE_DBL_STATEMENT);
-    }
 
     @Override
     public void saveOrUpdate(List<EntityContainer<TsKvEntity>> entities) {
@@ -97,49 +85,5 @@ public class HsqlTimeseriesInsertRepository extends AbstractTimeseriesInsertRepo
                 return entities.size();
             }
         });
-    }
-
-    @Override
-    protected void saveOrUpdateBoolean(TsKvEntity entity, String query) {
-        entityManager.createNativeQuery(query)
-                .setParameter("entity_type", entity.getEntityType().name())
-                .setParameter("entity_id", entity.getEntityId())
-                .setParameter("key", entity.getKey())
-                .setParameter("ts", entity.getTs())
-                .setParameter("bool_v", entity.getBooleanValue())
-                .executeUpdate();
-    }
-
-    @Override
-    protected void saveOrUpdateString(TsKvEntity entity, String query) {
-        entityManager.createNativeQuery(query)
-                .setParameter("entity_type", entity.getEntityType().name())
-                .setParameter("entity_id", entity.getEntityId())
-                .setParameter("key", entity.getKey())
-                .setParameter("ts", entity.getTs())
-                .setParameter("str_v", entity.getStrValue())
-                .executeUpdate();
-    }
-
-    @Override
-    protected void saveOrUpdateLong(TsKvEntity entity, String query) {
-        entityManager.createNativeQuery(query)
-                .setParameter("entity_type", entity.getEntityType().name())
-                .setParameter("entity_id", entity.getEntityId())
-                .setParameter("key", entity.getKey())
-                .setParameter("ts", entity.getTs())
-                .setParameter("long_v", entity.getLongValue())
-                .executeUpdate();
-    }
-
-    @Override
-    protected void saveOrUpdateDouble(TsKvEntity entity, String query) {
-        entityManager.createNativeQuery(query)
-                .setParameter("entity_type", entity.getEntityType().name())
-                .setParameter("entity_id", entity.getEntityId())
-                .setParameter("key", entity.getKey())
-                .setParameter("ts", entity.getTs())
-                .setParameter("dbl_v", entity.getDoubleValue())
-                .executeUpdate();
     }
 }

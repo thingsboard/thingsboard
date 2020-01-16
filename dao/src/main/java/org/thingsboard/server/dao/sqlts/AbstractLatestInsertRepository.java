@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.sqlts;
 
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
 import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
 
@@ -24,35 +23,6 @@ import java.util.List;
 @Repository
 public abstract class AbstractLatestInsertRepository extends AbstractInsertRepository {
 
-    public abstract void saveOrUpdate(TsKvLatestEntity entity);
-
     public abstract void saveOrUpdate(List<TsKvLatestEntity> entities);
-
-    protected void processSaveOrUpdate(TsKvLatestEntity entity, String requestBoolValue, String requestStrValue, String requestLongValue, String requestDblValue) {
-        if (entity.getBooleanValue() != null) {
-            saveOrUpdateBoolean(entity, requestBoolValue);
-        }
-        if (entity.getStrValue() != null) {
-            saveOrUpdateString(entity, requestStrValue);
-        }
-        if (entity.getLongValue() != null) {
-            saveOrUpdateLong(entity, requestLongValue);
-        }
-        if (entity.getDoubleValue() != null) {
-            saveOrUpdateDouble(entity, requestDblValue);
-        }
-    }
-
-    @Modifying
-    protected abstract void saveOrUpdateBoolean(TsKvLatestEntity entity, String query);
-
-    @Modifying
-    protected abstract void saveOrUpdateString(TsKvLatestEntity entity, String query);
-
-    @Modifying
-    protected abstract void saveOrUpdateLong(TsKvLatestEntity entity, String query);
-
-    @Modifying
-    protected abstract void saveOrUpdateDouble(TsKvLatestEntity entity, String query);
 
 }

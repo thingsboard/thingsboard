@@ -45,51 +45,6 @@ public class PsqlTimeseriesInsertRepository extends AbstractTimeseriesInsertRepo
             "ON CONFLICT (entity_id, key, ts) DO UPDATE SET bool_v = ?, str_v = ?, long_v = ?, dbl_v = ?;";
 
     @Override
-    public void saveOrUpdate(TsKvEntity entity, PsqlPartition partition) {
-        processSaveOrUpdate(entity, partition.getInsertOrUpdateBoolStatement(), partition.getInsertOrUpdateStrStatement(), partition.getInsertOrUpdateLongStatement(), partition.getInsertOrUpdateDblStatement());
-    }
-
-    @Override
-    protected void saveOrUpdateBoolean(TsKvEntity entity, String query) {
-        entityManager.createNativeQuery(query)
-                .setParameter("entity_id", entity.getEntityId())
-                .setParameter("key", entity.getKey())
-                .setParameter("ts", entity.getTs())
-                .setParameter("bool_v", entity.getBooleanValue())
-                .executeUpdate();
-    }
-
-    @Override
-    protected void saveOrUpdateString(TsKvEntity entity, String query) {
-        entityManager.createNativeQuery(query)
-                .setParameter("entity_id", entity.getEntityId())
-                .setParameter("key", entity.getKey())
-                .setParameter("ts", entity.getTs())
-                .setParameter("str_v", replaceNullChars(entity.getStrValue()))
-                .executeUpdate();
-    }
-
-    @Override
-    protected void saveOrUpdateLong(TsKvEntity entity, String query) {
-        entityManager.createNativeQuery(query)
-                .setParameter("entity_id", entity.getEntityId())
-                .setParameter("key", entity.getKey())
-                .setParameter("ts", entity.getTs())
-                .setParameter("long_v", entity.getLongValue())
-                .executeUpdate();
-    }
-
-    @Override
-    protected void saveOrUpdateDouble(TsKvEntity entity, String query) {
-        entityManager.createNativeQuery(query)
-                .setParameter("entity_id", entity.getEntityId())
-                .setParameter("key", entity.getKey())
-                .setParameter("ts", entity.getTs())
-                .setParameter("dbl_v", entity.getDoubleValue())
-                .executeUpdate();
-    }
-
-    @Override
     public void saveOrUpdate(List<EntityContainer<TsKvEntity>> entities) {
         Map<String, List<TsKvEntity>> partitionMap = new HashMap<>();
         for (EntityContainer<TsKvEntity> entityContainer : entities) {

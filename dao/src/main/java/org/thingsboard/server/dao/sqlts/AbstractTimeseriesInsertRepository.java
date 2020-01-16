@@ -15,9 +15,7 @@
  */
 package org.thingsboard.server.dao.sqlts;
 
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
-import org.thingsboard.server.dao.timeseries.PsqlPartition;
 import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
 
 import java.util.List;
@@ -25,35 +23,6 @@ import java.util.List;
 @Repository
 public abstract class AbstractTimeseriesInsertRepository<T extends AbstractTsKvEntity> extends AbstractInsertRepository {
 
-    public abstract void saveOrUpdate(T entity, PsqlPartition partition);
-
     public abstract void saveOrUpdate(List<EntityContainer<T>> entities);
-
-    protected void processSaveOrUpdate(T entity, String requestBoolValue, String requestStrValue, String requestLongValue, String requestDblValue) {
-        if (entity.getBooleanValue() != null) {
-            saveOrUpdateBoolean(entity, requestBoolValue);
-        }
-        if (entity.getStrValue() != null) {
-            saveOrUpdateString(entity, requestStrValue);
-        }
-        if (entity.getLongValue() != null) {
-            saveOrUpdateLong(entity, requestLongValue);
-        }
-        if (entity.getDoubleValue() != null) {
-            saveOrUpdateDouble(entity, requestDblValue);
-        }
-    }
-
-    @Modifying
-    protected abstract void saveOrUpdateBoolean(T entity, String query);
-
-    @Modifying
-    protected abstract void saveOrUpdateString(T entity, String query);
-
-    @Modifying
-    protected abstract void saveOrUpdateLong(T entity, String query);
-
-    @Modifying
-    protected abstract void saveOrUpdateDouble(T entity, String query);
 
 }
