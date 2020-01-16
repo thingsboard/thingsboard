@@ -3,7 +3,6 @@ before_install:
   - export M2_HOME=/usr/local/maven
   - export MAVEN_OPTS="-Dmaven.repo.local=$HOME/.m2/repository -Xms1024m -Xmx3072m"
   - export HTTP_LOG_CONTROLLER_ERROR_STACK_TRACE=false
-  - cp .travis.settings.xml $HOME/.m2/settings.xml
 jdk:
  - openjdk8
 language: java
