@@ -356,7 +356,7 @@ function utf8ToBytes(input: string, units?: number): number[] {
   return bytes;
 }
 
-export function deepClone<T>(target: T): T {
+export function deepClone<T>(target: T, ignoreFields?: string[]): T {
   if (target === null) {
     return target;
   }
@@ -371,7 +371,9 @@ export function deepClone<T>(target: T): T {
   if (typeof target === 'object' && target !== {}) {
     const cp = { ...(target as { [key: string]: any }) } as { [key: string]: any };
     Object.keys(cp).forEach(k => {
-      cp[k] = deepClone<any>(cp[k]);
+      if (!ignoreFields || ignoreFields.indexOf(k) === -1) {
+        cp[k] = deepClone<any>(cp[k]);
+      }
     });
     return cp as T;
   }

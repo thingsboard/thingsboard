@@ -33,13 +33,14 @@
       <div class="drop-area tb-flow-drop"
            flowDrop
            [flow]="flow.flowJs">
-        <label for="select">{{ dropLabel }}</label>
-        <input class="file-input" flowButton [flow]="flow.flowJs" [flowAttributes]="{accept: accept}" id="select">
+        <label for="{{inputId}}">{{ dropLabel }}</label>
+        <input class="file-input" flowButton [flow]="flow.flowJs" [flowAttributes]="{accept: accept}" id="{{inputId}}">
       </div>
     </div>
   </ng-container>
 </div>
 <div>
-  <div *ngIf="!fileName" translate>import.no-file</div>
+  <tb-error *ngIf="!fileName && required && requiredAsError" error="{{ noFileText | translate }}"></tb-error>
+  <div *ngIf="!fileName && !requiredAsError" translate>{{ noFileText }}</div>
   <div *ngIf="fileName">{{ fileName }}</div>
 </div>

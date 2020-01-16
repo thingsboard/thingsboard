@@ -16,39 +16,25 @@
 
 import {
   AfterViewInit,
-  Component, ElementRef,
-  EventEmitter, forwardRef,
+  Component,
+  ComponentRef,
+  forwardRef,
   Input,
-  OnChanges,
+  OnDestroy,
   OnInit,
-  Output,
-  SimpleChanges,
   ViewChild,
-  Compiler,
-  Injector, ComponentRef, OnDestroy
+  ViewContainerRef
 } from '@angular/core';
-import { PageComponent } from '@shared/components/page.component';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, NgForm, Validators } from '@angular/forms';
-import { FcRuleNode, FcRuleEdge } from './rulechain-page.models';
-import { RuleNodeType, LinkLabel, RuleNodeDefinition, RuleNodeConfiguration, IRuleNodeConfigurationComponent } from '@shared/models/rule-node.models';
-import { EntityType } from '@shared/models/entity-type.models';
-import { Observable, of, Subscription } from 'rxjs';
+import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import {
+  IRuleNodeConfigurationComponent,
+  RuleNodeConfiguration,
+  RuleNodeDefinition
+} from '@shared/models/rule-node.models';
+import { Subscription } from 'rxjs';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { deepClone } from '@core/utils';
-import { EntityAlias } from '@shared/models/alias.models';
-import { TruncatePipe } from '@shared/pipe/truncate.pipe';
-import { MatChipList, MatAutocomplete, MatChipInputEvent, MatAutocompleteSelectedEvent } from '@angular/material';
 import { TranslateService } from '@ngx-translate/core';
-import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
-import { catchError, map, mergeMap, share } from 'rxjs/operators';
-import { DynamicWidgetComponent } from '@home/components/widget/dynamic-widget.component';
-import { SharedModule } from '@shared/shared.module';
-import { WidgetComponentsModule } from '@home/components/widget/widget-components.module';
-import { DynamicComponentFactoryService } from '@core/services/dynamic-component-factory.service';
-import { ViewContainerRef } from '@angular/core';
 import { JsonObjectEditComponent } from '@shared/components/json-object-edit.component';
 
 @Component({

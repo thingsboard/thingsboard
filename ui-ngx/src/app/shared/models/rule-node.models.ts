@@ -24,10 +24,11 @@ import { ComponentDescriptor, ComponentType } from '@shared/models/component-des
 import { EntityType, EntityTypeResource } from '@shared/models/entity-type.models';
 import { Observable } from 'rxjs';
 import { PageComponent } from '@shared/components/page.component';
-import { ComponentFactory, EventEmitter, Inject, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, ComponentFactory, EventEmitter, Inject, OnDestroy, OnInit } from '@angular/core';
 import { RafService } from '@core/services/raf.service';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
+import { AbstractControl, FormGroup } from '@angular/forms';
 
 export enum MsgDataType {
   JSON = 'JSON',
@@ -83,10 +84,28 @@ export interface IRuleNodeConfigurationComponent {
 }
 
 export abstract class RuleNodeConfigurationComponent extends PageComponent implements
-  IRuleNodeConfigurationComponent, OnInit {
+  IRuleNodeConfigurationComponent, OnInit, AfterViewInit {
 
   ruleNodeId: string;
-  configuration: RuleNodeConfiguration;
+
+  configurationValue: RuleNodeConfiguration;
+
+  private configurationSet = false;
+
+  set configuration(value: RuleNodeConfiguration) {
+    this.configurationValue = value;
+    if (!this.configurationSet) {
+      this.configurationSet = true;
+      this.setupConfiguration(value);
+    } else {
+      this.updateConfiguration(value);
+    }
+  }
+
+  get configuration(): RuleNodeConfiguration {
+    return this.configurationValue;
+  }
+
   configurationChangedEmiter = new EventEmitter<RuleNodeConfiguration>();
   configurationChanged = this.configurationChangedEmiter.asObservable();
 
@@ -94,21 +113,77 @@ export abstract class RuleNodeConfigurationComponent extends PageComponent imple
     super(store);
   }
 
-  ngOnInit() {
-    this.onConfigurationSet(this.configuration);
+  ngOnInit() {}
+
+  ngAfterViewInit(): void {
+    setTimeout(() => {
+      if (!this.validateConfig()) {
+        this.configurationChangedEmiter.emit(null);
+      }
+    }, 0);
   }
 
   validate() {
     this.onValidate();
   }
 
-  protected abstract onConfigurationSet(configuration: RuleNodeConfiguration);
+  protected setupConfiguration(configuration: RuleNodeConfiguration) {
+    this.onConfigurationSet(this.prepareInputConfig(configuration));
+    this.updateValidators(false);
+    for (const trigger of this.validatorTriggers()) {
+      const path = trigger.split('.');
+      let control: AbstractControl = this.configForm();
+      for (const part of path) {
+        control = control.get(part);
+      }
+      control.valueChanges.subscribe(() => {
+        this.updateValidators(true);
+      });
+    }
+    this.configForm().valueChanges.subscribe((updated: RuleNodeConfiguration) => {
+      this.onConfigurationChanged(updated);
+    });
+  }
 
-  protected notifyConfigurationUpdated(configuration: RuleNodeConfiguration) {
-    this.configurationChangedEmiter.emit(configuration);
+  protected updateConfiguration(configuration: RuleNodeConfiguration) {
+    this.configForm().reset(this.prepareInputConfig(configuration), {emitEvent: false});
+    this.updateValidators(false);
+  }
+
+  protected updateValidators(emitEvent: boolean) {
+  }
+
+  protected validatorTriggers(): string[] {
+    return [];
+  }
+
+  protected onConfigurationChanged(updated: RuleNodeConfiguration) {
+    this.configurationValue = updated;
+    if (this.validateConfig()) {
+      this.configurationChangedEmiter.emit(this.prepareOutputConfig(updated));
+    } else {
+      this.configurationChangedEmiter.emit(null);
+    }
+  }
+
+  protected prepareInputConfig(configuration: RuleNodeConfiguration): RuleNodeConfiguration {
+    return configuration;
+  }
+
+  protected prepareOutputConfig(configuration: RuleNodeConfiguration): RuleNodeConfiguration {
+    return configuration;
+  }
+
+  protected validateConfig(): boolean {
+    return this.configForm().valid;
   }
 
   protected onValidate() {}
+
+  protected abstract configForm(): FormGroup;
+
+  protected abstract onConfigurationSet(configuration: RuleNodeConfiguration);
+
 }
 
 

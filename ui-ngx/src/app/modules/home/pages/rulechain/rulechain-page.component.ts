@@ -341,9 +341,9 @@ export class RuleChainPageComponent extends PageComponent
     this.nextNodeID = 1;
     this.nextConnectorID = 1;
 
-    this.selectedObjects.length = 0;
-    this.ruleChainModel.nodes.length = 0;
-    this.ruleChainModel.edges.length = 0;
+    this.selectedObjects = [];
+    this.ruleChainModel.nodes = [];
+    this.ruleChainModel.edges = [];
 
     this.inputConnectorId = this.nextConnectorID++;
     this.ruleChainModel.nodes.push(
@@ -535,7 +535,7 @@ export class RuleChainPageComponent extends PageComponent
       this.editingRuleNodeLink = null;
       this.isEditingRuleNode = true;
       this.editingRuleNodeIndex = this.ruleChainModel.nodes.indexOf(node);
-      this.editingRuleNode = deepClone(node);
+      this.editingRuleNode = deepClone(node, ['component']);
       setTimeout(() => {
         this.ruleNodeComponent.ruleNodeFormGroup.markAsPristine();
       }, 0);
@@ -576,7 +576,7 @@ export class RuleChainPageComponent extends PageComponent
   onRevertRuleNodeEdit() {
     this.ruleNodeComponent.ruleNodeFormGroup.markAsPristine();
     const node = this.ruleChainModel.nodes[this.editingRuleNodeIndex];
-    this.editingRuleNode = deepClone(node);
+    this.editingRuleNode = deepClone(node, ['component']);
   }
 
   onRevertRuleNodeLinkEdit() {
@@ -593,7 +593,7 @@ export class RuleChainPageComponent extends PageComponent
         delete this.editingRuleNode.error;
       }
       this.ruleChainModel.nodes[this.editingRuleNodeIndex] = this.editingRuleNode;
-      this.editingRuleNode = deepClone(this.editingRuleNode);
+      this.editingRuleNode = deepClone(this.editingRuleNode, ['component']);
       this.onModelChanged();
       this.updateRuleNodesHighlight();
     }

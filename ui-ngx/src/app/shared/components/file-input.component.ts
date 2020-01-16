@@ -14,7 +14,17 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, forwardRef, Input, OnDestroy, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  EventEmitter,
+  forwardRef,
+  Input,
+  OnChanges,
+  OnDestroy,
+  Output, SimpleChanges,
+  ViewChild
+} from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -22,6 +32,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { FlowDirective } from '@flowjs/ngx-flow';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'tb-file-input',
@@ -35,13 +46,19 @@ import { FlowDirective } from '@flowjs/ngx-flow';
     }
   ]
 })
-export class FileInputComponent extends PageComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
+export class FileInputComponent extends PageComponent implements AfterViewInit, OnDestroy, ControlValueAccessor, OnChanges {
 
   @Input()
   label: string;
 
   @Input()
   accept = '*/*';
+
+  @Input()
+  noFileText = 'import.no-file';
+
+  @Input()
+  inputId = 'select';
 
   @Input()
   allowedExtensions: string;
@@ -64,8 +81,26 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
     }
   }
 
+  private requiredAsErrorValue: boolean;
+  get requiredAsError(): boolean {
+    return this.requiredAsErrorValue;
+  }
+  @Input()
+  set requiredAsError(value: boolean) {
+    const newVal = coerceBooleanProperty(value);
+    if (this.requiredAsErrorValue !== newVal) {
+      this.requiredAsErrorValue = newVal;
+    }
+  }
+
   @Input()
   disabled: boolean;
+
+  @Input()
+  existingFileName: string;
+
+  @Output()
+  fileNameChanged = new EventEmitter<string>();
 
   fileName: string;
   fileContent: any;
@@ -77,7 +112,8 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
 
   private propagateChange = null;
 
-  constructor(protected store: Store<AppState>) {
+  constructor(protected store: Store<AppState>,
+              public translate: TranslateService) {
     super(store);
   }
 
@@ -135,11 +171,23 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
   }
 
   writeValue(value: any): void {
-    this.fileName = null;
+    this.fileName = this.existingFileName || null;
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    for (const propName of Object.keys(changes)) {
+      const change = changes[propName];
+      if (change.currentValue !== change.previousValue) {
+        if (propName === 'existingFileName') {
+          this.fileName = this.existingFileName || null;
+        }
+      }
+    }
   }
 
   private updateModel() {
     this.propagateChange(this.fileContent);
+    this.fileNameChanged.emit(this.fileName);
   }
 
   clearFile() {
