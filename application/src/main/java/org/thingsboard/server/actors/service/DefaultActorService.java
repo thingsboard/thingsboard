@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,8 +94,6 @@ public class DefaultActorService implements ActorService {
     private ActorRef appActor;
 
     private ActorRef rpcManagerActor;
-
-    private ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
     @PostConstruct
     public void initActorSystem() {
@@ -201,7 +199,11 @@ public class DefaultActorService implements ActorService {
     @Scheduled(fixedDelayString = "${cluster.stats.print_interval_ms}")
     public void printStats() {
         if (statsEnabled) {
-            log.info("Cluster msgs sent [{}] received [{}]", sentClusterMsgs.getAndSet(0), receivedClusterMsgs.getAndSet(0));
+            int sent = sentClusterMsgs.getAndSet(0);
+            int received = receivedClusterMsgs.getAndSet(0);
+            if (sent > 0 || received > 0) {
+                log.info("Cluster msgs sent [{}] received [{}]", sent, received);
+            }
         }
     }
 

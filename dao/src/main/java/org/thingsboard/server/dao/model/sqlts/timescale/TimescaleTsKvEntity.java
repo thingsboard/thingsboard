@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.model.ToData;
-import org.thingsboard.server.dao.model.sql.AbsractTsKvEntity;
+import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
 
 import javax.persistence.Column;
 import javax.persistence.ColumnResult;
@@ -115,7 +115,7 @@ import static org.thingsboard.server.dao.sqlts.timescale.AggregationRepository.F
                 resultSetMapping = "timescaleCountMapping"
         )
 })
-public final class TimescaleTsKvEntity extends AbsractTsKvEntity implements ToData<TsKvEntry> {
+public final class TimescaleTsKvEntity extends AbstractTsKvEntity implements ToData<TsKvEntry> {
 
     @Id
     @Column(name = TENANT_ID_COLUMN)

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -190,9 +190,10 @@ function TimeseriesTableWidgetController($element, $scope, $filter, $timeout, ty
         }
         var descriptors = vm.ctx.actionsApi.getActionDescriptors('rowClick');
         if (descriptors.length) {
-						var entityId = vm.ctx.activeEntityInfo.entityId;
+            var entityId = vm.ctx.activeEntityInfo.entityId;
             var entityName = vm.ctx.activeEntityInfo.entityName;
-            vm.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, row);
+            var entityLabel = vm.ctx.activeEntityInfo.entityLabel;
+            vm.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, row, entityLabel);
         }
     }
 
@@ -200,9 +201,10 @@ function TimeseriesTableWidgetController($element, $scope, $filter, $timeout, ty
         if ($event) {
             $event.stopPropagation();
         }
-				var entityId = vm.ctx.activeEntityInfo.entityId;
+        var entityId = vm.ctx.activeEntityInfo.entityId;
         var entityName = vm.ctx.activeEntityInfo.entityName;
-        vm.ctx.actionsApi.handleWidgetAction($event, actionDescriptor, entityId, entityName, row);
+        var entityLabel = vm.ctx.activeEntityInfo.entityLabel;
+        vm.ctx.actionsApi.handleWidgetAction($event, actionDescriptor, entityId, entityName, row, entityLabel);
     }
 
 

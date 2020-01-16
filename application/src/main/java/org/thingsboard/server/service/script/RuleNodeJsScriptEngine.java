@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,6 +137,11 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
     @Override
     public JsonNode executeJson(TbMsg msg) throws ScriptException {
         return executeScript(msg);
+    }
+
+    @Override
+    public ListenableFuture<JsonNode> executeJsonAsync(TbMsg msg) throws ScriptException {
+        return executeScriptAsync(msg);
     }
 
     @Override

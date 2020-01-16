@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,44 +43,6 @@ import java.util.stream.Collectors;
 public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningExecutorService {
 
     private static final String DESC_ORDER = "DESC";
-
-    @Value("${sql.ts_inserts_executor_type}")
-    private String insertExecutorType;
-
-    @Value("${sql.ts_inserts_fixed_thread_pool_size}")
-    private int insertFixedThreadPoolSize;
-
-    @Value("${spring.datasource.hikari.maximumPoolSize}")
-    private int maximumPoolSize;
-
-    protected ListeningExecutorService insertService;
-
-    @PostConstruct
-    void init() {
-        Optional<TsInsertExecutorType> executorTypeOptional = TsInsertExecutorType.parse(insertExecutorType);
-        TsInsertExecutorType executorType;
-        executorType = executorTypeOptional.orElse(TsInsertExecutorType.FIXED);
-        switch (executorType) {
-            case SINGLE:
-                insertService = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
-                break;
-            case FIXED:
-            case CACHED:
-                int poolSize = insertFixedThreadPoolSize;
-                if (poolSize <= 0) {
-                    poolSize = maximumPoolSize * 4;
-                }
-                insertService = MoreExecutors.listeningDecorator(Executors.newWorkStealingPool(poolSize));
-                break;
-        }
-    }
-
-    @PreDestroy
-    void preDestroy() {
-        if (insertService != null) {
-            insertService.shutdown();
-        }
-    }
 
     protected ListenableFuture<List<TsKvEntry>> processFindAllAsync(TenantId tenantId, EntityId entityId, List<ReadTsKvQuery> queries) {
         List<ListenableFuture<List<TsKvEntry>>> futures = queries

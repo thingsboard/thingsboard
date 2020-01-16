@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.STRING_VALUE_COLUM
 
 @Data
 @MappedSuperclass
-public abstract class AbsractTsKvEntity {
+public abstract class AbstractTsKvEntity {
 
     protected static final String SUM = "SUM";
     protected static final String AVG = "AVG";
@@ -80,7 +80,7 @@ public abstract class AbsractTsKvEntity {
 
     protected static boolean isAllNull(Object... args) {
         for (Object arg : args) {
-            if(arg != null) {
+            if (arg != null) {
                 return false;
             }
         }

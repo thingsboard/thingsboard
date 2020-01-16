@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,14 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
 import org.thingsboard.server.dao.model.sqlts.ts.TsKvLatestEntity;
 
+import java.util.List;
+
 @Repository
 public abstract class AbstractLatestInsertRepository extends AbstractInsertRepository {
 
     public abstract void saveOrUpdate(TsKvLatestEntity entity);
+
+    public abstract void saveOrUpdate(List<TsKvLatestEntity> entities);
 
     protected void processSaveOrUpdate(TsKvLatestEntity entity, String requestBoolValue, String requestStrValue, String requestLongValue, String requestDblValue) {
         if (entity.getBooleanValue() != null) {

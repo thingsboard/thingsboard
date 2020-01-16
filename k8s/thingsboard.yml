@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2019 The Thingsboard Authors
+# Copyright © 2016-2020 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,12 +14,15 @@
 # limitations under the License.
 #
 
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: zookeeper
   namespace: thingsboard
 spec:
+  selector:
+    matchLabels:
+      app: zookeeper
   template:
     metadata:
       labels:
@@ -59,12 +62,15 @@ spec:
   - name: zk-port
     port: 2181
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: tb-kafka
   namespace: thingsboard
 spec:
+  selector:
+    matchLabels:
+      app: tb-kafka
   template:
     metadata:
       labels:
@@ -122,12 +128,15 @@ spec:
   - name: tb-kafka-port
     port: 9092
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: tb-redis
   namespace: thingsboard
 spec:
+  selector:
+    matchLabels:
+      app: tb-redis
   template:
     metadata:
       labels:
@@ -168,7 +177,7 @@ spec:
   - name: tb-redis-port
     port: 6379
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: tb-js-executor
@@ -204,7 +213,7 @@ spec:
           value: "1000"
       restartPolicy: Always
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: tb-node
@@ -293,7 +302,7 @@ spec:
   - port: 8080
     name: http
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: tb-mqtt-transport
@@ -368,7 +377,7 @@ spec:
     targetPort: 1883
     name: mqtt
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: tb-http-transport
@@ -442,7 +451,7 @@ spec:
   - port: 8080
     name: http
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: tb-coap-transport
@@ -510,7 +519,7 @@ spec:
     name: coap
     protocol: UDP
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: tb-web-ui
@@ -568,7 +577,7 @@ spec:
   - port: 8080
     name: http
 ---
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
   name: tb-ingress
