@@ -28,10 +28,12 @@ import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.client.support.HttpRequestWrapper;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.request.async.DeferredResult;
+import org.thingsboard.client.tools.utils.JsonConverter;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.ClaimRequest;
 import org.thingsboard.server.common.data.Customer;
@@ -57,6 +59,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.page.TimePageData;
@@ -74,6 +77,7 @@ import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Collections;
@@ -81,19 +85,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import static org.springframework.util.StringUtils.isEmpty;
 
 /**
  * @author Andrew Shvayka
  */
-public class RestClient implements ClientHttpRequestInterceptor {
+public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     private static final String JWT_TOKEN_HEADER_PARAM = "X-Authorization";
     protected final RestTemplate restTemplate;
     protected final String baseURL;
     private String token;
     private String refreshToken;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private ExecutorService service = Executors.newFixedThreadPool(10);
 
 
     protected static final String ACTIVATE_TOKEN_REGEX = "/api/noauth/activate?activateToken=";
@@ -256,6 +264,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
         }
         return restTemplate.postForEntity(baseURL + deviceCreationUrl, device, Device.class, params).getBody();
     }
+
     public Asset createAsset(Asset asset) {
         return restTemplate.postForEntity(baseURL + "/api/asset", asset, Asset.class).getBody();
     }
@@ -1613,16 +1622,25 @@ public class RestClient implements ClientHttpRequestInterceptor {
                 scope).getBody();
     }
 
-    public DeferredResult<ResponseEntity> getAttributesResponseEntity(String entityType, String entityId, String keys) {
-        return restTemplate.exchange(
+    public List<AttributeKvEntry> getAttributeKvEntries(EntityId entityId, List<String> keys) {
+        List<JsonNode> attributes = restTemplate.exchange(
                 baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/values/attributes?keys={keys}",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
-                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                new ParameterizedTypeReference<List<JsonNode>>() {
                 },
-                entityType,
-                entityId,
-                keys).getBody();
+                entityId.getEntityType().name(),
+                entityId.getId(),
+                fromKeysList(keys)).getBody();
+        if (!CollectionUtils.isEmpty(attributes)) {
+            return JsonConverter.toAttributes(attributes);
+        } else {
+            return Collections.emptyList();
+        }
+    }
+
+    public Future<List<AttributeKvEntry>> getAttributeKvEntriesAsync(EntityId entityId, List<String> keys) {
+        return service.submit(() -> getAttributeKvEntries(entityId, keys));
     }
 
     public DeferredResult<ResponseEntity> getAttributesByScope(String entityType, String entityId, String scope, String keys) {
@@ -2028,6 +2046,17 @@ public class RestClient implements ClientHttpRequestInterceptor {
         }
         if (pageLink.getTextOffset() != null) {
             params.put("textOffset", pageLink.getTextOffset());
+        }
+    }
+
+    private String fromKeysList(List<String> keysList) {
+        return String.join(",", keysList);
+    }
+
+    @Override
+    public void close() {
+        if (service != null) {
+            service.shutdown();
         }
     }
 }
