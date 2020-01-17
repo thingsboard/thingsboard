@@ -60,6 +60,7 @@ import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.page.TimePageData;
@@ -923,7 +924,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
             }
         }
     }
-//TODO:
+
     public Optional<Dashboard> updateDashboardCustomers(String dashboardId, List<String> customerIds) {
         try {
             ResponseEntity<Dashboard> dashboard = restTemplate.postForEntity(baseURL + "/api/dashboard/{dashboardId}/customers", customerIds, Dashboard.class, dashboardId);
@@ -937,7 +938,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         }
     }
 
-    public Optional<Dashboard> addDashboardCustomers(String dashboardId, String[] customerIds) {
+    public Optional<Dashboard> addDashboardCustomers(String dashboardId, List<String> customerIds) {
         try {
             ResponseEntity<Dashboard> dashboard = restTemplate.postForEntity(baseURL + "/api/dashboard/{dashboardId}/customers/add", customerIds, Dashboard.class, dashboardId);
             return Optional.ofNullable(dashboard.getBody());
@@ -950,7 +951,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         }
     }
 
-    public Optional<Dashboard> removeDashboardCustomers(String dashboardId, String[] customerIds) {
+    public Optional<Dashboard> removeDashboardCustomers(String dashboardId, List<String> customerIds) {
         try {
             ResponseEntity<Dashboard> dashboard = restTemplate.postForEntity(baseURL + "/api/dashboard/{dashboardId}/customers/remove", customerIds, Dashboard.class, dashboardId);
             return Optional.ofNullable(dashboard.getBody());
@@ -1144,12 +1145,12 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 .getBody();
     }
 
-    public List<Device> getDevicesByIds(String[] deviceIds) {
+    public List<Device> getDevicesByIds(List<String> deviceIds) {
         return restTemplate.exchange(baseURL + "/api/devices?deviceIds={deviceIds}",
                 HttpMethod.GET,
                 HttpEntity.EMPTY, new ParameterizedTypeReference<List<Device>>() {
                 },
-                String.join(",", deviceIds)).getBody();
+                listToString(deviceIds)).getBody();
     }
 
     public List<Device> findByQuery(DeviceSearchQuery query) {
@@ -1170,22 +1171,22 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 }).getBody();
     }
 
-    public DeferredResult<ResponseEntity> claimDevice(String deviceName, ClaimRequest claimRequest) {
+    public JsonNode claimDevice(String deviceName, ClaimRequest claimRequest) {
         return restTemplate.exchange(
                 baseURL + "/api/customer/device/{deviceName}/claim",
                 HttpMethod.POST,
                 new HttpEntity<>(claimRequest),
-                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                new ParameterizedTypeReference<JsonNode>() {
                 },
                 deviceName).getBody();
     }
 
-    public DeferredResult<ResponseEntity> reClaimDevice(String deviceName) {
+    public JsonNode reClaimDevice(String deviceName) {
         return restTemplate.exchange(
                 baseURL + "/api/customer/device/{deviceName}/claim",
                 HttpMethod.DELETE,
                 HttpEntity.EMPTY,
-                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                new ParameterizedTypeReference<JsonNode>() {
                 },
                 deviceName).getBody();
     }
@@ -1599,23 +1600,23 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         }
     }
 
-    public DeferredResult<ResponseEntity> getAttributeKeys(EntityId entityId) {
+    public List<String> getAttributeKeys(EntityId entityId) {
         return restTemplate.exchange(
                 baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/keys/attributes",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
-                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                new ParameterizedTypeReference<List<String>>() {
                 },
                 entityId.getEntityType().name(),
                 entityId.getId().toString()).getBody();
     }
 
-    public DeferredResult<ResponseEntity> getAttributeKeysByScope(EntityId entityId, String scope) {
-        return restTemplate.exchange(
+    public List<String> getAttributeKeysByScope(EntityId entityId, String scope) {
+       return restTemplate.exchange(
                 baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/keys/attributes/{scope}",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
-                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                new ParameterizedTypeReference<List<String>>() {
                 },
                 entityId.getEntityType().name(),
                 entityId.getId().toString(),
@@ -1643,44 +1644,54 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         return service.submit(() -> getAttributeKvEntries(entityId, keys));
     }
 
-    public DeferredResult<ResponseEntity> getAttributesByScope(EntityId entityId, String scope, List<String> keys) {
-        return restTemplate.exchange(
+    public List<AttributeKvEntry> getAttributesByScope(EntityId entityId, String scope, List<String> keys) {
+        List<JsonNode> attributes = restTemplate.exchange(
                 baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/values/attributes/{scope}?keys={keys}",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
-                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                new ParameterizedTypeReference<List<JsonNode>>() {
                 },
                 entityId.getEntityType().name(),
                 entityId.getId().toString(),
                 scope,
                 listToString(keys)).getBody();
+        if (!CollectionUtils.isEmpty(attributes)) {
+            return JsonConverter.toAttributes(attributes);
+        } else {
+            return Collections.emptyList();
+        }
     }
 
-    public DeferredResult<ResponseEntity> getTimeseriesKeys(EntityId entityId) {
+    public List<String> getTimeseriesKeys(EntityId entityId) {
         return restTemplate.exchange(
                 baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/keys/timeseries",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
-                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                new ParameterizedTypeReference<List<String>>() {
                 },
                 entityId.getEntityType().name(),
                 entityId.getId().toString()).getBody();
     }
 
-    public DeferredResult<ResponseEntity> getLatestTimeseries(EntityId entityId, List<String> keys) {
-        return restTemplate.exchange(
+    public List<TsKvEntry> getLatestTimeseries(EntityId entityId, List<String> keys) {
+        Map<String, List<JsonNode>> timeseries = restTemplate.exchange(
                 baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/values/timeseries?keys={keys}",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
-                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                new ParameterizedTypeReference<Map<String, List<JsonNode>>>() {
                 },
                 entityId.getEntityType().name(),
                 entityId.getId().toString(),
                 listToString(keys)).getBody();
+        if (!CollectionUtils.isEmpty(timeseries)) {
+            return JsonConverter.toTimeseries(timeseries);
+        } else {
+            return Collections.emptyList();
+        }
     }
 
 
-    public DeferredResult<ResponseEntity> getTimeseries(EntityId entityId, List<String> keys, Long startTs, Long endTs, Long interval, Integer limit, String agg) {
+    public List<TsKvEntry> getTimeseries(EntityId entityId, List<String> keys, Long startTs, Long endTs, Long interval, Integer limit, String agg) {
         Map<String, String> params = new HashMap<>();
         params.put("entityType", entityId.getEntityType().name());
         params.put("entityId", entityId.getId().toString());
@@ -1691,81 +1702,117 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         params.put("limit", limit == null ? "100" : limit.toString());
         params.put("agg", agg == null ? "NONE" : agg);
 
-        return restTemplate.exchange(
+        Map<String, List<JsonNode>> timeseries = restTemplate.exchange(
                 baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/values/timeseries?keys={keys}&startTs={startTs}&endTs={endTs}&interval={interval}&limit={limit}&agg={agg}",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
-                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                new ParameterizedTypeReference<Map<String, List<JsonNode>>>() {
                 },
                 params).getBody();
+
+        if (!CollectionUtils.isEmpty(timeseries)) {
+            return JsonConverter.toTimeseries(timeseries);
+        } else {
+            return Collections.emptyList();
+        }
     }
 
-    public DeferredResult<ResponseEntity> saveDeviceAttributes(String deviceId, String scope, JsonNode request) {
-        return restTemplate.exchange(
+    public List<AttributeKvEntry> saveDeviceAttributes(String deviceId, String scope, JsonNode request) {
+        List<JsonNode> attributes = restTemplate.exchange(
                 baseURL + "/api/plugins/telemetry/{deviceId}/{scope}",
                 HttpMethod.POST,
                 new HttpEntity<>(request),
-                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                new ParameterizedTypeReference<List<JsonNode>>() {
                 },
                 deviceId,
                 scope).getBody();
+
+        if (!CollectionUtils.isEmpty(attributes)) {
+            return JsonConverter.toAttributes(attributes);
+        } else {
+            return Collections.emptyList();
+        }
     }
 
-    public DeferredResult<ResponseEntity> saveEntityAttributesV1(EntityId entityId, String scope, JsonNode request) {
-        return restTemplate.exchange(
+    public List<AttributeKvEntry> saveEntityAttributesV1(EntityId entityId, String scope, JsonNode request) {
+        List<JsonNode> attributes = restTemplate.exchange(
                 baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/{scope}",
                 HttpMethod.POST,
                 new HttpEntity<>(request),
-                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                new ParameterizedTypeReference<List<JsonNode>>() {
                 },
                 entityId.getEntityType().name(),
                 entityId.getId().toString(),
                 scope).getBody();
+
+        if (!CollectionUtils.isEmpty(attributes)) {
+            return JsonConverter.toAttributes(attributes);
+        } else {
+            return Collections.emptyList();
+        }
     }
 
-    public DeferredResult<ResponseEntity> saveEntityAttributesV2(EntityId entityId, String scope, JsonNode request) {
-        return restTemplate.exchange(
+    public List<AttributeKvEntry> saveEntityAttributesV2(EntityId entityId, String scope, JsonNode request) {
+        List<JsonNode> attributes = restTemplate.exchange(
                 baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/attributes/{scope}",
                 HttpMethod.POST,
                 new HttpEntity<>(request),
-                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                new ParameterizedTypeReference<List<JsonNode>>() {
                 },
                 entityId.getEntityType().name(),
                 entityId.getId().toString(),
                 scope).getBody();
+
+        if (!CollectionUtils.isEmpty(attributes)) {
+            return JsonConverter.toAttributes(attributes);
+        } else {
+            return Collections.emptyList();
+        }
     }
 
-    public DeferredResult<ResponseEntity> saveEntityTelemetry(EntityId entityId, String scope, String requestBody) {
-        return restTemplate.exchange(
+    public List<TsKvEntry> saveEntityTelemetry(EntityId entityId, String scope, String requestBody) {
+        Map<String, List<JsonNode>> timeseries = restTemplate.exchange(
                 baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/timeseries/{scope}",
                 HttpMethod.POST,
                 new HttpEntity<>(requestBody),
-                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                new ParameterizedTypeReference<Map<String, List<JsonNode>>>() {
                 },
-               entityId.getEntityType().name(),
+                entityId.getEntityType().name(),
                 entityId.getId().toString(),
                 scope).getBody();
+
+        if (!CollectionUtils.isEmpty(timeseries)) {
+            return JsonConverter.toTimeseries(timeseries);
+        } else {
+            return Collections.emptyList();
+        }
     }
 
-    public DeferredResult<ResponseEntity> saveEntityTelemetryWithTTL(EntityId entityId, String scope, Long ttl, String requestBody) {
-        return restTemplate.exchange(
+    public List<TsKvEntry> saveEntityTelemetryWithTTL(EntityId entityId, String scope, Long ttl, String requestBody) {
+        Map<String, List<JsonNode>> timeseries = restTemplate.exchange(
                 baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/timeseries/{scope}/{ttl}",
                 HttpMethod.POST,
                 new HttpEntity<>(requestBody),
-                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                new ParameterizedTypeReference<Map<String, List<JsonNode>>>() {
                 },
                 entityId.getEntityType().name(),
                 entityId.getId().toString(),
                 scope,
                 ttl).getBody();
+
+        if (!CollectionUtils.isEmpty(timeseries)) {
+            return JsonConverter.toTimeseries(timeseries);
+        } else {
+            return Collections.emptyList();
+        }
     }
 
-    public DeferredResult<ResponseEntity> deleteEntityTimeseries(EntityId entityId,
-                                                                 List<String> keys,
-                                                                 boolean deleteAllDataForKeys,
-                                                                 Long startTs,
-                                                                 Long endTs,
-                                                                 boolean rewriteLatestIfDeleted) {
+    public List<TsKvEntry> deleteEntityTimeseries(EntityId entityId,
+                                                  List<String> keys,
+                                                  boolean deleteAllDataForKeys,
+                                                  Long startTs,
+                                                  Long endTs,
+                                                  boolean rewriteLatestIfDeleted) {
         Map<String, String> params = new HashMap<>();
         params.put("entityType", entityId.getEntityType().name());
         params.put("entityId", entityId.getId().toString());
@@ -1775,38 +1822,56 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         params.put("endTs", endTs.toString());
         params.put("rewriteLatestIfDeleted", String.valueOf(rewriteLatestIfDeleted));
 
-        return restTemplate.exchange(
+        Map<String, List<JsonNode>> timeseries = restTemplate.exchange(
                 baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/timeseries/delete?keys={keys}&deleteAllDataForKeys={deleteAllDataForKeys}&startTs={startTs}&endTs={endTs}&rewriteLatestIfDeleted={rewriteLatestIfDeleted}",
                 HttpMethod.DELETE,
                 HttpEntity.EMPTY,
-                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                new ParameterizedTypeReference<Map<String, List<JsonNode>>>() {
                 },
                 params).getBody();
+
+        if (!CollectionUtils.isEmpty(timeseries)) {
+            return JsonConverter.toTimeseries(timeseries);
+        } else {
+            return Collections.emptyList();
+        }
     }
 
-    public DeferredResult<ResponseEntity> deleteEntityAttributes(String deviceId, String scope, List<String> keys) {
-        return restTemplate.exchange(
+    public List<AttributeKvEntry> deleteEntityAttributes(String deviceId, String scope, List<String> keys) {
+        List<JsonNode> attributes = restTemplate.exchange(
                 baseURL + "/api/plugins/telemetry/{deviceId}/{scope}?keys={keys}",
                 HttpMethod.DELETE,
                 HttpEntity.EMPTY,
-                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                new ParameterizedTypeReference<List<JsonNode>>() {
                 },
                 deviceId,
                 scope,
                 listToString(keys)).getBody();
+
+        if (!CollectionUtils.isEmpty(attributes)) {
+            return JsonConverter.toAttributes(attributes);
+        } else {
+            return Collections.emptyList();
+        }
     }
 
-    public DeferredResult<ResponseEntity> deleteEntityAttributes(EntityId entityId, String scope, List<String> keys) {
-        return restTemplate.exchange(
+    public List<AttributeKvEntry> deleteEntityAttributes(EntityId entityId, String scope, List<String> keys) {
+        List<JsonNode> attributes = restTemplate.exchange(
                 baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/{scope}?keys={keys}",
                 HttpMethod.DELETE,
                 HttpEntity.EMPTY,
-                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                new ParameterizedTypeReference<List<JsonNode>>() {
                 },
                 entityId.getEntityType().name(),
                 entityId.getId().toString(),
                 scope,
                 listToString(keys)).getBody();
+
+        if (!CollectionUtils.isEmpty(attributes)) {
+            return JsonConverter.toAttributes(attributes);
+        } else {
+            return Collections.emptyList();
+        }
     }
 
     public Optional<Tenant> getTenantById(String tenantId) {

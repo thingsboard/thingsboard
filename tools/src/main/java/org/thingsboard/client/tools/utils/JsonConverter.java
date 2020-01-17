@@ -18,19 +18,24 @@ package org.thingsboard.client.tools.utils;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class JsonConverter {
     private static final String KEY = "key";
     private static final String VALUE = "value";
     private static final String LAST_UPDATE_TS = "lastUpdateTs";
+    private static final String TS = "ts";
 
     private static final String CAN_T_PARSE_VALUE = "Can't parse value: ";
 
@@ -40,6 +45,18 @@ public class JsonConverter {
                     return new BaseAttributeKvEntry(entry, attr.get(LAST_UPDATE_TS).asLong());
                 }
         ).collect(Collectors.toList());
+    }
+
+    public static List<TsKvEntry> toTimeseries(Map<String, List<JsonNode>> timeseries) {
+        List<TsKvEntry> result = new ArrayList<>();
+        timeseries.forEach((key, values) ->
+                result.addAll(values.stream().map(ts -> {
+                            KvEntry entry = parseValue(key, ts.get(VALUE));
+                            return new BasicTsKvEntry(ts.get(TS).asLong(), entry);
+                        }
+                ).collect(Collectors.toList()))
+        );
+        return result;
     }
 
     private static KvEntry parseValue(String key, JsonNode value) {
