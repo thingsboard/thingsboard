@@ -32,7 +32,6 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.client.tools.utils.JsonConverter;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.ClaimRequest;
@@ -1181,14 +1180,8 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 deviceName).getBody();
     }
 
-    public JsonNode reClaimDevice(String deviceName) {
-        return restTemplate.exchange(
-                baseURL + "/api/customer/device/{deviceName}/claim",
-                HttpMethod.DELETE,
-                HttpEntity.EMPTY,
-                new ParameterizedTypeReference<JsonNode>() {
-                },
-                deviceName).getBody();
+    public void reClaimDevice(String deviceName) {
+        restTemplate.delete(baseURL + "/api/customer/device/{deviceName}/claim", deviceName);
     }
 
     public void saveRelation(EntityRelation relation) {
@@ -1491,22 +1484,21 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 params).getBody();
     }
 
-    public DeferredResult<ResponseEntity> handleOneWayDeviceRPCRequest(String deviceId, String requestBody) {
-        return restTemplate.exchange(
+    public void handleOneWayDeviceRPCRequest(String deviceId, JsonNode requestBody) {
+        restTemplate.exchange(
                 baseURL + "/api/plugins/rpc/oneway/{deviceId}",
                 HttpMethod.POST,
                 new HttpEntity<>(requestBody),
-                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
-                },
+                Object.class,
                 deviceId).getBody();
     }
 
-    public DeferredResult<ResponseEntity> handleTwoWayDeviceRPCRequest(String deviceId, String requestBody) {
+    public JsonNode handleTwoWayDeviceRPCRequest(String deviceId, JsonNode requestBody) {
         return restTemplate.exchange(
                 baseURL + "/api/plugins/rpc/twoway/{deviceId}",
                 HttpMethod.POST,
                 new HttpEntity<>(requestBody),
-                new ParameterizedTypeReference<DeferredResult<ResponseEntity>>() {
+                new ParameterizedTypeReference<JsonNode>() {
                 },
                 deviceId).getBody();
     }
@@ -1612,7 +1604,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     public List<String> getAttributeKeysByScope(EntityId entityId, String scope) {
-       return restTemplate.exchange(
+        return restTemplate.exchange(
                 baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/keys/attributes/{scope}",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
