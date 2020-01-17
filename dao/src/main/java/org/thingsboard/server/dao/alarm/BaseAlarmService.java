@@ -53,8 +53,16 @@ import org.thingsboard.server.dao.tenant.TenantDao;
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -74,8 +82,6 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
 
     @Autowired
     private EntityService entityService;
-
-
 
     protected ExecutorService readResultsProcessingExecutor;
 
@@ -265,47 +271,6 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                     );
                 });
     }
-/*
-
-    @Override
-    public ListenableFuture<TimePageData<AlarmInfo>> findAlarms(TenantId tenantId, AlarmQuery query) {
-        ListenableFuture<List<AlarmInfo>> alarms = alarmDao.findAlarms(tenantId, query);
-
-        if (query.getFetchOriginator() != null && query.getFetchOriginator().booleanValue()) {
-            alarms = Futures.transformAsync(alarms, input -> {
-                List<ListenableFuture<AlarmInfo>> alarmFutures = new ArrayList<>(input.size());
-                ConcurrentMap<EntityId, String> alarmsMap = new ConcurrentHashMap<>();
-                for (AlarmInfo alarmInfo : input) {
-                    tmpUUID2 = alarmInfo.getOriginator();
-                    if (!alarmsMap.containsKey(tmpUUID2)) {
-                        alarmFutures.add(Futures.transform(
-                                entityService.fetchEntityNameAsync(tenantId, tmpUUID2), originatorName -> {
-                                    if (originatorName == null) {
-                                        originatorName = "Deleted";
-                                    }
-                                    log.info("Request made!");
-                                    alarmsMap.put(tmpUUID2, originatorName);
-                                    alarmInfo.setOriginatorName(originatorName);
-                                    return alarmInfo;
-                                }
-                        ));
-                    } else {
-                        alarmInfo.setOriginatorName(alarmsMap.get(tmpUUID2));
-                        alarmFutures.add(Futures.immediateFuture(alarmInfo));
-                    }
-                }
-                return Futures.successfulAsList(alarmFutures);
-            });
-        }
-        return Futures.transform(alarms, new Function<List<AlarmInfo>, TimePageData<AlarmInfo>>() {
-            @Nullable
-            @Override
-            public TimePageData<AlarmInfo> apply(@Nullable List<AlarmInfo> alarms) {
-                return new TimePageData<>(alarms, query.getPageLink());
-            }
-        });
-    }
-*/
 
     @Override
     public ListenableFuture<TimePageData<AlarmInfo>> findAlarms(TenantId tenantId, AlarmQuery query) {
