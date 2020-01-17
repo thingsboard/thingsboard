@@ -41,8 +41,8 @@
   }
 
   &.tb-data-table {
-    table,
-    table.md-row-select {
+    table.md-table,
+    table.md-table.md-row-select {
       tbody {
         .tb-action-cell {
           width: 36px;
