@@ -38,11 +38,11 @@ import org.thingsboard.server.dao.device.provision.ProvisionResponse;
 import org.thingsboard.server.dao.device.provision.ProvisionResponseStatus;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CredentialsType;
+import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
@@ -121,6 +121,7 @@ public class LocalTransportApiService implements TransportApiService {
                     device.setTenantId(gateway.getTenantId());
                     device.setName(requestMsg.getDeviceName());
                     device.setType(requestMsg.getDeviceType());
+                    device.setLabel(!StringUtils.isEmpty(requestMsg.getDeviceLabel()) ? requestMsg.getDeviceLabel() : null);
                     device.setCustomerId(gateway.getCustomerId());
                     device = deviceService.saveDevice(device);
                     relationService.saveRelationAsync(TenantId.SYS_TENANT_ID, new EntityRelation(gateway.getId(), device.getId(), "Created"));
@@ -142,6 +143,7 @@ public class LocalTransportApiService implements TransportApiService {
                 new ProvisionRequest(
                         requestMsg.getDeviceName(),
                         requestMsg.getDeviceType(),
+                        requestMsg.getX509CertPubKey(),
                         new ProvisionProfileCredentials(
                                 requestMsg.getProvisionProfileCredentialsMsg().getProvisionProfileKey(),
                                 requestMsg.getProvisionProfileCredentialsMsg().getProvisionProfileSecret())));
@@ -178,7 +180,7 @@ public class LocalTransportApiService implements TransportApiService {
             try {
                 ValidateDeviceCredentialsResponseMsg.Builder builder = ValidateDeviceCredentialsResponseMsg.newBuilder();
                 builder.setDeviceInfo(getDeviceInfoProto(device));
-                if(!StringUtils.isEmpty(credentials.getCredentialsValue())){
+                if (!StringUtils.isEmpty(credentials.getCredentialsValue())) {
                     builder.setCredentialsBody(credentials.getCredentialsValue());
                 }
                 return TransportApiResponseMsg.newBuilder()

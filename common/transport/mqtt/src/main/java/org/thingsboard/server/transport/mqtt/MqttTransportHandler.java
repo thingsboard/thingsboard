@@ -39,6 +39,7 @@ import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportService;
@@ -212,6 +213,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 case MqttTopics.GATEWAY_DISCONNECT_TOPIC:
                     gatewaySessionHandler.onDeviceDisconnect(mqttMsg);
                     break;
+                case MqttTopics.GATEWAY_PROVISION_TOPIC:
+                    gatewaySessionHandler.onDeviceProvision(mqttMsg);
+                    break;
             }
         } catch (RuntimeException | AdaptorException e) {
             log.warn("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
@@ -285,11 +289,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             if (msgId > 0) {
                 ctx.writeAndFlush(createMqttPubAckMsg(msgId));
             }
-            try {
-                adaptor.convertToPublish(deviceSessionCtx, provisionResponseMsg).ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
-            } catch (AdaptorException e) {
-                log.trace("[{}] Failed to convert device provision response to MQTT msg", sessionId, e);
-            }
+            adaptor.convertToPublish(deviceSessionCtx, provisionResponseMsg).ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
         }
 
         @Override
@@ -326,6 +326,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     case MqttTopics.GATEWAY_ATTRIBUTES_RESPONSE_TOPIC:
                     case MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_TOPIC:
                     case MqttTopics.DEVICE_PROVISION_RESPONSE_TOPIC:
+                    case MqttTopics.GATEWAY_PROVISION_RESPONSE_TOPIC:
                         registerSubQoS(topic, grantedQoSList, reqQoS);
                         break;
                     default:
@@ -394,7 +395,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         if (StringUtils.isEmpty(userName)) {
             ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_REFUSED_BAD_USER_NAME_OR_PASSWORD));
             ctx.close();
-        } else if ("provision".equals(userName)) {
+        } else if (DataConstants.PROVISION.equals(userName)) {
             deviceSessionCtx.setDeviceInfo(DeviceInfoProto.newBuilder().getDefaultInstanceForType());
             ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_ACCEPTED));
         } else {

@@ -144,12 +144,14 @@ message GetOrCreateDeviceFromGatewayRequestMsg {
   int64 gatewayIdLSB = 2;
   string deviceName = 3;
   string deviceType = 4;
+  string deviceLabel = 5;
 }
 
 message ProvisionDeviceRequestMsg {
   string deviceName = 1;
   string deviceType = 2;
-  ProvisionDeviceProfileCredentialsMsg provisionProfileCredentialsMsg = 3;
+  string x509CertPubKey = 3;
+  ProvisionDeviceProfileCredentialsMsg provisionProfileCredentialsMsg = 4;
 }
 
 message ProvisionDeviceProfileCredentialsMsg {

@@ -64,6 +64,7 @@ public class GatewaySessionHandler {
     private static final String DEFAULT_DEVICE_TYPE = "default";
     private static final String CAN_T_PARSE_VALUE = "Can't parse value: ";
     private static final String DEVICE_PROPERTY = "device";
+    private static final String EMPTY_STR = "";
 
     private final MqttTransportContext context;
     private final TransportService transportService;
@@ -89,8 +90,9 @@ public class GatewaySessionHandler {
         JsonElement json = getJson(msg);
         String deviceName = checkDeviceName(getDeviceName(json));
         String deviceType = getDeviceType(json);
+        String deviceLabel = getDeviceLabel(json);
         log.trace("[{}] onDeviceConnect: {}", sessionId, deviceName);
-        Futures.addCallback(onDeviceConnect(deviceName, deviceType), new FutureCallback<GatewayDeviceSessionCtx>() {
+        Futures.addCallback(onDeviceConnect(deviceName, deviceType, deviceLabel), new FutureCallback<GatewayDeviceSessionCtx>() {
             @Override
             public void onSuccess(@Nullable GatewayDeviceSessionCtx result) {
                 ack(msg);
@@ -105,13 +107,14 @@ public class GatewaySessionHandler {
         }, context.getExecutor());
     }
 
-    private ListenableFuture<GatewayDeviceSessionCtx> onDeviceConnect(String deviceName, String deviceType) {
+    private ListenableFuture<GatewayDeviceSessionCtx> onDeviceConnect(String deviceName, String deviceType, String label) {
         SettableFuture<GatewayDeviceSessionCtx> future = SettableFuture.create();
         GatewayDeviceSessionCtx result = devices.get(deviceName);
         if (result == null) {
             transportService.process(GetOrCreateDeviceFromGatewayRequestMsg.newBuilder()
                             .setDeviceName(deviceName)
                             .setDeviceType(deviceType)
+                            .setDeviceLabel(label == null ? EMPTY_STR : label)
                             .setGatewayIdMSB(gateway.getDeviceIdMSB())
                             .setGatewayIdLSB(gateway.getDeviceIdLSB()).build(),
                     new TransportServiceCallback<GetOrCreateDeviceFromGatewayResponseMsg>() {
@@ -228,6 +231,35 @@ public class GatewaySessionHandler {
         }
     }
 
+    public void onDeviceProvision(MqttPublishMessage mqttMsg) throws AdaptorException {
+        JsonElement json = JsonMqttAdaptor.validateJsonPayload(sessionId, mqttMsg.payload());
+
+        if (json.isJsonObject()) {
+            JsonObject jsonObj = json.getAsJsonObject();
+            int requestId = jsonObj.get("id").getAsInt();
+
+            int msgId = mqttMsg.variableHeader().packetId();
+            TransportProtos.ProvisionDeviceRequestMsg provisionRequestMsg = JsonConverter.convertToProvisionRequestMsg(jsonObj);
+            transportService.process(provisionRequestMsg, new TransportServiceCallback<TransportProtos.ProvisionDeviceResponseMsg>() {
+                @Override
+                public void onSuccess(TransportProtos.ProvisionDeviceResponseMsg provisionResponseMsg) {
+                    log.trace("[{}] Published msg: {}", sessionId, provisionRequestMsg);
+                    if (msgId > 0) {
+                        channel.writeAndFlush(MqttTransportHandler.createMqttPubAckMsg(msgId));
+                    }
+                    context.getAdaptor().convertToGatewayPublish(deviceSessionCtx, provisionResponseMsg, requestId).ifPresent(channel::writeAndFlush);
+                }
+
+                @Override
+                public void onError(Throwable e) {
+                    log.debug("[{}] Failed to process device provision command: {}", sessionId, provisionRequestMsg, e);
+                }
+            });
+        } else {
+            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
+        }
+    }
+
     public void onDeviceAttributes(MqttPublishMessage mqttMsg) throws AdaptorException {
         JsonElement json = JsonMqttAdaptor.validateJsonPayload(sessionId, mqttMsg.payload());
         int msgId = mqttMsg.variableHeader().packetId();
@@ -276,7 +308,7 @@ public class GatewaySessionHandler {
 
                         @Override
                         public void onFailure(Throwable t) {
-                            log.debug("[{}] Failed to process device teleemtry command: {}", sessionId, deviceName, t);
+                            log.debug("[{}] Failed to process device telemetry command: {}", sessionId, deviceName, t);
                         }
                     }, context.getExecutor());
         } else {
@@ -333,7 +365,7 @@ public class GatewaySessionHandler {
         GatewayDeviceSessionCtx ctx = devices.get(deviceName);
         if (ctx == null) {
             log.debug("[{}] Missing device [{}] for the gateway session", sessionId, deviceName);
-            return onDeviceConnect(deviceName, DEFAULT_DEVICE_TYPE);
+            return onDeviceConnect(deviceName, DEFAULT_DEVICE_TYPE, null);
         } else {
             return Futures.immediateFuture(ctx);
         }
@@ -347,13 +379,18 @@ public class GatewaySessionHandler {
         }
     }
 
-    private String getDeviceName(JsonElement json) throws AdaptorException {
+    private String getDeviceName(JsonElement json) {
         return json.getAsJsonObject().get(DEVICE_PROPERTY).getAsString();
     }
 
-    private String getDeviceType(JsonElement json) throws AdaptorException {
+    private String getDeviceType(JsonElement json) {
         JsonElement type = json.getAsJsonObject().get("type");
         return type == null || type instanceof JsonNull ? DEFAULT_DEVICE_TYPE : type.getAsString();
+    }
+
+    private String getDeviceLabel(JsonElement json) {
+        JsonElement label = json.getAsJsonObject().get("label");
+        return label == null || label instanceof JsonNull ? null : label.getAsString();
     }
 
     private JsonElement getJson(MqttPublishMessage mqttMsg) throws AdaptorException {

@@ -24,6 +24,7 @@ public class ProvisionRequest {
 
     private String deviceName;
     private String deviceType;
+    private String x509CertPubKey;
     private ProvisionProfileCredentials credentials;
 
 }

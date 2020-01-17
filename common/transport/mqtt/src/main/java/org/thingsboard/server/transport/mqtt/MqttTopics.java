@@ -40,9 +40,11 @@ public class MqttTopics {
     public static final String GATEWAY_ATTRIBUTES_TOPIC = BASE_GATEWAY_API_TOPIC + "/attributes";
     public static final String GATEWAY_TELEMETRY_TOPIC = BASE_GATEWAY_API_TOPIC + "/telemetry";
     public static final String GATEWAY_CLAIM_TOPIC = BASE_GATEWAY_API_TOPIC + "/claim";
+    public static final String GATEWAY_PROVISION_TOPIC = BASE_GATEWAY_API_TOPIC + "/provision";
     public static final String GATEWAY_RPC_TOPIC = BASE_GATEWAY_API_TOPIC + "/rpc";
     public static final String GATEWAY_ATTRIBUTES_REQUEST_TOPIC = BASE_GATEWAY_API_TOPIC + "/attributes/request";
     public static final String GATEWAY_ATTRIBUTES_RESPONSE_TOPIC = BASE_GATEWAY_API_TOPIC + "/attributes/response";
+    public static final String GATEWAY_PROVISION_RESPONSE_TOPIC = BASE_GATEWAY_API_TOPIC + "/provision/response";
 
 
     private MqttTopics() {

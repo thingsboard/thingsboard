@@ -45,9 +45,9 @@ import org.thingsboard.server.gen.transport.TransportProtos.PostAttributeMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostTelemetryMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceProfileCredentialsMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvListProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
-import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -252,10 +252,21 @@ public class JsonConverter {
     }
 
     public static JsonObject toJson(ProvisionDeviceResponseMsg payload) {
+        return toJson(payload, false, 0);
+    }
+
+    public static JsonObject toJson(ProvisionDeviceResponseMsg payload, int requestId) {
+        return toJson(payload, true, requestId);
+    }
+
+    private static JsonObject toJson(ProvisionDeviceResponseMsg payload, boolean toGateway, int requestId) {
         JsonObject result = new JsonObject();
         if (payload.getProvisionResponseStatus() == TransportProtos.ProvisionResponseStatus.NOT_FOUND) {
-            result.addProperty("errorMsg", "Provision profile wasn't found!");
+            result.addProperty("errorMsg", "Provision profile was not found!");
         } else {
+            if (toGateway) {
+                result.addProperty("id", requestId);
+            }
             result.addProperty("deviceId", new DeviceId(
                     new UUID(payload.getDeviceCredentials().getDeviceIdMSB(), payload.getDeviceCredentials().getDeviceIdLSB())).toString());
             result.addProperty("credentialsType", payload.getDeviceCredentials().getCredentialsType().name());
@@ -535,13 +546,18 @@ public class JsonConverter {
         }
     }
 
+    public static ProvisionDeviceRequestMsg convertToProvisionRequestMsg(JsonObject jo) {
+        return buildProvisionRequestMsg(jo);
+    }
+
     private static ProvisionDeviceRequestMsg buildProvisionRequestMsg(JsonObject jo) {
         return ProvisionDeviceRequestMsg.newBuilder()
-                .setDeviceName(getStrValue(jo, "deviceName"))
-                .setDeviceType(getStrValue(jo, "deviceType"))
+                .setDeviceName(getStrValue(jo, "deviceName", true))
+                .setDeviceType(getStrValue(jo, "deviceType", true))
+                .setX509CertPubKey(getStrValue(jo, "x509CertPubKey", false))
                 .setProvisionProfileCredentialsMsg(buildProvisionProfileCredentialsMsg(
-                        getStrValue(jo, "provisionProfileKey"),
-                        getStrValue(jo, "provisionProfileSecret")))
+                        getStrValue(jo, "provisionProfileKey", true),
+                        getStrValue(jo, "provisionProfileSecret", true)))
                 .build();
     }
 
@@ -552,11 +568,14 @@ public class JsonConverter {
                 .build();
     }
 
-    private static String getStrValue(JsonObject jo, String field) {
+    private static String getStrValue(JsonObject jo, String field, boolean requiredField) {
         if (jo.has(field)) {
             return jo.get(field).getAsString();
         } else {
-            throw new RuntimeException("Failed to find the field " + field + " in JSON body " + jo + "!");
+            if (requiredField) {
+                throw new RuntimeException("Failed to find the field " + field + " in JSON body " + jo + "!");
+            }
+            return "";
         }
     }
 }

@@ -24,6 +24,7 @@ import org.eclipse.californium.core.network.ExchangeObserver;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.eclipse.californium.core.server.resources.Resource;
 import org.springframework.util.ReflectionUtils;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.security.DeviceTokenCredentials;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
@@ -54,7 +55,6 @@ public class CoapTransportResource extends CoapResource {
     private static final int ACCESS_TOKEN_POSITION = 3;
     private static final int FEATURE_TYPE_POSITION = 4;
     private static final int REQUEST_ID_POSITION = 5;
-    private static final String PROVISION = "provision";
 
     private final CoapTransportContext transportContext;
     private final TransportService transportService;
@@ -276,8 +276,8 @@ public class CoapTransportResource extends CoapResource {
         try {
             if (uriPath.size() >= FEATURE_TYPE_POSITION) {
                 return Optional.of(FeatureType.valueOf(uriPath.get(FEATURE_TYPE_POSITION - 1).toUpperCase()));
-            } else if (uriPath.size() == 3 && uriPath.contains(PROVISION)) {
-                return Optional.of(FeatureType.valueOf(PROVISION.toUpperCase()));
+            } else if (uriPath.size() == 3 && uriPath.contains(DataConstants.PROVISION)) {
+                return Optional.of(FeatureType.valueOf(DataConstants.PROVISION.toUpperCase()));
             }
         } catch (RuntimeException e) {
             log.warn("Failed to decode feature type: {}", uriPath);

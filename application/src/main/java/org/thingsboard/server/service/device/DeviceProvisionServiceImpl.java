@@ -22,11 +22,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
@@ -72,31 +74,28 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
 
     @Override
     public ProvisionResponse provisionDevice(ProvisionRequest provisionRequest) {
-        boolean isProfileFound = false;
         ProvisionProfile targetProfile = null;
         for (ProvisionProfile profile : set) {
             if (profile.getCredentials().equals(provisionRequest.getCredentials())) {
                 log.debug("[{}] Found provision profile!", profile);
-                isProfileFound = true;
                 targetProfile = profile;
                 break;
             }
         }
-        if (!isProfileFound) {
+        if (targetProfile == null) {
             return new ProvisionResponse(null, ProvisionResponseStatus.NOT_FOUND);
         }
-        Device device = getOrCreateDevice(targetProfile.getTenantId(), provisionRequest.getDeviceName(),
-                provisionRequest.getDeviceType(), targetProfile.getCustomerId());
+        Device device = getOrCreateDevice(provisionRequest, targetProfile);
         set.remove(targetProfile);
         return new ProvisionResponse(deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), device.getId()), ProvisionResponseStatus.SUCCESS);
     }
 
-    private Device getOrCreateDevice(TenantId tenantId, String deviceName, String deviceType, CustomerId customerId) {
-        Device device = deviceService.findDeviceByTenantIdAndName(tenantId, deviceName);
+    private Device getOrCreateDevice(ProvisionRequest provisionRequest, ProvisionProfile profile) {
+        Device device = deviceService.findDeviceByTenantIdAndName(profile.getTenantId(), provisionRequest.getDeviceName());
         if (device == null) {
             deviceCreationLock.lock();
             try {
-                return processGetOrCreateDevice(tenantId, deviceName, deviceType, customerId);
+                return processGetOrCreateDevice(provisionRequest, profile);
             } finally {
                 deviceCreationLock.unlock();
             }
@@ -104,20 +103,27 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
         return device;
     }
 
-    private Device processGetOrCreateDevice(TenantId tenantId, String deviceName, String deviceType, CustomerId customerId) {
-        Device device = deviceService.findDeviceByTenantIdAndName(tenantId, deviceName);
+    private Device processGetOrCreateDevice(ProvisionRequest provisionRequest, ProvisionProfile profile) {
+        Device device = deviceService.findDeviceByTenantIdAndName(profile.getTenantId(), provisionRequest.getDeviceName());
         if (device == null) {
             device = new Device();
-            device.setName(deviceName);
-            device.setType(deviceType);
-            device.setTenantId(tenantId);
-            if (customerId != null) {
-                device.setCustomerId(customerId);
+            device.setName(provisionRequest.getDeviceName());
+            device.setType(provisionRequest.getDeviceType());
+            device.setTenantId(profile.getTenantId());
+            if (profile.getCustomerId() != null) {
+                device.setCustomerId(profile.getCustomerId());
             }
             device = deviceService.saveDevice(device);
 
             actorService.onDeviceAdded(device);
             pushDeviceCreatedEventToRuleEngine(device);
+
+            if (!StringUtils.isEmpty(provisionRequest.getX509CertPubKey())) {
+                DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(profile.getTenantId(), device.getId());
+                deviceCredentials.setCredentialsType(DeviceCredentialsType.X509_CERTIFICATE);
+                deviceCredentials.setCredentialsValue(provisionRequest.getX509CertPubKey());
+                deviceCredentialsService.updateDeviceCredentials(profile.getTenantId(), deviceCredentials);
+            }
         }
         return device;
     }
