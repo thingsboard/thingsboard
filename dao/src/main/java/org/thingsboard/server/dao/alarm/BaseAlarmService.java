@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.sun.nio.sctp.MessageInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -54,7 +53,6 @@ import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -275,7 +273,6 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     @Override
     public ListenableFuture<TimePageData<AlarmInfo>> findAlarms(TenantId tenantId, AlarmQuery query) {
         ListenableFuture<List<AlarmInfo>> alarms = alarmDao.findAlarms(tenantId, query);
-
         if (query.getFetchOriginator() != null && query.getFetchOriginator().booleanValue()) {
             alarms = Futures.transformAsync(alarms, input -> {
                 List<ListenableFuture<AlarmInfo>> alarmFutures = new ArrayList<>(input.size());
@@ -297,7 +294,6 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                         alarmFutures.add(Futures.immediateFuture(alarmInfo));
                     }
                 }
-//                namesMap.clear();
                 return Futures.successfulAsList(alarmFutures);
             });
         }
