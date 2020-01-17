@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -291,7 +291,8 @@ export default class TbMapWidgetV2 {
 			entityId.id = datasource.entityId;
 			entityId.entityType = datasource.entityType;
 			var entityName = datasource.entityName;
-			this.ctx.actionsApi.handleWidgetAction(event, descriptor, entityId, entityName);
+			var entityLabel = datasource.entityLabel;
+			this.ctx.actionsApi.handleWidgetAction(event, descriptor, entityId, entityName, null, entityLabel);
 		}
 	}
 
@@ -560,7 +561,8 @@ export default class TbMapWidgetV2 {
 				entityId.id = datasource.entityId;
 				entityId.entityType = datasource.entityType;
 				var entityName = datasource.entityName;
-				tbMap.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName);
+				var entityLabel = datasource.entityLabel;
+				tbMap.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, null, entityLabel);
 			}
 		}
 		function locationPolygonClick($event, location) {
@@ -571,7 +573,8 @@ export default class TbMapWidgetV2 {
 				entityId.id = datasource.entityId;
 				entityId.entityType = datasource.entityType;
 				var entityName = datasource.entityName;
-				tbMap.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName);
+				var entityLabel = datasource.entityLabel;
+				tbMap.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, null, entityLabel);
 			}
 		}
 
