@@ -151,7 +151,8 @@ message ProvisionDeviceRequestMsg {
   string deviceName = 1;
   string deviceType = 2;
   string x509CertPubKey = 3;
-  ProvisionDeviceProfileCredentialsMsg provisionProfileCredentialsMsg = 4;
+  bool singleProvisioning = 4;
+  ProvisionDeviceProfileCredentialsMsg provisionProfileCredentialsMsg = 5;
 }
 
 message ProvisionDeviceProfileCredentialsMsg {
@@ -167,6 +168,7 @@ message ProvisionDeviceResponseMsg {
 enum ProvisionResponseStatus {
   SUCCESS = 0;
   NOT_FOUND = 1;
+  DENIED = 2;
 }
 
 message GetOrCreateDeviceFromGatewayResponseMsg {

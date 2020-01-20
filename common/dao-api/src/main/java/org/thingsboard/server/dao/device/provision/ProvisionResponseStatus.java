@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.device.provision;
 public enum ProvisionResponseStatus {
 
     SUCCESS,
-    NOT_FOUND
+    NOT_FOUND,
+    DENIED
 
 }

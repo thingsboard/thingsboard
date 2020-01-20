@@ -139,36 +139,47 @@ public class LocalTransportApiService implements TransportApiService {
     }
 
     private ListenableFuture<TransportApiResponseMsg> handle(ProvisionDeviceRequestMsg requestMsg) {
-        ProvisionResponse provisionResponse = deviceProvisionService.provisionDevice(
+        ListenableFuture<ProvisionResponse> provisionResponseFuture = deviceProvisionService.provisionDevice(
                 new ProvisionRequest(
                         requestMsg.getDeviceName(),
                         requestMsg.getDeviceType(),
                         requestMsg.getX509CertPubKey(),
+                        requestMsg.getSingleProvisioning(),
                         new ProvisionProfileCredentials(
                                 requestMsg.getProvisionProfileCredentialsMsg().getProvisionProfileKey(),
                                 requestMsg.getProvisionProfileCredentialsMsg().getProvisionProfileSecret())));
-        if (provisionResponse.getResponseStatus() == ProvisionResponseStatus.NOT_FOUND) {
-            return Futures.immediateFuture(TransportApiResponseMsg.newBuilder()
-                    .setProvisionDeviceResponseMsg(TransportProtos.ProvisionDeviceResponseMsg.newBuilder()
-                            .setDeviceCredentials(TransportProtos.DeviceCredentialsProto.getDefaultInstance())
-                            .setProvisionResponseStatus(TransportProtos.ProvisionResponseStatus.NOT_FOUND)
-                            .build())
-                    .build());
-        } else {
-            DeviceCredentials deviceCredentials = provisionResponse.getDeviceCredentials();
-            return Futures.immediateFuture(TransportApiResponseMsg.newBuilder()
-                    .setProvisionDeviceResponseMsg(TransportProtos.ProvisionDeviceResponseMsg.newBuilder()
-                            .setDeviceCredentials(TransportProtos.DeviceCredentialsProto.newBuilder()
-                                    .setDeviceIdMSB(deviceCredentials.getDeviceId().getId().getMostSignificantBits())
-                                    .setDeviceIdLSB(deviceCredentials.getDeviceId().getId().getLeastSignificantBits())
-                                    .setCredentialsType(deviceCredentials.getCredentialsType() == DeviceCredentialsType.ACCESS_TOKEN ?
-                                            CredentialsType.ACCESS_TOKEN : CredentialsType.X509_CERTIFICATE)
-                                    .setCredentialsId(deviceCredentials.getCredentialsId())
-                                    .setCredentialsValue(deviceCredentials.getCredentialsValue() != null ? deviceCredentials.getCredentialsValue() : "")
-                                    .build())
-                            .build())
-                    .build());
-        }
+
+        return Futures.transform(provisionResponseFuture, provisionResponse -> {
+            if (provisionResponse.getResponseStatus() == ProvisionResponseStatus.NOT_FOUND) {
+                return TransportApiResponseMsg.newBuilder()
+                        .setProvisionDeviceResponseMsg(TransportProtos.ProvisionDeviceResponseMsg.newBuilder()
+                                .setDeviceCredentials(TransportProtos.DeviceCredentialsProto.getDefaultInstance())
+                                .setProvisionResponseStatus(TransportProtos.ProvisionResponseStatus.NOT_FOUND)
+                                .build())
+                        .build();
+            } else if (provisionResponse.getResponseStatus() == ProvisionResponseStatus.DENIED) {
+                return TransportApiResponseMsg.newBuilder()
+                        .setProvisionDeviceResponseMsg(TransportProtos.ProvisionDeviceResponseMsg.newBuilder()
+                                .setDeviceCredentials(TransportProtos.DeviceCredentialsProto.getDefaultInstance())
+                                .setProvisionResponseStatus(TransportProtos.ProvisionResponseStatus.DENIED)
+                                .build())
+                        .build();
+            } else {
+                DeviceCredentials deviceCredentials = provisionResponse.getDeviceCredentials();
+                return TransportApiResponseMsg.newBuilder()
+                        .setProvisionDeviceResponseMsg(TransportProtos.ProvisionDeviceResponseMsg.newBuilder()
+                                .setDeviceCredentials(TransportProtos.DeviceCredentialsProto.newBuilder()
+                                        .setDeviceIdMSB(deviceCredentials.getDeviceId().getId().getMostSignificantBits())
+                                        .setDeviceIdLSB(deviceCredentials.getDeviceId().getId().getLeastSignificantBits())
+                                        .setCredentialsType(deviceCredentials.getCredentialsType() == DeviceCredentialsType.ACCESS_TOKEN ?
+                                                CredentialsType.ACCESS_TOKEN : CredentialsType.X509_CERTIFICATE)
+                                        .setCredentialsId(deviceCredentials.getCredentialsId())
+                                        .setCredentialsValue(deviceCredentials.getCredentialsValue() != null ? deviceCredentials.getCredentialsValue() : "")
+                                        .build())
+                                .build())
+                        .build();
+            }
+        });
     }
 
     private ListenableFuture<TransportApiResponseMsg> getDeviceInfo(DeviceId deviceId, DeviceCredentials credentials) {

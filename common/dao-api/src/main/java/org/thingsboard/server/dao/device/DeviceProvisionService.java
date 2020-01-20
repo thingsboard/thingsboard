@@ -34,6 +34,6 @@ public interface DeviceProvisionService {
 
     void deleteProfile(TenantId tenantId, ProvisionProfileId profileId);
 
-    ProvisionResponse provisionDevice(ProvisionRequest provisionRequest);
+    ListenableFuture<ProvisionResponse> provisionDevice(ProvisionRequest provisionRequest);
 
 }

@@ -19,6 +19,7 @@ import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
@@ -37,12 +38,16 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.ProvisionProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
+import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProvisionService;
@@ -58,7 +63,9 @@ import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static org.thingsboard.server.common.data.CacheConstants.DEVICE_PROVISION_CACHE;
@@ -71,6 +78,7 @@ public class DeviceProvisionServiceImpl extends AbstractEntityService implements
 
     private static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     private static final String INCORRECT_PROFILE_ID = "Incorrect profileId ";
+    private static final String DEVICE_PROVISIONED = "deviceProvisioned";
 
     private final ObjectMapper mapper = new ObjectMapper();
     private final ReentrantLock deviceCreationLock = new ReentrantLock();
@@ -80,6 +88,9 @@ public class DeviceProvisionServiceImpl extends AbstractEntityService implements
 
     @Autowired
     private DeviceCredentialsService deviceCredentialsService;
+
+    @Autowired
+    private AttributesService attributesService;
 
     @Autowired
     private TenantDao tenantDao;
@@ -158,16 +169,40 @@ public class DeviceProvisionServiceImpl extends AbstractEntityService implements
     }
 
     @Override
-    public ProvisionResponse provisionDevice(ProvisionRequest provisionRequest) {
+    public ListenableFuture<ProvisionResponse> provisionDevice(ProvisionRequest provisionRequest) {
         ProvisionProfile targetProfile = provisionProfileDao.findByKeyAndSecret(
                 TenantId.SYS_TENANT_ID,
                 provisionRequest.getCredentials().getProvisionProfileKey(),
                 provisionRequest.getCredentials().getProvisionProfileSecret());
         if (targetProfile == null) {
-            return new ProvisionResponse(null, ProvisionResponseStatus.NOT_FOUND);
+            return Futures.immediateFuture(new ProvisionResponse(null, ProvisionResponseStatus.NOT_FOUND));
         }
         Device device = getOrCreateDevice(provisionRequest, targetProfile);
-        return new ProvisionResponse(deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), device.getId()), ProvisionResponseStatus.SUCCESS);
+        if (provisionRequest.isSingleProvisioning()) {
+            return processProvision(device);
+        } else {
+            return Futures.immediateFuture(
+                    new ProvisionResponse(
+                            deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), device.getId()),
+                            ProvisionResponseStatus.SUCCESS));
+        }
+    }
+
+    private ListenableFuture<ProvisionResponse> processProvision(Device device) {
+        ListenableFuture<Optional<AttributeKvEntry>> future = attributesService.find(device.getTenantId(), device.getId(), DataConstants.SERVER_SCOPE, DEVICE_PROVISIONED);
+        ListenableFuture<Boolean> booleanFuture = Futures.transformAsync(future, optional -> {
+            if (optional.isPresent() && optional.get().getBooleanValue().orElse(false)) {
+                return Futures.immediateFuture(true);
+            }
+            return Futures.transform(attributesService.save(device.getTenantId(), device.getId(), DataConstants.SERVER_SCOPE,
+                    Collections.singletonList(new BaseAttributeKvEntry(new BooleanDataEntry(DEVICE_PROVISIONED, true), System.currentTimeMillis()))), input -> false);
+        });
+        return Futures.transform(booleanFuture, b -> {
+            if (b) {
+                return new ProvisionResponse(null, ProvisionResponseStatus.DENIED);
+            }
+            return new ProvisionResponse(deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), device.getId()), ProvisionResponseStatus.SUCCESS);
+        });
     }
 
     private Device getOrCreateDevice(ProvisionRequest provisionRequest, ProvisionProfile profile) {

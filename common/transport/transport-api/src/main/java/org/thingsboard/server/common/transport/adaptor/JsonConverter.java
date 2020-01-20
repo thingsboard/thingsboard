@@ -263,6 +263,8 @@ public class JsonConverter {
         JsonObject result = new JsonObject();
         if (payload.getProvisionResponseStatus() == TransportProtos.ProvisionResponseStatus.NOT_FOUND) {
             result.addProperty("errorMsg", "Provision profile was not found!");
+        } else if (payload.getProvisionResponseStatus() == TransportProtos.ProvisionResponseStatus.DENIED) {
+            result.addProperty("errorMsg", "Denied to provision device!");
         } else {
             if (toGateway) {
                 result.addProperty("id", requestId);
@@ -555,6 +557,7 @@ public class JsonConverter {
                 .setDeviceName(getStrValue(jo, "deviceName", true))
                 .setDeviceType(getStrValue(jo, "deviceType", true))
                 .setX509CertPubKey(getStrValue(jo, "x509CertPubKey", false))
+                .setSingleProvisioning(getBoolValue(jo))
                 .setProvisionProfileCredentialsMsg(buildProvisionProfileCredentialsMsg(
                         getStrValue(jo, "provisionProfileKey", true),
                         getStrValue(jo, "provisionProfileSecret", true)))
@@ -577,5 +580,12 @@ public class JsonConverter {
             }
             return "";
         }
+    }
+
+    private static boolean getBoolValue(JsonObject jo) {
+        if (jo.has("singleProvisioning")) {
+            return jo.get("singleProvisioning").getAsBoolean();
+        }
+        return false;
     }
 }
