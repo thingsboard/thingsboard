@@ -28,11 +28,10 @@ import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.client.support.HttpRequestWrapper;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-import org.thingsboard.client.tools.utils.JsonConverter;
+import org.thingsboard.client.tools.utils.RestJsonConverter;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.ClaimRequest;
 import org.thingsboard.server.common.data.Customer;
@@ -1620,11 +1619,8 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 entityId.getEntityType().name(),
                 entityId.getId(),
                 listToString(keys)).getBody();
-        if (!CollectionUtils.isEmpty(attributes)) {
-            return JsonConverter.toAttributes(attributes);
-        } else {
-            return Collections.emptyList();
-        }
+
+        return RestJsonConverter.toAttributes(attributes);
     }
 
     public Future<List<AttributeKvEntry>> getAttributeKvEntriesAsync(EntityId entityId, List<String> keys) {
@@ -1642,11 +1638,8 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 entityId.getId().toString(),
                 scope,
                 listToString(keys)).getBody();
-        if (!CollectionUtils.isEmpty(attributes)) {
-            return JsonConverter.toAttributes(attributes);
-        } else {
-            return Collections.emptyList();
-        }
+
+        return RestJsonConverter.toAttributes(attributes);
     }
 
     public List<String> getTimeseriesKeys(EntityId entityId) {
@@ -1670,11 +1663,8 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 entityId.getEntityType().name(),
                 entityId.getId().toString(),
                 listToString(keys)).getBody();
-        if (!CollectionUtils.isEmpty(timeseries)) {
-            return JsonConverter.toTimeseries(timeseries);
-        } else {
-            return Collections.emptyList();
-        }
+
+        return RestJsonConverter.toTimeseries(timeseries);
     }
 
 
@@ -1697,11 +1687,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 },
                 params).getBody();
 
-        if (!CollectionUtils.isEmpty(timeseries)) {
-            return JsonConverter.toTimeseries(timeseries);
-        } else {
-            return Collections.emptyList();
-        }
+        return RestJsonConverter.toTimeseries(timeseries);
     }
 
     public List<AttributeKvEntry> saveDeviceAttributes(String deviceId, String scope, JsonNode request) {
@@ -1714,11 +1700,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 deviceId,
                 scope).getBody();
 
-        if (!CollectionUtils.isEmpty(attributes)) {
-            return JsonConverter.toAttributes(attributes);
-        } else {
-            return Collections.emptyList();
-        }
+        return RestJsonConverter.toAttributes(attributes);
     }
 
     public List<AttributeKvEntry> saveEntityAttributesV1(EntityId entityId, String scope, JsonNode request) {
@@ -1732,11 +1714,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 entityId.getId().toString(),
                 scope).getBody();
 
-        if (!CollectionUtils.isEmpty(attributes)) {
-            return JsonConverter.toAttributes(attributes);
-        } else {
-            return Collections.emptyList();
-        }
+        return RestJsonConverter.toAttributes(attributes);
     }
 
     public List<AttributeKvEntry> saveEntityAttributesV2(EntityId entityId, String scope, JsonNode request) {
@@ -1750,11 +1728,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 entityId.getId().toString(),
                 scope).getBody();
 
-        if (!CollectionUtils.isEmpty(attributes)) {
-            return JsonConverter.toAttributes(attributes);
-        } else {
-            return Collections.emptyList();
-        }
+        return RestJsonConverter.toAttributes(attributes);
     }
 
     public List<TsKvEntry> saveEntityTelemetry(EntityId entityId, String scope, String requestBody) {
@@ -1768,11 +1742,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 entityId.getId().toString(),
                 scope).getBody();
 
-        if (!CollectionUtils.isEmpty(timeseries)) {
-            return JsonConverter.toTimeseries(timeseries);
-        } else {
-            return Collections.emptyList();
-        }
+        return RestJsonConverter.toTimeseries(timeseries);
     }
 
     public List<TsKvEntry> saveEntityTelemetryWithTTL(EntityId entityId, String scope, Long ttl, String requestBody) {
@@ -1787,11 +1757,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 scope,
                 ttl).getBody();
 
-        if (!CollectionUtils.isEmpty(timeseries)) {
-            return JsonConverter.toTimeseries(timeseries);
-        } else {
-            return Collections.emptyList();
-        }
+        return RestJsonConverter.toTimeseries(timeseries);
     }
 
     public List<TsKvEntry> deleteEntityTimeseries(EntityId entityId,
@@ -1817,11 +1783,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 },
                 params).getBody();
 
-        if (!CollectionUtils.isEmpty(timeseries)) {
-            return JsonConverter.toTimeseries(timeseries);
-        } else {
-            return Collections.emptyList();
-        }
+        return RestJsonConverter.toTimeseries(timeseries);
     }
 
     public List<AttributeKvEntry> deleteEntityAttributes(String deviceId, String scope, List<String> keys) {
@@ -1835,11 +1797,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 scope,
                 listToString(keys)).getBody();
 
-        if (!CollectionUtils.isEmpty(attributes)) {
-            return JsonConverter.toAttributes(attributes);
-        } else {
-            return Collections.emptyList();
-        }
+        return RestJsonConverter.toAttributes(attributes);
     }
 
     public List<AttributeKvEntry> deleteEntityAttributes(EntityId entityId, String scope, List<String> keys) {
@@ -1854,11 +1812,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 scope,
                 listToString(keys)).getBody();
 
-        if (!CollectionUtils.isEmpty(attributes)) {
-            return JsonConverter.toAttributes(attributes);
-        } else {
-            return Collections.emptyList();
-        }
+        return RestJsonConverter.toAttributes(attributes);
     }
 
     public Optional<Tenant> getTenantById(String tenantId) {
