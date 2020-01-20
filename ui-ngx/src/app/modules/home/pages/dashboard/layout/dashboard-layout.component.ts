@@ -14,27 +14,25 @@
 /// limitations under the License.
 ///
 
-import { Component, OnDestroy, OnInit, Input, ChangeDetectorRef, ViewChild } from '@angular/core';
-import { StateControllerComponent } from '@home/pages/dashboard/states/state-controller.component';
+import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ILayoutController } from '@home/pages/dashboard/layout/layout.models';
 import { DashboardContext, DashboardPageLayoutContext } from '@home/pages/dashboard/dashboard-page.models';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Widget } from '@shared/models/widget.models';
-import { WidgetLayout, WidgetLayouts } from '@shared/models/dashboard.models';
-import { GridsterComponent } from 'angular-gridster2';
 import {
   DashboardCallbacks,
   DashboardContextMenuItem,
-  IDashboardComponent, WidgetContextMenuItem
+  IDashboardComponent,
+  WidgetContextMenuItem
 } from '@home/models/dashboard-component.models';
-import { Observable, of, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { Hotkey, HotkeysService } from 'angular2-hotkeys';
-import { getCurrentIsLoading } from '@core/interceptors/load.selectors';
 import { TranslateService } from '@ngx-translate/core';
 import { ItemBufferService } from '@app/core/services/item-buffer.service';
 import { DomSanitizer, SafeStyle } from '@angular/platform-browser';
+import { TbCheatSheetComponent } from '@shared/components/cheatsheet.component';
 
 @Component({
   selector: 'tb-dashboard-layout',
@@ -46,6 +44,10 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
   layoutCtxValue: DashboardPageLayoutContext;
   dashboardStyle: {[klass: string]: any} = null;
   backgroundImage: SafeStyle | string;
+
+  hotKeys: Hotkey[] = [];
+
+  @Input() dashboardCheatSheet: TbCheatSheetComponent;
 
   @Input()
   set layoutCtx(val: DashboardPageLayoutContext) {
@@ -81,11 +83,11 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
   private rxSubscriptions = new Array<Subscription>();
 
   constructor(protected store: Store<AppState>,
-              private hotkeysService: HotkeysService,
               private translate: TranslateService,
               private itembuffer: ItemBufferService,
               private sanitizer: DomSanitizer) {
     super(store);
+    this.initHotKeys();
   }
 
   ngOnInit(): void {
@@ -95,7 +97,6 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
         this.dashboardCtx.runChangeDetection();
       })
     );
-    this.initHotKeys();
   }
 
   ngOnDestroy(): void {
@@ -106,7 +107,7 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
   }
 
   private initHotKeys(): void {
-    this.hotkeysService.add(
+    this.hotKeys.push(
       new Hotkey('ctrl+c', (event: KeyboardEvent) => {
           if (this.isEdit && !this.isEditingWidget && !this.widgetEditMode) {
             const widget = this.dashboard.getSelectedWidget();
@@ -119,7 +120,7 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
         }, null,
         this.translate.instant('action.copy'))
     );
-    this.hotkeysService.add(
+    this.hotKeys.push(
       new Hotkey('ctrl+r', (event: KeyboardEvent) => {
           if (this.isEdit && !this.isEditingWidget && !this.widgetEditMode) {
             const widget = this.dashboard.getSelectedWidget();
@@ -132,7 +133,7 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
         }, null,
         this.translate.instant('action.copy-reference'))
     );
-    this.hotkeysService.add(
+    this.hotKeys.push(
       new Hotkey('ctrl+v', (event: KeyboardEvent) => {
           if (this.isEdit && !this.isEditingWidget && !this.widgetEditMode) {
             if (this.itembuffer.hasWidget()) {
@@ -144,7 +145,7 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
         }, null,
         this.translate.instant('action.paste'))
     );
-    this.hotkeysService.add(
+    this.hotKeys.push(
       new Hotkey('ctrl+i', (event: KeyboardEvent) => {
           if (this.isEdit && !this.isEditingWidget && !this.widgetEditMode) {
             if (this.itembuffer.canPasteWidgetReference(this.dashboardCtx.getDashboard(),
@@ -157,7 +158,7 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
         }, null,
         this.translate.instant('action.paste-reference'))
     );
-    this.hotkeysService.add(
+    this.hotKeys.push(
       new Hotkey('ctrl+x', (event: KeyboardEvent) => {
           if (this.isEdit && !this.isEditingWidget && !this.widgetEditMode) {
             const widget = this.dashboard.getSelectedWidget();

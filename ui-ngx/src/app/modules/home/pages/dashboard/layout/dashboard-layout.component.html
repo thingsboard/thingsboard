@@ -15,13 +15,14 @@
     limitations under the License.
 
 -->
-<hotkeys-cheatsheet></hotkeys-cheatsheet>
 <div fxLayout="column" class="tb-progress-cover" fxLayoutAlign="center center"
   *ngIf="layoutCtx.widgets.isLoading()">
   <mat-spinner color="warn" mode="indeterminate" diameter="100">
   </mat-spinner>
 </div>
-<div class="mat-content" style="position: relative; width: 100%; height: 100%;"
+<div class="mat-content"
+          style="position: relative; width: 100%; height: 100%;" tb-hotkeys [hotkeys]="hotKeys"
+          [cheatSheet]="dashboardCheatSheet"
           [style.backgroundImage]="backgroundImage"
           [ngStyle]="dashboardStyle">
   <section *ngIf="layoutCtx.widgets.isEmpty()" fxLayoutAlign="center center"

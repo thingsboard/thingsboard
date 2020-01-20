@@ -14,37 +14,32 @@
 /// limitations under the License.
 ///
 
-import { FcNode, FcEdge, FcModel } from 'ngx-flowchart/dist/ngx-flowchart';
-import { RuleNodeComponentDescriptor, RuleNodeConfiguration } from '@shared/models/rule-node.models';
-import { RuleNodeId } from '@app/shared/models/id/rule-node-id';
-import { RuleChainId } from '@shared/models/id/rule-chain-id';
-
-export interface FcRuleNodeType extends FcNode {
-  component: RuleNodeComponentDescriptor;
-  nodeClass: string;
-  icon: string;
-  iconUrl?: string;
-}
+import { FcModel } from 'ngx-flowchart/dist/ngx-flowchart';
+import { FcRuleEdge, FcRuleNode, FcRuleNodeType } from '@shared/models/rule-node.models';
 
 export interface FcRuleNodeTypeModel extends FcModel {
   nodes: Array<FcRuleNodeType>;
 }
 
-export interface FcRuleNode extends FcRuleNodeType {
-  ruleNodeId?: RuleNodeId;
-  additionalInfo?: any;
-  configuration?: RuleNodeConfiguration;
-  debugMode?: boolean;
-  targetRuleChainId?: string;
-  error?: string;
-  highlighted?: boolean;
-}
-
-export interface FcRuleEdge extends FcEdge {
-  labels?: string[];
-}
-
 export interface FcRuleNodeModel extends FcModel {
   nodes: Array<FcRuleNode>;
   edges: Array<FcRuleEdge>;
+}
+
+export interface RuleChainMenuItem {
+  action?: ($event: MouseEvent) => void;
+  enabled?: boolean;
+  value?: string;
+  icon?: string;
+  shortcut?: string;
+  divider?: boolean;
+}
+
+export interface RuleChainMenuContextInfo {
+  headerClass: string;
+  icon: string;
+  iconUrl?: string;
+  title: string;
+  subtitle: string;
+  menuItems: RuleChainMenuItem[];
 }

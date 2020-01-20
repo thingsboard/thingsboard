@@ -14,31 +14,14 @@
 /// limitations under the License.
 ///
 
-import {
-  AfterViewInit,
-  Component, ElementRef,
-  EventEmitter, forwardRef,
-  Input,
-  OnChanges,
-  OnInit,
-  Output,
-  SimpleChanges,
-  ViewChild
-} from '@angular/core';
-import { PageComponent } from '@shared/components/page.component';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, NgForm, Validators } from '@angular/forms';
-import { FcRuleNode, FcRuleEdge } from './rulechain-page.models';
-import { RuleNodeType, LinkLabel } from '@shared/models/rule-node.models';
-import { EntityType } from '@shared/models/entity-type.models';
-import { Observable, of, Subscription } from 'rxjs';
-import { RuleChainService } from '@core/http/rule-chain.service';
+import { Component, ElementRef, forwardRef, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { LinkLabel } from '@shared/models/rule-node.models';
+import { Observable, of } from 'rxjs';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { deepClone } from '@core/utils';
-import { EntityAlias } from '@shared/models/alias.models';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
-import { MatChipList, MatAutocomplete, MatChipInputEvent, MatAutocompleteSelectedEvent } from '@angular/material';
+import { MatAutocomplete, MatAutocompleteSelectedEvent, MatChipInputEvent, MatChipList } from '@angular/material';
 import { TranslateService } from '@ngx-translate/core';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import { map, mergeMap, share, startWith } from 'rxjs/operators';

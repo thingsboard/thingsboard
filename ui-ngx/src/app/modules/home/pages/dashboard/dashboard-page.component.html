@@ -17,6 +17,7 @@
 -->
 <div class="tb-dashboard-page mat-content" style="padding-top: 150px;"
      fxFlex tb-fullscreen [fullscreen]="widgetEditMode || iframeMode || forceFullscreen || isFullscreen">
+  <tb-hotkeys-cheatsheet #cheatSheetComponent></tb-hotkeys-cheatsheet>
   <section class="tb-dashboard-toolbar"
            [ngClass]="{ 'tb-dashboard-toolbar-opened': toolbarOpened,
                         'tb-dashboard-toolbar-closed': !toolbarOpened }">
@@ -146,6 +147,7 @@
               [mode]="isMobile ? 'over' : 'side'"
               [(opened)]="rightLayoutOpened">
             <tb-dashboard-layout style="height: 100%;"
+              [dashboardCheatSheet]="cheatSheetComponent"
               [layoutCtx]="layouts.right.layoutCtx"
               [dashboardCtx]="dashboardCtx"
               [isEdit]="isEdit"
@@ -159,6 +161,7 @@
                               [ngStyle]="{width: mainLayoutWidth(),
                               height: mainLayoutHeight()}">
             <tb-dashboard-layout
+              [dashboardCheatSheet]="cheatSheetComponent"
               [layoutCtx]="layouts.main.layoutCtx"
               [dashboardCtx]="dashboardCtx"
               [isEdit]="isEdit"

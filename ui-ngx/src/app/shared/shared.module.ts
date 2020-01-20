@@ -118,6 +118,8 @@ import { NodeScriptTestDialogComponent } from '@shared/components/dialog/node-sc
 import { MessageTypeAutocompleteComponent } from './components/message-type-autocomplete.component';
 import { JsonContentComponent } from './components/json-content.component';
 import { KeyValMapComponent } from './components/kv-map.component';
+import { TbCheatSheetComponent } from '@shared/components/cheatsheet.component';
+import { TbHotkeysDirective } from '@shared/components/hotkeys.directive';
 
 @NgModule({
   providers: [
@@ -149,11 +151,13 @@ import { KeyValMapComponent } from './components/kv-map.component';
     FullscreenDirective,
     CircularProgressDirective,
     MatChipDraggableDirective,
+    TbHotkeysDirective,
     TbAnchorComponent,
     HelpComponent,
     TbCheckboxComponent,
     TbSnackBarComponent,
     TbErrorComponent,
+    TbCheatSheetComponent,
     BreadcrumbComponent,
     UserMenuComponent,
     TimewindowComponent,
@@ -256,10 +260,12 @@ import { KeyValMapComponent } from './components/kv-map.component';
     FullscreenDirective,
     CircularProgressDirective,
     MatChipDraggableDirective,
+    TbHotkeysDirective,
     TbAnchorComponent,
     HelpComponent,
     TbCheckboxComponent,
     TbErrorComponent,
+    TbCheatSheetComponent,
     BreadcrumbComponent,
     UserMenuComponent,
     TimewindowComponent,

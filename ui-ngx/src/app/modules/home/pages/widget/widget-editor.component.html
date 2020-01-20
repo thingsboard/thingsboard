@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<hotkeys-cheatsheet></hotkeys-cheatsheet>
 <div fxFlex fxLayout="column">
-  <div fxFlex fxLayout="column" tb-fullscreen [fullscreen]="fullscreen">
+  <div fxFlex fxLayout="column" tb-fullscreen [fullscreen]="fullscreen" tb-hotkeys [hotkeys]="hotKeys" [cheatSheet]="cheatSheetComponent">
+    <tb-hotkeys-cheatsheet #cheatSheetComponent></tb-hotkeys-cheatsheet>
     <mat-toolbar class="mat-elevation-z1 tb-edit-toolbar mat-hue-3" fxLayoutGap="16px">
       <mat-form-field floatLabel="always" hideRequiredMarker class="tb-widget-title">
         <mat-label></mat-label>

@@ -15,8 +15,10 @@
     limitations under the License.
 
 -->
-<div class="mat-content" fxFlex tb-fullscreen [fullscreen]="isFullscreen"
+<div class="mat-content" fxFlex tb-fullscreen [fullscreen]="isFullscreen" tb-hotkeys [hotkeys]="hotKeys"
+     [cheatSheet]="cheatSheetComponent"
   fxLayout="column" class="tb-rulechain">
+  <tb-hotkeys-cheatsheet #cheatSheetComponent></tb-hotkeys-cheatsheet>
   <section class="tb-rulechain-container" fxFlex fxLayout="column">
     <div class="tb-rulechain-layout" fxFlex fxLayout="row">
       <section fxLayout="row"
@@ -80,6 +82,7 @@
                          [model]="ruleNodeTypesModel[ruleNodeType].model"
                          [selectedObjects]="ruleNodeTypesModel[ruleNodeType].selectedObjects"
                          [automaticResize]="false"
+                         fitModelSizeByDefault
                          [userCallbacks]="nodeLibCallbacks"
                          [nodeWidth]="170"
                          [nodeHeight]="50"
@@ -162,7 +165,38 @@
                   matTooltipPosition="above">
             <mat-icon>{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
           </button>
-          <div class="tb-absolute-fill tb-rulechain-graph">
+          <div class="tb-absolute-fill tb-rulechain-graph" (contextmenu)="openRuleChainContextMenu($event)">
+            <div #ruleChainMenuTrigger="matMenuTrigger" style="visibility: hidden; position: fixed"
+                 [style.left]="ruleChainMenuPosition.x"
+                 [style.top]="ruleChainMenuPosition.y"
+                 [matMenuTriggerFor]="ruleChainMenu">
+            </div>
+            <mat-menu #ruleChainMenu="matMenu" class="tb-rule-chain-context-menu"
+                      [overlapTrigger]="true">
+              <ng-template matMenuContent let-contextInfo="contextInfo">
+                <div class="tb-rule-chain-context-menu-container" (mouseleave)="onRuleChainContextMenuMouseLeave()">
+                  <div class="tb-context-menu-header {{contextInfo.headerClass}}">
+                    <mat-icon *ngIf="!contextInfo.iconUrl">{{contextInfo.icon}}</mat-icon>
+                    <img *ngIf="contextInfo.iconUrl" [src]="contextInfo.iconUrl"/>
+                    <div fxFlex>
+                      <div class="tb-context-menu-title">{{contextInfo.title}}</div>
+                      <div class="tb-context-menu-subtitle">{{contextInfo.subtitle}}</div>
+                    </div>
+                  </div>
+                  <div *ngFor="let menuItem of contextInfo.menuItems">
+                    <mat-divider *ngIf="menuItem.divider"></mat-divider>
+                    <button *ngIf="!menuItem.divider"
+                            mat-menu-item
+                            [disabled]="!menuItem.enabled"
+                            (click)="menuItem.action(contextMenuEvent)">
+                      <span *ngIf="menuItem.shortcut" class="tb-alt-text"> {{ menuItem.shortcut | keyboardShortcut }}</span>
+                      <mat-icon *ngIf="menuItem.icon">{{menuItem.icon}}</mat-icon>
+                      <span translate>{{menuItem.value}}</span>
+                    </button>
+                  </div>
+                </div>
+              </ng-template>
+            </mat-menu>
             <fc-canvas #ruleChainCanvas
                        id="tb-rulchain-canvas"
                        [model]="ruleChainModel"
@@ -170,6 +204,7 @@
                        [selectedObjects]="selectedObjects"
                        [edgeStyle]="flowchartConstants.curvedStyle"
                        [automaticResize]="true"
+                       fitModelSizeByDefault="false"
                        [nodeWidth]="170"
                        [nodeHeight]="50"
                        [dragAnimation]="flowchartConstants.dragAnimationRepaint"

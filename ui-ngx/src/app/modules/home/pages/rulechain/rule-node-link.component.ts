@@ -14,34 +14,12 @@
 /// limitations under the License.
 ///
 
-import {
-  AfterViewInit,
-  Component, ElementRef,
-  EventEmitter, forwardRef,
-  Input,
-  OnChanges,
-  OnInit,
-  Output,
-  SimpleChanges,
-  ViewChild
-} from '@angular/core';
-import { PageComponent } from '@shared/components/page.component';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
+import { Component, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, NgForm, Validators } from '@angular/forms';
-import { FcRuleNode, FcRuleEdge } from './rulechain-page.models';
-import { RuleNodeType, LinkLabel } from '@shared/models/rule-node.models';
-import { EntityType } from '@shared/models/entity-type.models';
-import { Observable, of, Subscription } from 'rxjs';
-import { RuleChainService } from '@core/http/rule-chain.service';
+import { FcRuleEdge, LinkLabel } from '@shared/models/rule-node.models';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { deepClone } from '@core/utils';
-import { EntityAlias } from '@shared/models/alias.models';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
-import { MatChipList, MatAutocomplete, MatChipInputEvent, MatAutocompleteSelectedEvent } from '@angular/material';
 import { TranslateService } from '@ngx-translate/core';
-import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
-import { map, mergeMap, share } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-rule-node-link',

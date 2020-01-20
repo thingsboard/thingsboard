@@ -24,6 +24,8 @@ import * as equal from 'deep-equal';
 import { UtilsService } from '@core/services/utils.service';
 import { Observable, of, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { FcRuleEdge, FcRuleNode, ruleNodeTypeDescriptors } from '@shared/models/rule-node.models';
+import { RuleChainService } from '@core/http/rule-chain.service';
 
 const WIDGET_ITEM = 'widget_item';
 const WIDGET_REFERENCE = 'widget_reference';
@@ -45,6 +47,21 @@ export interface WidgetReference {
   originalColumns: number;
 }
 
+export interface RuleNodeConnection {
+  isInputSource: boolean;
+  fromIndex: number;
+  toIndex: number;
+  label: string;
+  labels: string[];
+}
+
+export interface RuleNodesReference {
+  nodes: FcRuleNode[];
+  connections: RuleNodeConnection[];
+  originX?: number;
+  originY?: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -54,6 +71,7 @@ export class ItemBufferService {
   private delimiter = '.';
 
   constructor(private dashboardUtils: DashboardUtilsService,
+              private ruleChainService: RuleChainService,
               private utils: UtilsService) {}
 
   public prepareWidgetItem(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, widget: Widget): WidgetItem {
@@ -99,12 +117,12 @@ export class ItemBufferService {
 
   public copyWidget(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, widget: Widget): void {
     const widgetItem = this.prepareWidgetItem(dashboard, sourceState, sourceLayout, widget);
-    this.storeSet(WIDGET_ITEM, JSON.stringify(widgetItem));
+    this.storeSet(WIDGET_ITEM, widgetItem);
   }
 
   public copyWidgetReference(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, widget: Widget): void {
     const widgetReference = this.prepareWidgetReference(dashboard, sourceState, sourceLayout, widget);
-    this.storeSet(WIDGET_REFERENCE, JSON.stringify(widgetReference));
+    this.storeSet(WIDGET_REFERENCE, widgetReference);
   }
 
   public hasWidget(): boolean {
@@ -112,9 +130,8 @@ export class ItemBufferService {
   }
 
   public canPasteWidgetReference(dashboard: Dashboard, state: string, layout: DashboardLayoutId): boolean {
-    const widgetReferenceJson = this.storeGet(WIDGET_REFERENCE);
-    if (widgetReferenceJson) {
-      const widgetReference: WidgetReference = JSON.parse(widgetReferenceJson);
+    const widgetReference: WidgetReference = this.storeGet(WIDGET_REFERENCE);
+    if (widgetReference) {
       if (widgetReference.dashboardId === dashboard.id.id) {
         if ((widgetReference.sourceState !== state || widgetReference.sourceLayout !== layout)
           && dashboard.configuration.widgets[widgetReference.widgetId]) {
@@ -128,9 +145,8 @@ export class ItemBufferService {
   public pasteWidget(targetDashboard: Dashboard, targetState: string,
                      targetLayout: DashboardLayoutId, position: WidgetPosition,
                      onAliasesUpdateFunction: () => void): Observable<Widget> {
-    const widgetItemJson = this.storeGet(WIDGET_ITEM);
-    if (widgetItemJson) {
-      const widgetItem: WidgetItem = JSON.parse(widgetItemJson);
+    const widgetItem: WidgetItem = this.storeGet(WIDGET_ITEM);
+    if (widgetItem) {
       const widget = widgetItem.widget;
       const aliasesInfo = widgetItem.aliasesInfo;
       const originalColumns = widgetItem.originalColumns;
@@ -155,9 +171,8 @@ export class ItemBufferService {
 
   public pasteWidgetReference(targetDashboard: Dashboard, targetState: string,
                               targetLayout: DashboardLayoutId, position: WidgetPosition): Observable<Widget> {
-    const widgetReferenceJson = this.storeGet(WIDGET_REFERENCE);
-    if (widgetReferenceJson) {
-      const widgetReference: WidgetReference = JSON.parse(widgetReferenceJson);
+    const widgetReference: WidgetReference = this.storeGet(WIDGET_REFERENCE);
+    if (widgetReference) {
       const widget = targetDashboard.configuration.widgets[widgetReference.widgetId];
       if (widget) {
         const originalColumns = widgetReference.originalColumns;
@@ -214,6 +229,89 @@ export class ItemBufferService {
       onAliasesUpdateFunction();
     }
     return of(theDashboard);
+  }
+
+  public copyRuleNodes(nodes: FcRuleNode[], connections: RuleNodeConnection[]) {
+    const ruleNodes: RuleNodesReference = {
+      nodes: [],
+      connections: []
+    };
+    let top = -1, left = -1, bottom = -1, right = -1;
+    for (let i = 0; i < nodes.length; i++) {
+      const origNode = nodes[i];
+      const node: FcRuleNode = {
+        id: '',
+        connectors: [],
+        additionalInfo: origNode.additionalInfo,
+        configuration: origNode.configuration,
+        debugMode: origNode.debugMode,
+        x: origNode.x,
+        y: origNode.y,
+        name: origNode.name,
+        componentClazz: origNode.component.clazz,
+      }
+      if (origNode.targetRuleChainId) {
+        node.targetRuleChainId = origNode.targetRuleChainId;
+      }
+      if (origNode.error) {
+        node.error = origNode.error;
+      }
+      ruleNodes.nodes.push(node);
+      if (i==0) {
+        top = node.y;
+        left = node.x;
+        bottom = node.y + 50;
+        right = node.x + 170;
+      } else {
+        top = Math.min(top, node.y);
+        left = Math.min(left, node.x);
+        bottom = Math.max(bottom, node.y + 50);
+        right = Math.max(right, node.x + 170);
+      }
+    }
+    ruleNodes.originX = left + (right-left)/2;
+    ruleNodes.originY = top + (bottom-top)/2;
+    connections.forEach(connection => {
+      ruleNodes.connections.push(connection);
+    });
+    this.storeSet(RULE_NODES, ruleNodes);
+  }
+
+  public hasRuleNodes(): boolean {
+    return this.storeHas(RULE_NODES);
+  }
+
+  public pasteRuleNodes(x: number, y: number): RuleNodesReference {
+    const ruleNodes: RuleNodesReference = this.storeGet(RULE_NODES);
+    if (ruleNodes) {
+      const deltaX = x - ruleNodes.originX;
+      const deltaY = y - ruleNodes.originY;
+      for (const node of ruleNodes.nodes) {
+        const component = this.ruleChainService.getRuleNodeComponentByClazz(node.componentClazz);
+        if (component) {
+          let icon = ruleNodeTypeDescriptors.get(component.type).icon;
+          let iconUrl: string = null;
+          if (component.configurationDescriptor.nodeDefinition.icon) {
+            icon = component.configurationDescriptor.nodeDefinition.icon;
+          }
+          if (component.configurationDescriptor.nodeDefinition.iconUrl) {
+            iconUrl = component.configurationDescriptor.nodeDefinition.iconUrl;
+          }
+          delete node.componentClazz;
+          node.component = component;
+          node.nodeClass = ruleNodeTypeDescriptors.get(component.type).nodeClass;
+          node.icon = icon;
+          node.iconUrl = iconUrl;
+          node.connectors = [];
+          node.x = Math.round(node.x + deltaX);
+          node.y = Math.round(node.y + deltaY);
+        } else {
+          return null;
+        }
+      }
+      return ruleNodes;
+    }
+    return null;
   }
 
   private getOriginalColumns(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId): number {

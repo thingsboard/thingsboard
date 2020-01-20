@@ -18,9 +18,11 @@ import {
   AfterViewInit,
   Component,
   ElementRef,
-  HostBinding, Inject,
+  HostBinding,
+  Inject,
   OnInit,
-  QueryList, SkipSelf,
+  QueryList,
+  SkipSelf,
   ViewChild,
   ViewChildren,
   ViewEncapsulation
@@ -31,7 +33,7 @@ import { AppState } from '@core/core.state';
 import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
 import { HasDirtyFlag } from '@core/guards/confirm-on-exit.guard';
 import { TranslateService } from '@ngx-translate/core';
-import { MatDialog, MatExpansionPanel, ErrorStateMatcher, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material';
+import { ErrorStateMatcher, MAT_DIALOG_DATA, MatDialog, MatDialogRef, MatExpansionPanel } from '@angular/material';
 import { DialogService } from '@core/services/dialog.service';
 import { AuthService } from '@core/auth/auth.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -41,8 +43,11 @@ import {
   RuleChain,
   ruleChainNodeComponent
 } from '@shared/models/rule-chain.models';
-import { FlowchartConstants, NgxFlowchartComponent, UserCallbacks } from 'ngx-flowchart/dist/ngx-flowchart';
+import { FcItemInfo, FlowchartConstants, NgxFlowchartComponent, UserCallbacks } from 'ngx-flowchart/dist/ngx-flowchart';
 import {
+  FcRuleEdge,
+  FcRuleNode,
+  FcRuleNodeType,
   getRuleNodeHelpLink,
   LinkLabel,
   RuleNodeComponentDescriptor,
@@ -50,24 +55,19 @@ import {
   ruleNodeTypeDescriptors,
   ruleNodeTypesLibrary
 } from '@shared/models/rule-node.models';
-import { FcRuleEdge, FcRuleNode, FcRuleNodeModel, FcRuleNodeType, FcRuleNodeTypeModel } from './rulechain-page.models';
+import { FcRuleNodeModel, FcRuleNodeTypeModel, RuleChainMenuContextInfo } from './rulechain-page.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
-import { fromEvent, never, of, throwError, NEVER, Observable } from 'rxjs';
-import { debounceTime, distinctUntilChanged, map, tap, mergeMap } from 'rxjs/operators';
+import { fromEvent, NEVER, Observable, of } from 'rxjs';
+import { debounceTime, distinctUntilChanged, mergeMap, tap } from 'rxjs/operators';
 import { ISearchableComponent } from '../../models/searchable-component.models';
-import { deepClone, isDefined, isString } from '@core/utils';
+import { deepClone } from '@core/utils';
 import { RuleNodeDetailsComponent } from '@home/pages/rulechain/rule-node-details.component';
 import { RuleNodeLinkComponent } from './rule-node-link.component';
-import Timeout = NodeJS.Timeout;
-import { Dashboard } from '@shared/models/dashboard.models';
-import { IAliasController } from '@core/api/widget-api.models';
-import { Widget, widgetTypesData } from '@shared/models/widget.models';
-import { WidgetConfigComponentData, WidgetInfo } from '@home/models/widget-component.models';
 import { DialogComponent } from '@shared/components/dialog.component';
-import { UtilsService } from '@core/services/utils.service';
-import { EntityService } from '@core/http/entity.service';
-import { AddWidgetDialogComponent, AddWidgetDialogData } from '@home/pages/dashboard/add-widget-dialog.component';
-import { RuleNodeConfigComponent } from '@home/pages/rulechain/rule-node-config.component';
+import { MatMenuTrigger } from '@angular/material/menu';
+import { ItemBufferService, RuleNodeConnection } from '@core/services/item-buffer.service';
+import Timeout = NodeJS.Timeout;
+import { Hotkey, HotkeysService } from 'angular2-hotkeys';
 
 @Component({
   selector: 'tb-rulechain-page',
@@ -91,6 +91,12 @@ export class RuleChainPageComponent extends PageComponent
 
   @ViewChildren('ruleNodeTypeExpansionPanels',
     {read: MatExpansionPanel}) expansionPanels: QueryList<MatExpansionPanel>;
+
+  @ViewChild('ruleChainMenuTrigger', {static: true}) ruleChainMenuTrigger: MatMenuTrigger;
+
+  ruleChainMenuPosition = { x: '0px', y: '0px' };
+
+  contextMenuEvent: MouseEvent;
 
   ruleNodeTypeDescriptorsMap = ruleNodeTypeDescriptors;
   ruleNodeTypesLibraryArray = ruleNodeTypesLibrary;
@@ -116,6 +122,9 @@ export class RuleChainPageComponent extends PageComponent
   isEditingRuleNodeLink = false;
   editingRuleNodeLinkIndex = -1;
 
+  hotKeys: Hotkey[] = [];
+
+  enableHotKeys = true;
   isLibraryOpen = true;
 
   ruleNodeSearch = '';
@@ -173,7 +182,11 @@ export class RuleChainPageComponent extends PageComponent
         } else {
           const labels = this.ruleChainService.getRuleNodeSupportedLinks(sourceNode.component);
           const allowCustomLabels = this.ruleChainService.ruleNodeAllowCustomLinks(sourceNode.component);
+          this.enableHotKeys = false;
           return this.addRuleNodeLink(edge, labels, allowCustomLabels).pipe(
+            tap(() => {
+                this.enableHotKeys = true;
+            }),
             mergeMap((res) => {
               if (res) {
                 return of(res);
@@ -216,6 +229,7 @@ export class RuleChainPageComponent extends PageComponent
               private ruleChainService: RuleChainService,
               private authService: AuthService,
               private translate: TranslateService,
+              private itembuffer: ItemBufferService,
               public dialog: MatDialog,
               public dialogService: DialogService,
               public fb: FormBuilder) {
@@ -236,6 +250,7 @@ export class RuleChainPageComponent extends PageComponent
         })
       )
       .subscribe();
+    this.ruleChainCanvas.adjustCanvasSize(true);
   }
 
   onSearchTextUpdated(searchText: string) {
@@ -244,6 +259,7 @@ export class RuleChainPageComponent extends PageComponent
   }
 
   private init() {
+    this.initHotKeys();
     this.ruleChain = this.route.snapshot.data.ruleChain;
     if (this.route.snapshot.data.import && !this.ruleChain) {
       this.router.navigateByUrl('ruleChains');
@@ -266,6 +282,89 @@ export class RuleChainPageComponent extends PageComponent
     }
     this.updateRuleChainLibrary();
     this.createRuleChainModel();
+  }
+
+  private initHotKeys(): void {
+    this.hotKeys.push(
+      new Hotkey('ctrl+a', (event: KeyboardEvent) => {
+          if (this.enableHotKeys) {
+            event.preventDefault();
+            this.ruleChainCanvas.modelService.selectAll();
+            return false;
+          }
+          return true;
+        }, ['INPUT', 'SELECT', 'TEXTAREA'],
+        this.translate.instant('rulenode.select-all-objects'))
+    );
+    this.hotKeys.push(
+      new Hotkey('ctrl+c', (event: KeyboardEvent) => {
+          if (this.enableHotKeys) {
+            event.preventDefault();
+            this.copyRuleNodes();
+            return false;
+          }
+          return true;
+        }, ['INPUT', 'SELECT', 'TEXTAREA'],
+        this.translate.instant('rulenode.copy-selected'))
+    );
+    this.hotKeys.push(
+      new Hotkey('ctrl+v', (event: KeyboardEvent) => {
+          if (this.enableHotKeys) {
+            event.preventDefault();
+            if (this.itembuffer.hasRuleNodes()) {
+              this.pasteRuleNodes();
+            }
+            return false;
+          }
+          return true;
+        }, ['INPUT', 'SELECT', 'TEXTAREA'],
+        this.translate.instant('action.paste'))
+    );
+    this.hotKeys.push(
+      new Hotkey('esc', (event: KeyboardEvent) => {
+          if (this.enableHotKeys) {
+            event.preventDefault();
+            event.stopPropagation();
+            this.ruleChainCanvas.modelService.deselectAll();
+            return false;
+          }
+          return true;
+        }, ['INPUT', 'SELECT', 'TEXTAREA'],
+        this.translate.instant('rulenode.deselect-all-objects'))
+    );
+    this.hotKeys.push(
+      new Hotkey('ctrl+s', (event: KeyboardEvent) => {
+          if (this.enableHotKeys) {
+            event.preventDefault();
+            this.saveRuleChain();
+            return false;
+          }
+          return true;
+        }, ['INPUT', 'SELECT', 'TEXTAREA'],
+        this.translate.instant('action.apply'))
+    );
+    this.hotKeys.push(
+      new Hotkey('ctrl+z', (event: KeyboardEvent) => {
+          if (this.enableHotKeys) {
+            event.preventDefault();
+            this.revertRuleChain();
+            return false;
+          }
+          return true;
+        }, ['INPUT', 'SELECT', 'TEXTAREA'],
+        this.translate.instant('action.decline-changes'))
+    );
+    this.hotKeys.push(
+      new Hotkey('del', (event: KeyboardEvent) => {
+          if (this.enableHotKeys) {
+            event.preventDefault();
+            this.ruleChainCanvas.modelService.deleteSelected();
+            return false;
+          }
+          return true;
+        }, ['INPUT', 'SELECT', 'TEXTAREA'],
+        this.translate.instant('rulenode.delete-selected-objects'))
+    );
   }
 
   updateRuleChainLibrary() {
@@ -510,9 +609,227 @@ export class RuleChainPageComponent extends PageComponent
         }
       });
     }
+    if (this.ruleChainCanvas) {
+      this.ruleChainCanvas.adjustCanvasSize(true);
+    }
     this.isDirtyValue = false;
     this.updateRuleNodesHighlight();
     this.validate();
+  }
+
+  openRuleChainContextMenu($event: MouseEvent) {
+    if (this.ruleChainCanvas.modelService && !$event.ctrlKey && !$event.metaKey) {
+      const x = $event.clientX;
+      const y = $event.clientY;
+      const item = this.ruleChainCanvas.modelService.getItemInfoAtPoint(x, y);
+      const contextInfo = this.prepareContextMenu(item);
+      if (contextInfo.menuItems && contextInfo.menuItems.length > 0) {
+        $event.preventDefault();
+        $event.stopPropagation();
+        this.contextMenuEvent = $event;
+        this.ruleChainMenuPosition.x = x + 'px';
+        this.ruleChainMenuPosition.y = y + 'px';
+        this.ruleChainMenuTrigger.menuData = { contextInfo };
+        this.ruleChainMenuTrigger.openMenu();
+      }
+    }
+  }
+
+  onRuleChainContextMenuMouseLeave() {
+    this.ruleChainMenuTrigger.closeMenu();
+  }
+
+  private prepareContextMenu(item: FcItemInfo): RuleChainMenuContextInfo {
+    if (this.objectsSelected() || (!item.node && !item.edge)) {
+      return this.prepareRuleChainContextMenu();
+    } else if (item.node) {
+      return this.prepareRuleNodeContextMenu(item.node);
+    } else if (item.edge) {
+      return this.prepareEdgeContextMenu(item.edge);
+    }
+  }
+
+  private prepareRuleChainContextMenu(): RuleChainMenuContextInfo {
+    const contextInfo: RuleChainMenuContextInfo = {
+      headerClass: 'tb-rulechain-header',
+      icon: 'settings_ethernet',
+      title: this.ruleChain.name,
+      subtitle: this.translate.instant('rulechain.rulechain'),
+      menuItems: []
+    };
+    if (this.ruleChainCanvas.modelService.nodes.getSelectedNodes().length) {
+      contextInfo.menuItems.push(
+        {
+          action: () => {
+            this.copyRuleNodes();
+          },
+          enabled: true,
+          value: 'rulenode.copy-selected',
+          icon: 'content_copy',
+          shortcut: 'M-C'
+        }
+      );
+    }
+    contextInfo.menuItems.push(
+      {
+        action: ($event) => {
+          this.pasteRuleNodes($event);
+        },
+        enabled: this.itembuffer.hasRuleNodes(),
+        value: 'action.paste',
+        icon: 'content_paste',
+        shortcut: 'M-V'
+      }
+    );
+    contextInfo.menuItems.push(
+      {
+        divider: true
+      }
+    );
+    if (this.objectsSelected()) {
+      contextInfo.menuItems.push(
+        {
+          action: () => {
+            this.ruleChainCanvas.modelService.deselectAll();
+          },
+          enabled: true,
+          value: 'rulenode.deselect-all',
+          icon: 'tab_unselected',
+          shortcut: 'Esc'
+        }
+      );
+      contextInfo.menuItems.push(
+        {
+          action: () => {
+            this.ruleChainCanvas.modelService.deleteSelected();
+          },
+          enabled: true,
+          value: 'rulenode.delete-selected',
+          icon: 'clear',
+          shortcut: 'Del'
+        }
+      );
+    } else {
+      contextInfo.menuItems.push(
+        {
+          action: () => {
+            this.ruleChainCanvas.modelService.selectAll();
+          },
+          enabled: true,
+          value: 'rulenode.select-all',
+          icon: 'select_all',
+          shortcut: 'M-A'
+        }
+      );
+    }
+    contextInfo.menuItems.push(
+      {
+        divider: true
+      }
+    );
+    contextInfo.menuItems.push(
+      {
+        action: () => {
+          this.saveRuleChain();
+        },
+        enabled: !(this.isInvalid || (!this.isDirty && !this.isImport)),
+        value: 'action.apply-changes',
+        icon: 'done',
+        shortcut: 'M-S'
+      }
+    );
+    contextInfo.menuItems.push(
+      {
+        action: () => {
+          this.revertRuleChain();
+        },
+        enabled: this.isDirty,
+        value: 'action.decline-changes',
+        icon: 'close',
+        shortcut: 'M-Z'
+      }
+    );
+    return contextInfo;
+  }
+
+  private prepareRuleNodeContextMenu(node: FcRuleNode): RuleChainMenuContextInfo {
+    const contextInfo: RuleChainMenuContextInfo = {
+      headerClass: node.nodeClass,
+      icon: node.icon,
+      iconUrl: node.iconUrl,
+      title: node.name,
+      subtitle: node.component.name,
+      menuItems: []
+    };
+    if (!node.readonly) {
+      contextInfo.menuItems.push(
+        {
+          action: () => {
+            this.openNodeDetails(node);
+          },
+          enabled: true,
+          value: 'rulenode.details',
+          icon: 'menu'
+        }
+      );
+      contextInfo.menuItems.push(
+        {
+          action: () => {
+            this.copyNode(node);
+          },
+          enabled: true,
+          value: 'action.copy',
+          icon: 'content_copy'
+        }
+      );
+      contextInfo.menuItems.push(
+        {
+          action: () => {
+            this.ruleChainCanvas.modelService.nodes.delete(node);
+          },
+          enabled: true,
+          value: 'action.delete',
+          icon: 'clear',
+          shortcut: 'M-X'
+        }
+      );
+    }
+    return contextInfo;
+  }
+
+  private prepareEdgeContextMenu(edge: FcRuleEdge): RuleChainMenuContextInfo {
+    const contextInfo: RuleChainMenuContextInfo = {
+      headerClass: 'tb-link-header',
+      icon: 'trending_flat',
+      title: edge.label,
+      subtitle: this.translate.instant('rulenode.link'),
+      menuItems: []
+    };
+    const sourceNode: FcRuleNode = this.ruleChainCanvas.modelService.nodes.getNodeByConnectorId(edge.source);
+    if (sourceNode.component.type != RuleNodeType.INPUT) {
+      contextInfo.menuItems.push(
+        {
+          action: () => {
+            this.openLinkDetails(edge);
+          },
+          enabled: true,
+          value: 'rulenode.details',
+          icon: 'menu'
+        }
+      );
+    }
+    contextInfo.menuItems.push(
+      {
+        action: () => {
+          this.ruleChainCanvas.modelService.edges.delete(edge);
+        },
+        enabled: true,
+        value: 'action.delete',
+        icon: 'clear',
+        shortcut: 'M-X'
+      }
+    );
+    return contextInfo;
   }
 
   onModelChanged() {
@@ -531,6 +848,8 @@ export class RuleChainPageComponent extends PageComponent
 
   openNodeDetails(node: FcRuleNode) {
     if (node.component.type !== RuleNodeType.INPUT) {
+      this.enableHotKeys = false;
+      this.updateErrorTooltips(true);
       this.isEditingRuleNodeLink = false;
       this.editingRuleNodeLink = null;
       this.isEditingRuleNode = true;
@@ -545,6 +864,8 @@ export class RuleChainPageComponent extends PageComponent
   openLinkDetails(edge: FcRuleEdge) {
     const sourceNode: FcRuleNode = this.ruleChainCanvas.modelService.nodes.getNodeByConnectorId(edge.source) as FcRuleNode;
     if (sourceNode.component.type !== RuleNodeType.INPUT) {
+      this.enableHotKeys = false;
+      this.updateErrorTooltips(true);
       this.isEditingRuleNode = false;
       this.editingRuleNode = null;
       this.editingRuleNodeLinkLabels = this.ruleChainService.getRuleNodeSupportedLinks(sourceNode.component);
@@ -558,9 +879,121 @@ export class RuleChainPageComponent extends PageComponent
     }
   }
 
+  private copyNode(node: FcRuleNode) {
+    this.itembuffer.copyRuleNodes([node], []);
+  }
+
+  private copyRuleNodes() {
+    const nodes: FcRuleNode[] = this.ruleChainCanvas.modelService.nodes.getSelectedNodes();
+    const edges: FcRuleEdge[] = this.ruleChainCanvas.modelService.edges.getSelectedEdges();
+    const connections: RuleNodeConnection[] = [];
+    edges.forEach((edge) => {
+      const sourceNode = this.ruleChainCanvas.modelService.nodes.getNodeByConnectorId(edge.source);
+      const destNode = this.ruleChainCanvas.modelService.nodes.getNodeByConnectorId(edge.destination);
+      const isInputSource = sourceNode.component.type == RuleNodeType.INPUT;
+      const fromIndex = nodes.indexOf(sourceNode);
+      const toIndex = nodes.indexOf(destNode);
+      if ( (isInputSource || fromIndex > -1) && toIndex > -1 ) {
+        const connection: RuleNodeConnection = {
+          isInputSource: isInputSource,
+          fromIndex: fromIndex,
+          toIndex: toIndex,
+          label: edge.label,
+          labels: edge.labels
+        };
+        connections.push(connection);
+      }
+    });
+    this.itembuffer.copyRuleNodes(nodes, connections);
+  }
+
+  private pasteRuleNodes(event?: MouseEvent) {
+    const canvas = $(this.ruleChainCanvas.modelService.canvasHtmlElement);
+    let x: number;
+    let y: number;
+    if (event) {
+      const offset = canvas.offset();
+      x = Math.round(event.clientX - offset.left);
+      y = Math.round(event.clientY - offset.top);
+    } else {
+      const scrollParent = canvas.parent();
+      const scrollTop = scrollParent.scrollTop();
+      const scrollLeft = scrollParent.scrollLeft();
+      x = scrollLeft + scrollParent.width()/2;
+      y = scrollTop + scrollParent.height()/2;
+    }
+    const ruleNodes = this.itembuffer.pasteRuleNodes(x, y);
+    if (ruleNodes) {
+      this.ruleChainCanvas.modelService.deselectAll();
+      const nodes: FcRuleNode[] = [];
+      ruleNodes.nodes.forEach((node) => {
+        node.id = 'rule-chain-node-' + this.nextNodeID++;
+        const component = node.component;
+        if (component.configurationDescriptor.nodeDefinition.inEnabled) {
+          node.connectors.push(
+            {
+              type: FlowchartConstants.leftConnectorType,
+              id: (this.nextConnectorID++) + ''
+            }
+          );
+        }
+        if (component.configurationDescriptor.nodeDefinition.outEnabled) {
+          node.connectors.push(
+            {
+              type: FlowchartConstants.rightConnectorType,
+              id: (this.nextConnectorID++) + ''
+            }
+          );
+        }
+        nodes.push(node);
+        this.ruleChainModel.nodes.push(node);
+        this.ruleChainCanvas.modelService.nodes.select(node);
+      });
+      ruleNodes.connections.forEach((connection) => {
+        const sourceNode = nodes[connection.fromIndex];
+        const destNode = nodes[connection.toIndex];
+        if ( (connection.isInputSource || sourceNode) &&  destNode ) {
+          let source: string;
+          let destination: string;
+          if (connection.isInputSource) {
+            source = this.inputConnectorId + '';
+            const found = this.ruleChainModel.edges.find(theEdge => theEdge.source === (this.inputConnectorId + ''));
+            if (found) {
+              this.ruleChainCanvas.modelService.edges.delete(found);
+            }
+          } else {
+            const sourceConnectors = this.ruleChainCanvas.modelService.nodes.getConnectorsByType(sourceNode, FlowchartConstants.rightConnectorType);
+            if (sourceConnectors && sourceConnectors.length) {
+              source = sourceConnectors[0].id;
+            }
+          }
+          const destConnectors = this.ruleChainCanvas.modelService.nodes.getConnectorsByType(destNode, FlowchartConstants.leftConnectorType);
+          if (destConnectors && destConnectors.length) {
+            destination = destConnectors[0].id;
+          }
+          if (source && destination) {
+            const edge: FcRuleEdge = {
+              source: source,
+              destination: destination,
+              label: connection.label,
+              labels: connection.labels
+            };
+            this.ruleChainModel.edges.push(edge);
+            this.ruleChainCanvas.modelService.edges.select(edge);
+          }
+        }
+      });
+      this.updateRuleNodesHighlight();
+      this.validate();
+      this.onModelChanged();
+    }
+  }
+
   onDetailsDrawerClosed() {
     this.onEditRuleNodeClosed();
     this.onEditRuleNodeLinkClosed();
+    this.enableHotKeys = true;
+    this.updateErrorTooltips(false);
   }
 
   onEditRuleNodeClosed() {
@@ -739,6 +1172,7 @@ export class RuleChainPageComponent extends PageComponent
   addRuleNode(ruleNode: FcRuleNode) {
     ruleNode.configuration = deepClone(ruleNode.component.configurationDescriptor.nodeDefinition.defaultConfiguration);
     const ruleChainId = this.ruleChain.id ? this.ruleChain.id.id : null;
+    this.enableHotKeys = false;
     this.dialog.open<AddRuleNodeDialogComponent, AddRuleNodeDialogData,
       FcRuleNode>(AddRuleNodeDialogComponent, {
       disableClose: true,
@@ -772,6 +1206,7 @@ export class RuleChainPageComponent extends PageComponent
           this.onModelChanged();
           this.updateRuleNodesHighlight();
         }
+        this.enableHotKeys = true;
       }
     );
   }
@@ -832,6 +1267,17 @@ export class RuleChainPageComponent extends PageComponent
         const tooltip = this.errorTooltips[node.id];
         tooltip.destroy();
         delete this.errorTooltips[node.id];
+      }
+    }
+  }
+
+  private updateErrorTooltips(hide: boolean) {
+    for (const nodeId of Object.keys(this.errorTooltips)) {
+      const tooltip = this.errorTooltips[nodeId];
+      if (hide) {
+        tooltip.close();
+      } else {
+        tooltip.open();
       }
     }
   }

@@ -19,12 +19,10 @@ import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { FormBuilder, FormGroup, NgForm, Validators } from '@angular/forms';
-import { FcRuleNode } from './rulechain-page.models';
-import { RuleNodeType } from '@shared/models/rule-node.models';
+import { FcRuleNode, RuleNodeType } from '@shared/models/rule-node.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { Subscription } from 'rxjs';
 import { RuleChainService } from '@core/http/rule-chain.service';
-import { JsonObjectEditComponent } from '@shared/components/json-object-edit.component';
 import { RuleNodeConfigComponent } from './rule-node-config.component';
 
 @Component({

@@ -139,6 +139,8 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
 
   saveWidgetTimeout: Timeout;
 
+  hotKeys: Hotkey[] = [];
+
   private rxSubscriptions = new Array<Subscription>();
 
   constructor(protected store: Store<AppState>,
@@ -146,7 +148,6 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
               private route: ActivatedRoute,
               private router: Router,
               private widgetService: WidgetService,
-              private hotkeysService: HotkeysService,
               private translate: TranslateService,
               private raf: RafService,
               private dialog: MatDialog) {
@@ -159,6 +160,8 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
         this.init(data);
       }
     ));
+
+    this.initHotKeys();
   }
 
   private init(data: any) {
@@ -181,7 +184,6 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
   }
 
   ngOnInit(): void {
-    this.initHotKeys();
     this.initSplitLayout();
     this.initAceEditors();
     this.iframe = $(this.widgetIFrameElmRef.nativeElement);
@@ -203,7 +205,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
   }
 
   private initHotKeys(): void {
-    this.hotkeysService.add(
+    this.hotKeys.push(
       new Hotkey('ctrl+q', (event: KeyboardEvent) => {
         if (!getCurrentIsLoading(this.store) && !this.undoDisabled()) {
           event.preventDefault();
@@ -213,7 +215,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
       }, ['INPUT', 'SELECT', 'TEXTAREA'],
         this.translate.instant('widget.undo'))
     );
-    this.hotkeysService.add(
+    this.hotKeys.push(
       new Hotkey('ctrl+s', (event: KeyboardEvent) => {
           if (!getCurrentIsLoading(this.store) && !this.saveDisabled()) {
             event.preventDefault();
@@ -223,7 +225,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
         }, ['INPUT', 'SELECT', 'TEXTAREA'],
         this.translate.instant('widget.save'))
     );
-    this.hotkeysService.add(
+    this.hotKeys.push(
       new Hotkey('shift+ctrl+s', (event: KeyboardEvent) => {
           if (!getCurrentIsLoading(this.store) && !this.saveAsDisabled()) {
             event.preventDefault();
@@ -233,7 +235,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
         }, ['INPUT', 'SELECT', 'TEXTAREA'],
         this.translate.instant('widget.saveAs'))
     );
-    this.hotkeysService.add(
+    this.hotKeys.push(
       new Hotkey('shift+ctrl+f', (event: KeyboardEvent) => {
           event.preventDefault();
           this.fullscreen = !this.fullscreen;
@@ -241,7 +243,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
         }, ['INPUT', 'SELECT', 'TEXTAREA'],
         this.translate.instant('widget.toggle-fullscreen'))
     );
-    this.hotkeysService.add(
+    this.hotKeys.push(
       new Hotkey('ctrl+enter', (event: KeyboardEvent) => {
           event.preventDefault();
           this.applyWidgetScript();

@@ -14,18 +14,14 @@
 /// limitations under the License.
 ///
 
-import {BaseData} from '@shared/models/base-data';
-import {AssetId} from '@shared/models/id/asset-id';
-import {TenantId} from '@shared/models/id/tenant-id';
-import {CustomerId} from '@shared/models/id/customer-id';
-import {RuleChainId} from '@shared/models/id/rule-chain-id';
-import {RuleNodeId} from '@shared/models/id/rule-node-id';
-import { ComponentDescriptor, ComponentType } from '@shared/models/component-descriptor.models';
-import { EntityType, EntityTypeResource } from '@shared/models/entity-type.models';
+import { BaseData } from '@shared/models/base-data';
+import { RuleChainId } from '@shared/models/id/rule-chain-id';
+import { RuleNodeId } from '@shared/models/id/rule-node-id';
+import { ComponentDescriptor } from '@shared/models/component-descriptor.models';
+import { FcEdge, FcNode } from 'ngx-flowchart/dist/ngx-flowchart';
 import { Observable } from 'rxjs';
 import { PageComponent } from '@shared/components/page.component';
-import { AfterViewInit, ComponentFactory, EventEmitter, Inject, OnDestroy, OnInit } from '@angular/core';
-import { RafService } from '@core/services/raf.service';
+import { AfterViewInit, EventEmitter, Inject, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { AbstractControl, FormGroup } from '@angular/forms';
@@ -38,7 +34,6 @@ export enum MsgDataType {
 
 export interface RuleNodeConfiguration {
   [key: string]: any;
-  // TODO:
 }
 
 export interface RuleNode extends BaseData<RuleNodeId> {
@@ -305,6 +300,28 @@ export const ruleNodeTypeDescriptors = new Map<RuleNodeType, RuleNodeTypeDescrip
 export interface RuleNodeComponentDescriptor extends ComponentDescriptor {
   type: RuleNodeType;
   configurationDescriptor?: RuleNodeConfigurationDescriptor;
+}
+
+export interface FcRuleNodeType extends FcNode {
+  component?: RuleNodeComponentDescriptor;
+  nodeClass?: string;
+  icon?: string;
+  iconUrl?: string;
+}
+
+export interface FcRuleNode extends FcRuleNodeType {
+  ruleNodeId?: RuleNodeId;
+  additionalInfo?: any;
+  configuration?: RuleNodeConfiguration;
+  debugMode?: boolean;
+  targetRuleChainId?: string;
+  error?: string;
+  highlighted?: boolean;
+  componentClazz?: string;
+}
+
+export interface FcRuleEdge extends FcEdge {
+  labels?: string[];
 }
 
 export interface TestScriptInputParams {

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@import './rule-node-colors';
+
 :host {
 
   .fc-node-overlay {
@@ -63,33 +65,7 @@
     border: solid 1px #777;
     border-radius: 5px;
 
-    &.tb-filter-type {
-      background-color: #f1e861;
-    }
-
-    &.tb-enrichment-type {
-      background-color: #cdf14e;
-    }
-
-    &.tb-transformation-type {
-      background-color: #79cef1;
-    }
-
-    &.tb-action-type {
-      background-color: #f1928f;
-    }
-
-    &.tb-external-type {
-      background-color: #fbc766;
-    }
-
-    &.tb-rule-chain-type {
-      background-color: #d6c4f1;
-    }
-
-    &.tb-unknown-type {
-      background-color: #f16c29;
-    }
+    @include rule-node-colors();
 
     &.tb-rule-node-highlighted:not(.tb-rule-node-invalid) {
       box-shadow: 0 0 10px 6px #51cbee;

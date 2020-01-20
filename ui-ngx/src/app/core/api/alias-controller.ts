@@ -186,7 +186,9 @@ export class AliasController implements IAliasController {
         );
       } else {
         resolvedAliasSubject.error(null);
+        const res = this.resolvedAliasesObservable[aliasId];
         delete this.resolvedAliasesObservable[aliasId];
+        return res;
       }
       return this.resolvedAliasesObservable[aliasId];
     }

@@ -737,18 +737,22 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       dataLoading: (subscription) => {
         if (this.loadingData !== subscription.loadingData) {
           this.loadingData = subscription.loadingData;
-          this.cd.detectChanges();
+          if (!this.destroyed) {
+            this.cd.detectChanges();
+          }
         }
       },
       legendDataUpdated: (subscription, detectChanges) => {
-        if (detectChanges) {
+        if (detectChanges && !this.destroyed) {
           this.cd.detectChanges();
         }
       },
       timeWindowUpdated: (subscription, timeWindowConfig) => {
         this.ngZone.run(() => {
           this.widget.config.timewindow = timeWindowConfig;
-          this.cd.detectChanges();
+          if (!this.destroyed) {
+            this.cd.detectChanges();
+          }
         });
       }
     };
