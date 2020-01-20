@@ -427,11 +427,11 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     public void ackAlarm(String alarmId) {
-        restTemplate.postForObject(baseURL + "/api/alarm/{alarmId}/ack", new Object(), Object.class, alarmId);
+        restTemplate.postForLocation(baseURL + "/api/alarm/{alarmId}/ack", null, alarmId);
     }
 
     public void clearAlarm(String alarmId) {
-        restTemplate.postForObject(baseURL + "/api/alarm/{alarmId}/clear", new Object(), Object.class, alarmId);
+        restTemplate.postForLocation(baseURL + "/api/alarm/{alarmId}/clear", null, alarmId);
     }
 
     public TimePageData<AlarmInfo> getAlarms(EntityId entityId, String searchStatus, String status, TimePageLink pageLink, Boolean fetchOriginator) {
@@ -709,14 +709,14 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     public void logout() {
-        restTemplate.exchange(URI.create(baseURL + "/api/auth/logout"), HttpMethod.POST, HttpEntity.EMPTY, Object.class);
+        restTemplate.postForLocation(baseURL + "/api/auth/logout", null);
     }
 
     public void changePassword(String currentPassword, String newPassword) {
         ObjectNode changePasswordRequest = objectMapper.createObjectNode();
         changePasswordRequest.put("currentPassword", currentPassword);
         changePasswordRequest.put("newPassword", newPassword);
-        restTemplate.exchange(URI.create(baseURL + "/api/auth/changePassword"), HttpMethod.POST, new HttpEntity<>(changePasswordRequest), Object.class);
+        restTemplate.postForLocation(baseURL + "/api/auth/changePassword", changePasswordRequest);
     }
 
     public Optional<UserPasswordPolicy> getUserPasswordPolicy() {
@@ -740,7 +740,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     public void requestResetPasswordByEmail(String email) {
         ObjectNode resetPasswordByEmailRequest = objectMapper.createObjectNode();
         resetPasswordByEmailRequest.put("email", email);
-        restTemplate.exchange(URI.create(baseURL + "/api/noauth/resetPasswordByEmail"), HttpMethod.POST, new HttpEntity<>(resetPasswordByEmailRequest), Object.class);
+        restTemplate.postForLocation(baseURL + "/api/noauth/resetPasswordByEmail", resetPasswordByEmailRequest);
     }
 
     public Optional<JsonNode> activateUser(String userId, String password) {
@@ -1185,7 +1185,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     public void saveRelation(EntityRelation relation) {
-        restTemplate.postForEntity(baseURL + "/api/relation", relation, Object.class);
+        restTemplate.postForLocation(baseURL + "/api/relation", null);
     }
 
     public void deleteRelation(String fromId, String fromType, String relationType, String relationTypeGroup, String toId, String toType) {
@@ -1485,12 +1485,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     public void handleOneWayDeviceRPCRequest(String deviceId, JsonNode requestBody) {
-        restTemplate.exchange(
-                baseURL + "/api/plugins/rpc/oneway/{deviceId}",
-                HttpMethod.POST,
-                new HttpEntity<>(requestBody),
-                Object.class,
-                deviceId).getBody();
+        restTemplate.postForLocation(baseURL + "/api/plugins/rpc/oneway/{deviceId}", requestBody, deviceId);
     }
 
     public JsonNode handleTwoWayDeviceRPCRequest(String deviceId, JsonNode requestBody) {
@@ -1934,7 +1929,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     public void sendActivationEmail(String email) {
-        restTemplate.postForEntity(baseURL + "/api/user/sendActivationMail?email={email}", null, Object.class, email);
+        restTemplate.postForLocation(baseURL + "/api/user/sendActivationMail?email={email}", null, email);
     }
 
     public String getActivationLink(String userId) {
@@ -1974,10 +1969,9 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     public void setUserCredentialsEnabled(String userId, boolean userCredentialsEnabled) {
-        restTemplate.postForEntity(
+        restTemplate.postForLocation(
                 baseURL + "/api/user/{userId}/userCredentialsEnabled?serCredentialsEnabled={serCredentialsEnabled}",
                 null,
-                Object.class,
                 userId,
                 userCredentialsEnabled);
     }
