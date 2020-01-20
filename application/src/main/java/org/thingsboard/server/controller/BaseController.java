@@ -52,6 +52,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.ProvisionProfileId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -82,6 +83,7 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.ClaimDevicesService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.device.provision.ProvisionProfile;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
@@ -373,6 +375,18 @@ public abstract class BaseController {
             checkNotNull(device);
             accessControlService.checkPermission(getCurrentUser(), Resource.DEVICE, operation, deviceId, device);
             return device;
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
+    }
+
+    ProvisionProfile checkProfileId(ProvisionProfileId profileId, Operation operation) throws ThingsboardException {
+        try {
+            validateId(profileId, "Incorrect profileId " + profileId);
+            ProvisionProfile profile = deviceProvisionService.findProfileById(getCurrentUser().getTenantId(), profileId);
+            checkNotNull(profile);
+            accessControlService.checkPermission(getCurrentUser(), Resource.PROVISION_PROFILE, operation, profileId, profile);
+            return profile;
         } catch (Exception e) {
             throw handleException(e, false);
         }

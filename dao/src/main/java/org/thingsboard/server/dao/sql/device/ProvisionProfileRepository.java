@@ -13,11 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.security.permission;
+package org.thingsboard.server.dao.sql.device;
 
-public enum Operation {
+import org.springframework.data.repository.CrudRepository;
+import org.thingsboard.server.dao.model.sql.ProvisionProfileEntity;
+import org.thingsboard.server.dao.util.SqlDao;
 
-    ALL, CREATE, READ, WRITE, DELETE, ASSIGN_TO_CUSTOMER, UNASSIGN_FROM_CUSTOMER, RPC_CALL,
-    READ_CREDENTIALS, WRITE_CREDENTIALS, READ_ATTRIBUTES, WRITE_ATTRIBUTES, READ_TELEMETRY, WRITE_TELEMETRY, CLAIM_DEVICES
+@SqlDao
+public interface ProvisionProfileRepository extends CrudRepository<ProvisionProfileEntity, String> {
+
+    ProvisionProfileEntity findByKeyAndSecret(String key, String secret);
 
 }

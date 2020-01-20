@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
+import org.thingsboard.server.common.data.ClaimRequest;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -40,11 +41,11 @@ import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.ProvisionProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
-import org.thingsboard.server.common.data.ClaimRequest;
 import org.thingsboard.server.dao.device.claim.ClaimResponse;
 import org.thingsboard.server.dao.device.claim.ClaimResult;
 import org.thingsboard.server.dao.device.provision.ProvisionProfile;
@@ -64,6 +65,7 @@ import java.util.stream.Collectors;
 public class DeviceController extends BaseController {
 
     private static final String DEVICE_ID = "deviceId";
+    private static final String PROFILE_ID = "profileId";
     private static final String DEVICE_NAME = "deviceName";
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
@@ -425,6 +427,7 @@ public class DeviceController extends BaseController {
                         deferredResult.setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
                     }
                 }
+
                 @Override
                 public void onFailure(Throwable t) {
                     deferredResult.setErrorResult(t);
@@ -479,9 +482,35 @@ public class DeviceController extends BaseController {
     public ProvisionProfile saveProvisionProfile(@RequestBody ProvisionProfile profile) throws ThingsboardException {
         try {
             profile.setTenantId(getTenantId());
-            accessControlService.checkPermission(getCurrentUser(), Resource.DEVICE, Operation.PROVISION_DEVICES,
-                    null, profile);
+            accessControlService.checkPermission(getCurrentUser(), Resource.PROVISION_PROFILE, Operation.CREATE,
+                    profile.getId(), profile);
             return deviceProvisionService.saveProvisionProfile(profile);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/device/provision", params = {"key", "secret"}, method = RequestMethod.GET)
+    @ResponseBody
+    public ProvisionProfile getProvisionProfile(@RequestParam String key, @RequestParam String secret) throws ThingsboardException {
+        try {
+            TenantId tenantId = getTenantId();
+            return checkNotNull(deviceProvisionService.findProvisionProfileByKeyAndSecret(tenantId, key, secret));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/device/{profileId}/provision", method = RequestMethod.DELETE)
+    @ResponseStatus(value = HttpStatus.OK)
+    public void deleteProfile(@PathVariable(PROFILE_ID) String strProfileId) throws ThingsboardException {
+        checkParameter(PROFILE_ID, strProfileId);
+        try {
+            ProvisionProfileId provisionProfileId = new ProvisionProfileId(toUUID(strProfileId));
+            checkProfileId(provisionProfileId, Operation.DELETE);
+            deviceProvisionService.deleteProfile(getTenantId(), provisionProfileId);
         } catch (Exception e) {
             throw handleException(e);
         }

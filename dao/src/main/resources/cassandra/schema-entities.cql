@@ -714,3 +714,19 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.entity_view_by_tenant_and_ent
       AND id IS NOT NULL
     PRIMARY KEY (tenant_id, entity_id, customer_id, search_text, id, type)
     WITH CLUSTERING ORDER BY (entity_id DESC, customer_id DESC, search_text ASC, id DESC);
+
+CREATE TABLE IF NOT EXISTS thingsboard.provision_profile (
+    id timeuuid,
+    tenant_id timeuuid,
+    customer_id timeuuid,
+    key text,
+    secret text,
+    PRIMARY KEY (id, key)
+);
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.provision_profile_by_key_and_secret AS
+	SELECT *
+	from thingsboard.provision_profile
+	WHERE key IS NOT NULL AND secret IS NOT NULL AND id IS NOT NULL
+	PRIMARY KEY ( key, secret, id )
+	WITH CLUSTERING ORDER BY ( secret ASC, id DESC );

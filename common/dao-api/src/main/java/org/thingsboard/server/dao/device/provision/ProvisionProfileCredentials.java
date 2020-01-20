@@ -15,17 +15,26 @@
  */
 package org.thingsboard.server.dao.device.provision;
 
-import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 @Data
-@AllArgsConstructor
-public class ProvisionProfileCredentials {
+public class ProvisionProfileCredentials implements Serializable {
+
+    private static final long serialVersionUID = 4737290293406694616L;
 
     private String provisionProfileKey;
     private String provisionProfileSecret;
+
+    @JsonCreator
+    public ProvisionProfileCredentials(@JsonProperty("provisionProfileKey") String provisionProfileKey, @JsonProperty("provisionProfileSecret") String provisionProfileSecret) {
+        this.provisionProfileKey = provisionProfileKey;
+        this.provisionProfileSecret = provisionProfileSecret;
+    }
 
     @Override
     public boolean equals(Object o) {

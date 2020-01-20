@@ -15,13 +15,24 @@
  */
 package org.thingsboard.server.dao.device;
 
+import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.id.ProvisionProfileId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.device.provision.ProvisionProfile;
 import org.thingsboard.server.dao.device.provision.ProvisionRequest;
 import org.thingsboard.server.dao.device.provision.ProvisionResponse;
 
 public interface DeviceProvisionService {
 
+    ProvisionProfile findProfileById(TenantId tenantId, ProvisionProfileId profileId);
+
+    ListenableFuture<ProvisionProfile> findProfileByIdAsync(TenantId tenantId, ProvisionProfileId profileId);
+
     ProvisionProfile saveProvisionProfile(ProvisionProfile provisionProfile);
+
+    ProvisionProfile findProvisionProfileByKeyAndSecret(TenantId tenantId, String key, String secret);
+
+    void deleteProfile(TenantId tenantId, ProvisionProfileId profileId);
 
     ProvisionResponse provisionDevice(ProvisionRequest provisionRequest);
 

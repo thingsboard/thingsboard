@@ -16,18 +16,38 @@
 package org.thingsboard.server.dao.device.provision;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.ProvisionProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.Objects;
 
 @Data
-public class ProvisionProfile implements HasTenantId {
+public class ProvisionProfile extends BaseData<ProvisionProfileId> implements HasTenantId, HasCustomerId {
+
+    private static final long serialVersionUID = 1869935044931680450L;
 
     private ProvisionProfileCredentials credentials;
     private TenantId tenantId;
     private CustomerId customerId;
+
+    public ProvisionProfile() {
+        super();
+    }
+
+    public ProvisionProfile(ProvisionProfileId id) {
+        super(id);
+    }
+
+    public ProvisionProfile(ProvisionProfile profile) {
+        super(profile);
+        this.credentials = profile.getCredentials();
+        this.tenantId = profile.getTenantId();
+        this.customerId = profile.getCustomerId();
+    }
 
     @Override
     public boolean equals(Object o) {

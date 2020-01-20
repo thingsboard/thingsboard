@@ -294,6 +294,9 @@ caffeine:
     securitySettings:
       timeToLiveInMinutes: 1440
       maxSize: 1
+    deviceProvision:
+      timeToLiveInMinutes: 1440
+      maxSize: 1000
 
 redis:
   # standalone or cluster

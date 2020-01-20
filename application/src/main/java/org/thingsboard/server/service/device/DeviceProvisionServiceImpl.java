@@ -19,39 +19,61 @@ import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.actors.service.ActorService;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.ProvisionProfileId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
+import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProvisionService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.device.ProvisionProfileDao;
 import org.thingsboard.server.dao.device.provision.ProvisionProfile;
 import org.thingsboard.server.dao.device.provision.ProvisionRequest;
 import org.thingsboard.server.dao.device.provision.ProvisionResponse;
 import org.thingsboard.server.dao.device.provision.ProvisionResponseStatus;
+import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.service.DataValidator;
+import org.thingsboard.server.dao.tenant.TenantDao;
 
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
+
+import static org.thingsboard.server.common.data.CacheConstants.DEVICE_PROVISION_CACHE;
+import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
+import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service
 @Slf4j
-public class DeviceProvisionServiceImpl implements DeviceProvisionService {
+public class DeviceProvisionServiceImpl extends AbstractEntityService implements DeviceProvisionService {
+
+    private static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
+    private static final String INCORRECT_PROFILE_ID = "Incorrect profileId ";
 
     private final ObjectMapper mapper = new ObjectMapper();
     private final ReentrantLock deviceCreationLock = new ReentrantLock();
-    private final Set<ProvisionProfile> set = ConcurrentHashMap.newKeySet();
 
     @Autowired
     private DeviceService deviceService;
@@ -60,33 +82,91 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
     private DeviceCredentialsService deviceCredentialsService;
 
     @Autowired
+    private TenantDao tenantDao;
+
+    @Autowired
+    private CustomerDao customerDao;
+
+    @Autowired
+    private ProvisionProfileDao provisionProfileDao;
+
+    @Autowired
     private ActorService actorService;
 
+    @Autowired
+    private CacheManager cacheManager;
+
+    @Override
+    public ProvisionProfile findProfileById(TenantId tenantId, ProvisionProfileId profileId) {
+        log.trace("Executing findProfileById [{}]", profileId);
+        validateId(profileId, INCORRECT_PROFILE_ID + profileId);
+        return provisionProfileDao.findById(tenantId, profileId.getId());
+    }
+
+    @Override
+    public ListenableFuture<ProvisionProfile> findProfileByIdAsync(TenantId tenantId, ProvisionProfileId profileId) {
+        log.trace("Executing findProfileByIdAsync [{}]", profileId);
+        validateId(profileId, INCORRECT_PROFILE_ID + profileId);
+        return provisionProfileDao.findByIdAsync(tenantId, profileId.getId());
+    }
+
+    @CacheEvict(cacheNames = DEVICE_PROVISION_CACHE, key = "{#provisionProfile.tenantId, #provisionProfile.credentials.provisionProfileKey, #provisionProfile.credentials.provisionProfileSecret}")
     @Override
     public ProvisionProfile saveProvisionProfile(ProvisionProfile provisionProfile) {
-        boolean added = set.add(provisionProfile);
-        if (!added) {
-            log.debug("[{}] The profile has already been added!", provisionProfile);
-            throw new RuntimeException("The profile has already been added!");
+        log.trace("Executing saveProvisionProfile [{}]", provisionProfile);
+        provisionProfileValidator.validate(provisionProfile, ProvisionProfile::getTenantId);
+        ProvisionProfile savedProvisionProfile;
+        if (!sqlDatabaseUsed) {
+            savedProvisionProfile = provisionProfileDao.save(provisionProfile.getTenantId(), provisionProfile);
+        } else {
+            try {
+                savedProvisionProfile = provisionProfileDao.save(provisionProfile.getTenantId(), provisionProfile);
+            } catch (Exception t) {
+                ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
+                if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("provision_profile_unq_key")) {
+                    throw new DataValidationException("Profile with such key and secret already exists!");
+                } else {
+                    throw t;
+                }
+            }
         }
-        return provisionProfile;
+        return savedProvisionProfile;
+    }
+
+    @Cacheable(cacheNames = DEVICE_PROVISION_CACHE, key = "{#tenantId, #key, #secret}")
+    @Override
+    public ProvisionProfile findProvisionProfileByKeyAndSecret(TenantId tenantId, String key, String secret) {
+        log.trace("Executing findProvisionProfileByKeyAndSecret [{}][{}][{}]", tenantId, key, secret);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        return provisionProfileDao.findByKeyAndSecret(tenantId, key, secret);
+    }
+
+    @Override
+    public void deleteProfile(TenantId tenantId, ProvisionProfileId profileId) {
+        log.trace("Executing deleteProfile [{}]", profileId);
+        validateId(profileId, INCORRECT_PROFILE_ID + profileId);
+
+        ProvisionProfile profile = provisionProfileDao.findById(tenantId, profileId.getId());
+        List<Object> list = new ArrayList<>();
+        list.add(profile.getTenantId());
+        list.add(profile.getCredentials().getProvisionProfileKey());
+        list.add(profile.getCredentials().getProvisionProfileSecret());
+        Cache cache = cacheManager.getCache(DEVICE_PROVISION_CACHE);
+        cache.evict(list);
+
+        provisionProfileDao.removeById(tenantId, profileId.getId());
     }
 
     @Override
     public ProvisionResponse provisionDevice(ProvisionRequest provisionRequest) {
-        ProvisionProfile targetProfile = null;
-        for (ProvisionProfile profile : set) {
-            if (profile.getCredentials().equals(provisionRequest.getCredentials())) {
-                log.debug("[{}] Found provision profile!", profile);
-                targetProfile = profile;
-                break;
-            }
-        }
+        ProvisionProfile targetProfile = provisionProfileDao.findByKeyAndSecret(
+                TenantId.SYS_TENANT_ID,
+                provisionRequest.getCredentials().getProvisionProfileKey(),
+                provisionRequest.getCredentials().getProvisionProfileSecret());
         if (targetProfile == null) {
             return new ProvisionResponse(null, ProvisionResponseStatus.NOT_FOUND);
         }
         Device device = getOrCreateDevice(provisionRequest, targetProfile);
-        set.remove(targetProfile);
         return new ProvisionResponse(deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), device.getId()), ProvisionResponseStatus.SUCCESS);
     }
 
@@ -147,4 +227,63 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
         }
         return metaData;
     }
+
+    private DataValidator<ProvisionProfile> provisionProfileValidator =
+            new DataValidator<ProvisionProfile>() {
+
+                @Override
+                protected void validateCreate(TenantId tenantId, ProvisionProfile profile) {
+                    if (!sqlDatabaseUsed) {
+                        ProvisionProfile existingProfileEntity = provisionProfileDao.findByKeyAndSecret(tenantId,
+                                profile.getCredentials().getProvisionProfileKey(), profile.getCredentials().getProvisionProfileSecret());
+                        if (existingProfileEntity != null) {
+                            throw new DataValidationException("Create of existent provision profile!");
+                        }
+                    }
+                }
+
+                @Override
+                protected void validateUpdate(TenantId tenantId, ProvisionProfile profile) {
+                    ProvisionProfile existingProfileEntity = provisionProfileDao.findById(tenantId, profile.getUuidId());
+                    if (existingProfileEntity == null) {
+                        throw new DataValidationException("Unable to update non-existent provision profile!");
+                    }
+                    if (!sqlDatabaseUsed) {
+                        ProvisionProfile sameProvisionProfileKey = provisionProfileDao.findByKeyAndSecret(tenantId,
+                                profile.getCredentials().getProvisionProfileKey(), profile.getCredentials().getProvisionProfileSecret());
+                        if (sameProvisionProfileKey != null && !sameProvisionProfileKey.getUuidId().equals(profile.getUuidId())) {
+                            throw new DataValidationException("Specified profile is already registered!");
+                        }
+                    }
+                }
+
+                @Override
+                protected void validateDataImpl(TenantId tenantId, ProvisionProfile profile) {
+                    if (StringUtils.isEmpty(profile.getCredentials().getProvisionProfileKey())) {
+                        throw new DataValidationException("Profile key should be specified!");
+                    }
+                    if (StringUtils.isEmpty(profile.getCredentials().getProvisionProfileSecret())) {
+                        throw new DataValidationException("Profile secret should be specified!");
+                    }
+                    if (profile.getTenantId() == null) {
+                        throw new DataValidationException("Profile should be assigned to tenant!");
+                    } else {
+                        Tenant tenant = tenantDao.findById(profile.getTenantId(), profile.getTenantId().getId());
+                        if (tenant == null) {
+                            throw new DataValidationException("Profile is referencing to non-existent tenant!");
+                        }
+                    }
+                    if (profile.getCustomerId() == null) {
+                        profile.setCustomerId(new CustomerId(NULL_UUID));
+                    } else if (!profile.getCustomerId().getId().equals(NULL_UUID)) {
+                        Customer customer = customerDao.findById(profile.getTenantId(), profile.getCustomerId().getId());
+                        if (customer == null) {
+                            throw new DataValidationException("Can't assign profile to non-existent customer!");
+                        }
+                        if (!customer.getTenantId().getId().equals(profile.getTenantId().getId())) {
+                            throw new DataValidationException("Can't assign profile to customer from different tenant!");
+                        }
+                    }
+                }
+            };
 }
