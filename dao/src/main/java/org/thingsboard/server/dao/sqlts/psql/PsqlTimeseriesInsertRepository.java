@@ -21,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.model.sqlts.psql.TsKvEntity;
 import org.thingsboard.server.dao.sqlts.AbstractTimeseriesInsertRepository;
 import org.thingsboard.server.dao.sqlts.EntityContainer;
-import org.thingsboard.server.dao.timeseries.PsqlPartition;
 import org.thingsboard.server.dao.util.PsqlDao;
 import org.thingsboard.server.dao.util.SqlTsDao;
 
@@ -48,20 +47,13 @@ public class PsqlTimeseriesInsertRepository extends AbstractTimeseriesInsertRepo
     public void saveOrUpdate(List<EntityContainer<TsKvEntity>> entities) {
         Map<String, List<TsKvEntity>> partitionMap = new HashMap<>();
         for (EntityContainer<TsKvEntity> entityContainer : entities) {
-            String partitionDate = entityContainer.getPartitionDate();
-            TsKvEntity entity = entityContainer.getEntity();
-            partitionMap.compute(partitionDate, (partition, tsKvEntities) -> {
-                if (tsKvEntities == null) {
-                    tsKvEntities = new ArrayList<>();
-                }
-                tsKvEntities.add(entity);
-                return tsKvEntities;
-            });
+            List<TsKvEntity> tsKvEntities = partitionMap.computeIfAbsent(entityContainer.getPartitionDate(), k -> new ArrayList<>());
+            tsKvEntities.add(entityContainer.getEntity());
         }
-        partitionMap.forEach((partition, tsKvEntities) -> jdbcTemplate.batchUpdate(getInsertOrUpdateQuery(partition), new BatchPreparedStatementSetter() {
+        partitionMap.forEach((partition, entries) -> jdbcTemplate.batchUpdate(getInsertOrUpdateQuery(partition), new BatchPreparedStatementSetter() {
             @Override
             public void setValues(PreparedStatement ps, int i) throws SQLException {
-                TsKvEntity tsKvEntity = tsKvEntities.get(i);
+                TsKvEntity tsKvEntity = entries.get(i);
                 ps.setObject(1, tsKvEntity.getEntityId());
                 ps.setInt(2, tsKvEntity.getKey());
                 ps.setLong(3, tsKvEntity.getTs());
@@ -97,7 +89,7 @@ public class PsqlTimeseriesInsertRepository extends AbstractTimeseriesInsertRepo
 
             @Override
             public int getBatchSize() {
-                return entities.size();
+                return entries.size();
             }
         }));
     }
