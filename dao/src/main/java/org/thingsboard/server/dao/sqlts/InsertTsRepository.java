@@ -15,14 +15,12 @@
  */
 package org.thingsboard.server.dao.sqlts;
 
-import org.springframework.stereotype.Repository;
-import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
+import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
 
 import java.util.List;
 
-@Repository
-public abstract class AbstractLatestInsertRepository extends AbstractInsertRepository {
+public interface InsertTsRepository<T extends AbstractTsKvEntity> {
 
-    public abstract void saveOrUpdate(List<TsKvLatestEntity> entities);
+    void saveOrUpdate(List<EntityContainer<T>> entities);
 
 }

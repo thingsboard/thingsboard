@@ -21,8 +21,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import java.util.regex.Pattern;
 
 @Repository

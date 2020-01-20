@@ -31,7 +31,6 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sqlts.hsql.TsKvEntity;
 import org.thingsboard.server.dao.sqlts.AbstractSimpleSqlTimeseriesDao;
-import org.thingsboard.server.dao.sqlts.AbstractTimeseriesInsertRepository;
 import org.thingsboard.server.dao.sqlts.EntityContainer;
 import org.thingsboard.server.dao.timeseries.TimeseriesDao;
 import org.thingsboard.server.dao.util.HsqlDao;

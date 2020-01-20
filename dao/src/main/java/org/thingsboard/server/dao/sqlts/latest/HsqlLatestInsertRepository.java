@@ -19,7 +19,8 @@ import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
-import org.thingsboard.server.dao.sqlts.AbstractLatestInsertRepository;
+import org.thingsboard.server.dao.sqlts.AbstractInsertRepository;
+import org.thingsboard.server.dao.sqlts.InsertLatestRepository;
 import org.thingsboard.server.dao.util.HsqlDao;
 import org.thingsboard.server.dao.util.SqlTsDao;
 
@@ -32,7 +33,7 @@ import java.util.List;
 @HsqlDao
 @Repository
 @Transactional
-public class HsqlLatestInsertRepository extends AbstractLatestInsertRepository {
+public class HsqlLatestInsertRepository extends AbstractInsertRepository implements InsertLatestRepository {
 
     private static final String INSERT_OR_UPDATE =
             "MERGE INTO ts_kv_latest USING(VALUES ?, ?, ?, ?, ?, ?, ?, ?) " +

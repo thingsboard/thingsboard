@@ -42,16 +42,6 @@ public interface TsKvTimescaleRepository extends CrudRepository<TimescaleTsKvEnt
             @Param("startTs") long startTs,
             @Param("endTs") long endTs, Pageable pageable);
 
-    @Query(value = "SELECT tskv.tenant_id as tenant_id, tskv.entity_id as entity_id, tskv.key as key, last(tskv.ts,tskv.ts) as ts," +
-            " last(tskv.bool_v, tskv.ts) as bool_v, last(tskv.str_v, tskv.ts) as str_v," +
-            " last(tskv.long_v, tskv.ts) as long_v, last(tskv.dbl_v, tskv.ts) as dbl_v" +
-            " FROM tenant_ts_kv tskv WHERE tskv.tenant_id = cast(:tenantId AS uuid) " +
-            "AND tskv.entity_id = cast(:entityId AS uuid) " +
-            "GROUP BY tskv.tenant_id, tskv.entity_id, tskv.key", nativeQuery = true)
-    List<TimescaleTsKvEntity> findAllLatestValues(
-            @Param("tenantId") UUID tenantId,
-            @Param("entityId") UUID entityId);
-
     @Transactional
     @Modifying
     @Query("DELETE FROM TimescaleTsKvEntity tskv WHERE tskv.tenantId = :tenantId " +

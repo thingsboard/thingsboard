@@ -19,9 +19,9 @@ import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.model.sqlts.hsql.TsKvEntity;
-import org.thingsboard.server.dao.sqlts.AbstractTimeseriesInsertRepository;
+import org.thingsboard.server.dao.sqlts.AbstractInsertRepository;
 import org.thingsboard.server.dao.sqlts.EntityContainer;
-import org.thingsboard.server.dao.timeseries.PsqlPartition;
+import org.thingsboard.server.dao.sqlts.InsertTsRepository;
 import org.thingsboard.server.dao.util.HsqlDao;
 import org.thingsboard.server.dao.util.SqlTsDao;
 
@@ -34,7 +34,7 @@ import java.util.List;
 @HsqlDao
 @Repository
 @Transactional
-public class HsqlTimeseriesInsertRepository extends AbstractTimeseriesInsertRepository<TsKvEntity> {
+public class HsqlTimeseriesInsertRepository extends AbstractInsertRepository implements InsertTsRepository<TsKvEntity> {
 
     private static final String INSERT_OR_UPDATE =
             "MERGE INTO ts_kv USING(VALUES ?, ?, ?, ?, ?, ?, ?, ?) " +

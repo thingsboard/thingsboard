@@ -19,8 +19,9 @@ import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.model.sqlts.psql.TsKvEntity;
-import org.thingsboard.server.dao.sqlts.AbstractTimeseriesInsertRepository;
+import org.thingsboard.server.dao.sqlts.AbstractInsertRepository;
 import org.thingsboard.server.dao.sqlts.EntityContainer;
+import org.thingsboard.server.dao.sqlts.InsertTsRepository;
 import org.thingsboard.server.dao.util.PsqlDao;
 import org.thingsboard.server.dao.util.SqlTsDao;
 
@@ -36,7 +37,7 @@ import java.util.Map;
 @PsqlDao
 @Repository
 @Transactional
-public class PsqlTimeseriesInsertRepository extends AbstractTimeseriesInsertRepository<TsKvEntity> {
+public class PsqlTimeseriesInsertRepository extends AbstractInsertRepository implements InsertTsRepository<TsKvEntity> {
 
     private static final String INSERT_INTO_TS_KV = "INSERT INTO ts_kv_";
 

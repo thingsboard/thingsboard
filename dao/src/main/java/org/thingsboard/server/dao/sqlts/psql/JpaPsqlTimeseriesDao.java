@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
@@ -37,10 +38,14 @@ import org.thingsboard.server.dao.sqlts.AbstractSimpleSqlTimeseriesDao;
 import org.thingsboard.server.dao.sqlts.EntityContainer;
 import org.thingsboard.server.dao.sqlts.dictionary.TsKvDictionaryRepository;
 import org.thingsboard.server.dao.timeseries.PsqlPartition;
+import org.thingsboard.server.dao.timeseries.SqlTsPartitionDate;
 import org.thingsboard.server.dao.timeseries.TimeseriesDao;
 import org.thingsboard.server.dao.util.PsqlDao;
 import org.thingsboard.server.dao.util.SqlTsDao;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -49,6 +54,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantLock;
+
+import static org.thingsboard.server.dao.timeseries.SqlTsPartitionDate.EPOCH_START;
 
 
 @Component
@@ -72,6 +79,24 @@ public class JpaPsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEnt
 
     @Autowired
     private PsqlPartitioningRepository partitioningRepository;
+
+    private SqlTsPartitionDate tsFormat;
+
+    @PsqlDao
+    @Value("${sql.ts_key_value_partitioning}")
+    private String partitioning;
+
+    @Override
+    protected void init() {
+        super.init();
+        Optional<SqlTsPartitionDate> partition = SqlTsPartitionDate.parse(partitioning);
+        if (partition.isPresent()) {
+            tsFormat = partition.get();
+        } else {
+            log.warn("Incorrect configuration of partitioning {}", partitioning);
+            throw new RuntimeException("Failed to parse partitioning property: " + partitioning + "!");
+        }
+    }
 
     @Override
     public ListenableFuture<List<TsKvEntry>> findAllAsync(TenantId tenantId, EntityId entityId, List<ReadTsKvQuery> queries) {
@@ -274,4 +299,16 @@ public class JpaPsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEnt
         }
     }
 
+    private PsqlPartition toPartition(long ts) {
+        LocalDateTime time = LocalDateTime.ofInstant(Instant.ofEpochMilli(ts), ZoneOffset.UTC);
+        LocalDateTime localDateTimeStart = tsFormat.trancateTo(time);
+        if (localDateTimeStart == SqlTsPartitionDate.EPOCH_START) {
+            return new PsqlPartition(toMills(EPOCH_START), Long.MAX_VALUE, tsFormat.getPattern());
+        } else {
+            LocalDateTime localDateTimeEnd = tsFormat.plusTo(localDateTimeStart);
+            return new PsqlPartition(toMills(localDateTimeStart), toMills(localDateTimeEnd), tsFormat.getPattern());
+        }
+    }
+
+    private long toMills(LocalDateTime time) { return time.toInstant(ZoneOffset.UTC).toEpochMilli(); }
 }

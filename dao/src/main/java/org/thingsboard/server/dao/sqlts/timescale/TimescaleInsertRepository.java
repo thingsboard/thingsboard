@@ -19,10 +19,9 @@ import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.model.sqlts.timescale.TimescaleTsKvEntity;
-import org.thingsboard.server.dao.sqlts.AbstractSimpleSqlTimeseriesDao;
-import org.thingsboard.server.dao.sqlts.AbstractTimeseriesInsertRepository;
+import org.thingsboard.server.dao.sqlts.AbstractInsertRepository;
 import org.thingsboard.server.dao.sqlts.EntityContainer;
-import org.thingsboard.server.dao.timeseries.PsqlPartition;
+import org.thingsboard.server.dao.sqlts.InsertTsRepository;
 import org.thingsboard.server.dao.util.PsqlDao;
 import org.thingsboard.server.dao.util.TimescaleDBTsDao;
 
@@ -35,7 +34,7 @@ import java.util.List;
 @PsqlDao
 @Repository
 @Transactional
-public class TimescaleInsertRepository extends AbstractTimeseriesInsertRepository<TimescaleTsKvEntity> {
+public class TimescaleInsertRepository extends AbstractInsertRepository implements InsertTsRepository<TimescaleTsKvEntity> {
 
     private static final String INSERT_OR_UPDATE =
             "INSERT INTO tenant_ts_kv (tenant_id, entity_id, key, ts, bool_v, str_v, long_v, dbl_v) VALUES(?, ?, ?, ?, ?, ?, ?, ?) " +
