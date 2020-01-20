@@ -101,7 +101,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     private String token;
     private String refreshToken;
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private ExecutorService service = Executors.newFixedThreadPool(10);
+    private ExecutorService service = Executors.newWorkStealingPool(10);
 
 
     protected static final String ACTIVATE_TOKEN_REGEX = "/api/noauth/activate?activateToken=";
