@@ -31,3 +31,7 @@ tb-timeseries-table-widget {
     z-index: 10;
   }
 }
+
+md-table-container {
+  overflow-x: visible !important;
+}
