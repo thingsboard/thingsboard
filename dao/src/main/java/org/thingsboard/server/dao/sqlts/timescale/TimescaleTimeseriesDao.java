@@ -66,7 +66,6 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
     private static final String TS = "ts";
 
     private final ConcurrentMap<String, Integer> tsKvDictionaryMap = new ConcurrentHashMap<>();
-    private final ConcurrentMap<Integer, String> tsKvDictionaryInvertMap = new ConcurrentHashMap<>();
 
     private static final ReentrantLock tsCreationLock = new ReentrantLock();
 
@@ -224,13 +223,11 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
                         try {
                             TsKvDictionary saved = dictionaryRepository.save(tsKvDictionary);
                             tsKvDictionaryMap.put(saved.getKey(), saved.getKeyId());
-                            tsKvDictionaryInvertMap.put(saved.getKeyId(), saved.getKey());
                             keyId = saved.getKeyId();
                         } catch (ConstraintViolationException e) {
                             tsKvDictionaryOptional = dictionaryRepository.findById(new TsKvDictionaryCompositeKey(strKey));
                             TsKvDictionary dictionary = tsKvDictionaryOptional.orElseThrow(() -> new RuntimeException("Failed to get TsKvDictionary entity from DB!"));
                             tsKvDictionaryMap.put(dictionary.getKey(), dictionary.getKeyId());
-                            tsKvDictionaryInvertMap.put(dictionary.getKeyId(), dictionary.getKey());
                             keyId = dictionary.getKeyId();
                         }
                     } else {
@@ -242,7 +239,6 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
             } else {
                 keyId = tsKvDictionaryOptional.get().getKeyId();
                 tsKvDictionaryMap.put(strKey, keyId);
-                tsKvDictionaryInvertMap.put(keyId, strKey);
             }
         }
         return keyId;
