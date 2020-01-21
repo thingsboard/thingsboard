@@ -31,11 +31,11 @@ tb-timeseries-table-widget {
     z-index: 10;
   }
 
-  md-table-container {
-    overflow-x: visible !important;
+  md-table-container.flex.ng-scope {
+    overflow-x: visible;
   }
 
-  md-tabs {
-    min-height: 0 !important;
+  md-tabs.ng-isolate-scope.flex.tb-headless {
+    min-height: 0;
   }
 }
