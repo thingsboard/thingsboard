@@ -65,8 +65,7 @@ import static org.thingsboard.server.dao.timeseries.SqlTsPartitionDate.EPOCH_STA
 public class JpaPsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEntity> implements TimeseriesDao {
 
     private final ConcurrentMap<String, Integer> tsKvDictionaryMap = new ConcurrentHashMap<>();
-    private final ConcurrentMap<PsqlPartition, Integer> partitionMap = new ConcurrentHashMap<>();
-    private final Set<PsqlPartition> partitions = ConcurrentHashMap.newKeySet(partitionMap.size());
+    private final Set<PsqlPartition> partitions = ConcurrentHashMap.newKeySet();
 
     private static final ReentrantLock tsCreationLock = new ReentrantLock();
     private static final ReentrantLock partitionCreationLock = new ReentrantLock();
@@ -82,7 +81,6 @@ public class JpaPsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEnt
 
     private SqlTsPartitionDate tsFormat;
 
-    @PsqlDao
     @Value("${sql.ts_key_value_partitioning}")
     private String partitioning;
 
