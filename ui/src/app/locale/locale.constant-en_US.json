@@ -1171,7 +1171,8 @@
             "server-attribute": "Server attribute",
             "timeseries": "Timeseries",
             "entity-field": "Entity field",
-            "access-token": "Access token"
+            "access-token": "Access token",
+            "gateway": "Gateway"
         },
         "stepper-text":{
             "select-file": "Select a file",

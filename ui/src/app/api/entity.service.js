@@ -1179,6 +1179,13 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
             type: entityParameters.type,
             label: entityParameters.label
         };
+
+        if (entityParameters.additionalInfo && entityParameters.additionalInfo.gateway === true) {
+            newEntity.additionalInfo = {
+                gateway: true
+            };
+        }
+
         let saveEntityPromise = getEntitySavePromise(entityType, newEntity, config);
 
         saveEntityPromise.then(function success(response) {

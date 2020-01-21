@@ -98,7 +98,7 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
         vm.columnsParam = [];
         var columnParam = {};
         for (var i = 0; i < parseData.headers.length; i++) {
-            if (vm.importParameters.isHeader && parseData.headers[i].search(/^(name|type|label)$/im) === 0) {
+            if (vm.importParameters.isHeader && parseData.headers[i].search(/^(name|type|label|gateway)$/im) === 0) {
                 columnParam = {
                     type: types.importEntityColumnType[parseData.headers[i].toLowerCase()].value,
                     key: parseData.headers[i].toLowerCase(),
@@ -126,6 +126,9 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
             var entityData = {
                 name: "",
                 type: "",
+                additionalInfo: {
+                    gateway: null
+                },
                 label: "",
                 accessToken: "",
                 attributes: {
@@ -166,6 +169,8 @@ export default function ImportDialogCsvController($scope, $mdDialog, toast, impo
                     case types.importEntityColumnType.label.value:
                         entityData.label = importData.rows[i][j];
                         break;
+                    case types.importEntityColumnType.gateway.value:
+                        entityData.additionalInfo.gateway = importData.rows[i][j];
                 }
             }
             entitiesData.push(entityData);

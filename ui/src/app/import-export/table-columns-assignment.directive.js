@@ -51,6 +51,7 @@ function TableColumnsAssignmentController($scope, types, $timeout) {
             vm.columnTypes.serverAttribute = types.importEntityColumnType.serverAttribute;
             vm.columnTypes.timeseries = types.importEntityColumnType.timeseries;
             vm.columnTypes.accessToken = types.importEntityColumnType.accessToken;
+            vm.columnTypes.gateway = types.importEntityColumnType.gateway;
             break;
         case types.entityType.asset:
             vm.columnTypes.serverAttribute = types.importEntityColumnType.serverAttribute;
@@ -64,6 +65,7 @@ function TableColumnsAssignmentController($scope, types, $timeout) {
             var isSelectType = false;
             var isSelectLabel = false;
             var isSelectCredentials = false;
+            var isSelectGateWay = false;
             for (var i = 0; i < newVal.length; i++) {
                 switch (newVal[i].type) {
                     case types.importEntityColumnType.name.value:
@@ -78,9 +80,12 @@ function TableColumnsAssignmentController($scope, types, $timeout) {
                     case types.importEntityColumnType.accessToken.value:
                         isSelectCredentials = true;
                         break;
+                    case types.importEntityColumnType.gateway.value:
+                        isSelectGateWay = true;
+                        break;
                 }
             }
-            if(isSelectName && isSelectType) {
+            if (isSelectName && isSelectType && isSelectGateWay) {
                 vm.theForm.$setDirty();
             } else {
                 vm.theForm.$setPristine();
@@ -89,6 +94,7 @@ function TableColumnsAssignmentController($scope, types, $timeout) {
                 vm.columnTypes.name.disable = isSelectName;
                 vm.columnTypes.type.disable = isSelectType;
                 vm.columnTypes.label.disable = isSelectLabel;
+                vm.columnTypes.gateway.disable = isSelectGateWay;
                 if (angular.isDefined(vm.columnTypes.accessToken)) {
                     vm.columnTypes.accessToken.disable = isSelectCredentials;
                 }

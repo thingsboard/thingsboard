@@ -42,7 +42,8 @@
                                     ng-if="column.type != vm.columnTypes.name.value &&
                                            column.type != vm.columnTypes.type.value &&
                                            column.type != vm.columnTypes.label.value &&
-                                           column.type != vm.columnTypes.accessToken.value">
+                                           column.type != vm.columnTypes.accessToken.value &&
+                                           column.type != vm.columnTypes.gateway.value">
                     <input required name="columnKeyName"
                            placeholder="{{ 'import.column-value' | translate }}"
                            ng-model="column.key"
