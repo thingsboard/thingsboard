@@ -98,7 +98,7 @@ public class JpaHsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEnt
 
     @Override
     public ListenableFuture<TsKvEntry> findLatest(TenantId tenantId, EntityId entityId, String key) {
-        return getTsKvEntryListenableFuture(entityId, key);
+        return getFindLatestFuture(entityId, key);
     }
 
     @Override

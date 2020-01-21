@@ -233,22 +233,6 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
         return tsLatestQueue.add(latestEntity);
     }
 
-    protected ListenableFuture<TsKvEntry> getTsKvEntryListenableFuture(EntityId entityId, String key) {
-        TsKvLatestCompositeKey compositeKey =
-                new TsKvLatestCompositeKey(
-                        entityId.getEntityType(),
-                        fromTimeUUID(entityId.getId()),
-                        key);
-        Optional<TsKvLatestEntity> entry = tsKvLatestRepository.findById(compositeKey);
-        TsKvEntry result;
-        if (entry.isPresent()) {
-            result = DaoUtil.getData(entry.get());
-        } else {
-            result = new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry(key, null));
-        }
-        return Futures.immediateFuture(result);
-    }
-
     private ListenableFuture<Void> getNewLatestEntryFuture(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
         ListenableFuture<List<TsKvEntry>> future = findNewLatestEntryFuture(tenantId, entityId, query);
         return Futures.transformAsync(future, entryList -> {
