@@ -94,7 +94,7 @@ public class PsqlTsDatabaseUpgradeService implements DatabaseTsUpgradeService {
     }
 
     private void loadSql(Connection conn) {
-        Path schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "2.4.1", LOAD_FUNCTIONS_SQL);
+        Path schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "2.4.3", LOAD_FUNCTIONS_SQL);
         try {
             loadFunctions(schemaUpdateFile, conn);
         } catch (Exception e) {
