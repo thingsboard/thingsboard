@@ -96,9 +96,8 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
         withCallback(allFutures, i -> {
             if (!failuresMap.isEmpty()) {
                 throw reportFailures(failuresMap);
-            } else {
-                ctx.tellNext(msg, SUCCESS);
             }
+            ctx.tellNext(msg, SUCCESS);
         }, t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
     }
 
