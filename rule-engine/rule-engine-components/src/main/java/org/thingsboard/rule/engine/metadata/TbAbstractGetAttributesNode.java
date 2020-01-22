@@ -93,9 +93,13 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
                 putAttrAsync(ctx, entityId, msg, SHARED_SCOPE, config.getSharedAttributeNames(), failuresMap, "shared_"),
                 putAttrAsync(ctx, entityId, msg, SERVER_SCOPE, config.getServerAttributeNames(), failuresMap, "ss_")
         );
-        reportFailures(failuresMap);
-        failuresMap.clear();
-        withCallback(allFutures, i -> ctx.tellNext(msg, SUCCESS), t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
+        withCallback(allFutures, i -> {
+            if (!failuresMap.isEmpty()) {
+                ctx.tellFailure(msg, reportFailures(failuresMap));
+            } else {
+                ctx.tellNext(msg, SUCCESS);
+            }
+        }, t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
     }
 
     private ListenableFuture<Void> putAttrAsync(TbContext ctx, EntityId entityId, TbMsg msg, String scope, List<String> keys, ConcurrentHashMap<String, List<String>> failuresMap, String prefix) {
@@ -179,22 +183,20 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
         failures.add(key);
     }
 
-    private void reportFailures(ConcurrentHashMap<String, List<String>> failuresMap) {
-        if (!failuresMap.isEmpty()) {
-            StringBuilder errorMessage = new StringBuilder("The following attribute/telemetry keys is not present in the DB: ").append("\n");
-            if (failuresMap.containsKey(CLIENT_SCOPE)) {
-                errorMessage.append("\t").append("[" + CLIENT_SCOPE + "]:").append(failuresMap.get(CLIENT_SCOPE).toString()).append("\n");
-            }
-            if (failuresMap.containsKey(SERVER_SCOPE)) {
-                errorMessage.append("\t").append("[" + SERVER_SCOPE + "]:").append(failuresMap.get(SERVER_SCOPE).toString()).append("\n");
-            }
-            if (failuresMap.containsKey(SHARED_SCOPE)) {
-                errorMessage.append("\t").append("[" + SHARED_SCOPE + "]:").append(failuresMap.get(SHARED_SCOPE).toString()).append("\n");
-            }
-            if (failuresMap.containsKey(LATEST_TS)) {
-                errorMessage.append("\t").append("[" + LATEST_TS + "]:").append(failuresMap.get(LATEST_TS).toString()).append("\n");
-            }
-            throw new RuntimeException(errorMessage.toString());
+    private RuntimeException reportFailures(ConcurrentHashMap<String, List<String>> failuresMap) {
+        StringBuilder errorMessage = new StringBuilder("The following attribute/telemetry keys is not present in the DB: ").append("\n");
+        if (failuresMap.containsKey(CLIENT_SCOPE)) {
+            errorMessage.append("\t").append("[" + CLIENT_SCOPE + "]:").append(failuresMap.get(CLIENT_SCOPE).toString()).append("\n");
         }
+        if (failuresMap.containsKey(SERVER_SCOPE)) {
+            errorMessage.append("\t").append("[" + SERVER_SCOPE + "]:").append(failuresMap.get(SERVER_SCOPE).toString()).append("\n");
+        }
+        if (failuresMap.containsKey(SHARED_SCOPE)) {
+            errorMessage.append("\t").append("[" + SHARED_SCOPE + "]:").append(failuresMap.get(SHARED_SCOPE).toString()).append("\n");
+        }
+        if (failuresMap.containsKey(LATEST_TS)) {
+            errorMessage.append("\t").append("[" + LATEST_TS + "]:").append(failuresMap.get(LATEST_TS).toString()).append("\n");
+        }
+        return new RuntimeException(errorMessage.toString());
     }
 }
