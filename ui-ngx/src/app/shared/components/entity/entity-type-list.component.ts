@@ -190,7 +190,7 @@ export class EntityTypeListComponent implements ControlValueAccessor, OnInit, Af
       this.entityTypeList = [];
       value.forEach((entityType) => {
         this.entityTypeList.push({
-          name: this.translate.instant(entityTypeTranslations.get(entityType).type),
+          name: entityTypeTranslations.has(entityType) ? this.translate.instant(entityTypeTranslations.get(entityType).type) : 'Unknown',
           value: entityType
         });
       });

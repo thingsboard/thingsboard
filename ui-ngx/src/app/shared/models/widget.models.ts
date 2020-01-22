@@ -363,8 +363,6 @@ export interface WidgetConfig {
   datasources?: Array<Datasource>;
   targetDeviceAliasIds?: Array<string>;
   [key: string]: any;
-
-  // TODO:
 }
 
 export interface Widget {

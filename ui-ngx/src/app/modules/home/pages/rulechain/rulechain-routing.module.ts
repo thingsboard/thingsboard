@@ -16,7 +16,14 @@
 
 import * as AngularCore from '@angular/core';
 import { Injectable, NgModule } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve, RouterModule, Routes } from '@angular/router';
+import {
+  ActivatedRouteSnapshot,
+  CanActivate,
+  Resolve, Router,
+  RouterModule,
+  RouterStateSnapshot,
+  Routes, UrlTree
+} from '@angular/router';
 
 import { EntitiesTableComponent } from '../../components/entity/entities-table.component';
 import { Authority } from '@shared/models/authority.enum';
@@ -41,6 +48,7 @@ import * as TranslateCore from '@ngx-translate/core';
 import * as TbCore from '@core/public-api';
 import * as TbShared from '@shared/public-api';
 import * as TbHomeComponents from '@home/components/public-api';
+import { ItemBufferService } from '@core/public-api';
 
 declare const SystemJS;
 
@@ -98,6 +106,23 @@ export class RuleNodeComponentsResolver implements Resolve<Array<RuleNodeCompone
   }
 }
 
+@Injectable()
+export class RuleChainImportGuard implements CanActivate {
+
+  constructor(private itembuffer: ItemBufferService,
+              private router: Router) {
+  }
+
+  canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
+    if (this.itembuffer.hasRuleChainImport()) {
+      return true;
+    } else {
+      return this.router.parseUrl('ruleChains');
+    }
+  }
+
+}
+
 export const ruleChainBreadcumbLabelFunction: BreadCrumbLabelFunction = ((route, translate, component) => {
   let label: string = component.ruleChain.name;
   if (component.ruleChain.root) {
@@ -153,6 +178,7 @@ const routes: Routes = [
       {
         path: 'ruleChain/import',
         component: RuleChainPageComponent,
+        canActivate: [RuleChainImportGuard],
         canDeactivate: [ConfirmOnExitGuard],
         data: {
           breadcrumb: {
@@ -164,8 +190,6 @@ const routes: Routes = [
           import: true
         },
         resolve: {
-          ruleChain: 'importRuleChain',
-          ruleChainMetaData: 'importRuleChainMetadata',
           ruleNodeComponents: RuleNodeComponentsResolver
         }
       }
@@ -182,20 +206,7 @@ const routes: Routes = [
     RuleChainResolver,
     ResolvedRuleChainMetaDataResolver,
     RuleNodeComponentsResolver,
-    {
-      provide: 'importRuleChain',
-      useValue: (route: ActivatedRouteSnapshot) => {
-        const ruleChainImport: RuleChainImport = route.params.ruleChainImport;
-        return ruleChainImport.ruleChain;
-      }
-    },
-    {
-      provide: 'importRuleChainMetadata',
-      useValue: (route: ActivatedRouteSnapshot) => {
-        const ruleChainImport: RuleChainImport = route.params.ruleChainImport;
-        return ruleChainImport.metadata;
-      }
-    }
+    RuleChainImportGuard
   ]
 })
 export class RuleChainRoutingModule { }

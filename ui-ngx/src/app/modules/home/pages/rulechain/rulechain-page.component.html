@@ -111,16 +111,21 @@
             <div class="details-buttons">
               <div [tb-help]="helpLinkIdForRuleNodeType()"></div>
             </div>
-            <mat-tab-group fxFlex class="tb-absolute-fill" [(selectedIndex)]="selectedRuleNodeTabIndex">
+            <mat-tab-group fxFlex class="tb-absolute-fill tb-rulenode-details" [(selectedIndex)]="selectedRuleNodeTabIndex">
               <mat-tab label="{{ 'rulenode.details' | translate }}">
                 <tb-rule-node #tbRuleNode
                               [ruleNode]="editingRuleNode"
-                              [ruleChainId]="ruleChain.id.id"
+                              [ruleChainId]="ruleChain.id?.id"
                               [isEdit]="true"
                               [isReadOnly]="false">
                 </tb-rule-node>
               </mat-tab>
-              <mat-tab *ngIf="editingRuleNode.ruleNodeId" label="{{ 'rulenode.events' | translate }}">
+              <mat-tab *ngIf="editingRuleNode.ruleNodeId" label="{{ 'rulenode.events' | translate }}" #eventsTab="matTab">
+                <tb-event-table [active]="eventsTab.isActive"
+                                [debugEventTypes]="[debugEventTypes.DEBUG_RULE_NODE]"
+                                [defaultEventType]="debugEventTypes.DEBUG_RULE_NODE"
+                                [tenantId]="ruleChain.tenantId.id"
+                                [entityId]="editingRuleNode.ruleNodeId"></tb-event-table>
               </mat-tab>
               <mat-tab label="{{ 'rulenode.help' | translate }}">
                 <div class="tb-rule-node-help">

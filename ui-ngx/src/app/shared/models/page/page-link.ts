@@ -94,14 +94,15 @@ export class PageLink {
       pageData.data = pageData.data.filter((entity) => searchFunction(entity, this.textSearch));
     }
     pageData.totalElements = pageData.data.length;
-    pageData.totalPages = Math.ceil(pageData.totalElements / this.pageSize);
+    pageData.totalPages = this.pageSize === Number.POSITIVE_INFINITY ? 1 : Math.ceil(pageData.totalElements / this.pageSize);
     if (this.sortOrder) {
       pageData.data = pageData.data.sort((a, b) => this.sort(a, b));
     }
-    const startIndex = this.pageSize * this.page;
-    const endIndex = startIndex + this.pageSize;
-    pageData.data = pageData.data.slice(startIndex, startIndex + this.pageSize);
-    pageData.hasNext = pageData.totalElements > startIndex + pageData.data.length;
+    if (this.pageSize !== Number.POSITIVE_INFINITY) {
+      const startIndex = this.pageSize * this.page;
+      pageData.data = pageData.data.slice(startIndex, startIndex + this.pageSize);
+      pageData.hasNext = pageData.totalElements > startIndex + pageData.data.length;
+    }
     return pageData;
   }
 

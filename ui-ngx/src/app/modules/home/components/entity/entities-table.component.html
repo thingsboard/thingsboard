@@ -152,18 +152,26 @@
                 </mat-checkbox>
               </mat-cell>
             </ng-container>
-            <ng-container [matColumnDef]="column.key" *ngFor="let column of columns; trackBy: trackByColumnKey; let col = index">
-              <mat-header-cell *matHeaderCellDef [ngStyle]="headerCellStyle(column, col)" mat-sort-header [disabled]="!column.sortable"> {{ column.title | translate }} </mat-header-cell>
+            <ng-container [matColumnDef]="column.key" *ngFor="let column of entityColumns; trackBy: trackByColumnKey;">
+              <mat-header-cell *matHeaderCellDef [ngStyle]="headerCellStyle(column)" mat-sort-header [disabled]="!column.sortable"> {{ column.title | translate }} </mat-header-cell>
               <mat-cell *matCellDef="let entity; let row = index"
-                        [innerHTML]="cellContent(entity, column, row, col)"
-                        [ngStyle]="cellStyle(entity, column, row, col)">
-                <button *ngIf="column.actionDescriptor; let actionDescriptor" mat-button mat-icon-button [disabled]="isLoading$ | async"
-                        [fxShow]="actionDescriptor.isEnabled(entity)"
-                        matTooltip="{{ actionDescriptor.nameFunction ? actionDescriptor.nameFunction(entity) : actionDescriptor.name }}"
+                        [matTooltip]="cellTooltip(entity, column, row)"
                         matTooltipPosition="above"
-                        (click)="actionDescriptor.onAction($event, entity)">
-                  <mat-icon [svgIcon]="actionDescriptor.mdiIcon" [ngStyle]="actionDescriptor.style">
-                    {{actionDescriptor.icon}}</mat-icon>
+                        [innerHTML]="cellContent(entity, column, row)"
+                        [ngStyle]="cellStyle(entity, column, row)">
+              </mat-cell>
+            </ng-container>
+            <ng-container [matColumnDef]="column.key" *ngFor="let column of actionColumns; trackBy: trackByColumnKey;">
+              <mat-header-cell *matHeaderCellDef [ngStyle]="headerCellStyle(column)" mat-sort-header [disabled]="!column.sortable"> {{ column.title | translate }} </mat-header-cell>
+              <mat-cell *matCellDef="let entity; let row = index"
+                        [ngStyle]="cellStyle(entity, column, row)">
+                <button mat-button mat-icon-button [disabled]="isLoading$ | async"
+                        [fxShow]="column.actionDescriptor.isEnabled(entity)"
+                        matTooltip="{{ column.actionDescriptor.nameFunction ? column.actionDescriptor.nameFunction(entity) : column.actionDescriptor.name }}"
+                        matTooltipPosition="above"
+                        (click)="column.actionDescriptor.onAction($event, entity)">
+                  <mat-icon [svgIcon]="column.actionDescriptor.mdiIcon" [ngStyle]="column.actionDescriptor.style">
+                    {{column.actionDescriptor.icon}}</mat-icon>
                 </button>
               </mat-cell>
             </ng-container>

@@ -26,10 +26,14 @@ import { Observable, of, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { FcRuleEdge, FcRuleNode, ruleNodeTypeDescriptors } from '@shared/models/rule-node.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
+import { RuleChainImport } from '@shared/models/rule-chain.models';
+import { Simulate } from 'react-dom/test-utils';
+import error = Simulate.error;
 
 const WIDGET_ITEM = 'widget_item';
 const WIDGET_REFERENCE = 'widget_reference';
 const RULE_NODES = 'rule_nodes';
+const RULE_CHAIN_IMPORT = 'rule_chain_import';
 
 export interface WidgetItem {
   widget: Widget;
@@ -312,6 +316,20 @@ export class ItemBufferService {
       return ruleNodes;
     }
     return null;
+  }
+
+  public hasRuleChainImport(): boolean {
+    return this.storeHas(RULE_CHAIN_IMPORT);
+  }
+
+  public storeRuleChainImport(ruleChainImport: RuleChainImport): void {
+    this.storeSet(RULE_CHAIN_IMPORT, ruleChainImport);
+  }
+
+  public getRuleChainImport(): RuleChainImport {
+    const ruleChainImport: RuleChainImport = this.storeGet(RULE_CHAIN_IMPORT);
+    this.storeRemove(RULE_CHAIN_IMPORT);
+    return ruleChainImport;
   }
 
   private getOriginalColumns(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId): number {

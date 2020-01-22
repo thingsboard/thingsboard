@@ -275,6 +275,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
 
   private updateWidgets() {
     this.dashboardWidgets.setWidgets(this.widgets, this.widgetLayouts);
+    this.dashboardWidgets.doCheck();
     this.dashboardLoading = false;
   }
 

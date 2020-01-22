@@ -259,5 +259,4 @@ export interface IWidgetSubscription {
   destroy(): void;
 
   [key: string]: any;
-  // TODO:
 }

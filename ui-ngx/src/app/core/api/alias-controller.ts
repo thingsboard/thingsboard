@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { AliasInfo, IAliasController, IStateController, StateEntityInfo, StateControllerHolder } from '@core/api/widget-api.models';
+import { AliasInfo, IAliasController, StateControllerHolder, StateEntityInfo } from '@core/api/widget-api.models';
 import { forkJoin, Observable, of, ReplaySubject, Subject } from 'rxjs';
 import { DataKey, Datasource, DatasourceType } from '@app/shared/models/widget.models';
 import { deepClone } from '@core/utils';
@@ -23,54 +23,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { EntityAliases } from '@shared/models/alias.models';
 import { EntityInfo } from '@shared/models/entity.models';
 import * as equal from 'deep-equal';
-import { map, tap } from 'rxjs/operators';
-
-export class DummyAliasController implements IAliasController {
-
-  entityAliasesChanged: Observable<Array<string>>;
-  entityAliasResolved: Observable<string>;
-
-  [key: string]: any | null;
-
-  constructor() {
-    this.entityAliasesChanged = new Subject<Array<string>>().asObservable();
-    this.entityAliasResolved = new Subject<string>().asObservable();
-  }
-
-  getAliasInfo(aliasId): Observable<AliasInfo> {
-    return of(null);
-  }
-
-  resolveAlarmSource(alarmSource: Datasource): Observable<Datasource> {
-    return of(deepClone(alarmSource));
-  }
-
-  resolveDatasources(datasources: Array<Datasource>): Observable<Array<Datasource>> {
-    return of(deepClone(datasources));
-  }
-
-  getEntityAliases(): EntityAliases {
-    return undefined;
-  }
-
-  getInstantAliasInfo(aliasId: string): AliasInfo {
-    return undefined;
-  }
-
-  updateCurrentAliasEntity(aliasId: string, currentEntity: EntityInfo) {
-  }
-
-  updateEntityAliases(entityAliases: EntityAliases) {
-  }
-
-  dashboardStateChanged() {
-  }
-
-  getEntityAliasId(aliasName: string): string {
-    return null;
-  }
-
-}
+import { map } from 'rxjs/operators';
 
 export class AliasController implements IAliasController {
 

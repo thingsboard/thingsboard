@@ -19,18 +19,24 @@ import { CommonModule } from '@angular/common';
 import { SharedModule } from '@app/shared/shared.module';
 import { AlarmDetailsDialogComponent } from '@home/components/alarm/alarm-details-dialog.component';
 import { LegendComponent } from '@home/components/widget/legend.component';
+import { EntitiesTableWidgetComponent } from '@home/components/widget/lib/entities-table-widget.component';
+import { DisplayColumnsPanelComponent } from '@home/components/widget/lib/display-columns-panel.component';
 
 @NgModule({
   entryComponents: [
+    DisplayColumnsPanelComponent
   ],
   declarations:
     [
+      DisplayColumnsPanelComponent,
+      EntitiesTableWidgetComponent
     ],
   imports: [
     CommonModule,
     SharedModule
   ],
   exports: [
+    EntitiesTableWidgetComponent
   ]
 })
 export class WidgetComponentsModule { }

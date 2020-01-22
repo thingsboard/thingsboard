@@ -15,8 +15,8 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
-import { Observable } from 'rxjs/index';
+import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
+import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { PageData } from '@shared/models/page/page-data';
 import { EntityId } from '@shared/models/id/entity-id';
@@ -26,24 +26,42 @@ import {
   AlarmQuery,
   AlarmSearchStatus,
   AlarmSeverity,
-  AlarmStatus
+  AlarmStatus,
+  simulatedAlarm
 } from '@shared/models/alarm.models';
 import { EntityType } from '@shared/models/entity-type.models';
-import { Datasource } from '@shared/models/widget.models';
+import { Datasource, DatasourceType } from '@shared/models/widget.models';
+import { SubscriptionTimewindow } from '@shared/models/time/time.models';
+import { UtilsService } from '@core/services/utils.service';
+import { TimePageLink } from '@shared/models/page/page-link';
+import { Direction, SortOrder } from '@shared/models/page/sort-order';
+import { concatMap, expand, map, toArray } from 'rxjs/operators';
+import { EMPTY } from 'rxjs';
+import Timeout = NodeJS.Timeout;
+
+interface AlarmSourceListenerQuery {
+  entityType: EntityType;
+  entityId: string;
+  alarmSearchStatus: AlarmSearchStatus;
+  alarmStatus: AlarmStatus;
+  fetchOriginator?: boolean;
+  limit?: number;
+  interval?: number;
+  startTime?: number;
+  endTime?: number;
+  onAlarms?: (alarms: Array<AlarmInfo>) => void;
+}
 
 export interface AlarmSourceListener {
   id?: string;
+  subscriptionTimewindow: SubscriptionTimewindow;
   alarmSource: Datasource;
   alarmsPollingInterval: number;
   alarmSearchStatus: AlarmSearchStatus;
-  alarmsQuery: {
-    entityType: EntityType;
-    entityId: string;
-    alarmSearchStatus: AlarmSearchStatus;
-    alarmStatus: AlarmStatus;
-    fetchOriginator?: boolean;
-    onAlarms?: (alarms: Array<AlarmInfo>) => void;
-  };
+  alarmsUpdated: (alarms: Array<AlarmInfo>) => void;
+  lastUpdateTs?: number;
+  alarmsQuery?: AlarmSourceListenerQuery;
+  pollTimer?: Timeout;
 }
 
 @Injectable({
@@ -51,8 +69,11 @@ export interface AlarmSourceListener {
 })
 export class AlarmService {
 
+  private alarmSourceListeners: {[id: string]: AlarmSourceListener} = {};
+
   constructor(
-    private http: HttpClient
+    private http: HttpClient,
+    private utils: UtilsService
   ) { }
 
   public getAlarm(alarmId: string, config?: RequestConfig): Observable<Alarm> {
@@ -91,5 +112,111 @@ export class AlarmService {
     }
     return this.http.get<AlarmSeverity>(url,
       defaultHttpOptionsFromConfig(config));
+  }
+
+  public subscribeForAlarms(alarmSourceListener: AlarmSourceListener): void {
+    alarmSourceListener.id = this.utils.guid();
+    this.alarmSourceListeners[alarmSourceListener.id] = alarmSourceListener;
+    const alarmSource = alarmSourceListener.alarmSource;
+    if (alarmSource.type === DatasourceType.function) {
+      setTimeout(() => {
+        alarmSourceListener.alarmsUpdated([simulatedAlarm]);
+      }, 0);
+    } else if (alarmSource.entityType && alarmSource.entityId) {
+      const pollingInterval = alarmSourceListener.alarmsPollingInterval;
+      alarmSourceListener.alarmsQuery = {
+        entityType: alarmSource.entityType,
+        entityId: alarmSource.entityId,
+        alarmSearchStatus: alarmSourceListener.alarmSearchStatus,
+        alarmStatus: null
+      };
+      const originatorKeys = alarmSource.dataKeys.filter(dataKey => dataKey.name.toLocaleLowerCase().includes('originator'));
+      if (originatorKeys.length) {
+        alarmSourceListener.alarmsQuery.fetchOriginator = true;
+      }
+      const subscriptionTimewindow = alarmSourceListener.subscriptionTimewindow;
+      if (subscriptionTimewindow.realtimeWindowMs) {
+        alarmSourceListener.alarmsQuery.startTime = subscriptionTimewindow.startTs;
+      } else {
+        alarmSourceListener.alarmsQuery.startTime = subscriptionTimewindow.fixedWindow.startTimeMs;
+        alarmSourceListener.alarmsQuery.endTime = subscriptionTimewindow.fixedWindow.endTimeMs;
+      }
+      alarmSourceListener.alarmsQuery.onAlarms = (alarms) => {
+        if (subscriptionTimewindow.realtimeWindowMs) {
+          const now = Date.now();
+          if (alarmSourceListener.lastUpdateTs) {
+            const interval = now - alarmSourceListener.lastUpdateTs;
+            alarmSourceListener.alarmsQuery.startTime += interval;
+          }
+          alarmSourceListener.lastUpdateTs = now;
+        }
+        alarmSourceListener.alarmsUpdated(alarms);
+      };
+      this.onPollAlarms(alarmSourceListener.alarmsQuery);
+      alarmSourceListener.pollTimer = setInterval(this.onPollAlarms.bind(this), pollingInterval, alarmSourceListener.alarmsQuery);
+    }
+  }
+
+  public unsubscribeFromAlarms(alarmSourceListener: AlarmSourceListener): void {
+    if (alarmSourceListener && alarmSourceListener.id) {
+      if (alarmSourceListener.pollTimer) {
+        clearInterval(alarmSourceListener.pollTimer);
+        alarmSourceListener.pollTimer = null;
+      }
+      delete this.alarmSourceListeners[alarmSourceListener.id];
+    }
+  }
+
+  private onPollAlarms(alarmsQuery: AlarmSourceListenerQuery): void {
+    this.getAlarmsByAlarmSourceQuery(alarmsQuery).subscribe((alarms) => {
+      alarmsQuery.onAlarms(alarms);
+    });
+  }
+
+  private getAlarmsByAlarmSourceQuery(alarmsQuery: AlarmSourceListenerQuery): Observable<Array<AlarmInfo>> {
+    const time = Date.now();
+    let pageLink: TimePageLink;
+    const sortOrder: SortOrder = {property: 'createdTime', direction: Direction.DESC};
+    if (alarmsQuery.limit) {
+      pageLink = new TimePageLink(alarmsQuery.limit, 0,
+        null,
+        sortOrder);
+    } else if (alarmsQuery.interval) {
+      pageLink = new TimePageLink(100, 0,
+        null,
+        sortOrder, time - alarmsQuery.interval);
+    } else if (alarmsQuery.startTime) {
+      pageLink = new TimePageLink(100, 0,
+        null,
+        sortOrder, Math.round(alarmsQuery.startTime));
+      if (alarmsQuery.endTime) {
+        pageLink.endTime = Math.round(alarmsQuery.endTime);
+      }
+    }
+    return this.fetchAlarms(alarmsQuery, pageLink);
+  }
+
+  private fetchAlarms(query: AlarmSourceListenerQuery,
+                      pageLink: TimePageLink): Observable<Array<AlarmInfo>> {
+    const alarmQuery = new AlarmQuery(
+      {id: query.entityId, entityType: query.entityType},
+      pageLink,
+      query.alarmSearchStatus,
+      query.alarmStatus,
+      query.fetchOriginator);
+    return this.getAlarms(alarmQuery, {ignoreLoading: true}).pipe(
+      expand((data) => {
+        if (data.hasNext && !query.limit) {
+          alarmQuery.pageLink.page += 1;
+          return this.getAlarms(alarmQuery, {ignoreLoading: true});
+        } else {
+          return EMPTY;
+        }
+      }),
+      map((data) => data.data),
+      concatMap((data) => data),
+      toArray(),
+      map((data) => data.sort((a, b) => alarmQuery.pageLink.sort(a, b))),
+    );
   }
 }

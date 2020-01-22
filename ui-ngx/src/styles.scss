@@ -509,10 +509,10 @@ mat-label {
   .mat-row {
     transition: background-color .2s;
     &:hover:not(.tb-current-entity) {
-      background-color: #f4f4f4;
+      background-color: rgba(221, 221, 221, 0.3);
     }
     &.tb-current-entity {
-      background-color: #e9e9e9;
+      background-color: rgba(221, 221, 221, 0.65);
     }
   }
 
@@ -560,6 +560,9 @@ mat-label {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+    &.mat-table-sticky {
+      background: transparent;
     }
   }
 

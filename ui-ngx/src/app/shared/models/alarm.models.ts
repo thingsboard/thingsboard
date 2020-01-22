@@ -22,6 +22,8 @@ import {AlarmId} from '@shared/models/id/alarm-id';
 import {EntityId} from '@shared/models/id/entity-id';
 import { ActionStatus } from '@shared/models/audit-log.models';
 import { TimePageLink } from '@shared/models/page/page-link';
+import { NULL_UUID } from '@shared/models/id/has-uuid';
+import { EntityType } from '@shared/models/entity-type.models';
 
 export enum AlarmSeverity {
   CRITICAL = 'CRITICAL',
@@ -102,6 +104,27 @@ export interface Alarm extends BaseData<AlarmId> {
 export interface AlarmInfo extends Alarm {
   originatorName: string;
 }
+
+export const simulatedAlarm: AlarmInfo = {
+  tenantId: new TenantId(NULL_UUID),
+  createdTime: new Date().getTime(),
+  startTs: new Date().getTime(),
+  endTs: 0,
+  ackTs: 0,
+  clearTs: 0,
+  originatorName: 'Simulated',
+  originator: {
+    entityType: EntityType.DEVICE,
+    id: "1"
+  },
+  type: 'TEMPERATURE',
+  severity: AlarmSeverity.MAJOR,
+  status: AlarmStatus.ACTIVE_UNACK,
+  details: {
+    message: "Temperature is high!"
+  },
+  propagate: false
+};
 
 export interface AlarmField {
   keyName: string;

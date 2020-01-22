@@ -32,8 +32,12 @@ import { EntityTypeResource } from '@shared/models/entity-type.models';
 import { Observable } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
 import { Direction } from '@shared/models/page/sort-order';
-import { MsgDataType } from '@shared/models/rule-node.models';
 import { DialogService } from '@core/services/dialog.service';
+import { ContentType } from '@shared/models/constants';
+import {
+  EventContentDialogComponent,
+  EventContentDialogData
+} from '@home/components/event/event-content-dialog.component';
 
 export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
 
@@ -157,34 +161,62 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
       case DebugEventType.DEBUG_RULE_NODE:
       case DebugEventType.DEBUG_RULE_CHAIN:
         this.columns.push(
-          new EntityTableColumn<Event>('type', 'event.type', '100%',
-            (entity) => entity.body.type, entity => ({}), false),
-          new EntityTableColumn<Event>('entity', 'event.entity', '100%',
-            (entity) => entity.body.entityName, entity => ({}), false),
+          new EntityTableColumn<Event>('type', 'event.type', '40px',
+            (entity) => entity.body.type, entity => ({
+              padding: '0 12px 0 0',
+            }), false, key => ({
+              padding: '0 12px 0 0'
+            })),
+          new EntityTableColumn<Event>('entity', 'event.entity', '100px',
+            (entity) => entity.body.entityName, entity => ({
+              padding: '0 12px 0 0',
+            }), false, key => ({
+              padding: '0 12px 0 0'
+            })),
           new EntityTableColumn<Event>('msgId', 'event.message-id', '100%',
-            (entity) => entity.body.msgId, entity => ({}), false),
+            (entity) => entity.body.msgId, entity => ({
+              whiteSpace: 'nowrap',
+              padding: '0 12px 0 0',
+              textOverflow: 'ellipsis',
+              display: 'inline-block',
+              lineHeight: '48px',
+            }), false, key => ({
+              padding: '0 12px 0 0'
+            }),
+            entity => entity.body.msgId),
           new EntityTableColumn<Event>('msgType', 'event.message-type', '100%',
-            (entity) => entity.body.msgType, entity => ({}), false),
-          new EntityTableColumn<Event>('relationType', 'event.relation-type', '100%',
-            (entity) => entity.body.relationType, entity => ({}), false),
+            (entity) => entity.body.msgType, entity => ({
+              whiteSpace: 'nowrap',
+              padding: '0 12px 0 0',
+              textOverflow: 'ellipsis',
+              display: 'inline-block',
+              lineHeight: '48px',
+            }), false, key => ({
+              padding: '0 12px 0 0'
+            }),
+            entity => entity.body.msgType),
+          new EntityTableColumn<Event>('relationType', 'event.relation-type', '100px',
+            (entity) => entity.body.relationType, entity => ({padding: '0 12px 0 0',}),false, key => ({
+              padding: '0 12px 0 0'
+            })),
           new EntityActionTableColumn<Event>('data', 'event.data',
             {
               name: this.translate.instant('action.view'),
               icon: 'more_horiz',
-              isEnabled: (entity) => entity.body.data && entity.body.data.length > 0,
+              isEnabled: (entity) => entity.body.data ? entity.body.data.length > 0 : false,
               onAction: ($event, entity) => this.showContent($event, entity.body.data,
                 'event.data', entity.body.dataType)
             },
-            '60px'),
+            '40px'),
           new EntityActionTableColumn<Event>('metadata', 'event.metadata',
             {
               name: this.translate.instant('action.view'),
               icon: 'more_horiz',
-              isEnabled: (entity) => entity.body.metadata && entity.body.metadata.length > 0,
+              isEnabled: (entity) => entity.body.metadata ? entity.body.metadata.length > 0 : false,
               onAction: ($event, entity) => this.showContent($event, entity.body.metadata,
-                'event.metadata', MsgDataType.JSON)
+                'event.metadata', ContentType.JSON)
             },
-            '60px'),
+            '40px'),
           new EntityActionTableColumn<Event>('error', 'event.error',
             {
               name: this.translate.instant('action.view'),
@@ -193,7 +225,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
               onAction: ($event, entity) => this.showContent($event, entity.body.error,
                 'event.error')
             },
-            '60px')
+            '40px')
         );
         break;
     }
@@ -202,11 +234,18 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     }
   }
 
-  showContent($event: MouseEvent, content: string, title: string, contentType: MsgDataType = null): void {
+  showContent($event: MouseEvent, content: string, title: string, contentType: ContentType = null): void {
     if ($event) {
       $event.stopPropagation();
     }
-    // TODO:
-    this.dialogService.todo();
+    this.dialog.open<EventContentDialogComponent, EventContentDialogData>(EventContentDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        content,
+        title,
+        contentType
+      }
+    });
   }
 }

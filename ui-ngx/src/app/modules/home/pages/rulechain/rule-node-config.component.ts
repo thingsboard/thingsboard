@@ -36,6 +36,7 @@ import { RuleChainService } from '@core/http/rule-chain.service';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { TranslateService } from '@ngx-translate/core';
 import { JsonObjectEditComponent } from '@shared/components/json-object-edit.component';
+import { deepClone } from '@core/utils';
 
 @Component({
   selector: 'tb-rule-node-config',
@@ -134,7 +135,7 @@ export class RuleNodeConfigComponent implements ControlValueAccessor, OnInit, On
   }
 
   writeValue(value: RuleNodeConfiguration): void {
-    this.configuration = value;
+    this.configuration = deepClone(value);
     if (this.changeSubscription) {
       this.changeSubscription.unsubscribe();
       this.changeSubscription = null;
@@ -145,7 +146,7 @@ export class RuleNodeConfigComponent implements ControlValueAccessor, OnInit, On
         this.updateModel(configuration);
       });
     } else {
-      this.ruleNodeConfigFormGroup.get('configuration').patchValue(value, {emitEvent: false});
+      this.ruleNodeConfigFormGroup.get('configuration').patchValue(this.configuration, {emitEvent: false});
       this.changeSubscription = this.ruleNodeConfigFormGroup.get('configuration').valueChanges.subscribe(
         (configuration: RuleNodeConfiguration) => {
           this.updateModel(configuration);

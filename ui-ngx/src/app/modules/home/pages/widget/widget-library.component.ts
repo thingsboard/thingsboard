@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
@@ -24,25 +24,21 @@ import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Authority } from '@shared/models/authority.enum';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
-import { Observable, of, Subscription } from 'rxjs';
+import { of } from 'rxjs';
 import { Widget, widgetType } from '@app/shared/models/widget.models';
 import { WidgetService } from '@core/http/widget.service';
-import { map, mergeMap, share } from 'rxjs/operators';
+import { map, mergeMap } from 'rxjs/operators';
 import { DialogService } from '@core/services/dialog.service';
 import { FooterFabButtons } from '@app/shared/components/footer-fab-buttons.component';
 import { DashboardCallbacks, IDashboardComponent, WidgetsData } from '@home/models/dashboard-component.models';
-import { IAliasController } from '@app/core/api/widget-api.models';
-import { toWidgetInfo } from '@home/models/widget-component.models';
-import { DummyAliasController } from '@core/api/alias-controller';
-import {
-  DeviceCredentialsDialogComponent,
-  DeviceCredentialsDialogData
-} from '@home/pages/device/device-credentials-dialog.component';
-import { DeviceCredentials } from '@shared/models/device.models';
+import { IAliasController, IStateController, StateParams } from '@app/core/api/widget-api.models';
+import { AliasController } from '@core/api/alias-controller';
 import { MatDialog } from '@angular/material/dialog';
 import { SelectWidgetTypeDialogComponent } from '@home/pages/widget/select-widget-type-dialog.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ImportExportService } from '@home/components/import-export/import-export.service';
+import { UtilsService } from '@core/services/utils.service';
+import { EntityService } from '@core/http/entity.service';
 
 @Component({
   selector: 'tb-widget-library',
@@ -86,7 +82,14 @@ export class WidgetLibraryComponent extends PageComponent implements OnInit {
     onRemoveWidget: this.removeWidgetType.bind(this)
   };
 
-  aliasController: IAliasController = new DummyAliasController();
+  aliasController: IAliasController = new AliasController(this.utils,
+    this.entityService,
+    () => { return {
+      getStateParams(): StateParams {
+        return {};
+      }
+    } as IStateController},
+    {});
 
   @ViewChild('dashboard', {static: true}) dashboard: IDashboardComponent;
 
@@ -97,7 +100,9 @@ export class WidgetLibraryComponent extends PageComponent implements OnInit {
               private dialogService: DialogService,
               private importExport: ImportExportService,
               private dialog: MatDialog,
-              private translate: TranslateService) {
+              private translate: TranslateService,
+              private utils: UtilsService,
+              private entityService: EntityService) {
     super(store);
 
     this.authUser = getCurrentAuthUser(this.store);

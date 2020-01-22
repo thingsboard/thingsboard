@@ -27,7 +27,7 @@ import {
   NgZone,
   OnChanges,
   OnDestroy,
-  OnInit,
+  OnInit, ReflectiveInjector,
   SimpleChanges, Type,
   ViewChild,
   ViewContainerRef,
@@ -93,12 +93,14 @@ import { EntityService } from '@core/http/entity.service';
 import { AssetService } from '@core/http/asset.service';
 import { DialogService } from '@core/services/dialog.service';
 import { CustomDialogService } from '@home/components/widget/dialog/custom-dialog.service';
+import { DatePipe } from '@angular/common';
 
 const ServicesMap = new Map<string, Type<any>>();
 ServicesMap.set('deviceService', DeviceService);
 ServicesMap.set('assetService', AssetService);
 ServicesMap.set('dialogs', DialogService);
 ServicesMap.set('customDialog', CustomDialogService);
+ServicesMap.set('date', DatePipe);
 
 @Component({
   selector: 'tb-widget',
@@ -249,6 +251,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     }
 
     this.widgetContext = this.dashboardWidget.widgetContext;
+    this.widgetContext.changeDetector = this.cd;
     this.widgetContext.servicesMap = ServicesMap;
     this.widgetContext.isEdit = this.isEdit;
     this.widgetContext.isMobile = this.isMobile;
@@ -420,6 +423,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
 
     this.initialize().subscribe(
       () => {
+        this.cd.detectChanges();
         this.onInit();
       },
       (err) => {
@@ -579,13 +583,11 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         }
       }
     ));
-
-    this.configureDynamicWidgetComponent();
     if (!this.typeParameters.useCustomDatasources) {
-      // this.cre
       this.createDefaultSubscription().subscribe(
         () => {
           this.subscriptionInited = true;
+          this.configureDynamicWidgetComponent();
           initSubject.next();
           initSubject.complete();
         },
@@ -597,6 +599,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     } else {
       this.loadingData = false;
       this.subscriptionInited = true;
+      this.configureDynamicWidgetComponent();
       initSubject.next();
       initSubject.complete();
     }
@@ -621,14 +624,23 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
 
   private configureDynamicWidgetComponent() {
       this.widgetContentContainer.clear();
-      this.dynamicWidgetComponentRef = this.widgetContentContainer.createComponent(this.widgetInfo.componentFactory);
+      const injector: Injector = Injector.create(
+        {
+          providers: [
+            {
+              provide: 'widgetContext',
+              useValue: this.widgetContext
+            },
+            {
+              provide: 'errorMessages',
+              useValue: this.errorMessages
+            }
+          ],
+          parent: this.injector
+        }
+      );
+      this.dynamicWidgetComponentRef = this.widgetContentContainer.createComponent(this.widgetInfo.componentFactory, 0, injector);
       this.dynamicWidgetComponent = this.dynamicWidgetComponentRef.instance;
-
-      this.dynamicWidgetComponent.widgetContext = this.widgetContext;
-      this.dynamicWidgetComponent.errorMessages = this.errorMessages;
-
-      this.widgetContext.$scope = this.dynamicWidgetComponent;
-      this.widgetContext.$scope.$injector = this.injector;
 
       const containerElement = $(this.elementRef.nativeElement.querySelector('#widget-container'));
 
@@ -810,22 +822,30 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       };
       options.callbacks = {
         rpcStateChanged: (subscription) => {
-          this.dynamicWidgetComponent.rpcEnabled = subscription.rpcEnabled;
-          this.dynamicWidgetComponent.executingRpcRequest = subscription.executingRpcRequest;
+          if (this.dynamicWidgetComponent) {
+            this.dynamicWidgetComponent.rpcEnabled = subscription.rpcEnabled;
+            this.dynamicWidgetComponent.executingRpcRequest = subscription.executingRpcRequest;
+          }
         },
         onRpcSuccess: (subscription) => {
-          this.dynamicWidgetComponent.executingRpcRequest = subscription.executingRpcRequest;
-          this.dynamicWidgetComponent.rpcErrorText = subscription.rpcErrorText;
-          this.dynamicWidgetComponent.rpcRejection = subscription.rpcRejection;
+          if (this.dynamicWidgetComponent) {
+            this.dynamicWidgetComponent.executingRpcRequest = subscription.executingRpcRequest;
+            this.dynamicWidgetComponent.rpcErrorText = subscription.rpcErrorText;
+            this.dynamicWidgetComponent.rpcRejection = subscription.rpcRejection;
+          }
         },
         onRpcFailed: (subscription) => {
-          this.dynamicWidgetComponent.executingRpcRequest = subscription.executingRpcRequest;
-          this.dynamicWidgetComponent.rpcErrorText = subscription.rpcErrorText;
-          this.dynamicWidgetComponent.rpcRejection = subscription.rpcRejection;
+          if (this.dynamicWidgetComponent) {
+            this.dynamicWidgetComponent.executingRpcRequest = subscription.executingRpcRequest;
+            this.dynamicWidgetComponent.rpcErrorText = subscription.rpcErrorText;
+            this.dynamicWidgetComponent.rpcRejection = subscription.rpcRejection;
+          }
         },
         onRpcErrorCleared: (subscription) => {
-          this.dynamicWidgetComponent.rpcErrorText = null;
-          this.dynamicWidgetComponent.rpcRejection = null;
+          if (this.dynamicWidgetComponent) {
+            this.dynamicWidgetComponent.rpcErrorText = null;
+            this.dynamicWidgetComponent.rpcRejection = null;
+          }
         }
       };
       this.createSubscription(options).subscribe(
@@ -897,12 +917,11 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         } else {
           url = `/dashboards/${targetDashboardId}?state=${state}`;
         }
-        const urlTree = this.router.parseUrl(url);
         this.router.navigateByUrl(url);
         break;
       case WidgetActionType.custom:
         const customFunction = descriptor.customFunction;
-        if (isDefined(customFunction) && customFunction.length > 0) {
+        if (customFunction && customFunction.length > 0) {
           try {
             if (!additionalParams) {
               additionalParams = {};

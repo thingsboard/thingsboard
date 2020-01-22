@@ -41,7 +41,7 @@ import {
   toHistoryTimewindow,
   WidgetTimewindow
 } from '@app/shared/models/time/time.models';
-import { Observable, of, ReplaySubject, Subject } from 'rxjs';
+import { Observable, ReplaySubject, Subject, throwError } from 'rxjs';
 import { CancelAnimationFrame } from '@core/services/raf.service';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AlarmInfo, AlarmSearchStatus } from '@shared/models/alarm.models';
@@ -78,7 +78,20 @@ export class WidgetSubscription implements IWidgetSubscription {
 
   alarms: Array<AlarmInfo>;
   alarmSource: Datasource;
-  alarmSearchStatus: AlarmSearchStatus;
+
+  private alarmSearchStatusValue: AlarmSearchStatus;
+
+  set alarmSearchStatus(value: AlarmSearchStatus) {
+    if (this.alarmSearchStatusValue !== value) {
+      this.alarmSearchStatusValue = value;
+      this.onAlarmSearchStatusChanged();
+    }
+  }
+
+  get alarmSearchStatus(): AlarmSearchStatus {
+    return this.alarmSearchStatusValue;
+  }
+
   alarmsPollingInterval: number;
   alarmSourceListener: AlarmSourceListener;
 
@@ -136,7 +149,7 @@ export class WidgetSubscription implements IWidgetSubscription {
       this.callbacks.dataLoading = this.callbacks.dataLoading || (() => {});
       this.callbacks.timeWindowUpdated = this.callbacks.timeWindowUpdated || (() => {});
       this.alarmSource = options.alarmSource;
-      this.alarmSearchStatus = isDefined(options.alarmSearchStatus) ?
+      this.alarmSearchStatusValue = isDefined(options.alarmSearchStatus) ?
         options.alarmSearchStatus : AlarmSearchStatus.ANY;
       this.alarmsPollingInterval = isDefined(options.alarmsPollingInterval) ?
         options.alarmsPollingInterval : 5000;
@@ -262,8 +275,30 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   private initAlarmSubscription(): Observable<any> {
-    // TODO:
-    return of(null);
+    const initAlarmSubscriptionSubject = new ReplaySubject(1);
+    this.loadStDiff().subscribe(() => {
+      if (!this.ctx.aliasController) {
+        this.configureAlarmsData();
+        initAlarmSubscriptionSubject.next();
+        initAlarmSubscriptionSubject.complete();
+      } else {
+        this.ctx.aliasController.resolveAlarmSource(this.alarmSource).subscribe(
+          (alarmSource) => {
+            this.alarmSource = alarmSource;
+            this.configureAlarmsData();
+            initAlarmSubscriptionSubject.next();
+            initAlarmSubscriptionSubject.complete();
+          },
+          (err) => {
+            initAlarmSubscriptionSubject.error(err);
+          }
+        );
+      }
+    });
+    return initAlarmSubscriptionSubject.asObservable();
+  }
+
+  private configureAlarmsData() {
   }
 
   private initDataSubscription(): Observable<any> {
@@ -417,6 +452,12 @@ export class WidgetSubscription implements IWidgetSubscription {
     }
   }
 
+  private onAlarmSearchStatusChanged() {
+    if (this.type === widgetType.alarm) {
+      this.update();
+    }
+  }
+
   updateDataVisibility(index: number): void {
     if (this.displayLegend) {
       const hidden = this.legendData.keys[index].dataKey.hidden;
@@ -465,17 +506,125 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   sendOneWayCommand(method: string, params?: any, timeout?: number): Observable<any> {
-    // TODO:
-    return undefined;
+    return this.sendCommand(true, method, params, timeout);
   }
 
   sendTwoWayCommand(method: string, params?: any, timeout?: number): Observable<any> {
-    // TODO:
-    return undefined;
+    return this.sendCommand(false, method, params, timeout);
   }
 
   clearRpcError(): void {
-    // TODO:
+    this.rpcRejection = null;
+    this.rpcErrorText = null;
+    this.callbacks.onRpcErrorCleared(this);
+  }
+
+  sendCommand(oneWayElseTwoWay: boolean, method: string, params?: any, timeout?: number): Observable<any> {
+    if (!this.rpcEnabled) {
+      return throwError(new Error('Rpc disabled!'));
+    } else {
+      if (this.rpcRejection && this.rpcRejection.status !== 408) {
+        this.rpcRejection = null;
+        this.rpcErrorText = null;
+        this.callbacks.onRpcErrorCleared(this);
+      }
+      const requestBody: any = {
+        method,
+        params
+      };
+      if (timeout && timeout > 0) {
+        requestBody.timeout = timeout;
+      }
+      const rpcSubject: Subject<any> = new ReplaySubject<any>();
+      this.executingRpcRequest = true;
+      this.callbacks.rpcStateChanged(this);
+      if (this.ctx.utils.widgetEditMode) {
+        setTimeout(() => {
+          this.executingRpcRequest = false;
+          this.callbacks.rpcStateChanged(this);
+          if (oneWayElseTwoWay) {
+            rpcSubject.next();
+            rpcSubject.complete();
+          } else {
+            rpcSubject.next(requestBody);
+            rpcSubject.complete();
+          }
+        }, 500);
+      } else {
+        this.executingSubjects.push(rpcSubject);
+        const targetSendFunction = oneWayElseTwoWay ? this.ctx.deviceService.sendOneWayRpcCommand : this.ctx.deviceService.sendTwoWayRpcCommand;
+        targetSendFunction(this.targetDeviceId, requestBody).subscribe((responseBody) => {
+          this.rpcRejection = null;
+          this.rpcErrorText = null;
+          const index = this.executingSubjects.indexOf(rpcSubject);
+          if (index >= 0) {
+            this.executingSubjects.splice( index, 1 );
+          }
+          this.executingRpcRequest = this.executingSubjects.length > 0;
+          this.callbacks.onRpcSuccess(this);
+          rpcSubject.next(responseBody);
+          rpcSubject.complete();
+        },
+        (rejection: HttpErrorResponse) => {
+          const index = this.executingSubjects.indexOf(rpcSubject);
+          if (index >= 0) {
+            this.executingSubjects.splice( index, 1 );
+          }
+          this.executingRpcRequest = this.executingSubjects.length > 0;
+          this.callbacks.rpcStateChanged(this);
+          if (!this.executingRpcRequest || rejection.status === 408) {
+            this.rpcRejection = rejection;
+            if (rejection.status === 408) {
+              this.rpcErrorText = 'Device is offline.';
+            } else {
+              this.rpcErrorText =  'Error : ' + rejection.status + ' - ' + rejection.statusText;
+              const error = this.extractRejectionErrorText(rejection);
+              if (error) {
+                this.rpcErrorText += '</br>';
+                this.rpcErrorText += error;
+              }
+            }
+            this.callbacks.onRpcFailed(this);
+          }
+          rpcSubject.error(rejection);
+        });
+      }
+      return rpcSubject.asObservable();
+    }
+  }
+
+  private extractRejectionErrorText(rejection: HttpErrorResponse) {
+    let error = null;
+    if (rejection.error) {
+      error = rejection.error;
+      try {
+        error = rejection.error ? JSON.parse(rejection.error) : null;
+      } catch (e) {}
+    }
+    if (error && !error.message) {
+      error = this.prepareMessageFromData(error);
+    } else if (error && error.message) {
+      error = error.message;
+    }
+    return error;
+  }
+
+  private prepareMessageFromData(data) {
+    if (typeof data === 'object' && data.constructor === ArrayBuffer) {
+      const msg = String.fromCharCode.apply(null, new Uint8Array(data));
+      try {
+        const msgObj = JSON.parse(msg);
+        if (msgObj.message) {
+          return msgObj.message;
+        } else {
+          return msg;
+        }
+      } catch (e) {
+        return msg;
+      }
+    } else {
+      return data;
+    }
   }
 
   update() {
@@ -550,8 +699,34 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   private alarmsSubscribe() {
-    // TODO:
-    this.notifyDataLoaded();
+    this.notifyDataLoading();
+    if (this.timeWindowConfig) {
+      this.updateRealtimeSubscription();
+      if (this.subscriptionTimewindow.fixedWindow) {
+        this.onDataUpdated();
+      }
+    }
+    this.alarmSourceListener = {
+      subscriptionTimewindow: this.subscriptionTimewindow,
+      alarmSource: this.alarmSource,
+      alarmSearchStatus: this.alarmSearchStatus,
+      alarmsPollingInterval: this.alarmsPollingInterval,
+      alarmsUpdated: alarms => this.alarmsUpdated(alarms)
+    };
+    this.alarms = null;
+
+    this.ctx.alarmService.subscribeForAlarms(this.alarmSourceListener);
+
+    let forceUpdate = false;
+    if (this.alarmSource.unresolvedStateEntity ||
+      (this.alarmSource.type === DatasourceType.entity && !this.alarmSource.entityId)
+    ) {
+      forceUpdate = true;
+    }
+    if (forceUpdate) {
+      this.notifyDataLoaded();
+      this.onDataUpdated();
+    }
   }
 
 
@@ -570,7 +745,10 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   private alarmsUnsubscribe() {
-    // TODO:
+    if (this.alarmSourceListener) {
+      this.ctx.alarmService.unsubscribeFromAlarms(this.alarmSourceListener);
+      this.alarmSourceListener = null;
+    }
   }
 
   private checkRpcTarget(aliasIds: Array<string>): boolean {
@@ -681,6 +859,18 @@ export class WidgetSubscription implements IWidgetSubscription {
         this.updateLegend(datasourceIndex + dataKeyIndex, sourceData.data, detectChanges);
       }
       this.onDataUpdated(detectChanges);
+    }
+  }
+
+  private alarmsUpdated(alarms: Array<AlarmInfo>) {
+    this.notifyDataLoaded();
+    const updated = !this.alarms || !deepEqual(this.alarms, alarms);
+    this.alarms = alarms;
+    if (this.subscriptionTimewindow && this.subscriptionTimewindow.realtimeWindowMs) {
+      this.updateTimewindow();
+    }
+    if (updated) {
+      this.onDataUpdated();
     }
   }
 

@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.io.IOException;
+import java.util.List;
 
 @Slf4j
 @RuleNode(
@@ -53,9 +54,12 @@ import java.io.IOException;
 public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConfiguration> {
 
     private static ObjectMapper mapper = new ObjectMapper();
+    private List<String> relationTypes;
 
     @Override
     protected TbCreateAlarmNodeConfiguration loadAlarmNodeConfig(TbNodeConfiguration configuration) throws TbNodeException {
+        TbCreateAlarmNodeConfiguration nodeConfiguration = TbNodeUtils.convert(configuration, TbCreateAlarmNodeConfiguration.class);
+        relationTypes = nodeConfiguration.getRelationTypes();
         return TbNodeUtils.convert(configuration, TbCreateAlarmNodeConfiguration.class);
     }
 

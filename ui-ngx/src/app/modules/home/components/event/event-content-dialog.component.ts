@@ -18,60 +18,60 @@ import { Component, ElementRef, Inject, OnInit, Renderer2, ViewChild } from '@an
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { ActionStatus, AuditLog } from '@shared/models/audit-log.models';
 
 import * as ace from 'ace-builds';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
+import { ContentType, contentTypesMap } from '@shared/models/constants';
 
-export interface AuditLogDetailsDialogData {
-  auditLog: AuditLog;
+export interface EventContentDialogData {
+  content: string;
+  title: string;
+  contentType: ContentType;
 }
 
 @Component({
-  selector: 'tb-audit-log-details-dialog',
-  templateUrl: './audit-log-details-dialog.component.html',
-  styleUrls: ['./audit-log-details-dialog.component.scss']
+  selector: 'tb-event-content-dialog',
+  templateUrl: './event-content-dialog.component.html',
+  styleUrls: ['./event-content-dialog.component.scss']
 })
-export class AuditLogDetailsDialogComponent extends DialogComponent<AuditLogDetailsDialogComponent> implements OnInit {
+export class EventContentDialogComponent extends DialogComponent<EventContentDialogData> implements OnInit {
 
-  @ViewChild('actionDataEditor', {static: true})
-  actionDataEditorElmRef: ElementRef;
-  private actionDataEditor: ace.Ace.Editor;
+  @ViewChild('eventContentEditor', {static: true})
+  eventContentEditorElmRef: ElementRef;
+  private eventContentEditor: ace.Ace.Editor;
 
-  @ViewChild('failureDetailsEditor', {static: true})
-  failureDetailsEditorElmRef: ElementRef;
-  private failureDetailsEditor: ace.Ace.Editor;
-
-  auditLog: AuditLog;
-  displayFailureDetails: boolean;
-  actionData: string;
-  actionFailureDetails: string;
+  content: string;
+  title: string;
+  contentType: ContentType;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
-              @Inject(MAT_DIALOG_DATA) public data: AuditLogDetailsDialogData,
-              public dialogRef: MatDialogRef<AuditLogDetailsDialogComponent>,
+              @Inject(MAT_DIALOG_DATA) public data: EventContentDialogData,
+              public dialogRef: MatDialogRef<EventContentDialogComponent>,
               private renderer: Renderer2) {
     super(store, router, dialogRef);
   }
 
   ngOnInit(): void {
-    this.auditLog = this.data.auditLog;
-    this.displayFailureDetails = this.auditLog.actionStatus === ActionStatus.FAILURE;
-    this.actionData = this.auditLog.actionData ? JSON.stringify(this.auditLog.actionData, null, 2) : '';
-    this.actionFailureDetails = this.auditLog.actionFailureDetails;
+    this.content = this.data.content;
+    this.title = this.data.title;
+    this.contentType = this.data.contentType;
 
-    this.actionDataEditor = this.createEditor(this.actionDataEditorElmRef, this.actionData);
-    if (this.displayFailureDetails) {
-      this.failureDetailsEditor = this.createEditor(this.failureDetailsEditorElmRef, this.actionFailureDetails);
-    }
+    this.eventContentEditor = this.createEditor(this.eventContentEditorElmRef, this.content);
   }
 
   createEditor(editorElementRef: ElementRef, content: string): ace.Ace.Editor {
     const editorElement = editorElementRef.nativeElement;
+    let mode = 'java';
+    if (this.contentType) {
+      mode = contentTypesMap.get(this.contentType).code;
+      if (this.contentType === ContentType.JSON && content) {
+        content = js_beautify(content, {indent_size: 4});
+      }
+    }
     let editorOptions: Partial<ace.Ace.EditorOptions> = {
-      mode: 'ace/mode/java',
+      mode: `ace/mode/${mode}`,
       theme: 'ace/theme/github',
       showGutter: false,
       showPrintMargin: false,
@@ -93,7 +93,7 @@ export class AuditLogDetailsDialogComponent extends DialogComponent<AuditLogDeta
   }
 
   updateEditorSize(editorElement: any, content: string, editor: ace.Ace.Editor) {
-    let newHeight = 200;
+    let newHeight = 400;
     let newWidth = 600;
     if (content && content.length > 0) {
       const lines = content.split('\n');

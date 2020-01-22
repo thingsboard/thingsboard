@@ -19,7 +19,8 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
-  Input, NgZone,
+  Input,
+  NgZone,
   OnInit,
   ViewChild,
   ViewContainerRef
@@ -65,7 +66,7 @@ import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service'
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { DataKey, Datasource, DatasourceType, Widget, widgetType } from '@shared/models/widget.models';
 import { IAliasController, IStateController, StateParams } from '@core/api/widget-api.models';
-import { AliasController, DummyAliasController } from '@core/api/alias-controller';
+import { AliasController } from '@core/api/alias-controller';
 import { EntityAlias, EntityAliases } from '@shared/models/alias.models';
 import { UtilsService } from '@core/services/utils.service';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
@@ -73,8 +74,6 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { WidgetService } from '@core/http/widget.service';
 import { toWidgetInfo } from '../../models/widget-component.models';
 import { EntityService } from '@core/http/entity.service';
-import { SelectTargetLayoutDialogComponent } from '@home/pages/dashboard/layout/select-target-layout-dialog.component';
-import { DashboardLayoutId } from '@shared/models/dashboard.models';
 import {
   AddWidgetToDashboardDialogComponent,
   AddWidgetToDashboardDialogData

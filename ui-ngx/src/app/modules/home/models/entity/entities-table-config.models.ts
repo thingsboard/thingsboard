@@ -41,6 +41,7 @@ export type EntityActionFunction<T extends BaseData<HasId>> = (action: EntityAct
 export type CreateEntityOperation<T extends BaseData<HasId>> = () => Observable<T>;
 
 export type CellContentFunction<T extends BaseData<HasId>> = (entity: T, key: string) => string;
+export type CellTooltipFunction<T extends BaseData<HasId>> = (entity: T, key: string) => string | undefined;
 export type HeaderCellStyleFunction<T extends BaseData<HasId>> = (key: string) => object;
 export type CellStyleFunction<T extends BaseData<HasId>> = (entity: T, key: string) => object;
 
@@ -86,7 +87,8 @@ export class EntityTableColumn<T extends BaseData<HasId>> extends BaseEntityTabl
               public cellContentFunction: CellContentFunction<T> = (entity, property) => entity[property],
               public cellStyleFunction: CellStyleFunction<T> = () => ({}),
               public sortable: boolean = true,
-              public headerCellStyleFunction: HeaderCellStyleFunction<T> = () => ({})) {
+              public headerCellStyleFunction: HeaderCellStyleFunction<T> = () => ({}),
+              public cellTooltipFunction: CellTooltipFunction<T> = () => undefined) {
     super('content', key, title, maxWidth, sortable);
   }
 }

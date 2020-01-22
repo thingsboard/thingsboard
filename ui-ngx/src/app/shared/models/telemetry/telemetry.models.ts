@@ -229,7 +229,7 @@ export interface TelemetryService {
 
 export class TelemetrySubscriber {
 
-  private dataSubject = new ReplaySubject<SubscriptionUpdate>();
+  private dataSubject = new ReplaySubject<SubscriptionUpdate>(1);
   private reconnectSubject = new Subject();
 
   private zone: NgZone;

@@ -113,6 +113,14 @@ export class DeviceService {
     return this.http.delete(`/api/customer/device/${deviceId}`, defaultHttpOptionsFromConfig(config));
   }
 
+  public sendOneWayRpcCommand(deviceId: string, requestBody: any, config?: RequestConfig): Observable<any> {
+    return this.http.post<Device>(`/api/plugins/rpc/oneway/${deviceId}`, requestBody, defaultHttpOptionsFromConfig(config));
+  }
+
+  public sendTwoWayRpcCommand(deviceId: string, requestBody: any, config?: RequestConfig): Observable<any> {
+    return this.http.post<Device>(`/api/plugins/rpc/twoway/${deviceId}`, requestBody, defaultHttpOptionsFromConfig(config));
+  }
+
   public findByQuery(query: DeviceSearchQuery,
                      config?: RequestConfig): Observable<Array<Device>> {
     return this.http.post<Array<Device>>('/api/devices', query, defaultHttpOptionsFromConfig(config));

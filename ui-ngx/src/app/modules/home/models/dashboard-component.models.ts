@@ -17,11 +17,11 @@
 import { GridsterComponent, GridsterConfig, GridsterItem, GridsterItemComponentInterface } from 'angular-gridster2';
 import { Widget, widgetType, WidgetPosition } from '@app/shared/models/widget.models';
 import { WidgetLayout, WidgetLayouts } from '@app/shared/models/dashboard.models';
-import { WidgetAction, WidgetContext, WidgetHeaderAction } from './widget-component.models';
+import { IDashboardWidget, WidgetAction, WidgetContext, WidgetHeaderAction } from './widget-component.models';
 import { Timewindow } from '@shared/models/time/time.models';
 import { Observable, of, Subject } from 'rxjs';
 import { guid, isDefined, isUndefined } from '@app/core/utils';
-import { IterableDiffer, KeyValueDiffer } from '@angular/core';
+import { IterableDiffer, KeyValueDiffer, NgZone } from '@angular/core';
 import { IAliasController, IStateController } from '@app/core/api/widget-api.models';
 import * as deepEqual from 'deep-equal';
 
@@ -264,7 +264,7 @@ export class DashboardWidgets implements Iterable<DashboardWidget> {
 
 }
 
-export class DashboardWidget implements GridsterItem {
+export class DashboardWidget implements GridsterItem, IDashboardWidget {
 
   highlighted = false;
   selected = false;
@@ -302,7 +302,7 @@ export class DashboardWidget implements GridsterItem {
   customHeaderActions: Array<WidgetHeaderAction>;
   widgetActions: Array<WidgetAction>;
 
-  widgetContext = new WidgetContext(this.dashboard, this.widget);
+  widgetContext = new WidgetContext(this.dashboard, this, this.widget);
 
   widgetId: string;
 

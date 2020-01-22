@@ -14,15 +14,11 @@
 /// limitations under the License.
 ///
 
-import { ActionStatus, ActionType } from '@shared/models/audit-log.models';
 import { BaseData } from '@shared/models/base-data';
-import { AuditLogId } from '@shared/models/id/audit-log-id';
 import { TenantId } from '@shared/models/id/tenant-id';
-import { CustomerId } from '@shared/models/id/customer-id';
 import { EntityId } from '@shared/models/id/entity-id';
-import { UserId } from '@shared/models/id/user-id';
 import { EventId } from './id/event-id';
-import { MsgDataType } from './rule-node.models';
+import { ContentType } from '@shared/models/constants';
 
 export enum EventType {
   ERROR = 'ERROR',
@@ -72,7 +68,7 @@ export interface DebugRuleNodeEventBody extends BaseEventBody {
   msgId: string;
   msgType: string;
   relationType: string;
-  dataType: MsgDataType;
+  dataType: ContentType;
   data: string;
   metadata: string;
   error: string;

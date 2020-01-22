@@ -43,7 +43,7 @@ import {
   EntityTableConfig,
   GroupActionDescriptor,
   HeaderActionDescriptor,
-  EntityColumn
+  EntityColumn, EntityActionTableColumn
 } from '@home/models/entity/entities-table-config.models';
 import { EntityTypeTranslation } from '@shared/models/entity-type.models';
 import { DialogService } from '@core/services/dialog.service';
@@ -55,6 +55,8 @@ import {
 import { Timewindow, historyInterval } from '@shared/models/time/time.models';
 import {DomSanitizer, SafeHtml} from '@angular/platform-browser';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
+import { instanceOf } from 'prop-types';
+import { isDefined, isDefinedAndNotNull, isUndefined } from '@core/utils';
 
 @Component({
   selector: 'tb-entities-table',
@@ -73,12 +75,15 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
   groupActionDescriptors: Array<GroupActionDescriptor<BaseData<HasId>>>;
   cellActionDescriptors: Array<CellActionDescriptor<BaseData<HasId>>>;
 
-  columns: Array<EntityColumn<BaseData<HasId>>>;
+  actionColumns: Array<EntityActionTableColumn<BaseData<HasId>>>;
+  entityColumns: Array<EntityTableColumn<BaseData<HasId>>>;
+
   displayedColumns: string[];
 
   headerCellStyleCache: Array<any> = [];
 
   cellContentCache: Array<SafeHtml> = [];
+  cellTooltipCache: Array<string> = [];
 
   cellStyleCache: Array<any> = [];
 
@@ -230,6 +235,7 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
   private dataLoaded() {
     this.headerCellStyleCache.length = 0;
     this.cellContentCache.length = 0;
+    this.cellTooltipCache.length = 0;
     this.cellStyleCache.length = 0;
   }
 
@@ -360,14 +366,19 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
   }
 
   columnsUpdated(resetData: boolean = false) {
-    this.columns = [...this.entitiesTableConfig.columns];
+    this.entityColumns = this.entitiesTableConfig.columns.filter(
+      (column) => column instanceof EntityTableColumn)
+      .map(column => column as EntityTableColumn<BaseData<HasId>>);
+    this.actionColumns = this.entitiesTableConfig.columns.filter(
+      (column) => column instanceof EntityActionTableColumn)
+      .map(column => column as EntityActionTableColumn<BaseData<HasId>>);
 
     this.displayedColumns = [];
 
     if (this.selectionEnabled) {
       this.displayedColumns.push('select');
     }
-    this.columns.forEach(
+    this.entitiesTableConfig.columns.forEach(
       (column) => {
         this.displayedColumns.push(column.key);
       }
@@ -375,14 +386,15 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
     this.displayedColumns.push('actions');
     this.headerCellStyleCache.length = 0;
     this.cellContentCache.length = 0;
+    this.cellTooltipCache.length = 0;
     this.cellStyleCache.length = 0;
     if (resetData) {
       this.dataSource.reset();
     }
   }
 
-  headerCellStyle(column: EntityColumn<BaseData<HasId>>, col: number) {
-    const index = col;
+  headerCellStyle(column: EntityColumn<BaseData<HasId>>) {
+    const index = this.entitiesTableConfig.columns.indexOf(column);
     let res = this.headerCellStyleCache[index];
     if (!res) {
       if (column instanceof EntityTableColumn) {
@@ -395,9 +407,10 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
     return res;
   }
 
-  cellContent(entity: BaseData<HasId>, column: EntityColumn<BaseData<HasId>>, row: number, col: number) {
+  cellContent(entity: BaseData<HasId>, column: EntityColumn<BaseData<HasId>>, row: number) {
     if (column instanceof EntityTableColumn) {
-      const index = row * this.columns.length + col;
+      const col = this.entitiesTableConfig.columns.indexOf(column);
+      const index = row * this.entitiesTableConfig.columns.length + col;
       let res = this.cellContentCache[index];
       if (!res) {
         res = this.domSanitizer.bypassSecurityTrustHtml(column.cellContentFunction(entity, column.key));
@@ -409,8 +422,26 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
     }
   }
 
-  cellStyle(entity: BaseData<HasId>, column: EntityColumn<BaseData<HasId>>, row: number, col: number) {
-    const index = row * this.columns.length + col;
+  cellTooltip(entity: BaseData<HasId>, column: EntityColumn<BaseData<HasId>>, row: number) {
+    if (column instanceof EntityTableColumn) {
+      const col = this.entitiesTableConfig.columns.indexOf(column);
+      const index = row * this.entitiesTableConfig.columns.length + col;
+      let res = this.cellTooltipCache[index];
+      if (isUndefined(res)) {
+        res = column.cellTooltipFunction(entity, column.key);
+        res = isDefined(res) ? res : null;
+        this.cellTooltipCache[index] = res;
+      } else {
+        return res !== null ? res : undefined;
+      }
+    } else {
+      return undefined;
+    }
+  }
+
+  cellStyle(entity: BaseData<HasId>, column: EntityColumn<BaseData<HasId>>, row: number) {
+    const col = this.entitiesTableConfig.columns.indexOf(column);
+    const index = row * this.entitiesTableConfig.columns.length + col;
     let res = this.cellStyleCache[index];
     if (!res) {
       if (column instanceof EntityTableColumn) {

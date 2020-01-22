@@ -32,6 +32,8 @@ import {RuleChainService} from '@core/http/rule-chain.service';
 import {RuleChainComponent} from '@modules/home/pages/rulechain/rulechain.component';
 import {DialogService} from '@core/services/dialog.service';
 import { RuleChainTabsComponent } from '@home/pages/rulechain/rulechain-tabs.component';
+import { ImportExportService } from '@home/components/import-export/import-export.service';
+import { ItemBufferService } from '@core/services/item-buffer.service';
 
 @Injectable()
 export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<RuleChain>> {
@@ -40,6 +42,8 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
 
   constructor(private ruleChainService: RuleChainService,
               private dialogService: DialogService,
+              private importExport: ImportExportService,
+              private itembuffer: ItemBufferService,
               private translate: TranslateService,
               private datePipe: DatePipe,
               private router: Router) {
@@ -120,8 +124,12 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     if ($event) {
       $event.stopPropagation();
     }
-    // TODO:
-    this.dialogService.todo();
+    this.importExport.importRuleChain().subscribe((ruleChainImport) => {
+      if (ruleChainImport) {
+        this.itembuffer.storeRuleChainImport(ruleChainImport);
+        this.router.navigateByUrl(`ruleChains/ruleChain/import`);
+      }
+    });
   }
 
   openRuleChain($event: Event, ruleChain: RuleChain) {
@@ -135,8 +143,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     if ($event) {
       $event.stopPropagation();
     }
-    // TODO:
-    this.dialogService.todo();
+    this.importExport.exportRuleChain(ruleChain.id.id);
   }
 
   setRootRuleChain($event: Event, ruleChain: RuleChain) {

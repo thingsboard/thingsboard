@@ -63,11 +63,13 @@ import { ImportDialogComponent } from './import-export/import-dialog.component';
 import { AddWidgetToDashboardDialogComponent } from './attribute/add-widget-to-dashboard-dialog.component';
 import { ImportDialogCsvComponent } from './import-export/import-dialog-csv.component';
 import { TableColumnsAssignmentComponent } from './import-export/table-columns-assignment.component';
+import { EventContentDialogComponent } from '@home/components/event/event-content-dialog.component';
 
 @NgModule({
   entryComponents: [
     AddEntityDialogComponent,
     AuditLogDetailsDialogComponent,
+    EventContentDialogComponent,
     EventTableHeaderComponent,
     RelationDialogComponent,
     AlarmTableHeaderComponent,
@@ -94,6 +96,7 @@ import { TableColumnsAssignmentComponent } from './import-export/table-columns-a
       ContactComponent,
       AuditLogTableComponent,
       AuditLogDetailsDialogComponent,
+      EventContentDialogComponent,
       EventTableHeaderComponent,
       EventTableComponent,
       RelationTableComponent,

@@ -82,14 +82,7 @@ export class RuleChainService {
 
   public getResolvedRuleChainMetadata(ruleChainId: string, config?: RequestConfig): Observable<ResolvedRuleChainMetaData> {
     return this.getRuleChainMetadata(ruleChainId, config).pipe(
-      mergeMap((ruleChainMetaData) => {
-        return this.resolveTargetRuleChains(ruleChainMetaData.ruleChainConnections).pipe(
-          map((targetRuleChainsMap) => {
-            const resolvedRuleChainMetadata: ResolvedRuleChainMetaData = {...ruleChainMetaData, targetRuleChainsMap};
-            return resolvedRuleChainMetadata;
-          })
-        );
-      })
+      mergeMap((ruleChainMetaData) => this.resolveRuleChainMetadata(ruleChainMetaData))
     );
   }
 
@@ -100,13 +93,15 @@ export class RuleChainService {
   public saveAndGetResolvedRuleChainMetadata(ruleChainMetaData: RuleChainMetaData,
                                              config?: RequestConfig): Observable<ResolvedRuleChainMetaData> {
     return this.saveRuleChainMetadata(ruleChainMetaData, config).pipe(
-      mergeMap((savedRuleChainMetaData) => {
-        return this.resolveTargetRuleChains(savedRuleChainMetaData.ruleChainConnections).pipe(
-          map((targetRuleChainsMap) => {
-            const resolvedRuleChainMetadata: ResolvedRuleChainMetaData = {...savedRuleChainMetaData, targetRuleChainsMap};
-            return resolvedRuleChainMetadata;
-          })
-        );
+      mergeMap((savedRuleChainMetaData) => this.resolveRuleChainMetadata(savedRuleChainMetaData))
+    );
+  }
+
+  public resolveRuleChainMetadata(ruleChainMetaData: RuleChainMetaData): Observable<ResolvedRuleChainMetaData> {
+    return this.resolveTargetRuleChains(ruleChainMetaData.ruleChainConnections).pipe(
+      map((targetRuleChainsMap) => {
+        const resolvedRuleChainMetadata: ResolvedRuleChainMetaData = {...ruleChainMetaData, targetRuleChainsMap};
+        return resolvedRuleChainMetadata;
       })
     );
   }

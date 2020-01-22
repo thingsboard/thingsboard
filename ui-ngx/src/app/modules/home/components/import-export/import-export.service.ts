@@ -44,15 +44,16 @@ import {
   EntityAliasesDialogData
 } from '@home/components/alias/entity-aliases-dialog.component';
 import { ItemBufferService, WidgetItem } from '@core/services/item-buffer.service';
-import { CsvToJsonConfig, ImportWidgetResult, WidgetsBundleItem, CsvToJsonResult } from './import-export.models';
+import { ImportWidgetResult, WidgetsBundleItem } from './import-export.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { UtilsService } from '@core/services/utils.service';
 import { WidgetService } from '@core/http/widget.service';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
-import { ImportDialogCsvComponent, ImportDialogCsvData } from './import-dialog-csv.component';
-import { ImportEntityData, ImportEntitiesResultInfo } from '@shared/models/entity.models';
+import { ImportEntitiesResultInfo, ImportEntityData } from '@shared/models/entity.models';
 import { RequestConfig } from '@core/http/http-utils';
+import { RuleChain, RuleChainImport, RuleChainMetaData } from '@shared/models/rule-chain.models';
+import { RuleChainService } from '@core/http/rule-chain.service';
 
 // @dynamic
 @Injectable()
@@ -66,6 +67,7 @@ export class ImportExportService {
               private dashboardUtils: DashboardUtilsService,
               private widgetService: WidgetService,
               private entityService: EntityService,
+              private ruleChainService: RuleChainService,
               private utils: UtilsService,
               private itembuffer: ItemBufferService,
               private dialog: MatDialog) {
@@ -363,6 +365,81 @@ export class ImportExportService {
         }
       })
     );
+  }
+
+  public exportRuleChain(ruleChainId: string) {
+    this.ruleChainService.getRuleChain(ruleChainId).pipe(
+      mergeMap(ruleChain => {
+        return this.ruleChainService.getRuleChainMetadata(ruleChainId).pipe(
+          map((ruleChainMetaData) => {
+            const ruleChainExport: RuleChainImport = {
+              ruleChain: this.prepareRuleChain(ruleChain),
+              metadata: this.prepareRuleChainMetaData(ruleChainMetaData)
+            };
+            return ruleChainExport;
+          })
+        );
+      })
+    ).subscribe((ruleChainExport) => {
+        let name = ruleChainExport.ruleChain.name;
+        name = name.toLowerCase().replace(/\W/g, '_');
+        this.exportToPc(ruleChainExport, name + '.json');
+    },
+      (e) => {
+        this.handleExportError(e, 'rulechain.export-failed-error');
+      }
+    );
+  }
+
+  public importRuleChain(): Observable<RuleChainImport> {
+    return this.openImportDialog('rulechain.import', 'rulechain.rulechain-file').pipe(
+      mergeMap((ruleChainImport: RuleChainImport) => {
+        if (!this.validateImportedRuleChain(ruleChainImport)) {
+          this.store.dispatch(new ActionNotificationShow(
+            {message: this.translate.instant('rulechain.invalid-rulechain-file-error'),
+              type: 'error'}));
+          throw new Error('Invalid rule chain file');
+        } else {
+          return this.ruleChainService.resolveRuleChainMetadata(ruleChainImport.metadata).pipe(
+            map((resolvedMetadata) => {
+              ruleChainImport.resolvedMetadata = resolvedMetadata;
+              return ruleChainImport;
+            })
+          );
+        }
+      }),
+      catchError((err) => {
+        return of(null);
+      })
+    );
+  }
+
+  private prepareRuleChain(ruleChain: RuleChain): RuleChain {
+    ruleChain = this.prepareExport(ruleChain);
+    if (ruleChain.firstRuleNodeId) {
+      ruleChain.firstRuleNodeId = null;
+    }
+    ruleChain.root = false;
+    return ruleChain;
+  }
+
+  private prepareRuleChainMetaData(ruleChainMetaData: RuleChainMetaData) {
+    delete ruleChainMetaData.ruleChainId;
+    for (let i = 0; i < ruleChainMetaData.nodes.length; i++) {
+      var node = ruleChainMetaData.nodes[i];
+      delete node.ruleChainId;
+      ruleChainMetaData.nodes[i] = this.prepareExport(node);
+    }
+    return ruleChainMetaData;
+  }
+
+  private validateImportedRuleChain(ruleChainImport: RuleChainImport): boolean {
+    if (isUndefined(ruleChainImport.ruleChain)
+      || isUndefined(ruleChainImport.metadata)
+      || isUndefined(ruleChainImport.ruleChain.name)) {
+      return false;
+    }
+    return true;
   }
 
   private sumObject(obj1: any, obj2: any): any {

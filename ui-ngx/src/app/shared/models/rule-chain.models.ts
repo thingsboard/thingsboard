@@ -33,7 +33,7 @@ export interface RuleChain extends BaseData<RuleChainId> {
 
 export interface RuleChainMetaData {
   ruleChainId: RuleChainId;
-  firstNodeIndex: number;
+  firstNodeIndex?: number;
   nodes: Array<RuleNode>;
   connections: Array<NodeConnectionInfo>;
   ruleChainConnections: Array<RuleChainConnectionInfo>;
@@ -45,7 +45,8 @@ export interface ResolvedRuleChainMetaData extends RuleChainMetaData {
 
 export interface RuleChainImport {
   ruleChain: RuleChain;
-  metadata: ResolvedRuleChainMetaData;
+  metadata: RuleChainMetaData;
+  resolvedMetadata?: ResolvedRuleChainMetaData;
 }
 
 export interface NodeConnectionInfo {

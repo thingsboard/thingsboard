@@ -26,18 +26,12 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { AbstractControl, FormGroup } from '@angular/forms';
 
-export enum MsgDataType {
-  JSON = 'JSON',
-  TEXT = 'TEXT',
-  BINARY = 'BINARY'
-}
-
 export interface RuleNodeConfiguration {
   [key: string]: any;
 }
 
 export interface RuleNode extends BaseData<RuleNodeId> {
-  ruleChainId: RuleChainId;
+  ruleChainId?: RuleChainId;
   type: string;
   name: string;
   debugMode: boolean;

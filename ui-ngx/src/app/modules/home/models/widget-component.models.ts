@@ -40,7 +40,7 @@ import {
   WidgetActionsApi,
   WidgetSubscriptionApi, WidgetSubscriptionContext, WidgetSubscriptionOptions
 } from '@core/api/widget-api.models';
-import { ComponentFactory, Type } from '@angular/core';
+import { ChangeDetectorRef, ComponentFactory, Injector, NgZone, Type } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RafService } from '@core/services/raf.service';
 import { WidgetTypeId } from '@shared/models/id/widget-type-id';
@@ -69,9 +69,14 @@ export interface WidgetAction extends IWidgetAction {
   show: boolean;
 }
 
+export interface IDashboardWidget {
+  updateWidgetParams();
+}
+
 export class WidgetContext {
 
   constructor(public dashboard: IDashboardComponent,
+              private dashboardWidget: IDashboardWidget,
               private widget: Widget) {}
 
   get stateController(): IStateController {
@@ -100,6 +105,25 @@ export class WidgetContext {
 
   get decimals(): number {
     return isDefined(this.widget.config.decimals) ? this.widget.config.decimals : 2;
+  }
+
+  set changeDetector(cd: ChangeDetectorRef) {
+    this._changeDetector = cd;
+  }
+
+  private _changeDetector: ChangeDetectorRef;
+
+  detectChanges(updateWidgetParams: boolean = false) {
+    if (updateWidgetParams) {
+      this.dashboardWidget.updateWidgetParams();
+    }
+    this._changeDetector.detectChanges();
+  }
+
+  updateWidgetParams() {
+    setTimeout(() => {
+      this.dashboardWidget.updateWidgetParams();
+    }, 0);
   }
 
   inited = false;
@@ -167,11 +191,13 @@ export class WidgetContext {
   widgetActions?: Array<WidgetAction>;
 
   servicesMap?: Map<string, Type<any>>;
+
+  $injector?: Injector;
 }
 
 export interface IDynamicWidgetComponent {
-  widgetContext: WidgetContext;
-  errorMessages: string[];
+  readonly ctx: WidgetContext;
+  readonly errorMessages: string[];
   executingRpcRequest: boolean;
   rpcEnabled: boolean;
   rpcErrorText: string;
