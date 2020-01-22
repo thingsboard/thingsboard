@@ -1180,9 +1180,9 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
             label: entityParameters.label
         };
 
-        if (entityParameters.additionalInfo && entityParameters.additionalInfo.gateway === true) {
+        if (entityType === types.entityType.device && entityParameters.gateway !== null) {
             newEntity.additionalInfo = {
-                gateway: true
+                gateway: entityParameters.gateway
             };
         }
 
