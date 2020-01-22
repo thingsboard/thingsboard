@@ -95,7 +95,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
         );
         withCallback(allFutures, i -> {
             if (!failuresMap.isEmpty()) {
-                ctx.tellFailure(msg, reportFailures(failuresMap));
+                throw reportFailures(failuresMap);
             } else {
                 ctx.tellNext(msg, SUCCESS);
             }
@@ -197,6 +197,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
         if (failuresMap.containsKey(LATEST_TS)) {
             errorMessage.append("\t").append("[" + LATEST_TS + "]:").append(failuresMap.get(LATEST_TS).toString()).append("\n");
         }
+        failuresMap.clear();
         return new RuntimeException(errorMessage.toString());
     }
 }
