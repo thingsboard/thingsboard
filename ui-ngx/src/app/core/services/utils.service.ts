@@ -360,7 +360,10 @@ export class UtilsService {
   }
 
   public createLabelFromDatasource(datasource: Datasource, pattern: string) {
-    let label = deepClone(pattern);
+    let label = pattern;
+    if (!datasource) {
+      return label;
+    }
     let match = varsRegex.exec(pattern);
     while (match !== null) {
       const variable = match[0];
