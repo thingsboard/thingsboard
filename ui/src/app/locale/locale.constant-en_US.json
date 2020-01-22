@@ -1172,7 +1172,7 @@
             "timeseries": "Timeseries",
             "entity-field": "Entity field",
             "access-token": "Access token",
-            "gateway": "Gateway"
+            "isgateway": "Is Gateway"
         },
         "stepper-text":{
             "select-file": "Select a file",

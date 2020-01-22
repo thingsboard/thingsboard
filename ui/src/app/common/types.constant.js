@@ -399,7 +399,7 @@ export default angular.module('thingsboard.types', [])
                     value: 'ACCESS_TOKEN'
                 },
                 isGateway: {
-                    name: 'import.column-type.gateway',
+                    name: 'import.column-type.isgateway',
                     value: 'gateway'
                 }
             },
