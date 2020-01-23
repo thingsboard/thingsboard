@@ -50,7 +50,8 @@
         "export": "Export",
         "share-via": "Share via {{provider}}",
         "continue": "Continue",
-        "discard-changes": "Discard Changes"
+        "discard-changes": "Discard Changes",
+        "download": "Download"
     },
     "aggregation": {
         "aggregation": "Aggregation",
@@ -1136,7 +1137,6 @@
         "create-new-gateway_ok_no": "Are you sure you want create a new gateway with name: '{{gatewayName}}'?",
         "no-gateway-matching": " '{{item}}' not found.",
         "thingsboard": "ThingsBoard",
-        "storage": "Storage",
         "connectors": "Connectors configuration",
         "thingsboard-host": "ThingsBoard Host",
         "thingsboard-port": "ThingsBoard Port",
@@ -1146,6 +1146,12 @@
         "tls-path-ca-certificate": "Path to CA certificate on gateway:",
         "tls-path-private-key": "Path to private key on gateway:",
         "tls-path-client-certificate": "Path to client certificate on gateway:",
+        "storage": "Storage",
+        "storage-type": "Storage type",
+        "storage-read-time": "Read records per time:",
+        "storage-max-time": "Maximum records per time:",
+        "storage-max-files": "Maximum files:",
+        "storage-data-path": "Data folder path:",
         "download-tip": "Download configuration file",
         "save-tip": "Save configuration file",
         "save-attr": "Allow remote configuration",
