@@ -179,8 +179,8 @@ public class DefaultDeviceRpcService implements DeviceRpcService {
 
         Device device = deviceService.findDeviceById(msg.getTenantId(), msg.getDeviceId());
         if (device != null) {
-            metaData.putValue("deviceName", device.getName());
-            metaData.putValue("deviceType", device.getType());
+            metaData.putValue(DataConstants.DEVICE_NAME, device.getName());
+            metaData.putValue(DataConstants.DEVICE_TYPE, device.getType());
         }
 
         entityNode.put("method", msg.getBody().getMethod());

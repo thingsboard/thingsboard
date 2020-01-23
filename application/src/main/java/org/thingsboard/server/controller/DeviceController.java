@@ -38,6 +38,7 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -479,7 +480,7 @@ public class DeviceController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/device/provision", method = RequestMethod.POST)
     @ResponseBody
-    public ProvisionProfile saveProvisionProfile(@RequestBody ProvisionProfile profile) throws ThingsboardException {
+    public ProvisionProfile saveProvisionProfile(@RequestBody(required = false) ProvisionProfile profile) throws ThingsboardException {
         try {
             profile.setTenantId(getTenantId());
             accessControlService.checkPermission(getCurrentUser(), Resource.PROVISION_PROFILE, Operation.CREATE,
@@ -496,7 +497,11 @@ public class DeviceController extends BaseController {
     public ProvisionProfile getProvisionProfile(@RequestParam String key, @RequestParam String secret) throws ThingsboardException {
         try {
             TenantId tenantId = getTenantId();
-            return checkNotNull(deviceProvisionService.findProvisionProfileByKeyAndSecret(tenantId, key, secret));
+            ProvisionProfile profile = checkNotNull(deviceProvisionService.findProvisionProfileByKey(tenantId, key));
+            if (profile.getTenantId().equals(tenantId) && profile.getCredentials().getProvisionProfileSecret().equals(secret)) {
+                return profile;
+            }
+            throw new ThingsboardException("Requested item wasn't found!", ThingsboardErrorCode.ITEM_NOT_FOUND);
         } catch (Exception e) {
             throw handleException(e);
         }

@@ -35,14 +35,13 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 public class CassandraProvisionProfileDao extends CassandraAbstractModelDao<ProvisionProfileEntity, ProvisionProfile> implements ProvisionProfileDao {
 
     @Override
-    public ProvisionProfile findByKeyAndSecret(TenantId tenantId, String key, String secret) {
-        log.debug("Try to find provision profile by key [{}] and secret [{}]", key, secret);
-        Select.Where query = select().from(ModelConstants.PROVISION_PROFILE_BY_KEY_AND_SECRET_COLUMN_FAMILY_NAME)
-                .where(eq(ModelConstants.PROVISION_PROFILE_KEY_PROPERTY, key))
-                .and(eq(ModelConstants.PROVISION_PROFILE_SECRET_PROPERTY, secret));
+    public ProvisionProfile findByKey(TenantId tenantId, String key) {
+        log.debug("Try to find provision profile by key [{}]", key);
+        Select.Where query = select().from(ModelConstants.PROVISION_PROFILE_BY_KEY_COLUMN_FAMILY_NAME)
+                .where(eq(ModelConstants.PROVISION_PROFILE_KEY_PROPERTY, key));
         log.trace("Execute query {}", query);
         ProvisionProfileEntity provisionProfileEntity = findOneByStatement(tenantId, query);
-        log.trace("Found provision profile [{}] by key [{}] and secret [{}]", provisionProfileEntity, key, secret);
+        log.trace("Found provision profile [{}] by key [{}]", provisionProfileEntity, key);
         return DaoUtil.getData(provisionProfileEntity);
     }
 

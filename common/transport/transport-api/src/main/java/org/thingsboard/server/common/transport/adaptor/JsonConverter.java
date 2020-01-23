@@ -554,13 +554,13 @@ public class JsonConverter {
 
     private static ProvisionDeviceRequestMsg buildProvisionRequestMsg(JsonObject jo) {
         return ProvisionDeviceRequestMsg.newBuilder()
-                .setDeviceName(getStrValue(jo, "deviceName", true))
-                .setDeviceType(getStrValue(jo, "deviceType", true))
-                .setX509CertPubKey(getStrValue(jo, "x509CertPubKey", false))
+                .setDeviceName(getStrValue(jo, DataConstants.DEVICE_NAME, true))
+                .setDeviceType(getStrValue(jo, DataConstants.DEVICE_TYPE, true))
+                .setX509CertPubKey(getStrValue(jo, DataConstants.CERT_PUB_KEY, false))
                 .setSingleProvisioning(getBoolValue(jo))
                 .setProvisionProfileCredentialsMsg(buildProvisionProfileCredentialsMsg(
-                        getStrValue(jo, "provisionProfileKey", true),
-                        getStrValue(jo, "provisionProfileSecret", true)))
+                        getStrValue(jo, DataConstants.PROVISION_PROFILE_KEY, true),
+                        getStrValue(jo, DataConstants.PROVISION_PROFILE_SECRET, true)))
                 .build();
     }
 
@@ -583,8 +583,8 @@ public class JsonConverter {
     }
 
     private static boolean getBoolValue(JsonObject jo) {
-        if (jo.has("singleProvisioning")) {
-            return jo.get("singleProvisioning").getAsBoolean();
+        if (jo.has(DataConstants.SINGLE_PROVISIONING)) {
+            return jo.get(DataConstants.SINGLE_PROVISIONING).getAsBoolean();
         }
         return false;
     }

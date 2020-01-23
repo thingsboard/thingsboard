@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
@@ -54,6 +55,7 @@ import org.thingsboard.server.dao.device.DeviceProvisionService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.device.ProvisionProfileDao;
 import org.thingsboard.server.dao.device.provision.ProvisionProfile;
+import org.thingsboard.server.dao.device.provision.ProvisionProfileCredentials;
 import org.thingsboard.server.dao.device.provision.ProvisionRequest;
 import org.thingsboard.server.dao.device.provision.ProvisionResponse;
 import org.thingsboard.server.dao.device.provision.ProvisionResponseStatus;
@@ -121,7 +123,7 @@ public class DeviceProvisionServiceImpl extends AbstractEntityService implements
         return provisionProfileDao.findByIdAsync(tenantId, profileId.getId());
     }
 
-    @CacheEvict(cacheNames = DEVICE_PROVISION_CACHE, key = "{#provisionProfile.tenantId, #provisionProfile.credentials.provisionProfileKey, #provisionProfile.credentials.provisionProfileSecret}")
+    @CacheEvict(cacheNames = DEVICE_PROVISION_CACHE, key = "{#provisionProfile.tenantId, #provisionProfile.credentials.provisionProfileKey}")
     @Override
     public ProvisionProfile saveProvisionProfile(ProvisionProfile provisionProfile) {
         log.trace("Executing saveProvisionProfile [{}]", provisionProfile);
@@ -135,7 +137,10 @@ public class DeviceProvisionServiceImpl extends AbstractEntityService implements
             } catch (Exception t) {
                 ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
                 if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("provision_profile_unq_key")) {
-                    throw new DataValidationException("Profile with such key and secret already exists!");
+                    log.warn("Profile with such key already exists!", e);
+                    log.debug("Generating a new provision key!");
+                    provisionProfile.getCredentials().setProvisionProfileKey(generateProvisionProfileCredentials());
+                    savedProvisionProfile = saveProvisionProfile(provisionProfile);
                 } else {
                     throw t;
                 }
@@ -144,12 +149,12 @@ public class DeviceProvisionServiceImpl extends AbstractEntityService implements
         return savedProvisionProfile;
     }
 
-    @Cacheable(cacheNames = DEVICE_PROVISION_CACHE, key = "{#tenantId, #key, #secret}")
+    @Cacheable(cacheNames = DEVICE_PROVISION_CACHE, key = "{#tenantId, #key}")
     @Override
-    public ProvisionProfile findProvisionProfileByKeyAndSecret(TenantId tenantId, String key, String secret) {
-        log.trace("Executing findProvisionProfileByKeyAndSecret [{}][{}][{}]", tenantId, key, secret);
+    public ProvisionProfile findProvisionProfileByKey(TenantId tenantId, String key) {
+        log.trace("Executing findProvisionProfileByKey [{}][{}]", tenantId, key);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        return provisionProfileDao.findByKeyAndSecret(tenantId, key, secret);
+        return provisionProfileDao.findByKey(tenantId, key);
     }
 
     @Override
@@ -161,7 +166,6 @@ public class DeviceProvisionServiceImpl extends AbstractEntityService implements
         List<Object> list = new ArrayList<>();
         list.add(profile.getTenantId());
         list.add(profile.getCredentials().getProvisionProfileKey());
-        list.add(profile.getCredentials().getProvisionProfileSecret());
         Cache cache = cacheManager.getCache(DEVICE_PROVISION_CACHE);
         cache.evict(list);
 
@@ -170,11 +174,10 @@ public class DeviceProvisionServiceImpl extends AbstractEntityService implements
 
     @Override
     public ListenableFuture<ProvisionResponse> provisionDevice(ProvisionRequest provisionRequest) {
-        ProvisionProfile targetProfile = provisionProfileDao.findByKeyAndSecret(
+        ProvisionProfile targetProfile = provisionProfileDao.findByKey(
                 TenantId.SYS_TENANT_ID,
-                provisionRequest.getCredentials().getProvisionProfileKey(),
-                provisionRequest.getCredentials().getProvisionProfileSecret());
-        if (targetProfile == null) {
+                provisionRequest.getCredentials().getProvisionProfileKey());
+        if (targetProfile == null || !provisionRequest.getCredentials().getProvisionProfileSecret().equals(targetProfile.getCredentials().getProvisionProfileSecret())) {
             return Futures.immediateFuture(new ProvisionResponse(null, ProvisionResponseStatus.NOT_FOUND));
         }
         Device device = getOrCreateDevice(provisionRequest, targetProfile);
@@ -263,16 +266,22 @@ public class DeviceProvisionServiceImpl extends AbstractEntityService implements
         return metaData;
     }
 
+    private String generateProvisionProfileCredentials() {
+        return RandomStringUtils.randomAlphanumeric(20);
+    }
+
     private DataValidator<ProvisionProfile> provisionProfileValidator =
             new DataValidator<ProvisionProfile>() {
 
                 @Override
                 protected void validateCreate(TenantId tenantId, ProvisionProfile profile) {
                     if (!sqlDatabaseUsed) {
-                        ProvisionProfile existingProfileEntity = provisionProfileDao.findByKeyAndSecret(tenantId,
-                                profile.getCredentials().getProvisionProfileKey(), profile.getCredentials().getProvisionProfileSecret());
+                        ProvisionProfile existingProfileEntity = provisionProfileDao.findByKey(tenantId,
+                                profile.getCredentials().getProvisionProfileKey());
                         if (existingProfileEntity != null) {
-                            throw new DataValidationException("Create of existent provision profile!");
+                            log.debug("Generating a new provision key for create!");
+                            profile.getCredentials().setProvisionProfileKey(generateProvisionProfileCredentials());
+                            validateCreate(tenantId, profile);
                         }
                     }
                 }
@@ -284,21 +293,31 @@ public class DeviceProvisionServiceImpl extends AbstractEntityService implements
                         throw new DataValidationException("Unable to update non-existent provision profile!");
                     }
                     if (!sqlDatabaseUsed) {
-                        ProvisionProfile sameProvisionProfileKey = provisionProfileDao.findByKeyAndSecret(tenantId,
-                                profile.getCredentials().getProvisionProfileKey(), profile.getCredentials().getProvisionProfileSecret());
+                        ProvisionProfile sameProvisionProfileKey = provisionProfileDao.findByKey(tenantId,
+                                profile.getCredentials().getProvisionProfileKey());
                         if (sameProvisionProfileKey != null && !sameProvisionProfileKey.getUuidId().equals(profile.getUuidId())) {
-                            throw new DataValidationException("Specified profile is already registered!");
+                            log.debug("Generating a new provision key for update!");
+                            profile.getCredentials().setProvisionProfileKey(generateProvisionProfileCredentials());
+                            validateUpdate(tenantId, profile);
                         }
                     }
                 }
 
                 @Override
                 protected void validateDataImpl(TenantId tenantId, ProvisionProfile profile) {
-                    if (StringUtils.isEmpty(profile.getCredentials().getProvisionProfileKey())) {
-                        throw new DataValidationException("Profile key should be specified!");
-                    }
-                    if (StringUtils.isEmpty(profile.getCredentials().getProvisionProfileSecret())) {
-                        throw new DataValidationException("Profile secret should be specified!");
+                    if (profile.getCredentials() == null) {
+                        profile.setCredentials(
+                                new ProvisionProfileCredentials(
+                                        generateProvisionProfileCredentials(),
+                                        generateProvisionProfileCredentials()));
+                    } else {
+                        ProvisionProfileCredentials credentials = profile.getCredentials();
+                        if (StringUtils.isEmpty(profile.getCredentials().getProvisionProfileKey())) {
+                            credentials.setProvisionProfileKey(generateProvisionProfileCredentials());
+                        }
+                        if (StringUtils.isEmpty(profile.getCredentials().getProvisionProfileSecret())) {
+                            credentials.setProvisionProfileSecret(generateProvisionProfileCredentials());
+                        }
                     }
                     if (profile.getTenantId() == null) {
                         throw new DataValidationException("Profile should be assigned to tenant!");

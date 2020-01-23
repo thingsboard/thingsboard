@@ -34,12 +34,11 @@ public interface ProvisionProfileDao extends Dao<ProvisionProfile> {
     ProvisionProfile save(TenantId tenantId, ProvisionProfile provisionProfile);
 
     /**
-     * Find provision profile by key and secret.
+     * Find provision profile by key.
      *
      * @param key the profile key
-     * @param secret the profile secret
      * @return the provision profile object
      */
-    ProvisionProfile findByKeyAndSecret(TenantId tenantId, String key, String secret);
+    ProvisionProfile findByKey(TenantId tenantId, String key);
 
 }

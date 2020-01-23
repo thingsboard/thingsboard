@@ -271,7 +271,7 @@ public class ModelConstants {
     public static final String PROVISION_PROFILE_KEY_PROPERTY = "key";
     public static final String PROVISION_PROFILE_SECRET_PROPERTY = "secret";
 
-    public static final String PROVISION_PROFILE_BY_KEY_AND_SECRET_COLUMN_FAMILY_NAME = "provision_profile_by_key_and_secret";
+    public static final String PROVISION_PROFILE_BY_KEY_COLUMN_FAMILY_NAME = "provision_profile_by_key";
 
     /**
      * Cassandra widgets_bundle constants.

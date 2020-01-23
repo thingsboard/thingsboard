@@ -64,5 +64,13 @@ public class DataConstants {
     public static final String DURATION_MS_FIELD_NAME = "durationMs";
 
     public static final String PROVISION = "provision";
+    public static final String PROVISION_PROFILE_KEY = "provisionProfileKey";
+    public static final String PROVISION_PROFILE_SECRET = "provisionProfileSecret";
+    public static final String SINGLE_PROVISIONING = "singleProvisioning";
+
+    public static final String DEVICE_NAME = "deviceName";
+    public static final String DEVICE_TYPE = "deviceType";
+    public static final String CERT_PUB_KEY = "x509CertPubKey";
+
 
 }

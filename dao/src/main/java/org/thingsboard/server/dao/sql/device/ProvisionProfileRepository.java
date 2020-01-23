@@ -22,6 +22,6 @@ import org.thingsboard.server.dao.util.SqlDao;
 @SqlDao
 public interface ProvisionProfileRepository extends CrudRepository<ProvisionProfileEntity, String> {
 
-    ProvisionProfileEntity findByKeyAndSecret(String key, String secret);
+    ProvisionProfileEntity findByKey(String key);
 
 }

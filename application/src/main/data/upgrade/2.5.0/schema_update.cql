@@ -14,22 +14,20 @@
 -- limitations under the License.
 --
 
-DROP MATERIALIZED VIEW IF EXISTS thingsboard.provision_profile_by_key_and_secret;
+DROP MATERIALIZED VIEW IF EXISTS thingsboard.provision_profile_by_key;
 
 DROP TABLE IF EXISTS thingsboard.provision_profile;
 
 CREATE TABLE IF NOT EXISTS thingsboard.provision_profile (
-    id timeuuid,
+    id timeuuid PRIMARY KEY,
     tenant_id timeuuid,
     customer_id timeuuid,
     key text,
     secret text,
-    PRIMARY KEY (id, key)
 );
 
-CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.provision_profile_by_key_and_secret AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.provision_profile_by_key AS
 	SELECT *
 	from thingsboard.provision_profile
-	WHERE key IS NOT NULL AND secret IS NOT NULL AND id IS NOT NULL
-	PRIMARY KEY ( key, secret, id )
-	WITH CLUSTERING ORDER BY ( secret ASC, id DESC );
+	WHERE key IS NOT NULL AND id IS NOT NULL
+	PRIMARY KEY ( key, id );

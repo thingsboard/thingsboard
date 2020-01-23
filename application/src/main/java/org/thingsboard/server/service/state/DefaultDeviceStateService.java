@@ -64,14 +64,26 @@ import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static org.thingsboard.server.common.data.DataConstants.*;
+import static org.thingsboard.server.common.data.DataConstants.ACTIVITY_EVENT;
+import static org.thingsboard.server.common.data.DataConstants.CONNECT_EVENT;
+import static org.thingsboard.server.common.data.DataConstants.DISCONNECT_EVENT;
+import static org.thingsboard.server.common.data.DataConstants.INACTIVITY_EVENT;
+import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 
 /**
  * Created by ashvayka on 01.05.18.
@@ -426,8 +438,8 @@ public class DefaultDeviceStateService implements DeviceStateService {
             DeviceStateData stateData = getOrFetchDeviceStateData(device.getId());
             if (stateData != null) {
                 TbMsgMetaData md = new TbMsgMetaData();
-                md.putValue("deviceName", device.getName());
-                md.putValue("deviceType", device.getType());
+                md.putValue(DataConstants.DEVICE_NAME, device.getName());
+                md.putValue(DataConstants.DEVICE_TYPE, device.getType());
                 stateData.setMetaData(md);
             }
         } else {
@@ -482,8 +494,8 @@ public class DefaultDeviceStateService implements DeviceStateService {
                             .inactivityTimeout(inactivityTimeout)
                             .build();
                     TbMsgMetaData md = new TbMsgMetaData();
-                    md.putValue("deviceName", device.getName());
-                    md.putValue("deviceType", device.getType());
+                    md.putValue(DataConstants.DEVICE_NAME, device.getName());
+                    md.putValue(DataConstants.DEVICE_TYPE, device.getType());
                     return DeviceStateData.builder()
                             .tenantId(device.getTenantId())
                             .deviceId(device.getId())

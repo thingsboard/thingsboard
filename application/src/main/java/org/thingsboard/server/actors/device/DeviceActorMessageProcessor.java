@@ -31,6 +31,7 @@ import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.rule.engine.api.msg.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.shared.AbstractContextAwareMsgProcessor;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -129,8 +130,8 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             this.deviceName = device.getName();
             this.deviceType = device.getType();
             this.defaultMetaData = new TbMsgMetaData();
-            this.defaultMetaData.putValue("deviceName", deviceName);
-            this.defaultMetaData.putValue("deviceType", deviceType);
+            this.defaultMetaData.putValue(DataConstants.DEVICE_NAME, deviceName);
+            this.defaultMetaData.putValue(DataConstants.DEVICE_TYPE, deviceType);
             return true;
         } else {
             return false;
@@ -547,8 +548,8 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         this.deviceName = msg.getDeviceName();
         this.deviceType = msg.getDeviceType();
         this.defaultMetaData = new TbMsgMetaData();
-        this.defaultMetaData.putValue("deviceName", deviceName);
-        this.defaultMetaData.putValue("deviceType", deviceType);
+        this.defaultMetaData.putValue(DataConstants.DEVICE_NAME, deviceName);
+        this.defaultMetaData.putValue(DataConstants.DEVICE_TYPE, deviceType);
     }
 
     private JsonObject getJsonObject(List<KeyValueProto> tsKv) {

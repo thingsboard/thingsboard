@@ -255,5 +255,5 @@ CREATE TABLE IF NOT EXISTS provision_profile (
     secret varchar(255),
     customer_id varchar(31),
     tenant_id varchar(31),
-    CONSTRAINT provision_profile_unq_key UNIQUE (tenant_id, key, secret)
+    CONSTRAINT provision_profile_unq_key UNIQUE (key)
 );

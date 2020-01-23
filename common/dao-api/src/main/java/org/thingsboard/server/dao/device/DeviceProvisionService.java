@@ -30,7 +30,7 @@ public interface DeviceProvisionService {
 
     ProvisionProfile saveProvisionProfile(ProvisionProfile provisionProfile);
 
-    ProvisionProfile findProvisionProfileByKeyAndSecret(TenantId tenantId, String key, String secret);
+    ProvisionProfile findProvisionProfileByKey(TenantId tenantId, String key);
 
     void deleteProfile(TenantId tenantId, ProvisionProfileId profileId);
 

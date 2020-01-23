@@ -34,8 +34,8 @@ public class JpaProvisionProfileDao extends JpaAbstractDao<ProvisionProfileEntit
     private ProvisionProfileRepository provisionProfileRepository;
 
     @Override
-    public ProvisionProfile findByKeyAndSecret(TenantId tenantId, String key, String secret) {
-        return DaoUtil.getData(provisionProfileRepository.findByKeyAndSecret(key, secret));
+    public ProvisionProfile findByKey(TenantId tenantId, String key) {
+        return DaoUtil.getData(provisionProfileRepository.findByKey(key));
     }
 
     @Override
