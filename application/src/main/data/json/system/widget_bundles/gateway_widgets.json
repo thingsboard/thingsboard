@@ -22,7 +22,7 @@
       }
     },
     {
-      "alias": "config_for_gateways",
+      "alias": "config_for_gateways_two_direcrives_",
       "name": "Config for gateways form",
       "descriptor": {
         "type": "static",
