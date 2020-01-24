@@ -90,9 +90,9 @@ export class UsersTableConfigResolver implements Resolve<EntityTableConfig<User>
 
     this.config.columns.push(
       new DateEntityTableColumn<User>('createdTime', 'user.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<User>('firstName', 'user.first-name'),
-      new EntityTableColumn<User>('lastName', 'user.last-name'),
-      new EntityTableColumn<User>('email', 'user.email')
+      new EntityTableColumn<User>('firstName', 'user.first-name', '33%'),
+      new EntityTableColumn<User>('lastName', 'user.last-name', '33%'),
+      new EntityTableColumn<User>('email', 'user.email', '33%')
     );
 
     this.config.deleteEnabled = user => user && user.id && user.id.id !== this.authUser.id.id;

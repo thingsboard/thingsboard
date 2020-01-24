@@ -30,7 +30,7 @@ import { AlarmService } from '../http/alarm.service';
 import { UtilsService } from '@core/services/utils.service';
 import { Timewindow, WidgetTimewindow } from '@shared/models/time/time.models';
 import { EntityType } from '@shared/models/entity-type.models';
-import { AlarmSearchStatus } from '@shared/models/alarm.models';
+import { AlarmInfo, AlarmSearchStatus } from '@shared/models/alarm.models';
 import { HttpErrorResponse } from '@angular/common/http';
 import { DatasourceService } from '@core/api/datasource.service';
 import { RafService } from '@core/services/raf.service';
@@ -226,6 +226,7 @@ export interface IWidgetSubscription {
   timeWindowConfig?: Timewindow;
   timeWindow?: WidgetTimewindow;
 
+  alarms?: Array<AlarmInfo>;
   alarmSource?: Datasource;
   alarmSearchStatus?: AlarmSearchStatus;
   alarmsPollingInterval?: number;

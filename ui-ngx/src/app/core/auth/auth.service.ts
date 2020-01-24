@@ -62,18 +62,6 @@ export class AuthService {
     private adminService: AdminService,
     private translate: TranslateService
   ) {
-    combineLatest(
-      this.store.pipe(select(selectIsAuthenticated)),
-      this.store.pipe(select(selectIsUserLoaded))
-    ).pipe(
-      map(results => ({isAuthenticated: results[0], isUserLoaded: results[1]})),
-      distinctUntilChanged(),
-      filter((data) => data.isUserLoaded ),
-      skip(1),
-    ).subscribe((data) => {
-      this.gotoDefaultPlace(data.isAuthenticated);
-    });
-    this.reloadUser();
   }
 
   redirectUrl: string;

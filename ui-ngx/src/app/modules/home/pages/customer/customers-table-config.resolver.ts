@@ -55,10 +55,10 @@ export class CustomersTableConfigResolver implements Resolve<EntityTableConfig<C
 
     this.config.columns.push(
       new DateEntityTableColumn<Customer>('createdTime', 'customer.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<Customer>('title', 'customer.title'),
-      new EntityTableColumn<Customer>('email', 'contact.email'),
-      new EntityTableColumn<Customer>('country', 'contact.country'),
-      new EntityTableColumn<Customer>('city', 'contact.city')
+      new EntityTableColumn<Customer>('title', 'customer.title', '25%'),
+      new EntityTableColumn<Customer>('email', 'contact.email', '25%'),
+      new EntityTableColumn<Customer>('country', 'contact.country', '25%'),
+      new EntityTableColumn<Customer>('city', 'contact.city', '25%')
     );
 
     this.config.cellActionDescriptors.push(

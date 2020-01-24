@@ -106,6 +106,7 @@ export interface AlarmInfo extends Alarm {
 }
 
 export const simulatedAlarm: AlarmInfo = {
+  id: new AlarmId(NULL_UUID),
   tenantId: new TenantId(NULL_UUID),
   createdTime: new Date().getTime(),
   startTs: new Date().getTime(),

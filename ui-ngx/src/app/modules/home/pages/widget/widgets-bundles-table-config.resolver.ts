@@ -58,7 +58,7 @@ export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableCon
 
     this.config.columns.push(
       new DateEntityTableColumn<WidgetsBundle>('createdTime', 'widgets-bundle.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<WidgetsBundle>('title', 'widgets-bundle.title'),
+      new EntityTableColumn<WidgetsBundle>('title', 'widgets-bundle.title', '100%'),
       new EntityTableColumn<WidgetsBundle>('tenantId', 'widgets-bundle.system', '60px',
         entity => {
           return checkBoxCell(entity.tenantId.id === NULL_UUID);

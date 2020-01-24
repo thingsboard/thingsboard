@@ -55,10 +55,10 @@ export class TenantsTableConfigResolver implements Resolve<EntityTableConfig<Ten
 
     this.config.columns.push(
       new DateEntityTableColumn<Tenant>('createdTime', 'tenant.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<Tenant>('title', 'tenant.title'),
-      new EntityTableColumn<Tenant>('email', 'contact.email'),
-      new EntityTableColumn<Tenant>('country', 'contact.country'),
-      new EntityTableColumn<Tenant>('city', 'contact.city')
+      new EntityTableColumn<Tenant>('title', 'tenant.title', '25%'),
+      new EntityTableColumn<Tenant>('email', 'contact.email', '25%'),
+      new EntityTableColumn<Tenant>('country', 'contact.country', '25%'),
+      new EntityTableColumn<Tenant>('city', 'contact.city', '25%')
     );
 
     this.config.cellActionDescriptors.push(

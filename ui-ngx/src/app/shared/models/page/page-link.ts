@@ -16,6 +16,7 @@
 
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
+import { getDescendantProp } from '@core/utils';
 
 export type PageLinkSearchFunction<T> = (entity: T, textSearch: string) => boolean;
 
@@ -69,8 +70,8 @@ export class PageLink {
   public sort(item1: any, item2: any): number {
     if (this.sortOrder) {
       const property = this.sortOrder.property;
-      const item1Value = item1[property];
-      const item2Value = item2[property];
+      const item1Value = getDescendantProp(item1, property);
+      const item2Value = getDescendantProp(item2, property);
       let result = 0;
       if (item1Value !== item2Value) {
         if (typeof item1Value === 'number' && typeof item2Value === 'number') {

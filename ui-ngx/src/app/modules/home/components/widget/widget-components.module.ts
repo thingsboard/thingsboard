@@ -21,6 +21,7 @@ import { AlarmDetailsDialogComponent } from '@home/components/alarm/alarm-detail
 import { LegendComponent } from '@home/components/widget/legend.component';
 import { EntitiesTableWidgetComponent } from '@home/components/widget/lib/entities-table-widget.component';
 import { DisplayColumnsPanelComponent } from '@home/components/widget/lib/display-columns-panel.component';
+import { AlarmsTableWidgetComponent } from '@home/components/widget/lib/alarms-table-widget.component';
 
 @NgModule({
   entryComponents: [
@@ -29,14 +30,16 @@ import { DisplayColumnsPanelComponent } from '@home/components/widget/lib/displa
   declarations:
     [
       DisplayColumnsPanelComponent,
-      EntitiesTableWidgetComponent
+      EntitiesTableWidgetComponent,
+      AlarmsTableWidgetComponent
     ],
   imports: [
     CommonModule,
     SharedModule
   ],
   exports: [
-    EntitiesTableWidgetComponent
+    EntitiesTableWidgetComponent,
+    AlarmsTableWidgetComponent
   ]
 })
 export class WidgetComponentsModule { }

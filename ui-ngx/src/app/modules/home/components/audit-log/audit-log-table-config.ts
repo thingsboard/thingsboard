@@ -83,22 +83,22 @@ export class AuditLogTableConfig extends EntityTableConfig<AuditLog, TimePageLin
 
     if (this.auditLogMode !== AuditLogMode.ENTITY) {
       this.columns.push(
-        new EntityTableColumn<AuditLog>('entityType', 'audit-log.entity-type', '100%',
+        new EntityTableColumn<AuditLog>('entityType', 'audit-log.entity-type', '20%',
           (entity) => translate.instant(entityTypeTranslations.get(entity.entityId.entityType).type)),
-        new EntityTableColumn<AuditLog>('entityName', 'audit-log.entity-name'),
+        new EntityTableColumn<AuditLog>('entityName', 'audit-log.entity-name', '20%'),
       );
     }
 
     if (this.auditLogMode !== AuditLogMode.USER) {
       this.columns.push(
-        new EntityTableColumn<AuditLog>('userName', 'audit-log.user')
+        new EntityTableColumn<AuditLog>('userName', 'audit-log.user', '33%')
       );
     }
 
     this.columns.push(
-      new EntityTableColumn<AuditLog>('actionType', 'audit-log.type', '100%',
+      new EntityTableColumn<AuditLog>('actionType', 'audit-log.type', '33%',
         (entity) => translate.instant(actionTypeTranslations.get(entity.actionType))),
-      new EntityTableColumn<AuditLog>('actionStatus', 'audit-log.status', '100%',
+      new EntityTableColumn<AuditLog>('actionStatus', 'audit-log.status', '33%',
         (entity) => translate.instant(actionStatusTranslations.get(entity.actionStatus)))
     );
 

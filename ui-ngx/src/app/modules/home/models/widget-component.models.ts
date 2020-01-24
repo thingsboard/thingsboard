@@ -114,19 +114,24 @@ export class WidgetContext {
   private _changeDetector: ChangeDetectorRef;
 
   detectChanges(updateWidgetParams: boolean = false) {
-    if (updateWidgetParams) {
-      this.dashboardWidget.updateWidgetParams();
+    if (!this.destroyed) {
+      if (updateWidgetParams) {
+        this.dashboardWidget.updateWidgetParams();
+      }
+      this._changeDetector.detectChanges();
     }
-    this._changeDetector.detectChanges();
   }
 
   updateWidgetParams() {
-    setTimeout(() => {
-      this.dashboardWidget.updateWidgetParams();
-    }, 0);
+    if (!this.destroyed) {
+      setTimeout(() => {
+        this.dashboardWidget.updateWidgetParams();
+      }, 0);
+    }
   }
 
   inited = false;
+  destroyed = false;
 
   subscriptions: {[id: string]: IWidgetSubscription} = {};
   defaultSubscription: IWidgetSubscription = null;

@@ -398,9 +398,9 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
     let res = this.headerCellStyleCache[index];
     if (!res) {
       if (column instanceof EntityTableColumn) {
-        res = {...column.headerCellStyleFunction(column.key), ...{maxWidth: column.maxWidth}};
+        res = {...column.headerCellStyleFunction(column.key), ...{minWidth: column.width, maxWidth: column.width, width: column.width}};
       } else {
-        res = {maxWidth: column.maxWidth};
+        res = {width: column.width};
       }
       this.headerCellStyleCache[index] = res;
     }
@@ -445,9 +445,9 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
     let res = this.cellStyleCache[index];
     if (!res) {
       if (column instanceof EntityTableColumn) {
-        res = {...column.cellStyleFunction(entity, column.key), ...{maxWidth: column.maxWidth}};
+        res = {...column.cellStyleFunction(entity, column.key), ...{minWidth: column.width, maxWidth: column.width, width: column.width}};
       } else {
-        res = {maxWidth: column.maxWidth};
+        res = {width: column.width};
       }
       this.cellStyleCache[index] = res;
     }

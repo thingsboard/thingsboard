@@ -146,12 +146,12 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
   configureColumns(assetScope: string): Array<EntityTableColumn<AssetInfo>> {
     const columns: Array<EntityTableColumn<AssetInfo>> = [
       new DateEntityTableColumn<AssetInfo>('createdTime', 'asset.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<AssetInfo>('name', 'asset.name'),
-      new EntityTableColumn<AssetInfo>('type', 'asset.asset-type'),
+      new EntityTableColumn<AssetInfo>('name', 'asset.name', '33%'),
+      new EntityTableColumn<AssetInfo>('type', 'asset.asset-type', '33%'),
     ];
     if (assetScope === 'tenant') {
       columns.push(
-        new EntityTableColumn<AssetInfo>('customerTitle', 'customer.customer'),
+        new EntityTableColumn<AssetInfo>('customerTitle', 'customer.customer', '33%'),
         new EntityTableColumn<AssetInfo>('customerIsPublic', 'asset.public', '60px',
           entity => {
             return checkBoxCell(entity.customerIsPublic);

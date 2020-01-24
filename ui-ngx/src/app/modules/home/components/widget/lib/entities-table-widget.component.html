@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="tb-entity-table tb-absolute-fill">
+<div class="tb-table-widget tb-absolute-fill">
   <div fxFlex fxLayout="column" class="tb-absolute-fill">
     <mat-toolbar class="mat-table-toolbar" [fxShow]="textSearchMode">
       <div class="mat-toolbar-tools">
@@ -39,8 +39,8 @@
     </mat-toolbar>
     <div fxFlex class="table-container">
       <mat-table [dataSource]="entityDatasource"
-                 matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="(pageLink.sortOrder.direction + '').toLowerCase()" matSortDisableClear>
-        <ng-container [matColumnDef]="column.label" *ngFor="let column of columns; trackBy: trackByColumnLabel;">
+                 matSort [matSortActive]="sortOrderProperty" [matSortDirection]="(pageLink.sortOrder.direction + '').toLowerCase()" matSortDisableClear>
+        <ng-container [matColumnDef]="column.def" *ngFor="let column of columns; trackBy: trackByColumnDef;">
           <mat-header-cell [ngStyle]="headerStyle(column)" *matHeaderCellDef mat-sort-header> {{ column.title }} </mat-header-cell>
           <mat-cell *matCellDef="let entity;"
                     [innerHTML]="cellContent(entity, column)"

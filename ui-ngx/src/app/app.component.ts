@@ -19,11 +19,15 @@ import { Component, OnInit } from '@angular/core';
 import { environment as env } from '@env/environment';
 
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '@ngrx/store';
+import { select, Store } from '@ngrx/store';
 import { AppState } from './core/core.state';
 import { LocalStorageService } from './core/local-storage/local-storage.service';
 import { DomSanitizer } from '@angular/platform-browser';
 import { MatIconRegistry } from '@angular/material';
+import { combineLatest } from 'rxjs';
+import { selectIsAuthenticated, selectIsUserLoaded } from '@core/auth/auth.selectors';
+import { distinctUntilChanged, filter, map, skip } from 'rxjs/operators';
+import { AuthService } from '@core/auth/auth.service';
 
 @Component({
   selector: 'tb-root',
@@ -36,7 +40,8 @@ export class AppComponent implements OnInit {
               private storageService: LocalStorageService,
               private translate: TranslateService,
               private matIconRegistry: MatIconRegistry,
-              private domSanitizer: DomSanitizer) {
+              private domSanitizer: DomSanitizer,
+              private authService: AuthService) {
 
     console.log(`ThingsBoard Version: ${env.tbVersion}`);
 
@@ -56,6 +61,7 @@ export class AppComponent implements OnInit {
     this.storageService.testLocalStorage();
 
     this.setupTranslate();
+    this.setupAuth();
   }
 
   setupTranslate() {
@@ -67,6 +73,21 @@ export class AppComponent implements OnInit {
       console.log(`Default Lang: ${env.defaultLang}`);
     }
     this.translate.setDefaultLang(env.defaultLang);
+  }
+
+  setupAuth() {
+    combineLatest([
+      this.store.pipe(select(selectIsAuthenticated)),
+      this.store.pipe(select(selectIsUserLoaded))]
+    ).pipe(
+      map(results => ({isAuthenticated: results[0], isUserLoaded: results[1]})),
+      distinctUntilChanged(),
+      filter((data) => data.isUserLoaded ),
+      skip(1),
+    ).subscribe((data) => {
+      this.authService.gotoDefaultPlace(data.isAuthenticated);
+    });
+    this.authService.reloadUser();
   }
 
   ngOnInit() {

@@ -153,8 +153,10 @@
               </mat-cell>
             </ng-container>
             <ng-container [matColumnDef]="column.key" *ngFor="let column of entityColumns; trackBy: trackByColumnKey;">
-              <mat-header-cell *matHeaderCellDef [ngStyle]="headerCellStyle(column)" mat-sort-header [disabled]="!column.sortable"> {{ column.title | translate }} </mat-header-cell>
-              <mat-cell *matCellDef="let entity; let row = index"
+              <mat-header-cell [ngClass]="{'mat-number-cell': column.isNumberColumn}"
+                               *matHeaderCellDef [ngStyle]="headerCellStyle(column)" mat-sort-header [disabled]="!column.sortable"> {{ column.title | translate }} </mat-header-cell>
+              <mat-cell [ngClass]="{'mat-number-cell': column.isNumberColumn}"
+                        *matCellDef="let entity; let row = index"
                         [matTooltip]="cellTooltip(entity, column, row)"
                         matTooltipPosition="above"
                         [innerHTML]="cellContent(entity, column, row)"
@@ -176,10 +178,10 @@
               </mat-cell>
             </ng-container>
             <ng-container matColumnDef="actions" stickyEnd>
-              <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: (cellActionDescriptors.length * 40) + 'px', maxWidth: (cellActionDescriptors.length * 40) + 'px' }">
+              <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ width: (cellActionDescriptors.length * 40) + 'px' }">
                 {{ entitiesTableConfig.actionsColumnTitle ? (entitiesTableConfig.actionsColumnTitle | translate) : '' }}
               </mat-header-cell>
-              <mat-cell *matCellDef="let entity" [ngStyle.gt-md]="{ minWidth: (cellActionDescriptors.length * 40) + 'px', maxWidth: (cellActionDescriptors.length * 40) + 'px' }">
+              <mat-cell *matCellDef="let entity" [ngStyle.gt-md]="{ width: (cellActionDescriptors.length * 40) + 'px' }">
                 <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
                   <button mat-button mat-icon-button [disabled]="isLoading$ | async"
                           [fxShow]="actionDescriptor.isEnabled(entity)" *ngFor="let actionDescriptor of cellActionDescriptors"
@@ -190,7 +192,7 @@
                       {{actionDescriptor.icon}}</mat-icon>
                   </button>
                 </div>
-                <div fxHide fxShow.lt-lg>
+                <div fxHide fxShow.lt-lg *ngIf="cellActionDescriptors.length">
                   <button mat-button mat-icon-button
                           (click)="$event.stopPropagation()"
                           [matMenuTriggerFor]="cellActionsMenu">

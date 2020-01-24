@@ -143,12 +143,12 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
   configureColumns(dashboardScope: string): Array<EntityTableColumn<DashboardInfo>> {
     const columns: Array<EntityTableColumn<DashboardInfo>> = [
       new DateEntityTableColumn<DashboardInfo>('createdTime', 'dashboard.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<DashboardInfo>('title', 'dashboard.title')
+      new EntityTableColumn<DashboardInfo>('title', 'dashboard.title', '50%')
     ];
     if (dashboardScope === 'tenant') {
       columns.push(
         new EntityTableColumn<DashboardInfo>('customersTitle', 'dashboard.assignedToCustomers',
-          '100%', entity => {
+          '50%', entity => {
             return getDashboardAssignedCustomersText(entity);
           }, () => ({}), false),
         new EntityTableColumn<DashboardInfo>('dashboardIsPublic', 'dashboard.public', '60px',

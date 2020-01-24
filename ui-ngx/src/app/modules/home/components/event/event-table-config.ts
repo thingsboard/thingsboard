@@ -109,8 +109,8 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
   updateColumns(updateTableColumns: boolean = false): void {
     this.columns = [];
     this.columns.push(
-      new DateEntityTableColumn<Event>('createdTime', 'event.event-time', this.datePipe, '150px'),
-      new EntityTableColumn<Event>('server', 'event.server', '150px',
+      new DateEntityTableColumn<Event>('createdTime', 'event.event-time', this.datePipe, '120px'),
+      new EntityTableColumn<Event>('server', 'event.server', '100px',
         (entity) => entity.body.server, entity => ({}), false));
     switch (this.eventType) {
       case EventType.ERROR:
@@ -146,20 +146,21 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
         break;
       case EventType.STATS:
         this.columns.push(
-          new EntityTableColumn<Event>('messagesProcessed', 'event.messages-processed', '100%',
+          new EntityTableColumn<Event>('messagesProcessed', 'event.messages-processed', '50%',
             (entity) => entity.body.messagesProcessed + '',
-              entity => ({justifyContent: 'flex-end'}),
+            () => ({}),
             false,
-            key => ({justifyContent: 'flex-end'})),
-          new EntityTableColumn<Event>('errorsOccurred', 'event.errors-occurred', '100%',
+            () => ({}), () => undefined, true),
+          new EntityTableColumn<Event>('errorsOccurred', 'event.errors-occurred', '50%',
             (entity) => entity.body.errorsOccurred + '',
-              entity => ({justifyContent: 'flex-end'}),
+            () => ({}),
             false,
-            key => ({justifyContent: 'flex-end'}))
+            () => ({}), () => undefined, true)
         );
         break;
       case DebugEventType.DEBUG_RULE_NODE:
       case DebugEventType.DEBUG_RULE_CHAIN:
+        this.columns[0].width = '100px';
         this.columns.push(
           new EntityTableColumn<Event>('type', 'event.type', '40px',
             (entity) => entity.body.type, entity => ({
@@ -173,24 +174,18 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
             }), false, key => ({
               padding: '0 12px 0 0'
             })),
-          new EntityTableColumn<Event>('msgId', 'event.message-id', '100%',
+          new EntityTableColumn<Event>('msgId', 'event.message-id', '100px',
             (entity) => entity.body.msgId, entity => ({
               whiteSpace: 'nowrap',
-              padding: '0 12px 0 0',
-              textOverflow: 'ellipsis',
-              display: 'inline-block',
-              lineHeight: '48px',
+              padding: '0 12px 0 0'
             }), false, key => ({
               padding: '0 12px 0 0'
             }),
             entity => entity.body.msgId),
-          new EntityTableColumn<Event>('msgType', 'event.message-type', '100%',
+          new EntityTableColumn<Event>('msgType', 'event.message-type', '100px',
             (entity) => entity.body.msgType, entity => ({
               whiteSpace: 'nowrap',
-              padding: '0 12px 0 0',
-              textOverflow: 'ellipsis',
-              display: 'inline-block',
-              lineHeight: '48px',
+              padding: '0 12px 0 0'
             }), false, key => ({
               padding: '0 12px 0 0'
             }),

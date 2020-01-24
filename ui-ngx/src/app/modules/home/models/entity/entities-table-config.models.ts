@@ -75,7 +75,7 @@ export class BaseEntityTableColumn<T extends BaseData<HasId>> {
   constructor(public type: EntityTableColumnType,
               public key: string,
               public title: string,
-              public maxWidth: string = '100%',
+              public width: string = '0px',
               public sortable: boolean = true) {
   }
 }
@@ -83,13 +83,14 @@ export class BaseEntityTableColumn<T extends BaseData<HasId>> {
 export class EntityTableColumn<T extends BaseData<HasId>> extends BaseEntityTableColumn<T> {
   constructor(public key: string,
               public title: string,
-              public maxWidth: string = '100%',
+              public width: string = '0px',
               public cellContentFunction: CellContentFunction<T> = (entity, property) => entity[property],
               public cellStyleFunction: CellStyleFunction<T> = () => ({}),
               public sortable: boolean = true,
               public headerCellStyleFunction: HeaderCellStyleFunction<T> = () => ({}),
-              public cellTooltipFunction: CellTooltipFunction<T> = () => undefined) {
-    super('content', key, title, maxWidth, sortable);
+              public cellTooltipFunction: CellTooltipFunction<T> = () => undefined,
+              public isNumberColumn: boolean = false) {
+    super('content', key, title, width, sortable);
   }
 }
 
@@ -97,8 +98,8 @@ export class EntityActionTableColumn<T extends BaseData<HasId>> extends BaseEnti
   constructor(public key: string,
               public title: string,
               public actionDescriptor: CellActionDescriptor<T>,
-              public maxWidth: string = '100%') {
-    super('action', key, title, maxWidth, false);
+              public width: string = '0px') {
+    super('action', key, title, width, false);
   }
 }
 
@@ -106,12 +107,12 @@ export class DateEntityTableColumn<T extends BaseData<HasId>> extends EntityTabl
   constructor(key: string,
               title: string,
               datePipe: DatePipe,
-              maxWidth: string = '100%',
+              width: string = '0px',
               dateFormat: string = 'yyyy-MM-dd HH:mm:ss',
               cellStyleFunction: CellStyleFunction<T> = () => ({})) {
     super(key,
           title,
-          maxWidth,
+          width,
           (entity, property) => datePipe.transform(entity[property], dateFormat),
           cellStyleFunction);
   }

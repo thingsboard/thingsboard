@@ -365,6 +365,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         this.handleWidgetException(e);
       }
     }
+    this.widgetContext.destroyed = true;
     this.destroyDynamicWidgetComponent();
   }
 

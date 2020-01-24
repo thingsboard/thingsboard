@@ -14,7 +14,16 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, ElementRef, Input, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  Input,
+  NgZone,
+  OnInit,
+  ViewChild,
+  ViewContainerRef
+} from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -31,7 +40,6 @@ import { IWidgetSubscription } from '@core/api/widget-api.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { deepClone, isDefined, isNumber } from '@core/utils';
-import * as tinycolor_ from 'tinycolor2';
 import cssjs from '@core/css/css';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder, sortOrderFromString } from '@shared/models/page/sort-order';
@@ -49,10 +57,18 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
   CellContentInfo,
   CellStyleInfo,
+  constructTableCssString,
   DisplayColumn,
   EntityColumn,
   EntityData,
-  getEntityValue
+  fromEntityColumnDef,
+  getCellContentInfo,
+  getCellStyleInfo,
+  getColumnWidth,
+  getEntityValue,
+  TableWidgetDataKeySettings,
+  TableWidgetSettings,
+  toEntityColumnDef
 } from '@home/components/widget/lib/table-widget.models';
 import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { ComponentPortal, PortalInjector } from '@angular/cdk/portal';
@@ -62,32 +78,20 @@ import {
   DisplayColumnsPanelData
 } from '@home/components/widget/lib/display-columns-panel.component';
 
-const tinycolor = tinycolor_;
-
-interface EntitiesTableWidgetSettings {
+interface EntitiesTableWidgetSettings extends TableWidgetSettings {
   entitiesTitle: string;
-  enableSearch: boolean;
-  enableSelectColumnDisplay: boolean;
   displayEntityName: boolean;
   entityNameColumnTitle: string;
   displayEntityType: boolean;
-  displayPagination: boolean;
-  defaultPageSize: number;
-  defaultSortOrder: string;
 }
 
-interface EntitiesTableDataKeySettings {
-  columnWidth: string;
-  useCellStyleFunction: boolean;
-  cellStyleFunction: string;
-  useCellContentFunction: boolean;
-  cellContentFunction: string;
+interface EntitiesTableDataKeySettings extends TableWidgetDataKeySettings {
 }
 
 @Component({
   selector: 'tb-entities-table-widget',
   templateUrl: './entities-table-widget.component.html',
-  styleUrls: ['./entities-table-widget.component.scss']
+  styleUrls: ['./entities-table-widget.component.scss', './table-widget.scss']
 })
 export class EntitiesTableWidgetComponent extends PageComponent implements OnInit, AfterViewInit {
 
@@ -101,6 +105,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   public displayPagination = true;
   public pageSizeOptions;
   public pageLink: PageLink;
+  public sortOrderProperty: string;
   public textSearchMode = false;
   public columns: Array<EntityColumn> = [];
   public displayedColumns: string[] = [];
@@ -138,6 +143,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
 
   constructor(protected store: Store<AppState>,
               private elementRef: ElementRef,
+              private ngZone: NgZone,
               private overlay: Overlay,
               private viewContainerRef: ViewContainerRef,
               private utils: UtilsService,
@@ -185,12 +191,16 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   }
 
   public onDataUpdated() {
-    this.entityDatasource.updateEntitiesData(this.subscription.data);
-    this.ctx.detectChanges();
+    this.ngZone.run(() => {
+      this.entityDatasource.updateEntitiesData(this.subscription.data);
+      this.ctx.detectChanges();
+    });
   }
 
   private initializeConfig() {
     this.ctx.widgetActions = [this.searchAction, this.columnDisplayAction];
+
+    this.actionCellDescriptors = this.ctx.actionsApi.getActionDescriptors('actionCellButton');
 
     let entitiesTitle: string;
 
@@ -212,78 +222,9 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
       this.defaultPageSize = pageSize;
     }
     this.pageSizeOptions = [this.defaultPageSize, this.defaultPageSize*2, this.defaultPageSize*3];
-
-    if (this.settings.defaultSortOrder && this.settings.defaultSortOrder.length) {
-      this.defaultSortOrder = this.settings.defaultSortOrder;
-    }
-
     this.pageLink.pageSize = this.displayPagination ? this.defaultPageSize : Number.POSITIVE_INFINITY;
-    this.pageLink.sortOrder = sortOrderFromString(this.defaultSortOrder);
 
-    const origColor = this.widgetConfig.color || 'rgba(0, 0, 0, 0.87)';
-    const origBackgroundColor = this.widgetConfig.backgroundColor || 'rgb(255, 255, 255)';
-    const defaultColor = tinycolor(origColor);
-    const mdDark = defaultColor.setAlpha(0.87).toRgbString();
-    const mdDarkSecondary = defaultColor.setAlpha(0.54).toRgbString();
-    const mdDarkDisabled = defaultColor.setAlpha(0.26).toRgbString();
-    const mdDarkDivider = defaultColor.setAlpha(0.12).toRgbString();
-
-    const cssString =
-      '.mat-input-element::placeholder {\n' +
-      '   color: ' + mdDarkSecondary + ';\n'+
-      '}\n' +
-      '.mat-input-element::-moz-placeholder {\n' +
-      '   color: ' + mdDarkSecondary + ';\n'+
-      '}\n' +
-      '.mat-input-element::-webkit-input-placeholder {\n' +
-      '   color: ' + mdDarkSecondary + ';\n'+
-      '}\n' +
-      '.mat-input-element:-ms-input-placeholder {\n' +
-      '   color: ' + mdDarkSecondary + ';\n'+
-      '}\n' +
-      'mat-toolbar.mat-table-toolbar {\n'+
-      'color: ' + mdDark + ';\n'+
-      '}\n'+
-      'mat-toolbar.mat-table-toolbar button.mat-icon-button mat-icon {\n'+
-      'color: ' + mdDarkSecondary + ';\n'+
-      '}\n'+
-      '.mat-table .mat-header-row {\n'+
-      'background-color: ' + origBackgroundColor + ';\n'+
-      '}\n'+
-      '.mat-table .mat-header-cell {\n'+
-      'color: ' + mdDarkSecondary + ';\n'+
-      '}\n'+
-      '.mat-table .mat-header-cell .mat-sort-header-arrow {\n'+
-      'color: ' + mdDarkDisabled + ';\n'+
-      '}\n'+
-      '.mat-table .mat-row, .mat-table .mat-header-row {\n'+
-      'border-bottom-color: '+mdDarkDivider+';\n'+
-      '}\n'+
-      '.mat-table .mat-row:not(.tb-current-entity):not(:hover) .mat-cell.mat-table-sticky, .mat-table .mat-header-cell.mat-table-sticky {\n'+
-      'background-color: ' + origBackgroundColor + ';\n'+
-      '}\n'+
-      '.mat-table .mat-cell {\n'+
-      'color: ' + mdDark + ';\n'+
-      '}\n'+
-      '.mat-table .mat-cell button.mat-icon-button mat-icon {\n'+
-      'color: ' + mdDarkSecondary + ';\n'+
-      '}\n'+
-      '.mat-divider {\n'+
-      'border-top-color: ' + mdDarkDivider + ';\n'+
-      '}\n'+
-      '.mat-paginator {\n'+
-      'color: ' + mdDarkSecondary + ';\n'+
-      '}\n'+
-      '.mat-paginator button.mat-icon-button {\n'+
-      'color: ' + mdDarkSecondary + ';\n'+
-      '}\n'+
-      '.mat-paginator button.mat-icon-button[disabled][disabled] {\n'+
-      'color: ' + mdDarkDisabled + ';\n'+
-      '}\n'+
-      '.mat-paginator .mat-select-value {\n'+
-      'color: ' + mdDarkSecondary + ';\n'+
-      '}';
-
+    const cssString = constructTableCssString(this.widgetConfig);
     const cssParser = new cssjs();
     cssParser.testMode = false;
     const namespace = 'entities-table-' + this.utils.hashCode(cssString);
@@ -293,8 +234,6 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   }
 
   private updateDatasources() {
-
-    this.actionCellDescriptors = this.ctx.actionsApi.getActionDescriptors('actionCellButton');
 
     const displayEntityName = isDefined(this.settings.displayEntityName) ? this.settings.displayEntityName : true;
     let entityNameColumnTitle: string;
@@ -306,11 +245,11 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     const displayEntityType = isDefined(this.settings.displayEntityType) ? this.settings.displayEntityType : true;
 
     if (displayEntityName) {
-      this.displayedColumns.push('entityName');
       this.columns.push(
         {
           name: 'entityName',
           label: 'entityName',
+          def: 'entityName',
           title: entityNameColumnTitle
         } as EntityColumn
       );
@@ -320,14 +259,14 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
       this.stylesInfo['entityName'] = {
         useCellStyleFunction: false
       };
-      this.columnWidth['entityName'] = '100px';
+      this.columnWidth['entityName'] = '0px';
     }
     if (displayEntityType) {
-      this.displayedColumns.push('entityType');
       this.columns.push(
         {
           name: 'entityType',
           label: 'entityType',
+          def: 'entityType',
           title: this.translate.instant('entity.entity-type'),
         } as EntityColumn
       );
@@ -337,7 +276,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
       this.stylesInfo['entityType'] = {
         useCellStyleFunction: false
       };
-      this.columnWidth['entityType'] = '100px';
+      this.columnWidth['entityType'] = '0px';
     }
 
     const dataKeys: Array<DataKey> = [];
@@ -353,55 +292,24 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
         dataKeys.push(dataKey);
 
         dataKey.title = this.utils.customTranslation(dataKey.label, dataKey.label);
+        dataKey.def = 'def' + this.columns.length;
         const keySettings: EntitiesTableDataKeySettings = dataKey.settings;
 
-        let cellStyleFunction: Function = null;
-        let useCellStyleFunction = false;
-
-        if (keySettings.useCellStyleFunction === true) {
-          if (isDefined(keySettings.cellStyleFunction) && keySettings.cellStyleFunction.length > 0) {
-            try {
-              cellStyleFunction = new Function('value', keySettings.cellStyleFunction);
-              useCellStyleFunction = true;
-            } catch (e) {
-              cellStyleFunction = null;
-              useCellStyleFunction = false;
-            }
-          }
-        }
-        this.stylesInfo[dataKey.label] = {
-          useCellStyleFunction,
-          cellStyleFunction
-        };
-
-        let cellContentFunction: Function = null;
-        let useCellContentFunction = false;
-
-        if (keySettings.useCellContentFunction === true) {
-          if (isDefined(keySettings.cellContentFunction) && keySettings.cellContentFunction.length > 0) {
-            try {
-              cellContentFunction = new Function('value, entity, ctx', keySettings.cellContentFunction);
-              useCellContentFunction = true;
-            } catch (e) {
-              cellContentFunction = null;
-              useCellContentFunction = false;
-            }
-          }
-        }
-
-        this.contentsInfo[dataKey.label] = {
-          useCellContentFunction,
-          cellContentFunction,
-          units: dataKey.units,
-          decimals: dataKey.decimals
-        };
-
-        const columnWidth = isDefined(keySettings.columnWidth) ? keySettings.columnWidth : '0px';
-        this.columnWidth[dataKey.label] = columnWidth;
-        this.displayedColumns.push(dataKey.label);
+        this.stylesInfo[dataKey.def] = getCellStyleInfo(keySettings);
+        this.contentsInfo[dataKey.def] = getCellContentInfo(keySettings, 'value, entity, ctx');
+        this.contentsInfo[dataKey.def].units = dataKey.units;
+        this.contentsInfo[dataKey.def].decimals = dataKey.decimals;
+        this.columnWidth[dataKey.def] = getColumnWidth(keySettings);
         this.columns.push(dataKey);
       });
+      this.displayedColumns.push(...this.columns.map(column => column.def));
     }
+
+    if (this.settings.defaultSortOrder && this.settings.defaultSortOrder.length) {
+      this.defaultSortOrder = this.settings.defaultSortOrder;
+    }
+    this.pageLink.sortOrder = sortOrderFromString(this.defaultSortOrder);
+    this.sortOrderProperty = toEntityColumnDef(this.pageLink.sortOrder.property, this.columns);
 
     if (this.actionCellDescriptors.length) {
       this.displayedColumns.push('actions');
@@ -435,8 +343,8 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     const columns: DisplayColumn[] = this.columns.map(column => {
       return {
         title: column.title,
-        label: column.label,
-        display: this.displayedColumns.indexOf(column.label) > -1
+        def: column.def,
+        display: this.displayedColumns.indexOf(column.def) > -1
       }
     });
 
@@ -444,7 +352,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
       [DISPLAY_COLUMNS_PANEL_DATA, {
         columns,
         columnsUpdated: (newColumns) => {
-          this.displayedColumns = newColumns.filter(column => column.display).map(column => column.label);
+          this.displayedColumns = newColumns.filter(column => column.display).map(column => column.def);
           this.displayedColumns.push('actions');
         }
       } as DisplayColumnsPanelData],
@@ -485,24 +393,27 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     } else {
       this.pageLink.page = 0;
     }
-    this.pageLink.sortOrder.property = this.sort.active;
+    this.pageLink.sortOrder.property = fromEntityColumnDef(this.sort.active, this.columns);
     this.pageLink.sortOrder.direction = Direction[this.sort.direction.toUpperCase()];
     this.entityDatasource.loadEntities(this.pageLink);
     this.ctx.detectChanges();
   }
 
-  public trackByColumnLabel(index, column: EntityColumn) {
-    return column.label;
+  public trackByColumnDef(index, column: EntityColumn) {
+    return column.def;
   }
 
   public headerStyle(key: EntityColumn): any {
-    return this.widthStyle(key);
+    const columnWidth = this.columnWidth[key.def];
+    return {
+      width: columnWidth
+    }
   }
 
   public cellStyle(entity: EntityData, key: EntityColumn): any {
     let style: any = {};
     if (entity && key) {
-      const styleInfo = this.stylesInfo[key.label];
+      const styleInfo = this.stylesInfo[key.def];
       const value = getEntityValue(entity, key);
       if (styleInfo.useCellStyleFunction && styleInfo.cellStyleFunction) {
         try {
@@ -514,20 +425,9 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
         style = this.defaultStyle(key, value);
       }
     }
-    const widthStyle = this.widthStyle(key);
-    style = {...style, ...widthStyle};
-    return style;
-  }
-
-  private widthStyle(key: EntityColumn): any {
-    let style: any = {};
-    const columnWidth = this.columnWidth[key.label];
-    if (columnWidth !== "0px") {
-      style.minWidth = columnWidth;
+    if (!style.width) {
+      const columnWidth = this.columnWidth[key.def];
       style.width = columnWidth;
-    } else {
-      style.minWidth = "auto";
-      style.width = "auto";
     }
     return style;
   }
@@ -535,7 +435,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   public cellContent(entity: EntityData, key: EntityColumn): SafeHtml {
     let strContent = '';
     if (entity && key) {
-      const contentInfo = this.contentsInfo[key.label];
+      const contentInfo = this.contentsInfo[key.def];
       const value = getEntityValue(entity, key);
       if (contentInfo.useCellContentFunction && contentInfo.cellContentFunction) {
         if (isDefined(value)) {
