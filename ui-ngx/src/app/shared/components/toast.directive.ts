@@ -19,7 +19,7 @@ import {
   Component,
   Directive,
   ElementRef,
-  Inject, Input,
+  Inject, Input, NgZone,
   OnDestroy,
   ViewContainerRef
 } from '@angular/core';
@@ -48,40 +48,43 @@ export class ToastDirective implements AfterViewInit, OnDestroy {
   private hideNotificationSubscription: Subscription = null;
 
   private snackBarRef: MatSnackBarRef<TbSnackBarComponent> = null;
+  private currentMessage: NotificationMessage = null;
 
   constructor(public elementRef: ElementRef,
               public viewContainerRef: ViewContainerRef,
               private notificationService: NotificationService,
               public snackBar: MatSnackBar,
+              private ngZone: NgZone,
               private breakpointObserver: BreakpointObserver) {
   }
 
   ngAfterViewInit(): void {
     this.notificationSubscription = this.notificationService.getNotification().subscribe(
       (notificationMessage) => {
-        if (notificationMessage && notificationMessage.message) {
-          const target = notificationMessage.target || 'root';
-          if (this.toastTarget === target) {
-            const data = {
-              parent: this.elementRef,
-              notification: notificationMessage
-            };
-            const isGtSm = this.breakpointObserver.isMatched(MediaBreakpoints['gt-sm']);
-            const config: MatSnackBarConfig = {
-              horizontalPosition: notificationMessage.horizontalPosition || 'left',
-              verticalPosition: !isGtSm ? 'bottom' : (notificationMessage.verticalPosition || 'top'),
-              viewContainerRef: this.viewContainerRef,
-              duration: notificationMessage.duration,
-              data
-            };
+        if (this.shouldDisplayMessage(notificationMessage)) {
+          this.currentMessage = notificationMessage;
+          const data = {
+            parent: this.elementRef,
+            notification: notificationMessage
+          };
+          const isGtSm = this.breakpointObserver.isMatched(MediaBreakpoints['gt-sm']);
+          const config: MatSnackBarConfig = {
+            horizontalPosition: notificationMessage.horizontalPosition || 'left',
+            verticalPosition: !isGtSm ? 'bottom' : (notificationMessage.verticalPosition || 'top'),
+            viewContainerRef: this.viewContainerRef,
+            duration: notificationMessage.duration,
+            data
+          };
+          this.ngZone.run(() => {
             if (this.snackBarRef) {
               this.snackBarRef.dismiss();
             }
             this.snackBarRef = this.snackBar.openFromComponent(TbSnackBarComponent, config);
             this.snackBarRef.afterDismissed().subscribe(() => {
               this.snackBarRef = null;
+              this.currentMessage = null;
             });
-          }
+          });
         }
       }
     );
@@ -91,11 +94,28 @@ export class ToastDirective implements AfterViewInit, OnDestroy {
         if (hideNotification) {
           const target = hideNotification.target || 'root';
           if (this.toastTarget === target) {
-            this.snackBar.dismiss();
+            this.ngZone.run(() => {
+              if (this.snackBarRef) {
+                this.snackBarRef.dismiss();
+              }
+            });
           }
         }
       }
     );
+  }
+
+  private shouldDisplayMessage(notificationMessage: NotificationMessage): boolean {
+    if (notificationMessage && notificationMessage.message) {
+      const target = notificationMessage.target || 'root';
+      if (this.toastTarget === target) {
+        if (!this.currentMessage || this.currentMessage.message !== notificationMessage.message
+          || this.currentMessage.type !== notificationMessage.type) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   ngOnDestroy(): void {
