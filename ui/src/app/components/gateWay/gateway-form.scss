@@ -13,13 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//#container {
-//  height: 100%;
-//  margin: auto;
-//  overflow: auto;
-//}
-//
-
 .configurationPoint {
   display: flex;
   flex-direction: row;
@@ -27,13 +20,22 @@
 }
 
 .security-type {
-  margin: 38px 0 0 0;
-}
-
-.security-type3 {
-  margin: 73px 0 0 0;
+  margin-top: 38px;
 }
 
 .error {
   color: #f00;
 }
+
+md-checkbox.remote {
+  display: flex;
+  margin-top: 26px;
+
+  .md-label {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+

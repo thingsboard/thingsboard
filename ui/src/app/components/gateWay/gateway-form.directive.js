@@ -51,6 +51,7 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
     const attributeNameServer = "configuration_drafts";
     const attributeNameShared = "configuration";
     const attributeNameLogShared = "RemoteLoggingLevel";
+    vm.remoteLoggingConfig = '[loggers]}}keys=root, service, connector, converter, tb_connection, storage, extension}}[handlers]}}keys=consoleHandler, serviceHandler, connectorHandler, converterHandler, tb_connectionHandler, storageHandler, extensionHandler}}[formatters]}}keys=LogFormatter}}[logger_root]}}level=ERROR}}handlers=consoleHandler}}[logger_connector]}}level={ERROR}}}handlers=connectorHandler}}formatter=LogFormatter}}qualname=connector}}[logger_storage]}}level={ERROR}}}handlers=storageHandler}}formatter=LogFormatter}}qualname=storage}}[logger_tb_connection]}}level={ERROR}}}handlers=tb_connectionHandler}}formatter=LogFormatter}}qualname=tb_connection}}[logger_service]}}level={ERROR}}}handlers=serviceHandler}}formatter=LogFormatter}}qualname=service}}[logger_converter]}}level={ERROR}}}handlers=connectorHandler}}formatter=LogFormatter}}qualname=converter}}[logger_extension]}}level={ERROR}}}handlers=connectorHandler}}formatter=LogFormatter}}qualname=extension}}[handler_consoleHandler]}}class=StreamHandler}}level={ERROR}}}formatter=LogFormatter}}args=(sys.stdout,)}}[handler_connectorHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}connector.log", "d", 1, 7,)}}[handler_storageHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}storage.log", "d", 1, 7,)}}[handler_serviceHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}service.log", "d", 1, 7,)}}[handler_converterHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}converter.log", "d", 1, 3,)}}[handler_extensionHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}extension.log", "d", 1, 3,)}}[handler_tb_connectionHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}tb_connection.log", "d", 1, 3,)}}[formatter_LogFormatter]}}format="%(asctime)s - %(levelname)s - %(module)s - %(lineno)d - %(message)s" }}datefmt="%Y-%m-%d %H:%M:%S"';
     vm.types = types;
     vm.configurations = $scope.configurations = {
         singleSelect: '',
@@ -70,7 +71,8 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
         privateKeyPath: '/etc/thingsboard-gateway/privateKey.pem',
         certPath: '/etc/thingsboard-gateway/certificate.pem',
         connectors: {},
-        remoteLoggingLevel: "DEBUG" // level login
+        remoteLoggingLevel: "DEBUG", // level login
+        remoteLoggingPathToLogs: './logs/'
     };
     getGatewaysListByUser(true);
 
@@ -134,6 +136,7 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
                 });
     };
 
+
     vm.remouteConfig = () => {
         if (vm.configurations.remoteConfiguration) {
             vm.saveAttributeConfig();
@@ -185,11 +188,8 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
         let fileZip = {};
         fileZip["tb_gateway.yaml"] = vm.getConfig();
         vm.createConfigByExport(fileZip);
-        vm.downLoadConfig(fileZip, 'config');
-    };
-
-    vm.downLoadConfig = (data, filename) => {
-        importExport.exportJSZip(data, filename);
+        vm.getLogsConfigByExport(fileZip);
+        importExport.exportJSZip(fileZip, 'config');
     };
 
     vm.getConfig = () => {
@@ -236,6 +236,16 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
                 fileZipAdd[vm.validFileName(connector) + ".json"] = angular.toJson(vm.configurations.connectors[connector].config);
             }
         }
+    };
+
+    vm.getLogsConfigByExport = (fileZipAdd) => {
+        fileZipAdd["logs.conf"] = vm.getLogsConfig();
+    };
+
+    vm.getLogsConfig = () => {
+        return vm.remoteLoggingConfig
+            .replace(/{ERROR}/g, vm.configurations.remoteLoggingLevel)
+            .replace(/{.\/logs\/}/g, vm.configurations.remoteLoggingPathToLogs);
     };
 
     vm.getConfigAllByAttributeJSON = () => {
@@ -287,6 +297,9 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
             }
         }
         configMain.connectors = conn;
+
+        configMain.logs =  $window.btoa(vm.getLogsConfig());
+
         return configMain;
     };
 
@@ -333,7 +346,7 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
                 (success) => {
                     if (success.data.length > 0) {
                         for (let deviceNumber in success.data) {
-                            if (success.data[deviceNumber].additionalInfo !== null) {
+                            if (success.data[deviceNumber].additionalInfo !== null && success.data[deviceNumber].additionalInfo.gateway===true) {
                                 vm.gateways.push(success.data[deviceNumber].name);
                                 if (firstInit && vm.gateways.length && success.data[deviceNumber].name === vm.gateways[0]) {
                                     vm.configurations.singleSelect = vm.gateways[0];
@@ -354,7 +367,7 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
                 (success) => {
                     if (success.data.length > 0) {
                         for (let deviceNumber in success.data) {
-                            if (success.data[deviceNumber].additionalInfo !== null) {
+                            if (success.data[deviceNumber].additionalInfo !== null && success.data[deviceNumber].additionalInfo.gateway===true) {
                                 vm.gateways.push(success.data[deviceNumber].name);
                                 if (firstInit && vm.gateways.length) {
                                     vm.configurations.singleSelect = vm.gateways[0];
@@ -466,7 +479,7 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
         let fileName3 = fileName2.replace(/^\s+|\s+$/g, '');
         let fileName4 = fileName3.toLowerCase();
         return fileName4;
-    }
+    };
 }
 
 
