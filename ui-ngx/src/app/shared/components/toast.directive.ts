@@ -47,6 +47,8 @@ export class ToastDirective implements AfterViewInit, OnDestroy {
   private notificationSubscription: Subscription = null;
   private hideNotificationSubscription: Subscription = null;
 
+  private snackBarRef: MatSnackBarRef<TbSnackBarComponent> = null;
+
   constructor(public elementRef: ElementRef,
               public viewContainerRef: ViewContainerRef,
               private notificationService: NotificationService,
@@ -55,8 +57,6 @@ export class ToastDirective implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    const toastComponent = this;
-
     this.notificationSubscription = this.notificationService.getNotification().subscribe(
       (notificationMessage) => {
         if (notificationMessage && notificationMessage.message) {
@@ -70,11 +70,17 @@ export class ToastDirective implements AfterViewInit, OnDestroy {
             const config: MatSnackBarConfig = {
               horizontalPosition: notificationMessage.horizontalPosition || 'left',
               verticalPosition: !isGtSm ? 'bottom' : (notificationMessage.verticalPosition || 'top'),
-              viewContainerRef: toastComponent.viewContainerRef,
+              viewContainerRef: this.viewContainerRef,
               duration: notificationMessage.duration,
               data
             };
-            this.snackBar.openFromComponent(TbSnackBarComponent, config);
+            if (this.snackBarRef) {
+              this.snackBarRef.dismiss();
+            }
+            this.snackBarRef = this.snackBar.openFromComponent(TbSnackBarComponent, config);
+            this.snackBarRef.afterDismissed().subscribe(() => {
+              this.snackBarRef = null;
+            });
           }
         }
       }
