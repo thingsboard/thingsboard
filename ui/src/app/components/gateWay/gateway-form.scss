@@ -13,6 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+.gateway-form{
+  .gateway-form-row{
+    md-input-container{
+      margin-bottom: 0;
+    }
+  }
+}
+
 .configurationPoint {
   display: flex;
   flex-direction: row;
@@ -28,9 +36,6 @@
 }
 
 md-checkbox.remote {
-  display: flex;
-  margin-top: 26px;
-
   .md-label {
     max-width: 100%;
     overflow: hidden;

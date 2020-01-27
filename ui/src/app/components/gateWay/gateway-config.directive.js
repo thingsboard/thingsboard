@@ -225,8 +225,7 @@ function GatewayDialogController($scope, $mdDialog, $document, $window, config, 
     };
 
     vm.beautifyJson = () => {
-        var res = js_beautify(vm.config, {indent_size: 4});
-        vm.config = res;
+        vm.config = js_beautify(vm.config, {indent_size: 4});
     };
 }
 

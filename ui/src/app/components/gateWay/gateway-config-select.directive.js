@@ -50,15 +50,15 @@ function GatewayConfigSelect($compile, $templateCache, $mdConstant, $translate, 
             scope.updateView();
         });
 
-        scope.gatewayNameSearch = function (gatewyaSearchText) {
-            return gatewyaSearchText ? scope.gatewayList.filter(
-                scope.createFilterForGatewayName(gatewyaSearchText)) : scope.gatewayList;
+        scope.gatewayNameSearch = function (gatewaySearchText) {
+            return gatewaySearchText ? scope.gatewayList.filter(
+                scope.createFilterForGatewayName(gatewaySearchText)) : scope.gatewayList;
         };
 
         scope.createFilterForGatewayName = function (query) {
-            var lowercaseQuery = angular.lowercase(query);
+            var lowercaseQuery = query.toLowerCase();
             return function filterFn(device) {
-                return (angular.lowercase(device).indexOf(lowercaseQuery) === 0);
+                return (device.toLowerCase().indexOf(lowercaseQuery) === 0);
             };
         };
 
@@ -78,15 +78,15 @@ function GatewayConfigSelect($compile, $templateCache, $mdConstant, $translate, 
         };
 
         scope.textIsNotEmpty = function (text) {
-            return (text && text != null && text.length > 0) ? true : false;
+            return !!text;
         };
 
         scope.gatewayNameEnter = function ($event) {
             if ($event.keyCode === $mdConstant.KEY_CODE.ENTER) {
                 $event.preventDefault();
-                let indexRes = scope.gatewayList.findIndex((element) => element.key === scope.gatewyaSearchText);
+                let indexRes = scope.gatewayList.findIndex((element) => element.key === scope.gatewaySearchText);
                     if (indexRes === -1) {
-                        scope.createDeviceNewDialog($event, {name: scope.gatewyaSearchText});
+                        scope.createDeviceNewDialog($event, {name: scope.gatewaySearchText});
                     }
             }
         };
@@ -112,7 +112,7 @@ function GatewayConfigSelect($compile, $templateCache, $mdConstant, $translate, 
                     scope.createDevice(deviceObj);
                 },
                 () => {
-                    scope.gatewyaSearchText = "";
+                    scope.gatewaySearchText = "";
                 }
             );
         };
