@@ -31,7 +31,6 @@ function GatewayForm() {
         scope: true,
         bindToController: {
             disabled: '=ngDisabled',
-            titleText: '@?',
             keyPlaceholderText: '@?',
             valuePlaceholderText: '@?',
             noDataText: '@?',
@@ -102,31 +101,46 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
         deviceService.findByName(deviceObj.name, {ignoreErrors: true})
             .then(
                 function (device) {
-                    deviceService.getDeviceCredentials(device.id.id).then(
-                        (deviceCredentials) => {
-                            vm.configurations.accessToken = deviceCredentials.credentialsId;
-                            vm.configurations.entityType = deviceCredentials.deviceId.entityType;
-                            vm.configurations.entityId = deviceCredentials.deviceId.id;
-                            vm.getAttributeStart();
-                        }
-                    );
+                    getDeviceCredential(device.id.id);
+                    // deviceService.getDeviceCredentials(device.id.id).then(
+                    //     (deviceCredentials) => {
+                    //         vm.configurations.accessToken = deviceCredentials.credentialsId;
+                    //         vm.configurations.entityType = deviceCredentials.deviceId.entityType;
+                    //         vm.configurations.entityId = deviceCredentials.deviceId.id;
+                    //         vm.getAttributeStart();
+                    //     }
+                    // );
                 }
             )
     };
+
+    function getDeviceCredential(deviceId){
+        return deviceService.getDeviceCredentials(deviceId).then(
+            (deviceCredentials) => {
+                vm.configurations.accessToken = deviceCredentials.credentialsId;
+                vm.configurations.entityType = deviceCredentials.deviceId.entityType;
+                vm.configurations.entityId = deviceCredentials.deviceId.id;
+                vm.getAttributeStart();
+            }
+        );
+    }
 
     vm.createDevice = (deviceObj) => {
         deviceService.findByName(deviceObj.name, {ignoreErrors: true})
             .then(
                 function (device) {
-                    deviceService.getDeviceCredentials(device.id.id).then(
-                        (deviceCredentials) => {
-                            vm.configurations.accessToken = deviceCredentials.credentialsId;
-                            vm.configurations.entityType = deviceCredentials.deviceId.entityType;
-                            vm.configurations.entityId = deviceCredentials.deviceId.id;
-                            vm.getAttributeStart();
-                            getGatewaysListByUser();
-                        }
-                    );
+                    getDeviceCredential(device.id.id).then(() => {
+                        getGatewaysListByUser();
+                    });
+                    // deviceService.getDeviceCredentials(device.id.id).then(
+                    //     (deviceCredentials) => {
+                    //         vm.configurations.accessToken = deviceCredentials.credentialsId;
+                    //         vm.configurations.entityType = deviceCredentials.deviceId.entityType;
+                    //         vm.configurations.entityId = deviceCredentials.deviceId.id;
+                    //         vm.getAttributeStart();
+                    //
+                    //     }
+                    // );
                 },
                 function () {
                     deviceService.saveDevice(deviceObj).then(
