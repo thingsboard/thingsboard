@@ -64,7 +64,7 @@ export default function EntityListDirective($compile, $templateCache, $q, $mdUti
             var value = ngModelCtrl.$viewValue;
             var valid = !scope.tbRequired || value && value.length > 0;
             ngModelCtrl.$setValidity('entityList', valid);
-            scope.devicesLimit = 10 + scope.ngModelCtrl.$modelValue.length;
+            scope.entityLimit = 10 + scope.ngModelCtrl.$modelValue.length;
         };
 
         ngModelCtrl.$render = function () {
