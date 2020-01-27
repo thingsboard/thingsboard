@@ -49,8 +49,7 @@
         "import": "Import",
         "export": "Export",
         "share-via": "Share via {{provider}}",
-        "continue": "Continue",
-        "discard-changes": "Discard Changes"
+        "continue": "Continue"
     },
     "aggregation": {
         "aggregation": "Aggregation",
@@ -85,28 +84,7 @@
         "timeout-required": "Timeout is required.",
         "timeout-invalid": "That doesn't look like a valid timeout.",
         "enable-tls": "Enable TLS",
-        "send-test-mail": "Send test mail",
-        "security-settings": "Security settings",
-        "password-policy": "Password policy",
-        "minimum-password-length": "Minimum password length",
-        "minimum-password-length-required": "Minimum password length is required",
-        "minimum-password-length-range": "Minimum password length should be in a range from 5 to 50",
-        "minimum-uppercase-letters": "Minimum number of uppercase letters",
-        "minimum-uppercase-letters-range": "Minimum number of uppercase letters can't be negative",
-        "minimum-lowercase-letters": "Minimum number of lowercase letters",
-        "minimum-lowercase-letters-range": "Minimum number of lowercase letters can't be negative",
-        "minimum-digits": "Minimum number of digits",
-        "minimum-digits-range": "Minimum number of digits can't be negative",
-        "minimum-special-characters": "Minimum number of special characters",
-        "minimum-special-characters-range": "Minimum number of special characters can't be negative",
-        "password-expiration-period-days": "Password expiration period in days",
-        "password-expiration-period-days-range": "Password expiration period in days can't be negative",
-        "password-reuse-frequency-days": "Password reuse frequency in days",
-        "password-reuse-frequency-days-range": "Password reuse frequency in days can't be negative",
-        "general-policy": "General policy",
-        "max-failed-login-attempts": "Maximum number of failed login attempts, before account is locked",
-        "minimum-max-failed-login-attempts-range": "Maximum number of failed login attempts can't be negative",
-        "user-lockout-notification-email": "In case user account lockout, send notification to email"
+        "send-test-mail": "Send test mail"
     },
     "alarm": {
         "alarm": "Alarm",
@@ -162,13 +140,7 @@
         "clear-alarms-text": "Are you sure you want to clear { count, plural, 1 {1 alarm} other {# alarms} }?",
         "clear-alarm-title": "Clear Alarm",
         "clear-alarm-text": "Are you sure you want to clear Alarm?",
-        "alarm-status-filter": "Alarm Status Filter",
-        "max-count-load": "Maximum number of alarms to load (0 - unlimited)",
-        "max-count-load-required": "Maximum number of alarms to load is required.",
-        "max-count-load-error-min": "Minimum value is 0.",
-        "fetch-size": "Fetch size",
-        "fetch-size-required": "Fetch size is required.",
-        "fetch-size-error-min": "Minimum value is 10."
+        "alarm-status-filter": "Alarm Status Filter"
     },
     "alias": {
         "add": "Add alias",
@@ -277,8 +249,7 @@
         "asset-required": "Asset is required",
         "name-starts-with": "Asset name starts with",
         "import": "Import assets",
-        "asset-file": "Asset file",
-        "label": "Label"
+        "asset-file": "Asset file"
     },
     "attribute": {
         "attributes": "Attributes",
@@ -335,9 +306,6 @@
         "type-relations-delete": "All relation deleted",
         "type-alarm-ack": "Acknowledged",
         "type-alarm-clear": "Cleared",
-        "type-login": "Login",
-        "type-logout": "Logout",
-        "type-lockout": "Lockout",
         "status-success": "Success",
         "status-failure": "Failure",
         "audit-log-details": "Audit log details",
@@ -583,7 +551,6 @@
         "configuration": "Data key configuration",
         "timeseries": "Timeseries",
         "attributes": "Attributes",
-        "entity-field": "Entity field",
         "alarm": "Alarm fields",
         "timeseries-required": "Entity timeseries are required.",
         "timeseries-or-attributes-required": "Entity timeseries/attributes are required.",
@@ -810,28 +777,10 @@
         "search": "Search entities",
         "selected-entities": "{ count, plural, 1 {1 entity} other {# entities} } selected",
         "entity-name": "Entity name",
-        "entity-label": "Entity label",
         "details": "Entity details",
         "no-entities-prompt": "No entities found",
         "no-data": "No data to display",
         "columns-to-display": "Columns to Display"
-    },
-    "entity-field": {
-        "created-time": "Created time",
-        "name": "Name",
-        "type": "Type",
-        "first-name": "First name",
-        "last-name": "Last name",
-        "email": "Email",
-        "title": "Title",
-        "country": "Country",
-        "state": "State",
-        "city": "City",
-        "address": "Address",
-        "address2": "Address 2",
-        "zip": "Zip",
-        "phone": "Phone",
-        "label": "Label"
     },
     "entity-view": {
         "entity-view": "Entity View",
@@ -1164,7 +1113,6 @@
         "column-type": {
             "name": "Name",
             "type": "Type",
-            "label": "Label",
             "column-type": "Column type",
             "client-attribute": "Client attribute",
             "shared-attribute": "Shared attribute",
@@ -1173,7 +1121,7 @@
             "entity-field": "Entity field",
             "access-token": "Access token"
         },
-        "stepper-text":{
+        "stepper-text": {
             "select-file": "Select a file",
             "configuration": "Import configuration",
             "column-type": "Select columns type",
@@ -1221,13 +1169,7 @@
         "min": "min",
         "max": "max",
         "avg": "avg",
-        "total": "total",
-        "comparison-time-ago": {
-            "days": "(day ago)",
-            "weeks": "(week ago)",
-            "months": "(month ago)",
-            "years": "(year ago)"
-        }
+        "total": "total"
     },
     "login": {
         "login": "Login",
@@ -1241,7 +1183,6 @@
         "remember-me": "Remember me",
         "forgot-password": "Forgot Password?",
         "password-reset": "Password reset",
-        "expired-password-reset-message": "Your credentials has been expired! Please create new password.",
         "new-password": "New password",
         "new-password-again": "New password again",
         "password-link-sent-message": "Password reset link was successfully sent!",
@@ -1255,7 +1196,6 @@
     },
     "profile": {
         "profile": "Profile",
-        "last-login-time": "Last Login",
         "change-password": "Change Password",
         "current-password": "Current password"
     },
@@ -1452,8 +1392,7 @@
         "edit": "Edit timewindow",
         "date-range": "Date range",
         "last": "Last",
-        "time-period": "Time period",
-        "hide": "Hide"
+        "time-period": "Time period"
     },
     "user": {
         "user": "User",
@@ -1496,11 +1435,7 @@
         "activation-link-copied-message": "User activation link has been copied to clipboard",
         "details": "Details",
         "login-as-tenant-admin": "Login as Tenant Admin",
-        "login-as-customer-user": "Login as Customer User",
-        "disable-account": "Disable User Account",
-        "enable-account": "Enable User Account",
-        "enable-account-message": "User account was successfully enabled!",
-        "disable-account-message": "User account was successfully disabled!"
+        "login-as-customer-user": "Login as Customer User"
     },
     "value": {
         "type": "Value type",
@@ -1559,7 +1494,6 @@
         "settings-schema": "Settings schema",
         "datakey-settings-schema": "Data key settings schema",
         "javascript": "Javascript",
-        "js": "JS",
         "remove-widget-type-title": "Are you sure you want to remove the widget type '{{widgetName}}'?",
         "remove-widget-type-text": "After the confirmation the widget type and all related data will become unrecoverable.",
         "remove-widget-type": "Remove widget type",
@@ -1576,7 +1510,6 @@
         "update-dashboard-state": "Update current dashboard state",
         "open-dashboard": "Navigate to other dashboard",
         "custom": "Custom action",
-        "custom-pretty": "Custom action (with HTML template)",
         "target-dashboard-state": "Target dashboard state",
         "target-dashboard-state-required": "Target dashboard state is required",
         "set-entity-from-widget": "Set entity from widget",
@@ -1615,7 +1548,6 @@
         "settings": "Settings",
         "advanced": "Advanced",
         "title": "Title",
-        "title-tooltip": "Title Tooltip",
         "general-settings": "General settings",
         "display-title": "Display title",
         "drop-shadow": "Drop shadow",
@@ -1658,10 +1590,7 @@
         "edit-action": "Edit action",
         "delete-action": "Delete action",
         "delete-action-title": "Delete widget action",
-        "delete-action-text": "Are you sure you want delete widget action with name '{{actionName}}'?",
-        "display-icon": "Display title icon",
-        "icon-color": "Icon color",
-        "icon-size": "Icon size"
+        "delete-action-text": "Are you sure you want delete widget action with name '{{actionName}}'?"
     },
     "widget-type": {
         "import": "Import widget type",
@@ -1728,46 +1657,6 @@
                 "Step size": "Step size",
                 "Ok": "Ok"
             }
-        },
-        "input-widgets": {
-            "attribute-not-allowed": "Attribute parameter cannot be used in this widget",
-            "blocked-location": "Geolocation is blocked in your browser",
-            "claim-device": "Claim device",
-            "claim-failed": "Failed to claim the device!",
-            "claim-not-found": "Device not found!",
-            "claim-successful": "Device was successfully claimed!",
-            "date": "Date",
-            "device-name": "Device name",
-            "device-name-required": "Device name is required",
-            "discard-changes": "Discard changes",
-            "entity-attribute-required": "Entity attribute is required",
-            "entity-coordinate-required": "Both fields, latitude and longitude, are required",
-            "entity-timeseries-required": "Entity timeseries is required",
-            "get-location": "Get current location",
-            "latitude": "Latitude",
-            "longitude": "Longitude",
-            "not-allowed-entity": "Selected entity cannot have shared attributes",
-            "no-attribute-selected": "No attribute is selected",
-            "no-datakey-selected": "No datakey is selected",
-            "no-coordinate-specified": "Datakey for latitude/longitude doesn't specified",
-            "no-entity-selected": "No entity selected",
-            "no-image": "No image",
-            "no-support-geolocation": "Your browser doesn't support geolocation",
-            "no-support-web-camera": "No supported web camera",
-            "no-timeseries-selected": "No timeseries selected",
-            "secret-key": "Secret key",
-            "secret-key-required": "Secret key is required",
-            "switch-attribute-value": "Switch entity attribute value",
-            "switch-camera": "Switch camera",
-            "switch-timeseries-value": "Switch entity timeseries value",
-            "take-photo": "Take photo",
-            "time": "Time",
-            "timeseries-not-allowed": "Timeseries parameter cannot be used in this widget",
-            "update-failed": "Update failed",
-            "update-successful": "Update successful",
-            "update-attribute": "Update attribute",
-            "update-timeseries": "Update timeseries",
-            "value": "Value"
         }
     },
     "icon": {
@@ -1784,9 +1673,7 @@
             "marker-click": "On marker click",
             "tooltip-tag-action": "Tooltip tag action",
             "node-selected": "On node selected",
-            "element-click": "On HTML element click",
-            "pie-slice-click": "On slice click",
-            "row-double-click": "On row double click"
+            "element-click": "On HTML element click"
         }
     },
     "language": {
@@ -1795,7 +1682,6 @@
             "de_DE": "German",
             "fr_FR": "French",
             "zh_CN": "Simplified Chinese",
-            "zh_TW": "Traditional Chinese",
             "en_US": "English",
             "it_IT": "Italian",
             "ko_KR": "Korean",
@@ -1805,9 +1691,7 @@
             "tr_TR": "Turkish",
             "fa_IR": "Persian",
             "uk_UA": "Ukrainian",
-            "cs_CZ": "Czech",
-            "el_GR": "Greek",
-            "lv_LV": "Latvian"
+            "cs_CZ": "Czech"
         }
     }
 }
