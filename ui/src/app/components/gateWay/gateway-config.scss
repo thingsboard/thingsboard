@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.section-gateway-config {
+.gateway-config {
   span.no-data-found {
     position: relative;
     display: flex;
@@ -24,48 +24,62 @@
       color: rgba(0, 0, 0, .38);
     }
   }
+
+  .gateway-config-row{
+    md-input-container{
+      margin-bottom: 0;
+    }
+
+    &.gateway-config-row-vertical {
+      flex-direction: column;
+    }
+  }
+
+  .action-buttons.gateway-config-row-vertical {
+    flex-direction: column;
+    justify-content: space-evenly;
+  }
 }
 
-#section-row {
-  max-height: 80px;
+.gateway-config-dialog{
+  .md-button.tidy{
+    min-width: 32px;
+    min-height: 15px;
+    padding: 4px;
+    margin: 0 5px 0 0;
+    font-size: .8rem;
+    line-height: 15px;
+    color: #7b7b7b;
+    background: rgba(220, 220, 220, .35);
+  }
+
+  .tb-json-toolbar{
+    height: 40px;
+  }
+
+  .tb-json-panel {
+    height: calc(100% - 80px);
+    margin-left: 15px;
+    border: 1px solid #c0c0c0;
+
+    .tb-json-input {
+      width: 100%;
+      min-width: 400px;
+      height: 100%;
+
+      &:not(.fill-height) {
+        min-height: 200px;
+      }
+    }
+  }
 }
 
-.buttons {
-  min-width: 40px;
+@media (max-width: 425px){
+  .gateway-config-dialog{
+    .tb-json-panel {
+      .tb-json-input {
+        min-width: 200px;
+      }
+    }
+  }
 }
-
-#cancel-btn{
-  margin-right: 20px;
-}
-
-#dialog-config {
-  min-width: 600px;
-}
-
-#dialog-custom-trans {
-  min-height: 400px;
-}
-
-#dialog-close {
-  margin-top: 8px;
-}
-
-#dialog-tidy {
-  display: flex;
-  flex-direction: row;
-  height: 40px;
-  margin-top: 30px;
-}
-
-.dialog-content {
-  position: relative;
-  display: flex;
-}
-
-#dialog-caption {
-  padding-top: 10px;
-  padding-bottom: 10px;
-  padding-left: 15px;
-  color: rgba(0, 0, 0, .57);
-}
-

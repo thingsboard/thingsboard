@@ -86,6 +86,14 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
         value: 'tls'
     }];
 
+    vm.storageTypes = [{
+        name: 'Memory storage',
+        value: 'memoryStorage'
+    }, {
+        name: 'File storage',
+        value: 'fileStorage'
+    }];
+
     $scope.$on('gateway-form-resize', function (event, formId) {
         if (vm.formId == formId) {
             updateWidgetDisplaying();
@@ -93,25 +101,20 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
     });
 
     function updateWidgetDisplaying() {
-        vm.changeAlignment = (vm.ctx.$container[0].offsetWidth < 620);
-        vm.smallWidthContainer = (vm.ctx.$container[0].offsetWidth < 420);
+        vm.changeAlignment = (vm.ctx.$container[0].offsetWidth <= 425);
     }
 
+    updateWidgetDisplaying();
+
     vm.getAccessToken = (deviceObj) => {
-        deviceService.findByName(deviceObj.name, {ignoreErrors: true})
-            .then(
-                function (device) {
-                    getDeviceCredential(device.id.id);
-                    // deviceService.getDeviceCredentials(device.id.id).then(
-                    //     (deviceCredentials) => {
-                    //         vm.configurations.accessToken = deviceCredentials.credentialsId;
-                    //         vm.configurations.entityType = deviceCredentials.deviceId.entityType;
-                    //         vm.configurations.entityId = deviceCredentials.deviceId.id;
-                    //         vm.getAttributeStart();
-                    //     }
-                    // );
-                }
-            )
+        if(deviceObj.name) {
+            deviceService.findByName(deviceObj.name, {ignoreErrors: true})
+                .then(
+                    function (device) {
+                        getDeviceCredential(device.id.id);
+                    }
+                )
+        }
     };
 
     function getDeviceCredential(deviceId){
@@ -132,15 +135,6 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
                     getDeviceCredential(device.id.id).then(() => {
                         getGatewaysListByUser();
                     });
-                    // deviceService.getDeviceCredentials(device.id.id).then(
-                    //     (deviceCredentials) => {
-                    //         vm.configurations.accessToken = deviceCredentials.credentialsId;
-                    //         vm.configurations.entityType = deviceCredentials.deviceId.entityType;
-                    //         vm.configurations.entityId = deviceCredentials.deviceId.id;
-                    //         vm.getAttributeStart();
-                    //
-                    //     }
-                    // );
                 },
                 function () {
                     deviceService.saveDevice(deviceObj).then(
@@ -159,18 +153,10 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
                 });
     };
 
-
-    vm.remoteConfig = () => {
-        if (vm.configurations.remoteConfiguration) {
-            vm.saveAttributeConfig();
-        } else {
-            vm.exportConfig();
-        }
-        vm.setAttribute(attributeNameLogShared, vm.configurations.remoteLoggingLevel.toUpperCase(), types.attributesScope.shared.value);
-    };
     vm.saveAttributeConfig = () => {
         vm.setAttribute(attributeNameShared, $window.btoa(angular.toJson(vm.getConfigAllByAttributeJSON())), types.attributesScope.shared.value);
         vm.setAttribute(attributeNameServer, $window.btoa(angular.toJson(vm.getConfigByAttributeTmpJSON())), types.attributesScope.server.value);
+        vm.setAttribute(attributeNameLogShared, vm.configurations.remoteLoggingLevel.toUpperCase(), types.attributesScope.shared.value);
     };
 
     vm.getAttributeStart = () => {
@@ -212,6 +198,7 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
         vm.createConfigByExport(fileZip);
         vm.getLogsConfigByExport(fileZip);
         importExport.exportJSZip(fileZip, 'config');
+        vm.setAttribute(attributeNameLogShared, vm.configurations.remoteLoggingLevel.toUpperCase(), types.attributesScope.shared.value);
     };
 
     vm.getConfig = () => {
@@ -371,7 +358,9 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
                                 if (firstInit && vm.gateways.length && device.name === vm.gateways[0]) {
                                     vm.configurations.singleSelect = vm.gateways[0];
                                     let deviceObj = {
-                                        "name": vm.configurations.singleSelect, "type": "Gateway", "additionalInfo": {
+                                        "name": vm.configurations.singleSelect,
+                                        "type": "Gateway",
+                                        "additionalInfo": {
                                             "gateway": true
                                         }
                                     };
@@ -392,7 +381,9 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
                                 if (firstInit && vm.gateways.length) {
                                     vm.configurations.singleSelect = vm.gateways[0];
                                     let deviceObj = {
-                                        "name": vm.configurations.singleSelect, "type": "Gateway", "additionalInfo": {
+                                        "name": vm.configurations.singleSelect,
+                                        "type": "Gateway",
+                                        "additionalInfo": {
                                             "gateway": true
                                         }
                                     };

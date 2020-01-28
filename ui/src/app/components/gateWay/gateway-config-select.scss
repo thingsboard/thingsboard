@@ -13,24 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#gateway-box-list{
-  min-width: 0;
-  padding-top: 8px;
-}
-
 .tb-gateway-autocomplete {
   .tb-not-found {
-    display: block;
-    height: 48px;
     line-height: 1.5;
+    white-space: normal;
 
-    .tb-no-entries {
+    .tb-no-gateway {
       line-height: 48px;
     }
   }
+}
 
-  li {
-    height: auto !important;
-    white-space: normal !important;
+.tb-gateway-autocomplete-container.md-virtual-repeat-container.md-autocomplete-suggestions-container{
+  z-index: 70;
+}
+
+md-autocomplete{
+  md-input-container{
+    margin-bottom: 0;
   }
 }

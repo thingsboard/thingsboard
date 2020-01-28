@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<md-dialog id="dialog-config">
+<md-dialog class="gateway-config-dialog">
     <form name="theForm" ng-submit="vm.save()">
         <md-toolbar>
             <div class="md-toolbar-tools">
@@ -23,51 +23,46 @@
                     gateway.title-connectors-json
                 </h2>
                 <span flex></span>
-                <div class="tb-editor-area-title-panel">
-                    <md-button id="dialog-close"
-                               aria-label="{{'fullscreen.fullscreen'|translate}}"
-                               ng-click="vm.cancel()"
-                               class="md-icon-button md-fab md-mini md-primary">
-                        <md-icon aria-label="{{'gateway.update-config'|translate}}"
-                                 class="material-icons">close
-                        </md-icon>
-                    </md-button>
-                </div>
+                <md-button class="md-icon-button"
+                           ng-click="vm.cancel()"
+                           aria-label="{{'action.close'|translate}}">
+                    <ng-md-icon icon="close" aria-label="Close"></ng-md-icon>
+                </md-button>
             </div>
         </md-toolbar>
-        <md-dialog-content class="dialog-content">
-            <div tb-expand-fullscreen fullscreen-zindex="100" expand-button-id="expand-button" layout="column">
-                <div id="dialog-tidy" layout-align="start center"
-                     class="tb-json-content-toolbar tb-editor-area-title-panel">
-                    <div>
-                        <md-button ng-if="!readonly" aria-label="{{'gateway.tidy'|translate}}"
-                                   ng-click="vm.beautifyJson()">{{'gateway.tidy'|translate}}
-                        </md-button>
-                        <md-tooltip>{{'gateway.tidy-tip' | translate }}</md-tooltip>
+        <md-dialog-content>
+            <div class="md-dialog-content">
+                <div tb-expand-fullscreen fullscreen-zindex="100" expand-button-id="expand-button" layout="column">
+                    <div layout="row" layout-align="start center" class="tb-json-toolbar">
+                        <label class="tb-title no-padding" translate>gateway.transformer-json-config</label>
+                        <span flex></span>
+                                <md-button ng-if="!readonly"
+                                           aria-label="{{'gateway.tidy'|translate}}"
+                                           class="tidy"
+                                           ng-click="vm.beautifyJson()">
+                                    {{'gateway.tidy'|translate}}
+                                    <md-tooltip md-direction="top">{{'gateway.tidy-tip' | translate }}</md-tooltip>
+                                </md-button>
+                            <md-button id="expand-button" aria-label="Fullscreen"
+                                       class="md-icon-button tb-md-32 tb-fullscreen-button-style"></md-button>
                     </div>
-                    <md-button id="expand-button" aria-label="Fullscreen"
-                               class="md-icon-button tb-md-32 tb-fullscreen-button-style"></md-button>
-                </div>
-                <div class="md-caption" id="dialog-caption" translate>
-                    gateway.transformer-json-config
-                </div>
-                <div layout="row" class="tb-extension-custom-transformer-panel" flex>
-                    <div id="dialog-custom-trans" flex class="tb-extension-custom-transformer"
-                         ui-ace="vm.configAreaOptions"
-                         ng-model="vm.config"
-                         name="config"
-                         ng-change='vm.validateConfig(vm.config, "config")'
-                         required>
+                    <div layout="row" class="tb-json-panel" flex>
+                        <div flex class="tb-json-input"
+                             ui-ace="vm.configAreaOptions"
+                             ng-model="vm.config"
+                             name="config"
+                             ng-change='vm.validateConfig(vm.config, "config")'
+                             required>
+                        </div>
                     </div>
-                </div>
-                <div class="tb-error-messages" ng-messages="theForm.config.$error" role="alert">
-                    <div ng-message="required" class="tb-error-message" translate>gateway.json-required</div>
-                    <div ng-message="vm.config" class="tb-error-message" translate>gateway.json-parse</div>
+                    <div class="tb-error-messages" layout="column" flex ng-messages="theForm.config.$error" role="alert">
+                        <div ng-message="required" flex class="tb-error-message" translate>gateway.json-required</div>
+                        <div ng-message="vm.config" class="tb-error-message" translate>gateway.json-parse</div>
+                    </div>
                 </div>
             </div>
         </md-dialog-content>
-        <md-dialog-actions layout="row">
-            <span flex></span>
+        <md-dialog-actions layout="row" layout-align="end center" class="action-buttons">
             <md-button ng-disabled="$root.loading || theForm.$invalid || !theForm.$dirty" type="submit"
                        class="md-raised md-primary">
                 {{'action.save'|translate}}

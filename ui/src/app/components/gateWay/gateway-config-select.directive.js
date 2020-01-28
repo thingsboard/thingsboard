@@ -77,8 +77,8 @@ function GatewayConfigSelect($compile, $templateCache, $mdConstant, $translate, 
             }
         };
 
-        scope.textIsNotEmpty = function (text) {
-            return !!text;
+        scope.textIsEmpty = function (str) {
+            return (!str || 0 === str.length);
         };
 
         scope.gatewayNameEnter = function ($event) {
@@ -86,17 +86,17 @@ function GatewayConfigSelect($compile, $templateCache, $mdConstant, $translate, 
                 $event.preventDefault();
                 let indexRes = scope.gatewayList.findIndex((element) => element.key === scope.gatewaySearchText);
                     if (indexRes === -1) {
-                        scope.createDeviceNewDialog($event, {name: scope.gatewaySearchText});
+                        scope.createNewGatewayDialog($event, {name: scope.gatewaySearchText});
                     }
             }
         };
 
-        scope.createDeviceNewDialog = function ($event, deviceName) {
+        scope.createNewGatewayDialog = function ($event, deviceName) {
             if ($event) {
                 $event.stopPropagation();
             }
             var title = $translate.instant('gateway.create-new-gateway');
-            var content = $translate.instant('gateway.create-new-gateway_ok_no', {gatewayName: deviceName.name});
+            var content = $translate.instant('gateway.create-new-gateway-text', {gatewayName: deviceName.name});
             var confirm = $mdDialog.confirm()
                 .targetEvent($event)
                 .title(title)

@@ -39,7 +39,8 @@ function GatewayConfig() {
             keyPlaceholderText: '@?',
             valuePlaceholderText: '@?',
             noDataText: '@?',
-            gatewayConfig: '='
+            gatewayConfig: '=',
+            changeAlignment: '='
         },
         controller: GatewayConfigController,
         controllerAs: 'vm',

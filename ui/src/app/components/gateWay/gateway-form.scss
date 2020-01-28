@@ -14,33 +14,27 @@
  * limitations under the License.
  */
 .gateway-form{
+  padding: 5px 5px 0;
+
   .gateway-form-row{
     md-input-container{
       margin-bottom: 0;
     }
-  }
-}
 
-.configurationPoint {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
+    &.gateway-config-row-vertical{
+      flex-direction: column;
+
+      .md-select-container{
+        margin-bottom: 14px;
+      }
+    }
+  }
+
+  .action-buttons{
+    padding-top: 8px;
+  }
 }
 
 .security-type {
   margin-top: 38px;
 }
-
-.error {
-  color: #f00;
-}
-
-md-checkbox.remote {
-  .md-label {
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-}
-
