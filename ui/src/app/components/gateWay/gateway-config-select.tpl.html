@@ -47,5 +47,8 @@
                 </div>
             </div>
         </md-not-found>
+        <div ng-messages="theForm.singleSelect.$error">
+            <div ng-message="required" translate>Test</div>
+        </div>
     </md-autocomplete>
 </section>

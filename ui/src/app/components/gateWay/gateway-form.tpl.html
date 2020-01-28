@@ -32,44 +32,53 @@
                 <md-expansion-panel-content>
                     <tb-gateway-config-select tb-required="true"
                                               ng-model="vm.configurations.singleSelect"
+                                              the-form="gatewayConfiguration"
                                               gateway-list="vm.gateways"
                                               get_access_token="vm.getAccessToken"
                                               create-device="vm.createDevice">
                     </tb-gateway-config-select>
-
                     <md-input-container class="md-block">
                         <label>{{'gateway.security-type' | translate }}</label>
                         <md-select name="securityType" ng-model="vm.configurations.securityType">
-                            <md-option ng-repeat="securityType in vm.securityTypes" ng-value="securityType.value">{{securityType.name}}</md-option>
+                            <md-option ng-repeat="securityType in vm.securityTypes" ng-value="securityType.value">
+                                {{securityType.name}}
+                            </md-option>
                         </md-select>
                     </md-input-container>
-                    <div ng-if="vm.configurations.securityType=='tls'">
-                        <md-input-container class="md-block security-type">
-                            <label>{{'gateway.tls-path-ca-certificate' | translate }}</label>
-                            <input type="text" ng-model="vm.configurations.caCertPath" name="caCertPath" required/>
-                        </md-input-container>
-                        <md-input-container class="md-block">
-                            <label>{{'gateway.tls-path-private-key' | translate }}</label>
-                            <input type="text" ng-model="vm.configurations.privateKeyPath" name="privateKeyPath" required/>
-                        </md-input-container>
-                        <md-input-container class="md-block">
-                            <label>{{'gateway.tls-path-client-certificate' | translate }}</label>
-                            <input type="text" ng-model="vm.configurations.certPath" name="certPath" required/>
-                        </md-input-container>
-                    </div>
-
-                    <div layout="row" class="gateway-form-row" ng-class="{'gateway-config-row-vertical': vm.changeAlignment}">
+                    <div layout="row" class="gateway-form-row"
+                         ng-class="{'gateway-config-row-vertical': vm.changeAlignment}">
                         <md-input-container class="md-block" flex>
                             <label>{{ 'gateway.thingsboard-host' | translate }}</label>
                             <input type="text" name="host" ng-model="vm.configurations.host" required>
+                            <div ng-messages="gatewayConfiguration.host.$error">
+                                <div ng-message="required" translate>extension.field-required</div>
+                            </div>
                         </md-input-container>
-
                         <md-input-container class="md-block" flex>
                             <label>{{ 'gateway.thingsboard-port' | translate }}</label>
-                            <input type="number" min="1" max="65535" step="1" name="port" ng-model="vm.configurations.port" required>
+                            <input type="number" min="1" max="65535" step="1" name="port"
+                                   ng-model="vm.configurations.port" required>
+                            <div ng-messages="gatewayConfiguration.port.$error">
+                                <div ng-message="required" translate>extension.field-required</div>
+                                <div ng-message="max" translate>max</div>
+                                <div ng-message="min" translate>min</div>
+                            </div>
                         </md-input-container>
                     </div>
-
+                    <div ng-if="vm.configurations.securityType=='tls'">
+                        <md-input-container class="md-block security-type">
+                            <label>{{'gateway.tls-path-ca-certificate' | translate }}</label>
+                            <input type="text" ng-model="vm.configurations.caCertPath" name="caCertPath"/>
+                        </md-input-container>
+                        <md-input-container class="md-block">
+                            <label>{{'gateway.tls-path-private-key' | translate }}</label>
+                            <input type="text" ng-model="vm.configurations.privateKeyPath" name="privateKeyPath"/>
+                        </md-input-container>
+                        <md-input-container class="md-block">
+                            <label>{{'gateway.tls-path-client-certificate' | translate }}</label>
+                            <input type="text" ng-model="vm.configurations.certPath" name="certPath"/>
+                        </md-input-container>
+                    </div>
                     <md-checkbox ng-model="vm.configurations.remoteConfiguration"
                                  name="remoteConfiguration"
                                  ng-click="vm.setSaveTypeConfig({item: vm.configurations.remoteConfiguration})"
@@ -77,8 +86,8 @@
                         {{ 'gateway.remote' | translate }}
                         <md-tooltip md-direction="right">{{'gateway.remote-tip' | translate }}</md-tooltip>
                     </md-checkbox>
-
-                    <div layout="row" class="gateway-form-row" ng-class="{'gateway-config-row-vertical': vm.changeAlignment}">
+                    <div layout="row" class="gateway-form-row"
+                         ng-class="{'gateway-config-row-vertical': vm.changeAlignment}">
                         <md-input-container class="md-block md-select-container" flex>
                             <label>{{'gateway.remote-logging-level' | translate }}</label>
                             <md-select name="loggingLevel" ng-model="vm.configurations.remoteLoggingLevel">
@@ -90,7 +99,11 @@
                         </md-input-container>
                         <md-input-container class="md-block" flex>
                             <label>{{'gateway.remote-logging-path-logs' | translate }}</label>
-                            <input type="text" ng-model="vm.configurations.remoteLoggingPathToLogs" name="readRecordsCount"  required>
+                            <input type="text" ng-model="vm.configurations.remoteLoggingPathToLogs"
+                                   name="remoteLoggingPathToLogs" required>
+                            <div ng-messages="gatewayConfiguration.remoteLoggingPathToLogs.$error">
+                                <div ng-message="required" translate>extension.field-required</div>
+                            </div>
                         </md-input-container>
                     </div>
                 </md-expansion-panel-content>
@@ -112,19 +125,30 @@
                     <md-input-container class="md-block" flex>
                         <label>{{'gateway.storage-type' | translate }}</label>
                         <md-select required ng-model="vm.configurations.storageType">
-                            <md-option ng-repeat="storageType in vm.storageTypes" ng-value="storageType.value">{{storageType.name}}</md-option>
+                            <md-option ng-repeat="storageType in vm.storageTypes" ng-value="storageType.value">
+                                {{storageType.name}}
+                            </md-option>
                         </md-select>
                     </md-input-container>
 
-                    <div layout="row" class="gateway-form-row" ng-class="{'gateway-config-row-vertical': vm.changeAlignment}">
+                    <div layout="row" class="gateway-form-row"
+                         ng-class="{'gateway-config-row-vertical': vm.changeAlignment}">
                         <md-input-container class="md-block" flex>
                             <label>{{'gateway.storage-read-time' | translate }}</label>
-                            <input type="number" min="1" name="readRecordsCount"  ng-model='vm.configurations.readRecordsCount' required/>
+                            <input type="number" min="1" name="readRecordsCount"
+                                   ng-model='vm.configurations.readRecordsCount' required/>
+                            <div ng-messages="gatewayConfiguration.readRecordsCount.$error">
+                                <div ng-message="required" translate>extension.field-required</div>
+                            </div>
                         </md-input-container>
 
                         <md-input-container class="md-block" flex>
                             <label>{{'gateway.storage-max-time' | translate }}</label>
-                            <input type="number" min="1" name="maxRecordsCount"  ng-model='vm.configurations.maxRecordsCount' required/>
+                            <input type="number" min="1" name="maxRecordsCount"
+                                   ng-model='vm.configurations.maxRecordsCount' required/>
+                            <div ng-messages="gatewayConfiguration.maxRecordsCount.$error">
+                                <div ng-message="required" translate>extension.field-required</div>
+                            </div>
                         </md-input-container>
                     </div>
 
@@ -133,12 +157,20 @@
                          ng-class="{'gateway-config-row-vertical': vm.changeAlignment}">
                         <md-input-container class="md-block" flex>
                             <label>{{'gateway.storage-max-files' | translate }}</label>
-                            <input type="number" min="1" name="maxFilesCount" ng-model='vm.configurations.maxFilesCount' required/>
+                            <input type="number" min="1" name="maxFilesCount" ng-model='vm.configurations.maxFilesCount'
+                                   required/>
+                            <div ng-messages="gatewayConfiguration.maxFilesCount.$error">
+                                <div ng-message="required" translate>extension.field-required</div>
+                            </div>
                         </md-input-container>
 
                         <md-input-container class="md-block" flex>
                             <label>{{'gateway.storage-data-path' | translate }}</label>
-                            <input type="text" name="dataFolderPath"  ng-model='vm.configurations.dataFolderPath' required/>
+                            <input type="text" name="dataFolderPath" ng-model='vm.configurations.dataFolderPath'
+                                   required/>
+                            <div ng-messages="gatewayConfiguration.dataFolderPath.$error">
+                                <div ng-message="required" translate>extension.field-required</div>
+                            </div>
                         </md-input-container>
                     </div>
                 </md-expansion-panel-content>
@@ -165,7 +197,7 @@
             </md-expansion-panel-expanded>
         </md-expansion-panel>
     </md-expansion-panel-group>
-    <section layout="row" layout-align="end center" class="action-buttons">
+    <section layout="row" layout-align="end center" class="form-action-buttons">
         <md-button class="md-primary md-raised"
                    ng-click="vm.exportConfig()"
                    ng-if="!vm.configurations.remoteConfiguration"

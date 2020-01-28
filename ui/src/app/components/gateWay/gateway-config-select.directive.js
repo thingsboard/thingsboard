@@ -128,7 +128,8 @@ function GatewayConfigSelect($compile, $templateCache, $mdConstant, $translate, 
             allowedEntityTypes: '=?',
             gatewayList: '=?',
             getAccessToken: '=',
-            createDevice: '='
+            createDevice: '=',
+            theForm: '='
         }
     };
 }

@@ -49,7 +49,7 @@ function GatewayConfig() {
 }
 
 /*@ngInject*/
-function GatewayConfigController($scope, $document, $mdDialog, $mdUtil, $window, types) {
+function GatewayConfigController($scope, $document, $mdDialog, $mdUtil, $window, types, toast,  $translate) {  //eslint-disable-line
 
     let vm = this;
 
@@ -181,6 +181,39 @@ function GatewayConfigController($scope, $document, $mdDialog, $mdUtil, $window,
 
         });
         return (index === 0) ? name : name + index;
+    };
+
+    vm.buttonValid = (config) => {
+        return (angular.equals("{}", config)) ? "md-warn" : "md-primary";
+    };
+
+    vm.checkboxValid = (keyVal) => {
+        // var queryResult = $document[0].getElementById("section-row");
+        // let toastParent = angular.element(queryResult);
+        // let toastParent = angular.element(".gateway-config");
+        // let toastParentId = toastParent[2].id;
+        // let errKeyValEnable1 = $translate.instant('gateway.keyval-name-err');
+        // let errKeyValEnable2 = $translate.instant('gateway.keyval-type-err');
+        // let errKeyValEnable3 = $translate.instant('gateway.keyval-config-err');
+
+
+        // let errTxt = errKeyValEnable1 + "\r\n" + errKeyValEnable2 + "\r\n" + errKeyValEnable3;
+        // let errTxt = "ggggg\n" +
+        //     "jhgjh\n" +
+        //     "jk";
+        // console.log(queryResult, "toastParent", toastParent); //eslint-disable-line
+        //
+        // console.log("errKeyValEnable", errTxt); //eslint-disable-line
+        //
+        // console.log("keyVal", keyVal);   //eslint-disable-line
+        // toast.showInfo(errTxt, 750, toastParent, 'bottom left');
+        // toast.showError($translate.instant('gateway.keyval-enable-err', {errKeyValEnable: errKeyValEnable}), 750, angular.element(queryResult), 'bottom left');
+        // var multibutton = angular.element(element.getElementsByClassName("keyVal-enabled"));
+        if (angular.equals("", keyVal.key)|| angular.equals("", keyVal.value) || angular.equals("{}", keyVal.config)) {
+            keyVal.enabled = false;
+
+
+        }
     };
 }
 
