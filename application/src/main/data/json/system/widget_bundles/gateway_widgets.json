@@ -22,8 +22,8 @@
       }
     },
     {
-      "alias": "config_for_gateways_two_direcrives_",
-      "name": "Config for gateways form",
+      "alias": "new_config_form",
+      "name": "Config form",
       "descriptor": {
         "type": "static",
         "sizeX": 7.5,
@@ -33,12 +33,12 @@
             "url": ""
           }
         ],
-        "templateHtml": "<md-expansion-panel-content>\n    <tb-gateway-form title-text=\"Gateway configuration\"\n        ng-disabled=\"$root.loading\"\n        gate-way-form=\"configurations\">\n    </tb-gateway-form>\n</md-expansion-panel-content>",
+        "templateHtml": "<tb-gateway-form\n    form-id=\"formId\"\n    ctx=\"ctx\">\n</tb-gateway-form>\n",
         "templateCss": "#container {\n    overflow: auto;\n    height: 100%;\n     margin: auto;\n}\n\n\n\n/*#configurations {*/\n/*    display: flex;*/\n/*    flex-direction: column;*/\n/*    height: 100%;*/\n/*    margin: 0px;*/\n/*    padding: 0;*/\n/*}*/\n\n/*.configurationPointParent {*/\n/*    display: flex;*/\n/*    flex-direction: column;*/\n    \n/*}*/\n\n/*.configurationPoint {*/\n/*    display: flex;*/\n/*    flex-direction: row;*/\n/*    justify-content: space-between;*/\n/*    margin: 5px;*/\n/*}*/\n\n/*.configurationPoint.select {*/\n/*  margin: 0px;*/\n/*  padding: 0;*/\n/*  border: 0;*/\n/*  height: 40px;*/\n\n/*}*/\n\n/*.configurationPoint.select.inputRow {*/\n/*  margin: 0px;*/\n/*  width: 100%;*/\n/*  padding: 0;*/\n/*  border: 0;*/\n/*  height: 40px;*/\n/*}*/\n\n\n/*.error {*/\n/*color: red;*/\n/*}*/",
-        "controllerScript": "",
-        "settingsSchema": "{\n    \"schema\": {},\n    \"form\": []\n}",
+        "controllerScript": "self.onInit = function() {\n    var scope = self.ctx.$scope;\n    var id = self.ctx.$scope.$injector.get('utils').guid();\n    scope.formId = \"form-\"+id;\n    scope.ctx = self.ctx;\n}\n\nself.onResize = function() {\n    self.ctx.$scope.$broadcast('gateway-form-resize', self.ctx.$scope.formId);\n}\n",
+        "settingsSchema": "{\n    \"schema\": {\n        \"type\": \"object\",\n        \"title\": \"GatewayConfigForm\",\n        \"properties\": {\n            \"gatewayTitle\": {\n                \"title\": \"Gateway form title\",\n                \"type\": \"string\",\n                \"default\": \"Gateway Config Form\"\n            }\n        }\n    },\n    \"form\": [\n        \"gatewayTitle\"\n    ]\n}\n",
         "dataKeySettingsSchema": "{}\n",
-        "defaultConfig": "{\"datasources\":[{\"type\":\"static\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Random\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.15479322438769105,\"funcBody\":\"var value = prevValue + Math.random() * 100 - 50;\\nvar multiplier = Math.pow(10, 2 || 0);\\nvar value = Math.round(value * multiplier) / multiplier;\\nif (value < -1000) {\\n\\tvalue = -1000;\\n} else if (value > 1000) {\\n\\tvalue = 1000;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"rgb(255, 255, 255)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"8px\",\"settings\":{\"cardHtml\":\"<div class='card'>HTML code here</div>\",\"cardCss\":\".card {\\n    font-weight: bold;\\n    font-size: 32px;\\n    color: #999;\\n    width: 100%;\\n    height: 100%;\\n    display: flex;\\n    align-items: center;\\n    justify-content: center;\\n}\"},\"title\":\"Config for gateways form\",\"dropShadow\":true}"
+        "defaultConfig": "{\"datasources\":[{\"type\":\"static\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Random\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.15479322438769105,\"funcBody\":\"var value = prevValue + Math.random() * 100 - 50;\\nvar multiplier = Math.pow(10, 2 || 0);\\nvar value = Math.round(value * multiplier) / multiplier;\\nif (value < -1000) {\\n\\tvalue = -1000;\\n} else if (value > 1000) {\\n\\tvalue = 1000;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":true,\"backgroundColor\":\"rgb(255, 255, 255)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"8px\",\"settings\":{\"gatewayTitle\":\"Gateway Config Form\"},\"title\":\"Config form\",\"dropShadow\":true,\"showTitleIcon\":false,\"titleIcon\":\"more_horiz\",\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"iconSize\":\"24px\",\"titleTooltip\":\"\",\"enableFullscreen\":true,\"widgetStyle\":{},\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"useDashboardTimewindow\":true,\"displayTimewindow\":true,\"showLegend\":false,\"actions\":{}}"
       }
     }
   ]
