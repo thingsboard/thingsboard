@@ -20,10 +20,10 @@
         <div layout="column" layout-align="center center" class="gateway-config-row">
             <md-input-container class="md-block">
                 <md-checkbox ng-model="keyVal.enabled"
-                             id="keyVal-enabled"
                              aria-label="{{ 'gateway.enabled' | translate }}"
-                             ng-change="vm.checkboxValid(keyVal)">
-<!--                             ng-disabled="gatewayConfig.$invalid || !gatewayConfig.$dirty">-->
+                             ng-change="vm.checkboxValid(keyVal)"
+                             ng-click="vm.checkboxValidClick($event, keyVal)"
+                             ng-mouseover="vm.checkboxValidMouseover($event, keyVal)">
                 </md-checkbox>
                 <md-tooltip md-direction="top">
                     {{ 'gateway.enabled' | translate }}
@@ -33,7 +33,6 @@
         <div layout="row" flex class="gateway-config-row"
              ng-class="{'gateway-config-row-vertical': vm.changeAlignment}">
             <md-input-container class="md-block" flex>
-<!--                                md-is-error="theForm.configType.$touched && theForm.configType.$invalid">-->
                 <label>{{'gateway.connector-type' | translate }}</label>
                 <md-select name="configType" ng-change="vm.configTypeChange(keyVal)" ng-model="keyVal.value"  required>
                     <md-option ng-repeat="configType in vm.types.gatewayConfigType" ng-value="configType.value">
@@ -59,9 +58,10 @@
         <div layout="row" layout-align="end center" class="action-buttons"
              ng-class="{'gateway-config-row-vertical': vm.changeAlignment}">
             <md-button class="md-icon-button md-fab md-mini"
+                       name="updateconf"
                        ng-click="vm.openConfigDialog($event, $index, keyVal.config, keyVal.key)"
                        aria-label="{{ 'gateway.update-config' | translate }}"
-                       ng-class="vm.buttonValid(keyVal.config)">
+                       ng-class="vm.buttonValid(keyVal.config)" required>
                 <md-icon class="material-icons">settings_ethernet</md-icon>
                 <md-tooltip md-direction="top">
                     {{ 'gateway.update-config' | translate }}

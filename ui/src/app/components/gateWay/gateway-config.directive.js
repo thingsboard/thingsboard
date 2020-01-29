@@ -49,7 +49,7 @@ function GatewayConfig() {
 }
 
 /*@ngInject*/
-function GatewayConfigController($scope, $document, $mdDialog, $mdUtil, $window, types, toast,  $translate) {  //eslint-disable-line
+function GatewayConfigController($scope, $document, $mdDialog, $mdUtil, $window, types, toast, $timeout, $compile, $translate) {  //eslint-disable-line
 
     let vm = this;
 
@@ -90,7 +90,11 @@ function GatewayConfigController($scope, $document, $mdDialog, $mdUtil, $window,
             for (let i = 0; i < vm.kvList.length; i++) {
                 let entry = vm.kvList[i];
                 if (entry.key && entry.value) {
-                    let connectorJSON = angular.toJson({enabled: entry.enabled, connector: entry.value, config: angular.fromJson(entry.config)});
+                    let connectorJSON = angular.toJson({
+                        enabled: entry.enabled,
+                        connector: entry.value,
+                        config: angular.fromJson(entry.config)
+                    });
                     vm.gatewayConfig [entry.key] = angular.fromJson(connectorJSON);
                 }
             }
@@ -159,10 +163,12 @@ function GatewayConfigController($scope, $document, $mdDialog, $mdUtil, $window,
                 }
             }
         }
+        vm.checkboxValid(keyVal);
     };
 
     vm.keyValChange = (keyVal, indexKey) => {
         keyVal.key = vm.keyValChangeValid(keyVal.key, 0, indexKey);
+        vm.checkboxValid(keyVal);
     };
 
     vm.configTypeChangeValid = (name, index) => {
@@ -188,33 +194,79 @@ function GatewayConfigController($scope, $document, $mdDialog, $mdUtil, $window,
     };
 
     vm.checkboxValid = (keyVal) => {
-        // var queryResult = $document[0].getElementById("section-row");
-        // let toastParent = angular.element(queryResult);
-        // let toastParent = angular.element(".gateway-config");
-        // let toastParentId = toastParent[2].id;
-        // let errKeyValEnable1 = $translate.instant('gateway.keyval-name-err');
-        // let errKeyValEnable2 = $translate.instant('gateway.keyval-type-err');
-        // let errKeyValEnable3 = $translate.instant('gateway.keyval-config-err');
+        if (!keyVal.key || angular.equals("", keyVal.key)
+            || !keyVal.value || angular.equals("", keyVal.value)
+            || angular.equals("{}", keyVal.config)) {
+            return keyVal.enabled = false;
+        }
+        return true;
+    };
+    vm.checkboxValidMouseover = ($event, keyVal) => {
+        console.log($event, keyVal);     //eslint-disable-line
+        vm.checkboxValidClick ($event, keyVal);
+    };
 
+    vm.checkboxValidClick = ($event, keyVal) => {
+        if (!vm.checkboxValid(keyVal)) {
+            let errTxt = "";
+            if (!keyVal.key || angular.equals("", keyVal.key)) {
+                errTxt = $translate.instant('gateway.keyval-name-err');
+            }
 
-        // let errTxt = errKeyValEnable1 + "\r\n" + errKeyValEnable2 + "\r\n" + errKeyValEnable3;
-        // let errTxt = "ggggg\n" +
-        //     "jhgjh\n" +
-        //     "jk";
-        // console.log(queryResult, "toastParent", toastParent); //eslint-disable-line
-        //
-        // console.log("errKeyValEnable", errTxt); //eslint-disable-line
-        //
-        // console.log("keyVal", keyVal);   //eslint-disable-line
-        // toast.showInfo(errTxt, 750, toastParent, 'bottom left');
-        // toast.showError($translate.instant('gateway.keyval-enable-err', {errKeyValEnable: errKeyValEnable}), 750, angular.element(queryResult), 'bottom left');
-        // var multibutton = angular.element(element.getElementsByClassName("keyVal-enabled"));
-        if (angular.equals("", keyVal.key)|| angular.equals("", keyVal.value) || angular.equals("{}", keyVal.config)) {
-            keyVal.enabled = false;
+            if (!keyVal.value || angular.equals("", keyVal.value)) {
+                errTxt += '<div>' + $translate.instant('gateway.keyval-type-err') + '</div>';
+            }
 
-
+            if (angular.equals("{}", keyVal.config)) {
+                errTxt += '<div>' + $translate.instant('gateway.keyval-config-err') + '</div>';
+            }
+            if (!angular.equals("", errTxt)) {
+                displayTooltip($event, '<div class="tb-rule-node-tooltip tb-lib-tooltip">' +
+                    '<div id="tb-node-content" layout="column">' +
+                    '<div class="tb-node-title">' + $translate.instant('gateway.keyval-save-err') + '</div>' +
+                    '<div class="tb-node-details">' + errTxt + '</div>' +
+                    '</div>' +
+                    '</div>');
+            }
+        }
+        else {
+            destroyTooltips();
         }
     };
+
+
+    function displayTooltip(event, content) {
+        destroyTooltips();
+        vm.tooltipTimeout = $timeout(() => {
+            var element = angular.element(event.target);
+            element.tooltipster(
+                {
+                    theme: 'tooltipster-shadow',
+                    delay: 10,
+                    animation: 'grow',
+                    side: 'right'
+                }
+            );
+            var contentElement = angular.element(content);
+            $compile(contentElement)($scope);
+            var tooltip = element.tooltipster('instance');
+            tooltip.content(contentElement);
+            tooltip.open();
+        }, 500);
+    }
+
+    function destroyTooltips() {
+        if (vm.tooltipTimeout) {
+            $timeout.cancel(vm.tooltipTimeout);
+            vm.tooltipTimeout = null;
+        }
+        var instances = angular.element.tooltipster.instances();
+        instances.forEach((instance) => {
+            if (!instance.isErrorTooltip) {
+                instance.destroy();
+            }
+        });
+    }
 }
 
 /*@ngInject*/

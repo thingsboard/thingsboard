@@ -1171,7 +1171,11 @@
         "enabled": "Enabled",
         "name": "Name",
         "no-gateway-found": "No gateway found.",
-        "gateway": "Gateway"
+        "gateway": "Gateway",
+        "keyval-save-err": "Save config error",
+        "keyval-name-err": "Please add <b>Name</b>",
+        "keyval-type-err": "Please add <b>Connector type</b>",
+        "keyval-config-err": "Please add <b>configuration JSON</b>"
     },
     "grid": {
         "delete-item-title": "Are you sure you want to delete this item?",

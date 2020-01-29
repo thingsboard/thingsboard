@@ -36,7 +36,8 @@ function GatewayForm() {
             noDataText: '@?',
             formId: '=',
             ctx: '=',
-            gatewayFormConfig: '='
+            gatewayFormConfig: '=',
+            theForm: '='
         },
         controller: GatewayFormController,
         controllerAs: 'vm',
@@ -45,14 +46,14 @@ function GatewayForm() {
 }
 
 /*@ngInject*/
-function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, importExport, attributeService, deviceService, userService, $mdDialog, $mdUtil, types, $window, $q) {
+function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, toast, importExport, attributeService, deviceService, userService, $mdDialog, $mdUtil, types, $window, $q) {
     $scope.$mdExpansionPanel = $mdExpansionPanel;
     let vm = this;
     const attributeNameClinet = "current_configuration";
     const attributeNameServer = "configuration_drafts";
     const attributeNameShared = "configuration";
     const attributeNameLogShared = "RemoteLoggingLevel";
-    vm.remoteLoggingConfig = '[loggers]}}keys=root, service, connector, converter, tb_connection, storage, extension}}[handlers]}}keys=consoleHandler, serviceHandler, connectorHandler, converterHandler, tb_connectionHandler, storageHandler, extensionHandler}}[formatters]}}keys=LogFormatter}}[logger_root]}}level=ERROR}}handlers=consoleHandler}}[logger_connector]}}level={ERROR}}}handlers=connectorHandler}}formatter=LogFormatter}}qualname=connector}}[logger_storage]}}level={ERROR}}}handlers=storageHandler}}formatter=LogFormatter}}qualname=storage}}[logger_tb_connection]}}level={ERROR}}}handlers=tb_connectionHandler}}formatter=LogFormatter}}qualname=tb_connection}}[logger_service]}}level={ERROR}}}handlers=serviceHandler}}formatter=LogFormatter}}qualname=service}}[logger_converter]}}level={ERROR}}}handlers=connectorHandler}}formatter=LogFormatter}}qualname=converter}}[logger_extension]}}level={ERROR}}}handlers=connectorHandler}}formatter=LogFormatter}}qualname=extension}}[handler_consoleHandler]}}class=StreamHandler}}level={ERROR}}}formatter=LogFormatter}}args=(sys.stdout,)}}[handler_connectorHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}connector.log", "d", 1, 7,)}}[handler_storageHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}storage.log", "d", 1, 7,)}}[handler_serviceHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}service.log", "d", 1, 7,)}}[handler_converterHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}converter.log", "d", 1, 3,)}}[handler_extensionHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}extension.log", "d", 1, 3,)}}[handler_tb_connectionHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}tb_connection.log", "d", 1, 3,)}}[formatter_LogFormatter]}}format="%(asctime)s - %(levelname)s - %(module)s - %(lineno)d - %(message)s" }}datefmt="%Y-%m-%d %H:%M:%S"';
+    vm.remoteLoggingConfig = '[loggers]}}keys=root, service, connector, converter, tb_connection, storage, extension}}[handlers]}}keys=consoleHandler, serviceHandler, connectorHandler, converterHandler, tb_connectionHandler, storageHandler, extensionHandler}}[formatters]}}keys=LogFormatter}}[logger_root]}}level=ERROR}}handlers=consoleHandler}}[logger_connector]}}level={ERROR}}}handlers=connectorHandler}}formatter=LogFormatter}}qualname=connector}}[logger_storage]}}level={ERROR}}}handlers=storageHandler}}formatter=LogFormatter}}qualname=storage}}[logger_tb_connection]}}level={ERROR}}}handlers=tb_connectionHandler}}formatter=LogFormatter}}qualname=tb_connection}}[logger_service]}}level={ERROR}}}handlers=serviceHandler}}formatter=LogFormatter}}qualname=service}}[logger_converter]}}level={ERROR}}}handlers=connectorHandler}}formatter=LogFormatter}}qualname=converter}}[logger_extension]}}level={ERROR}}}handlers=connectorHandler}}formatter=LogFormatter}}qualname=extension}}[handler_consoleHandler]}}class=StreamHandler}}level={ERROR}}}formatter=LogFormatter}}args=(sys.stdout,)}}[handler_connectorHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}connector.log", "d", 1, 7,)}}[handler_storageHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}storage.log", "d", 1, 7,)}}[handler_serviceHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}service.log", "d", 1, 7,)}}[handler_converterHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}converter.log", "d", 1, 3,)}}[handler_extensionHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}extension.log", "d", 1, 3,)}}[handler_tb_connectionHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}tb_connection.log", "d", 1, 3,)}}[formatter_LogFormatter]}}format="%(asctime)s - %(levelname)s - [%(filename)s] - %(module)s - %(lineno)d - %(message)s" }}datefmt="%Y-%m-%d %H:%M:%S"';
     vm.types = types;
 
     vm.configurations = {
@@ -101,13 +102,15 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
     });
 
     function updateWidgetDisplaying() {
-        vm.changeAlignment = (vm.ctx.$container[0].offsetWidth <= 425);
+        if (vm.ctx && vm.ctx.$container) {
+            vm.changeAlignment = (vm.ctx.$container[0].offsetWidth <= 425);
+        }
     }
 
     updateWidgetDisplaying();
 
     vm.getAccessToken = (deviceObj) => {
-        if(deviceObj.name) {
+        if (deviceObj.name) {
             deviceService.findByName(deviceObj.name, {ignoreErrors: true})
                 .then(
                     function (device) {
@@ -117,7 +120,7 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
         }
     };
 
-    function getDeviceCredential(deviceId){
+    function getDeviceCredential(deviceId) {
         return deviceService.getDeviceCredentials(deviceId).then(
             (deviceCredentials) => {
                 vm.configurations.accessToken = deviceCredentials.credentialsId;
@@ -307,7 +310,7 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
         }
         configMain.connectors = conn;
 
-        configMain.logs =  $window.btoa(vm.getLogsConfig());
+        configMain.logs = $window.btoa(vm.getLogsConfig());
 
         return configMain;
     };
@@ -335,7 +338,7 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
     vm.getConfigByAttributeTmpJSON = () => {
         let connects = {};
         for (let connector in vm.configurations.connectors) {
-            if (!vm.configurations.connectors[connector].enabled) {
+            if (!vm.configurations.connectors[connector].enabled && Object.keys(vm.configurations.connectors[connector].config).length !== 0) {
                 let conn = {};
                 conn["connector"] = vm.configurations.connectors[connector].connector;
                 conn["config"] = vm.configurations.connectors[connector].config;
@@ -353,7 +356,7 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
                 (devices) => {
                     if (devices.data.length > 0) {
                         devices.data.forEach((device) => {
-                            if (device.additionalInfo !== null && device.additionalInfo.gateway===true) {
+                            if (device.additionalInfo !== null && device.additionalInfo.gateway === true) {
                                 vm.gateways.push(device.name);
                                 if (firstInit && vm.gateways.length && device.name === vm.gateways[0]) {
                                     vm.configurations.singleSelect = vm.gateways[0];
@@ -376,7 +379,7 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
                 (devices) => {
                     if (devices.data.length > 0) {
                         devices.data.forEach((device) => {
-                            if (device.additionalInfo !== null && device.additionalInfo.gateway===true) {
+                            if (device.additionalInfo !== null && device.additionalInfo.gateway === true) {
                                 vm.gateways.push(device.name);
                                 if (firstInit && vm.gateways.length) {
                                     vm.configurations.singleSelect = vm.gateways[0];
@@ -444,8 +447,7 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
             if (vm.types.gatewayLogLevel[resp[0].value.toLowerCase()]) {
                 vm.configurations.remoteLoggingLevel = resp[0].value.toUpperCase();
             }
-        }
-        else{
+        } else {
             vm.configurations.remoteLoggingLevel = vm.types.gatewayLogLevel.debug;
         }
     };
