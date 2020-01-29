@@ -359,6 +359,7 @@ public class ModelConstants {
 
     public static final String PARTITION_COLUMN = "partition";
     public static final String KEY_COLUMN = "key";
+    public static final String KEY_ID_COLUMN = "key_id";
     public static final String TS_COLUMN = "ts";
 
     /**

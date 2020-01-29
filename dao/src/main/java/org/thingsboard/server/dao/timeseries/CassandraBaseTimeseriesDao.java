@@ -97,7 +97,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
     @Value("${cassandra.query.set_null_values_enabled}")
     private boolean setNullValuesEnabled;
 
-    private TsPartitionDate tsFormat;
+    private NoSqlTsPartitionDate tsFormat;
 
     private PreparedStatement partitionInsertStmt;
     private PreparedStatement partitionInsertTtlStmt;
@@ -120,7 +120,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
         super.startExecutor();
         if (!isInstall()) {
             getFetchStmt(Aggregation.NONE, DESC_ORDER);
-            Optional<TsPartitionDate> partition = TsPartitionDate.parse(partitioning);
+            Optional<NoSqlTsPartitionDate> partition = NoSqlTsPartitionDate.parse(partitioning);
             if (partition.isPresent()) {
                 tsFormat = partition.get();
             } else {

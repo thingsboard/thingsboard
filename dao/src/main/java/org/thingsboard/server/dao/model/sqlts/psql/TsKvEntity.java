@@ -13,25 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model.sqlts.ts;
+package org.thingsboard.server.dao.model.sqlts.psql;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.BooleanDataEntry;
+import org.thingsboard.server.common.data.kv.DoubleDataEntry;
+import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.model.ToData;
 import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.Id;
 import javax.persistence.IdClass;
 import javax.persistence.Table;
+import javax.persistence.Transient;
+import java.util.UUID;
 
-import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_TYPE_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.TS_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_ID_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.KEY_COLUMN;
 
 @Data
 @Entity
@@ -40,13 +44,15 @@ import static org.thingsboard.server.dao.model.ModelConstants.TS_COLUMN;
 public final class TsKvEntity extends AbstractTsKvEntity implements ToData<TsKvEntry> {
 
     @Id
-    @Enumerated(EnumType.STRING)
-    @Column(name = ENTITY_TYPE_COLUMN)
-    private EntityType entityType;
+    @Column(name = ENTITY_ID_COLUMN, columnDefinition = "uuid")
+    protected UUID entityId;
 
     @Id
-    @Column(name = TS_COLUMN)
-    protected Long ts;
+    @Column(name = KEY_COLUMN)
+    protected int key;
+
+    @Transient
+    protected String strKey;
 
     public TsKvEntity() {
     }
@@ -113,6 +119,17 @@ public final class TsKvEntity extends AbstractTsKvEntity implements ToData<TsKvE
 
     @Override
     public TsKvEntry toData() {
-        return new BasicTsKvEntry(ts, getKvEntry());
+        KvEntry kvEntry = null;
+        if (strValue != null) {
+            kvEntry = new StringDataEntry(strKey, strValue);
+        } else if (longValue != null) {
+            kvEntry = new LongDataEntry(strKey, longValue);
+        } else if (doubleValue != null) {
+            kvEntry = new DoubleDataEntry(strKey, doubleValue);
+        } else if (booleanValue != null) {
+            kvEntry = new BooleanDataEntry(strKey, booleanValue);
+        }
+        return new BasicTsKvEntry(ts, kvEntry);
     }
+
 }
