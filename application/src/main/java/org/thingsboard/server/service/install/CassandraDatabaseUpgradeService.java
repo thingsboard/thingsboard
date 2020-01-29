@@ -59,7 +59,7 @@ import static org.thingsboard.server.service.install.DatabaseHelper.TYPE;
 @NoSqlDao
 @Profile("install")
 @Slf4j
-public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
+public class CassandraDatabaseUpgradeService implements DatabaseEntitiesUpgradeService {
 
     private static final String SCHEMA_UPDATE_CQL = "schema_update.cql";
 

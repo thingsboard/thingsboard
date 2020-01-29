@@ -13,18 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.install;
+package org.thingsboard.server.dao.model.sqlts.dictionary;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
-import org.thingsboard.server.dao.util.SqlTsDao;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Service
-@SqlTsDao
-@Profile("install")
-public class SqlTsDatabaseSchemaService extends SqlAbstractDatabaseSchemaService
-        implements TsDatabaseSchemaService {
-    public SqlTsDatabaseSchemaService() {
-        super("schema-ts.sql", null);
-    }
+import javax.persistence.Transient;
+import java.io.Serializable;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class TsKvDictionaryCompositeKey implements Serializable{
+
+    @Transient
+    private static final long serialVersionUID = -4089175869616037523L;
+
+    private String key;
 }

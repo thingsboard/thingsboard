@@ -13,11 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model.sqlts.ts;
+package org.thingsboard.server.dao.model.sqlts.latest;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.BooleanDataEntry;
+import org.thingsboard.server.common.data.kv.DoubleDataEntry;
+import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.model.ToData;
 import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
@@ -30,8 +35,9 @@ import javax.persistence.Id;
 import javax.persistence.IdClass;
 import javax.persistence.Table;
 
+import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_ID_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_TYPE_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.TS_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.KEY_COLUMN;
 
 @Data
 @Entity
@@ -44,16 +50,32 @@ public final class TsKvLatestEntity extends AbstractTsKvEntity implements ToData
     @Column(name = ENTITY_TYPE_COLUMN)
     private EntityType entityType;
 
-    @Column(name = TS_COLUMN)
-    private long ts;
+    @Id
+    @Column(name = ENTITY_ID_COLUMN)
+    private String entityId;
 
-    @Override
-    public TsKvEntry toData() {
-        return new BasicTsKvEntry(ts, getKvEntry());
-    }
+    @Id
+    @Column(name = KEY_COLUMN)
+    private String key;
 
     @Override
     public boolean isNotEmpty() {
         return strValue != null || longValue != null || doubleValue != null || booleanValue != null;
     }
+
+    @Override
+    public TsKvEntry toData() {
+        KvEntry kvEntry = null;
+        if (strValue != null) {
+            kvEntry = new StringDataEntry(key, strValue);
+        } else if (longValue != null) {
+            kvEntry = new LongDataEntry(key, longValue);
+        } else if (doubleValue != null) {
+            kvEntry = new DoubleDataEntry(key, doubleValue);
+        } else if (booleanValue != null) {
+            kvEntry = new BooleanDataEntry(key, booleanValue);
+        }
+        return new BasicTsKvEntry(ts, kvEntry);
+    }
+
 }

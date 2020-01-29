@@ -13,10 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.install;
+package org.thingsboard.server.dao.model.sqlts.hsql;
 
-public interface DatabaseUpgradeService {
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.EntityType;
 
-    void upgradeDatabase(String fromVersion) throws Exception;
+import javax.persistence.Transient;
+import java.io.Serializable;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class TsKvCompositeKey implements Serializable {
+
+    @Transient
+    private static final long serialVersionUID = -4089175869616037523L;
+
+    private EntityType entityType;
+    private String entityId;
+    private String key;
+    private long ts;
 
 }

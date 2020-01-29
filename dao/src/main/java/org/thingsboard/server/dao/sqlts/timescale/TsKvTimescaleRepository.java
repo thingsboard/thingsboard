@@ -26,6 +26,7 @@ import org.thingsboard.server.dao.model.sqlts.timescale.TimescaleTsKvEntity;
 import org.thingsboard.server.dao.util.TimescaleDBTsDao;
 
 import java.util.List;
+import java.util.UUID;
 
 @TimescaleDBTsDao
 public interface TsKvTimescaleRepository extends CrudRepository<TimescaleTsKvEntity, TimescaleTsKvCompositeKey> {
@@ -35,21 +36,11 @@ public interface TsKvTimescaleRepository extends CrudRepository<TimescaleTsKvEnt
             "AND tskv.key = :entityKey " +
             "AND tskv.ts > :startTs AND tskv.ts <= :endTs")
     List<TimescaleTsKvEntity> findAllWithLimit(
-            @Param("tenantId") String tenantId,
-            @Param("entityId") String entityId,
-            @Param("entityKey") String key,
+            @Param("tenantId") UUID tenantId,
+            @Param("entityId") UUID entityId,
+            @Param("entityKey") int key,
             @Param("startTs") long startTs,
             @Param("endTs") long endTs, Pageable pageable);
-
-    @Query(value = "SELECT tskv.tenant_id as tenant_id, tskv.entity_id as entity_id, tskv.key as key, last(tskv.ts,tskv.ts) as ts," +
-            " last(tskv.bool_v, tskv.ts) as bool_v, last(tskv.str_v, tskv.ts) as str_v," +
-            " last(tskv.long_v, tskv.ts) as long_v, last(tskv.dbl_v, tskv.ts) as dbl_v" +
-            " FROM tenant_ts_kv tskv WHERE tskv.tenant_id = cast(:tenantId AS varchar) " +
-            "AND tskv.entity_id = cast(:entityId AS varchar) " +
-            "GROUP BY tskv.tenant_id, tskv.entity_id, tskv.key", nativeQuery = true)
-    List<TimescaleTsKvEntity> findAllLatestValues(
-            @Param("tenantId") String tenantId,
-            @Param("entityId") String entityId);
 
     @Transactional
     @Modifying
@@ -57,9 +48,9 @@ public interface TsKvTimescaleRepository extends CrudRepository<TimescaleTsKvEnt
             "AND tskv.entityId = :entityId " +
             "AND tskv.key = :entityKey " +
             "AND tskv.ts > :startTs AND tskv.ts <= :endTs")
-    void delete(@Param("tenantId") String tenantId,
-                @Param("entityId") String entityId,
-                @Param("entityKey") String key,
+    void delete(@Param("tenantId") UUID tenantId,
+                @Param("entityId") UUID entityId,
+                @Param("entityKey") int key,
                 @Param("startTs") long startTs,
                 @Param("endTs") long endTs);
 

@@ -54,7 +54,7 @@ import static org.thingsboard.server.service.install.DatabaseHelper.TYPE;
 @Profile("install")
 @Slf4j
 @SqlDao
-public class SqlDatabaseUpgradeService implements DatabaseUpgradeService {
+public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService {
 
     private static final String SCHEMA_UPDATE_SQL = "schema_update.sql";
 
@@ -172,7 +172,8 @@ public class SqlDatabaseUpgradeService implements DatabaseUpgradeService {
                     loadSql(schemaUpdateFile, conn);
                     try {
                         conn.createStatement().execute("ALTER TABLE device ADD COLUMN label varchar(255)"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
-                    } catch (Exception e) {}
+                    } catch (Exception e) {
+                    }
                     log.info("Schema updated.");
                 }
                 break;
@@ -201,7 +202,8 @@ public class SqlDatabaseUpgradeService implements DatabaseUpgradeService {
                     log.info("Updating schema ...");
                     try {
                         conn.createStatement().execute("ALTER TABLE alarm ADD COLUMN propagate_relation_types varchar"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
-                    } catch (Exception e) {}
+                    } catch (Exception e) {
+                    }
                     log.info("Schema updated.");
                 }
                 break;

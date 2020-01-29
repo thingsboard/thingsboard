@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sqlts.ts;
+package org.thingsboard.server.dao.sqlts.latest;
 
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionCallbackWithoutResult;
-import org.thingsboard.server.dao.model.sqlts.ts.TsKvLatestEntity;
-import org.thingsboard.server.dao.sqlts.AbstractLatestInsertRepository;
-import org.thingsboard.server.dao.util.PsqlDao;
-import org.thingsboard.server.dao.util.SqlTsDao;
+import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
+import org.thingsboard.server.dao.sqlts.AbstractInsertRepository;
+import org.thingsboard.server.dao.sqlts.InsertLatestRepository;
+import org.thingsboard.server.dao.util.PsqlTsAnyDao;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -31,18 +31,11 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
-@SqlTsDao
-@PsqlDao
+
+@PsqlTsAnyDao
 @Repository
 @Transactional
-public class PsqlLatestInsertRepository extends AbstractLatestInsertRepository {
-
-    private static final String TS_KV_LATEST_CONSTRAINT = "(entity_type, entity_id, key)";
-
-    private static final String INSERT_OR_UPDATE_BOOL_STATEMENT = getInsertOrUpdateStringPsql(TS_KV_LATEST_TABLE, TS_KV_LATEST_CONSTRAINT, BOOL_V, PSQL_ON_BOOL_VALUE_UPDATE_SET_NULLS);
-    private static final String INSERT_OR_UPDATE_STR_STATEMENT = getInsertOrUpdateStringPsql(TS_KV_LATEST_TABLE, TS_KV_LATEST_CONSTRAINT, STR_V, PSQL_ON_STR_VALUE_UPDATE_SET_NULLS);
-    private static final String INSERT_OR_UPDATE_LONG_STATEMENT = getInsertOrUpdateStringPsql(TS_KV_LATEST_TABLE, TS_KV_LATEST_CONSTRAINT, LONG_V, PSQL_ON_LONG_VALUE_UPDATE_SET_NULLS);
-    private static final String INSERT_OR_UPDATE_DBL_STATEMENT = getInsertOrUpdateStringPsql(TS_KV_LATEST_TABLE, TS_KV_LATEST_CONSTRAINT, DBL_V, PSQL_ON_DBL_VALUE_UPDATE_SET_NULLS);
+public class PsqlLatestInsertRepository extends AbstractInsertRepository implements InsertLatestRepository {
 
     private static final String BATCH_UPDATE =
             "UPDATE ts_kv_latest SET ts = ?, bool_v = ?, str_v = ?, long_v = ?, dbl_v = ? WHERE entity_type = ? AND entity_id = ? and key = ?";
@@ -51,11 +44,6 @@ public class PsqlLatestInsertRepository extends AbstractLatestInsertRepository {
     private static final String INSERT_OR_UPDATE =
             "INSERT INTO ts_kv_latest (entity_type, entity_id, key, ts, bool_v, str_v, long_v, dbl_v) VALUES(?, ?, ?, ?, ?, ?, ?, ?) " +
                     "ON CONFLICT (entity_type, entity_id, key) DO UPDATE SET ts = ?, bool_v = ?, str_v = ?, long_v = ?, dbl_v = ?;";
-
-    @Override
-    public void saveOrUpdate(TsKvLatestEntity entity) {
-        processSaveOrUpdate(entity, INSERT_OR_UPDATE_BOOL_STATEMENT, INSERT_OR_UPDATE_STR_STATEMENT, INSERT_OR_UPDATE_LONG_STATEMENT, INSERT_OR_UPDATE_DBL_STATEMENT);
-    }
 
     @Override
     public void saveOrUpdate(List<TsKvLatestEntity> entities) {
@@ -159,49 +147,5 @@ public class PsqlLatestInsertRepository extends AbstractLatestInsertRepository {
                 });
             }
         });
-    }
-
-    @Override
-    protected void saveOrUpdateBoolean(TsKvLatestEntity entity, String query) {
-        entityManager.createNativeQuery(query)
-                .setParameter("entity_type", entity.getEntityType().name())
-                .setParameter("entity_id", entity.getEntityId())
-                .setParameter("key", entity.getKey())
-                .setParameter("ts", entity.getTs())
-                .setParameter("bool_v", entity.getBooleanValue())
-                .executeUpdate();
-    }
-
-    @Override
-    protected void saveOrUpdateString(TsKvLatestEntity entity, String query) {
-        entityManager.createNativeQuery(query)
-                .setParameter("entity_type", entity.getEntityType().name())
-                .setParameter("entity_id", entity.getEntityId())
-                .setParameter("key", entity.getKey())
-                .setParameter("ts", entity.getTs())
-                .setParameter("str_v", replaceNullChars(entity.getStrValue()))
-                .executeUpdate();
-    }
-
-    @Override
-    protected void saveOrUpdateLong(TsKvLatestEntity entity, String query) {
-        entityManager.createNativeQuery(query)
-                .setParameter("entity_type", entity.getEntityType().name())
-                .setParameter("entity_id", entity.getEntityId())
-                .setParameter("key", entity.getKey())
-                .setParameter("ts", entity.getTs())
-                .setParameter("long_v", entity.getLongValue())
-                .executeUpdate();
-    }
-
-    @Override
-    protected void saveOrUpdateDouble(TsKvLatestEntity entity, String query) {
-        entityManager.createNativeQuery(query)
-                .setParameter("entity_type", entity.getEntityType().name())
-                .setParameter("entity_id", entity.getEntityId())
-                .setParameter("key", entity.getKey())
-                .setParameter("ts", entity.getTs())
-                .setParameter("dbl_v", entity.getDoubleValue())
-                .executeUpdate();
     }
 }
