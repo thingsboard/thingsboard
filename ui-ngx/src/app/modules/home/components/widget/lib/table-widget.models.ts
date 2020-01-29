@@ -234,6 +234,9 @@ export function constructTableCssString(widgetConfig: WidgetConfig): string {
     '.mat-table .mat-cell button.mat-icon-button mat-icon {\n'+
     'color: ' + mdDarkSecondary + ';\n'+
     '}\n'+
+    '.mat-table .mat-cell button.mat-icon-button[disabled][disabled] mat-icon {\n'+
+    'color: ' + mdDarkDisabled + ';\n'+
+    '}\n'+
     '.mat-divider {\n'+
     'border-top-color: ' + mdDarkDivider + ';\n'+
     '}\n'+

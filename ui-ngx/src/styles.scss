@@ -498,6 +498,11 @@ mat-label {
       mat-icon {
         color: rgba(0, 0, 0, .54);
       }
+      &[disabled][disabled] {
+        mat-icon {
+          color: rgba(0, 0, 0, .26);
+        }
+      }
     }
   }
 

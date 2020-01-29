@@ -17,32 +17,22 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@app/shared/shared.module';
-import { EntitiesTableWidgetComponent } from '@home/components/widget/lib/entities-table-widget.component';
-import { DisplayColumnsPanelComponent } from '@home/components/widget/lib/display-columns-panel.component';
-import { AlarmsTableWidgetComponent } from '@home/components/widget/lib/alarms-table-widget.component';
-import { AlarmStatusFilterPanelComponent } from '@home/components/widget/lib/alarm-status-filter-panel.component';
-import { SharedHomeComponentsModule } from '@home/components/shared-home-components.module';
+import { AlarmDetailsDialogComponent } from '@home/components/alarm/alarm-details-dialog.component';
 
 @NgModule({
   entryComponents: [
-    DisplayColumnsPanelComponent,
-    AlarmStatusFilterPanelComponent
+    AlarmDetailsDialogComponent
   ],
   declarations:
     [
-      DisplayColumnsPanelComponent,
-      AlarmStatusFilterPanelComponent,
-      EntitiesTableWidgetComponent,
-      AlarmsTableWidgetComponent
+      AlarmDetailsDialogComponent
     ],
   imports: [
     CommonModule,
-    SharedModule,
-    SharedHomeComponentsModule
+    SharedModule
   ],
   exports: [
-    EntitiesTableWidgetComponent,
-    AlarmsTableWidgetComponent
+    AlarmDetailsDialogComponent
   ]
 })
-export class WidgetComponentsModule { }
+export class SharedHomeComponentsModule { }

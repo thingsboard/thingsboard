@@ -30,7 +30,6 @@ import { RelationTableComponent } from '@home/components/relation/relation-table
 import { RelationDialogComponent } from './relation/relation-dialog.component';
 import { AlarmTableHeaderComponent } from '@home/components/alarm/alarm-table-header.component';
 import { AlarmTableComponent } from '@home/components/alarm/alarm-table.component';
-import { AlarmDetailsDialogComponent } from '@home/components/alarm/alarm-details-dialog.component';
 import { AttributeTableComponent } from '@home/components/attribute/attribute-table.component';
 import { AddAttributeDialogComponent } from './attribute/add-attribute-dialog.component';
 import { EditAttributeValuePanelComponent } from './attribute/edit-attribute-value-panel.component';
@@ -64,6 +63,7 @@ import { AddWidgetToDashboardDialogComponent } from './attribute/add-widget-to-d
 import { ImportDialogCsvComponent } from './import-export/import-dialog-csv.component';
 import { TableColumnsAssignmentComponent } from './import-export/table-columns-assignment.component';
 import { EventContentDialogComponent } from '@home/components/event/event-content-dialog.component';
+import { SharedHomeComponentsModule } from '@home/components/shared-home-components.module';
 
 @NgModule({
   entryComponents: [
@@ -73,7 +73,6 @@ import { EventContentDialogComponent } from '@home/components/event/event-conten
     EventTableHeaderComponent,
     RelationDialogComponent,
     AlarmTableHeaderComponent,
-    AlarmDetailsDialogComponent,
     AddAttributeDialogComponent,
     EditAttributeValuePanelComponent,
     AliasesEntitySelectPanelComponent,
@@ -104,7 +103,6 @@ import { EventContentDialogComponent } from '@home/components/event/event-conten
       RelationFiltersComponent,
       AlarmTableHeaderComponent,
       AlarmTableComponent,
-      AlarmDetailsDialogComponent,
       AttributeTableComponent,
       AddAttributeDialogComponent,
       EditAttributeValuePanelComponent,
@@ -136,7 +134,8 @@ import { EventContentDialogComponent } from '@home/components/event/event-conten
     ],
   imports: [
     CommonModule,
-    SharedModule
+    SharedModule,
+    SharedHomeComponentsModule
   ],
   exports: [
     EntitiesTableComponent,
@@ -149,7 +148,6 @@ import { EventContentDialogComponent } from '@home/components/event/event-conten
     RelationTableComponent,
     RelationFiltersComponent,
     AlarmTableComponent,
-    AlarmDetailsDialogComponent,
     AttributeTableComponent,
     AliasesEntitySelectComponent,
     EntityAliasesDialogComponent,

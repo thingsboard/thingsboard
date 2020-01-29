@@ -39,7 +39,7 @@ import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder, sortOrderFromString } from '@shared/models/page/sort-order';
 import { DataSource } from '@angular/cdk/typings/collections';
 import { CollectionViewer, SelectionModel } from '@angular/cdk/collections';
-import { BehaviorSubject, fromEvent, merge, Observable, of } from 'rxjs';
+import { BehaviorSubject, forkJoin, fromEvent, merge, Observable, of } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { entityTypeTranslations } from '@shared/models/entity-type.models';
 import { catchError, debounceTime, distinctUntilChanged, map, take, tap } from 'rxjs/operators';
@@ -77,6 +77,19 @@ import {
   alarmStatusTranslations
 } from '@shared/models/alarm.models';
 import { DatePipe } from '@angular/common';
+import {
+  ALARM_STATUS_FILTER_PANEL_DATA,
+  AlarmStatusFilterPanelComponent,
+  AlarmStatusFilterPanelData
+} from '@home/components/widget/lib/alarm-status-filter-panel.component';
+import {
+  AlarmDetailsDialogComponent,
+  AlarmDetailsDialogData
+} from '@home/components/alarm/alarm-details-dialog.component';
+import { MatDialog } from '@angular/material/dialog';
+import { NULL_UUID } from '@shared/models/id/has-uuid';
+import { DialogService } from '@core/services/dialog.service';
+import { AlarmService } from '@core/http/alarm.service';
 
 interface AlarmsTableWidgetSettings extends TableWidgetSettings {
   alarmsTitle: string;
@@ -172,7 +185,10 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
               private utils: UtilsService,
               public translate: TranslateService,
               private domSanitizer: DomSanitizer,
-              private datePipe: DatePipe) {
+              private datePipe: DatePipe,
+              private dialog: MatDialog,
+              private dialogService: DialogService,
+              private alarmService: AlarmService) {
     super(store);
 
     const sortOrder: SortOrder = sortOrderFromString(this.defaultSortOrder);
@@ -390,7 +406,36 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   }
 
   private editAlarmStatusFilter($event: Event) {
-    // TODO:
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const target = $event.target || $event.srcElement || $event.currentTarget;
+    const config = new OverlayConfig();
+    config.backdropClass = 'cdk-overlay-transparent-backdrop';
+    config.hasBackdrop = true;
+    const connectedPosition: ConnectedPosition = {
+      originX: 'end',
+      originY: 'bottom',
+      overlayX: 'end',
+      overlayY: 'top'
+    };
+    config.positionStrategy = this.overlay.position().flexibleConnectedTo(target as HTMLElement)
+      .withPositions([connectedPosition]);
+
+    const overlayRef = this.overlay.create(config);
+    overlayRef.backdropClick().subscribe(() => {
+      overlayRef.dispose();
+    });
+    const injectionTokens = new WeakMap<any, any>([
+      [ALARM_STATUS_FILTER_PANEL_DATA, {
+        subscription: this.subscription,
+      } as AlarmStatusFilterPanelData],
+      [OverlayRef, overlayRef]
+    ]);
+    const injector = new PortalInjector(this.viewContainerRef.injector, injectionTokens);
+    overlayRef.attach(new ComponentPortal(AlarmStatusFilterPanelComponent,
+      this.viewContainerRef, injector));
+    this.ctx.detectChanges();
   }
 
   private enterFilterMode() {
@@ -538,35 +583,138 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     if ($event) {
       $event.stopPropagation();
     }
-    // TODO:
+    if (alarm && alarm.id && alarm.id.id !== NULL_UUID) {
+      this.dialog.open<AlarmDetailsDialogComponent, AlarmDetailsDialogData, boolean>
+      (AlarmDetailsDialogComponent,
+        {
+          disableClose: true,
+          panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+          data: {
+            alarmId: alarm.id.id,
+            allowAcknowledgment: this.allowAcknowledgment,
+            allowClear: this.allowClear,
+            displayDetails: true
+          }
+        }).afterClosed().subscribe(
+        (res) => {
+          if (res) {
+            this.subscription.update();
+          }
+        }
+      );
+    }
   }
 
   private ackAlarm($event: Event, alarm: AlarmInfo) {
     if ($event) {
       $event.stopPropagation();
     }
-    // TODO:
+    if (alarm && alarm.id && alarm.id.id !== NULL_UUID) {
+      this.dialogService.confirm(
+        this.translate.instant('alarm.aknowledge-alarm-title'),
+        this.translate.instant('alarm.aknowledge-alarm-text'),
+        this.translate.instant('action.no'),
+        this.translate.instant('action.yes')
+      ).subscribe((res) => {
+        if (res) {
+          if (res) {
+            this.alarmService.ackAlarm(alarm.id.id).subscribe(() => {
+              this.subscription.update();
+            });
+          }
+        }
+      });
+    }
   }
 
   public ackAlarms($event: Event) {
     if ($event) {
       $event.stopPropagation();
     }
-    // TODO:
+    if (this.alarmsDatasource.selection.hasValue()) {
+      const alarms = this.alarmsDatasource.selection.selected.filter(
+        (alarm) => { return alarm.id.id !== NULL_UUID }
+      );
+      if (alarms.length) {
+        const title = this.translate.instant('alarm.aknowledge-alarms-title', {count: alarms.length});
+        const content = this.translate.instant('alarm.aknowledge-alarms-text', {count: alarms.length});
+        this.dialogService.confirm(
+          title,
+          content,
+          this.translate.instant('action.no'),
+          this.translate.instant('action.yes')
+        ).subscribe((res) => {
+          if (res) {
+            if (res) {
+              const tasks: Observable<void>[] = [];
+              for (const alarm of alarms) {
+                tasks.push(this.alarmService.ackAlarm(alarm.id.id));
+              }
+              forkJoin(tasks).subscribe(() => {
+                this.alarmsDatasource.clearSelection();
+                this.subscription.update();
+              });
+            }
+          }
+        });
+      }
+    }
   }
 
   private clearAlarm($event: Event, alarm: AlarmInfo) {
     if ($event) {
       $event.stopPropagation();
     }
-    // TODO:
+    if (alarm && alarm.id && alarm.id.id !== NULL_UUID) {
+      this.dialogService.confirm(
+        this.translate.instant('alarm.clear-alarm-title'),
+        this.translate.instant('alarm.clear-alarm-text'),
+        this.translate.instant('action.no'),
+        this.translate.instant('action.yes')
+      ).subscribe((res) => {
+        if (res) {
+          if (res) {
+            this.alarmService.clearAlarm(alarm.id.id).subscribe(() => {
+              this.subscription.update();
+            });
+          }
+        }
+      });
+    }
   }
 
   public clearAlarms($event: Event) {
     if ($event) {
       $event.stopPropagation();
     }
-    // TODO:
+    if (this.alarmsDatasource.selection.hasValue()) {
+      const alarms = this.alarmsDatasource.selection.selected.filter(
+        (alarm) => { return alarm.id.id !== NULL_UUID }
+      );
+      if (alarms.length) {
+        const title = this.translate.instant('alarm.clear-alarms-title', {count: alarms.length});
+        const content = this.translate.instant('alarm.clear-alarms-text', {count: alarms.length});
+        this.dialogService.confirm(
+          title,
+          content,
+          this.translate.instant('action.no'),
+          this.translate.instant('action.yes')
+        ).subscribe((res) => {
+          if (res) {
+            if (res) {
+              const tasks: Observable<void>[] = [];
+              for (const alarm of alarms) {
+                tasks.push(this.alarmService.clearAlarm(alarm.id.id));
+              }
+              forkJoin(tasks).subscribe(() => {
+                this.alarmsDatasource.clearSelection();
+                this.subscription.update();
+              });
+            }
+          }
+        });
+      }
+    }
   }
 
   private defaultContent(key: EntityColumn, value: any): any {
@@ -720,6 +868,13 @@ class AlarmsDatasource implements DataSource<AlarmInfo> {
 
   isSelected(alarm: AlarmInfo): boolean {
     return this.selection.isSelected(alarm);
+  }
+
+  clearSelection() {
+    if (this.selection.hasValue()) {
+      this.selection.clear();
+      this.onSelectionModeChanged(false);
+    }
   }
 
   masterToggle() {

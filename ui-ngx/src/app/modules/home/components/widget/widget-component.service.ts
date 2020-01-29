@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Inject, Injectable } from '@angular/core';
+import { Inject, Injectable, Type } from '@angular/core';
 import { DynamicComponentFactoryService } from '@core/services/dynamic-component-factory.service';
 import { WidgetService } from '@core/http/widget.service';
 import { forkJoin, Observable, of, ReplaySubject, Subject, throwError } from 'rxjs';
@@ -34,7 +34,6 @@ import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
 import { isFunction, isUndefined } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import { DynamicWidgetComponent } from '@home/components/widget/dynamic-widget.component';
-import { SharedModule } from '@shared/shared.module';
 import { WidgetComponentsModule } from '@home/components/widget/widget-components.module';
 import { WINDOW } from '@core/services/window.service';
 
@@ -43,6 +42,7 @@ import { TbFlot } from './lib/flot-widget';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { WidgetTypeId } from '@app/shared/models/id/widget-type-id';
 import { TenantId } from '@app/shared/models/id/tenant-id';
+import { SharedModule } from '@shared/shared.module';
 
 const tinycolor = tinycolor_;
 
@@ -117,16 +117,23 @@ export class WidgetComponentService {
       const initSubject = new ReplaySubject();
       this.init$ = initSubject.asObservable();
       const loadDefaultWidgetInfoTasks = [
-        this.loadWidgetResources(this.missingWidgetType, 'global-widget-missing-type'),
-        this.loadWidgetResources(this.errorWidgetType, 'global-widget-error-type'),
+        this.loadWidgetResources(this.missingWidgetType, 'global-widget-missing-type', [SharedModule]),
+        this.loadWidgetResources(this.errorWidgetType, 'global-widget-error-type', [SharedModule]),
       ];
       forkJoin(loadDefaultWidgetInfoTasks).subscribe(
         () => {
           initSubject.next();
         },
-        () => {
+        (e) => {
+          let errorMessages = ['Failed to load default widget types!'];
+          if (e && e.length) {
+            errorMessages = errorMessages.concat(e);
+          }
           console.error('Failed to load default widget types!');
-          initSubject.error('Failed to load default widget types!');
+          initSubject.error({
+            widgetInfo: this.errorWidgetType,
+            errorMessages
+          });
         }
       );
       return this.init$;
@@ -194,7 +201,7 @@ export class WidgetComponentService {
     }
     if (widgetControllerDescriptor) {
       const widgetNamespace = `widget-type-${(isSystem ? 'sys-' : '')}${bundleAlias}-${widgetInfo.alias}`;
-      this.loadWidgetResources(widgetInfo, widgetNamespace).subscribe(
+      this.loadWidgetResources(widgetInfo, widgetNamespace, [WidgetComponentsModule]).subscribe(
         () => {
           if (widgetControllerDescriptor.settingsSchema) {
             widgetInfo.typeSettingsSchema = widgetControllerDescriptor.settingsSchema;
@@ -219,7 +226,7 @@ export class WidgetComponentService {
     }
   }
 
-  private loadWidgetResources(widgetInfo: WidgetInfo, widgetNamespace: string): Observable<any> {
+  private loadWidgetResources(widgetInfo: WidgetInfo, widgetNamespace: string, modules?: Type<any>[]): Observable<any> {
     this.cssParser.cssPreviewNamespace = widgetNamespace;
     this.cssParser.createStyleElement(widgetNamespace, widgetInfo.templateCss);
     const resourceTasks: Observable<string>[] = [];
@@ -236,7 +243,7 @@ export class WidgetComponentService {
       this.dynamicComponentFactoryService.createDynamicComponentFactory(
         class DynamicWidgetComponentInstance extends DynamicWidgetComponent {},
         widgetInfo.templateHtml,
-        [SharedModule, WidgetComponentsModule]
+        modules
       ).pipe(
         map((factory) => {
           widgetInfo.componentFactory = factory;

@@ -16,7 +16,7 @@
 
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
-import { getDescendantProp } from '@core/utils';
+import { getDescendantProp, isObject } from '@core/utils';
 
 export type PageLinkSearchFunction<T> = (entity: T, textSearch: string) => boolean;
 
@@ -28,10 +28,16 @@ const defaultPageLinkSearchFunction: PageLinkSearchFunction<any> =
     const expected = ('' + textSearch).toLowerCase();
     for (const key of Object.keys(entity)) {
       const val = entity[key];
-      if (val !== null && val !== Object(val)) {
-        const actual = ('' + val).toLowerCase();
-        if (actual.indexOf(expected) !== -1) {
-          return true;
+      if (val !== null) {
+        if (val !== Object(val)) {
+          const actual = ('' + val).toLowerCase();
+          if (actual.indexOf(expected) !== -1) {
+            return true;
+          }
+        } else if (isObject(val)) {
+          if (defaultPageLinkSearchFunction(val, textSearch)) {
+            return true;
+          }
         }
       }
     }
