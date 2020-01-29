@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sqlts.ts;
+package org.thingsboard.server.dao.sqlts;
 
-import org.springframework.data.repository.CrudRepository;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.dao.model.sqlts.ts.TsKvLatestCompositeKey;
-import org.thingsboard.server.dao.model.sqlts.ts.TsKvLatestEntity;
-import org.thingsboard.server.dao.util.SqlDao;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
 
-import java.util.List;
+@Data
+@AllArgsConstructor
+public class EntityContainer<T extends AbstractTsKvEntity> {
 
-@SqlDao
-public interface TsKvLatestRepository extends CrudRepository<TsKvLatestEntity, TsKvLatestCompositeKey> {
+        private T entity;
+        private String partitionDate;
 
-    List<TsKvLatestEntity> findAllByEntityTypeAndEntityId(EntityType entityType, String entityId);
 }

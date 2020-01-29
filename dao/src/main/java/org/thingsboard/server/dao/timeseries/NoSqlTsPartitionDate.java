@@ -21,7 +21,7 @@ import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalUnit;
 import java.util.Optional;
 
-public enum TsPartitionDate {
+public enum NoSqlTsPartitionDate {
 
     MINUTES("yyyy-MM-dd-HH-mm", ChronoUnit.MINUTES), HOURS("yyyy-MM-dd-HH", ChronoUnit.HOURS), DAYS("yyyy-MM-dd", ChronoUnit.DAYS), MONTHS("yyyy-MM", ChronoUnit.MONTHS), YEARS("yyyy", ChronoUnit.YEARS),INDEFINITE("",ChronoUnit.FOREVER);
 
@@ -29,7 +29,7 @@ public enum TsPartitionDate {
     private final transient TemporalUnit truncateUnit;
     public final static LocalDateTime EPOCH_START = LocalDateTime.ofEpochSecond(0,0, ZoneOffset.UTC);
 
-    TsPartitionDate(String pattern, TemporalUnit truncateUnit) {
+    NoSqlTsPartitionDate(String pattern, TemporalUnit truncateUnit) {
         this.pattern = pattern;
         this.truncateUnit = truncateUnit;
     }
@@ -56,10 +56,10 @@ public enum TsPartitionDate {
         }
     }
 
-    public static Optional<TsPartitionDate> parse(String name) {
-        TsPartitionDate partition = null;
+    public static Optional<NoSqlTsPartitionDate> parse(String name) {
+        NoSqlTsPartitionDate partition = null;
         if (name != null) {
-            for (TsPartitionDate partitionDate : TsPartitionDate.values()) {
+            for (NoSqlTsPartitionDate partitionDate : NoSqlTsPartitionDate.values()) {
                 if (partitionDate.name().equalsIgnoreCase(name)) {
                     partition = partitionDate;
                     break;

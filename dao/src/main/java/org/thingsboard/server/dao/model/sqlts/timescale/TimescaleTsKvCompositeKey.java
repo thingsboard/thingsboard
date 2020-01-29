@@ -21,6 +21,7 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.Transient;
 import java.io.Serializable;
+import java.util.UUID;
 
 @Data
 @AllArgsConstructor
@@ -30,8 +31,8 @@ public class TimescaleTsKvCompositeKey implements Serializable {
     @Transient
     private static final long serialVersionUID = -4089175869616037523L;
 
-    private String tenantId;
-    private String entityId;
-    private String key;
+    private UUID tenantId;
+    private UUID entityId;
+    private int key;
     private long ts;
 } 

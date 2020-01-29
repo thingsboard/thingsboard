@@ -19,7 +19,9 @@ import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.model.sqlts.timescale.TimescaleTsKvEntity;
-import org.thingsboard.server.dao.sqlts.AbstractTimeseriesInsertRepository;
+import org.thingsboard.server.dao.sqlts.AbstractInsertRepository;
+import org.thingsboard.server.dao.sqlts.EntityContainer;
+import org.thingsboard.server.dao.sqlts.InsertTsRepository;
 import org.thingsboard.server.dao.util.PsqlDao;
 import org.thingsboard.server.dao.util.TimescaleDBTsDao;
 
@@ -32,35 +34,21 @@ import java.util.List;
 @PsqlDao
 @Repository
 @Transactional
-public class TimescaleInsertRepository extends AbstractTimeseriesInsertRepository<TimescaleTsKvEntity> {
-
-    private static final String INSERT_OR_UPDATE_BOOL_STATEMENT = getInsertOrUpdateString(BOOL_V, PSQL_ON_BOOL_VALUE_UPDATE_SET_NULLS);
-    private static final String INSERT_OR_UPDATE_STR_STATEMENT = getInsertOrUpdateString(STR_V, PSQL_ON_STR_VALUE_UPDATE_SET_NULLS);
-    private static final String INSERT_OR_UPDATE_LONG_STATEMENT = getInsertOrUpdateString(LONG_V, PSQL_ON_LONG_VALUE_UPDATE_SET_NULLS);
-    private static final String INSERT_OR_UPDATE_DBL_STATEMENT = getInsertOrUpdateString(DBL_V, PSQL_ON_DBL_VALUE_UPDATE_SET_NULLS);
-
-    private static final String BATCH_UPDATE =
-            "UPDATE tenant_ts_kv SET bool_v = ?, str_v = ?, long_v = ?, dbl_v = ? WHERE entity_type = ? AND entity_id = ? and key = ? and ts = ?";
-
+public class TimescaleInsertRepository extends AbstractInsertRepository implements InsertTsRepository<TimescaleTsKvEntity> {
 
     private static final String INSERT_OR_UPDATE =
             "INSERT INTO tenant_ts_kv (tenant_id, entity_id, key, ts, bool_v, str_v, long_v, dbl_v) VALUES(?, ?, ?, ?, ?, ?, ?, ?) " +
                     "ON CONFLICT (tenant_id, entity_id, key, ts) DO UPDATE SET bool_v = ?, str_v = ?, long_v = ?, dbl_v = ?;";
 
     @Override
-    public void saveOrUpdate(TimescaleTsKvEntity entity) {
-        processSaveOrUpdate(entity, INSERT_OR_UPDATE_BOOL_STATEMENT, INSERT_OR_UPDATE_STR_STATEMENT, INSERT_OR_UPDATE_LONG_STATEMENT, INSERT_OR_UPDATE_DBL_STATEMENT);
-    }
-
-    @Override
-    public void saveOrUpdate(List<TimescaleTsKvEntity> entities) {
+    public void saveOrUpdate(List<EntityContainer<TimescaleTsKvEntity>> entities) {
         jdbcTemplate.batchUpdate(INSERT_OR_UPDATE, new BatchPreparedStatementSetter() {
             @Override
             public void setValues(PreparedStatement ps, int i) throws SQLException {
-                TimescaleTsKvEntity tsKvEntity = entities.get(i);
-                ps.setString(1, tsKvEntity.getTenantId());
-                ps.setString(2, tsKvEntity.getEntityId());
-                ps.setString(3, tsKvEntity.getKey());
+                TimescaleTsKvEntity tsKvEntity = entities.get(i).getEntity();
+                ps.setObject(1, tsKvEntity.getTenantId());
+                ps.setObject(2, tsKvEntity.getEntityId());
+                ps.setInt(3, tsKvEntity.getKey());
                 ps.setLong(4, tsKvEntity.getTs());
 
                 if (tsKvEntity.getBooleanValue() != null) {
@@ -97,53 +85,5 @@ public class TimescaleInsertRepository extends AbstractTimeseriesInsertRepositor
                 return entities.size();
             }
         });
-    }
-
-    @Override
-    protected void saveOrUpdateBoolean(TimescaleTsKvEntity entity, String query) {
-        entityManager.createNativeQuery(query)
-                .setParameter("tenant_id", entity.getTenantId())
-                .setParameter("entity_id", entity.getEntityId())
-                .setParameter("key", entity.getKey())
-                .setParameter("ts", entity.getTs())
-                .setParameter("bool_v", entity.getBooleanValue())
-                .executeUpdate();
-    }
-
-    @Override
-    protected void saveOrUpdateString(TimescaleTsKvEntity entity, String query) {
-        entityManager.createNativeQuery(query)
-                .setParameter("tenant_id", entity.getTenantId())
-                .setParameter("entity_id", entity.getEntityId())
-                .setParameter("key", entity.getKey())
-                .setParameter("ts", entity.getTs())
-                .setParameter("str_v", replaceNullChars(entity.getStrValue()))
-                .executeUpdate();
-    }
-
-    @Override
-    protected void saveOrUpdateLong(TimescaleTsKvEntity entity, String query) {
-        entityManager.createNativeQuery(query)
-                .setParameter("tenant_id", entity.getTenantId())
-                .setParameter("entity_id", entity.getEntityId())
-                .setParameter("key", entity.getKey())
-                .setParameter("ts", entity.getTs())
-                .setParameter("long_v", entity.getLongValue())
-                .executeUpdate();
-    }
-
-    @Override
-    protected void saveOrUpdateDouble(TimescaleTsKvEntity entity, String query) {
-        entityManager.createNativeQuery(query)
-                .setParameter("tenant_id", entity.getTenantId())
-                .setParameter("entity_id", entity.getEntityId())
-                .setParameter("key", entity.getKey())
-                .setParameter("ts", entity.getTs())
-                .setParameter("dbl_v", entity.getDoubleValue())
-                .executeUpdate();
-    }
-
-    private static String getInsertOrUpdateString(String value, String nullValues) {
-        return "INSERT INTO tenant_ts_kv(tenant_id, entity_id, key, ts, " + value + ") VALUES (:tenant_id, :entity_id, :key, :ts, :" + value + ") ON CONFLICT (tenant_id, entity_id, key, ts) DO UPDATE SET " + value + " = :" + value + ", ts = :ts," + nullValues;
     }
 }

@@ -30,7 +30,7 @@ import org.springframework.test.context.support.DirtiesContextTestExecutionListe
  * Created by Valerii Sosliuk on 4/22/2017.
  */
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {JpaDaoConfig.class, SqlTsDaoConfig.class, JpaDbunitTestConfig.class})
+@ContextConfiguration(classes = {JpaDaoConfig.class, HsqlTsDaoConfig.class, JpaDbunitTestConfig.class})
 @TestPropertySource("classpath:sql-test.properties")
 @TestExecutionListeners({
         DependencyInjectionTestExecutionListener.class,
