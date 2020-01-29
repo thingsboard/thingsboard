@@ -1690,82 +1690,72 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         return RestJsonConverter.toTimeseries(timeseries);
     }
 
-    public List<AttributeKvEntry> saveDeviceAttributes(String deviceId, String scope, JsonNode request) {
-        List<JsonNode> attributes = restTemplate.exchange(
-                baseURL + "/api/plugins/telemetry/{deviceId}/{scope}",
-                HttpMethod.POST,
-                new HttpEntity<>(request),
-                new ParameterizedTypeReference<List<JsonNode>>() {
-                },
-                deviceId,
-                scope).getBody();
-
-        return RestJsonConverter.toAttributes(attributes);
+    public boolean saveDeviceAttributes(DeviceId deviceId, String scope, JsonNode request) {
+        return restTemplate
+                .postForEntity(baseURL + "/api/plugins/telemetry/{deviceId}/{scope}", request, Object.class, deviceId.getId().toString(), scope)
+                .getStatusCode()
+                .is2xxSuccessful();
     }
 
-    public List<AttributeKvEntry> saveEntityAttributesV1(EntityId entityId, String scope, JsonNode request) {
-        List<JsonNode> attributes = restTemplate.exchange(
-                baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/{scope}",
-                HttpMethod.POST,
-                new HttpEntity<>(request),
-                new ParameterizedTypeReference<List<JsonNode>>() {
-                },
-                entityId.getEntityType().name(),
-                entityId.getId().toString(),
-                scope).getBody();
-
-        return RestJsonConverter.toAttributes(attributes);
+    public boolean saveEntityAttributesV1(EntityId entityId, String scope, JsonNode request) {
+        return restTemplate
+                .postForEntity(
+                        baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/{scope}",
+                        request,
+                        Object.class,
+                        entityId.getEntityType().name(),
+                        entityId.getId().toString(),
+                        scope)
+                .getStatusCode()
+                .is2xxSuccessful();
     }
 
-    public List<AttributeKvEntry> saveEntityAttributesV2(EntityId entityId, String scope, JsonNode request) {
-        List<JsonNode> attributes = restTemplate.exchange(
-                baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/attributes/{scope}",
-                HttpMethod.POST,
-                new HttpEntity<>(request),
-                new ParameterizedTypeReference<List<JsonNode>>() {
-                },
-                entityId.getEntityType().name(),
-                entityId.getId().toString(),
-                scope).getBody();
-
-        return RestJsonConverter.toAttributes(attributes);
+    public boolean saveEntityAttributesV2(EntityId entityId, String scope, JsonNode request) {
+        return restTemplate
+                .postForEntity(
+                        baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/attributes/{scope}",
+                        request,
+                        Object.class,
+                        entityId.getEntityType().name(),
+                        entityId.getId().toString(),
+                        scope)
+                .getStatusCode()
+                .is2xxSuccessful();
     }
 
-    public List<TsKvEntry> saveEntityTelemetry(EntityId entityId, String scope, String requestBody) {
-        Map<String, List<JsonNode>> timeseries = restTemplate.exchange(
-                baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/timeseries/{scope}",
-                HttpMethod.POST,
-                new HttpEntity<>(requestBody),
-                new ParameterizedTypeReference<Map<String, List<JsonNode>>>() {
-                },
-                entityId.getEntityType().name(),
-                entityId.getId().toString(),
-                scope).getBody();
-
-        return RestJsonConverter.toTimeseries(timeseries);
+    public boolean saveEntityTelemetry(EntityId entityId, String scope, JsonNode request) {
+        return restTemplate
+                .postForEntity(
+                        baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/timeseries/{scope}",
+                        request,
+                        Object.class,
+                        entityId.getEntityType().name(),
+                        entityId.getId().toString(),
+                        scope)
+                .getStatusCode()
+                .is2xxSuccessful();
     }
 
-    public List<TsKvEntry> saveEntityTelemetryWithTTL(EntityId entityId, String scope, Long ttl, String requestBody) {
-        Map<String, List<JsonNode>> timeseries = restTemplate.exchange(
-                baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/timeseries/{scope}/{ttl}",
-                HttpMethod.POST,
-                new HttpEntity<>(requestBody),
-                new ParameterizedTypeReference<Map<String, List<JsonNode>>>() {
-                },
-                entityId.getEntityType().name(),
-                entityId.getId().toString(),
-                scope,
-                ttl).getBody();
-
-        return RestJsonConverter.toTimeseries(timeseries);
+    public boolean saveEntityTelemetryWithTTL(EntityId entityId, String scope, Long ttl, JsonNode request) {
+        return restTemplate
+                .postForEntity(
+                        baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/timeseries/{scope}/{ttl}",
+                        request,
+                        Object.class,
+                        entityId.getEntityType().name(),
+                        entityId.getId().toString(),
+                        scope,
+                        ttl)
+                .getStatusCode()
+                .is2xxSuccessful();
     }
 
-    public List<TsKvEntry> deleteEntityTimeseries(EntityId entityId,
-                                                  List<String> keys,
-                                                  boolean deleteAllDataForKeys,
-                                                  Long startTs,
-                                                  Long endTs,
-                                                  boolean rewriteLatestIfDeleted) {
+    public boolean deleteEntityTimeseries(EntityId entityId,
+                                          List<String> keys,
+                                          boolean deleteAllDataForKeys,
+                                          Long startTs,
+                                          Long endTs,
+                                          boolean rewriteLatestIfDeleted) {
         Map<String, String> params = new HashMap<>();
         params.put("entityType", entityId.getEntityType().name());
         params.put("entityId", entityId.getId().toString());
@@ -1775,44 +1765,46 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         params.put("endTs", endTs.toString());
         params.put("rewriteLatestIfDeleted", String.valueOf(rewriteLatestIfDeleted));
 
-        Map<String, List<JsonNode>> timeseries = restTemplate.exchange(
-                baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/timeseries/delete?keys={keys}&deleteAllDataForKeys={deleteAllDataForKeys}&startTs={startTs}&endTs={endTs}&rewriteLatestIfDeleted={rewriteLatestIfDeleted}",
-                HttpMethod.DELETE,
-                HttpEntity.EMPTY,
-                new ParameterizedTypeReference<Map<String, List<JsonNode>>>() {
-                },
-                params).getBody();
+        return restTemplate
+                .exchange(
+                        baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/timeseries/delete?keys={keys}&deleteAllDataForKeys={deleteAllDataForKeys}&startTs={startTs}&endTs={endTs}&rewriteLatestIfDeleted={rewriteLatestIfDeleted}",
+                        HttpMethod.DELETE,
+                        HttpEntity.EMPTY,
+                        Object.class,
+                        params)
+                .getStatusCode()
+                .is2xxSuccessful();
 
-        return RestJsonConverter.toTimeseries(timeseries);
     }
 
-    public List<AttributeKvEntry> deleteEntityAttributes(String deviceId, String scope, List<String> keys) {
-        List<JsonNode> attributes = restTemplate.exchange(
-                baseURL + "/api/plugins/telemetry/{deviceId}/{scope}?keys={keys}",
-                HttpMethod.DELETE,
-                HttpEntity.EMPTY,
-                new ParameterizedTypeReference<List<JsonNode>>() {
-                },
-                deviceId,
-                scope,
-                listToString(keys)).getBody();
-
-        return RestJsonConverter.toAttributes(attributes);
+    public boolean deleteEntityAttributes(DeviceId deviceId, String scope, List<String> keys) {
+        return restTemplate
+                .exchange(
+                        baseURL + "/api/plugins/telemetry/{deviceId}/{scope}?keys={keys}",
+                        HttpMethod.DELETE,
+                        HttpEntity.EMPTY,
+                        Object.class,
+                        deviceId.getId().toString(),
+                        scope,
+                        listToString(keys))
+                .getStatusCode()
+                .is2xxSuccessful();
     }
 
-    public List<AttributeKvEntry> deleteEntityAttributes(EntityId entityId, String scope, List<String> keys) {
-        List<JsonNode> attributes = restTemplate.exchange(
-                baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/{scope}?keys={keys}",
-                HttpMethod.DELETE,
-                HttpEntity.EMPTY,
-                new ParameterizedTypeReference<List<JsonNode>>() {
-                },
-                entityId.getEntityType().name(),
-                entityId.getId().toString(),
-                scope,
-                listToString(keys)).getBody();
+    public boolean deleteEntityAttributes(EntityId entityId, String scope, List<String> keys) {
+        return restTemplate
+                .exchange(
+                        baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/{scope}?keys={keys}",
+                        HttpMethod.DELETE,
+                        HttpEntity.EMPTY,
+                        Object.class,
+                        entityId.getEntityType().name(),
+                        entityId.getId().toString(),
+                        scope,
+                        listToString(keys))
+                .getStatusCode()
+                .is2xxSuccessful();
 
-        return RestJsonConverter.toAttributes(attributes);
     }
 
     public Optional<Tenant> getTenantById(String tenantId) {
