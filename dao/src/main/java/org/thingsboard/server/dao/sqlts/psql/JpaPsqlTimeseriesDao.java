@@ -48,10 +48,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -67,7 +64,7 @@ import static org.thingsboard.server.dao.timeseries.SqlTsPartitionDate.EPOCH_STA
 public class JpaPsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEntity> implements TimeseriesDao {
 
     private final ConcurrentMap<String, Integer> tsKvDictionaryMap = new ConcurrentHashMap<>();
-    private final Set<PsqlPartition> partitions = ConcurrentHashMap.newKeySet();
+    private final Map<Long, PsqlPartition> partitions = new ConcurrentHashMap<>();
 
     private static final ReentrantLock tsCreationLock = new ReentrantLock();
     private static final ReentrantLock partitionCreationLock = new ReentrantLock();
@@ -82,6 +79,7 @@ public class JpaPsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEnt
     private PsqlPartitioningRepository partitioningRepository;
 
     private SqlTsPartitionDate tsFormat;
+    private PsqlPartition indefinitePartition;
 
     @Value("${sql.ts_key_value_partitioning}")
     private String partitioning;
@@ -92,6 +90,10 @@ public class JpaPsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEnt
         Optional<SqlTsPartitionDate> partition = SqlTsPartitionDate.parse(partitioning);
         if (partition.isPresent()) {
             tsFormat = partition.get();
+            if (tsFormat.equals(SqlTsPartitionDate.INDEFINITE)) {
+                indefinitePartition = new PsqlPartition(toMills(EPOCH_START), Long.MAX_VALUE, tsFormat.getPattern());
+                savePartition(indefinitePartition);
+            }
         } else {
             log.warn("Incorrect configuration of partitioning {}", partitioning);
             throw new RuntimeException("Failed to parse partitioning property: " + partitioning + "!");
@@ -116,23 +118,22 @@ public class JpaPsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEnt
         entity.setLongValue(tsKvEntry.getLongValue().orElse(null));
         entity.setBooleanValue(tsKvEntry.getBooleanValue().orElse(null));
         PsqlPartition psqlPartition = toPartition(tsKvEntry.getTs());
-        savePartition(psqlPartition);
         log.trace("Saving entity: {}", entity);
         return tsQueue.add(new EntityContainer(entity, psqlPartition.getPartitionDate()));
     }
 
     @Override
     public ListenableFuture<Void> remove(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
-       return service.submit(() -> {
-           String strKey = query.getKey();
-           Integer keyId = getOrSaveKeyId(strKey);
-           tsKvRepository.delete(
-                   entityId.getId(),
-                   keyId,
-                   query.getStartTs(),
-                   query.getEndTs());
-           return null;
-       });
+        return service.submit(() -> {
+            String strKey = query.getKey();
+            Integer keyId = getOrSaveKeyId(strKey);
+            tsKvRepository.delete(
+                    entityId.getId(),
+                    keyId,
+                    query.getStartTs(),
+                    query.getEndTs());
+            return null;
+        });
     }
 
     @Override
@@ -286,13 +287,13 @@ public class JpaPsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEnt
     }
 
     private void savePartition(PsqlPartition psqlPartition) {
-        if (!partitions.contains(psqlPartition)) {
+        if (!partitions.containsKey(psqlPartition.getStart())) {
             partitionCreationLock.lock();
             try {
                 log.trace("Saving partition: {}", psqlPartition);
                 partitioningRepository.save(psqlPartition);
                 log.trace("Adding partition to Set: {}", psqlPartition);
-                partitions.add(psqlPartition);
+                partitions.put(psqlPartition.getStart(), psqlPartition);
             } finally {
                 partitionCreationLock.unlock();
             }
@@ -300,17 +301,28 @@ public class JpaPsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEnt
     }
 
     private PsqlPartition toPartition(long ts) {
-        if (tsFormat.getTruncateUnit().equals(SqlTsPartitionDate.INDEFINITE.getTruncateUnit())) {
-            return new PsqlPartition(toMills(EPOCH_START), Long.MAX_VALUE, tsFormat.getPattern());
+        if (tsFormat.equals(SqlTsPartitionDate.INDEFINITE)) {
+            return indefinitePartition;
         } else {
             LocalDateTime time = LocalDateTime.ofInstant(Instant.ofEpochMilli(ts), ZoneOffset.UTC);
             LocalDateTime localDateTimeStart = tsFormat.trancateTo(time);
-            LocalDateTime localDateTimeEnd = tsFormat.plusTo(localDateTimeStart);
-            ZonedDateTime zonedDateTime = localDateTimeStart.atZone(ZoneOffset.UTC);
-            String partitionDate = zonedDateTime.format(DateTimeFormatter.ofPattern(tsFormat.getPattern()));
-            return new PsqlPartition(toMills(localDateTimeStart), toMills(localDateTimeEnd), partitionDate);
+            long partitionStartTs = toMills(localDateTimeStart);
+            PsqlPartition partition = partitions.get(partitionStartTs);
+            if (partition != null) {
+                return partition;
+            } else {
+                LocalDateTime localDateTimeEnd = tsFormat.plusTo(localDateTimeStart);
+                long partitionEndTs = toMills(localDateTimeEnd);
+                ZonedDateTime zonedDateTime = localDateTimeStart.atZone(ZoneOffset.UTC);
+                String partitionDate = zonedDateTime.format(DateTimeFormatter.ofPattern(tsFormat.getPattern()));
+                partition = new PsqlPartition(partitionStartTs, partitionEndTs, partitionDate);
+                savePartition(partition);
+                return partition;
+            }
         }
     }
 
-    private long toMills(LocalDateTime time) { return time.toInstant(ZoneOffset.UTC).toEpochMilli(); }
+    private static long toMills(LocalDateTime time) {
+        return time.toInstant(ZoneOffset.UTC).toEpochMilli();
+    }
 }
