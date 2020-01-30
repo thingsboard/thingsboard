@@ -16,13 +16,13 @@
 
 import {
   AfterViewInit,
-  Component, ComponentFactoryResolver,
+  ChangeDetectionStrategy,
+  Component,
+  ComponentFactoryResolver,
   ElementRef,
   Input,
   OnInit,
-  Type,
-  ViewChild,
-  ChangeDetectionStrategy
+  ViewChild
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
@@ -35,28 +35,24 @@ import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { forkJoin, fromEvent, merge, Observable } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { BaseData, HasId } from '@shared/models/base-data';
-import { EntityId } from '@shared/models/id/entity-id';
 import { ActivatedRoute } from '@angular/router';
 import {
   CellActionDescriptor,
+  EntityActionTableColumn,
+  EntityColumn,
   EntityTableColumn,
   EntityTableConfig,
   GroupActionDescriptor,
-  HeaderActionDescriptor,
-  EntityColumn, EntityActionTableColumn
+  HeaderActionDescriptor
 } from '@home/models/entity/entities-table-config.models';
 import { EntityTypeTranslation } from '@shared/models/entity-type.models';
 import { DialogService } from '@core/services/dialog.service';
 import { AddEntityDialogComponent } from './add-entity-dialog.component';
-import {
-  AddEntityDialogData,
-  EntityAction
-} from '@home/models/entity/entity-component.models';
-import { Timewindow, historyInterval } from '@shared/models/time/time.models';
-import {DomSanitizer, SafeHtml} from '@angular/platform-browser';
+import { AddEntityDialogData, EntityAction } from '@home/models/entity/entity-component.models';
+import { historyInterval, Timewindow } from '@shared/models/time/time.models';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
-import { instanceOf } from 'prop-types';
-import { isDefined, isDefinedAndNotNull, isUndefined } from '@core/utils';
+import { isDefined, isUndefined } from '@core/utils';
 
 @Component({
   selector: 'tb-entities-table',
@@ -456,6 +452,10 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
 
   trackByColumnKey(index, column: EntityTableColumn<BaseData<HasId>>) {
     return column.key;
+  }
+
+  trackByEntityId(index: number, entity: BaseData<HasId>) {
+    return entity.id.id;
   }
 
 }

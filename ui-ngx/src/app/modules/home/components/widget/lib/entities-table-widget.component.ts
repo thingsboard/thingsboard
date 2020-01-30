@@ -433,28 +433,24 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   }
 
   public cellContent(entity: EntityData, key: EntityColumn): SafeHtml {
-    let strContent = '';
     if (entity && key) {
       const contentInfo = this.contentsInfo[key.def];
       const value = getEntityValue(entity, key);
+      let content = '';
       if (contentInfo.useCellContentFunction && contentInfo.cellContentFunction) {
-        if (isDefined(value)) {
-          strContent = '' + value;
-        }
-        var content = strContent;
         try {
           content = contentInfo.cellContentFunction(value, entity, this.ctx);
         } catch (e) {
-          content = strContent;
+            content = '' + value;
         }
       } else {
         const decimals = (contentInfo.decimals || contentInfo.decimals === 0) ? contentInfo.decimals : this.ctx.widgetConfig.decimals;
         const units = contentInfo.units || this.ctx.widgetConfig.units;
         content = this.ctx.utils.formatValue(value, decimals, units, true);
       }
-      return this.domSanitizer.bypassSecurityTrustHtml(content);
+      return isDefined(content) ? this.domSanitizer.bypassSecurityTrustHtml(content) : '';
     } else {
-      return strContent;
+      return '';
     }
   }
 

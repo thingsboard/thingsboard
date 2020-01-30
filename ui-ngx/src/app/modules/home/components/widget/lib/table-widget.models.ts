@@ -31,7 +31,7 @@ export interface TableWidgetSettings {
 }
 
 export interface TableWidgetDataKeySettings {
-  columnWidth: string;
+  columnWidth?: string;
   useCellStyleFunction: boolean;
   cellStyleFunction: string;
   useCellContentFunction: boolean;
@@ -168,6 +168,7 @@ export function constructTableCssString(widgetConfig: WidgetConfig): string {
   const mdDark = defaultColor.setAlpha(0.87).toRgbString();
   const mdDarkSecondary = defaultColor.setAlpha(0.54).toRgbString();
   const mdDarkDisabled = defaultColor.setAlpha(0.26).toRgbString();
+  const mdDarkDisabled2 = defaultColor.setAlpha(0.38).toRgbString();
   const mdDarkDivider = defaultColor.setAlpha(0.12).toRgbString();
 
   const cssString =
@@ -188,6 +189,15 @@ export function constructTableCssString(widgetConfig: WidgetConfig): string {
     '}\n'+
     'mat-toolbar.mat-table-toolbar:not([color="primary"]) button.mat-icon-button mat-icon {\n'+
     'color: ' + mdDarkSecondary + ';\n'+
+    '}\n'+
+    '.mat-tab-label {\n'+
+    'color: ' + mdDark + ';\n'+
+    '}\n'+
+    '.mat-tab-header-pagination-chevron {\n'+
+    'border-color: ' + mdDark + ';\n'+
+    '}\n'+
+    '.mat-tab-header-pagination-disabled .mat-tab-header-pagination-chevron {\n'+
+    'border-color: ' + mdDarkDisabled2 + ';\n'+
     '}\n'+
     '.mat-table .mat-header-row {\n'+
     'background-color: ' + origBackgroundColor + ';\n'+

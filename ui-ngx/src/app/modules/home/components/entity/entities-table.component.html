@@ -135,7 +135,7 @@
           </div>
         </mat-toolbar>
         <div fxFlex class="table-container">
-          <mat-table [dataSource]="dataSource"
+          <mat-table [dataSource]="dataSource" [trackBy]="trackByEntityId"
                      matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="(pageLink.sortOrder.direction + '').toLowerCase()" matSortDisableClear>
             <ng-container matColumnDef="select" sticky>
               <mat-header-cell *matHeaderCellDef>

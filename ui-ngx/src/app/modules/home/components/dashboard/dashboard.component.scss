@@ -48,6 +48,16 @@
   }
 }
 
+tb-widget.tb-widget {
+  position: relative;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  outline: none;
+
+  transition: all .2s ease-in-out;
+}
+
 div.tb-widget {
   position: relative;
   height: 100%;

@@ -507,26 +507,22 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   }
 
   public cellContent(alarm: AlarmInfo, key: EntityColumn): SafeHtml {
-    let strContent = '';
     if (alarm && key) {
       const contentInfo = this.contentsInfo[key.def];
       const value = getAlarmValue(alarm, key);
+      let content = '';
       if (contentInfo.useCellContentFunction && contentInfo.cellContentFunction) {
-        if (isDefined(value)) {
-          strContent = '' + value;
-        }
-        var content = strContent;
         try {
           content = contentInfo.cellContentFunction(value, alarm, this.ctx);
         } catch (e) {
-          content = strContent;
+          content = '' + value;
         }
       } else {
         content = this.defaultContent(key, value);
       }
-      return this.domSanitizer.bypassSecurityTrustHtml(content);
+      return isDefined(content) ? this.domSanitizer.bypassSecurityTrustHtml(content) : '';
     } else {
-      return strContent;
+      return '';
     }
   }
 

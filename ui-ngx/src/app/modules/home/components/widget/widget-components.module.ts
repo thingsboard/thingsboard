@@ -22,6 +22,7 @@ import { DisplayColumnsPanelComponent } from '@home/components/widget/lib/displa
 import { AlarmsTableWidgetComponent } from '@home/components/widget/lib/alarms-table-widget.component';
 import { AlarmStatusFilterPanelComponent } from '@home/components/widget/lib/alarm-status-filter-panel.component';
 import { SharedHomeComponentsModule } from '@home/components/shared-home-components.module';
+import { TimeseriesTableWidgetComponent } from '@home/components/widget/lib/timeseries-table-widget.component';
 
 @NgModule({
   entryComponents: [
@@ -33,7 +34,8 @@ import { SharedHomeComponentsModule } from '@home/components/shared-home-compone
       DisplayColumnsPanelComponent,
       AlarmStatusFilterPanelComponent,
       EntitiesTableWidgetComponent,
-      AlarmsTableWidgetComponent
+      AlarmsTableWidgetComponent,
+      TimeseriesTableWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -42,7 +44,8 @@ import { SharedHomeComponentsModule } from '@home/components/shared-home-compone
   ],
   exports: [
     EntitiesTableWidgetComponent,
-    AlarmsTableWidgetComponent
+    AlarmsTableWidgetComponent,
+    TimeseriesTableWidgetComponent
   ]
 })
 export class WidgetComponentsModule { }
