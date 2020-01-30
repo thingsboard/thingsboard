@@ -46,6 +46,8 @@ import org.thingsboard.server.dao.util.SqlTsDao;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -298,13 +300,15 @@ public class JpaPsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEnt
     }
 
     private PsqlPartition toPartition(long ts) {
-        LocalDateTime time = LocalDateTime.ofInstant(Instant.ofEpochMilli(ts), ZoneOffset.UTC);
-        LocalDateTime localDateTimeStart = tsFormat.trancateTo(time);
-        if (localDateTimeStart == SqlTsPartitionDate.EPOCH_START) {
+        if (tsFormat.getTruncateUnit().equals(SqlTsPartitionDate.INDEFINITE.getTruncateUnit())) {
             return new PsqlPartition(toMills(EPOCH_START), Long.MAX_VALUE, tsFormat.getPattern());
         } else {
+            LocalDateTime time = LocalDateTime.ofInstant(Instant.ofEpochMilli(ts), ZoneOffset.UTC);
+            LocalDateTime localDateTimeStart = tsFormat.trancateTo(time);
             LocalDateTime localDateTimeEnd = tsFormat.plusTo(localDateTimeStart);
-            return new PsqlPartition(toMills(localDateTimeStart), toMills(localDateTimeEnd), tsFormat.getPattern());
+            ZonedDateTime zonedDateTime = localDateTimeStart.atZone(ZoneOffset.UTC);
+            String partitionDate = zonedDateTime.format(DateTimeFormatter.ofPattern(tsFormat.getPattern()));
+            return new PsqlPartition(toMills(localDateTimeStart), toMills(localDateTimeEnd), partitionDate);
         }
     }
 
