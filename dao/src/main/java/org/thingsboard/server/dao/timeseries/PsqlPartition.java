@@ -17,9 +17,6 @@ package org.thingsboard.server.dao.timeseries;
 
 import lombok.Data;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 @Data
 public class PsqlPartition {
 
@@ -30,10 +27,10 @@ public class PsqlPartition {
     private String partitionDate;
     private String query;
 
-    public PsqlPartition(long start, long end, String pattern) {
+    public PsqlPartition(long start, long end, String partitionDate) {
         this.start = start;
         this.end = end;
-        this.partitionDate = new SimpleDateFormat(pattern).format(new Date(start));
+        this.partitionDate = partitionDate;
         this.query = createStatement(start, end, partitionDate);
     }
 
