@@ -107,7 +107,7 @@ CREATE TABLE IF NOT EXISTS customer (
 
 CREATE TABLE IF NOT EXISTS dashboard (
     id varchar(31) NOT NULL CONSTRAINT dashboard_pkey PRIMARY KEY,
-    configuration varchar(10000000),
+    configuration varchar(100000000),
     assigned_customers varchar(1000000),
     search_text varchar(255),
     tenant_id varchar(31),
@@ -198,7 +198,7 @@ CREATE TABLE IF NOT EXISTS widget_type (
     id varchar(31) NOT NULL CONSTRAINT widget_type_pkey PRIMARY KEY,
     alias varchar(255),
     bundle_alias varchar(255),
-    descriptor varchar(100000000),
+    descriptor varchar(1000000),
     name varchar(255),
     tenant_id varchar(31)
 );

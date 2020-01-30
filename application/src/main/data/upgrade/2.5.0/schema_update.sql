@@ -14,4 +14,4 @@
 -- limitations under the License.
 --
 
-ALTER TABLE widget_type ALTER COLUMN descriptor SET DATA TYPE varchar(100000000);
+ALTER TABLE dashboard ALTER COLUMN configuration SET DATA TYPE varchar(100000000);
