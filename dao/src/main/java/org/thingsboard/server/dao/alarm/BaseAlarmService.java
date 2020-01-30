@@ -56,11 +56,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -277,6 +273,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
             alarms = Futures.transformAsync(alarms, input -> {
                 List<ListenableFuture<AlarmInfo>> alarmFutures = new ArrayList<>(input.size());
                 ConcurrentMap<EntityId, String> namesMap = new ConcurrentHashMap<>();
+                ConcurrentMap<Future, EntityId> futureMap = new ConcurrentHashMap<>();
                 for (AlarmInfo alarmInfo : input) {
                     if (!namesMap.containsKey(alarmInfo.getOriginator())) {
                         alarmFutures.add(Futures.transform(
