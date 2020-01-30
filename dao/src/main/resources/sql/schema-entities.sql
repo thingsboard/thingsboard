@@ -198,7 +198,7 @@ CREATE TABLE IF NOT EXISTS widget_type (
     id varchar(31) NOT NULL CONSTRAINT widget_type_pkey PRIMARY KEY,
     alias varchar(255),
     bundle_alias varchar(255),
-    descriptor varchar(1000000),
+    descriptor varchar(100000000),
     name varchar(255),
     tenant_id varchar(31)
 );
