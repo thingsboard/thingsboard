@@ -30,9 +30,9 @@ import thingsboardSideMenu from '../components/side-menu.directive';
 import thingsboardNavTree from '../components/nav-tree.directive';
 import thingsboardDashboardAutocomplete from '../components/dashboard-autocomplete.directive';
 import thingsboardKvMap from '../components/kv-map.directive';
-import thingsboardGatewayConfig from '../components/gateWay/gateway-config.directive';
-import thingsboardGatewayConfigSelect from '../components/gateWay/gateway-config-select.directive';
-import thingsboardGatewayForm from '../components/gateWay/gateway-form.directive';
+import thingsboardGatewayConfig from '../components/gateway/gateway-config.directive';
+import thingsboardGatewayConfigSelect from '../components/gateway/gateway-config-select.directive';
+import thingsboardGatewayForm from '../components/gateway/gateway-form.directive';
 import thingsboardJsonObjectEdit from '../components/json-object-edit.directive';
 import thingsboardJsonContent from '../components/json-content.directive';
 

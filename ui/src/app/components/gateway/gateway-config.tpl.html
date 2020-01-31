@@ -1,0 +1,94 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section name="gatewayConfig" layout="column" class="gateway-config">
+    <section layout="row" ng-form="'gatewayConfig_' + $index" ng-repeat="keyVal in vm.kvList track by $index">
+        <div layout="column" layout-align="center start" class="gateway-config-row">
+            <!--            <md-input-container class="md-block">-->
+            <!--&lt;!&ndash;                <md-checkbox ng-model="keyVal.enabled"&ndash;&gt;-->
+            <!--&lt;!&ndash;                             aria-label="{{ 'gateway.enabled' | translate }}"&ndash;&gt;-->
+            <!--&lt;!&ndash;                             ng-change="vm.checkboxValid(keyVal)"&ndash;&gt;-->
+            <!--&lt;!&ndash;                             ng-click="vm.checkboxValidClick($event, keyVal)"&ndash;&gt;-->
+            <!--&lt;!&ndash;                             ng-mouseover="vm.checkboxValidMouseover($event, keyVal)">&ndash;&gt;-->
+            <!--&lt;!&ndash;                </md-checkbox>&ndash;&gt;-->
+            <!--                <md-switch ng-model="keyVal.enabled" aria-label="{{ 'gateway.enabled' | translate }}">-->
+            <!--                </md-switch>-->
+            <!--                <md-tooltip md-direction="top">-->
+            <!--                    {{ 'gateway.enabled' | translate }}-->
+            <!--                </md-tooltip>-->
+            <!--            </md-input-container>-->
+            <md-switch ng-model="keyVal.enabled" ng-disabled="{{'gatewayConfig_' + $index}}.$invalid"
+                       aria-label="{{ 'gateway.connector-enabled' | translate }}">
+            </md-switch>
+        </div>
+        <div layout="row" flex class="gateway-config-row"
+             ng-class="{'gateway-config-row-vertical': vm.changeAlignment}">
+            <md-input-container class="md-block" flex>
+                <label>{{'gateway.connector-type' | translate }}</label>
+                <md-select name="configType"
+                           ng-change="vm.configTypeChange(keyVal)"
+                           aria-label="{{ 'gateway.gateway.connector-type' | translate }}"
+                           ng-model="keyVal.value"  required>
+                    <md-option ng-repeat="configType in vm.types.gatewayConfigType" ng-value="configType.value">
+                        {{configType.value}}
+                    </md-option>
+                </md-select>
+                <div ng-messages="vm.theForm.configType.$error">
+                    <div ng-message="required" translate>gateway.connector-type-required</div>
+                </div>
+            </md-input-container>
+            <md-input-container class="md-block" flex>
+                <input placeholder="{{'gateway.connector-name' | translate }}"
+                       ng-model-options="{ updateOn: 'blur' }"
+                       ng-change="vm.keyValChange(keyVal, $index)" name="key" ng-model="keyVal.key" required/>
+                <div ng-messages="vm.theForm.key.$error">
+                    <div ng-message="required" translate>gateway.connector-name-required</div>
+                </div>
+            </md-input-container>
+        </div>
+        <div layout="row" layout-align="end center" class="action-buttons"
+             ng-class="{'gateway-config-row-vertical': vm.changeAlignment}">
+            <md-button class="md-icon-button md-mini" ng-click="vm.openConfigDialog($event, $index, keyVal.config, keyVal.key)"
+                       aria-label="{{ 'gateway.update-config' | translate }}"
+                       ng-class="vm.validationJSON(keyVal.config)" required>
+                <md-icon class="material-icons">more_horiz</md-icon>
+                <md-tooltip md-direction="top">
+                    {{ 'gateway.update-config' | translate }}
+                </md-tooltip>
+            </md-button>
+            <md-button class="md-icon-button md-mini" ng-click="vm.removeKeyVal($index)"
+                       aria-label="{{ 'gateway.delete' | translate }}">
+                <md-icon class="material-icons">close</md-icon>
+                <md-tooltip md-direction="top">
+                    {{ 'gateway.delete' | translate }}
+                </md-tooltip>
+            </md-button>
+        </div>
+    </section>
+    <span ng-show="!vm.kvList.length"
+          layout-align="center center" ng-class="{'disabled': vm.disabled}"
+          class="no-data-found" translate>{{'gateway.no-connectors'}}</span>
+    <div>
+        <md-button class="md-raised" ng-click="vm.addKeyVal()"
+                   aria-label="{{ 'gateway.connector-add' | translate }}">
+            <md-tooltip md-direction="top">
+                {{ 'gateway.connector-add' | translate }}
+            </md-tooltip>
+            <span translate>action.add</span>
+        </md-button>
+    </div>
+</section >

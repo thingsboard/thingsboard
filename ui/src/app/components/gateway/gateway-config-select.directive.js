@@ -36,9 +36,8 @@ function GatewayConfigSelect($compile, $templateCache, $mdConstant, $translate, 
         element.html(template);
 
         scope.tbRequired = angular.isDefined(scope.tbRequired) ? scope.tbRequired : false;
-
-        scope.ngModelCtrl = ngModelCtrl;
         scope.singleSelect = null;
+        scope.gatewaySearchText = '';
 
         scope.updateValidity = function () {
             var value = ngModelCtrl.$viewValue;
@@ -46,9 +45,13 @@ function GatewayConfigSelect($compile, $templateCache, $mdConstant, $translate, 
             ngModelCtrl.$setValidity('singleSelect', valid);
         };
 
-        scope.$watch('singleSelect', function () {
-            scope.updateView();
-        });
+        function startWatchers() {
+            scope.$watch('singleSelect', function (newVal, prevVal) {
+                if (!angular.equals(newVal, prevVal) && newVal !== null) {
+                    scope.updateView();
+                }
+            });
+        }
 
         scope.gatewayNameSearch = function (gatewaySearchText) {
             return gatewaySearchText ? scope.gatewayList.filter(
@@ -58,22 +61,20 @@ function GatewayConfigSelect($compile, $templateCache, $mdConstant, $translate, 
         scope.createFilterForGatewayName = function (query) {
             var lowercaseQuery = query.toLowerCase();
             return function filterFn(device) {
-                return (device.toLowerCase().indexOf(lowercaseQuery) === 0);
+                return (device.name.toLowerCase().indexOf(lowercaseQuery) === 0);
             };
         };
 
         scope.updateView = function () {
             ngModelCtrl.$setViewValue(scope.singleSelect);
             scope.updateValidity();
-            let deviceObj = {"name": scope.singleSelect, "type": "Gateway", "additionalInfo": {
-                    "gateway": true
-                }};
-            scope.getAccessToken(deviceObj);
+            scope.getAccessToken(scope.singleSelect.id);
         };
 
         ngModelCtrl.$render = function () {
             if (ngModelCtrl.$viewValue) {
                 scope.singleSelect = ngModelCtrl.$viewValue;
+                startWatchers();
             }
         };
 
@@ -106,9 +107,13 @@ function GatewayConfigSelect($compile, $templateCache, $mdConstant, $translate, 
                 .ok($translate.instant('action.yes'));
             $mdDialog.show(confirm).then(
                 () => {
-                    let deviceObj = {"name": deviceName.name, "type": "Gateway", "additionalInfo": {
-                            "gateway": true
-                        }};
+                    let deviceObj = {
+                        name: deviceName.name,
+                        type: "Gateway",
+                        additionalInfo: {
+                            gateway: true
+                        }
+                    };
                     scope.createDevice(deviceObj);
                 },
                 () => {
