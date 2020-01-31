@@ -70,7 +70,7 @@ public abstract class AbstractSimpleSqlTimeseriesDao<T extends AbstractTsKvEntit
 
     @PreDestroy
     protected void destroy() {
-        super.init();
+        super.destroy();
         if (tsQueue != null) {
             tsQueue.destroy();
         }
