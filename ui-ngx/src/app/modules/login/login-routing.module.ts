@@ -52,6 +52,16 @@ const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
+    path: 'login/resetExpiredPassword',
+    component: ResetPasswordComponent,
+    data: {
+      title: 'login.reset-password',
+      module: 'public',
+      expiredPassword: true
+    },
+    canActivate: [AuthGuard]
+  },
+  {
     path: 'login/createPassword',
     component: CreatePasswordComponent,
     data: {

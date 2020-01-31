@@ -91,5 +91,11 @@
         opacity: 1;
       }
     }
+    ul.indicators {
+      pointer-events: none;
+      li {
+        pointer-events: all;
+      }
+    }
   }
 }

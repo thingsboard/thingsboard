@@ -21,14 +21,22 @@
 }
 
 :host ::ng-deep {
-  .mat-tab-body-wrapper {
-    position: absolute;
-    top: 49px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-  }
-  .mat-tab-label {
-    min-width: 40px;
+  tb-details-panel {
+    > .mat-content {
+      > .mat-tab-group {
+        > .mat-tab-body-wrapper {
+          position: absolute;
+          top: 49px;
+          left: 0;
+          right: 0;
+          bottom: 0;
+        }
+        > .mat-tab-header {
+          .mat-tab-label {
+            min-width: 40px;
+          }
+        }
+      }
+    }
   }
 }

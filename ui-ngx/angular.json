@@ -36,7 +36,8 @@
               "node_modules/tooltipster/dist/css/tooltipster.bundle.min.css",
               "node_modules/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-shadow.min.css",
               "src/app/shared/components/json-form/react/json-form.scss",
-              "node_modules/rc-select/assets/index.css"
+              "node_modules/rc-select/assets/index.css",
+              "node_modules/jstree-bootstrap-theme/dist/themes/proton/style.min.css"
             ],
             "stylePreprocessorOptions": {
               "includePaths": [
@@ -79,7 +80,8 @@
               "node_modules/ace-builds/src-min/snippets/json.js",
               "node_modules/ace-builds/src-min/snippets/java.js",
               "node_modules/ace-builds/src-min/snippets/javascript.js",
-              "node_modules/systemjs/dist/system.js"
+              "node_modules/systemjs/dist/system.js",
+              "node_modules/jstree/dist/jstree.min.js"
             ],
             "es5BrowserSupport": true,
             "customWebpackConfig": {

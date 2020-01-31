@@ -120,6 +120,7 @@ import { JsonContentComponent } from './components/json-content.component';
 import { KeyValMapComponent } from './components/kv-map.component';
 import { TbCheatSheetComponent } from '@shared/components/cheatsheet.component';
 import { TbHotkeysDirective } from '@shared/components/hotkeys.directive';
+import { NavTreeComponent } from '@shared/components/nav-tree.component';
 
 @NgModule({
   providers: [
@@ -198,6 +199,7 @@ import { TbHotkeysDirective } from '@shared/components/hotkeys.directive';
     FileInputComponent,
     MessageTypeAutocompleteComponent,
     KeyValMapComponent,
+    NavTreeComponent,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
@@ -346,6 +348,7 @@ import { TbHotkeysDirective } from '@shared/components/hotkeys.directive';
     FileInputComponent,
     MessageTypeAutocompleteComponent,
     KeyValMapComponent,
+    NavTreeComponent,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,

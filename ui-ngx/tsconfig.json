@@ -18,6 +18,7 @@
       "src/typings/rawloader.typings.d.ts",
       "src/typings/jquery.typings.d.ts",
       "src/typings/jquery.flot.typings.d.ts",
+      "src/typings/jquery.jstree.typings.d.ts",
       "src/typings/split.js.typings.d.ts"
     ],
     "paths": {

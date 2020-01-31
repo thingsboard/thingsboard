@@ -21,6 +21,9 @@ import { Store } from '@ngrx/store';
 import { AppState } from '../../../../core/core.state';
 import { PageComponent } from '../../../../shared/components/page.component';
 import { FormBuilder } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Constants } from '@shared/models/constants';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'tb-login',
@@ -36,7 +39,8 @@ export class LoginComponent extends PageComponent implements OnInit {
 
   constructor(protected store: Store<AppState>,
               private authService: AuthService,
-              public fb: FormBuilder) {
+              public fb: FormBuilder,
+              private router: Router) {
     super(store);
   }
 
@@ -45,7 +49,16 @@ export class LoginComponent extends PageComponent implements OnInit {
 
   login(): void {
     if (this.loginFormGroup.valid) {
-      this.authService.login(this.loginFormGroup.value).subscribe();
+      this.authService.login(this.loginFormGroup.value).subscribe(
+        () => {},
+        (error: HttpErrorResponse) => {
+          if (error && error.error && error.error.errorCode) {
+            if (error.error.errorCode === Constants.serverErrorCode.credentialsExpired) {
+              this.router.navigateByUrl(`login/resetExpiredPassword?resetToken=${error.error.resetToken}`);
+            }
+          }
+        }
+      );
     } else {
       Object.keys(this.loginFormGroup.controls).forEach(field => {
         const control = this.loginFormGroup.get(field);

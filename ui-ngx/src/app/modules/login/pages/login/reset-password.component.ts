@@ -34,6 +34,8 @@ import { map } from 'rxjs/operators';
 })
 export class ResetPasswordComponent extends PageComponent implements OnInit, OnDestroy {
 
+  isExpiredPassword: boolean;
+
   resetToken = '';
   sub: Subscription;
 
@@ -51,6 +53,7 @@ export class ResetPasswordComponent extends PageComponent implements OnInit, OnD
   }
 
   ngOnInit() {
+    this.isExpiredPassword = this.route.snapshot.data.expiredPassword;
     this.sub = this.route
       .queryParams
       .subscribe(params => {

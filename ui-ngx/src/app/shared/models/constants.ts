@@ -20,6 +20,7 @@ export const Constants = {
     authentication: 10,
     jwtTokenExpired: 11,
     tenantTrialExpired: 12,
+    credentialsExpired: 15,
     permissionDenied: 20,
     invalidArguments: 30,
     badRequestParams: 31,

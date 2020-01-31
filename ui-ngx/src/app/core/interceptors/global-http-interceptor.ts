@@ -128,7 +128,7 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
     if (errorResponse.error.refreshTokenPending || errorResponse.status === 401) {
       if (errorResponse.error.refreshTokenPending || errorCode && errorCode === Constants.serverErrorCode.jwtTokenExpired) {
           return this.refreshTokenAndRetry(req, next);
-      } else {
+      } else if (errorCode !== Constants.serverErrorCode.credentialsExpired) {
         unhandled = true;
       }
     } else if (errorResponse.status === 429) {

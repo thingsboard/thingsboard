@@ -23,6 +23,7 @@ import { AlarmsTableWidgetComponent } from '@home/components/widget/lib/alarms-t
 import { AlarmStatusFilterPanelComponent } from '@home/components/widget/lib/alarm-status-filter-panel.component';
 import { SharedHomeComponentsModule } from '@home/components/shared-home-components.module';
 import { TimeseriesTableWidgetComponent } from '@home/components/widget/lib/timeseries-table-widget.component';
+import { EntitiesHierarchyWidgetComponent } from '@home/components/widget/lib/entities-hierarchy-widget.component';
 
 @NgModule({
   entryComponents: [
@@ -35,7 +36,8 @@ import { TimeseriesTableWidgetComponent } from '@home/components/widget/lib/time
       AlarmStatusFilterPanelComponent,
       EntitiesTableWidgetComponent,
       AlarmsTableWidgetComponent,
-      TimeseriesTableWidgetComponent
+      TimeseriesTableWidgetComponent,
+      EntitiesHierarchyWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -45,7 +47,8 @@ import { TimeseriesTableWidgetComponent } from '@home/components/widget/lib/time
   exports: [
     EntitiesTableWidgetComponent,
     AlarmsTableWidgetComponent,
-    TimeseriesTableWidgetComponent
+    TimeseriesTableWidgetComponent,
+    EntitiesHierarchyWidgetComponent
   ]
 })
 export class WidgetComponentsModule { }
