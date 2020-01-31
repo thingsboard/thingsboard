@@ -21,8 +21,11 @@ import javax.persistence.Column;
 import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
 
+import java.util.UUID;
+
 import static org.thingsboard.server.dao.model.ModelConstants.BOOLEAN_VALUE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.DOUBLE_VALUE_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_ID_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.LONG_VALUE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.STRING_VALUE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.TS_COLUMN;
@@ -35,6 +38,10 @@ public abstract class AbstractTsKvEntity {
     protected static final String AVG = "AVG";
     protected static final String MIN = "MIN";
     protected static final String MAX = "MAX";
+
+    @Id
+    @Column(name = ENTITY_ID_COLUMN, columnDefinition = "uuid")
+    protected UUID entityId;
 
     @Id
     @Column(name = TS_COLUMN)

@@ -44,15 +44,11 @@ import static org.thingsboard.server.dao.model.ModelConstants.KEY_COLUMN;
 public final class TsKvEntity extends AbstractTsKvEntity implements ToData<TsKvEntry> {
 
     @Id
-    @Column(name = ENTITY_ID_COLUMN, columnDefinition = "uuid")
-    protected UUID entityId;
-
-    @Id
     @Column(name = KEY_COLUMN)
-    protected int key;
+    private int key;
 
     @Transient
-    protected String strKey;
+    private String strKey;
 
     public TsKvEntity() {
     }

@@ -66,14 +66,8 @@ import static org.thingsboard.server.dao.timeseries.SqlTsPartitionDate.EPOCH_STA
 @PsqlDao
 public class JpaPsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEntity> implements TimeseriesDao {
 
-    private final ConcurrentMap<String, Integer> tsKvDictionaryMap = new ConcurrentHashMap<>();
     private final Map<Long, PsqlPartition> partitions = new ConcurrentHashMap<>();
-
-    private static final ReentrantLock tsCreationLock = new ReentrantLock();
     private static final ReentrantLock partitionCreationLock = new ReentrantLock();
-
-    @Autowired
-    private TsKvDictionaryRepository dictionaryRepository;
 
     @Autowired
     private TsKvPsqlRepository tsKvRepository;
@@ -253,41 +247,41 @@ public class JpaPsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEnt
                 endTs));
     }
 
-    private Integer getOrSaveKeyId(String strKey) {
-        Integer keyId = tsKvDictionaryMap.get(strKey);
-        if (keyId == null) {
-            Optional<TsKvDictionary> tsKvDictionaryOptional;
-            tsKvDictionaryOptional = dictionaryRepository.findById(new TsKvDictionaryCompositeKey(strKey));
-            if (!tsKvDictionaryOptional.isPresent()) {
-                tsCreationLock.lock();
-                try {
-                    tsKvDictionaryOptional = dictionaryRepository.findById(new TsKvDictionaryCompositeKey(strKey));
-                    if (!tsKvDictionaryOptional.isPresent()) {
-                        TsKvDictionary tsKvDictionary = new TsKvDictionary();
-                        tsKvDictionary.setKey(strKey);
-                        try {
-                            TsKvDictionary saved = dictionaryRepository.save(tsKvDictionary);
-                            tsKvDictionaryMap.put(saved.getKey(), saved.getKeyId());
-                            keyId = saved.getKeyId();
-                        } catch (ConstraintViolationException e) {
-                            tsKvDictionaryOptional = dictionaryRepository.findById(new TsKvDictionaryCompositeKey(strKey));
-                            TsKvDictionary dictionary = tsKvDictionaryOptional.orElseThrow(() -> new RuntimeException("Failed to get TsKvDictionary entity from DB!"));
-                            tsKvDictionaryMap.put(dictionary.getKey(), dictionary.getKeyId());
-                            keyId = dictionary.getKeyId();
-                        }
-                    } else {
-                        keyId = tsKvDictionaryOptional.get().getKeyId();
-                    }
-                } finally {
-                    tsCreationLock.unlock();
-                }
-            } else {
-                keyId = tsKvDictionaryOptional.get().getKeyId();
-                tsKvDictionaryMap.put(strKey, keyId);
-            }
-        }
-        return keyId;
-    }
+//    private Integer getOrSaveKeyId(String strKey) {
+//        Integer keyId = tsKvDictionaryMap.get(strKey);
+//        if (keyId == null) {
+//            Optional<TsKvDictionary> tsKvDictionaryOptional;
+//            tsKvDictionaryOptional = dictionaryRepository.findById(new TsKvDictionaryCompositeKey(strKey));
+//            if (!tsKvDictionaryOptional.isPresent()) {
+//                tsCreationLock.lock();
+//                try {
+//                    tsKvDictionaryOptional = dictionaryRepository.findById(new TsKvDictionaryCompositeKey(strKey));
+//                    if (!tsKvDictionaryOptional.isPresent()) {
+//                        TsKvDictionary tsKvDictionary = new TsKvDictionary();
+//                        tsKvDictionary.setKey(strKey);
+//                        try {
+//                            TsKvDictionary saved = dictionaryRepository.save(tsKvDictionary);
+//                            tsKvDictionaryMap.put(saved.getKey(), saved.getKeyId());
+//                            keyId = saved.getKeyId();
+//                        } catch (ConstraintViolationException e) {
+//                            tsKvDictionaryOptional = dictionaryRepository.findById(new TsKvDictionaryCompositeKey(strKey));
+//                            TsKvDictionary dictionary = tsKvDictionaryOptional.orElseThrow(() -> new RuntimeException("Failed to get TsKvDictionary entity from DB!"));
+//                            tsKvDictionaryMap.put(dictionary.getKey(), dictionary.getKeyId());
+//                            keyId = dictionary.getKeyId();
+//                        }
+//                    } else {
+//                        keyId = tsKvDictionaryOptional.get().getKeyId();
+//                    }
+//                } finally {
+//                    tsCreationLock.unlock();
+//                }
+//            } else {
+//                keyId = tsKvDictionaryOptional.get().getKeyId();
+//                tsKvDictionaryMap.put(strKey, keyId);
+//            }
+//        }
+//        return keyId;
+//    }
 
     private void savePartition(PsqlPartition psqlPartition) {
         if (!partitions.containsKey(psqlPartition.getStart())) {

@@ -130,15 +130,11 @@ public final class TimescaleTsKvEntity extends AbstractTsKvEntity implements ToD
     private UUID tenantId;
 
     @Id
-    @Column(name = ENTITY_ID_COLUMN, columnDefinition = "uuid")
-    protected UUID entityId;
-
-    @Id
     @Column(name = KEY_COLUMN)
-    protected int key;
+    private int key;
 
     @Transient
-    protected String strKey;
+    private String strKey;
 
 
     public TimescaleTsKvEntity() {
