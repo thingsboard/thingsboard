@@ -47,18 +47,16 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
     const attributeNameShared = "configuration";
     const attributeLogShared = "RemoteLoggingLevel";
 
-    vm.remoteLoggingConfig = '[loggers]}}keys=root, service, connector, converter, tb_connection, storage, extension}}[handlers]}}keys=consoleHandler, serviceHandler, connectorHandler, converterHandler, tb_connectionHandler, storageHandler, extensionHandler}}[formatters]}}keys=LogFormatter}}[logger_root]}}level=ERROR}}handlers=consoleHandler}}[logger_connector]}}level={ERROR}}}handlers=connectorHandler}}formatter=LogFormatter}}qualname=connector}}[logger_storage]}}level={ERROR}}}handlers=storageHandler}}formatter=LogFormatter}}qualname=storage}}[logger_tb_connection]}}level={ERROR}}}handlers=tb_connectionHandler}}formatter=LogFormatter}}qualname=tb_connection}}[logger_service]}}level={ERROR}}}handlers=serviceHandler}}formatter=LogFormatter}}qualname=service}}[logger_converter]}}level={ERROR}}}handlers=connectorHandler}}formatter=LogFormatter}}qualname=converter}}[logger_extension]}}level={ERROR}}}handlers=connectorHandler}}formatter=LogFormatter}}qualname=extension}}[handler_consoleHandler]}}class=StreamHandler}}level={ERROR}}}formatter=LogFormatter}}args=(sys.stdout,)}}[handler_connectorHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}connector.log", "d", 1, 7,)}}[handler_storageHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}storage.log", "d", 1, 7,)}}[handler_serviceHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}service.log", "d", 1, 7,)}}[handler_converterHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}converter.log", "d", 1, 3,)}}[handler_extensionHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}extension.log", "d", 1, 3,)}}[handler_tb_connectionHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}tb_connection.log", "d", 1, 3,)}}[formatter_LogFormatter]}}format="%(asctime)s - %(levelname)s - [%(filename)s] - %(module)s - %(lineno)d - %(message)s" }}datefmt="%Y-%m-%d %H:%M:%S"';
+    const templateLogsConfig = '[loggers]}}keys=root, service, connector, converter, tb_connection, storage, extension}}[handlers]}}keys=consoleHandler, serviceHandler, connectorHandler, converterHandler, tb_connectionHandler, storageHandler, extensionHandler}}[formatters]}}keys=LogFormatter}}[logger_root]}}level=ERROR}}handlers=consoleHandler}}[logger_connector]}}level={ERROR}}}handlers=connectorHandler}}formatter=LogFormatter}}qualname=connector}}[logger_storage]}}level={ERROR}}}handlers=storageHandler}}formatter=LogFormatter}}qualname=storage}}[logger_tb_connection]}}level={ERROR}}}handlers=tb_connectionHandler}}formatter=LogFormatter}}qualname=tb_connection}}[logger_service]}}level={ERROR}}}handlers=serviceHandler}}formatter=LogFormatter}}qualname=service}}[logger_converter]}}level={ERROR}}}handlers=connectorHandler}}formatter=LogFormatter}}qualname=converter}}[logger_extension]}}level={ERROR}}}handlers=connectorHandler}}formatter=LogFormatter}}qualname=extension}}[handler_consoleHandler]}}class=StreamHandler}}level={ERROR}}}formatter=LogFormatter}}args=(sys.stdout,)}}[handler_connectorHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}connector.log", "d", 1, 7,)}}[handler_storageHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}storage.log", "d", 1, 7,)}}[handler_serviceHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}service.log", "d", 1, 7,)}}[handler_converterHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}converter.log", "d", 1, 3,)}}[handler_extensionHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}extension.log", "d", 1, 3,)}}[handler_tb_connectionHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}tb_connection.log", "d", 1, 3,)}}[formatter_LogFormatter]}}format="%(asctime)s - %(levelname)s - [%(filename)s] - %(module)s - %(lineno)d - %(message)s" }}datefmt="%Y-%m-%d %H:%M:%S"';
 
     vm.types = types;
 
     vm.configurations = {
-        singleSelect: '',
+        gateway: '',
         host: $document[0].domain,
         port: 1883,
         remoteConfiguration: true,
         accessToken: '',
-        entityType: '',
-        entityId: '',
         storageType: "memoryStorage",
         readRecordsCount: 100,
         maxRecordsCount: 10000,
@@ -114,12 +112,7 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
 
     vm.getAccessToken = (deviceId) => {
         if (deviceId.id) {
-        //     deviceService.findByName(deviceObj.name, {ignoreErrors: true})
-        //         .then(
-        //             function (device) {
             getDeviceCredential(deviceId.id);
-                //     }
-                // )
         }
     };
 
@@ -127,9 +120,7 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
         return deviceService.getDeviceCredentials(deviceId).then(
             (deviceCredentials) => {
                 vm.configurations.accessToken = deviceCredentials.credentialsId;
-                vm.configurations.entityType = deviceCredentials.deviceId.entityType;
-                vm.configurations.entityId = deviceCredentials.deviceId.id;
-                vm.getAttributeStart();
+                getAttributes();
             }
         );
     }
@@ -145,63 +136,56 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
                 function () {
                     deviceService.saveDevice(deviceObj).then(
                         (device) => {
-                            deviceService.getDeviceCredentials(device.id.id).then(
-                                (data) => {
-                                    vm.configurations.accessToken = data.credentialsId;
-                                    vm.configurations.entityType = device.id.entityType;
-                                    vm.configurations.entityId = device.id.id;
-                                    vm.getAttributeStart();
-                                    getGatewaysListByUser();
-                                }
-                            );
+                            getDeviceCredential(device.id.id).then(() =>{
+                                getGatewaysListByUser();
+                            });
                         }
                     );
                 });
     };
 
     vm.saveAttributeConfig = () => {
-        saveAttribute(attributeNameShared, $window.btoa(angular.toJson(vm.getConfigAllByAttributeJSON())), types.attributesScope.shared.value);
+        saveAttribute(attributeNameShared, $window.btoa(angular.toJson(getGatewayConfigJSON())), types.attributesScope.shared.value);
         saveAttribute(attributeNameServer, $window.btoa(angular.toJson(vm.getConfigByAttributeTmpJSON())), types.attributesScope.server.value);
         saveAttribute(attributeLogShared, vm.configurations.remoteLoggingLevel.toUpperCase(), types.attributesScope.shared.value);
     };
 
-    vm.getAttributeStart = () => {
-        let initResps = [];
+    function getAttributes() {
+        let promises = [];
         vm.configurations.connectors = {};
-        initResps.push(vm.getAttributeConfig(attributeNameClient, types.attributesScope.client.value));
-        initResps.push(vm.getAttributeConfig(attributeNameServer, types.attributesScope.server.value));
-        initResps.push(vm.getAttributeConfig(attributeLogShared, types.attributesScope.shared.value));
-        $q.all(initResps).then((resp) => {
+        promises.push(getAttribute(attributeNameClient, types.attributesScope.client.value));
+        promises.push(getAttribute(attributeNameServer, types.attributesScope.server.value));
+        promises.push(getAttribute(attributeLogShared, types.attributesScope.shared.value));
+        $q.all(promises).then((resp) => {
             vm.getAttributeInitFromClient(resp[0]);
             vm.getAttributeInitFromServer(resp[1]);
             vm.getAttributeInitFromShared(resp[2]);
         });
-    };
+    }
 
-    vm.getAttributeConfig = (attributeName, typeValue) => {
-        let keys = [attributeName];
-        return attributeService.getEntityAttributesValues(vm.configurations.entityType, vm.configurations.entityId, typeValue, keys);
-    };
+    function getAttribute(attributeName, typeValue) {
+        return attributeService.getEntityAttributesValues(vm.configurations.gateway.id.entityType, vm.configurations.gateway.id.id, typeValue, attributeName);
+    }
 
     function saveAttribute(attributeName, attributeConfig, typeValue) {
         let attributes = [{
             key: attributeName,
             value: attributeConfig
         }];
-        attributeService.saveEntityAttributes(vm.configurations.entityType, vm.configurations.entityId, typeValue, attributes).then(() => {
+        attributeService.saveEntityAttributes(vm.configurations.gateway.id.entityType, vm.configurations.gateway.id.id, typeValue, attributes).then(() => {
         });
     }
 
     vm.exportConfig = () => {
-        let fileZip = {};
-        fileZip["tb_gateway.yaml"] = generateConfigFileYAML();
-        vm.createConfigByExport(fileZip);
-        vm.getLogsConfigByExport(fileZip);
-        importExport.exportJSZip(fileZip, 'config');
+        let filesZip = {};
+        filesZip["tb_gateway.yaml"] = generateYAMLConfigurationFile();
+        generateConfigConnectorFiles(filesZip);
+        generateLogConfigFile(filesZip);
+        importExport.exportJSZip(filesZip, 'config');
         saveAttribute(attributeLogShared, vm.configurations.remoteLoggingLevel.toUpperCase(), types.attributesScope.shared.value);
     };
 
-    function generateConfigFileYAML() {
+    function generateYAMLConfigurationFile() {
         let config;
         config = 'thingsboard:\n';
         config += '  host: ' + vm.configurations.host + '\n';
@@ -239,33 +223,34 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
         return config;
     }
 
-    vm.createConfigByExport = (fileZipAdd) => {
+    function generateConfigConnectorFiles(fileZipAdd) {
         for (let connector in vm.configurations.connectors) {
             if (vm.configurations.connectors[connector].enabled) {
                 fileZipAdd[generateFileName(connector) + ".json"] = angular.toJson(vm.configurations.connectors[connector].config);
             }
         }
-    };
+    }
 
-    vm.getLogsConfigByExport = (fileZipAdd) => {
-        fileZipAdd["logs.conf"] = vm.getLogsConfig();
-    };
+    function generateLogConfigFile(fileZipAdd) {
+        fileZipAdd["logs.conf"] = getLogsConfig();
+    }
 
-    vm.getLogsConfig = () => {
-        return vm.remoteLoggingConfig
+    function getLogsConfig() {
+        return templateLogsConfig
             .replace(/{ERROR}/g, vm.configurations.remoteLoggingLevel)
             .replace(/{.\/logs\/}/g, vm.configurations.remoteLoggingPathToLogs);
-    };
+    }
 
-    vm.getConfigAllByAttributeJSON = () => {
-        let thingsBoardAll = {};
-        thingsBoardAll["thingsboard"] = vm.getConfigMainByAttributeJSON();
-        vm.getConfigByAttributeJSON(thingsBoardAll);
-        return thingsBoardAll;
-    };
+    function getGatewayConfigJSON() {
+        let gatewayConfig = {};
+        gatewayConfig["thingsboard"] = gatewayMainConfigJSON();
+        gatewayConnectorConfigJSON(gatewayConfig);
+        return gatewayConfig;
+    }
 
-    vm.getConfigMainByAttributeJSON = () => {
-        let configMain = {};
+    function gatewayMainConfigJSON() {
+        let configuration = {};
+        
         let thingsBoard = {};
         thingsBoard.host = vm.configurations.host;
         thingsBoard.remoteConfiguration = vm.configurations.remoteConfiguration;
@@ -279,7 +264,7 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
             security.cert = vm.configurations.certPath;
         }
         thingsBoard.security = security;
-        configMain.thingsboard = thingsBoard;
+        configuration.thingsboard = thingsBoard;
 
         let storage = {};
         if (vm.configurations.storageType === 'memoryStorage') {
@@ -293,7 +278,7 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
             storage.max_read_records_count = vm.configurations.readRecordsCount;
             storage.max_records_per_file = vm.configurations.maxRecordsCount;
         }
-        configMain.storage = storage;
+        configuration.storage = storage;
 
         let conn = [];
         for (let connector in vm.configurations.connectors) {
@@ -305,14 +290,14 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
                 conn.push(connect);
             }
         }
-        configMain.connectors = conn;
+        configuration.connectors = conn;
 
-        configMain.logs = $window.btoa(vm.getLogsConfig());
+        configuration.logs = $window.btoa(getLogsConfig());
 
-        return configMain;
-    };
+        return configuration;
+    }
 
-    vm.getConfigByAttributeJSON = (thingsBoardBy) => {
+    function gatewayConnectorConfigJSON(gatewayConfiguration) {
         for (let connector in vm.configurations.connectors) {
             if (vm.configurations.connectors[connector].enabled) {
                 let typeAr = vm.configurations.connectors[connector].connector;
@@ -326,11 +311,11 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
                     }
                 }
                 if (objTypeAll.length > 0) {
-                    thingsBoardBy[typeAr] = objTypeAll;
+                    gatewayConfiguration[typeAr] = objTypeAll;
                 }
             }
         }
-    };
+    }
 
     vm.getConfigByAttributeTmpJSON = () => {
         let connects = {};
@@ -351,12 +336,9 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
             for (let i = 0; i < devices.length; i++) {
                 const device = devices[i];
                 if (device.additionalInfo !== null && device.additionalInfo.gateway === true) {
-                    vm.gateways.push({
-                        name: device.name,
-                        id: device.id
-                    });
+                    vm.gateways.push(device);
                     if (firstInit && vm.gateways.length && device.name === vm.gateways[0].name) {
-                        vm.configurations.singleSelect = vm.gateways[0];
+                        vm.configurations.gateway = device;
                         vm.getAccessToken(device.id);
                     }
                 }

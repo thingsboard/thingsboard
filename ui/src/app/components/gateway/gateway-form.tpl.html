@@ -31,7 +31,7 @@
                 </md-expansion-panel-header>
                 <md-expansion-panel-content>
                     <tb-gateway-config-select tb-required="true"
-                                              ng-model="vm.configurations.singleSelect"
+                                              ng-model="vm.configurations.gateway"
                                               the-form="gatewayConfiguration"
                                               gateway-list="vm.gateways"
                                               get_access_token="vm.getAccessToken"
@@ -90,9 +90,9 @@
                         <md-input-container class="md-block md-select-container" flex>
                             <label>{{'gateway.remote-logging-level' | translate }}</label>
                             <md-select name="loggingLevel" ng-model="vm.configurations.remoteLoggingLevel">
-                                <md-option ng-repeat="loggingLevel in vm.types.gatewayLogLevel"
-                                           ng-value="loggingLevel" ng-selected="$index === 5">
-                                    {{loggingLevel | translate}}
+                                <md-option ng-repeat="logLevel in vm.types.gatewayLogLevel"
+                                           ng-value="logLevel" ng-selected="$index === 5">
+                                    {{logLevel}}
                                 </md-option>
                             </md-select>
                         </md-input-container>

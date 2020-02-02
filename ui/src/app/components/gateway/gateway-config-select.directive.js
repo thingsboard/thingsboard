@@ -32,21 +32,21 @@ export default angular.module('thingsboard.directives.gatewayConfigSelect', [])
 function GatewayConfigSelect($compile, $templateCache, $mdConstant, $translate, $mdDialog) {
 
     var linker = function (scope, element, attrs, ngModelCtrl) {
-        var template = $templateCache.get(gatewayAliasSelectTemplate);
+        const template = $templateCache.get(gatewayAliasSelectTemplate);
         element.html(template);
 
         scope.tbRequired = angular.isDefined(scope.tbRequired) ? scope.tbRequired : false;
-        scope.singleSelect = null;
+        scope.gateway = null;
         scope.gatewaySearchText = '';
 
         scope.updateValidity = function () {
             var value = ngModelCtrl.$viewValue;
             var valid = angular.isDefined(value) && value != null || !scope.tbRequired;
-            ngModelCtrl.$setValidity('singleSelect', valid);
+            ngModelCtrl.$setValidity('gateway', valid);
         };
 
         function startWatchers() {
-            scope.$watch('singleSelect', function (newVal, prevVal) {
+            scope.$watch('gateway', function (newVal, prevVal) {
                 if (!angular.equals(newVal, prevVal) && newVal !== null) {
                     scope.updateView();
                 }
@@ -66,14 +66,14 @@ function GatewayConfigSelect($compile, $templateCache, $mdConstant, $translate, 
         };
 
         scope.updateView = function () {
-            ngModelCtrl.$setViewValue(scope.singleSelect);
+            ngModelCtrl.$setViewValue(scope.gateway);
             scope.updateValidity();
-            scope.getAccessToken(scope.singleSelect.id);
+            scope.getAccessToken(scope.gateway.id);
         };
 
         ngModelCtrl.$render = function () {
             if (ngModelCtrl.$viewValue) {
-                scope.singleSelect = ngModelCtrl.$viewValue;
+                scope.gateway = ngModelCtrl.$viewValue;
                 startWatchers();
             }
         };
@@ -86,9 +86,9 @@ function GatewayConfigSelect($compile, $templateCache, $mdConstant, $translate, 
             if ($event.keyCode === $mdConstant.KEY_CODE.ENTER) {
                 $event.preventDefault();
                 let indexRes = scope.gatewayList.findIndex((element) => element.key === scope.gatewaySearchText);
-                    if (indexRes === -1) {
-                        scope.createNewGatewayDialog($event, {name: scope.gatewaySearchText});
-                    }
+                if (indexRes === -1) {
+                    scope.createNewGatewayDialog($event, scope.gatewaySearchText);
+                }
             }
         };
 
@@ -97,7 +97,7 @@ function GatewayConfigSelect($compile, $templateCache, $mdConstant, $translate, 
                 $event.stopPropagation();
             }
             var title = $translate.instant('gateway.create-new-gateway');
-            var content = $translate.instant('gateway.create-new-gateway-text', {gatewayName: deviceName.name});
+            var content = $translate.instant('gateway.create-new-gateway-text', {gatewayName: deviceName});
             var confirm = $mdDialog.confirm()
                 .targetEvent($event)
                 .title(title)
@@ -108,7 +108,7 @@ function GatewayConfigSelect($compile, $templateCache, $mdConstant, $translate, 
             $mdDialog.show(confirm).then(
                 () => {
                     let deviceObj = {
-                        name: deviceName.name,
+                        name: deviceName,
                         type: "Gateway",
                         additionalInfo: {
                             gateway: true
@@ -130,7 +130,6 @@ function GatewayConfigSelect($compile, $templateCache, $mdConstant, $translate, 
         link: linker,
         scope: {
             tbRequired: '=?',
-            allowedEntityTypes: '=?',
             gatewayList: '=?',
             getAccessToken: '=',
             createDevice: '=',

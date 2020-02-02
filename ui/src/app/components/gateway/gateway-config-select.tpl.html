@@ -16,11 +16,11 @@
 
 -->
 <section layout='column'>
-    <md-autocomplete md-input-name="singleSelect" flex
+    <md-autocomplete md-input-name="gateway" flex
                      ng-required="tbRequired"
                      md-no-cache="true"
-                     ng-model="singleSelect"
-                     md-selected-item="singleSelect"
+                     ng-model="gateway"
+                     md-selected-item="gateway"
                      md-search-text="gatewaySearchText"
                      md-items="item in gatewayNameSearch(gatewaySearchText)"
                      md-item-text="item.name"
@@ -42,11 +42,11 @@
                 </div>
                 <div ng-if="!textIsEmpty(gatewaySearchText)">
                     <span translate translate-values='{ item: "{{gatewaySearchText | truncate:true:6:&apos;...&apos;}}" }'>gateway.no-gateway-matching</span>
-                    <a translate ng-click="createNewGatewayDialog($event, {name: gatewaySearchText})">gateway.create-new-gateway</a>
+                    <a translate ng-click="createNewGatewayDialog($event, gatewaySearchText)">gateway.create-new-gateway</a>
                 </div>
             </div>
         </md-not-found>
-        <div ng-messages="theForm.singleSelect.$error">
+        <div ng-messages="theForm.gateway.$error">
             <div ng-message="required" translate>gateway.gateway-name-required</div>
         </div>
     </md-autocomplete>
