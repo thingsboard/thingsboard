@@ -52,9 +52,6 @@ public final class TsKvEntity extends AbstractTsKvEntity implements ToData<TsKvE
     @Column(name = KEY_COLUMN)
     private int key;
 
-    @Transient
-    private String strKey;
-
     public TsKvEntity() {
     }
 
@@ -116,20 +113,5 @@ public final class TsKvEntity extends AbstractTsKvEntity implements ToData<TsKvE
     @Override
     public boolean isNotEmpty() {
         return strValue != null || longValue != null || doubleValue != null || booleanValue != null;
-    }
-
-    @Override
-    public TsKvEntry toData() {
-        KvEntry kvEntry = null;
-        if (strValue != null) {
-            kvEntry = new StringDataEntry(strKey, strValue);
-        } else if (longValue != null) {
-            kvEntry = new LongDataEntry(strKey, longValue);
-        } else if (doubleValue != null) {
-            kvEntry = new DoubleDataEntry(strKey, doubleValue);
-        } else if (booleanValue != null) {
-            kvEntry = new BooleanDataEntry(strKey, booleanValue);
-        }
-        return new BasicTsKvEntry(ts, kvEntry);
     }
 }
