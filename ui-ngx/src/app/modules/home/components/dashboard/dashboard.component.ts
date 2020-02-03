@@ -19,7 +19,7 @@ import {
   Component,
   DoCheck,
   Input,
-  IterableDiffers,
+  IterableDiffers, KeyValueDiffers,
   NgZone,
   OnChanges,
   OnDestroy,
@@ -42,7 +42,7 @@ import {
   IDashboardComponent
 } from '../../models/dashboard-component.models';
 import { ReplaySubject, Subject, Subscription } from 'rxjs';
-import { WidgetLayouts } from '@shared/models/dashboard.models';
+import { WidgetLayout, WidgetLayouts } from '@shared/models/dashboard.models';
 import { DialogService } from '@core/services/dialog.service';
 import { animatedScroll, deepClone, isDefined } from '@app/core/utils';
 import { BreakpointObserver } from '@angular/cdk/layout';
@@ -154,7 +154,8 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
   dashboardWidgets = new DashboardWidgets(this,
     this.differs.find([]).create<Widget>((index, item) => {
       return item;
-    })
+    }),
+    this.kvDiffers.find([]).create<string, WidgetLayout>()
   );
 
   breakpointObserverSubscription: Subscription;
@@ -168,6 +169,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
               private dialogService: DialogService,
               private breakpointObserver: BreakpointObserver,
               private differs: IterableDiffers,
+              private kvDiffers: KeyValueDiffers,
               private ngZone: NgZone) {
     super(store);
     this.authUser = getCurrentAuthUser(store);

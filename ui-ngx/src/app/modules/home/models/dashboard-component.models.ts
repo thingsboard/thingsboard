@@ -101,15 +101,16 @@ export class DashboardWidgets implements Iterable<DashboardWidget> {
   }
 
   constructor(private dashboard: IDashboardComponent,
-              private widgetsDiffer: IterableDiffer<Widget>) {
+              private widgetsDiffer: IterableDiffer<Widget>,
+              private widgetLayoutsDiffer: KeyValueDiffer<string, WidgetLayout>) {
   }
 
   doCheck() {
     const widgetChange = this.widgetsDiffer.diff(this.widgets);
+    const widgetLayoutChange = this.widgetLayoutsDiffer.diff(this.widgetLayouts);
+    const updateRecords: Array<DashboardWidgetUpdateRecord> = [];
+
     if (widgetChange !== null) {
-
-      const updateRecords: Array<DashboardWidgetUpdateRecord> = [];
-
       widgetChange.forEachAddedItem((added) => {
         updateRecords.push({
           widget: added.item,
@@ -130,6 +131,25 @@ export class DashboardWidgets implements Iterable<DashboardWidget> {
           updateRecords.push(operation);
         }
       });
+    }
+    if (widgetLayoutChange !== null) {
+      widgetLayoutChange.forEachChangedItem((changed) => {
+        let operation = updateRecords.find((record) => record.widgetId === changed.key);
+        if (!operation) {
+          let index = this.dashboardWidgets.findIndex((dashboardWidget) => dashboardWidget.widgetId === changed.key);
+          if (index > -1) {
+            const widget = this.dashboardWidgets[index];
+            updateRecords.push({
+              widget: widget.widget,
+              widgetId: changed.key,
+              widgetLayout: changed.currentValue,
+              operation: 'update'
+            });
+          }
+        }
+      });
+    }
+    if (updateRecords.length) {
       updateRecords.forEach((record) => {
         switch (record.operation) {
           case 'add':
@@ -147,7 +167,7 @@ export class DashboardWidgets implements Iterable<DashboardWidget> {
             index = this.dashboardWidgets.findIndex((dashboardWidget) => dashboardWidget.widgetId === record.widgetId);
             if (index > -1) {
               const prevDashboardWidget = this.dashboardWidgets[index];
-              if (!deepEqual(prevDashboardWidget.widget, record.widget)) {
+              if (!deepEqual(prevDashboardWidget.widget, record.widget) || !deepEqual(prevDashboardWidget.widgetLayout, record.widgetLayout)) {
                 this.dashboardWidgets[index] = new DashboardWidget(this.dashboard, record.widget, record.widgetLayout);
                 this.dashboardWidgets[index].highlighted = prevDashboardWidget.highlighted;
                 this.dashboardWidgets[index].selected = prevDashboardWidget.selected;
@@ -159,9 +179,7 @@ export class DashboardWidgets implements Iterable<DashboardWidget> {
             break;
         }
       });
-      if (updateRecords.length) {
-        this.updateRowsAndSort();
-      }
+      this.updateRowsAndSort();
     }
   }
 

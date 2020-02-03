@@ -529,7 +529,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       this.cafs.reinit = null;
     }
     this.cafs.reinit = this.raf.raf(() => {
-      this.reInitImpl();
+      this.ngZone.run(() => {
+        this.reInitImpl();
+      });
     });
   }
 
@@ -541,6 +543,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           if (this.destroyed) {
             this.onDestroy();
           } else {
+            this.widgetContext.reset();
             this.subscriptionInited = true;
             this.configureDynamicWidgetComponent();
             this.cd.detectChanges();
@@ -551,12 +554,14 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           if (this.destroyed) {
             this.onDestroy();
           } else {
+            this.widgetContext.reset();
             this.subscriptionInited = true;
             this.onInit();
           }
         }
       );
     } else {
+      this.widgetContext.reset();
       this.subscriptionInited = true;
       this.configureDynamicWidgetComponent();
       this.cd.detectChanges();

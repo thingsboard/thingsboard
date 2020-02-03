@@ -130,6 +130,15 @@ export class WidgetContext {
     }
   }
 
+  reset() {
+    this.destroyed = false;
+    this.hideTitlePanel = false;
+    this.widgetTitleTemplate = undefined;
+    this.widgetTitle = undefined;
+    this.customHeaderActions = undefined;
+    this.widgetActions = undefined;
+  }
+
   inited = false;
   destroyed = false;
 
