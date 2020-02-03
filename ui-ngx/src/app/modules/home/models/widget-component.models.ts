@@ -198,6 +198,8 @@ export class WidgetContext {
   servicesMap?: Map<string, Type<any>>;
 
   $injector?: Injector;
+
+  ngZone?: NgZone;
 }
 
 export interface IDynamicWidgetComponent {

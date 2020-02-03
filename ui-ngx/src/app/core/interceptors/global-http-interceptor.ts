@@ -47,7 +47,8 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
   private AUTH_HEADER_NAME = 'X-Authorization';
 
   private internalUrlPrefixes = [
-    '/api/auth/token'
+    '/api/auth/token',
+    '/api/plugins/rpc'
   ];
 
   private activeRequests = 0;
@@ -125,8 +126,8 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
     const ignoreErrors = config.ignoreErrors;
     const resendRequest = config.resendRequest;
     const errorCode = errorResponse.error ? errorResponse.error.errorCode : null;
-    if (errorResponse.error.refreshTokenPending || errorResponse.status === 401) {
-      if (errorResponse.error.refreshTokenPending || errorCode && errorCode === Constants.serverErrorCode.jwtTokenExpired) {
+    if (errorResponse.error && errorResponse.error.refreshTokenPending || errorResponse.status === 401) {
+      if (errorResponse.error && errorResponse.error.refreshTokenPending || errorCode && errorCode === Constants.serverErrorCode.jwtTokenExpired) {
           return this.refreshTokenAndRetry(req, next);
       } else if (errorCode !== Constants.serverErrorCode.credentialsExpired) {
         unhandled = true;

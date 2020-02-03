@@ -201,7 +201,7 @@ export class WidgetComponentService {
     }
     if (widgetControllerDescriptor) {
       const widgetNamespace = `widget-type-${(isSystem ? 'sys-' : '')}${bundleAlias}-${widgetInfo.alias}`;
-      this.loadWidgetResources(widgetInfo, widgetNamespace, [WidgetComponentsModule]).subscribe(
+      this.loadWidgetResources(widgetInfo, widgetNamespace, [SharedModule, WidgetComponentsModule]).subscribe(
         () => {
           if (widgetControllerDescriptor.settingsSchema) {
             widgetInfo.typeSettingsSchema = widgetControllerDescriptor.settingsSchema;

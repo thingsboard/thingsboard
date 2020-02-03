@@ -157,6 +157,7 @@ class ThingsboardArray extends React.Component<JsonFormFieldProps, ThingsboardAr
             addButton = <Button variant='contained'
                                 color='primary'
                                 startIcon={<AddIcon/>}
+                                style={{marginBottom: '8px'}}
                                 onClick={this.onAppend}>{this.props.form.add || 'New'}</Button>;
         }
 

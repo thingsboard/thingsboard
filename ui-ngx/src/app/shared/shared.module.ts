@@ -121,6 +121,7 @@ import { KeyValMapComponent } from './components/kv-map.component';
 import { TbCheatSheetComponent } from '@shared/components/cheatsheet.component';
 import { TbHotkeysDirective } from '@shared/components/hotkeys.directive';
 import { NavTreeComponent } from '@shared/components/nav-tree.component';
+import { LedLightComponent } from '@shared/components/led-light.component';
 
 @NgModule({
   providers: [
@@ -200,6 +201,7 @@ import { NavTreeComponent } from '@shared/components/nav-tree.component';
     MessageTypeAutocompleteComponent,
     KeyValMapComponent,
     NavTreeComponent,
+    LedLightComponent,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
@@ -349,6 +351,7 @@ import { NavTreeComponent } from '@shared/components/nav-tree.component';
     MessageTypeAutocompleteComponent,
     KeyValMapComponent,
     NavTreeComponent,
+    LedLightComponent,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,

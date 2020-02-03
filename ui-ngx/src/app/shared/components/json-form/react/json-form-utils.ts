@@ -314,7 +314,7 @@ function defaultFormDefinition(name: string, schema: any, options: DefaultsFormO
   const rules = defaults[stripNullType(schema.type)];
   if (rules) {
     let def;
-    rules.forEach((rule) => {
+    for (const rule of rules) {
       def = rule(name, schema, options);
       if (def) {
 
@@ -324,7 +324,7 @@ function defaultFormDefinition(name: string, schema: any, options: DefaultsFormO
         }
         return def;
       }
-    });
+    }
   }
 }
 

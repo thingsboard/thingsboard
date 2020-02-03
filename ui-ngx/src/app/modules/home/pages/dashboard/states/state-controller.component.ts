@@ -18,7 +18,7 @@ import { IStateControllerComponent, StateControllerState } from '@home/pages/das
 import { IDashboardController } from '../dashboard-page.models';
 import { DashboardState } from '@app/shared/models/dashboard.models';
 import { Subscription } from 'rxjs';
-import { OnDestroy, OnInit } from '@angular/core';
+import { NgZone, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, Params } from '@angular/router';
 import { StatesControllerService } from '@home/pages/dashboard/states/states-controller.service';
 import { EntityId } from '@app/shared/models/id/entity-id';
@@ -91,6 +91,7 @@ export abstract class StateControllerComponent implements IStateControllerCompon
 
   constructor(protected router: Router,
               protected route: ActivatedRoute,
+              protected ngZone: NgZone,
               protected statesControllerService: StatesControllerService) {
   }
 
@@ -121,12 +122,14 @@ export abstract class StateControllerComponent implements IStateControllerCompon
   protected updateStateParam(newState: string) {
     this.currentState = newState;
     const queryParams: Params = { state: this.currentState };
-    this.router.navigate(
-      [],
-      {
-        relativeTo: this.route,
-        queryParams,
-        queryParamsHandling: 'merge',
+    this.ngZone.run(() => {
+      this.router.navigate(
+        [],
+        {
+          relativeTo: this.route,
+          queryParams,
+          queryParamsHandling: 'merge',
+        });
     });
   }
 

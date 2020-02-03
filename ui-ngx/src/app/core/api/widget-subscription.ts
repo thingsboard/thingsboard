@@ -552,8 +552,9 @@ export class WidgetSubscription implements IWidgetSubscription {
         }, 500);
       } else {
         this.executingSubjects.push(rpcSubject);
-        const targetSendFunction = oneWayElseTwoWay ? this.ctx.deviceService.sendOneWayRpcCommand : this.ctx.deviceService.sendTwoWayRpcCommand;
-        targetSendFunction(this.targetDeviceId, requestBody).subscribe((responseBody) => {
+        (oneWayElseTwoWay ? this.ctx.deviceService.sendOneWayRpcCommand(this.targetDeviceId, requestBody) :
+          this.ctx.deviceService.sendTwoWayRpcCommand(this.targetDeviceId, requestBody))
+        .subscribe((responseBody) => {
           this.rpcRejection = null;
           this.rpcErrorText = null;
           const index = this.executingSubjects.indexOf(rpcSubject);

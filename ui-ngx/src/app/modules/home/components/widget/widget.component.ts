@@ -27,18 +27,19 @@ import {
   NgZone,
   OnChanges,
   OnDestroy,
-  OnInit, ReflectiveInjector,
-  SimpleChanges, Type,
+  OnInit,
+  SimpleChanges,
+  Type,
   ViewChild,
   ViewContainerRef,
   ViewEncapsulation
 } from '@angular/core';
-import { DashboardWidget, IDashboardComponent } from '@home/models/dashboard-component.models';
+import { DashboardWidget } from '@home/models/dashboard-component.models';
 import {
   Datasource,
+  defaultLegendConfig,
   LegendConfig,
   LegendData,
-  LegendDirection,
   LegendPosition,
   Widget,
   WidgetActionDescriptor,
@@ -46,8 +47,7 @@ import {
   WidgetActionType,
   WidgetResource,
   widgetType,
-  WidgetTypeParameters,
-  defaultLegendConfig
+  WidgetTypeParameters
 } from '@shared/models/widget.models';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
@@ -101,6 +101,7 @@ ServicesMap.set('assetService', AssetService);
 ServicesMap.set('dialogs', DialogService);
 ServicesMap.set('customDialog', CustomDialogService);
 ServicesMap.set('date', DatePipe);
+ServicesMap.set('utils', UtilsService);
 
 @Component({
   selector: 'tb-widget',
@@ -252,6 +253,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
 
     this.widgetContext = this.dashboardWidget.widgetContext;
     this.widgetContext.changeDetector = this.cd;
+    this.widgetContext.ngZone = this.ngZone;
     this.widgetContext.servicesMap = ServicesMap;
     this.widgetContext.isEdit = this.isEdit;
     this.widgetContext.isMobile = this.isMobile;
@@ -533,7 +535,6 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
 
   private reInitImpl() {
     this.onDestroy();
-    this.configureDynamicWidgetComponent();
     if (!this.typeParameters.useCustomDatasources) {
       this.createDefaultSubscription().subscribe(
         () => {
@@ -541,6 +542,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
             this.onDestroy();
           } else {
             this.subscriptionInited = true;
+            this.configureDynamicWidgetComponent();
+            this.cd.detectChanges();
             this.onInit();
           }
         },
@@ -555,6 +558,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       );
     } else {
       this.subscriptionInited = true;
+      this.configureDynamicWidgetComponent();
+      this.cd.detectChanges();
       this.onInit();
     }
   }
@@ -826,6 +831,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           if (this.dynamicWidgetComponent) {
             this.dynamicWidgetComponent.rpcEnabled = subscription.rpcEnabled;
             this.dynamicWidgetComponent.executingRpcRequest = subscription.executingRpcRequest;
+            this.cd.detectChanges();
           }
         },
         onRpcSuccess: (subscription) => {
@@ -833,6 +839,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
             this.dynamicWidgetComponent.executingRpcRequest = subscription.executingRpcRequest;
             this.dynamicWidgetComponent.rpcErrorText = subscription.rpcErrorText;
             this.dynamicWidgetComponent.rpcRejection = subscription.rpcRejection;
+            this.cd.detectChanges();
           }
         },
         onRpcFailed: (subscription) => {
@@ -840,12 +847,14 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
             this.dynamicWidgetComponent.executingRpcRequest = subscription.executingRpcRequest;
             this.dynamicWidgetComponent.rpcErrorText = subscription.rpcErrorText;
             this.dynamicWidgetComponent.rpcRejection = subscription.rpcRejection;
+            this.cd.detectChanges();
           }
         },
         onRpcErrorCleared: (subscription) => {
           if (this.dynamicWidgetComponent) {
             this.dynamicWidgetComponent.rpcErrorText = null;
             this.dynamicWidgetComponent.rpcRejection = null;
+            this.cd.detectChanges();
           }
         }
       };

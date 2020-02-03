@@ -14,22 +14,11 @@
 /// limitations under the License.
 ///
 
-import {
-  Component,
-  OnInit,
-  ViewEncapsulation,
-  Input,
-  OnDestroy,
-  OnChanges,
-  SimpleChanges,
-  NgZone
-} from '@angular/core';
-import { IStateController, StateParams, StateObject } from '@core/api/widget-api.models';
+import { Component, NgZone, OnDestroy, OnInit } from '@angular/core';
+import { StateObject, StateParams } from '@core/api/widget-api.models';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Observable, Subscription, of } from 'rxjs';
-import { IDashboardController } from '@home/pages/dashboard/dashboard-page.models';
-import { DashboardState } from '@shared/models/dashboard.models';
-import { IStateControllerComponent, StateControllerState } from './state-controller.models';
+import { Observable, of } from 'rxjs';
+import { StateControllerState } from './state-controller.models';
 import { StateControllerComponent } from './state-controller.component';
 import { StatesControllerService } from '@home/pages/dashboard/states/states-controller.service';
 import { EntityId } from '@app/shared/models/id/entity-id';
@@ -51,11 +40,12 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
 
   constructor(protected router: Router,
               protected route: ActivatedRoute,
+              protected ngZone: NgZone,
               protected statesControllerService: StatesControllerService,
               private utils: UtilsService,
               private entityService: EntityService,
               private dashboardUtils: DashboardUtilsService) {
-    super(router, route, statesControllerService);
+    super(router, route, ngZone, statesControllerService);
   }
 
   ngOnInit(): void {
