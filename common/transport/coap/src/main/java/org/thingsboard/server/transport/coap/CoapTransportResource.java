@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.coap.CoAP.ResponseCode;
 import org.eclipse.californium.core.coap.Request;
-import org.eclipse.californium.core.coap.Response;
 import org.eclipse.californium.core.network.Exchange;
 import org.eclipse.californium.core.network.ExchangeObserver;
 import org.eclipse.californium.core.server.resources.CoapExchange;
@@ -122,6 +121,9 @@ public class CoapTransportResource extends CoapResource {
                         processRequest(exchange, SessionMsgType.TO_SERVER_RPC_REQUEST);
                     }
                     break;
+                case CLAIM:
+                    processRequest(exchange, SessionMsgType.CLAIM_REQUEST);
+                    break;
             }
         }
     }
@@ -151,6 +153,11 @@ public class CoapTransportResource extends CoapResource {
                             case POST_TELEMETRY_REQUEST:
                                 transportService.process(sessionInfo,
                                         transportContext.getAdaptor().convertToPostTelemetry(sessionId, request),
+                                        new CoapOkCallback(exchange));
+                                break;
+                            case CLAIM_REQUEST:
+                                transportService.process(sessionInfo,
+                                        transportContext.getAdaptor().convertToClaimDevice(sessionId, request, sessionInfo),
                                         new CoapOkCallback(exchange));
                                 break;
                             case SUBSCRIBE_ATTRIBUTES_REQUEST:
@@ -192,6 +199,7 @@ public class CoapTransportResource extends CoapResource {
                                         new CoapOkCallback(exchange));
                                 break;
                             case TO_SERVER_RPC_REQUEST:
+                                transportService.registerSyncSession(sessionInfo, new CoapSessionListener(sessionId, exchange), transportContext.getTimeout());
                                 transportService.process(sessionInfo,
                                         transportContext.getAdaptor().convertToServerRpcRequest(sessionId, request),
                                         new CoapNoOpCallback(exchange));
@@ -318,7 +326,7 @@ public class CoapTransportResource extends CoapResource {
 
         @Override
         public void onSuccess(Void msg) {
-                exchange.respond(ResponseCode.VALID);
+            exchange.respond(ResponseCode.VALID);
         }
 
         @Override

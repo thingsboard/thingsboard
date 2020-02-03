@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,13 @@
  */
 import ImportExport from './import-export.service';
 import ImportDialogController from './import-dialog.controller';
+import ImportDialogCSVController from './import-dialog-csv.controller';
+import TableColumnsAssignment from './table-columns-assignment.directive';
 
 
 export default angular.module('thingsboard.importexport', [])
     .factory('importExport', ImportExport)
     .controller('ImportDialogController', ImportDialogController)
+    .controller('ImportDialogCSVController', ImportDialogCSVController)
+    .directive('tbTableColumnsAssignment', TableColumnsAssignment)
     .name;

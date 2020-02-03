@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -283,7 +283,7 @@ function Contact($compile, $templateCache) {
         "Austria": "[0-9]{4}",
         "Belgium": "[0-9]{4}",
         "Brazil": "[0-9]{5}[\\-]?[0-9]{3}",
-        "Canada": "[A-Za-z][0-9][A-Za-z] [0-9][A-Za-z][0-9]",
+        "Canada": "^(?!.*[DFIOQU])[A-VXY][0-9][A-Z][ -]?[0-9][A-Z][0-9]$",
         "Denmark": "[0-9]{3,4}",
         "Faroe Islands": "[0-9]{3,4}",
         "Netherlands": "[1-9][0-9]{3}\\s?[a-zA-Z]{2}",

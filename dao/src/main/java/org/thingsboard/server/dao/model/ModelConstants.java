@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ public class ModelConstants {
     public static final String ENTITY_TYPE_PROPERTY = "entity_type";
 
     public static final String ENTITY_TYPE_COLUMN = ENTITY_TYPE_PROPERTY;
+    public static final String TENANT_ID_COLUMN = "tenant_id";
     public static final String ENTITY_ID_COLUMN = "entity_id";
     public static final String ATTRIBUTE_TYPE_COLUMN = "attribute_type";
     public static final String ATTRIBUTE_KEY_COLUMN = "attribute_key";
@@ -134,6 +135,7 @@ public class ModelConstants {
     public static final String DEVICE_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
     public static final String DEVICE_NAME_PROPERTY = "name";
     public static final String DEVICE_TYPE_PROPERTY = "type";
+    public static final String DEVICE_LABEL_PROPERTY = "label";
     public static final String DEVICE_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
     public static final String DEVICE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "device_by_tenant_and_search_text";
     public static final String DEVICE_BY_TENANT_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "device_by_tenant_by_type_and_search_text";
@@ -195,6 +197,7 @@ public class ModelConstants {
     public static final String ASSET_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
     public static final String ASSET_NAME_PROPERTY = "name";
     public static final String ASSET_TYPE_PROPERTY = "type";
+    public static final String ASSET_LABEL_PROPERTY = "label";
     public static final String ASSET_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
 
     public static final String ASSET_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "asset_by_tenant_and_search_text";
@@ -228,6 +231,7 @@ public class ModelConstants {
     public static final String ALARM_ACK_TS_PROPERTY = "ack_ts";
     public static final String ALARM_CLEAR_TS_PROPERTY = "clear_ts";
     public static final String ALARM_PROPAGATE_PROPERTY = "propagate";
+    public static final String ALARM_PROPAGATE_RELATION_TYPES = "propagate_relation_types";
 
     public static final String ALARM_BY_ID_VIEW_NAME = "alarm_by_id";
 
@@ -355,6 +359,7 @@ public class ModelConstants {
 
     public static final String PARTITION_COLUMN = "partition";
     public static final String KEY_COLUMN = "key";
+    public static final String KEY_ID_COLUMN = "key_id";
     public static final String TS_COLUMN = "ts";
 
     /**

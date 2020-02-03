@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,11 +50,8 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
             scope.alarmFields.push(alarmField);
         }
 
-        scope.selectedTimeseriesDataKey = null;
-        scope.timeseriesDataKeySearchText = null;
-
-        scope.selectedAttributeDataKey = null;
-        scope.attributeDataKeySearchText = null;
+        scope.selectedDataKey = null;
+        scope.dataKeySearchText = null;
 
         scope.selectedAlarmDataKey = null;
         scope.alarmDataKeySearchText = null;
@@ -92,11 +89,7 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
             }
         });
 
-        scope.$watch('timeseriesDataKeys', function () {
-            updateDataKeys();
-        }, true);
-
-        scope.$watch('attributeDataKeys', function () {
+        scope.$watch('dataKeys', function () {
             updateDataKeys();
         }, true);
 
@@ -107,10 +100,13 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
         function updateDataKeys() {
             if (ngModelCtrl.$viewValue) {
                 var dataKeys = [];
-                dataKeys = dataKeys.concat(scope.timeseriesDataKeys);
-                dataKeys = dataKeys.concat(scope.attributeDataKeys);
+                dataKeys = dataKeys.concat(scope.dataKeys);
                 dataKeys = dataKeys.concat(scope.alarmDataKeys);
-                ngModelCtrl.$viewValue.dataKeys = dataKeys;
+                if (!angular.equals(ngModelCtrl.$viewValue.dataKeys, dataKeys))
+                {
+                   ngModelCtrl.$setDirty();
+                   ngModelCtrl.$viewValue.dataKeys = dataKeys;
+                }
                 scope.updateValidity();
             }
         }
@@ -124,21 +120,17 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
                 } else {
                     scope.entityAlias = null;
                 }
-                var timeseriesDataKeys = [];
-                var attributeDataKeys = [];
+                var dataKeys = [];
                 var alarmDataKeys = [];
                 for (var d in ngModelCtrl.$viewValue.dataKeys) {
                     var dataKey = ngModelCtrl.$viewValue.dataKeys[d];
-                    if (dataKey.type === types.dataKeyType.timeseries) {
-                        timeseriesDataKeys.push(dataKey);
-                    } else if (dataKey.type === types.dataKeyType.attribute) {
-                        attributeDataKeys.push(dataKey);
+                    if ((dataKey.type === types.dataKeyType.timeseries) || (dataKey.type === types.dataKeyType.attribute) || (dataKey.type === types.dataKeyType.entityField)) {
+                        dataKeys.push(dataKey);
                     } else if (dataKey.type === types.dataKeyType.alarm) {
                         alarmDataKeys.push(dataKey);
                     }
                 }
-                scope.timeseriesDataKeys = timeseriesDataKeys;
-                scope.attributeDataKeys = attributeDataKeys;
+                scope.dataKeys = dataKeys;
                 scope.alarmDataKeys = alarmDataKeys;
             }
         };
@@ -148,35 +140,36 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
         }
 
         scope.selectedEntityAliasChange = function () {
-            if (!scope.timeseriesDataKeySearchText || scope.timeseriesDataKeySearchText === '') {
-                scope.timeseriesDataKeySearchText = scope.timeseriesDataKeySearchText === '' ? null : '';
-            }
-            if (!scope.attributeDataKeySearchText || scope.attributeDataKeySearchText === '') {
-                scope.attributeDataKeySearchText = scope.attributeDataKeySearchText === '' ? null : '';
+            if (!scope.dataKeySearchText || scope.dataKeySearchText === '') {
+                scope.dataKeySearchText = scope.dataKeySearchText === '' ? null : '';
             }
             if (!scope.alarmDataKeySearchText || scope.alarmDataKeySearchText === '') {
                 scope.alarmDataKeySearchText = scope.alarmDataKeySearchText === '' ? null : '';
             }
         };
 
-        scope.transformTimeseriesDataKeyChip = function (chip) {
+        scope.transformDataKeyChip = function (chip) {
             if (scope.maxDataKeys > 0 && ngModelCtrl.$viewValue.dataKeys.length >= scope.maxDataKeys ) {
                 return null;
             } else {
-                return scope.generateDataKey({chip: chip, type: types.dataKeyType.timeseries});
-            }
-        };
-
-        scope.transformAttributeDataKeyChip = function (chip) {
-            if (scope.maxDataKeys > 0 && ngModelCtrl.$viewValue.dataKeys.length >= scope.maxDataKeys ) {
-                return null;
-            } else {
-                return scope.generateDataKey({chip: chip, type: types.dataKeyType.attribute});
+                if (chip.type) {
+                    return scope.generateDataKey({chip: chip.name, type: chip.type});
+                } else {
+                    if (scope.widgetType != types.widgetType.latest.value) {
+                        return scope.generateDataKey({chip: chip, type: types.dataKeyType.timeseries});
+                    } else {
+                        return null;
+                    }
+                }
             }
         };
 
         scope.transformAlarmDataKeyChip = function (chip) {
-            return scope.generateDataKey({chip: chip, type: types.dataKeyType.alarm});
+            if (chip.type) {
+                return scope.generateDataKey({chip: chip.name, type: chip.type});
+            } else {
+                return scope.generateDataKey({chip: chip, type: types.dataKeyType.alarm});
+            }
         };
 
         scope.showColorPicker = function (event, dataKey) {
@@ -203,9 +196,9 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
                 dataKey.color = color;
                 ngModelCtrl.$setDirty();
             });
-        }
+        };
 
-        scope.editDataKey = function (event, dataKey, index) {
+        scope.editDataKey = function (event, dataKey) {
 
             $mdDialog.show({
                 controller: 'DatakeyConfigDialogController',
@@ -225,20 +218,20 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
                     var w = angular.element($window);
                     w.triggerHandler('resize');
                 }
-            }).then(function (dataKey) {
-                if (dataKey.type === types.dataKeyType.timeseries) {
-                    scope.timeseriesDataKeys[index] = dataKey;
-                } else if (dataKey.type === types.dataKeyType.attribute) {
-                    scope.attributeDataKeys[index] = dataKey;
-                } else if (dataKey.type === types.dataKeyType.alarm) {
-                    scope.alarmDataKeys[index] = dataKey;
+            }).then(function (newDataKey) {
+                if ((newDataKey.type === types.dataKeyType.timeseries) || (newDataKey.type === types.dataKeyType.attribute) || (newDataKey.type === types.dataKeyType.entityField)) {
+                    let index = scope.dataKeys.indexOf(dataKey);
+                    scope.dataKeys[index] = newDataKey;
+                } else if (newDataKey.type === types.dataKeyType.alarm) {
+                    let index = scope.alarmDataKeys.indexOf(dataKey);
+                    scope.alarmDataKeys[index] = newDataKey;
                 }
                 ngModelCtrl.$setDirty();
             }, function () {
             });
         };
 
-        scope.dataKeysSearch = function (searchText, type) {
+        scope.dataKeysSearch = function (searchText) {
             if (scope.widgetType == types.widgetType.alarm.value) {
                 var dataKeys = searchText ? scope.alarmFields.filter(
                     scope.createFilterForDataKey(searchText)) : scope.alarmFields;
@@ -246,9 +239,31 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
             } else {
                 if (scope.entityAlias) {
                     var deferred = $q.defer();
-                    scope.fetchEntityKeys({entityAliasId: scope.entityAlias.id, query: searchText, type: type})
+                    scope.fetchEntityKeys({entityAliasId: scope.entityAlias.id, query: searchText, type: types.dataKeyType.timeseries})
                         .then(function (dataKeys) {
-                            deferred.resolve(dataKeys);
+                            var items = [];
+                            for (var i = 0; i < dataKeys.length; i++) {
+                                items.push({ name: dataKeys[i], type: types.dataKeyType.timeseries });
+                            }
+                            if (scope.widgetType == types.widgetType.latest.value) {
+                                var keysType = [types.dataKeyType.attribute, types.dataKeyType.entityField];
+                                var promises = [];
+                                keysType.forEach((type) => {
+                                    promises.push(scope.fetchEntityKeys({entityAliasId: scope.entityAlias.id, query: searchText, type: type}));
+                                });
+                                $q.all(promises).then(function (dataKeys) {
+                                        for (var i = 0; i < dataKeys.length; i++) {
+                                            for (var j = 0; j < dataKeys[i].length; j++) {
+                                                items.push({name: dataKeys[i][j], type: keysType[i]});
+                                            }
+                                        }
+                                        deferred.resolve(items);
+                                    }, function (e) {
+                                        deferred.reject(e);
+                                    });
+							}
+							else
+                                deferred.resolve(items);
                         }, function (e) {
                             deferred.reject(e);
                         });
@@ -266,13 +281,13 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
             };
         };
 
-        scope.createKey = function (event, chipsId) {
+        scope.createKey = function (event, type, chipsId) {
             var chipsChild = $(chipsId, element)[0].firstElementChild;
             var el = angular.element(chipsChild);
             var chipBuffer = el.scope().$mdChipsCtrl.getChipBuffer();
             event.preventDefault();
             event.stopPropagation();
-            el.scope().$mdChipsCtrl.appendChip(chipBuffer.trim());
+            el.scope().$mdChipsCtrl.appendChip({ name: chipBuffer.trim(), type: type});
             el.scope().$mdChipsCtrl.resetChipBuffer();
         }
 

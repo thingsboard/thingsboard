@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,15 @@ public class TbMsgDelayNodeConfiguration implements NodeConfiguration<TbMsgDelay
 
     private int periodInSeconds;
     private int maxPendingMsgs;
+    private String periodInSecondsPattern;
+    private boolean useMetadataPeriodInSecondsPatterns;
 
     @Override
     public TbMsgDelayNodeConfiguration defaultConfiguration() {
         TbMsgDelayNodeConfiguration configuration = new TbMsgDelayNodeConfiguration();
         configuration.setPeriodInSeconds(60);
         configuration.setMaxPendingMsgs(1000);
+        configuration.setUseMetadataPeriodInSecondsPatterns(false);
         return configuration;
     }
 }

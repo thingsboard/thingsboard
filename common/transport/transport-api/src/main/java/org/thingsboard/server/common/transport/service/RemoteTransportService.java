@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,34 +24,41 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.transport.SessionMsgListener;
-import org.thingsboard.server.common.transport.TransportService;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
-import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.gen.transport.TransportProtos.*;
+import org.thingsboard.server.gen.transport.TransportProtos.ClaimDeviceMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostAttributeMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostTelemetryMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionEventMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
+import org.thingsboard.server.gen.transport.TransportProtos.SubscribeToAttributeUpdatesMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.SubscribeToRPCMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.SubscriptionInfoProto;
+import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
-import org.thingsboard.server.kafka.*;
+import org.thingsboard.server.kafka.AsyncCallbackTemplate;
+import org.thingsboard.server.kafka.TBKafkaAdmin;
+import org.thingsboard.server.kafka.TBKafkaConsumerTemplate;
+import org.thingsboard.server.kafka.TBKafkaProducerTemplate;
+import org.thingsboard.server.kafka.TbKafkaRequestTemplate;
+import org.thingsboard.server.kafka.TbKafkaSettings;
+import org.thingsboard.server.kafka.TbNodeIdProvider;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.time.Duration;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -94,7 +101,7 @@ public class RemoteTransportService extends AbstractTransportService {
     private TBKafkaProducerTemplate<ToRuleEngineMsg> ruleEngineProducer;
     private TBKafkaConsumerTemplate<ToTransportMsg> mainConsumer;
 
-    private ExecutorService mainConsumerExecutor = Executors.newSingleThreadExecutor();
+    private ExecutorService mainConsumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("remote-transport-consumer"));
 
     private volatile boolean stopped = false;
 
@@ -104,6 +111,7 @@ public class RemoteTransportService extends AbstractTransportService {
 
         TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<TransportApiRequestMsg> requestBuilder = TBKafkaProducerTemplate.builder();
         requestBuilder.settings(kafkaSettings);
+        requestBuilder.clientId("producer-transport-api-request-" + nodeIdProvider.getNodeId());
         requestBuilder.defaultTopic(transportApiRequestsTopic);
         requestBuilder.encoder(new TransportApiRequestEncoder());
 
@@ -128,6 +136,7 @@ public class RemoteTransportService extends AbstractTransportService {
 
         TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<ToRuleEngineMsg> ruleEngineProducerBuilder = TBKafkaProducerTemplate.builder();
         ruleEngineProducerBuilder.settings(kafkaSettings);
+        ruleEngineProducerBuilder.clientId("producer-rule-engine-request-" + nodeIdProvider.getNodeId());
         ruleEngineProducerBuilder.defaultTopic(ruleEngineTopic);
         ruleEngineProducerBuilder.encoder(new ToRuleEngineMsgEncoder());
         ruleEngineProducer = ruleEngineProducerBuilder.build();
@@ -303,28 +312,28 @@ public class RemoteTransportService extends AbstractTransportService {
         send(sessionInfo, toRuleEngineMsg, callback);
     }
 
-    private static class TransportCallbackAdaptor implements Callback {
-        private final TransportServiceCallback<Void> callback;
-
-        TransportCallbackAdaptor(TransportServiceCallback<Void> callback) {
-            this.callback = callback;
-        }
-
-        @Override
-        public void onCompletion(RecordMetadata metadata, Exception exception) {
-            if (exception == null) {
-                if (callback != null) {
-                    callback.onSuccess(null);
-                }
-            } else {
-                if (callback != null) {
-                    callback.onError(exception);
-                }
-            }
-        }
+    @Override
+    protected void registerClaimingInfo(SessionInfoProto sessionInfo, ClaimDeviceMsg msg, TransportServiceCallback<Void> callback) {
+        ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
+                TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
+                        .setClaimDevice(msg).build()
+        ).build();
+        send(sessionInfo, toRuleEngineMsg, callback);
     }
 
     private void send(SessionInfoProto sessionInfo, ToRuleEngineMsg toRuleEngineMsg, TransportServiceCallback<Void> callback) {
-        ruleEngineProducer.send(getRoutingKey(sessionInfo), toRuleEngineMsg, new TransportCallbackAdaptor(callback));
+        ruleEngineProducer.send(getRoutingKey(sessionInfo), toRuleEngineMsg, (metadata, exception) -> {
+            if (callback != null) {
+                if (exception == null) {
+                    this.transportCallbackExecutor.submit(() -> {
+                        callback.onSuccess(null);
+                    });
+                } else {
+                    this.transportCallbackExecutor.submit(() -> {
+                        callback.onError(exception);
+                    });
+                }
+            }
+        });
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,7 @@ div.tb-widget {
   transition: all .2s ease-in-out;
 
   .tb-widget-title {
-    max-height: 60px;
-
+    max-height: 65px;
     padding-top: 5px;
     padding-left: 5px;
     overflow: hidden;
@@ -35,14 +34,23 @@ div.tb-widget {
       font-size: 14px;
       opacity: .85;
     }
+
+    .title{
+      width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
   }
 
   .tb-widget-actions {
-    position: absolute;
-    top: 8px;
-    right: 8px;
     z-index: 19;
-    margin: 0;
+    margin: 5px 0 0;
+
+    &-absolute{
+      position: absolute;
+      top: 3px;
+      right: 8px;
+    }
 
     .md-button.md-icon-button {
       width: 32px;

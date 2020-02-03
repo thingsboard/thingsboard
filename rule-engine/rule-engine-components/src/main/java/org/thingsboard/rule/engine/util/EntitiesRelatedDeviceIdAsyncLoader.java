@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ public class EntitiesRelatedDeviceIdAsyncLoader {
     private static DeviceSearchQuery buildQuery(EntityId originator, DeviceRelationsQuery deviceRelationsQuery) {
         DeviceSearchQuery query = new DeviceSearchQuery();
         RelationsSearchParameters parameters = new RelationsSearchParameters(originator,
-                deviceRelationsQuery.getDirection(), deviceRelationsQuery.getMaxLevel());
+                deviceRelationsQuery.getDirection(), deviceRelationsQuery.getMaxLevel(), deviceRelationsQuery.isFetchLastLevelOnly());
         query.setParameters(parameters);
         query.setRelationType(deviceRelationsQuery.getRelationType());
         query.setDeviceTypes(deviceRelationsQuery.getDeviceTypes());

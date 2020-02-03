@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import 'angular-translate-storage-cookie';
 import 'angular-translate-handler-log';
 import 'angular-translate-interpolation-messageformat';
 import 'md-color-picker';
+import 'md-date-range-picker';
 import mdPickers from 'mdPickers';
 import ngSanitize from 'angular-sanitize';
 import FBAngular from 'angular-fullscreen';
@@ -39,6 +40,7 @@ import uiRouter from 'angular-ui-router';
 import angularJwt from 'angular-jwt';
 import 'angular-drag-and-drop-lists';
 import mdDataTable from 'angular-material-data-table';
+import fixedTableHeader from 'angular-fixed-table-header';
 import 'angular-material-expansion-panel';
 import ngTouch from 'angular-touch';
 import 'angular-carousel';
@@ -51,7 +53,10 @@ import 'react-schema-form';
 import react from 'ngreact';
 import '@flowjs/ng-flow/dist/ng-flow-standalone.min';
 import 'ngFlowchart/dist/ngFlowchart';
-
+import 'jstree/dist/jstree.min';
+import 'material-steppers/dist/material-steppers';
+import 'material-steppers/dist/material-steppers.css'
+import 'jstree-bootstrap-theme/dist/themes/proton/style.min.css';
 import 'typeface-roboto';
 import 'font-awesome/css/font-awesome.min.css';
 import 'angular-material/angular-material.min.css';
@@ -64,6 +69,7 @@ import 'angular-hotkeys/build/hotkeys.min.css';
 import 'angular-carousel/dist/angular-carousel.min.css';
 import 'angular-material-expansion-panel/dist/md-expansion-panel.min.css';
 import 'ngFlowchart/dist/flowchart.css';
+import 'md-date-range-picker/src/md-date-range-picker.css';
 import '../scss/main.scss';
 
 import thingsboardThirdpartyFix from './common/thirdparty-fix';
@@ -105,6 +111,7 @@ angular.module('thingsboard', [
     angularSocialshare,
     'pascalprecht.translate',
     'mdColorPicker',
+    'ngMaterialDateRangePicker',
     mdPickers,
     ngSanitize,
     FBAngular.name,
@@ -114,6 +121,7 @@ angular.module('thingsboard', [
     angularJwt,
     'dndLists',
     mdDataTable,
+    fixedTableHeader,
     'material.components.expansionPanels',
     ngTouch,
     'angular-carousel',
@@ -121,6 +129,7 @@ angular.module('thingsboard', [
     react.name,
     'flow',
     'flowchart',
+    'mdSteppers',
     thingsboardThirdpartyFix,
     thingsboardTranslateHandler,
     thingsboardLogin,

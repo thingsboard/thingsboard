@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,10 +143,16 @@ export default class AliasController {
                                 for (var i=0;i<resolvedEntities.length;i++) {
                                     var resolvedEntity = resolvedEntities[i];
                                     newDatasource = angular.copy(datasource);
+                                    if (resolvedEntity.origEntity) {
+                                        newDatasource.entity = angular.copy(resolvedEntity.origEntity);
+                                    } else {
+                                        newDatasource.entity = {};
+                                    }
                                     newDatasource.entityId = resolvedEntity.id;
                                     newDatasource.entityType = resolvedEntity.entityType;
                                     newDatasource.entityName = resolvedEntity.name;
-                                    newDatasource.entityDescription = resolvedEntity.entityDescription
+                                    newDatasource.entityLabel = resolvedEntity.label;
+                                    newDatasource.entityDescription = resolvedEntity.entityDescription;
                                     newDatasource.name = resolvedEntity.name;
                                     newDatasource.generated = i > 0 ? true : false;
                                     datasources.push(newDatasource);
@@ -164,9 +170,15 @@ export default class AliasController {
                         } else {
                             var entity = aliasInfo.currentEntity;
                             if (entity) {
+                                if (entity.origEntity) {
+                                    datasource.entity = angular.copy(entity.origEntity);
+                                } else {
+                                    datasource.entity = {};
+                                }
                                 datasource.entityId = entity.id;
                                 datasource.entityType = entity.entityType;
                                 datasource.entityName = entity.name;
+                                datasource.entityLabel = entity.label;
                                 datasource.name = entity.name;
                                 datasource.entityDescription = entity.entityDescription;
                                 deferred.resolve([datasource]);

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package org.thingsboard.server.actors.ruleChain;
 
 import akka.actor.ActorContext;
 import akka.actor.ActorRef;
-import akka.event.LoggingAdapter;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -56,7 +55,9 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     @Override
     public void start(ActorContext context) throws Exception {
         tbNode = initComponent(ruleNode);
-        state = ComponentLifecycleState.ACTIVE;
+        if (tbNode != null) {
+            state = ComponentLifecycleState.ACTIVE;
+        }
     }
 
     @Override
@@ -84,7 +85,9 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
 
     @Override
     public void onClusterEventMsg(ClusterEventMsg msg) {
-
+        if (tbNode != null) {
+            tbNode.onClusterEventMsg(defaultCtx, msg);
+        }
     }
 
     public void onRuleToSelfMsg(RuleNodeToSelfMsg msg) throws Exception {
@@ -117,9 +120,12 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     }
 
     private TbNode initComponent(RuleNode ruleNode) throws Exception {
-        Class<?> componentClazz = Class.forName(ruleNode.getType());
-        TbNode tbNode = (TbNode) (componentClazz.newInstance());
-        tbNode.init(defaultCtx, new TbNodeConfiguration(ruleNode.getConfiguration()));
+        TbNode tbNode = null;
+        if (ruleNode != null) {
+            Class<?> componentClazz = Class.forName(ruleNode.getType());
+            tbNode = (TbNode) (componentClazz.newInstance());
+            tbNode.init(defaultCtx, new TbNodeConfiguration(ruleNode.getConfiguration()));
+        }
         return tbNode;
     }
 

@@ -1,5 +1,5 @@
 --
--- Copyright © 2016-2018 The Thingsboard Authors
+-- Copyright © 2016-2020 The Thingsboard Authors
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS alarm (
     start_ts bigint,
     status varchar(255),
     tenant_id varchar(31),
+    propagate_relation_types varchar,
     type varchar(255)
 );
 
@@ -42,9 +43,11 @@ CREATE TABLE IF NOT EXISTS asset (
     additional_info varchar,
     customer_id varchar(31),
     name varchar(255),
+    label varchar(255),
     search_text varchar(255),
     tenant_id varchar(31),
-    type varchar(255)
+    type varchar(255),
+    CONSTRAINT asset_name_unq_key UNIQUE (tenant_id, name)
 );
 
 CREATE TABLE IF NOT EXISTS audit_log (
@@ -72,7 +75,7 @@ CREATE TABLE IF NOT EXISTS attribute_kv (
   long_v bigint,
   dbl_v double precision,
   last_update_ts bigint,
-  CONSTRAINT attribute_kv_unq_key UNIQUE (entity_type, entity_id, attribute_type, attribute_key)
+  CONSTRAINT attribute_kv_pkey PRIMARY KEY (entity_type, entity_id, attribute_type, attribute_key)
 );
 
 CREATE TABLE IF NOT EXISTS component_descriptor (
@@ -117,8 +120,10 @@ CREATE TABLE IF NOT EXISTS device (
     customer_id varchar(31),
     type varchar(255),
     name varchar(255),
+    label varchar(255),
     search_text varchar(255),
-    tenant_id varchar(31)
+    tenant_id varchar(31),
+    CONSTRAINT device_name_unq_key UNIQUE (tenant_id, name)
 );
 
 CREATE TABLE IF NOT EXISTS device_credentials (
@@ -126,12 +131,13 @@ CREATE TABLE IF NOT EXISTS device_credentials (
     credentials_id varchar,
     credentials_type varchar(255),
     credentials_value varchar,
-    device_id varchar(31)
+    device_id varchar(31),
+    CONSTRAINT device_credentials_id_unq_key UNIQUE (credentials_id)
 );
 
 CREATE TABLE IF NOT EXISTS event (
     id varchar(31) NOT NULL CONSTRAINT event_pkey PRIMARY KEY,
-    body varchar,
+    body varchar(10000000),
     entity_id varchar(31),
     entity_type varchar(255),
     event_type varchar(255),
@@ -148,7 +154,7 @@ CREATE TABLE IF NOT EXISTS relation (
     relation_type_group varchar(255),
     relation_type varchar(255),
     additional_info varchar,
-    CONSTRAINT relation_unq_key UNIQUE (from_id, from_type, relation_type_group, relation_type, to_id, to_type)
+    CONSTRAINT relation_pkey PRIMARY KEY (from_id, from_type, relation_type_group, relation_type, to_id, to_type)
 );
 
 CREATE TABLE IF NOT EXISTS tb_user (

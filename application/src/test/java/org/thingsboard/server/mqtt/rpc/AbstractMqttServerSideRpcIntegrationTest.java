@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,7 +128,7 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractC
         String accessToken = deviceCredentials.getCredentialsId();
         assertNotNull(accessToken);
 
-        String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"23\",\"value\": 1}}";
+        String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"23\",\"value\": 1},\"timeout\": 6000}";
         String deviceId = savedDevice.getId().getId().toString();
 
         doPostAsync("/api/plugins/rpc/oneway/" + deviceId, setGpioRequest, String.class, status().isRequestTimeout(),
@@ -183,7 +183,7 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractC
         String accessToken = deviceCredentials.getCredentialsId();
         assertNotNull(accessToken);
 
-        String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"23\",\"value\": 1}}";
+        String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"23\",\"value\": 1},\"timeout\": 6000}";
         String deviceId = savedDevice.getId().getId().toString();
 
         doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setGpioRequest, String.class, status().isRequestTimeout(),

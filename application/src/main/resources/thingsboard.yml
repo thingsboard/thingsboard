@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2018 The Thingsboard Authors
+# Copyright © 2016-2020 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,6 +32,28 @@ server:
     # Alias that identifies the key in the key store
     key-alias: "${SSL_KEY_ALIAS:tomcat}"
   log_controller_error_stack_trace: "${HTTP_LOG_CONTROLLER_ERROR_STACK_TRACE:true}"
+  ws:
+    send_timeout: "${TB_SERVER_WS_SEND_TIMEOUT:5000}"
+    limits:
+      # Limit the amount of sessions and subscriptions available on each server. Put values to zero to disable particular limitation
+      max_sessions_per_tenant: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_SESSIONS_PER_TENANT:0}"
+      max_sessions_per_customer: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_SESSIONS_PER_CUSTOMER:0}"
+      max_sessions_per_regular_user: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_SESSIONS_PER_REGULAR_USER:0}"
+      max_sessions_per_public_user: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_SESSIONS_PER_PUBLIC_USER:0}"
+      max_queue_per_ws_session: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_QUEUE_PER_WS_SESSION:500}"
+      max_subscriptions_per_tenant: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_SUBSCRIPTIONS_PER_TENANT:0}"
+      max_subscriptions_per_customer: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_SUBSCRIPTIONS_PER_CUSTOMER:0}"
+      max_subscriptions_per_regular_user: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_SUBSCRIPTIONS_PER_REGULAR_USER:0}"
+      max_subscriptions_per_public_user: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_SUBSCRIPTIONS_PER_PUBLIC_USER:0}"
+      max_updates_per_session: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_UPDATES_PER_SESSION:300:1,3000:60}"
+  rest:
+    limits:
+      tenant:
+        enabled: "${TB_SERVER_REST_LIMITS_TENANT_ENABLED:false}"
+        configuration: "${TB_SERVER_REST_LIMITS_TENANT_CONFIGURATION:100:1,2000:60}"
+      customer:
+        enabled: "${TB_SERVER_REST_LIMITS_CUSTOMER_ENABLED:false}"
+        configuration: "${TB_SERVER_REST_LIMITS_CUSTOMER_CONFIGURATION:50:1,1000:60}"
 
 # Zookeeper connection parameters. Used for service discovery.
 zk:
@@ -63,6 +85,9 @@ cluster:
   vitrual_nodes_size: "${CLUSTER_VIRTUAL_NODES_SIZE:16}"
   # Queue partition id for current node
   partition_id: "${QUEUE_PARTITION_ID:0}"
+  stats:
+    enabled: "${TB_CLUSTER_STATS_ENABLED:false}"
+    print_interval_ms: "${TB_CLUSTER_STATS_PRINT_INTERVAL_MS:10000}"
 
 # Plugins configuration parameters
 plugins:
@@ -73,12 +98,19 @@ plugins:
 security:
   # JWT Token parameters
   jwt:
-    tokenExpirationTime: "${JWT_TOKEN_EXPIRATION_TIME:900}" # Number of seconds (15 mins)
-    refreshTokenExpTime: "${JWT_REFRESH_TOKEN_EXPIRATION_TIME:3600}" # Seconds (1 hour)
+    tokenExpirationTime: "${JWT_TOKEN_EXPIRATION_TIME:9000}" # Number of seconds (2.5 hours)
+    refreshTokenExpTime: "${JWT_REFRESH_TOKEN_EXPIRATION_TIME:604800}" # Number of seconds (1 week)
     tokenIssuer: "${JWT_TOKEN_ISSUER:thingsboard.io}"
     tokenSigningKey: "${JWT_TOKEN_SIGNING_KEY:thingsboardDefaultSigningKey}"
   # Enable/disable access to Tenant Administrators JWT token by System Administrator or Customer Users JWT token by Tenant Administrator
   user_token_access_enabled: "${SECURITY_USER_TOKEN_ACCESS_ENABLED:true}"
+  # Enable/disable case-sensitive username login
+  user_login_case_sensitive: "${SECURITY_USER_LOGIN_CASE_SENSITIVE:true}"
+  claim:
+    # Enable/disable claiming devices, if false -> the device's [claimingAllowed] SERVER_SCOPE attribute must be set to [true] to allow claiming specific device
+    allowClaimingByDefault: "${SECURITY_CLAIM_ALLOW_CLAIMING_BY_DEFAULT:true}"
+    # Time allowed to claim the device in milliseconds
+    duration: "${SECURITY_CLAIM_DURATION:60000}" # 1 minute, note this value must equal claimDevices.timeToLiveInMinutes value
 
 # Dashboard parameters
 dashboard:
@@ -90,8 +122,9 @@ database:
   entities:
     type: "${DATABASE_ENTITIES_TYPE:sql}" # cassandra OR sql
   ts:
-    type: "${DATABASE_TS_TYPE:sql}" # cassandra OR sql (for hybrid mode, only this value should be cassandra)
+    type: "${DATABASE_TS_TYPE:sql}" # cassandra, sql, or timescale (for hybrid mode, DATABASE_TS_TYPE value should be cassandra, or timescale)
 
+# note: timescale works only with postgreSQL database for DATABASE_ENTITIES_TYPE.
 
 # Cassandra driver configuration parameters
 cassandra:
@@ -138,13 +171,23 @@ cassandra:
     read_consistency_level: "${CASSANDRA_READ_CONSISTENCY_LEVEL:ONE}"
     write_consistency_level: "${CASSANDRA_WRITE_CONSISTENCY_LEVEL:ONE}"
     default_fetch_size: "${CASSANDRA_DEFAULT_FETCH_SIZE:2000}"
-    # Specify partitioning size for timestamp key-value storage. Example MINUTES, HOURS, DAYS, MONTHS,INDEFINITE
+    # Specify partitioning size for timestamp key-value storage. Example: MINUTES, HOURS, DAYS, MONTHS,INDEFINITE
     ts_key_value_partitioning: "${TS_KV_PARTITIONING:MONTHS}"
     ts_key_value_ttl: "${TS_KV_TTL:0}"
+    events_ttl: "${TS_EVENTS_TTL:0}"
+    # Specify TTL of debug log in seconds. The current value corresponds to one week
+    debug_events_ttl: "${DEBUG_EVENTS_TTL:604800}"
     buffer_size: "${CASSANDRA_QUERY_BUFFER_SIZE:200000}"
     concurrent_limit: "${CASSANDRA_QUERY_CONCURRENT_LIMIT:1000}"
     permit_max_wait_time: "${PERMIT_MAX_WAIT_TIME:120000}"
+    dispatcher_threads: "${CASSANDRA_QUERY_DISPATCHER_THREADS:2}"
+    callback_threads: "${CASSANDRA_QUERY_CALLBACK_THREADS:4}"
+    poll_ms: "${CASSANDRA_QUERY_POLL_MS:50}"
     rate_limit_print_interval_ms: "${CASSANDRA_QUERY_RATE_LIMIT_PRINT_MS:10000}"
+    # set all data types values except target to null for the same ts on save
+    set_null_values_enabled: "${CASSANDRA_QUERY_SET_NULL_VALUES_ENABLED:false}"
+    # log one of cassandra queries with specified frequency (0 - logging is disabled)
+    print_queries_freq: "${CASSANDRA_QUERY_PRINT_FREQ:0}"
     tenant_rate_limits:
       enabled: "${CASSANDRA_QUERY_TENANT_RATE_LIMITS_ENABLED:false}"
       configuration: "${CASSANDRA_QUERY_TENANT_RATE_LIMITS_CONFIGURATION:1000:1,30000:60}"
@@ -152,10 +195,27 @@ cassandra:
 
 # SQL configuration parameters
 sql:
-    # Specify executor service type used to perform timeseries insert tasks: SINGLE FIXED CACHED
-    ts_inserts_executor_type: "${SQL_TS_INSERTS_EXECUTOR_TYPE:fixed}"
-    # Specify thread pool size for FIXED executor service type
-    ts_inserts_fixed_thread_pool_size: "${SQL_TS_INSERTS_FIXED_THREAD_POOL_SIZE:10}"
+    # Specify batch size for persisting attribute updates
+    attributes:
+      batch_size: "${SQL_ATTRIBUTES_BATCH_SIZE:10000}"
+      batch_max_delay: "${SQL_ATTRIBUTES_BATCH_MAX_DELAY_MS:100}"
+      stats_print_interval_ms: "${SQL_ATTRIBUTES_BATCH_STATS_PRINT_MS:10000}"
+    ts:
+      batch_size: "${SQL_TS_BATCH_SIZE:10000}"
+      batch_max_delay: "${SQL_TS_BATCH_MAX_DELAY_MS:100}"
+      stats_print_interval_ms: "${SQL_TS_BATCH_STATS_PRINT_MS:10000}"
+    ts_latest:
+      batch_size: "${SQL_TS_LATEST_BATCH_SIZE:10000}"
+      batch_max_delay: "${SQL_TS_LATEST_BATCH_MAX_DELAY_MS:100}"
+      stats_print_interval_ms: "${SQL_TS_LATEST_BATCH_STATS_PRINT_MS:10000}"
+    ts_timescale:
+      batch_size: "${SQL_TS_TIMESCALE_BATCH_SIZE:10000}"
+      batch_max_delay: "${SQL_TS_TIMESCALE_BATCH_MAX_DELAY_MS:100}"
+      stats_print_interval_ms: "${SQL_TS_TIMESCALE_BATCH_STATS_PRINT_MS:10000}"
+    # Specify whether to remove null characters from strValue of attributes and timeseries before insert
+    remove_null_chars: "${SQL_REMOVE_NULL_CHARS:true}"
+    # Specify partitioning size for timestamp key-value storage. Example: DAYS, MONTHS, YEARS, INDEFINITE
+    ts_key_value_partitioning: "${TS_KV_PARTITIONING:MONTHS}"
 
 # Actor system parameters
 actors:
@@ -170,24 +230,33 @@ actors:
       timeout: "${ACTORS_SESSION_SYNC_TIMEOUT:10000}"
   rule:
     # Specify thread pool size for database request callbacks executor service
-    db_callback_thread_pool_size: "${ACTORS_RULE_DB_CALLBACK_THREAD_POOL_SIZE:1}"
+    db_callback_thread_pool_size: "${ACTORS_RULE_DB_CALLBACK_THREAD_POOL_SIZE:50}"
     # Specify thread pool size for javascript executor service
-    js_thread_pool_size: "${ACTORS_RULE_JS_THREAD_POOL_SIZE:10}"
+    js_thread_pool_size: "${ACTORS_RULE_JS_THREAD_POOL_SIZE:50}"
     # Specify thread pool size for mail sender executor service
-    mail_thread_pool_size: "${ACTORS_RULE_MAIL_THREAD_POOL_SIZE:10}"
+    mail_thread_pool_size: "${ACTORS_RULE_MAIL_THREAD_POOL_SIZE:50}"
     # Whether to allow usage of system mail service for rules
     allow_system_mail_service: "${ACTORS_RULE_ALLOW_SYSTEM_MAIL_SERVICE:true}"
     # Specify thread pool size for external call service
-    external_call_thread_pool_size: "${ACTORS_RULE_EXTERNAL_CALL_THREAD_POOL_SIZE:10}"
+    external_call_thread_pool_size: "${ACTORS_RULE_EXTERNAL_CALL_THREAD_POOL_SIZE:50}"
     chain:
       # Errors for particular actor are persisted once per specified amount of milliseconds
       error_persist_frequency: "${ACTORS_RULE_CHAIN_ERROR_FREQUENCY:3000}"
+      debug_mode_rate_limits_per_tenant:
+        enabled: "${ACTORS_RULE_CHAIN_DEBUG_MODE_RATE_LIMITS_PER_TENANT_ENABLED:true}"
+        configuration: "${ACTORS_RULE_CHAIN_DEBUG_MODE_RATE_LIMITS_PER_TENANT_CONFIGURATION:50000:3600}"
     node:
       # Errors for particular actor are persisted once per specified amount of milliseconds
       error_persist_frequency: "${ACTORS_RULE_NODE_ERROR_FREQUENCY:3000}"
+    transaction:
+      # Size of queues which store messages for transaction rule nodes
+      queue_size: "${ACTORS_RULE_TRANSACTION_QUEUE_SIZE:20}"
+      # Time in milliseconds for transaction to complete
+      duration: "${ACTORS_RULE_TRANSACTION_DURATION:15000}"
   statistics:
     # Enable/disable actor statistics
     enabled: "${ACTORS_STATISTICS_ENABLED:true}"
+    js_print_interval_ms: "${ACTORS_JS_STATISTICS_PRINT_INTERVAL_MS:10000}"
     persist_frequency: "${ACTORS_STATISTICS_PERSIST_FREQUENCY:3600000}"
   queue:
     # Enable/disable persistence of un-processed messages to the queue
@@ -221,15 +290,52 @@ caffeine:
     entityViews:
       timeToLiveInMinutes: 1440
       maxSize: 100000
+    claimDevices:
+      timeToLiveInMinutes: 1
+      maxSize: 100000
+    securitySettings:
+      timeToLiveInMinutes: 1440
+      maxSize: 1
 
 redis:
   # standalone or cluster
   connection:
     type: standalone
+  standalone:
     host: "${REDIS_HOST:localhost}"
     port: "${REDIS_PORT:6379}"
-    db: "${REDIS_DB:0}"
-    password: "${REDIS_PASSWORD:}"
+    useDefaultClientConfig: "${REDIS_USE_DEFAULT_CLIENT_CONFIG:true}"
+    # this value may be used only if you used not default ClientConfig
+    clientName: "${REDIS_CLIENT_NAME:standalone}"
+    # this value may be used only if you used not default ClientConfig
+    connectTimeout: "${REDIS_CLIENT_CONNECT_TIMEOUT:30000}"
+    # this value may be used only if you used not default ClientConfig
+    readTimeout: "${REDIS_CLIENT_READ_TIMEOUT:60000}"
+    # this value may be used only if you used not default ClientConfig
+    usePoolConfig: "${REDIS_CLIENT_USE_POOL_CONFIG:false}"
+  cluster:
+    # Comma-separated list of "host:port" pairs to bootstrap from.
+    nodes: "${REDIS_NODES:}"
+    # Maximum number of redirects to follow when executing commands across the cluster.
+    max-redirects: "${REDIS_MAX_REDIRECTS:12}"
+    useDefaultPoolConfig: "${REDIS_USE_DEFAULT_POOL_CONFIG:true}"
+  # db index
+  db: "${REDIS_DB:0}"
+  # db password
+  password: "${REDIS_PASSWORD:}"
+  # pool config
+  pool_config:
+    maxTotal: "${REDIS_POOL_CONFIG_MAX_TOTAL:128}"
+    maxIdle: "${REDIS_POOL_CONFIG_MAX_IDLE:128}"
+    minIdle: "${REDIS_POOL_CONFIG_MIN_IDLE:16}"
+    testOnBorrow: "${REDIS_POOL_CONFIG_TEST_ON_BORROW:true}"
+    testOnReturn: "${REDIS_POOL_CONFIG_TEST_ON_RETURN:true}"
+    testWhileIdle: "${REDIS_POOL_CONFIG_TEST_WHILE_IDLE:true}"
+    minEvictableMs: "${REDIS_POOL_CONFIG_MIN_EVICTABLE_MS:60000}"
+    evictionRunsMs: "${REDIS_POOL_CONFIG_EVICTION_RUNS_MS:30000}"
+    maxWaitMills: "${REDIS_POOL_CONFIG_MAX_WAIT_MS:60000}"
+    numberTestsPerEvictionRun: "${REDIS_POOL_CONFIG_NUMBER_TESTS_PER_EVICTION_RUN:3}"
+    blockWhenExhausted: "${REDIS_POOL_CONFIG_BLOCK_WHEN_EXHAUSTED:true}"
 
 # Check new version updates parameters
 updates:
@@ -240,65 +346,48 @@ updates:
 spring.mvc.cors:
    mappings:
      # Intercept path
-      "/api/auth/**":
+      "[/api/**]":
          #Comma-separated list of origins to allow. '*' allows all origins. When not set,CORS support is disabled.
          allowed-origins: "*"
          #Comma-separated list of methods to allow. '*' allows all methods.
-         allowed-methods: "POST,GET,OPTIONS"
+         allowed-methods: "*"
          #Comma-separated list of headers to allow in a request. '*' allows all headers.
          allowed-headers: "*"
          #How long, in seconds, the response from a pre-flight request can be cached by clients.
          max-age: "1800"
          #Set whether credentials are supported. When not set, credentials are not supported.
          allow-credentials: "true"
-      "/api/v1/**":
-         allowed-origins: "*"
-         allowed-methods: "*"
-         allowed-headers: "*"
-         max-age: "1800"
-         allow-credentials: "true"
 
 # spring serve gzip compressed static resources
 spring.resources.chain:
-  gzipped: "true"
+  compressed: "true"
   strategy:
     content:
       enabled: "true"
 
-# HSQLDB DAO Configuration
+spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation: "true"
+
+# SQL DAO Configuration
 spring:
   data:
     jpa:
       repositories:
         enabled: "true"
   jpa:
+    open-in-view: "false"
     hibernate:
-      ddl-auto: "validate"
-    database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.HSQLDialect}"
+      ddl-auto: "none"
+    database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}"
   datasource:
-    driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.hsqldb.jdbc.JDBCDriver}"
-    url: "${SPRING_DATASOURCE_URL:jdbc:hsqldb:file:${SQL_DATA_FOLDER:/tmp}/thingsboardDb;sql.enforce_size=false;hsqldb.log_size=5}"
-    username: "${SPRING_DATASOURCE_USERNAME:sa}"
-    password: "${SPRING_DATASOURCE_PASSWORD:}"
-
-# PostgreSQL DAO Configuration
-# spring:
-#  data:
-#    sql:
-#      repositories:
-#        enabled: "true"
-#  sql:
-#    hibernate:
-#      ddl-auto: "validate"
-#    database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}"
-#  datasource:
-#    driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.postgresql.Driver}"
-#    url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard}"
-#    username: "${SPRING_DATASOURCE_USERNAME:postgres}"
-#    password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
+    driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.postgresql.Driver}"
+    url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard}"
+    username: "${SPRING_DATASOURCE_USERNAME:postgres}"
+    password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
+    hikari:
+      maximumPoolSize: "${SPRING_DATASOURCE_MAXIMUM_POOL_SIZE:50}"
 
 # Audit log parameters
-audit_log:
+audit-log:
   # Enable/disable audit log functionality.
   enabled: "${AUDIT_LOG_ENABLED:true}"
   # Specify partitioning size for audit log by tenant id storage. Example MINUTES, HOURS, DAYS, MONTHS
@@ -307,7 +396,7 @@ audit_log:
   default_query_period: "${AUDIT_LOG_DEFAULT_QUERY_PERIOD:30}"
   # Logging levels per each entity type.
   # Allowed values: OFF (disable), W (log write operations), RW (log read and write operations)
-  logging_level:
+  logging-level:
     mask:
       "device": "${AUDIT_LOG_MASK_DEVICE:W}"
       "asset": "${AUDIT_LOG_MASK_ASSET:W}"
@@ -337,6 +426,7 @@ audit_log:
 state:
   defaultInactivityTimeoutInSec: "${DEFAULT_INACTIVITY_TIMEOUT:10}"
   defaultStateCheckIntervalInSec: "${DEFAULT_STATE_CHECK_INTERVAL:10}"
+  persistToTelemetry: "${PERSIST_STATE_TO_TELEMETRY:false}"
 
 kafka:
   enabled: true
@@ -369,9 +459,14 @@ js:
     # Specify thread pool size for JavaScript sandbox resource monitor
     monitor_thread_pool_size: "${LOCAL_JS_SANDBOX_MONITOR_THREAD_POOL_SIZE:4}"
     # Maximum CPU time in milliseconds allowed for script execution
-    max_cpu_time: "${LOCAL_JS_SANDBOX_MAX_CPU_TIME:100}"
+    max_cpu_time: "${LOCAL_JS_SANDBOX_MAX_CPU_TIME:3000}"
     # Maximum allowed JavaScript execution errors before JavaScript will be blacklisted
     max_errors: "${LOCAL_JS_SANDBOX_MAX_ERRORS:3}"
+    # JS Eval max request timeout. 0 - no timeout
+    max_requests_timeout: "${LOCAL_JS_MAX_REQUEST_TIMEOUT:0}"
+    stats:
+      enabled: "${TB_JS_LOCAL_STATS_ENABLED:false}"
+      print_interval_ms: "${TB_JS_LOCAL_STATS_PRINT_INTERVAL_MS:10000}"
   # Remote JavaScript environment properties
   remote:
     # JS Eval request topic
@@ -388,6 +483,9 @@ js:
     response_auto_commit_interval: "${REMOTE_JS_RESPONSE_AUTO_COMMIT_INTERVAL_MS:100}"
     # Maximum allowed JavaScript execution errors before JavaScript will be blacklisted
     max_errors: "${REMOTE_JS_SANDBOX_MAX_ERRORS:3}"
+    stats:
+      enabled: "${TB_JS_REMOTE_STATS_ENABLED:false}"
+      print_interval_ms: "${TB_JS_REMOTE_STATS_PRINT_INTERVAL_MS:10000}"
 
 transport:
   type: "${TRANSPORT_TYPE:local}" # local or remote
@@ -405,6 +503,9 @@ transport:
       poll_records_pack_size: "${TB_RULE_ENGINE_MAX_POLL_RECORDS:1000}"
       max_poll_records_per_second: "${TB_RULE_ENGINE_MAX_POLL_RECORDS_PER_SECOND:10000}"
       max_poll_records_per_minute: "${TB_RULE_ENGINE_MAX_POLL_RECORDS_PER_MINUTE:120000}"
+      stats:
+        enabled: "${TB_RULE_ENGINE_STATS_ENABLED:false}"
+        print_interval_ms: "${TB_RULE_ENGINE_STATS_PRINT_INTERVAL_MS:10000}"
     notifications:
       topic: "${TB_TRANSPORT_NOTIFICATIONS_TOPIC:tb.transport.notifications}"
   sessions:
@@ -417,6 +518,8 @@ transport:
   json:
     # Cast String data types to Numeric if possible when processing Telemetry/Attributes JSON
     type_cast_enabled: "${JSON_TYPE_CAST_ENABLED:true}"
+    # Maximum allowed string value length when processing Telemetry/Attributes JSON (0 value disables string value length check)
+    max_string_value_length: "${JSON_MAX_STRING_VALUE_LENGTH:0}"
   # Local HTTP transport parameters
   http:
     enabled: "${HTTP_ENABLED:true}"
@@ -433,6 +536,7 @@ transport:
       boss_group_thread_count: "${NETTY_BOSS_GROUP_THREADS:1}"
       worker_group_thread_count: "${NETTY_WORKER_GROUP_THREADS:12}"
       max_payload_size: "${NETTY_MAX_PAYLOAD_SIZE:65536}"
+      so_keep_alive: "${NETTY_SO_KEEPALIVE:false}"
     # MQTT SSL configuration
     ssl:
       # Enable/disable SSL support
@@ -454,3 +558,18 @@ transport:
     bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"
     bind_port: "${COAP_BIND_PORT:5683}"
     timeout: "${COAP_TIMEOUT:10000}"
+
+swagger:
+  api_path_regex: "${SWAGGER_API_PATH_REGEX:/api.*}"
+  security_path_regex: "${SWAGGER_SECURITY_PATH_REGEX:/api.*}"
+  non_security_path_regex: "${SWAGGER_NON_SECURITY_PATH_REGEX:/api/noauth.*}"
+  title: "${SWAGGER_TITLE:Thingsboard REST API}"
+  description: "${SWAGGER_DESCRIPTION:For instructions how to authorize requests please visit <a href='http://thingsboard.io/docs/reference/rest-api/'>REST API documentation page</a>.}"
+  contact:
+    name: "${SWAGGER_CONTACT_NAME:Thingsboard team}"
+    url: "${SWAGGER_CONTACT_URL:http://thingsboard.io}"
+    email: "${SWAGGER_CONTACT_EMAIL:info@thingsboard.io}"
+  license:
+    title: "${SWAGGER_LICENSE_TITLE:Apache License Version 2.0}"
+    url: "${SWAGGER_LICENSE_URL:https://github.com/thingsboard/thingsboard/blob/master/LICENSE}"
+  version: "${SWAGGER_VERSION:2.0}"

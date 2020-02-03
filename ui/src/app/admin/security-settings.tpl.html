@@ -1,0 +1,167 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div tb-help="'securitySettings'" help-container-id="help-container">
+    <md-card class="settings-card">
+        <md-card-title>
+            <md-card-title-text layout="row">
+                <span translate class="md-headline">admin.security-settings</span>
+                <span flex></span>
+                <div id="help-container"></div>
+            </md-card-title-text>
+        </md-card-title>
+        <md-progress-linear md-mode="indeterminate" ng-disabled="!$root.loading" ng-show="$root.loading"></md-progress-linear>
+        <span style="min-height: 5px;" flex="" ng-show="!$root.loading"></span>
+        <md-card-content>
+            <form name="vm.settingsForm" ng-submit="vm.save()" tb-confirm-on-exit confirm-form="vm.settingsForm">
+                <fieldset ng-disabled="$root.loading">
+                    <md-expansion-panel-group md-component-id="securitySettingsPanelGroup" auto-expand="true" multiple>
+                        <md-expansion-panel md-component-id="generalPolicyPanel" id="generalPolicyPanel">
+                            <md-expansion-panel-collapsed>
+                                <div class="tb-panel-title" translate>admin.general-policy</div>
+                                <md-expansion-panel-icon></md-expansion-panel-icon>
+                            </md-expansion-panel-collapsed>
+                            <md-expansion-panel-expanded>
+                                <md-expansion-panel-header ng-click="vm.$mdExpansionPanel('generalPolicyPanel').collapse()">
+                                    <div class="tb-panel-title" translate>admin.general-policy</div>
+                                    <md-expansion-panel-icon></md-expansion-panel-icon>
+                                </md-expansion-panel-header>
+                                <md-expansion-panel-content>
+                                    <md-input-container class="md-block">
+                                        <label translate>admin.max-failed-login-attempts</label>
+                                        <input type="number"
+                                               step="1"
+                                               min="0"
+                                               name="maxFailedLoginAttempts"
+                                               ng-model="vm.securitySettings.maxFailedLoginAttempts">
+                                        <div ng-messages="vm.settingsForm.maxFailedLoginAttempts.$error">
+                                            <div translate ng-message="min">admin.minimum-max-failed-login-attempts-range</div>
+                                        </div>
+                                    </md-input-container>
+                                    <md-input-container class="md-block">
+                                        <label translate>admin.user-lockout-notification-email</label>
+                                        <input type="email"
+                                               name="userLockoutNotificationEmail"
+                                               ng-model="vm.securitySettings.userLockoutNotificationEmail">
+                                    </md-input-container>
+                                </md-expansion-panel-content>
+                            </md-expansion-panel-expanded>
+                        </md-expansion-panel>
+                        <md-expansion-panel md-component-id="passwordPolicyPanel" id="passwordPolicyPanel">
+                            <md-expansion-panel-collapsed>
+                                <div class="tb-panel-title" translate>admin.password-policy</div>
+                                <md-expansion-panel-icon></md-expansion-panel-icon>
+                            </md-expansion-panel-collapsed>
+                            <md-expansion-panel-expanded>
+                                <md-expansion-panel-header ng-click="vm.$mdExpansionPanel('passwordPolicyPanel').collapse()">
+                                    <div class="tb-panel-title" translate>admin.password-policy</div>
+                                    <md-expansion-panel-icon></md-expansion-panel-icon>
+                                </md-expansion-panel-header>
+                                <md-expansion-panel-content>
+                                    <md-input-container class="md-block">
+                                        <label translate>admin.minimum-password-length</label>
+                                        <input type="number"
+                                               step="1"
+                                               min="5"
+                                               max="50"
+                                               required
+                                               name="minimumPasswordLength"
+                                               ng-model="vm.securitySettings.passwordPolicy.minimumLength">
+                                        <div ng-messages="vm.settingsForm.minimumPasswordLength.$error">
+                                            <div translate ng-message="required">admin.minimum-password-length-required</div>
+                                            <div translate ng-message="min">admin.minimum-password-length-range</div>
+                                            <div translate ng-message="max">admin.minimum-password-length-range</div>
+                                        </div>
+                                    </md-input-container>
+                                    <md-input-container class="md-block">
+                                        <label translate>admin.minimum-uppercase-letters</label>
+                                        <input type="number"
+                                               step="1"
+                                               min="0"
+                                               name="minimumUppercaseLetters"
+                                               ng-model="vm.securitySettings.passwordPolicy.minimumUppercaseLetters">
+                                        <div ng-messages="vm.settingsForm.minimumUppercaseLetters.$error">
+                                            <div translate ng-message="min">admin.minimum-uppercase-letters-range</div>
+                                        </div>
+                                    </md-input-container>
+                                    <md-input-container class="md-block">
+                                        <label translate>admin.minimum-lowercase-letters</label>
+                                        <input type="number"
+                                               step="1"
+                                               min="0"
+                                               name="minimumLowercaseLetters"
+                                               ng-model="vm.securitySettings.passwordPolicy.minimumLowercaseLetters">
+                                        <div ng-messages="vm.settingsForm.minimumLowercaseLetters.$error">
+                                            <div translate ng-message="min">admin.minimum-lowercase-letters-range</div>
+                                        </div>
+                                    </md-input-container>
+                                    <md-input-container class="md-block">
+                                        <label translate>admin.minimum-digits</label>
+                                        <input type="number"
+                                               step="1"
+                                               min="0"
+                                               name="minimumDigits"
+                                               ng-model="vm.securitySettings.passwordPolicy.minimumDigits">
+                                        <div ng-messages="vm.settingsForm.minimumDigits.$error">
+                                            <div translate ng-message="min">admin.minimum-digits-range</div>
+                                        </div>
+                                    </md-input-container>
+                                    <md-input-container class="md-block">
+                                        <label translate>admin.minimum-special-characters</label>
+                                        <input type="number"
+                                               step="1"
+                                               min="0"
+                                               name="minimumSpecialCharacters"
+                                               ng-model="vm.securitySettings.passwordPolicy.minimumSpecialCharacters">
+                                        <div ng-messages="vm.settingsForm.minimumSpecialCharacters.$error">
+                                            <div translate ng-message="min">admin.minimum-special-characters-range</div>
+                                        </div>
+                                    </md-input-container>
+                                    <md-input-container class="md-block">
+                                        <label translate>admin.password-expiration-period-days</label>
+                                        <input type="number"
+                                               step="1"
+                                               min="0"
+                                               name="passwordExpirationPeriodDays"
+                                               ng-model="vm.securitySettings.passwordPolicy.passwordExpirationPeriodDays">
+                                        <div ng-messages="vm.settingsForm.passwordExpirationPeriodDays.$error">
+                                            <div translate ng-message="min">admin.password-expiration-period-days-range</div>
+                                        </div>
+                                    </md-input-container>
+                                    <md-input-container class="md-block">
+                                        <label translate>admin.password-reuse-frequency-days</label>
+                                        <input type="number"
+                                               step="1"
+                                               min="0"
+                                               name="passwordReuseFrequencyDays"
+                                               ng-model="vm.securitySettings.passwordPolicy.passwordReuseFrequencyDays">
+                                        <div ng-messages="vm.settingsForm.passwordReuseFrequencyDays.$error">
+                                            <div translate ng-message="min">admin.password-reuse-frequency-days-range</div>
+                                        </div>
+                                    </md-input-container>
+                                </md-expansion-panel-content>
+                            </md-expansion-panel-expanded>
+                        </md-expansion-panel>
+                    </md-expansion-panel-group>
+                    <div layout="row" layout-align="end center" width="100%" layout-wrap>
+                        <md-button ng-disabled="$root.loading || vm.settingsForm.$invalid || !vm.settingsForm.$dirty" type="submit" class="md-raised md-primary">{{'action.save' | translate}}</md-button>
+                    </div>
+                </fieldset>
+            </form>
+        </md-card-content>
+    </md-card>
+</div>

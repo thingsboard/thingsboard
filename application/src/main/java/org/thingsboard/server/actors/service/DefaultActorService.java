@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,10 @@ import akka.actor.Terminated;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.msg.DeviceCredentialsUpdateNotificationMsg;
 import org.thingsboard.rule.engine.api.msg.DeviceNameOrTypeUpdateMsg;
@@ -50,18 +52,16 @@ import org.thingsboard.server.service.cluster.discovery.DiscoveryService;
 import org.thingsboard.server.service.cluster.discovery.ServerInstance;
 import org.thingsboard.server.service.cluster.rpc.ClusterRpcService;
 import org.thingsboard.server.service.state.DeviceStateService;
+import org.thingsboard.server.service.transport.RuleEngineStats;
 import scala.concurrent.Await;
 import scala.concurrent.Future;
 import scala.concurrent.duration.Duration;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-
-import java.util.Arrays;
-import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.thingsboard.server.gen.cluster.ClusterAPIProtos.MessageType.CLUSTER_ACTOR_MESSAGE;
 
@@ -95,11 +95,9 @@ public class DefaultActorService implements ActorService {
 
     private ActorRef rpcManagerActor;
 
-    private ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-
     @PostConstruct
     public void initActorSystem() {
-        log.info("Initializing Actor system. {}", actorContext.getRuleChainService());
+        log.info("Initializing Actor system.");
         actorContext.setActorService(this);
         system = ActorSystem.create(ACTOR_SYSTEM_NAME, actorContext.getConfig());
         actorContext.setActorSystem(system);
@@ -191,8 +189,29 @@ public class DefaultActorService implements ActorService {
         this.rpcManagerActor.tell(msg, ActorRef.noSender());
     }
 
+    @Value("${cluster.stats.enabled:false}")
+    private boolean statsEnabled;
+
+    private final AtomicInteger sentClusterMsgs = new AtomicInteger(0);
+    private final AtomicInteger receivedClusterMsgs = new AtomicInteger(0);
+
+
+    @Scheduled(fixedDelayString = "${cluster.stats.print_interval_ms}")
+    public void printStats() {
+        if (statsEnabled) {
+            int sent = sentClusterMsgs.getAndSet(0);
+            int received = receivedClusterMsgs.getAndSet(0);
+            if (sent > 0 || received > 0) {
+                log.info("Cluster msgs sent [{}] received [{}]", sent, received);
+            }
+        }
+    }
+
     @Override
     public void onReceivedMsg(ServerAddress source, ClusterAPIProtos.ClusterMessage msg) {
+        if (statsEnabled) {
+            receivedClusterMsgs.incrementAndGet();
+        }
         ServerAddress serverAddress = new ServerAddress(source.getHost(), source.getPort(), source.getServerType());
         if (log.isDebugEnabled()) {
             log.info("Received msg [{}] from [{}]", msg.getMessageType().name(), serverAddress);
@@ -235,16 +254,25 @@ public class DefaultActorService implements ActorService {
             case CLUSTER_DEVICE_STATE_SERVICE_MESSAGE:
                 actorContext.getDeviceStateService().onRemoteMsg(serverAddress, msg.getPayload().toByteArray());
                 break;
+            case CLUSTER_TRANSACTION_SERVICE_MESSAGE:
+                actorContext.getRuleChainTransactionService().onRemoteTransactionMsg(serverAddress, msg.getPayload().toByteArray());
+                break;
         }
     }
 
     @Override
     public void onSendMsg(ClusterAPIProtos.ClusterMessage msg) {
+        if (statsEnabled) {
+            sentClusterMsgs.incrementAndGet();
+        }
         rpcManagerActor.tell(msg, ActorRef.noSender());
     }
 
     @Override
     public void onRpcSessionCreateRequestMsg(RpcSessionCreateRequestMsg msg) {
+        if (statsEnabled) {
+            sentClusterMsgs.incrementAndGet();
+        }
         rpcManagerActor.tell(msg, ActorRef.noSender());
     }
 

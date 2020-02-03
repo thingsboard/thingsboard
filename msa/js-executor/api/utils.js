@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 'use strict';
 
 const Long = require('long'),
       uuidParse = require('uuid-parse');
 
-var logger = require('../config/logger')('Utils');
-
 exports.toUUIDString = function(mostSigBits, leastSigBits) {
     var msbBytes = Long.fromValue(mostSigBits, false).toBytes(false);
     var lsbBytes = Long.fromValue(leastSigBits, false).toBytes(false);
     var uuidBytes = msbBytes.concat(lsbBytes);
-    var buff = new Buffer(uuidBytes, 'utf8');
     return uuidParse.unparse(uuidBytes);
+}
+
+exports.UUIDFromBuffer = function(buf) {
+    return uuidParse.unparse(buf);
 }
 
 exports.UUIDToBits = function(uuidString) {

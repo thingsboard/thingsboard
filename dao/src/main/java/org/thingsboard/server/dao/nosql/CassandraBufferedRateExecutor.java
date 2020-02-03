@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package org.thingsboard.server.dao.nosql;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +25,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.entity.EntityService;
-import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.util.AbstractBufferedRateExecutor;
 import org.thingsboard.server.dao.util.AsyncTaskContext;
 import org.thingsboard.server.dao.util.NoSqlAnyDao;
@@ -34,7 +32,6 @@ import org.thingsboard.server.dao.util.NoSqlAnyDao;
 import javax.annotation.PreDestroy;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Created by ashvayka on 24.10.18.
@@ -55,23 +52,36 @@ public class CassandraBufferedRateExecutor extends AbstractBufferedRateExecutor<
             @Value("${cassandra.query.concurrent_limit}") int concurrencyLimit,
             @Value("${cassandra.query.permit_max_wait_time}") long maxWaitTime,
             @Value("${cassandra.query.dispatcher_threads:2}") int dispatcherThreads,
-            @Value("${cassandra.query.callback_threads:2}") int callbackThreads,
+            @Value("${cassandra.query.callback_threads:4}") int callbackThreads,
             @Value("${cassandra.query.poll_ms:50}") long pollMs,
             @Value("${cassandra.query.tenant_rate_limits.enabled}") boolean tenantRateLimitsEnabled,
             @Value("${cassandra.query.tenant_rate_limits.configuration}") String tenantRateLimitsConfiguration,
-            @Value("${cassandra.query.tenant_rate_limits.print_tenant_names}") boolean printTenantNames) {
-        super(queueLimit, concurrencyLimit, maxWaitTime, dispatcherThreads, callbackThreads, pollMs, tenantRateLimitsEnabled, tenantRateLimitsConfiguration);
+            @Value("${cassandra.query.tenant_rate_limits.print_tenant_names}") boolean printTenantNames,
+            @Value("${cassandra.query.print_queries_freq:0}") int printQueriesFreq) {
+        super(queueLimit, concurrencyLimit, maxWaitTime, dispatcherThreads, callbackThreads, pollMs, tenantRateLimitsEnabled, tenantRateLimitsConfiguration, printQueriesFreq);
         this.printTenantNames = printTenantNames;
     }
 
     @Scheduled(fixedDelayString = "${cassandra.query.rate_limit_print_interval_ms}")
     public void printStats() {
-        log.info("Permits queueSize [{}] totalAdded [{}] totalLaunched [{}] totalReleased [{}] totalFailed [{}] totalExpired [{}] totalRejected [{}] " +
-                        "totalRateLimited [{}] totalRateLimitedTenants [{}] currBuffer [{}] ",
-                getQueueSize(),
-                totalAdded.getAndSet(0), totalLaunched.getAndSet(0), totalReleased.getAndSet(0),
-                totalFailed.getAndSet(0), totalExpired.getAndSet(0), totalRejected.getAndSet(0),
-                totalRateLimited.getAndSet(0), rateLimitedTenants.size(), concurrencyLevel.get());
+        int queueSize = getQueueSize();
+        int totalAddedValue = totalAdded.getAndSet(0);
+        int totalLaunchedValue = totalLaunched.getAndSet(0);
+        int totalReleasedValue = totalReleased.getAndSet(0);
+        int totalFailedValue = totalFailed.getAndSet(0);
+        int totalExpiredValue = totalExpired.getAndSet(0);
+        int totalRejectedValue = totalRejected.getAndSet(0);
+        int totalRateLimitedValue = totalRateLimited.getAndSet(0);
+        int rateLimitedTenantsValue = rateLimitedTenants.size();
+        int concurrencyLevelValue = concurrencyLevel.get();
+        if (queueSize > 0 || totalAddedValue > 0 || totalLaunchedValue > 0 || totalReleasedValue > 0 ||
+                totalFailedValue > 0 || totalExpiredValue > 0 || totalRejectedValue > 0 || totalRateLimitedValue > 0 || rateLimitedTenantsValue > 0
+                || concurrencyLevelValue > 0) {
+            log.info("Permits queueSize [{}] totalAdded [{}] totalLaunched [{}] totalReleased [{}] totalFailed [{}] totalExpired [{}] totalRejected [{}] " +
+                            "totalRateLimited [{}] totalRateLimitedTenants [{}] currBuffer [{}] ",
+                    queueSize, totalAddedValue, totalLaunchedValue, totalReleasedValue,
+                    totalFailedValue, totalExpiredValue, totalRejectedValue, totalRateLimitedValue, rateLimitedTenantsValue, concurrencyLevelValue);
+        }
 
         rateLimitedTenants.forEach(((tenantId, counter) -> {
             if (printTenantNames) {

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -164,13 +164,13 @@ function EntityRelationService($http, $q) {
         return deferred.promise;
     }
 
-    function findByQuery(query) {
+    function findByQuery(query, config) {
         var deferred = $q.defer();
         var url = '/api/relations';
-        $http.post(url, query).then(function success(response) {
+        $http.post(url, query, config).then(function success(response) {
             deferred.resolve(response.data);
-        }, function fail() {
-            deferred.reject();
+        }, function fail(e) {
+            deferred.reject(e);
         });
         return deferred.promise;
     }

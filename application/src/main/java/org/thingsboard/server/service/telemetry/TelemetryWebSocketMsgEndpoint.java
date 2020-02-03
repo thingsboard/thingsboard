@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.service.telemetry;
 
+import org.springframework.web.socket.CloseStatus;
+
 import java.io.IOException;
 
 /**
@@ -22,8 +24,7 @@ import java.io.IOException;
  */
 public interface TelemetryWebSocketMsgEndpoint {
 
-    void send(TelemetryWebSocketSessionRef sessionRef, String msg) throws IOException;
+    void send(TelemetryWebSocketSessionRef sessionRef, int subscriptionId, String msg) throws IOException;
 
-    void close(TelemetryWebSocketSessionRef sessionRef) throws IOException;
-
+    void close(TelemetryWebSocketSessionRef sessionRef, CloseStatus withReason) throws IOException;
 }

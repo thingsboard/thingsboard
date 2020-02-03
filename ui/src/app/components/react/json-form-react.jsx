@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,15 +47,19 @@ class ReactSchemaForm extends React.Component {
 ReactSchemaForm.propTypes = {
         schema: React.PropTypes.object,
         form: React.PropTypes.array,
+        groupInfoes: React.PropTypes.array,
         model: React.PropTypes.object,
         option: React.PropTypes.object,
         onModelChange: React.PropTypes.func,
-        onColorClick: React.PropTypes.func
+        onColorClick: React.PropTypes.func,
+        onIconClick: React.PropTypes.func,
+        onToggleFullscreen: React.PropTypes.func
 }
 
 ReactSchemaForm.defaultProps = {
     schema: {},
-    form: [ "*" ]
+    form: [ "*" ],
+    groupInfoes:[]
 }
 
 ReactSchemaForm.childContextTypes = {

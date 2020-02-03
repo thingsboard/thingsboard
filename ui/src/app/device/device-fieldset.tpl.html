@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2018 The Thingsboard Authors
+    Copyright © 2016-2020 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -71,6 +71,10 @@
                 ng-model="device.type"
                 entity-type="types.entityType.device">
         </tb-entity-subtype-autocomplete>
+        <md-input-container class="md-block">
+            <label translate>device.label</label>
+            <input name="label" ng-model="device.label">
+        </md-input-container>
         <md-input-container class="md-block">
             <md-checkbox ng-disabled="$root.loading || !isEdit" flex aria-label="{{ 'device.is-gateway' | translate }}"
                          ng-model="device.additionalInfo.gateway">{{ 'device.is-gateway' | translate }}

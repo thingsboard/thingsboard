@@ -4,6 +4,6 @@
 net stop ${pkg.name}
 
 @ECHO Uninstalling ${pkg.name} ...
-%~dp0${pkg.name}.exe uninstall
+"%~dp0"${pkg.name}.exe uninstall
 
 @ECHO DONE.

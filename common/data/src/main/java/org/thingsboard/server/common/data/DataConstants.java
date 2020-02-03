@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ package org.thingsboard.server.common.data;
  */
 public class DataConstants {
 
-    public static final String SYSTEM = "SYSTEM";
     public static final String TENANT = "TENANT";
     public static final String CUSTOMER = "CUSTOMER";
     public static final String DEVICE = "DEVICE";
@@ -28,6 +27,7 @@ public class DataConstants {
     public static final String CLIENT_SCOPE = "CLIENT_SCOPE";
     public static final String SERVER_SCOPE = "SERVER_SCOPE";
     public static final String SHARED_SCOPE = "SHARED_SCOPE";
+    public static final String LATEST_TS = "LATEST_TS";
 
     public static final String[] allScopes() {
         return new String[]{CLIENT_SCOPE, SHARED_SCOPE, SERVER_SCOPE};
@@ -38,9 +38,7 @@ public class DataConstants {
     public static final String LC_EVENT = "LC_EVENT";
     public static final String STATS = "STATS";
     public static final String DEBUG_RULE_NODE = "DEBUG_RULE_NODE";
-
-    public static final String ONEWAY = "ONEWAY";
-    public static final String TWOWAY = "TWOWAY";
+    public static final String DEBUG_RULE_CHAIN = "DEBUG_RULE_CHAIN";
 
     public static final String IN = "IN";
     public static final String OUT = "OUT";
@@ -61,5 +59,9 @@ public class DataConstants {
     public static final String ALARM_CLEAR = "ALARM_CLEAR";
 
     public static final String RPC_CALL_FROM_SERVER_TO_DEVICE = "RPC_CALL_FROM_SERVER_TO_DEVICE";
+
+    public static final String DEFAULT_SECRET_KEY = "";
+    public static final String SECRET_KEY_FIELD_NAME = "secretKey";
+    public static final String DURATION_MS_FIELD_NAME = "durationMs";
 
 }

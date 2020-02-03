@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.audit.AuditLog;
 
 @Component
-@ConditionalOnProperty(prefix = "audit_log.sink", value = "type", havingValue = "none")
+@ConditionalOnProperty(prefix = "audit-log.sink", value = "type", havingValue = "none")
 public class DummyAuditLogSink implements AuditLogSink {
 
     @Override

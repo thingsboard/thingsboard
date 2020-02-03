@@ -22,7 +22,7 @@ setlocal ENABLEEXTENSIONS
 
 SET BASE=%~dp0
 
-%BASE%${pkg.name}.exe install
+"%BASE%"${pkg.name}.exe install
 
 @ECHO ${pkg.name} installed successfully!
 

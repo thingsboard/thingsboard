@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,15 +95,24 @@ public final class GrpcSession implements Closeable {
     }
 
     public void sendMsg(ClusterAPIProtos.ClusterMessage msg) {
-        outputStream.onNext(msg);
-    }
-
-    public void onError(Throwable t) {
-        outputStream.onError(t);
+        if (connected) {
+            try {
+                outputStream.onNext(msg);
+            } catch (Throwable t) {
+                try {
+                    outputStream.onError(t);
+                } catch (Throwable t2) {
+                }
+                listener.onError(GrpcSession.this, t);
+            }
+        } else {
+            log.warn("[{}] Failed to send message due to closed session!", sessionId);
+        }
     }
 
     @Override
     public void close() {
+        connected = false;
         try {
             outputStream.onCompleted();
         } catch (IllegalStateException e) {

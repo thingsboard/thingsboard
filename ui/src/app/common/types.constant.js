@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,13 @@ export default angular.module('thingsboard.types', [])
                 general: 2,
                 authentication: 10,
                 jwtTokenExpired: 11,
+                credentialsExpired: 15,
                 permissionDenied: 20,
                 invalidArguments: 30,
                 badRequestParams: 31,
-                itemNotFound: 32
+                itemNotFound: 32,
+                tooManyRequests: 33,
+                tooManyUpdates: 34
             },
             entryPoints: {
                 login: "/api/auth/login",
@@ -210,6 +213,15 @@ export default angular.module('thingsboard.types', [])
                 },
                 "ALARM_CLEAR": {
                     name: "audit-log.type-alarm-clear"
+                },
+                "LOGIN": {
+                    name: "audit-log.type-login"
+                },
+                "LOGOUT": {
+                    name: "audit-log.type-logout"
+                },
+                "LOCKOUT": {
+                    name: "audit-log.type-lockout"
                 }
             },
             auditLogActionStatus: {
@@ -274,6 +286,16 @@ export default angular.module('thingsboard.types', [])
                     name: 'alias.filter-type-entity-view-search-query'
                 }
             },
+            direction: {
+                column: {
+                    value: "column",
+                    name: "direction.column"
+                },
+                row: {
+                    value: "row",
+                    name: "direction.row"
+                }
+            },
             position: {
                 top: {
                     value: "top",
@@ -300,7 +322,8 @@ export default angular.module('thingsboard.types', [])
                 timeseries: "timeseries",
                 attribute: "attribute",
                 function: "function",
-                alarm: "alarm"
+                alarm: "alarm",
+                entityField: "entityField"
             },
             contentType: {
                 "JSON": {
@@ -337,6 +360,44 @@ export default angular.module('thingsboard.types', [])
                 rulechain: "RULE_CHAIN",
                 rulenode: "RULE_NODE",
                 entityView: "ENTITY_VIEW"
+            },
+            importEntityColumnType: {
+                name: {
+                    name: 'import.column-type.name',
+                    value: 'name'
+                },
+                type: {
+                    name: 'import.column-type.type',
+                    value: 'type'
+                },
+                label: {
+                    name: 'import.column-type.label',
+                    value: 'label'
+                },
+                clientAttribute: {
+                    name: 'import.column-type.client-attribute',
+                    value: 'CLIENT_ATTRIBUTE'
+                },
+                sharedAttribute: {
+                    name: 'import.column-type.shared-attribute',
+                    value: 'SHARED_ATTRIBUTE'
+                },
+                serverAttribute: {
+                    name: 'import.column-type.server-attribute',
+                    value: 'SERVER_ATTRIBUTE'
+                },
+                timeseries: {
+                    name: 'import.column-type.timeseries',
+                    value: 'TIMESERIES'
+                },
+                entityField: {
+                    name: 'import.column-type.entity-field',
+                    value: 'ENTITY_FIELD'
+                },
+                accessToken: {
+                    name: 'import.column-type.access-token',
+                    value: 'ACCESS_TOKEN'
+                }
             },
             aliasEntityType: {
                 current_customer: "CURRENT_CUSTOMER"
@@ -407,6 +468,84 @@ export default angular.module('thingsboard.types', [])
                     list: 'entity.type-current-customer'
                 }
             },
+            entityField: {
+                createdTime: {
+                    keyName: 'createdTime',
+                    name: 'entity-field.created-time',
+                    value: 'createdTime',
+                    time: true
+                },
+                name: {
+                    keyName: 'name',
+                    name: 'entity-field.name',
+                    value: 'name'
+                },
+                type: {
+                    keyName: 'type',
+                    name: 'entity-field.type',
+                    value: 'type'
+                },
+                firstName: {
+                    keyName: 'firstName',
+                    name: 'entity-field.first-name',
+                    value: 'firstName'
+                },
+                lastName: {
+                    keyName: 'lastName',
+                    name: 'entity-field.last-name',
+                    value: 'lastName'
+                },
+                email: {
+                    keyName: 'email',
+                    name: 'entity-field.email',
+                    value: 'email'
+                },
+                title: {
+                    keyName: 'title',
+                    name: 'entity-field.title',
+                    value: 'title'
+                },
+                country: {
+                    keyName: 'country',
+                    name: 'entity-field.country',
+                    value: 'country'
+                },
+                state: {
+                    keyName: 'state',
+                    name: 'entity-field.state',
+                    value: 'state'
+                },
+                city: {
+                    keyName: 'city',
+                    name: 'entity-field.city',
+                    value: 'city'
+                },
+                address: {
+                    keyName: 'address',
+                    name: 'entity-field.address',
+                    value: 'address'
+                },
+                address2: {
+                    keyName: 'address2',
+                    name: 'entity-field.address2',
+                    value: 'address2'
+                },
+                zip: {
+                    keyName: 'zip',
+                    name: 'entity-field.zip',
+                    value: 'zip'
+                },
+                phone: {
+                    keyName: 'phone',
+                    name: 'entity-field.phone',
+                    value: 'phone'
+                },
+                label: {
+                    keyName: 'label',
+                    name: 'entity-field.label',
+                    value: 'label'
+                }
+            },
             entitySearchDirection: {
                 from: "FROM",
                 to: "TO"
@@ -444,6 +583,32 @@ export default angular.module('thingsboard.types', [])
                 mqtt: "MQTT",
                 opc: "OPC UA",
                 modbus: "MODBUS"
+            },
+            gatewayConfigType: {
+                mqtt:  {
+                    value: "mqtt",
+                    name: "MQTT"
+                },
+                modbus:  {
+                    value: "modbus",
+                    name: "Modbus"
+                },
+                opc_ua:  {
+                    value: "opcua",
+                    name: "OPC-UA"
+                },
+                ble:  {
+                    value: "ble",
+                    name: "BLE"
+                }
+            },
+            gatewayLogLevel: {
+                none: "NONE",
+                critical: "CRITICAL",
+                error: "ERROR",
+                warning: "WARNING",
+                info: "INFO",
+                debug: "DEBUG"
             },
             extensionValueType: {
                 string: 'value.string',
@@ -775,6 +940,10 @@ export default angular.module('thingsboard.types', [])
                 custom: {
                     name: 'widget-action.custom',
                     value: 'custom'
+                },
+                customPretty: {
+                    name: 'widget-action.custom-pretty',
+                    value: 'customPretty'
                 }
             },
             systemBundleAlias: {

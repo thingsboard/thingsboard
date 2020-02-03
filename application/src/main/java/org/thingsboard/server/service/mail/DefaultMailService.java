@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,9 @@ package org.thingsboard.server.service.mail;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
+import org.apache.velocity.exception.VelocityException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.MessageSource;
@@ -26,7 +28,6 @@ import org.springframework.core.NestedRuntimeException;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import org.springframework.ui.velocity.VelocityEngineUtils;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
@@ -39,6 +40,8 @@ import org.thingsboard.server.dao.settings.AdminSettingsService;
 import javax.annotation.PostConstruct;
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -126,7 +129,7 @@ public class DefaultMailService implements MailService {
         Map<String, Object> model = new HashMap<String, Object>();
         model.put(TARGET_EMAIL, email);
 
-        String message = VelocityEngineUtils.mergeTemplateIntoString(this.engine,
+        String message = mergeTemplateIntoString(this.engine,
                 "test.vm", UTF_8, model);
 
         sendMail(testMailSender, mailFrom, email, subject, message);
@@ -141,7 +144,7 @@ public class DefaultMailService implements MailService {
         model.put("activationLink", activationLink);
         model.put(TARGET_EMAIL, email);
 
-        String message = VelocityEngineUtils.mergeTemplateIntoString(this.engine,
+        String message = mergeTemplateIntoString(this.engine,
                 "activation.vm", UTF_8, model);
 
         sendMail(mailSender, mailFrom, email, subject, message);
@@ -156,7 +159,7 @@ public class DefaultMailService implements MailService {
         model.put("loginLink", loginLink);
         model.put(TARGET_EMAIL, email);
 
-        String message = VelocityEngineUtils.mergeTemplateIntoString(this.engine,
+        String message = mergeTemplateIntoString(this.engine,
                 "account.activated.vm", UTF_8, model);
 
         sendMail(mailSender, mailFrom, email, subject, message);
@@ -171,7 +174,7 @@ public class DefaultMailService implements MailService {
         model.put("passwordResetLink", passwordResetLink);
         model.put(TARGET_EMAIL, email);
 
-        String message = VelocityEngineUtils.mergeTemplateIntoString(this.engine,
+        String message = mergeTemplateIntoString(this.engine,
                 "reset.password.vm", UTF_8, model);
 
         sendMail(mailSender, mailFrom, email, subject, message);
@@ -186,7 +189,7 @@ public class DefaultMailService implements MailService {
         model.put("loginLink", loginLink);
         model.put(TARGET_EMAIL, email);
 
-        String message = VelocityEngineUtils.mergeTemplateIntoString(this.engine,
+        String message = mergeTemplateIntoString(this.engine,
                 "password.was.reset.vm", UTF_8, model);
 
         sendMail(mailSender, mailFrom, email, subject, message);
@@ -209,6 +212,21 @@ public class DefaultMailService implements MailService {
         mailSender.send(helper.getMimeMessage());
     }
 
+    @Override
+    public void sendAccountLockoutEmail( String lockoutEmail, String email, Integer maxFailedLoginAttempts) throws ThingsboardException {
+        String subject = messages.getMessage("account.lockout.subject", null, Locale.US);
+
+        Map<String, Object> model = new HashMap<String, Object>();
+        model.put("lockoutAccount", lockoutEmail);
+        model.put("maxFailedLoginAttempts", maxFailedLoginAttempts);
+        model.put(TARGET_EMAIL, email);
+
+        String message = mergeTemplateIntoString(this.engine,
+                "account.lockout.vm", UTF_8, model);
+
+        sendMail(mailSender, mailFrom, email, subject, message);
+    }
+
     private void sendMail(JavaMailSenderImpl mailSender,
                           String mailFrom, String email,
                           String subject, String message) throws ThingsboardException {
@@ -223,6 +241,22 @@ public class DefaultMailService implements MailService {
         } catch (Exception e) {
             throw handleException(e);
         }
+    }
+
+    private static String mergeTemplateIntoString(VelocityEngine velocityEngine, String templateLocation,
+                                                 String encoding, Map<String, Object> model) throws VelocityException {
+
+        StringWriter result = new StringWriter();
+        mergeTemplate(velocityEngine, templateLocation, encoding, model, result);
+        return result.toString();
+    }
+
+    private static void mergeTemplate(
+            VelocityEngine velocityEngine, String templateLocation, String encoding,
+            Map<String, Object> model, Writer writer) throws VelocityException {
+
+        VelocityContext velocityContext = new VelocityContext(model);
+        velocityEngine.mergeTemplate(templateLocation, encoding, velocityContext, writer);
     }
 
     protected ThingsboardException handleException(Exception exception) {

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2018 The Thingsboard Authors
+    Copyright © 2016-2020 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@
             <md-tab ng-repeat="source in vm.sources" label="{{ source.datasource.name }}">
                 <md-table-container class="flex">
                     <table md-table>
-                        <thead md-head md-order="source.query.order" md-on-reorder="vm.onReorder(source)">
+                        <thead fix-head md-head md-order="source.query.order" md-on-reorder="vm.onReorder(source)">
                             <tr md-row>
                                 <th ng-show="vm.showTimestamp"
                                     md-column md-order-by="0"
@@ -60,13 +60,26 @@
                         </thead>
 
                         <tbody md-body>
-                            <tr md-row ng-repeat="row in source.ts.data track by $index">
+                            <tr md-row ng-repeat="row in source.ts.data track by $index" ng-click="vm.onRowClick($event, row)">
                                 <td ng-show="$index > 0 || ($index === 0 && vm.showTimestamp)"
                                     md-cell
                                     ng-repeat="d in row track by $index"
                                     ng-style="vm.cellStyle(source, $index, d)"
                                     ng-bind-html="vm.cellContent(source, $index, row, d)"
                                 ></td>
+                                <td md-cell class="tb-action-cell"
+                                    ng-style="{minWidth: vm.actionCellDescriptors.length*36+'px',
+                                               maxWidth: vm.actionCellDescriptors.length*36+'px',
+                                               width: vm.actionCellDescriptors.length*36+'px'}">
+                                    <md-button class="md-icon-button" ng-repeat="actionDescriptor in vm.actionCellDescriptors"
+                                               aria-label="{{ actionDescriptor.displayName }}"
+                                               ng-click="vm.onActionButtonClick($event, row, actionDescriptor)" ng-disabled="$root.loading">
+                                       <md-icon aria-label="{{ actionDescriptor.displayName }}" class="material-icons">{{actionDescriptor.icon}}</md-icon>
+                                       <md-tooltip md-direction="top">
+                                           {{ actionDescriptor.displayName }}
+                                       </md-tooltip>
+                                    </md-button>
+                                </td>
                             </tr>
                         </tbody>
                     </table>

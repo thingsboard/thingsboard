@@ -236,7 +236,8 @@
 		"select-asset": "アセットを選択",
 		"no-assets-matching": "'{{entity}}'発見されました。",
 		"asset-required": "資産が必要です",
-		"name-starts-with": "アセット名はで始まります"
+		"name-starts-with": "アセット名はで始まります",
+		"label": "ラベル"
 	},
 	"attribute": {
 		"attributes": "属性",
@@ -288,11 +289,11 @@
 		"type-suspended": "一時停止中",
 		"type-credentials-read": "信用証明書を読む",
 		"type-attributes-read": "読み取られた属性",
-        "type-relation-add-or-update": "関係が更新されました",
-        "type-relation-delete": "関係が削除されました",
-        "type-relations-delete": "すべてのリレーションを削除",
-        "type-alarm-ack": "承認された",
-        "type-alarm-clear": "クリアされた",													  
+		"type-relation-add-or-update": "関係が更新されました",
+		"type-relation-delete": "関係が削除されました",
+		"type-relations-delete": "すべてのリレーションを削除",
+		"type-alarm-ack": "承認された",
+		"type-alarm-clear": "クリアされた",
 		"status-success": "成功",
 		"status-failure": "失敗",
 		"audit-log-details": "監査ログの詳細",
@@ -322,7 +323,7 @@
 	"common": {
 		"username": "ユーザー名",
 		"password": "パスワード",
-        "enter-username": "ユーザーネームを入力してください",
+		"enter-username": "ユーザーネームを入力してください",
 		"enter-password": "パスワードを入力する",
 		"enter-search": "検索を入力"
 	},
@@ -919,7 +920,6 @@
 		"modbus-register-count": "レジスタ数",
 		"modbus-register-count-range": "レジスタ数は正の値でなければなりません。",
 		"modbus-byte-order": "バイト順",
-
 		"sync": {
 			"status": "状態",
 			"sync": "同期",
@@ -927,7 +927,6 @@
 			"last-sync-time": "前回の同期時間",
 			"not-available": "利用不可"
 		},
-
 		"export-extensions-configuration": "エクステンション設定のエクスポート",
 		"import-extensions-configuration": "エクステンション設定のインポート",
 		"import-extensions": "拡張機能のインポート",
@@ -1207,10 +1206,10 @@
 		"tenant-required": "テナントが必要です"
 	},
 	"timeinterval": {
-		"seconds-interval": "{ seconds, select, 1 {1 second} other {# seconds} }",
-		"minutes-interval": "{ minutes, select, 1 {1 minute} other {# minutes} }",
-		"hours-interval": "{ hours, select, 1 {1 hour} other {# hours} }",
-		"days-interval": "{ days, select, 1 {1 day} other {# days} }",
+		"seconds-interval": "{ seconds, plural, 1 {1 second} other {# seconds} }",
+		"minutes-interval": "{ minutes, plural, 1 {1 minute} other {# minutes} }",
+		"hours-interval": "{ hours, plural, 1 {1 hour} other {# hours} }",
+		"days-interval": "{ days, plural, 1 {1 day} other {# days} }",
 		"days": "日々",
 		"hours": "時間",
 		"minutes": "分",
@@ -1218,10 +1217,10 @@
 		"advanced": "上級"
 	},
 	"timewindow": {
-		"days": "{ days, select, 1 { day } other {# days } }",
-		"hours": "{ hours, select, 0 { hour } 1 {1 hour } other {# hours } }",
-		"minutes": "{ minutes, select, 0 { minute } 1 {1 minute } other {# minutes } }",
-		"seconds": "{ seconds, select, 0 { second } 1 {1 second } other {# seconds } }",
+		"days": "{ days, plural, 1 { day } other {# days } }",
+		"hours": "{ hours, plural, 0 { hour } 1 {1 hour } other {# hours } }",
+		"minutes": "{ minutes, plural, 0 { minute } 1 {1 minute } other {# minutes } }",
+		"seconds": "{ seconds, plural, 0 { second } 1 {1 second } other {# seconds } }",
 		"realtime": "リアルタイム",
 		"history": "歴史",
 		"last-prefix": "最終",
@@ -1417,7 +1416,7 @@
 		"action-source-required": "アクションソースが必要です。",
 		"action-name": "名",
 		"action-name-required": "アクション名は必須です。",
-        "action-name-not-unique": "同じ名前の別のアクションがすでに存在します。<br/>アクション名は、同じアクションソース内で一意である必要があります。",
+		"action-name-not-unique": "同じ名前の別のアクションがすでに存在します。<br/>アクション名は、同じアクションソース内で一意である必要があります。",
 		"action-icon": "アイコン",
 		"action-type": "タイプ",
 		"action-type-required": "アクションタイプが必要です。",
@@ -1427,12 +1426,71 @@
 		"delete-action-text": "'{{actionName}}'?"
 	},
 	"widget-type": {
-        "import": "インポートウィジェットタイプ",
+		"import": "インポートウィジェットタイプ",
 		"export": "ウィジェットのタイプをエクスポートする",
 		"export-failed-error": "{{error}}",
 		"create-new-widget-type": "新しいウィジェットタイプを作成する",
 		"widget-type-file": "ウィジェットタイプファイル",
 		"invalid-widget-type-file-error": "ウィジェットタイプをインポートできません：ウィジェットタイプのデータ構造が無効です。"
+	},
+	"widgets": {
+		"date-range-navigator": {
+			"localizationMap": {
+				"Sun": "日",
+				"Mon": "月",
+				"Tue": "火",
+				"Wed": "水",
+				"Thu": "木",
+				"Fri": "金",
+				"Sat": "土",
+				"Jan": "1月",
+				"Feb": "2月",
+				"Mar": "3月",
+				"Apr": "4月",
+				"May": "5月",
+				"Jun": "6月",
+				"Jul": "7月",
+				"Aug": "8月",
+				"Sep": "9月",
+				"Oct": "10月",
+				"Nov": "11月",
+				"Dec": "12月",
+				"January": "1月",
+				"February": "2月",
+				"March": "行進",
+				"April": "4月",
+				"June": "六月",
+				"July": "7月",
+				"August": "8月",
+				"September": "9月",
+				"October": "10月",
+				"November": "11月",
+				"December": "12月",
+				"Custom Date Range": "カスタム期間",
+				"Date Range Template": "日付範囲テンプレート",
+				"Today": "今日",
+				"Yesterday": "昨日",
+				"This Week": "今週",
+				"Last Week": "先週",
+				"This Month": "今月",
+				"Last Month": "先月",
+				"Year": "年",
+				"This Year": "今年",
+				"Last Year": "昨年",
+				"Date picker": "日付ピッカー",
+				"Hour": "時",
+				"Day": "日",
+				"Week": "週間",
+				"2 weeks": "2週間",
+				"Month": "月",
+				"3 months": "3ヶ月",
+				"6 months": "6ヵ月",
+				"Custom interval": "カスタム間隔",
+				"Interval": "間隔",
+				"Step size": "刻み幅",
+				"Ok": "Ok"
+			}
+		}
 	},
 	"icon": {
 		"icon": "アイコン",
@@ -1444,6 +1502,7 @@
 		"widget-action": {
 			"action-cell-button": "アクションセルボタン",
 			"row-click": "行のクリック",
+			"polygon-click": "ポリゴンクリック",
 			"marker-click": "マーカークリック",
 			"tooltip-tag-action": "ツールチップのタグアクション"
 		}
@@ -1451,6 +1510,8 @@
 	"language": {
 		"language": "言語",
 		"locales": {
+			"de_DE": "ドイツ語",
+            "fr_FR": "フランス語",
 			"en_US": "英語",
 			"ko_KR": "韓国語",
 			"it_IT": "イタリアの",
@@ -1458,7 +1519,10 @@
 			"ru_RU": "ロシア",
 			"es_ES": "スペイン語",
 			"ja_JA": "日本語",
-			"tr_TR": "トルコ語"
+			"tr_TR": "トルコ語",
+            "fa_IR": "ペルシャ語",
+            "uk_UA": "ウクライナ語",
+			"cs_CZ": "チェコ語で"            
 		}
 	}
 }

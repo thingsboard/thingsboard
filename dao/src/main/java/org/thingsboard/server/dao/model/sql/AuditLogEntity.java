@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -140,7 +140,7 @@ public class AuditLogEntity extends BaseSqlEntity<AuditLog> implements BaseEntit
             auditLog.setEntityId(EntityIdFactory.getByTypeAndId(entityType.name(), toUUID(entityId).toString()));
         }
         if (userId != null) {
-            auditLog.setUserId(new UserId(toUUID(entityId)));
+            auditLog.setUserId(new UserId(toUUID(userId)));
         }
         auditLog.setEntityName(this.entityName);
         auditLog.setUserName(this.userName);

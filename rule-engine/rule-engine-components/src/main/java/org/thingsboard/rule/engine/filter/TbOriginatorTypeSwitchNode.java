@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import org.thingsboard.server.common.msg.TbMsg;
         type = ComponentType.FILTER,
         name = "originator type switch",
         configClazz = EmptyNodeConfiguration.class,
-        relationTypes = {"Device", "Asset", "Tenant", "Customer", "User", "Dashboard", "Rule chain", "Rule node"},
+        relationTypes = {"Device", "Asset", "Entity View", "Tenant", "Customer", "User", "Dashboard", "Rule chain", "Rule node"},
         nodeDescription = "Route incoming messages by Message Originator Type",
         nodeDetails = "Routes messages to chain according to the originator type ('Device', 'Asset', etc.).",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
@@ -63,6 +63,9 @@ public class TbOriginatorTypeSwitchNode implements TbNode {
                 break;
             case DEVICE:
                 relationType = "Device";
+                break;
+            case ENTITY_VIEW:
+                relationType = "Entity View";
                 break;
             case RULE_CHAIN:
                 relationType = "Rule chain";

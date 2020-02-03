@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2018 The Thingsboard Authors
+# Copyright © 2016-2020 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,9 +23,12 @@ services:
     image: "zookeeper:3.5"
     ports:
       - "2181"
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_SERVERS: server.1=zookeeper:2888:3888;zookeeper:2181
   kafka:
     restart: always
-    image: "wurstmeister/kafka"
+    image: "wurstmeister/kafka:2.12-2.2.1"
     ports:
       - "9092:9092"
     env_file:
@@ -33,6 +36,7 @@ services:
     depends_on:
       - zookeeper
   redis:
+    restart: always
     image: redis:4.0
     ports:
       - "6379"

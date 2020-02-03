@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,4 +22,6 @@ public class CacheConstants {
     public static final String SESSIONS_CACHE = "sessions";
     public static final String ASSET_CACHE = "assets";
     public static final String ENTITY_VIEW_CACHE = "entityViews";
+    public static final String CLAIM_DEVICES_CACHE = "claimDevices";
+    public static final String SECURITY_SETTINGS_CACHE = "securitySettings";
 }

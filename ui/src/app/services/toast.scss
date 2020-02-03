@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 md-toast.tb-info-toast .md-toast-content {
   height: 100%;
+  max-height: 100%;
   padding: 18px;
   font-size: 18px;
 }
 
 md-toast.tb-success-toast .md-toast-content {
   height: 100%;
+  max-height: 100%;
   font-size: 18px !important;
   background-color: #008000;
 }
 
 md-toast.tb-error-toast .md-toast-content {
   height: 100%;
+  max-height: 100%;
   font-size: 18px !important;
   background-color: #800000;
 }

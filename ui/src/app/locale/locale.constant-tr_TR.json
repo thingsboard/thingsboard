@@ -236,7 +236,8 @@
         "select-asset": "Varlık seç",
         "no-assets-matching": "'{{entity}}' isimli varlık bulunamadı.",
         "asset-required": "Varlık gerekli",
-        "name-starts-with": "... ile başlayan varlık adı"
+        "name-starts-with": "... ile başlayan varlık adı",
+        "label": "Etiket"
     },
     "attribute": {
         "attributes": "Öznitelikler",
@@ -1175,7 +1176,7 @@
         "delete-rulechains-action-title": "{ count, plural, 1 {1 kuralı} other {# kuralı} } sil",
         "delete-rulechains-text": "UYARI: Onaylandıktan sonra seçili tüm kurallar ve ilişkili tüm veriler geri yüklenemez şekilde silinecektir.",
         "add-rulechain-text": "Yeni kural ekle",
-        "no-rulechains-text":"Hiçbir kural bulunamadı",
+        "no-rulechains-text": "Hiçbir kural bulunamadı",
         "rulechain-details": "Kural detayları",
         "details": "Detaylar",
         "events": "Olaylar",
@@ -1285,10 +1286,10 @@
         "tenant-required": "Tenant gerekli"
     },
     "timeinterval": {
-        "seconds-interval": "{ seconds, select, 1 {1 saniye} other {# saniye} }",
-        "minutes-interval": "{ minutes, select, 1 {1 dakika} other {# dakika} }",
-        "hours-interval": "{ hours, select, 1 {1 saat} other {# saat} }",
-        "days-interval": "{ days, select, 1 {1 gün} other {# gün} }",
+        "seconds-interval": "{ seconds, plural, 1 {1 saniye} other {# saniye} }",
+        "minutes-interval": "{ minutes, plural, 1 {1 dakika} other {# dakika} }",
+        "hours-interval": "{ hours, plural, 1 {1 saat} other {# saat} }",
+        "days-interval": "{ days, plural, 1 {1 gün} other {# gün} }",
         "days": "Gün",
         "hours": "Saat",
         "minutes": "Dakika",
@@ -1296,10 +1297,10 @@
         "advanced": "İleri düzey"
     },
     "timewindow": {
-        "days": "{ days, select, 1 { gün } other {# gün } }",
-        "hours": "{ hours, select, 0 { saat } 1 {1 saat } other {# saat } }",
-        "minutes": "{ minutes, select, 0 { dakika } 1 {1 dakika } other {# dakika } }",
-        "seconds": "{ seconds, select, 0 { saniye } 1 {1 saniye } other {# saniye } }",
+        "days": "{ days, plural, 1 { gün } other {# gün } }",
+        "hours": "{ hours, plural, 0 { saat } 1 {1 saat } other {# saat } }",
+        "minutes": "{ minutes, plural, 0 { dakika } 1 {1 dakika } other {# dakika } }",
+        "seconds": "{ seconds, plural, 0 { saniye } 1 {1 saniye } other {# saniye } }",
         "realtime": "Gerçek zaman",
         "history": "Tarih",
         "last-prefix": "son",
@@ -1514,6 +1515,65 @@
         "widget-type-file": "Gösterge türü dosyası",
         "invalid-widget-type-file-error": "Gösterge türü içe aktarılamadı: Geçersiz gösterge türü veri yapısı."
     },
+    "widgets": {
+        "date-range-navigator": {
+            "localizationMap": {
+                "Sun": "Paz",
+                "Mon": "Pzt",
+                "Tue": "Sal",
+                "Wed": "Çar",
+                "Thu": "Per",
+                "Fri": "Cum",
+                "Sat": "Cmt",
+                "Jan": "Oca",
+                "Feb": "Şub",
+                "Mar": "Mar",
+                "Apr": "Nis",
+                "May": "May",
+                "Jun": "Haz",
+                "Jul": "Tem",
+                "Aug": "Ağu",
+                "Sep": "Eyl",
+                "Oct": "Eki",
+                "Nov": "Kas",
+                "Dec": "Ara",
+                "January": "Ocak",
+                "February": "Şubat",
+                "March": "Mart",
+                "April": "Nisan",
+                "June": "Haziran",
+                "July": "Temmuz",
+                "August": "Ağustos",
+                "September": "Eylül",
+                "October": "Ekim",
+                "November": "Kasım",
+                "December": "Aralık",
+                "Custom Date Range": "Özel Tarih Aralığı",
+                "Date Range Template": "Tarih Aralığı Şablonu",
+                "Today": "Bugün",
+                "Yesterday": "Dün",
+                "This Week": "Bu hafta",
+                "Last Week": "Geçen hafta",
+                "This Month": "Bu ay",
+                "Last Month": "Geçen ay",
+                "Year": "Yıl",
+                "This Year": "Bu yıl",
+                "Last Year": "Geçen yıl",
+                "Date picker": "Tarih seçici",
+                "Hour": "Saat",
+                "Day": "Gün",
+                "Week": "Hafta",
+                "2 weeks": "2 Hafta",
+                "Month": "Ay",
+                "3 months": "3 Ay",
+                "6 months": "6 Ay",
+                "Custom interval": "Özel aralık",
+                "Interval": "Aralık",
+                "Step size": "Adım boyutu",
+                "Ok": "Ok"
+            }
+        }
+    },
     "icon": {
         "icon": "İkon",
         "select-icon": "İkon seç",
@@ -1524,13 +1584,15 @@
         "widget-action": {
             "action-cell-button": "Eylem hücre butonu",
             "row-click": "Satır tıklama eylemi",
-            "marker-click": "İşaretçi tıklama eylemi",
+            "polygon-click": "Satır tıklama eylemi",
+            "marker-click": "Çokgen tıklama eylemi",
             "tooltip-tag-action": "İpucu etiket eylemi"
         }
     },
     "language": {
         "language": "Dil",
         "locales": {
+            "de_DE": "Almanca",
             "fr_FR": "Fransızca",
             "zh_CN": "Çince",
             "en_US": "İngilizce",
@@ -1539,7 +1601,12 @@
             "ru_RU": "Rusça",
             "es_ES": "İspanyol",
             "ja_JA": "Japonca",
-            "tr_TR": "Türkçe"
+            "tr_TR": "Türkçe",
+            "fa_IR": "Farsça",
+            "uk_UA": "Ukrayna",
+            "cs_CZ": "Çekçe",
+            "el_GR": "Yunanca",
+            "lv_LV": "Letonca"
         }
     }
 }

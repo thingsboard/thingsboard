@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,10 @@
 /* eslint-disable */
 
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const CompressionPlugin = require('compression-webpack-plugin');
+
 const webpack = require('webpack');
 const path = require('path');
 const dirTree = require('directory-tree');
@@ -34,7 +35,7 @@ dirTree('./src/app/locale/', {extensions:/\.json$/}, (item) => {
 });
 
 module.exports = {
-    devtool: 'source-map',
+    mode: 'production',
     entry: [
         './src/app/app.js',
         'webpack-material-design-icons'
@@ -43,6 +44,7 @@ module.exports = {
         path: path.resolve(__dirname, 'target/generated-resources/public/static'),
         publicPath: PUBLIC_RESOURCE_PATH,
         filename: 'bundle.[hash].js',
+        pathinfo: false
     },
     plugins: [
         new webpack.ProvidePlugin({
@@ -73,26 +75,19 @@ module.exports = {
             title: 'ThingsBoard',
             inject: 'body',
         }),
-        new webpack.optimize.OccurrenceOrderPlugin(),
-        new webpack.NoErrorsPlugin(),
-        new webpack.optimize.DedupePlugin(),
-        new webpack.optimize.CommonsChunkPlugin('vendor', 'vendor.[hash].js'),
-        new ExtractTextPlugin('style.[contentHash].css', {
-            allChunks: true,
+        new MiniCssExtractPlugin({
+            filename: 'style.[contentHash].css'
         }),
         new webpack.DefinePlugin({
             THINGSBOARD_VERSION: JSON.stringify(require('./package.json').version),
             '__DEVTOOLS__': false,
-            'process.env': {
-                NODE_ENV: JSON.stringify('production'),
-            },
             PUBLIC_PATH: PUBLIC_RESOURCE_PATH,
             SUPPORTED_LANGS: JSON.stringify(langs)
         }),
         new CompressionPlugin({
-            asset: "[path].gz[query]",
+            filename: "[path].gz[query]",
             algorithm: "gzip",
-            test: /\.js$|\.css$|\.svg$|\.ttf$|\.woff$|\.woff2|\.eot$\.json$/,
+            test: /\.js$|\.css$|\.svg$|\.ttf$|\.woff$|\.woff2$|\.eot$|\.json$/,
             threshold: 10240,
             minRatio: 0.8
         })
@@ -102,59 +97,131 @@ module.exports = {
         fs: "empty"
     },
     module: {
-        loaders: [
+        rules: [
             {
                 test: /\.jsx$/,
-                loader: 'babel',
+                use: [
+                    {
+                        loader: 'babel-loader',
+                        options: {
+                            cacheDirectory: true
+                        }
+                    }
+                ],
                 exclude: /node_modules/,
                 include: __dirname,
             },
             {
                 test: /\.js$/,
-                loaders: ['ng-annotate', 'babel'],
+                use: [
+                    {
+                        loader: 'ng-annotate-loader',
+                        options: {
+                            ngAnnotate: 'ng-annotate-patched',
+                            es6: true,
+                            explicitOnly: false
+                        }
+                    },
+                    {
+                        loader: 'babel-loader',
+                        options: {
+                            cacheDirectory: true
+                        }
+                    }
+                ],
                 exclude: /node_modules/,
                 include: __dirname,
             },
             {
                 test: /\.js$/,
-                loader: "eslint-loader?{parser: 'babel-eslint'}",
+                use: [
+                    {
+                        loader: 'eslint-loader',
+                        options: {
+                            parser: 'babel-eslint'
+                        }
+                    }
+                ],
                 exclude: /node_modules|vendor/,
                 include: __dirname,
             },
             {
                 test: /\.css$/,
-                loader: ExtractTextPlugin.extract('style-loader', 'css-loader'),
+                use: [
+                    MiniCssExtractPlugin.loader,
+                    'css-loader'
+                ]
             },
             {
                 test: /\.scss$/,
-                loader: ExtractTextPlugin.extract('style-loader', 'css-loader!postcss-loader!sass-loader'),
+                use: [
+                    MiniCssExtractPlugin.loader,
+                    'css-loader',
+                    'postcss-loader',
+                    'sass-loader'
+                ]
             },
             {
                 test: /\.less$/,
-                loader: ExtractTextPlugin.extract('style-loader', 'css-loader!postcss-loader!less-loader'),
+                use: [
+                    MiniCssExtractPlugin.loader,
+                    'css-loader',
+                    'postcss-loader',
+                    'less-loader'
+                ]
             },
             {
                 test: /\.tpl\.html$/,
-                loader: 'ngtemplate?relativeTo=' + (path.resolve(__dirname, './src/app')) + '/!html!html-minifier-loader'
+                use: [
+                    {
+                        loader: 'ngtemplate-loader',
+                        options: {
+                            relativeTo: path.resolve(__dirname, './src/app')
+                        }
+                    },
+                    {
+                        loader: 'html-loader'
+                    },
+                    {
+                        loader: 'html-minifier-loader',
+                        options: {
+                            caseSensitive: true,
+                            removeComments: true,
+                            collapseWhitespace: false,
+                            preventAttributesEscaping: true,
+                            removeEmptyAttributes: false
+                        }
+                    }
+                ]
             },
             {
                 test: /\.(svg)(\?v=[0-9]+\.[0-9]+\.[0-9]+)?$/,
-                loader: 'url?limit=8192'
+                use: [
+                    {
+                        loader: 'url-loader',
+                        options: {
+                            limit: 8192
+                        }
+                    }
+                ]
             },
             {
                 test: /\.(png|jpe?g|gif|woff|woff2|ttf|otf|eot|ico)(\?v=[0-9]+\.[0-9]+\.[0-9]+)?$/,
-                loaders: [
-                    'url?limit=8192',
-                    'img?minimize'
+                use: [
+                    {
+                        loader: 'url-loader',
+                        options: {
+                            limit: 8192
+                        }
+                    },
+                    {
+                        loader: 'img-loader',
+                        options: {
+                            minimize: true
+                        }
+                    }
                 ]
             }
         ],
-    },
-    'html-minifier-loader': {
-        caseSensitive: true,
-        removeComments: true,
-        collapseWhitespace: false,
-        preventAttributesEscaping: true,
-        removeEmptyAttributes: false
     }
 };

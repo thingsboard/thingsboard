@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,22 @@ package org.thingsboard.rule.engine.action;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.rule.engine.api.*;
+import org.thingsboard.rule.engine.api.ScriptEngine;
+import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
+import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
-import static org.thingsboard.rule.engine.api.util.DonAsynchron.withCallback;
+import javax.script.ScriptException;
+
+import static org.thingsboard.common.util.DonAsynchron.withCallback;
+
 
 @Slf4j
 public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfiguration> implements TbNode {
@@ -56,27 +64,31 @@ public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfigura
                         ctx.tellNext(msg, "False");
                     } else if (alarmResult.isCreated) {
                         ctx.tellNext(toAlarmMsg(ctx, alarmResult, msg), "Created");
+                        ctx.sendTbMsgToRuleEngine(ctx.alarmCreatedMsg(alarmResult.alarm, ctx.getSelfId()));
                     } else if (alarmResult.isUpdated) {
                         ctx.tellNext(toAlarmMsg(ctx, alarmResult, msg), "Updated");
                     } else if (alarmResult.isCleared) {
                         ctx.tellNext(toAlarmMsg(ctx, alarmResult, msg), "Cleared");
                     }
                 },
-                t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
+                t -> ctx.tellFailure(msg, t)
+                , ctx.getDbCallbackExecutor());
     }
 
     protected abstract ListenableFuture<AlarmResult> processAlarm(TbContext ctx, TbMsg msg);
 
     protected ListenableFuture<JsonNode> buildAlarmDetails(TbContext ctx, TbMsg msg, JsonNode previousDetails) {
-        return ctx.getJsExecutor().executeAsync(() -> {
+        try {
             TbMsg dummyMsg = msg;
             if (previousDetails != null) {
                 TbMsgMetaData metaData = msg.getMetaData().copy();
                 metaData.putValue(PREV_ALARM_DETAILS, mapper.writeValueAsString(previousDetails));
                 dummyMsg = ctx.transformMsg(msg, msg.getType(), msg.getOriginator(), metaData, msg.getData());
             }
-            return buildDetailsJsEngine.executeJson(dummyMsg);
-        });
+            return buildDetailsJsEngine.executeJsonAsync(dummyMsg);
+        } catch (Exception e) {
+            return Futures.immediateFailedFuture(e);
+        }
     }
 
     private TbMsg toAlarmMsg(TbContext ctx, AlarmResult alarmResult, TbMsg originalMsg) {

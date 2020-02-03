@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public class EntitiesRelatedEntityIdAsyncLoader {
     private static EntityRelationsQuery buildQuery(EntityId originator, RelationsQuery relationsQuery) {
         EntityRelationsQuery query = new EntityRelationsQuery();
         RelationsSearchParameters parameters = new RelationsSearchParameters(originator,
-                relationsQuery.getDirection(), relationsQuery.getMaxLevel());
+                relationsQuery.getDirection(), relationsQuery.getMaxLevel(), relationsQuery.isFetchLastLevelOnly());
         query.setParameters(parameters);
         query.setFilters(relationsQuery.getFilters());
         return query;

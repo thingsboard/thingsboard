@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ export default function GlobalInterceptor($rootScope, $q, $injector) {
     var userService;
     var types;
     var http;
+    var timeout;
 
     var internalUrlPrefixes = [
         '/api/auth/token',
@@ -69,6 +70,13 @@ export default function GlobalInterceptor($rootScope, $q, $injector) {
             http = $injector.get("$http");
         }
         return http;
+    }
+
+    function getTimeout() {
+        if (!timeout) {
+            timeout = $injector.get("$timeout");
+        }
+        return timeout;
     }
 
     function rejectionErrorCode(rejection) {
@@ -144,22 +152,34 @@ export default function GlobalInterceptor($rootScope, $q, $injector) {
         return response;
     }
 
+    function retryRequest (httpConfig) {
+        var thisTimeout =  1000 + Math.random() * 3000;
+        return getTimeout()(function() {
+            return getHttp()(httpConfig);
+        }, thisTimeout);
+    }
+
     function responseError(rejection) {
         if (rejection.config.url.startsWith('/api/')) {
             updateLoadingState(rejection.config, false);
         }
         var unhandled = false;
         var ignoreErrors = rejection.config.ignoreErrors;
+        var resendRequest = rejection.config.resendRequest;
         if (rejection.refreshTokenPending || rejection.status === 401) {
             var errorCode = rejectionErrorCode(rejection);
             if (rejection.refreshTokenPending || (errorCode && errorCode === getTypes().serverErrorCode.jwtTokenExpired)) {
                 return refreshTokenAndRetry(rejection);
-            } else {
+            } else if (errorCode !== getTypes().serverErrorCode.credentialsExpired) {
                 unhandled = true;
             }
         } else if (rejection.status === 403) {
             if (!ignoreErrors) {
                 $rootScope.$broadcast('forbidden');
+            }
+        } else if (rejection.status === 429) {
+            if (resendRequest) {
+                return retryRequest(rejection.config);
             }
         } else if (rejection.status === 0 || rejection.status === -1) {
             getToast().showError(getTranslate().instant('error.unable-to-connect'));

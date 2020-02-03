@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import thingsboardConfirmOnExit from '../components/confirm-on-exit.directive';
 import thingsboardDashboard from '../components/dashboard.directive';
 import thingsboardExpandFullscreen from '../components/expand-fullscreen.directive';
 import thingsboardCircularProgress from '../components/circular-progress.directive';
+import thingsboardMdChipDraggable from '../components/md-chip-draggable.directive';
 
 import WidgetLibraryRoutes from './widget-library.routes';
 import WidgetLibraryController from './widget-library.controller';
@@ -46,6 +47,7 @@ export default angular.module('thingsboard.widget-library', [
     thingsboardDashboard,
     thingsboardExpandFullscreen,
     thingsboardCircularProgress,
+    thingsboardMdChipDraggable,
     'cfp.hotkeys',
     'ui.ace'
 ])

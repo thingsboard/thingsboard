@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import './rulechain.scss';
 
 import 'tooltipster/dist/css/tooltipster.bundle.min.css';
@@ -108,6 +107,9 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
 
     vm.objectsSelected = objectsSelected;
     vm.deleteSelected = deleteSelected;
+
+    vm.isDebugModeEnabled = isDebugModeEnabled;
+    vm.resetDebugModeInAllNodes = resetDebugModeInAllNodes;
 
     vm.triggerResize = triggerResize;
 
@@ -1341,6 +1343,19 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
 
     function deleteSelected() {
         vm.modelservice.deleteSelected();
+    }
+
+    function isDebugModeEnabled() {
+        var res = $filter('filter')(vm.ruleChainModel.nodes, {debugMode: true});
+        return (res && res.length);
+    }
+
+    function resetDebugModeInAllNodes() {
+        vm.ruleChainModel.nodes.forEach((node) => {
+            if (node.component.type != types.ruleNodeType.INPUT.value && node.component.type != types.ruleNodeType.RULE_CHAIN.value) {
+                node.debugMode = false;
+            }
+        });
     }
 
     function triggerResize() {

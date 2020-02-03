@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,12 @@ import thingsboardApiUser from '../api/user.service';
 import thingsboardNoAnimate from '../components/no-animate.directive';
 import thingsboardOnFinishRender from '../components/finish-render.directive';
 import thingsboardSideMenu from '../components/side-menu.directive';
+import thingsboardNavTree from '../components/nav-tree.directive';
 import thingsboardDashboardAutocomplete from '../components/dashboard-autocomplete.directive';
 import thingsboardKvMap from '../components/kv-map.directive';
+import thingsboardGatewayConfig from '../components/gateWay/gateway-config.directive';
+import thingsboardGatewayConfigSelect from '../components/gateWay/gateway-config-select.directive';
+import thingsboardGatewayForm from '../components/gateWay/gateway-form.directive';
 import thingsboardJsonObjectEdit from '../components/json-object-edit.directive';
 import thingsboardJsonContent from '../components/json-content.directive';
 
@@ -89,8 +93,12 @@ export default angular.module('thingsboard.home', [
     thingsboardNoAnimate,
     thingsboardOnFinishRender,
     thingsboardSideMenu,
+    thingsboardNavTree,
     thingsboardDashboardAutocomplete,
     thingsboardKvMap,
+    thingsboardGatewayConfig,
+    thingsboardGatewayConfigSelect,
+    thingsboardGatewayForm,
     thingsboardJsonObjectEdit,
     thingsboardJsonContent
 ])

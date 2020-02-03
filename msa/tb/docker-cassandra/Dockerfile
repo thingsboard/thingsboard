@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2018 The Thingsboard Authors
+# Copyright © 2016-2020 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM openjdk:8-jdk
+FROM thingsboard/openjdk8
 
 RUN apt-get update
 RUN apt-get install -y curl nmap procps
@@ -36,7 +36,7 @@ RUN chmod a+x /tmp/*.sh \
 
 RUN dpkg -i /tmp/${pkg.name}.deb
 
-RUN update-rc.d ${pkg.name} disable
+RUN systemctl --no-reload disable --now ${pkg.name}.service > /dev/null 2>&1 || :
 
 RUN mv /tmp/logback.xml ${pkg.installFolder}/conf \
     && mv /tmp/${pkg.name}.conf ${pkg.installFolder}/conf

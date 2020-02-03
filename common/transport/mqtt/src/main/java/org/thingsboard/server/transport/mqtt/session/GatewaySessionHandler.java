@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
@@ -172,13 +173,53 @@ public class GatewaySessionHandler {
                                 if (!deviceEntry.getValue().isJsonArray()) {
                                     throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
                                 }
-                                TransportProtos.PostTelemetryMsg postTelemetryMsg = JsonConverter.convertToTelemetryProto(deviceEntry.getValue().getAsJsonArray());
-                                transportService.process(deviceCtx.getSessionInfo(), postTelemetryMsg, getPubAckCallback(channel, deviceName, msgId, postTelemetryMsg));
+                                try {
+                                    TransportProtos.PostTelemetryMsg postTelemetryMsg = JsonConverter.convertToTelemetryProto(deviceEntry.getValue().getAsJsonArray());
+                                    transportService.process(deviceCtx.getSessionInfo(), postTelemetryMsg, getPubAckCallback(channel, deviceName, msgId, postTelemetryMsg));
+                                } catch (Throwable e) {
+                                    UUID gatewayId = new UUID(gateway.getDeviceIdMSB(), gateway.getDeviceIdLSB());
+                                    log.warn("[{}][{}] Failed to convert telemetry: {}", gatewayId, deviceName, deviceEntry.getValue(), e);
+                                }
                             }
 
                             @Override
                             public void onFailure(Throwable t) {
-                                log.debug("[{}] Failed to process device teleemtry command: {}", sessionId, deviceName, t);
+                                log.debug("[{}] Failed to process device telemetry command: {}", sessionId, deviceName, t);
+                            }
+                        }, context.getExecutor());
+            }
+        } else {
+            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
+        }
+    }
+
+    public void onDeviceClaim(MqttPublishMessage mqttMsg) throws AdaptorException {
+        JsonElement json = JsonMqttAdaptor.validateJsonPayload(sessionId, mqttMsg.payload());
+        int msgId = mqttMsg.variableHeader().packetId();
+        if (json.isJsonObject()) {
+            JsonObject jsonObj = json.getAsJsonObject();
+            for (Map.Entry<String, JsonElement> deviceEntry : jsonObj.entrySet()) {
+                String deviceName = deviceEntry.getKey();
+                Futures.addCallback(checkDeviceConnected(deviceName),
+                        new FutureCallback<GatewayDeviceSessionCtx>() {
+                            @Override
+                            public void onSuccess(@Nullable GatewayDeviceSessionCtx deviceCtx) {
+                                if (!deviceEntry.getValue().isJsonObject()) {
+                                    throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
+                                }
+                                try {
+                                    DeviceId deviceId = deviceCtx.getDeviceId();
+                                    TransportProtos.ClaimDeviceMsg claimDeviceMsg = JsonConverter.convertToClaimDeviceProto(deviceId, deviceEntry.getValue());
+                                    transportService.process(deviceCtx.getSessionInfo(), claimDeviceMsg, getPubAckCallback(channel, deviceName, msgId, claimDeviceMsg));
+                                } catch (Throwable e) {
+                                    UUID gatewayId = new UUID(gateway.getDeviceIdMSB(), gateway.getDeviceIdLSB());
+                                    log.warn("[{}][{}] Failed to convert claim message: {}", gatewayId, deviceName, deviceEntry.getValue(), e);
+                                }
+                            }
+
+                            @Override
+                            public void onFailure(Throwable t) {
+                                log.debug("[{}] Failed to process device claiming command: {}", sessionId, deviceName, t);
                             }
                         }, context.getExecutor());
             }
@@ -279,10 +320,10 @@ public class GatewaySessionHandler {
 
                         @Override
                         public void onFailure(Throwable t) {
+                            ack(msg);
                             log.debug("[{}] Failed to process device attributes request command: {}", sessionId, deviceName, t);
                         }
                     }, context.getExecutor());
-            ack(msg);
         } else {
             throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
         }

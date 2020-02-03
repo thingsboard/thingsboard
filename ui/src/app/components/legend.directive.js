@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,8 +43,12 @@ function Legend($compile, $templateCache, types) {
         scope.isHorizontal = scope.legendConfig.position === types.position.bottom.value ||
             scope.legendConfig.position === types.position.top.value;
 
+        scope.isRowDirection = scope.legendConfig.direction === types.direction.row.value;
+
         scope.toggleHideData = function(index) {
-            scope.legendData.keys[index].dataKey.hidden = !scope.legendData.keys[index].dataKey.hidden;
+            if (!scope.legendData.keys[index].dataKey.settings.disableDataHiding) {
+                scope.legendData.keys[index].dataKey.hidden = !scope.legendData.keys[index].dataKey.hidden;
+            }
         }
 
         $compile(element.contents())(scope);

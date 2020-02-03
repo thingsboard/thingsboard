@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,7 +88,11 @@ function DatasourceFunc($compile, $templateCache, $mdDialog, $window, $document,
                 var dataKeys = [];
                 dataKeys = dataKeys.concat(scope.funcDataKeys);
                 dataKeys = dataKeys.concat(scope.alarmDataKeys);
-                ngModelCtrl.$viewValue.dataKeys = dataKeys;
+                if (ngModelCtrl.$viewValue.dataKeys != dataKeys)
+                {
+                   ngModelCtrl.$setDirty();
+                   ngModelCtrl.$viewValue.dataKeys = dataKeys;
+                }
                 scope.updateValidity();
             }
         }
@@ -158,7 +162,7 @@ function DatasourceFunc($compile, $templateCache, $mdDialog, $window, $document,
             });
         }
 
-        scope.editDataKey = function (event, dataKey, index) {
+        scope.editDataKey = function (event, dataKey) {
 
             $mdDialog.show({
                 controller: 'DatakeyConfigDialogController',
@@ -178,11 +182,13 @@ function DatasourceFunc($compile, $templateCache, $mdDialog, $window, $document,
                     var w = angular.element($window);
                     w.triggerHandler('resize');
                 }
-            }).then(function (dataKey) {
-                if (dataKey.type === types.dataKeyType.function) {
-                    scope.funcDataKeys[index] = dataKey;
-                } else if (dataKey.type === types.dataKeyType.alarm) {
-                    scope.alarmDataKeys[index] = dataKey;
+            }).then(function (newDataKey) {
+                if (newDataKey.type === types.dataKeyType.function) {
+                    let index = scope.funcDataKeys.indexOf(dataKey);
+                    scope.funcDataKeys[index] = newDataKey;
+                } else if (newDataKey.type === types.dataKeyType.alarm) {
+                    let index = scope.alarmDataKeys.indexOf(dataKey);
+                    scope.alarmDataKeys[index] = newDataKey;
                 }
                 ngModelCtrl.$setDirty();
             }, function () {

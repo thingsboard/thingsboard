@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, time
         currentUserDetails = null,
         lastPublicDashboardId = null,
         allowedDashboardIds = [],
+        redirectParams = null,
         userTokenAccessEnabled = false,
         userLoaded = false;
 
@@ -56,13 +57,15 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, time
         refreshTokenPending: refreshTokenPending,
         updateAuthorizationHeader: updateAuthorizationHeader,
         setAuthorizationRequestHeader: setAuthorizationRequestHeader,
+        setRedirectParams: setRedirectParams,
         gotoDefaultPlace: gotoDefaultPlace,
         forceDefaultPlace: forceDefaultPlace,
         updateLastPublicDashboardId: updateLastPublicDashboardId,
         logout: logout,
         reloadUser: reloadUser,
         isUserTokenAccessEnabled: isUserTokenAccessEnabled,
-        loginAsUser: loginAsUser
+        loginAsUser: loginAsUser,
+        setUserCredentialsEnabled: setUserCredentialsEnabled
     }
 
     reloadUser();
@@ -139,7 +142,11 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, time
     }
 
     function logout() {
-        clearJwtToken(true);
+        $http.post('/api/auth/logout', null, {ignoreErrors: true}).then(function success() {
+            clearJwtToken(true);
+        }, function fail() {
+            clearJwtToken(true);
+        });
     }
 
     function clearJwtToken(doLogout) {
@@ -360,6 +367,25 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, time
                     $location.search('publicId', null);
                     deferred.reject();
                 });
+            } else if (locationSearch.accessToken) {
+                var token = locationSearch.accessToken;
+                var refreshToken = locationSearch.refreshToken;
+                $location.search('accessToken', null);
+                if (refreshToken) {
+                    $location.search('refreshToken', null);
+                }
+                try {
+                    updateAndValidateToken(token, 'jwt_token', false);
+                    if (refreshToken) {
+                        updateAndValidateToken(refreshToken, 'refresh_token', false);
+                    } else {
+                        store.remove('refresh_token');
+                        store.remove('refresh_token_expiration');
+                    }
+                } catch (e) {
+                    deferred.reject();
+                }
+                procceedJwtTokenValidate();
             } else {
                 procceedJwtTokenValidate();
             }
@@ -471,6 +497,20 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, time
         return deferred.promise;
     }
 
+    function setUserCredentialsEnabled(userId, userCredentialsEnabled) {
+        var deferred = $q.defer();
+        var url = '/api/user/' + userId + '/userCredentialsEnabled';
+        if (angular.isDefined(userCredentialsEnabled)) {
+            url += '?userCredentialsEnabled=' + userCredentialsEnabled;
+        }
+        $http.post(url, null).then(function success() {
+            deferred.resolve();
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
     function getUser(userId, ignoreErrors, config) {
         var deferred = $q.defer();
         var url = '/api/user/' + userId;
@@ -541,9 +581,15 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, time
         return false;
     }
 
+    function setRedirectParams(params) {
+        redirectParams = params;
+    }
+
     function gotoDefaultPlace(params) {
         if (currentUser && isAuthenticated()) {
-            var place = 'home.links';
+            var place = redirectParams ? redirectParams.toName : 'home.links';
+            params = redirectParams ? redirectParams.params : params;
+            redirectParams = null;
             if (currentUser.authority === 'TENANT_ADMIN' || currentUser.authority === 'CUSTOMER_USER') {
                 if (userHasDefaultDashboard()) {
                     place = $rootScope.forceFullscreen ? 'dashboard' : 'home.dashboards.dashboard';

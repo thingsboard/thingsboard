@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.RpcError;
 import org.thingsboard.rule.engine.api.msg.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -38,6 +40,7 @@ import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.core.ToServerRpcResponseMsg;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
+import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
 import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
 import org.thingsboard.server.service.cluster.rpc.ClusterRpcService;
@@ -68,6 +71,9 @@ public class DefaultDeviceRpcService implements DeviceRpcService {
     private ClusterRpcService rpcService;
 
     @Autowired
+    private DeviceService deviceService;
+
+    @Autowired
     @Lazy
     private ActorService actorService;
 
@@ -78,7 +84,7 @@ public class DefaultDeviceRpcService implements DeviceRpcService {
 
     @PostConstruct
     public void initExecutor() {
-        rpcCallBackExecutor = Executors.newSingleThreadScheduledExecutor();
+        rpcCallBackExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("rpc-callback"));
     }
 
     @PreDestroy
@@ -170,6 +176,12 @@ public class DefaultDeviceRpcService implements DeviceRpcService {
         metaData.putValue("originPort", Integer.toString(routingService.getCurrentServer().getPort()));
         metaData.putValue("expirationTime", Long.toString(msg.getExpirationTime()));
         metaData.putValue("oneway", Boolean.toString(msg.isOneway()));
+
+        Device device = deviceService.findDeviceById(msg.getTenantId(), msg.getDeviceId());
+        if (device != null) {
+            metaData.putValue("deviceName", device.getName());
+            metaData.putValue("deviceType", device.getType());
+        }
 
         entityNode.put("method", msg.getBody().getMethod());
         entityNode.put("params", msg.getBody().getParams());

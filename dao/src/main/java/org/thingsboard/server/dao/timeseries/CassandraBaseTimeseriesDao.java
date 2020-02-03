@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,7 @@ import javax.annotation.PreDestroy;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -93,7 +94,10 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
     @Value("${cassandra.query.ts_key_value_ttl}")
     private long systemTtl;
 
-    private TsPartitionDate tsFormat;
+    @Value("${cassandra.query.set_null_values_enabled}")
+    private boolean setNullValuesEnabled;
+
+    private NoSqlTsPartitionDate tsFormat;
 
     private PreparedStatement partitionInsertStmt;
     private PreparedStatement partitionInsertTtlStmt;
@@ -116,7 +120,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
         super.startExecutor();
         if (!isInstall()) {
             getFetchStmt(Aggregation.NONE, DESC_ORDER);
-            Optional<TsPartitionDate> partition = TsPartitionDate.parse(partitioning);
+            Optional<NoSqlTsPartitionDate> partition = NoSqlTsPartitionDate.parse(partitioning);
             if (partition.isPresent()) {
                 tsFormat = partition.get();
             } else {
@@ -175,7 +179,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
     }
 
     public boolean isFixedPartitioning() {
-        return tsFormat.getTruncateUnit().equals(TsPartitionDate.EPOCH_START);
+        return tsFormat.getTruncateUnit().equals(ChronoUnit.FOREVER);
     }
 
     private ListenableFuture<List<Long>> getPartitionsFuture(TenantId tenantId, ReadTsKvQuery query, EntityId entityId, long minPartition, long maxPartition) {
@@ -306,9 +310,13 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
 
     @Override
     public ListenableFuture<Void> save(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry, long ttl) {
+        List<ListenableFuture<Void>> futures = new ArrayList<>();
         ttl = computeTtl(ttl);
         long partition = toPartitionTs(tsKvEntry.getTs());
         DataType type = tsKvEntry.getDataType();
+        if (setNullValuesEnabled) {
+            processSetNullValues(tenantId, entityId, tsKvEntry, ttl, futures, partition, type);
+        }
         BoundStatement stmt = (ttl == 0 ? getSaveStmt(type) : getSaveTtlStmt(type)).bind();
         stmt.setString(0, entityId.getEntityType().name())
                 .setUUID(1, entityId.getId())
@@ -316,6 +324,46 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
                 .setLong(3, partition)
                 .setLong(4, tsKvEntry.getTs());
         addValue(tsKvEntry, stmt, 5);
+        if (ttl > 0) {
+            stmt.setInt(6, (int) ttl);
+        }
+        futures.add(getFuture(executeAsyncWrite(tenantId, stmt), rs -> null));
+        return Futures.transform(Futures.allAsList(futures), result -> null);
+    }
+
+    private void processSetNullValues(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry, long ttl, List<ListenableFuture<Void>> futures, long partition, DataType type) {
+        switch (type) {
+            case LONG:
+                futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.BOOLEAN));
+                futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.DOUBLE));
+                futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.STRING));
+                break;
+            case BOOLEAN:
+                futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.DOUBLE));
+                futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.LONG));
+                futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.STRING));
+                break;
+            case DOUBLE:
+                futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.BOOLEAN));
+                futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.LONG));
+                futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.STRING));
+                break;
+            case STRING:
+                futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.BOOLEAN));
+                futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.DOUBLE));
+                futures.add(saveNull(tenantId, entityId, tsKvEntry, ttl, partition, DataType.LONG));
+                break;
+        }
+    }
+
+    private ListenableFuture<Void> saveNull(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry, long ttl, long partition, DataType type) {
+        BoundStatement stmt = (ttl == 0 ? getSaveStmt(type) : getSaveTtlStmt(type)).bind();
+        stmt.setString(0, entityId.getEntityType().name())
+                .setUUID(1, entityId.getId())
+                .setString(2, tsKvEntry.getKey())
+                .setLong(3, partition)
+                .setLong(4, tsKvEntry.getTs());
+        stmt.setToNull(getColumnName(type));
         if (ttl > 0) {
             stmt.setInt(6, (int) ttl);
         }

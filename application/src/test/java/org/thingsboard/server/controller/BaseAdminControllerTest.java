@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,18 +103,6 @@ public abstract class BaseAdminControllerTest extends AbstractControllerTest {
         doPost("/api/admin/settings", adminSettings)
         .andExpect(status().isBadRequest())
         .andExpect(statusReason(containsString("Provided json structure is different")));
-    }
-    
-    @Test
-    public void testSaveAdminSettingsWithNonTextValue() throws Exception {
-        loginSysAdmin();
-        AdminSettings adminSettings = doGet("/api/admin/settings/mail", AdminSettings.class); 
-        JsonNode json = adminSettings.getJsonValue();
-        ((ObjectNode) json).put("timeout", 10000L);
-        adminSettings.setJsonValue(json);
-        doPost("/api/admin/settings", adminSettings)
-        .andExpect(status().isBadRequest())
-        .andExpect(statusReason(containsString("Provided json structure can't contain non-text values")));
     }
     
     @Test

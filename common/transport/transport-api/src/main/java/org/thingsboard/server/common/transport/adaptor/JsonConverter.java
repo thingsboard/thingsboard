@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.util.StringUtils;
+import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.kv.AttributeKey;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
@@ -35,6 +37,7 @@ import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.msg.kv.AttributesKVMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ClaimDeviceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.KeyValueProto;
 import org.thingsboard.server.gen.transport.TransportProtos.KeyValueType;
@@ -61,23 +64,71 @@ public class JsonConverter {
 
     private static boolean isTypeCastEnabled = true;
 
-    public static PostTelemetryMsg convertToTelemetryProto(JsonElement jsonObject) throws JsonSyntaxException {
-        long systemTs = System.currentTimeMillis();
+    private static int maxStringValueLength = 0;
+
+    public static PostTelemetryMsg convertToTelemetryProto(JsonElement jsonElement) throws JsonSyntaxException {
         PostTelemetryMsg.Builder builder = PostTelemetryMsg.newBuilder();
-        if (jsonObject.isJsonObject()) {
-            parseObject(builder, systemTs, jsonObject);
-        } else if (jsonObject.isJsonArray()) {
-            jsonObject.getAsJsonArray().forEach(je -> {
+        convertToTelemetry(jsonElement, System.currentTimeMillis(), null, builder);
+        return builder.build();
+    }
+
+    private static void convertToTelemetry(JsonElement jsonElement, long systemTs, Map<Long, List<KvEntry>> result, PostTelemetryMsg.Builder builder) {
+        if (jsonElement.isJsonObject()) {
+            parseObject(systemTs, result, builder, jsonElement.getAsJsonObject());
+        } else if (jsonElement.isJsonArray()) {
+            jsonElement.getAsJsonArray().forEach(je -> {
                 if (je.isJsonObject()) {
-                    parseObject(builder, systemTs, je.getAsJsonObject());
+                    parseObject(systemTs, result, builder, je.getAsJsonObject());
                 } else {
                     throw new JsonSyntaxException(CAN_T_PARSE_VALUE + je);
                 }
             });
         } else {
-            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + jsonObject);
+            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + jsonElement);
         }
-        return builder.build();
+    }
+
+    private static void parseObject(long systemTs, Map<Long, List<KvEntry>> result, PostTelemetryMsg.Builder builder, JsonObject jo) {
+        if (result != null) {
+            parseObject(result, systemTs, jo);
+        } else {
+            parseObject(builder, systemTs, jo);
+        }
+    }
+
+    public static ClaimDeviceMsg convertToClaimDeviceProto(DeviceId deviceId, String json) {
+        long durationMs = 0L;
+        if (json != null && !json.isEmpty()) {
+            return convertToClaimDeviceProto(deviceId, new JsonParser().parse(json));
+        }
+        return buildClaimDeviceMsg(deviceId, DataConstants.DEFAULT_SECRET_KEY, durationMs);
+    }
+
+    public static ClaimDeviceMsg convertToClaimDeviceProto(DeviceId deviceId, JsonElement jsonElement) {
+        String secretKey = DataConstants.DEFAULT_SECRET_KEY;
+        long durationMs = 0L;
+        if (jsonElement.isJsonObject()) {
+            JsonObject jo = jsonElement.getAsJsonObject();
+            if (jo.has(DataConstants.SECRET_KEY_FIELD_NAME)) {
+                secretKey = jo.get(DataConstants.SECRET_KEY_FIELD_NAME).getAsString();
+            }
+            if (jo.has(DataConstants.DURATION_MS_FIELD_NAME)) {
+                durationMs = jo.get(DataConstants.DURATION_MS_FIELD_NAME).getAsLong();
+            }
+        } else {
+            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + jsonElement);
+        }
+        return buildClaimDeviceMsg(deviceId, secretKey, durationMs);
+    }
+
+    private static ClaimDeviceMsg buildClaimDeviceMsg(DeviceId deviceId, String secretKey, long durationMs) {
+        ClaimDeviceMsg.Builder result = ClaimDeviceMsg.newBuilder();
+        return result
+                .setDeviceIdMSB(deviceId.getId().getMostSignificantBits())
+                .setDeviceIdLSB(deviceId.getId().getLeastSignificantBits())
+                .setSecretKey(secretKey)
+                .setDurationMs(durationMs)
+                .build();
     }
 
     public static PostAttributeMsg convertToAttributesProto(JsonElement jsonObject) throws JsonSyntaxException {
@@ -101,8 +152,7 @@ public class JsonConverter {
         return result;
     }
 
-    private static void parseObject(PostTelemetryMsg.Builder builder, long systemTs, JsonElement jsonObject) {
-        JsonObject jo = jsonObject.getAsJsonObject();
+    private static void parseObject(PostTelemetryMsg.Builder builder, long systemTs, JsonObject jo) {
         if (jo.has("ts") && jo.has("values")) {
             parseWithTs(builder, jo);
         } else {
@@ -131,7 +181,11 @@ public class JsonConverter {
             if (element.isJsonPrimitive()) {
                 JsonPrimitive value = element.getAsJsonPrimitive();
                 if (value.isString()) {
-                    if(isTypeCastEnabled && NumberUtils.isParsable(value.getAsString())) {
+                    if (maxStringValueLength > 0 && value.getAsString().length() > maxStringValueLength) {
+                        String message = String.format("String value length [%d] for key [%s] is greater than maximum allowed [%d]", value.getAsString().length(), valueEntry.getKey(), maxStringValueLength);
+                        throw new JsonSyntaxException(message);
+                    }
+                    if (isTypeCastEnabled && NumberUtils.isParsable(value.getAsString())) {
                         try {
                             result.add(buildNumericKeyValueProto(value, valueEntry.getKey()));
                         } catch (RuntimeException th) {
@@ -147,10 +201,10 @@ public class JsonConverter {
                             .setBoolV(value.getAsBoolean()).build());
                 } else if (value.isNumber()) {
                     result.add(buildNumericKeyValueProto(value, valueEntry.getKey()));
-                } else {
+                } else if (!value.isJsonNull()) {
                     throw new JsonSyntaxException(CAN_T_PARSE_VALUE + value);
                 }
-            } else {
+            } else if (!element.isJsonNull()) {
                 throw new JsonSyntaxException(CAN_T_PARSE_VALUE + element);
             }
         }
@@ -251,9 +305,10 @@ public class JsonConverter {
         return result;
     }
 
-    public static JsonObject getJsonObjectForGateway(TransportProtos.GetAttributeResponseMsg responseMsg) {
+    public static JsonObject getJsonObjectForGateway(String deviceName, TransportProtos.GetAttributeResponseMsg responseMsg) {
         JsonObject result = new JsonObject();
         result.addProperty("id", responseMsg.getRequestId());
+        result.addProperty(DEVICE_PROPERTY, deviceName);
         if (responseMsg.getClientAttributeListCount() > 0) {
             addValues(result, responseMsg.getClientAttributeListList());
         }
@@ -389,7 +444,11 @@ public class JsonConverter {
             if (element.isJsonPrimitive()) {
                 JsonPrimitive value = element.getAsJsonPrimitive();
                 if (value.isString()) {
-                    if(isTypeCastEnabled && NumberUtils.isParsable(value.getAsString())) {
+                    if (maxStringValueLength > 0 && value.getAsString().length() > maxStringValueLength) {
+                        String message = String.format("String value length [%d] for key [%s] is greater than maximum allowed [%d]", value.getAsString().length(), valueEntry.getKey(), maxStringValueLength);
+                        throw new JsonSyntaxException(message);
+                    }
+                    if (isTypeCastEnabled && NumberUtils.isParsable(value.getAsString())) {
                         try {
                             parseNumericValue(result, valueEntry, value);
                         } catch (RuntimeException th) {
@@ -412,26 +471,13 @@ public class JsonConverter {
         return result;
     }
 
-    public static Map<Long, List<KvEntry>> convertToTelemetry(JsonElement jsonObject, long systemTs) throws JsonSyntaxException {
+    public static Map<Long, List<KvEntry>> convertToTelemetry(JsonElement jsonElement, long systemTs) throws JsonSyntaxException {
         Map<Long, List<KvEntry>> result = new HashMap<>();
-        if (jsonObject.isJsonObject()) {
-            parseObject(result, systemTs, jsonObject);
-        } else if (jsonObject.isJsonArray()) {
-            jsonObject.getAsJsonArray().forEach(je -> {
-                if (je.isJsonObject()) {
-                    parseObject(result, systemTs, je.getAsJsonObject());
-                } else {
-                    throw new JsonSyntaxException(CAN_T_PARSE_VALUE + je);
-                }
-            });
-        } else {
-            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + jsonObject);
-        }
+        convertToTelemetry(jsonElement, systemTs, result, null);
         return result;
     }
 
-    private static void parseObject(Map<Long, List<KvEntry>> result, long systemTs, JsonElement jsonObject) {
-        JsonObject jo = jsonObject.getAsJsonObject();
+    private static void parseObject(Map<Long, List<KvEntry>> result, long systemTs, JsonObject jo) {
         if (jo.has("ts") && jo.has("values")) {
             parseWithTs(result, jo);
         } else {
@@ -456,4 +502,9 @@ public class JsonConverter {
     public static void setTypeCastEnabled(boolean enabled) {
         isTypeCastEnabled = enabled;
     }
+
+    public static void setMaxStringValueLength(int length) {
+        maxStringValueLength = length;
+    }
+
 }

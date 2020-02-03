@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2018 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,7 +111,7 @@ public abstract class AbstractMqttTelemetryIntegrationTest extends AbstractContr
         client.subscribe("v1/devices/me/attributes", MqttQoS.AT_MOST_ONCE.value());
         String payload = "{\"key\":\"value\"}";
         String result = doPostAsync("/api/plugins/telemetry/" + savedDevice.getId() + "/SHARED_SCOPE", payload, String.class, status().isOk());
-        latch.await(3, TimeUnit.SECONDS);
+        latch.await(10, TimeUnit.SECONDS);
         assertEquals(payload, callback.getPayload());
         assertEquals(MqttQoS.AT_MOST_ONCE.value(), callback.getQoS());
     }
