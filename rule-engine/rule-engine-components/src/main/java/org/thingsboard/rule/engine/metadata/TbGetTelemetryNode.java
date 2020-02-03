@@ -55,14 +55,12 @@ import static org.thingsboard.server.common.data.kv.Aggregation.NONE;
  */
 @Slf4j
 @RuleNode(type = ComponentType.ENRICHMENT,
-        name = "originator telemetry",
+        name = "发起者遥测",
         configClazz = TbGetTelemetryNodeConfiguration.class,
-        nodeDescription = "Add Message Originator Telemetry for selected time range into Message Metadata\n",
-        nodeDetails = "The node allows you to select fetch mode: <b>FIRST/LAST/ALL</b> to fetch telemetry of certain time range that are added into Message metadata without any prefix. " +
-                "If selected fetch mode <b>ALL</b> Telemetry will be added like array into Message Metadata where <b>key</b> is Timestamp and <b>value</b> is value of Telemetry.</br>" +
-                "If selected fetch mode <b>FIRST</b> or <b>LAST</b> Telemetry will be added like string without Timestamp.</br>" +
-                "Also, the rule node allows you to select telemetry sampling order: <b>ASC</b> or <b>DESC</b>. </br>" +
-                "<b>Note</b>: The maximum size of the fetched array is 1000 records.\n ",
+        nodeDescription = "将所选时间范围的消息发起者遥测添加到消息元数据中\n",
+        nodeDetails = "该节点允许选择提取方式 <b>第一个/最后一个/全部</b>来提取所选时间范围的消息发起者遥测添加到消息元数据中，不加任何前缀. " +
+                "如果选中的提取方式为 <b>全部</b> 遥测会被以类似于键值对数组一样添加到元数据，其中 <b>key</b> 是时间戳 <b>value</b> 是遥测的值. " +
+                "无果选中的提取方式是 <b>第一个</b> 或 <b>最后一个</b> 遥测将会以不带时间戳的字符串形式加入到元数据",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeGetTelemetryFromDatabase")
 public class TbGetTelemetryNode implements TbNode {

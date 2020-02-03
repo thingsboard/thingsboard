@@ -64,6 +64,10 @@ module.exports = {
                 to: 'thingsboard.ico'
             },
             {
+                from: './src/images',
+                to: 'images'
+            },   
+            {
                 from: './src/app/locale',
                 to: 'locale',
                 ignore: [ '*.js' ],
@@ -76,7 +80,7 @@ module.exports = {
         new HtmlWebpackPlugin({
             template: './src/index.html',
             filename: 'index.html',
-            title: 'ThingsBoard',
+            title: '天融物联',
             inject: 'body',
         }),
         new StyleLintPlugin(),

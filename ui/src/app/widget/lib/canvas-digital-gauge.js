@@ -231,100 +231,100 @@ export default class TbCanvasDigitalGauge {
         return {
             "schema": {
                 "type": "object",
-                "title": "Settings",
+                "title": "设置",
                 "properties": {
                     "minValue": {
-                        "title": "Minimum value",
+                        "title": "最小值",
                         "type": "number",
                         "default": 0
                     },
                     "maxValue": {
-                        "title": "Maximum value",
+                        "title": "最大值",
                         "type": "number",
                         "default": 100
                     },
                     "gaugeType": {
-                        "title": "Gauge type",
+                        "title": "仪表类型",
                         "type": "string",
                         "default": "arc"
                     },
                     "donutStartAngle": {
-                        "title": "Angle to start from when in donut mode",
+                        "title": "在甜甜圈模式下开始的角度",
                         "type": "number",
                         "default": 90
                     },
                     "neonGlowBrightness": {
-                        "title": "Neon glow effect brightness, (0-100), 0 - disable effect",
+                        "title": "霓虹灯发光特效。亮度, (0-100), 0 - 禁用特效",
                         "type": "number",
                         "default": 0
                     },
                     "dashThickness": {
-                        "title": "Thickness of the stripes, 0 - no stripes",
+                        "title": "跳舞粗细, 0 - 无条纹",
                         "type": "number",
                         "default": 0
                     },
                     "roundedLineCap": {
-                        "title": "Display rounded line cap",
+                        "title": "显示圆形端点",
                         "type": "boolean",
                         "default": false
                     },
                     "title": {
-                        "title": "Gauge title",
+                        "title": "仪表标题",
                         "type": "string",
                         "default": null
                     },
                     "showTitle": {
-                        "title": "Show gauge title",
+                        "title": "显示仪表标题",
                         "type": "boolean",
                         "default": false
                     },
                     "unitTitle": {
-                        "title": "Unit title",
+                        "title": "单位",
                         "type": "string",
                         "default": null
                     },
                     "showUnitTitle": {
-                        "title": "Show unit title",
+                        "title": "显示单位",
                         "type": "boolean",
                         "default": false
                     },
                     "showTimestamp": {
-                        "title": "Show value timestamp",
+                        "title": "显示数据时间戳",
                         "type": "boolean",
                         "default": false
                     },
                     "timestampFormat": {
-                        "title": "Timestamp format",
+                        "title": "时间戳格式",
                         "type": "string",
                         "default": "yyyy-MM-dd HH:mm:ss"
                     },
                     "showValue": {
-                        "title": "Show value text",
+                        "title": "显示数据文本",
                         "type": "boolean",
                         "default": true
                     },
                     "showMinMax": {
-                        "title": "Show min and max values",
+                        "title": "显示最小最大值",
                         "type": "boolean",
                         "default": true
                     },
                     "gaugeWidthScale": {
-                        "title": "Width of the gauge element",
+                        "title": "仪表宽度",
                         "type": "number",
                         "default": 0.75
                     },
                     "defaultColor": {
-                        "title": "Default color",
+                        "title": "缺省颜色",
                         "type": "string",
                         "default": null
                     },
                     "gaugeColor": {
-                        "title": "Background color of the gauge element",
+                        "title": "仪表背景色",
                         "type": "string",
                         "default": null
                     },
                     "levelColors": {
-                        "title": "Colors of indicator, from lower to upper",
+                        "title": "指示器颜色, 从下到上",
                         "type": "array",
                         "items": {
                             "title": "Color",
@@ -332,139 +332,139 @@ export default class TbCanvasDigitalGauge {
                         }
                     },
                     "animation": {
-                        "title": "Enable animation",
+                        "title": "启用动画",
                         "type": "boolean",
                         "default": true
                     },
                     "animationDuration": {
-                        "title": "Animation duration",
+                        "title": "动画持续毫秒",
                         "type": "number",
                         "default": 500
                     },
                     "animationRule": {
-                        "title": "Animation rule",
+                        "title": "动画规则",
                         "type": "string",
                         "default": "linear"
                     },
                     "titleFont": {
-                        "title": "Gauge title font",
+                        "title": "仪表标题字体",
                         "type": "object",
                         "properties": {
                             "family": {
-                                "title": "Font family",
+                                "title": "字体",
                                 "type": "string",
                                 "default": "Roboto"
                             },
                             "size": {
-                                "title": "Size",
+                                "title": "大小",
                                 "type": "number",
                                 "default": 12
                             },
                             "style": {
-                                "title": "Style",
+                                "title": "样式",
                                 "type": "string",
                                 "default": "normal"
                             },
                             "weight": {
-                                "title": "Weight",
+                                "title": "权重",
                                 "type": "string",
                                 "default": "500"
                             },
                             "color": {
-                                "title": "color",
+                                "title": "颜色",
                                 "type": "string",
                                 "default": null
                             }
                         }
                     },
                     "labelFont": {
-                        "title": "Font of label showing under value",
+                        "title": "数值下面的标注字体",
                         "type": "object",
                         "properties": {
                             "family": {
-                                "title": "Font family",
+                                "title": "字体",
                                 "type": "string",
                                 "default": "Roboto"
                             },
                             "size": {
-                                "title": "Size",
+                                "title": "大小",
                                 "type": "number",
                                 "default": 8
                             },
                             "style": {
-                                "title": "Style",
+                                "title": "样式",
                                 "type": "string",
                                 "default": "normal"
                             },
                             "weight": {
-                                "title": "Weight",
+                                "title": "权重",
                                 "type": "string",
                                 "default": "500"
                             },
                             "color": {
-                                "title": "color",
+                                "title": "颜色",
                                 "type": "string",
                                 "default": null
                             }
                         }
                     },
                     "valueFont": {
-                        "title": "Font of label showing current value",
+                        "title": "当前值标注的字体",
                         "type": "object",
                         "properties": {
                             "family": {
-                                "title": "Font family",
+                                "title": "字体",
                                 "type": "string",
                                 "default": "Roboto"
                             },
                             "size": {
-                                "title": "Size",
+                                "title": "大小",
                                 "type": "number",
                                 "default": 18
                             },
                             "style": {
-                                "title": "Style",
+                                "title": "样式",
                                 "type": "string",
                                 "default": "normal"
                             },
                             "weight": {
-                                "title": "Weight",
+                                "title": "权重",
                                 "type": "string",
                                 "default": "500"
                             },
                             "color": {
-                                "title": "color",
+                                "title": "颜色",
                                 "type": "string",
                                 "default": null
                             }
                         }
                     },
                     "minMaxFont": {
-                        "title": "Font of minimum and maximum labels",
+                        "title": "最小最大值字体",
                         "type": "object",
                         "properties": {
                             "family": {
-                                "title": "Font family",
+                                "title": "字体",
                                 "type": "string",
                                 "default": "Roboto"
                             },
                             "size": {
-                                "title": "Size",
+                                "title": "大小",
                                 "type": "number",
                                 "default": 10
                             },
                             "style": {
-                                "title": "Style",
+                                "title": "样式",
                                 "type": "string",
                                 "default": "normal"
                             },
                             "weight": {
-                                "title": "Weight",
+                                "title": "权重",
                                 "type": "string",
                                 "default": "500"
                             },
                             "color": {
-                                "title": "color",
+                                "title": "颜色",
                                 "type": "string",
                                 "default": null
                             }
@@ -482,19 +482,19 @@ export default class TbCanvasDigitalGauge {
                     "items": [
                         {
                             "value": "arc",
-                            "label": "Arc"
+                            "label": "圆弧"
                         },
                         {
                             "value": "donut",
-                            "label": "Donut"
+                            "label": "甜甜圈"
                         },
                         {
                             "value": "horizontalBar",
-                            "label": "Horizontal bar"
+                            "label": "水平条形图"
                         },
                         {
                             "value": "verticalBar",
-                            "label": "Vertical bar"
+                            "label": "垂直条形图"
                         }
                     ]
                 },
@@ -537,47 +537,47 @@ export default class TbCanvasDigitalGauge {
                     "items": [
                         {
                             "value": "linear",
-                            "label": "Linear"
+                            "label": "线性"
                         },
                         {
                             "value": "quad",
-                            "label": "Quad"
+                            "label": "象限"
                         },
                         {
                             "value": "quint",
-                            "label": "Quint"
+                            "label": "五重峰"
                         },
                         {
                             "value": "cycle",
-                            "label": "Cycle"
+                            "label": "循环"
                         },
                         {
                             "value": "bounce",
-                            "label": "Bounce"
+                            "label": "弹跳"
                         },
                         {
                             "value": "elastic",
-                            "label": "Elastic"
+                            "label": "弹簧"
                         },
                         {
                             "value": "dequad",
-                            "label": "Dequad"
+                            "label": "反象限"
                         },
                         {
                             "value": "dequint",
-                            "label": "Dequint"
+                            "label": "反五重峰"
                         },
                         {
                             "value": "decycle",
-                            "label": "Decycle"
+                            "label": "反循环"
                         },
                         {
                             "value": "debounce",
-                            "label": "Debounce"
+                            "label": "反弹跳"
                         },
                         {
                             "value": "delastic",
-                            "label": "Delastic"
+                            "label": "反弹簧"
                         }
                     ]
                 },
@@ -593,15 +593,15 @@ export default class TbCanvasDigitalGauge {
                             "items": [
                                 {
                                     "value": "normal",
-                                    "label": "Normal"
+                                    "label": "常规"
                                 },
                                 {
                                     "value": "italic",
-                                    "label": "Italic"
+                                    "label": "斜体"
                                 },
                                 {
                                     "value": "oblique",
-                                    "label": "Oblique"
+                                    "label": "仿斜体"
                                 }
                             ]
                         },
@@ -612,19 +612,19 @@ export default class TbCanvasDigitalGauge {
                             "items": [
                                 {
                                     "value": "normal",
-                                    "label": "Normal"
+                                    "label": "常规"
                                 },
                                 {
                                     "value": "bold",
-                                    "label": "Bold"
+                                    "label": "粗体"
                                 },
                                 {
                                     "value": "bolder",
-                                    "label": "Bolder"
+                                    "label": "更粗"
                                 },
                                 {
                                     "value": "lighter",
-                                    "label": "Lighter"
+                                    "label": "更淡"
                                 },
                                 {
                                     "value": "100",
@@ -682,15 +682,15 @@ export default class TbCanvasDigitalGauge {
                             "items": [
                                 {
                                     "value": "normal",
-                                    "label": "Normal"
+                                    "label": "常规"
                                 },
                                 {
                                     "value": "italic",
-                                    "label": "Italic"
+                                    "label": "斜体"
                                 },
                                 {
                                     "value": "oblique",
-                                    "label": "Oblique"
+                                    "label": "仿斜体"
                                 }
                             ]
                         },
@@ -701,19 +701,19 @@ export default class TbCanvasDigitalGauge {
                             "items": [
                                 {
                                     "value": "normal",
-                                    "label": "Normal"
+                                    "label": "常规"
                                 },
                                 {
                                     "value": "bold",
-                                    "label": "Bold"
+                                    "label": "粗体"
                                 },
                                 {
                                     "value": "bolder",
-                                    "label": "Bolder"
+                                    "label": "更粗"
                                 },
                                 {
                                     "value": "lighter",
-                                    "label": "Lighter"
+                                    "label": "更淡"
                                 },
                                 {
                                     "value": "100",
@@ -771,15 +771,15 @@ export default class TbCanvasDigitalGauge {
                             "items": [
                                 {
                                     "value": "normal",
-                                    "label": "Normal"
+                                    "label": "常规"
                                 },
                                 {
                                     "value": "italic",
-                                    "label": "Italic"
+                                    "label": "斜体"
                                 },
                                 {
                                     "value": "oblique",
-                                    "label": "Oblique"
+                                    "label": "仿斜体"
                                 }
                             ]
                         },
@@ -790,19 +790,19 @@ export default class TbCanvasDigitalGauge {
                             "items": [
                                 {
                                     "value": "normal",
-                                    "label": "Normal"
+                                    "label": "常规"
                                 },
                                 {
                                     "value": "bold",
-                                    "label": "Bold"
+                                    "label": "粗体"
                                 },
                                 {
                                     "value": "bolder",
-                                    "label": "Bolder"
+                                    "label": "更粗"
                                 },
                                 {
                                     "value": "lighter",
-                                    "label": "Lighter"
+                                    "label": "更淡"
                                 },
                                 {
                                     "value": "100",
@@ -860,15 +860,15 @@ export default class TbCanvasDigitalGauge {
                             "items": [
                                 {
                                     "value": "normal",
-                                    "label": "Normal"
+                                    "label": "常规"
                                 },
                                 {
                                     "value": "italic",
-                                    "label": "Italic"
+                                    "label": "斜体"
                                 },
                                 {
                                     "value": "oblique",
-                                    "label": "Oblique"
+                                    "label": "仿斜体"
                                 }
                             ]
                         },
@@ -879,19 +879,19 @@ export default class TbCanvasDigitalGauge {
                             "items": [
                                 {
                                     "value": "normal",
-                                    "label": "Normal"
+                                    "label": "常规"
                                 },
                                 {
                                     "value": "bold",
-                                    "label": "Bold"
+                                    "label": "粗体"
                                 },
                                 {
                                     "value": "bolder",
-                                    "label": "Bolder"
+                                    "label": "更粗"
                                 },
                                 {
                                     "value": "lighter",
-                                    "label": "Lighter"
+                                    "label": "更淡"
                                 },
                                 {
                                     "value": "100",

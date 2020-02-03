@@ -283,13 +283,13 @@ export default class TbImageMap {
     }
 
     createDefaultMarkerIcon(marker, color, onMarkerIconReady) {
-        var pinColor = color.substr(1);
+        //var pinColor = color.substr(1);
         var icon = L.icon({
-            iconUrl: 'https://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|' + pinColor,
+            iconUrl: 'static/images/leaflet/marker.png',
             iconSize: [21, 34],
             iconAnchor: [21 * marker.offsetX, 34 * marker.offsetY],
             popupAnchor: [0, -34],
-            shadowUrl: 'https://chart.apis.google.com/chart?chst=d_map_pin_shadow',
+            shadowUrl: 'static/images/leaflet/marker_shadow.png',
             shadowSize: [40, 37],
             shadowAnchor: [12, 35]
         });

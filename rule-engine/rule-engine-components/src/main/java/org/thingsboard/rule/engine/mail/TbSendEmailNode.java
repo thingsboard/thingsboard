@@ -35,12 +35,11 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 @Slf4j
 @RuleNode(
         type = ComponentType.EXTERNAL,
-        name = "send email",
+        name = "发送邮件",
         configClazz = TbSendEmailNodeConfiguration.class,
-        nodeDescription = "Sends email message via SMTP server.",
-        nodeDetails = "Expects messages with <b>SEND_EMAIL</b> type. Node works only with messages that " +
-                " where created using <code>to Email</code> transformation Node, please connect this Node " +
-                "with <code>to Email</code> Node using <code>Successful</code> chain.",
+        nodeDescription = "通过SMTP服务发送电子邮件。",
+        nodeDetails = "期望为<b>SEND_EMAIL</b>类型的消息。该节点仅适用于使用<code>转换为邮件</code>转换节点创建的消息，" +
+                "请使用<code>Successful</code>链将此节点连接到<code>转换为邮件</code>节点。",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeSendEmailConfig",
         icon = "send"

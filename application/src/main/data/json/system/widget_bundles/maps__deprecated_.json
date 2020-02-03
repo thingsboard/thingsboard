@@ -1,13 +1,13 @@
 {
   "widgetsBundle": {
     "alias": "maps",
-    "title": "Maps (Deprecated)",
+    "title": "地图 (不推荐使用)",
     "image": null
   },
   "widgetTypes": [
     {
       "alias": "google_maps",
-      "name": "Google Maps",
+      "name": "谷歌地图",
       "descriptor": {
         "type": "latest",
         "sizeX": 8.5,
@@ -23,7 +23,7 @@
     },
     {
       "alias": "openstreetmap",
-      "name": "OpenStreetMap",
+      "name": "OSM地图",
       "descriptor": {
         "type": "latest",
         "sizeX": 8.5,
@@ -39,7 +39,7 @@
     },
     {
       "alias": "route_map",
-      "name": "Route Map",
+      "name": "路线图",
       "descriptor": {
         "type": "timeseries",
         "sizeX": 8.5,
@@ -55,7 +55,7 @@
     },
     {
       "alias": "route_map_openstreetmap",
-      "name": "Route Map - OpenStreetMap",
+      "name": "路线图 - OSM",
       "descriptor": {
         "type": "timeseries",
         "sizeX": 8.5,

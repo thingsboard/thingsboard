@@ -38,12 +38,11 @@ import java.util.HashSet;
 @Slf4j
 @RuleNode(
         type = ComponentType.TRANSFORMATION,
-        name = "change originator",
+        name = "转换发起者",
         configClazz = TbChangeOriginatorNodeConfiguration.class,
-        nodeDescription = "Change Message Originator To Tenant/Customer/Related Entity/Alarm Originator",
-        nodeDetails = "Related Entity found using configured relation direction and Relation Type. " +
-                "If multiple Related Entities are found, only first Entity is used as new Originator, other entities are discarded.<br/>" +
-                "Alarm Originator found only in case original Originator is <code>Alarm</code> entity.",
+        nodeDescription = "将消息发起着更改为租户/客户/相关实体",
+        nodeDetails = "使用配置的关系方向和关系类型找到相关实体。" +
+                "如果找到多个相关联的实体，则只有第一个实体被当做新的发起者，其他实体将被丢弃。",
         uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
         configDirective = "tbTransformationNodeChangeOriginatorConfig",
         icon = "find_replace"

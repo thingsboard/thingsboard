@@ -39,10 +39,10 @@ import java.util.Map;
 @Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
-        name = "save timeseries",
+        name = "保存时间序列",
         configClazz = TbMsgTimeseriesNodeConfiguration.class,
-        nodeDescription = "Saves timeseries data",
-        nodeDetails = "Saves timeseries telemetry data based on configurable TTL parameter. Expects messages with 'POST_TELEMETRY_REQUEST' message type",
+        nodeDescription = "保存时间序列数据",
+        nodeDetails = "基于可配置的TTL参数保存时间序列遥测数据。期望'POST_TELEMETRY_REQUEST'消息类型的消息。",
         uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
         configDirective = "tbActionNodeTimeseriesConfig",
         icon = "file_upload"

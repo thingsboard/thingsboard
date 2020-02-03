@@ -29,15 +29,15 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
 @Slf4j
 @RuleNode(
         type = ComponentType.FILTER,
-        name = "switch", customRelations = true,
+        name = "转换器", customRelations = true,
         relationTypes = {},
         configClazz = TbJsSwitchNodeConfiguration.class,
-        nodeDescription = "Route incoming Message to one or multiple output chains",
-        nodeDetails = "Node executes configured JS script. Script should return array of next Chain names where Message should be routed. " +
-                "If Array is empty - message not routed to next Node. " +
-                "Message payload can be accessed via <code>msg</code> property. For example <code>msg.temperature < 10;</code><br/>" +
-                "Message metadata can be accessed via <code>metadata</code> property. For example <code>metadata.customerName === 'John';</code><br/>" +
-                "Message type can be accessed via <code>msgType</code> property.",
+        nodeDescription = "将传入的消息路由到一个或多个输出链",
+        nodeDetails = "该节点执行配置的JS脚本。脚本应该返回下一个链名称的数组，其中消息应该被路由。" +
+                "如果数组为空 - 消息不会被路由到下一个节点。" +
+                "可以通过<code>msg</code>属性访问消息的有效负载，例如<code>msg.temperature < 10;</code><br/>" +
+                "可以通过<code>metadata</code>属性访问消息的元数据，例如<code>metadata.customerName === 'John';</code><br/>" +
+                "可以通过<code>msgType</code>属性访问消息类型。",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbFilterNodeSwitchConfig")
 public class TbJsSwitchNode implements TbNode {

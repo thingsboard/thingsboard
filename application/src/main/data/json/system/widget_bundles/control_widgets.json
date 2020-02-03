@@ -1,13 +1,13 @@
 {
   "widgetsBundle": {
     "alias": "control_widgets",
-    "title": "Control widgets",
+    "title": "控制器部件",
     "image": null
   },
   "widgetTypes": [
     {
       "alias": "rpc_debug_terminal",
-      "name": "RPC debug terminal",
+      "name": "RPC调试终端",
       "descriptor": {
         "type": "rpc",
         "sizeX": 9.5,
@@ -23,7 +23,7 @@
     },
     {
       "alias": "rpc_remote_shell",
-      "name": "RPC remote shell",
+      "name": "RPC远程控制台",
       "descriptor": {
         "type": "rpc",
         "sizeX": 9.5,
@@ -39,7 +39,7 @@
     },
     {
       "alias": "knob_control",
-      "name": "Knob Control",
+      "name": "旋钮",
       "descriptor": {
         "type": "rpc",
         "sizeX": 5,
@@ -55,7 +55,7 @@
     },
     {
       "alias": "switch_control",
-      "name": "Switch Control",
+      "name": "开关",
       "descriptor": {
         "type": "rpc",
         "sizeX": 4,
@@ -71,7 +71,7 @@
     },
     {
       "alias": "round_switch",
-      "name": "Round switch",
+      "name": "圆形开关",
       "descriptor": {
         "type": "rpc",
         "sizeX": 2.5,
@@ -87,7 +87,7 @@
     },
     {
       "alias": "led_indicator",
-      "name": "Led indicator",
+      "name": "Led 指示器",
       "descriptor": {
         "type": "rpc",
         "sizeX": 2.5,

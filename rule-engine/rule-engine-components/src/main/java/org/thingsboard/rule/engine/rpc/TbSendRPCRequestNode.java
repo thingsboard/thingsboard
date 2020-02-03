@@ -46,11 +46,11 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
-        name = "rpc call request",
+        name = "rpc调用请求",
         configClazz = TbSendRpcRequestNodeConfiguration.class,
-        nodeDescription = "Sends RPC call to device",
-        nodeDetails = "Expects messages with \"method\" and \"params\". Will forward response from device to next nodes." +
-                "If the RPC call request is originated by REST API call from user, will forward the response to user immediately.",
+        nodeDescription = "将RPC调用发送到设备",
+        nodeDetails = "期望携带\"method\"和\"params\"的消息。将设备的响应转发到下一个节点。" +
+                "如果RPC调用请求是由用户的REST API调用发起的，则会立即将响应转发给用户。",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeRpcRequestConfig",
         icon = "call_made"

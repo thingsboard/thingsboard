@@ -124,119 +124,119 @@ export default class TbAnalogueCompass {
         return {
             "schema": {
                 "type": "object",
-                "title": "Settings",
+                "title": "设置",
                 "properties": {
                     "majorTicks": {
-                        "title": "Major ticks names",
+                        "title": "主刻度名称",
                         "type": "array",
                         "items": {
-                            "title": "Tick name",
+                            "title": "刻度名称",
                             "type": "string"
                         }
                     },
                     "minorTicks": {
-                        "title": "Minor ticks count",
+                        "title": "次刻度个数",
                         "type": "number",
                         "default": 22
                     },
                     "showStrokeTicks": {
-                        "title": "Show ticks stroke",
+                        "title": "显示刻度线",
                         "type": "boolean",
                         "default": false
                     },
                     "needleCircleSize": {
-                        "title": "Needle circle size",
+                        "title": "指针环大小",
                         "type": "number",
                         "default": 15
                     },
                     "showBorder": {
-                        "title": "Show border",
+                        "title": "显示边框",
                         "type": "boolean",
                         "default": true
                     },
                     "borderOuterWidth": {
-                        "title": "Border width",
+                        "title": "边框宽度",
                         "type": "number",
                         "default": 10
                     },
                     "colorPlate": {
-                        "title": "Plate color",
+                        "title": "表盘颜色",
                         "type": "string",
                         "default": "#222"
                     },
                     "colorMajorTicks": {
-                        "title": "Major ticks color",
+                        "title": "主刻度颜色",
                         "type": "string",
                         "default": "#f5f5f5"
                     },
                     "colorMinorTicks": {
-                        "title": "Minor ticks color",
+                        "title": "次刻度颜色",
                         "type": "string",
                         "default": "#ddd"
                     },
                     "colorNeedle": {
-                        "title": "Needle color",
+                        "title": "指针颜色",
                         "type": "string",
                         "default": "#f08080"
                     },
                     "colorNeedleCircle": {
-                        "title": "Needle circle color",
+                        "title": "指针环颜色",
                         "type": "string",
                         "default": "#e8e8e8"
                     },
                     "colorBorder": {
-                        "title": "Border color",
+                        "title": "边框颜色",
                         "type": "string",
                         "default": "#ccc"
                     },
                     "majorTickFont": {
-                        "title": "Major tick font",
+                        "title": "主刻度字体",
                         "type": "object",
                         "properties": {
                             "family": {
-                                "title": "Font family",
+                                "title": "字体",
                                 "type": "string",
                                 "default": "Roboto"
                             },
                             "size": {
-                                "title": "Size",
+                                "title": "大小",
                                 "type": "number",
                                 "default": 20
                             },
                             "style": {
-                                "title": "Style",
+                                "title": "样式",
                                 "type": "string",
                                 "default": "normal"
                             },
                             "weight": {
-                                "title": "Weight",
+                                "title": "权重",
                                 "type": "string",
                                 "default": "500"
                             },
                             "color": {
-                                "title": "color",
+                                "title": "颜色",
                                 "type": "string",
                                 "default": "#ccc"
                             }
                         }
                     },
                     "animation": {
-                        "title": "Enable animation",
+                        "title": "启用动画",
                         "type": "boolean",
                         "default": true
                     },
                     "animationDuration": {
-                        "title": "Animation duration",
+                        "title": "动画持续毫秒",
                         "type": "number",
                         "default": 500
                     },
                     "animationRule": {
-                        "title": "Animation rule",
+                        "title": "动画规则",
                         "type": "string",
                         "default": "cycle"
                     },
                     "animationTarget": {
-                        "title": "Animation target",
+                        "title": "动画目标",
                         "type": "string",
                         "default": "needle"
                     }
@@ -291,15 +291,15 @@ export default class TbAnalogueCompass {
                             "items": [
                                 {
                                     "value": "normal",
-                                    "label": "Normal"
+                                    "label": "常规"
                                 },
                                 {
                                     "value": "italic",
-                                    "label": "Italic"
+                                    "label": "斜体"
                                 },
                                 {
                                     "value": "oblique",
-                                    "label": "Oblique"
+                                    "label": "仿斜体"
                                 }
                             ]
                         },
@@ -310,19 +310,19 @@ export default class TbAnalogueCompass {
                             "items": [
                                 {
                                     "value": "normal",
-                                    "label": "Normal"
+                                    "label": "常规"
                                 },
                                 {
                                     "value": "bold",
-                                    "label": "Bold"
+                                    "label": "粗体"
                                 },
                                 {
                                     "value": "bolder",
-                                    "label": "Bolder"
+                                    "label": "更粗"
                                 },
                                 {
                                     "value": "lighter",
-                                    "label": "Lighter"
+                                    "label": "更细"
                                 },
                                 {
                                     "value": "100",
@@ -377,47 +377,47 @@ export default class TbAnalogueCompass {
                     "items": [
                         {
                             "value": "linear",
-                            "label": "Linear"
+                            "label": "线性"
                         },
                         {
                             "value": "quad",
-                            "label": "Quad"
+                            "label": "象限"
                         },
                         {
                             "value": "quint",
-                            "label": "Quint"
+                            "label": "五重峰"
                         },
                         {
                             "value": "cycle",
-                            "label": "Cycle"
+                            "label": "循环"
                         },
                         {
                             "value": "bounce",
-                            "label": "Bounce"
+                            "label": "弹跳"
                         },
                         {
                             "value": "elastic",
-                            "label": "Elastic"
+                            "label": "弹簧"
                         },
                         {
                             "value": "dequad",
-                            "label": "Dequad"
+                            "label": "反象限"
                         },
                         {
                             "value": "dequint",
-                            "label": "Dequint"
+                            "label": "反五重峰"
                         },
                         {
                             "value": "decycle",
-                            "label": "Decycle"
+                            "label": "反循环"
                         },
                         {
                             "value": "debounce",
-                            "label": "Debounce"
+                            "label": "反弹跳"
                         },
                         {
                             "value": "delastic",
-                            "label": "Delastic"
+                            "label": "反弹簧"
                         }
                     ]
                 },
@@ -428,11 +428,11 @@ export default class TbAnalogueCompass {
                     "items": [
                         {
                             "value": "needle",
-                            "label": "Needle"
+                            "label": "指针"
                         },
                         {
                             "value": "plate",
-                            "label": "Plate"
+                            "label": "表盘"
                         }
                     ]
                 }

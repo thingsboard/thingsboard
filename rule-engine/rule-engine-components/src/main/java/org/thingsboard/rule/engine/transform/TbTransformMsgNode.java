@@ -26,16 +26,16 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 
 @RuleNode(
         type = ComponentType.TRANSFORMATION,
-        name = "script",
+        name = "脚本",
         configClazz = TbTransformMsgNodeConfiguration.class,
-        nodeDescription = "Change Message payload, Metadata or Message type using JavaScript",
-        nodeDetails = "JavaScript function receive 3 input parameters <br/> " +
-                "<code>metadata</code> - is a Message metadata.<br/>" +
-                "<code>msg</code> - is a Message payload.<br/>" +
-                "<code>msgType</code> - is a Message type.<br/>" +
-                "Should return the following structure:<br/>" +
+        nodeDescription = "使用JavaScript更改消息的有效载荷，元数据以及消息类型",
+        nodeDetails = "JavaScript函数接收3个输入参数<br/> " +
+                "<code>metadata</code> - 是消息元数据。<br/>" +
+                "<code>msg</code> - 是消息的有效负载。<br/>" +
+                "<code>msgType</code> - 是消息类型。<br/>" +
+                "必须返回如下结构：<br/>" +
                 "<code>{ msg: <i style=\"color: #666;\">new payload</i>,<br/>&nbsp&nbsp&nbspmetadata: <i style=\"color: #666;\">new metadata</i>,<br/>&nbsp&nbsp&nbspmsgType: <i style=\"color: #666;\">new msgType</i> }</code><br/>" +
-                "All fields in resulting object are optional and will be taken from original message if not specified.",
+                "结果对象中的所有字段都是可选的，如果未指定，将从原始消息中获取。",
         uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
         configDirective = "tbTransformationNodeScriptConfig")
 public class TbTransformMsgNode extends TbAbstractTransformNode {

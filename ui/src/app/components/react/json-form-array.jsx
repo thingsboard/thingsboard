@@ -142,7 +142,7 @@ class ThingsboardArray extends React.Component {
         }
         let addButton = '';
         if (!this.props.form.readonly) {
-            addButton = <RaisedButton label={this.props.form.add || 'New'}
+            addButton = <RaisedButton label={this.props.form.add || '新增'}
                                     primary={true}
                                     icon={<FontIcon className="material-icons">add</FontIcon>}
                                     onTouchTap={this.onAppend}></RaisedButton>;

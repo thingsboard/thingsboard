@@ -194,6 +194,7 @@ function LedIndicatorController($element, $scope, $timeout, utils, types) {
         while (textWidth > maxWidth) {
             fontSize--;
             textWidth = measureTextWidth(text, fontSize);
+            if (fontSize < 13) break;  //设置最小字体为12，解决Led指示器部件大小改变时，因为死循环导致的浏览器页面崩溃问题
         }
         element.css({'fontSize': fontSize+'px', 'lineHeight': fontSize+'px'});
     }

@@ -94,6 +94,8 @@
         <snakeyaml.version>1.23</snakeyaml.version>
         <passay.version>1.5.0</passay.version>
         <ua-parser.version>1.4.3</ua-parser.version>
+        <local-map-server-host>192.168.15.100</local-map-server-host>
+        <local-map-server-port>8400</local-map-server-port>
     </properties>
 
     <modules>
@@ -286,7 +288,7 @@
                         </lifecycleMappingMetadata>
                     </configuration>
                 </plugin>
-                <plugin>
+<!--                 <plugin>
                     <groupId>com.mycila</groupId>
                     <artifactId>license-maven-plugin</artifactId>
                     <version>3.0</version>
@@ -334,7 +336,7 @@
                             </goals>
                         </execution>
                     </executions>
-                </plugin>
+                </plugin> -->
             </plugins>
         </pluginManagement>
         <plugins>

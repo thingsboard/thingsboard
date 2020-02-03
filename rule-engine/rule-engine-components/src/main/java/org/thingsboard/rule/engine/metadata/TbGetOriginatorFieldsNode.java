@@ -33,10 +33,10 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
  */
 @Slf4j
 @RuleNode(type = ComponentType.ENRICHMENT,
-        name = "originator fields",
+        name = "发起者领域",
         configClazz = TbGetOriginatorFieldsConfiguration.class,
-        nodeDescription = "Add Message Originator fields values into Message Metadata",
-        nodeDetails = "Will fetch fields values specified in mapping. If specified field is not part of originator fields it will be ignored.",
+        nodeDescription = "将消息发起者字段值添加到消息元数据",
+        nodeDetails = "该节点将获取映射中指定的字段值，如果指定的字段不是创建者字段的一部分，则将忽略它。",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeOriginatorFieldsConfig")
 public class TbGetOriginatorFieldsNode implements TbNode {

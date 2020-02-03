@@ -30,7 +30,7 @@
 	        	</div>
 				<div ng-transclude="detailsButtons"></div>
 	        	<md-button class="md-icon-button" ng-click="closeDetails()">
-	        		<md-icon aria-label="close" class="material-icons">close</md-icon>
+	        		<md-icon aria-label="close" class="material-icons">关闭</md-icon>
 	        	</md-button>	        	
 	        </div>
 		    <section ng-if="!isReadOnly" layout="row" layout-wrap
@@ -40,7 +40,7 @@
 							 aria-label="{{ 'action.apply' | translate }}"
 							 ng-click="detailsApply()">
 					  <md-tooltip md-direction="top">
-						  {{ 'action.apply-changes' | translate }}
+						  {{ 'action.apply-changes' | translate }}AA
 					  </md-tooltip>
 					  <ng-md-icon icon="done"></ng-md-icon>
 				</md-button>
