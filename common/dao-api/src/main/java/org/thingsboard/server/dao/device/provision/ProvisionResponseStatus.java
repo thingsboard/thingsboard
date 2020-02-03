@@ -19,6 +19,6 @@ public enum ProvisionResponseStatus {
 
     SUCCESS,
     NOT_FOUND,
-    DENIED
+    FAILURE
 
 }

@@ -33,6 +33,7 @@ public class ProvisionProfile extends BaseData<ProvisionProfileId> implements Ha
     private ProvisionProfileCredentials credentials;
     private TenantId tenantId;
     private CustomerId customerId;
+    private boolean preProvisionAllowed;
 
     public ProvisionProfile() {
         super();
@@ -47,20 +48,23 @@ public class ProvisionProfile extends BaseData<ProvisionProfileId> implements Ha
         this.credentials = profile.getCredentials();
         this.tenantId = profile.getTenantId();
         this.customerId = profile.getCustomerId();
+        this.preProvisionAllowed = profile.isPreProvisionAllowed();
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof ProvisionProfile)) return false;
+        if (!super.equals(o)) return false;
         ProvisionProfile profile = (ProvisionProfile) o;
-        return getCredentials().equals(profile.getCredentials()) &&
+        return isPreProvisionAllowed() == profile.isPreProvisionAllowed() &&
+                getCredentials().equals(profile.getCredentials()) &&
                 getTenantId().equals(profile.getTenantId()) &&
-                Objects.equals(getCustomerId(), profile.getCustomerId());
+                getCustomerId().equals(profile.getCustomerId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getCredentials(), getTenantId(), getCustomerId());
+        return Objects.hash(super.hashCode(), getCredentials(), getTenantId(), getCustomerId(), isPreProvisionAllowed());
     }
 }

@@ -57,6 +57,8 @@ public class DataConstants {
     public static final String ATTRIBUTES_DELETED = "ATTRIBUTES_DELETED";
     public static final String ALARM_ACK = "ALARM_ACK";
     public static final String ALARM_CLEAR = "ALARM_CLEAR";
+    public static final String PROVISION_SUCCESS = "PROVISION_SUCCESS";
+    public static final String PROVISION_FAILURE = "PROVISION_FAILURE";
 
     public static final String RPC_CALL_FROM_SERVER_TO_DEVICE = "RPC_CALL_FROM_SERVER_TO_DEVICE";
 
@@ -67,7 +69,6 @@ public class DataConstants {
     public static final String PROVISION = "provision";
     public static final String PROVISION_PROFILE_KEY = "provisionProfileKey";
     public static final String PROVISION_PROFILE_SECRET = "provisionProfileSecret";
-    public static final String SINGLE_PROVISIONING = "singleProvisioning";
 
     public static final String DEVICE_NAME = "deviceName";
     public static final String DEVICE_TYPE = "deviceType";

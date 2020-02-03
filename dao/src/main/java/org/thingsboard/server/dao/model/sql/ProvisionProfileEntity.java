@@ -48,6 +48,9 @@ public final class ProvisionProfileEntity extends BaseSqlEntity<ProvisionProfile
     @Column(name = ModelConstants.PROVISION_PROFILE_SECRET_PROPERTY)
     private String secret;
 
+    @Column(name = ModelConstants.PROVISION_PROFILE_PRE_PROVISION_ALLOWED_PROPERTY)
+    private boolean preProvisionAllowed;
+
     public ProvisionProfileEntity() {
         super();
     }
@@ -64,6 +67,7 @@ public final class ProvisionProfileEntity extends BaseSqlEntity<ProvisionProfile
         }
         this.key = profile.getCredentials().getProvisionProfileKey();
         this.secret = profile.getCredentials().getProvisionProfileSecret();
+        this.preProvisionAllowed = profile.isPreProvisionAllowed();
     }
 
     @Override
@@ -77,6 +81,7 @@ public final class ProvisionProfileEntity extends BaseSqlEntity<ProvisionProfile
             profile.setCustomerId(new CustomerId(toUUID(customerId)));
         }
         profile.setCredentials(new ProvisionProfileCredentials(key, secret));
+        profile.setPreProvisionAllowed(preProvisionAllowed);
         return profile;
     }
 }

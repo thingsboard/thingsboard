@@ -144,7 +144,6 @@ public class LocalTransportApiService implements TransportApiService {
                         requestMsg.getDeviceName(),
                         requestMsg.getDeviceType(),
                         requestMsg.getX509CertPubKey(),
-                        requestMsg.getSingleProvisioning(),
                         new ProvisionProfileCredentials(
                                 requestMsg.getProvisionProfileCredentialsMsg().getProvisionProfileKey(),
                                 requestMsg.getProvisionProfileCredentialsMsg().getProvisionProfileSecret())));
@@ -152,8 +151,8 @@ public class LocalTransportApiService implements TransportApiService {
         return Futures.transform(provisionResponseFuture, provisionResponse -> {
             if (provisionResponse.getResponseStatus() == ProvisionResponseStatus.NOT_FOUND) {
                 return getTransportApiResponseMsg(TransportProtos.DeviceCredentialsProto.getDefaultInstance(), TransportProtos.ProvisionResponseStatus.NOT_FOUND);
-            } else if (provisionResponse.getResponseStatus() == ProvisionResponseStatus.DENIED) {
-                return getTransportApiResponseMsg(TransportProtos.DeviceCredentialsProto.getDefaultInstance(), TransportProtos.ProvisionResponseStatus.DENIED);
+            } else if (provisionResponse.getResponseStatus() == ProvisionResponseStatus.FAILURE) {
+                return getTransportApiResponseMsg(TransportProtos.DeviceCredentialsProto.getDefaultInstance(), TransportProtos.ProvisionResponseStatus.FAILURE);
             } else {
                 return getTransportApiResponseMsg(getDeviceCredentials(provisionResponse.getDeviceCredentials()), TransportProtos.ProvisionResponseStatus.SUCCESS);
             }

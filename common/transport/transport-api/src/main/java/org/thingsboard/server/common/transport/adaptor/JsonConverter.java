@@ -263,8 +263,8 @@ public class JsonConverter {
         JsonObject result = new JsonObject();
         if (payload.getProvisionResponseStatus() == TransportProtos.ProvisionResponseStatus.NOT_FOUND) {
             result.addProperty("errorMsg", "Provision profile was not found!");
-        } else if (payload.getProvisionResponseStatus() == TransportProtos.ProvisionResponseStatus.DENIED) {
-            result.addProperty("errorMsg", "Denied to provision device!");
+        } else if (payload.getProvisionResponseStatus() == TransportProtos.ProvisionResponseStatus.FAILURE) {
+            result.addProperty("errorMsg", "Failed to provision device!");
         } else {
             if (toGateway) {
                 result.addProperty("id", requestId);
@@ -557,7 +557,6 @@ public class JsonConverter {
                 .setDeviceName(getStrValue(jo, DataConstants.DEVICE_NAME, true))
                 .setDeviceType(getStrValue(jo, DataConstants.DEVICE_TYPE, true))
                 .setX509CertPubKey(getStrValue(jo, DataConstants.CERT_PUB_KEY, false))
-                .setSingleProvisioning(getBoolValue(jo))
                 .setProvisionProfileCredentialsMsg(buildProvisionProfileCredentialsMsg(
                         getStrValue(jo, DataConstants.PROVISION_PROFILE_KEY, true),
                         getStrValue(jo, DataConstants.PROVISION_PROFILE_SECRET, true)))
@@ -580,12 +579,5 @@ public class JsonConverter {
             }
             return "";
         }
-    }
-
-    private static boolean getBoolValue(JsonObject jo) {
-        if (jo.has(DataConstants.SINGLE_PROVISIONING)) {
-            return jo.get(DataConstants.SINGLE_PROVISIONING).getAsBoolean();
-        }
-        return false;
     }
 }

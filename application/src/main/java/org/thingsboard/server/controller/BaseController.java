@@ -620,6 +620,12 @@ public abstract class BaseController {
             case ALARM_CLEAR:
                 msgType = DataConstants.ALARM_CLEAR;
                 break;
+            case PROVISION_SUCCESS:
+                msgType = DataConstants.PROVISION_SUCCESS;
+                break;
+            case PROVISION_FAILURE:
+                msgType = DataConstants.PROVISION_FAILURE;
+                break;
         }
         if (!StringUtils.isEmpty(msgType)) {
             try {

@@ -27,39 +27,33 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.device.provision.ProvisionProfile;
 import org.thingsboard.server.dao.device.provision.ProvisionProfileCredentials;
 import org.thingsboard.server.dao.model.BaseEntity;
+import org.thingsboard.server.dao.model.ModelConstants;
 
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.model.ModelConstants.ID_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.PROVISION_PROFILE_COLUMN_FAMILY_NAME;
-import static org.thingsboard.server.dao.model.ModelConstants.PROVISION_PROFILE_CUSTOMER_ID_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.PROVISION_PROFILE_KEY_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.PROVISION_PROFILE_SECRET_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.PROVISION_PROFILE_TENANT_ID_PROPERTY;
-
-@Table(name = PROVISION_PROFILE_COLUMN_FAMILY_NAME)
+@Table(name = ModelConstants.PROVISION_PROFILE_COLUMN_FAMILY_NAME)
 @EqualsAndHashCode
 @ToString
 public final class ProvisionProfileEntity implements BaseEntity<ProvisionProfile> {
 
     @PartitionKey(value = 0)
-    @Column(name = ID_PROPERTY)
+    @Column(name = ModelConstants.ID_PROPERTY)
     private UUID id;
 
-    @PartitionKey(value = 1)
-    @Column(name = PROVISION_PROFILE_TENANT_ID_PROPERTY)
+    @Column(name = ModelConstants.PROVISION_PROFILE_TENANT_ID_PROPERTY)
     private UUID tenantId;
 
-    @PartitionKey(value = 2)
-    @Column(name = PROVISION_PROFILE_CUSTOMER_ID_PROPERTY)
+    @Column(name = ModelConstants.PROVISION_PROFILE_CUSTOMER_ID_PROPERTY)
     private UUID customerId;
 
-    @PartitionKey(value = 3)
-    @Column(name = PROVISION_PROFILE_KEY_PROPERTY)
+    @Column(name = ModelConstants.PROVISION_PROFILE_KEY_PROPERTY)
     private String key;
 
-    @Column(name = PROVISION_PROFILE_SECRET_PROPERTY)
+    @Column(name = ModelConstants.PROVISION_PROFILE_SECRET_PROPERTY)
     private String secret;
+
+    @Column(name = ModelConstants.PROVISION_PROFILE_PRE_PROVISION_ALLOWED_PROPERTY)
+    private boolean preProvisionAllowed;
 
     public ProvisionProfileEntity() {
         super();
@@ -77,6 +71,7 @@ public final class ProvisionProfileEntity implements BaseEntity<ProvisionProfile
         }
         this.key = profile.getCredentials().getProvisionProfileKey();
         this.secret = profile.getCredentials().getProvisionProfileSecret();
+        this.preProvisionAllowed = profile.isPreProvisionAllowed();
     }
 
     public UUID getId() {
@@ -98,6 +93,7 @@ public final class ProvisionProfileEntity implements BaseEntity<ProvisionProfile
             profile.setCustomerId(new CustomerId(customerId));
         }
         profile.setCredentials(new ProvisionProfileCredentials(key, secret));
+        profile.setPreProvisionAllowed(preProvisionAllowed);
         return profile;
     }
 }
