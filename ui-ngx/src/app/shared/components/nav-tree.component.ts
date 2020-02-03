@@ -150,7 +150,7 @@ export class NavTreeComponent implements OnInit {
     this.treeElement.on('changed.jstree', (e, data) => {
       const node: NavTreeNode = data.instance.get_selected(true)[0];
       if (this.onNodeSelected) {
-        this.onNodeSelected(node, e);
+        this.onNodeSelected(node, e as Event);
       }
     });
 
