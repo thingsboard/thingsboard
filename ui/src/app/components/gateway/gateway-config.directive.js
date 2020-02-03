@@ -17,8 +17,8 @@ import './gateway-config.scss';
 
 /* eslint-disable import/no-unresolved, import/default */
 
-import gatewayTemplate from './gateway-config.tpl.html';
-import gatewayDialogTemplate from './gateway-config-dialog.tpl.html';
+import gatewayConfigTemplate from './gateway-config.tpl.html';
+import gatewayConfigDialogTemplate from './gateway-config-dialog.tpl.html';
 import beautify from "js-beautify";
 
 /* eslint-enable import/no-unresolved, import/default */
@@ -41,80 +41,27 @@ function GatewayConfig() {
         },
         controller: GatewayConfigController,
         controllerAs: 'vm',
-        templateUrl: gatewayTemplate
+        templateUrl: gatewayConfigTemplate
     };
 }
 
 /*@ngInject*/
 function GatewayConfigController($scope, $document, $mdDialog, $mdUtil, $window, types) {
     let vm = this;
-    vm.kvList = [];
     vm.types = types;
-    $scope.$watch('vm.gatewayConfig', () => {
-        vm.stopWatchKvList();
-        vm.kvList = [];
-        if (vm.gatewayConfig) {
-            for (var property in vm.gatewayConfig) {
-                if (Object.prototype.hasOwnProperty.call(vm.gatewayConfig, property)) {
-                    vm.kvList.push(
-                        {
-                            enabled: vm.gatewayConfig[property].enabled,
-                            key: property,
-                            value: vm.gatewayConfig[property].connector,
-                            config: js_beautify(vm.gatewayConfig[property].config + '', {indent_size: 4})
-                        }
-                    );
-                }
-            }
-        }
-        $mdUtil.nextTick(() => {
-            vm.watchKvList();
-        });
-    });
 
-    vm.watchKvList = () => {
-        $scope.kvListWatcher = $scope.$watch('vm.kvList', () => {
-            if (!vm.gatewayConfig) {
-                return;
-            }
-            for (let property in vm.gatewayConfig) {
-                if (Object.prototype.hasOwnProperty.call(vm.gatewayConfig, property)) {
-                    delete vm.gatewayConfig[property];
-                }
-            }
-            for (let i = 0; i < vm.kvList.length; i++) {
-                let connector = vm.kvList[i];
-                if (connector.key && connector.value) {
-                    let connectorJSON = angular.toJson({
-                        enabled: connector.enabled,
-                        connector: connector.value,
-                        config: angular.fromJson(connector.config)
-                    });
-                    vm.gatewayConfig [connector.key] = angular.fromJson(connectorJSON);
-                }
-            }
-        }, true);
-    };
-
-    vm.stopWatchKvList = () => {
-        if ($scope.kvListWatcher) {
-            $scope.kvListWatcher();
-            $scope.kvListWatcher = null;
-        }
-    };
-
-    vm.removeKeyVal = (index) => {
+    vm.removeConnector = (index) => {
         if (index > -1) {
-            vm.kvList.splice(index, 1);
+            vm.gatewayConfig.splice(index, 1);
         }
     };
 
-    vm.addKeyVal = () => {
-        vm.kvList.push({
+    vm.addNewConnector = () => {
+        vm.gatewayConfig.push({
             enabled: false,
-            key: '',
-            value: '',
-            config: '{}'
+            configType: '',
+            config: {},
+            name: ''
         });
     };
 
@@ -125,8 +72,11 @@ function GatewayConfigController($scope, $document, $mdDialog, $mdUtil, $window,
         $mdDialog.show({
             controller: GatewayDialogController,
             controllerAs: 'vm',
-            templateUrl: gatewayDialogTemplate,
+            templateUrl: gatewayConfigDialogTemplate,
             parent: angular.element($document[0].body),
+            // scope: {
+            //     theForm: 'gatewayConfig_' + index
+            // },
             locals: {
                 config: config,
                 typeName: typeName
@@ -135,49 +85,47 @@ function GatewayConfigController($scope, $document, $mdDialog, $mdUtil, $window,
             fullscreen: true,
             multiple: true,
         }).then(function (config) {
-            if (config) {
-                if (index > -1) {
-                    vm.kvList[index].config = config;
-                }
+            if (config && index > -1) {
+                vm.gatewayConfig[index].config = config;
             }
         });
 
     };
 
-    vm.configTypeChange = (keyVal) => {
-        for (let prop in types.gatewayConfigType) {
-            if (types.gatewayConfigType[prop].value === keyVal.value) {
-                if (!keyVal.key) {
-                    keyVal.key = vm.configTypeChangeValid(types.gatewayConfigType[prop].name, 0);
+    vm.changeConnectorType = (connector) => {
+        for (let gatewayConfigTypeKey in types.gatewayConfigType) {
+            if (types.gatewayConfigType[gatewayConfigTypeKey].value === connector.configType) {
+                if (!connector.name) {
+                    connector.name = generateConnectorName(types.gatewayConfigType[gatewayConfigTypeKey].name, 0);
+                    break;
                 }
             }
         }
     };
 
-    vm.keyValChange = (keyVal, indexKey) => {
-        keyVal.key = vm.keyValChangeValid(keyVal.key, 0, indexKey);
+    vm.changeConnectorName = (connector, currentConnectorIndex) => {
+        connector.name = validateConnectorName(connector.name, 0, currentConnectorIndex);
     };
 
-    vm.configTypeChangeValid = (name, index) => {
+    function generateConnectorName(name, index) {
         let newKeyName = index ? name + index : name;
-        let indexRes = vm.kvList.findIndex((element) => element.key === newKeyName);
-        return indexRes === -1 ? newKeyName : vm.configTypeChangeValid(name, ++index);
-    };
+        let indexRes = vm.gatewayConfig.findIndex((element) => element.name === newKeyName);
+        return indexRes === -1 ? newKeyName : generateConnectorName(name, ++index);
+    }
 
-    vm.keyValChangeValid = (name, index, indexKey) => {
-        angular.forEach(vm.kvList, function (value, key) {
+    function validateConnectorName(name, index, currentConnectorIndex) {
+        for (let i = 0; i < vm.gatewayConfig.length; i++) {
             let nameEq = (index === 0) ? name : name + index;
-            if (key !== indexKey && value.key === nameEq) {
+            if (i !== currentConnectorIndex && vm.gatewayConfig[i].name === nameEq) {
                 index++;
-                vm.keyValChangeValid(name, index, indexKey);
+                validateConnectorName(name, index, currentConnectorIndex);
             }
-
-        });
+        }
         return (index === 0) ? name : name + index;
-    };
+    }
 
-    vm.validationJSON = (config) => {
-        if (angular.equals('{}', config)) {
+    vm.validateJSON = (config) => {
+        if (angular.equals({}, config)) {
             return "md-warn";
         }
     };
@@ -186,9 +134,8 @@ function GatewayConfigController($scope, $document, $mdDialog, $mdUtil, $window,
 /*@ngInject*/
 function GatewayDialogController($scope, $mdDialog, $document, $window, config, typeName) {
     let vm = this;
-    vm.doc = $document[0];
-    vm.config = angular.copy(config);
-    vm.typeName = "" + typeName;
+    vm.config = angular.toJson(config);
+    vm.typeName = typeName;
     vm.configAreaOptions = {
         useWrapMode: true,
         mode: 'json',
@@ -214,7 +161,7 @@ function GatewayDialogController($scope, $mdDialog, $document, $window, config, 
     };
 
     vm.save = () => {
-        $mdDialog.hide(vm.config);
+        $mdDialog.hide(angular.fromJson(vm.config));
     };
 
     vm.cancel = () => {

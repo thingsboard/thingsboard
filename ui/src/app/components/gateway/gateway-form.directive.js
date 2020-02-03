@@ -42,10 +42,10 @@ function GatewayForm() {
 /*@ngInject*/
 function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, toast, importExport, attributeService, deviceService, userService, $mdDialog, $mdUtil, types, $window, $q, entityService) {
     let vm = this;
-    const attributeNameClient = "current_configuration";
-    const attributeNameServer = "configuration_drafts";
-    const attributeNameShared = "configuration";
-    const attributeLogShared = "RemoteLoggingLevel";
+    const currentConfigurationAttribute = "current_configuration";
+    const configurationDraftsAttribute = "configuration_drafts";
+    const configurationAttribute = "configuration";
+    const remoteLoggingLevelAttribute = "RemoteLoggingLevel";
 
     const templateLogsConfig = '[loggers]}}keys=root, service, connector, converter, tb_connection, storage, extension}}[handlers]}}keys=consoleHandler, serviceHandler, connectorHandler, converterHandler, tb_connectionHandler, storageHandler, extensionHandler}}[formatters]}}keys=LogFormatter}}[logger_root]}}level=ERROR}}handlers=consoleHandler}}[logger_connector]}}level={ERROR}}}handlers=connectorHandler}}formatter=LogFormatter}}qualname=connector}}[logger_storage]}}level={ERROR}}}handlers=storageHandler}}formatter=LogFormatter}}qualname=storage}}[logger_tb_connection]}}level={ERROR}}}handlers=tb_connectionHandler}}formatter=LogFormatter}}qualname=tb_connection}}[logger_service]}}level={ERROR}}}handlers=serviceHandler}}formatter=LogFormatter}}qualname=service}}[logger_converter]}}level={ERROR}}}handlers=connectorHandler}}formatter=LogFormatter}}qualname=converter}}[logger_extension]}}level={ERROR}}}handlers=connectorHandler}}formatter=LogFormatter}}qualname=extension}}[handler_consoleHandler]}}class=StreamHandler}}level={ERROR}}}formatter=LogFormatter}}args=(sys.stdout,)}}[handler_connectorHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}connector.log", "d", 1, 7,)}}[handler_storageHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}storage.log", "d", 1, 7,)}}[handler_serviceHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}service.log", "d", 1, 7,)}}[handler_converterHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}converter.log", "d", 1, 3,)}}[handler_extensionHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}extension.log", "d", 1, 3,)}}[handler_tb_connectionHandler]}}level={ERROR}}}class=logging.handlers.TimedRotatingFileHandler}}formatter=LogFormatter}}args=("{./logs/}tb_connection.log", "d", 1, 3,)}}[formatter_LogFormatter]}}format="%(asctime)s - %(levelname)s - [%(filename)s] - %(module)s - %(lineno)d - %(message)s" }}datefmt="%Y-%m-%d %H:%M:%S"';
 
@@ -107,16 +107,20 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
 
     function initializeConfig() {
         updateWidgetDisplaying();
-        getGatewaysListByUser(true);
+        getGatewaysList(true);
     }
 
     vm.getAccessToken = (deviceId) => {
         if (deviceId.id) {
-            getDeviceCredential(deviceId.id);
+            getDeviceCredentials(deviceId.id);
         }
     };
 
-    function getDeviceCredential(deviceId) {
+    vm.collapsePanel = function (panelId) {
+        $mdExpansionPanel(panelId).collapse();
+    };
+
+    function getDeviceCredentials(deviceId) {
         return deviceService.getDeviceCredentials(deviceId).then(
             (deviceCredentials) => {
                 vm.configurations.accessToken = deviceCredentials.credentialsId;
@@ -129,15 +133,15 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
         deviceService.findByName(deviceObj.name, {ignoreErrors: true})
             .then(
                 function (device) {
-                    getDeviceCredential(device.id.id).then(() => {
-                        getGatewaysListByUser();
+                    getDeviceCredentials(device.id.id).then(() => {
+                        getGatewaysList();
                     });
                 },
                 function () {
                     deviceService.saveDevice(deviceObj).then(
                         (device) => {
-                            getDeviceCredential(device.id.id).then(() =>{
-                                getGatewaysListByUser();
+                            getDeviceCredentials(device.id.id).then(() =>{
+                                getGatewaysList();
                             });
                         }
                     );
@@ -145,34 +149,33 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
     };
 
     vm.saveAttributeConfig = () => {
-        saveAttribute(attributeNameShared, $window.btoa(angular.toJson(getGatewayConfigJSON())), types.attributesScope.shared.value);
-        saveAttribute(attributeNameServer, $window.btoa(angular.toJson(vm.getConfigByAttributeTmpJSON())), types.attributesScope.server.value);
-        saveAttribute(attributeLogShared, vm.configurations.remoteLoggingLevel.toUpperCase(), types.attributesScope.shared.value);
+        saveAttribute(configurationAttribute, $window.btoa(angular.toJson(getGatewayConfigJSON())), types.attributesScope.shared.value);
+        saveAttribute(configurationDraftsAttribute, $window.btoa(angular.toJson(getDraftConnectorJSON())), types.attributesScope.server.value);
+        saveAttribute(remoteLoggingLevelAttribute, vm.configurations.remoteLoggingLevel.toUpperCase(), types.attributesScope.shared.value);
     };
 
     function getAttributes() {
         let promises = [];
-        vm.configurations.connectors = {};
-        promises.push(getAttribute(attributeNameClient, types.attributesScope.client.value));
-        promises.push(getAttribute(attributeNameServer, types.attributesScope.server.value));
-        promises.push(getAttribute(attributeLogShared, types.attributesScope.shared.value));
-        $q.all(promises).then((resp) => {
-            vm.getAttributeInitFromClient(resp[0]);
-            vm.getAttributeInitFromServer(resp[1]);
-            vm.getAttributeInitFromShared(resp[2]);
+        promises.push(getAttribute(currentConfigurationAttribute, types.attributesScope.client.value));
+        promises.push(getAttribute(configurationDraftsAttribute, types.attributesScope.server.value));
+        promises.push(getAttribute(remoteLoggingLevelAttribute, types.attributesScope.shared.value));
+        $q.all(promises).then((response) => {
+            processCurrentConfiguration(response[0]);
+            processConfigurationDrafts(response[1]);
+            processLoggingLevel(response[2]);
         });
     }
 
-    function getAttribute(attributeName, typeValue) {
-        return attributeService.getEntityAttributesValues(vm.configurations.gateway.id.entityType, vm.configurations.gateway.id.id, typeValue, attributeName);
+    function getAttribute(attributeName, attributeScope) {
+        return attributeService.getEntityAttributesValues(vm.configurations.gateway.id.entityType, vm.configurations.gateway.id.id, attributeScope, attributeName);
     }
 
-    function saveAttribute(attributeName, attributeConfig, typeValue) {
+    function saveAttribute(attributeName, attributeValue, attributeScope) {
         let attributes = [{
             key: attributeName,
-            value: attributeConfig
+            value: attributeValue
         }];
-        attributeService.saveEntityAttributes(vm.configurations.gateway.id.entityType, vm.configurations.gateway.id.id, typeValue, attributes).then(() => {
+        attributeService.saveEntityAttributes(vm.configurations.gateway.id.entityType, vm.configurations.gateway.id.id, attributeScope, attributes).then(() => {
         });
     }
 
@@ -182,7 +185,7 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
         generateConfigConnectorFiles(filesZip);
         generateLogConfigFile(filesZip);
         importExport.exportJSZip(filesZip, 'config');
-        saveAttribute(attributeLogShared, vm.configurations.remoteLoggingLevel.toUpperCase(), types.attributesScope.shared.value);
+        saveAttribute(remoteLoggingLevelAttribute, vm.configurations.remoteLoggingLevel.toUpperCase(), types.attributesScope.shared.value);
     };
 
     function generateYAMLConfigurationFile() {
@@ -212,21 +215,21 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
             config += '  max_records_per_file: ' + vm.configurations.maxRecordsCount + '\n';
         }
         config += 'connectors:\n';
-        for (let connector in vm.configurations.connectors) {
-            if (vm.configurations.connectors[connector].enabled) {
+        for(let i = 0; i < vm.configurations.connectors.length; i++){
+            if (vm.configurations.connectors[i].enabled) {
                 config += '  -\n';
-                config += '    name: ' + connector + ' Connector\n';
-                config += '    type: ' + vm.configurations.connectors[connector].connector + '\n';
-                config += '    configuration: ' + generateFileName(connector) + ".json" + '\n';
+                config += '    name: ' + vm.configurations.connectors[i].name + '\n';
+                config += '    type: ' + vm.configurations.connectors[i].configType + '\n';
+                config += '    configuration: ' + generateFileName(vm.configurations.connectors[i].name) + '\n';
             }
         }
         return config;
     }
 
     function generateConfigConnectorFiles(fileZipAdd) {
-        for (let connector in vm.configurations.connectors) {
-            if (vm.configurations.connectors[connector].enabled) {
-                fileZipAdd[generateFileName(connector) + ".json"] = angular.toJson(vm.configurations.connectors[connector].config);
+        for(let i = 0; i < vm.configurations.connectors.length; i++){
+            if (vm.configurations.connectors[i].enabled) {
+                fileZipAdd[generateFileName(vm.configurations.connectors[i].name)] = angular.toJson(vm.configurations.connectors[i].config);
             }
         }
     }
@@ -280,17 +283,18 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
         }
         configuration.storage = storage;
 
-        let conn = [];
-        for (let connector in vm.configurations.connectors) {
-            if (vm.configurations.connectors[connector].enabled) {
-                let connect = {};
-                connect.configuration = generateFileName(connector) + ".json";
-                connect.name = connector;
-                connect.type = vm.configurations.connectors[connector].connector;
-                conn.push(connect);
+        let connectors = [];
+        for (let i = 0; i < vm.configurations.connectors.length; i++) {
+            if (vm.configurations.connectors[i].enabled) {
+                let connector = {
+                    configuration: generateFileName(vm.configurations.connectors[i].name),
+                    name: vm.configurations.connectors[i].name,
+                    type: vm.configurations.connectors[i].configType
+                };
+                connectors.push(connector);
             }
         }
-        configuration.connectors = conn;
+        configuration.connectors = connectors;
 
         configuration.logs = $window.btoa(getLogsConfig());
 
@@ -298,39 +302,37 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
     }
 
     function gatewayConnectorConfigJSON(gatewayConfiguration) {
-        for (let connector in vm.configurations.connectors) {
-            if (vm.configurations.connectors[connector].enabled) {
-                let typeAr = vm.configurations.connectors[connector].connector;
-                let objTypeAll = [];
-                for (let conn in vm.configurations.connectors) {
-                    if (typeAr === vm.configurations.connectors[conn].connector && vm.configurations.connectors[conn].enabled) {
-                        let objType = {};
-                        objType["name"] = conn;
-                        objType["config"] = vm.configurations.connectors[conn].config;
-                        objTypeAll.push(objType);
-                    }
+        for(let i = 0; i < vm.configurations.connectors.length; i++){
+            if (vm.configurations.connectors[i].enabled) {
+                let typeConnector = vm.configurations.connectors[i].configType;
+                if(!angular.isArray(gatewayConfiguration[typeConnector])){
+                    gatewayConfiguration[typeConnector] = [];
                 }
-                if (objTypeAll.length > 0) {
-                    gatewayConfiguration[typeAr] = objTypeAll;
-                }
+
+                let connectorConfig = {
+                    name: vm.configurations.connectors[i].name,
+                    config: vm.configurations.connectors[i].config
+                };
+                gatewayConfiguration[typeConnector].push(connectorConfig);
             }
         }
     }
 
-    vm.getConfigByAttributeTmpJSON = () => {
-        let connects = {};
-        for (let connector in vm.configurations.connectors) {
-            if (!vm.configurations.connectors[connector].enabled && Object.keys(vm.configurations.connectors[connector].config).length !== 0) {
-                let conn = {};
-                conn["connector"] = vm.configurations.connectors[connector].connector;
-                conn["config"] = vm.configurations.connectors[connector].config;
-                connects[connector] = conn;
+    function getDraftConnectorJSON() {
+        let draftConnector = {};
+        for(let i = 0; i < vm.configurations.connectors.length; i++){
+            if (!vm.configurations.connectors[i].enabled) {
+                let connector = {
+                    connector: vm.configurations.connectors[i].configType,
+                    config: vm.configurations.connectors[i].config
+                };
+                draftConnector[vm.configurations.connectors[i].name] = connector;
             }
         }
-        return connects;
-    };
+        return draftConnector;
+    }
 
-    function getGatewaysListByUser(firstInit) {
+    function getGatewaysList(firstInit) {
         vm.gateways = [];
         entityService.getEntitiesByNameFilter(types.entityType.device, "", -1).then((devices) => {
             for (let i = 0; i < devices.length; i++) {
@@ -346,93 +348,96 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
         });
     }
 
-    vm.getAttributeInitFromClient = (resp) => {
-        if (resp.length > 0) {
-            vm.configurations.connectors = {};
-            let attribute = angular.fromJson($window.atob(resp[0].value));
-            for (var type in attribute) {
-                let keyVal = attribute[type];
-                if (type === "thingsboard") {
-                    if (keyVal !== null && Object.keys(keyVal).length > 0) {
-                        vm.setConfigMain(keyVal);
+    function processCurrentConfiguration(response) {
+        if (response.length > 0) {
+            vm.configurations.connectors = [];
+            let attribute = angular.fromJson($window.atob(response[0].value));
+            for (var attributeKey in attribute) {
+                let keyValue = attribute[attributeKey];
+                if (attributeKey === "thingsboard") {
+                    if (keyValue !== null && Object.keys(keyValue).length > 0) {
+                        setConfigGateway(keyValue);
                     }
                 } else {
-                    for (let typeVal in keyVal) {
-                        let typeName = '';
-                        if (Object.prototype.hasOwnProperty.call(keyVal[typeVal], 'name')) {
-                            typeName = 'name';
+                    for (let connectorType in keyValue) {
+                        let name = "No name";
+                        if (Object.prototype.hasOwnProperty.call(keyValue[connectorType], 'name')) {
+                            name = keyValue[connectorType].name ;
                         }
-                        let key = "";
-                        key = (typeName === "") ? "No name" : ((typeName === 'name') ? keyVal[typeVal].name : keyVal[typeVal][typeName].name);
-                        let conn = {};
-                        conn["enabled"] = true;
-                        conn["connector"] = type;
-                        conn["config"] = angular.toJson(keyVal[typeVal].config);
-                        vm.configurations.connectors[key] = conn;
+                        let connector = {
+                            enabled: true,
+                            configType: attributeKey,
+                            config: keyValue[connectorType].config,
+                            name: name
+                        };
+                        vm.configurations.connectors.push(connector);
                     }
                 }
             }
         }
-    };
+    }
 
-    vm.getAttributeInitFromServer = (resp) => {
-        if (resp.length > 0) {
-            let attribute = angular.fromJson($window.atob(resp[0].value));
+    function processConfigurationDrafts(response) {
+        if (response.length > 0) {
+            let attribute = angular.fromJson($window.atob(response[0].value));
             for (let key in attribute) {
-                let conn = {};
-                conn["enabled"] = false;
-                conn["connector"] = attribute[key].connector;
-                conn["config"] = angular.toJson(attribute[key].config);
-                vm.configurations.connectors[key] = conn;
+                let connector = {
+                    enabled: false,
+                    configType: attribute[key].connector,
+                    config: attribute[key].config,
+                    name: key
+                };
+                vm.configurations.connectors.push(connector);
             }
         }
-    };
+    }
 
-    vm.getAttributeInitFromShared = (resp) => {
-        if (resp.length > 0) {
-            if (vm.types.gatewayLogLevel[resp[0].value.toLowerCase()]) {
-                vm.configurations.remoteLoggingLevel = resp[0].value.toUpperCase();
+    function processLoggingLevel(response) {
+        if (response.length > 0) {
+            if (vm.types.gatewayLogLevel[response[0].value.toLowerCase()]) {
+                vm.configurations.remoteLoggingLevel = response[0].value.toUpperCase();
             }
         } else {
             vm.configurations.remoteLoggingLevel = vm.types.gatewayLogLevel.debug;
         }
-    };
+    }
 
-    vm.setConfigMain = (keyVal) => {
-        if (Object.prototype.hasOwnProperty.call(keyVal, 'thingsboard')) {
-            vm.configurations.host = keyVal.thingsboard.host;
-            vm.configurations.port = keyVal.thingsboard.port;
-            vm.configurations.remoteConfiguration = keyVal.thingsboard.remoteConfiguration;
-            if (Object.prototype.hasOwnProperty.call(keyVal.thingsboard.security, 'accessToken')) {
+    function setConfigGateway(keyValue) {
+        if (Object.prototype.hasOwnProperty.call(keyValue, 'thingsboard')) {
+            vm.configurations.host = keyValue.thingsboard.host;
+            vm.configurations.port = keyValue.thingsboard.port;
+            vm.configurations.remoteConfiguration = keyValue.thingsboard.remoteConfiguration;
+            if (Object.prototype.hasOwnProperty.call(keyValue.thingsboard.security, 'accessToken')) {
                 vm.configurations.securityType = 'accessToken';
-                vm.configurations.accessToken = keyVal.thingsboard.security.accessToken;
+                vm.configurations.accessToken = keyValue.thingsboard.security.accessToken;
             } else {
                 vm.configurations.securityType = 'tls';
-                vm.configurations.caCertPath = keyVal.thingsboard.security.caCert;
-                vm.configurations.privateKeyPath = keyVal.thingsboard.security.private_key;
-                vm.configurations.certPath = keyVal.thingsboard.security.cert;
+                vm.configurations.caCertPath = keyValue.thingsboard.security.caCert;
+                vm.configurations.privateKeyPath = keyValue.thingsboard.security.private_key;
+                vm.configurations.certPath = keyValue.thingsboard.security.cert;
             }
         }
-        if (Object.prototype.hasOwnProperty.call(keyVal, 'storage') && Object.prototype.hasOwnProperty.call(keyVal.storage, 'type')) {
-            if (keyVal.storage.type === 'memory') {
+
+        if (Object.prototype.hasOwnProperty.call(keyValue, 'storage') && Object.prototype.hasOwnProperty.call(keyValue.storage, 'type')) {
+            if (keyValue.storage.type === 'memory') {
                 vm.configurations.storageType = 'memoryStorage';
-                vm.configurations.readRecordsCount = keyVal.storage.read_records_count;
-                vm.configurations.maxRecordsCount = keyVal.storage.max_records_count;
-            } else if (keyVal.storage.type === 'file') {
+                vm.configurations.readRecordsCount = keyValue.storage.read_records_count;
+                vm.configurations.maxRecordsCount = keyValue.storage.max_records_count;
+            } else if (keyValue.storage.type === 'file') {
                 vm.configurations.storageType = 'fileStorage';
-                vm.configurations.dataFolderPath = keyVal.storage.data_folder_path;
-                vm.configurations.maxFilesCount = keyVal.storage.max_file_count;
-                vm.configurations.readRecordsCount = keyVal.storage.read_records_count;
-                vm.configurations.maxRecordsCount = keyVal.storage.max_records_count;
+                vm.configurations.dataFolderPath = keyValue.storage.data_folder_path;
+                vm.configurations.maxFilesCount = keyValue.storage.max_file_count;
+                vm.configurations.readRecordsCount = keyValue.storage.read_records_count;
+                vm.configurations.maxRecordsCount = keyValue.storage.max_records_count;
             }
         }
-    };
+    }
 
     function generateFileName(fileName) {
         return fileName.replace("_", "")
             .replace("-", "")
-            .replace(/^\s+|\s+$/g, '')
-            .toLowerCase();
+            .replace(/^\s+|\s+/g, '')
+            .toLowerCase() + '.json';
     }
 }
 

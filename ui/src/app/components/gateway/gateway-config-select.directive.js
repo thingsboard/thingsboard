@@ -17,7 +17,7 @@ import './gateway-config-select.scss';
 
 /* eslint-disable import/no-unresolved, import/default */
 
-import gatewayAliasSelectTemplate from './gateway-config-select.tpl.html';
+import gatewaySelectTemplate from './gateway-config-select.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
 
@@ -32,7 +32,7 @@ export default angular.module('thingsboard.directives.gatewayConfigSelect', [])
 function GatewayConfigSelect($compile, $templateCache, $mdConstant, $translate, $mdDialog) {
 
     var linker = function (scope, element, attrs, ngModelCtrl) {
-        const template = $templateCache.get(gatewayAliasSelectTemplate);
+        const template = $templateCache.get(gatewaySelectTemplate);
         element.html(template);
 
         scope.tbRequired = angular.isDefined(scope.tbRequired) ? scope.tbRequired : false;

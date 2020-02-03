@@ -24,7 +24,7 @@
                 <md-expansion-panel-icon></md-expansion-panel-icon>
             </md-expansion-panel-collapsed>
             <md-expansion-panel-expanded>
-                <md-expansion-panel-header ng-click="$mdExpansionPanel('thingsboardPanelId').collapse()">
+                <md-expansion-panel-header ng-click="vm.collapsePanel('thingsboardPanelId')">
                     <div class="tb-panel-title">{{ 'gateway.thingsboard' | translate | uppercase }}</div>
                     <span flex></span>
                     <md-expansion-panel-icon></md-expansion-panel-icon>
@@ -115,7 +115,7 @@
                 <md-expansion-panel-icon></md-expansion-panel-icon>
             </md-expansion-panel-collapsed>
             <md-expansion-panel-expanded>
-                <md-expansion-panel-header ng-click="$mdExpansionPanel('storagePanelId').collapse()">
+                <md-expansion-panel-header ng-click="vm.collapsePanel('storagePanelId')">
                     <div class="tb-panel-title">{{ 'gateway.storage' | translate | uppercase }}</div>
                     <span flex></span>
                     <md-expansion-panel-icon></md-expansion-panel-icon>
@@ -188,7 +188,7 @@
                 <md-expansion-panel-icon></md-expansion-panel-icon>
             </md-expansion-panel-collapsed>
             <md-expansion-panel-expanded>
-                <md-expansion-panel-header ng-click="$mdExpansionPanel('connectorsPanelId').collapse()">
+                <md-expansion-panel-header ng-click="vm.collapsePanel('connectorsPanelId')">
                     <div class="tb-panel-title">{{ 'gateway.connectors' | translate | uppercase }}</div>
                     <span flex></span>
                     <md-expansion-panel-icon></md-expansion-panel-icon>
