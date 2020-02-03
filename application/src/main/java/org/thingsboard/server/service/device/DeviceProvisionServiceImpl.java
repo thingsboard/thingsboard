@@ -299,7 +299,7 @@ public class DeviceProvisionServiceImpl extends AbstractEntityService implements
             TbMsg msg = new TbMsg(UUIDs.timeBased(), type, device.getId(), createTbMsgMetaData(device), mapper.writeValueAsString(entityNode), null, null, 0L);
             actorService.onMsg(new SendToClusterMsg(device.getId(), new ServiceToRuleEngineMsg(device.getTenantId(), msg)));
         } catch (JsonProcessingException | IllegalArgumentException e) {
-            log.warn("[{}] Failed to push device action to rule engine: {}", device.getId(), DataConstants.ENTITY_CREATED, e);
+            log.warn("[{}] Failed to push device action to rule engine: {}", device.getId(), type, e);
         }
     }
 
