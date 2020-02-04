@@ -87,7 +87,7 @@
       <mat-table [dataSource]="dataSource"
                  matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
         <ng-container matColumnDef="select" sticky>
-          <mat-header-cell *matHeaderCellDef>
+          <mat-header-cell *matHeaderCellDef style="width: 30px;">
             <mat-checkbox (change)="$event ? dataSource.masterToggle() : null"
                           [checked]="dataSource.selection.hasValue() && (dataSource.isAllSelected() | async)"
                           [indeterminate]="dataSource.selection.hasValue() && !(dataSource.isAllSelected() | async)">
@@ -101,39 +101,39 @@
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="type">
-          <mat-header-cell *matHeaderCellDef mat-sort-header> {{ 'relation.type' | translate }} </mat-header-cell>
+          <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 33%"> {{ 'relation.type' | translate }} </mat-header-cell>
           <mat-cell *matCellDef="let relation">
             {{ relation.type }}
           </mat-cell>
         </ng-container>
         <ng-container *ngIf="direction === directions.FROM" matColumnDef="toEntityTypeName">
-          <mat-header-cell *matHeaderCellDef mat-sort-header> {{ 'relation.to-entity-type' | translate }} </mat-header-cell>
+          <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 33%"> {{ 'relation.to-entity-type' | translate }} </mat-header-cell>
           <mat-cell *matCellDef="let relation">
             {{ relation.toEntityTypeName }}
           </mat-cell>
         </ng-container>
         <ng-container *ngIf="direction === directions.FROM" matColumnDef="toName">
-          <mat-header-cell *matHeaderCellDef mat-sort-header> {{ 'relation.to-entity-name' | translate }} </mat-header-cell>
+          <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 33%"> {{ 'relation.to-entity-name' | translate }} </mat-header-cell>
           <mat-cell *matCellDef="let relation">
             {{ relation.toName }}
           </mat-cell>
         </ng-container>
         <ng-container *ngIf="direction === directions.TO" matColumnDef="fromEntityTypeName">
-          <mat-header-cell *matHeaderCellDef mat-sort-header> {{ 'relation.from-entity-type' | translate }} </mat-header-cell>
+          <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 33%"> {{ 'relation.from-entity-type' | translate }} </mat-header-cell>
           <mat-cell *matCellDef="let relation">
             {{ relation.fromEntityTypeName }}
           </mat-cell>
         </ng-container>
         <ng-container *ngIf="direction === directions.TO" matColumnDef="fromName">
-          <mat-header-cell *matHeaderCellDef mat-sort-header> {{ 'relation.from-entity-name' | translate }} </mat-header-cell>
+          <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 33%"> {{ 'relation.from-entity-name' | translate }} </mat-header-cell>
           <mat-cell *matCellDef="let relation">
             {{ relation.fromName }}
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="actions" stickyEnd>
-          <mat-header-cell *matHeaderCellDef [ngStyle]="{ minWidth: '80px', maxWidth: '80px' }">
+          <mat-header-cell *matHeaderCellDef style="min-width: 80px; max-width: 80px; width: 80px">
           </mat-header-cell>
-          <mat-cell *matCellDef="let relation" [ngStyle]="{ minWidth: '80px', maxWidth: '80px' }">
+          <mat-cell *matCellDef="let relation">
             <div fxFlex fxLayout="row" fxLayoutAlign="end">
               <button mat-button mat-icon-button [disabled]="isLoading$ | async"
                       matTooltip="{{ 'relation.edit' | translate }}"

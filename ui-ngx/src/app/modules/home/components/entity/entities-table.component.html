@@ -138,7 +138,7 @@
           <mat-table [dataSource]="dataSource" [trackBy]="trackByEntityId"
                      matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
             <ng-container matColumnDef="select" sticky>
-              <mat-header-cell *matHeaderCellDef>
+              <mat-header-cell *matHeaderCellDef style="width: 30px;">
                 <mat-checkbox (change)="$event ? dataSource.masterToggle() : null"
                               [checked]="dataSource.selection.hasValue() && (dataSource.isAllSelected() | async)"
                               [indeterminate]="dataSource.selection.hasValue() && !(dataSource.isAllSelected() | async)">
@@ -178,10 +178,14 @@
               </mat-cell>
             </ng-container>
             <ng-container matColumnDef="actions" stickyEnd>
-              <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ width: (cellActionDescriptors.length * 40) + 'px' }">
+              <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: (cellActionDescriptors.length * 40) + 'px',
+                                                                    maxWidth: (cellActionDescriptors.length * 40) + 'px',
+                                                                    width: (cellActionDescriptors.length * 40) + 'px' }">
                 {{ entitiesTableConfig.actionsColumnTitle ? (entitiesTableConfig.actionsColumnTitle | translate) : '' }}
               </mat-header-cell>
-              <mat-cell *matCellDef="let entity" [ngStyle.gt-md]="{ width: (cellActionDescriptors.length * 40) + 'px' }">
+              <mat-cell *matCellDef="let entity" [ngStyle.gt-md]="{ minWidth: (cellActionDescriptors.length * 40) + 'px',
+                                                                    maxWidth: (cellActionDescriptors.length * 40) + 'px',
+                                                                    width: (cellActionDescriptors.length * 40) + 'px' }">
                 <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
                   <button mat-button mat-icon-button [disabled]="isLoading$ | async"
                           [fxShow]="actionDescriptor.isEnabled(entity)" *ngFor="let actionDescriptor of cellActionDescriptors"

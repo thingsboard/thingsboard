@@ -156,6 +156,17 @@ export function getColumnWidth(keySettings: TableWidgetDataKeySettings): string 
   return isDefined(keySettings.columnWidth) ? keySettings.columnWidth : '0px';
 }
 
+export function widthStyle(width: string): any {
+  const widthStyleObj: any = {width};
+  if (width !== '0px') {
+    widthStyleObj.minWidth = width;
+    widthStyleObj.maxWidth = width;
+  }
+  return widthStyleObj;
+}
+
+
+
 export function constructTableCssString(widgetConfig: WidgetConfig): string {
   const origColor = widgetConfig.color || 'rgba(0, 0, 0, 0.87)';
   const origBackgroundColor = widgetConfig.backgroundColor || 'rgb(255, 255, 255)';

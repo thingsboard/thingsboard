@@ -58,9 +58,13 @@
               </mat-cell>
             </ng-container>
             <ng-container matColumnDef="actions" stickyEnd>
-              <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: (actionCellDescriptors.length * 36) + 'px', maxWidth: (actionCellDescriptors.length * 36) + 'px' }">
+              <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: (actionCellDescriptors.length * 40) + 'px',
+                                                                    maxWidth: (actionCellDescriptors.length * 40) + 'px',
+                                                                    width: (actionCellDescriptors.length * 40) + 'px' }">
               </mat-header-cell>
-              <mat-cell *matCellDef="let row" [ngStyle.gt-md]="{ minWidth: (actionCellDescriptors.length * 36) + 'px', maxWidth: (actionCellDescriptors.length * 36) + 'px' }">
+              <mat-cell *matCellDef="let row" [ngStyle.gt-md]="{ minWidth: (actionCellDescriptors.length * 40) + 'px',
+                                                                maxWidth: (actionCellDescriptors.length * 40) + 'px',
+                                                                width: (actionCellDescriptors.length * 40) + 'px' }">
                 <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
                   <button mat-button mat-icon-button [disabled]="isLoading$ | async"
                           *ngFor="let actionDescriptor of actionCellDescriptors"

@@ -85,6 +85,12 @@ export class PageLink {
           result = item1Value - item2Value;
         } else if (typeof item1Value === 'string' && typeof item2Value === 'string') {
           result = item1Value.localeCompare(item2Value);
+        } else if (typeof item1Value === 'boolean' && typeof item2Value === 'boolean') {
+          if (item1Value && !item2Value) {
+            result = 1;
+          } else if (!item1Value && item2Value) {
+            result = -1;
+          }
         } else if (typeof item1Value !== typeof item2Value) {
           result = 1;
         }

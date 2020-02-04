@@ -56,7 +56,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
 
     this.config.columns.push(
       new DateEntityTableColumn<RuleChain>('createdTime', 'rulechain.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<RuleChain>('name', 'rulechain.name'),
+      new EntityTableColumn<RuleChain>('name', 'rulechain.name', '100%'),
       new EntityTableColumn<RuleChain>('root', 'rulechain.root', '60px',
         entity => {
           return checkBoxCell(entity.root);

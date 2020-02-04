@@ -70,7 +70,7 @@
                           [indeterminate]="alarmsDatasource.selection.hasValue() && !(alarmsDatasource.isAllSelected() | async)">
             </mat-checkbox>
           </mat-header-cell>
-          <mat-cell *matCellDef="let alarm" style="width: 30px;">
+          <mat-cell *matCellDef="let alarm">
             <mat-checkbox (click)="$event.stopPropagation();"
                           (change)="$event ? alarmsDatasource.toggleSelection(alarm) : null"
                           [checked]="alarmsDatasource.isSelected(alarm)">
@@ -85,9 +85,13 @@
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="actions" stickyEnd>
-          <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ width: (actionCellDescriptors.length * 36) + 'px' }">
+          <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: (actionCellDescriptors.length * 40) + 'px',
+                                                                maxWidth: (actionCellDescriptors.length * 40) + 'px',
+                                                                width: (actionCellDescriptors.length * 40) + 'px' }">
           </mat-header-cell>
-          <mat-cell *matCellDef="let alarm" [ngStyle.gt-md]="{ width: (actionCellDescriptors.length * 36) + 'px' }">
+          <mat-cell *matCellDef="let alarm" [ngStyle.gt-md]="{ minWidth: (actionCellDescriptors.length * 40) + 'px',
+                                                                maxWidth: (actionCellDescriptors.length * 40) + 'px',
+                                                                width: (actionCellDescriptors.length * 40) + 'px' }">
             <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
               <button mat-button mat-icon-button [disabled]="(isLoading$ | async) || !actionEnabled(alarm, actionDescriptor)"
                       *ngFor="let actionDescriptor of actionCellDescriptors"

@@ -59,7 +59,7 @@ import {
   getColumnWidth,
   TableWidgetDataKeySettings,
   TableWidgetSettings,
-  toAlarmColumnDef
+  toAlarmColumnDef, widthStyle
 } from '@home/components/widget/lib/table-widget.models';
 import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { ComponentPortal, PortalInjector } from '@angular/cdk/portal';
@@ -476,9 +476,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
 
   public headerStyle(key: EntityColumn): any {
     const columnWidth = this.columnWidth[key.def];
-    return {
-      width: columnWidth
-    };
+    return widthStyle(columnWidth);
   }
 
   public cellStyle(alarm: AlarmInfo, key: EntityColumn): any {
@@ -498,7 +496,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     }
     if (!style.width) {
       const columnWidth = this.columnWidth[key.def];
-      style.width = columnWidth;
+      style = {...style, ...widthStyle(columnWidth)};
     }
     return style;
   }

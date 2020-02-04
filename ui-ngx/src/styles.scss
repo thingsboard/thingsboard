@@ -511,8 +511,23 @@ mat-label {
     max-width: 100%;
     margin-bottom: 1rem;
     display: table;
+    table-layout: auto;
     border-collapse: separate;
     margin: 0px;
+  }
+
+  mat-footer-row::after, mat-header-row::after, mat-row::after {
+    content: none;
+  }
+
+  mat-header-row {
+    min-height: 60px;
+    height: 60px;
+  }
+
+  mat-footer-row, mat-row {
+    min-height: 52px;
+    height: 52px;
   }
 
   .mat-row,

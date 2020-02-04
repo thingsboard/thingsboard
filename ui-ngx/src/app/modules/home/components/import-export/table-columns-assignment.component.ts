@@ -139,7 +139,6 @@ export class TableColumnsAssignmentComponent implements OnInit, ControlValueAcce
     return (this.valid) ? null : {
       columnsInvalid: true
     };
-    return null;
   }
 
   writeValue(value: CsvColumnParam[]): void {

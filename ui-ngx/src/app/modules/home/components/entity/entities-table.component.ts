@@ -393,10 +393,15 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
     const index = this.entitiesTableConfig.columns.indexOf(column);
     let res = this.headerCellStyleCache[index];
     if (!res) {
+      const widthStyle: any = {width: column.width};
+      if (column.width !== '0px') {
+        widthStyle.minWidth = column.width;
+        widthStyle.maxWidth = column.width;
+      }
       if (column instanceof EntityTableColumn) {
-        res = {...column.headerCellStyleFunction(column.key), ...{minWidth: column.width, maxWidth: column.width, width: column.width}};
+        res = {...column.headerCellStyleFunction(column.key), ...widthStyle};
       } else {
-        res = {width: column.width};
+        res = widthStyle;
       }
       this.headerCellStyleCache[index] = res;
     }
@@ -440,10 +445,15 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
     const index = row * this.entitiesTableConfig.columns.length + col;
     let res = this.cellStyleCache[index];
     if (!res) {
+      const widthStyle: any = {width: column.width};
+      if (column.width !== '0px') {
+        widthStyle.minWidth = column.width;
+        widthStyle.maxWidth = column.width;
+      }
       if (column instanceof EntityTableColumn) {
-        res = {...column.cellStyleFunction(entity, column.key), ...{minWidth: column.width, maxWidth: column.width, width: column.width}};
+        res = {...column.cellStyleFunction(entity, column.key), ...widthStyle};
       } else {
-        res = {width: column.width};
+        res = widthStyle;
       }
       this.cellStyleCache[index] = res;
     }

@@ -137,7 +137,7 @@
       <mat-table [dataSource]="dataSource"
                  matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
         <ng-container matColumnDef="select" sticky>
-          <mat-header-cell *matHeaderCellDef>
+          <mat-header-cell *matHeaderCellDef style="width: 30px;">
             <mat-checkbox (change)="$event ? dataSource.masterToggle() : null"
                           [checked]="dataSource.selection.hasValue() && (dataSource.isAllSelected() | async)"
                           [indeterminate]="dataSource.selection.hasValue() && !(dataSource.isAllSelected() | async)">
@@ -151,26 +151,28 @@
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="lastUpdateTs">
-          <mat-header-cell *matHeaderCellDef mat-sort-header> {{ 'attribute.last-update-time' | translate }} </mat-header-cell>
+          <mat-header-cell *matHeaderCellDef mat-sort-header style="min-width: 150px; max-width: 150px; width: 150px;"> {{ 'attribute.last-update-time' | translate }} </mat-header-cell>
           <mat-cell *matCellDef="let attribute">
             {{ attribute.lastUpdateTs | date:'yyyy-MM-dd HH:mm:ss' }}
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="key">
-          <mat-header-cell *matHeaderCellDef mat-sort-header> {{ 'attribute.key' | translate }} </mat-header-cell>
+          <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 40%"> {{ 'attribute.key' | translate }} </mat-header-cell>
           <mat-cell *matCellDef="let attribute">
             {{ attribute.key }}
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="value">
-          <mat-header-cell *matHeaderCellDef> {{ 'attribute.value' | translate }} </mat-header-cell>
+          <mat-header-cell *matHeaderCellDef style="width: 60%"> {{ 'attribute.value' | translate }} </mat-header-cell>
           <mat-cell *matCellDef="let attribute"
                     class="tb-value-cell"
                     (click)="editAttribute($event, attribute)">
-            <span fxFlex>{{attribute.value}}</span>
-            <span [fxShow]="!isClientSideTelemetryTypeMap.get(attributeScope)">
-              <mat-icon>edit</mat-icon>
-            </span>
+            <div fxLayout="row">
+              <span fxFlex>{{attribute.value}}</span>
+              <span [fxShow]="!isClientSideTelemetryTypeMap.get(attributeScope)">
+                <mat-icon>edit</mat-icon>
+              </span>
+            </div>
           </mat-cell>
         </ng-container>
         <mat-header-row [ngClass]="{'mat-row-select': true}" *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>

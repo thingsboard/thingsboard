@@ -55,20 +55,20 @@ import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
-  CellContentInfo,
-  CellStyleInfo,
-  constructTableCssString,
-  DisplayColumn,
-  EntityColumn,
-  EntityData,
-  fromEntityColumnDef,
-  getCellContentInfo,
-  getCellStyleInfo,
-  getColumnWidth,
-  getEntityValue,
-  TableWidgetDataKeySettings,
-  TableWidgetSettings,
-  toEntityColumnDef
+    CellContentInfo,
+    CellStyleInfo,
+    constructTableCssString,
+    DisplayColumn,
+    EntityColumn,
+    EntityData,
+    fromEntityColumnDef,
+    getCellContentInfo,
+    getCellStyleInfo,
+    getColumnWidth,
+    getEntityValue,
+    TableWidgetDataKeySettings,
+    TableWidgetSettings,
+    toEntityColumnDef, widthStyle
 } from '@home/components/widget/lib/table-widget.models';
 import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { ComponentPortal, PortalInjector } from '@angular/cdk/portal';
@@ -402,9 +402,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
 
   public headerStyle(key: EntityColumn): any {
     const columnWidth = this.columnWidth[key.def];
-    return {
-      width: columnWidth
-    };
+    return widthStyle(columnWidth);
   }
 
   public cellStyle(entity: EntityData, key: EntityColumn): any {
@@ -424,7 +422,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     }
     if (!style.width) {
       const columnWidth = this.columnWidth[key.def];
-      style.width = columnWidth;
+      style = {...style, ...widthStyle(columnWidth)};
     }
     return style;
   }

@@ -78,27 +78,27 @@
               <mat-table [dataSource]="dataSource"
                          matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
                 <ng-container matColumnDef="name">
-                  <mat-header-cell *matHeaderCellDef mat-sort-header> {{ 'dashboard.state-name' | translate }} </mat-header-cell>
+                  <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 60%"> {{ 'dashboard.state-name' | translate }} </mat-header-cell>
                   <mat-cell *matCellDef="let state">
                     {{ state.name }}
                   </mat-cell>
                 </ng-container>
                 <ng-container matColumnDef="id">
-                  <mat-header-cell *matHeaderCellDef mat-sort-header> {{ 'dashboard.state-id' | translate }} </mat-header-cell>
+                  <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 40%"> {{ 'dashboard.state-id' | translate }} </mat-header-cell>
                   <mat-cell *matCellDef="let state">
                     {{ state.id }}
                   </mat-cell>
                 </ng-container>
                 <ng-container matColumnDef="root">
-                  <mat-header-cell *matHeaderCellDef mat-sort-header> {{ 'dashboard.is-root-state' | translate }} </mat-header-cell>
+                  <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 80px"> {{ 'dashboard.is-root-state' | translate }} </mat-header-cell>
                   <mat-cell *matCellDef="let state">
                     <mat-icon class="material-icons mat-icon">{{state.root ? 'check_box' : 'check_box_outline_blank'}}</mat-icon>
                   </mat-cell>
                 </ng-container>
                 <ng-container matColumnDef="actions" stickyEnd>
-                  <mat-header-cell *matHeaderCellDef [ngStyle]="{ minWidth: '80px', maxWidth: '80px' }">
+                  <mat-header-cell *matHeaderCellDef style="min-width: 80px; max-width: 80px; width: 80px">
                   </mat-header-cell>
-                  <mat-cell *matCellDef="let state" [ngStyle]="{ minWidth: '80px', maxWidth: '80px' }">
+                  <mat-cell *matCellDef="let state">
                     <div fxFlex fxLayout="row">
                       <button mat-button mat-icon-button [disabled]="isLoading$ | async"
                               type="button"
