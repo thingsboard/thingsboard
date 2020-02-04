@@ -38,6 +38,7 @@ class MatFabToolbarBase {
 const MatFabToolbarMixinBase: CanColorCtor & typeof MatFabToolbarBase = mixinColor(MatFabToolbarBase);
 
 @Directive({
+  // tslint:disable-next-line:directive-selector
   selector: 'mat-fab-trigger'
 })
 export class FabTriggerDirective {
@@ -48,6 +49,7 @@ export class FabTriggerDirective {
 }
 
 @Directive({
+  // tslint:disable-next-line:directive-selector
   selector: 'mat-fab-actions'
 })
 export class FabActionsDirective implements OnInit {
@@ -65,6 +67,7 @@ export class FabActionsDirective implements OnInit {
 
 // @dynamic
 @Component({
+  // tslint:disable-next-line:component-selector
   selector: 'mat-fab-toolbar',
   templateUrl: './fab-toolbar.component.html',
   styleUrls: ['./fab-toolbar.component.scss'],

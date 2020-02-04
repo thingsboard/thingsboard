@@ -89,10 +89,10 @@ export abstract class StateControllerComponent implements IStateControllerCompon
 
   private inited = false;
 
-  constructor(protected router: Router,
-              protected route: ActivatedRoute,
-              protected ngZone: NgZone,
-              protected statesControllerService: StatesControllerService) {
+  protected constructor(protected router: Router,
+                        protected route: ActivatedRoute,
+                        protected ngZone: NgZone,
+                        protected statesControllerService: StatesControllerService) {
   }
 
   ngOnInit(): void {

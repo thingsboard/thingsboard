@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { AuthUser, User } from '../../shared/models/user.model';
+import { AuthUser, User } from '@shared/models/user.model';
 
 export interface AuthPayload {
   authUser: AuthUser;

@@ -36,7 +36,8 @@ import { Router } from '@angular/router';
   providers: [{provide: ErrorStateMatcher, useExisting: AddEntityDialogComponent}],
   styleUrls: ['./add-entity-dialog.component.scss']
 })
-export class AddEntityDialogComponent extends DialogComponent<AddEntityDialogComponent, BaseData<HasId>> implements OnInit, ErrorStateMatcher {
+export class AddEntityDialogComponent extends
+  DialogComponent<AddEntityDialogComponent, BaseData<HasId>> implements OnInit, ErrorStateMatcher {
 
   entityComponent: EntityComponent<BaseData<HasId>>;
   detailsForm: NgForm;

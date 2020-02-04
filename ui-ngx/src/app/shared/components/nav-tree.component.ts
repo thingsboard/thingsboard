@@ -103,10 +103,10 @@ export class NavTreeComponent implements OnInit {
   private initTree() {
 
     const loadNodes: LoadNodesCallback = (node, cb) => {
-      const outCb = (_nodes: NavTreeNode[]) => {
+      const outCb = (nodes: NavTreeNode[]) => {
         const copied: NavTreeNode[] = [];
-        if (_nodes) {
-          _nodes.forEach((n) => {
+        if (nodes) {
+          nodes.forEach((n) => {
             copied.push(deepClone(n, ['data']));
           });
         }

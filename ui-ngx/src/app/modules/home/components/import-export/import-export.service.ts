@@ -426,7 +426,7 @@ export class ImportExportService {
   private prepareRuleChainMetaData(ruleChainMetaData: RuleChainMetaData) {
     delete ruleChainMetaData.ruleChainId;
     for (let i = 0; i < ruleChainMetaData.nodes.length; i++) {
-      var node = ruleChainMetaData.nodes[i];
+      const node = ruleChainMetaData.nodes[i];
       delete node.ruleChainId;
       ruleChainMetaData.nodes[i] = this.prepareExport(node);
     }

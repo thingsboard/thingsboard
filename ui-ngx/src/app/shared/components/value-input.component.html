@@ -25,8 +25,8 @@
           <span>{{ valueTypes.get(valueType).name | translate }}</span>
         </mat-select-trigger>
         <mat-option *ngFor="let valueType of valueTypeKeys" [value]="valueType">
-          <mat-icon svgIcon="{{ valueTypes.get(valueType).icon }}"></mat-icon>
-          <span>{{ valueTypes.get(valueType).name | translate }}</span>
+          <mat-icon svgIcon="{{ valueTypes.get(valueTypeEnum[valueType]).icon }}"></mat-icon>
+          <span>{{ valueTypes.get(valueTypeEnum[valueType]).name | translate }}</span>
         </mat-option>
       </mat-select>
     </mat-form-field>

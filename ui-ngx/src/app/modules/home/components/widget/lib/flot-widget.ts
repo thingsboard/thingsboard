@@ -51,23 +51,23 @@ export class TbFlot {
 
   private settings: TbFlotSettings;
 
-  private tooltip: JQuery<any>;
+  private readonly tooltip: JQuery<any>;
 
-  private yAxisTickFormatter: TbFlotTicksFormatterFunction;
+  private readonly yAxisTickFormatter: TbFlotTicksFormatterFunction;
   private ticksFormatterFunction: TbFlotTicksFormatterFunction;
-  private yaxis: TbFlotAxisOptions;
+  private readonly yaxis: TbFlotAxisOptions;
   private yaxes: Array<TbFlotAxisOptions>;
 
-  private options: JQueryPlotOptions;
+  private readonly options: JQueryPlotOptions;
   private subscription: IWidgetSubscription;
   private $element: JQuery<any>;
 
-  private trackUnits: string;
-  private trackDecimals: number;
-  private tooltipIndividual: boolean;
-  private tooltipCumulative: boolean;
+  private readonly trackUnits: string;
+  private readonly trackDecimals: number;
+  private readonly tooltipIndividual: boolean;
+  private readonly tooltipCumulative: boolean;
 
-  private defaultBarWidth: number;
+  private readonly defaultBarWidth: number;
 
   private plotInited = false;
   private plot: JQueryPlot;
@@ -85,7 +85,7 @@ export class TbFlot {
   private mouseupHandler = this.onFlotMouseUp.bind(this);
   private mouseleaveHandler = this.onFlotMouseLeave.bind(this);
 
-  private animatedPie: boolean;
+  private readonly animatedPie: boolean;
   private pieDataAnimationDuration: number;
   private pieData: DatasourceData[];
   private pieRenderedData: any[];
@@ -110,7 +110,7 @@ export class TbFlot {
     return flotDatakeySettingsSchema(defaultShowLines);
   }
 
-  constructor(private ctx: WidgetContext, private chartType: ChartType) {
+  constructor(private ctx: WidgetContext, private readonly chartType: ChartType) {
     this.chartType = this.chartType || 'line';
     this.settings = ctx.settings as TbFlotSettings;
     this.tooltip = $('#flot-series-tooltip');

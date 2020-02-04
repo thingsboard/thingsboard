@@ -15,17 +15,14 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
-import { Observable, Subject, ReplaySubject } from 'rxjs/index';
+import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
+import { Observable, ReplaySubject } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
-import { Tenant } from '@shared/models/tenant.model';
-import {DashboardInfo, Dashboard} from '@shared/models/dashboard.models';
-import {map} from 'rxjs/operators';
-import { DeviceInfo, Device, DeviceCredentials, DeviceSearchQuery } from '@app/shared/models/device.models';
-import {EntitySubtype} from '@app/shared/models/entity-type.models';
-import {AuthService} from '../auth/auth.service';
+import { Device, DeviceCredentials, DeviceInfo, DeviceSearchQuery } from '@app/shared/models/device.models';
+import { EntitySubtype } from '@app/shared/models/entity-type.models';
+import { AuthService } from '@core/auth/auth.service';
 
 @Injectable({
   providedIn: 'root'

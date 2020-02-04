@@ -51,7 +51,7 @@ export interface ImportDialogData {
   providers: [{provide: ErrorStateMatcher, useExisting: ImportDialogComponent}],
   styleUrls: []
 })
-export class ImportDialogComponent extends DialogComponent<ImportDialogComponent, any>
+export class ImportDialogComponent extends DialogComponent<ImportDialogComponent>
   implements OnInit, ErrorStateMatcher {
 
   importTitle: string;
@@ -65,7 +65,7 @@ export class ImportDialogComponent extends DialogComponent<ImportDialogComponent
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: ImportDialogData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
-              public dialogRef: MatDialogRef<ImportDialogComponent, any>,
+              public dialogRef: MatDialogRef<ImportDialogComponent>,
               private fb: FormBuilder) {
     super(store, router, dialogRef);
     this.importTitle = data.importTitle;

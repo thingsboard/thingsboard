@@ -63,7 +63,7 @@
           <mat-label translate>aggregation.function</mat-label>
           <mat-select matInput formControlName="type" style="min-width: 150px;">
             <mat-option *ngFor="let aggregation of aggregations" [value]="aggregation">
-              {{ aggregationTypesTranslations.get(aggregation) | translate }}
+              {{ aggregationTypesTranslations.get(aggregationTypes[aggregation]) | translate }}
             </mat-option>
           </mat-select>
         </mat-form-field>

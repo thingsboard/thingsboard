@@ -88,7 +88,8 @@ export class WidgetLibraryComponent extends PageComponent implements OnInit {
       getStateParams(): StateParams {
         return {};
       }
-    } as IStateController},
+    } as IStateController;
+    },
     {});
 
   @ViewChild('dashboard', {static: true}) dashboard: IDashboardComponent;

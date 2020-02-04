@@ -76,7 +76,7 @@
             </mat-toolbar>
             <div class="table-container">
               <mat-table [dataSource]="dataSource"
-                         matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="(pageLink.sortOrder.direction + '').toLowerCase()" matSortDisableClear>
+                         matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
                 <ng-container matColumnDef="name">
                   <mat-header-cell *matHeaderCellDef mat-sort-header> {{ 'dashboard.state-name' | translate }} </mat-header-cell>
                   <mat-cell *matCellDef="let state">

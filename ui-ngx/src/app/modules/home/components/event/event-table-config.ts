@@ -191,7 +191,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
             }),
             entity => entity.body.msgType),
           new EntityTableColumn<Event>('relationType', 'event.relation-type', '100px',
-            (entity) => entity.body.relationType, entity => ({padding: '0 12px 0 0',}),false, key => ({
+            (entity) => entity.body.relationType, entity => ({padding: '0 12px 0 0', }), false, key => ({
               padding: '0 12px 0 0'
             })),
           new EntityActionTableColumn<Event>('data', 'event.data',

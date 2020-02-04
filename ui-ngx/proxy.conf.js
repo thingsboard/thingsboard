@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-const ruleNodeUiforwardHost = 'localhost';
+const ruleNodeUiforwardHost = "localhost";
 const ruleNodeUiforwardPort = 8080;
 
 const PROXY_CONFIG = {
-  '/api': {
-    'target': 'http://localhost:8080',
-    'secure': false
+  "/api": {
+    "target": "http://localhost:8080",
+    "secure": false,
   },
-  '/static/rulenode': {
-    'target': `http://${ruleNodeUiforwardHost}:${ruleNodeUiforwardPort}`,
-    'secure': false
+  "/static/rulenode": {
+    "target": `http://${ruleNodeUiforwardHost}:${ruleNodeUiforwardPort}`,
+    "secure": false,
   },
-  '/api/ws': {
-    'target': 'ws://localhost:8080',
-    'ws': true
-  }
-}
+  "/api/ws": {
+    "target": "ws://localhost:8080",
+    "ws": true,
+  },
+};
 
 module.exports = PROXY_CONFIG;

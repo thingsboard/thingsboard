@@ -26,7 +26,7 @@
                       matInput [ngModel]="attributeScope"
                       (ngModelChange)="attributeScopeChanged($event)">
             <mat-option *ngFor="let scope of attributeScopes" [value]="scope">
-              {{ telemetryTypeTranslationsMap.get(scope) | translate }}
+              {{ telemetryTypeTranslationsMap.get(toTelemetryTypeFunc(scope)) | translate }}
             </mat-option>
           </mat-select>
         </mat-form-field>
@@ -135,7 +135,7 @@
     </mat-toolbar>
     <div fxFlex class="table-container" [fxShow]="mode !== 'widget'">
       <mat-table [dataSource]="dataSource"
-                 matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="(pageLink.sortOrder.direction + '').toLowerCase()" matSortDisableClear>
+                 matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
         <ng-container matColumnDef="select" sticky>
           <mat-header-cell *matHeaderCellDef>
             <mat-checkbox (change)="$event ? dataSource.masterToggle() : null"

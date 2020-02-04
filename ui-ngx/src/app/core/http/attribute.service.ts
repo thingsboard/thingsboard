@@ -15,8 +15,8 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
-import { forkJoin, Observable, of } from 'rxjs/index';
+import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
+import { forkJoin, Observable, of } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeData, AttributeScope } from '@shared/models/telemetry/telemetry.models';

@@ -17,17 +17,17 @@
 
 /* jshint unused:false */
 /* global base64_decode, CSSWizardView, window, console, jQuery */
-var fi = function () {
+var fi = function() {
 
   this.cssImportStatements = [];
   this.cssKeyframeStatements = [];
 
-  this.cssRegex = new RegExp('([\\s\\S]*?){([\\s\\S]*?)}', 'gi');
-  this.cssMediaQueryRegex = '((@media [\\s\\S]*?){([\\s\\S]*?}\\s*?)})';
-  this.cssKeyframeRegex = '((@.*?keyframes [\\s\\S]*?){([\\s\\S]*?}\\s*?)})';
-  this.combinedCSSRegex = '((\\s*?@media[\\s\\S]*?){([\\s\\S]*?)}\\s*?})|(([\\s\\S]*?){([\\s\\S]*?)})'; //to match css & media queries together
-  this.cssCommentsRegex = '(\\/\\*[\\s\\S]*?\\*\\/)';
-  this.cssImportStatementRegex = new RegExp('@import .*?;', 'gi');
+  this.cssRegex = new RegExp("([\\s\\S]*?){([\\s\\S]*?)}", "gi");
+  this.cssMediaQueryRegex = "((@media [\\s\\S]*?){([\\s\\S]*?}\\s*?)})";
+  this.cssKeyframeRegex = "((@.*?keyframes [\\s\\S]*?){([\\s\\S]*?}\\s*?)})";
+  this.combinedCSSRegex = "((\\s*?@media[\\s\\S]*?){([\\s\\S]*?)}\\s*?})|(([\\s\\S]*?){([\\s\\S]*?)})"; //to match css & media queries together
+  this.cssCommentsRegex = "(\\/\\*[\\s\\S]*?\\*\\/)";
+  this.cssImportStatementRegex = new RegExp("@import .*?;", "gi");
 };
 
 /*
@@ -37,10 +37,10 @@ var fi = function () {
 
  @return cleanedCSS contains no css comments
  */
-fi.prototype.stripComments = function (cssString) {
-  var regex = new RegExp(this.cssCommentsRegex, 'gi');
+fi.prototype.stripComments = function(cssString) {
+  var regex = new RegExp(this.cssCommentsRegex, "gi");
 
-  return cssString.replace(regex, '');
+  return cssString.replace(regex, "");
 };
 
 /*
@@ -52,7 +52,7 @@ fi.prototype.stripComments = function (cssString) {
 
  @return object css
  */
-fi.prototype.parseCSS = function (source) {
+fi.prototype.parseCSS = function(source) {
 
   if (source === undefined) {
     return [];
@@ -69,17 +69,17 @@ fi.prototype.parseCSS = function (source) {
     if (imports !== null) {
       this.cssImportStatements.push(imports[0]);
       css.push({
-        selector: '@imports',
-        type: 'imports',
-        styles: imports[0]
+        selector: "@imports",
+        type: "imports",
+        styles: imports[0],
       });
     } else {
       break;
     }
   }
-  source = source.replace(this.cssImportStatementRegex, '');
+  source = source.replace(this.cssImportStatementRegex, "");
   //get keyframe statements
-  var keyframesRegex = new RegExp(this.cssKeyframeRegex, 'gi');
+  var keyframesRegex = new RegExp(this.cssKeyframeRegex, "gi");
   var arr;
   while (true) {
     arr = keyframesRegex.exec(source);
@@ -87,44 +87,44 @@ fi.prototype.parseCSS = function (source) {
       break;
     }
     css.push({
-      selector: '@keyframes',
-      type: 'keyframes',
-      styles: arr[0]
+      selector: "@keyframes",
+      type: "keyframes",
+      styles: arr[0],
     });
   }
-  source = source.replace(keyframesRegex, '');
+  source = source.replace(keyframesRegex, "");
 
   //unified regex
-  var unified = new RegExp(this.combinedCSSRegex, 'gi');
+  var unified = new RegExp(this.combinedCSSRegex, "gi");
 
   while (true) {
     arr = unified.exec(source);
     if (arr === null) {
       break;
     }
-    var selector = '';
+    var selector = "";
     if (arr[2] === undefined) {
-      selector = arr[5].split('\r\n').join('\n').trim();
+      selector = arr[5].split("\r\n").join("\n").trim();
     } else {
-      selector = arr[2].split('\r\n').join('\n').trim();
+      selector = arr[2].split("\r\n").join("\n").trim();
     }
 
     /*
      fetch comments and associate it with current selector
      */
-    var commentsRegex = new RegExp(this.cssCommentsRegex, 'gi');
+    var commentsRegex = new RegExp(this.cssCommentsRegex, "gi");
     var comments = commentsRegex.exec(selector);
     if (comments !== null) {
-      selector = selector.replace(commentsRegex, '').trim();
+      selector = selector.replace(commentsRegex, "").trim();
     }
 
     //determine the type
-    if (selector.indexOf('@media') !== -1) {
+    if (selector.indexOf("@media") !== -1) {
       //we have a media query
       var cssObject = {
         selector: selector,
-        type: 'media',
-        subStyles: this.parseCSS(arr[3] + '\n}') //recursively parse media query inner css
+        type: "media",
+        subStyles: this.parseCSS(arr[3] + "\n}"), //recursively parse media query inner css
       };
       if (comments !== null) {
         cssObject.comments = comments[0];
@@ -135,10 +135,10 @@ fi.prototype.parseCSS = function (source) {
       var rules = this.parseRules(arr[6]);
       var style = {
         selector: selector,
-        rules: rules
+        rules: rules,
       };
-      if (selector === '@font-face') {
-        style.type = 'font-face';
+      if (selector === "@font-face") {
+        style.type = "font-face";
       }
       if (comments !== null) {
         style.comments = comments[0];
@@ -157,9 +157,9 @@ fi.prototype.parseCSS = function (source) {
  @param rules, css directive string example
  \n\ncolor:white;\n    font-size:18px;\n
  */
-fi.prototype.parseRules = function (rules) {
+fi.prototype.parseRules = function(rules) {
   //convert all windows style line endings to unix style line endings
-  rules = rules.split('\r\n').join('\n');
+  rules = rules.split("\r\n").join("\n");
   var ret = [];
 
   // Split all rules but keep semicolon for base64 url data
@@ -171,11 +171,11 @@ fi.prototype.parseRules = function (rules) {
 
     //determine if line is a valid css directive, ie color:white;
     line = line.trim();
-    if (line.indexOf(':') !== -1) {
+    if (line.indexOf(":") !== -1) {
       //line contains :
-      line = line.split(':');
+      line = line.split(":");
       var cssDirective = line[0].trim();
-      var cssValue = line.slice(1).join(':').trim();
+      var cssValue = line.slice(1).join(":").trim();
 
       //more checks
       if (cssDirective.length < 1 || cssValue.length < 1) {
@@ -186,19 +186,19 @@ fi.prototype.parseRules = function (rules) {
       //push rule
       ret.push({
         directive: cssDirective,
-        value: cssValue
+        value: cssValue,
       });
     } else {
       //if there is no ':', but what if it was mis splitted value which starts with base64
-      if (line.trim().substr(0, 7) == 'base64,') { //hack :)
+      if (line.trim().substr(0, 7) == "base64,") { //hack :)
         ret[ret.length - 1].value += line.trim();
       } else {
         //add rule, even if it is defective
         if (line.length > 0) {
           ret.push({
-            directive: '',
+            directive: "",
             value: line,
-            defective: true
+            defective: true,
           });
         }
       }
@@ -211,7 +211,7 @@ fi.prototype.parseRules = function (rules) {
  just returns the rule having given directive
  if not found returns false;
  */
-fi.prototype.findCorrespondingRule = function (rules, directive, value) {
+fi.prototype.findCorrespondingRule = function(rules, directive, value) {
   if (value === undefined) {
     value = false;
   }
@@ -231,7 +231,7 @@ fi.prototype.findCorrespondingRule = function (rules, directive, value) {
  Finds styles that have given selector, compress them,
  and returns them
  */
-fi.prototype.findBySelector = function (cssObjectArray, selector, contains) {
+fi.prototype.findBySelector = function(cssObjectArray, selector, contains) {
   if (contains === undefined) {
     contains = false;
   }
@@ -263,7 +263,7 @@ fi.prototype.findBySelector = function (cssObjectArray, selector, contains) {
 /*
  deletes cssObjects having given selector, and returns new array
  */
-fi.prototype.deleteBySelector = function (cssObjectArray, selector) {
+fi.prototype.deleteBySelector = function(cssObjectArray, selector) {
   var ret = [];
   for (var i = 0; i < cssObjectArray.length; i++) {
     if (cssObjectArray[i].selector !== selector) {
@@ -277,7 +277,7 @@ fi.prototype.deleteBySelector = function (cssObjectArray, selector) {
  Compresses given cssObjectArray and tries to minimize
  selector redundence.
  */
-fi.prototype.compressCSS = function (cssObjectArray) {
+fi.prototype.compressCSS = function(cssObjectArray) {
   var compressed = [];
   var done = {};
   for (var i = 0; i < cssObjectArray.length; i++) {
@@ -315,19 +315,19 @@ fi.prototype.compressCSS = function (cssObjectArray) {
 
  @return diff css object contains changed values in css1 in regards to css2 see test input output in /test/data/css.js
  */
-fi.prototype.cssDiff = function (css1, css2) {
+fi.prototype.cssDiff = function(css1, css2) {
   if (css1.selector !== css2.selector) {
     return false;
   }
 
   //if one of them is media query return false, because diff function can not operate on media queries
-  if ((css1.type === 'media' || css2.type === 'media')) {
+  if ((css1.type === "media" || css2.type === "media")) {
     return false;
   }
 
   var diff = {
     selector: css1.selector,
-    rules: []
+    rules: [],
   };
   var rule1, rule2;
   for (var i = 0; i < css1.rules.length; i++) {
@@ -352,11 +352,10 @@ fi.prototype.cssDiff = function (css1, css2) {
     rule1 = this.findCorrespondingRule(css1.rules, rule2.directive);
     if (rule1 === false) {
       //rule1 is a new rule
-      rule2.type = 'DELETED'; //mark it as a deleted rule, so that other merge operations could be true
+      rule2.type = "DELETED"; //mark it as a deleted rule, so that other merge operations could be true
       diff.rules.push(rule2);
     }
   }
-
 
   if (diff.rules.length === 0) {
     return false;
@@ -373,18 +372,17 @@ fi.prototype.cssDiff = function (css1, css2) {
  @param reverse, [optional], if given true, first parameter will be traversed on reversed order
  effectively giving priority to the styles in newArray
  */
-fi.prototype.intelligentMerge = function (cssObjectArray, newArray, reverse) {
+fi.prototype.intelligentMerge = function(cssObjectArray, newArray, reverse) {
   if (reverse === undefined) {
     reverse = false;
   }
-
 
   for (var i = 0; i < newArray.length; i++) {
     this.intelligentCSSPush(cssObjectArray, newArray[i], reverse);
   }
   for (i = 0; i < cssObjectArray.length; i++) {
     var cobj = cssObjectArray[i];
-    if (cobj.type === 'media' || (cobj.type === 'keyframes')) {
+    if (cobj.type === "media" || (cobj.type === "keyframes")) {
       continue;
     }
     cobj.rules = this.compactRules(cobj.rules);
@@ -400,7 +398,7 @@ fi.prototype.intelligentMerge = function (cssObjectArray, newArray, reverse) {
  @param reverse [optional] default is false, if given, cssObjectArray will be reversly traversed
  resulting more priority in minimalObject's styles
  */
-fi.prototype.intelligentCSSPush = function (cssObjectArray, minimalObject, reverse) {
+fi.prototype.intelligentCSSPush = function(cssObjectArray, minimalObject, reverse) {
   var pushSelector = minimalObject.selector;
   //find correct selector if not found just push minimalObject into cssObject
   var cssObject = false;
@@ -428,15 +426,15 @@ fi.prototype.intelligentCSSPush = function (cssObjectArray, minimalObject, rever
   if (cssObject === false) {
     cssObjectArray.push(minimalObject); //just push, because cssSelector is new
   } else {
-    if (minimalObject.type !== 'media') {
+    if (minimalObject.type !== "media") {
       for (var ii = 0; ii < minimalObject.rules.length; ii++) {
         var rule = minimalObject.rules[ii];
         //find rule inside cssObject
         var oldRule = this.findCorrespondingRule(cssObject.rules, rule.directive);
         if (oldRule === false) {
           cssObject.rules.push(rule);
-        } else if (rule.type == 'DELETED') {
-          oldRule.type = 'DELETED';
+        } else if (rule.type == "DELETED") {
+          oldRule.type = "DELETED";
         } else {
           //rule found just update value
 
@@ -457,10 +455,10 @@ fi.prototype.intelligentCSSPush = function (cssObjectArray, minimalObject, rever
 
  @returns rules array, compacted by deleting all unneccessary rules
  */
-fi.prototype.compactRules = function (rules) {
+fi.prototype.compactRules = function(rules) {
   var newRules = [];
   for (var i = 0; i < rules.length; i++) {
-    if (rules[i].type !== 'DELETED') {
+    if (rules[i].type !== "DELETED") {
       newRules.push(rules[i]);
     }
   }
@@ -471,18 +469,18 @@ fi.prototype.compactRules = function (rules) {
 
  @param [optional] cssBase, if given computes cssString from cssObject array
  */
-fi.prototype.getCSSForEditor = function (cssBase, depth) {
+fi.prototype.getCSSForEditor = function(cssBase, depth) {
   if (depth === undefined) {
     depth = 0;
   }
-  var ret = '';
+  var ret = "";
   if (cssBase === undefined) {
     cssBase = this.css;
   }
   //append imports
   for (var i = 0; i < cssBase.length; i++) {
-    if (cssBase[i].type == 'imports') {
-      ret += cssBase[i].styles + '\n\n';
+    if (cssBase[i].type == "imports") {
+      ret += cssBase[i].styles + "\n\n";
     }
   }
   for (i = 0; i < cssBase.length; i++) {
@@ -492,34 +490,34 @@ fi.prototype.getCSSForEditor = function (cssBase, depth) {
     }
     var comments = "";
     if (tmp.comments !== undefined) {
-      comments = tmp.comments + '\n';
+      comments = tmp.comments + "\n";
     }
 
-    if (tmp.type == 'media') { //also put media queries to output
-      ret += comments + tmp.selector + '{\n';
+    if (tmp.type == "media") { //also put media queries to output
+      ret += comments + tmp.selector + "{\n";
       ret += this.getCSSForEditor(tmp.subStyles, depth + 1);
-      ret += '}\n\n';
-    } else if (tmp.type !== 'keyframes' && tmp.type !== 'imports') {
-      ret += this.getSpaces(depth) + comments + tmp.selector + ' {\n';
+      ret += "}\n\n";
+    } else if (tmp.type !== "keyframes" && tmp.type !== "imports") {
+      ret += this.getSpaces(depth) + comments + tmp.selector + " {\n";
       ret += this.getCSSOfRules(tmp.rules, depth + 1);
-      ret += this.getSpaces(depth) + '}\n\n';
+      ret += this.getSpaces(depth) + "}\n\n";
     }
   }
 
   //append keyFrames
   for (i = 0; i < cssBase.length; i++) {
-    if (cssBase[i].type == 'keyframes') {
-      ret += cssBase[i].styles + '\n\n';
+    if (cssBase[i].type == "keyframes") {
+      ret += cssBase[i].styles + "\n\n";
     }
   }
 
   return ret;
 };
 
-fi.prototype.getImports = function (cssObjectArray) {
+fi.prototype.getImports = function(cssObjectArray) {
   var imps = [];
   for (var i = 0; i < cssObjectArray.length; i++) {
-    if (cssObjectArray[i].type == 'imports') {
+    if (cssObjectArray[i].type == "imports") {
       imps.push(cssObjectArray[i].styles);
     }
   }
@@ -529,30 +527,30 @@ fi.prototype.getImports = function (cssObjectArray) {
  given rules array, returns visually formatted css string
  to be used inside editor
  */
-fi.prototype.getCSSOfRules = function (rules, depth) {
-  var ret = '';
+fi.prototype.getCSSOfRules = function(rules, depth) {
+  var ret = "";
   for (var i = 0; i < rules.length; i++) {
     if (rules[i] === undefined) {
       continue;
     }
     if (rules[i].defective === undefined) {
-      ret += this.getSpaces(depth) + rules[i].directive + ' : ' + rules[i].value + ';\n';
+      ret += this.getSpaces(depth) + rules[i].directive + " : " + rules[i].value + ";\n";
     } else {
-      ret += this.getSpaces(depth) + rules[i].value + ';\n';
+      ret += this.getSpaces(depth) + rules[i].value + ";\n";
     }
 
   }
-  return ret || '\n';
+  return ret || "\n";
 };
 
 /*
  A very simple helper function returns number of spaces appended in a single string,
  the number depends input parameter, namely input*2
  */
-fi.prototype.getSpaces = function (num) {
-  var ret = '';
+fi.prototype.getSpaces = function(num) {
+  var ret = "";
   for (var i = 0; i < num * 4; i++) {
-    ret += ' ';
+    ret += " ";
   }
   return ret;
 };
@@ -563,14 +561,14 @@ fi.prototype.getSpaces = function (num) {
 
  @returns css string in which this.cssPreviewNamespace prepended
  */
-fi.prototype.applyNamespacing = function (css, forcedNamespace) {
+fi.prototype.applyNamespacing = function(css, forcedNamespace) {
   var cssObjectArray = css;
-  var namespaceClass = '.' + this.cssPreviewNamespace;
+  var namespaceClass = "." + this.cssPreviewNamespace;
   if (forcedNamespace !== undefined) {
     namespaceClass = forcedNamespace;
   }
 
-  if (typeof css === 'string') {
+  if (typeof css === "string") {
     cssObjectArray = this.parseCSS(css);
   }
 
@@ -578,21 +576,21 @@ fi.prototype.applyNamespacing = function (css, forcedNamespace) {
     var obj = cssObjectArray[i];
 
     //bypass namespacing for @font-face @keyframes @import
-    if (obj.selector.indexOf('@font-face') > -1 || obj.selector.indexOf('keyframes') > -1 || obj.selector.indexOf('@import') > -1 || obj.selector.indexOf('.form-all') > -1 || obj.selector.indexOf('#stage') > -1) {
+    if (obj.selector.indexOf("@font-face") > -1 || obj.selector.indexOf("keyframes") > -1 || obj.selector.indexOf("@import") > -1 || obj.selector.indexOf(".form-all") > -1 || obj.selector.indexOf("#stage") > -1) {
       continue;
     }
 
-    if (obj.type !== 'media') {
-      var selector = obj.selector.split(',');
+    if (obj.type !== "media") {
+      var selector = obj.selector.split(",");
       var newSelector = [];
       for (var j = 0; j < selector.length; j++) {
-        if (selector[j].indexOf('.supernova') === -1) { //do not apply namespacing to selectors including supernova
-          newSelector.push(namespaceClass + ' ' + selector[j]);
+        if (selector[j].indexOf(".supernova") === -1) { //do not apply namespacing to selectors including supernova
+          newSelector.push(namespaceClass + " " + selector[j]);
         } else {
           newSelector.push(selector[j]);
         }
       }
-      obj.selector = newSelector.join(',');
+      obj.selector = newSelector.join(",");
     } else {
       obj.subStyles = this.applyNamespacing(obj.subStyles, forcedNamespace); //handle media queries as well
     }
@@ -605,26 +603,26 @@ fi.prototype.applyNamespacing = function (css, forcedNamespace) {
  given css string or object array, clears possible namespacing from
  all of the selectors inside the css
  */
-fi.prototype.clearNamespacing = function (css, returnObj) {
+fi.prototype.clearNamespacing = function(css, returnObj) {
   if (returnObj === undefined) {
     returnObj = false;
   }
   var cssObjectArray = css;
-  var namespaceClass = '.' + this.cssPreviewNamespace;
-  if (typeof css === 'string') {
+  var namespaceClass = "." + this.cssPreviewNamespace;
+  if (typeof css === "string") {
     cssObjectArray = this.parseCSS(css);
   }
 
   for (var i = 0; i < cssObjectArray.length; i++) {
     var obj = cssObjectArray[i];
 
-    if (obj.type !== 'media') {
-      var selector = obj.selector.split(',');
+    if (obj.type !== "media") {
+      var selector = obj.selector.split(",");
       var newSelector = [];
       for (var j = 0; j < selector.length; j++) {
-        newSelector.push(selector[j].split(namespaceClass + ' ').join(''));
+        newSelector.push(selector[j].split(namespaceClass + " ").join(""));
       }
-      obj.selector = newSelector.join(',');
+      obj.selector = newSelector.join(",");
     } else {
       obj.subStyles = this.clearNamespacing(obj.subStyles, true); //handle media queries as well
     }
@@ -641,17 +639,17 @@ fi.prototype.clearNamespacing = function (css, returnObj) {
  creates a new style tag (also destroys the previous one)
  and injects given css string into that css tag
  */
-fi.prototype.createStyleElement = function (id, css, format) {
+fi.prototype.createStyleElement = function(id, css, format) {
   if (format === undefined) {
     format = false;
   }
 
-  if (this.testMode === false && format !== 'nonamespace') {
+  if (this.testMode === false && format !== "nonamespace") {
     //apply namespacing classes
     css = this.applyNamespacing(css);
   }
 
-  if (typeof css != 'string') {
+  if (typeof css != "string") {
     css = this.getCSSForEditor(css);
   }
   //apply formatting for css
@@ -660,7 +658,7 @@ fi.prototype.createStyleElement = function (id, css, format) {
   }
 
   if (this.testMode !== false) {
-    return this.testMode('create style #' + id, css); //if test mode, just pass result to callback
+    return this.testMode("create style #" + id, css); //if test mode, just pass result to callback
   }
 
   var __el = document.getElementById(id);
@@ -668,11 +666,11 @@ fi.prototype.createStyleElement = function (id, css, format) {
     __el.parentNode.removeChild(__el);
   }
 
-  var head = document.head || document.getElementsByTagName('head')[0],
-    style = document.createElement('style');
+  var head = document.head || document.getElementsByTagName("head")[0],
+    style = document.createElement("style");
 
   style.id = id;
-  style.type = 'text/css';
+  style.type = "text/css";
 
   head.appendChild(style);
 

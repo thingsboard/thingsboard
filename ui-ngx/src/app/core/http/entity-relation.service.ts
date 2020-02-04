@@ -15,8 +15,8 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
-import { Observable } from 'rxjs/index';
+import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
+import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { EntityRelation, EntityRelationInfo, EntityRelationsQuery } from '@shared/models/relation.models';
 import { EntityId } from '@app/shared/models/id/entity-id';

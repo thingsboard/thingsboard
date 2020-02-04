@@ -41,7 +41,7 @@ const tinycolor = tinycolor_;
 class ThingsboardSchemaForm extends React.Component<JsonFormProps, any> {
 
   private hasConditions: boolean;
-  private mapper: {[type: string]: any};
+  private readonly mapper: {[type: string]: any};
 
   constructor(props) {
     super(props);

@@ -15,7 +15,7 @@
 ///
 
 import { Action } from '@ngrx/store';
-import { AuthUser, User } from '../../shared/models/user.model';
+import { User } from '@shared/models/user.model';
 import { AuthPayload } from '@core/auth/auth.models';
 
 export enum AuthActionTypes {

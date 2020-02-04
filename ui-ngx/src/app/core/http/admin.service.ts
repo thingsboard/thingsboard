@@ -15,8 +15,8 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
-import { Observable } from 'rxjs/index';
+import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
+import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { AdminSettings, MailServerSettings, SecuritySettings, UpdateMessage } from '@shared/models/settings.models';
 

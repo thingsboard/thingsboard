@@ -817,7 +817,7 @@ export class RuleChainPageComponent extends PageComponent
       menuItems: []
     };
     const sourceNode: FcRuleNode = this.ruleChainCanvas.modelService.nodes.getNodeByConnectorId(edge.source);
-    if (sourceNode.component.type != RuleNodeType.INPUT) {
+    if (sourceNode.component.type !== RuleNodeType.INPUT) {
       contextInfo.menuItems.push(
         {
           action: () => {
@@ -900,14 +900,14 @@ export class RuleChainPageComponent extends PageComponent
     edges.forEach((edge) => {
       const sourceNode = this.ruleChainCanvas.modelService.nodes.getNodeByConnectorId(edge.source);
       const destNode = this.ruleChainCanvas.modelService.nodes.getNodeByConnectorId(edge.destination);
-      const isInputSource = sourceNode.component.type == RuleNodeType.INPUT;
+      const isInputSource = sourceNode.component.type === RuleNodeType.INPUT;
       const fromIndex = nodes.indexOf(sourceNode);
       const toIndex = nodes.indexOf(destNode);
       if ( (isInputSource || fromIndex > -1) && toIndex > -1 ) {
         const connection: RuleNodeConnection = {
-          isInputSource: isInputSource,
-          fromIndex: fromIndex,
-          toIndex: toIndex,
+          isInputSource,
+          fromIndex,
+          toIndex,
           label: edge.label,
           labels: edge.labels
         };
@@ -929,8 +929,8 @@ export class RuleChainPageComponent extends PageComponent
       const scrollParent = canvas.parent();
       const scrollTop = scrollParent.scrollTop();
       const scrollLeft = scrollParent.scrollLeft();
-      x = scrollLeft + scrollParent.width()/2;
-      y = scrollTop + scrollParent.height()/2;
+      x = scrollLeft + scrollParent.width() / 2;
+      y = scrollTop + scrollParent.height() / 2;
     }
     const ruleNodes = this.itembuffer.pasteRuleNodes(x, y);
     if (ruleNodes) {
@@ -972,19 +972,21 @@ export class RuleChainPageComponent extends PageComponent
               this.ruleChainCanvas.modelService.edges.delete(found);
             }
           } else {
-            const sourceConnectors = this.ruleChainCanvas.modelService.nodes.getConnectorsByType(sourceNode, FlowchartConstants.rightConnectorType);
+            const sourceConnectors = this.ruleChainCanvas.modelService.nodes
+              .getConnectorsByType(sourceNode, FlowchartConstants.rightConnectorType);
             if (sourceConnectors && sourceConnectors.length) {
               source = sourceConnectors[0].id;
             }
           }
-          const destConnectors = this.ruleChainCanvas.modelService.nodes.getConnectorsByType(destNode, FlowchartConstants.leftConnectorType);
+          const destConnectors = this.ruleChainCanvas.modelService.nodes
+            .getConnectorsByType(destNode, FlowchartConstants.leftConnectorType);
           if (destConnectors && destConnectors.length) {
             destination = destConnectors[0].id;
           }
           if (source && destination) {
             const edge: FcRuleEdge = {
-              source: source,
-              destination: destination,
+              source,
+              destination,
               label: connection.label,
               labels: connection.labels
             };
@@ -1203,7 +1205,7 @@ export class RuleChainPageComponent extends PageComponent
           nodes.push(node);
         }
       });
-      const firstNodeEdge = this.ruleChainModel.edges.find((edge) => edge.source === this.inputConnectorId+'');
+      const firstNodeEdge = this.ruleChainModel.edges.find((edge) => edge.source === this.inputConnectorId + '');
       if (firstNodeEdge) {
         const firstNode = this.ruleChainCanvas.modelService.nodes.getNodeByConnectorId(firstNodeEdge.destination);
         ruleChainMetaData.firstNodeIndex = nodes.indexOf(firstNode);
@@ -1241,8 +1243,8 @@ export class RuleChainPageComponent extends PageComponent
           }
         }
       });
-      this.ruleChainService.saveAndGetResolvedRuleChainMetadata(ruleChainMetaData).subscribe((ruleChainMetaData) => {
-        this.ruleChainMetaData = ruleChainMetaData;
+      this.ruleChainService.saveAndGetResolvedRuleChainMetadata(ruleChainMetaData).subscribe((savedRuleChainMetaData) => {
+        this.ruleChainMetaData = savedRuleChainMetaData;
         if (this.isImport) {
           this.isDirtyValue = false;
           this.isImport = false;

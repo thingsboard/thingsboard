@@ -17,6 +17,7 @@
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { getDescendantProp, isObject } from '@core/utils';
+import { SortDirection } from '@angular/material/sort';
 
 export type PageLinkSearchFunction<T> = (entity: T, textSearch: string) => boolean;
 
@@ -111,6 +112,14 @@ export class PageLink {
       pageData.hasNext = pageData.totalElements > startIndex + pageData.data.length;
     }
     return pageData;
+  }
+
+  public sortDirection(): SortDirection {
+    if (this.sortOrder) {
+      return (this.sortOrder.direction + '').toLowerCase() as SortDirection;
+    } else {
+      return '' as SortDirection;
+    }
   }
 
 }

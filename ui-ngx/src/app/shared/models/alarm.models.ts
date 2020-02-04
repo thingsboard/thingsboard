@@ -116,13 +116,13 @@ export const simulatedAlarm: AlarmInfo = {
   originatorName: 'Simulated',
   originator: {
     entityType: EntityType.DEVICE,
-    id: "1"
+    id: '1'
   },
   type: 'TEMPERATURE',
   severity: AlarmSeverity.MAJOR,
   status: AlarmStatus.ACTIVE_UNACK,
   details: {
-    message: "Temperature is high!"
+    message: 'Temperature is high!'
   },
   propagate: false
 };

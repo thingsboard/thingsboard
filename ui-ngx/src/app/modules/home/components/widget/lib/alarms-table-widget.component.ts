@@ -100,9 +100,6 @@ interface AlarmsTableWidgetSettings extends TableWidgetSettings {
   allowClear: boolean;
 }
 
-interface AlarmsTableDataKeySettings extends TableWidgetDataKeySettings {
-}
-
 interface AlarmWidgetActionDescriptor extends WidgetActionDescriptor {
   details?: boolean;
   acknowledge?: boolean;
@@ -301,7 +298,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     if (isDefined(pageSize) && isNumber(pageSize) && pageSize > 0) {
       this.defaultPageSize = pageSize;
     }
-    this.pageSizeOptions = [this.defaultPageSize, this.defaultPageSize*2, this.defaultPageSize*3];
+    this.pageSizeOptions = [this.defaultPageSize, this.defaultPageSize * 2, this.defaultPageSize * 3];
     this.pageLink.pageSize = this.displayPagination ? this.defaultPageSize : Number.POSITIVE_INFINITY;
 
     const cssString = constructTableCssString(this.widgetConfig);
@@ -320,11 +317,11 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     }
 
     if (this.alarmSource) {
-      this.alarmSource.dataKeys.forEach((_dataKey) => {
-        const dataKey: EntityColumn = deepClone(_dataKey) as EntityColumn;
+      this.alarmSource.dataKeys.forEach((alarmDataKey) => {
+        const dataKey: EntityColumn = deepClone(alarmDataKey) as EntityColumn;
         dataKey.title = this.utils.customTranslation(dataKey.label, dataKey.label);
         dataKey.def = 'def' + this.columns.length;
-        const keySettings: AlarmsTableDataKeySettings = dataKey.settings;
+        const keySettings: TableWidgetDataKeySettings = dataKey.settings;
 
         this.stylesInfo[dataKey.def] = getCellStyleInfo(keySettings);
         this.contentsInfo[dataKey.def] = getCellContentInfo(keySettings, 'value, alarm, ctx');
@@ -383,7 +380,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
         title: column.title,
         def: column.def,
         display: this.displayedColumns.indexOf(column.def) > -1
-      }
+      };
     });
 
     const injectionTokens = new WeakMap<any, any>([
@@ -481,7 +478,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     const columnWidth = this.columnWidth[key.def];
     return {
       width: columnWidth
-    }
+    };
   }
 
   public cellStyle(alarm: AlarmInfo, key: EntityColumn): any {
@@ -629,7 +626,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     }
     if (this.alarmsDatasource.selection.hasValue()) {
       const alarms = this.alarmsDatasource.selection.selected.filter(
-        (alarm) => { return alarm.id.id !== NULL_UUID }
+        (alarm) => alarm.id.id !== NULL_UUID
       );
       if (alarms.length) {
         const title = this.translate.instant('alarm.aknowledge-alarms-title', {count: alarms.length});
@@ -685,7 +682,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     }
     if (this.alarmsDatasource.selection.hasValue()) {
       const alarms = this.alarmsDatasource.selection.selected.filter(
-        (alarm) => { return alarm.id.id !== NULL_UUID }
+        (alarm) => alarm.id.id !== NULL_UUID
       );
       if (alarms.length) {
         const title = this.translate.instant('alarm.clear-alarms-title', {count: alarms.length});
@@ -725,8 +722,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
           return this.translate.instant(alarmStatusTranslations.get(value));
         } else if (alarmField.value === alarmFields.originatorType.value) {
           return this.translate.instant(entityTypeTranslations.get(value).type);
-        }
-        else {
+        } else {
           return value;
         }
       } else {
@@ -741,7 +737,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     if (isDefined(value)) {
       const alarmField = alarmFields[key.name];
       if (alarmField) {
-        if (alarmField.value == alarmFields.severity.value) {
+        if (alarmField.value === alarmFields.severity.value) {
           return {
             fontWeight: 'bold',
             color: alarmSeverityColors.get(value)

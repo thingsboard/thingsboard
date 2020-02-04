@@ -21,7 +21,7 @@ import {AppState} from '@app/core/core.state';
 import {TranslateService} from '@ngx-translate/core';
 import {AliasEntityType, EntityType, entityTypeTranslations} from '@app/shared/models/entity-type.models';
 import {EntityService} from '@core/http/entity.service';
-import {coerceBooleanProperty} from "@angular/cdk/coercion";
+import {coerceBooleanProperty} from '@angular/cdk/coercion';
 
 @Component({
   selector: 'tb-entity-type-select',

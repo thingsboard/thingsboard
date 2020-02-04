@@ -5,7 +5,7 @@
       true,
       "attribute",
       "tb",
-      "camelCase"
+      "kebab-case"
     ],
     "component-selector": [
       true,

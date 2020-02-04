@@ -14,15 +14,14 @@
 /// limitations under the License.
 ///
 
-import {Injectable} from '@angular/core';
-import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
-import {Observable} from 'rxjs/index';
-import {HttpClient} from '@angular/common/http';
-import {PageLink} from '@shared/models/page/page-link';
-import {PageData} from '@shared/models/page/page-data';
-import {EntitySubtype} from '@app/shared/models/entity-type.models';
+import { Injectable } from '@angular/core';
+import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
+import { Observable } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { PageLink } from '@shared/models/page/page-link';
+import { PageData } from '@shared/models/page/page-data';
+import { EntitySubtype } from '@app/shared/models/entity-type.models';
 import { EntityView, EntityViewInfo, EntityViewSearchQuery } from '@app/shared/models/entity-view.models';
-import { Asset, AssetSearchQuery } from '@shared/models/asset.models';
 
 @Injectable({
   providedIn: 'root'

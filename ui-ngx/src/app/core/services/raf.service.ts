@@ -26,8 +26,8 @@ export type CancelAnimationFrame = () => void;
 })
 export class RafService {
 
-  private rafFunction: (frameCallback: () => void) => CancelAnimationFrame;
-  private rafSupported: boolean;
+  private readonly rafFunction: (frameCallback: () => void) => CancelAnimationFrame;
+  private readonly rafSupported: boolean;
 
   constructor(
     @Inject(WINDOW) private window: Window,

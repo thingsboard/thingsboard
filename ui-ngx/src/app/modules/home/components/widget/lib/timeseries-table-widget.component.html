@@ -42,7 +42,7 @@
       <mat-tab *ngFor="let source of sources" label="{{ source.datasource.name }}">
         <div fxFlex class="table-container">
           <mat-table [dataSource]="source.timeseriesDatasource" [trackBy]="trackByRowIndex"
-                     matSort [matSortActive]="source.pageLink.sortOrder.property" [matSortDirection]="(source.pageLink.sortOrder.direction + '').toLowerCase()" matSortDisableClear>
+                     matSort [matSortActive]="source.pageLink.sortOrder.property" [matSortDirection]="source.pageLink.sortDirection()" matSortDisableClear>
             <ng-container *ngIf="showTimestamp" [matColumnDef]="'0'">
               <mat-header-cell *matHeaderCellDef mat-sort-header>Timestamp</mat-header-cell>
               <mat-cell *matCellDef="let row;"

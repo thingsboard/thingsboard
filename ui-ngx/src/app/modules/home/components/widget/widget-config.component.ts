@@ -58,7 +58,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { EntityService } from '@core/http/entity.service';
 import { JsonFormComponentData } from '@shared/components/json-form/json-form-component.models';
 import { WidgetActionsData } from './action/manage-widget-actions.component.models';
-import { Dashboard } from '@shared/models/dashboard.models';
+import { Dashboard, DashboardState } from '@shared/models/dashboard.models';
 
 const emptySettingsSchema = {
   type: 'object',
@@ -107,7 +107,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   functionsOnly: boolean;
 
   @Input()
-  dashboardStates: Array<string>;
+  dashboardStates: {[id: string]: DashboardState };
 
   @Input() disabled: boolean;
 

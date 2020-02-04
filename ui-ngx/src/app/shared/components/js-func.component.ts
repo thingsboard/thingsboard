@@ -66,7 +66,7 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
 
   @Input() functionArgs: Array<string>;
 
-  @Input() validationArgs: Array<string>;
+  @Input() validationArgs: Array<any>;
 
   @Input() resultType: string;
 

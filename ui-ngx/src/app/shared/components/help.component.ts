@@ -18,6 +18,7 @@ import { Component, Input } from '@angular/core';
 import { HelpLinks } from '@shared/models/constants';
 
 @Component({
+  // tslint:disable-next-line:component-selector
   selector: '[tb-help]',
   templateUrl: './help.component.html'
 })

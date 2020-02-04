@@ -20,8 +20,8 @@ import { environment as env } from '@env/environment';
 
 import { TranslateService } from '@ngx-translate/core';
 import { select, Store } from '@ngrx/store';
-import { AppState } from './core/core.state';
-import { LocalStorageService } from './core/local-storage/local-storage.service';
+import { AppState } from '@core/core.state';
+import { LocalStorageService } from '@core/local-storage/local-storage.service';
 import { DomSanitizer } from '@angular/platform-browser';
 import { MatIconRegistry } from '@angular/material';
 import { combineLatest } from 'rxjs';

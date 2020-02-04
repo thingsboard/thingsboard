@@ -21,7 +21,7 @@
   <mat-select matInput [ngModel]="alarmTableConfig.searchStatus"
               (ngModelChange)="searchStatusChanged($event)">
     <mat-option *ngFor="let status of alarmSearchStatusTypes" [value]="status">
-      {{ alarmSearchStatusTranslationsMap.get(status) | translate }}
+      {{ alarmSearchStatusTranslationsMap.get(alarmSearchStatusEnum[status]) | translate }}
     </mat-option>
   </mat-select>
 </mat-form-field>

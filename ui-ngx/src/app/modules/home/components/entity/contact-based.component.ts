@@ -25,8 +25,8 @@ import {EntityComponent} from './entity.component';
 
 export abstract class ContactBasedComponent<T extends ContactBased<HasId>> extends EntityComponent<T> implements AfterViewInit {
 
-  constructor(protected store: Store<AppState>,
-              protected fb: FormBuilder) {
+  protected constructor(protected store: Store<AppState>,
+                        protected fb: FormBuilder) {
     super(store);
   }
 

@@ -108,36 +108,10 @@ export class WidgetContext {
   }
 
   set changeDetector(cd: ChangeDetectorRef) {
-    this._changeDetector = cd;
+    this.changeDetectorValue = cd;
   }
 
-  private _changeDetector: ChangeDetectorRef;
-
-  detectChanges(updateWidgetParams: boolean = false) {
-    if (!this.destroyed) {
-      if (updateWidgetParams) {
-        this.dashboardWidget.updateWidgetParams();
-      }
-      this._changeDetector.detectChanges();
-    }
-  }
-
-  updateWidgetParams() {
-    if (!this.destroyed) {
-      setTimeout(() => {
-        this.dashboardWidget.updateWidgetParams();
-      }, 0);
-    }
-  }
-
-  reset() {
-    this.destroyed = false;
-    this.hideTitlePanel = false;
-    this.widgetTitleTemplate = undefined;
-    this.widgetTitle = undefined;
-    this.customHeaderActions = undefined;
-    this.widgetActions = undefined;
-  }
+  private changeDetectorValue: ChangeDetectorRef;
 
   inited = false;
   destroyed = false;
@@ -209,6 +183,32 @@ export class WidgetContext {
   $injector?: Injector;
 
   ngZone?: NgZone;
+
+  detectChanges(updateWidgetParams: boolean = false) {
+    if (!this.destroyed) {
+      if (updateWidgetParams) {
+        this.dashboardWidget.updateWidgetParams();
+      }
+      this.changeDetectorValue.detectChanges();
+    }
+  }
+
+  updateWidgetParams() {
+    if (!this.destroyed) {
+      setTimeout(() => {
+        this.dashboardWidget.updateWidgetParams();
+      }, 0);
+    }
+  }
+
+  reset() {
+    this.destroyed = false;
+    this.hideTitlePanel = false;
+    this.widgetTitleTemplate = undefined;
+    this.widgetTitle = undefined;
+    this.customHeaderActions = undefined;
+    this.widgetActions = undefined;
+  }
 }
 
 export interface IDynamicWidgetComponent {

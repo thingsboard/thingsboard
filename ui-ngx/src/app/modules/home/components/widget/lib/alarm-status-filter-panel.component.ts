@@ -35,6 +35,7 @@ export class AlarmStatusFilterPanelComponent {
 
   alarmSearchStatuses = Object.keys(AlarmSearchStatus);
   alarmSearchStatusTranslationMap = alarmSearchStatusTranslations;
+  alarmSearchStatusEnum = AlarmSearchStatus;
 
   constructor(@Inject(ALARM_STATUS_FILTER_PANEL_DATA) public data: AlarmStatusFilterPanelData) {
     this.subscription = this.data.subscription;

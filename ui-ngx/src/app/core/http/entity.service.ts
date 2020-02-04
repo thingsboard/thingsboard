@@ -15,7 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { EMPTY, forkJoin, Observable, of, throwError } from 'rxjs/index';
+import { EMPTY, forkJoin, Observable, of, throwError } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
 import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
@@ -28,7 +28,7 @@ import { UserService } from './user.service';
 import { DashboardService } from '@core/http/dashboard.service';
 import { Direction } from '@shared/models/page/sort-order';
 import { PageData } from '@shared/models/page/page-data';
-import { getCurrentAuthUser } from '../auth/auth.selectors';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Authority } from '@shared/models/authority.enum';
@@ -44,7 +44,7 @@ import { AliasInfo, StateParams, SubscriptionInfo } from '@core/api/widget-api.m
 import { Datasource, DatasourceType, KeyInfo } from '@app/shared/models/widget.models';
 import { UtilsService } from '@core/services/utils.service';
 import { AliasFilterType, EntityAlias, EntityAliasFilter, EntityAliasFilterResult } from '@shared/models/alias.models';
-import { EntityInfo, ImportEntityData, ImportEntitiesResultInfo } from '@shared/models/entity.models';
+import { EntityInfo, ImportEntitiesResultInfo, ImportEntityData } from '@shared/models/entity.models';
 import {
   EntityRelationInfo,
   EntityRelationsQuery,
@@ -52,7 +52,7 @@ import {
   EntitySearchQuery
 } from '@shared/models/relation.models';
 import { EntityRelationService } from '@core/http/entity-relation.service';
-import { isDefined } from '../utils';
+import { isDefined } from '@core/utils';
 import { Asset, AssetSearchQuery } from '@shared/models/asset.models';
 import { Device, DeviceCredentialsType, DeviceSearchQuery } from '@shared/models/device.models';
 import { EntityViewSearchQuery } from '@shared/models/entity-view.models';

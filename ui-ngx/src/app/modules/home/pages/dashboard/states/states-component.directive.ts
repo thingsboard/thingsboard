@@ -34,6 +34,7 @@ import { IStateController } from '@core/api/widget-api.models';
 import { IStateControllerComponent } from '@home/pages/dashboard/states/state-controller.models';
 
 @Directive({
+  // tslint:disable-next-line:directive-selector
   selector: 'tb-states-component'
 })
 export class StatesComponentDirective implements OnInit, OnDestroy, OnChanges {

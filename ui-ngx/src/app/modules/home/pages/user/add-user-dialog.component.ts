@@ -50,6 +50,7 @@ export class AddUserDialogComponent extends DialogComponent<AddUserDialogCompone
   user: User;
 
   activationMethods = Object.keys(ActivationMethod);
+  activationMethodEnum = ActivationMethod;
 
   activationMethodTranslations = activationMethodTranslations;
 

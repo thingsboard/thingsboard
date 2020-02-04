@@ -72,9 +72,6 @@ interface TimeseriesTableWidgetSettings {
   hideEmptyLines: boolean;
 }
 
-interface TimeseriesTableDataKeySettings extends TableWidgetDataKeySettings {
-}
-
 interface TimeseriesRow {
   [col: number]: any;
   formattedTs: string;
@@ -94,10 +91,10 @@ interface TimeseriesTableSource {
   pageLink: PageLink;
   displayedColumns: string[];
   timeseriesDatasource: TimeseriesDatasource;
-  header: TimeseriesHeader[],
-  stylesInfo: CellStyleInfo[],
-  contentsInfo: CellContentInfo[],
-  rowDataTemplate: {[key: string]: any}
+  header: TimeseriesHeader[];
+  stylesInfo: CellStyleInfo[];
+  contentsInfo: CellContentInfo[];
+  rowDataTemplate: {[key: string]: any};
 }
 
 @Component({
@@ -223,13 +220,13 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     if (isDefined(pageSize) && isNumber(pageSize) && pageSize > 0) {
       this.defaultPageSize = pageSize;
     }
-    this.pageSizeOptions = [this.defaultPageSize, this.defaultPageSize*2, this.defaultPageSize*3];
+    this.pageSizeOptions = [this.defaultPageSize, this.defaultPageSize * 2, this.defaultPageSize * 3];
 
     let cssString = constructTableCssString(this.widgetConfig);
 
     const origBackgroundColor = this.widgetConfig.backgroundColor || 'rgb(255, 255, 255)';
-    cssString += '.tb-table-widget mat-toolbar.mat-table-toolbar:not([color=primary]) {\n'+
-    'background-color: ' + origBackgroundColor + ' !important;\n'+
+    cssString += '.tb-table-widget mat-toolbar.mat-table-toolbar:not([color=primary]) {\n' +
+    'background-color: ' + origBackgroundColor + ' !important;\n' +
     '}\n';
 
     const cssParser = new cssjs();
@@ -262,13 +259,13 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
         source.stylesInfo = [];
         source.contentsInfo = [];
         source.rowDataTemplate = {};
-        source.rowDataTemplate['Timestamp'] = null;
+        source.rowDataTemplate.Timestamp = null;
         if (this.showTimestamp) {
           source.displayedColumns.push('0');
         }
         for (let a = 0; a < datasource.dataKeys.length; a++ ) {
           const dataKey = datasource.dataKeys[a];
-          const keySettings: TimeseriesTableDataKeySettings = dataKey.settings;
+          const keySettings: TableWidgetDataKeySettings = dataKey.settings;
           const index = a + 1;
           source.header.push({
             index,
@@ -371,14 +368,14 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     return header.index;
   }
 
-  public trackByRowIndex(index: number, row: TimeseriesRow) {
+  public trackByRowIndex(index: number) {
     return index;
   }
 
   public cellStyle(source: TimeseriesTableSource, index: number, value: any): any {
     let style: any = {};
     if (index > 0) {
-      const styleInfo = source.stylesInfo[index-1];
+      const styleInfo = source.stylesInfo[index - 1];
       if (styleInfo.useCellStyleFunction && styleInfo.cellStyleFunction) {
         try {
           style = styleInfo.cellStyleFunction(value);
@@ -394,16 +391,15 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     if (index === 0) {
       return row.formattedTs;
     } else {
-      let content = '';
-      const contentInfo = source.contentsInfo[index-1];
+      let content;
+      const contentInfo = source.contentsInfo[index - 1];
       if (contentInfo.useCellContentFunction && contentInfo.cellContentFunction) {
         try {
           const rowData = source.rowDataTemplate;
-          rowData['Timestamp'] = row[0];
-          for (let h=0; h < source.header.length; h++) {
-            const headerInfo = source.header[h];
+          rowData.Timestamp = row[0];
+          source.header.forEach((headerInfo) => {
             rowData[headerInfo.dataKey.name] = row[headerInfo.index];
-          }
+          });
           content = contentInfo.cellContentFunction(value, rowData, this.ctx);
         } catch (e) {
           content = '' + value;
@@ -498,8 +494,7 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
     const rowsMap: {[timestamp: number]: TimeseriesRow} = {};
     for (let d = 0; d < data.length; d++) {
       const columnData = data[d].data;
-      for (let i = 0; i < columnData.length; i++) {
-        const cellData = columnData[i];
+      columnData.forEach((cellData) => {
         const timestamp = cellData[0];
         let row = rowsMap[timestamp];
         if (!row) {
@@ -508,20 +503,21 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
           };
           row[0] = timestamp;
           for (let c = 0; c < data.length; c++) {
-            row[c+1] = undefined;
+            row[c + 1] = undefined;
           }
           rowsMap[timestamp] = row;
         }
-        row[d+1] = cellData[1];
-      }
+        row[d + 1] = cellData[1];
+      });
     }
     const rows: TimeseriesRow[]  = [];
     for (const t of Object.keys(rowsMap)) {
       if (this.hideEmptyLines) {
         let hideLine = true;
-        for (let _c = 0; (_c < data.length) && hideLine; _c++) {
-          if (rowsMap[t][_c+1])
+        for (let c = 0; (c < data.length) && hideLine; c++) {
+          if (rowsMap[t][c + 1]) {
             hideLine = false;
+          }
         }
         if (!hideLine) {
           rows.push(rowsMap[t]);

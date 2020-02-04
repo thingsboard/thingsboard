@@ -85,9 +85,6 @@ interface EntitiesTableWidgetSettings extends TableWidgetSettings {
   displayEntityType: boolean;
 }
 
-interface EntitiesTableDataKeySettings extends TableWidgetDataKeySettings {
-}
-
 @Component({
   selector: 'tb-entities-table-widget',
   templateUrl: './entities-table-widget.component.html',
@@ -221,7 +218,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     if (isDefined(pageSize) && isNumber(pageSize) && pageSize > 0) {
       this.defaultPageSize = pageSize;
     }
-    this.pageSizeOptions = [this.defaultPageSize, this.defaultPageSize*2, this.defaultPageSize*3];
+    this.pageSizeOptions = [this.defaultPageSize, this.defaultPageSize * 2, this.defaultPageSize * 3];
     this.pageLink.pageSize = this.displayPagination ? this.defaultPageSize : Number.POSITIVE_INFINITY;
 
     const cssString = constructTableCssString(this.widgetConfig);
@@ -253,13 +250,13 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
           title: entityNameColumnTitle
         } as EntityColumn
       );
-      this.contentsInfo['entityName'] = {
+      this.contentsInfo.entityName = {
         useCellContentFunction: false
       };
-      this.stylesInfo['entityName'] = {
+      this.stylesInfo.entityName = {
         useCellStyleFunction: false
       };
-      this.columnWidth['entityName'] = '0px';
+      this.columnWidth.entityName = '0px';
     }
     if (displayEntityType) {
       this.columns.push(
@@ -270,13 +267,13 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
           title: this.translate.instant('entity.entity-type'),
         } as EntityColumn
       );
-      this.contentsInfo['entityType'] = {
+      this.contentsInfo.entityType = {
         useCellContentFunction: false
       };
-      this.stylesInfo['entityType'] = {
+      this.stylesInfo.entityType = {
         useCellStyleFunction: false
       };
-      this.columnWidth['entityType'] = '0px';
+      this.columnWidth.entityType = '0px';
     }
 
     const dataKeys: Array<DataKey> = [];
@@ -284,8 +281,8 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     const datasource = this.subscription.datasources[0];
 
     if (datasource) {
-      datasource.dataKeys.forEach((_dataKey) => {
-        const dataKey: EntityColumn = deepClone(_dataKey) as EntityColumn;
+      datasource.dataKeys.forEach((entityDataKey) => {
+        const dataKey: EntityColumn = deepClone(entityDataKey) as EntityColumn;
         if (dataKey.type === DataKeyType.function) {
           dataKey.name = dataKey.label;
         }
@@ -293,7 +290,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
 
         dataKey.title = this.utils.customTranslation(dataKey.label, dataKey.label);
         dataKey.def = 'def' + this.columns.length;
-        const keySettings: EntitiesTableDataKeySettings = dataKey.settings;
+        const keySettings: TableWidgetDataKeySettings = dataKey.settings;
 
         this.stylesInfo[dataKey.def] = getCellStyleInfo(keySettings);
         this.contentsInfo[dataKey.def] = getCellContentInfo(keySettings, 'value, entity, ctx');
@@ -345,7 +342,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
         title: column.title,
         def: column.def,
         display: this.displayedColumns.indexOf(column.def) > -1
-      }
+      };
     });
 
     const injectionTokens = new WeakMap<any, any>([
@@ -407,7 +404,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     const columnWidth = this.columnWidth[key.def];
     return {
       width: columnWidth
-    }
+    };
   }
 
   public cellStyle(entity: EntityData, key: EntityColumn): any {

@@ -46,14 +46,14 @@ export interface CustomDialogContainerData {
   selector: 'tb-custom-dialog-container-component',
   template: ''
 })
-export class CustomDialogContainerComponent extends DialogComponent<CustomDialogContainerComponent, any> implements OnDestroy {
+export class CustomDialogContainerComponent extends DialogComponent<CustomDialogContainerComponent> implements OnDestroy {
 
-  private customComponentRef: ComponentRef<CustomDialogComponent>;
+  private readonly customComponentRef: ComponentRef<CustomDialogComponent>;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
               public viewContainerRef: ViewContainerRef,
-              public dialogRef: MatDialogRef<CustomDialogContainerComponent, any>,
+              public dialogRef: MatDialogRef<CustomDialogContainerComponent>,
               @Inject(MAT_DIALOG_DATA) public data: CustomDialogContainerData) {
     super(store, router, dialogRef);
     let customDialogData: CustomDialogData = {

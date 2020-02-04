@@ -46,6 +46,14 @@ export enum TelemetryFeature {
 
 export type TelemetryType = LatestTelemetry | AttributeScope;
 
+export function toTelemetryType(val: string): TelemetryType {
+  if (LatestTelemetry[val]) {
+    return LatestTelemetry[val];
+  } else {
+    return AttributeScope[val];
+  }
+}
+
 export const telemetryTypeTranslations = new Map<TelemetryType, string>(
   [
     [LatestTelemetry.LATEST_TELEMETRY, 'attribute.scope-latest-telemetry'],

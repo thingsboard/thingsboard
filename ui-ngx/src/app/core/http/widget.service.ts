@@ -15,18 +15,18 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
-import { Observable, Subject, of, ReplaySubject } from 'rxjs/index';
+import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
+import { Observable, of, ReplaySubject, Subject } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
-import { Widget, WidgetType, widgetType, WidgetTypeData, widgetTypesData } from '@shared/models/widget.models';
+import { Widget, WidgetType, widgetType, widgetTypesData } from '@shared/models/widget.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ResourcesService } from '../services/resources.service';
-import { toWidgetInfo, WidgetInfo, toWidgetType } from '@app/modules/home/models/widget-component.models';
-import { map, tap, mergeMap, filter } from 'rxjs/operators';
+import { toWidgetInfo, toWidgetType, WidgetInfo } from '@app/modules/home/models/widget-component.models';
+import { filter, map, mergeMap, tap } from 'rxjs/operators';
 import { WidgetTypeId } from '@shared/models/id/widget-type-id';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { ActivationEnd, Router } from '@angular/router';

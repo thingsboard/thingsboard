@@ -15,10 +15,10 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
-import { Observable } from 'rxjs/index';
+import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
+import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
-import { PageLink, TimePageLink } from '@shared/models/page/page-link';
+import { TimePageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
 import { AuditLog } from '@shared/models/audit-log.models';
 import { EntityId } from '@shared/models/id/entity-id';

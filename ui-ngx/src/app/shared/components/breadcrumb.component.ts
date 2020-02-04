@@ -22,7 +22,7 @@ import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
-  selector: '[tb-breadcrumb]',
+  selector: 'tb-breadcrumb',
   templateUrl: './breadcrumb.component.html',
   styleUrls: ['./breadcrumb.component.scss']
 })

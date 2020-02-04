@@ -19,6 +19,7 @@ import { Component, OnInit } from '@angular/core';
 import { FcNodeComponent } from 'ngx-flowchart/dist/ngx-flowchart';
 
 @Component({
+  // tslint:disable-next-line:component-selector
   selector: 'rule-node',
   templateUrl: './rulenode.component.html',
   styleUrls: ['./rulenode.component.scss']

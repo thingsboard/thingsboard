@@ -33,15 +33,15 @@
       <div fxLayout="column" fxLayoutGap="16px" fxLayout.gt-sm="row" fxLayoutAlign="center center">
         <button *ngFor="let type of allWidgetTypes;" class="tb-card-button" mat-button mat-raised-button color="primary"
                 type="button"
-                (click)="typeSelected(type)">
-          <mat-icon *ngIf="!widgetTypesDataMap.get(type).isMdiIcon; else mdiIconBlock" class="tb-mat-96">
-            {{ widgetTypesDataMap.get(type).icon }}
+                (click)="typeSelected(widgetTypes[type])">
+          <mat-icon *ngIf="!widgetTypesDataMap.get(widgetTypes[type]).isMdiIcon; else mdiIconBlock" class="tb-mat-96">
+            {{ widgetTypesDataMap.get(widgetTypes[type]).icon }}
           </mat-icon>
           <ng-template #mdiIconBlock>
-            <mat-icon class="tb-mat-96" [svgIcon]="widgetTypesDataMap.get(type).icon">
+            <mat-icon class="tb-mat-96" [svgIcon]="widgetTypesDataMap.get(widgetTypes[type]).icon">
             </mat-icon>
           </ng-template>
-          <span translate>{{ widgetTypesDataMap.get(type).name }}</span>
+          <span translate>{{ widgetTypesDataMap.get(widgetTypes[type]).name }}</span>
         </button>
       </div>
     </fieldset>

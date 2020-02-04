@@ -227,7 +227,7 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
         if (datasource.nodeId) {
           const node = this.nodesMap[datasource.nodeId];
           const key = datasourceData.dataKey.label;
-          let value = undefined;
+          let value;
           if (datasourceData.data && datasourceData.data.length) {
             value = datasourceData.data[0][1];
           }
@@ -292,7 +292,7 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
         cb([]);
       }
     }
-  };
+  }
 
   public onNodeSelected: NodeSelectedCallback = (node, event) => {
     let nodeId;
@@ -311,7 +311,7 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
         }
       }
     }
-  };
+  }
 
   public onNodesInserted: NodesInsertedCallback = (nodes, parent) => {
     if (nodes) {
@@ -323,7 +323,7 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
         }
       });
     }
-  };
+  }
 
   public searchCallback: NodeSearchCallback = (searchText, node) => {
     const theNode = this.nodesMap[node.id];
@@ -331,7 +331,7 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
       return theNode.data.searchText.includes(searchText.toLowerCase());
     }
     return false;
-  };
+  }
 
   private updateNodeStyle(node: HierarchyNavTreeNode) {
     const newText = this.prepareNodeText(node);
@@ -404,7 +404,7 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
       map(entity => {
         if (entity !== null) {
           const node: HierarchyNavTreeNode = {
-            id: (++this.nodeIdCounter)+''
+            id: (++this.nodeIdCounter) + ''
           };
           this.nodesMap[node.id] = node;
           datasource.nodeId = node.id;

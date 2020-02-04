@@ -45,7 +45,7 @@ import {
   isClientSideTelemetryType,
   LatestTelemetry,
   TelemetryType,
-  telemetryTypeTranslations
+  telemetryTypeTranslations, toTelemetryType
 } from '@shared/models/telemetry/telemetry.models';
 import { AttributeDatasource } from '@home/models/datasource/attribute-datasource';
 import { AttributeService } from '@app/core/http/attribute.service';
@@ -98,6 +98,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
 
   attributeScopes: Array<string> = [];
   attributeScope: TelemetryType;
+  toTelemetryTypeFunc = toTelemetryType;
 
   displayedColumns = ['select', 'lastUpdateTs', 'key', 'value'];
   pageLink: PageLink;

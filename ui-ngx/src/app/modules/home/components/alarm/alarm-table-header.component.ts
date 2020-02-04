@@ -31,6 +31,7 @@ export class AlarmTableHeaderComponent extends EntityTableHeaderComponent<AlarmI
   alarmSearchStatusTranslationsMap = alarmSearchStatusTranslations;
 
   alarmSearchStatusTypes = Object.keys(AlarmSearchStatus);
+  alarmSearchStatusEnum = AlarmSearchStatus;
 
   get alarmTableConfig(): AlarmTableConfig {
     return this.entitiesTableConfig as AlarmTableConfig;

@@ -62,6 +62,7 @@ export class EntityFilterComponent implements ControlValueAccessor, OnInit {
 
   directionTypes = Object.keys(EntitySearchDirection);
   directionTypeTranslations = entitySearchDirectionTranslations;
+  directionTypeEnum = EntitySearchDirection;
 
   private propagateChange = null;
 

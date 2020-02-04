@@ -56,21 +56,25 @@ export interface DisplayColumn {
   display: boolean;
 }
 
+export type CellContentFunction = (...args: any[]) => string;
+
 export interface CellContentInfo {
   useCellContentFunction: boolean;
-  cellContentFunction?: Function;
+  cellContentFunction?: CellContentFunction;
   units?: string;
   decimals?: number;
 }
 
+export type CellStyleFunction = (value: any) => any;
+
 export interface CellStyleInfo {
   useCellStyleFunction: boolean;
-  cellStyleFunction?: Function;
+  cellStyleFunction?: CellStyleFunction;
 }
 
 export function findColumnProperty(searchProperty: string, searchValue: string, columnProperty: string, columns: EntityColumn[]): string {
   let res = searchValue;
-  const column = columns.find(column => column[searchProperty] === searchValue);
+  const column = columns.find(theColumn => theColumn[searchProperty] === searchValue);
   if (column) {
     res = column[columnProperty];
   }
@@ -107,13 +111,13 @@ export function getAlarmValue(alarm: AlarmInfo, key: EntityColumn) {
 }
 
 export function getCellStyleInfo(keySettings: TableWidgetDataKeySettings): CellStyleInfo {
-  let cellStyleFunction: Function = null;
+  let cellStyleFunction: CellStyleFunction = null;
   let useCellStyleFunction = false;
 
   if (keySettings.useCellStyleFunction === true) {
     if (isDefined(keySettings.cellStyleFunction) && keySettings.cellStyleFunction.length > 0) {
       try {
-        cellStyleFunction = new Function('value', keySettings.cellStyleFunction);
+        cellStyleFunction = new Function('value', keySettings.cellStyleFunction) as CellStyleFunction;
         useCellStyleFunction = true;
       } catch (e) {
         cellStyleFunction = null;
@@ -128,13 +132,13 @@ export function getCellStyleInfo(keySettings: TableWidgetDataKeySettings): CellS
 }
 
 export function getCellContentInfo(keySettings: TableWidgetDataKeySettings, ...args: string[]): CellContentInfo {
-  let cellContentFunction: Function = null;
+  let cellContentFunction: CellContentFunction = null;
   let useCellContentFunction = false;
 
   if (keySettings.useCellContentFunction === true) {
     if (isDefined(keySettings.cellContentFunction) && keySettings.cellContentFunction.length > 0) {
       try {
-        cellContentFunction = new Function(...args, keySettings.cellContentFunction);
+        cellContentFunction = new Function(...args, keySettings.cellContentFunction) as CellContentFunction;
         useCellContentFunction = true;
       } catch (e) {
         cellContentFunction = null;
@@ -173,94 +177,94 @@ export function constructTableCssString(widgetConfig: WidgetConfig): string {
 
   const cssString =
     '.mat-input-element::placeholder {\n' +
-    '   color: ' + mdDarkSecondary + ';\n'+
+    '   color: ' + mdDarkSecondary + ';\n' +
     '}\n' +
     '.mat-input-element::-moz-placeholder {\n' +
-    '   color: ' + mdDarkSecondary + ';\n'+
+    '   color: ' + mdDarkSecondary + ';\n' +
     '}\n' +
     '.mat-input-element::-webkit-input-placeholder {\n' +
-    '   color: ' + mdDarkSecondary + ';\n'+
+    '   color: ' + mdDarkSecondary + ';\n' +
     '}\n' +
     '.mat-input-element:-ms-input-placeholder {\n' +
-    '   color: ' + mdDarkSecondary + ';\n'+
+    '   color: ' + mdDarkSecondary + ';\n' +
     '}\n' +
-    'mat-toolbar.mat-table-toolbar {\n'+
-    'color: ' + mdDark + ';\n'+
-    '}\n'+
-    'mat-toolbar.mat-table-toolbar:not([color="primary"]) button.mat-icon-button mat-icon {\n'+
-    'color: ' + mdDarkSecondary + ';\n'+
-    '}\n'+
-    '.mat-tab-label {\n'+
-    'color: ' + mdDark + ';\n'+
-    '}\n'+
-    '.mat-tab-header-pagination-chevron {\n'+
-    'border-color: ' + mdDark + ';\n'+
-    '}\n'+
-    '.mat-tab-header-pagination-disabled .mat-tab-header-pagination-chevron {\n'+
-    'border-color: ' + mdDarkDisabled2 + ';\n'+
-    '}\n'+
-    '.mat-table .mat-header-row {\n'+
-    'background-color: ' + origBackgroundColor + ';\n'+
-    '}\n'+
-    '.mat-table .mat-header-cell {\n'+
-    'color: ' + mdDarkSecondary + ';\n'+
-    '}\n'+
-    '.mat-table .mat-header-cell .mat-sort-header-arrow {\n'+
-    'color: ' + mdDarkDisabled + ';\n'+
-    '}\n'+
-    '.mat-table .mat-cell, .mat-table .mat-header-cell {\n'+
-    'border-bottom-color: '+mdDarkDivider+';\n'+
-    '}\n'+
-    '.mat-table .mat-cell .mat-checkbox-frame, .mat-table .mat-header-cell .mat-checkbox-frame {\n'+
-    'border-color: '+mdDarkSecondary+';\n'+
-    '}\n'+
-    '.mat-table .mat-row .mat-cell.mat-table-sticky {\n'+
-    'transition: background-color .2s;\n'+
-    '}\n'+
-    '.mat-table .mat-row.tb-current-entity {\n'+
-    'background-color: ' + currentEntityColor + ';\n'+
-    '}\n'+
-    '.mat-table .mat-row.tb-current-entity .mat-cell.mat-table-sticky {\n'+
-    'background-color: ' + currentEntityStickyColor + ';\n'+
-    '}\n'+
-    '.mat-table .mat-row:hover:not(.tb-current-entity) {\n'+
-    'background-color: ' + hoverColor + ';\n'+
-    '}\n'+
-    '.mat-table .mat-row:hover:not(.tb-current-entity) .mat-cell.mat-table-sticky {\n'+
-    'background-color: ' + hoverStickyColor + ';\n'+
-    '}\n'+
-    '.mat-table .mat-row.mat-row-select.mat-selected:not(.tb-current-entity) {\n'+
-    'background-color: ' + selectedColor + ';\n'+
-    '}\n'+
-    '.mat-table .mat-row.mat-row-select.mat-selected:not(.tb-current-entity) .mat-cell.mat-table-sticky {\n'+
-    'background-color: ' + selectedStickyColor + ';\n'+
-    '}\n'+
-    '.mat-table .mat-row .mat-cell.mat-table-sticky, .mat-table .mat-header-cell.mat-table-sticky {\n'+
-    'background-color: ' + origBackgroundColor + ';\n'+
-    '}\n'+
-    '.mat-table .mat-cell {\n'+
-    'color: ' + mdDark + ';\n'+
-    '}\n'+
-    '.mat-table .mat-cell button.mat-icon-button mat-icon {\n'+
-    'color: ' + mdDarkSecondary + ';\n'+
-    '}\n'+
-    '.mat-table .mat-cell button.mat-icon-button[disabled][disabled] mat-icon {\n'+
-    'color: ' + mdDarkDisabled + ';\n'+
-    '}\n'+
-    '.mat-divider {\n'+
-    'border-top-color: ' + mdDarkDivider + ';\n'+
-    '}\n'+
-    '.mat-paginator {\n'+
-    'color: ' + mdDarkSecondary + ';\n'+
-    '}\n'+
-    '.mat-paginator button.mat-icon-button {\n'+
-    'color: ' + mdDarkSecondary + ';\n'+
-    '}\n'+
-    '.mat-paginator button.mat-icon-button[disabled][disabled] {\n'+
-    'color: ' + mdDarkDisabled + ';\n'+
-    '}\n'+
-    '.mat-paginator .mat-select-value {\n'+
-    'color: ' + mdDarkSecondary + ';\n'+
+    'mat-toolbar.mat-table-toolbar {\n' +
+    'color: ' + mdDark + ';\n' +
+    '}\n' +
+    'mat-toolbar.mat-table-toolbar:not([color="primary"]) button.mat-icon-button mat-icon {\n' +
+    'color: ' + mdDarkSecondary + ';\n' +
+    '}\n' +
+    '.mat-tab-label {\n' +
+    'color: ' + mdDark + ';\n' +
+    '}\n' +
+    '.mat-tab-header-pagination-chevron {\n' +
+    'border-color: ' + mdDark + ';\n' +
+    '}\n' +
+    '.mat-tab-header-pagination-disabled .mat-tab-header-pagination-chevron {\n' +
+    'border-color: ' + mdDarkDisabled2 + ';\n' +
+    '}\n' +
+    '.mat-table .mat-header-row {\n' +
+    'background-color: ' + origBackgroundColor + ';\n' +
+    '}\n' +
+    '.mat-table .mat-header-cell {\n' +
+    'color: ' + mdDarkSecondary + ';\n' +
+    '}\n' +
+    '.mat-table .mat-header-cell .mat-sort-header-arrow {\n' +
+    'color: ' + mdDarkDisabled + ';\n' +
+    '}\n' +
+    '.mat-table .mat-cell, .mat-table .mat-header-cell {\n' +
+    'border-bottom-color: ' + mdDarkDivider + ';\n' +
+    '}\n' +
+    '.mat-table .mat-cell .mat-checkbox-frame, .mat-table .mat-header-cell .mat-checkbox-frame {\n' +
+    'border-color: ' + mdDarkSecondary + ';\n' +
+    '}\n' +
+    '.mat-table .mat-row .mat-cell.mat-table-sticky {\n' +
+    'transition: background-color .2s;\n' +
+    '}\n' +
+    '.mat-table .mat-row.tb-current-entity {\n' +
+    'background-color: ' + currentEntityColor + ';\n' +
+    '}\n' +
+    '.mat-table .mat-row.tb-current-entity .mat-cell.mat-table-sticky {\n' +
+    'background-color: ' + currentEntityStickyColor + ';\n' +
+    '}\n' +
+    '.mat-table .mat-row:hover:not(.tb-current-entity) {\n' +
+    'background-color: ' + hoverColor + ';\n' +
+    '}\n' +
+    '.mat-table .mat-row:hover:not(.tb-current-entity) .mat-cell.mat-table-sticky {\n' +
+    'background-color: ' + hoverStickyColor + ';\n' +
+    '}\n' +
+    '.mat-table .mat-row.mat-row-select.mat-selected:not(.tb-current-entity) {\n' +
+    'background-color: ' + selectedColor + ';\n' +
+    '}\n' +
+    '.mat-table .mat-row.mat-row-select.mat-selected:not(.tb-current-entity) .mat-cell.mat-table-sticky {\n' +
+    'background-color: ' + selectedStickyColor + ';\n' +
+    '}\n' +
+    '.mat-table .mat-row .mat-cell.mat-table-sticky, .mat-table .mat-header-cell.mat-table-sticky {\n' +
+    'background-color: ' + origBackgroundColor + ';\n' +
+    '}\n' +
+    '.mat-table .mat-cell {\n' +
+    'color: ' + mdDark + ';\n' +
+    '}\n' +
+    '.mat-table .mat-cell button.mat-icon-button mat-icon {\n' +
+    'color: ' + mdDarkSecondary + ';\n' +
+    '}\n' +
+    '.mat-table .mat-cell button.mat-icon-button[disabled][disabled] mat-icon {\n' +
+    'color: ' + mdDarkDisabled + ';\n' +
+    '}\n' +
+    '.mat-divider {\n' +
+    'border-top-color: ' + mdDarkDivider + ';\n' +
+    '}\n' +
+    '.mat-paginator {\n' +
+    'color: ' + mdDarkSecondary + ';\n' +
+    '}\n' +
+    '.mat-paginator button.mat-icon-button {\n' +
+    'color: ' + mdDarkSecondary + ';\n' +
+    '}\n' +
+    '.mat-paginator button.mat-icon-button[disabled][disabled] {\n' +
+    'color: ' + mdDarkDisabled + ';\n' +
+    '}\n' +
+    '.mat-paginator .mat-select-value {\n' +
+    'color: ' + mdDarkSecondary + ';\n' +
     '}';
   return cssString;
 }

@@ -60,7 +60,7 @@
     </mat-toolbar>
     <div fxFlex class="table-container">
       <mat-table [dataSource]="dataSource"
-                 matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="(pageLink.sortOrder.direction + '').toLowerCase()" matSortDisableClear>
+                 matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
         <ng-container matColumnDef="actionSourceName">
           <mat-header-cell *matHeaderCellDef mat-sort-header> {{ 'widget-config.action-source' | translate }} </mat-header-cell>
           <mat-cell *matCellDef="let action">

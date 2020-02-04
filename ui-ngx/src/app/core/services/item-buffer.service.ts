@@ -240,7 +240,10 @@ export class ItemBufferService {
       nodes: [],
       connections: []
     };
-    let top = -1, left = -1, bottom = -1, right = -1;
+    let top = -1;
+    let left = -1;
+    let bottom = -1;
+    let right = -1;
     for (let i = 0; i < nodes.length; i++) {
       const origNode = nodes[i];
       const node: FcRuleNode = {
@@ -253,7 +256,7 @@ export class ItemBufferService {
         y: origNode.y,
         name: origNode.name,
         componentClazz: origNode.component.clazz,
-      }
+      };
       if (origNode.targetRuleChainId) {
         node.targetRuleChainId = origNode.targetRuleChainId;
       }
@@ -261,7 +264,7 @@ export class ItemBufferService {
         node.error = origNode.error;
       }
       ruleNodes.nodes.push(node);
-      if (i==0) {
+      if (i === 0) {
         top = node.y;
         left = node.x;
         bottom = node.y + 50;
@@ -273,8 +276,8 @@ export class ItemBufferService {
         right = Math.max(right, node.x + 170);
       }
     }
-    ruleNodes.originX = left + (right-left)/2;
-    ruleNodes.originY = top + (bottom-top)/2;
+    ruleNodes.originX = left + (right - left) / 2;
+    ruleNodes.originY = top + (bottom - top) / 2;
     connections.forEach(connection => {
       ruleNodes.connections.push(connection);
     });

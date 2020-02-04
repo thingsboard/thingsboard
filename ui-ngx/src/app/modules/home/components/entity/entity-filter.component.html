@@ -138,7 +138,7 @@
             <mat-label translate>relation.direction</mat-label>
             <mat-select required matInput formControlName="direction">
               <mat-option *ngFor="let type of directionTypes" [value]="type">
-                {{ directionTypeTranslations.get(type) | translate }}
+                {{ directionTypeTranslations.get(directionTypeEnum[type]) | translate }}
               </mat-option>
             </mat-select>
           </mat-form-field>
@@ -196,7 +196,7 @@
           <mat-label translate>relation.direction</mat-label>
           <mat-select required matInput formControlName="direction">
             <mat-option *ngFor="let type of directionTypes" [value]="type">
-              {{ directionTypeTranslations.get(type) | translate }}
+              {{ directionTypeTranslations.get(directionTypeEnum[type]) | translate }}
             </mat-option>
           </mat-select>
         </mat-form-field>

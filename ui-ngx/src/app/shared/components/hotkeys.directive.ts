@@ -29,21 +29,21 @@ export class TbHotkeysDirective implements OnInit, OnDestroy {
   private mousetrap: MousetrapInstance;
   private hotkeysList: Hotkey[] = [];
 
-  private _preventIn = ['INPUT', 'SELECT', 'TEXTAREA'];
+  private preventIn = ['INPUT', 'SELECT', 'TEXTAREA'];
 
-  constructor(private _elementRef: ElementRef) {
-    this.mousetrap = new Mousetrap(this._elementRef.nativeElement);
-    (this._elementRef.nativeElement as HTMLElement).tabIndex = -1;
-    (this._elementRef.nativeElement as HTMLElement).style.outline = '0';
+  constructor(private elementRef: ElementRef) {
+    this.mousetrap = new Mousetrap(this.elementRef.nativeElement);
+    (this.elementRef.nativeElement as HTMLElement).tabIndex = -1;
+    (this.elementRef.nativeElement as HTMLElement).style.outline = '0';
   }
 
   ngOnInit() {
-    for (let hotkey of this.hotkeys) {
+    for (const hotkey of this.hotkeys) {
       this.hotkeysList.push(hotkey);
       this.bindEvent(hotkey);
     }
     if (this.cheatSheet) {
-      let hotkeyObj: Hotkey = new Hotkey(
+      const hotkeyObj: Hotkey = new Hotkey(
         '?',
         (event: KeyboardEvent) => {
           this.cheatSheet.toggleCheatSheet();
@@ -59,26 +59,27 @@ export class TbHotkeysDirective implements OnInit, OnDestroy {
   }
 
   private bindEvent(hotkey: Hotkey): void {
-    this.mousetrap.bind((<Hotkey>hotkey).combo, (event: KeyboardEvent, combo: string) => {
+    this.mousetrap.bind((hotkey as Hotkey).combo, (event: KeyboardEvent, combo: string) => {
       let shouldExecute = true;
-      if(event) {
-        let target: HTMLElement = <HTMLElement>(event.target || event.srcElement);
-        let nodeName: string = target.nodeName.toUpperCase();
-        if((' ' + target.className + ' ').indexOf(' mousetrap ') > -1) {
+      if (event) {
+        const target: HTMLElement = (event.target || event.srcElement) as HTMLElement;
+        const nodeName: string = target.nodeName.toUpperCase();
+        if ((' ' + target.className + ' ').indexOf(' mousetrap ') > -1) {
           shouldExecute = true;
-        } else if(this._preventIn.indexOf(nodeName) > -1 && (<Hotkey>hotkey).allowIn.map(allow => allow.toUpperCase()).indexOf(nodeName) === -1) {
+        } else if (this.preventIn.indexOf(nodeName) > -1 && (hotkey as Hotkey).
+                   allowIn.map(allow => allow.toUpperCase()).indexOf(nodeName) === -1) {
           shouldExecute = false;
         }
       }
 
-      if(shouldExecute) {
-        return (<Hotkey>hotkey).callback.apply(this, [event, combo]);
+      if (shouldExecute) {
+        return (hotkey as Hotkey).callback.apply(this, [event, combo]);
       }
     });
   }
 
   ngOnDestroy() {
-    for (let hotkey of this.hotkeysList) {
+    for (const hotkey of this.hotkeysList) {
       this.mousetrap.unbind(hotkey.combo);
     }
   }

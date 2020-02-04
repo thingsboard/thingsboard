@@ -18,19 +18,19 @@ import { Injectable, NgZone } from '@angular/core';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { HttpClient } from '@angular/common/http';
 
-import { combineLatest, forkJoin, Observable, of, throwError } from 'rxjs';
-import { catchError, distinctUntilChanged, filter, map, mergeMap, skip, tap } from 'rxjs/operators';
+import { forkJoin, Observable, of, throwError } from 'rxjs';
+import { catchError, map, mergeMap, tap } from 'rxjs/operators';
 
-import { LoginRequest, LoginResponse, PublicLoginRequest } from '../../shared/models/login.models';
+import { LoginRequest, LoginResponse, PublicLoginRequest } from '@shared/models/login.models';
 import { ActivatedRoute, Router, UrlTree } from '@angular/router';
 import { defaultHttpOptions } from '../http/http-utils';
 import { ReplaySubject } from 'rxjs/internal/ReplaySubject';
 import { UserService } from '../http/user.service';
-import { select, Store } from '@ngrx/store';
+import { Store } from '@ngrx/store';
 import { AppState } from '../core.state';
 import { ActionAuthAuthenticated, ActionAuthLoadUser, ActionAuthUnauthenticated } from './auth.actions';
-import { getCurrentAuthState, getCurrentAuthUser, selectIsAuthenticated, selectIsUserLoaded } from './auth.selectors';
-import { Authority } from '../../shared/models/authority.enum';
+import { getCurrentAuthState, getCurrentAuthUser } from './auth.selectors';
+import { Authority } from '@shared/models/authority.enum';
 import { ActionSettingsChangeLanguage } from '@app/core/settings/settings.actions';
 import { AuthPayload, AuthState } from '@core/auth/auth.models';
 import { TranslateService } from '@ngx-translate/core';

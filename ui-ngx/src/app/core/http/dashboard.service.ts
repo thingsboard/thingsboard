@@ -14,15 +14,15 @@
 /// limitations under the License.
 ///
 
-import {Inject, Injectable} from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
 import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
-import { Observable, ReplaySubject, Subject } from 'rxjs/index';
-import {HttpClient} from '@angular/common/http';
-import {PageLink} from '@shared/models/page/page-link';
-import {PageData} from '@shared/models/page/page-data';
-import {Dashboard, DashboardInfo} from '@shared/models/dashboard.models';
-import {WINDOW} from '@core/services/window.service';
-import { ActivationEnd, NavigationEnd, Router } from '@angular/router';
+import { Observable } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { PageLink } from '@shared/models/page/page-link';
+import { PageData } from '@shared/models/page/page-data';
+import { Dashboard, DashboardInfo } from '@shared/models/dashboard.models';
+import { WINDOW } from '@core/services/window.service';
+import { NavigationEnd, Router } from '@angular/router';
 import { filter, map, publishReplay, refCount } from 'rxjs/operators';
 
 // @dynamic

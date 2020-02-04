@@ -398,8 +398,7 @@ export function flotSettingsSchema(chartType: ChartType): JsonSettingsSchema {
   return schema;
 }
 
-export const flotPieSettingsSchema: JsonSettingsSchema =
-  {
+export const flotPieSettingsSchema: JsonSettingsSchema = {
     schema: {
       type: 'object',
       title: 'Settings',

@@ -44,7 +44,7 @@ export interface HierarchyNavTreeNode extends NavTreeNode {
     datasource: HierarchyNodeDatasource;
     nodeCtx: HierarchyNodeContext;
     searchText?: string;
-  }
+  };
 }
 
 export interface HierarchyNodeDatasource extends Datasource {
@@ -64,7 +64,7 @@ export type NodeOpenedFunction = (nodeCtx: HierarchyNodeContext) => boolean;
 export type NodeHasChildrenFunction = (nodeCtx: HierarchyNodeContext) => boolean;
 export type NodesSortFunction = (nodeCtx1: HierarchyNodeContext, nodeCtx2: HierarchyNodeContext) => number;
 
-export function loadNodeCtxFunction<F extends Function>(functionBody: string, argNames: string, ...args: any[]): F {
+export function loadNodeCtxFunction<F extends (...args: any[]) => any>(functionBody: string, argNames: string, ...args: any[]): F {
   let nodeCtxFunction: F = null;
   if (isDefined(functionBody) && functionBody.length) {
     try {
@@ -81,11 +81,11 @@ export function loadNodeCtxFunction<F extends Function>(functionBody: string, ar
 }
 
 export function materialIconHtml(materialIcon: string): string {
-  return '<mat-icon class="node-icon material-icons" role="img" aria-hidden="false">'+materialIcon+'</mat-icon>';
+  return '<mat-icon class="node-icon material-icons" role="img" aria-hidden="false">' + materialIcon + '</mat-icon>';
 }
 
 export function iconUrlHtml(iconUrl: string): string {
-  return '<div class="node-icon" style="background-image: url('+iconUrl+');">&nbsp;</div>';
+  return '<div class="node-icon" style="background-image: url(' + iconUrl + ');">&nbsp;</div>';
 }
 
 export const defaultNodeRelationQueryFunction: NodeRelationQueryFunction = nodeCtx => {
@@ -100,7 +100,7 @@ export const defaultNodeRelationQueryFunction: NodeRelationQueryFunction = nodeC
     },
     filters: [
       {
-        relationType: "Contains",
+        relationType: 'Contains',
         entityTypes: []
       }
     ]

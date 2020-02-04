@@ -128,7 +128,7 @@ import { Hotkey, HotkeysService } from 'angular2-hotkeys';
 export class TbCheatSheetComponent implements OnInit, OnDestroy {
 
   helpVisible = false;
-  @Input() title: string = 'Keyboard Shortcuts:';
+  @Input() title = 'Keyboard Shortcuts:';
 
   @Input()
   hotkeys: Hotkey[];
@@ -137,9 +137,9 @@ export class TbCheatSheetComponent implements OnInit, OnDestroy {
 
   private mousetrap: MousetrapInstance;
 
-  constructor(private _elementRef: ElementRef,
+  constructor(private elementRef: ElementRef,
               private hotkeysService: HotkeysService) {
-    this.mousetrap = new Mousetrap(this._elementRef.nativeElement);
+    this.mousetrap = new Mousetrap(this.elementRef.nativeElement);
     this.mousetrap.bind('?', (event: KeyboardEvent, combo: string) => {
       this.toggleCheatSheet();
     });

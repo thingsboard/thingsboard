@@ -24,7 +24,7 @@
             <mat-label translate>legend.direction</mat-label>
             <mat-select matInput formControlName="direction" style="min-width: 150px;">
               <mat-option *ngFor="let direction of legendDirections" [value]="direction">
-                {{ legendDirectionTranslations.get(direction) | translate }}
+                {{ legendDirectionTranslations.get(legendDirection[direction]) | translate }}
               </mat-option>
             </mat-select>
           </mat-form-field>
@@ -34,7 +34,7 @@
               <mat-option *ngFor="let pos of legendPositions" [value]="pos"
                   [disabled]="legendConfigForm.get('direction').value === legendDirection.row &&
                   (pos === legendPosition.left || pos === legendPosition.right)">
-                {{ legendPositionTranslations.get(pos) | translate }}
+                {{ legendPositionTranslations.get(legendPosition[pos]) | translate }}
               </mat-option>
             </mat-select>
           </mat-form-field>

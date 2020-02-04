@@ -58,7 +58,7 @@
         <mat-label translate>widget-config.action-type</mat-label>
         <mat-select required matInput formControlName="type">
           <mat-option *ngFor="let actionType of widgetActionTypes" [value]="actionType">
-            {{ widgetActionTypeTranslations.get(actionType) | translate }}
+            {{ widgetActionTypeTranslations.get(widgetActionType[actionType]) | translate }}
           </mat-option>
         </mat-select>
         <mat-error *ngIf="widgetActionFormGroup.get('type').hasError('required')">

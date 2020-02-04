@@ -15,11 +15,10 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
-import { User } from '../../shared/models/user.model';
-import { Observable } from 'rxjs/index';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { AdminSettings } from '@shared/models/settings.models';
+import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
+import { User } from '@shared/models/user.model';
+import { Observable } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
 

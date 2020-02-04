@@ -19,7 +19,7 @@
   <label class="tb-title" translate>alarm.alarm-status-filter</label>
   <mat-radio-group [(ngModel)]="subscription.alarmSearchStatus" fxLayout="column" fxLayoutGap="16px">
     <mat-radio-button *ngFor="let searchStatus of alarmSearchStatuses" [value]="searchStatus" color="primary">
-      {{ alarmSearchStatusTranslationMap.get(searchStatus) | translate }}
+      {{ alarmSearchStatusTranslationMap.get(alarmSearchStatusEnum[searchStatus]) | translate }}
     </mat-radio-button>
   </mat-radio-group>
 </div>

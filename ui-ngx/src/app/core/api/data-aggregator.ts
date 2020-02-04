@@ -65,7 +65,7 @@ export class DataAggregator {
 
   private dataBuffer: SubscriptionData = {};
   private data: SubscriptionData;
-  private lastPrevKvPairData: {[key: string]: [number, any]};
+  private readonly lastPrevKvPairData: {[key: string]: [number, any]};
 
   private aggregationMap: AggregationMap;
 
@@ -74,7 +74,7 @@ export class DataAggregator {
 
   private noAggregation = this.aggregationType === AggregationType.NONE;
   private aggregationTimeout = Math.max(this.interval, 1000);
-  private aggFunction: AggFunction;
+  private readonly aggFunction: AggFunction;
 
   private intervalTimeoutHandle: Timeout;
   private intervalScheduledTime: number;

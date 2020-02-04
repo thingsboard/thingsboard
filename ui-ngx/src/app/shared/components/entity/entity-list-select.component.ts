@@ -66,7 +66,7 @@ export class EntityListSelectComponent implements ControlValueAccessor, OnInit, 
 
   displayEntityTypeSelect: boolean;
 
-  private defaultEntityType: EntityType | AliasEntityType = null;
+  private readonly defaultEntityType: EntityType | AliasEntityType = null;
 
   private propagateChange = (v: any) => { };
 

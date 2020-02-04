@@ -16,22 +16,26 @@
 
 import { ComponentFactory, Injectable } from '@angular/core';
 import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
-import { forkJoin, Observable, of } from 'rxjs/index';
+import { forkJoin, Observable, of } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
 import {
   ResolvedRuleChainMetaData,
-  RuleChain, RuleChainConnectionInfo,
+  RuleChain,
+  RuleChainConnectionInfo,
   RuleChainMetaData,
   ruleChainNodeComponent,
-  ruleNodeTypeComponentTypes, unknownNodeComponent
+  ruleNodeTypeComponentTypes,
+  unknownNodeComponent
 } from '@shared/models/rule-chain.models';
 import { ComponentDescriptorService } from './component-descriptor.service';
 import {
   IRuleNodeConfigurationComponent,
   LinkLabel,
-  RuleNodeComponentDescriptor, TestScriptInputParams, TestScriptResult
+  RuleNodeComponentDescriptor,
+  TestScriptInputParams,
+  TestScriptResult
 } from '@app/shared/models/rule-node.models';
 import { ResourcesService } from '../services/resources.service';
 import { catchError, map, mergeMap } from 'rxjs/operators';

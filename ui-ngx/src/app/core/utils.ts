@@ -400,5 +400,5 @@ export function snakeCase(name: string, separator: string): string {
 }
 
 export function getDescendantProp(obj: any, path: string): any {
-  return path.split('.').reduce((acc, part) => acc && acc[part], obj)
+  return path.split('.').reduce((acc, part) => acc && acc[part], obj);
 }

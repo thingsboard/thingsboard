@@ -98,7 +98,7 @@ let globalDraggingChipListId = null;
 class DraggableChip {
 
   private chipElement: HTMLElement;
-  private handle: HTMLElement;
+  private readonly handle: HTMLElement;
 
   private dragging = false;
   private counter = 0;

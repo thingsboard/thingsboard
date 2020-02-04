@@ -24,15 +24,15 @@ import {
 } from '@angular/common/http';
 import { Observable } from 'rxjs/internal/Observable';
 import { Inject, Injectable } from '@angular/core';
-import { AuthService } from '../auth/auth.service';
-import { Constants } from '../../shared/models/constants';
+import { AuthService } from '@core/auth/auth.service';
+import { Constants } from '@shared/models/constants';
 import { InterceptorHttpParams } from './interceptor-http-params';
-import {catchError, delay, switchMap, tap, map, mergeMap} from 'rxjs/operators';
+import { catchError, delay, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { throwError } from 'rxjs/internal/observable/throwError';
 import { of } from 'rxjs/internal/observable/of';
 import { InterceptorConfig } from './interceptor-config';
 import { Store } from '@ngrx/store';
-import { AppState } from '../core.state';
+import { AppState } from '@core/core.state';
 import { ActionLoadFinish, ActionLoadStart } from './load.actions';
 import { ActionNotificationShow } from '@app/core/notification/notification.actions';
 import { DialogService } from '@core/services/dialog.service';
@@ -127,7 +127,8 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
     const resendRequest = config.resendRequest;
     const errorCode = errorResponse.error ? errorResponse.error.errorCode : null;
     if (errorResponse.error && errorResponse.error.refreshTokenPending || errorResponse.status === 401) {
-      if (errorResponse.error && errorResponse.error.refreshTokenPending || errorCode && errorCode === Constants.serverErrorCode.jwtTokenExpired) {
+      if (errorResponse.error && errorResponse.error.refreshTokenPending ||
+          errorCode && errorCode === Constants.serverErrorCode.jwtTokenExpired) {
           return this.refreshTokenAndRetry(req, next);
       } else if (errorCode !== Constants.serverErrorCode.credentialsExpired) {
         unhandled = true;
