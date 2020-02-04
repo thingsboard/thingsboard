@@ -71,7 +71,6 @@ public class SqlTimescaleDatabaseUpgradeService implements DatabaseTsUpgradeServ
                     log.info("Updating timescale schema ...");
                     log.info("Load upgrade functions ...");
                     loadSql(conn);
-                    log.info("Upgrade functions successfully loaded!");
                     boolean versionValid = checkVersion(conn);
                     if (!versionValid) {
                         log.info("PostgreSQL version should be at least more than 9.6!");
@@ -99,6 +98,7 @@ public class SqlTimescaleDatabaseUpgradeService implements DatabaseTsUpgradeServ
         Path schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "2.4.3", LOAD_FUNCTIONS_SQL);
         try {
             loadFunctions(schemaUpdateFile, conn);
+            log.info("Upgrade functions successfully loaded!");
         } catch (Exception e) {
             log.info("Failed to load Timescale upgrade functions due to: {}", e.getMessage());
         }
