@@ -43,12 +43,15 @@ public class PsqlTsDatabaseUpgradeService implements DatabaseTsUpgradeService {
     private static final String CALL_REGEX = "call ";
     private static final String LOAD_FUNCTIONS_SQL = "schema_update_psql_ts.sql";
     private static final String CHECK_VERSION = CALL_REGEX + "check_version()";
-    private static final String CREATE_PARTITION_TABLE = CALL_REGEX + "create_partition_table()";
+    private static final String CREATE_PARTITION_TS_KV_TABLE = CALL_REGEX + "create_partition_ts_kv_table()";
+    private static final String CREATE_NEW_TS_KV_LATEST_TABLE = CALL_REGEX + "create_new_ts_kv_latest_table()";
     private static final String CREATE_PARTITIONS = CALL_REGEX + "create_partitions()";
     private static final String CREATE_TS_KV_DICTIONARY_TABLE = CALL_REGEX + "create_ts_kv_dictionary_table()";
     private static final String INSERT_INTO_DICTIONARY = CALL_REGEX + "insert_into_dictionary()";
     private static final String INSERT_INTO_TS_KV = CALL_REGEX + "insert_into_ts_kv()";
-    private static final String DROP_OLD_TABLE = "DROP TABLE ts_kv_old;";
+    private static final String INSERT_INTO_TS_KV_LATEST = CALL_REGEX + "insert_into_ts_kv_latest()";
+    private static final String DROP_TABLE_TS_KV_OLD = "DROP TABLE ts_kv_old;";
+    private static final String DROP_TABLE_TS_KV_LATEST_OLD = "DROP TABLE ts_kv_latest_old;";
 
     @Value("${spring.datasource.url}")
     private String dbUrl;
@@ -78,12 +81,15 @@ public class PsqlTsDatabaseUpgradeService implements DatabaseTsUpgradeService {
                     } else {
                         log.info("PostgreSQL version is valid!");
                         log.info("Updating schema ...");
-                        executeFunction(conn, CREATE_PARTITION_TABLE);
+                        executeFunction(conn, CREATE_PARTITION_TS_KV_TABLE);
                         executeFunction(conn, CREATE_PARTITIONS);
                         executeFunction(conn, CREATE_TS_KV_DICTIONARY_TABLE);
                         executeFunction(conn, INSERT_INTO_DICTIONARY);
                         executeFunction(conn, INSERT_INTO_TS_KV);
-                        dropOldTable(conn, DROP_OLD_TABLE);
+                        executeFunction(conn, CREATE_NEW_TS_KV_LATEST_TABLE);
+                        executeFunction(conn, INSERT_INTO_TS_KV_LATEST);
+                        dropOldTable(conn, DROP_TABLE_TS_KV_OLD);
+                        dropOldTable(conn, DROP_TABLE_TS_KV_LATEST_OLD);
                         log.info("schema timeseries updated!");
                     }
                 }
