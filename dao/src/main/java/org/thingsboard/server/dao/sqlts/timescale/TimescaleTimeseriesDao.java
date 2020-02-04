@@ -64,14 +64,10 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao<TimescaleTs
     private AggregationRepository aggregationRepository;
 
     @PostConstruct
-    protected void init() {
-        super.init();
-    }
+    protected void init() { super.init(); }
 
     @PreDestroy
-    protected void destroy() {
-        super.destroy();
-    }
+    protected void destroy() { super.destroy(); }
 
     @Override
     protected ListenableFuture<List<TsKvEntry>> findAllAsync(TenantId tenantId, EntityId entityId, ReadTsKvQuery query) {

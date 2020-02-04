@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS tenant_ts_kv (
     str_v varchar(10000000),
     long_v bigint,
     dbl_v double precision,
-    CONSTRAINT ts_kv_pkey PRIMARY KEY (tenant_id, entity_id, key, ts)
+    CONSTRAINT tenant_ts_kv_pkey PRIMARY KEY (tenant_id, entity_id, key, ts)
 );
 
 CREATE TABLE IF NOT EXISTS ts_kv_dictionary (

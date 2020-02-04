@@ -40,6 +40,7 @@ import org.thingsboard.server.dao.timeseries.TimeseriesDao;
 import org.thingsboard.server.dao.util.PsqlDao;
 import org.thingsboard.server.dao.util.SqlTsDao;
 
+import javax.annotation.PreDestroy;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -93,6 +94,9 @@ public class JpaPsqlTimeseriesDao extends AbstractSqlTimeseriesDao<TsKvEntity> i
             throw new RuntimeException("Failed to parse partitioning property: " + partitioning + "!");
         }
     }
+
+    @PreDestroy
+    protected void destroy() { super.destroy(); }
 
     @Override
     public ListenableFuture<Void> save(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry, long ttl) {

@@ -37,6 +37,8 @@ import org.thingsboard.server.dao.timeseries.TimeseriesDao;
 import org.thingsboard.server.dao.util.HsqlDao;
 import org.thingsboard.server.dao.util.SqlTsDao;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -52,6 +54,12 @@ public class JpaHsqlTimeseriesDao extends AbstractSqlTimeseriesDao<TsKvEntity> i
 
     @Autowired
     private TsKvHsqlRepository tsKvRepository;
+
+    @PostConstruct
+    protected void init() { super.init(); }
+
+    @PreDestroy
+    protected void destroy() {super.destroy();}
 
     @Override
     public ListenableFuture<List<TsKvEntry>> findAllAsync(TenantId tenantId, EntityId entityId, List<ReadTsKvQuery> queries) {
