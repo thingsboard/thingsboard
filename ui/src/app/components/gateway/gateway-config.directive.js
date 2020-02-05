@@ -74,9 +74,6 @@ function GatewayConfigController($scope, $document, $mdDialog, $mdUtil, $window,
             controllerAs: 'vm',
             templateUrl: gatewayConfigDialogTemplate,
             parent: angular.element($document[0].body),
-            // scope: {
-            //     theForm: 'gatewayConfig_' + index
-            // },
             locals: {
                 config: config,
                 typeName: typeName
