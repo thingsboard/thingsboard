@@ -1788,21 +1788,23 @@
     "language": {
         "language": "Язык",
         "locales": {
-            "de_DE": "Немецкий",
-            "en_US": "Английский",
-            "zh_CN": "Китайский",
-            "ko_KR": "Корейский",
-            "es_ES": "Испанский",
-            "it_IT": "Итальянский",
+            "de_DE": "Deutsch",
+            "fr_FR": "Français",
+            "zh_CN": "简体中文",
+            "zh_TW": "繁體中文",
+            "en_US": "English",
+            "it_IT": "Italiano",
+            "ko_KR": "한글",
             "ru_RU": "Русский",
-            "tr_TR": "Турецкий",
-            "fr_FR": "Французский",
-            "ja_JA": "Японский",
-            "fa_IR": "Персидский",
-            "uk_UA": "Украинский",
-            "cs_CZ": "Чешский",
-            "el_GR": "Греческий",
-            "lv_LV": "Латышский"
+            "es_ES": "Español",
+            "ja_JA": "日本語",
+            "tr_TR": "Türkçe",
+            "fa_IR": "فارسي",
+            "uk_UA": "Українська",
+            "cs_CZ": "Česky",
+            "el_GR": "Ελληνικά",
+            "ro_RO": "Română",
+            "lv_LV": "Latviešu"
         }
     }
 }

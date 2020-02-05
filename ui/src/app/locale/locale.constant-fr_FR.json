@@ -1169,23 +1169,25 @@
         "value": "Valeur"
     },
     "language": {
-        "language": "Language",
+        "language": "Langue",
         "locales": {
-            "de_DE": "Allemand",
-            "en_US": "Anglais",
+            "de_DE": "Deutsch",
             "fr_FR": "Français",
-            "es_ES": "Espagnol",
-            "it_IT": "Italien",
-            "ko_KR": "Coréen",
-            "ru_RU": "Russe",
-            "zh_CN": "Chinois",
-            "ja_JA": "Japonaise",
-            "tr_TR": "Turc",
-            "fa_IR": "Persane",
-            "uk_UA": "Ukrainien",
-            "cs_CZ": "Tchèque",
-            "el_GR": "Grec",
-            "lv_LV": "Letton"
+            "zh_CN": "简体中文",
+            "zh_TW": "繁體中文",
+            "en_US": "English",
+            "it_IT": "Italiano",
+            "ko_KR": "한글",
+            "ru_RU": "Русский",
+            "es_ES": "Español",
+            "ja_JA": "日本語",
+            "tr_TR": "Türkçe",
+            "fa_IR": "فارسي",
+            "uk_UA": "Українська",
+            "cs_CZ": "Česky",
+            "el_GR": "Ελληνικά",
+            "ro_RO": "Română",
+            "lv_LV": "Latviešu"
         }
     },
     "layout": {

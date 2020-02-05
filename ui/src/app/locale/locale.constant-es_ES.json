@@ -1761,21 +1761,23 @@
     "language": {
         "language": "Lenguaje",
         "locales": {
-            "de_DE": "Alemán",
-            "fr_FR": "Francés",
-            "zh_CN": "Chino",
-            "en_US": "Inglés",
+            "de_DE": "Deutsch",
+            "fr_FR": "Français",
+            "zh_CN": "简体中文",
+            "zh_TW": "繁體中文",
+            "en_US": "English",
             "it_IT": "Italiano",
-            "ko_KR": "Coreano",
-            "ru_RU": "Ruso",
+            "ko_KR": "한글",
+            "ru_RU": "Русский",
             "es_ES": "Español",
-            "ja_JA": "Japonés",
-            "tr_TR": "Turco",
-            "fa_IR": "Persa",
-            "uk_UA": "Ucraniano",
-            "cs_CZ": "Checo",
-            "el_GR": "Griego",
-            "lv_LV": "Letón"
+            "ja_JA": "日本語",
+            "tr_TR": "Türkçe",
+            "fa_IR": "فارسي",
+            "uk_UA": "Українська",
+            "cs_CZ": "Česky",
+            "el_GR": "Ελληνικά",
+            "ro_RO": "Română",
+            "lv_LV": "Latviešu"
         }
     }
 }

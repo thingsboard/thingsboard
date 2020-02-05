@@ -1385,19 +1385,23 @@
     "language": {
         "language": "언어",
         "locales": {
-            "de_DE": "독일어",
-            "en_US": "영어",
-            "fr_FR": "프랑스의",
+            "de_DE": "Deutsch",
+            "fr_FR": "Français",
+            "zh_CN": "简体中文",
+            "zh_TW": "繁體中文",
+            "en_US": "English",
+            "it_IT": "Italiano",
             "ko_KR": "한글",
-            "zh_CN": "중국어",
-            "ru_RU": "러시아어",
-            "es_ES": "스페인어",
-            "it_IT": "이탈리아 사람",
-            "ja_JA": "일본어",
-            "tr_TR": "터키어",
-            "fa_IR": "페르시아 인",
-            "uk_UA": "우크라이나의",
-            "cs_CZ": "체코 어로"            
+            "ru_RU": "Русский",
+            "es_ES": "Español",
+            "ja_JA": "日本語",
+            "tr_TR": "Türkçe",
+            "fa_IR": "فارسي",
+            "uk_UA": "Українська",
+            "cs_CZ": "Česky",
+            "el_GR": "Ελληνικά",
+            "ro_RO": "Română",
+            "lv_LV": "Latviešu"
         }
     }
 }

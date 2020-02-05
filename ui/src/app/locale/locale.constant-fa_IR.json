@@ -1626,19 +1626,23 @@
     "language": {
         "language": "زبان",
         "locales": {
-            "de_DE": "آلمانی",
-			"fr_FR": "فرانسوي",
-            "zh_CN": "چيني",
-            "en_US": "انگليسي",
-            "it_IT": "ايتاليايي",
-            "ko_KR": "کره اي",
-            "ru_RU": "روسي",
-            "es_ES": "اسپانيولي",
-            "ja_JA": "ژاپني",
-            "tr_TR": "ترکي",
-			"fa_IR": "فارسي",
-            "uk_UA": "اوکراین",
-	          "cs_CZ": "در چک "            
+            "de_DE": "Deutsch",
+            "fr_FR": "Français",
+            "zh_CN": "简体中文",
+            "zh_TW": "繁體中文",
+            "en_US": "English",
+            "it_IT": "Italiano",
+            "ko_KR": "한글",
+            "ru_RU": "Русский",
+            "es_ES": "Español",
+            "ja_JA": "日本語",
+            "tr_TR": "Türkçe",
+            "fa_IR": "فارسي",
+            "uk_UA": "Українська",
+            "cs_CZ": "Česky",
+            "el_GR": "Ελληνικά",
+            "ro_RO": "Română",
+            "lv_LV": "Latviešu"
         }
     }
 }
