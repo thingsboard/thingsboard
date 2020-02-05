@@ -40,7 +40,7 @@ function GatewayForm() {
 }
 
 /*@ngInject*/
-function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, toast, importExport, attributeService, deviceService, userService, $mdDialog, $mdUtil, types, $window, $q, entityService) {
+function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, toast, importExport, attributeService, deviceService, userService, $mdDialog, $mdUtil, types, $window, $q, entityService, utils, $translate) {
     let vm = this;
     const currentConfigurationAttribute = "current_configuration";
     const configurationDraftsAttribute = "configuration_drafts";
@@ -66,10 +66,14 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
         caCertPath: '/etc/thingsboard-gateway/ca.pem',
         privateKeyPath: '/etc/thingsboard-gateway/privateKey.pem',
         certPath: '/etc/thingsboard-gateway/certificate.pem',
-        connectors: {},
+        connectors: [],
         remoteLoggingLevel: "DEBUG",
         remoteLoggingPathToLogs: './logs/'
     };
+
+    let archiveFileName = '';
+    let gatewayNameExists = '';
+    let successfulSaved = '';
 
     vm.securityTypes = [{
         name: 'gateway.security-types.access-token',
@@ -105,8 +109,23 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
         vm.changeAlignment = (vm.ctx.$container[0].offsetWidth <= 425);
     }
 
+    function initWidgetSettings() {
+        let widgetTitle;
+        if (vm.settings.widgetTitle && vm.settings.widgetTitle.length) {
+            widgetTitle = utils.customTranslation(vm.settings.widgetTitle, vm.settings.widgetTitle);
+        } else {
+            widgetTitle = $translate.instant('gateway.gateway');
+        }
+        vm.ctx.widgetTitle = widgetTitle;
+
+        archiveFileName = vm.settings.archiveFileName && vm.settings.archiveFileName.length ? vm.settings.archiveFileName : 'gatewayConfiguration';
+        gatewayNameExists = utils.customTranslation(vm.settings.deviceNameExist, vm.settings.deviceNameExist) || $translate.instant('gateway.gateway-exists');
+        successfulSaved = utils.customTranslation(vm.settings.successfulSave, vm.settings.successfulSave) || $translate.instant('gateway.gateway-saved');
+    }
+
     function initializeConfig() {
         updateWidgetDisplaying();
+        initWidgetSettings();
         getGatewaysList(true);
     }
 
@@ -132,12 +151,13 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
     vm.createDevice = (deviceObj) => {
         deviceService.findByName(deviceObj.name, {ignoreErrors: true})
             .then(
-                function (device) {
-                    getDeviceCredentials(device.id.id).then(() => {
-                        getGatewaysList();
-                    });
+                function () {
+                    toast.showError(gatewayNameExists, angular.element('.gateway-form'),'top left');
                 },
                 function () {
+                    if(vm.settings.gatewayType && vm.settings.gatewayType.length){
+                        deviceObj.type = vm.settings.gatewayType;
+                    }
                     deviceService.saveDevice(deviceObj).then(
                         (device) => {
                             getDeviceCredentials(device.id.id).then(() =>{
@@ -149,9 +169,13 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
     };
 
     vm.saveAttributeConfig = () => {
-        saveAttribute(configurationAttribute, $window.btoa(angular.toJson(getGatewayConfigJSON())), types.attributesScope.shared.value);
-        saveAttribute(configurationDraftsAttribute, $window.btoa(angular.toJson(getDraftConnectorJSON())), types.attributesScope.server.value);
-        saveAttribute(remoteLoggingLevelAttribute, vm.configurations.remoteLoggingLevel.toUpperCase(), types.attributesScope.shared.value);
+        $q.all([
+            saveAttribute(configurationAttribute, $window.btoa(angular.toJson(getGatewayConfigJSON())), types.attributesScope.shared.value),
+            saveAttribute(configurationDraftsAttribute, $window.btoa(angular.toJson(getDraftConnectorJSON())), types.attributesScope.server.value),
+            saveAttribute(remoteLoggingLevelAttribute, vm.configurations.remoteLoggingLevel.toUpperCase(), types.attributesScope.shared.value)
+        ]).then(() =>{
+            toast.showSuccess(successfulSaved, 2000, angular.element('.gateway-form'),'top left');
+        })
     };
 
     function getAttributes() {
@@ -175,8 +199,7 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
             key: attributeName,
             value: attributeValue
         }];
-        attributeService.saveEntityAttributes(vm.configurations.gateway.id.entityType, vm.configurations.gateway.id.id, attributeScope, attributes).then(() => {
-        });
+        return attributeService.saveEntityAttributes(vm.configurations.gateway.id.entityType, vm.configurations.gateway.id.id, attributeScope, attributes);
     }
 
     vm.exportConfig = () => {
@@ -184,7 +207,7 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
         filesZip["tb_gateway.yaml"] = generateYAMLConfigurationFile();
         generateConfigConnectorFiles(filesZip);
         generateLogConfigFile(filesZip);
-        importExport.exportJSZip(filesZip, 'config');
+        importExport.exportJSZip(filesZip, archiveFileName);
         saveAttribute(remoteLoggingLevelAttribute, vm.configurations.remoteLoggingLevel.toUpperCase(), types.attributesScope.shared.value);
     };
 

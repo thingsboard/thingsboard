@@ -125,16 +125,14 @@ function GatewayConfigController($scope, $document, $mdDialog, $mdUtil, $window,
     }
 
     vm.validateJSON = (config) => {
-        if (angular.equals({}, config)) {
-            return "md-warn";
-        }
+        return angular.equals({}, config);
     };
 }
 
 /*@ngInject*/
 function GatewayDialogController($scope, $mdDialog, $document, $window, config, typeName) {
     let vm = this;
-    vm.config = angular.toJson(config);
+    vm.config = js_beautify(angular.toJson(config), {indent_size: 4});
     vm.typeName = typeName;
     vm.configAreaOptions = {
         useWrapMode: true,
@@ -153,9 +151,9 @@ function GatewayDialogController($scope, $mdDialog, $document, $window, config, 
         if (model && model.length) {
             try {
                 angular.fromJson(model);
-                $scope.theForm[editorName].$setValidity('configJSON', true);
+                $scope.theForm[editorName].$setValidity('config', true);
             } catch (e) {
-                $scope.theForm[editorName].$setValidity('configJSON', false);
+                $scope.theForm[editorName].$setValidity('config', false);
             }
         }
     };

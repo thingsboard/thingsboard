@@ -16,9 +16,9 @@
 
 -->
 <section name="gatewayConfig" layout="column" class="gateway-config">
-    <section layout="row" ng-form="'gatewayConfig_' + $index" ng-repeat="connector in vm.gatewayConfig track by $index">
+    <section layout="row" ng-form="gatewayConfig_{{$index}}" ng-repeat="connector in vm.gatewayConfig track by $index">
         <div layout="column" layout-align="center start" class="gateway-config-row">
-            <md-switch ng-model="connector.enabled" ng-disabled="{{'gatewayConfig_' + $index}}.$invalid"
+            <md-switch ng-model="connector.enabled" ng-disabled="gatewayConfig_{{$index}}.$invalid || vm.validateJSON(connector.config)"
                        aria-label="{{ 'gateway.connector-enabled' | translate }}">
             </md-switch>
         </div>
@@ -51,7 +51,7 @@
              ng-class="{'gateway-config-row-vertical': vm.changeAlignment}">
             <md-button class="md-icon-button md-mini" ng-click="vm.openConfigDialog($event, $index, connector.config, connector.name)"
                        aria-label="{{ 'gateway.update-config' | translate }}"
-                       ng-class="vm.validateJSON(connector.config)">
+                       ng-class="{'md-warn': vm.validateJSON(connector.config)}">
                 <md-icon class="material-icons">more_horiz</md-icon>
                 <md-tooltip md-direction="top">
                     {{ 'gateway.update-config' | translate }}
