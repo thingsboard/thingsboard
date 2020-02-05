@@ -109,7 +109,7 @@ export function isString(value: any): boolean {
 
 export function formatValue(value: any, dec?: number, units?: string, showZeroDecimals?: boolean): string | undefined {
   if (isDefined(value) &&
-    value != null && isNumeric(value)) {
+    value !== null && isNumeric(value)) {
     let formatted: string | number = Number(value);
     if (isDefined(dec)) {
       formatted = formatted.toFixed(dec);
@@ -123,8 +123,12 @@ export function formatValue(value: any, dec?: number, units?: string, showZeroDe
     }
     return formatted;
   } else {
-    return value;
+    return value !== null ? value : '';
   }
+}
+
+export function objectValues(obj: any): any[] {
+  return Object.keys(obj).map(e => obj[e]);
 }
 
 export function deleteNullProperties(obj: any) {

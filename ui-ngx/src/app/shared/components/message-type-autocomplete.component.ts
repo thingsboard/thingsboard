@@ -23,6 +23,7 @@ import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { MessageType, messageTypeNames } from '@shared/models/rule-node.models';
+import { objectValues } from '@core/utils';
 
 @Component({
   selector: 'tb-message-type-autocomplete',
@@ -109,7 +110,7 @@ export class MessageTypeAutocompleteComponent implements ControlValueAccessor, O
     this.modelValue = value;
     let res: MessageType | string = null;
     if (value) {
-      if (Object.values(MessageType).includes(value)) {
+      if (objectValues(MessageType).includes(value)) {
         res = MessageType[value];
       } else {
         res = value;
@@ -129,7 +130,7 @@ export class MessageTypeAutocompleteComponent implements ControlValueAccessor, O
   updateView(value: MessageType | string | null) {
     let res: string = null;
     if (value) {
-      if (Object.values(MessageType).includes(value)) {
+      if (objectValues(MessageType).includes(value)) {
         res = MessageType[value];
       } else {
         res = value;
@@ -143,7 +144,7 @@ export class MessageTypeAutocompleteComponent implements ControlValueAccessor, O
 
   displayMessageTypeFn(messageType?: MessageType | string): string | undefined {
     if (messageType) {
-      if (Object.values(MessageType).includes(messageType)) {
+      if (objectValues(MessageType).includes(messageType)) {
         return messageTypeNames.get(MessageType[messageType]);
       } else {
         return messageType;

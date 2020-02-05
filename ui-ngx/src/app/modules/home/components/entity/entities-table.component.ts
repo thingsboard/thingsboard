@@ -419,7 +419,7 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
       }
       return res;
     } else {
-      return null;
+      return '';
     }
   }
 

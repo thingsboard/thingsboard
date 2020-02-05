@@ -18,11 +18,9 @@
   height: 100%;
   .tb-table-widget {
     mat-footer-row, mat-row {
-      min-height: 38px;
       height: 38px;
     }
     mat-header-row {
-      min-height: 40px;
       height: 40px;
     }
     mat-toolbar {

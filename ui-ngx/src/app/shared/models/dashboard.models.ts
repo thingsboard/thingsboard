@@ -120,7 +120,7 @@ export function getDashboardAssignedCustomersText(dashboard: DashboardInfo): str
       .map(customerInfo => customerInfo.title)
       .join(', ');
   } else {
-    return null;
+    return '';
   }
 }
 

@@ -426,13 +426,19 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
 
     this.initialize().subscribe(
       () => {
-        this.cd.detectChanges();
+        this.detectChanges();
         this.onInit();
       },
       (err) => {
         // console.log(err);
       }
     );
+  }
+
+  private detectChanges() {
+    if (!this.destroyed) {
+      this.cd.detectChanges();
+    }
   }
 
   private isReady(): boolean {
@@ -546,7 +552,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
             this.widgetContext.reset();
             this.subscriptionInited = true;
             this.configureDynamicWidgetComponent();
-            this.cd.detectChanges();
+            this.detectChanges();
             this.onInit();
           }
         },
@@ -564,7 +570,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       this.widgetContext.reset();
       this.subscriptionInited = true;
       this.configureDynamicWidgetComponent();
-      this.cd.detectChanges();
+      this.detectChanges();
       this.onInit();
     }
   }
@@ -760,22 +766,18 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       dataLoading: (subscription) => {
         if (this.loadingData !== subscription.loadingData) {
           this.loadingData = subscription.loadingData;
-          if (!this.destroyed) {
-            this.cd.detectChanges();
-          }
+          this.detectChanges();
         }
       },
       legendDataUpdated: (subscription, detectChanges) => {
-        if (detectChanges && !this.destroyed) {
-          this.cd.detectChanges();
+        if (detectChanges) {
+          this.detectChanges();
         }
       },
       timeWindowUpdated: (subscription, timeWindowConfig) => {
         this.ngZone.run(() => {
           this.widget.config.timewindow = timeWindowConfig;
-          if (!this.destroyed) {
-            this.cd.detectChanges();
-          }
+          this.detectChanges();
         });
       }
     };
@@ -836,7 +838,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           if (this.dynamicWidgetComponent) {
             this.dynamicWidgetComponent.rpcEnabled = subscription.rpcEnabled;
             this.dynamicWidgetComponent.executingRpcRequest = subscription.executingRpcRequest;
-            this.cd.detectChanges();
+            this.detectChanges();
           }
         },
         onRpcSuccess: (subscription) => {
@@ -844,7 +846,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
             this.dynamicWidgetComponent.executingRpcRequest = subscription.executingRpcRequest;
             this.dynamicWidgetComponent.rpcErrorText = subscription.rpcErrorText;
             this.dynamicWidgetComponent.rpcRejection = subscription.rpcRejection;
-            this.cd.detectChanges();
+            this.detectChanges();
           }
         },
         onRpcFailed: (subscription) => {
@@ -852,14 +854,14 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
             this.dynamicWidgetComponent.executingRpcRequest = subscription.executingRpcRequest;
             this.dynamicWidgetComponent.rpcErrorText = subscription.rpcErrorText;
             this.dynamicWidgetComponent.rpcRejection = subscription.rpcRejection;
-            this.cd.detectChanges();
+            this.detectChanges();
           }
         },
         onRpcErrorCleared: (subscription) => {
           if (this.dynamicWidgetComponent) {
             this.dynamicWidgetComponent.rpcErrorText = null;
             this.dynamicWidgetComponent.rpcRejection = null;
-            this.cd.detectChanges();
+            this.detectChanges();
           }
         }
       };
@@ -873,16 +875,16 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           createSubscriptionSubject.error(err);
         }
       );
-      this.cd.detectChanges();
+      this.detectChanges();
     } else if (this.widget.type === widgetType.static) {
       this.loadingData = false;
       createSubscriptionSubject.next();
       createSubscriptionSubject.complete();
-      this.cd.detectChanges();
+      this.detectChanges();
     } else {
       createSubscriptionSubject.next();
       createSubscriptionSubject.complete();
-      this.cd.detectChanges();
+      this.detectChanges();
     }
     return createSubscriptionSubject.asObservable();
   }

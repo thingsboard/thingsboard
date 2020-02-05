@@ -521,13 +521,15 @@ mat-label {
   }
 
   mat-header-row {
-    min-height: 60px;
     height: 60px;
   }
 
   mat-footer-row, mat-row {
-    min-height: 52px;
     height: 52px;
+  }
+
+  mat-header-row, mat-footer-row, mat-row {
+    min-height: auto;
   }
 
   .mat-row,
@@ -537,15 +539,21 @@ mat-label {
 
 
   .mat-header-row.mat-table-sticky {
+    background-clip: padding-box;
     .mat-header-cell {
       position: sticky;
       top: 0;
       z-index: 10;
       background: inherit;
+      background-clip: padding-box;
       &.mat-table-sticky {
         z-index: 11 !important;
       }
     }
+  }
+
+  .mat-cell.mat-table-sticky {
+    background-clip: padding-box;
   }
 
   .mat-row {

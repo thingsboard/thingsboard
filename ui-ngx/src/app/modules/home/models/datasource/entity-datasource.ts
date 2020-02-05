@@ -20,7 +20,7 @@ import { BehaviorSubject, Observable, of, ReplaySubject } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { BaseData, HasId } from '@shared/models/base-data';
 import { CollectionViewer, DataSource } from '@angular/cdk/typings/collections';
-import { catchError, map, take, tap } from 'rxjs/operators';
+import { catchError, map, share, take, tap } from 'rxjs/operators';
 import { SelectionModel } from '@angular/cdk/collections';
 import {EntityBooleanFunction} from '@home/models/entity/entities-table-config.models';
 
@@ -78,19 +78,22 @@ export class EntitiesDataSource<T extends BaseData<HasId>, P extends PageLink = 
   isAllSelected(): Observable<boolean> {
     const numSelected = this.selection.selected.length;
     return this.entitiesSubject.pipe(
-      map((entities) => numSelected === this.selectableEntitiesCount(entities))
+      map((entities) => numSelected === this.selectableEntitiesCount(entities)),
+      share()
     );
   }
 
   isEmpty(): Observable<boolean> {
     return this.entitiesSubject.pipe(
-      map((entities) => !entities.length)
+      map((entities) => !entities.length),
+      share()
     );
   }
 
   total(): Observable<number> {
     return this.pageDataSubject.pipe(
-      map((pageData) => pageData.totalElements)
+      map((pageData) => pageData.totalElements),
+      share()
     );
   }
 

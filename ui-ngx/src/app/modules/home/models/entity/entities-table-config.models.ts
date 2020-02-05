@@ -84,7 +84,7 @@ export class EntityTableColumn<T extends BaseData<HasId>> extends BaseEntityTabl
   constructor(public key: string,
               public title: string,
               public width: string = '0px',
-              public cellContentFunction: CellContentFunction<T> = (entity, property) => entity[property],
+              public cellContentFunction: CellContentFunction<T> = (entity, property) => entity[property] ? entity[property] : '',
               public cellStyleFunction: CellStyleFunction<T> = () => ({}),
               public sortable: boolean = true,
               public headerCellStyleFunction: HeaderCellStyleFunction<T> = () => ({}),
