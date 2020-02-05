@@ -31,8 +31,7 @@ import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sqlts.psql.TsKvEntity;
-import org.thingsboard.server.dao.model.sqlts.timescale.TimescaleTsKvEntity;
-import org.thingsboard.server.dao.sqlts.AbstractSqlTimeseriesDao;
+import org.thingsboard.server.dao.sqlts.AbstractPsqlHsqlTimeseriesDao;
 import org.thingsboard.server.dao.sqlts.EntityContainer;
 import org.thingsboard.server.dao.timeseries.PsqlPartition;
 import org.thingsboard.server.dao.timeseries.SqlTsPartitionDate;
@@ -40,7 +39,6 @@ import org.thingsboard.server.dao.timeseries.TimeseriesDao;
 import org.thingsboard.server.dao.util.PsqlDao;
 import org.thingsboard.server.dao.util.SqlTsDao;
 
-import javax.annotation.PreDestroy;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -50,7 +48,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
@@ -62,7 +59,7 @@ import static org.thingsboard.server.dao.timeseries.SqlTsPartitionDate.EPOCH_STA
 @Slf4j
 @SqlTsDao
 @PsqlDao
-public class JpaPsqlTimeseriesDao extends AbstractSqlTimeseriesDao<TsKvEntity> implements TimeseriesDao {
+public class JpaPsqlTimeseriesDao extends AbstractPsqlHsqlTimeseriesDao<TsKvEntity> implements TimeseriesDao {
 
     private final Map<Long, PsqlPartition> partitions = new ConcurrentHashMap<>();
     private static final ReentrantLock partitionCreationLock = new ReentrantLock();
@@ -94,9 +91,6 @@ public class JpaPsqlTimeseriesDao extends AbstractSqlTimeseriesDao<TsKvEntity> i
             throw new RuntimeException("Failed to parse partitioning property: " + partitioning + "!");
         }
     }
-
-    @PreDestroy
-    protected void destroy() { super.destroy(); }
 
     @Override
     public ListenableFuture<Void> save(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry, long ttl) {
@@ -208,11 +202,6 @@ public class JpaPsqlTimeseriesDao extends AbstractSqlTimeseriesDao<TsKvEntity> i
     }
 
     @Override
-    protected ListenableFuture<List<Optional<TsKvEntry>>> findAllAndAggregateAsync(TenantId tenantId, EntityId entityId, String key, long startTs, long endTs, long timeBucket, Aggregation aggregation) {
-        return null;
-    }
-
-    @Override
     protected void findCount(TenantId tenantId, EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
         Integer keyId = getOrSaveKeyId(key);
         entitiesFutures.add(tsKvRepository.findCount(
@@ -270,31 +259,6 @@ public class JpaPsqlTimeseriesDao extends AbstractSqlTimeseriesDao<TsKvEntity> i
                 keyId,
                 startTs,
                 endTs));
-    }
-
-    @Override
-    protected CompletableFuture<List<TimescaleTsKvEntity>> findCount(String key, long startTs, long endTs, long timeBucket, UUID entityId, UUID tenantId) {
-        return null;
-    }
-
-    @Override
-    protected CompletableFuture<List<TimescaleTsKvEntity>> findSum(String key, long startTs, long endTs, long timeBucket, UUID entityId, UUID tenantId) {
-        return null;
-    }
-
-    @Override
-    protected CompletableFuture<List<TimescaleTsKvEntity>> findMin(String key, long startTs, long endTs, long timeBucket, UUID entityId, UUID tenantId) {
-        return null;
-    }
-
-    @Override
-    protected CompletableFuture<List<TimescaleTsKvEntity>> findMax(String key, long startTs, long endTs, long timeBucket, UUID entityId, UUID tenantId) {
-        return null;
-    }
-
-    @Override
-    protected CompletableFuture<List<TimescaleTsKvEntity>> findAvg(String key, long startTs, long endTs, long timeBucket, UUID entityId, UUID tenantId) {
-        return null;
     }
 
     @Override

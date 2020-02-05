@@ -20,7 +20,6 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,14 +39,13 @@ import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionary;
 import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionaryCompositeKey;
 import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestCompositeKey;
 import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
-import org.thingsboard.server.dao.model.sqlts.timescale.TimescaleTsKvEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
 import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueue;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
 import org.thingsboard.server.dao.sqlts.dictionary.TsKvDictionaryRepository;
-import org.thingsboard.server.dao.sqlts.latest.TsKvLatestRepository;
 import org.thingsboard.server.dao.sqlts.latest.SearchTsKvLatestRepository;
+import org.thingsboard.server.dao.sqlts.latest.TsKvLatestRepository;
 import org.thingsboard.server.dao.timeseries.SimpleListenableFuture;
 
 import javax.annotation.Nullable;
@@ -56,8 +54,6 @@ import javax.annotation.PreDestroy;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
@@ -65,16 +61,13 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 @Slf4j
-public abstract class AbstractSqlTimeseriesDao<T extends AbstractTsKvEntity> extends JpaAbstractDaoListeningExecutorService {
+public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningExecutorService {
 
     private static final String DESC_ORDER = "DESC";
 
     private final ConcurrentMap<String, Integer> tsKvDictionaryMap = new ConcurrentHashMap<>();
 
     private static final ReentrantLock tsCreationLock = new ReentrantLock();
-
-    @Autowired
-    private InsertTsRepository<T> insertRepository;
 
     @Autowired
     private TsKvLatestRepository tsKvLatestRepository;
@@ -88,8 +81,7 @@ public abstract class AbstractSqlTimeseriesDao<T extends AbstractTsKvEntity> ext
     @Autowired
     private TsKvDictionaryRepository dictionaryRepository;
 
-    @Autowired
-    protected ScheduledLogExecutorComponent logExecutor;
+    private TbSqlBlockingQueue<TsKvLatestEntity> tsLatestQueue;
 
     @Value("${sql.ts_latest.batch_size:1000}")
     private int tsLatestBatchSize;
@@ -100,18 +92,17 @@ public abstract class AbstractSqlTimeseriesDao<T extends AbstractTsKvEntity> ext
     @Value("${sql.ts_latest.stats_print_interval_ms:1000}")
     private long tsLatestStatsPrintIntervalMs;
 
+    @Autowired
+    protected ScheduledLogExecutorComponent logExecutor;
+
     @Value("${sql.ts.batch_size:1000}")
-    private int tsBatchSize;
+    protected int tsBatchSize;
 
     @Value("${sql.ts.batch_max_delay:100}")
-    private long tsMaxDelay;
+    protected long tsMaxDelay;
 
     @Value("${sql.ts.stats_print_interval_ms:1000}")
-    private long tsStatsPrintIntervalMs;
-
-    private TbSqlBlockingQueue<TsKvLatestEntity> tsLatestQueue;
-
-    protected TbSqlBlockingQueue<EntityContainer<T>> tsQueue;
+    protected long tsStatsPrintIntervalMs;
 
     @PostConstruct
     protected void init() {
@@ -123,24 +114,12 @@ public abstract class AbstractSqlTimeseriesDao<T extends AbstractTsKvEntity> ext
                 .build();
         tsLatestQueue = new TbSqlBlockingQueue<>(tsLatestParams);
         tsLatestQueue.init(logExecutor, v -> insertLatestRepository.saveOrUpdate(v));
-
-        TbSqlBlockingQueueParams tsParams = TbSqlBlockingQueueParams.builder()
-                .logName("TS")
-                .batchSize(tsBatchSize)
-                .maxDelay(tsMaxDelay)
-                .statsPrintIntervalMs(tsStatsPrintIntervalMs)
-                .build();
-        tsQueue = new TbSqlBlockingQueue<>(tsParams);
-        tsQueue.init(logExecutor, v -> insertRepository.saveOrUpdate(v));
     }
 
     @PreDestroy
     protected void destroy() {
         if (tsLatestQueue != null) {
             tsLatestQueue.destroy();
-        }
-        if (tsQueue != null) {
-            tsQueue.destroy();
         }
     }
 
@@ -167,94 +146,6 @@ public abstract class AbstractSqlTimeseriesDao<T extends AbstractTsKvEntity> ext
     protected abstract ListenableFuture<List<TsKvEntry>> findAllAsync(TenantId tenantId, EntityId entityId, ReadTsKvQuery query);
 
     protected abstract ListenableFuture<List<TsKvEntry>> findAllAsyncWithLimit(TenantId tenantId, EntityId entityId, ReadTsKvQuery query);
-
-    protected abstract ListenableFuture<Optional<TsKvEntry>> findAndAggregateAsync(TenantId tenantId, EntityId entityId, String key, long startTs, long endTs, long ts, Aggregation aggregation);
-
-    protected abstract ListenableFuture<List<Optional<TsKvEntry>>> findAllAndAggregateAsync(TenantId tenantId, EntityId entityId, String key, long startTs, long endTs, long timeBucket, Aggregation aggregation);
-
-    protected void switchAgregation(TenantId tenantId, EntityId entityId, String key, long startTs, long endTs, Aggregation aggregation, List<CompletableFuture<T>> entitiesFutures) {
-        switch (aggregation) {
-            case AVG:
-                findAvg(tenantId, entityId, key, startTs, endTs, entitiesFutures);
-                break;
-            case MAX:
-                findMax(tenantId, entityId, key, startTs, endTs, entitiesFutures);
-                break;
-            case MIN:
-                findMin(tenantId, entityId, key, startTs, endTs, entitiesFutures);
-                break;
-            case SUM:
-                findSum(tenantId, entityId, key, startTs, endTs, entitiesFutures);
-                break;
-            case COUNT:
-                findCount(tenantId, entityId, key, startTs, endTs, entitiesFutures);
-                break;
-            default:
-                throw new IllegalArgumentException("Not supported aggregation type: " + aggregation);
-        }
-    }
-
-    protected abstract void findCount(TenantId tenantId, EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<T>> entitiesFutures);
-
-    protected abstract void findSum(TenantId tenantId, EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<T>> entitiesFutures);
-
-    protected abstract void findMin(TenantId tenantId, EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<T>> entitiesFutures);
-
-    protected abstract void findMax(TenantId tenantId, EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<T>> entitiesFutures);
-
-    protected abstract void findAvg(TenantId tenantId, EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<T>> entitiesFutures);
-
-    protected CompletableFuture<List<TimescaleTsKvEntity>> switchAgregation(String key, long startTs, long endTs, long timeBucket, Aggregation aggregation, UUID entityId, UUID tenantId) {
-        switch (aggregation) {
-            case AVG:
-                return findAvg(key, startTs, endTs, timeBucket, entityId, tenantId);
-            case MAX:
-                return findMax(key, startTs, endTs, timeBucket, entityId, tenantId);
-            case MIN:
-                return findMin(key, startTs, endTs, timeBucket, entityId, tenantId);
-            case SUM:
-                return findSum(key, startTs, endTs, timeBucket, entityId, tenantId);
-            case COUNT:
-                return findCount(key, startTs, endTs, timeBucket, entityId, tenantId);
-            default:
-                throw new IllegalArgumentException("Not supported aggregation type: " + aggregation);
-        }
-    }
-
-    protected abstract CompletableFuture<List<TimescaleTsKvEntity>> findCount(String key, long startTs, long endTs, long timeBucket, UUID entityId, UUID tenantId);
-
-    protected abstract CompletableFuture<List<TimescaleTsKvEntity>> findSum(String key, long startTs, long endTs, long timeBucket, UUID entityId, UUID tenantId);
-
-    protected abstract CompletableFuture<List<TimescaleTsKvEntity>> findMin(String key, long startTs, long endTs, long timeBucket, UUID entityId, UUID tenantId);
-
-    protected abstract CompletableFuture<List<TimescaleTsKvEntity>> findMax(String key, long startTs, long endTs, long timeBucket, UUID entityId, UUID tenantId);
-
-    protected abstract CompletableFuture<List<TimescaleTsKvEntity>> findAvg(String key, long startTs, long endTs, long timeBucket, UUID entityId, UUID tenantId);
-
-    protected SettableFuture<T> setFutures(List<CompletableFuture<T>> entitiesFutures) {
-        SettableFuture<T> listenableFuture = SettableFuture.create();
-        CompletableFuture<List<T>> entities =
-                CompletableFuture.allOf(entitiesFutures.toArray(new CompletableFuture[entitiesFutures.size()]))
-                        .thenApply(v -> entitiesFutures.stream()
-                                .map(CompletableFuture::join)
-                                .collect(Collectors.toList()));
-
-        entities.whenComplete((tsKvEntities, throwable) -> {
-            if (throwable != null) {
-                listenableFuture.setException(throwable);
-            } else {
-                T result = null;
-                for (T entity : tsKvEntities) {
-                    if (entity.isNotEmpty()) {
-                        result = entity;
-                        break;
-                    }
-                }
-                listenableFuture.set(result);
-            }
-        });
-        return listenableFuture;
-    }
 
     protected ListenableFuture<List<TsKvEntry>> getTskvEntriesFuture(ListenableFuture<List<Optional<TsKvEntry>>> future) {
         return Futures.transform(future, new Function<List<Optional<TsKvEntry>>, List<TsKvEntry>>() {
