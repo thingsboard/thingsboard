@@ -219,12 +219,11 @@ public class DeviceProvisionServiceImpl extends AbstractEntityService implements
                 if (state.equals(PROVISIONED_STATE)) {
                     return Futures.immediateFuture(true);
                 } else {
-                    log.error("[{}] Unknown provision state: {}!", device.getName(), state);
+                    log.error("[{}][{}] Unknown provision state: {}!", device.getName(), DEVICE_PROVISION_STATE, state);
                     return Futures.immediateCancelledFuture();
                 }
             }
-            return Futures.transform(attributesService.save(device.getTenantId(), device.getId(), DataConstants.SERVER_SCOPE,
-                    Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry(DEVICE_PROVISION_STATE, PROVISIONED_STATE), System.currentTimeMillis()))), input -> false);
+            return Futures.transform(saveProvisionStateAttribute(device), input -> false);
         });
         if (provisionedFuture.isCancelled()) {
             throw new RuntimeException("Unknown provision state!");
@@ -251,20 +250,26 @@ public class DeviceProvisionServiceImpl extends AbstractEntityService implements
     private ListenableFuture<ProvisionResponse> processCreateDevice(ProvisionRequest provisionRequest, ProvisionProfile profile) {
         Device device = deviceService.findDeviceByTenantIdAndName(profile.getTenantId(), provisionRequest.getDeviceName());
         if (device == null) {
-            device = saveDevice(provisionRequest, profile);
+            Device savedDevice = saveDevice(provisionRequest, profile);
 
-            actorService.onDeviceAdded(device);
-            pushDeviceCreatedEventToRuleEngine(device);
-            notify(device, provisionRequest, DataConstants.PROVISION_SUCCESS, true);
+            actorService.onDeviceAdded(savedDevice);
+            pushDeviceCreatedEventToRuleEngine(savedDevice);
+            notify(savedDevice, provisionRequest, DataConstants.PROVISION_SUCCESS, true);
 
-            return Futures.immediateFuture(
+            return Futures.transform(saveProvisionStateAttribute(savedDevice), input ->
                     new ProvisionResponse(
-                            getDeviceCredentials(device, provisionRequest.getX509CertPubKey()),
+                            getDeviceCredentials(savedDevice, provisionRequest.getX509CertPubKey()),
                             ProvisionResponseStatus.SUCCESS));
         }
         log.warn("[{}] The device is already provisioned!", device.getName());
         notify(device, provisionRequest, DataConstants.PROVISION_FAILURE, false);
         return Futures.immediateFuture(new ProvisionResponse(null, ProvisionResponseStatus.FAILURE));
+    }
+
+    private ListenableFuture<List<Void>> saveProvisionStateAttribute(Device device) {
+        return attributesService.save(device.getTenantId(), device.getId(), DataConstants.SERVER_SCOPE,
+                Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry(DEVICE_PROVISION_STATE, PROVISIONED_STATE),
+                        System.currentTimeMillis())));
     }
 
     private Device saveDevice(ProvisionRequest provisionRequest, ProvisionProfile profile) {
