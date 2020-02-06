@@ -34,7 +34,6 @@ import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
 import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionary;
 import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionaryCompositeKey;
 import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestCompositeKey;
@@ -76,7 +75,7 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
     private SearchTsKvLatestRepository searchTsKvLatestRepository;
 
     @Autowired
-    private InsertLatestRepository insertLatestRepository;
+    private InsertLatestTsRepository insertLatestTsRepository;
 
     @Autowired
     private TsKvDictionaryRepository dictionaryRepository;
@@ -113,7 +112,7 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
                 .statsPrintIntervalMs(tsLatestStatsPrintIntervalMs)
                 .build();
         tsLatestQueue = new TbSqlBlockingQueue<>(tsLatestParams);
-        tsLatestQueue.init(logExecutor, v -> insertLatestRepository.saveOrUpdate(v));
+        tsLatestQueue.init(logExecutor, v -> insertLatestTsRepository.saveOrUpdate(v));
     }
 
     @PreDestroy

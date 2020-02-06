@@ -117,7 +117,7 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
     }
 
     private ListenableFuture<List<Optional<TsKvEntry>>> findAllAndAggregateAsync(TenantId tenantId, EntityId entityId, String key, long startTs, long endTs, long timeBucket, Aggregation aggregation) {
-        CompletableFuture<List<TimescaleTsKvEntity>> listCompletableFuture = switchAgregation(key, startTs, endTs, timeBucket, aggregation, entityId.getId(), tenantId.getId());
+        CompletableFuture<List<TimescaleTsKvEntity>> listCompletableFuture = switchAggregation(key, startTs, endTs, timeBucket, aggregation, entityId.getId(), tenantId.getId());
         SettableFuture<List<TimescaleTsKvEntity>> listenableFuture = SettableFuture.create();
         listCompletableFuture.whenComplete((timescaleTsKvEntities, throwable) -> {
             if (throwable != null) {
@@ -213,7 +213,7 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
         return service.submit(() -> null);
     }
 
-    private CompletableFuture<List<TimescaleTsKvEntity>> switchAgregation(String key, long startTs, long endTs, long timeBucket, Aggregation aggregation, UUID entityId, UUID tenantId) {
+    private CompletableFuture<List<TimescaleTsKvEntity>> switchAggregation(String key, long startTs, long endTs, long timeBucket, Aggregation aggregation, UUID entityId, UUID tenantId) {
         switch (aggregation) {
             case AVG:
                 return findAvg(key, startTs, endTs, timeBucket, entityId, tenantId);

@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
 import org.thingsboard.server.dao.sqlts.AbstractInsertRepository;
-import org.thingsboard.server.dao.sqlts.InsertLatestRepository;
+import org.thingsboard.server.dao.sqlts.InsertLatestTsRepository;
 import org.thingsboard.server.dao.util.PsqlTsAnyDao;
 
 import java.sql.PreparedStatement;
@@ -35,7 +35,7 @@ import java.util.List;
 @PsqlTsAnyDao
 @Repository
 @Transactional
-public class PsqlLatestInsertRepository extends AbstractInsertRepository implements InsertLatestRepository {
+public class PsqlLatestInsertTsRepository extends AbstractInsertRepository implements InsertLatestTsRepository {
 
     private static final String BATCH_UPDATE =
             "UPDATE ts_kv_latest SET ts = ?, bool_v = ?, str_v = ?, long_v = ?, dbl_v = ? WHERE entity_id = ? and key = ?";

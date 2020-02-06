@@ -44,5 +44,3 @@ CREATE TABLE IF NOT EXISTS ts_kv_latest (
     dbl_v double precision,
     CONSTRAINT ts_kv_latest_pkey PRIMARY KEY (entity_id, key)
 );
-
-SELECT create_hypertable('tenant_ts_kv', 'ts', chunk_time_interval => 86400000, if_not_exists => true);
