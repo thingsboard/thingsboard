@@ -55,15 +55,15 @@
                              required>
                         </div>
                     </div>
-                    <div class="tb-error-messages" layout="column" flex ng-messages="theForm.config.$error" role="alert">
+                    <div class="tb-error-messages" layout="column" ng-messages="theForm.config.$error" role="alert">
                         <div ng-message="required" flex class="tb-error-message" translate>gateway.json-required</div>
-                        <div ng-message="vm.config" class="tb-error-message" translate>gateway.json-parse</div>
+                        <div ng-message="config" class="tb-error-message" translate>gateway.json-parse</div>
                     </div>
                 </div>
             </div>
         </md-dialog-content>
         <md-dialog-actions layout="row" layout-align="end center" class="action-buttons">
-            <md-button ng-disabled="$root.loading || theForm.$invalid || !theForm.$dirty" type="submit"
+            <md-button ng-disabled="$root.loading || theForm.config.$invalid || !theForm.config.$dirty" type="submit"
                        class="md-raised md-primary">
                 {{'action.save'|translate}}
             </md-button>
