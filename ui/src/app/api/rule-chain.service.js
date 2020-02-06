@@ -46,7 +46,7 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
 
     return service;
 
-    function getRuleChains (pageLink, config) {
+    function getRuleChains (pageLink, config, type) {
         var deferred = $q.defer();
         var url = '/api/ruleChains?limit=' + pageLink.limit;
         if (angular.isDefined(pageLink.textSearch)) {
@@ -57,6 +57,9 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
         }
         if (angular.isDefined(pageLink.textOffset)) {
             url += '&textOffset=' + pageLink.textOffset;
+        }
+        if (angular.isDefined(type) && type.length) {
+            url += '&type=' + type;
         }
         $http.get(url, config).then(function success(response) {
             deferred.resolve(prepareRuleChains(response.data));

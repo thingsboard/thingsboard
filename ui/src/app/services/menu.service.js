@@ -156,9 +156,24 @@ function Menu(userService, $state, $rootScope) {
                         },
                         {
                             name: 'rulechain.rulechains',
-                            type: 'link',
+                            type: 'toggle',
                             state: 'home.ruleChains',
-                            icon: 'settings_ethernet'
+                            height: '80px',
+                            icon: 'settings_ethernet',
+                            pages: [
+                                {
+                                    name: 'rulechain.system-rulechains',
+                                    type: 'link',
+                                    state: 'home.ruleChains.system',
+                                    icon: 'settings_ethernet'
+                                },
+                                {
+                                    name: 'rulechain.edge-rulechains',
+                                    type: 'link',
+                                    state: 'home.ruleChains.edge',
+                                    icon: 'router'
+                                }
+                            ]
                         },
                         {
                             name: 'customer.customers',
@@ -214,9 +229,14 @@ function Menu(userService, $state, $rootScope) {
                             name: 'rulechain.management',
                             places: [
                                 {
-                                    name: 'rulechain.rulechains',
+                                    name: 'rulechain.system-rulechains',
                                     icon: 'settings_ethernet',
                                     state: 'home.ruleChains'
+                                },
+                                {
+                                    name: 'rulechain.edge-rulechains',
+                                    icon: 'router',
+                                    state: 'home.edgesRuleChains'
                                 }
                             ]
                         },

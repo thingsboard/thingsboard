@@ -1391,10 +1391,11 @@
     "rulechain": {
         "rulechain": "Rule chain",
         "rulechains": "Rule chains",
+        "system-rulechains": "System Rule chains",
+        "edge-rulechains": "Edge Rule chains",
         "root": "Root",
         "delete": "Delete rule chain",
         "name": "Name",
-        "type": "Type",
         "name-required": "Name is required.",
         "description": "Description",
         "add": "Add Rule Chain",

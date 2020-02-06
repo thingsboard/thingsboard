@@ -116,7 +116,7 @@ export default function RuleChainsController(ruleChainService, userService, edge
 
         if (vm.ruleChainsScope === 'tenant') {
             fetchRuleChainsFunction = function (pageLink) {
-                return fetchRuleChains(pageLink);
+                return fetchRuleChains(pageLink, 'SYSTEM');
             };
             deleteRuleChainFunction = function (ruleChainId) {
                 return deleteRuleChain(ruleChainId);
@@ -131,6 +131,57 @@ export default function RuleChainsController(ruleChainService, userService, edge
                 icon: "flag",
                 isEnabled: isNonRootRuleChain
             });
+
+            ruleChainActionsList.push({
+                onAction: function ($event, item) {
+                    vm.grid.deleteItem($event, item);
+                },
+                name: function() { return $translate.instant('action.delete') },
+                details: function() { return $translate.instant('rulechain.delete') },
+                icon: "delete",
+                isEnabled: isNonRootRuleChain
+            });
+
+            ruleChainGroupActionsList.push(
+                {
+                    onAction: function ($event) {
+                        vm.grid.deleteItems($event);
+                    },
+                    name: function() { return $translate.instant('rulechain.delete-rulechains') },
+                    details: deleteRuleChainsActionTitle,
+                    icon: "delete"
+                }
+            );
+
+            vm.ruleChainGridConfig.addItemActions = [];
+            vm.ruleChainGridConfig.addItemActions.push({
+                onAction: function ($event) {
+                    vm.grid.addItem($event);
+                },
+                name: function() { return $translate.instant('action.create') },
+                details: function() { return $translate.instant('rulechain.create-new-rulechain') },
+                icon: "insert_drive_file"
+            });
+            vm.ruleChainGridConfig.addItemActions.push({
+                onAction: function ($event) {
+                    importExport.importRuleChain($event).then(
+                        function(ruleChainImport) {
+                            $state.go('home.ruleChains.importRuleChain', {ruleChainImport:ruleChainImport});
+                        }
+                    );
+                },
+                name: function() { return $translate.instant('action.import') },
+                details: function() { return $translate.instant('rulechain.import') },
+                icon: "file_upload"
+            });
+
+        } else if (vm.ruleChainsScope === 'edges') {
+            fetchRuleChainsFunction = function (pageLink) {
+                return fetchRuleChains(pageLink, 'EDGE');
+            };
+            deleteRuleChainFunction = function (ruleChainId) {
+                return deleteRuleChain(ruleChainId);
+            };
 
             ruleChainActionsList.push({
                 onAction: function ($event, item) {
@@ -209,7 +260,6 @@ export default function RuleChainsController(ruleChainService, userService, edge
                 details: function() { return $translate.instant('rulechain.import') },
                 icon: "file_upload"
             });
-
         } else if (vm.ruleChainsScope === 'edge') {
             fetchRuleChainsFunction = function (pageLink) {
                 return ruleChainService.getEdgeRuleChains(edgeId, pageLink);
@@ -291,11 +341,18 @@ export default function RuleChainsController(ruleChainService, userService, edge
         vm.grid = grid;
     }
 
-    function fetchRuleChains(pageLink) {
-        return ruleChainService.getRuleChains(pageLink);
+    function fetchRuleChains(pageLink, type) {
+        return ruleChainService.getRuleChains(pageLink, null, type);
     }
 
     function saveRuleChain(ruleChain) {
+        if (angular.isUndefined(ruleChain.type)) {
+            if (vm.ruleChainsScope === 'edges') {
+                ruleChain.type = types.edgeRuleChainType;
+            } else {
+                ruleChain.type = types.systemRuleChainType;
+            }
+        }
         return ruleChainService.saveRuleChain(ruleChain);
     }
 
@@ -303,10 +360,11 @@ export default function RuleChainsController(ruleChainService, userService, edge
         if ($event) {
             $event.stopPropagation();
         }
+
         if (vm.ruleChainsScope === 'edge') {
-            $state.go('home.edges.ruleChains.ruleChain', {
-                ruleChainId: ruleChain.id.id
-            });
+            $state.go('home.edges.ruleChains.ruleChain', {ruleChainId: ruleChain.id.id, edgeId: vm.edge.id.id});
+        } else if (vm.ruleChainsScope === 'edges') {
+            $state.go('home.ruleChains.edge.ruleChain', {ruleChainId: ruleChain.id.id});
         } else {
             $state.go('home.ruleChains.ruleChain', {ruleChainId: ruleChain.id.id});
         }

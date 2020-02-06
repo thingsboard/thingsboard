@@ -597,21 +597,29 @@ CREATE TABLE IF NOT EXISTS  thingsboard.rule_chain (
     id uuid,
     tenant_id uuid,
     name text,
+    type text,
     search_text text,
     first_rule_node_id uuid,
     root boolean,
     debug_mode boolean,
     configuration text,
     additional_info text,
-    PRIMARY KEY (id, tenant_id)
+    PRIMARY KEY (id, tenant_id, type)
 );
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.rule_chain_by_tenant_and_search_text AS
     SELECT *
     from thingsboard.rule_chain
-    WHERE tenant_id IS NOT NULL AND search_text IS NOT NULL AND id IS NOT NULL
-    PRIMARY KEY ( tenant_id, search_text, id )
+    WHERE tenant_id IS NOT NULL AND search_text IS NOT NULL AND id IS NOT NULL AND type IS NOT NULL
+    PRIMARY KEY ( tenant_id, search_text, id, type )
     WITH CLUSTERING ORDER BY ( search_text ASC, id DESC );
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.rule_chain_by_tenant_by_type_and_search_text AS
+    SELECT *
+    from thingsboard.rule_chain
+    WHERE tenant_id IS NOT NULL AND search_text IS NOT NULL AND id IS NOT NULL AND type IS NOT NULL
+    PRIMARY KEY ( tenant_id, type, search_text, id )
+    WITH CLUSTERING ORDER BY ( type ASC, search_text ASC, id DESC );
 
 CREATE TABLE IF NOT EXISTS  thingsboard.rule_node (
     id uuid,

@@ -103,11 +103,7 @@ public class RuleChainEntity extends BaseSqlEntity<RuleChain> implements SearchT
         }
         this.tenantId = toString(DaoUtil.getId(ruleChain.getTenantId()));
         this.name = ruleChain.getName();
-        if (ruleChain.getType() != null) {
-            this.type = ruleChain.getType();
-        } else {
-            this.type = RuleChainType.SYSTEM;
-        }
+        this.type = ruleChain.getType();
         this.searchText = ruleChain.getName();
         if (ruleChain.getFirstRuleNodeId() != null) {
             this.firstRuleNodeId = UUIDConverter.fromTimeUUID(ruleChain.getFirstRuleNodeId().getId());
@@ -141,11 +137,7 @@ public class RuleChainEntity extends BaseSqlEntity<RuleChain> implements SearchT
         ruleChain.setCreatedTime(UUIDs.unixTimestamp(getId()));
         ruleChain.setTenantId(new TenantId(toUUID(tenantId)));
         ruleChain.setName(name);
-        if (type != null) {
-            ruleChain.setType(type);
-        } else {
-            ruleChain.setType(RuleChainType.SYSTEM);
-        }
+        ruleChain.setType(type);
         if (firstRuleNodeId != null) {
             ruleChain.setFirstRuleNodeId(new RuleNodeId(UUIDConverter.fromString(firstRuleNodeId)));
         }

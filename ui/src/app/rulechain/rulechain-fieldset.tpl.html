@@ -50,14 +50,6 @@
             </div>
         </md-input-container>
         <md-input-container class="md-block">
-            <label translate>rulechain.type</label>
-            <md-select ng-disabled="$root.loading || !isEdit || ruleChainScope !== 'tenant' || ruleChain.root === true" name="type" ng-model="ruleChain.type">
-                <md-option ng-repeat="ruleChainType in ruleChainTypes" value="{{ruleChainType}}">
-                    {{ruleChainType}}
-                </md-option>
-            </md-select>
-        </md-input-container>
-        <md-input-container class="md-block">
             <md-checkbox ng-disabled="$root.loading || !isEdit" aria-label="{{ 'rulechain.debug-mode' | translate }}"
                          ng-model="ruleChain.debugMode">{{ 'rulechain.debug-mode' | translate }}
             </md-checkbox>

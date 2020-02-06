@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.dao.Dao;
 
 import java.util.List;
@@ -37,6 +38,16 @@ public interface RuleChainDao extends Dao<RuleChain> {
      * @return the list of rule chain objects
      */
     List<RuleChain> findRuleChainsByTenantId(UUID tenantId, TextPageLink pageLink);
+
+    /**
+     * Find rule chains by tenantId, type and page link.
+     *
+     * @param tenantId the tenantId
+     * @param type the type
+     * @param pageLink the page link
+     * @return the list of rule chain objects
+     */
+    List<RuleChain> findRuleChainsByTenantIdAndType(UUID tenantId, RuleChainType type, TextPageLink pageLink);
 
     /**
      * Find rule chains by tenantId, edgeId and page link.

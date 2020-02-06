@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.RuleChainEntity;
 import org.thingsboard.server.dao.relation.RelationDao;
@@ -68,9 +69,22 @@ public class JpaRuleChainDao extends JpaAbstractSearchTextDao<RuleChainEntity, R
 
     @Override
     public List<RuleChain> findRuleChainsByTenantId(UUID tenantId, TextPageLink pageLink) {
+        log.debug("Try to find rule chains by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
         return DaoUtil.convertDataList(ruleChainRepository
                 .findByTenantId(
                         UUIDConverter.fromTimeUUID(tenantId),
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getIdOffset() == null ? NULL_UUID_STR : UUIDConverter.fromTimeUUID(pageLink.getIdOffset()),
+                        new PageRequest(0, pageLink.getLimit())));
+    }
+
+    @Override
+    public List<RuleChain> findRuleChainsByTenantIdAndType(UUID tenantId, RuleChainType type, TextPageLink pageLink) {
+        log.debug("Try to find rule chains by tenantId [{}], type [{}] and pageLink [{}]", tenantId, type, pageLink);
+        return DaoUtil.convertDataList(ruleChainRepository
+                .findByTenantIdAndType(
+                        UUIDConverter.fromTimeUUID(tenantId),
+                        type,
                         Objects.toString(pageLink.getTextSearch(), ""),
                         pageLink.getIdOffset() == null ? NULL_UUID_STR : UUIDConverter.fromTimeUUID(pageLink.getIdOffset()),
                         new PageRequest(0, pageLink.getLimit())));

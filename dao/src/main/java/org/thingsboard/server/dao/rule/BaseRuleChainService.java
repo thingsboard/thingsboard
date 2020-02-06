@@ -63,6 +63,8 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.dao.service.Validator.validateString;
+
 /**
  * Created by igor on 3/12/18.
  */
@@ -359,6 +361,14 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     }
 
     @Override
+    public TextPageData<RuleChain> findTenantRuleChainsByType(TenantId tenantId, RuleChainType type, TextPageLink pageLink) {
+        Validator.validateId(tenantId, "Incorrect tenant id for search rule chain request.");
+        Validator.validatePageLink(pageLink, "Incorrect PageLink object for search rule chain request.");
+        List<RuleChain> ruleChains = ruleChainDao.findRuleChainsByTenantIdAndType(tenantId.getId(), type, pageLink);
+        return new TextPageData<>(ruleChains, pageLink);
+    }
+
+    @Override
     public void deleteRuleChainById(TenantId tenantId, RuleChainId ruleChainId) {
         Validator.validateId(ruleChainId, "Incorrect rule chain id for delete request.");
         RuleChain ruleChain = ruleChainDao.findById(tenantId, ruleChainId.getId());
@@ -514,7 +524,10 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                 @Override
                 protected void validateDataImpl(TenantId tenantId, RuleChain ruleChain) {
                     if (StringUtils.isEmpty(ruleChain.getName())) {
-                        throw new DataValidationException("Rule chain name should be specified!.");
+                        throw new DataValidationException("Rule chain name should be specified!");
+                    }
+                    if (ruleChain.getType() == null) {
+                        throw new DataValidationException("Rule chain type should be specified!");
                     }
                     if (ruleChain.getTenantId() == null || ruleChain.getTenantId().isNullUid()) {
                         throw new DataValidationException("Rule chain should be assigned to tenant!");

@@ -106,11 +106,7 @@ public class RuleChainEntity implements SearchTextEntity<RuleChain> {
         }
         this.tenantId = DaoUtil.getId(ruleChain.getTenantId());
         this.name = ruleChain.getName();
-        if (ruleChain.getType() != null) {
-            this.type = ruleChain.getType();
-        } else {
-            this.type = RuleChainType.SYSTEM;
-        }
+        this.type = ruleChain.getType();
         this.searchText = ruleChain.getName();
         this.firstRuleNodeId = DaoUtil.getId(ruleChain.getFirstRuleNodeId());
         this.root = ruleChain.isRoot();
@@ -204,11 +200,7 @@ public class RuleChainEntity implements SearchTextEntity<RuleChain> {
         ruleChain.setCreatedTime(UUIDs.unixTimestamp(id));
         ruleChain.setTenantId(new TenantId(tenantId));
         ruleChain.setName(name);
-        if (type != null) {
-            ruleChain.setType(type);
-        } else {
-            ruleChain.setType(RuleChainType.SYSTEM);
-        }
+        ruleChain.setType(type);
         if (this.firstRuleNodeId != null) {
             ruleChain.setFirstRuleNodeId(new RuleNodeId(this.firstRuleNodeId));
         }

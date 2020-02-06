@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeQueueEntry;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -44,10 +45,12 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
+import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -59,6 +62,7 @@ import org.thingsboard.server.common.data.rule.RuleChainConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
@@ -91,6 +95,7 @@ import org.thingsboard.server.gen.edge.UplinkResponseMsg;
 import org.thingsboard.server.gen.edge.UserUpdateMsg;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
 
+import javax.swing.text.html.parser.Entity;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -101,6 +106,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+
+import static org.thingsboard.server.gen.edge.UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE;
+import static org.thingsboard.server.gen.edge.UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE;
 
 @Slf4j
 @Data
@@ -175,7 +183,9 @@ public final class EdgeGrpcSession implements Cloneable {
         do {
             pageData =  ctx.getEdgeService().findQueueEvents(edge.getTenantId(), edge.getId(), pageLink);
             if (!pageData.getData().isEmpty()) {
+                log.trace("[{}] [{}] event(s) are going to be processed.", this.sessionId, pageData.getData().size());
                 for (Event event : pageData.getData()) {
+                    log.trace("[{}] Processing event [{}]", this.sessionId, event);
                     EdgeQueueEntry entry;
                     try {
                         entry = objectMapper.treeToValue(event.getBody(), EdgeQueueEntry.class);
@@ -192,6 +202,9 @@ public final class EdgeGrpcSession implements Cloneable {
                             case RULE_CHAIN_CUSTOM_MESSAGE:
                                 processCustomDownlinkMessage(entry);
                                 break;
+                        }
+                        if (ENTITY_CREATED_RPC_MESSAGE.equals(msgType)) {
+                            pushEntityAttributesToEdge(entry);
                         }
                     } catch (Exception e) {
                         log.error("Exception during processing records from queue", e);
@@ -212,6 +225,63 @@ public final class EdgeGrpcSession implements Cloneable {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
             log.error("Error during sleep", e);
+        }
+    }
+
+    private void pushEntityAttributesToEdge(EdgeQueueEntry entry) throws IOException {
+        EntityId entityId = null;
+        String entityName = null;
+        switch (entry.getEntityType()) {
+            case EDGE:
+                entityId = objectMapper.readValue(entry.getData(), Edge.class).getId();
+                break;
+            case DEVICE:
+                entityId = objectMapper.readValue(entry.getData(), Device.class).getId();
+                break;
+            case ASSET:
+                entityId = objectMapper.readValue(entry.getData(), Asset.class).getId();
+                break;
+            case ENTITY_VIEW:
+                entityId = objectMapper.readValue(entry.getData(), EntityView.class).getId();
+                break;
+            case DASHBOARD:
+                entityId = objectMapper.readValue(entry.getData(), Dashboard.class).getId();
+                break;
+        }
+        if (entityId != null) {
+            ListenableFuture<List<AttributeKvEntry>> ssAttrFuture = ctx.getAttributesService().findAll(edge.getTenantId(), entityId, DataConstants.SERVER_SCOPE);
+            Futures.transform(ssAttrFuture, ssAttributes -> {
+                if (ssAttributes != null && !ssAttributes.isEmpty()) {
+                    try {
+                        TbMsgMetaData metaData = new TbMsgMetaData();
+                        ObjectNode entityNode = objectMapper.createObjectNode();
+                        metaData.putValue("scope", DataConstants.SERVER_SCOPE);
+                        for (AttributeKvEntry attr : ssAttributes) {
+                            if (attr.getDataType() == DataType.BOOLEAN) {
+                                entityNode.put(attr.getKey(), attr.getBooleanValue().get());
+                            } else if (attr.getDataType() == DataType.DOUBLE) {
+                                entityNode.put(attr.getKey(), attr.getDoubleValue().get());
+                            } else if (attr.getDataType() == DataType.LONG) {
+                                entityNode.put(attr.getKey(), attr.getLongValue().get());
+                            } else {
+                                entityNode.put(attr.getKey(), attr.getValueAsString());
+                            }
+                        }
+                        TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), DataConstants.ATTRIBUTES_UPDATED, entityId, metaData, TbMsgDataType.JSON
+                                , objectMapper.writeValueAsString(entityNode)
+                                , null, null, 0L);
+                        log.debug("Sending donwlink entity data msg, entityName [{}], tbMsg [{}]", entityName, tbMsg);
+                        outputStream.onNext(ResponseMsg.newBuilder()
+                                .setDownlinkMsg(constructDownlinkEntityDataMsg(entityName, tbMsg))
+                                .build());
+                    } catch (Exception e) {
+                        log.error("[{}] Failed to send attribute updates to the edge", edge.getName(), e);
+                    }
+                }
+                return null;
+            });
+            ListenableFuture<List<AttributeKvEntry>> shAttrFuture = ctx.getAttributesService().findAll(edge.getTenantId(), entityId, DataConstants.SHARED_SCOPE);
+            ListenableFuture<List<AttributeKvEntry>> clAttrFuture = ctx.getAttributesService().findAll(edge.getTenantId(), entityId, DataConstants.CLIENT_SCOPE);
         }
     }
 
@@ -411,7 +481,7 @@ public final class EdgeGrpcSession implements Cloneable {
                     return UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE;
                 case DataConstants.ENTITY_CREATED:
                 case DataConstants.ENTITY_ASSIGNED_TO_EDGE:
-                    return UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE;
+                    return ENTITY_CREATED_RPC_MESSAGE;
                 case DataConstants.ENTITY_DELETED:
                 case DataConstants.ENTITY_UNASSIGNED_FROM_EDGE:
                     return UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE;
@@ -521,6 +591,8 @@ public final class EdgeGrpcSession implements Cloneable {
 
     private RuleNodeProto constructNode(RuleNode node) throws JsonProcessingException {
         return RuleNodeProto.newBuilder()
+                .setIdMSB(node.getId().getId().getMostSignificantBits())
+                .setIdLSB(node.getId().getId().getLeastSignificantBits())
                 .setType(node.getType())
                 .setName(node.getName())
                 .setDebugMode(node.isDebugMode())

@@ -607,7 +607,7 @@ export default angular.module('thingsboard.types', [])
                 }
             },
             systemRuleChainType: "SYSTEM",
-            ruleChainTypes: ["SYSTEM", "EDGE"],
+            edgeRuleChainType: "EDGE",
             ruleNodeTypeComponentTypes: ["FILTER", "ENRICHMENT", "TRANSFORMATION", "ACTION", "EXTERNAL"],
             ruleChainNodeComponent: {
                 type: 'RULE_CHAIN',

@@ -125,11 +125,13 @@ message RuleChainMetadataUpdateMsg {
 }
 
 message RuleNodeProto {
-  string type = 1;
-  string name = 2;
-  bool debugMode = 3;
-  string configuration = 4;
-  string additionalInfo = 5;
+  int64 idMSB = 1;
+  int64 idLSB = 2;
+  string type = 3;
+  string name = 4;
+  bool debugMode = 5;
+  string configuration = 6;
+  string additionalInfo = 7;
 }
 
 message NodeConnectionInfoProto {

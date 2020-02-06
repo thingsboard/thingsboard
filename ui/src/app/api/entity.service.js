@@ -277,7 +277,7 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                 }
                 break;
             case types.entityType.rulechain:
-                promise = ruleChainService.getRuleChains(pageLink, config);
+                promise = ruleChainService.getRuleChains(pageLink, config, subType);
                 break;
             case types.entityType.dashboard:
                 if (user.authority === 'CUSTOMER_USER') {

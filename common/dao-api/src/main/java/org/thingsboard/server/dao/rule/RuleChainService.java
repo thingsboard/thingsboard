@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
 
 import java.util.List;
@@ -61,6 +62,8 @@ public interface RuleChainService {
     List<EntityRelation> getRuleNodeRelations(TenantId tenantId, RuleNodeId ruleNodeId);
 
     TextPageData<RuleChain> findTenantRuleChains(TenantId tenantId, TextPageLink pageLink);
+
+    TextPageData<RuleChain> findTenantRuleChainsByType(TenantId tenantId, RuleChainType type, TextPageLink pageLink);
 
     void deleteRuleChainById(TenantId tenantId, RuleChainId ruleChainId);
 
