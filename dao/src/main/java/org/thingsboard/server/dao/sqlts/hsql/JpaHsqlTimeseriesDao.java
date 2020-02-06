@@ -141,9 +141,7 @@ public class JpaHsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEnt
                                 query.getKey(),
                                 query.getStartTs(),
                                 query.getEndTs(),
-                                new PageRequest(0, query.getLimit(),
-                                        new Sort(Sort.Direction.fromString(
-                                                query.getOrderBy()), "ts")))));
+                                PageRequest.of(0, query.getLimit(), Sort.by(Sort.Direction.fromString(query.getOrderBy()), "ts")))));
     }
 
     protected void findCount(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {

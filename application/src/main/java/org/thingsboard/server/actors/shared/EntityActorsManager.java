@@ -18,7 +18,7 @@ package org.thingsboard.server.actors.shared;
 import akka.actor.ActorContext;
 import akka.actor.ActorRef;
 import akka.actor.Props;
-import akka.actor.UntypedActor;
+import akka.actor.UntypedAbstractActor;
 import akka.japi.Creator;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
@@ -31,14 +31,11 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * Created by ashvayka on 15.03.18.
  */
 @Slf4j
-public abstract class EntityActorsManager<T extends EntityId, A extends UntypedActor, M extends SearchTextBased<? extends UUIDBased>> {
+public abstract class EntityActorsManager<T extends EntityId, A extends UntypedAbstractActor, M extends SearchTextBased<? extends UUIDBased>> {
 
     protected final ActorSystemContext systemContext;
     protected final BiMap<T, ActorRef> actors;
