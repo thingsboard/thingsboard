@@ -20,8 +20,10 @@
    (mousedown)="userNodeCallbacks.mouseDown($event, node)"
    (mouseenter)="userNodeCallbacks.mouseEnter($event, node)"
    (mouseleave)="userNodeCallbacks.mouseLeave($event, node)">
-  <div class="{{flowchartConstants.nodeOverlayClass}}"></div>
-  <div class="tb-rule-node {{node.nodeClass}}" [ngClass]="{'tb-rule-node-highlighted' : node.highlighted, 'tb-rule-node-invalid': node.error }">
+  <div class="fc-node-overlay"></div>
+  <div class="tb-rule-node {{node.nodeClass}}"
+       [ngClass]="{'tb-rule-node-highlighted' : node.highlighted,
+                   'tb-rule-node-invalid': node.error }">
     <mat-icon *ngIf="!iconUrl" fxFlex="15">{{node.icon}}</mat-icon>
     <img *ngIf="iconUrl" fxFlex="15" [src]="iconUrl"/>
     <div fxLayout="column" fxFlex="85" fxLayoutAlign="center">
@@ -32,6 +34,7 @@
       <div fc-magnet [connector]="connector" [callbacks]="callbacks"
            *ngFor="let connector of modelservice.nodes.getConnectorsByType(node, flowchartConstants.leftConnectorType)">
         <div fc-connector [connector]="connector"
+             [nodeRectInfo]="nodeRectInfo"
              [mouseOverConnector]="mouseOverConnector"
              [callbacks]="callbacks"
              [modelservice]="modelservice"></div>
@@ -41,16 +44,19 @@
       <div fc-magnet [connector]="connector" [callbacks]="callbacks"
            *ngFor="let connector of modelservice.nodes.getConnectorsByType(node, flowchartConstants.rightConnectorType)">
         <div fc-connector [connector]="connector"
+             [nodeRectInfo]="nodeRectInfo"
              [mouseOverConnector]="mouseOverConnector"
              [callbacks]="callbacks"
              [modelservice]="modelservice"></div>
       </div>
     </div>
   </div>
-  <div *ngIf="modelservice.isEditable() && !node.readonly" class="fc-nodeedit" (click)="userNodeCallbacks.nodeEdit($event, node)">
-    <i class="fa fa-pencil" aria-hidden="true"></i>
-  </div>
-  <div *ngIf="modelservice.isEditable() && !node.readonly" class="fc-nodedelete" (click)="modelservice.nodes.delete(node)">
-    &times;
-  </div>
+  <section *ngIf="modelservice.isEditable() && !node.readonly">
+    <div class="fc-nodeedit" (click)="userNodeCallbacks.nodeEdit($event, node)">
+      <i class="fa fa-pencil" aria-hidden="true"></i>
+    </div>
+    <div class="fc-nodedelete" (click)="modelservice.nodes.delete(node)">
+      &times;
+    </div>
+  </section>
 </div>
