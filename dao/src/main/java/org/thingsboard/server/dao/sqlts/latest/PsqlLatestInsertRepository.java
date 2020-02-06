@@ -38,12 +38,12 @@ import java.util.List;
 public class PsqlLatestInsertRepository extends AbstractInsertRepository implements InsertLatestRepository {
 
     private static final String BATCH_UPDATE =
-            "UPDATE ts_kv_latest SET ts = ?, bool_v = ?, str_v = ?, long_v = ?, dbl_v = ? WHERE entity_type = ? AND entity_id = ? and key = ?";
+            "UPDATE ts_kv_latest SET ts = ?, bool_v = ?, str_v = ?, long_v = ?, dbl_v = ? WHERE entity_id = ? and key = ?";
 
 
     private static final String INSERT_OR_UPDATE =
-            "INSERT INTO ts_kv_latest (entity_type, entity_id, key, ts, bool_v, str_v, long_v, dbl_v) VALUES(?, ?, ?, ?, ?, ?, ?, ?) " +
-                    "ON CONFLICT (entity_type, entity_id, key) DO UPDATE SET ts = ?, bool_v = ?, str_v = ?, long_v = ?, dbl_v = ?;";
+            "INSERT INTO ts_kv_latest (entity_id, key, ts, bool_v, str_v, long_v, dbl_v) VALUES(?, ?, ?, ?, ?, ?, ?) " +
+                    "ON CONFLICT (entity_id, key) DO UPDATE SET ts = ?, bool_v = ?, str_v = ?, long_v = ?, dbl_v = ?;";
 
     @Override
     public void saveOrUpdate(List<TsKvLatestEntity> entities) {
@@ -76,9 +76,8 @@ public class PsqlLatestInsertRepository extends AbstractInsertRepository impleme
                             ps.setNull(5, Types.DOUBLE);
                         }
 
-                        ps.setString(6, tsKvLatestEntity.getEntityType().name());
-                        ps.setString(7, tsKvLatestEntity.getEntityId());
-                        ps.setString(8, tsKvLatestEntity.getKey());
+                        ps.setObject(6, tsKvLatestEntity.getEntityId());
+                        ps.setInt(7, tsKvLatestEntity.getKey());
                     }
 
                     @Override
@@ -105,38 +104,37 @@ public class PsqlLatestInsertRepository extends AbstractInsertRepository impleme
                     @Override
                     public void setValues(PreparedStatement ps, int i) throws SQLException {
                         TsKvLatestEntity tsKvLatestEntity = insertEntities.get(i);
-                        ps.setString(1, tsKvLatestEntity.getEntityType().name());
-                        ps.setString(2, tsKvLatestEntity.getEntityId());
-                        ps.setString(3, tsKvLatestEntity.getKey());
-                        ps.setLong(4, tsKvLatestEntity.getTs());
-                        ps.setLong(9, tsKvLatestEntity.getTs());
+                        ps.setObject(1, tsKvLatestEntity.getEntityId());
+                        ps.setInt(2, tsKvLatestEntity.getKey());
+                        ps.setLong(3, tsKvLatestEntity.getTs());
+                        ps.setLong(8, tsKvLatestEntity.getTs());
 
                         if (tsKvLatestEntity.getBooleanValue() != null) {
-                            ps.setBoolean(5, tsKvLatestEntity.getBooleanValue());
-                            ps.setBoolean(10, tsKvLatestEntity.getBooleanValue());
+                            ps.setBoolean(4, tsKvLatestEntity.getBooleanValue());
+                            ps.setBoolean(9, tsKvLatestEntity.getBooleanValue());
                         } else {
-                            ps.setNull(5, Types.BOOLEAN);
-                            ps.setNull(10, Types.BOOLEAN);
+                            ps.setNull(4, Types.BOOLEAN);
+                            ps.setNull(9, Types.BOOLEAN);
                         }
 
-                        ps.setString(6, replaceNullChars(tsKvLatestEntity.getStrValue()));
-                        ps.setString(11, replaceNullChars(tsKvLatestEntity.getStrValue()));
+                        ps.setString(5, replaceNullChars(tsKvLatestEntity.getStrValue()));
+                        ps.setString(10, replaceNullChars(tsKvLatestEntity.getStrValue()));
 
 
                         if (tsKvLatestEntity.getLongValue() != null) {
-                            ps.setLong(7, tsKvLatestEntity.getLongValue());
-                            ps.setLong(12, tsKvLatestEntity.getLongValue());
+                            ps.setLong(6, tsKvLatestEntity.getLongValue());
+                            ps.setLong(11, tsKvLatestEntity.getLongValue());
                         } else {
-                            ps.setNull(7, Types.BIGINT);
-                            ps.setNull(12, Types.BIGINT);
+                            ps.setNull(6, Types.BIGINT);
+                            ps.setNull(11, Types.BIGINT);
                         }
 
                         if (tsKvLatestEntity.getDoubleValue() != null) {
-                            ps.setDouble(8, tsKvLatestEntity.getDoubleValue());
-                            ps.setDouble(13, tsKvLatestEntity.getDoubleValue());
+                            ps.setDouble(7, tsKvLatestEntity.getDoubleValue());
+                            ps.setDouble(12, tsKvLatestEntity.getDoubleValue());
                         } else {
-                            ps.setNull(8, Types.DOUBLE);
-                            ps.setNull(13, Types.DOUBLE);
+                            ps.setNull(7, Types.DOUBLE);
+                            ps.setNull(12, Types.DOUBLE);
                         }
                     }
 

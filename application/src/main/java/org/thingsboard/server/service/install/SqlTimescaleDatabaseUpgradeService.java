@@ -21,7 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.dao.util.PsqlDao;
-import org.thingsboard.server.dao.util.SqlTsDao;
+import org.thingsboard.server.dao.util.TimescaleDBTsDao;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -36,22 +36,20 @@ import java.sql.Types;
 @Service
 @Profile("install")
 @Slf4j
-@SqlTsDao
+@TimescaleDBTsDao
 @PsqlDao
-public class PsqlTsDatabaseUpgradeService implements DatabaseTsUpgradeService {
+public class SqlTimescaleDatabaseUpgradeService implements DatabaseTsUpgradeService {
 
     private static final String CALL_REGEX = "call ";
-    private static final String LOAD_FUNCTIONS_SQL = "schema_update_psql_ts.sql";
+    private static final String LOAD_FUNCTIONS_SQL = "schema_update_timescale_ts.sql";
     private static final String CHECK_VERSION = CALL_REGEX + "check_version()";
-    private static final String CREATE_PARTITION_TS_KV_TABLE = CALL_REGEX + "create_partition_ts_kv_table()";
-    private static final String CREATE_NEW_TS_KV_LATEST_TABLE = CALL_REGEX + "create_new_ts_kv_latest_table()";
-    private static final String CREATE_PARTITIONS = CALL_REGEX + "create_partitions()";
+    private static final String CREATE_TS_KV_LATEST_TABLE = CALL_REGEX + "create_ts_kv_latest_table()";
+    private static final String CREATE_TENANT_TS_KV_TABLE_COPY = CALL_REGEX + "create_tenant_ts_kv_table_copy()";
     private static final String CREATE_TS_KV_DICTIONARY_TABLE = CALL_REGEX + "create_ts_kv_dictionary_table()";
     private static final String INSERT_INTO_DICTIONARY = CALL_REGEX + "insert_into_dictionary()";
-    private static final String INSERT_INTO_TS_KV = CALL_REGEX + "insert_into_ts_kv()";
+    private static final String INSERT_INTO_TS_KV = CALL_REGEX + "insert_into_tenant_ts_kv()";
     private static final String INSERT_INTO_TS_KV_LATEST = CALL_REGEX + "insert_into_ts_kv_latest()";
-    private static final String DROP_TABLE_TS_KV_OLD = "DROP TABLE ts_kv_old;";
-    private static final String DROP_TABLE_TS_KV_LATEST_OLD = "DROP TABLE ts_kv_latest_old;";
+    private static final String DROP_OLD_TS_KV_TABLE = "DROP TABLE tenant_ts_kv_old;";
 
     @Value("${spring.datasource.url}")
     private String dbUrl;
@@ -70,25 +68,23 @@ public class PsqlTsDatabaseUpgradeService implements DatabaseTsUpgradeService {
         switch (fromVersion) {
             case "2.4.3":
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
-                    log.info("Updating timeseries schema ...");
+                    log.info("Updating timescale schema ...");
                     log.info("Load upgrade functions ...");
                     loadSql(conn);
                     boolean versionValid = checkVersion(conn);
                     if (!versionValid) {
-                        log.info("PostgreSQL version should be at least more than 10!");
+                        log.info("PostgreSQL version should be at least more than 9.6!");
                         log.info("Please upgrade your PostgreSQL and restart the script!");
                     } else {
                         log.info("PostgreSQL version is valid!");
                         log.info("Updating schema ...");
-                        executeFunction(conn, CREATE_PARTITION_TS_KV_TABLE);
-                        executeFunction(conn, CREATE_PARTITIONS);
+                        executeFunction(conn, CREATE_TS_KV_LATEST_TABLE);
+                        executeFunction(conn, CREATE_TENANT_TS_KV_TABLE_COPY);
                         executeFunction(conn, CREATE_TS_KV_DICTIONARY_TABLE);
                         executeFunction(conn, INSERT_INTO_DICTIONARY);
                         executeFunction(conn, INSERT_INTO_TS_KV);
-                        executeFunction(conn, CREATE_NEW_TS_KV_LATEST_TABLE);
                         executeFunction(conn, INSERT_INTO_TS_KV_LATEST);
-                        dropOldTable(conn, DROP_TABLE_TS_KV_OLD);
-                        dropOldTable(conn, DROP_TABLE_TS_KV_LATEST_OLD);
+                        executeQuery(conn, DROP_OLD_TS_KV_TABLE);
                         log.info("schema timeseries updated!");
                     }
                 }
@@ -104,7 +100,7 @@ public class PsqlTsDatabaseUpgradeService implements DatabaseTsUpgradeService {
             loadFunctions(schemaUpdateFile, conn);
             log.info("Upgrade functions successfully loaded!");
         } catch (Exception e) {
-            log.info("Failed to load PostgreSQL upgrade functions due to: {}", e.getMessage());
+            log.info("Failed to load Timescale upgrade functions due to: {}", e.getMessage());
         }
     }
 
@@ -140,7 +136,7 @@ public class PsqlTsDatabaseUpgradeService implements DatabaseTsUpgradeService {
         }
     }
 
-    private void dropOldTable(Connection conn, String query) {
+    private void executeQuery(Connection conn, String query) {
         try {
             conn.createStatement().execute(query); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
             Thread.sleep(5000);

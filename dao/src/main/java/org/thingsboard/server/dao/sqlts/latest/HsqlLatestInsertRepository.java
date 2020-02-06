@@ -36,43 +36,41 @@ import java.util.List;
 public class HsqlLatestInsertRepository extends AbstractInsertRepository implements InsertLatestRepository {
 
     private static final String INSERT_OR_UPDATE =
-            "MERGE INTO ts_kv_latest USING(VALUES ?, ?, ?, ?, ?, ?, ?, ?) " +
-                    "T (entity_type, entity_id, key, ts, bool_v, str_v, long_v, dbl_v) " +
-                    "ON (ts_kv_latest.entity_type=T.entity_type " +
-                    "AND ts_kv_latest.entity_id=T.entity_id " +
+            "MERGE INTO ts_kv_latest USING(VALUES ?, ?, ?, ?, ?, ?, ?) " +
+                    "T (entity_id, key, ts, bool_v, str_v, long_v, dbl_v) " +
+                    "ON (ts_kv_latest.entity_id=T.entity_id " +
                     "AND ts_kv_latest.key=T.key) " +
                     "WHEN MATCHED THEN UPDATE SET ts_kv_latest.ts = T.ts, ts_kv_latest.bool_v = T.bool_v, ts_kv_latest.str_v = T.str_v, ts_kv_latest.long_v = T.long_v, ts_kv_latest.dbl_v = T.dbl_v " +
-                    "WHEN NOT MATCHED THEN INSERT (entity_type, entity_id, key, ts, bool_v, str_v, long_v, dbl_v) " +
-                    "VALUES (T.entity_type, T.entity_id, T.key, T.ts, T.bool_v, T.str_v, T.long_v, T.dbl_v);";
+                    "WHEN NOT MATCHED THEN INSERT (entity_id, key, ts, bool_v, str_v, long_v, dbl_v) " +
+                    "VALUES (T.entity_id, T.key, T.ts, T.bool_v, T.str_v, T.long_v, T.dbl_v);";
 
     @Override
     public void saveOrUpdate(List<TsKvLatestEntity> entities) {
         jdbcTemplate.batchUpdate(INSERT_OR_UPDATE, new BatchPreparedStatementSetter() {
             @Override
             public void setValues(PreparedStatement ps, int i) throws SQLException {
-                ps.setString(1, entities.get(i).getEntityType().name());
-                ps.setString(2, entities.get(i).getEntityId());
-                ps.setString(3, entities.get(i).getKey());
-                ps.setLong(4, entities.get(i).getTs());
+                ps.setObject(1, entities.get(i).getEntityId());
+                ps.setInt(2, entities.get(i).getKey());
+                ps.setLong(3, entities.get(i).getTs());
 
                 if (entities.get(i).getBooleanValue() != null) {
-                    ps.setBoolean(5, entities.get(i).getBooleanValue());
+                    ps.setBoolean(4, entities.get(i).getBooleanValue());
                 } else {
-                    ps.setNull(5, Types.BOOLEAN);
+                    ps.setNull(4, Types.BOOLEAN);
                 }
 
-                ps.setString(6, entities.get(i).getStrValue());
+                ps.setString(5, entities.get(i).getStrValue());
 
                 if (entities.get(i).getLongValue() != null) {
-                    ps.setLong(7, entities.get(i).getLongValue());
+                    ps.setLong(6, entities.get(i).getLongValue());
                 } else {
-                    ps.setNull(7, Types.BIGINT);
+                    ps.setNull(6, Types.BIGINT);
                 }
 
                 if (entities.get(i).getDoubleValue() != null) {
-                    ps.setDouble(8, entities.get(i).getDoubleValue());
+                    ps.setDouble(7, entities.get(i).getDoubleValue());
                 } else {
-                    ps.setNull(8, Types.DOUBLE);
+                    ps.setNull(7, Types.DOUBLE);
                 }
             }
 
