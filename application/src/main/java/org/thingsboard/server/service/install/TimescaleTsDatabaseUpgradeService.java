@@ -119,11 +119,4 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
             log.info("Failed to load Timescale upgrade functions due to: {}", e.getMessage());
         }
     }
-
-    private void executeQuery(Connection conn) {
-        try {
-            conn.createStatement().execute("ALTER TABLE asset ADD COLUMN label varchar(255)"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
-        } catch (Exception e) {}
-    }
-
 }
