@@ -85,12 +85,15 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
                         log.info("Updating schema ...");
                         executeFunction(conn, CALL_CREATE_TS_KV_LATEST_TABLE);
                         executeFunction(conn, CALL_CREATE_NEW_TENANT_TS_KV_TABLE);
+
+                        executeQuery(conn, "SELECT create_hypertable('tenant_ts_kv', 'ts', chunk_time_interval => " + chunkTimeInterval + ", if_not_exists => true);");
+
                         executeFunction(conn, CALL_CREATE_TS_KV_DICTIONARY_TABLE);
                         executeFunction(conn, CALL_INSERT_INTO_DICTIONARY);
                         executeFunction(conn, CALL_INSERT_INTO_TS_KV);
                         executeFunction(conn, CALL_INSERT_INTO_TS_KV_LATEST);
 
-                        executeQuery(conn, "SELECT set_chunk_time_interval('tenant_ts_kv', " + chunkTimeInterval +");");
+                        //executeQuery(conn, "SELECT set_chunk_time_interval('tenant_ts_kv', " + chunkTimeInterval +");");
 
                         executeDropStatement(conn, DROP_OLD_TENANT_TS_KV_TABLE);
 
