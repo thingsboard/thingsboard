@@ -77,7 +77,7 @@ export class AttributeService {
     } else {
       saveEntityAttributesObservable = of(null);
     }
-    return forkJoin(saveEntityAttributesObservable, deleteEntityAttributesObservable);
+    return forkJoin([saveEntityAttributesObservable, deleteEntityAttributesObservable]);
   }
 
   public saveEntityTimeseries(entityId: EntityId, timeseriesScope: string, timeseries: Array<AttributeData>,
@@ -105,6 +105,6 @@ export class AttributeService {
     } else {
       saveEntityTimeseriesObservable = of(null);
     }
-    return forkJoin(saveEntityTimeseriesObservable, deleteEntityTimeseriesObservable);
+    return forkJoin([saveEntityTimeseriesObservable, deleteEntityTimeseriesObservable]);
   }
 }

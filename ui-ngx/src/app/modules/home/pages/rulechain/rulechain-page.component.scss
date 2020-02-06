@@ -124,6 +124,18 @@
           &:hover {
             background: #dadada;
           }
+          .mat-expansion-panel-header-title {
+            line-height: 48px;
+            height: 48px;
+            .mat-icon {
+              min-width: 24px;
+              margin: auto 8px auto auto;
+            }
+            .tb-panel-title {
+              min-width: 140px;
+              user-select: none;
+            }
+          }
         }
         &.mat-expanded {
           .mat-expansion-panel-header {
@@ -134,10 +146,6 @@
       }
       .mat-expansion-panel-body {
         padding: 0;
-      }
-      .tb-panel-title {
-        min-width: 140px;
-        user-select: none;
       }
       .fc-canvas {
         background: #f9f9f9;

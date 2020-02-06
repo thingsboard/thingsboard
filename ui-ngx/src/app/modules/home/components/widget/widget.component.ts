@@ -94,10 +94,12 @@ import { AssetService } from '@core/http/asset.service';
 import { DialogService } from '@core/services/dialog.service';
 import { CustomDialogService } from '@home/components/widget/dialog/custom-dialog.service';
 import { DatePipe } from '@angular/common';
+import { AttributeService } from '@core/http/attribute.service';
 
 const ServicesMap = new Map<string, Type<any>>();
 ServicesMap.set('deviceService', DeviceService);
 ServicesMap.set('assetService', AssetService);
+ServicesMap.set('attributeService', AttributeService);
 ServicesMap.set('dialogs', DialogService);
 ServicesMap.set('customDialog', CustomDialogService);
 ServicesMap.set('date', DatePipe);

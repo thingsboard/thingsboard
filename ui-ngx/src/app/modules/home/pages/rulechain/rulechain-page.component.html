@@ -74,7 +74,7 @@
                                           (mouseenter)="typeHeaderMouseEnter($event, ruleNodeType)"
                                           (mouseleave)="destroyTooltips()">
                 <mat-panel-title>
-                  <mat-icon style="margin-right: 8px;">{{ ruleNodeTypeDescriptorsMap.get(ruleNodeType).icon }}</mat-icon>
+                  <mat-icon>{{ ruleNodeTypeDescriptorsMap.get(ruleNodeType).icon }}</mat-icon>
                   <div class="tb-panel-title" translate>{{ ruleNodeTypeDescriptorsMap.get(ruleNodeType).name }}</div>
                 </mat-panel-title>
               </mat-expansion-panel-header>
