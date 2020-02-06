@@ -50,7 +50,7 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
     private static final String INSERT_INTO_TS_KV_LATEST = "insert_into_ts_kv_latest()";
 
     private static final String CALL_CREATE_TS_KV_LATEST_TABLE = CALL_REGEX + CREATE_TS_KV_LATEST_TABLE;
-    private static final String CALL_CREATE_TENANT_TS_KV_TABLE_COPY = CALL_REGEX + CREATE_NEW_TENANT_TS_KV_TABLE;
+    private static final String CALL_CREATE_NEW_TENANT_TS_KV_TABLE = CALL_REGEX + CREATE_NEW_TENANT_TS_KV_TABLE;
     private static final String CALL_CREATE_TS_KV_DICTIONARY_TABLE = CALL_REGEX + CREATE_TS_KV_DICTIONARY_TABLE;
     private static final String CALL_INSERT_INTO_DICTIONARY = CALL_REGEX + INSERT_INTO_DICTIONARY;
     private static final String CALL_INSERT_INTO_TS_KV = CALL_REGEX + INSERT_INTO_TENANT_TS_KV;
@@ -84,7 +84,7 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
                         log.info("PostgreSQL version is valid!");
                         log.info("Updating schema ...");
                         executeFunction(conn, CALL_CREATE_TS_KV_LATEST_TABLE);
-                        executeFunction(conn, CALL_CREATE_TENANT_TS_KV_TABLE_COPY);
+                        executeFunction(conn, CALL_CREATE_NEW_TENANT_TS_KV_TABLE);
                         executeFunction(conn, CALL_CREATE_TS_KV_DICTIONARY_TABLE);
                         executeFunction(conn, CALL_INSERT_INTO_DICTIONARY);
                         executeFunction(conn, CALL_INSERT_INTO_TS_KV);
