@@ -41,18 +41,11 @@ import static org.thingsboard.server.dao.model.ModelConstants.KEY_COLUMN;
 @Entity
 @Table(name = "ts_kv")
 @IdClass(TsKvCompositeKey.class)
-public final class TsKvEntity extends AbstractTsKvEntity implements ToData<TsKvEntry> {
-
-    @Id
-    @Column(name = ENTITY_ID_COLUMN, columnDefinition = "uuid")
-    protected UUID entityId;
+public final class TsKvEntity extends AbstractTsKvEntity {
 
     @Id
     @Column(name = KEY_COLUMN)
-    protected int key;
-
-    @Transient
-    protected String strKey;
+    private int key;
 
     public TsKvEntity() {
     }
@@ -116,20 +109,4 @@ public final class TsKvEntity extends AbstractTsKvEntity implements ToData<TsKvE
     public boolean isNotEmpty() {
         return strValue != null || longValue != null || doubleValue != null || booleanValue != null;
     }
-
-    @Override
-    public TsKvEntry toData() {
-        KvEntry kvEntry = null;
-        if (strValue != null) {
-            kvEntry = new StringDataEntry(strKey, strValue);
-        } else if (longValue != null) {
-            kvEntry = new LongDataEntry(strKey, longValue);
-        } else if (doubleValue != null) {
-            kvEntry = new DoubleDataEntry(strKey, doubleValue);
-        } else if (booleanValue != null) {
-            kvEntry = new BooleanDataEntry(strKey, booleanValue);
-        }
-        return new BasicTsKvEntry(ts, kvEntry);
-    }
-
 }

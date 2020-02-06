@@ -30,7 +30,7 @@ import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sqlts.hsql.TsKvEntity;
-import org.thingsboard.server.dao.sqlts.AbstractSimpleSqlTimeseriesDao;
+import org.thingsboard.server.dao.sqlts.AbstractPsqlHsqlTimeseriesDao;
 import org.thingsboard.server.dao.sqlts.EntityContainer;
 import org.thingsboard.server.dao.timeseries.TimeseriesDao;
 import org.thingsboard.server.dao.util.HsqlDao;
@@ -41,14 +41,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
-
 
 @Component
 @Slf4j
 @SqlTsDao
 @HsqlDao
-public class JpaHsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEntity> implements TimeseriesDao {
+public class JpaHsqlTimeseriesDao extends AbstractPsqlHsqlTimeseriesDao<TsKvEntity> implements TimeseriesDao {
 
     @Autowired
     private TsKvHsqlRepository tsKvRepository;
@@ -60,11 +58,12 @@ public class JpaHsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEnt
 
     @Override
     public ListenableFuture<Void> save(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry, long ttl) {
+        String strKey = tsKvEntry.getKey();
+        Integer keyId = getOrSaveKeyId(strKey);
         TsKvEntity entity = new TsKvEntity();
-        entity.setEntityType(entityId.getEntityType());
-        entity.setEntityId(fromTimeUUID(entityId.getId()));
+        entity.setEntityId(entityId.getId());
         entity.setTs(tsKvEntry.getTs());
-        entity.setKey(tsKvEntry.getKey());
+        entity.setKey(keyId);
         entity.setStrValue(tsKvEntry.getStrValue().orElse(null));
         entity.setDoubleValue(tsKvEntry.getDoubleValue().orElse(null));
         entity.setLongValue(tsKvEntry.getLongValue().orElse(null));
@@ -77,9 +76,8 @@ public class JpaHsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEnt
     public ListenableFuture<Void> remove(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
         return service.submit(() -> {
             tsKvRepository.delete(
-                    fromTimeUUID(entityId.getId()),
-                    entityId.getEntityType(),
-                    query.getKey(),
+                    entityId.getId(),
+                    getOrSaveKeyId(query.getKey()),
                     query.getStartTs(),
                     query.getEndTs());
             return null;
@@ -116,14 +114,47 @@ public class JpaHsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEnt
         return Futures.immediateFuture(null);
     }
 
-    protected ListenableFuture<Optional<TsKvEntry>> findAndAggregateAsync(EntityId entityId, String key, long startTs, long endTs, long ts, Aggregation aggregation) {
+    protected ListenableFuture<List<TsKvEntry>> findAllAsync(TenantId tenantId, EntityId entityId, ReadTsKvQuery query) {
+        if (query.getAggregation() == Aggregation.NONE) {
+            return findAllAsyncWithLimit(tenantId, entityId, query);
+        } else {
+            long stepTs = query.getStartTs();
+            List<ListenableFuture<Optional<TsKvEntry>>> futures = new ArrayList<>();
+            while (stepTs < query.getEndTs()) {
+                long startTs = stepTs;
+                long endTs = stepTs + query.getInterval();
+                long ts = startTs + (endTs - startTs) / 2;
+                futures.add(findAndAggregateAsync(tenantId, entityId, query.getKey(), startTs, endTs, ts, query.getAggregation()));
+                stepTs = endTs;
+            }
+            return getTskvEntriesFuture(Futures.allAsList(futures));
+        }
+    }
+
+    @Override
+    protected ListenableFuture<List<TsKvEntry>> findAllAsyncWithLimit(TenantId tenantId, EntityId entityId, ReadTsKvQuery query) {
+        List<TsKvEntity> tsKvEntities = tsKvRepository.findAllWithLimit(
+                entityId.getId(),
+                getOrSaveKeyId(query.getKey()),
+                query.getStartTs(),
+                query.getEndTs(),
+                new PageRequest(0, query.getLimit(),
+                        new Sort(Sort.Direction.fromString(
+                                query.getOrderBy()), "ts")));
+        tsKvEntities.forEach(tsKvEntity -> tsKvEntity.setStrKey(query.getKey()));
+        return Futures.immediateFuture(
+                DaoUtil.convertDataList(
+                        tsKvEntities));
+    }
+
+    @Override
+    protected ListenableFuture<Optional<TsKvEntry>> findAndAggregateAsync(TenantId tenantId, EntityId entityId, String key, long startTs, long endTs, long ts, Aggregation aggregation) {
         List<CompletableFuture<TsKvEntity>> entitiesFutures = new ArrayList<>();
-        switchAgregation(entityId, key, startTs, endTs, aggregation, entitiesFutures);
+        switchAgregation(tenantId, entityId, key, startTs, endTs, aggregation, entitiesFutures);
         return Futures.transform(setFutures(entitiesFutures), entity -> {
             if (entity != null && entity.isNotEmpty()) {
-                entity.setEntityId(fromTimeUUID(entityId.getId()));
-                entity.setEntityType(entityId.getEntityType());
-                entity.setKey(key);
+                entity.setEntityId(entityId.getId());
+                entity.setKey(getOrSaveKeyId(key));
                 entity.setTs(ts);
                 return Optional.of(DaoUtil.getData(entity));
             } else {
@@ -132,75 +163,63 @@ public class JpaHsqlTimeseriesDao extends AbstractSimpleSqlTimeseriesDao<TsKvEnt
         });
     }
 
-    protected ListenableFuture<List<TsKvEntry>> findAllAsyncWithLimit(EntityId entityId, ReadTsKvQuery query) {
-        return Futures.immediateFuture(
-                DaoUtil.convertDataList(
-                        tsKvRepository.findAllWithLimit(
-                                fromTimeUUID(entityId.getId()),
-                                entityId.getEntityType(),
-                                query.getKey(),
-                                query.getStartTs(),
-                                query.getEndTs(),
-                                new PageRequest(0, query.getLimit(),
-                                        new Sort(Sort.Direction.fromString(
-                                                query.getOrderBy()), "ts")))));
-    }
-
-    protected void findCount(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
+    @Override
+    protected void findCount(TenantId tenantId, EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
+        Integer keyId = getOrSaveKeyId(key);
         entitiesFutures.add(tsKvRepository.findCount(
-                fromTimeUUID(entityId.getId()),
-                entityId.getEntityType(),
-                key,
+                entityId.getId(),
+                keyId,
                 startTs,
                 endTs));
     }
 
-    protected void findSum(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
+    @Override
+    protected void findSum(TenantId tenantId, EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
+        Integer keyId = getOrSaveKeyId(key);
         entitiesFutures.add(tsKvRepository.findSum(
-                fromTimeUUID(entityId.getId()),
-                entityId.getEntityType(),
-                key,
+                entityId.getId(),
+                keyId,
                 startTs,
                 endTs));
     }
 
-    protected void findMin(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
+    @Override
+    protected void findMin(TenantId tenantId, EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
+        Integer keyId = getOrSaveKeyId(key);
         entitiesFutures.add(tsKvRepository.findStringMin(
-                fromTimeUUID(entityId.getId()),
-                entityId.getEntityType(),
-                key,
+                entityId.getId(),
+                keyId,
                 startTs,
                 endTs));
         entitiesFutures.add(tsKvRepository.findNumericMin(
-                fromTimeUUID(entityId.getId()),
-                entityId.getEntityType(),
-                key,
+                entityId.getId(),
+                keyId,
                 startTs,
                 endTs));
     }
 
-    protected void findMax(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
+    @Override
+    protected void findMax(TenantId tenantId, EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
+        Integer keyId = getOrSaveKeyId(key);
         entitiesFutures.add(tsKvRepository.findStringMax(
-                fromTimeUUID(entityId.getId()),
-                entityId.getEntityType(),
-                key,
+                entityId.getId(),
+                keyId,
                 startTs,
                 endTs));
         entitiesFutures.add(tsKvRepository.findNumericMax(
-                fromTimeUUID(entityId.getId()),
-                entityId.getEntityType(),
-                key,
+                entityId.getId(),
+                keyId,
                 startTs,
                 endTs));
     }
 
-    protected void findAvg(EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
+    @Override
+    protected void findAvg(TenantId tenantId, EntityId entityId, String key, long startTs, long endTs, List<CompletableFuture<TsKvEntity>> entitiesFutures) {
+        Integer keyId = getOrSaveKeyId(key);
         entitiesFutures.add(tsKvRepository.findAvg(
-                fromTimeUUID(entityId.getId()),
-                entityId.getEntityType(),
-                key,
+                entityId.getId(),
+                keyId,
                 startTs,
                 endTs));
     }
-
 }

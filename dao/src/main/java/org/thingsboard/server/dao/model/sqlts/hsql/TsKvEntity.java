@@ -34,6 +34,9 @@ import javax.persistence.Enumerated;
 import javax.persistence.Id;
 import javax.persistence.IdClass;
 import javax.persistence.Table;
+import javax.persistence.Transient;
+
+import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_ID_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_TYPE_COLUMN;
@@ -46,17 +49,8 @@ import static org.thingsboard.server.dao.model.ModelConstants.KEY_COLUMN;
 public final class TsKvEntity extends AbstractTsKvEntity implements ToData<TsKvEntry> {
 
     @Id
-    @Enumerated(EnumType.STRING)
-    @Column(name = ENTITY_TYPE_COLUMN)
-    private EntityType entityType;
-
-    @Id
-    @Column(name = ENTITY_ID_COLUMN)
-    private String entityId;
-
-    @Id
     @Column(name = KEY_COLUMN)
-    private String key;
+    private int key;
 
     public TsKvEntity() {
     }
@@ -119,20 +113,5 @@ public final class TsKvEntity extends AbstractTsKvEntity implements ToData<TsKvE
     @Override
     public boolean isNotEmpty() {
         return strValue != null || longValue != null || doubleValue != null || booleanValue != null;
-    }
-
-    @Override
-    public TsKvEntry toData() {
-        KvEntry kvEntry = null;
-        if (strValue != null) {
-            kvEntry = new StringDataEntry(key, strValue);
-        } else if (longValue != null) {
-            kvEntry = new LongDataEntry(key, longValue);
-        } else if (doubleValue != null) {
-            kvEntry = new DoubleDataEntry(key, doubleValue);
-        } else if (booleanValue != null) {
-            kvEntry = new BooleanDataEntry(key, booleanValue);
-        }
-        return new BasicTsKvEntry(ts, kvEntry);
     }
 }

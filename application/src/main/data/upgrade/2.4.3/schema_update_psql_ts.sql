@@ -14,7 +14,7 @@
 -- limitations under the License.
 --
 
--- load function check_version()
+-- select check_version();
 
 CREATE OR REPLACE FUNCTION check_version() RETURNS boolean AS $$
 DECLARE
@@ -38,9 +38,9 @@ BEGIN
 END;
 $$ LANGUAGE 'plpgsql';
 
--- load function create_partition_table()
+-- select create_partition_ts_kv_table();
 
-CREATE OR REPLACE FUNCTION create_partition_table() RETURNS VOID AS $$
+CREATE OR REPLACE FUNCTION create_partition_ts_kv_table() RETURNS VOID AS $$
 
 BEGIN
   ALTER TABLE ts_kv
@@ -59,8 +59,32 @@ BEGIN
 END;
 $$ LANGUAGE 'plpgsql';
 
+-- select create_new_ts_kv_latest_table();
 
--- load function create_partitions()
+CREATE OR REPLACE FUNCTION create_new_ts_kv_latest_table() RETURNS VOID AS $$
+
+BEGIN
+  ALTER TABLE ts_kv_latest
+    RENAME TO ts_kv_latest_old;
+  ALTER TABLE ts_kv_latest_old
+     RENAME CONSTRAINT ts_kv_latest_pkey TO ts_kv_latest_pkey_old;
+  CREATE TABLE IF NOT EXISTS ts_kv_latest
+  (
+    LIKE ts_kv_latest_old
+  );
+  ALTER TABLE ts_kv_latest
+    DROP COLUMN entity_type;
+  ALTER TABLE ts_kv_latest
+    ALTER COLUMN entity_id TYPE uuid USING entity_id::uuid;
+  ALTER TABLE ts_kv_latest
+    ALTER COLUMN key TYPE integer USING key::integer;
+  ALTER TABLE ts_kv_latest
+    ADD CONSTRAINT ts_kv_latest_pkey PRIMARY KEY (entity_id, key);
+END;
+$$ LANGUAGE 'plpgsql';
+
+
+-- select create_partitions();
 
 CREATE OR REPLACE FUNCTION create_partitions() RETURNS VOID AS
 $$
@@ -89,7 +113,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- load function create_ts_kv_dictionary_table()
+-- select create_ts_kv_dictionary_table();
 
 CREATE OR REPLACE FUNCTION create_ts_kv_dictionary_table() RETURNS VOID AS $$
 
@@ -103,7 +127,7 @@ BEGIN
 END;
 $$ LANGUAGE 'plpgsql';
 
--- load function insert_into_dictionary()
+-- select insert_into_dictionary();
 
 CREATE OR REPLACE FUNCTION insert_into_dictionary() RETURNS VOID AS
 $$
@@ -128,7 +152,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- load function insert_into_ts_kv()
+-- select insert_into_ts_kv();
 
 CREATE OR REPLACE FUNCTION insert_into_ts_kv() RETURNS void AS
 $$
@@ -170,6 +194,54 @@ BEGIN
                 insert_record.long_v, insert_record.dbl_v);
         IF MOD(insert_counter, insert_size) = 0 THEN
             RAISE NOTICE '% records have been inserted into the partitioned ts_kv!',insert_counter;
+        END IF;
+    END LOOP;
+    CLOSE insert_cursor;
+END;
+$$ LANGUAGE 'plpgsql';
+
+-- select insert_into_ts_kv_latest();
+
+CREATE OR REPLACE FUNCTION insert_into_ts_kv_latest() RETURNS void AS
+$$
+DECLARE
+    insert_size CONSTANT integer := 10000;
+    insert_counter       integer DEFAULT 0;
+    insert_record        RECORD;
+    insert_cursor CURSOR FOR SELECT CONCAT(first, '-', second, '-1', third, '-', fourth, '-', fifth)::uuid AS entity_id,
+                                    substrings.key                                                         AS key,
+                                    substrings.ts                                                          AS ts,
+                                    substrings.bool_v                                                      AS bool_v,
+                                    substrings.str_v                                                       AS str_v,
+                                    substrings.long_v                                                      AS long_v,
+                                    substrings.dbl_v                                                       AS dbl_v
+                             FROM (SELECT SUBSTRING(entity_id, 8, 8)  AS first,
+                                          SUBSTRING(entity_id, 4, 4)  AS second,
+                                          SUBSTRING(entity_id, 1, 3)  AS third,
+                                          SUBSTRING(entity_id, 16, 4) AS fourth,
+                                          SUBSTRING(entity_id, 20)    AS fifth,
+                                          key_id                      AS key,
+                                          ts,
+                                          bool_v,
+                                          str_v,
+                                          long_v,
+                                          dbl_v
+                                   FROM ts_kv_latest_old
+                                            INNER JOIN ts_kv_dictionary ON (ts_kv_latest_old.key = ts_kv_dictionary.key)) AS substrings;
+BEGIN
+    OPEN insert_cursor;
+    LOOP
+        insert_counter := insert_counter + 1;
+        FETCH insert_cursor INTO insert_record;
+        IF NOT FOUND THEN
+            RAISE NOTICE '% records have been inserted into the ts_kv_latest!',insert_counter - 1;
+            EXIT;
+        END IF;
+        INSERT INTO ts_kv_latest(entity_id, key, ts, bool_v, str_v, long_v, dbl_v)
+        VALUES (insert_record.entity_id, insert_record.key, insert_record.ts, insert_record.bool_v, insert_record.str_v,
+                insert_record.long_v, insert_record.dbl_v);
+        IF MOD(insert_counter, insert_size) = 0 THEN
+            RAISE NOTICE '% records have been inserted into the ts_kv_latest!',insert_counter;
         END IF;
     END LOOP;
     CLOSE insert_cursor;

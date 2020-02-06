@@ -16,66 +16,78 @@
 package org.thingsboard.server.dao.model.sqlts.latest;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
-import org.thingsboard.server.common.data.kv.BooleanDataEntry;
-import org.thingsboard.server.common.data.kv.DoubleDataEntry;
-import org.thingsboard.server.common.data.kv.KvEntry;
-import org.thingsboard.server.common.data.kv.LongDataEntry;
-import org.thingsboard.server.common.data.kv.StringDataEntry;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.dao.model.ToData;
 import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
+import org.thingsboard.server.dao.sqlts.latest.SearchTsKvLatestRepository;
 
 import javax.persistence.Column;
+import javax.persistence.ColumnResult;
+import javax.persistence.ConstructorResult;
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.Id;
 import javax.persistence.IdClass;
+import javax.persistence.NamedNativeQueries;
+import javax.persistence.NamedNativeQuery;
+import javax.persistence.SqlResultSetMapping;
+import javax.persistence.SqlResultSetMappings;
 import javax.persistence.Table;
+import java.util.UUID;
 
-import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_ID_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_TYPE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.KEY_COLUMN;
 
 @Data
 @Entity
 @Table(name = "ts_kv_latest")
 @IdClass(TsKvLatestCompositeKey.class)
-public final class TsKvLatestEntity extends AbstractTsKvEntity implements ToData<TsKvEntry> {
+@SqlResultSetMappings({
+        @SqlResultSetMapping(
+                name = "tsKvLatestFindMapping",
+                classes = {
+                        @ConstructorResult(
+                                targetClass = TsKvLatestEntity.class,
+                                columns = {
+                                        @ColumnResult(name = "entityId", type = UUID.class),
+                                        @ColumnResult(name = "key", type = Integer.class),
+                                        @ColumnResult(name = "strKey", type = String.class),
+                                        @ColumnResult(name = "strValue", type = String.class),
+                                        @ColumnResult(name = "boolValue", type = Boolean.class),
+                                        @ColumnResult(name = "longValue", type = Long.class),
+                                        @ColumnResult(name = "doubleValue", type = Double.class),
+                                        @ColumnResult(name = "ts", type = Long.class),
 
-    @Id
-    @Enumerated(EnumType.STRING)
-    @Column(name = ENTITY_TYPE_COLUMN)
-    private EntityType entityType;
-
-    @Id
-    @Column(name = ENTITY_ID_COLUMN)
-    private String entityId;
+                                }
+                        ),
+                })
+})
+@NamedNativeQueries({
+        @NamedNativeQuery(
+                name = SearchTsKvLatestRepository.FIND_ALL_BY_ENTITY_ID,
+                query = SearchTsKvLatestRepository.FIND_ALL_BY_ENTITY_ID_QUERY,
+                resultSetMapping = "tsKvLatestFindMapping",
+                resultClass = TsKvLatestEntity.class
+        )
+})
+public final class TsKvLatestEntity extends AbstractTsKvEntity {
 
     @Id
     @Column(name = KEY_COLUMN)
-    private String key;
+    private int key;
 
     @Override
     public boolean isNotEmpty() {
         return strValue != null || longValue != null || doubleValue != null || booleanValue != null;
     }
 
-    @Override
-    public TsKvEntry toData() {
-        KvEntry kvEntry = null;
-        if (strValue != null) {
-            kvEntry = new StringDataEntry(key, strValue);
-        } else if (longValue != null) {
-            kvEntry = new LongDataEntry(key, longValue);
-        } else if (doubleValue != null) {
-            kvEntry = new DoubleDataEntry(key, doubleValue);
-        } else if (booleanValue != null) {
-            kvEntry = new BooleanDataEntry(key, booleanValue);
-        }
-        return new BasicTsKvEntry(ts, kvEntry);
+    public TsKvLatestEntity() {
     }
 
+    public TsKvLatestEntity(UUID entityId, Integer key, String strKey, String strValue, Boolean boolValue, Long longValue, Double doubleValue, Long ts) {
+        this.entityId = entityId;
+        this.key = key;
+        this.ts = ts;
+        this.longValue = longValue;
+        this.doubleValue = doubleValue;
+        this.strValue = strValue;
+        this.booleanValue = boolValue;
+        this.strKey = strKey;
+    }
 }
