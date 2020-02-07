@@ -32,13 +32,13 @@ public abstract class SqlAbstractDatabaseSchemaService implements DatabaseSchema
     private static final String SQL_DIR = "sql";
 
     @Value("${spring.datasource.url}")
-    private String dbUrl;
+    protected String dbUrl;
 
     @Value("${spring.datasource.username}")
-    private String dbUserName;
+    protected String dbUserName;
 
     @Value("${spring.datasource.password}")
-    private String dbPassword;
+    protected String dbPassword;
 
     @Autowired
     private InstallScripts installScripts;

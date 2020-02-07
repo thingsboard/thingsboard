@@ -35,7 +35,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Slf4j
-public abstract class AbstractPsqlHsqlTimeseriesDao<T extends AbstractTsKvEntity> extends AbstractSqlTimeseriesDao {
+public abstract class AbstractChunkedAggregationTimeseriesDao<T extends AbstractTsKvEntity> extends AbstractSqlTimeseriesDao {
 
     @Autowired
     protected InsertTsRepository<T> insertRepository;
@@ -65,7 +65,7 @@ public abstract class AbstractPsqlHsqlTimeseriesDao<T extends AbstractTsKvEntity
 
     protected abstract ListenableFuture<Optional<TsKvEntry>> findAndAggregateAsync(TenantId tenantId, EntityId entityId, String key, long startTs, long endTs, long ts, Aggregation aggregation);
 
-    protected void switchAgregation(TenantId tenantId, EntityId entityId, String key, long startTs, long endTs, Aggregation aggregation, List<CompletableFuture<T>> entitiesFutures) {
+    protected void switchAggregation(TenantId tenantId, EntityId entityId, String key, long startTs, long endTs, Aggregation aggregation, List<CompletableFuture<T>> entitiesFutures) {
         switch (aggregation) {
             case AVG:
                 findAvg(tenantId, entityId, key, startTs, endTs, entitiesFutures);

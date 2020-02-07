@@ -210,8 +210,12 @@ sql:
       stats_print_interval_ms: "${SQL_TS_LATEST_BATCH_STATS_PRINT_MS:10000}"
     # Specify whether to remove null characters from strValue of attributes and timeseries before insert
     remove_null_chars: "${SQL_REMOVE_NULL_CHARS:true}"
-    # Specify partitioning size for timestamp key-value storage. Example: DAYS, MONTHS, YEARS, INDEFINITE
-    ts_key_value_partitioning: "${TS_KV_PARTITIONING:MONTHS}"
+    postgres:
+      # Specify partitioning size for timestamp key-value storage. Example: DAYS, MONTHS, YEARS, INDEFINITE.
+      ts_key_value_partitioning: "${SQL_POSTGRES_TS_KV_PARTITIONING:MONTHS}"
+    timescale:
+      # Specify Interval size for new data chunks storage.
+      chunk_time_interval: "${SQL_TIMESCALE_CHUNK_TIME_INTERVAL:604800000}"
 
 # Actor system parameters
 actors:

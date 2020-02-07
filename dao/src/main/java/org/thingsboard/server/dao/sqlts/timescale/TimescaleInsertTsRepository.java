@@ -34,7 +34,7 @@ import java.util.List;
 @PsqlDao
 @Repository
 @Transactional
-public class TimescaleInsertRepository extends AbstractInsertRepository implements InsertTsRepository<TimescaleTsKvEntity> {
+public class TimescaleInsertTsRepository extends AbstractInsertRepository implements InsertTsRepository<TimescaleTsKvEntity> {
 
     private static final String INSERT_OR_UPDATE =
             "INSERT INTO tenant_ts_kv (tenant_id, entity_id, key, ts, bool_v, str_v, long_v, dbl_v) VALUES(?, ?, ?, ?, ?, ?, ?, ?) " +

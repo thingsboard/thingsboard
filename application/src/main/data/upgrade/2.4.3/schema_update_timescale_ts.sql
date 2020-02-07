@@ -38,9 +38,9 @@ BEGIN
 END;
 $$ LANGUAGE 'plpgsql';
 
--- select create_tenant_ts_kv_table_copy();
+-- select create_new_tenant_ts_kv_table();
 
-CREATE OR REPLACE FUNCTION create_tenant_ts_kv_table_copy() RETURNS VOID AS $$
+CREATE OR REPLACE FUNCTION create_new_tenant_ts_kv_table() RETURNS VOID AS $$
 
 BEGIN
   ALTER TABLE tenant_ts_kv
@@ -59,7 +59,7 @@ BEGIN
     ADD CONSTRAINT tenant_ts_kv_pkey PRIMARY KEY(tenant_id, entity_id, key, ts);
   ALTER INDEX idx_tenant_ts_kv RENAME TO idx_tenant_ts_kv_old;
   ALTER INDEX tenant_ts_kv_ts_idx RENAME TO tenant_ts_kv_ts_idx_old;
-  PERFORM create_hypertable('tenant_ts_kv', 'ts', chunk_time_interval => 86400000, if_not_exists => true);
+--   PERFORM create_hypertable('tenant_ts_kv', 'ts', chunk_time_interval => 86400000, if_not_exists => true);
   CREATE INDEX IF NOT EXISTS idx_tenant_ts_kv ON tenant_ts_kv(tenant_id, entity_id, key, ts);
 END;
 $$ LANGUAGE 'plpgsql';
@@ -132,24 +132,24 @@ DECLARE
     insert_size CONSTANT integer := 10000;
     insert_counter       integer DEFAULT 0;
     insert_record        RECORD;
-    insert_cursor CURSOR FOR SELECT CONCAT(tenant_id_first, '-', tenant_id_second, '-1', tenant_id_third, '-', tenant_id_fourth, '-', tenant_id_fifth)::uuid AS tenant_id,
-                                    CONCAT(entity_id_first, '-', entity_id_second, '-1', entity_id_third, '-', entity_id_fourth, '-', entity_id_fifth)::uuid AS entity_id,
-                                    substrings.key                                                         AS key,
-                                    substrings.ts                                                          AS ts,
-                                    substrings.bool_v                                                      AS bool_v,
-                                    substrings.str_v                                                       AS str_v,
-                                    substrings.long_v                                                      AS long_v,
-                                    substrings.dbl_v                                                       AS dbl_v
-                             FROM (SELECT SUBSTRING(tenant_id, 8, 8)  AS tenant_id_first,
-                                          SUBSTRING(tenant_id, 4, 4)  AS tenant_id_second,
-                                          SUBSTRING(tenant_id, 1, 3)  AS tenant_id_third,
-                                          SUBSTRING(tenant_id, 16, 4) AS tenant_id_fourth,
-                                          SUBSTRING(tenant_id, 20)    AS tenant_id_fifth,
-                                          SUBSTRING(entity_id, 8, 8)  AS entity_id_first,
-                                          SUBSTRING(entity_id, 4, 4)  AS entity_id_second,
-                                          SUBSTRING(entity_id, 1, 3)  AS entity_id_third,
-                                          SUBSTRING(entity_id, 16, 4) AS entity_id_fourth,
-                                          SUBSTRING(entity_id, 20)    AS entity_id_fifth,
+    insert_cursor CURSOR FOR SELECT CONCAT(tenant_id_first_part_uuid, '-', tenant_id_second_part_uuid, '-1', tenant_id_third_part_uuid, '-', tenant_id_fourth_part_uuid, '-', tenant_id_fifth_part_uuid)::uuid AS tenant_id,
+                                    CONCAT(entity_id_first_part_uuid, '-', entity_id_second_part_uuid, '-1', entity_id_third_part_uuid, '-', entity_id_fourth_part_uuid, '-', entity_id_fifth_part_uuid)::uuid AS entity_id,
+                                    tenant_ts_kv_records.key                                                         AS key,
+                                    tenant_ts_kv_records.ts                                                          AS ts,
+                                    tenant_ts_kv_records.bool_v                                                      AS bool_v,
+                                    tenant_ts_kv_records.str_v                                                       AS str_v,
+                                    tenant_ts_kv_records.long_v                                                      AS long_v,
+                                    tenant_ts_kv_records.dbl_v                                                       AS dbl_v
+                             FROM (SELECT SUBSTRING(tenant_id, 8, 8)  AS tenant_id_first_part_uuid,
+                                          SUBSTRING(tenant_id, 4, 4)  AS tenant_id_second_part_uuid,
+                                          SUBSTRING(tenant_id, 1, 3)  AS tenant_id_third_part_uuid,
+                                          SUBSTRING(tenant_id, 16, 4) AS tenant_id_fourth_part_uuid,
+                                          SUBSTRING(tenant_id, 20)    AS tenant_id_fifth_part_uuid,
+                                          SUBSTRING(entity_id, 8, 8)  AS entity_id_first_part_uuid,
+                                          SUBSTRING(entity_id, 4, 4)  AS entity_id_second_part_uuid,
+                                          SUBSTRING(entity_id, 1, 3)  AS entity_id_third_part_uuid,
+                                          SUBSTRING(entity_id, 16, 4) AS entity_id_fourth_part_uuid,
+                                          SUBSTRING(entity_id, 20)    AS entity_id_fifth_part_uuid,
                                           key_id                      AS key,
                                           ts,
                                           bool_v,
@@ -157,7 +157,7 @@ DECLARE
                                           long_v,
                                           dbl_v
                                    FROM tenant_ts_kv_old
-                                            INNER JOIN ts_kv_dictionary ON (tenant_ts_kv_old.key = ts_kv_dictionary.key)) AS substrings;
+                                            INNER JOIN ts_kv_dictionary ON (tenant_ts_kv_old.key = ts_kv_dictionary.key)) AS tenant_ts_kv_records;
 BEGIN
     OPEN insert_cursor;
     LOOP
@@ -188,10 +188,10 @@ DECLARE
     latest_record        RECORD;
     insert_record        RECORD;
     insert_cursor CURSOR FOR SELECT
-                                    latest.key          AS key,
-                                    latest.entity_id    AS entity_id,
-                                    latest.ts           AS ts
-                             FROM (SELECT DISTINCT key AS key, entity_id AS entity_id, MAX(ts) AS ts FROM tenant_ts_kv GROUP BY key, entity_id) AS latest;
+                                    latest_records.key          AS key,
+                                    latest_records.entity_id    AS entity_id,
+                                    latest_records.ts           AS ts
+                             FROM (SELECT DISTINCT key AS key, entity_id AS entity_id, MAX(ts) AS ts FROM tenant_ts_kv GROUP BY key, entity_id) AS latest_records;
 BEGIN
     OPEN insert_cursor;
     LOOP
