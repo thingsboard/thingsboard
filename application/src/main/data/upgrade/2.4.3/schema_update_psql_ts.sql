@@ -160,18 +160,18 @@ DECLARE
     insert_size CONSTANT integer := 10000;
     insert_counter       integer DEFAULT 0;
     insert_record        RECORD;
-    insert_cursor CURSOR FOR SELECT CONCAT(first, '-', second, '-1', third, '-', fourth, '-', fifth)::uuid AS entity_id,
-                                    substrings.key                                                         AS key,
-                                    substrings.ts                                                          AS ts,
-                                    substrings.bool_v                                                      AS bool_v,
-                                    substrings.str_v                                                       AS str_v,
-                                    substrings.long_v                                                      AS long_v,
-                                    substrings.dbl_v                                                       AS dbl_v
-                             FROM (SELECT SUBSTRING(entity_id, 8, 8)  AS first,
-                                          SUBSTRING(entity_id, 4, 4)  AS second,
-                                          SUBSTRING(entity_id, 1, 3)  AS third,
-                                          SUBSTRING(entity_id, 16, 4) AS fourth,
-                                          SUBSTRING(entity_id, 20)    AS fifth,
+    insert_cursor CURSOR FOR SELECT CONCAT(first_part_uuid, '-', second_part_uuid, '-1', third_part_uuid, '-', fourth_part_uuid, '-', fifth_part_uuid)::uuid AS entity_id,
+                                    ts_kv_records.key                                                         AS key,
+                                    ts_kv_records.ts                                                          AS ts,
+                                    ts_kv_records.bool_v                                                      AS bool_v,
+                                    ts_kv_records.str_v                                                       AS str_v,
+                                    ts_kv_records.long_v                                                      AS long_v,
+                                    ts_kv_records.dbl_v                                                       AS dbl_v
+                             FROM (SELECT SUBSTRING(entity_id, 8, 8)  AS first_part_uuid,
+                                          SUBSTRING(entity_id, 4, 4)  AS second_part_uuid,
+                                          SUBSTRING(entity_id, 1, 3)  AS third_part_uuid,
+                                          SUBSTRING(entity_id, 16, 4) AS fourth_part_uuid,
+                                          SUBSTRING(entity_id, 20)    AS fifth_part_uuid,
                                           key_id                      AS key,
                                           ts,
                                           bool_v,
@@ -179,7 +179,7 @@ DECLARE
                                           long_v,
                                           dbl_v
                                    FROM ts_kv_old
-                                            INNER JOIN ts_kv_dictionary ON (ts_kv_old.key = ts_kv_dictionary.key)) AS substrings;
+                                            INNER JOIN ts_kv_dictionary ON (ts_kv_old.key = ts_kv_dictionary.key)) AS ts_kv_records;
 BEGIN
     OPEN insert_cursor;
     LOOP
@@ -208,18 +208,18 @@ DECLARE
     insert_size CONSTANT integer := 10000;
     insert_counter       integer DEFAULT 0;
     insert_record        RECORD;
-    insert_cursor CURSOR FOR SELECT CONCAT(first, '-', second, '-1', third, '-', fourth, '-', fifth)::uuid AS entity_id,
-                                    substrings.key                                                         AS key,
-                                    substrings.ts                                                          AS ts,
-                                    substrings.bool_v                                                      AS bool_v,
-                                    substrings.str_v                                                       AS str_v,
-                                    substrings.long_v                                                      AS long_v,
-                                    substrings.dbl_v                                                       AS dbl_v
-                             FROM (SELECT SUBSTRING(entity_id, 8, 8)  AS first,
-                                          SUBSTRING(entity_id, 4, 4)  AS second,
-                                          SUBSTRING(entity_id, 1, 3)  AS third,
-                                          SUBSTRING(entity_id, 16, 4) AS fourth,
-                                          SUBSTRING(entity_id, 20)    AS fifth,
+    insert_cursor CURSOR FOR SELECT CONCAT(first_part_uuid, '-', second_part_uuid, '-1', third_part_uuid, '-', fourth_part_uuid, '-', fifth_part_uuid)::uuid AS entity_id,
+                                    ts_kv_latest_records.key                                                         AS key,
+                                    ts_kv_latest_records.ts                                                          AS ts,
+                                    ts_kv_latest_records.bool_v                                                      AS bool_v,
+                                    ts_kv_latest_records.str_v                                                       AS str_v,
+                                    ts_kv_latest_records.long_v                                                      AS long_v,
+                                    ts_kv_latest_records.dbl_v                                                       AS dbl_v
+                             FROM (SELECT SUBSTRING(entity_id, 8, 8)  AS first_part_uuid,
+                                          SUBSTRING(entity_id, 4, 4)  AS second_part_uuid,
+                                          SUBSTRING(entity_id, 1, 3)  AS third_part_uuid,
+                                          SUBSTRING(entity_id, 16, 4) AS fourth_part_uuid,
+                                          SUBSTRING(entity_id, 20)    AS fifth_part_uuid,
                                           key_id                      AS key,
                                           ts,
                                           bool_v,
@@ -227,7 +227,7 @@ DECLARE
                                           long_v,
                                           dbl_v
                                    FROM ts_kv_latest_old
-                                            INNER JOIN ts_kv_dictionary ON (ts_kv_latest_old.key = ts_kv_dictionary.key)) AS substrings;
+                                            INNER JOIN ts_kv_dictionary ON (ts_kv_latest_old.key = ts_kv_dictionary.key)) AS ts_kv_latest_records;
 BEGIN
     OPEN insert_cursor;
     LOOP

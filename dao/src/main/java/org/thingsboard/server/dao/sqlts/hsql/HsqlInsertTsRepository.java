@@ -34,7 +34,7 @@ import java.util.List;
 @HsqlDao
 @Repository
 @Transactional
-public class HsqlTimeseriesInsertRepository extends AbstractInsertRepository implements InsertTsRepository<TsKvEntity> {
+public class HsqlInsertTsRepository extends AbstractInsertRepository implements InsertTsRepository<TsKvEntity> {
 
     private static final String INSERT_OR_UPDATE =
             "MERGE INTO ts_kv USING(VALUES ?, ?, ?, ?, ?, ?, ?) " +

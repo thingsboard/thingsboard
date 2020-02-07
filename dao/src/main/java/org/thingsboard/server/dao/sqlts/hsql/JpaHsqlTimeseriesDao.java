@@ -30,7 +30,7 @@ import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sqlts.hsql.TsKvEntity;
-import org.thingsboard.server.dao.sqlts.AbstractPsqlHsqlTimeseriesDao;
+import org.thingsboard.server.dao.sqlts.AbstractChunkedAggregationTimeseriesDao;
 import org.thingsboard.server.dao.sqlts.EntityContainer;
 import org.thingsboard.server.dao.timeseries.TimeseriesDao;
 import org.thingsboard.server.dao.util.HsqlDao;
@@ -46,7 +46,7 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 @SqlTsDao
 @HsqlDao
-public class JpaHsqlTimeseriesDao extends AbstractPsqlHsqlTimeseriesDao<TsKvEntity> implements TimeseriesDao {
+public class JpaHsqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDao<TsKvEntity> implements TimeseriesDao {
 
     @Autowired
     private TsKvHsqlRepository tsKvRepository;
@@ -150,7 +150,7 @@ public class JpaHsqlTimeseriesDao extends AbstractPsqlHsqlTimeseriesDao<TsKvEnti
     @Override
     protected ListenableFuture<Optional<TsKvEntry>> findAndAggregateAsync(TenantId tenantId, EntityId entityId, String key, long startTs, long endTs, long ts, Aggregation aggregation) {
         List<CompletableFuture<TsKvEntity>> entitiesFutures = new ArrayList<>();
-        switchAgregation(tenantId, entityId, key, startTs, endTs, aggregation, entitiesFutures);
+        switchAggregation(tenantId, entityId, key, startTs, endTs, aggregation, entitiesFutures);
         return Futures.transform(setFutures(entitiesFutures), entity -> {
             if (entity != null && entity.isNotEmpty()) {
                 entity.setEntityId(entityId.getId());

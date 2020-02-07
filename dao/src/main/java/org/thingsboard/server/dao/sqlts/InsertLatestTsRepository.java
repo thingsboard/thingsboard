@@ -13,19 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.install;
+package org.thingsboard.server.dao.sqlts;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
-import org.thingsboard.server.dao.util.SqlDao;
-import org.thingsboard.server.dao.util.TimescaleDBTsDao;
+import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
 
-@Service
-@TimescaleDBTsDao
-@Profile("install")
-public class SqlTimescaleDatabaseSchemaService extends SqlAbstractDatabaseSchemaService
-        implements TsDatabaseSchemaService {
-    public SqlTimescaleDatabaseSchemaService() {
-        super("schema-timescale.sql", "schema-timescale-idx.sql");
-    }
+import java.util.List;
+
+public interface InsertLatestTsRepository {
+
+    void saveOrUpdate(List<TsKvLatestEntity> entities);
+
 }

@@ -31,7 +31,7 @@ import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sqlts.psql.TsKvEntity;
-import org.thingsboard.server.dao.sqlts.AbstractPsqlHsqlTimeseriesDao;
+import org.thingsboard.server.dao.sqlts.AbstractChunkedAggregationTimeseriesDao;
 import org.thingsboard.server.dao.sqlts.EntityContainer;
 import org.thingsboard.server.dao.timeseries.PsqlPartition;
 import org.thingsboard.server.dao.timeseries.SqlTsPartitionDate;
@@ -59,7 +59,7 @@ import static org.thingsboard.server.dao.timeseries.SqlTsPartitionDate.EPOCH_STA
 @Slf4j
 @SqlTsDao
 @PsqlDao
-public class JpaPsqlTimeseriesDao extends AbstractPsqlHsqlTimeseriesDao<TsKvEntity> implements TimeseriesDao {
+public class JpaPsqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDao<TsKvEntity> implements TimeseriesDao {
 
     private final Map<Long, PsqlPartition> partitions = new ConcurrentHashMap<>();
     private static final ReentrantLock partitionCreationLock = new ReentrantLock();
@@ -73,7 +73,7 @@ public class JpaPsqlTimeseriesDao extends AbstractPsqlHsqlTimeseriesDao<TsKvEnti
     private SqlTsPartitionDate tsFormat;
     private PsqlPartition indefinitePartition;
 
-    @Value("${sql.ts_key_value_partitioning}")
+    @Value("${sql.postgres.ts_key_value_partitioning:MONTHS}")
     private String partitioning;
 
     @Override
@@ -188,7 +188,7 @@ public class JpaPsqlTimeseriesDao extends AbstractPsqlHsqlTimeseriesDao<TsKvEnti
     @Override
     protected ListenableFuture<Optional<TsKvEntry>> findAndAggregateAsync(TenantId tenantId, EntityId entityId, String key, long startTs, long endTs, long ts, Aggregation aggregation) {
         List<CompletableFuture<TsKvEntity>> entitiesFutures = new ArrayList<>();
-        switchAgregation(tenantId, entityId, key, startTs, endTs, aggregation, entitiesFutures);
+        switchAggregation(tenantId, entityId, key, startTs, endTs, aggregation, entitiesFutures);
         return Futures.transform(setFutures(entitiesFutures), entity -> {
             if (entity != null && entity.isNotEmpty()) {
                 entity.setEntityId(entityId.getId());
