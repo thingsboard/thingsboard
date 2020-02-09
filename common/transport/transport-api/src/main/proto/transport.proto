@@ -47,6 +47,7 @@ enum KeyValueType {
   LONG_V = 1;
   DOUBLE_V = 2;
   STRING_V = 3;
+  JSON_V = 4;
 }
 
 message KeyValueProto {
@@ -56,6 +57,7 @@ message KeyValueProto {
   int64 long_v = 4;
   double double_v = 5;
   string string_v = 6;
+  string json_v = 7;
 }
 
 message TsKvProto {

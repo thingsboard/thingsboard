@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.common.data.kv;
 
+import com.google.gson.JsonObject;
+
 import java.util.Objects;
 import java.util.Optional;
 
@@ -56,6 +58,11 @@ public class BasicTsKvEntry implements TsKvEntry {
     @Override
     public Optional<Double> getDoubleValue() {
         return kv.getDoubleValue();
+    }
+
+    @Override
+    public Optional<JsonObject> getJsonValue() {
+        return kv.getJsonValue();
     }
 
     @Override

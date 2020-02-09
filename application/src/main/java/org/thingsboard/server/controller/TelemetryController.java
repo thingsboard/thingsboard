@@ -284,8 +284,7 @@ public class TelemetryController extends BaseController {
             if (startTs == null || endTs == null) {
                 deleteToTs = endTs;
                 return getImmediateDeferredResult("When deleteAllDataForKeys is false, start and end timestamp values shouldn't be empty", HttpStatus.BAD_REQUEST);
-            }
-            else{
+            } else {
                 deleteFromTs = startTs;
                 deleteToTs = endTs;
             }
@@ -639,7 +638,9 @@ public class TelemetryController extends BaseController {
         jsonNode.fields().forEachRemaining(entry -> {
             String key = entry.getKey();
             JsonNode value = entry.getValue();
-            if (entry.getValue().isTextual()) {
+            if (entry.getValue().isObject()) {
+                attributes.add(new BaseAttributeKvEntry(new JsonDataEntry(key, value.asText()), ts));
+            } else if (entry.getValue().isTextual()) {
                 if (maxStringValueLength > 0 && entry.getValue().textValue().length() > maxStringValueLength) {
                     String message = String.format("String value length [%d] for key [%s] is greater than maximum allowed [%d]", entry.getValue().textValue().length(), key, maxStringValueLength);
                     throw new UncheckedApiException(new InvalidParametersException(message));

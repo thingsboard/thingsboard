@@ -59,6 +59,7 @@ import java.util.stream.Collectors;
 public class JsonConverter {
 
     private static final Gson GSON = new Gson();
+    private static final JsonParser JSON_PARSER = new JsonParser();
     private static final String CAN_T_PARSE_VALUE = "Can't parse value: ";
     private static final String DEVICE_PROPERTY = "device";
 
@@ -204,6 +205,14 @@ public class JsonConverter {
                 } else if (!value.isJsonNull()) {
                     throw new JsonSyntaxException(CAN_T_PARSE_VALUE + value);
                 }
+            } else if (element.isJsonObject()) {
+                result.add(KeyValueProto
+                        .newBuilder()
+                        .setKey(valueEntry
+                                .getKey())
+                        .setType(KeyValueType.JSON_V)
+                        .setJsonV(element.toString())
+                        .build());
             } else if (!element.isJsonNull()) {
                 throw new JsonSyntaxException(CAN_T_PARSE_VALUE + element);
             }
@@ -353,6 +362,9 @@ public class JsonConverter {
                 break;
             case LONG_V:
                 json.addProperty(name, entry.getLongV());
+                break;
+            case JSON_V:
+                json.add(name, JSON_PARSER.parse(entry.getJsonV()));
                 break;
         }
     }

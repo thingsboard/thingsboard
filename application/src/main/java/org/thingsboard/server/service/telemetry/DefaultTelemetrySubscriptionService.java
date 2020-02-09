@@ -18,15 +18,17 @@ package org.thingsboard.server.service.telemetry;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
-import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
@@ -36,7 +38,20 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.*;
+import org.thingsboard.server.common.data.kv.Aggregation;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
+import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.BooleanDataEntry;
+import org.thingsboard.server.common.data.kv.DataType;
+import org.thingsboard.server.common.data.kv.DoubleDataEntry;
+import org.thingsboard.server.common.data.kv.JsonDataEntry;
+import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
+import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.dao.attributes.AttributesService;
@@ -105,6 +120,8 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
     @Autowired
     @Lazy
     private ActorService actorService;
+
+    private final JsonParser jsonParser = new JsonParser();
 
     private ExecutorService tsCallBackExecutor;
     private ExecutorService wsCallBackExecutor;
@@ -692,6 +709,10 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
                 Optional<Double> doubleValue = attr.getDoubleValue();
                 doubleValue.ifPresent(dataBuilder::setDoubleValue);
                 break;
+            case JSON:
+                Optional<JsonObject> jsonValue = attr.getJsonValue();
+                jsonValue.ifPresent(json -> dataBuilder.setJsonValue(jsonValue.toString()));
+                break;
             case STRING:
                 Optional<String> stringValue = attr.getStrValue();
                 stringValue.ifPresent(dataBuilder::setStrValue);
@@ -723,6 +744,9 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
                 break;
             case STRING:
                 entry = new StringDataEntry(proto.getKey(), proto.getStrValue());
+                break;
+            case JSON:
+                entry = new JsonDataEntry(proto.getKey(), jsonParser.parse(proto.getJsonValue()).getAsJsonObject());
                 break;
         }
         return entry;

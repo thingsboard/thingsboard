@@ -17,6 +17,7 @@ package org.thingsboard.server.common.data.kv;
 
 import java.io.Serializable;
 import java.util.Optional;
+import com.google.gson.JsonObject;
 
 /**
  * Represents attribute or any other KV data entry
@@ -36,6 +37,8 @@ public interface KvEntry extends Serializable {
     Optional<Boolean> getBooleanValue();
 
     Optional<Double> getDoubleValue();
+
+    Optional<JsonObject> getJsonValue();
 
     String getValueAsString();
 
