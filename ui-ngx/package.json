@@ -87,8 +87,8 @@
   },
   "devDependencies": {
     "@angular-builders/custom-webpack": "^8.4.1",
-    "@angular-devkit/build-angular": "^0.803.24",
-    "@angular/cli": "^8.3.24",
+    "@angular-devkit/build-angular": "^0.803.25",
+    "@angular/cli": "^8.3.25",
     "@angular/compiler-cli": "~8.2.14",
     "@angular/language-service": "~8.2.14",
     "@types/flot": "0.0.31",
