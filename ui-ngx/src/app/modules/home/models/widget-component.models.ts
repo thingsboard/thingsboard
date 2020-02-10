@@ -161,6 +161,7 @@ export class WidgetContext {
   isEdit: boolean;
   isMobile: boolean;
 
+  widgetNamespace?: string;
   subscriptionApi?: WidgetSubscriptionApi;
 
   actionsApi?: WidgetActionsApi;

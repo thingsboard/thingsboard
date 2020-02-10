@@ -15,12 +15,12 @@
 ///
 
 import {
-  AfterViewInit,
+  AfterViewInit, ApplicationRef, ChangeDetectorRef,
   Component,
   Directive,
   ElementRef,
   Inject, Input, NgZone,
-  OnDestroy,
+  OnDestroy, ViewChild,
   ViewContainerRef
 } from '@angular/core';
 import {
@@ -35,6 +35,8 @@ import { Subscription } from 'rxjs';
 import { NotificationService } from '@app/core/services/notification.service';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
+import Timeout = NodeJS.Timeout;
+import { MatButton } from '@angular/material/button';
 
 @Directive({
   selector: '[tb-toast]'
@@ -49,6 +51,8 @@ export class ToastDirective implements AfterViewInit, OnDestroy {
 
   private snackBarRef: MatSnackBarRef<TbSnackBarComponent> = null;
   private currentMessage: NotificationMessage = null;
+
+  private dismissTimeout: Timeout = null;
 
   constructor(public elementRef: ElementRef,
               public viewContainerRef: ViewContainerRef,
@@ -73,6 +77,7 @@ export class ToastDirective implements AfterViewInit, OnDestroy {
             verticalPosition: !isGtSm ? 'bottom' : (notificationMessage.verticalPosition || 'top'),
             viewContainerRef: this.viewContainerRef,
             duration: notificationMessage.duration,
+            panelClass: notificationMessage.panelClass,
             data
           };
           this.ngZone.run(() => {
@@ -80,7 +85,23 @@ export class ToastDirective implements AfterViewInit, OnDestroy {
               this.snackBarRef.dismiss();
             }
             this.snackBarRef = this.snackBar.openFromComponent(TbSnackBarComponent, config);
+            if (notificationMessage.duration && notificationMessage.duration > 0 && notificationMessage.forceDismiss) {
+              if (this.dismissTimeout !== null) {
+                clearTimeout(this.dismissTimeout);
+                this.dismissTimeout = null;
+              }
+              this.dismissTimeout = setTimeout(() => {
+                if (this.snackBarRef) {
+                  this.snackBarRef.instance.actionButton._elementRef.nativeElement.click();
+                }
+                this.dismissTimeout = null;
+              }, notificationMessage.duration);
+            }
             this.snackBarRef.afterDismissed().subscribe(() => {
+              if (this.dismissTimeout !== null) {
+                clearTimeout(this.dismissTimeout);
+                this.dismissTimeout = null;
+              }
               this.snackBarRef = null;
               this.currentMessage = null;
             });
@@ -134,11 +155,15 @@ export class ToastDirective implements AfterViewInit, OnDestroy {
   styleUrls: ['snack-bar-component.scss']
 })
 export class TbSnackBarComponent implements AfterViewInit, OnDestroy {
+
+  @ViewChild('actionButton', {static: true}) actionButton: MatButton;
+
   private parentEl: HTMLElement;
-  private snackBarContainerEl: HTMLElement;
+  public snackBarContainerEl: HTMLElement;
   private parentScrollSubscription: Subscription = null;
   public notification: NotificationMessage;
   constructor(@Inject(MAT_SNACK_BAR_DATA) public data: any, private elementRef: ElementRef,
+              public cd: ChangeDetectorRef,
               public snackBarRef: MatSnackBarRef<TbSnackBarComponent>) {
     this.notification = data.notification;
   }

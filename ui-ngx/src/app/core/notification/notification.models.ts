@@ -29,8 +29,10 @@ export class NotificationMessage {
   type: NotificationType;
   target?: string;
   duration?: number;
+  forceDismiss?: boolean;
   horizontalPosition?: NotificationHorizontalPosition;
   verticalPosition?: NotificationVerticalPosition;
+  panelClass?: string | string[];
 }
 
 export class HideNotification {

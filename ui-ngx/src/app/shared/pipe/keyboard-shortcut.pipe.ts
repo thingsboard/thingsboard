@@ -44,7 +44,6 @@ export class KeyboardShortcutPipe implements PipeTransform {
       const last = index === keys.length - 1;
       return last ? key : abbreviations[key];
     }).join(seperator);
-    return (!value) ? '' : value.replace(/ /g, '');
   }
 
 }

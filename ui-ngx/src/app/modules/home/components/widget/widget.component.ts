@@ -95,6 +95,8 @@ import { DialogService } from '@core/services/dialog.service';
 import { CustomDialogService } from '@home/components/widget/dialog/custom-dialog.service';
 import { DatePipe } from '@angular/common';
 import { AttributeService } from '@core/http/attribute.service';
+import { TranslateService } from '@ngx-translate/core';
+import { HttpClient } from '@angular/common/http';
 
 const ServicesMap = new Map<string, Type<any>>();
 ServicesMap.set('deviceService', DeviceService);
@@ -104,6 +106,8 @@ ServicesMap.set('dialogs', DialogService);
 ServicesMap.set('customDialog', CustomDialogService);
 ServicesMap.set('date', DatePipe);
 ServicesMap.set('utils', UtilsService);
+ServicesMap.set('translate', TranslateService);
+ServicesMap.set('http', HttpClient);
 
 @Component({
   selector: 'tb-widget',
@@ -390,10 +394,10 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   }
 
   private loadFromWidgetInfo() {
-    const widgetNamespace = `widget-type-${(this.widget.isSystemType ? 'sys-' : '')}${this.widget.bundleAlias}-${this.widget.typeAlias}`;
+    this.widgetContext.widgetNamespace = `widget-type-${(this.widget.isSystemType ? 'sys-' : '')}${this.widget.bundleAlias}-${this.widget.typeAlias}`;
     const elem = this.elementRef.nativeElement;
     elem.classList.add('tb-widget');
-    elem.classList.add(widgetNamespace);
+    elem.classList.add(this.widgetContext.widgetNamespace);
     this.widgetType = this.widgetInfo.widgetTypeFunction;
     this.typeParameters = this.widgetInfo.typeParameters;
 

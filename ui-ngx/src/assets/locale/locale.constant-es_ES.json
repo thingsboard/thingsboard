@@ -1680,6 +1680,31 @@
                 "Step size": "Numero de pie",
                 "Ok": "De acuerdo"
             }
+        },
+        "input-widgets": {
+          "attribute-not-allowed": "El parámetro de atributo no se puede usar en este widget",
+          "date": "Fecha",
+          "discard-changes": "Descartar los cambios",
+          "entity-attribute-required": "Se requiere atributo de entidad",
+          "entity-timeseries-required": "Se requiere la serie de tiempo de la entidad",
+          "not-allowed-entity": "La entidad seleccionada no puede tener atributos compartidos",
+          "no-attribute-selected": "No se seleccionó ningún atributo",
+          "no-datakey-selected": "No se seleccionó ninguna clave de datos",
+          "no-entity-selected": "Ninguna entidad seleccionada",
+          "no-image": "Sin imágen",
+          "no-support-web-camera": "No hay cámara web compatible",
+          "no-timeseries-selected": "No hay series de tiempo seleccionadas",
+          "switch-attribute-value": "Cambiar el valor del atributo de entidad",
+          "switch-camera": "Cambiar de cámara",
+          "switch-timeseries-value": "Cambiar el valor de la serie de tiempo de la entidad",
+          "take-photo": "Tomar foto",
+          "time": "Tiempo",
+          "timeseries-not-allowed": "El parámetro Timeseries no se puede usar en este widget",
+          "update-failed": "Actualización fallida",
+          "update-successful": "Actualización exitosa",
+          "update-attribute": "Actualizar atributo",
+          "update-timeseries": "Actualizar series de tiempo",
+          "value": "Valor"
         }
     },
     "icon": {

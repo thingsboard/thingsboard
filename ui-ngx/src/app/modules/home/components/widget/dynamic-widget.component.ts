@@ -15,14 +15,19 @@
 ///
 
 import { PageComponent } from '@shared/components/page.component';
-import { Inject, Injector, Input, OnDestroy, OnInit } from '@angular/core';
+import { Inject, Injector, OnDestroy, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { WidgetContext, IDynamicWidgetComponent } from '@home/models/widget-component.models';
-import { ExceptionData } from '@shared/models/error.models';
+import { IDynamicWidgetComponent, WidgetContext } from '@home/models/widget-component.models';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RafService } from '@core/services/raf.service';
-import { DeviceService } from '@core/http/device.service';
+import { ActionNotificationShow } from '@core/notification/notification.actions';
+import {
+  NotificationHorizontalPosition,
+  NotificationType,
+  NotificationVerticalPosition
+} from '@core/notification/notification.models';
+import { FormBuilder, Validators } from '@angular/forms';
 
 export class DynamicWidgetComponent extends PageComponent implements IDynamicWidgetComponent, OnInit, OnDestroy {
 
@@ -33,8 +38,11 @@ export class DynamicWidgetComponent extends PageComponent implements IDynamicWid
 
   [key: string]: any;
 
+  validators = Validators;
+
   constructor(@Inject(RafService) public raf: RafService,
               @Inject(Store) protected store: Store<AppState>,
+              @Inject(FormBuilder) public fb: FormBuilder,
               @Inject(Injector) private $injector: Injector,
               @Inject('widgetContext') public readonly ctx: WidgetContext,
               @Inject('errorMessages') public readonly errorMessages: string[]) {
@@ -61,6 +69,37 @@ export class DynamicWidgetComponent extends PageComponent implements IDynamicWid
     if (this.widgetContext.defaultSubscription) {
       this.widgetContext.defaultSubscription.clearRpcError();
     }
+  }
+
+  showSuccessToast(message: string, duration: number = 1000,
+                   verticalPosition: NotificationVerticalPosition = 'bottom',
+                   horizontalPosition: NotificationHorizontalPosition = 'left',
+                   target?: string) {
+    this.showToast('success', message, duration, verticalPosition, horizontalPosition, target);
+  }
+
+  showErrorToast(message: string,
+                 verticalPosition: NotificationVerticalPosition = 'bottom',
+                 horizontalPosition: NotificationHorizontalPosition = 'left',
+                 target?: string) {
+    this.showToast('error', message, undefined, verticalPosition, horizontalPosition, target);
+  }
+
+  showToast(type: NotificationType, message: string, duration: number = 1000,
+            verticalPosition: NotificationVerticalPosition = 'bottom',
+            horizontalPosition: NotificationHorizontalPosition = 'left',
+            target?: string) {
+    this.store.dispatch(new ActionNotificationShow(
+      {
+        message,
+        type,
+        duration,
+        verticalPosition,
+        horizontalPosition,
+        target,
+        panelClass: this.ctx.widgetNamespace,
+        forceDismiss: true
+      }));
   }
 
 }

@@ -1607,6 +1607,31 @@
         "Step size": "Schrittlänge",
         "Ok": "Ok"
       }
+    },
+    "input-widgets": {
+      "attribute-not-allowed": "Attributparameter können in diesem Widget nicht verwendet werden",
+      "date": "Datum",
+      "discard-changes": "Änderungen verwerfen",
+      "entity-attribute-required": "Entitätsattribut ist erforderlich",
+      "entity-timeseries-required": "Zeitreihen für Entitäten sind erforderlich",
+      "not-allowed-entity": "Die ausgewählte Entität kann keine gemeinsamen Attribute haben",
+      "no-attribute-selected": "Es ist kein Attribut ausgewählt",
+      "no-datakey-selected": "Es ist kein Datenschlüssel ausgewählt",
+      "no-entity-selected": "Keine Entität ausgewählt",
+      "no-image": "Kein Bild",
+      "no-support-web-camera": "Keine unterstützte Webcam",
+      "no-timeseries-selected": "Keine Zeitreihen ausgewählt",
+      "switch-attribute-value": "Entitätsattributwert wechseln",
+      "switch-camera": "Kamera wechseln",
+      "switch-timeseries-value": "Wert für Zeitreihen von Entitäten wechseln",
+      "take-photo": "Foto machen",
+      "time": "Zeit",
+      "timeseries-not-allowed": "Der Timeseries-Parameter kann in diesem Widget nicht verwendet werden",
+      "update-failed": "Aktualisierung fehlgeschlagen",
+      "update-successful": "Aktualisierung erfolgreich",
+      "update-attribute": "Attribut aktualisieren",
+      "update-timeseries": "Zeitreihen aktualisieren",
+      "value": "Wert"
     }
   },
   "icon": {
@@ -1641,7 +1666,7 @@
       "tr_TR": "Türkisch",
       "fa_IR": "Persisch",
       "uk_UA": "Ukrainisch",
-      "cs_CZ": "Tschechisch"      
+      "cs_CZ": "Tschechisch"
     }
   }
 }

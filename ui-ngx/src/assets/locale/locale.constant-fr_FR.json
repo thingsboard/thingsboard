@@ -1018,7 +1018,7 @@
             "tr_TR": "Turc",
             "fa_IR": "Persane",
             "uk_UA": "Ukrainien",
-            "cs_CZ": "Tchèque"            
+            "cs_CZ": "Tchèque"
         }
     },
     "layout": {
@@ -1501,6 +1501,31 @@
                 "Step size": "Taille de pas",
                 "Ok": "Ok"
             }
+        },
+        "input-widgets": {
+          "attribute-not-allowed": "Le paramètre d'attribut ne peut pas être utilisé dans ce widget",
+          "date": "Date",
+          "discard-changes": "Annuler les modifications",
+          "entity-attribute-required": "L'attribut d'entité est requis",
+          "entity-timeseries-required": "Entité timeseries est requis",
+          "not-allowed-entity": "L'entité sélectionnée ne peut pas avoir d'attributs partagés",
+          "no-attribute-selected": "Aucun attribut n'est sélectionné",
+          "no-datakey-selected": "Aucune date n'est sélectionnée",
+          "no-entity-selected": "Aucune entité sélectionnée",
+          "no-image": "Pas d'image",
+          "no-support-web-camera": "Pas de webcam supportée",
+          "no-timeseries-selected": "Aucune série temporelle sélectionnée",
+          "switch-attribute-value": "Changer la valeur de l'attribut d'entité",
+          "switch-camera": "Changer de caméra",
+          "switch-timeseries-value": "Changer la valeur de l'entité série temporelle",
+          "take-photo": "Prendre une photo",
+          "time": "Temps",
+          "timeseries-not-allowed": "Le paramètre série temporelle ne peut pas être utilisé dans ce widget",
+          "update-failed": "Mise à jour a échoué",
+          "update-successful": "Mise à jour réussie",
+          "update-attribute": "Attribut de mise à jour",
+          "update-timeseries": "Mise à jour de la série temporelle",
+          "value": "Valeur"
         }
     },
     "widgets-bundle": {

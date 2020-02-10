@@ -20,7 +20,7 @@
 import { Inject, Injectable, NgZone } from '@angular/core';
 import { WINDOW } from '@core/services/window.service';
 import { ExceptionData } from '@app/shared/models/error.models';
-import { deepClone, deleteNullProperties, guid, isDefined, isUndefined } from '@core/utils';
+import { deepClone, deleteNullProperties, guid, isDefined, isDefinedAndNotNull, isUndefined } from '@core/utils';
 import { WindowMessage } from '@shared/models/window-message.model';
 import { TranslateService } from '@ngx-translate/core';
 import { customTranslationsPrefix } from '@app/shared/models/constants';
@@ -441,4 +441,23 @@ export class UtilsService {
     this.window.history.replaceState({}, '', baseUrl + params);
   }
 
+  public deepClone<T>(target: T, ignoreFields?: string[]): T {
+    return deepClone(target, ignoreFields);
+  }
+
+  public isUndefined(value: any): boolean {
+    return isUndefined(value);
+  }
+
+  public isDefined(value: any): boolean {
+    return isDefined(value);
+  }
+
+  public defaultValue(value: any, defaultValue: any): any {
+    if (isDefinedAndNotNull(value)) {
+      return value;
+    } else {
+      return defaultValue;
+    }
+  }
 }

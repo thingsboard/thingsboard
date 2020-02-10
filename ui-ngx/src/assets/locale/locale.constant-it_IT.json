@@ -1615,6 +1615,31 @@
                 "Step size": "Dimensione del passo",
                 "Ok": "Ok"
             }
+        },
+        "input-widgets": {
+          "attribute-not-allowed": "Questo widget non può usare un parametro di tipo attributo",
+          "date": "Data",
+          "discard-changes": "Annulla modifiche",
+          "entity-attribute-required": "E' richiesta un'entità di tipo attributo",
+          "entity-timeseries-required": "E' richiesta un'entità di tipo serie temporale",
+          "not-allowed-entity": "L'entità selezionata non può avere attributi condivisi",
+          "no-attribute-selected": "Nessun attributo selezionato",
+          "no-datakey-selected": "Nessuna datakey selezionata",
+          "no-entity-selected": "Nessuna entità selezionata",
+          "no-image": "Nessuna immagine",
+          "no-support-web-camera": "Web camera non supportata",
+          "no-timeseries-selected": "Nessuna serie temporale selezionata",
+          "switch-attribute-value": "Cambia il valore dell'attributo",
+          "switch-camera": "Cambia camera",
+          "switch-timeseries-value": "Cambia il valore della serie temporale",
+          "take-photo": "Fai una foto",
+          "time": "Tempo",
+          "timeseries-not-allowed": "Questo widget non può usare un parametro di tipo serie temporale",
+          "update-failed": "Aggiornamento fallito",
+          "update-successful": "Aggiornamento eseguito con successo",
+          "update-attribute": "Aggiorna attributo",
+          "update-timeseries": "Aggiorna serie temporale",
+          "value": "Valore"
         }
     },
     "icon": {
@@ -1649,7 +1674,7 @@
             "tr_TR": "Turco",
             "fa_IR": "Persiana",
             "uk_UA": "Ucraino",
-            "cs_CZ": "Ceco"            
+            "cs_CZ": "Ceco"
         }
     }
 }
