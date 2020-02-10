@@ -9,6 +9,15 @@ You need to have a Kubernetes cluster, and the kubectl command-line tool must be
 If you do not already have a cluster, you can create one by using [Minikube](https://kubernetes.io/docs/setup/minikube), 
 or you can choose any other available [Kubernetes cluster deployment solutions](https://kubernetes.io/docs/setup/pick-right-solution/).
 
+### Enable ingress addon
+
+By default ingress addon is disable in the Minikube, and available only in cluster providers.
+To enable ingress, please execute next command:
+
+`
+$ minikube addons enable ingress
+` 
+
 ## Installation
 
 Before performing initial installation you can configure the type of database to be used with ThingsBoard.
