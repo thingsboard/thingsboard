@@ -59,14 +59,13 @@ export class DynamicComponentFactoryService {
                      modules?: Type<any>[]): Observable<ComponentFactory<T>> {
     const dymamicComponentFactorySubject = new ReplaySubject<ComponentFactory<T>>();
     const comp = this.createDynamicComponent(componentType, template);
-    let moduleImports = [CommonModule];
+    let moduleImports: Type<any>[] = [CommonModule];
     if (modules) {
       moduleImports = [...moduleImports, ...modules];
     }
-    // noinspection AngularInvalidImportedOrDeclaredSymbol,AngularInvalidEntryComponent
+    // noinspection AngularInvalidImportedOrDeclaredSymbol
     @NgModule({
       declarations: [comp],
-      entryComponents: [comp],
       imports: moduleImports
     })
     class DynamicComponentInstanceModule extends DynamicComponentModule {}
@@ -105,8 +104,7 @@ export class DynamicComponentFactoryService {
   private createDynamicComponent<T>(componentType: Type<T>, template: string): Type<T> {
     // noinspection AngularMissingOrInvalidDeclarationInModule
     return Component({
-      template,
-      jit: true
+      template
     })(componentType);
   }
 

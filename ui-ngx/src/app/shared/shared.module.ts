@@ -133,16 +133,6 @@ import { LedLightComponent } from '@shared/components/led-light.component';
       useValue: Flow
     }
   ],
-  entryComponents: [
-    TbSnackBarComponent,
-    TbAnchorComponent,
-    TimewindowPanelComponent,
-    DashboardSelectPanelComponent,
-    MatSpinner,
-    ColorPickerDialogComponent,
-    MaterialIconsDialogComponent,
-    NodeScriptTestDialogComponent
-  ],
   declarations: [
     FooterComponent,
     LogoComponent,

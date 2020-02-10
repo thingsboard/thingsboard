@@ -20,9 +20,6 @@ import { SharedModule } from '@app/shared/shared.module';
 import { AlarmDetailsDialogComponent } from '@home/components/alarm/alarm-details-dialog.component';
 
 @NgModule({
-  entryComponents: [
-    AlarmDetailsDialogComponent
-  ],
   declarations:
     [
       AlarmDetailsDialogComponent

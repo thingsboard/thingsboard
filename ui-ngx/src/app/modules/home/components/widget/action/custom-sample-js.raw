@@ -25,7 +25,7 @@
 //    vm.entityType = entityId.entityType;
 //
 //    vm.editEntityFormGroup = vm.fb.group({
-//      entityName: [vm.entityName, [vm.Validators.required]]
+//      entityName: [vm.entityName, [vm.validators.required]]
 //    });
 //
 //    vm.cancel = function() {

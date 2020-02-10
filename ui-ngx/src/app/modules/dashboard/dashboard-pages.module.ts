@@ -23,7 +23,6 @@ import { DashboardModule } from '@home/pages/dashboard/dashboard.module';
 import { DashboardPagesRoutingModule } from './dashboard-pages.routing.module';
 
 @NgModule({
-  entryComponents: [],
   imports: [
     CommonModule,
     SharedModule,

@@ -24,12 +24,9 @@ import { AlarmStatusFilterPanelComponent } from '@home/components/widget/lib/ala
 import { SharedHomeComponentsModule } from '@home/components/shared-home-components.module';
 import { TimeseriesTableWidgetComponent } from '@home/components/widget/lib/timeseries-table-widget.component';
 import { EntitiesHierarchyWidgetComponent } from '@home/components/widget/lib/entities-hierarchy-widget.component';
+import { CustomDialogService } from '@home/components/widget/dialog/custom-dialog.service';
 
 @NgModule({
-  entryComponents: [
-    DisplayColumnsPanelComponent,
-    AlarmStatusFilterPanelComponent
-  ],
   declarations:
     [
       DisplayColumnsPanelComponent,
@@ -49,6 +46,9 @@ import { EntitiesHierarchyWidgetComponent } from '@home/components/widget/lib/en
     AlarmsTableWidgetComponent,
     TimeseriesTableWidgetComponent,
     EntitiesHierarchyWidgetComponent
+  ],
+  providers: [
+    CustomDialogService
   ]
 })
 export class WidgetComponentsModule { }

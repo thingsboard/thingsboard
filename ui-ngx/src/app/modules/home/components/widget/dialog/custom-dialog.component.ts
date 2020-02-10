@@ -42,7 +42,7 @@ export class CustomDialogComponent extends PageComponent {
               @Inject(CUSTOM_DIALOG_DATA) public data: CustomDialogData) {
     super(store);
     // @ts-ignore
-    this.Validators = Validators;
+    this.validators = Validators;
     this.data.controller(this);
   }
 }

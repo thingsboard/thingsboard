@@ -42,7 +42,7 @@ import * as AngularCommon from '@angular/common';
 import * as AngularForms from '@angular/forms';
 import * as AngularCdkCoercion from '@angular/cdk/coercion';
 import * as AngularCdkKeycodes from '@angular/cdk/keycodes';
-import * as AngularMaterial from '@angular/material';
+import * as AngularMaterial from '@angular/material/esm5';
 import * as NgrxStore from '@ngrx/store';
 import * as TranslateCore from '@ngx-translate/core';
 import * as TbCore from '@core/public-api';

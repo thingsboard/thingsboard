@@ -663,6 +663,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         }
       );
       this.dynamicWidgetComponentRef = this.widgetContentContainer.createComponent(this.widgetInfo.componentFactory, 0, injector);
+
       this.dynamicWidgetComponent = this.dynamicWidgetComponentRef.instance;
 
       const containerElement = $(this.elementRef.nativeElement.querySelector('#widget-container'));

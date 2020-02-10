@@ -51,7 +51,7 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { DOCUMENT } from '@angular/common';
 import { WINDOW } from '@core/services/window.service';
 import { TimeService } from '@core/services/time.service';
-import { TooltipPosition } from '@angular/material/typings/tooltip';
+import { TooltipPosition } from '@angular/material/tooltip';
 import { deepClone } from '@core/utils';
 
 // @dynamic

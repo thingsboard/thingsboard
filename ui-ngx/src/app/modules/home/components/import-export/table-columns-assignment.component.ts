@@ -21,8 +21,8 @@ import { AppState } from '@core/core.state';
 import { EntityType } from '@shared/models/entity-type.models';
 import { CsvColumnParam, ImportEntityColumnType, importEntityColumnTypeTranslations,
          importEntityObjectColumns } from '@home/components/import-export/import-export.models';
-import { CollectionViewer, DataSource } from '@angular/cdk/typings/collections';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 
 @Component({
   selector: 'tb-table-columns-assignment',

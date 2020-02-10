@@ -25,10 +25,6 @@ import { HomeDialogsModule } from '@app/modules/home/dialogs/home-dialogs.module
 import { DefaultStateControllerComponent } from '@home/pages/dashboard/states/default-state-controller.component';
 
 @NgModule({
-  entryComponents: [
-    DefaultStateControllerComponent,
-    EntityStateControllerComponent
-  ],
   declarations: [
     StatesComponentDirective,
     DefaultStateControllerComponent,

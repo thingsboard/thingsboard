@@ -23,10 +23,6 @@ import {HomeComponentsModule} from '@modules/home/components/home-components.mod
 import { TenantTabsComponent } from '@home/pages/tenant/tenant-tabs.component';
 
 @NgModule({
-  entryComponents: [
-    TenantComponent,
-    TenantTabsComponent
-  ],
   declarations: [
     TenantComponent,
     TenantTabsComponent

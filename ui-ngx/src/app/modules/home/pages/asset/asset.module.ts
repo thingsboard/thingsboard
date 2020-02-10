@@ -25,11 +25,6 @@ import {HomeComponentsModule} from '@modules/home/components/home-components.mod
 import { AssetTabsComponent } from '@home/pages/asset/asset-tabs.component';
 
 @NgModule({
-  entryComponents: [
-    AssetComponent,
-    AssetTabsComponent,
-    AssetTableHeaderComponent
-  ],
   declarations: [
     AssetComponent,
     AssetTabsComponent,

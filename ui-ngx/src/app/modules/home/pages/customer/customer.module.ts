@@ -23,10 +23,6 @@ import {HomeComponentsModule} from '@modules/home/components/home-components.mod
 import { CustomerTabsComponent } from '@home/pages/customer/customer-tabs.component';
 
 @NgModule({
-  entryComponents: [
-    CustomerComponent,
-    CustomerTabsComponent
-  ],
   declarations: [
     CustomerComponent,
     CustomerTabsComponent

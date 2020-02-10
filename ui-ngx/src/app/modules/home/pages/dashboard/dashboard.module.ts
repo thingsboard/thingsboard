@@ -39,19 +39,6 @@ import { DashboardStateDialogComponent } from './states/dashboard-state-dialog.c
 import { SelectTargetStateDialogComponent } from './states/select-target-state-dialog.component';
 
 @NgModule({
-  entryComponents: [
-    DashboardFormComponent,
-    DashboardTabsComponent,
-    ManageDashboardCustomersDialogComponent,
-    MakeDashboardPublicDialogComponent,
-    AddWidgetDialogComponent,
-    ManageDashboardLayoutsDialogComponent,
-    SelectTargetLayoutDialogComponent,
-    DashboardSettingsDialogComponent,
-    ManageDashboardStatesDialogComponent,
-    DashboardStateDialogComponent,
-    SelectTargetStateDialogComponent
-  ],
   declarations: [
     DashboardFormComponent,
     DashboardTabsComponent,

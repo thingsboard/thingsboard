@@ -26,11 +26,6 @@ import { SelectWidgetTypeDialogComponent } from '@home/pages/widget/select-widge
 import { SaveWidgetTypeAsDialogComponent } from './save-widget-type-as-dialog.component';
 
 @NgModule({
-  entryComponents: [
-    WidgetsBundleComponent,
-    SelectWidgetTypeDialogComponent,
-    SaveWidgetTypeAsDialogComponent
-  ],
   declarations: [
     WidgetsBundleComponent,
     WidgetLibraryComponent,

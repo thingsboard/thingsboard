@@ -79,3 +79,5 @@ import 'core-js/es/array';
 /***************************************************************************************************
  * APPLICATION IMPORTS
  */
+
+(window as any).global = window;

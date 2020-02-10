@@ -77,6 +77,7 @@ $tb-light-theme-background: (
   disabled-button-toggle: map_get($mat-grey, 200),
   unselected-chip: map_get($mat-grey, 300),
   disabled-list-option: map_get($mat-grey, 200),
+  tooltip: map_get($mat-grey, 700)
 );
 
 @function get-tb-light-theme($primary, $accent, $warn: mat-palette($mat-red)) {
@@ -148,6 +149,7 @@ $tb-dark-theme-background: (
   disabled-button-toggle: black,
   unselected-chip: map_get($tb-dark-mat-indigo, 700),
   disabled-list-option: black,
+  tooltip: map_get($mat-grey, 700),
 );
 
 @function get-tb-dark-theme($primary, $accent, $warn: mat-palette($mat-red)) {

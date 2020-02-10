@@ -26,12 +26,6 @@ import {HomeComponentsModule} from '@modules/home/components/home-components.mod
 import { DeviceTabsComponent } from '@home/pages/device/device-tabs.component';
 
 @NgModule({
-  entryComponents: [
-    DeviceComponent,
-    DeviceTabsComponent,
-    DeviceTableHeaderComponent,
-    DeviceCredentialsDialogComponent
-  ],
   declarations: [
     DeviceComponent,
     DeviceTabsComponent,

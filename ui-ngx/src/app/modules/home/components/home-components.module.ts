@@ -66,26 +66,6 @@ import { EventContentDialogComponent } from '@home/components/event/event-conten
 import { SharedHomeComponentsModule } from '@home/components/shared-home-components.module';
 
 @NgModule({
-  entryComponents: [
-    AddEntityDialogComponent,
-    AuditLogDetailsDialogComponent,
-    EventContentDialogComponent,
-    EventTableHeaderComponent,
-    RelationDialogComponent,
-    AlarmTableHeaderComponent,
-    AddAttributeDialogComponent,
-    EditAttributeValuePanelComponent,
-    AliasesEntitySelectPanelComponent,
-    EntityAliasesDialogComponent,
-    EntityAliasDialogComponent,
-    DataKeyConfigDialogComponent,
-    LegendConfigPanelComponent,
-    WidgetActionDialogComponent,
-    CustomDialogContainerComponent,
-    ImportDialogComponent,
-    ImportDialogCsvComponent,
-    AddWidgetToDashboardDialogComponent
-  ],
   declarations:
     [
       EntitiesTableComponent,

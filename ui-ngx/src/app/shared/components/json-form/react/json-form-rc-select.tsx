@@ -16,12 +16,13 @@
 
 import * as React from 'react';
 import ThingsboardBaseComponent from './json-form-base-component';
-import Select, {Option} from 'rc-select/lib';
+import Select, {Option} from 'rc-select';
 import {
   JsonFormFieldProps,
   JsonFormFieldState,
   KeyLabelItem
 } from '@shared/components/json-form/react/json-form.models';
+import { Mode } from 'rc-select/lib/interface';
 
 interface ThingsboardRcSelectState extends JsonFormFieldState {
   currentValue: KeyLabelItem | KeyLabelItem[];
@@ -150,6 +151,14 @@ class ThingsboardRcSelect extends React.Component<JsonFormFieldProps, Thingsboar
         if (this.state.focused) {
             labelClass += ' tb-focused';
         }
+        let mode: Mode;
+        if (this.props.form.tags) {
+          mode = 'tags';
+        } else if (this.props.form.multiple) {
+          mode = 'multiple';
+        } else if (this.props.form.combobox) {
+          mode = 'combobox';
+        }
 
         return (
             <div className='tb-container'>
@@ -158,12 +167,9 @@ class ThingsboardRcSelect extends React.Component<JsonFormFieldProps, Thingsboar
                     className={this.props.form.className}
                     dropdownClassName={this.props.form.dropdownClassName}
                     dropdownStyle={{...this.props.form.dropdownStyle, ...{zIndex: 100001}}}
-                    dropdownMenuStyle={this.props.form.dropdownMenuStyle}
                     allowClear={this.props.form.allowClear}
-                    tags={this.props.form.tags}
+                    mode={mode}
                     maxTagTextLength={this.props.form.maxTagTextLength}
-                    multiple={this.props.form.multiple}
-                    combobox={this.props.form.combobox}
                     disabled={this.props.form.readonly}
                     optionLabelProp='children'
                     value={this.state.currentValue}

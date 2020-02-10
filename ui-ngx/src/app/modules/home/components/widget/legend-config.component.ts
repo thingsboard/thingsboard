@@ -14,43 +14,14 @@
 /// limitations under the License.
 ///
 
-import {
-  Component,
-  forwardRef, Inject,
-  Input,
-  OnDestroy,
-  OnInit,
-  ViewChild,
-  ViewContainerRef
-} from '@angular/core';
+import { Component, forwardRef, Inject, Input, OnDestroy, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { TranslateService } from '@ngx-translate/core';
-import { MillisecondsToTimeStringPipe } from '@shared/pipe/milliseconds-to-time-string.pipe';
-import {
-  HistoryWindowType,
-  Timewindow,
-  TimewindowType,
-  initModelFromDefaultTimewindow, cloneSelectedTimewindow
-} from '@shared/models/time/time.models';
-import { DatePipe } from '@angular/common';
-import {
-  Overlay,
-  CdkOverlayOrigin,
-  OverlayConfig,
-  OverlayPositionBuilder, ConnectedPosition, PositionStrategy, OverlayRef
-} from '@angular/cdk/overlay';
-import {
-  TIMEWINDOW_PANEL_DATA,
-  TimewindowPanelComponent,
-  TimewindowPanelData
-} from '@shared/components/time/timewindow-panel.component';
+import { DOCUMENT } from '@angular/common';
+import { CdkOverlayOrigin, ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { ComponentPortal, PortalInjector } from '@angular/cdk/portal';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { DOCUMENT } from '@angular/common';
 import { WINDOW } from '@core/services/window.service';
-import { TimeService } from '@core/services/time.service';
-import { TooltipPosition } from '@angular/material/typings/tooltip';
 import { deepClone } from '@core/utils';
 import { LegendConfig } from '@shared/models/widget.models';
 import {

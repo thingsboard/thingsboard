@@ -25,11 +25,6 @@ import {HomeComponentsModule} from '@modules/home/components/home-components.mod
 import { EntityViewTabsComponent } from '@home/pages/entity-view/entity-view-tabs.component';
 
 @NgModule({
-  entryComponents: [
-    EntityViewComponent,
-    EntityViewTabsComponent,
-    EntityViewTableHeaderComponent
-  ],
   declarations: [
     EntityViewComponent,
     EntityViewTabsComponent,

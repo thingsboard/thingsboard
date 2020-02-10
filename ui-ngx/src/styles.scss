@@ -596,6 +596,7 @@ mat-label {
     min-width: 40px;
     word-wrap: initial;
     display: table-cell;
+    box-sizing: content-box;
     line-break: unset;
     width: 0px;
     overflow: hidden;
@@ -674,6 +675,7 @@ mat-label {
 
   .mat-icon {
     vertical-align: middle;
+    box-sizing: content-box;
     &.tb-mat-16 {
       @include tb-mat-icon-size(16);
     }

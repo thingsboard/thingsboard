@@ -17,7 +17,7 @@
   padding: 15px;
   font-family: Roboto, "Helvetica Neue", sans-serif;
 
-  &.jstree-proton {
+  &.jstree-proton, &.jstree-proton-small, &.jstree-proton-large {
     .jstree-node,
     .jstree-icon {
       background-image: url("../../../assets/jstree/32px.png");
@@ -29,7 +29,12 @@
 
     .jstree-themeicon-custom {
       background-image: none;
+    }
+  }
 
+  &.jstree-proton {
+
+    .jstree-themeicon-custom {
       &.material-icons {
         font-size: 18px;
       }
@@ -41,18 +46,8 @@
   }
 
   &.jstree-proton-small {
-    .jstree-node,
-    .jstree-icon {
-      background-image: url("../../../assets/jstree/32px.png");
-    }
-
-    .jstree-last {
-      background: transparent;
-    }
 
     .jstree-themeicon-custom {
-      background-image: none;
-
       &.material-icons {
         font-size: 14px;
       }
@@ -64,18 +59,8 @@
   }
 
   &.jstree-proton-large {
-    .jstree-node,
-    .jstree-icon {
-      background-image: url("../../../assets/jstree/32px.png");
-    }
-
-    .jstree-last {
-      background: transparent;
-    }
 
     .jstree-themeicon-custom {
-      background-image: none;
-
       &.material-icons {
         font-size: 24px;
       }

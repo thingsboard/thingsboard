@@ -691,7 +691,7 @@ export class ImportExportService {
       const e = this.document.createEvent('MouseEvents');
       const a = this.document.createElement('a');
       a.download = filename;
-      a.href = this.window.URL.createObjectURL(blob);
+      a.href = URL.createObjectURL(blob);
       a.dataset.downloadurl = ['text/json', a.download, a.href].join(':');
       // @ts-ignore
       e.initEvent('click', true, false, this.window,

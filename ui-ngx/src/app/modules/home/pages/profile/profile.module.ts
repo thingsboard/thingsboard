@@ -22,9 +22,6 @@ import { ProfileRoutingModule } from './profile-routing.module';
 import { ChangePasswordDialogComponent } from '@modules/home/pages/profile/change-password-dialog.component';
 
 @NgModule({
-  entryComponents: [
-    ChangePasswordDialogComponent
-  ],
   declarations: [
     ProfileComponent,
     ChangePasswordDialogComponent

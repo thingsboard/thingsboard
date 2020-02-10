@@ -30,13 +30,6 @@ import { LinkLabelsComponent } from '@home/pages/rulechain/link-labels.component
 import { RuleNodeConfigComponent } from './rule-node-config.component';
 
 @NgModule({
-  entryComponents: [
-    RuleChainComponent,
-    RuleChainTabsComponent,
-    RuleNodeComponent,
-    AddRuleNodeLinkDialogComponent,
-    AddRuleNodeDialogComponent
-  ],
   declarations: [
     RuleChainComponent,
     RuleChainTabsComponent,

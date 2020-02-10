@@ -16,7 +16,7 @@
 
 import { WidgetActionDescriptor, WidgetActionSource,
   widgetActionTypeTranslationMap, CustomActionDescriptor } from '@app/shared/models/widget.models';
-import { CollectionViewer, DataSource } from '@angular/cdk/typings/collections';
+import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { EntityRelationInfo, EntitySearchDirection } from '@shared/models/relation.models';
 import { BehaviorSubject, Observable, of, ReplaySubject } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';

@@ -70,8 +70,6 @@ export class CustomDialogService {
 }
 
 @NgModule({
-  entryComponents: [
-  ],
   declarations:
     [
     ],

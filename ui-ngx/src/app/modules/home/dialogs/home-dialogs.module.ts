@@ -22,10 +22,6 @@ import {AddEntitiesToCustomerDialogComponent} from '@modules/home/dialogs/add-en
 import { HomeDialogsService } from './home-dialogs.service';
 
 @NgModule({
-  entryComponents: [
-    AssignToCustomerDialogComponent,
-    AddEntitiesToCustomerDialogComponent
-  ],
   declarations:
   [
     AssignToCustomerDialogComponent,

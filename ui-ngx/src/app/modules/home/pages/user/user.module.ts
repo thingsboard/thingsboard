@@ -25,12 +25,6 @@ import {HomeComponentsModule} from '@modules/home/components/home-components.mod
 import { UserTabsComponent } from '@home/pages/user/user-tabs.component';
 
 @NgModule({
-  entryComponents: [
-    UserComponent,
-    UserTabsComponent,
-    AddUserDialogComponent,
-    ActivationLinkDialogComponent
-  ],
   declarations: [
     UserComponent,
     UserTabsComponent,

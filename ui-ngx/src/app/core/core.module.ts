@@ -48,11 +48,6 @@ export function HttpLoaderFactory(http: HttpClient) {
 }
 
 @NgModule({
-  entryComponents: [
-    ConfirmDialogComponent,
-    AlertDialogComponent,
-    TodoDialogComponent
-  ],
   declarations: [
     ConfirmDialogComponent,
     AlertDialogComponent,

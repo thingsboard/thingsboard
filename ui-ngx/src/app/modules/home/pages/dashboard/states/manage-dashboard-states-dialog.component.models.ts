@@ -15,8 +15,7 @@
 ///
 
 import { DashboardState } from '@shared/models/dashboard.models';
-import { CollectionViewer, DataSource } from '@angular/cdk/typings/collections';
-import { WidgetActionDescriptorInfo } from '@home/components/widget/action/manage-widget-actions.component.models';
+import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { BehaviorSubject, Observable, of, ReplaySubject } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { PageLink } from '@shared/models/page/page-link';

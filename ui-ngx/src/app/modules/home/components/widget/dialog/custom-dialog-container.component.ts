@@ -62,16 +62,16 @@ export class CustomDialogContainerComponent extends DialogComponent<CustomDialog
     if (this.data.data) {
       customDialogData = {...customDialogData, ...this.data.data};
     }
-    const injector: Injector = ReflectiveInjector.resolveAndCreate([
-      {
+    const injector: Injector = Injector.create({
+      providers: [{
         provide: CUSTOM_DIALOG_DATA,
         useValue: customDialogData
       },
-      {
-        provide: MatDialogRef,
-        useValue: dialogRef
-      }
-    ]);
+        {
+          provide: MatDialogRef,
+          useValue: dialogRef
+        }]
+    });
     this.customComponentRef = this.viewContainerRef.createComponent(this.data.customComponentFactory, 0, injector);
   }
 
