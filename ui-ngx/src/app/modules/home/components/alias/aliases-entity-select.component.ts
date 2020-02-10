@@ -15,7 +15,7 @@
 ///
 
 import { Component, Inject, Input, OnDestroy, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
-import { TooltipPosition } from '@angular/material';
+import { TooltipPosition } from '@angular/material/tooltip';
 import { IAliasController } from '@core/api/widget-api.models';
 import { CdkOverlayOrigin, ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { TranslateService } from '@ngx-translate/core';

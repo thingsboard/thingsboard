@@ -15,7 +15,7 @@
 ///
 
 import { Component, ElementRef, Inject, OnInit, Renderer2, ViewChild } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ActionStatus, AuditLog } from '@shared/models/audit-log.models';

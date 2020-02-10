@@ -27,7 +27,7 @@ import {
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { WINDOW } from '@core/services/window.service';
-import { mixinColor, CanColorCtor } from '@angular/material';
+import { mixinColor, CanColorCtor } from '@angular/material/core';
 
 export declare type FabToolbarDirection = 'left' | 'right';
 

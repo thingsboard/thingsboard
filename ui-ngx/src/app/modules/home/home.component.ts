@@ -31,7 +31,7 @@ import { MediaBreakpoints } from '@shared/models/constants';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { Router } from '@angular/router';
 import * as screenfull from 'screenfull';
-import { MatSidenav } from '@angular/material';
+import { MatSidenav } from '@angular/material/sidenav';
 import { AuthState } from '@core/auth/auth.models';
 import { WINDOW } from '@core/services/window.service';
 import { ISearchableComponent, instanceOfSearchableComponent } from '@home/models/searchable-component.models';

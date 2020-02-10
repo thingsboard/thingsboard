@@ -42,7 +42,9 @@ import { AliasEntityType, EntitySubtype, EntityType, entityTypeTranslations } fr
 import {BaseData} from '@shared/models/base-data';
 import {EntityId} from '@shared/models/id/entity-id';
 import {EntityService} from '@core/http/entity.service';
-import {ErrorStateMatcher, MatAutocomplete, MatAutocompleteSelectedEvent, MatChipList} from '@angular/material';
+import { MatAutocomplete, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
+import { MatChipList } from '@angular/material/chips';
+import { ErrorStateMatcher } from '@angular/material/core';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { emptyPageData } from '@shared/models/page/page-data';
 import { AssetService } from '@core/http/asset.service';

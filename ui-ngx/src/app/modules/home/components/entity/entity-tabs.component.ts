@@ -20,7 +20,7 @@ import { AfterViewInit, ContentChildren, EventEmitter, Input, OnInit, Output, Qu
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
-import { MatTab } from '@angular/material';
+import { MatTab } from '@angular/material/tabs';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { BehaviorSubject } from 'rxjs';
 import { Authority } from '@app/shared/models/authority.enum';

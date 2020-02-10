@@ -37,7 +37,7 @@ import { map, mergeMap, take, tap } from 'rxjs/operators';
 import { forkJoin, noop, Observable, of } from 'rxjs';
 import { Authority } from '@shared/models/authority.enum';
 import { CustomerId } from '@shared/models/id/customer-id';
-import { MatDialog } from '@angular/material';
+import { MatDialog } from '@angular/material/dialog';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import {
   AddUserDialogComponent,

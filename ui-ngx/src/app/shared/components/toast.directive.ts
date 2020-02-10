@@ -23,12 +23,7 @@ import {
   OnDestroy, ViewChild,
   ViewContainerRef
 } from '@angular/core';
-import {
-  MAT_SNACK_BAR_DATA,
-  MatSnackBar,
-  MatSnackBarConfig,
-  MatSnackBarRef
-} from '@angular/material';
+import { MAT_SNACK_BAR_DATA, MatSnackBar, MatSnackBarConfig, MatSnackBarRef } from '@angular/material/snack-bar';
 import { NotificationMessage } from '@app/core/notification/notification.models';
 import { onParentScrollOrWindowResize } from '@app/core/utils';
 import { Subscription } from 'rxjs';

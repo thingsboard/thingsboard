@@ -32,7 +32,9 @@ import {
 } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { TbMissingTranslationHandler } from './translate/missing-translate-handler';
-import { MatButtonModule, MatDialogModule, MatSnackBarModule } from '@angular/material';
+import { MatButtonModule } from '@angular/material/button';
+import { MatDialogModule } from '@angular/material/dialog';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { ConfirmDialogComponent } from '@core/services/dialog/confirm-dialog.component';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { TranslateDefaultCompiler } from '@core/translate/translate-default-compiler';

@@ -28,7 +28,7 @@ import {environment as env} from '@env/environment';
 import {TranslateService} from '@ngx-translate/core';
 import {ActionSettingsChangeLanguage} from '@core/settings/settings.actions';
 import {ChangePasswordDialogComponent} from '@modules/home/pages/profile/change-password-dialog.component';
-import {MatDialog} from '@angular/material';
+import { MatDialog } from '@angular/material/dialog';
 import {DialogService} from '@core/services/dialog.service';
 import {AuthService} from '@core/auth/auth.service';
 import {ActivatedRoute} from '@angular/router';

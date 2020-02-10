@@ -15,7 +15,8 @@
 ///
 
 import { AfterViewInit, Component, ElementRef, Inject, OnInit, SkipSelf, ViewChild } from '@angular/core';
-import { ErrorStateMatcher, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material';
+import { ErrorStateMatcher } from '@angular/material/core';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm } from '@angular/forms';

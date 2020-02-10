@@ -43,7 +43,7 @@ import { EntityComponent } from './entity.component';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { Subscription } from 'rxjs';
-import { MatTabGroup, MatTab } from '@angular/material';
+import { MatTabGroup, MatTab } from '@angular/material/tabs';
 import { EntityTabsComponent } from '@home/components/entity/entity-tabs.component';
 
 @Component({

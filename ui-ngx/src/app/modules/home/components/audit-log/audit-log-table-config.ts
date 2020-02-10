@@ -34,7 +34,7 @@ import { AuditLogService } from '@core/http/audit-log.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import { Direction } from '@shared/models/page/sort-order';
-import { MatDialog } from '@angular/material';
+import { MatDialog } from '@angular/material/dialog';
 import { PageLink, TimePageLink } from '@shared/models/page/page-link';
 import { Observable } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';

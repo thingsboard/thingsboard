@@ -15,7 +15,8 @@
 ///
 
 import {Component, OnInit, SkipSelf, Inject} from '@angular/core';
-import {ErrorStateMatcher, MatDialogRef, MAT_DIALOG_DATA} from '@angular/material';
+import { ErrorStateMatcher } from '@angular/material/core';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';

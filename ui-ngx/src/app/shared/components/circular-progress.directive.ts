@@ -16,7 +16,8 @@
 
 import { Directive, ElementRef, ViewContainerRef, ComponentFactoryResolver, ComponentRef, Input } from '@angular/core';
 import { Overlay } from '@angular/cdk/overlay';
-import { MatProgressBar, MatSpinner } from '@angular/material';
+import { MatProgressBar } from '@angular/material/progress-bar';
+import { MatSpinner } from '@angular/material/progress-spinner';
 
 @Directive({
   selector: '[tb-circular-progress]'

@@ -16,7 +16,7 @@
 
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { MatDialog, MatDialogConfig } from '@angular/material';
+import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '@core/services/dialog/confirm-dialog.component';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertDialogComponent } from '@core/services/dialog/alert-dialog.component';

@@ -23,7 +23,7 @@ import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { LocalStorageService } from '@core/local-storage/local-storage.service';
 import { DomSanitizer } from '@angular/platform-browser';
-import { MatIconRegistry } from '@angular/material';
+import { MatIconRegistry } from '@angular/material/icon';
 import { combineLatest } from 'rxjs';
 import { selectIsAuthenticated, selectIsUserLoaded } from '@core/auth/auth.selectors';
 import { distinctUntilChanged, filter, map, skip } from 'rxjs/operators';
