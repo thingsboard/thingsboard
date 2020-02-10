@@ -83,8 +83,8 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
   @Input()
   disabled: boolean;
 
-  @ViewChild('entityInput', {static: false}) entityInput: ElementRef<HTMLInputElement>;
-  @ViewChild('entityAutocomplete', {static: false}) matAutocomplete: MatAutocomplete;
+  @ViewChild('entityInput') entityInput: ElementRef<HTMLInputElement>;
+  @ViewChild('entityAutocomplete') matAutocomplete: MatAutocomplete;
   @ViewChild('chipList', {static: true}) chipList: MatChipList;
 
   entities: Array<BaseData<EntityId>> = [];

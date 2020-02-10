@@ -121,7 +121,7 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
 
   @Input() disabled: boolean;
 
-  @ViewChild('timewindowPanelOrigin', {static: false}) timewindowPanelOrigin: CdkOverlayOrigin;
+  @ViewChild('timewindowPanelOrigin') timewindowPanelOrigin: CdkOverlayOrigin;
 
   innerValue: Timewindow;
 

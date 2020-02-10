@@ -89,8 +89,8 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
   @Input()
   entityType: EntityType;
 
-  @ViewChild('entitySubtypeInput', {static: false}) entitySubtypeInput: ElementRef<HTMLInputElement>;
-  @ViewChild('entitySubtypeAutocomplete', {static: false}) entitySubtypeAutocomplete: MatAutocomplete;
+  @ViewChild('entitySubtypeInput') entitySubtypeInput: ElementRef<HTMLInputElement>;
+  @ViewChild('entitySubtypeAutocomplete') entitySubtypeAutocomplete: MatAutocomplete;
   @ViewChild('chipList', {static: true}) chipList: MatChipList;
 
   entitySubtypeList: Array<string> = [];

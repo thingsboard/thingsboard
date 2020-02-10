@@ -52,7 +52,7 @@ export class RuleNodeConfigComponent implements ControlValueAccessor, OnInit, On
 
   @ViewChild('definedConfigContent', {read: ViewContainerRef, static: true}) definedConfigContainer: ViewContainerRef;
 
-  @ViewChild('jsonObjectEditComponent', {static: false}) jsonObjectEditComponent: JsonObjectEditComponent;
+  @ViewChild('jsonObjectEditComponent') jsonObjectEditComponent: JsonObjectEditComponent;
 
   private requiredValue: boolean;
   get required(): boolean {

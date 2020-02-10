@@ -90,7 +90,7 @@ export class RuleChainPageComponent extends PageComponent
   @HostBinding('style.width') width = '100%';
   @HostBinding('style.height') height = '100%';
 
-  @ViewChild('ruleNodeSearchInput', {static: false}) ruleNodeSearchInputField: ElementRef;
+  @ViewChild('ruleNodeSearchInput') ruleNodeSearchInputField: ElementRef;
 
   @ViewChild('ruleChainCanvas', {static: true}) ruleChainCanvas: NgxFlowchartComponent;
 
@@ -124,8 +124,8 @@ export class RuleChainPageComponent extends PageComponent
   editingRuleNodeAllowCustomLabels = false;
   editingRuleNodeLinkLabels: {[label: string]: LinkLabel};
 
-  @ViewChild('tbRuleNode', {static: false}) ruleNodeComponent: RuleNodeDetailsComponent;
-  @ViewChild('tbRuleNodeLink', {static: false}) ruleNodeLinkComponent: RuleNodeLinkComponent;
+  @ViewChild('tbRuleNode') ruleNodeComponent: RuleNodeDetailsComponent;
+  @ViewChild('tbRuleNodeLink') ruleNodeLinkComponent: RuleNodeLinkComponent;
 
   editingRuleNodeLink: FcRuleEdge = null;
   isEditingRuleNodeLink = false;

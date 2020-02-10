@@ -55,10 +55,10 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
 
   logo = require('../../../assets/logo_title_white.svg');
 
-  @ViewChild('sidenav', {static: false})
+  @ViewChild('sidenav')
   sidenav: MatSidenav;
 
-  @ViewChild('searchInput', {static: false}) searchInputField: ElementRef;
+  @ViewChild('searchInput') searchInputField: ElementRef;
 
   // @ts-ignore
   fullscreenEnabled = screenfull.enabled;

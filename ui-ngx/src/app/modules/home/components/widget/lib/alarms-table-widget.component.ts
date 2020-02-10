@@ -116,9 +116,9 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   @Input()
   ctx: WidgetContext;
 
-  @ViewChild('searchInput', {static: false}) searchInputField: ElementRef;
-  @ViewChild(MatPaginator, {static: false}) paginator: MatPaginator;
-  @ViewChild(MatSort, {static: false}) sort: MatSort;
+  @ViewChild('searchInput') searchInputField: ElementRef;
+  @ViewChild(MatPaginator) paginator: MatPaginator;
+  @ViewChild(MatSort) sort: MatSort;
 
   public enableSelection = true;
   public displayPagination = true;

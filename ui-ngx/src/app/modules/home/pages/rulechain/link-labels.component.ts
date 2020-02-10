@@ -38,9 +38,9 @@ import { map, mergeMap, share, startWith } from 'rxjs/operators';
 })
 export class LinkLabelsComponent implements ControlValueAccessor, OnInit, OnChanges {
 
-  @ViewChild('chipList', {static: false}) chipList: MatChipList;
-  @ViewChild('labelAutocomplete', {static: false}) matAutocomplete: MatAutocomplete;
-  @ViewChild('labelInput', {static: false}) labelInput: ElementRef<HTMLInputElement>;
+  @ViewChild('chipList') chipList: MatChipList;
+  @ViewChild('labelAutocomplete') matAutocomplete: MatAutocomplete;
+  @ViewChild('labelInput') labelInput: ElementRef<HTMLInputElement>;
 
   private requiredValue: boolean;
   get required(): boolean {

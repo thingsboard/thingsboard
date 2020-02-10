@@ -212,7 +212,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   set rightLayoutOpened(rightLayoutOpened: boolean) {
   }
 
-  @ViewChild('tbEditWidget', {static: false}) editWidgetComponent: EditWidgetComponent;
+  @ViewChild('tbEditWidget') editWidgetComponent: EditWidgetComponent;
 
   constructor(protected store: Store<AppState>,
               @Inject(WINDOW) private window: Window,

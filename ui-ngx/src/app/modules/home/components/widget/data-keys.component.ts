@@ -124,9 +124,9 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
   @Input()
   disabled: boolean;
 
-  @ViewChild('keyInput', {static: false}) keyInput: ElementRef<HTMLInputElement>;
-  @ViewChild('keyAutocomplete', {static: false}) matAutocomplete: MatAutocomplete;
-  @ViewChild('chipList', {static: false}) chipList: MatChipList;
+  @ViewChild('keyInput') keyInput: ElementRef<HTMLInputElement>;
+  @ViewChild('keyAutocomplete') matAutocomplete: MatAutocomplete;
+  @ViewChild('chipList') chipList: MatChipList;
 
   keys: Array<DataKey> = [];
   filteredKeys: Observable<Array<DataKey>>;

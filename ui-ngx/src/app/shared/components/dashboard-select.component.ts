@@ -78,7 +78,7 @@ export class DashboardSelectComponent implements ControlValueAccessor, OnInit {
 
   dashboardId: string | null;
 
-  @ViewChild('dashboardSelectPanelOrigin', {static: false}) dashboardSelectPanelOrigin: CdkOverlayOrigin;
+  @ViewChild('dashboardSelectPanelOrigin') dashboardSelectPanelOrigin: CdkOverlayOrigin;
 
   private propagateChange = (v: any) => { };
 

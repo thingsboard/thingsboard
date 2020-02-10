@@ -70,8 +70,8 @@ export class EntityAliasSelectComponent implements ControlValueAccessor, OnInit,
   @Input()
   callbacks: EntityAliasSelectCallbacks;
 
-  @ViewChild('entityAliasAutocomplete', {static: false}) entityAliasAutocomplete: MatAutocomplete;
-  @ViewChild('autocomplete', {static: false, read: MatAutocompleteTrigger}) autoCompleteTrigger: MatAutocompleteTrigger;
+  @ViewChild('entityAliasAutocomplete') entityAliasAutocomplete: MatAutocomplete;
+  @ViewChild('autocomplete', { read: MatAutocompleteTrigger }) autoCompleteTrigger: MatAutocompleteTrigger;
 
 
   private requiredValue: boolean;

@@ -46,7 +46,7 @@ export class AliasesEntitySelectComponent implements OnInit, OnDestroy {
 
   @Input() disabled: boolean;
 
-  @ViewChild('aliasEntitySelectPanelOrigin', {static: false}) aliasEntitySelectPanelOrigin: CdkOverlayOrigin;
+  @ViewChild('aliasEntitySelectPanelOrigin') aliasEntitySelectPanelOrigin: CdkOverlayOrigin;
 
   displayValue: string;
 

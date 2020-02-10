@@ -161,10 +161,10 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
   @Input()
   entityName: string;
 
-  @ViewChild('searchInput', {static: false}) searchInputField: ElementRef;
+  @ViewChild('searchInput') searchInputField: ElementRef;
 
-  @ViewChild(MatPaginator, {static: false}) paginator: MatPaginator;
-  @ViewChild(MatSort, {static: false}) sort: MatSort;
+  @ViewChild(MatPaginator) paginator: MatPaginator;
+  @ViewChild(MatSort) sort: MatSort;
 
   constructor(protected store: Store<AppState>,
               private attributeService: AttributeService,

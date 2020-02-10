@@ -71,10 +71,10 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
   @Input()
   dataKeySettingsSchema: any;
 
-  @ViewChild('keyInput', {static: false}) keyInput: ElementRef;
+  @ViewChild('keyInput') keyInput: ElementRef;
 
-  @ViewChild('funcBodyEdit', {static: false}) funcBodyEdit: JsFuncComponent;
-  @ViewChild('postFuncBodyEdit', {static: false}) postFuncBodyEdit: JsFuncComponent;
+  @ViewChild('funcBodyEdit') funcBodyEdit: JsFuncComponent;
+  @ViewChild('postFuncBodyEdit') postFuncBodyEdit: JsFuncComponent;
 
   displayAdvanced = false;
 

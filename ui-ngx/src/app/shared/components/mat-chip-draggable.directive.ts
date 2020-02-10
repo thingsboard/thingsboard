@@ -14,18 +14,7 @@
 /// limitations under the License.
 ///
 
-import {
-  AfterViewInit,
-  Directive,
-  ElementRef,
-  OnDestroy,
-  Renderer,
-  Renderer2,
-  HostListener,
-  QueryList,
-  Output,
-  EventEmitter
-} from '@angular/core';
+import { AfterViewInit, Directive, ElementRef, OnDestroy, Renderer, Renderer2, HostListener, QueryList, Output, EventEmitter } from '@angular/core';
 import { MatChip, MatChipList } from '@angular/material/chips';
 import DragStartEvent = JQuery.DragStartEvent;
 import Timeout = NodeJS.Timeout;

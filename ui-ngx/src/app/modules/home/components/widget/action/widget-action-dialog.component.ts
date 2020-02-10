@@ -59,7 +59,7 @@ export interface WidgetActionDialogData {
 export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDialogComponent,
                                                  WidgetActionDescriptorInfo> implements OnInit, ErrorStateMatcher {
 
-  @ViewChild('dashboardStateInput', {static: false}) dashboardStateInput: ElementRef;
+  @ViewChild('dashboardStateInput') dashboardStateInput: ElementRef;
 
   widgetActionFormGroup: FormGroup;
   actionTypeFormGroup: FormGroup;

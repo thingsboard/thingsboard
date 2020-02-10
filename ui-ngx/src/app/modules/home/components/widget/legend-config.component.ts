@@ -76,7 +76,7 @@ export class LegendConfigComponent implements OnInit, OnDestroy, ControlValueAcc
 
   @Input() disabled: boolean;
 
-  @ViewChild('legendConfigPanelOrigin', {static: false}) legendConfigPanelOrigin: CdkOverlayOrigin;
+  @ViewChild('legendConfigPanelOrigin') legendConfigPanelOrigin: CdkOverlayOrigin;
 
   innerValue: LegendConfig;
 

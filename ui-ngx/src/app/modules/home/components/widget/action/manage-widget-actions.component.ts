@@ -82,10 +82,10 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
   viewsInited = false;
   dirtyValue = false;
 
-  @ViewChild('searchInput', {static: false}) searchInputField: ElementRef;
+  @ViewChild('searchInput') searchInputField: ElementRef;
 
-  @ViewChild(MatPaginator, {static: false}) paginator: MatPaginator;
-  @ViewChild(MatSort, {static: false}) sort: MatSort;
+  @ViewChild(MatPaginator) paginator: MatPaginator;
+  @ViewChild(MatSort) sort: MatSort;
 
   private propagateChange = (_: any) => {};
 

@@ -17,12 +17,13 @@
 import { BaseData, HasId } from '@shared/models/base-data';
 import { FormGroup, NgForm } from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
-import { EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { EventEmitter, Input, OnInit, Output, ViewChild, Directive } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 
+@Directive()
 export abstract class EntityComponent<T extends BaseData<HasId>> extends PageComponent implements OnInit {
 
   entityValue: T;

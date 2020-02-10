@@ -107,7 +107,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   @Input()
   ctx: WidgetContext;
 
-  @ViewChild('searchInput', {static: false}) searchInputField: ElementRef;
+  @ViewChild('searchInput') searchInputField: ElementRef;
   @ViewChildren(MatPaginator) paginators: QueryList<MatPaginator>;
   @ViewChildren(MatSort) sorts: QueryList<MatSort>;
 

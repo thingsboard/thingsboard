@@ -95,9 +95,9 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   @Input()
   ctx: WidgetContext;
 
-  @ViewChild('searchInput', {static: false}) searchInputField: ElementRef;
-  @ViewChild(MatPaginator, {static: false}) paginator: MatPaginator;
-  @ViewChild(MatSort, {static: false}) sort: MatSort;
+  @ViewChild('searchInput') searchInputField: ElementRef;
+  @ViewChild(MatPaginator) paginator: MatPaginator;
+  @ViewChild(MatSort) sort: MatSort;
 
   public displayPagination = true;
   public pageSizeOptions;

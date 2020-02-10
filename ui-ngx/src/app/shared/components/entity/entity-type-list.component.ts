@@ -91,8 +91,8 @@ export class EntityTypeListComponent implements ControlValueAccessor, OnInit, Af
   @Input()
   ignoreAuthorityFilter: boolean;
 
-  @ViewChild('entityTypeInput', {static: false}) entityTypeInput: ElementRef<HTMLInputElement>;
-  @ViewChild('entityTypeAutocomplete', {static: false}) entityTypeAutocomplete: MatAutocomplete;
+  @ViewChild('entityTypeInput') entityTypeInput: ElementRef<HTMLInputElement>;
+  @ViewChild('entityTypeAutocomplete') entityTypeAutocomplete: MatAutocomplete;
   @ViewChild('chipList', {static: true}) chipList: MatChipList;
 
   allEntityTypeList: Array<EntityTypeInfo> = [];

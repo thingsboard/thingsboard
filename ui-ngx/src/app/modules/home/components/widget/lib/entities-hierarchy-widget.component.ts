@@ -73,7 +73,7 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
   @Input()
   ctx: WidgetContext;
 
-  @ViewChild('searchInput', {static: false}) searchInputField: ElementRef;
+  @ViewChild('searchInput') searchInputField: ElementRef;
 
   public toastTargetId = 'entities-hierarchy-' + this.utils.guid();
 

@@ -84,9 +84,9 @@ export class EntityKeysListComponent implements ControlValueAccessor, OnInit, Af
   @Input()
   disabled: boolean;
 
-  @ViewChild('keyInput', {static: false}) keyInput: ElementRef<HTMLInputElement>;
-  @ViewChild('keyAutocomplete', {static: false}) matAutocomplete: MatAutocomplete;
-  @ViewChild('chipList', {static: false}) chipList: MatChipList;
+  @ViewChild('keyInput') keyInput: ElementRef<HTMLInputElement>;
+  @ViewChild('keyAutocomplete') matAutocomplete: MatAutocomplete;
+  @ViewChild('chipList') chipList: MatChipList;
 
   filteredKeys: Observable<Array<string>>;
 

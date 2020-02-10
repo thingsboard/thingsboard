@@ -16,16 +16,7 @@
 
 import { BaseData, HasId } from '@shared/models/base-data';
 import { PageComponent } from '@shared/components/page.component';
-import {
-  AfterViewInit,
-  ContentChildren,
-  EventEmitter,
-  Input,
-  OnInit,
-  Output,
-  QueryList,
-  ViewChildren
-} from '@angular/core';
+import { AfterViewInit, ContentChildren, EventEmitter, Input, OnInit, Output, QueryList, ViewChildren, Directive } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
@@ -41,6 +32,7 @@ import { DebugEventType, EventType } from '@shared/models/event.models';
 import { AttributeScope, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 
+@Directive()
 export abstract class EntityTabsComponent<T extends BaseData<HasId>> extends PageComponent implements OnInit, AfterViewInit {
 
   attributeScopes = AttributeScope;
