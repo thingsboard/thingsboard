@@ -22,6 +22,6 @@ CREATE TABLE IF NOT EXISTS provision_profile (
     secret varchar(255),
     customer_id varchar(31),
     tenant_id varchar(31),
-    pre_provision_allowed boolean,
+    provision_request_validation_strategy_type varchar(255),
     CONSTRAINT provision_profile_unq_key UNIQUE (key)
 );

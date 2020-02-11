@@ -23,6 +23,8 @@ import org.thingsboard.server.common.data.id.ProvisionProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.device.provision.ProvisionProfile;
 import org.thingsboard.server.dao.device.provision.ProvisionProfileCredentials;
+import org.thingsboard.server.dao.device.provision.ProvisionRequestValidationStrategy;
+import org.thingsboard.server.dao.device.provision.ProvisionRequestValidationStrategyType;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 
@@ -48,8 +50,8 @@ public final class ProvisionProfileEntity extends BaseSqlEntity<ProvisionProfile
     @Column(name = ModelConstants.PROVISION_PROFILE_SECRET_PROPERTY)
     private String secret;
 
-    @Column(name = ModelConstants.PROVISION_PROFILE_PRE_PROVISION_ALLOWED_PROPERTY)
-    private boolean preProvisionAllowed;
+    @Column(name = ModelConstants.PROVISION_PROFILE_VALIDATION_STRATEGY_TYPE)
+    private String provisionRequestValidationStrategyType;
 
     public ProvisionProfileEntity() {
         super();
@@ -67,7 +69,7 @@ public final class ProvisionProfileEntity extends BaseSqlEntity<ProvisionProfile
         }
         this.key = profile.getCredentials().getProvisionProfileKey();
         this.secret = profile.getCredentials().getProvisionProfileSecret();
-        this.preProvisionAllowed = profile.isPreProvisionAllowed();
+        this.provisionRequestValidationStrategyType = profile.getStrategy().getValidationStrategyType().name();
     }
 
     @Override
@@ -81,7 +83,8 @@ public final class ProvisionProfileEntity extends BaseSqlEntity<ProvisionProfile
             profile.setCustomerId(new CustomerId(toUUID(customerId)));
         }
         profile.setCredentials(new ProvisionProfileCredentials(key, secret));
-        profile.setPreProvisionAllowed(preProvisionAllowed);
+        profile.setStrategy(new ProvisionRequestValidationStrategy(
+                ProvisionRequestValidationStrategyType.valueOf(provisionRequestValidationStrategyType)));
         return profile;
     }
 }

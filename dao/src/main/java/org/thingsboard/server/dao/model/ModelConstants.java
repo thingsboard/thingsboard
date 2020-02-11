@@ -270,7 +270,7 @@ public class ModelConstants {
     public static final String PROVISION_PROFILE_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
     public static final String PROVISION_PROFILE_KEY_PROPERTY = "key";
     public static final String PROVISION_PROFILE_SECRET_PROPERTY = "secret";
-    public static final String PROVISION_PROFILE_PRE_PROVISION_ALLOWED_PROPERTY = "pre_provision_allowed";
+    public static final String PROVISION_PROFILE_VALIDATION_STRATEGY_TYPE = "provision_request_validation_strategy_type";
 
     public static final String PROVISION_PROFILE_BY_KEY_COLUMN_FAMILY_NAME = "provision_profile_by_key";
 

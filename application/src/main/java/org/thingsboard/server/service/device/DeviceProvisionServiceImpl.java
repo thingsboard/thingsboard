@@ -60,6 +60,8 @@ import org.thingsboard.server.dao.device.ProvisionProfileDao;
 import org.thingsboard.server.dao.device.provision.ProvisionProfile;
 import org.thingsboard.server.dao.device.provision.ProvisionProfileCredentials;
 import org.thingsboard.server.dao.device.provision.ProvisionRequest;
+import org.thingsboard.server.dao.device.provision.ProvisionRequestValidationStrategy;
+import org.thingsboard.server.dao.device.provision.ProvisionRequestValidationStrategyType;
 import org.thingsboard.server.dao.device.provision.ProvisionResponse;
 import org.thingsboard.server.dao.device.provision.ProvisionResponseStatus;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
@@ -197,21 +199,24 @@ public class DeviceProvisionServiceImpl extends AbstractEntityService implements
         }
 
         Device device = deviceService.findDeviceByTenantIdAndName(targetProfile.getTenantId(), provisionRequest.getDeviceName());
-        if (device == null) {
-            if (targetProfile.isPreProvisionAllowed()) {
-                log.warn("[{}] Failed to find pre provisioned device!", provisionRequest.getDeviceName());
-                return Futures.immediateFuture(new ProvisionResponse(null, ProvisionResponseStatus.FAILURE));
-            } else {
-                return createDevice(provisionRequest, targetProfile);
-            }
-        } else {
-            if (targetProfile.isPreProvisionAllowed()) {
-                return processProvision(device, provisionRequest);
-            } else {
-                log.warn("[{}] The device is present and could not be provisioned once more!", device.getName());
-                notify(device, provisionRequest, DataConstants.PROVISION_FAILURE, false);
-                return Futures.immediateFuture(new ProvisionResponse(null, ProvisionResponseStatus.FAILURE));
-            }
+        switch (targetProfile.getStrategy().getValidationStrategyType()) {
+            case CHECK_NEW_DEVICE:
+                if (device == null) {
+                    return createDevice(provisionRequest, targetProfile);
+                } else {
+                    log.warn("[{}] The device is present and could not be provisioned once more!", device.getName());
+                    notify(device, provisionRequest, DataConstants.PROVISION_FAILURE, false);
+                    return Futures.immediateFuture(new ProvisionResponse(null, ProvisionResponseStatus.FAILURE));
+                }
+            case CHECK_PRE_PROVISIONED_DEVICE:
+                if (device == null) {
+                    log.warn("[{}] Failed to find pre provisioned device!", provisionRequest.getDeviceName());
+                    return Futures.immediateFuture(new ProvisionResponse(null, ProvisionResponseStatus.FAILURE));
+                } else {
+                    return processProvision(device, provisionRequest);
+                }
+            default:
+                throw new RuntimeException("Strategy is not supported - " + targetProfile.getStrategy().getValidationStrategyType().name());
         }
     }
 
@@ -452,6 +457,9 @@ public class DeviceProvisionServiceImpl extends AbstractEntityService implements
             if (!customer.getTenantId().getId().equals(profile.getTenantId().getId())) {
                 throw new DataValidationException("Can't assign profile to customer from different tenant!");
             }
+        }
+        if (profile.getStrategy() == null) {
+            profile.setStrategy(new ProvisionRequestValidationStrategy(ProvisionRequestValidationStrategyType.CHECK_NEW_DEVICE));
         }
     }
 }

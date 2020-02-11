@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS thingsboard.provision_profile (
     customer_id timeuuid,
     key text,
     secret text,
-    pre_provision_allowed boolean,
+    provision_request_validation_strategy_type text,
 );
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.provision_profile_by_key AS
