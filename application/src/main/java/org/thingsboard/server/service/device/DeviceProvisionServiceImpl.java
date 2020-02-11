@@ -71,6 +71,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static org.thingsboard.server.common.data.CacheConstants.DEVICE_PROVISION_CACHE;
@@ -137,7 +138,11 @@ public class DeviceProvisionServiceImpl extends AbstractEntityService implements
     @Override
     public ProvisionProfile saveProvisionProfile(ProvisionProfile provisionProfile) {
         log.trace("Executing saveProvisionProfile [{}]", provisionProfile);
-        provisionProfileValidator.validate(provisionProfile, ProvisionProfile::getTenantId);
+        if (provisionProfile.getCredentials() != null && !StringUtils.isEmpty(provisionProfile.getCredentials().getProvisionProfileKey())) {
+            provisionProfileValidator.validate(provisionProfile, ProvisionProfile::getTenantId);
+        } else {
+            emptyProvisionProfileValidator.validate(provisionProfile, ProvisionProfile::getTenantId);
+        }
         ProvisionProfile savedProvisionProfile;
         if (!sqlDatabaseUsed) {
             savedProvisionProfile = provisionProfileDao.save(provisionProfile.getTenantId(), provisionProfile);
@@ -337,7 +342,7 @@ public class DeviceProvisionServiceImpl extends AbstractEntityService implements
         return RandomStringUtils.randomAlphanumeric(20);
     }
 
-    private DataValidator<ProvisionProfile> provisionProfileValidator =
+    private DataValidator<ProvisionProfile> emptyProvisionProfileValidator =
             new DataValidator<ProvisionProfile>() {
 
                 @Override
@@ -355,10 +360,7 @@ public class DeviceProvisionServiceImpl extends AbstractEntityService implements
 
                 @Override
                 protected void validateUpdate(TenantId tenantId, ProvisionProfile profile) {
-                    ProvisionProfile existingProfileEntity = provisionProfileDao.findById(tenantId, profile.getUuidId());
-                    if (existingProfileEntity == null) {
-                        throw new DataValidationException("Unable to update non-existent provision profile!");
-                    }
+                    validateById(tenantId, profile.getUuidId());
                     if (!sqlDatabaseUsed) {
                         ProvisionProfile sameProvisionProfileKey = provisionProfileDao.findByKey(tenantId,
                                 profile.getCredentials().getProvisionProfileKey());
@@ -372,6 +374,7 @@ public class DeviceProvisionServiceImpl extends AbstractEntityService implements
 
                 @Override
                 protected void validateDataImpl(TenantId tenantId, ProvisionProfile profile) {
+                    validateProfile(profile);
                     if (profile.getCredentials() == null) {
                         profile.setCredentials(
                                 new ProvisionProfileCredentials(
@@ -379,32 +382,76 @@ public class DeviceProvisionServiceImpl extends AbstractEntityService implements
                                         generateProvisionProfileCredentials()));
                     } else {
                         ProvisionProfileCredentials credentials = profile.getCredentials();
-                        if (StringUtils.isEmpty(profile.getCredentials().getProvisionProfileKey())) {
+                        if (StringUtils.isEmpty(credentials.getProvisionProfileKey())) {
                             credentials.setProvisionProfileKey(generateProvisionProfileCredentials());
                         }
-                        if (StringUtils.isEmpty(profile.getCredentials().getProvisionProfileSecret())) {
+                        if (StringUtils.isEmpty(credentials.getProvisionProfileSecret())) {
                             credentials.setProvisionProfileSecret(generateProvisionProfileCredentials());
-                        }
-                    }
-                    if (profile.getTenantId() == null) {
-                        throw new DataValidationException("Profile should be assigned to tenant!");
-                    } else {
-                        Tenant tenant = tenantDao.findById(profile.getTenantId(), profile.getTenantId().getId());
-                        if (tenant == null) {
-                            throw new DataValidationException("Profile is referencing to non-existent tenant!");
-                        }
-                    }
-                    if (profile.getCustomerId() == null) {
-                        profile.setCustomerId(new CustomerId(NULL_UUID));
-                    } else if (!profile.getCustomerId().getId().equals(NULL_UUID)) {
-                        Customer customer = customerDao.findById(profile.getTenantId(), profile.getCustomerId().getId());
-                        if (customer == null) {
-                            throw new DataValidationException("Can't assign profile to non-existent customer!");
-                        }
-                        if (!customer.getTenantId().getId().equals(profile.getTenantId().getId())) {
-                            throw new DataValidationException("Can't assign profile to customer from different tenant!");
                         }
                     }
                 }
             };
+
+    private DataValidator<ProvisionProfile> provisionProfileValidator =
+            new DataValidator<ProvisionProfile>() {
+
+                @Override
+                protected void validateCreate(TenantId tenantId, ProvisionProfile profile) {
+                    if (!sqlDatabaseUsed) {
+                        ProvisionProfile existingProfileEntity = provisionProfileDao.findByKey(tenantId,
+                                profile.getCredentials().getProvisionProfileKey());
+                        if (existingProfileEntity != null) {
+                            throw new DataValidationException("Profile with such key already exists!");
+                        }
+                    }
+                }
+
+                @Override
+                protected void validateUpdate(TenantId tenantId, ProvisionProfile profile) {
+                    validateById(tenantId, profile.getUuidId());
+                    if (!sqlDatabaseUsed) {
+                        ProvisionProfile sameProvisionProfileKey = provisionProfileDao.findByKey(tenantId,
+                                profile.getCredentials().getProvisionProfileKey());
+                        if (sameProvisionProfileKey != null && !sameProvisionProfileKey.getUuidId().equals(profile.getUuidId())) {
+                            throw new DataValidationException("Profile with such key already exists!");
+                        }
+                    }
+                }
+
+                @Override
+                protected void validateDataImpl(TenantId tenantId, ProvisionProfile profile) {
+                    validateProfile(profile);
+                    if (StringUtils.isEmpty(profile.getCredentials().getProvisionProfileSecret())) {
+                        profile.getCredentials().setProvisionProfileSecret(generateProvisionProfileCredentials());
+                    }
+                }
+            };
+
+    private void validateById(TenantId tenantId, UUID uuid) {
+        if (provisionProfileDao.findById(tenantId, uuid) == null) {
+            throw new DataValidationException("Unable to update non-existent provision profile!");
+        }
+    }
+
+    private void validateProfile(ProvisionProfile profile) {
+        if (profile.getTenantId() == null) {
+            throw new DataValidationException("Profile should be assigned to tenant!");
+        } else {
+            Tenant tenant = tenantDao.findById(profile.getTenantId(), profile.getTenantId().getId());
+            if (tenant == null) {
+                throw new DataValidationException("Profile is referencing to non-existent tenant!");
+            }
+        }
+        if (profile.getCustomerId() == null) {
+            profile.setCustomerId(new CustomerId(NULL_UUID));
+        } else if (!profile.getCustomerId().getId().equals(NULL_UUID)) {
+            Customer customer = customerDao.findById(profile.getTenantId(), profile.getCustomerId().getId());
+            if (customer == null) {
+                throw new DataValidationException("Can't assign profile to non-existent customer!");
+            }
+            if (!customer.getTenantId().getId().equals(profile.getTenantId().getId())) {
+                throw new DataValidationException("Can't assign profile to customer from different tenant!");
+            }
+        }
+    }
 }
