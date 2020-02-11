@@ -17,10 +17,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
-import { ConfirmDialogComponent } from '@core/services/dialog/confirm-dialog.component';
 import { TranslateService } from '@ngx-translate/core';
-import { AlertDialogComponent } from '@core/services/dialog/alert-dialog.component';
-import { TodoDialogComponent } from '@core/services/dialog/todo-dialog.component';
 import { AuthService } from '@core/auth/auth.service';
 import {
   ColorPickerDialogComponent,
@@ -30,6 +27,9 @@ import {
   MaterialIconsDialogComponent,
   MaterialIconsDialogData
 } from '@shared/components/dialog/material-icons-dialog.component';
+import { ConfirmDialogComponent } from '@shared/components/dialog/confirm-dialog.component';
+import { AlertDialogComponent } from '@shared/components/dialog/alert-dialog.component';
+import { TodoDialogComponent } from '@shared/components/dialog/todo-dialog.component';
 
 @Injectable(
   {

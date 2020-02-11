@@ -35,12 +35,9 @@ import { TbMissingTranslationHandler } from './translate/missing-translate-handl
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
-import { ConfirmDialogComponent } from '@core/services/dialog/confirm-dialog.component';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { TranslateDefaultCompiler } from '@core/translate/translate-default-compiler';
-import { AlertDialogComponent } from '@core/services/dialog/alert-dialog.component';
 import { WINDOW_PROVIDERS } from '@core/services/window.service';
-import {TodoDialogComponent} from '@core/services/dialog/todo-dialog.component';
 import { HotkeyModule } from 'angular2-hotkeys';
 
 export function HttpLoaderFactory(http: HttpClient) {
@@ -48,11 +45,6 @@ export function HttpLoaderFactory(http: HttpClient) {
 }
 
 @NgModule({
-  declarations: [
-    ConfirmDialogComponent,
-    AlertDialogComponent,
-    TodoDialogComponent
-  ],
   imports: [
     CommonModule,
     HttpClientModule,

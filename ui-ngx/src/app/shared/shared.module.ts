@@ -108,6 +108,9 @@ import { MatChipDraggableDirective } from '@shared/components/mat-chip-draggable
 import { ColorInputComponent } from '@shared/components/color-input.component';
 import { JsFuncComponent } from '@shared/components/js-func.component';
 import { JsonFormComponent } from '@shared/components/json-form/json-form.component';
+import { ConfirmDialogComponent } from '@shared/components/dialog/confirm-dialog.component';
+import { AlertDialogComponent } from '@shared/components/dialog/alert-dialog.component';
+import { TodoDialogComponent } from '@shared/components/dialog/todo-dialog.component';
 import { MaterialIconsDialogComponent } from '@shared/components/dialog/material-icons-dialog.component';
 import { MaterialIconSelectComponent } from '@shared/components/material-icon-select.component';
 import { ImageInputComponent } from '@shared/components/image-input.component';
@@ -178,6 +181,9 @@ import { LedLightComponent } from '@shared/components/led-light.component';
     FabActionsDirective,
     FabToolbarComponent,
     WidgetsBundleSelectComponent,
+    ConfirmDialogComponent,
+    AlertDialogComponent,
+    TodoDialogComponent,
     ColorPickerDialogComponent,
     MaterialIconsDialogComponent,
     ColorInputComponent,
