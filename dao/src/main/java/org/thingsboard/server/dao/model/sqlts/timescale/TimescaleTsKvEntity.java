@@ -130,16 +130,8 @@ public final class TimescaleTsKvEntity extends AbstractTsKvEntity implements ToD
     private UUID tenantId;
 
     @Id
-    @Column(name = ENTITY_ID_COLUMN, columnDefinition = "uuid")
-    protected UUID entityId;
-
-    @Id
     @Column(name = KEY_COLUMN)
-    protected int key;
-
-    @Transient
-    protected String strKey;
-
+    private int key;
 
     public TimescaleTsKvEntity() {
     }
@@ -204,20 +196,4 @@ public final class TimescaleTsKvEntity extends AbstractTsKvEntity implements ToD
     public boolean isNotEmpty() {
         return ts != null && (strValue != null || longValue != null || doubleValue != null || booleanValue != null);
     }
-
-    @Override
-    public TsKvEntry toData() {
-        KvEntry kvEntry = null;
-        if (strValue != null) {
-            kvEntry = new StringDataEntry(strKey, strValue);
-        } else if (longValue != null) {
-            kvEntry = new LongDataEntry(strKey, longValue);
-        } else if (doubleValue != null) {
-            kvEntry = new DoubleDataEntry(strKey, doubleValue);
-        } else if (booleanValue != null) {
-            kvEntry = new BooleanDataEntry(strKey, booleanValue);
-        }
-        return new BasicTsKvEntry(ts, kvEntry);
-    }
-
 }

@@ -37,7 +37,7 @@ import java.util.Map;
 @PsqlDao
 @Repository
 @Transactional
-public class PsqlTimeseriesInsertRepository extends AbstractInsertRepository implements InsertTsRepository<TsKvEntity> {
+public class PsqlInsertTsRepository extends AbstractInsertRepository implements InsertTsRepository<TsKvEntity> {
 
     private static final String INSERT_INTO_TS_KV = "INSERT INTO ts_kv_";
 

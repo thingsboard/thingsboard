@@ -16,14 +16,14 @@
 
 -->
 <section layout='column'>
-    <md-autocomplete md-input-name="singleSelect" flex
+    <md-autocomplete md-input-name="gateway" flex
                      ng-required="tbRequired"
                      md-no-cache="true"
-                     ng-model="singleSelect"
-                     md-selected-item="singleSelect"
+                     ng-model="gateway"
+                     md-selected-item="gateway"
                      md-search-text="gatewaySearchText"
                      md-items="item in gatewayNameSearch(gatewaySearchText)"
-                     md-item-text="item"
+                     md-item-text="item.name"
                      tb-keydown="gatewayNameEnter($event)"
                      tb-keypress="gatewayNameEnter($event)"
                      md-min-length="0"
@@ -33,7 +33,7 @@
                      md-input-class="tb-test"
                      md-menu-container-class="tb-gateway-autocomplete-container">
         <md-item-template>
-            <span md-highlight-text="gatewaySearchText" md-highlight-flags="^i">{{item}}</span>
+            <span md-highlight-text="gatewaySearchText" md-highlight-flags="^i">{{item.name}}</span>
         </md-item-template>
         <md-not-found>
             <div class="tb-not-found">
@@ -41,14 +41,13 @@
                     <span translate>gateway.no-gateway-found</span>
                 </div>
                 <div ng-if="!textIsEmpty(gatewaySearchText)">
-                    <span translate
-                          translate-values='{ item: "{{gatewaySearchText | truncate:true:6:&apos;...&apos;}}" }'>gateway.no-gateway-matching</span>
-                    <a translate ng-click="createNewGatewayDialog($event, {name: gatewaySearchText})">gateway.create-new-gateway</a>
+                    <span translate translate-values='{ item: "{{gatewaySearchText | truncate:true:6:&apos;...&apos;}}" }'>gateway.no-gateway-matching</span>
+                    <a translate ng-click="createNewGatewayDialog($event, gatewaySearchText)">gateway.create-new-gateway</a>
                 </div>
             </div>
         </md-not-found>
-        <div ng-messages="theForm.singleSelect.$error">
-            <div ng-message="required" translate>Test</div>
+        <div ng-messages="theForm.gateway.$error">
+            <div ng-message="required" translate>gateway.gateway-name-required</div>
         </div>
     </md-autocomplete>
 </section>
