@@ -1177,11 +1177,15 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         let newEntity = {
             name: entityParameters.name,
             type: entityParameters.type,
-            label: entityParameters.label
+            label: entityParameters.label,
+            additionalInfo: {
+                description: entityParameters.description
+            }
         };
 
         if (entityType === types.entityType.device && entityParameters.gateway !== null) {
             newEntity.additionalInfo = {
+                ...newEntity.additionalInfo,
                 gateway: entityParameters.gateway
             };
         }

@@ -401,6 +401,10 @@ export default angular.module('thingsboard.types', [])
                 isGateway: {
                     name: 'import.column-type.isgateway',
                     value: 'gateway'
+                },
+                description: {
+                    name: 'import.column-type.description',
+                    value: 'description'
                 }
             },
             aliasEntityType: {
