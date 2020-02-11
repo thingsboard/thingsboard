@@ -16,22 +16,25 @@
 
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import {
-  AfterViewInit, ChangeDetectionStrategy,
+  AfterViewInit,
   Component,
   ElementRef,
   forwardRef,
   Input,
   OnChanges,
   OnInit,
-  SimpleChanges, SkipSelf,
+  SimpleChanges,
+  SkipSelf,
   ViewChild
 } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
   FormControl,
-  FormGroup, FormGroupDirective,
-  NG_VALUE_ACCESSOR, NgForm,
+  FormGroup,
+  FormGroupDirective,
+  NG_VALUE_ACCESSOR,
+  NgForm,
   Validators
 } from '@angular/forms';
 import { Observable, of } from 'rxjs';
@@ -51,10 +54,6 @@ import { UtilsService } from '@core/services/utils.service';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
 import { DialogService } from '@core/services/dialog.service';
-import {
-  ColorPickerDialogComponent,
-  ColorPickerDialogData
-} from '@shared/components/dialog/color-picker-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import {
   DataKeyConfigDialogComponent,
