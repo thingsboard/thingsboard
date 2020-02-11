@@ -42,7 +42,7 @@ import { MatDialog } from '@angular/material/dialog';
 import {
   SelectTargetStateDialogComponent,
   SelectTargetStateDialogData
-} from '@home/pages/dashboard/states/select-target-state-dialog.component';
+} from '@home/components/dashboard/select-target-state-dialog.component';
 import { mergeMap, map } from 'rxjs/operators';
 import { AliasesInfo } from '@shared/models/alias.models';
 import { ItemBufferService } from '@core/services/item-buffer.service';

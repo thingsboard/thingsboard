@@ -65,6 +65,7 @@ import { TableColumnsAssignmentComponent } from '@home/components/import-export/
 import { EventContentDialogComponent } from '@home/components/event/event-content-dialog.component';
 import { SharedHomeComponentsModule } from '@home/components/shared-home-components.module';
 import { SelectTargetLayoutDialogComponent } from '@home/components/dashboard/select-target-layout-dialog.component';
+import { SelectTargetStateDialogComponent } from '@home/components/dashboard/select-target-state-dialog.component';
 
 @NgModule({
   declarations:
@@ -111,6 +112,7 @@ import { SelectTargetLayoutDialogComponent } from '@home/components/dashboard/se
       ImportDialogComponent,
       ImportDialogCsvComponent,
       SelectTargetLayoutDialogComponent,
+      SelectTargetStateDialogComponent,
       AddWidgetToDashboardDialogComponent,
       TableColumnsAssignmentComponent
     ],
@@ -153,7 +155,8 @@ import { SelectTargetLayoutDialogComponent } from '@home/components/dashboard/se
     ImportDialogComponent,
     ImportDialogCsvComponent,
     TableColumnsAssignmentComponent,
-    SelectTargetLayoutDialogComponent
+    SelectTargetLayoutDialogComponent,
+    SelectTargetStateDialogComponent
   ],
   providers: [
     WidgetComponentService,
