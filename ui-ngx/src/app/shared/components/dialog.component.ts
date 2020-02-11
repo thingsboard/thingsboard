@@ -15,7 +15,7 @@
 ///
 
 import { OnDestroy } from '@angular/core';
-import { PageComponent } from './page.component';
+import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { MatDialogRef } from '@angular/material/dialog';
