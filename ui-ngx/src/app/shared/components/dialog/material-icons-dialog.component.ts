@@ -14,18 +14,16 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnInit, QueryList, ViewChildren, TemplateRef, AfterViewInit } from '@angular/core';
+import { AfterViewInit, Component, Inject, OnInit, QueryList, ViewChildren } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
-import { DialogComponent } from '@app/shared/components/dialog.component';
+import { DialogComponent } from '@shared/components/dialog.component';
 import { UtilsService } from '@core/services/utils.service';
 import { FormControl } from '@angular/forms';
-import { Observable, of, merge, noop } from 'rxjs';
-import { delay, map, mergeMap, share, startWith, tap, mapTo } from 'rxjs/operators';
-import { DashboardInfo } from '@shared/models/dashboard.models';
-import { MatTab } from '@angular/material/tabs';
+import { merge, Observable, of } from 'rxjs';
+import { delay, map, mapTo, mergeMap, share, startWith, tap } from 'rxjs/operators';
 
 export interface MaterialIconsDialogData {
   icon: string;
