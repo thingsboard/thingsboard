@@ -243,8 +243,8 @@ export class RuleChainService {
           map((res) => {
             if (nodeDefinition.configDirective && nodeDefinition.configDirective.length) {
               const selector = snakeCase(nodeDefinition.configDirective, '-');
-              const componentFactory = res.componentFactories.find((factory) =>
-                factory.selector === selector);
+              const componentFactory = res.find((factory) =>
+              factory.selector === selector);
               if (componentFactory) {
                 this.ruleNodeConfigFactories[nodeDefinition.configDirective] = componentFactory;
               } else {

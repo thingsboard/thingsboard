@@ -42,7 +42,8 @@ import * as AngularCommon from '@angular/common';
 import * as AngularForms from '@angular/forms';
 import * as AngularCdkCoercion from '@angular/cdk/coercion';
 import * as AngularCdkKeycodes from '@angular/cdk/keycodes';
-import * as AngularMaterial from '@angular/material/esm5';
+import * as AngularMaterialChips from '@angular/material/chips';
+import * as AngularMaterialAutocomplete from '@angular/material/autocomplete';
 import * as NgrxStore from '@ngrx/store';
 import * as TranslateCore from '@ngx-translate/core';
 import * as TbCore from '@core/public-api';
@@ -58,7 +59,8 @@ const ruleNodeConfigResourcesModulesMap = {
   '@angular/forms': SystemJS.newModule(AngularForms),
   '@angular/cdk/keycodes': SystemJS.newModule(AngularCdkKeycodes),
   '@angular/cdk/coercion': SystemJS.newModule(AngularCdkCoercion),
-  '@angular/material': SystemJS.newModule(AngularMaterial),
+  '@angular/material/chips': SystemJS.newModule(AngularMaterialChips),
+  '@angular/material/autocomplete': SystemJS.newModule(AngularMaterialAutocomplete),
   '@ngrx/store': SystemJS.newModule(NgrxStore),
   rxjs: SystemJS.newModule(RxJs),
   'rxjs/operators': SystemJS.newModule(RxJsOperators),

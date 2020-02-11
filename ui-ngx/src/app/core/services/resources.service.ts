@@ -14,9 +14,17 @@
 /// limitations under the License.
 ///
 
-import { Injectable, Inject, ModuleWithComponentFactories, Compiler, Injector } from '@angular/core';
+import {
+  Compiler,
+  ComponentFactory,
+  Inject,
+  Injectable,
+  Injector,
+  ModuleWithComponentFactories,
+  Type
+} from '@angular/core';
 import { DOCUMENT } from '@angular/common';
-import { ReplaySubject, Observable, throwError } from 'rxjs';
+import { forkJoin, Observable, ReplaySubject, throwError } from 'rxjs';
 
 declare const SystemJS;
 
@@ -26,7 +34,7 @@ declare const SystemJS;
 export class ResourcesService {
 
   private loadedResources: { [url: string]: ReplaySubject<any> } = {};
-  private loadedModules: { [url: string]: ReplaySubject<ModuleWithComponentFactories<any>> } = {};
+  private loadedModules: { [url: string]: ReplaySubject<ComponentFactory<any>[]> } = {};
 
   private anchor = this.document.getElementsByTagName('head')[0] || this.document.getElementsByTagName('body')[0];
 
@@ -52,11 +60,11 @@ export class ResourcesService {
     return this.loadResourceByType(fileType, url);
   }
 
-  public loadModule(url: string, modulesMap: {[key: string]: any}): Observable<ModuleWithComponentFactories<any>> {
+  public loadModule(url: string, modulesMap: {[key: string]: any}): Observable<ComponentFactory<any>[]> {
     if (this.loadedModules[url]) {
       return this.loadedModules[url].asObservable();
     }
-    const subject = new ReplaySubject<ModuleWithComponentFactories<any>>();
+    const subject = new ReplaySubject<ComponentFactory<any>[]>();
     this.loadedModules[url] = subject;
     if (modulesMap) {
       for (const moduleId of Object.keys(modulesMap)) {
@@ -65,23 +73,30 @@ export class ResourcesService {
     }
     SystemJS.import(url).then(
       (module) => {
-        if (module.default) {
-          this.compiler.compileModuleAndAllComponentsAsync(module.default).then(
-            (compiled) => {
-              try {
-                compiled.ngModuleFactory.create(this.injector);
-                this.loadedModules[url].next(compiled);
-                this.loadedModules[url].complete();
-              } catch (e) {
-                this.loadedModules[url].error(new Error(`Unable to init module from url: ${url}`));
-                delete this.loadedModules[url];
+        const modules = this.extractNgModules(module);
+        if (modules.length) {
+          const tasks: Promise<ModuleWithComponentFactories<any>>[] = [];
+          for (const m of modules) {
+            tasks.push(this.compiler.compileModuleAndAllComponentsAsync(m));
+          }
+          forkJoin(tasks).subscribe((compiled) => {
+            try {
+              const componentFactories: ComponentFactory<any>[] = [];
+              for (const c of compiled) {
+                c.ngModuleFactory.create(this.injector);
+                componentFactories.push(...c.componentFactories);
               }
-            },
-            (e) => {
-              this.loadedModules[url].error(new Error(`Unable to compile module from url: ${url}`));
+              this.loadedModules[url].next(componentFactories);
+              this.loadedModules[url].complete();
+            } catch (e) {
+              this.loadedModules[url].error(new Error(`Unable to init module from url: ${url}`));
               delete this.loadedModules[url];
             }
-          );
+          },
+          (e) => {
+              this.loadedModules[url].error(new Error(`Unable to compile module from url: ${url}`));
+              delete this.loadedModules[url];
+          });
         } else {
           this.loadedModules[url].error(new Error(`Module '${url}' doesn't have default export!`));
           delete this.loadedModules[url];
@@ -93,6 +108,17 @@ export class ResourcesService {
       }
     );
     return subject.asObservable();
+  }
+
+  private extractNgModules(module: any, modules: Type<any>[] = [] ): Type<any>[] {
+    if (module && 'ɵmod' in module) {
+      modules.push(module);
+    } else {
+      for (const k of Object.keys(module)) {
+        this.extractNgModules(module[k], modules);
+      }
+    }
+    return modules;
   }
 
   private loadResourceByType(type: 'css' | 'js', url: string): Observable<any> {
