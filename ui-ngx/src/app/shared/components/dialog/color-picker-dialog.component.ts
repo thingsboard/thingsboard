@@ -14,26 +14,14 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnInit, SkipSelf, ViewChild } from '@angular/core';
+import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
-import {
-  CONTAINS_TYPE,
-  EntityRelation,
-  EntitySearchDirection,
-  RelationTypeGroup
-} from '@shared/models/relation.models';
-import { EntityRelationService } from '@core/http/entity-relation.service';
-import { EntityId } from '@shared/models/id/entity-id';
-import { forkJoin, Observable } from 'rxjs';
-import { JsonObjectEditComponent } from '@app/shared/components/json-object-edit.component';
 import { Router } from '@angular/router';
-import { DialogComponent } from '@app/shared/components/dialog.component';
-import { AttributeData, AttributeScope } from '@shared/models/telemetry/telemetry.models';
-import { AttributeService } from '@core/http/attribute.service';
+import { DialogComponent } from '@shared/components/dialog.component';
 
 export interface ColorPickerDialogData {
   color: string;

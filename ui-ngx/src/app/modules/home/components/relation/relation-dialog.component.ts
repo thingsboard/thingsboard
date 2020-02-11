@@ -29,9 +29,9 @@ import {
 import { EntityRelationService } from '@core/http/entity-relation.service';
 import { EntityId } from '@shared/models/id/entity-id';
 import { forkJoin, Observable } from 'rxjs';
-import { JsonObjectEditComponent } from '@app/shared/components/json-object-edit.component';
+import { JsonObjectEditComponent } from '@shared/components/json-object-edit.component';
 import { Router } from '@angular/router';
-import { DialogComponent } from '@app/shared/components/dialog.component';
+import { DialogComponent } from '@shared/components/dialog.component';
 
 export interface RelationDialogData {
   isAdd: boolean;

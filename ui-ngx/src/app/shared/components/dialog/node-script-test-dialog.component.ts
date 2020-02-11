@@ -17,11 +17,13 @@
 import {
   AfterViewInit,
   Component,
-  ElementRef, HostBinding,
+  ElementRef,
+  HostBinding,
   Inject,
   OnInit,
   QueryList,
-  SkipSelf, ViewChild,
+  SkipSelf,
+  ViewChild,
   ViewChildren,
   ViewEncapsulation
 } from '@angular/core';
@@ -30,15 +32,14 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
-import { combineLatest, never, Observable, of, throwError, NEVER } from 'rxjs';
+import { NEVER, Observable, of } from 'rxjs';
 import { Router } from '@angular/router';
-import { DialogComponent } from '@app/shared/components/dialog.component';
+import { DialogComponent } from '@shared/components/dialog.component';
 import { ContentType } from '@shared/models/constants';
-import { JsonObjectEditComponent } from '@shared/components/json-object-edit.component';
 import { JsonContentComponent } from '@shared/components/json-content.component';
 import { TestScriptInputParams } from '@shared/models/rule-node.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
-import { map, mergeMap } from 'rxjs/operators';
+import { mergeMap } from 'rxjs/operators';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 
 export interface NodeScriptTestDialogData {
