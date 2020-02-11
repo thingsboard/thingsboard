@@ -45,7 +45,7 @@ export interface ManageDashboardLayoutsDialogData {
   selector: 'tb-manage-dashboard-layouts-dialog',
   templateUrl: './manage-dashboard-layouts-dialog.component.html',
   providers: [{provide: ErrorStateMatcher, useExisting: ManageDashboardLayoutsDialogComponent}],
-  styleUrls: ['./layout-button.scss']
+  styleUrls: ['../../../components/dashboard/layout-button.scss']
 })
 export class ManageDashboardLayoutsDialogComponent extends DialogComponent<ManageDashboardLayoutsDialogComponent, DashboardStateLayouts>
   implements OnInit, ErrorStateMatcher {
