@@ -37,7 +37,7 @@ import { EntityId } from '@app/shared/models/id/entity-id';
 import { Widget } from '@app/shared/models/widget.models';
 import { DashboardService } from '@core/http/dashboard.service';
 import { forkJoin, Observable, of } from 'rxjs';
-import { SelectTargetLayoutDialogComponent } from '@home/pages/dashboard/layout/select-target-layout-dialog.component';
+import { SelectTargetLayoutDialogComponent } from '@home/components/dashboard/select-target-layout-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import {
   SelectTargetStateDialogComponent,

@@ -74,7 +74,7 @@ import {
   ManageDashboardLayoutsDialogComponent,
   ManageDashboardLayoutsDialogData
 } from '@home/pages/dashboard/layout/manage-dashboard-layouts-dialog.component';
-import { SelectTargetLayoutDialogComponent } from '@home/pages/dashboard/layout/select-target-layout-dialog.component';
+import { SelectTargetLayoutDialogComponent } from '@home/components/dashboard/select-target-layout-dialog.component';
 import {
   DashboardSettingsDialogComponent,
   DashboardSettingsDialogData

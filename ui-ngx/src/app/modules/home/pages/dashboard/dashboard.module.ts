@@ -32,7 +32,6 @@ import { EditWidgetComponent } from './edit-widget.component';
 import { DashboardWidgetSelectComponent } from './dashboard-widget-select.component';
 import { AddWidgetDialogComponent } from './add-widget-dialog.component';
 import { ManageDashboardLayoutsDialogComponent } from './layout/manage-dashboard-layouts-dialog.component';
-import { SelectTargetLayoutDialogComponent } from './layout/select-target-layout-dialog.component';
 import { DashboardSettingsDialogComponent } from './dashboard-settings-dialog.component';
 import { ManageDashboardStatesDialogComponent } from './states/manage-dashboard-states-dialog.component';
 import { DashboardStateDialogComponent } from './states/dashboard-state-dialog.component';
@@ -51,7 +50,6 @@ import { SelectTargetStateDialogComponent } from './states/select-target-state-d
     DashboardWidgetSelectComponent,
     AddWidgetDialogComponent,
     ManageDashboardLayoutsDialogComponent,
-    SelectTargetLayoutDialogComponent,
     DashboardSettingsDialogComponent,
     ManageDashboardStatesDialogComponent,
     DashboardStateDialogComponent,
