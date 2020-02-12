@@ -42,6 +42,7 @@
   :host-context(.fc-edit) {
     .fc-nodeedit,
     .fc-nodedelete {
+      box-sizing: content-box;
       border: solid 2px #fff;
       background: #f83e05;
       outline: none;
@@ -49,6 +50,7 @@
   }
 
   .tb-rule-node {
+    box-sizing: content-box;
     display: flex;
     flex-direction: row;
     min-width: 150px;

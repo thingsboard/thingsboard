@@ -238,6 +238,10 @@ export class LinkLabelsComponent implements ControlValueAccessor, OnInit, OnChan
     }
   }
 
+  onFocus() {
+    this.linksFormGroup.get('label').updateValueAndValidity({onlySelf: true, emitEvent: true});
+  }
+
   clear(value: string = '') {
     this.labelInput.nativeElement.value = value;
     this.linksFormGroup.get('label').patchValue(null, {emitEvent: true});

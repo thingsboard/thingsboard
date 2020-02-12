@@ -156,8 +156,12 @@ class ThingsboardRcSelect extends React.Component<JsonFormFieldProps, Thingsboar
           mode = 'tags';
         } else if (this.props.form.multiple) {
           mode = 'multiple';
-        } else if (this.props.form.combobox) {
-          mode = 'combobox';
+        }
+
+        const dropdownStyle = {...this.props.form.dropdownStyle, ...{zIndex: 100001}};
+        let dropdownClassName = 'tb-rc-select-dropdown';
+        if (this.props.form.dropdownClassName) {
+          dropdownClassName += ' ' + this.props.form.dropdownClassName;
         }
 
         return (
@@ -165,9 +169,10 @@ class ThingsboardRcSelect extends React.Component<JsonFormFieldProps, Thingsboar
                 <label className={labelClass}>{this.props.form.title}</label>
                 <Select
                     className={this.props.form.className}
-                    dropdownClassName={this.props.form.dropdownClassName}
-                    dropdownStyle={{...this.props.form.dropdownStyle, ...{zIndex: 100001}}}
+                    dropdownClassName={dropdownClassName}
+                    dropdownStyle={dropdownStyle}
                     allowClear={this.props.form.allowClear}
+                    showSearch={true}
                     mode={mode}
                     maxTagTextLength={this.props.form.maxTagTextLength}
                     disabled={this.props.form.readonly}

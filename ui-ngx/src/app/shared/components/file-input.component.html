@@ -34,7 +34,7 @@
            flowDrop
            [flow]="flow.flowJs">
         <label for="{{inputId}}">{{ dropLabel }}</label>
-        <input class="file-input" flowButton [flow]="flow.flowJs" [flowAttributes]="{accept: accept}" id="{{inputId}}">
+        <input class="file-input" flowButton type="file" [flow]="flow.flowJs" [flowAttributes]="{accept: accept}" id="{{inputId}}">
       </div>
     </div>
   </ng-container>

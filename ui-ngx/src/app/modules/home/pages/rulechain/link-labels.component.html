@@ -29,6 +29,7 @@
     <input matInput type="text" placeholder="{{ !disabled ? ('rulenode.link-label' | translate) : '' }}"
            style="max-width: 200px;"
            #labelInput
+           (focusin)="onFocus()"
            formControlName="label"
            matAutocompleteOrigin
            #origin="matAutocompleteOrigin"
