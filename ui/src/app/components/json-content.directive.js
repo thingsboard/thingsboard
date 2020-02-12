@@ -62,6 +62,11 @@ function JsonContent($compile, $templateCache, toast, types, utils) {
             scope.contentBody = res;
         };
 
+        scope.minifierJson = function () {
+            var res = angular.toJson(angular.fromJson(scope.contentBody));
+            scope.contentBody = res;
+        };
+
         function updateEditorSize() {
             if (scope.json_editor) {
                 scope.json_editor.resize();
@@ -116,7 +121,8 @@ function JsonContent($compile, $templateCache, toast, types, utils) {
         scope.$watch('contentBody', function (newContent, oldContent) {
             ngModelCtrl.$setViewValue(scope.contentBody);
             if (!angular.equals(newContent, oldContent)) {
-                scope.contentValid = true;
+                // scope.contentValid = true;
+                scope.contentValid = scope.validate();
             }
             scope.updateValidity();
         });
@@ -131,6 +137,7 @@ function JsonContent($compile, $templateCache, toast, types, utils) {
         };
 
         scope.validate = function () {
+            debugger //eslint-disable-line
             try {
                 if (scope.validateContent) {
                     if (scope.contentType == types.contentType.JSON.value) {

@@ -1605,7 +1605,9 @@
     "js-func": {
         "no-return-error": "Функція повинна повертати значення!",
         "return-type-mismatch": "Функція повинна повернути значення типу '{{type}}'!",
-        "tidy": "Tidy"
+        "tidy": "Tidy",
+        "mini": "Mini",
+        "minifier": "Minifier"
     },
     "key-val": {
         "key": "Ключ",

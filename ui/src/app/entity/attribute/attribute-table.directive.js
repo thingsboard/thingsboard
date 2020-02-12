@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
                     return scope.attributeScopes[attrScope];
                 }
             }
-        }
+        };
 
         scope.types = types;
 
@@ -108,7 +108,7 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
             scope.query.search = null;
             scope.selectedAttributes = [];
             scope.attributeScope = getAttributeScopeByValue(attrs.defaultAttributeScope);
-        }
+        };
 
         scope.enterFilterMode = function(event) {
             let $button = angular.element(event.currentTarget);
@@ -119,12 +119,12 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
             $timeout(()=>{
                 $toolbarsContainer.find('.searchInput').focus();
             })
-        }
+        };
 
         scope.exitFilterMode = function() {
             scope.query.search = null;
             scope.getEntityAttributes();
-        }
+        };
 
         scope.$watch("query.search", function(newVal, prevVal) {
             if (!angular.equals(newVal, prevVal) && scope.query.search != null) {
@@ -144,11 +144,11 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
 
         scope.onReorder = function() {
             scope.getEntityAttributes(false, false);
-        }
+        };
 
         scope.onPaginate = function() {
             scope.getEntityAttributes(false, false);
-        }
+        };
 
         scope.getEntityAttributes = function(forceUpdate, reset) {
             if (scope.attributesDeferred) {
@@ -176,7 +176,7 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
                 });
                 deferred.resolve();
             }
-        }
+        };
 
         scope.checkSubscription = function() {
             var newSubscriptionId = null;
@@ -187,7 +187,7 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
                 attributeService.unsubscribeForEntityAttributes(scope.subscriptionId);
             }
             scope.subscriptionId = newSubscriptionId;
-        }
+        };
 
         scope.$on('$destroy', function() {
             if (scope.subscriptionId) {
@@ -214,7 +214,7 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
                     targetEvent: $event
                 });
             }
-        }
+        };
 
         scope.addAttribute = function($event) {
             if (!scope.attributeScope.clientSide) {
@@ -231,7 +231,7 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
                     scope.getEntityAttributes();
                 });
             }
-        }
+        };
 
         scope.deleteAttributes = function($event) {
             if (!scope.attributeScope.clientSide) {
@@ -252,7 +252,7 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
                         )
                 });
             }
-        }
+        };
 
         scope.nextWidget = function() {
             $mdUtil.nextTick(function () {
@@ -260,7 +260,7 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
                     scope.widgetsCarousel.index++;
                 }
             });
-        }
+        };
 
         scope.prevWidget = function() {
             $mdUtil.nextTick(function () {
@@ -268,7 +268,7 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
                     scope.widgetsCarousel.index--;
                 }
             });
-        }
+        };
 
         scope.enterWidgetMode = function() {
 
@@ -317,7 +317,7 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
                 type: types.datasourceType.entity,
                 entityAliasId: entityAlias.id,
                 dataKeys: []
-            }
+            };
             var i = 0;
             for (var attr =0; attr < scope.selectedAttributes.length;attr++) {
                 var attribute = scope.selectedAttributes[attr];
@@ -328,7 +328,7 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
                     color: utils.getMaterialColor(i),
                     settings: {},
                     _hash: Math.random()
-                }
+                };
                 datasource.dataKeys.push(dataKey);
                 i++;
             }
@@ -398,7 +398,7 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
                     }
                 }
             });
-        }
+        };
 
         scope.exitWidgetMode = function() {
             if (scope.widgetsBundleWatch) {
@@ -412,7 +412,7 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
             scope.selectedWidgetsBundleAlias = null;
             scope.mode = 'default';
             scope.getEntityAttributes(true);
-        }
+        };
 
         scope.addWidgetToDashboard = function($event) {
             if (scope.mode === 'widget' && scope.widgetsListCache.length > 0) {
@@ -430,14 +430,14 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
 
                 });
             }
-        }
+        };
 
         scope.loading = function() {
             return $rootScope.loading;
-        }
+        };
 
         $compile(element.contents())(scope);
-    }
+    };
 
     return {
         restrict: "E",

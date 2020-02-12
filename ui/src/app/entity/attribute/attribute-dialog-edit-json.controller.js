@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright © 2016-2019 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,39 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-tb-json-object-edit {
-  position: relative;
 
-  .fill-height {
-    height: 100%;
-  }
-}
+/* eslint-enable import/no-unresolved, import/default */
 
-.tb-json-object-edit-toolbar {
-  .md-button.tidy {
-    min-width: 32px;
-    min-height: 15px;
-    padding: 4px;
-    margin: 0 5px 0 0;
-    font-size: 12px;
-    line-height: 15px;
-    color: #7b7b7b;
-    background: rgba(220, 220, 220, .35);
-  }
-}
+import './attribute-dialog-edit-json.scss';
 
-.tb-json-object-panel {
-  height: 100%;
-  margin-left: 15px;
-  border: 1px solid #c0c0c0;
+/*@ngInject*/
+export default function AttributeDialogEditJsonController($scope, $mdDialog, $document, $window, types, jsonValue, readOnly) {
 
-  #tb-json-input {
-    width: 100%;
-    min-width: 200px;
-    height: 100%;
+    let vm = this;
+    vm.doc = $document[0];
+    vm.jsonValue = angular.copy(jsonValue);
+    vm.readOnly = readOnly;
+    vm.types = types;
 
-    &:not(.fill-height) {
-      min-height: 200px;
-    }
-  }
+    vm.save = () => {
+        $mdDialog.hide(vm.jsonValue);
+    };
+
+    vm.cancel = () => {
+        $mdDialog.hide();
+    };
 }

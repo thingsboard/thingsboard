@@ -1656,7 +1656,9 @@
   "js-func": {
     "no-return-error": "Η λειτουργία πρέπει να επιστρέφει τιμή!",
     "return-type-mismatch": "Η λειτουργία πρέπει να επιστρέφει τιμή από '{{type}}' τύπο!",
-    "tidy": "Tidy"
+    "tidy": "Tidy",
+    "mini": "Mini",
+    "minifier": "Minifier"
   },
   "key-val": {
     "key": "Όνομα",
@@ -2231,7 +2233,7 @@
     "last": "Τελευταίος",
     "time-period": "Χρονική Περίοδος"
   },
-  "user": {  
+  "user": {
     "user": "Χρήστης",
     "users": "Χρήστες",
     "management": "Διαχείριση Χρηστών",
