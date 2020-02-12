@@ -15,10 +15,13 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
+import org.hibernate.annotations.Type;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
+import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
@@ -29,12 +32,12 @@ import javax.persistence.Column;
 import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.Transient;
-
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.BOOLEAN_VALUE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.DOUBLE_VALUE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_ID_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.JSON_VALUE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.LONG_VALUE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.STRING_VALUE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.TS_COLUMN;
@@ -68,6 +71,10 @@ public abstract class AbstractTsKvEntity implements ToData<TsKvEntry> {
     @Column(name = DOUBLE_VALUE_COLUMN)
     protected Double doubleValue;
 
+    @Type(type = "json")
+    @Column(name = JSON_VALUE_COLUMN)
+    protected JsonNode jsonValue;
+
     @Transient
     protected String strKey;
 
@@ -93,6 +100,8 @@ public abstract class AbstractTsKvEntity implements ToData<TsKvEntry> {
             kvEntry = new DoubleDataEntry(strKey, doubleValue);
         } else if (booleanValue != null) {
             kvEntry = new BooleanDataEntry(strKey, booleanValue);
+        } else if (jsonValue != null) {
+            kvEntry = new JsonDataEntry(strKey, jsonValue);
         }
         return new BasicTsKvEntry(ts, kvEntry);
     }

@@ -58,6 +58,7 @@ import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
+import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
@@ -639,7 +640,7 @@ public class TelemetryController extends BaseController {
             String key = entry.getKey();
             JsonNode value = entry.getValue();
             if (entry.getValue().isObject()) {
-                attributes.add(new BaseAttributeKvEntry(new JsonDataEntry(key, value.asText()), ts));
+                attributes.add(new BaseAttributeKvEntry(new JsonDataEntry(key, value), ts));
             } else if (entry.getValue().isTextual()) {
                 if (maxStringValueLength > 0 && entry.getValue().textValue().length() > maxStringValueLength) {
                     String message = String.format("String value length [%d] for key [%s] is greater than maximum allowed [%d]", entry.getValue().textValue().length(), key, maxStringValueLength);

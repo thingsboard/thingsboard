@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.common.data.kv;
 
-import com.google.gson.JsonObject;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -54,7 +54,7 @@ public abstract class BasicKvEntry implements KvEntry {
     }
 
     @Override
-    public Optional<JsonObject> getJsonValue() {
+    public Optional<JsonNode> getJsonValue() {
         return Optional.ofNullable(null);
     }
 

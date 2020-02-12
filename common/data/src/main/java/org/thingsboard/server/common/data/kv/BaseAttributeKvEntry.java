@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.common.data.kv;
 
-import com.google.gson.JsonObject;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.Optional;
 
@@ -68,7 +68,7 @@ public class BaseAttributeKvEntry implements AttributeKvEntry {
     }
 
     @Override
-    public Optional<JsonObject> getJsonValue() {
+    public Optional<JsonNode> getJsonValue() {
         return kv.getJsonValue();
     }
 

@@ -15,11 +15,14 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
+import org.hibernate.annotations.Type;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
+import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
@@ -33,6 +36,7 @@ import java.io.Serializable;
 
 import static org.thingsboard.server.dao.model.ModelConstants.BOOLEAN_VALUE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.DOUBLE_VALUE_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.JSON_VALUE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.LAST_UPDATE_TS_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.LONG_VALUE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.STRING_VALUE_COLUMN;
@@ -57,6 +61,10 @@ public class AttributeKvEntity implements ToData<AttributeKvEntry>, Serializable
     @Column(name = DOUBLE_VALUE_COLUMN)
     private Double doubleValue;
 
+    @Type(type = "json")
+    @Column(name = JSON_VALUE_COLUMN)
+    private JsonNode jsonValue;
+
     @Column(name = LAST_UPDATE_TS_COLUMN)
     private Long lastUpdateTs;
 
@@ -71,7 +79,10 @@ public class AttributeKvEntity implements ToData<AttributeKvEntry>, Serializable
             kvEntry = new DoubleDataEntry(id.getAttributeKey(), doubleValue);
         } else if (longValue != null) {
             kvEntry = new LongDataEntry(id.getAttributeKey(), longValue);
+        } else if (jsonValue != null) {
+            kvEntry = new JsonDataEntry(id.getAttributeKey(), jsonValue);
         }
+
         return new BaseAttributeKvEntry(kvEntry, lastUpdateTs);
     }
 }

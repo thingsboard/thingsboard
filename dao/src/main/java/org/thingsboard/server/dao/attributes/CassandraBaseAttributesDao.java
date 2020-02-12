@@ -22,6 +22,7 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -112,30 +113,22 @@ public class CassandraBaseAttributesDao extends CassandraAbstractAsyncDao implem
 
     @Override
     public ListenableFuture<Void> save(TenantId tenantId, EntityId entityId, String attributeType, AttributeKvEntry attribute) {
-        BoundStatement stmt = getSaveStmt().bind();
-        stmt.setString(0, entityId.getEntityType().name());
-        stmt.setUUID(1, entityId.getId());
-        stmt.setString(2, attributeType);
-        stmt.setString(3, attribute.getKey());
-        stmt.setLong(4, attribute.getLastUpdateTs());
-        stmt.setString(5, attribute.getStrValue().orElse(null));
-        Optional<Boolean> booleanValue = attribute.getBooleanValue();
-        if (booleanValue.isPresent()) {
-            stmt.setBool(6, booleanValue.get());
+        BoundStatement stmt = getSaveStmt().bind()
+                .setString(0, entityId.getEntityType().name())
+                .setUUID(1, entityId.getId())
+                .setString(2, attributeType)
+                .setString(3, attribute.getKey())
+                .setLong(4, attribute.getLastUpdateTs())
+                .set(5, attribute.getStrValue().orElse(null), String.class)
+                .set(6, attribute.getBooleanValue().orElse(null), Boolean.class)
+                .set(7, attribute.getLongValue().orElse(null), Long.class)
+                .set(8, attribute.getDoubleValue().orElse(null), Double.class);
+
+        Optional<JsonNode> jsonV = attribute.getJsonValue();
+        if (jsonV.isPresent()) {
+            stmt.setString(9, attribute.getJsonValue().toString());
         } else {
-            stmt.setToNull(6);
-        }
-        Optional<Long> longValue = attribute.getLongValue();
-        if (longValue.isPresent()) {
-            stmt.setLong(7, longValue.get());
-        } else {
-            stmt.setToNull(7);
-        }
-        Optional<Double> doubleValue = attribute.getDoubleValue();
-        if (doubleValue.isPresent()) {
-            stmt.setDouble(8, doubleValue.get());
-        } else {
-            stmt.setToNull(8);
+            stmt.setToNull(9);
         }
         log.trace("Generated save stmt [{}] for entityId {} and attributeType {} and attribute", stmt, entityId, attributeType, attribute);
         return getFuture(executeAsyncWrite(tenantId, stmt), rs -> null);
@@ -172,8 +165,9 @@ public class CassandraBaseAttributesDao extends CassandraAbstractAsyncDao implem
                     "," + ModelConstants.BOOLEAN_VALUE_COLUMN +
                     "," + ModelConstants.LONG_VALUE_COLUMN +
                     "," + ModelConstants.DOUBLE_VALUE_COLUMN +
+                    "," + ModelConstants.JSON_VALUE_COLUMN +
                     ")" +
-                    " VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                    " VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         }
         return saveStmt;
     }

@@ -15,11 +15,12 @@
  */
 package org.thingsboard.server.service.telemetry;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.JsonParseException;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,6 +71,7 @@ import org.thingsboard.server.service.telemetry.sub.SubscriptionUpdate;
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -121,7 +123,7 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
     @Lazy
     private ActorService actorService;
 
-    private final JsonParser jsonParser = new JsonParser();
+    private final ObjectMapper mapper = new ObjectMapper();
 
     private ExecutorService tsCallBackExecutor;
     private ExecutorService wsCallBackExecutor;
@@ -710,7 +712,7 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
                 doubleValue.ifPresent(dataBuilder::setDoubleValue);
                 break;
             case JSON:
-                Optional<JsonObject> jsonValue = attr.getJsonValue();
+                Optional<JsonNode> jsonValue = attr.getJsonValue();
                 jsonValue.ifPresent(json -> dataBuilder.setJsonValue(jsonValue.toString()));
                 break;
             case STRING:
@@ -746,7 +748,11 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
                 entry = new StringDataEntry(proto.getKey(), proto.getStrValue());
                 break;
             case JSON:
-                entry = new JsonDataEntry(proto.getKey(), jsonParser.parse(proto.getJsonValue()).getAsJsonObject());
+                try {
+                    entry = new JsonDataEntry(proto.getKey(), mapper.readTree(proto.getJsonValue()));
+                } catch (IOException e) {
+                    throw new JsonParseException("Can't parse value: " + proto.getJsonValue(), e);
+                }
                 break;
         }
         return entry;

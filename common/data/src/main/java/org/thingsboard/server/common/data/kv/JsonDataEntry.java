@@ -15,15 +15,15 @@
  */
 package org.thingsboard.server.common.data.kv;
 
-import com.google.gson.JsonObject;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.Objects;
 import java.util.Optional;
 
 public class JsonDataEntry extends BasicKvEntry {
-    private final JsonObject value;
+    private final JsonNode value;
 
-    public JsonDataEntry(String key, JsonObject value) {
+    public JsonDataEntry(String key, JsonNode value) {
         super(key);
         this.value = value;
     }
@@ -34,7 +34,7 @@ public class JsonDataEntry extends BasicKvEntry {
     }
 
     @Override
-    public Optional<JsonObject> getJsonValue() {
+    public Optional<JsonNode> getJsonValue() {
         return Optional.ofNullable(value);
     }
 
