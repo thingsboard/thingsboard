@@ -140,7 +140,9 @@ public class DeviceProvisionServiceImpl extends AbstractEntityService implements
     @Override
     public ProvisionProfile saveProvisionProfile(ProvisionProfile provisionProfile) {
         log.trace("Executing saveProvisionProfile [{}]", provisionProfile);
+        boolean isKeyPresent = false;
         if (provisionProfile.getCredentials() != null && !StringUtils.isEmpty(provisionProfile.getCredentials().getProvisionProfileKey())) {
+            isKeyPresent = true;
             provisionProfileValidator.validate(provisionProfile, ProvisionProfile::getTenantId);
         } else {
             emptyProvisionProfileValidator.validate(provisionProfile, ProvisionProfile::getTenantId);
@@ -154,10 +156,14 @@ public class DeviceProvisionServiceImpl extends AbstractEntityService implements
             } catch (Exception t) {
                 ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
                 if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("provision_profile_unq_key")) {
-                    log.warn("Profile with such key already exists!", e);
-                    log.debug("Generating a new provision key!");
-                    provisionProfile.getCredentials().setProvisionProfileKey(generateProvisionProfileCredentials());
-                    savedProvisionProfile = saveProvisionProfile(provisionProfile);
+                    if (isKeyPresent) {
+                        throw new DataValidationException("Profile with such key already exists!");
+                    } else {
+                        log.warn("Profile with such key already exists!", e);
+                        log.debug("Prepare to generate a new provision key!");
+                        provisionProfile.getCredentials().setProvisionProfileKey(null);
+                        savedProvisionProfile = saveProvisionProfile(provisionProfile);
+                    }
                 } else {
                     throw t;
                 }
