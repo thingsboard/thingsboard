@@ -50,7 +50,7 @@ export interface GroupInfo {
   GroupTitle: string;
 }
 
-export type onChangeFn = (key: (string | number)[], val: any) => void;
+export type onChangeFn = (key: (string | number)[], val: any, forceUpdate?: boolean) => void;
 export type OnColorClickFn = (key: (string | number)[], val: tinycolor.ColorFormats.RGBA,
                               colorSelectedFn: (color: tinycolor.ColorFormats.RGBA) => void) => void;
 export type onToggleFullscreenFn = (element: HTMLElement, fullscreenFinishFn?: () => void) => void;
@@ -122,7 +122,7 @@ export interface JsonFormFieldProps {
   mapper?: {[type: string]: any};
   onChange?: onChangeFn;
   onColorClick?: OnColorClickFn;
-  onChangeValidate?: (e: any) => void;
+  onChangeValidate?: (e: any, forceUpdate?: boolean) => void;
   onToggleFullscreen?: onToggleFullscreenFn;
   valid?: boolean;
   error?: string;

@@ -168,11 +168,11 @@ export class JsonFormComponent implements OnInit, ControlValueAccessor, Validato
     }
   }
 
-  private onModelChange(key: (string | number)[], val: any) {
+  private onModelChange(key: (string | number)[], val: any, forceUpdate = false) {
     if (isString(val) && val === '') {
       val = undefined;
     }
-    if (JsonFormUtils.updateValue(key, this.model, val)) {
+    if (JsonFormUtils.updateValue(key, this.model, val) || forceUpdate) {
       this.formProps.model = this.model;
       this.isModelValid = this.validateModel();
       this.updateView();

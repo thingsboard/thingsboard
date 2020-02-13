@@ -2,7 +2,7 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "outDir": "../out-tsc/app",
-    "types": ["node", "jquery", "flot", "tooltipster", "tinycolor2", "js-beautify", "react", "react-dom", "jstree", "raphael"]
+    "types": ["node", "jquery", "flot", "tooltipster", "tinycolor2", "js-beautify", "react", "react-dom", "jstree", "raphael", "canvas-gauges"]
   },
   "angularCompilerOptions": {
     "fullTemplateTypeCheck": true

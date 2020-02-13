@@ -96,7 +96,7 @@ class ThingsboardArray extends React.Component<JsonFormFieldProps, ThingsboardAr
                 keys: newKeys
             }
         );
-        this.props.onChangeValidate(this.state.model);
+        this.props.onChangeValidate(this.state.model, true);
     }
 
     onDelete(index: number) {
@@ -110,7 +110,7 @@ class ThingsboardArray extends React.Component<JsonFormFieldProps, ThingsboardAr
                 keys: newKeys
             }
         );
-        this.props.onChangeValidate(this.state.model);
+        this.props.onChangeValidate(this.state.model, true);
     }
 
     setIndex(index: number) {

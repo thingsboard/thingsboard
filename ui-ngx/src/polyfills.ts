@@ -81,3 +81,24 @@ import 'core-js/es/array';
  */
 
 (window as any).global = window;
+
+/***************************************************************************************************
+ * WIDGETS IMPORTS
+ */
+
+import cssjs from '@core/css/css';
+import { TbFlot } from '@home/components/widget/lib/flot-widget';
+import { TbAnalogueCompass } from '@home/components/widget/lib/analogue-compass';
+import { TbAnalogueRadialGauge } from '@home/components/widget/lib/analogue-radial-gauge';
+import { TbAnalogueLinearGauge } from '@home/components/widget/lib/analogue-linear-gauge';
+
+import * as tinycolor_ from 'tinycolor2';
+
+const tinycolor = tinycolor_;
+
+(window as any).tinycolor = tinycolor;
+(window as any).cssjs = cssjs;
+(window as any).TbFlot = TbFlot;
+(window as any).TbAnalogueCompass = TbAnalogueCompass;
+(window as any).TbAnalogueRadialGauge = TbAnalogueRadialGauge;
+(window as any).TbAnalogueLinearGauge = TbAnalogueLinearGauge;

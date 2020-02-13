@@ -68,7 +68,9 @@ class ThingsboardText extends React.Component<JsonFormFieldProps, ThingsboardTex
           multiline={multiline}
           error={!this.props.valid}
           helperText={this.props.valid ? this.props.form.placeholder : this.props.error}
-          onChange={this.props.onChangeValidate}
+          onChange={(e) => {
+            this.props.onChangeValidate(e);
+          }}
           defaultValue={this.props.value}
           disabled={this.props.form.readonly}
           rows={rows}

@@ -73,8 +73,8 @@ class ThingsboardSchemaForm extends React.Component<JsonFormProps, any> {
     this.hasConditions = false;
   }
 
-  onChange(key: (string | number)[], val: any) {
-    this.props.onModelChange(key, val);
+  onChange(key: (string | number)[], val: any, forceUpdate?: boolean) {
+    this.props.onModelChange(key, val, forceUpdate);
     if (this.hasConditions) {
       this.forceUpdate();
     }

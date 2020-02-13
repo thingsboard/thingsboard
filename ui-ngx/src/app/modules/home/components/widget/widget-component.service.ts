@@ -37,16 +37,10 @@ import { DynamicWidgetComponent } from '@home/components/widget/dynamic-widget.c
 import { WidgetComponentsModule } from '@home/components/widget/widget-components.module';
 import { WINDOW } from '@core/services/window.service';
 
-import * as tinycolor_ from 'tinycolor2';
-import { TbFlot } from './lib/flot-widget';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { WidgetTypeId } from '@app/shared/models/id/widget-type-id';
 import { TenantId } from '@app/shared/models/id/tenant-id';
 import { SharedModule } from '@shared/shared.module';
-
-const tinycolor = tinycolor_;
-
-// declare var jQuery: any;
 
 // @dynamic
 @Injectable()
@@ -70,12 +64,6 @@ export class WidgetComponentService {
               private utils: UtilsService,
               private resources: ResourcesService,
               private translate: TranslateService) {
-    // @ts-ignore
-    this.window.tinycolor = tinycolor;
-    // @ts-ignore
-    this.window.cssjs = cssjs;
-    // @ts-ignore
-    this.window.TbFlot = TbFlot;
 
     this.cssParser.testMode = false;
 

@@ -6,7 +6,6 @@ import FormControl from '@material-ui/core/FormControl';
 import ThingsboardBaseComponent from '@shared/components/json-form/react/json-form-base-component';
 
 class ThingsboardRadios extends React.Component<JsonFormFieldProps, JsonFormFieldState> {
-
   render() {
     const items = this.props.form.titleMap.map((item, index) => {
       return (
@@ -19,7 +18,9 @@ class ThingsboardRadios extends React.Component<JsonFormFieldProps, JsonFormFiel
                    className={this.props.form.htmlClass}
                    disabled={this.props.form.readonly}>
         <FormLabel component='legend'>{this.props.form.title}</FormLabel>
-        <RadioGroup name={this.props.form.title} value={this.props.value} onChange={this.props.onChangeValidate}>
+        <RadioGroup name={this.props.form.title} value={this.props.value} onChange={(e) => {
+          this.props.onChangeValidate(e);
+        }}>
           {items}
         </RadioGroup>
       </FormControl>

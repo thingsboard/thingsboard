@@ -38,7 +38,7 @@ export default ThingsboardBaseComponent => class<P extends JsonFormFieldProps>
         }*/
     }
 
-    onChangeValidate(e) {
+    onChangeValidate(e, forceUpdate?: boolean) {
         let value = null;
         if (this.props.form.schema.type === 'integer' || this.props.form.schema.type === 'number') {
             if (e.target.value === null || e.target.value === '') {
@@ -61,7 +61,7 @@ export default ThingsboardBaseComponent => class<P extends JsonFormFieldProps>
             valid: validationResult.valid,
             error: validationResult.valid ? null : validationResult.error.message
         });
-        this.props.onChange(this.props.form.key, value);
+        this.props.onChange(this.props.form.key, value, forceUpdate);
     }
 
     defaultValue() {
