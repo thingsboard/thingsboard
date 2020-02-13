@@ -209,7 +209,7 @@ public class JsonConverter {
                 } else if (!value.isJsonNull()) {
                     throw new JsonSyntaxException(CAN_T_PARSE_VALUE + value);
                 }
-            } else if (element.isJsonObject()) {
+            } else if (element.isJsonObject() || element.isJsonArray()) {
                 result.add(KeyValueProto
                         .newBuilder()
                         .setKey(valueEntry
@@ -481,7 +481,7 @@ public class JsonConverter {
                 } else {
                     throw new JsonSyntaxException(CAN_T_PARSE_VALUE + value);
                 }
-            } else if (element.isJsonObject()) {
+            } else if (element.isJsonObject() || element.isJsonArray()) {
                 try {
                     result.add(new JsonDataEntry(valueEntry.getKey(), MAPPER.readTree(element.toString())));
                 } catch (IOException e) {
