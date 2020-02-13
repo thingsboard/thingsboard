@@ -639,7 +639,7 @@ public class TelemetryController extends BaseController {
         jsonNode.fields().forEachRemaining(entry -> {
             String key = entry.getKey();
             JsonNode value = entry.getValue();
-            if (entry.getValue().isObject()) {
+            if (entry.getValue().isObject() || entry.getValue().isArray()) {
                 attributes.add(new BaseAttributeKvEntry(new JsonDataEntry(key, value), ts));
             } else if (entry.getValue().isTextual()) {
                 if (maxStringValueLength > 0 && entry.getValue().textValue().length() > maxStringValueLength) {
