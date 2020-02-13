@@ -121,9 +121,9 @@
                 </tb-rule-node>
               </mat-tab>
               <mat-tab *ngIf="editingRuleNode.ruleNodeId" label="{{ 'rulenode.events' | translate }}" #eventsTab="matTab">
-                <tb-event-table [active]="eventsTab.isActive"
-                                [debugEventTypes]="[debugEventTypes.DEBUG_RULE_NODE]"
+                <tb-event-table [debugEventTypes]="[debugEventTypes.DEBUG_RULE_NODE]"
                                 [defaultEventType]="debugEventTypes.DEBUG_RULE_NODE"
+                                [active]="eventsTab.isActive"
                                 [tenantId]="ruleChain.tenantId.id"
                                 [entityId]="editingRuleNode.ruleNodeId"></tb-event-table>
               </mat-tab>

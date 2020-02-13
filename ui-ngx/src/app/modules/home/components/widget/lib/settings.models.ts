@@ -21,11 +21,11 @@ export type FontWeight = 'normal' | 'bold' | 'bolder' | 'lighter'
                          | '600' | '700' | '800' | '900';
 
 export interface FontSettings {
-  family: string;
-  size: number;
-  style: FontStyle;
-  weight: FontWeight;
-  color: string;
+  family?: string;
+  size?: number;
+  style?: FontStyle;
+  weight?: FontWeight;
+  color?: string;
   shadowColor?: string;
 }
 
@@ -35,4 +35,10 @@ export function getFontFamily(fontSettings: FontSettings): string {
     family = 'Roboto';
   }
   return family;
+}
+
+export function prepareFontSettings(fontSettings: FontSettings, defaultFontSettings: FontSettings): FontSettings {
+  const result = {...defaultFontSettings, ...(fontSettings || {})};
+  result.family = getFontFamily(result);
+  return result;
 }

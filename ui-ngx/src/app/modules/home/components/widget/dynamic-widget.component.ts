@@ -43,7 +43,7 @@ export class DynamicWidgetComponent extends PageComponent implements IDynamicWid
   constructor(@Inject(RafService) public raf: RafService,
               @Inject(Store) protected store: Store<AppState>,
               @Inject(FormBuilder) public fb: FormBuilder,
-              @Inject(Injector) private $injector: Injector,
+              @Inject(Injector) public readonly $injector: Injector,
               @Inject('widgetContext') public readonly ctx: WidgetContext,
               @Inject('errorMessages') public readonly errorMessages: string[]) {
     super(store);

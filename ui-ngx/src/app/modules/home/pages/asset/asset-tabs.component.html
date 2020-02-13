@@ -17,19 +17,19 @@
 -->
 <mat-tab *ngIf="entity"
          label="{{ 'attribute.attributes' | translate }}" #attributesTab="matTab">
-  <tb-attribute-table [active]="attributesTab.isActive"
+  <tb-attribute-table [defaultAttributeScope]="attributeScopes.SERVER_SCOPE"
+                      [active]="attributesTab.isActive"
                       [entityId]="entity.id"
-                      [entityName]="entity.name"
-                      [defaultAttributeScope]="attributeScopes.SERVER_SCOPE">
+                      [entityName]="entity.name">
   </tb-attribute-table>
 </mat-tab>
 <mat-tab *ngIf="entity"
          label="{{ 'attribute.latest-telemetry' | translate }}" #telemetryTab="matTab">
-  <tb-attribute-table [active]="telemetryTab.isActive"
+  <tb-attribute-table [defaultAttributeScope]="latestTelemetryTypes.LATEST_TELEMETRY"
+                      disableAttributeScopeSelection
+                      [active]="telemetryTab.isActive"
                       [entityId]="entity.id"
-                      [entityName]="entity.name"
-                      [defaultAttributeScope]="latestTelemetryTypes.LATEST_TELEMETRY"
-                      disableAttributeScopeSelection>
+                      [entityName]="entity.name">
   </tb-attribute-table>
 </mat-tab>
 <mat-tab *ngIf="entity"
@@ -38,7 +38,7 @@
 </mat-tab>
 <mat-tab *ngIf="entity"
          label="{{ 'asset.events' | translate }}" #eventsTab="matTab">
-  <tb-event-table [active]="eventsTab.isActive" [defaultEventType]="eventTypes.ERROR" [tenantId]="entity.tenantId.id"
+  <tb-event-table [defaultEventType]="eventTypes.ERROR" [active]="eventsTab.isActive" [tenantId]="entity.tenantId.id"
                   [entityId]="entity.id"></tb-event-table>
 </mat-tab>
 <mat-tab *ngIf="entity"
@@ -47,5 +47,5 @@
 </mat-tab>
 <mat-tab *ngIf="entity && authUser.authority === authorities.TENANT_ADMIN"
          label="{{ 'audit-log.audit-logs' | translate }}" #auditLogsTab="matTab">
-  <tb-audit-log-table [active]="auditLogsTab.isActive" [auditLogMode]="auditLogModes.ENTITY" [entityId]="entity.id" detailsMode="true"></tb-audit-log-table>
+  <tb-audit-log-table detailsMode="true" [active]="auditLogsTab.isActive" [auditLogMode]="auditLogModes.ENTITY" [entityId]="entity.id"></tb-audit-log-table>
 </mat-tab>

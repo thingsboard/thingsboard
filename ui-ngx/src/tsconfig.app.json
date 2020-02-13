@@ -7,8 +7,15 @@
   "angularCompilerOptions": {
     "fullTemplateTypeCheck": true
   },
+  "files": [
+    "main.ts",
+    "polyfills.ts"
+  ],
   "exclude": [
     "test.ts",
     "**/*.spec.ts"
+  ],
+  "include": [
+    "**/*.d.ts"
   ]
 }

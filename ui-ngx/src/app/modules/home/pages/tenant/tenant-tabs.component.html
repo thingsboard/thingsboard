@@ -17,19 +17,19 @@
 -->
 <mat-tab *ngIf="entity"
          label="{{ 'attribute.attributes' | translate }}" #attributesTab="matTab">
-  <tb-attribute-table [active]="attributesTab.isActive"
+  <tb-attribute-table [defaultAttributeScope]="attributeScopes.SERVER_SCOPE"
+                      [active]="attributesTab.isActive"
                       [entityId]="entity.id"
-                      [entityName]="entity.name"
-                      [defaultAttributeScope]="attributeScopes.SERVER_SCOPE">
+                      [entityName]="entity.name">
   </tb-attribute-table>
 </mat-tab>
 <mat-tab *ngIf="entity"
          label="{{ 'attribute.latest-telemetry' | translate }}" #telemetryTab="matTab">
-  <tb-attribute-table [active]="telemetryTab.isActive"
+  <tb-attribute-table [defaultAttributeScope]="latestTelemetryTypes.LATEST_TELEMETRY"
+                      disableAttributeScopeSelection
+                      [active]="telemetryTab.isActive"
                       [entityId]="entity.id"
-                      [entityName]="entity.name"
-                      [defaultAttributeScope]="latestTelemetryTypes.LATEST_TELEMETRY"
-                      disableAttributeScopeSelection>
+                      [entityName]="entity.name">
   </tb-attribute-table>
 </mat-tab>
 <mat-tab *ngIf="entity"
@@ -38,7 +38,7 @@
 </mat-tab>
 <mat-tab *ngIf="entity"
          label="{{ 'tenant.events' | translate }}" #eventsTab="matTab">
-  <tb-event-table [active]="eventsTab.isActive" [defaultEventType]="eventTypes.ERROR" [tenantId]="nullUid"
+  <tb-event-table [defaultEventType]="eventTypes.ERROR" [active]="eventsTab.isActive" [tenantId]="nullUid"
                   [entityId]="entity.id"></tb-event-table>
 </mat-tab>
 <mat-tab *ngIf="entity"

@@ -215,6 +215,7 @@ export class WidgetContext {
 export interface IDynamicWidgetComponent {
   readonly ctx: WidgetContext;
   readonly errorMessages: string[];
+  readonly $injector: Injector;
   executingRpcRequest: boolean;
   rpcEnabled: boolean;
   rpcErrorText: string;

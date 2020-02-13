@@ -91,6 +91,7 @@ import { TbFlot } from '@home/components/widget/lib/flot-widget';
 import { TbAnalogueCompass } from '@home/components/widget/lib/analogue-compass';
 import { TbAnalogueRadialGauge } from '@home/components/widget/lib/analogue-radial-gauge';
 import { TbAnalogueLinearGauge } from '@home/components/widget/lib/analogue-linear-gauge';
+import { TbCanvasDigitalGauge } from '@home/components/widget/lib/digital-gauge';
 
 import * as tinycolor_ from 'tinycolor2';
 
@@ -102,3 +103,4 @@ const tinycolor = tinycolor_;
 (window as any).TbAnalogueCompass = TbAnalogueCompass;
 (window as any).TbAnalogueRadialGauge = TbAnalogueRadialGauge;
 (window as any).TbAnalogueLinearGauge = TbAnalogueLinearGauge;
+(window as any).TbCanvasDigitalGauge = TbCanvasDigitalGauge;

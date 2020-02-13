@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-
+import * as CanvasGauges from 'canvas-gauges';
 import { FontSettings, getFontFamily } from '@home/components/widget/lib/settings.models';
 import { JsonSettingsSchema } from '@shared/models/widget.models';
 import { WidgetContext } from '@home/models/widget-component.models';
