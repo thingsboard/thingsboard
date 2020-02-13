@@ -19,7 +19,7 @@ import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
 
 import java.util.List;
 
-public interface InsertLatestRepository {
+public interface InsertLatestTsRepository {
 
     void saveOrUpdate(List<TsKvLatestEntity> entities);
 

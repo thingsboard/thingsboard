@@ -38,7 +38,7 @@ public final class TsKvDictionary {
     @Column(name = KEY_COLUMN)
     private String key;
 
-    @Column(name = KEY_ID_COLUMN, unique = true, columnDefinition="serial")
+    @Column(name = KEY_ID_COLUMN, unique = true, columnDefinition="int")
     @Generated(GenerationTime.INSERT)
     private int keyId;
 

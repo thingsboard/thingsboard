@@ -22,23 +22,21 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.transaction.annotation.Transactional;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.dao.model.sqlts.hsql.TsKvCompositeKey;
 import org.thingsboard.server.dao.model.sqlts.hsql.TsKvEntity;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @SqlDao
 public interface TsKvHsqlRepository extends CrudRepository<TsKvEntity, TsKvCompositeKey> {
 
     @Query("SELECT tskv FROM TsKvEntity tskv WHERE tskv.entityId = :entityId " +
-            "AND tskv.entityType = :entityType AND tskv.key = :entityKey " +
-            "AND tskv.ts > :startTs AND tskv.ts <= :endTs")
-    List<TsKvEntity> findAllWithLimit(@Param("entityId") String entityId,
-                                      @Param("entityType") EntityType entityType,
-                                      @Param("entityKey") String key,
+            "AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts <= :endTs")
+    List<TsKvEntity> findAllWithLimit(@Param("entityId") UUID entityId,
+                                      @Param("entityKey") int key,
                                       @Param("startTs") long startTs,
                                       @Param("endTs") long endTs,
                                       Pageable pageable);
@@ -46,22 +44,18 @@ public interface TsKvHsqlRepository extends CrudRepository<TsKvEntity, TsKvCompo
     @Transactional
     @Modifying
     @Query("DELETE FROM TsKvEntity tskv WHERE tskv.entityId = :entityId " +
-            "AND tskv.entityType = :entityType AND tskv.key = :entityKey " +
-            "AND tskv.ts > :startTs AND tskv.ts <= :endTs")
-    void delete(@Param("entityId") String entityId,
-                @Param("entityType") EntityType entityType,
-                @Param("entityKey") String key,
+            "AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts <= :endTs")
+    void delete(@Param("entityId") UUID entityId,
+                @Param("entityKey") int key,
                 @Param("startTs") long startTs,
                 @Param("endTs") long endTs);
 
     @Async
     @Query("SELECT new TsKvEntity(MAX(tskv.strValue)) FROM TsKvEntity tskv " +
-            "WHERE tskv.strValue IS NOT NULL " +
-            "AND tskv.entityId = :entityId AND tskv.entityType = :entityType " +
-            "AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts <= :endTs")
-    CompletableFuture<TsKvEntity> findStringMax(@Param("entityId") String entityId,
-                                                @Param("entityType") EntityType entityType,
-                                                @Param("entityKey") String entityKey,
+            "WHERE tskv.strValue IS NOT NULL AND tskv.entityId = :entityId AND tskv.key = :entityKey" +
+            " AND tskv.ts > :startTs AND tskv.ts <= :endTs")
+    CompletableFuture<TsKvEntity> findStringMax(@Param("entityId") UUID entityId,
+                                                @Param("entityKey") int entityKey,
                                                 @Param("startTs") long startTs,
                                                 @Param("endTs") long endTs);
 
@@ -70,24 +64,20 @@ public interface TsKvHsqlRepository extends CrudRepository<TsKvEntity, TsKvCompo
             "MAX(COALESCE(tskv.doubleValue, -1.79769E+308)), " +
             "SUM(CASE WHEN tskv.longValue IS NULL THEN 0 ELSE 1 END), " +
             "SUM(CASE WHEN tskv.doubleValue IS NULL THEN 0 ELSE 1 END), " +
-            "'MAX') FROM TsKvEntity tskv " +
-            "WHERE tskv.entityId = :entityId AND tskv.entityType = :entityType " +
+            "'MAX') FROM TsKvEntity tskv WHERE tskv.entityId = :entityId " +
             "AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts <= :endTs")
-    CompletableFuture<TsKvEntity> findNumericMax(@Param("entityId") String entityId,
-                                          @Param("entityType") EntityType entityType,
-                                          @Param("entityKey") String entityKey,
+    CompletableFuture<TsKvEntity> findNumericMax(@Param("entityId") UUID entityId,
+                                          @Param("entityKey") int entityKey,
                                           @Param("startTs") long startTs,
                                           @Param("endTs") long endTs);
 
 
     @Async
     @Query("SELECT new TsKvEntity(MIN(tskv.strValue)) FROM TsKvEntity tskv " +
-            "WHERE tskv.strValue IS NOT NULL " +
-            "AND tskv.entityId = :entityId AND tskv.entityType = :entityType " +
+            "WHERE tskv.strValue IS NOT NULL AND tskv.entityId = :entityId " +
             "AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts <= :endTs")
-    CompletableFuture<TsKvEntity> findStringMin(@Param("entityId") String entityId,
-                                          @Param("entityType") EntityType entityType,
-                                          @Param("entityKey") String entityKey,
+    CompletableFuture<TsKvEntity> findStringMin(@Param("entityId") UUID entityId,
+                                          @Param("entityKey") int entityKey,
                                           @Param("startTs") long startTs,
                                           @Param("endTs") long endTs);
 
@@ -96,12 +86,10 @@ public interface TsKvHsqlRepository extends CrudRepository<TsKvEntity, TsKvCompo
             "MIN(COALESCE(tskv.doubleValue, 1.79769E+308)), " +
             "SUM(CASE WHEN tskv.longValue IS NULL THEN 0 ELSE 1 END), " +
             "SUM(CASE WHEN tskv.doubleValue IS NULL THEN 0 ELSE 1 END), " +
-            "'MIN') FROM TsKvEntity tskv " +
-            "WHERE tskv.entityId = :entityId AND tskv.entityType = :entityType " +
+            "'MIN') FROM TsKvEntity tskv WHERE tskv.entityId = :entityId " +
             "AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts <= :endTs")
-    CompletableFuture<TsKvEntity> findNumericMin(@Param("entityId") String entityId,
-                                          @Param("entityType") EntityType entityType,
-                                          @Param("entityKey") String entityKey,
+    CompletableFuture<TsKvEntity> findNumericMin(@Param("entityId") UUID entityId,
+                                          @Param("entityKey") int entityKey,
                                           @Param("startTs") long startTs,
                                           @Param("endTs") long endTs);
 
@@ -110,11 +98,9 @@ public interface TsKvHsqlRepository extends CrudRepository<TsKvEntity, TsKvCompo
             "SUM(CASE WHEN tskv.strValue IS NULL THEN 0 ELSE 1 END), " +
             "SUM(CASE WHEN tskv.longValue IS NULL THEN 0 ELSE 1 END), " +
             "SUM(CASE WHEN tskv.doubleValue IS NULL THEN 0 ELSE 1 END)) FROM TsKvEntity tskv " +
-            "WHERE tskv.entityId = :entityId AND tskv.entityType = :entityType " +
-            "AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts <= :endTs")
-    CompletableFuture<TsKvEntity> findCount(@Param("entityId") String entityId,
-                                            @Param("entityType") EntityType entityType,
-                                            @Param("entityKey") String entityKey,
+            "WHERE tskv.entityId = :entityId AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts <= :endTs")
+    CompletableFuture<TsKvEntity> findCount(@Param("entityId") UUID entityId,
+                                            @Param("entityKey") int entityKey,
                                             @Param("startTs") long startTs,
                                             @Param("endTs") long endTs);
 
@@ -123,12 +109,10 @@ public interface TsKvHsqlRepository extends CrudRepository<TsKvEntity, TsKvCompo
             "SUM(COALESCE(tskv.doubleValue, 0.0)), " +
             "SUM(CASE WHEN tskv.longValue IS NULL THEN 0 ELSE 1 END), " +
             "SUM(CASE WHEN tskv.doubleValue IS NULL THEN 0 ELSE 1 END), " +
-            "'AVG') FROM TsKvEntity tskv " +
-            "WHERE tskv.entityId = :entityId AND tskv.entityType = :entityType " +
+            "'AVG') FROM TsKvEntity tskv WHERE tskv.entityId = :entityId " +
             "AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts <= :endTs")
-    CompletableFuture<TsKvEntity> findAvg(@Param("entityId") String entityId,
-                                          @Param("entityType") EntityType entityType,
-                                          @Param("entityKey") String entityKey,
+    CompletableFuture<TsKvEntity> findAvg(@Param("entityId") UUID entityId,
+                                          @Param("entityKey") int entityKey,
                                           @Param("startTs") long startTs,
                                           @Param("endTs") long endTs);
 
@@ -137,12 +121,10 @@ public interface TsKvHsqlRepository extends CrudRepository<TsKvEntity, TsKvCompo
             "SUM(COALESCE(tskv.doubleValue, 0.0)), " +
             "SUM(CASE WHEN tskv.longValue IS NULL THEN 0 ELSE 1 END), " +
             "SUM(CASE WHEN tskv.doubleValue IS NULL THEN 0 ELSE 1 END), " +
-            "'SUM') FROM TsKvEntity tskv " +
-            "WHERE tskv.entityId = :entityId AND tskv.entityType = :entityType " +
+            "'SUM') FROM TsKvEntity tskv WHERE tskv.entityId = :entityId " +
             "AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts <= :endTs")
-    CompletableFuture<TsKvEntity> findSum(@Param("entityId") String entityId,
-                                          @Param("entityType") EntityType entityType,
-                                          @Param("entityKey") String entityKey,
+    CompletableFuture<TsKvEntity> findSum(@Param("entityId") UUID entityId,
+                                          @Param("entityKey") int entityKey,
                                           @Param("startTs") long startTs,
                                           @Param("endTs") long endTs);
 

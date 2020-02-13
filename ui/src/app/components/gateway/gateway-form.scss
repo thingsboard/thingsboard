@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 .gateway-form{
+  height: 100%;
   padding: 5px 5px 0;
+  background-color: transparent;
 
   .gateway-form-row{
     md-input-container{
@@ -30,11 +32,11 @@
     }
   }
 
+  .security-type {
+    margin-top: 18px;
+  }
+
   .form-action-buttons{
     padding-top: 8px;
   }
-}
-
-.security-type {
-  margin-top: 38px;
 }

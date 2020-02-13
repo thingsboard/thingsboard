@@ -16,25 +16,41 @@
 package org.thingsboard.server.dao.model.sql;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.BooleanDataEntry;
+import org.thingsboard.server.common.data.kv.DoubleDataEntry;
+import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.dao.model.ToData;
 
 import javax.persistence.Column;
 import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
+import javax.persistence.Transient;
+
+import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.BOOLEAN_VALUE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.DOUBLE_VALUE_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_ID_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.LONG_VALUE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.STRING_VALUE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.TS_COLUMN;
 
 @Data
 @MappedSuperclass
-public abstract class AbstractTsKvEntity {
+public abstract class AbstractTsKvEntity implements ToData<TsKvEntry> {
 
     protected static final String SUM = "SUM";
     protected static final String AVG = "AVG";
     protected static final String MIN = "MIN";
     protected static final String MAX = "MAX";
+
+    @Id
+    @Column(name = ENTITY_ID_COLUMN, columnDefinition = "uuid")
+    protected UUID entityId;
 
     @Id
     @Column(name = TS_COLUMN)
@@ -52,6 +68,9 @@ public abstract class AbstractTsKvEntity {
     @Column(name = DOUBLE_VALUE_COLUMN)
     protected Double doubleValue;
 
+    @Transient
+    protected String strKey;
+
     public abstract boolean isNotEmpty();
 
     protected static boolean isAllNull(Object... args) {
@@ -62,4 +81,20 @@ public abstract class AbstractTsKvEntity {
         }
         return true;
     }
+
+    @Override
+    public TsKvEntry toData() {
+        KvEntry kvEntry = null;
+        if (strValue != null) {
+            kvEntry = new StringDataEntry(strKey, strValue);
+        } else if (longValue != null) {
+            kvEntry = new LongDataEntry(strKey, longValue);
+        } else if (doubleValue != null) {
+            kvEntry = new DoubleDataEntry(strKey, doubleValue);
+        } else if (booleanValue != null) {
+            kvEntry = new BooleanDataEntry(strKey, booleanValue);
+        }
+        return new BasicTsKvEntry(ts, kvEntry);
+    }
+
 }
