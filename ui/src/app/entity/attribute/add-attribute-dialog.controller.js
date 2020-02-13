@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 /* eslint-disable import/no-unresolved, import/default */
 
 import attributeDialogEditJsonTemplate from './attribute-dialog-edit-json.tpl.html';
@@ -42,7 +41,7 @@ export default function AddAttributeDialogController($scope, $mdDialog, $documen
 
     function add() {
         $scope.theForm.$setPristine();
-        if (vm.valueType===types.valueType.json) {
+        if (vm.valueType === types.valueType.json) {
             vm.attribute.value = angular.fromJson(vm.attribute.value);
         }
         attributeService.saveEntityAttributes(entityType, entityId, attributeScope, [vm.attribute]).then(
@@ -52,13 +51,12 @@ export default function AddAttributeDialogController($scope, $mdDialog, $documen
         );
     }
 
-    $scope.$watch('vm.valueType', function() {
+    $scope.$watch('vm.valueType', function () {
         if (vm.valueType === types.valueType.boolean) {
             vm.attribute.value = false;
-        }
-        else if (vm.valueType === types.valueType.json) {
+        } else if (vm.valueType === types.valueType.json) {
             vm.attribute.value = null;
-            vm.attribute.viewJsonStr =  null;
+            vm.attribute.viewJsonStr = null;
         } else {
             vm.attribute.value = null;
         }
@@ -71,7 +69,7 @@ export default function AddAttributeDialogController($scope, $mdDialog, $documen
                 if (response === null) {
                     vm.attribute.viewJsonStr = null;
                 } else {
-                    vm.attribute.viewJsonStr = angular.toJson(vm.attribute.value);
+                    vm.attribute.viewJsonStr = vm.attribute.value;
                 }
             }
         })

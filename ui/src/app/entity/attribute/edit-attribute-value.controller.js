@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 /* eslint-enable import/no-unresolved, import/default */
 
 import AttributeDialogEditJsonController from "./attribute-dialog-edit-json.controller";
@@ -80,17 +79,22 @@ export default function EditAttributeValueController($scope, $mdDialog, $documen
     });
 
     function editJson($event, jsonValue, readOnly) {
+        if (jsonValue) {
+            jsonValue = angular.toJson(jsonValue);
+        }
         showJsonDialog($event, jsonValue, readOnly).then((response) => {
             $scope.hideDialog = false;
             if (response || response === null) {
                 if (!angular.equals(response, $scope.model.value)) {
                     $scope.editDialog.$setDirty();
                 }
-                $scope.model.value = response;
+
                 if (response === null) {
                     $scope.model.viewJsonStr = null;
+                    $scope.model.value = null;
                 } else {
-                    $scope.model.viewJsonStr = angular.toJson($scope.model.value);
+                    $scope.model.value = angular.fromJson(response);
+                    $scope.model.viewJsonStr = response;
                 }
             }
         })

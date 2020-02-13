@@ -121,7 +121,6 @@ function JsonContent($compile, $templateCache, toast, types, utils) {
         scope.$watch('contentBody', function (newContent, oldContent) {
             ngModelCtrl.$setViewValue(scope.contentBody);
             if (!angular.equals(newContent, oldContent)) {
-                // scope.contentValid = true;
                 scope.contentValid = scope.validate();
             }
             scope.updateValidity();
@@ -137,7 +136,6 @@ function JsonContent($compile, $templateCache, toast, types, utils) {
         };
 
         scope.validate = function () {
-            debugger //eslint-disable-line
             try {
                 if (scope.validateContent) {
                     if (scope.contentType == types.contentType.JSON.value) {
