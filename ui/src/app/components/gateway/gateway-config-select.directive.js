@@ -48,6 +48,7 @@ function GatewayConfigSelect($compile, $templateCache, $mdConstant, $translate, 
         function startWatchers() {
             scope.$watch('gateway', function (newVal, prevVal) {
                 if (!angular.equals(newVal, prevVal) && newVal !== null) {
+                    console.log("select  startWatchers", "newVal", newVal, "prevVal", prevVal); //eslint-disable-line
                     scope.updateView();
                 }
             });

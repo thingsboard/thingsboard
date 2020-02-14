@@ -37,7 +37,8 @@ function GatewayConfig() {
             disabled: '=ngDisabled',
             gatewayConfig: '=',
             changeAlignment: '=',
-            theForm: '='
+            theForm: '=',
+            isReadOnly: '='
         },
         controller: GatewayConfigController,
         controllerAs: 'vm',

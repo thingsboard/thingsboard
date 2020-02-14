@@ -30,6 +30,7 @@ import thingsboardSideMenu from '../components/side-menu.directive';
 import thingsboardNavTree from '../components/nav-tree.directive';
 import thingsboardDashboardAutocomplete from '../components/dashboard-autocomplete.directive';
 import thingsboardKvMap from '../components/kv-map.directive';
+import thingsboardStateGatewayForm from '../components/gateway/state-gateway-form.directive';
 import thingsboardGatewayConfig from '../components/gateway/gateway-config.directive';
 import thingsboardGatewayConfigSelect from '../components/gateway/gateway-config-select.directive';
 import thingsboardGatewayForm from '../components/gateway/gateway-form.directive';
@@ -96,6 +97,7 @@ export default angular.module('thingsboard.home', [
     thingsboardNavTree,
     thingsboardDashboardAutocomplete,
     thingsboardKvMap,
+    thingsboardStateGatewayForm,
     thingsboardGatewayConfig,
     thingsboardGatewayConfigSelect,
     thingsboardGatewayForm,
