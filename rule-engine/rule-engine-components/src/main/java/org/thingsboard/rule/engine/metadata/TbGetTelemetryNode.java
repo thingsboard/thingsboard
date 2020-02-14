@@ -180,6 +180,9 @@ public class TbGetTelemetryNode implements TbNode {
             case DOUBLE:
                 obj.put("value", entry.getDoubleValue().get());
                 break;
+            case JSON:
+                obj.set("value", entry.getJsonValue().get());
+                break;
         }
         return obj;
     }

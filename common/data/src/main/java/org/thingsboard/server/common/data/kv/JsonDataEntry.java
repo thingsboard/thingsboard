@@ -17,6 +17,9 @@ package org.thingsboard.server.common.data.kv;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.Objects;
 import java.util.Optional;
 
