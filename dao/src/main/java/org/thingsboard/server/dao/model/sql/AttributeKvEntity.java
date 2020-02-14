@@ -15,9 +15,7 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
-import org.hibernate.annotations.Type;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
@@ -61,9 +59,8 @@ public class AttributeKvEntity implements ToData<AttributeKvEntry>, Serializable
     @Column(name = DOUBLE_VALUE_COLUMN)
     private Double doubleValue;
 
-    @Type(type = "json")
     @Column(name = JSON_VALUE_COLUMN)
-    private JsonNode jsonValue;
+    private String jsonValue;
 
     @Column(name = LAST_UPDATE_TS_COLUMN)
     private Long lastUpdateTs;

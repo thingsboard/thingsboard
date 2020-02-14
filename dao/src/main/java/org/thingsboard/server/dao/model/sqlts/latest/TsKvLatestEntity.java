@@ -15,9 +15,7 @@
  */
 package org.thingsboard.server.dao.model.sqlts.latest;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
-import org.springframework.util.StringUtils;
 import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
 import org.thingsboard.server.dao.sqlts.latest.SearchTsKvLatestRepository;
 
@@ -32,7 +30,6 @@ import javax.persistence.NamedNativeQuery;
 import javax.persistence.SqlResultSetMapping;
 import javax.persistence.SqlResultSetMappings;
 import javax.persistence.Table;
-import java.io.IOException;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.KEY_COLUMN;
@@ -72,8 +69,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.KEY_COLUMN;
 })
 public final class TsKvLatestEntity extends AbstractTsKvEntity {
 
-    private static final ObjectMapper mapper = new ObjectMapper();
-
     @Id
     @Column(name = KEY_COLUMN)
     private int key;
@@ -86,7 +81,7 @@ public final class TsKvLatestEntity extends AbstractTsKvEntity {
     public TsKvLatestEntity() {
     }
 
-    public TsKvLatestEntity(UUID entityId, Integer key, String strKey, String strValue, Boolean boolValue, Long longValue, Double doubleValue, String jsonValue, Long ts) throws IOException {
+    public TsKvLatestEntity(UUID entityId, Integer key, String strKey, String strValue, Boolean boolValue, Long longValue, Double doubleValue, String jsonValue, Long ts) {
         this.entityId = entityId;
         this.key = key;
         this.ts = ts;
@@ -94,9 +89,7 @@ public final class TsKvLatestEntity extends AbstractTsKvEntity {
         this.doubleValue = doubleValue;
         this.strValue = strValue;
         this.booleanValue = boolValue;
-        if (!StringUtils.isEmpty(jsonValue)) {
-            this.jsonValue = mapper.readTree(jsonValue);
-        }
+        this.jsonValue = jsonValue;
         this.strKey = strKey;
     }
 }

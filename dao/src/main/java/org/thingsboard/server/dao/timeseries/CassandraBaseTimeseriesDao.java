@@ -23,14 +23,11 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.gson.JsonParseException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,7 +56,6 @@ import org.thingsboard.server.dao.util.NoSqlTsDao;
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -90,7 +86,6 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
     public static final String ASC_ORDER = "ASC";
     public static final String DESC_ORDER = "DESC";
     private static List<Long> FIXED_PARTITION = Arrays.asList(new Long[]{0L});
-    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     @Autowired
     private Environment environment;
@@ -428,9 +423,9 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
                 .set(5, tsKvEntry.getStrValue().orElse(null), String.class)
                 .set(6, tsKvEntry.getLongValue().orElse(null), Long.class)
                 .set(7, tsKvEntry.getDoubleValue().orElse(null), Double.class);
-        Optional<JsonNode> jsonV = tsKvEntry.getJsonValue();
+        Optional<String> jsonV = tsKvEntry.getJsonValue();
         if (jsonV.isPresent()) {
-            stmt.setString(8, tsKvEntry.getJsonValue().get().toString());
+            stmt.setString(8, tsKvEntry.getJsonValue().get());
         } else {
             stmt.setToNull(8);
         }
@@ -695,11 +690,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
                     } else {
                         String jsonV = row.get(ModelConstants.JSON_VALUE_COLUMN, String.class);
                         if (StringUtils.isNoneEmpty(jsonV)) {
-                            try {
-                                kvEntry = new JsonDataEntry(key, MAPPER.readTree(jsonV));
-                            } catch (IOException e) {
-                                throw new JsonParseException("Can't parse value: " + jsonV, e);
-                            }
+                            kvEntry = new JsonDataEntry(key, jsonV);
                         } else {
                             log.warn("All values in key-value row are nullable ");
                         }
@@ -909,8 +900,8 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
                 doubleValue.ifPresent(d -> stmt.setDouble(column, d));
                 break;
             case JSON:
-                Optional<JsonNode> jsonValue = kvEntry.getJsonValue();
-                jsonValue.ifPresent(jsonObject -> stmt.setString(column, jsonObject.toString()));
+                Optional<String> jsonValue = kvEntry.getJsonValue();
+                jsonValue.ifPresent(jsonObject -> stmt.setString(column, jsonObject));
                 break;
         }
     }

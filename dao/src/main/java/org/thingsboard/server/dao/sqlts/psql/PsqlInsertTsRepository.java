@@ -86,13 +86,8 @@ public class PsqlInsertTsRepository extends AbstractInsertRepository implements 
                     ps.setNull(7, Types.DOUBLE);
                     ps.setNull(12, Types.DOUBLE);
 
-                    if (tsKvEntity.getJsonValue() != null) {
-                        ps.setString(8, replaceNullChars(tsKvEntity.getJsonValue().toString()));
-                        ps.setString(13, replaceNullChars(tsKvEntity.getJsonValue().toString()));
-                    } else {
-                        ps.setString(8, null);
-                        ps.setString(13, null);
-                    }
+                    ps.setString(8, replaceNullChars(tsKvEntity.getJsonValue()));
+                    ps.setString(13, replaceNullChars(tsKvEntity.getJsonValue()));
                 }
             }
 

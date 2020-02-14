@@ -69,11 +69,7 @@ public class HsqlAttributesInsertRepository extends AttributeKvInsertRepository 
                     ps.setNull(8, Types.BOOLEAN);
                 }
 
-                if (entity.getJsonValue() != null) {
-                    ps.setString(9, entity.getJsonValue().toString());
-                } else {
-                    ps.setString(9, null);
-                }
+                ps.setString(9, entity.getJsonValue());
 
                 ps.setLong(10, entity.getLastUpdateTs());
             });

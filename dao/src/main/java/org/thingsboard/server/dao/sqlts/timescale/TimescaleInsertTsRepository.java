@@ -79,13 +79,8 @@ public class TimescaleInsertTsRepository extends AbstractInsertRepository implem
                     ps.setNull(13, Types.DOUBLE);
                 }
 
-                if (tsKvEntity.getJsonValue() != null) {
-                    ps.setString(9, replaceNullChars(tsKvEntity.getJsonValue().toString()));
-                    ps.setString(14, replaceNullChars(tsKvEntity.getJsonValue().toString()));
-                } else {
-                    ps.setString(9, null);
-                    ps.setString(14, null);
-                }
+                ps.setString(9, replaceNullChars(tsKvEntity.getJsonValue()));
+                ps.setString(14, replaceNullChars(tsKvEntity.getJsonValue()));
             }
 
             @Override

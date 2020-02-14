@@ -68,7 +68,7 @@ public class BaseAttributeKvEntry implements AttributeKvEntry {
     }
 
     @Override
-    public Optional<JsonNode> getJsonValue() {
+    public Optional<String> getJsonValue() {
         return kv.getJsonValue();
     }
 

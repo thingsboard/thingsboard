@@ -73,11 +73,7 @@ public class HsqlLatestInsertTsRepository extends AbstractInsertRepository imple
                     ps.setNull(7, Types.DOUBLE);
                 }
 
-                if (entities.get(i).getJsonValue() != null) {
-                    ps.setString(8, entities.get(i).getJsonValue().toString());
-                } else {
-                    ps.setString(8, null);
-                }
+                ps.setString(8, entities.get(i).getJsonValue());
             }
 
             @Override

@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.transport.adaptor;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -48,7 +47,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.PostTelemetryMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvListProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -61,7 +59,6 @@ import java.util.stream.Collectors;
 
 public class JsonConverter {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final Gson GSON = new Gson();
     private static final JsonParser JSON_PARSER = new JsonParser();
     private static final String CAN_T_PARSE_VALUE = "Can't parse value: ";
@@ -416,7 +413,7 @@ public class JsonConverter {
                     result.add(de.getKey(), new JsonPrimitive(de.getStrValue().get()));
                     break;
                 case JSON:
-                    result.add(de.getKey(), JSON_PARSER.parse(de.getStrValue().get()));
+                    result.add(de.getKey(), JSON_PARSER.parse(de.getJsonValue().get()));
                     break;
                 default:
                     throw new IllegalArgumentException("Unsupported data type: " + de.getDataType());
@@ -482,11 +479,7 @@ public class JsonConverter {
                     throw new JsonSyntaxException(CAN_T_PARSE_VALUE + value);
                 }
             } else if (element.isJsonObject() || element.isJsonArray()) {
-                try {
-                    result.add(new JsonDataEntry(valueEntry.getKey(), MAPPER.readTree(element.toString())));
-                } catch (IOException e) {
-                    throw new JsonSyntaxException(CAN_T_PARSE_VALUE + element, e);
-                }
+                result.add(new JsonDataEntry(valueEntry.getKey(), element.toString()));
             } else {
                 throw new JsonSyntaxException(CAN_T_PARSE_VALUE + element);
             }

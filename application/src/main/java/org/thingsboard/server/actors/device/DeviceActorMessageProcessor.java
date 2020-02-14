@@ -648,7 +648,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                 break;
             case JSON:
                 builder.setType(KeyValueType.JSON_V);
-                builder.setJsonV(kvEntry.getJsonValue().get().toString());
+                builder.setJsonV(kvEntry.getJsonValue().get());
                 break;
         }
         return builder.build();

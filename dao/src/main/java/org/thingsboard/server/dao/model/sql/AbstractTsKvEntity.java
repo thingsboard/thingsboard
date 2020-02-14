@@ -15,9 +15,7 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
-import org.hibernate.annotations.Type;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
@@ -71,9 +69,8 @@ public abstract class AbstractTsKvEntity implements ToData<TsKvEntry> {
     @Column(name = DOUBLE_VALUE_COLUMN)
     protected Double doubleValue;
 
-    @Type(type = "json")
     @Column(name = JSON_VALUE_COLUMN)
-    protected JsonNode jsonValue;
+    protected String jsonValue;
 
     @Transient
     protected String strKey;

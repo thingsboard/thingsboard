@@ -88,11 +88,7 @@ public abstract class AttributeKvInsertRepository {
                             ps.setNull(4, Types.BOOLEAN);
                         }
 
-                        if (kvEntity.getJsonValue() != null) {
-                            ps.setString(5, replaceNullChars(kvEntity.getJsonValue().toString()));
-                        } else {
-                            ps.setString(5, null);
-                        }
+                        ps.setString(5, replaceNullChars(kvEntity.getJsonValue()));
 
                         ps.setLong(6, kvEntity.getLastUpdateTs());
                         ps.setString(7, kvEntity.getId().getEntityType().name());
@@ -157,13 +153,8 @@ public abstract class AttributeKvInsertRepository {
                             ps.setNull(14, Types.BOOLEAN);
                         }
 
-                        if (kvEntity.getJsonValue() != null) {
-                            ps.setString(9, replaceNullChars(kvEntity.getJsonValue().toString()));
-                            ps.setString(15, replaceNullChars(kvEntity.getJsonValue().toString()));
-                        } else {
-                            ps.setString(9, null);
-                            ps.setString(15, null);
-                        }
+                        ps.setString(9, replaceNullChars(kvEntity.getJsonValue()));
+                        ps.setString(15, replaceNullChars(kvEntity.getJsonValue()));
 
                         ps.setLong(10, kvEntity.getLastUpdateTs());
                         ps.setLong(16, kvEntity.getLastUpdateTs());
