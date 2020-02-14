@@ -98,6 +98,7 @@ export default function EditAttributeValueController($scope, $mdDialog, $documen
     }
 
     function showJsonDialog($event, jsonValue, readOnly) {
+
         if (jsonValue) {
             jsonValue = angular.toJson(angular.fromJson(jsonValue));
         }
