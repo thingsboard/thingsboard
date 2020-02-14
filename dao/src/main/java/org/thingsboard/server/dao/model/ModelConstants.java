@@ -369,6 +369,7 @@ public class ModelConstants {
     public static final String STRING_VALUE_COLUMN = "str_v";
     public static final String LONG_VALUE_COLUMN = "long_v";
     public static final String DOUBLE_VALUE_COLUMN = "dbl_v";
+    public static final String JSON_VALUE_COLUMN = "json_v";
 
     protected static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};
 

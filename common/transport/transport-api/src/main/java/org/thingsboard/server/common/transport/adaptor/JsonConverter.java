@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.transport.adaptor;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -31,6 +32,7 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
+import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
@@ -46,6 +48,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.PostTelemetryMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvListProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -58,7 +61,9 @@ import java.util.stream.Collectors;
 
 public class JsonConverter {
 
+    private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final Gson GSON = new Gson();
+    private static final JsonParser JSON_PARSER = new JsonParser();
     private static final String CAN_T_PARSE_VALUE = "Can't parse value: ";
     private static final String DEVICE_PROPERTY = "device";
 
@@ -204,6 +209,14 @@ public class JsonConverter {
                 } else if (!value.isJsonNull()) {
                     throw new JsonSyntaxException(CAN_T_PARSE_VALUE + value);
                 }
+            } else if (element.isJsonObject() || element.isJsonArray()) {
+                result.add(KeyValueProto
+                        .newBuilder()
+                        .setKey(valueEntry
+                                .getKey())
+                        .setType(KeyValueType.JSON_V)
+                        .setJsonV(element.toString())
+                        .build());
             } else if (!element.isJsonNull()) {
                 throw new JsonSyntaxException(CAN_T_PARSE_VALUE + element);
             }
@@ -354,6 +367,9 @@ public class JsonConverter {
             case LONG_V:
                 json.addProperty(name, entry.getLongV());
                 break;
+            case JSON_V:
+                json.add(name, JSON_PARSER.parse(entry.getJsonV()));
+                break;
         }
     }
 
@@ -363,47 +379,48 @@ public class JsonConverter {
 
     private static Consumer<TsKvProto> addToObjectFromProto(JsonObject result) {
         return de -> {
-            JsonPrimitive value;
             switch (de.getKv().getType()) {
                 case BOOLEAN_V:
-                    value = new JsonPrimitive(de.getKv().getBoolV());
+                    result.add(de.getKv().getKey(), new JsonPrimitive(de.getKv().getBoolV()));
                     break;
                 case DOUBLE_V:
-                    value = new JsonPrimitive(de.getKv().getDoubleV());
+                    result.add(de.getKv().getKey(), new JsonPrimitive(de.getKv().getDoubleV()));
                     break;
                 case LONG_V:
-                    value = new JsonPrimitive(de.getKv().getLongV());
+                    result.add(de.getKv().getKey(), new JsonPrimitive(de.getKv().getLongV()));
                     break;
                 case STRING_V:
-                    value = new JsonPrimitive(de.getKv().getStringV());
+                    result.add(de.getKv().getKey(), new JsonPrimitive(de.getKv().getStringV()));
                     break;
+                case JSON_V:
+                    result.add(de.getKv().getKey(), JSON_PARSER.parse(de.getKv().getJsonV()));
                 default:
                     throw new IllegalArgumentException("Unsupported data type: " + de.getKv().getType());
             }
-            result.add(de.getKv().getKey(), value);
         };
     }
 
     private static Consumer<AttributeKvEntry> addToObject(JsonObject result) {
         return de -> {
-            JsonPrimitive value;
             switch (de.getDataType()) {
                 case BOOLEAN:
-                    value = new JsonPrimitive(de.getBooleanValue().get());
+                    result.add(de.getKey(), new JsonPrimitive(de.getBooleanValue().get()));
                     break;
                 case DOUBLE:
-                    value = new JsonPrimitive(de.getDoubleValue().get());
+                    result.add(de.getKey(), new JsonPrimitive(de.getDoubleValue().get()));
                     break;
                 case LONG:
-                    value = new JsonPrimitive(de.getLongValue().get());
+                    result.add(de.getKey(), new JsonPrimitive(de.getLongValue().get()));
                     break;
                 case STRING:
-                    value = new JsonPrimitive(de.getStrValue().get());
+                    result.add(de.getKey(), new JsonPrimitive(de.getStrValue().get()));
+                    break;
+                case JSON:
+                    result.add(de.getKey(), JSON_PARSER.parse(de.getStrValue().get()));
                     break;
                 default:
                     throw new IllegalArgumentException("Unsupported data type: " + de.getDataType());
             }
-            result.add(de.getKey(), value);
         };
     }
 
@@ -463,6 +480,12 @@ public class JsonConverter {
                     parseNumericValue(result, valueEntry, value);
                 } else {
                     throw new JsonSyntaxException(CAN_T_PARSE_VALUE + value);
+                }
+            } else if (element.isJsonObject() || element.isJsonArray()) {
+                try {
+                    result.add(new JsonDataEntry(valueEntry.getKey(), MAPPER.readTree(element.toString())));
+                } catch (IOException e) {
+                    throw new JsonSyntaxException(CAN_T_PARSE_VALUE + element, e);
                 }
             } else {
                 throw new JsonSyntaxException(CAN_T_PARSE_VALUE + element);

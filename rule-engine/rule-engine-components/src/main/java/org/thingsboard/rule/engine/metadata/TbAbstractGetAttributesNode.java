@@ -77,7 +77,8 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
     }
 
     @Override
-    public void destroy() { }
+    public void destroy() {
+    }
 
     protected abstract ListenableFuture<T> findEntityIdAsync(TbContext ctx, TbMsg msg);
 
@@ -168,6 +169,8 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
             case DOUBLE:
                 value.put(VALUE, r.getDoubleValue().get());
                 break;
+            case JSON:
+                value.set(VALUE, r.getJsonValue().get());
         }
         msg.getMetaData().putValue(r.getKey(), value.toString());
     }

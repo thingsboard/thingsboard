@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.common.data.kv;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import java.io.Serializable;
 import java.util.Optional;
 
@@ -36,6 +38,8 @@ public interface KvEntry extends Serializable {
     Optional<Boolean> getBooleanValue();
 
     Optional<Double> getDoubleValue();
+
+    Optional<JsonNode> getJsonValue();
 
     String getValueAsString();
 
