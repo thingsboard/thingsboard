@@ -104,6 +104,7 @@ public class JpaPsqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDa
         entity.setDoubleValue(tsKvEntry.getDoubleValue().orElse(null));
         entity.setLongValue(tsKvEntry.getLongValue().orElse(null));
         entity.setBooleanValue(tsKvEntry.getBooleanValue().orElse(null));
+        entity.setJsonValue(tsKvEntry.getJsonValue().orElse(null));
         PsqlPartition psqlPartition = toPartition(tsKvEntry.getTs());
         log.trace("Saving entity: {}", entity);
         return tsQueue.add(new EntityContainer(entity, psqlPartition.getPartitionDate()));
