@@ -47,7 +47,9 @@ import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceAct
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceRequestMsg;
 import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
+import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
 import org.thingsboard.server.service.cluster.rpc.ClusterRpcService;
 import org.thingsboard.server.service.encoding.DataDecodingEncodingService;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
@@ -123,6 +125,18 @@ public class LocalTransportService extends AbstractTransportService implements R
                 transportApiResponseMsg -> {
                     if (callback != null) {
                         callback.onSuccess(transportApiResponseMsg.getGetOrCreateDeviceResponseMsg());
+                    }
+                },
+                getThrowableConsumer(callback), transportCallbackExecutor);
+    }
+
+    @Override
+    public void process(ProvisionDeviceRequestMsg msg, TransportServiceCallback<ProvisionDeviceResponseMsg> callback) {
+        DonAsynchron.withCallback(
+                transportApiService.handle(TransportApiRequestMsg.newBuilder().setProvisionRequestMsg(msg).build()),
+                transportApiResponseMsg -> {
+                    if (callback != null) {
+                        callback.onSuccess(transportApiResponseMsg.getProvisionDeviceResponseMsg());
                     }
                 },
                 getThrowableConsumer(callback), transportCallbackExecutor);

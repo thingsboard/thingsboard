@@ -40,6 +40,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotif
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionCloseNotificationProto;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.SubscribeToAttributeUpdatesMsg;
@@ -197,6 +198,14 @@ public class DeviceApiController {
         return responseWriter;
     }
 
+    @RequestMapping(value = "/provision", method = RequestMethod.POST)
+    public DeferredResult<ResponseEntity> provisionDevice(@RequestBody String json, HttpServletRequest request) {
+        DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
+        transportContext.getTransportService().process(JsonConverter.convertToProvisionRequestMsg(json),
+                new DeviceProvisionCallback(responseWriter));
+        return responseWriter;
+    }
+
     private static class DeviceAuthCallback implements TransportServiceCallback<ValidateDeviceCredentialsResponseMsg> {
         private final TransportContext transportContext;
         private final DeferredResult<ResponseEntity> responseWriter;
@@ -226,6 +235,25 @@ public class DeviceApiController {
             } else {
                 responseWriter.setResult(new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
             }
+        }
+
+        @Override
+        public void onError(Throwable e) {
+            log.warn("Failed to process request", e);
+            responseWriter.setResult(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
+        }
+    }
+
+    private static class DeviceProvisionCallback implements TransportServiceCallback<ProvisionDeviceResponseMsg> {
+        private final DeferredResult<ResponseEntity> responseWriter;
+
+        DeviceProvisionCallback(DeferredResult<ResponseEntity> responseWriter) {
+            this.responseWriter = responseWriter;
+        }
+
+        @Override
+        public void onSuccess(ProvisionDeviceResponseMsg msg) {
+            responseWriter.setResult(new ResponseEntity<>(JsonConverter.toJson(msg).toString(), HttpStatus.OK));
         }
 
         @Override

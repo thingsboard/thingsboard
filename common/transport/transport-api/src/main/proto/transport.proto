@@ -49,6 +49,11 @@ enum KeyValueType {
   STRING_V = 3;
 }
 
+enum CredentialsType {
+  ACCESS_TOKEN = 0;
+  X509_CERTIFICATE = 1;
+}
+
 message KeyValueProto {
   string key = 1;
   KeyValueType type = 2;
@@ -76,6 +81,14 @@ message DeviceInfoProto {
   string deviceName = 5;
   string deviceType = 6;
   string additionalInfo = 7;
+}
+
+message DeviceCredentialsProto {
+  int64 deviceIdMSB = 1;
+  int64 deviceIdLSB = 2;
+  CredentialsType credentialsType = 3;
+  string credentialsId = 4;
+  string credentialsValue = 5;
 }
 
 /**
@@ -131,6 +144,30 @@ message GetOrCreateDeviceFromGatewayRequestMsg {
   int64 gatewayIdLSB = 2;
   string deviceName = 3;
   string deviceType = 4;
+  string deviceLabel = 5;
+}
+
+message ProvisionDeviceRequestMsg {
+  string deviceName = 1;
+  string deviceType = 2;
+  string x509CertPubKey = 3;
+  ProvisionDeviceProfileCredentialsMsg provisionProfileCredentialsMsg = 4;
+}
+
+message ProvisionDeviceProfileCredentialsMsg {
+  string provisionProfileKey = 1;
+  string provisionProfileSecret = 2;
+}
+
+message ProvisionDeviceResponseMsg {
+  DeviceCredentialsProto deviceCredentials = 1;
+  ProvisionResponseStatus provisionResponseStatus = 2;
+}
+
+enum ProvisionResponseStatus {
+  SUCCESS = 0;
+  NOT_FOUND = 1;
+  FAILURE = 2;
 }
 
 message GetOrCreateDeviceFromGatewayResponseMsg {
@@ -234,9 +271,11 @@ message TransportApiRequestMsg {
    ValidateDeviceTokenRequestMsg validateTokenRequestMsg = 1;
    ValidateDeviceX509CertRequestMsg validateX509CertRequestMsg = 2;
    GetOrCreateDeviceFromGatewayRequestMsg getOrCreateDeviceRequestMsg = 3;
+   ProvisionDeviceRequestMsg provisionRequestMsg = 4;
 }
 
 message TransportApiResponseMsg {
    ValidateDeviceCredentialsResponseMsg validateTokenResponseMsg = 1;
    GetOrCreateDeviceFromGatewayResponseMsg getOrCreateDeviceResponseMsg = 2;
+   ProvisionDeviceResponseMsg provisionDeviceResponseMsg = 3;
 }

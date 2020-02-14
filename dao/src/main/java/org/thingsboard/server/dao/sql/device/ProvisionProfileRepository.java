@@ -13,11 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.dao.sql.device;
 
-/**
- * @author Andrew Shvayka
- */
-public enum EntityType {
-    TENANT, CUSTOMER, USER, DASHBOARD, ASSET, DEVICE, ALARM, RULE_CHAIN, RULE_NODE, ENTITY_VIEW, WIDGETS_BUNDLE, WIDGET_TYPE, PROVISION_PROFILE
+import org.springframework.data.repository.CrudRepository;
+import org.thingsboard.server.dao.model.sql.ProvisionProfileEntity;
+import org.thingsboard.server.dao.util.SqlDao;
+
+@SqlDao
+public interface ProvisionProfileRepository extends CrudRepository<ProvisionProfileEntity, String> {
+
+    ProvisionProfileEntity findByKey(String key);
+
 }

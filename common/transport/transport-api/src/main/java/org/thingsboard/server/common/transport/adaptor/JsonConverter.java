@@ -43,6 +43,9 @@ import org.thingsboard.server.gen.transport.TransportProtos.KeyValueProto;
 import org.thingsboard.server.gen.transport.TransportProtos.KeyValueType;
 import org.thingsboard.server.gen.transport.TransportProtos.PostAttributeMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostTelemetryMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceProfileCredentialsMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvListProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 
@@ -53,6 +56,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -245,6 +249,34 @@ public class JsonConverter {
                 throw new JsonSyntaxException("Big integer values are not supported!");
             }
         }
+    }
+
+    public static JsonObject toJson(ProvisionDeviceResponseMsg payload) {
+        return toJson(payload, false, 0);
+    }
+
+    public static JsonObject toJson(ProvisionDeviceResponseMsg payload, int requestId) {
+        return toJson(payload, true, requestId);
+    }
+
+    private static JsonObject toJson(ProvisionDeviceResponseMsg payload, boolean toGateway, int requestId) {
+        JsonObject result = new JsonObject();
+        if (payload.getProvisionResponseStatus() == TransportProtos.ProvisionResponseStatus.NOT_FOUND) {
+            result.addProperty("errorMsg", "Provision profile was not found!");
+        } else if (payload.getProvisionResponseStatus() == TransportProtos.ProvisionResponseStatus.FAILURE) {
+            result.addProperty("errorMsg", "Failed to provision device!");
+        } else {
+            if (toGateway) {
+                result.addProperty("id", requestId);
+            }
+            result.addProperty("deviceId", new DeviceId(
+                    new UUID(payload.getDeviceCredentials().getDeviceIdMSB(), payload.getDeviceCredentials().getDeviceIdLSB())).toString());
+            result.addProperty("credentialsType", payload.getDeviceCredentials().getCredentialsType().name());
+            result.addProperty("credentialsId", payload.getDeviceCredentials().getCredentialsId());
+            result.addProperty("credentialsValue",
+                    StringUtils.isEmpty(payload.getDeviceCredentials().getCredentialsValue()) ? null : payload.getDeviceCredentials().getCredentialsValue());
+        }
+        return result;
     }
 
     public static JsonObject toJson(GetAttributeResponseMsg payload) {
@@ -507,4 +539,45 @@ public class JsonConverter {
         maxStringValueLength = length;
     }
 
+    public static ProvisionDeviceRequestMsg convertToProvisionRequestMsg(String json) {
+        JsonElement jsonElement = new JsonParser().parse(json);
+        if (jsonElement.isJsonObject()) {
+            return buildProvisionRequestMsg(jsonElement.getAsJsonObject());
+        } else {
+            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + jsonElement);
+        }
+    }
+
+    public static ProvisionDeviceRequestMsg convertToProvisionRequestMsg(JsonObject jo) {
+        return buildProvisionRequestMsg(jo);
+    }
+
+    private static ProvisionDeviceRequestMsg buildProvisionRequestMsg(JsonObject jo) {
+        return ProvisionDeviceRequestMsg.newBuilder()
+                .setDeviceName(getStrValue(jo, DataConstants.DEVICE_NAME, true))
+                .setDeviceType(getStrValue(jo, DataConstants.DEVICE_TYPE, true))
+                .setX509CertPubKey(getStrValue(jo, DataConstants.CERT_PUB_KEY, false))
+                .setProvisionProfileCredentialsMsg(buildProvisionProfileCredentialsMsg(
+                        getStrValue(jo, DataConstants.PROVISION_PROFILE_KEY, true),
+                        getStrValue(jo, DataConstants.PROVISION_PROFILE_SECRET, true)))
+                .build();
+    }
+
+    private static ProvisionDeviceProfileCredentialsMsg buildProvisionProfileCredentialsMsg(String provisionProfileKey, String provisionProfileSecret) {
+        return ProvisionDeviceProfileCredentialsMsg.newBuilder()
+                .setProvisionProfileKey(provisionProfileKey)
+                .setProvisionProfileSecret(provisionProfileSecret)
+                .build();
+    }
+
+    private static String getStrValue(JsonObject jo, String field, boolean requiredField) {
+        if (jo.has(field)) {
+            return jo.get(field).getAsString();
+        } else {
+            if (requiredField) {
+                throw new RuntimeException("Failed to find the field " + field + " in JSON body " + jo + "!");
+            }
+            return "";
+        }
+    }
 }

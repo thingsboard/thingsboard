@@ -27,6 +27,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
+import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ClaimDeviceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg;
@@ -46,6 +47,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestM
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
 import org.thingsboard.server.kafka.AsyncCallbackTemplate;
@@ -226,6 +228,14 @@ public class RemoteTransportService extends AbstractTransportService {
         AsyncCallbackTemplate.withCallback(transportApiTemplate.post(msg.getDeviceName(),
                 TransportApiRequestMsg.newBuilder().setGetOrCreateDeviceRequestMsg(msg).build()),
                 response -> callback.onSuccess(response.getGetOrCreateDeviceResponseMsg()), callback::onError, transportCallbackExecutor);
+    }
+
+    @Override
+    public void process(ProvisionDeviceRequestMsg msg, TransportServiceCallback<ProvisionDeviceResponseMsg> callback) {
+        log.trace("Processing msg: {}", msg);
+        AsyncCallbackTemplate.withCallback(transportApiTemplate.post(msg.getDeviceName(),
+                TransportApiRequestMsg.newBuilder().setProvisionRequestMsg(msg).build()),
+                response -> callback.onSuccess(response.getProvisionDeviceResponseMsg()), callback::onError, transportCallbackExecutor);
     }
 
     @Override

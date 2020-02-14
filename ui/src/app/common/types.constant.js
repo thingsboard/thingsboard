@@ -222,6 +222,12 @@ export default angular.module('thingsboard.types', [])
                 },
                 "LOCKOUT": {
                     name: "audit-log.type-lockout"
+                },
+                "PROVISION_SUCCESS": {
+                    name: "audit-log.type-provision-success"
+                },
+                "PROVISION_FAILURE": {
+                    name: "audit-log.type-provision-failure"
                 }
             },
             auditLogActionStatus: {
@@ -851,6 +857,14 @@ export default angular.module('thingsboard.types', [])
                 'ATTRIBUTES_DELETED': {
                     name: 'Attributes Deleted',
                     value: 'ATTRIBUTES_DELETED'
+                },
+                'PROVISION_SUCCESS': {
+                    name: 'Provision Success',
+                    value: 'PROVISION_SUCCESS'
+                },
+                'PROVISION_FAILURE': {
+                    name: 'Provision Failure',
+                    value: 'PROVISION_FAILURE'
                 }
             },
             valueType: {

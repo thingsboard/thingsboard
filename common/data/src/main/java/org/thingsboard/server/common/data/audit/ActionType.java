@@ -40,7 +40,9 @@ public enum ActionType {
     ALARM_CLEAR(false),
     LOGIN(false),
     LOGOUT(false),
-    LOCKOUT(false);
+    LOCKOUT(false),
+    PROVISION_SUCCESS(false),
+    PROVISION_FAILURE(false);
 
     private final boolean isRead;
 

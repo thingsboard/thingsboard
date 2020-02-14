@@ -263,6 +263,18 @@ public class ModelConstants {
     public static final String DEVICE_CREDENTIALS_BY_CREDENTIALS_ID_COLUMN_FAMILY_NAME = "device_credentials_by_credentials_id";
 
     /**
+     * Cassandra provision_profile constants.
+     */
+    public static final String PROVISION_PROFILE_COLUMN_FAMILY_NAME = "provision_profile";
+    public static final String PROVISION_PROFILE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String PROVISION_PROFILE_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
+    public static final String PROVISION_PROFILE_KEY_PROPERTY = "key";
+    public static final String PROVISION_PROFILE_SECRET_PROPERTY = "secret";
+    public static final String PROVISION_PROFILE_VALIDATION_STRATEGY_TYPE = "provision_request_validation_strategy_type";
+
+    public static final String PROVISION_PROFILE_BY_KEY_COLUMN_FAMILY_NAME = "provision_profile_by_key";
+
+    /**
      * Cassandra widgets_bundle constants.
      */
     public static final String WIDGETS_BUNDLE_COLUMN_FAMILY_NAME = "widgets_bundle";
