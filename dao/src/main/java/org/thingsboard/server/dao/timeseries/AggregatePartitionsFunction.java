@@ -172,6 +172,8 @@ public class AggregatePartitionsFunction implements com.google.common.base.Funct
             }
         } else if (curBValue != null) {
             aggResult.bValue = aggResult.bValue == null ? curBValue : aggResult.bValue || curBValue;
+        } else if (curSValue != null && (aggResult.sValue == null || curSValue.compareTo(aggResult.sValue) > 0)) {
+            aggResult.sValue = curSValue;
         } else if (curJValue != null && (aggResult.jValue == null || curJValue.compareTo(aggResult.jValue) > 0)) {
             aggResult.jValue = curJValue;
         }
