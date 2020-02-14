@@ -33,7 +33,8 @@ export default class TbFlot {
         this.ctx = ctx;
         this.chartType = chartType || 'line';
         var settings = ctx.settings;
-        var utils = this.ctx.$scope.$injector.get('utils');
+        this.utils = this.ctx.$scope.$injector.get('utils');
+        this.types = this.ctx.$scope.$injector.get('types');
 
         ctx.tooltip = $('#flot-series-tooltip');
         if (ctx.tooltip.length === 0) {
@@ -265,7 +266,7 @@ export default class TbFlot {
             };
             if (settings.xaxis) {
                 this.xaxis.font.color = settings.xaxis.color || this.xaxis.font.color;
-                this.xaxis.label = utils.customTranslation(settings.xaxis.title, settings.xaxis.title) || null;
+                this.xaxis.label = this.utils.customTranslation(settings.xaxis.title, settings.xaxis.title) || null;
                 this.xaxis.labelFont.color = this.xaxis.font.color;
                 this.xaxis.labelFont.size = this.xaxis.font.size+2;
                 this.xaxis.labelFont.weight = "bold";
@@ -302,7 +303,7 @@ export default class TbFlot {
                 this.yaxis.font.color = settings.yaxis.color || this.yaxis.font.color;
                 this.yaxis.min = angular.isDefined(settings.yaxis.min) ? settings.yaxis.min : null;
                 this.yaxis.max = angular.isDefined(settings.yaxis.max) ? settings.yaxis.max : null;
-                this.yaxis.label = utils.customTranslation(settings.yaxis.title, settings.yaxis.title) || null;
+                this.yaxis.label = this.utils.customTranslation(settings.yaxis.title, settings.yaxis.title) || null;
                 this.yaxis.labelFont.color = this.yaxis.font.color;
                 this.yaxis.labelFont.size = this.yaxis.font.size+2;
                 this.yaxis.labelFont.weight = "bold";
@@ -365,7 +366,7 @@ export default class TbFlot {
                             return '';
                         };
                     }
-                    xaxis.label = utils.customTranslation(settings.xaxisSecond.title, settings.xaxisSecond.title) || null;
+                    xaxis.label = this.utils.customTranslation(settings.xaxisSecond.title, settings.xaxisSecond.title) || null;
                     xaxis.position = settings.xaxisSecond.axisPosition;
                 }
                 xaxis.tickLength = 0;
@@ -476,7 +477,6 @@ export default class TbFlot {
         this.yaxes = [];
         var yaxesMap = {};
         let predefinedThresholds = [], thresholdsDatasources = [];
-        let types = this.ctx.$scope.$injector.get('types');
 
         var tooltipValueFormatFunction = null;
         if (this.ctx.settings.tooltipValueFormatter && this.ctx.settings.tooltipValueFormatter.length) {
@@ -595,7 +595,7 @@ export default class TbFlot {
                             })[0];
 
                             let dataKey = {
-                                type: types.dataKeyType.attribute,
+                                type: this.types.dataKeyType.attribute,
                                 name: threshold.thresholdAttribute,
                                 label: threshold.thresholdAttribute,
                                 settings: {
@@ -610,7 +610,7 @@ export default class TbFlot {
                                 datasource.dataKeys.push(dataKey);
                             } else {
                                 datasource = {
-                                    type: types.datasourceType.entity,
+                                    type: this.types.datasourceType.entity,
                                     name: threshold.thresholdEntityAlias,
                                     aliasName: threshold.thresholdEntityAlias,
                                     entityAliasId: entityAliasId,
@@ -673,7 +673,7 @@ export default class TbFlot {
         var tickDecimals, tickSize;
 
         var label = keySettings.axisTitle && keySettings.axisTitle.length ? keySettings.axisTitle : yaxis.label;
-        if ((keySettings.axisTickDecimals)) {
+        if (angular.isNumber(keySettings.axisTickDecimals)) {
             tickDecimals = keySettings.axisTickDecimals;
         } else {
             tickDecimals = yaxis.tickDecimals;
@@ -714,12 +714,11 @@ export default class TbFlot {
     }
 
     subscribeForThresholdsAttributes(datasources) {
-        let types = this.ctx.$scope.$injector.get('types');
         let tbFlot = this;
         let thresholdsSourcesSubscriptionOptions = {
             datasources: datasources,
             useDashboardTimewindow: false,
-            type: types.widgetType.latest.value,
+            type: this.types.widgetType.latest.value,
             callbacks: {
                 onDataUpdated: (subscription) => {tbFlot.thresholdsSourcesDataUpdated(subscription.data)}
             }
@@ -732,7 +731,7 @@ export default class TbFlot {
     }
 
     thresholdsSourcesDataUpdated(data) {
-        let allThresholds = [].concat(this.predefinedThresholds);
+        let allThresholds = angular.copy(this.predefinedThresholds);
         for (let i = 0; i < data.length; i++) {
             let keyData = data[i];
             if (keyData && keyData.data && keyData.data[0]) {
@@ -752,7 +751,6 @@ export default class TbFlot {
     generateThreshold(existingThresholds, yaxis, lineWidth, color, defaultColorIndex, thresholdValue) {
         let marking = {};
         let markingYAxis;
-        let utils = this.ctx.$scope.$injector.get('utils');
 
         if (yaxis !== 1) {
             markingYAxis = 'y' + yaxis + 'axis';
@@ -767,7 +765,7 @@ export default class TbFlot {
         if (angular.isDefined(color)) {
             marking.color = color;
         } else {
-            marking.color = utils.getMaterialColor(defaultColorIndex);
+            marking.color = this.utils.getMaterialColor(defaultColorIndex);
         }
 
         marking[markingYAxis] = {
