@@ -76,6 +76,9 @@ export default function AddAttributeDialogController($scope, $mdDialog, $documen
     };
 
     function showJsonDialog($event, jsonValue, readOnly) {
+        if (jsonValue) {
+            jsonValue = angular.toJson(angular.fromJson(jsonValue));
+        }
         if ($event) {
             $event.stopPropagation();
         }

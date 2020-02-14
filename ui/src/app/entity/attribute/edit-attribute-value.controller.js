@@ -79,9 +79,6 @@ export default function EditAttributeValueController($scope, $mdDialog, $documen
     });
 
     function editJson($event, jsonValue, readOnly) {
-        if (jsonValue) {
-            jsonValue = angular.toJson(jsonValue);
-        }
         showJsonDialog($event, jsonValue, readOnly).then((response) => {
             $scope.hideDialog = false;
             if (response || response === null) {
@@ -101,6 +98,9 @@ export default function EditAttributeValueController($scope, $mdDialog, $documen
     }
 
     function showJsonDialog($event, jsonValue, readOnly) {
+        if (jsonValue) {
+            jsonValue = angular.toJson(angular.fromJson(jsonValue));
+        }
         if ($event) {
             $event.stopPropagation();
         }
