@@ -22,7 +22,6 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -122,14 +121,9 @@ public class CassandraBaseAttributesDao extends CassandraAbstractAsyncDao implem
                 .set(5, attribute.getStrValue().orElse(null), String.class)
                 .set(6, attribute.getBooleanValue().orElse(null), Boolean.class)
                 .set(7, attribute.getLongValue().orElse(null), Long.class)
-                .set(8, attribute.getDoubleValue().orElse(null), Double.class);
+                .set(8, attribute.getDoubleValue().orElse(null), Double.class)
+                .set(9, attribute.getJsonValue().orElse(null), String.class);
 
-        Optional<JsonNode> jsonV = attribute.getJsonValue();
-        if (jsonV.isPresent()) {
-            stmt.setString(9, attribute.getJsonValue().toString());
-        } else {
-            stmt.setToNull(9);
-        }
         log.trace("Generated save stmt [{}] for entityId {} and attributeType {} and attribute", stmt, entityId, attributeType, attribute);
         return getFuture(executeAsyncWrite(tenantId, stmt), rs -> null);
     }

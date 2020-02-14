@@ -77,11 +77,7 @@ public class HsqlInsertTsRepository extends AbstractInsertRepository implements 
                     ps.setNull(7, Types.DOUBLE);
                 }
 
-                if (tsKvEntity.getJsonValue() != null) {
-                    ps.setString(8, tsKvEntity.getJsonValue().toString());
-                } else {
-                    ps.setString(8, null);
-                }
+                ps.setString(8, tsKvEntity.getJsonValue());
             }
 
             @Override

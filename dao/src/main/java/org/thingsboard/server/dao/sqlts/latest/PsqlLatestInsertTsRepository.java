@@ -76,11 +76,7 @@ public class PsqlLatestInsertTsRepository extends AbstractInsertRepository imple
                             ps.setNull(5, Types.DOUBLE);
                         }
 
-                        if (tsKvLatestEntity.getJsonValue() != null) {
-                            ps.setString(6, replaceNullChars(tsKvLatestEntity.getJsonValue().toString()));
-                        } else {
-                            ps.setString(6, null);
-                        }
+                        ps.setString(6, replaceNullChars(tsKvLatestEntity.getJsonValue()));
 
                         ps.setObject(7, tsKvLatestEntity.getEntityId());
                         ps.setInt(8, tsKvLatestEntity.getKey());
@@ -143,13 +139,8 @@ public class PsqlLatestInsertTsRepository extends AbstractInsertRepository imple
                             ps.setNull(13, Types.DOUBLE);
                         }
 
-                        if (tsKvLatestEntity.getJsonValue() != null) {
-                            ps.setString(8, replaceNullChars(tsKvLatestEntity.getJsonValue().toString()));
-                            ps.setString(14, replaceNullChars(tsKvLatestEntity.getJsonValue().toString()));
-                        } else {
-                            ps.setString(8, null);
-                            ps.setString(14, null);
-                        }
+                        ps.setString(8, replaceNullChars(tsKvLatestEntity.getJsonValue()));
+                        ps.setString(14, replaceNullChars(tsKvLatestEntity.getJsonValue()));
                     }
 
                     @Override

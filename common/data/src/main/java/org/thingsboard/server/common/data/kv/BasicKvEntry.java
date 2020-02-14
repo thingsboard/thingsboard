@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.common.data.kv;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
 import java.util.Objects;
 import java.util.Optional;
 
@@ -54,7 +52,7 @@ public abstract class BasicKvEntry implements KvEntry {
     }
 
     @Override
-    public Optional<JsonNode> getJsonValue() {
+    public Optional<String> getJsonValue() {
         return Optional.ofNullable(null);
     }
 

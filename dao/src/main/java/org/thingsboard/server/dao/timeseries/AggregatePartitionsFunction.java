@@ -17,9 +17,6 @@ package org.thingsboard.server.dao.timeseries;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.JsonParseException;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
@@ -32,7 +29,6 @@ import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 
 import javax.annotation.Nullable;
-import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
@@ -52,7 +48,6 @@ public class AggregatePartitionsFunction implements com.google.common.base.Funct
     private static final int BOOL_POS = 7;
     private static final int STR_POS = 8;
     private static final int JSON_POS = 9;
-    private static final ObjectMapper mapper = new ObjectMapper();
 
     private final Aggregation aggregation;
     private final String key;
@@ -177,7 +172,7 @@ public class AggregatePartitionsFunction implements com.google.common.base.Funct
             }
         } else if (curBValue != null) {
             aggResult.bValue = aggResult.bValue == null ? curBValue : aggResult.bValue || curBValue;
-        }  else if (curJValue != null && (aggResult.jValue == null || curJValue.compareTo(aggResult.jValue) > 0)) {
+        } else if (curJValue != null && (aggResult.jValue == null || curJValue.compareTo(aggResult.jValue) > 0)) {
             aggResult.jValue = curJValue;
         }
     }
@@ -269,17 +264,9 @@ public class AggregatePartitionsFunction implements com.google.common.base.Funct
         } else if (aggResult.dataType == DataType.STRING) {
             return Optional.of(new BasicTsKvEntry(ts, new StringDataEntry(key, aggResult.sValue)));
         } else if (aggResult.dataType == DataType.JSON) {
-            return Optional.of(new BasicTsKvEntry(ts, new JsonDataEntry(key, parseJson(aggResult.jValue))));
+            return Optional.of(new BasicTsKvEntry(ts, new JsonDataEntry(key, aggResult.jValue)));
         } else {
             return Optional.of(new BasicTsKvEntry(ts, new BooleanDataEntry(key, aggResult.bValue)));
-        }
-    }
-
-    JsonNode parseJson(String value){
-        try {
-            return mapper.readTree(value);
-        } catch (IOException e) {
-            throw new JsonParseException("Can't parse value: " + value, e);
         }
     }
 

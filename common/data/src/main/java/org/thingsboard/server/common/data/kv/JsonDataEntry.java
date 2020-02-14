@@ -15,18 +15,13 @@
  */
 package org.thingsboard.server.common.data.kv;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.Objects;
 import java.util.Optional;
 
 public class JsonDataEntry extends BasicKvEntry {
-    private final JsonNode value;
+    private final String value;
 
-    public JsonDataEntry(String key, JsonNode value) {
+    public JsonDataEntry(String key, String value) {
         super(key);
         this.value = value;
     }
@@ -37,7 +32,7 @@ public class JsonDataEntry extends BasicKvEntry {
     }
 
     @Override
-    public Optional<JsonNode> getJsonValue() {
+    public Optional<String> getJsonValue() {
         return Optional.ofNullable(value);
     }
 
@@ -69,6 +64,6 @@ public class JsonDataEntry extends BasicKvEntry {
 
     @Override
     public String getValueAsString() {
-        return value.toString();
+        return value;
     }
 }
