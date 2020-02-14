@@ -353,28 +353,30 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   }
 
   private onDestroy() {
-    for (const id of Object.keys(this.widgetContext.subscriptions)) {
-      const subscription = this.widgetContext.subscriptions[id];
-      subscription.destroy();
-    }
-    this.subscriptionInited = false;
-    this.widgetContext.subscriptions = {};
-    if (this.widgetContext.inited) {
-      this.widgetContext.inited = false;
-      for (const cafId of Object.keys(this.cafs)) {
-        if (this.cafs[cafId]) {
-          this.cafs[cafId]();
-          this.cafs[cafId] = null;
+    if (this.widgetContext) {
+      for (const id of Object.keys(this.widgetContext.subscriptions)) {
+        const subscription = this.widgetContext.subscriptions[id];
+        subscription.destroy();
+      }
+      this.subscriptionInited = false;
+      this.widgetContext.subscriptions = {};
+      if (this.widgetContext.inited) {
+        this.widgetContext.inited = false;
+        for (const cafId of Object.keys(this.cafs)) {
+          if (this.cafs[cafId]) {
+            this.cafs[cafId]();
+            this.cafs[cafId] = null;
+          }
+        }
+        try {
+          this.widgetTypeInstance.onDestroy();
+        } catch (e) {
+          this.handleWidgetException(e);
         }
       }
-      try {
-        this.widgetTypeInstance.onDestroy();
-      } catch (e) {
-        this.handleWidgetException(e);
-      }
+      this.widgetContext.destroyed = true;
+      this.destroyDynamicWidgetComponent();
     }
-    this.widgetContext.destroyed = true;
-    this.destroyDynamicWidgetComponent();
   }
 
   public onTimewindowChanged(timewindow: Timewindow) {
@@ -432,7 +434,6 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
 
     this.initialize().subscribe(
       () => {
-        this.detectChanges();
         this.onInit();
       },
       (err) => {
@@ -443,7 +444,11 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
 
   private detectChanges() {
     if (!this.destroyed) {
-      this.cd.detectChanges();
+      try {
+        this.cd.detectChanges();
+      } catch (e) {
+        // console.log(e);
+      }
     }
   }
 
@@ -467,6 +472,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       this.cafs.init = this.raf.raf(() => {
         try {
           this.widgetTypeInstance.onInit();
+          this.detectChanges();
         } catch (e) {
           this.handleWidgetException(e);
         }
@@ -558,7 +564,6 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
             this.widgetContext.reset();
             this.subscriptionInited = true;
             this.configureDynamicWidgetComponent();
-            this.detectChanges();
             this.onInit();
           }
         },
@@ -576,7 +581,6 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       this.widgetContext.reset();
       this.subscriptionInited = true;
       this.configureDynamicWidgetComponent();
-      this.detectChanges();
       this.onInit();
     }
   }
@@ -637,12 +641,14 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     }
     if (this.dynamicWidgetComponentRef) {
       this.dynamicWidgetComponentRef.destroy();
+      this.dynamicWidgetComponentRef = null;
     }
   }
 
   private handleWidgetException(e) {
     console.error(e);
     this.widgetErrorData = this.utils.processWidgetException(e);
+    this.detectChanges();
   }
 
   private configureDynamicWidgetComponent() {
@@ -662,22 +668,31 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           parent: this.injector
         }
       );
-      this.dynamicWidgetComponentRef = this.widgetContentContainer.createComponent(this.widgetInfo.componentFactory, 0, injector);
-
-      this.dynamicWidgetComponent = this.dynamicWidgetComponentRef.instance;
 
       const containerElement = $(this.elementRef.nativeElement.querySelector('#widget-container'));
-
-      // this.widgetContext.$container = $('> ng-component:not([id="container"])', containerElement);
-      this.widgetContext.$container = $(this.dynamicWidgetComponentRef.location.nativeElement);
-      this.widgetContext.$container.css('display', 'block');
-      this.widgetContext.$container.css('user-select', 'none');
-      this.widgetContext.$container.attr('id', 'container');
       this.widgetContext.$containerParent = $(containerElement);
 
-      if (this.widgetSizeDetected) {
-        this.widgetContext.$container.css('height', this.widgetContext.height + 'px');
-        this.widgetContext.$container.css('width', this.widgetContext.width + 'px');
+      try {
+        this.dynamicWidgetComponentRef = this.widgetContentContainer.createComponent(this.widgetInfo.componentFactory, 0, injector);
+        this.cd.detectChanges();
+      } catch (e) {
+        if (this.dynamicWidgetComponentRef) {
+          this.dynamicWidgetComponentRef.destroy();
+          this.dynamicWidgetComponentRef = null;
+        }
+        this.widgetContentContainer.clear();
+      }
+
+      if (this.dynamicWidgetComponentRef) {
+        this.dynamicWidgetComponent = this.dynamicWidgetComponentRef.instance;
+        this.widgetContext.$container = $(this.dynamicWidgetComponentRef.location.nativeElement);
+        this.widgetContext.$container.css('display', 'block');
+        this.widgetContext.$container.css('user-select', 'none');
+        this.widgetContext.$container.attr('id', 'container');
+        if (this.widgetSizeDetected) {
+          this.widgetContext.$container.css('height', this.widgetContext.height + 'px');
+          this.widgetContext.$container.css('width', this.widgetContext.width + 'px');
+        }
       }
 
       this.onResizeListener = this.onResize.bind(this);
@@ -765,7 +780,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     options.units = this.widgetContext.units;
     options.callbacks = {
       onDataUpdated: () => {
-        this.widgetTypeInstance.onDataUpdated();
+        try {
+          this.widgetTypeInstance.onDataUpdated();
+        } catch (e){}
       },
       onDataUpdateError: (subscription, e) => {
         this.handleWidgetException(e);
@@ -1091,8 +1108,10 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     if (!this.widgetContext.width || this.widgetContext.width !== width ||
       !this.widgetContext.height || this.widgetContext.height !== height) {
       if (width > 0 && height > 0) {
-        this.widgetContext.$container.css('height', height + 'px');
-        this.widgetContext.$container.css('width', width + 'px');
+        if (this.widgetContext.$container) {
+          this.widgetContext.$container.css('height', height + 'px');
+          this.widgetContext.$container.css('width', width + 'px');
+        }
         this.widgetContext.width = width;
         this.widgetContext.height = height;
         sizeChanged = true;

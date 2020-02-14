@@ -190,7 +190,11 @@ export class WidgetContext {
       if (updateWidgetParams) {
         this.dashboardWidget.updateWidgetParams();
       }
-      this.changeDetectorValue.detectChanges();
+      try {
+        this.changeDetectorValue.detectChanges();
+      } catch (e) {
+        // console.log(e);
+      }
     }
   }
 
