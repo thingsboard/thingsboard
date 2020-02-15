@@ -87,6 +87,8 @@
         "timeout-required": "Необхідно задати час очікування.",
         "timeout-invalid": "Це не схоже на правильний час очікування.",
         "enable-tls": "Увімкнути TLS",
+        "tls-version" : "Версія TLS",
+        "enter-tls-version" : "Вкажіть версію TLS",
         "send-test-mail": "Надіслати тестове повідомлення",
         "use-system-mail-settings": "Використовувати параметри системного поштового сервера",
         "mail-templates": "Шаблони електронної пошти",

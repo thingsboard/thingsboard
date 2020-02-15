@@ -106,9 +106,10 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         node.put("smtpHost", "localhost");
         node.put("smtpPort", "25");
         node.put("timeout", "10000");
-        node.put("enableTls", "false");
+        node.put("enableTls", false);
         node.put("username", "");
-        node.put("password", ""); //NOSONAR, key used to identify password field (not password value itself)
+        node.put("password", "");
+        node.put("tlsVersion", "TLSv1.2");//NOSONAR, key used to identify password field (not password value itself)
         mailSettings.setJsonValue(node);
         adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, mailSettings);
     }
