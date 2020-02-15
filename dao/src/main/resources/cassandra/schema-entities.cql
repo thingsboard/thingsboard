@@ -410,6 +410,7 @@ CREATE TABLE IF NOT EXISTS thingsboard.attributes_kv_cf (
     str_v text,
     long_v bigint,
     dbl_v double,
+    json_v text,
     last_update_ts bigint,
     PRIMARY KEY ((entity_type, entity_id, attribute_type), attribute_key)
 ) WITH compaction = { 'class' :  'LeveledCompactionStrategy'  };

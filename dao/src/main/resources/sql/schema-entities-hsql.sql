@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS attribute_kv (
   str_v varchar(10000000),
   long_v bigint,
   dbl_v double precision,
-  json_v json,
+  json_v varchar(10000000),
   last_update_ts bigint,
   CONSTRAINT attribute_kv_pkey PRIMARY KEY (entity_type, entity_id, attribute_type, attribute_key)
 );
@@ -248,14 +248,4 @@ CREATE TABLE IF NOT EXISTS entity_view (
     end_ts bigint,
     search_text varchar(255),
     additional_info varchar
-);
-
-CREATE TABLE IF NOT EXISTS provision_profile (
-    id varchar(31) NOT NULL CONSTRAINT provision_profile_pkey PRIMARY KEY,
-    key varchar(255),
-    secret varchar(255),
-    customer_id varchar(31),
-    tenant_id varchar(31),
-    provision_request_validation_strategy_type varchar(255),
-    CONSTRAINT provision_profile_unq_key UNIQUE (key)
 );

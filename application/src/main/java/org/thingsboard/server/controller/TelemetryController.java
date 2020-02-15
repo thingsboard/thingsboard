@@ -15,12 +15,15 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,8 +59,10 @@ import org.thingsboard.server.common.data.kv.BaseDeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
+import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
+import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
@@ -77,6 +82,7 @@ import org.thingsboard.server.service.telemetry.exception.UncheckedApiException;
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -106,6 +112,8 @@ public class TelemetryController extends BaseController {
     private int maxStringValueLength;
 
     private ExecutorService executor;
+
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     @PostConstruct
     public void initExecutor() {
@@ -284,8 +292,7 @@ public class TelemetryController extends BaseController {
             if (startTs == null || endTs == null) {
                 deleteToTs = endTs;
                 return getImmediateDeferredResult("When deleteAllDataForKeys is false, start and end timestamp values shouldn't be empty", HttpStatus.BAD_REQUEST);
-            }
-            else{
+            } else {
                 deleteFromTs = startTs;
                 deleteToTs = endTs;
             }
@@ -536,8 +543,9 @@ public class TelemetryController extends BaseController {
         return new FutureCallback<List<AttributeKvEntry>>() {
             @Override
             public void onSuccess(List<AttributeKvEntry> attributes) {
-                List<AttributeData> values = attributes.stream().map(attribute -> new AttributeData(attribute.getLastUpdateTs(),
-                        attribute.getKey(), attribute.getValue())).collect(Collectors.toList());
+                List<AttributeData> values = attributes.stream().map(attribute ->
+                    new AttributeData(attribute.getLastUpdateTs(), attribute.getKey(), getKvValue(attribute))
+                ).collect(Collectors.toList());
                 logAttributesRead(user, entityId, scope, keyList, null);
                 response.setResult(new ResponseEntity<>(values, HttpStatus.OK));
             }
@@ -639,7 +647,9 @@ public class TelemetryController extends BaseController {
         jsonNode.fields().forEachRemaining(entry -> {
             String key = entry.getKey();
             JsonNode value = entry.getValue();
-            if (entry.getValue().isTextual()) {
+            if (entry.getValue().isObject() || entry.getValue().isArray()) {
+                attributes.add(new BaseAttributeKvEntry(new JsonDataEntry(key, toJsonStr(value)), ts));
+            } else if (entry.getValue().isTextual()) {
                 if (maxStringValueLength > 0 && entry.getValue().textValue().length() > maxStringValueLength) {
                     String message = String.format("String value length [%d] for key [%s] is greater than maximum allowed [%d]", entry.getValue().textValue().length(), key, maxStringValueLength);
                     throw new UncheckedApiException(new InvalidParametersException(message));
@@ -658,5 +668,28 @@ public class TelemetryController extends BaseController {
             }
         });
         return attributes;
+    }
+
+    private String toJsonStr(JsonNode value) {
+        try {
+            return mapper.writeValueAsString(value);
+        } catch (JsonProcessingException e) {
+            throw new JsonParseException("Can't parse jsonValue: " + value, e);
+        }
+    }
+
+    private JsonNode toJsonNode(String value) {
+        try {
+            return mapper.readTree(value);
+        } catch (IOException e) {
+            throw new JsonParseException("Can't parse jsonValue: " + value, e);
+        }
+    }
+
+    private Object getKvValue(KvEntry entry) {
+        if (entry.getDataType() == DataType.JSON) {
+            return toJsonNode(entry.getJsonValue().get());
+        }
+        return entry.getValue();
     }
 }

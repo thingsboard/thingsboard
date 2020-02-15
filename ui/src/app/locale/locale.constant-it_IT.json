@@ -84,6 +84,8 @@
         "timeout-required": "Timeout obbligatorio.",
         "timeout-invalid": "Timeout non valido.",
         "enable-tls": "Abilita TLS",
+        "tls-version" : "Versione TLS",
+        "enter-tls-version" : "Inserisci la versione TLS",
         "send-test-mail": "Invia mail di test",
         "security-settings": "Settaggi di sicurezza",
         "password-policy": "Politica password",

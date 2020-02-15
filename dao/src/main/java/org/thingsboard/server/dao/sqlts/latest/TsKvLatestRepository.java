@@ -20,11 +20,7 @@ import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestCompositeKey;
 import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import java.util.List;
-import java.util.UUID;
-
 @SqlDao
 public interface TsKvLatestRepository extends CrudRepository<TsKvLatestEntity, TsKvLatestCompositeKey> {
 
-    List<TsKvLatestEntity> findAllByEntityId(UUID entityId);
 }
