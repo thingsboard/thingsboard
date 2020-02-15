@@ -16,6 +16,8 @@
 
 DROP MATERIALIZED VIEW IF EXISTS thingsboard.provision_profile_by_key;
 
+DROP MATERIALIZED VIEW IF EXISTS thingsboard.provision_profile_by_tenant_and_search_text;
+
 DROP TABLE IF EXISTS thingsboard.provision_profile;
 
 CREATE TABLE IF NOT EXISTS thingsboard.provision_profile (
@@ -25,6 +27,8 @@ CREATE TABLE IF NOT EXISTS thingsboard.provision_profile (
     key text,
     secret text,
     provision_request_validation_strategy_type text,
+    search_text text,
+    additional_info text,
 );
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.provision_profile_by_key AS
@@ -32,3 +36,10 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.provision_profile_by_key AS
 	from thingsboard.provision_profile
 	WHERE key IS NOT NULL AND id IS NOT NULL
 	PRIMARY KEY ( key, id );
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.provision_profile_by_tenant_and_search_text AS
+    SELECT *
+    from thingsboard.provision_profile
+    WHERE tenant_id IS NOT NULL
+      AND id IS NOT NULL
+    PRIMARY KEY ( tenant_id, id);

@@ -15,10 +15,12 @@
  */
 package org.thingsboard.server.dao.device.provision;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
-import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.HasCustomerId;
+import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.ProvisionProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -26,7 +28,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import java.util.Objects;
 
 @Data
-public class ProvisionProfile extends BaseData<ProvisionProfileId> implements HasTenantId, HasCustomerId {
+public class ProvisionProfile extends SearchTextBasedWithAdditionalInfo<ProvisionProfileId> implements HasTenantId, HasCustomerId, HasName {
 
     private static final long serialVersionUID = 1869935044931680450L;
 
@@ -41,6 +43,17 @@ public class ProvisionProfile extends BaseData<ProvisionProfileId> implements Ha
 
     public ProvisionProfile(ProvisionProfileId id) {
         super(id);
+    }
+
+    @Override
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    public String getName() {
+        return credentials.getProvisionProfileKey();
+    }
+
+    @Override
+    public String getSearchText() {
+        return getName();
     }
 
     public ProvisionProfile(ProvisionProfile profile) {

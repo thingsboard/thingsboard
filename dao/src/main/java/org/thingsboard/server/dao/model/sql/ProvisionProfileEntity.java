@@ -16,8 +16,10 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.datastax.driver.core.utils.UUIDs;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.hibernate.annotations.Type;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.ProvisionProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -27,6 +29,7 @@ import org.thingsboard.server.dao.device.provision.ProvisionRequestValidationStr
 import org.thingsboard.server.dao.device.provision.ProvisionRequestValidationStrategyType;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.model.SearchTextEntity;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -36,7 +39,7 @@ import javax.persistence.Table;
 @Data
 @Entity
 @Table(name = ModelConstants.PROVISION_PROFILE_COLUMN_FAMILY_NAME)
-public final class ProvisionProfileEntity extends BaseSqlEntity<ProvisionProfile> {
+public final class ProvisionProfileEntity extends BaseSqlEntity<ProvisionProfile> implements SearchTextEntity<ProvisionProfile> {
 
     @Column(name = ModelConstants.PROVISION_PROFILE_TENANT_ID_PROPERTY)
     private String tenantId;
@@ -52,6 +55,13 @@ public final class ProvisionProfileEntity extends BaseSqlEntity<ProvisionProfile
 
     @Column(name = ModelConstants.PROVISION_PROFILE_VALIDATION_STRATEGY_TYPE)
     private String provisionRequestValidationStrategyType;
+
+    @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
+    private String searchText;
+
+    @Type(type = "json")
+    @Column(name = ModelConstants.PROVISION_PROFILE_ADDITIONAL_INFO_PROPERTY)
+    private JsonNode additionalInfo;
 
     public ProvisionProfileEntity() {
         super();
@@ -70,6 +80,21 @@ public final class ProvisionProfileEntity extends BaseSqlEntity<ProvisionProfile
         this.key = profile.getCredentials().getProvisionProfileKey();
         this.secret = profile.getCredentials().getProvisionProfileSecret();
         this.provisionRequestValidationStrategyType = profile.getStrategy().getValidationStrategyType().name();
+        this.additionalInfo = profile.getAdditionalInfo();
+    }
+
+    @Override
+    public String getSearchTextSource() {
+        return key;
+    }
+
+    @Override
+    public void setSearchText(String searchText) {
+        this.searchText = searchText;
+    }
+
+    public String getSearchText() {
+        return searchText;
     }
 
     @Override
@@ -85,6 +110,7 @@ public final class ProvisionProfileEntity extends BaseSqlEntity<ProvisionProfile
         profile.setCredentials(new ProvisionProfileCredentials(key, secret));
         profile.setStrategy(new ProvisionRequestValidationStrategy(
                 ProvisionRequestValidationStrategyType.valueOf(provisionRequestValidationStrategyType)));
+        profile.setAdditionalInfo(additionalInfo);
         return profile;
     }
 }

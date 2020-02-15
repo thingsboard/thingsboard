@@ -16,8 +16,12 @@
 package org.thingsboard.server.dao.device;
 
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.device.provision.ProvisionProfile;
+
+import java.util.List;
+import java.util.UUID;
 
 /**
  * The Interface ProvisionProfileDao.
@@ -41,4 +45,12 @@ public interface ProvisionProfileDao extends Dao<ProvisionProfile> {
      */
     ProvisionProfile findByKey(TenantId tenantId, String key);
 
+    /**
+     * Find profiles by tenantId and page link.
+     *
+     * @param tenantId the tenantId
+     * @param pageLink the page link
+     * @return the list of profile objects
+     */
+    List<ProvisionProfile> findProfilesByTenantId(UUID tenantId, TextPageLink pageLink);
 }

@@ -16,15 +16,25 @@
 package org.thingsboard.server.dao.sql.device;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.device.ProvisionProfileDao;
 import org.thingsboard.server.dao.device.provision.ProvisionProfile;
 import org.thingsboard.server.dao.model.sql.ProvisionProfileEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
+
+import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
+import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID_STR;
 
 @Component
 @SqlDao
@@ -36,6 +46,24 @@ public class JpaProvisionProfileDao extends JpaAbstractDao<ProvisionProfileEntit
     @Override
     public ProvisionProfile findByKey(TenantId tenantId, String key) {
         return DaoUtil.getData(provisionProfileRepository.findByKey(key));
+    }
+
+    @Override
+    public List<ProvisionProfile> findProfilesByTenantId(UUID tenantId, TextPageLink pageLink) {
+        if (StringUtils.isEmpty(pageLink.getTextSearch())) {
+            return DaoUtil.convertDataList(
+                    provisionProfileRepository.findByTenantId(
+                            fromTimeUUID(tenantId),
+                            pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
+                            new PageRequest(0, pageLink.getLimit())));
+        } else {
+            return DaoUtil.convertDataList(
+                    provisionProfileRepository.findByTenantId(
+                            fromTimeUUID(tenantId),
+                            Objects.toString(pageLink.getTextSearch(), ""),
+                            pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
+                            new PageRequest(0, pageLink.getLimit())));
+        }
     }
 
     @Override

@@ -257,5 +257,7 @@ CREATE TABLE IF NOT EXISTS provision_profile (
     customer_id varchar(31),
     tenant_id varchar(31),
     provision_request_validation_strategy_type varchar(255),
+    additional_info varchar,
+    search_text varchar(255),
     CONSTRAINT provision_profile_unq_key UNIQUE (key)
 );

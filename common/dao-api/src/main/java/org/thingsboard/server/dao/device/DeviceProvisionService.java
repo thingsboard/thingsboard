@@ -16,8 +16,11 @@
 package org.thingsboard.server.dao.device;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.ProvisionProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.TextPageData;
+import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.device.provision.ProvisionProfile;
 import org.thingsboard.server.dao.device.provision.ProvisionRequest;
 import org.thingsboard.server.dao.device.provision.ProvisionResponse;
@@ -33,6 +36,12 @@ public interface DeviceProvisionService {
     ProvisionProfile findProvisionProfileByKey(TenantId tenantId, String key);
 
     void deleteProfile(TenantId tenantId, ProvisionProfileId profileId);
+
+    ProvisionProfile assignProfileToCustomer(TenantId tenantId, ProvisionProfileId profileId, CustomerId customerId);
+
+    ProvisionProfile unassignProfileFromCustomer(TenantId tenantId, ProvisionProfileId profileId);
+
+    TextPageData<ProvisionProfile> findProfilesByTenantId(TenantId tenantId, TextPageLink pageLink);
 
     ListenableFuture<ProvisionResponse> provisionDevice(ProvisionRequest provisionRequest);
 

@@ -38,18 +38,15 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
-import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.ProvisionProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.device.claim.ClaimResponse;
 import org.thingsboard.server.dao.device.claim.ClaimResult;
-import org.thingsboard.server.dao.device.provision.ProvisionProfile;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -66,7 +63,6 @@ import java.util.stream.Collectors;
 public class DeviceController extends BaseController {
 
     private static final String DEVICE_ID = "deviceId";
-    private static final String PROFILE_ID = "profileId";
     private static final String DEVICE_NAME = "deviceName";
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
@@ -472,50 +468,6 @@ public class DeviceController extends BaseController {
                 }
             });
             return deferredResult;
-        } catch (Exception e) {
-            throw handleException(e);
-        }
-    }
-
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/device/provision", method = RequestMethod.POST)
-    @ResponseBody
-    public ProvisionProfile saveProvisionProfile(@RequestBody(required = false) ProvisionProfile profile) throws ThingsboardException {
-        try {
-            profile.setTenantId(getTenantId());
-            accessControlService.checkPermission(getCurrentUser(), Resource.PROVISION_PROFILE, Operation.CREATE,
-                    profile.getId(), profile);
-            return deviceProvisionService.saveProvisionProfile(profile);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
-    }
-
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/device/provision", params = {"key", "secret"}, method = RequestMethod.GET)
-    @ResponseBody
-    public ProvisionProfile getProvisionProfile(@RequestParam String key, @RequestParam String secret) throws ThingsboardException {
-        try {
-            TenantId tenantId = getTenantId();
-            ProvisionProfile profile = checkNotNull(deviceProvisionService.findProvisionProfileByKey(tenantId, key));
-            if (profile.getTenantId().equals(tenantId) && profile.getCredentials().getProvisionProfileSecret().equals(secret)) {
-                return profile;
-            }
-            throw new ThingsboardException("Requested item wasn't found!", ThingsboardErrorCode.ITEM_NOT_FOUND);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
-    }
-
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/device/{profileId}/provision", method = RequestMethod.DELETE)
-    @ResponseStatus(value = HttpStatus.OK)
-    public void deleteProfile(@PathVariable(PROFILE_ID) String strProfileId) throws ThingsboardException {
-        checkParameter(PROFILE_ID, strProfileId);
-        try {
-            ProvisionProfileId provisionProfileId = new ProvisionProfileId(toUUID(strProfileId));
-            checkProfileId(provisionProfileId, Operation.DELETE);
-            deviceProvisionService.deleteProfile(getTenantId(), provisionProfileId);
         } catch (Exception e) {
             throw handleException(e);
         }

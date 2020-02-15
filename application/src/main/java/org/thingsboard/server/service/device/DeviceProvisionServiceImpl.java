@@ -44,6 +44,8 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.common.data.page.TextPageData;
+import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -79,12 +81,14 @@ import java.util.concurrent.locks.ReentrantLock;
 import static org.thingsboard.server.common.data.CacheConstants.DEVICE_PROVISION_CACHE;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
+import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 
 @Service
 @Slf4j
 public class DeviceProvisionServiceImpl extends AbstractEntityService implements DeviceProvisionService {
 
     private static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
+    public static final String INCORRECT_PAGE_LINK = "Incorrect page link ";
     private static final String INCORRECT_PROFILE_ID = "Incorrect profileId ";
 
     private static final String DEVICE_PROVISION_STATE = "provisionState";
@@ -193,6 +197,29 @@ public class DeviceProvisionServiceImpl extends AbstractEntityService implements
         cache.evict(list);
 
         provisionProfileDao.removeById(tenantId, profileId.getId());
+    }
+
+    @Override
+    public ProvisionProfile assignProfileToCustomer(TenantId tenantId, ProvisionProfileId profileId, CustomerId customerId) {
+        ProvisionProfile profile = findProfileById(tenantId, profileId);
+        profile.setCustomerId(customerId);
+        return saveProvisionProfile(profile);
+    }
+
+    @Override
+    public ProvisionProfile unassignProfileFromCustomer(TenantId tenantId, ProvisionProfileId profileId) {
+        ProvisionProfile profile = findProfileById(tenantId, profileId);
+        profile.setCustomerId(null);
+        return saveProvisionProfile(profile);
+    }
+
+    @Override
+    public TextPageData<ProvisionProfile> findProfilesByTenantId(TenantId tenantId, TextPageLink pageLink) {
+        log.trace("Executing findProfilesByTenantId, tenantId [{}], pageLink [{}]", tenantId, pageLink);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validatePageLink(pageLink, INCORRECT_PAGE_LINK + pageLink);
+        List<ProvisionProfile> provisionProfiles = provisionProfileDao.findProfilesByTenantId(tenantId.getId(), pageLink);
+        return new TextPageData<>(provisionProfiles, pageLink);
     }
 
     @Override

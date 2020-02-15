@@ -19,20 +19,27 @@ import com.datastax.driver.core.querybuilder.Select;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.device.provision.ProvisionProfile;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.nosql.ProvisionProfileEntity;
-import org.thingsboard.server.dao.nosql.CassandraAbstractModelDao;
+import org.thingsboard.server.dao.nosql.CassandraAbstractSearchTextDao;
 import org.thingsboard.server.dao.util.NoSqlDao;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
+import static org.thingsboard.server.dao.model.ModelConstants.PROVISION_PROFILE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.PROVISION_PROFILE_TENANT_ID_PROPERTY;
 
 @Component
 @Slf4j
 @NoSqlDao
-public class CassandraProvisionProfileDao extends CassandraAbstractModelDao<ProvisionProfileEntity, ProvisionProfile> implements ProvisionProfileDao {
+public class CassandraProvisionProfileDao extends CassandraAbstractSearchTextDao<ProvisionProfileEntity, ProvisionProfile> implements ProvisionProfileDao {
 
     @Override
     public ProvisionProfile findByKey(TenantId tenantId, String key) {
@@ -43,6 +50,16 @@ public class CassandraProvisionProfileDao extends CassandraAbstractModelDao<Prov
         ProvisionProfileEntity provisionProfileEntity = findOneByStatement(tenantId, query);
         log.trace("Found provision profile [{}] by key [{}]", provisionProfileEntity, key);
         return DaoUtil.getData(provisionProfileEntity);
+    }
+
+    @Override
+    public List<ProvisionProfile> findProfilesByTenantId(UUID tenantId, TextPageLink pageLink) {
+        log.debug("Try to find profiles by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
+        List<ProvisionProfileEntity> profileEntities = findPageWithTextSearch(new TenantId(tenantId), PROVISION_PROFILE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
+                Collections.singletonList(eq(PROVISION_PROFILE_TENANT_ID_PROPERTY, tenantId)), pageLink);
+
+        log.trace("Found profiles [{}] by tenantId [{}] and pageLink [{}]", profileEntities, tenantId, pageLink);
+        return DaoUtil.convertDataList(profileEntities);
     }
 
     @Override
