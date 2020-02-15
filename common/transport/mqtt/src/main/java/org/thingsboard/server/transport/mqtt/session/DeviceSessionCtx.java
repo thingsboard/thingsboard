@@ -35,7 +35,7 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
     private AtomicInteger msgIdSeq = new AtomicInteger(0);
     @Getter
     @Setter
-    private boolean provision;
+    private boolean provisionOnly;
 
     public DeviceSessionCtx(UUID sessionId, ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap) {
         super(sessionId, mqttQoSMap);
