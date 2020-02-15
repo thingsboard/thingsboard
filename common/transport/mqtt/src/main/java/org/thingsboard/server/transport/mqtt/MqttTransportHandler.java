@@ -75,6 +75,7 @@ import static io.netty.handler.codec.mqtt.MqttConnectReturnCode.CONNECTION_ACCEP
 import static io.netty.handler.codec.mqtt.MqttConnectReturnCode.CONNECTION_REFUSED_BAD_USER_NAME_OR_PASSWORD;
 import static io.netty.handler.codec.mqtt.MqttConnectReturnCode.CONNECTION_REFUSED_NOT_AUTHORIZED;
 import static io.netty.handler.codec.mqtt.MqttMessageType.CONNACK;
+import static io.netty.handler.codec.mqtt.MqttMessageType.CONNECT;
 import static io.netty.handler.codec.mqtt.MqttMessageType.PINGRESP;
 import static io.netty.handler.codec.mqtt.MqttMessageType.PUBACK;
 import static io.netty.handler.codec.mqtt.MqttMessageType.SUBACK;
@@ -135,10 +136,45 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             return;
         }
         deviceSessionCtx.setChannel(ctx);
+        if (CONNECT.equals(msg.fixedHeader().messageType())) {
+            processConnect(ctx, (MqttConnectMessage) msg);
+        } else if (deviceSessionCtx.isProvisionOnly()) {
+            processProvisionSessionMsg(ctx, msg);
+        } else {
+            processRegularSessionMsg(ctx, msg);
+        }
+    }
+
+    private void processProvisionSessionMsg(ChannelHandlerContext ctx, MqttMessage msg) {
         switch (msg.fixedHeader().messageType()) {
-            case CONNECT:
-                processConnect(ctx, (MqttConnectMessage) msg);
+            case PUBLISH:
+                MqttPublishMessage mqttMsg = (MqttPublishMessage) msg;
+                String topicName = mqttMsg.variableHeader().topicName();
+                int msgId = mqttMsg.variableHeader().packetId();
+                try {
+                    if (topicName.equals(MqttTopics.DEVICE_PROVISION_TOPIC)) {
+                        ProvisionDeviceRequestMsg provisionRequestMsg = adaptor.convertToProvisionRequestMsg(deviceSessionCtx, mqttMsg);
+                        transportService.process(provisionRequestMsg, new DeviceProvisionCallback(ctx, msgId, provisionRequestMsg));
+                        log.trace("[{}][{}] Processing publish msg [{}][{}]!", sessionId, deviceSessionCtx.getDeviceId(), topicName, msgId);
+                    } else {
+                        throw new RuntimeException("Unsupported topic for provisioning requests!");
+                    }
+                } catch (RuntimeException | AdaptorException e) {
+                    log.warn("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
+                    ctx.close();
+                }
                 break;
+            case PINGREQ:
+                ctx.writeAndFlush(new MqttMessage(new MqttFixedHeader(PINGRESP, false, AT_MOST_ONCE, false, 0)));
+                break;
+            case DISCONNECT:
+                ctx.close();
+                break;
+        }
+    }
+
+    private void processRegularSessionMsg(ChannelHandlerContext ctx, MqttMessage msg) {
+        switch (msg.fixedHeader().messageType()) {
             case PUBLISH:
                 processPublish(ctx, (MqttPublishMessage) msg);
                 break;
@@ -159,17 +195,12 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 break;
             case DISCONNECT:
                 if (checkConnected(ctx, msg)) {
-                    if (deviceSessionCtx.isProvision()) {
-                        ctx.close();
-                    } else {
-                        processDisconnect(ctx);
-                    }
+                    processDisconnect(ctx);
                 }
                 break;
             default:
                 break;
         }
-
     }
 
     private void processPublish(ChannelHandlerContext ctx, MqttPublishMessage mqttMsg) {
@@ -242,10 +273,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             } else if (topicName.equals(MqttTopics.DEVICE_CLAIM_TOPIC)) {
                 TransportProtos.ClaimDeviceMsg claimDeviceMsg = adaptor.convertToClaimDevice(deviceSessionCtx, mqttMsg);
                 transportService.process(sessionInfo, claimDeviceMsg, getPubAckCallback(ctx, msgId, claimDeviceMsg));
-            } else if (topicName.equals(MqttTopics.DEVICE_PROVISION_TOPIC)) {
-                deviceSessionCtx.setProvision(true);
-                ProvisionDeviceRequestMsg provisionRequestMsg = adaptor.convertToProvisionRequestMsg(deviceSessionCtx, mqttMsg);
-                transportService.process(provisionRequestMsg, new DeviceProvisionCallback(ctx, msgId, provisionRequestMsg));
             }
         } catch (AdaptorException e) {
             log.warn("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
@@ -381,23 +408,26 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     private void processConnect(ChannelHandlerContext ctx, MqttConnectMessage msg) {
         log.info("[{}] Processing connect msg for client: {}!", sessionId, msg.payload().clientIdentifier());
-        X509Certificate cert;
-        if (sslHandler != null && (cert = getX509Certificate()) != null) {
-            processX509CertConnect(ctx, cert);
+        String userName = msg.payload().userName();
+        if (DataConstants.PROVISION.equals(userName)) {
+            deviceSessionCtx.setDeviceInfo(DeviceInfoProto.newBuilder().getDefaultInstanceForType());
+            deviceSessionCtx.setProvisionOnly(true);
+            ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_ACCEPTED));
         } else {
-            processAuthTokenConnect(ctx, msg);
+            X509Certificate cert;
+            if (sslHandler != null && (cert = getX509Certificate()) != null) {
+                processX509CertConnect(ctx, cert);
+            } else {
+                processAuthTokenConnect(userName, ctx, msg);
+            }
         }
     }
 
-    private void processAuthTokenConnect(ChannelHandlerContext ctx, MqttConnectMessage msg) {
-        String userName = msg.payload().userName();
+    private void processAuthTokenConnect(String userName, ChannelHandlerContext ctx, MqttConnectMessage msg) {
         log.info("[{}] Processing connect msg for client with user name: {}!", sessionId, userName);
         if (StringUtils.isEmpty(userName)) {
             ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_REFUSED_BAD_USER_NAME_OR_PASSWORD));
             ctx.close();
-        } else if (DataConstants.PROVISION.equals(userName)) {
-            deviceSessionCtx.setDeviceInfo(DeviceInfoProto.newBuilder().getDefaultInstanceForType());
-            ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_ACCEPTED));
         } else {
             transportService.process(ValidateDeviceTokenRequestMsg.newBuilder().setToken(userName).build(),
                     new TransportServiceCallback<ValidateDeviceCredentialsResponseMsg>() {
@@ -531,7 +561,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     @Override
     public void operationComplete(Future<? super Void> future) throws Exception {
-        if (deviceSessionCtx.isConnected() && !deviceSessionCtx.isProvision()) {
+        if (deviceSessionCtx.isConnected() && !deviceSessionCtx.isProvisionOnly()) {
             transportService.process(sessionInfo, AbstractTransportService.getSessionEventMsg(SessionEvent.CLOSED), null);
             transportService.deregisterSession(sessionInfo);
         }
