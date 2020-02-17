@@ -17,7 +17,7 @@
 FROM thingsboard/openjdk8
 
 RUN apt-get update
-RUN apt-get install apt-transport-https ca-certificates
+RUN apt-get install -y apt-transport-https ca-certificates
 RUN apt-get install -y curl nmap procps
 RUN echo 'deb http://www.apache.org/dist/cassandra/debian 311x main' | tee --append /etc/apt/sources.list.d/cassandra.list > /dev/null
 RUN wget -qO - https://www.apache.org/dist/cassandra/KEYS | apt-key add -
