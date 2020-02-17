@@ -82,7 +82,11 @@
 								 aria-label="{{ 'admin.enable-tls' | translate }}" ng-model="vm.settings.jsonValue.enableTls">{{ 'admin.enable-tls' | translate }}</md-checkbox>
 					<md-input-container class="md-block" ng-if="vm.settings.jsonValue.enableTls">
 						<label translate>admin.tls-version</label>
-						<input name="tlsVersion" placeholder="{{ 'admin.enter-tls-version' | translate }}" ng-model="vm.settings.jsonValue.tlsVersion">
+						<md-select ng-disabled="$root.loading" ng-model="vm.settings.jsonValue.tlsVersion">
+							<md-option ng-repeat="tlsVersion in vm.tlsVersions" value="{{tlsVersion}}">
+								{{tlsVersion}}
+							</md-option>
+						</md-select>
 					</md-input-container>
 					<md-input-container class="md-block">
 						<label translate>common.username</label>

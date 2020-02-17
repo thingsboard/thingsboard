@@ -87,7 +87,6 @@
         "timeout-invalid": "That doesn't look like a valid timeout.",
         "enable-tls": "Enable TLS",
         "tls-version": "TLS version",
-        "enter-tls-version" : "Enter TLS version",
         "send-test-mail": "Send test mail",
         "security-settings": "Security settings",
         "password-policy": "Password policy",

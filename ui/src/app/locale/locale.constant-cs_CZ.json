@@ -84,7 +84,6 @@
         "timeout-invalid": "Tohle nevypadá jako platný časový limit.",
         "enable-tls": "Povolit TLS",
         "tls-version": "Verze TLS",
-        "enter-tls-version" : "Zadejte verzi TLS",
         "send-test-mail": "Odeslat testovací zprávu"
     },
     "alarm": {
