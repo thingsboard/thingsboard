@@ -395,10 +395,12 @@ export class CanvasDigitalGauge extends BaseGauge {
       let color = this.contextProgressClone.currentColor;
       const options = this.options as CanvasDigitalGaugeOptions;
       if (!color) {
+        const progress = (CanvasGauges.drawings.normalizedValue(options).normal - options.minValue) /
+          (options.maxValue - options.minValue);
         if (options.neonGlowBrightness) {
-          color = getProgressColor(0, options.neonColorsRange);
+          color = getProgressColor(progress, options.neonColorsRange);
         } else {
-          color = getProgressColor(0, options.colorsRange);
+          color = getProgressColor(progress, options.colorsRange);
         }
       }
       return color;

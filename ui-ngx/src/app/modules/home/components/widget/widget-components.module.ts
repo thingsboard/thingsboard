@@ -25,6 +25,7 @@ import { SharedHomeComponentsModule } from '@home/components/shared-home-compone
 import { TimeseriesTableWidgetComponent } from '@home/components/widget/lib/timeseries-table-widget.component';
 import { EntitiesHierarchyWidgetComponent } from '@home/components/widget/lib/entities-hierarchy-widget.component';
 import { CustomDialogService } from '@home/components/widget/dialog/custom-dialog.service';
+import { RpcWidgetsModule } from '@home/components/widget/lib/rpc/rpc-widgets.module';
 
 @NgModule({
   declarations:
@@ -39,13 +40,15 @@ import { CustomDialogService } from '@home/components/widget/dialog/custom-dialo
   imports: [
     CommonModule,
     SharedModule,
+    RpcWidgetsModule,
     SharedHomeComponentsModule
   ],
   exports: [
     EntitiesTableWidgetComponent,
     AlarmsTableWidgetComponent,
     TimeseriesTableWidgetComponent,
-    EntitiesHierarchyWidgetComponent
+    EntitiesHierarchyWidgetComponent,
+    RpcWidgetsModule
   ],
   providers: [
     CustomDialogService

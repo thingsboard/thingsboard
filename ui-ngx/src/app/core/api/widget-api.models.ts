@@ -185,7 +185,7 @@ export interface WidgetSubscriptionCallbacks {
 }
 
 export interface WidgetSubscriptionOptions {
-  type: widgetType;
+  type?: widgetType;
   stateData?: boolean;
   alarmSource?: Datasource;
   alarmSearchStatus?: AlarmSearchStatus;
