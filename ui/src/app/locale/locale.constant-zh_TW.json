@@ -84,7 +84,6 @@
         "timeout-invalid": "這看起來不像有效的超時值。",
         "enable-tls": "啟用TLS",
         "tls-version": "TLS版本",
-        "enter-tls-version" : "输入TLS版本",
         "send-test-mail": "發送測試郵件"
     },
     "alarm": {

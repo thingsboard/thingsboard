@@ -84,7 +84,6 @@
         "timeout-invalid": "올바른 제한시간이 아닙니다.",
         "enable-tls": "TLS 사용",
         "tls-version" : "TLS 버전",
-        "enter-tls-version" : "TLS 버전을 입력하세요",
         "send-test-mail": "테스트 메일 보내기"
     },
     "alarm": {
