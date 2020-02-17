@@ -29,6 +29,8 @@ import thingsboardWebCameraInputWidget from '../widget/lib/web-camera-input-widg
 
 import thingsboardRpcWidgets from '../widget/lib/rpc';
 
+import thingsboardInputJson from '/Users/asdasd/Downloads/thingsboard/ui/src/app/components/input-json.directive.js';
+
 import TbFlot from '../widget/lib/flot-widget';
 import TbAnalogueLinearGauge from '../widget/lib/analogue-linear-gauge';
 import TbAnalogueRadialGauge from '../widget/lib/analogue-radial-gauge';
@@ -52,7 +54,7 @@ export default angular.module('thingsboard.api.widget', ['oc.lazyLoad', thingsbo
     thingsboardTimeseriesTableWidget, thingsboardAlarmsTableWidget, thingsboardEntitiesTableWidget,
     thingsboardEntitiesHierarchyWidget, thingsboardExtensionsTableWidget, thingsboardDateRangeNavigatorWidget,
     thingsboardMultipleInputWidget, thingsboardWebCameraInputWidget, thingsboardRpcWidgets, thingsboardTypes,
-    thingsboardUtils, TripAnimationWidget])
+    thingsboardUtils, thingsboardInputJson, TripAnimationWidget])
     .factory('widgetService', WidgetService)
     .name;
 
