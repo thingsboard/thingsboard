@@ -32,8 +32,8 @@ public class CassandraTsDatabaseUpgradeService extends AbstractCassandraDatabase
         switch (fromVersion) {
             case "2.4.3":
                 log.info("Updating schema ...");
-                String updateTsKvTableStmt = "alter table ts_kv add json_v text";
-                String updateTsKvLatestTableStmt = "alter table ts_kv_latest add json_v text";
+                String updateTsKvTableStmt = "alter table ts_kv_cf add json_v text";
+                String updateTsKvLatestTableStmt = "alter table ts_kv_latest_cf add json_v text";
 
                 try {
                     log.info("Updating ts ...");

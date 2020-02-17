@@ -282,7 +282,7 @@ public class CassandraDatabaseUpgradeService extends AbstractCassandraDatabaseUp
                 break;
             case "2.4.3":
                 log.info("Updating schema ...");
-                String updateAttributeKvTableStmt = "alter table attribute_kv add json_v text";
+                String updateAttributeKvTableStmt = "alter table attributes_kv_cf add json_v text";
                 try {
                     log.info("Updating attributes ...");
                     cluster.getSession().execute(updateAttributeKvTableStmt);
