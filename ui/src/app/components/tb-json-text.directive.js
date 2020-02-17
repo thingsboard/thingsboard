@@ -1,4 +1,4 @@
-export default angular.module('tbInputJson', [])
+export default angular.module('tbJsonText', [])
     .directive('tbJsonText', InputJson)
     .name;
 
