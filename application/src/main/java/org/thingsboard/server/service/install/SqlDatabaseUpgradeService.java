@@ -210,6 +210,10 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
             case "2.4.3":
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
                     log.info("Updating schema ...");
+                    try {
+                        conn.createStatement().execute("ALTER TABLE attribute_kv ADD COLUMN json_v json;");
+                    } catch (Exception e) {
+                    }
                     schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "2.5.0", SCHEMA_UPDATE_SQL);
                     loadSql(schemaUpdateFile, conn);
                     log.info("Schema updated.");

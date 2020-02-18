@@ -84,7 +84,6 @@
 		"timeout-invalid": "それは有効なタイムアウトのようには見えません。",
 		"enable-tls": "TLSを有効にする",
 		"tls-version": "TLSバージョン",
-		"enter-tls-version" : "TLSバージョンを入力してください",
 		"send-test-mail": "テストメールを送信する"
 	},
 	"alarm": {

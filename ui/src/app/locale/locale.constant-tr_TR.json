@@ -84,7 +84,6 @@
         "timeout-invalid": "Bu geçerli bir zaman aşımı gibi görünmüyor.",
         "enable-tls": "TLS'i etkinleştir.",
         "tls-version" : "TLS sürümü",
-        "enter-tls-version" : "TLS sürümünü girin",
         "send-test-mail": "Test e-postası gönder"
     },
     "alarm": {
