@@ -290,10 +290,6 @@ public class CassandraDatabaseUpgradeService extends AbstractCassandraDatabaseUp
                     log.info("Attributes updated.");
                 } catch (InvalidQueryException e) {
                 }
-                log.info("Schema updated.");
-                break;
-            case "2.4.3":
-                log.info("Updating schema ...");
                 schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "2.5.0", SCHEMA_UPDATE_CQL);
                 loadCql(schemaUpdateFile);
                 log.info("Schema updated.");
