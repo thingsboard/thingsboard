@@ -1118,7 +1118,9 @@
   "js-func": {
     "no-return-error": "Funktion muss einen Wert zurückgeben!",
     "return-type-mismatch": "Funktion muss einen Wert vom Typ '{{type}}' zurückgeben!",
-    "tidy": "Aufräumen"
+    "tidy": "Aufräumen",
+    "mini": "Mini",
+    "minifier": "Minifier"
   },
   "key-val": {
     "key": "Schlüssel",

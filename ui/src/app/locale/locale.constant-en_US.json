@@ -1268,7 +1268,9 @@
     "js-func": {
         "no-return-error": "Function must return value!",
         "return-type-mismatch": "Function must return value of '{{type}}' type!",
-        "tidy": "Tidy"
+        "tidy": "Tidy",
+        "mini": "Mini",
+        "minifier": "Minifier"
     },
     "key-val": {
         "key": "Key",
@@ -1591,7 +1593,9 @@
         "boolean-value": "Boolean value",
         "false": "False",
         "true": "True",
-        "long": "Long"
+        "long": "Long",
+        "json": "Json",
+        "json-value": "Json value"
     },
     "widget": {
         "widget-library": "Widgets Library",
