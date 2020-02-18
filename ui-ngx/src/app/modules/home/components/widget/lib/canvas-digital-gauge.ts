@@ -166,6 +166,31 @@ interface FontHeightInfo {
   descent?: number;
 }
 
+export class Drawings {
+  static font(options: CanvasGauges.GenericOptions, target: string, baseSize: number): string {
+    return options['font' + target + 'Style'] + ' ' +
+      options['font' + target + 'Weight'] + ' ' +
+      options['font' + target + 'Size'] * baseSize + 'px ' +
+      options['font' + target];
+  }
+  static normalizedValue(options: CanvasGauges.GenericOptions): {normal: number, indented: number} {
+    const value = options.value;
+    const min = options.minValue;
+    const max = options.maxValue;
+    const dt = (max - min) * 0.01;
+    return {
+      normal: value < min ? min : value > max ? max : value,
+      indented: value < min ? min - dt : value > max ? max + dt : value
+    };
+  }
+  static verifyError(err: any) {
+    if (err instanceof DOMException && (err as any).result === 0x8053000b) {
+      return ; // ignore it
+    }
+    throw err;
+  }
+}
+
 export class CanvasDigitalGauge extends BaseGauge {
 
   static heightCache: {[key: string]: FontHeightInfo} = {};
@@ -350,7 +375,7 @@ export class CanvasDigitalGauge extends BaseGauge {
         valueChanged = true;
       }
 
-      const progress = (CanvasGauges.drawings.normalizedValue(options).normal - options.minValue) /
+      const progress = (Drawings.normalizedValue(options).normal - options.minValue) /
         (options.maxValue - options.minValue);
 
       const fixedProgress = progress.toFixed(3);
@@ -385,7 +410,7 @@ export class CanvasDigitalGauge extends BaseGauge {
       super.draw();
 
     } catch (err) {
-      CanvasGauges.drawings.verifyError(err);
+      Drawings.verifyError(err);
     }
     return this;
   }
@@ -395,7 +420,7 @@ export class CanvasDigitalGauge extends BaseGauge {
       let color = this.contextProgressClone.currentColor;
       const options = this.options as CanvasDigitalGaugeOptions;
       if (!color) {
-        const progress = (CanvasGauges.drawings.normalizedValue(options).normal - options.minValue) /
+        const progress = (Drawings.normalizedValue(options).normal - options.minValue) /
           (options.maxValue - options.minValue);
         if (options.neonGlowBrightness) {
           color = getProgressColor(progress, options.neonColorsRange);
@@ -539,7 +564,7 @@ function barDimensions(context: DigitalGaugeCanvasRenderingContext2D,
       bd.barLeft = bd.origBaseX + options.fontMinMaxSize/3 * bd.fontSizeFactor;
       bd.barRight = bd.origBaseX + w + /*bd.width*/ - options.fontMinMaxSize/3 * bd.fontSizeFactor;
     } else {
-      context.font = CanvasGauges.drawings.font(options, 'MinMax', bd.fontSizeFactor);
+      context.font = Drawings.font(options, 'MinMax', bd.fontSizeFactor);
       const minTextWidth  = context.measureText(options.minValue+'').width;
       const maxTextWidth  = context.measureText(options.maxValue+'').width;
       const maxW = Math.max(minTextWidth, maxTextWidth);
@@ -682,7 +707,7 @@ function drawDigitalTitle(context: DigitalGaugeCanvasRenderingContext2D, options
 
   context.save();
   context.textAlign = 'center';
-  context.font = CanvasGauges.drawings.font(options, 'Title', fontSizeFactor);
+  context.font = Drawings.font(options, 'Title', fontSizeFactor);
   context.lineWidth = 0;
   drawText(context, options, 'Title', options.title.toUpperCase(), textX, textY);
 }
@@ -698,7 +723,7 @@ function drawDigitalLabel(context: DigitalGaugeCanvasRenderingContext2D, options
 
   context.save();
   context.textAlign = 'center';
-  context.font = CanvasGauges.drawings.font(options, 'Label', fontSizeFactor);
+  context.font = Drawings.font(options, 'Label', fontSizeFactor);
   context.lineWidth = 0;
   drawText(context, options, 'Label', options.label.toUpperCase(), textX, textY);
 }
@@ -712,7 +737,7 @@ function drawDigitalMinMax(context: DigitalGaugeCanvasRenderingContext2D, option
   context.save();
   context.textAlign = fontMinMaxAlign;
   context.textBaseline = fontMinMaxBaseline;
-  context.font = CanvasGauges.drawings.font(options, 'MinMax', fontSizeFactor);
+  context.font = Drawings.font(options, 'MinMax', fontSizeFactor);
   context.lineWidth = 0;
   drawText(context, options, 'MinMax', options.minValue+'', minX, minY);
   drawText(context, options, 'MinMax', options.maxValue+'', maxX, maxY);
@@ -751,7 +776,7 @@ function drawDigitalValue(context: DigitalGaugeCanvasRenderingContext2D, options
   context.save();
   context.textAlign = 'center';
   context.textBaseline = fontValueBaseline;
-  context.font = CanvasGauges.drawings.font(options, 'Value', fontSizeFactor);
+  context.font = Drawings.font(options, 'Value', fontSizeFactor);
   context.lineWidth = 0;
   drawText(context, options, 'Value', text, textX, textY);
 }
