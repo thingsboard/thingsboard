@@ -20,6 +20,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { defaultHttpOptions } from '@core/http/http-utils';
 import { map } from 'rxjs/operators';
+import { isDefined } from '@core/utils';
 
 export interface TimeInterval {
   name: string;
@@ -70,10 +71,16 @@ export class TimeService {
   }
 
   public boundMinInterval(min: number): number {
+    if (isDefined(min)) {
+      min = Math.floor(min / 1000) * 1000;
+    }
     return this.toBound(min, MIN_INTERVAL, MAX_INTERVAL, MIN_INTERVAL);
   }
 
   public boundMaxInterval(max: number): number {
+    if (isDefined(max)) {
+      max = Math.floor(max / 1000) * 1000;
+    }
     return this.toBound(max, MIN_INTERVAL, MAX_INTERVAL, MAX_INTERVAL);
   }
 
@@ -137,7 +144,7 @@ export class TimeService {
   }
 
   private toBound(value: number, min: number, max: number, defValue: number): number {
-    if (typeof value !== 'undefined') {
+    if (isDefined(value)) {
       value = Math.max(value, min);
       value = Math.min(value, max);
       return value;

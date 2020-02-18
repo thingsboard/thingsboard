@@ -26,6 +26,10 @@ import { TimeseriesTableWidgetComponent } from '@home/components/widget/lib/time
 import { EntitiesHierarchyWidgetComponent } from '@home/components/widget/lib/entities-hierarchy-widget.component';
 import { CustomDialogService } from '@home/components/widget/dialog/custom-dialog.service';
 import { RpcWidgetsModule } from '@home/components/widget/lib/rpc/rpc-widgets.module';
+import {
+  DateRangeNavigatorPanelComponent,
+  DateRangeNavigatorWidgetComponent
+} from '@home/components/widget/lib/date-range-navigator/date-range-navigator.component';
 
 @NgModule({
   declarations:
@@ -35,7 +39,9 @@ import { RpcWidgetsModule } from '@home/components/widget/lib/rpc/rpc-widgets.mo
       EntitiesTableWidgetComponent,
       AlarmsTableWidgetComponent,
       TimeseriesTableWidgetComponent,
-      EntitiesHierarchyWidgetComponent
+      EntitiesHierarchyWidgetComponent,
+      DateRangeNavigatorWidgetComponent,
+      DateRangeNavigatorPanelComponent
     ],
   imports: [
     CommonModule,
@@ -48,7 +54,8 @@ import { RpcWidgetsModule } from '@home/components/widget/lib/rpc/rpc-widgets.mo
     AlarmsTableWidgetComponent,
     TimeseriesTableWidgetComponent,
     EntitiesHierarchyWidgetComponent,
-    RpcWidgetsModule
+    RpcWidgetsModule,
+    DateRangeNavigatorWidgetComponent
   ],
   providers: [
     CustomDialogService

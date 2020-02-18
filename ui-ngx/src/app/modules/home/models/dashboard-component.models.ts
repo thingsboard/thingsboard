@@ -66,7 +66,7 @@ export interface IDashboardComponent {
   dashboardTimewindowChanged: Observable<Timewindow>;
   aliasController: IAliasController;
   stateController: IStateController;
-  onUpdateTimewindow(startTimeMs: number, endTimeMs: number, interval?: number): void;
+  onUpdateTimewindow(startTimeMs: number, endTimeMs: number, interval?: number, persist?: boolean): void;
   onResetTimewindow(): void;
   resetHighlight(): void;
   highlightWidget(widgetId: string, delay?: number);

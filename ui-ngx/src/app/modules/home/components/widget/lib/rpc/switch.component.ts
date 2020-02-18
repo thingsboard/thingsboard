@@ -309,8 +309,12 @@ export class SwitchComponent extends PageComponent implements OnInit, OnDestroy 
     }
     const subscriptionOptions: WidgetSubscriptionOptions = {
       callbacks: {
-        onDataUpdated: this.onDataUpdated.bind(this),
-        onDataUpdateError: this.onDataUpdateError.bind(this)
+        onDataUpdated: (subscription, detectChanges) => this.ctx.ngZone.run(() => {
+            this.onDataUpdated(subscription, detectChanges);
+        }),
+        onDataUpdateError: (subscription, e) => this.ctx.ngZone.run(() => {
+          this.onDataUpdateError(subscription, e);
+        })
       }
     };
     this.ctx.subscriptionApi.createSubscriptionFromInfo (

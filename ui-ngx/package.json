@@ -62,6 +62,7 @@
     "moment": "^2.24.0",
     "ngx-clipboard": "^12.3.0",
     "ngx-color-picker": "^9.0.0",
+    "ngx-daterangepicker-material": "^2.2.0",
     "ngx-flowchart": "git://github.com/thingsboard/ngx-flowchart.git#master",
     "ngx-hm-carousel": "^1.7.2",
     "ngx-translate-messageformat-compiler": "^4.5.0",

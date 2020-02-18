@@ -19,7 +19,8 @@ import {
   Component,
   DoCheck,
   Input,
-  IterableDiffers, KeyValueDiffers,
+  IterableDiffers,
+  KeyValueDiffers,
   NgZone,
   OnChanges,
   OnDestroy,
@@ -34,7 +35,7 @@ import { AuthUser } from '@shared/models/user.model';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Timewindow, toHistoryTimewindow } from '@shared/models/time/time.models';
 import { TimeService } from '@core/services/time.service';
-import { GridsterComponent, GridsterComponentInterface, GridsterConfig } from 'angular-gridster2';
+import { GridsterComponent, GridsterConfig } from 'angular-gridster2';
 import {
   DashboardCallbacks,
   DashboardWidget,
@@ -51,6 +52,7 @@ import { IAliasController, IStateController } from '@app/core/api/widget-api.mod
 import { Widget, WidgetPosition } from '@app/shared/models/widget.models';
 import { MatMenuTrigger } from '@angular/material/menu';
 import { SafeStyle } from '@angular/platform-browser';
+import { distinct } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-dashboard',
@@ -126,7 +128,9 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
 
   dashboardTimewindowChangedSubject: Subject<Timewindow> = new ReplaySubject<Timewindow>();
 
-  dashboardTimewindowChanged = this.dashboardTimewindowChangedSubject.asObservable();
+  dashboardTimewindowChanged = this.dashboardTimewindowChangedSubject.asObservable().pipe(
+    distinct()
+  );
 
   originalDashboardTimewindow: Timewindow;
 
@@ -291,9 +295,9 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
     addResizeListener(this.gridster.el, this.gridsterResizeListener);
   }
 
-  onUpdateTimewindow(startTimeMs: number, endTimeMs: number, interval?: number): void {
+  onUpdateTimewindow(startTimeMs: number, endTimeMs: number, interval?: number, persist?: boolean): void {
     this.ngZone.run(() => {
-      if (!this.originalDashboardTimewindow) {
+      if (!this.originalDashboardTimewindow && !persist) {
         this.originalDashboardTimewindow = deepClone(this.dashboardTimewindow);
       }
       this.dashboardTimewindow = toHistoryTimewindow(this.dashboardTimewindow,

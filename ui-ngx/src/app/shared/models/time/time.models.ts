@@ -15,7 +15,7 @@
 ///
 
 import { TimeService } from '@core/services/time.service';
-import { deepClone, isDefined } from '@app/core/utils';
+import { deepClone, isDefined, isUndefined } from '@app/core/utils';
 
 export const SECOND = 1000;
 export const MINUTE = 60 * SECOND;
@@ -140,22 +140,36 @@ export function defaultTimewindow(timeService: TimeService): Timewindow {
 export function initModelFromDefaultTimewindow(value: Timewindow, timeService: TimeService): Timewindow {
   const model = defaultTimewindow(timeService);
   if (value) {
-    if (value.realtime) {
-      model.selectedTab = TimewindowType.REALTIME;
+    if (isUndefined(value.selectedTab)) {
+      if (value.realtime) {
+        model.selectedTab = TimewindowType.REALTIME;
+      } else {
+        model.selectedTab = TimewindowType.HISTORY;
+      }
+    } else {
+      model.selectedTab = value.selectedTab;
+    }
+    if (model.selectedTab === TimewindowType.REALTIME) {
       if (isDefined(value.realtime.interval)) {
         model.realtime.interval = value.realtime.interval;
       }
       model.realtime.timewindowMs = value.realtime.timewindowMs;
     } else {
-      model.selectedTab = TimewindowType.HISTORY;
       if (isDefined(value.history.interval)) {
         model.history.interval = value.history.interval;
       }
-      if (isDefined(value.history.timewindowMs)) {
-        model.history.historyType = HistoryWindowType.LAST_INTERVAL;
+      if (isUndefined(value.history.historyType)) {
+        if (isDefined(value.history.timewindowMs)) {
+          model.history.historyType = HistoryWindowType.LAST_INTERVAL;
+        } else {
+          model.history.historyType = HistoryWindowType.FIXED;
+        }
+      } else {
+        model.history.historyType = value.history.historyType;
+      }
+      if (model.history.historyType === HistoryWindowType.LAST_INTERVAL) {
         model.history.timewindowMs = value.history.timewindowMs;
       } else {
-        model.history.historyType = HistoryWindowType.FIXED;
         model.history.fixedTimewindow.startTimeMs = value.history.fixedTimewindow.startTimeMs;
         model.history.fixedTimewindow.endTimeMs = value.history.fixedTimewindow.endTimeMs;
       }
@@ -189,7 +203,9 @@ export function toHistoryTimewindow(timewindow: Timewindow, startTimeMs: number,
     limit = timeService.getMaxDatapointsLimit();
   }
   const historyTimewindow: Timewindow = {
+    selectedTab: TimewindowType.HISTORY,
     history: {
+      historyType: HistoryWindowType.FIXED,
       fixedTimewindow: {
         startTimeMs,
         endTimeMs
@@ -226,7 +242,11 @@ export function createSubscriptionTimewindow(timewindow: Timewindow, stDiff: num
       limit: timewindow.aggregation.limit || timeService.getMaxDatapointsLimit()
     };
   }
-  if (isDefined(timewindow.realtime)) {
+  let selectedTab = timewindow.selectedTab;
+  if (isUndefined(selectedTab)) {
+    selectedTab = isDefined(timewindow.realtime) ? TimewindowType.REALTIME : TimewindowType.HISTORY;
+  }
+  if (selectedTab === TimewindowType.REALTIME) {
     subscriptionTimewindow.realtimeWindowMs = timewindow.realtime.timewindowMs;
     subscriptionTimewindow.aggregation.interval =
       timeService.boundIntervalToTimewindow(subscriptionTimewindow.realtimeWindowMs, timewindow.realtime.interval,
@@ -238,8 +258,12 @@ export function createSubscriptionTimewindow(timewindow: Timewindow, stDiff: num
       subscriptionTimewindow.startTs -= startDiff;
       aggTimewindow += subscriptionTimewindow.aggregation.interval;
     }
-  } else if (isDefined(timewindow.history)) {
-    if (isDefined(timewindow.history.timewindowMs)) {
+  } else {
+    let historyType = timewindow.history.historyType;
+    if (isUndefined(historyType)) {
+      historyType = isDefined(timewindow.history.timewindowMs) ? HistoryWindowType.LAST_INTERVAL : HistoryWindowType.FIXED;
+    }
+    if (historyType === HistoryWindowType.LAST_INTERVAL) {
       const currentTime = Date.now();
       subscriptionTimewindow.fixedWindow = {
         startTimeMs: currentTime - timewindow.history.timewindowMs,

@@ -16,6 +16,7 @@
 
 import { environment as env } from '@env/environment';
 import { TranslateService } from '@ngx-translate/core';
+import * as _moment from 'moment';
 
 export function updateUserLang(translate: TranslateService, userLang: string) {
   let targetLang = userLang;
@@ -33,6 +34,7 @@ export function updateUserLang(translate: TranslateService, userLang: string) {
     console.log(`Detected supported lang: ${detectedSupportedLang}`);
   }
   translate.use(detectedSupportedLang);
+  _moment.locale([detectedSupportedLang]);
 }
 
 function detectSupportedLang(targetLang: string): string {

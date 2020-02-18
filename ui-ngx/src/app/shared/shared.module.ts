@@ -53,6 +53,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDatetimepickerModule, MatNativeDatetimeModule } from '@mat-datetimepicker/core';
+import { NgxDaterangepickerMd } from 'ngx-daterangepicker-material';
 import { GridsterModule } from 'angular-gridster2';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -232,6 +233,7 @@ import { LedLightComponent } from '@shared/components/led-light.component';
     MatDatepickerModule,
     MatNativeDatetimeModule,
     MatDatetimepickerModule,
+    NgxDaterangepickerMd.forRoot(),
     MatSliderModule,
     MatExpansionModule,
     MatStepperModule,
@@ -318,6 +320,7 @@ import { LedLightComponent } from '@shared/components/led-light.component';
     MatDatepickerModule,
     MatNativeDatetimeModule,
     MatDatetimepickerModule,
+    NgxDaterangepickerMd,
     MatSliderModule,
     MatExpansionModule,
     MatStepperModule,

@@ -359,6 +359,7 @@ export class KnobComponent extends PageComponent implements OnInit, OnDestroy {
     this.updateColor(this.canvasBar.getValueColor());
     this.value = this.formatValue(value);
     this.checkValueSize();
+    this.ctx.detectChanges();
   }
 
   private updateColor(color: string) {
