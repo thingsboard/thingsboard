@@ -206,6 +206,7 @@
         "entity-filter-no-entity-matched": "Объекты, соответствующие фильтру, не найдены.",
         "no-entity-filter-specified": "Не указан фильтр объектов",
         "root-state-entity": "Использовать объект, полученный из дашборда, как корневой",
+        "last-level-relation": "Использовать только отношения последнего уровня",
         "root-entity": "Корневой объект",
         "state-entity-parameter-name": "Название объекта состояния",
         "default-state-entity": "Объект состояния по умолчанию",

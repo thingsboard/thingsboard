@@ -593,7 +593,8 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                         parameters: {
                             rootId: relationQueryRootEntityId.id,
                             rootType: relationQueryRootEntityId.entityType,
-                            direction: filter.direction
+                            direction: filter.direction,
+                            fetchLastLevelOnly: filter.fetchLastLevelOnly
                         },
                         filters: filter.filters
                     };
@@ -643,7 +644,8 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                         parameters: {
                             rootId: searchQueryRootEntityId.id,
                             rootType: searchQueryRootEntityId.entityType,
-                            direction: filter.direction
+                            direction: filter.direction,
+                            fetchLastLevelOnly: filter.fetchLastLevelOnly
                         },
                         relationType: filter.relationType
                     };
@@ -1075,10 +1077,10 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         }
     }
 
-    function getRelatedEntities(rootEntityId, entityType, entitySubTypes, maxLevel, keys, typeTranslatePrefix, relationType, direction) {
+    function getRelatedEntities(rootEntityId, entityType, entitySubTypes, maxLevel, keys, typeTranslatePrefix, relationType, direction, fetchLastLevelOnly) {
         var deferred = $q.defer();
 
-        var entitySearchQuery = constructRelatedEntitiesSearchQuery(rootEntityId, entityType, entitySubTypes, maxLevel, relationType, direction);
+        var entitySearchQuery = constructRelatedEntitiesSearchQuery(rootEntityId, entityType, entitySubTypes, maxLevel, relationType, direction,fetchLastLevelOnly);
         if (!entitySearchQuery) {
             deferred.reject();
         } else {
@@ -1499,13 +1501,14 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
             );
     }
 
-    function constructRelatedEntitiesSearchQuery(rootEntityId, entityType, entitySubTypes, maxLevel, relationType, direction) {
+    function constructRelatedEntitiesSearchQuery(rootEntityId, entityType, entitySubTypes, maxLevel, relationType, direction, fetchLastLevelOnly) {
 
         var searchQuery = {
             parameters: {
                 rootId: rootEntityId.id,
                 rootType: rootEntityId.entityType,
-                direction: direction
+                direction: direction,
+                fetchLastLevelOnly: !!fetchLastLevelOnly
             },
             relationType: relationType
         };
