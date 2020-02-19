@@ -145,6 +145,10 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         return response;
     }
 
+    public RestTemplate getRestTemplate() {
+        return restTemplate;
+    }
+
     public String getToken() {
         return token;
     }
@@ -172,170 +176,6 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         this.token = tokenInfo.get("token").asText();
         this.refreshToken = tokenInfo.get("refreshToken").asText();
         restTemplate.getInterceptors().add(this);
-    }
-
-    public Optional<Device> findDevice(String name) {
-        Map<String, String> params = new HashMap<String, String>();
-        params.put("deviceName", name);
-        try {
-            ResponseEntity<Device> deviceEntity = restTemplate.getForEntity(baseURL + "/api/tenant/devices?deviceName={deviceName}", Device.class, params);
-            return Optional.of(deviceEntity.getBody());
-        } catch (HttpClientErrorException exception) {
-            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
-                return Optional.empty();
-            } else {
-                throw exception;
-            }
-        }
-    }
-
-    public Optional<Customer> findCustomer(String title) {
-        Map<String, String> params = new HashMap<String, String>();
-        params.put("customerTitle", title);
-        try {
-            ResponseEntity<Customer> customerEntity = restTemplate.getForEntity(baseURL + "/api/tenant/customers?customerTitle={customerTitle}", Customer.class, params);
-            return Optional.of(customerEntity.getBody());
-        } catch (HttpClientErrorException exception) {
-            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
-                return Optional.empty();
-            } else {
-                throw exception;
-            }
-        }
-    }
-
-    public Optional<Asset> findAsset(String name) {
-        Map<String, String> params = new HashMap<String, String>();
-        params.put("assetName", name);
-        try {
-            ResponseEntity<Asset> assetEntity = restTemplate.getForEntity(baseURL + "/api/tenant/assets?assetName={assetName}", Asset.class, params);
-            return Optional.of(assetEntity.getBody());
-        } catch (HttpClientErrorException exception) {
-            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
-                return Optional.empty();
-            } else {
-                throw exception;
-            }
-        }
-    }
-
-    public Optional<JsonNode> getAttributes(String accessToken, String clientKeys, String sharedKeys) {
-        Map<String, String> params = new HashMap<>();
-        params.put("accessToken", accessToken);
-        params.put("clientKeys", clientKeys);
-        params.put("sharedKeys", sharedKeys);
-        try {
-            ResponseEntity<JsonNode> telemetryEntity = restTemplate.getForEntity(baseURL + "/api/v1/{accessToken}/attributes?clientKeys={clientKeys}&sharedKeys={sharedKeys}", JsonNode.class, params);
-            return Optional.of(telemetryEntity.getBody());
-        } catch (HttpClientErrorException exception) {
-            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
-                return Optional.empty();
-            } else {
-                throw exception;
-            }
-        }
-    }
-
-    public Customer createCustomer(Customer customer) {
-        return restTemplate.postForEntity(baseURL + "/api/customer", customer, Customer.class).getBody();
-    }
-
-    public Customer createCustomer(String title) {
-        Customer customer = new Customer();
-        customer.setTitle(title);
-        return restTemplate.postForEntity(baseURL + "/api/customer", customer, Customer.class).getBody();
-    }
-
-    public DeviceCredentials updateDeviceCredentials(DeviceId deviceId, String token) {
-        DeviceCredentials deviceCredentials = getCredentials(deviceId);
-        deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
-        deviceCredentials.setCredentialsId(token);
-        return saveDeviceCredentials(deviceCredentials);
-    }
-
-    public Device createDevice(String name, String type) {
-        Device device = new Device();
-        device.setName(name);
-        device.setType(type);
-        return doCreateDevice(device, null);
-    }
-
-    public Device createDevice(Device device) {
-        return doCreateDevice(device, null);
-    }
-
-    public Device createDevice(Device device, String accessToken) {
-        return doCreateDevice(device, accessToken);
-    }
-
-    private Device doCreateDevice(Device device, String accessToken) {
-        Map<String, String> params = new HashMap<>();
-        String deviceCreationUrl = "/api/device";
-        if (!StringUtils.isEmpty(accessToken)) {
-            deviceCreationUrl = deviceCreationUrl + "?accessToken={accessToken}";
-            params.put("accessToken", accessToken);
-        }
-        return restTemplate.postForEntity(baseURL + deviceCreationUrl, device, Device.class, params).getBody();
-    }
-
-    public Asset createAsset(Asset asset) {
-        return restTemplate.postForEntity(baseURL + "/api/asset", asset, Asset.class).getBody();
-    }
-
-    public Asset createAsset(String name, String type) {
-        Asset asset = new Asset();
-        asset.setName(name);
-        asset.setType(type);
-        return restTemplate.postForEntity(baseURL + "/api/asset", asset, Asset.class).getBody();
-    }
-
-    public Alarm createAlarm(Alarm alarm) {
-        return restTemplate.postForEntity(baseURL + "/api/alarm", alarm, Alarm.class).getBody();
-    }
-
-    public Device assignDevice(CustomerId customerId, DeviceId deviceId) {
-        return restTemplate.postForEntity(baseURL + "/api/customer/{customerId}/device/{deviceId}", null, Device.class,
-                customerId.toString(), deviceId.toString()).getBody();
-    }
-
-    public Asset assignAsset(CustomerId customerId, AssetId assetId) {
-        return restTemplate.postForEntity(baseURL + "/api/customer/{customerId}/asset/{assetId}", HttpEntity.EMPTY, Asset.class,
-                customerId.toString(), assetId.toString()).getBody();
-    }
-
-    public EntityRelation makeRelation(String relationType, EntityId idFrom, EntityId idTo) {
-        EntityRelation relation = new EntityRelation();
-        relation.setFrom(idFrom);
-        relation.setTo(idTo);
-        relation.setType(relationType);
-        return restTemplate.postForEntity(baseURL + "/api/relation", relation, EntityRelation.class).getBody();
-    }
-
-    public Dashboard createDashboard(Dashboard dashboard) {
-        return restTemplate.postForEntity(baseURL + "/api/dashboard", dashboard, Dashboard.class).getBody();
-    }
-
-    public List<DashboardInfo> findTenantDashboards() {
-        try {
-            ResponseEntity<TextPageData<DashboardInfo>> dashboards =
-                    restTemplate.exchange(baseURL + "/api/tenant/dashboards?limit=100000", HttpMethod.GET, null, new ParameterizedTypeReference<TextPageData<DashboardInfo>>() {
-                    });
-            return dashboards.getBody().getData();
-        } catch (HttpClientErrorException exception) {
-            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
-                return Collections.emptyList();
-            } else {
-                throw exception;
-            }
-        }
-    }
-
-    public DeviceCredentials getCredentials(DeviceId id) {
-        return restTemplate.getForEntity(baseURL + "/api/device/" + id.getId().toString() + "/credentials", DeviceCredentials.class).getBody();
-    }
-
-    public RestTemplate getRestTemplate() {
-        return restTemplate;
     }
 
     public Optional<AdminSettings> getAdminSettings(String key) {
@@ -465,6 +305,11 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 throw exception;
             }
         }
+    }
+
+    @Deprecated
+    public Alarm createAlarm(Alarm alarm) {
+        return restTemplate.postForEntity(baseURL + "/api/alarm", alarm, Alarm.class).getBody();
     }
 
     public Optional<Asset> getAssetById(AssetId assetId) {
@@ -601,6 +446,41 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<List<EntitySubtype>>() {
                 }).getBody();
+    }
+
+    @Deprecated
+    public Optional<Asset> findAsset(String name) {
+        Map<String, String> params = new HashMap<String, String>();
+        params.put("assetName", name);
+        try {
+            ResponseEntity<Asset> assetEntity = restTemplate.getForEntity(baseURL + "/api/tenant/assets?assetName={assetName}", Asset.class, params);
+            return Optional.of(assetEntity.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    @Deprecated
+    public Asset createAsset(Asset asset) {
+        return restTemplate.postForEntity(baseURL + "/api/asset", asset, Asset.class).getBody();
+    }
+
+    @Deprecated
+    public Asset createAsset(String name, String type) {
+        Asset asset = new Asset();
+        asset.setName(name);
+        asset.setType(type);
+        return restTemplate.postForEntity(baseURL + "/api/asset", asset, Asset.class).getBody();
+    }
+
+    @Deprecated
+    public Asset assignAsset(CustomerId customerId, AssetId assetId) {
+        return restTemplate.postForEntity(baseURL + "/api/customer/{customerId}/asset/{assetId}", HttpEntity.EMPTY, Asset.class,
+                customerId.toString(), assetId.toString()).getBody();
     }
 
     public TimePageData<AuditLog> getAuditLogsByCustomerId(CustomerId customerId, TimePageLink pageLink, List<ActionType> actionTypes) {
@@ -826,6 +706,34 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         }
     }
 
+    @Deprecated
+    public Optional<Customer> findCustomer(String title) {
+        Map<String, String> params = new HashMap<>();
+        params.put("customerTitle", title);
+        try {
+            ResponseEntity<Customer> customerEntity = restTemplate.getForEntity(baseURL + "/api/tenant/customers?customerTitle={customerTitle}", Customer.class, params);
+            return Optional.of(customerEntity.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    @Deprecated
+    public Customer createCustomer(Customer customer) {
+        return restTemplate.postForEntity(baseURL + "/api/customer", customer, Customer.class).getBody();
+    }
+
+    @Deprecated
+    public Customer createCustomer(String title) {
+        Customer customer = new Customer();
+        customer.setTitle(title);
+        return restTemplate.postForEntity(baseURL + "/api/customer", customer, Customer.class).getBody();
+    }
+
     public Long getServerTime() {
         return restTemplate.getForObject(baseURL + "/api/dashboard/serverTime", Long.class);
     }
@@ -994,6 +902,27 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 }, params).getBody();
     }
 
+    @Deprecated
+    public Dashboard createDashboard(Dashboard dashboard) {
+        return restTemplate.postForEntity(baseURL + "/api/dashboard", dashboard, Dashboard.class).getBody();
+    }
+
+    @Deprecated
+    public List<DashboardInfo> findTenantDashboards() {
+        try {
+            ResponseEntity<TextPageData<DashboardInfo>> dashboards =
+                    restTemplate.exchange(baseURL + "/api/tenant/dashboards?limit=100000", HttpMethod.GET, null, new ParameterizedTypeReference<TextPageData<DashboardInfo>>() {
+                    });
+            return dashboards.getBody().getData();
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Collections.emptyList();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
     public Optional<Device> getDeviceById(DeviceId deviceId) {
         try {
             ResponseEntity<Device> device = restTemplate.getForEntity(baseURL + "/api/device/{deviceId}", Device.class, deviceId.getId());
@@ -1143,6 +1072,70 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
 
     public void reClaimDevice(String deviceName) {
         restTemplate.delete(baseURL + "/api/customer/device/{deviceName}/claim", deviceName);
+    }
+
+    @Deprecated
+    public Device createDevice(String name, String type) {
+        Device device = new Device();
+        device.setName(name);
+        device.setType(type);
+        return doCreateDevice(device, null);
+    }
+
+    @Deprecated
+    public Device createDevice(Device device) {
+        return doCreateDevice(device, null);
+    }
+
+    @Deprecated
+    public Device createDevice(Device device, String accessToken) {
+        return doCreateDevice(device, accessToken);
+    }
+
+    @Deprecated
+    private Device doCreateDevice(Device device, String accessToken) {
+        Map<String, String> params = new HashMap<>();
+        String deviceCreationUrl = "/api/device";
+        if (!StringUtils.isEmpty(accessToken)) {
+            deviceCreationUrl = deviceCreationUrl + "?accessToken={accessToken}";
+            params.put("accessToken", accessToken);
+        }
+        return restTemplate.postForEntity(baseURL + deviceCreationUrl, device, Device.class, params).getBody();
+    }
+
+    @Deprecated
+    public DeviceCredentials getCredentials(DeviceId id) {
+        return restTemplate.getForEntity(baseURL + "/api/device/" + id.getId().toString() + "/credentials", DeviceCredentials.class).getBody();
+    }
+
+    @Deprecated
+    public Optional<Device> findDevice(String name) {
+        Map<String, String> params = new HashMap<>();
+        params.put("deviceName", name);
+        try {
+            ResponseEntity<Device> deviceEntity = restTemplate.getForEntity(baseURL + "/api/tenant/devices?deviceName={deviceName}", Device.class, params);
+            return Optional.of(deviceEntity.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    @Deprecated
+    public DeviceCredentials updateDeviceCredentials(DeviceId deviceId, String token) {
+        DeviceCredentials deviceCredentials = getCredentials(deviceId);
+        deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
+        deviceCredentials.setCredentialsId(token);
+        return saveDeviceCredentials(deviceCredentials);
+    }
+
+    @Deprecated
+    public Device assignDevice(CustomerId customerId, DeviceId deviceId) {
+        return restTemplate.postForEntity(baseURL + "/api/customer/{customerId}/device/{deviceId}", null, Device.class,
+                customerId.toString(), deviceId.toString()).getBody();
     }
 
     public void saveRelation(EntityRelation relation) {
@@ -1296,6 +1289,15 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 new HttpEntity<>(query),
                 new ParameterizedTypeReference<List<EntityRelationInfo>>() {
                 }).getBody();
+    }
+
+    @Deprecated
+    public EntityRelation makeRelation(String relationType, EntityId idFrom, EntityId idTo) {
+        EntityRelation relation = new EntityRelation();
+        relation.setFrom(idFrom);
+        relation.setTo(idTo);
+        relation.setType(relationType);
+        return restTemplate.postForEntity(baseURL + "/api/relation", relation, EntityRelation.class).getBody();
     }
 
     public Optional<EntityView> getEntityViewById(EntityViewId entityViewId) {
@@ -1967,6 +1969,24 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         }
     }
 
+    @Deprecated
+    public Optional<JsonNode> getAttributes(String accessToken, String clientKeys, String sharedKeys) {
+        Map<String, String> params = new HashMap<>();
+        params.put("accessToken", accessToken);
+        params.put("clientKeys", clientKeys);
+        params.put("sharedKeys", sharedKeys);
+        try {
+            ResponseEntity<JsonNode> telemetryEntity = restTemplate.getForEntity(baseURL + "/api/v1/{accessToken}/attributes?clientKeys={clientKeys}&sharedKeys={sharedKeys}", JsonNode.class, params);
+            return Optional.of(telemetryEntity.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
     private String getUrlParams(TimePageLink pageLink) {
         String urlParams = "limit={limit}&ascOrder={ascOrder}";
         if (pageLink.getStartTime() != null) {
@@ -2042,4 +2062,5 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
             service.shutdown();
         }
     }
+
 }
