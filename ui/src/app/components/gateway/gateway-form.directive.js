@@ -32,6 +32,7 @@ function GatewayForm() {
         bindToController: {
             formId: '=',
             ctx: '=',
+            isStateForm: '=',
             deviceName: '=',
             isReadOnly: '=',
             isState: '='
@@ -54,9 +55,6 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
 
     vm.types = types;
     vm.deviceNameForm = (vm.deviceName) ? vm.deviceName : null;
-    // vm.isReadOnlyForm = (vm.isReadOnly) ? vm.isReadOnly : false;
-    // vm.isStateForm = (vm.isState) ? vm.isState : false;
-    vm.isStateForm = true;
     vm.idForm = Math.random().toString(36).replace(/^0\.[0-9]*/, '');
     vm.configurations = {
         gateway: '',
@@ -100,6 +98,7 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
 
     $scope.$watch('vm.ctx', function () {
         if (vm.ctx) {
+            vm.isStateForm = $scope.isStateForm;
             vm.settings = vm.ctx.settings;
             vm.widgetConfig = vm.ctx.widgetConfig;
             if (vm.ctx.datasources && vm.ctx.datasources.length) {
@@ -174,7 +173,6 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
     }
 
     vm.createDevice = (deviceObj) => {
-        // console.log("vm.createDevice deviceObj", deviceObj); //eslint-disable-line
         deviceService.findByName(deviceObj.name, {ignoreErrors: true})
             .then(
                 function () {
