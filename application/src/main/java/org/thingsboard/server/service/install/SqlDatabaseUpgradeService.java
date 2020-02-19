@@ -30,6 +30,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLSyntaxErrorException;
 
 import static org.thingsboard.server.service.install.DatabaseHelper.ADDITIONAL_INFO;
 import static org.thingsboard.server.service.install.DatabaseHelper.ASSIGNED_CUSTOMERS;
@@ -213,6 +214,12 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     try {
                         conn.createStatement().execute("ALTER TABLE attribute_kv ADD COLUMN json_v json;");
                     } catch (Exception e) {
+                        if (e instanceof SQLSyntaxErrorException) {
+                            try {
+                                conn.createStatement().execute("ALTER TABLE attribute_kv ADD COLUMN json_v varchar(10000000);");
+                            } catch (Exception e1) {
+                            }
+                        }
                     }
                     try {
                         conn.createStatement().execute("ALTER TABLE dashboard ALTER COLUMN configuration SET DATA TYPE varchar(100000000);"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
