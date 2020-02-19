@@ -101,6 +101,9 @@ public class PsqlTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgradeSe
                         executeDropStatement(conn, DROP_FUNCTION_CREATE_NEW_TS_KV_LATEST_TABLE);
                         executeDropStatement(conn, DROP_FUNCTION_INSERT_INTO_TS_KV_LATEST);
 
+                        executeQuery(conn, "ALTER TABLE ts_kv ADD COLUMN json_v json;");
+                        executeQuery(conn, "ALTER TABLE ts_kv_latest ADD COLUMN json_v json;");
+
                         log.info("schema timeseries updated!");
                     }
                 }

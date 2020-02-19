@@ -86,7 +86,6 @@
         "timeout-invalid": "Недействительный таймаут.",
         "enable-tls": "Включить TLS",
         "tls-version" : "Версия TLS",
-        "enter-tls-version" : "Введите версию TLS",
         "send-test-mail": "Отправить пробное письмо",
         "security-settings": "Настройки безопасности",
         "password-policy": "Политика паролей",
