@@ -72,7 +72,15 @@ export function HttpLoaderFactory(http: HttpClient) {
     HotkeyModule.forRoot(),
 
     // ngrx
-    StoreModule.forRoot(reducers, { metaReducers }),
+    StoreModule.forRoot(reducers,
+      { metaReducers,
+        runtimeChecks: {
+          strictStateImmutability: true,
+          strictActionImmutability: true,
+          strictStateSerializability: true,
+          strictActionSerializability: true
+        }}
+    ),
     EffectsModule.forRoot(effects),
     env.production
       ? []
