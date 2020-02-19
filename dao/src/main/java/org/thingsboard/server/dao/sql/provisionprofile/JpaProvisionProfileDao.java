@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql.device;
+package org.thingsboard.server.dao.sql.provisionprofile;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -23,10 +23,10 @@ import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.device.ProvisionProfileDao;
-import org.thingsboard.server.dao.device.provision.ProvisionProfile;
 import org.thingsboard.server.dao.model.sql.ProvisionProfileEntity;
-import org.thingsboard.server.dao.sql.JpaAbstractDao;
+import org.thingsboard.server.dao.provisionprofile.ProvisionProfileDao;
+import org.thingsboard.server.dao.provisionprofile.provision.ProvisionProfile;
+import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
@@ -38,7 +38,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID_STR;
 
 @Component
 @SqlDao
-public class JpaProvisionProfileDao extends JpaAbstractDao<ProvisionProfileEntity, ProvisionProfile> implements ProvisionProfileDao {
+public class JpaProvisionProfileDao extends JpaAbstractSearchTextDao<ProvisionProfileEntity, ProvisionProfile> implements ProvisionProfileDao {
 
     @Autowired
     private ProvisionProfileRepository provisionProfileRepository;

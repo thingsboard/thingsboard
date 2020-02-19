@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.device;
+package org.thingsboard.server.dao.provisionprofile;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -21,9 +21,9 @@ import org.thingsboard.server.common.data.id.ProvisionProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
-import org.thingsboard.server.dao.device.provision.ProvisionProfile;
-import org.thingsboard.server.dao.device.provision.ProvisionRequest;
-import org.thingsboard.server.dao.device.provision.ProvisionResponse;
+import org.thingsboard.server.dao.provisionprofile.provision.ProvisionProfile;
+import org.thingsboard.server.dao.provisionprofile.provision.ProvisionRequest;
+import org.thingsboard.server.dao.provisionprofile.provision.ProvisionResponse;
 
 public interface DeviceProvisionService {
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.device.provision;
+package org.thingsboard.server.dao.provisionprofile.provision;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
@@ -45,6 +45,14 @@ public class ProvisionProfile extends SearchTextBasedWithAdditionalInfo<Provisio
         super(id);
     }
 
+    public ProvisionProfile(ProvisionProfile profile) {
+        super(profile);
+        this.credentials = profile.getCredentials();
+        this.tenantId = profile.getTenantId();
+        this.customerId = profile.getCustomerId();
+        this.strategy = profile.getStrategy();
+    }
+
     @Override
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public String getName() {
@@ -54,14 +62,6 @@ public class ProvisionProfile extends SearchTextBasedWithAdditionalInfo<Provisio
     @Override
     public String getSearchText() {
         return getName();
-    }
-
-    public ProvisionProfile(ProvisionProfile profile) {
-        super(profile);
-        this.credentials = profile.getCredentials();
-        this.tenantId = profile.getTenantId();
-        this.customerId = profile.getCustomerId();
-        this.strategy = profile.getStrategy();
     }
 
     @Override

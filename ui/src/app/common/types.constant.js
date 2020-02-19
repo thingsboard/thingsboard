@@ -472,7 +472,13 @@ export default angular.module('thingsboard.types', [])
                 "CURRENT_CUSTOMER": {
                     type: 'entity.type-current-customer',
                     list: 'entity.type-current-customer'
-                }
+                },
+                "PROVISION_PROFILE": {
+                    type: 'entity.type-provision-profile',
+                    typePlural: 'entity.type-provision-profiles',
+                    list: 'entity.list-of-provision-profiles',
+                    nameStartsWith: 'entity.provision-profile-name-starts-with'
+                },
             },
             entityField: {
                 createdTime: {

@@ -20,16 +20,18 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.ProvisionProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.device.provision.ProvisionProfile;
-import org.thingsboard.server.dao.device.provision.ProvisionProfileCredentials;
-import org.thingsboard.server.dao.device.provision.ProvisionRequestValidationStrategy;
-import org.thingsboard.server.dao.device.provision.ProvisionRequestValidationStrategyType;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
+import org.thingsboard.server.dao.provisionprofile.provision.ProvisionProfile;
+import org.thingsboard.server.dao.provisionprofile.provision.ProvisionProfileCredentials;
+import org.thingsboard.server.dao.provisionprofile.provision.ProvisionRequestValidationStrategy;
+import org.thingsboard.server.dao.provisionprofile.provision.ProvisionRequestValidationStrategyType;
+import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -38,6 +40,7 @@ import javax.persistence.Table;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Entity
+@TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ModelConstants.PROVISION_PROFILE_COLUMN_FAMILY_NAME)
 public final class ProvisionProfileEntity extends BaseSqlEntity<ProvisionProfile> implements SearchTextEntity<ProvisionProfile> {
 

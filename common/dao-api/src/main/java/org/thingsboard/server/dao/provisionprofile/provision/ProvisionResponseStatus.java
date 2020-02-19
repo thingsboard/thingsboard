@@ -13,18 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.device.provision;
+package org.thingsboard.server.dao.provisionprofile.provision;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+public enum ProvisionResponseStatus {
 
-@Data
-@AllArgsConstructor
-public class ProvisionRequest {
-
-    private String deviceName;
-    private String deviceType;
-    private String x509CertPubKey;
-    private ProvisionProfileCredentials credentials;
+    SUCCESS,
+    NOT_FOUND,
+    FAILURE
 
 }

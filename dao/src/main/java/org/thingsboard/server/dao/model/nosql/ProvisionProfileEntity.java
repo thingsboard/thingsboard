@@ -25,13 +25,13 @@ import lombok.ToString;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.ProvisionProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.device.provision.ProvisionProfile;
-import org.thingsboard.server.dao.device.provision.ProvisionProfileCredentials;
-import org.thingsboard.server.dao.device.provision.ProvisionRequestValidationStrategy;
-import org.thingsboard.server.dao.device.provision.ProvisionRequestValidationStrategyType;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.model.type.JsonCodec;
+import org.thingsboard.server.dao.provisionprofile.provision.ProvisionProfile;
+import org.thingsboard.server.dao.provisionprofile.provision.ProvisionProfileCredentials;
+import org.thingsboard.server.dao.provisionprofile.provision.ProvisionRequestValidationStrategy;
+import org.thingsboard.server.dao.provisionprofile.provision.ProvisionRequestValidationStrategyType;
 
 import java.util.UUID;
 

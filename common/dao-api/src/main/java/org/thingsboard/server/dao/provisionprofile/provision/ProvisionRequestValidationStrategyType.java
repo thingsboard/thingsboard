@@ -13,17 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.device.provision;
+package org.thingsboard.server.dao.provisionprofile.provision;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import org.thingsboard.server.common.data.security.DeviceCredentials;
+public enum ProvisionRequestValidationStrategyType {
 
-@Data
-@AllArgsConstructor
-public class ProvisionResponse {
-
-    private DeviceCredentials deviceCredentials;
-    private ProvisionResponseStatus responseStatus;
+    CHECK_NEW_DEVICE, CHECK_PRE_PROVISIONED_DEVICE
 
 }

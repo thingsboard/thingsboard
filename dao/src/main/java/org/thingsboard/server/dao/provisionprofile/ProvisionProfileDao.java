@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.device;
+package org.thingsboard.server.dao.provisionprofile;
 
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.Dao;
-import org.thingsboard.server.dao.device.provision.ProvisionProfile;
+import org.thingsboard.server.dao.provisionprofile.provision.ProvisionProfile;
 
 import java.util.List;
 import java.util.UUID;

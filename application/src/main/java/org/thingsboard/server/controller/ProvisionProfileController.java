@@ -35,9 +35,9 @@ import org.thingsboard.server.common.data.id.ProvisionProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
-import org.thingsboard.server.dao.device.provision.ProvisionProfile;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.provisionprofile.provision.ProvisionProfile;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
@@ -80,6 +80,7 @@ public class ProvisionProfileController extends BaseController {
         try {
             TenantId tenantId = getTenantId();
             ProvisionProfile profile = checkNotNull(deviceProvisionService.findProvisionProfileByKey(tenantId, key));
+            accessControlService.checkPermission(getCurrentUser(), Resource.PROVISION_PROFILE, Operation.READ, profile.getId(), profile);
             if (profile.getTenantId().equals(tenantId) && profile.getCredentials().getProvisionProfileSecret().equals(secret)) {
                 return profile;
             }

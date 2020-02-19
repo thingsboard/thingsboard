@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql.device;
+package org.thingsboard.server.dao.sql.provisionprofile;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
@@ -28,8 +28,6 @@ import java.util.List;
 public interface ProvisionProfileRepository extends CrudRepository<ProvisionProfileEntity, String> {
 
     ProvisionProfileEntity findByKey(String key);
-
-    List<ProvisionProfileEntity> findAllByTenantId(String tenantId);
 
     @Query("SELECT d FROM ProvisionProfileEntity d WHERE d.tenantId = :tenantId " +
             "AND d.id > :idOffset ORDER BY d.id")
