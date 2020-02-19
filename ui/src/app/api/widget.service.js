@@ -29,7 +29,7 @@ import thingsboardWebCameraInputWidget from '../widget/lib/web-camera-input-widg
 
 import thingsboardRpcWidgets from '../widget/lib/rpc';
 
-import thingsboardJsonText from '/Users/asdasd/Downloads/thingsboard/ui/src/app/components/tb-json-text.directive.js';
+import thingsboardJsonText from '../components/tb-json-text.directive.js';
 
 import TbFlot from '../widget/lib/flot-widget';
 import TbAnalogueLinearGauge from '../widget/lib/analogue-linear-gauge';
