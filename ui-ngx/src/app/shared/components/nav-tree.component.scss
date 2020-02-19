@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 .tb-nav-tree-container {
   padding: 15px;
   font-family: Roboto, "Helvetica Neue", sans-serif;
@@ -20,7 +21,7 @@
   &.jstree-proton, &.jstree-proton-small, &.jstree-proton-large {
     .jstree-node,
     .jstree-icon {
-      background-image: url("../../../assets/jstree/32px.png");
+      background-image: url("../../../assets/jstree/tb32px.png");
     }
 
     .jstree-last {
@@ -43,6 +44,14 @@
     .jstree-anchor {
       font-size: 16px;
     }
+
+    .jstree-file {
+      background: url("../../../assets/jstree/tb32px.png") -101px -69px no-repeat;
+    }
+
+    .jstree-folder {
+      background: url("../../../assets/jstree/tb32px.png") -261px -5px no-repeat;
+    }
   }
 
   &.jstree-proton-small {
@@ -56,6 +65,14 @@
     .jstree-anchor {
       font-size: 14px;
     }
+
+    .jstree-file {
+      background: url("../../../assets/jstree/tb32px.png") -103px -71px no-repeat;
+    }
+
+    .jstree-folder {
+      background: url("../../../assets/jstree/tb32px.png") -263px -7px no-repeat;
+    }
   }
 
   &.jstree-proton-large {
@@ -68,6 +85,14 @@
 
     .jstree-anchor {
       font-size: 20px;
+    }
+
+    .jstree-file {
+      background: url("../../../assets/jstree/tb32px.png") -96px -64px no-repeat;
+    }
+
+    .jstree-folder {
+      background: url("../../../assets/jstree/tb32px.png") -256px 0px no-repeat;
     }
   }
 
@@ -120,6 +145,15 @@
   }
 }
 
+#jstree-dnd {
+  &.jstree-proton, &.jstree-proton-small, &.jstree-proton-large {
+    .jstree-ok,
+    .jstree-er {
+      background-image: url("../../../assets/jstree/tb32px.png");
+    }
+  }
+}
+
 @media (max-width: 768px) {
   .tb-nav-tree-container {
     &.jstree-proton-responsive {
@@ -128,7 +162,7 @@
       .jstree-node > .jstree-ocl,
       .jstree-themeicon,
       .jstree-checkbox {
-        background-image: url("../../../assets/jstree/40px.png");
+        background-image: url("../../../assets/jstree/tb40px.png");
         background-size: 120px 240px;
       }
 
@@ -215,6 +249,15 @@
         background-position: -40px -40px;
       }
 
+      .jstree-file {
+        background: url("../../../assets/jstree/tb40px.png") 0 -160px no-repeat;
+        background-size: 120px 240px;
+      }
+      .jstree-folder {
+        background: url("../../../assets/jstree/tb40px.png") -40px -40px no-repeat;
+        background-size: 120px 240px;
+      }
+
       .jstree-checkbox,
       .jstree-checkbox:hover {
         background-position: -40px -80px;
@@ -284,6 +327,24 @@
         .jstree-closed > .jstree-ocl {
           background-position: -40px 0 !important;
         }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  #jstree-dnd {
+    &.jstree-dnd-responsive {
+      .jstree-ok,
+      .jstree-er {
+        background-image: url("../../../assets/jstree/tb40px.png");
+        background-size: 120px 240px;
+      }
+      .jstree-ok {
+        background-position: 0 -200px;
+      }
+      .jstree-er {
+        background-position: -40px -200px;
       }
     }
   }
