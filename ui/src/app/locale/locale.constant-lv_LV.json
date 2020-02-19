@@ -1678,21 +1678,6 @@
         }
     },
     "language": {
-        "language": "Language",
-        "locales": {
-            "de_DE": "German",
-            "fr_FR": "French",
-            "zh_CN": "Simplified Chinese",
-            "en_US": "English",
-            "it_IT": "Italian",
-            "ko_KR": "Korean",
-            "ru_RU": "Russian",
-            "es_ES": "Spanish",
-            "ja_JA": "Japanese",
-            "tr_TR": "Turkish",
-            "fa_IR": "Persian",
-            "uk_UA": "Ukrainian",
-            "cs_CZ": "Czech"
-        }
+        "language": "Language"
     }
 }
