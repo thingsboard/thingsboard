@@ -403,6 +403,14 @@ export default angular.module('thingsboard.types', [])
                 accessToken: {
                     name: 'import.column-type.access-token',
                     value: 'ACCESS_TOKEN'
+                },
+                isGateway: {
+                    name: 'import.column-type.isgateway',
+                    value: 'gateway'
+                },
+                description: {
+                    name: 'import.column-type.description',
+                    value: 'description'
                 }
             },
             aliasEntityType: {

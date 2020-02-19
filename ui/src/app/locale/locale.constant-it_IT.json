@@ -1701,23 +1701,6 @@
         }
     },
     "language": {
-        "language": "Lingua",
-        "locales": {
-            "de_DE": "Tedesco",
-            "fr_FR": "Francese",
-            "zh_CN": "Cinese",
-            "en_US": "Inglese",
-            "it_IT": "Italiano",
-            "ko_KR": "Coreano",
-            "ru_RU": "Russo",
-            "es_ES": "Spagnolo",
-            "ja_JA": "Giapponese",
-            "tr_TR": "Turco",
-            "fa_IR": "Persiana",
-            "uk_UA": "Ucraino",
-            "cs_CZ": "Ceco",
-            "el_GR": "Greco",
-            "lv_LV": "lettone"
-        }
+        "language": "Lingua"
     }
 }

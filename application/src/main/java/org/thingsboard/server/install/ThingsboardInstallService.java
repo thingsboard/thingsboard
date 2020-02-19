@@ -137,7 +137,9 @@ public class ThingsboardInstallService {
 
                         databaseEntitiesUpgradeService.upgradeDatabase("2.4.3");
 
-                        databaseTsUpgradeService.upgradeDatabase("2.4.3");
+                        if (databaseTsUpgradeService != null) {
+                            databaseTsUpgradeService.upgradeDatabase("2.4.3");
+                        }
                         databaseEntitiesUpgradeService.upgradeDatabase("2.4.3");
 
                         log.info("Updating system data...");

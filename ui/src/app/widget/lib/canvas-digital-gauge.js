@@ -209,7 +209,9 @@ export default class TbCanvasDigitalGauge {
                 }
                 var value = tvPair[1];
                 if(value !== this.gauge.value) {
-                    this.gauge._value = value;
+                    if (!this.ctx.settings.animation) {
+                        this.gauge._value = value;
+                    }
                     this.gauge.value = value;
                 } else if (this.localSettings.showTimestamp && this.gauge.timestamp != timestamp) {
                     this.gauge.timestamp = timestamp;
