@@ -1317,8 +1317,8 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         return restTemplate.postForEntity(baseURL + "/api/entityView", entityView, EntityView.class).getBody();
     }
 
-    public void deleteEntityView(String entityViewId) {
-        restTemplate.delete(baseURL + "/api/entityView/{entityViewId}", entityViewId);
+    public void deleteEntityView(EntityViewId entityViewId) {
+        restTemplate.delete(baseURL + "/api/entityView/{entityViewId}", entityViewId.getId());
     }
 
     public Optional<EntityView> getTenantEntityView(String entityViewName) {
@@ -1445,14 +1445,14 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         restTemplate.postForLocation(baseURL + "/api/plugins/rpc/oneway/{deviceId}", requestBody, deviceId.getId());
     }
 
-    public JsonNode handleTwoWayDeviceRPCRequest(String deviceId, JsonNode requestBody) {
+    public JsonNode handleTwoWayDeviceRPCRequest(DeviceId deviceId, JsonNode requestBody) {
         return restTemplate.exchange(
                 baseURL + "/api/plugins/rpc/twoway/{deviceId}",
                 HttpMethod.POST,
                 new HttpEntity<>(requestBody),
                 new ParameterizedTypeReference<JsonNode>() {
                 },
-                deviceId).getBody();
+                deviceId.getId()).getBody();
     }
 
     public Optional<RuleChain> getRuleChainById(RuleChainId ruleChainId) {
@@ -1917,7 +1917,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 }).getBody();
     }
 
-    public Optional<WidgetType> getWidgetTypeById(WidgetsBundleId widgetTypeId) {
+    public Optional<WidgetType> getWidgetTypeById(WidgetTypeId widgetTypeId) {
         try {
             ResponseEntity<WidgetType> widgetType =
                     restTemplate.getForEntity(baseURL + "/api/widgetType/{widgetTypeId}", WidgetType.class, widgetTypeId.getId());
