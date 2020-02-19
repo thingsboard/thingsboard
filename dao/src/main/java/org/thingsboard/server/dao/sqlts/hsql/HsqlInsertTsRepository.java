@@ -37,14 +37,14 @@ import java.util.List;
 public class HsqlInsertTsRepository extends AbstractInsertRepository implements InsertTsRepository<TsKvEntity> {
 
     private static final String INSERT_OR_UPDATE =
-            "MERGE INTO ts_kv USING(VALUES ?, ?, ?, ?, ?, ?, ?) " +
-                    "T (entity_id, key, ts, bool_v, str_v, long_v, dbl_v) " +
+            "MERGE INTO ts_kv USING(VALUES ?, ?, ?, ?, ?, ?, ?, ?) " +
+                    "T (entity_id, key, ts, bool_v, str_v, long_v, dbl_v, json_v) " +
                     "ON (ts_kv.entity_id=T.entity_id " +
                     "AND ts_kv.key=T.key " +
                     "AND ts_kv.ts=T.ts) " +
-                    "WHEN MATCHED THEN UPDATE SET ts_kv.bool_v = T.bool_v, ts_kv.str_v = T.str_v, ts_kv.long_v = T.long_v, ts_kv.dbl_v = T.dbl_v " +
-                    "WHEN NOT MATCHED THEN INSERT (entity_id, key, ts, bool_v, str_v, long_v, dbl_v) " +
-                    "VALUES (T.entity_id, T.key, T.ts, T.bool_v, T.str_v, T.long_v, T.dbl_v);";
+                    "WHEN MATCHED THEN UPDATE SET ts_kv.bool_v = T.bool_v, ts_kv.str_v = T.str_v, ts_kv.long_v = T.long_v, ts_kv.dbl_v = T.dbl_v ,ts_kv.json_v = T.json_v " +
+                    "WHEN NOT MATCHED THEN INSERT (entity_id, key, ts, bool_v, str_v, long_v, dbl_v, json_v) " +
+                    "VALUES (T.entity_id, T.key, T.ts, T.bool_v, T.str_v, T.long_v, T.dbl_v, T.json_v);";
 
     @Override
     public void saveOrUpdate(List<EntityContainer<TsKvEntity>> entities) {
@@ -76,6 +76,8 @@ public class HsqlInsertTsRepository extends AbstractInsertRepository implements 
                 } else {
                     ps.setNull(7, Types.DOUBLE);
                 }
+
+                ps.setString(8, tsKvEntity.getJsonValue());
             }
 
             @Override

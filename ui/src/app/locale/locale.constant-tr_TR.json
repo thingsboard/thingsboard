@@ -83,6 +83,7 @@
         "timeout-required": "Zaman aşımı değeri gerekli.",
         "timeout-invalid": "Bu geçerli bir zaman aşımı gibi görünmüyor.",
         "enable-tls": "TLS'i etkinleştir.",
+        "tls-version" : "TLS sürümü",
         "send-test-mail": "Test e-postası gönder"
     },
     "alarm": {

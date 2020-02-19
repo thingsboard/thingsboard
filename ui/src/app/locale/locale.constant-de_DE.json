@@ -83,6 +83,7 @@
     "timeout-required": "Wartezeit ist erforderlich.",
     "timeout-invalid": "Das ist keine gültige Wartezeit.",
     "enable-tls": "TLS aktivieren",
+    "tls-version" : "TLS-Version",
     "send-test-mail": "Test E-Mail senden",
     "security-settings": "Sicherheitseinstellungen",
     "password-policy": "Kennwortrichtlinie",

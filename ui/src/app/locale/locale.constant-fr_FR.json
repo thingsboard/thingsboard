@@ -56,6 +56,7 @@
         "base-url": "URL de base",
         "base-url-required": "L'URL de base est requise.",
         "enable-tls": "Activer TLS",
+        "tls-version": "Version TLS",
         "general": "Général",
         "general-settings": "Paramètres généraux",
         "mail-from": "Mail de",

@@ -88,6 +88,7 @@
     "timeout-required": "Απαιτείται τιμή Timeout.",
     "timeout-invalid": "Αυτή δε φαίνεται να είναι μια έγκυρη τιμή timeout.",
     "enable-tls": "Ενεργοποίηση TLS",
+    "tls-version": "Έκδοση TLS",
     "send-test-mail": "Αποστολή δοκιμαστικού μηνύματος",
     "use-system-mail-settings": "Χρήση των ρυθμίσεων διακομιστή αλληλογραφίας συστήματος",
     "mail-templates": "Πρότυπα αλληλογραφίας",

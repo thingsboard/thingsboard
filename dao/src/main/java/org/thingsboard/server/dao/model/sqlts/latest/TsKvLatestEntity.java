@@ -52,6 +52,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.KEY_COLUMN;
                                         @ColumnResult(name = "boolValue", type = Boolean.class),
                                         @ColumnResult(name = "longValue", type = Long.class),
                                         @ColumnResult(name = "doubleValue", type = Double.class),
+                                        @ColumnResult(name = "jsonValue", type = String.class),
                                         @ColumnResult(name = "ts", type = Long.class),
 
                                 }
@@ -74,13 +75,13 @@ public final class TsKvLatestEntity extends AbstractTsKvEntity {
 
     @Override
     public boolean isNotEmpty() {
-        return strValue != null || longValue != null || doubleValue != null || booleanValue != null;
+        return strValue != null || longValue != null || doubleValue != null || booleanValue != null || jsonValue != null;
     }
 
     public TsKvLatestEntity() {
     }
 
-    public TsKvLatestEntity(UUID entityId, Integer key, String strKey, String strValue, Boolean boolValue, Long longValue, Double doubleValue, Long ts) {
+    public TsKvLatestEntity(UUID entityId, Integer key, String strKey, String strValue, Boolean boolValue, Long longValue, Double doubleValue, String jsonValue, Long ts) {
         this.entityId = entityId;
         this.key = key;
         this.ts = ts;
@@ -88,6 +89,7 @@ public final class TsKvLatestEntity extends AbstractTsKvEntity {
         this.doubleValue = doubleValue;
         this.strValue = strValue;
         this.booleanValue = boolValue;
+        this.jsonValue = jsonValue;
         this.strKey = strKey;
     }
 }

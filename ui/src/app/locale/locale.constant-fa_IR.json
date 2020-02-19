@@ -83,6 +83,7 @@
         "timeout-required": ".مهلت مورد نياز است",
         "timeout-invalid": ".مهلت، به نظر نمي آيد معتبر باشد",
         "enable-tls": "TLS فعال سازي",
+        "tls-version": "نسخه TLS",
         "send-test-mail": "ارسال پيام آزمايشي"
     },
     "alarm": {
