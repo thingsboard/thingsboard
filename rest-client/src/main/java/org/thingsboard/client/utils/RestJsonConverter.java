@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.client.tools.utils;
+package org.thingsboard.client.utils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.util.CollectionUtils;
