@@ -549,7 +549,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
 
     public String getActivateToken(UserId userId) {
         String activationLink = getActivationLink(userId);
-        return StringUtils.delete(activationLink, baseURL + ACTIVATE_TOKEN_REGEX);
+        return activationLink.substring(activationLink.lastIndexOf(ACTIVATE_TOKEN_REGEX) + ACTIVATE_TOKEN_REGEX.length());
     }
 
     public Optional<User> getUser() {
