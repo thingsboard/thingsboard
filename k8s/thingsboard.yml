@@ -183,7 +183,7 @@ metadata:
   name: tb-js-executor
   namespace: thingsboard
 spec:
-  replicas: 20
+  replicas: 1
   selector:
     matchLabels:
       app: tb-js-executor
@@ -195,7 +195,7 @@ spec:
       containers:
       - name: server
         imagePullPolicy: Always
-        image: thingsboard/tb-js-executor:latest
+        image: volodymyrbabak/tb-js-executor:latest
         env:
         - name: REMOTE_JS_EVAL_REQUEST_TOPIC
           value: "js.eval.requests"
@@ -219,7 +219,7 @@ metadata:
   name: tb-node
   namespace: thingsboard
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: tb-node
@@ -240,7 +240,7 @@ spec:
       containers:
       - name: server
         imagePullPolicy: Always
-        image: thingsboard/tb-node:latest
+        image: volodymyrbabak/tb-node:latest
         ports:
         - containerPort: 8080
           name: http
@@ -308,7 +308,7 @@ metadata:
   name: tb-mqtt-transport
   namespace: thingsboard
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: tb-mqtt-transport
@@ -329,7 +329,7 @@ spec:
       containers:
       - name: server
         imagePullPolicy: Always
-        image: thingsboard/tb-mqtt-transport:latest
+        image: volodymyrbabak/tb-mqtt-transport:latest
         ports:
         - containerPort: 1883
           name: mqtt
@@ -383,7 +383,7 @@ metadata:
   name: tb-http-transport
   namespace: thingsboard
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: tb-http-transport
@@ -404,7 +404,7 @@ spec:
       containers:
       - name: server
         imagePullPolicy: Always
-        image: thingsboard/tb-http-transport:latest
+        image: volodymyrbabak/tb-http-transport:latest
         ports:
         - containerPort: 8080
           name: http
@@ -457,7 +457,7 @@ metadata:
   name: tb-coap-transport
   namespace: thingsboard
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: tb-coap-transport
@@ -478,7 +478,7 @@ spec:
       containers:
       - name: server
         imagePullPolicy: Always
-        image: thingsboard/tb-coap-transport:latest
+        image: volodymyrbabak/tb-coap-transport:latest
         ports:
         - containerPort: 5683
           name: coap
@@ -525,7 +525,7 @@ metadata:
   name: tb-web-ui
   namespace: thingsboard
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: tb-web-ui
@@ -537,7 +537,7 @@ spec:
       containers:
       - name: server
         imagePullPolicy: Always
-        image: thingsboard/tb-web-ui:latest
+        image: volodymyrbabak/tb-web-ui:latest
         ports:
         - containerPort: 8080
           name: http

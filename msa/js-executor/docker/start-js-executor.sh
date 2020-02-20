@@ -26,4 +26,4 @@ identity=${pkg.name}
 
 source "${CONF_FOLDER}/${configfile}"
 
-su -s /bin/sh -c "$mainfile"
+exec /bin/sh -c "$mainfile"

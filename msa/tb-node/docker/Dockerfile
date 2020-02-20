@@ -25,4 +25,8 @@ RUN dpkg -i /tmp/${pkg.name}.deb
 
 RUN systemctl --no-reload disable --now ${pkg.name}.service > /dev/null 2>&1 || :
 
+RUN mkdir /tb_node && chown thingsboard:thingsboard /tb_node
+
+USER ${pkg.user}
+
 CMD ["start-tb-node.sh"]

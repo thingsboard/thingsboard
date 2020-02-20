@@ -36,7 +36,7 @@
         <main.dir>${basedir}/../../..</main.dir>
         <pkg.name>tb-coap-transport</pkg.name>
         <docker.name>tb-coap-transport</docker.name>
-        <pkg.user>thingsboard</pkg.user>
+        <pkg.user>tb-coap-transport</pkg.user>
         <pkg.logFolder>/var/log/${pkg.name}</pkg.logFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
     </properties>

@@ -31,17 +31,17 @@
 
     <properties>
         <main.dir>${basedir}/..</main.dir>
-        <docker.repo>thingsboard</docker.repo>
+        <docker.repo>volodymyrbabak</docker.repo>
         <dockerfile.skip>true</dockerfile.skip>
     </properties>
 
     <modules>
-        <module>tb</module>
+<!--        <module>tb</module>-->
         <module>js-executor</module>
         <module>web-ui</module>
         <module>tb-node</module>
         <module>transport</module>
-        <module>black-box-tests</module>
+<!--        <module>black-box-tests</module>-->
     </modules>
 
     <build>

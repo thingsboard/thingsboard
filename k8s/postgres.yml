@@ -58,6 +58,8 @@ spec:
         env:
         - name: POSTGRES_DB
           value: "thingsboard"
+        - name: POSTGRES_PASSWORD
+          value: "postgres"
         - name: PGDATA
           value: /var/lib/postgresql/data/pgdata
         volumeMounts:
