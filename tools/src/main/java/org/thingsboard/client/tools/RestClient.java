@@ -1139,7 +1139,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     public void saveRelation(EntityRelation relation) {
-        restTemplate.postForLocation(baseURL + "/api/relation", null);
+        restTemplate.postForLocation(baseURL + "/api/relation", relation);
     }
 
     public void deleteRelation(EntityId fromId, String relationType, RelationTypeGroup relationTypeGroup, EntityId toId) {
