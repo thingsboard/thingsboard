@@ -168,7 +168,7 @@ export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvCom
     const isHeader: boolean = this.importParametersFormGroup.get('isHeader').value;
     for (let i = 0; i < this.parseData.headers.length; i++) {
       let columnParam: CsvColumnParam;
-      if (isHeader && this.parseData.headers[i].search(/^(name|type)$/im) === 0) {
+      if (isHeader && this.parseData.headers[i].search(/^(name|type|label)$/im) === 0) {
         columnParam = {
           type: ImportEntityColumnType[this.parseData.headers[i].toLowerCase()],
           key: this.parseData.headers[i].toLowerCase(),
@@ -195,6 +195,9 @@ export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvCom
       const entityData: ImportEntityData = {
         name: '',
         type: '',
+        description: '',
+        gateway: null,
+        label: '',
         accessToken: '',
         attributes: {
           server: [],
@@ -231,6 +234,15 @@ export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvCom
             break;
           case ImportEntityColumnType.type:
             entityData.type = importData.rows[i][j];
+            break;
+          case ImportEntityColumnType.label:
+            entityData.label = importData.rows[i][j];
+            break;
+          case ImportEntityColumnType.isGateway:
+            entityData.gateway = importData.rows[i][j];
+            break;
+          case ImportEntityColumnType.description:
+            entityData.description = importData.rows[i][j];
             break;
         }
       }

@@ -44,12 +44,15 @@ export interface CsvToJsonResult {
 export enum ImportEntityColumnType {
   name = 'NAME',
   type = 'TYPE',
+  label = 'LABEL',
   clientAttribute = 'CLIENT_ATTRIBUTE',
   sharedAttribute = 'SHARED_ATTRIBUTE',
   serverAttribute = 'SERVER_ATTRIBUTE',
   timeseries = 'TIMESERIES',
   entityField = 'ENTITY_FIELD',
-  accessToken = 'ACCESS_TOKEN'
+  accessToken = 'ACCESS_TOKEN',
+  isGateway = 'IS_GATEWAY',
+  description = 'DESCRIPTION'
 }
 
 export const importEntityObjectColumns =
@@ -59,12 +62,15 @@ export const importEntityColumnTypeTranslations = new Map<ImportEntityColumnType
   [
     [ImportEntityColumnType.name, 'import.column-type.name'],
     [ImportEntityColumnType.type, 'import.column-type.type'],
+    [ImportEntityColumnType.label, 'import.column-type.label'],
     [ImportEntityColumnType.clientAttribute, 'import.column-type.client-attribute'],
     [ImportEntityColumnType.sharedAttribute, 'import.column-type.shared-attribute'],
     [ImportEntityColumnType.serverAttribute, 'import.column-type.server-attribute'],
     [ImportEntityColumnType.timeseries, 'import.column-type.timeseries'],
     [ImportEntityColumnType.entityField, 'import.column-type.entity-field'],
     [ImportEntityColumnType.accessToken, 'import.column-type.access-token'],
+    [ImportEntityColumnType.isGateway, 'import.column-type.isgateway'],
+    [ImportEntityColumnType.description, 'import.column-type.description'],
   ]
 );
 
@@ -136,7 +142,7 @@ function convertStringToJSType(str: string): any {
     return parseFloat(str.replace(',', '.'));
   }
   if (str.search(/^(true|false)$/im) === 0) {
-    return str === 'true';
+    return str.toLowerCase() === 'true';
   }
   if (str === '') {
     return null;

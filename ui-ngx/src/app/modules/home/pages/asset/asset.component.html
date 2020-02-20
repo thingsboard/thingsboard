@@ -77,6 +77,10 @@
         [entityType]="entityType.ASSET"
       >
       </tb-entity-subtype-autocomplete>
+      <mat-form-field class="mat-block">
+        <mat-label translate>asset.label</mat-label>
+        <input matInput formControlName="label">
+      </mat-form-field>
       <div formGroupName="additionalInfo">
         <mat-form-field class="mat-block">
           <mat-label translate>asset.description</mat-label>

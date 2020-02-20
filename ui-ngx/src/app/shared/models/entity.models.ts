@@ -31,6 +31,9 @@ export interface EntityInfo {
 export interface ImportEntityData {
   name: string;
   type: string;
+  label: string;
+  gateway: boolean;
+  description: string;
   accessToken: string;
   attributes: {
     server: AttributeData[],

@@ -57,6 +57,7 @@ import { AssetTableHeaderComponent } from '@modules/home/pages/asset/asset-table
 import { AssetId } from '@app/shared/models/id/asset-id';
 import { AssetTabsComponent } from '@home/pages/asset/asset-tabs.component';
 import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
+import { DeviceInfo } from '@shared/models/device.models';
 
 @Injectable()
 export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<AssetInfo>> {
@@ -146,12 +147,13 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
   configureColumns(assetScope: string): Array<EntityTableColumn<AssetInfo>> {
     const columns: Array<EntityTableColumn<AssetInfo>> = [
       new DateEntityTableColumn<AssetInfo>('createdTime', 'asset.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<AssetInfo>('name', 'asset.name', '33%'),
-      new EntityTableColumn<AssetInfo>('type', 'asset.asset-type', '33%'),
+      new EntityTableColumn<AssetInfo>('name', 'asset.name', '25%'),
+      new EntityTableColumn<AssetInfo>('type', 'asset.asset-type', '25%'),
+      new EntityTableColumn<DeviceInfo>('label', 'asset.label', '25%'),
     ];
     if (assetScope === 'tenant') {
       columns.push(
-        new EntityTableColumn<AssetInfo>('customerTitle', 'customer.customer', '33%'),
+        new EntityTableColumn<AssetInfo>('customerTitle', 'customer.customer', '25%'),
         new EntityTableColumn<AssetInfo>('customerIsPublic', 'asset.public', '60px',
           entity => {
             return checkBoxCell(entity.customerIsPublic);

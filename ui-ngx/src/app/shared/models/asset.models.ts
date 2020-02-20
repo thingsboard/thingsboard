@@ -26,6 +26,7 @@ export interface Asset extends BaseData<AssetId> {
   customerId?: CustomerId;
   name: string;
   type: string;
+  label: string;
   additionalInfo?: any;
 }
 

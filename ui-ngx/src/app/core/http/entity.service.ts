@@ -805,14 +805,28 @@ export class EntityService {
       case EntityType.DEVICE:
         const device: Device = {
           name: entityData.name,
-          type: entityData.type
+          type: entityData.type,
+          label: entityData.label,
+          additionalInfo: {
+            description: entityData.description
+          }
         };
+        if (entityData.gateway !== null) {
+          device.additionalInfo = {
+            ...device.additionalInfo,
+            gateway: entityData.gateway
+          };
+        }
         saveEntityObservable = this.deviceService.saveDevice(device, config);
         break;
       case EntityType.ASSET:
         const asset: Asset = {
           name: entityData.name,
-          type: entityData.type
+          type: entityData.type,
+          label: entityData.label,
+          additionalInfo: {
+            description: entityData.description
+          }
         };
         saveEntityObservable = this.assetService.saveAsset(asset, config);
         break;
@@ -839,7 +853,31 @@ export class EntityService {
           }
           return findEntityObservable.pipe(
             mergeMap((entity) => {
-              return this.saveEntityData(entity.id, entityData, config).pipe(
+              const tasks: Observable<any>[] = [];
+              const result: Device | Asset = entity as (Device | Asset);
+              const additionalInfo = result.additionalInfo || {};
+              if(result.label !== entityData.label ||
+                 result.type !== entityData.type ||
+                 additionalInfo.description !== entityData.description ||
+                 (result.id.entityType === EntityType.DEVICE && (additionalInfo.gateway !== entityData.gateway)) ) {
+                result.label = entityData.label;
+                result.type = entityData.type;
+                result.additionalInfo = additionalInfo;
+                result.additionalInfo.description = entityData.description;
+                if (result.id.entityType === EntityType.DEVICE) {
+                  result.additionalInfo.gateway = entityData.gateway;
+                }
+                switch (result.id.entityType) {
+                  case EntityType.DEVICE:
+                    tasks.push(this.deviceService.saveDevice(result, config));
+                    break;
+                  case EntityType.ASSET:
+                    tasks.push(this.assetService.saveAsset(result, config));
+                    break;
+                }
+              }
+              tasks.push(this.saveEntityData(entity.id, entityData, config));
+              return forkJoin(tasks).pipe(
                 map(() => {
                   return { update: { entity: 1 } } as ImportEntitiesResultInfo;
                 }),

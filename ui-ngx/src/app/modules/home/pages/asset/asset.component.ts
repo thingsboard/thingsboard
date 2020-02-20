@@ -64,6 +64,7 @@ export class AssetComponent extends EntityComponent<AssetInfo> {
       {
         name: [entity ? entity.name : '', [Validators.required]],
         type: [entity ? entity.type : null, [Validators.required]],
+        label: [entity ? entity.label : ''],
         additionalInfo: this.fb.group(
           {
             description: [entity && entity.additionalInfo ? entity.additionalInfo.description : ''],
@@ -76,6 +77,7 @@ export class AssetComponent extends EntityComponent<AssetInfo> {
   updateForm(entity: AssetInfo) {
     this.entityForm.patchValue({name: entity.name});
     this.entityForm.patchValue({type: entity.type});
+    this.entityForm.patchValue({label: entity.label});
     this.entityForm.patchValue({additionalInfo: {description: entity.additionalInfo ? entity.additionalInfo.description : ''}});
   }
 

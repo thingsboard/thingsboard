@@ -42,9 +42,7 @@
     <mat-header-cell *matHeaderCellDef style="width: 30%"> {{ 'import.column-key' | translate }} </mat-header-cell>
     <mat-cell *matCellDef="let column">
       <mat-form-field floatLabel="always" hideRequiredMarker
-                      *ngIf="column.type !== importEntityColumnType.name &&
-                             column.type !== importEntityColumnType.type &&
-                             column.type !== importEntityColumnType.accessToken">
+                      *ngIf="isColumnTypeDiffers(column.type)">
         <mat-label></mat-label>
         <input matInput required
                [(ngModel)]="column.key" (ngModelChange)="columnsUpdated()"

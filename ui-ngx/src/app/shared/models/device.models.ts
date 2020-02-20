@@ -26,7 +26,7 @@ export interface Device extends BaseData<DeviceId> {
   customerId?: CustomerId;
   name: string;
   type: string;
-  label?: string;
+  label: string;
   additionalInfo?: any;
 }
 

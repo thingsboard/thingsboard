@@ -72,6 +72,8 @@ export class TableColumnsAssignmentComponent implements OnInit, ControlValueAcce
     this.columnTypes.push(
       { value: ImportEntityColumnType.name },
       { value: ImportEntityColumnType.type },
+      { value: ImportEntityColumnType.label },
+      { value: ImportEntityColumnType.description },
     );
     switch (this.entityType) {
       case EntityType.DEVICE:
@@ -79,7 +81,8 @@ export class TableColumnsAssignmentComponent implements OnInit, ControlValueAcce
           { value: ImportEntityColumnType.sharedAttribute },
           { value: ImportEntityColumnType.serverAttribute },
           { value: ImportEntityColumnType.timeseries },
-          { value: ImportEntityColumnType.accessToken }
+          { value: ImportEntityColumnType.accessToken },
+          { value: ImportEntityColumnType.isGateway }
         );
         break;
       case EntityType.ASSET:
@@ -109,13 +112,20 @@ export class TableColumnsAssignmentComponent implements OnInit, ControlValueAcce
   columnsUpdated() {
     const isSelectName = this.columns.findIndex((column) => column.type === ImportEntityColumnType.name) > -1;
     const isSelectType = this.columns.findIndex((column) => column.type === ImportEntityColumnType.type) > -1;
+    const isSelectLabel = this.columns.findIndex((column) => column.type === ImportEntityColumnType.label) > -1;
     const isSelectCredentials = this.columns.findIndex((column) => column.type === ImportEntityColumnType.accessToken) > -1;
+    const isSelectGateway = this.columns.findIndex((column) => column.type === ImportEntityColumnType.isGateway) > -1;
+    const isSelectDescription = this.columns.findIndex((column) => column.type === ImportEntityColumnType.description) > -1;
     const hasInvalidColumn = this.columns.findIndex((column) => !this.columnValid(column)) > -1;
 
     this.valid = isSelectName && isSelectType && !hasInvalidColumn;
 
     this.columnTypes.find((columnType) => columnType.value === ImportEntityColumnType.name).disabled = isSelectName;
     this.columnTypes.find((columnType) => columnType.value === ImportEntityColumnType.type).disabled = isSelectType;
+    this.columnTypes.find((columnType) => columnType.value === ImportEntityColumnType.label).disabled = isSelectLabel;
+    this.columnTypes.find((columnType) => columnType.value === ImportEntityColumnType.isGateway).disabled = isSelectGateway;
+    this.columnTypes.find((columnType) => columnType.value === ImportEntityColumnType.description).disabled = isSelectDescription;
+
     const accessTokenColumnType = this.columnTypes.find((columnType) => columnType.value === ImportEntityColumnType.accessToken);
     if (accessTokenColumnType) {
       accessTokenColumnType.disabled = isSelectCredentials;
@@ -125,6 +135,15 @@ export class TableColumnsAssignmentComponent implements OnInit, ControlValueAcce
     } else {
       this.propagateChangePending = true;
     }
+  }
+
+  public isColumnTypeDiffers(columnType: ImportEntityColumnType): boolean {
+    return columnType !== ImportEntityColumnType.name &&
+      columnType !== ImportEntityColumnType.type &&
+      columnType !== ImportEntityColumnType.label &&
+      columnType !== ImportEntityColumnType.accessToken &&
+      columnType !== ImportEntityColumnType.isGateway &&
+      columnType !== ImportEntityColumnType.description;
   }
 
   private columnValid(column: CsvColumnParam): boolean {
