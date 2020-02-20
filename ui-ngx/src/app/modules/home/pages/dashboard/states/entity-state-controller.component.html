@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2019 The Thingsboard Authors
+    Copyright © 2016-2020 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
     limitations under the License.
 
 -->
-
 <div class="entity-state-controller" fxLayout="row" fxLayoutAlign="start center">
   <div *ngIf="!isMobile || stateObject.length === 1" fxLayout="row" fxLayoutAlign="start center">
         <span *ngFor="let state of stateObject; index as i; last as isLast" class="state-entry" [ngStyle]="{fontWeight: isLast ? 'bold' : 'normal',
