@@ -106,6 +106,7 @@
         <module>tools</module>
         <module>application</module>
         <module>msa</module>
+        <module>rest-client</module>
     </modules>
 
     <profiles>
