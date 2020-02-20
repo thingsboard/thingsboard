@@ -18,10 +18,18 @@
 <div>
   <mat-card class="profile-card">
     <mat-card-title>
-      <div fxLayout="column">
-        <span class="mat-headline" translate>profile.profile</span>
-        <span class="profile-email" style='opacity: 0.7;'>{{ profile ? profile.get('email').value : '' }}</span>
+      <div fxLayout="row">
+        <div fxFlex fxLayout="column">
+          <span class="mat-headline" translate>profile.profile</span>
+          <span class="profile-email" style='opacity: 0.7;'>{{ profile ? profile.get('email').value : '' }}</span>
+        </div>
+        <div fxFlex fxLayout="column">
+          <span class="mat-subheader" translate>profile.last-login-time</span>
+          <span class="profile-last-login-ts" style='opacity: 0.7;'>{{ user?.additionalInfo?.lastLoginTs | date:'yyyy-MM-dd HH:mm:ss'  }}</span>
+        </div>
       </div>
+    </mat-card-title>
+    <mat-card-title>
     </mat-card-title>
     <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
     </mat-progress-bar>

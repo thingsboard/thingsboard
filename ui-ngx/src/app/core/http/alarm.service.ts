@@ -96,6 +96,10 @@ export class AlarmService {
     return this.http.post<void>(`/api/alarm/${alarmId}/clear`, null, defaultHttpOptionsFromConfig(config));
   }
 
+  public deleteAlarm(alarmId: string, config?: RequestConfig): Observable<void> {
+    return this.http.delete<void>(`/api/alarm/${alarmId}`, defaultHttpOptionsFromConfig(config));
+  }
+
   public getAlarms(query: AlarmQuery,
                    config?: RequestConfig): Observable<PageData<AlarmInfo>> {
     return this.http.get<PageData<AlarmInfo>>(`/api/alarm${query.toQuery()}`,

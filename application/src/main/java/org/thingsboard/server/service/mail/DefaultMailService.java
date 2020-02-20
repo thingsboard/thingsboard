@@ -112,8 +112,11 @@ public class DefaultMailService implements MailService {
             }
         }
         javaMailProperties.put(MAIL_PROP + protocol + ".starttls.enable", enableTls);
-        if (enableTls && jsonConfig.has("tlsVersion") && StringUtils.isNoneEmpty(jsonConfig.get("tlsVersion").asText())) {
-            javaMailProperties.put(MAIL_PROP + protocol + ".ssl.protocols", jsonConfig.get("tlsVersion").asText());
+        if (enableTls && jsonConfig.has("tlsVersion") && !jsonConfig.get("tlsVersion").isNull()) {
+            String tlsVersion = jsonConfig.get("tlsVersion").asText();
+            if (StringUtils.isNoneEmpty(tlsVersion)) {
+                javaMailProperties.put(MAIL_PROP + protocol + ".ssl.protocols", tlsVersion);
+            }
         }
         return javaMailProperties;
     }

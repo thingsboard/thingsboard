@@ -48,7 +48,8 @@ export enum ActionType {
   ALARM_ACK = 'ALARM_ACK',
   ALARM_CLEAR = 'ALARM_CLEAR',
   LOGIN = 'LOGIN',
-  LOGOUT = 'LOGOUT'
+  LOGOUT = 'LOGOUT',
+  LOCKOUT = 'LOCKOUT'
 }
 
 export enum ActionStatus {
@@ -77,7 +78,8 @@ export const actionTypeTranslations = new Map<ActionType, string>(
     [ActionType.ALARM_ACK, 'audit-log.type-alarm-ack'],
     [ActionType.ALARM_CLEAR, 'audit-log.type-alarm-clear'],
     [ActionType.LOGIN, 'audit-log.type-login'],
-    [ActionType.LOGOUT, 'audit-log.type-logout']
+    [ActionType.LOGOUT, 'audit-log.type-logout'],
+    [ActionType.LOCKOUT, 'audit-log.type-lockout']
   ]
 );
 

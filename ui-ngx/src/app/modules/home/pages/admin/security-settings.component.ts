@@ -56,6 +56,8 @@ export class SecuritySettingsComponent extends PageComponent implements OnInit, 
 
   buildSecuritySettingsForm() {
     this.securitySettingsFormGroup = this.fb.group({
+      maxFailedLoginAttempts: [null, [Validators.min(0)]],
+      userLockoutNotificationEmail: ['', []],
       passwordPolicy: this.fb.group(
         {
           minimumLength: [null, [Validators.required, Validators.min(5), Validators.max(50)]],
@@ -63,7 +65,8 @@ export class SecuritySettingsComponent extends PageComponent implements OnInit, 
           minimumLowercaseLetters: [null, Validators.min(0)],
           minimumDigits: [null, Validators.min(0)],
           minimumSpecialCharacters: [null, Validators.min(0)],
-          passwordExpirationPeriodDays: [null, Validators.min(0)]
+          passwordExpirationPeriodDays: [null, Validators.min(0)],
+          passwordReuseFrequencyDays: [null, Validators.min(0)]
         }
       )
     });

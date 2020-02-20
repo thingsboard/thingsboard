@@ -33,6 +33,28 @@
           <mat-expansion-panel [expanded]="true">
             <mat-expansion-panel-header>
               <mat-panel-title>
+                <div class="tb-panel-title" translate>admin.general-policy</div>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <mat-form-field class="mat-block">
+              <mat-label translate>admin.max-failed-login-attempts</mat-label>
+              <input matInput type="number"
+                     formControlName="maxFailedLoginAttempts"
+                     step="1"
+                     min="0"/>
+              <mat-error *ngIf="securitySettingsFormGroup.get('maxFailedLoginAttempts').hasError('min')">
+                {{ 'admin.minimum-max-failed-login-attempts-range' | translate }}
+              </mat-error>
+            </mat-form-field>
+            <mat-form-field class="mat-block">
+              <mat-label translate>admin.user-lockout-notification-email</mat-label>
+              <input matInput type="email"
+                     formControlName="userLockoutNotificationEmail"/>
+            </mat-form-field>
+          </mat-expansion-panel>
+          <mat-expansion-panel [expanded]="true">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
                 <div class="tb-panel-title" translate>admin.password-policy</div>
               </mat-panel-title>
             </mat-expansion-panel-header>
@@ -103,6 +125,16 @@
                        min="0"/>
                 <mat-error *ngIf="securitySettingsFormGroup.get('passwordPolicy').get('passwordExpirationPeriodDays').hasError('min')">
                   {{ 'admin.password-expiration-period-days-range' | translate }}
+                </mat-error>
+              </mat-form-field>
+              <mat-form-field class="mat-block">
+                <mat-label translate>admin.password-reuse-frequency-days</mat-label>
+                <input matInput type="number"
+                       formControlName="passwordReuseFrequencyDays"
+                       step="1"
+                       min="0"/>
+                <mat-error *ngIf="securitySettingsFormGroup.get('passwordPolicy').get('passwordReuseFrequencyDays').hasError('min')">
+                  {{ 'admin.password-reuse-frequency-days-range' | translate }}
                 </mat-error>
               </mat-form-field>
             </section>

@@ -213,6 +213,23 @@ export class UsersTableConfigResolver implements Resolve<EntityTableConfig<User>
     });
   }
 
+  setUserCredentialsEnabled($event: Event, user: User, userCredentialsEnabled: boolean) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.userService.setUserCredentialsEnabled(user.id.id, userCredentialsEnabled).subscribe(() => {
+      if (!user.additionalInfo) {
+        user.additionalInfo = {};
+      }
+      user.additionalInfo.userCredentialsEnabled = userCredentialsEnabled;
+      this.store.dispatch(new ActionNotificationShow(
+        {
+          message: this.translate.instant(userCredentialsEnabled ? 'user.enable-account-message' : 'user.disable-account-message'),
+          type: 'success'
+        }));
+    });
+  }
+
   onUserAction(action: EntityAction<User>): boolean {
     switch (action.action) {
       case 'loginAsUser':
@@ -223,6 +240,12 @@ export class UsersTableConfigResolver implements Resolve<EntityTableConfig<User>
         return true;
       case 'resendActivation':
         this.resendActivation(action.event, action.entity);
+        return true;
+      case 'disableAccount':
+        this.setUserCredentialsEnabled(action.event, action.entity, false);
+        return true;
+      case 'enableAccount':
+        this.setUserCredentialsEnabled(action.event, action.entity, true);
         return true;
     }
     return false;

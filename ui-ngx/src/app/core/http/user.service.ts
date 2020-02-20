@@ -21,6 +21,7 @@ import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
+import { isDefined } from '@core/utils';
 
 @Injectable({
   providedIn: 'root'
@@ -65,6 +66,14 @@ export class UserService {
 
   public sendActivationEmail(email: string, config?: RequestConfig) {
     return this.http.post(`/api/user/sendActivationMail?email=${email}`, null, defaultHttpOptionsFromConfig(config));
+  }
+
+  public setUserCredentialsEnabled(userId: string, userCredentialsEnabled?: boolean, config?: RequestConfig): Observable<any> {
+    let url = `/api/user/${userId}/userCredentialsEnabled`;
+    if (isDefined(userCredentialsEnabled)) {
+      url += `?userCredentialsEnabled=${userCredentialsEnabled}`;
+    }
+    return this.http.post<User>(url, null, defaultHttpOptionsFromConfig(config));
   }
 
 }

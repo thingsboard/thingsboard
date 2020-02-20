@@ -37,6 +37,8 @@ export class MailServerComponent extends PageComponent implements OnInit, HasCon
   adminSettings: AdminSettings<MailServerSettings>;
   smtpProtocols = ['smtp', 'smtps'];
 
+  tlsVersions = ['TLSv1.0', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3'];
+
   constructor(protected store: Store<AppState>,
               private router: Router,
               private adminService: AdminService,
@@ -67,6 +69,7 @@ export class MailServerComponent extends PageComponent implements OnInit, HasCon
         Validators.pattern(/^[0-9]{1,6}$/),
         Validators.maxLength(6)]],
       enableTls: ['false'],
+      tlsVersion: [],
       username: [''],
       password: ['']
     });

@@ -23,6 +23,7 @@ import { User } from '@shared/models/user.model';
 import { selectAuth, selectUserDetails } from '@core/auth/auth.selectors';
 import { map } from 'rxjs/operators';
 import { Authority } from '@shared/models/authority.enum';
+import { isUndefined } from '@core/utils';
 
 @Component({
   selector: 'tb-user',
@@ -48,6 +49,14 @@ export class UserComponent extends EntityComponent<User> {
       return !this.entitiesTableConfig.deleteEnabled(this.entity);
     } else {
       return false;
+    }
+  }
+
+  isUserCredentialsEnabled(): boolean {
+    if (!this.entity || !this.entity.additionalInfo || isUndefined(this.entity.additionalInfo.userCredentialsEnabled)) {
+      return true;
+    } else {
+      return this.entity.additionalInfo.userCredentialsEnabled === true;
     }
   }
 
