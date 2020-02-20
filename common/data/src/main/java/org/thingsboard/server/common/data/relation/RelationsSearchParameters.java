@@ -35,17 +35,19 @@ public class RelationsSearchParameters {
     private EntitySearchDirection direction;
     private RelationTypeGroup relationTypeGroup;
     private int maxLevel = 1;
+    private boolean fetchLastLevelOnly;
 
-    public RelationsSearchParameters(EntityId entityId, EntitySearchDirection direction, int maxLevel) {
-        this(entityId, direction, maxLevel, RelationTypeGroup.COMMON);
+    public RelationsSearchParameters(EntityId entityId, EntitySearchDirection direction, int maxLevel, boolean fetchLastLevelOnly) {
+        this(entityId, direction, maxLevel, RelationTypeGroup.COMMON, fetchLastLevelOnly);
     }
 
-    public RelationsSearchParameters(EntityId entityId, EntitySearchDirection direction, int maxLevel, RelationTypeGroup relationTypeGroup) {
+    public RelationsSearchParameters(EntityId entityId, EntitySearchDirection direction, int maxLevel, RelationTypeGroup relationTypeGroup, boolean fetchLastLevelOnly) {
         this.rootId = entityId.getId();
         this.rootType = entityId.getEntityType();
         this.direction = direction;
         this.maxLevel = maxLevel;
         this.relationTypeGroup = relationTypeGroup;
+        this.fetchLastLevelOnly = fetchLastLevelOnly;
     }
 
     public EntityId getEntityId() {

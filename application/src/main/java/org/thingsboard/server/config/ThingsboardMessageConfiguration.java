@@ -84,7 +84,7 @@ public class ThingsboardMessageConfiguration {
     }
 
     @Slf4j
-    static class SpringResourceLoader extends org.apache.velocity.runtime.resource.loader.ResourceLoader {
+    public static class SpringResourceLoader extends org.apache.velocity.runtime.resource.loader.ResourceLoader {
 
         public static final String NAME = "spring";
 

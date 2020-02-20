@@ -15,10 +15,12 @@
  */
 package org.thingsboard.server.service.script;
 
+import com.google.protobuf.util.JsonFormat;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
 import org.thingsboard.server.kafka.TbKafkaDecoder;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Created by ashvayka on 25.09.18.
@@ -27,6 +29,8 @@ public class RemoteJsResponseDecoder implements TbKafkaDecoder<JsInvokeProtos.Re
 
     @Override
     public JsInvokeProtos.RemoteJsResponse decode(byte[] data) throws IOException {
-        return JsInvokeProtos.RemoteJsResponse.parseFrom(data);
+        JsInvokeProtos.RemoteJsResponse.Builder builder = JsInvokeProtos.RemoteJsResponse.newBuilder();
+        JsonFormat.parser().ignoringUnknownFields().merge(new String(data, StandardCharsets.UTF_8), builder);
+        return builder.build();
     }
 }

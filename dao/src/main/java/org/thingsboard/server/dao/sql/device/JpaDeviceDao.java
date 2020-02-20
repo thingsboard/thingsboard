@@ -17,10 +17,14 @@ package org.thingsboard.server.dao.sql.device;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.*;
+import org.springframework.util.StringUtils;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceInfo;
+import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -40,7 +44,6 @@ import java.util.UUID;
 
 import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
 import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUIDs;
-import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID_STR;
 
 /**
  * Created by Valerii Sosliuk on 5/6/2017.
@@ -69,11 +72,18 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
 
     @Override
     public PageData<Device> findDevicesByTenantId(UUID tenantId, PageLink pageLink) {
-        return DaoUtil.toPageData(
-                deviceRepository.findByTenantId(
-                        fromTimeUUID(tenantId),
-                        Objects.toString(pageLink.getTextSearch(), ""),
-                        DaoUtil.toPageable(pageLink)));
+        if (StringUtils.isEmpty(pageLink.getTextSearch())) {
+            return DaoUtil.toPageData(
+                    deviceRepository.findByTenantId(
+                            fromTimeUUID(tenantId),
+                            DaoUtil.toPageable(pageLink)));
+        } else {
+            return DaoUtil.toPageData(
+                    deviceRepository.findByTenantId(
+                            fromTimeUUID(tenantId),
+                            Objects.toString(pageLink.getTextSearch(), ""),
+                            DaoUtil.toPageable(pageLink)));
+        }
     }
 
     @Override

@@ -81,34 +81,34 @@ public class AuditLogServiceImpl implements AuditLogService {
     private AuditLogSink auditLogSink;
 
     @Override
-    public PageData<AuditLog> findAuditLogsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, TimePageLink pageLink) {
+    public PageData<AuditLog> findAuditLogsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, List<ActionType> actionTypes, TimePageLink pageLink) {
         log.trace("Executing findAuditLogsByTenantIdAndCustomerId [{}], [{}], [{}]", tenantId, customerId, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateId(customerId, "Incorrect customerId " + customerId);
-        return auditLogDao.findAuditLogsByTenantIdAndCustomerId(tenantId.getId(), customerId, pageLink);
+        return auditLogDao.findAuditLogsByTenantIdAndCustomerId(tenantId.getId(), customerId, actionTypes, pageLink);
     }
 
     @Override
-    public PageData<AuditLog> findAuditLogsByTenantIdAndUserId(TenantId tenantId, UserId userId, TimePageLink pageLink) {
+    public PageData<AuditLog> findAuditLogsByTenantIdAndUserId(TenantId tenantId, UserId userId, List<ActionType> actionTypes, TimePageLink pageLink) {
         log.trace("Executing findAuditLogsByTenantIdAndUserId [{}], [{}], [{}]", tenantId, userId, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateId(userId, "Incorrect userId" + userId);
-        return auditLogDao.findAuditLogsByTenantIdAndUserId(tenantId.getId(), userId, pageLink);
+        return auditLogDao.findAuditLogsByTenantIdAndUserId(tenantId.getId(), userId, actionTypes, pageLink);
     }
 
     @Override
-    public PageData<AuditLog> findAuditLogsByTenantIdAndEntityId(TenantId tenantId, EntityId entityId, TimePageLink pageLink) {
+    public PageData<AuditLog> findAuditLogsByTenantIdAndEntityId(TenantId tenantId, EntityId entityId, List<ActionType> actionTypes, TimePageLink pageLink) {
         log.trace("Executing findAuditLogsByTenantIdAndEntityId [{}], [{}], [{}]", tenantId, entityId, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateEntityId(entityId, INCORRECT_TENANT_ID + entityId);
-        return auditLogDao.findAuditLogsByTenantIdAndEntityId(tenantId.getId(), entityId, pageLink);
+        return auditLogDao.findAuditLogsByTenantIdAndEntityId(tenantId.getId(), entityId, actionTypes, pageLink);
     }
 
     @Override
-    public PageData<AuditLog> findAuditLogsByTenantId(TenantId tenantId, TimePageLink pageLink) {
+    public PageData<AuditLog> findAuditLogsByTenantId(TenantId tenantId, List<ActionType> actionTypes, TimePageLink pageLink) {
         log.trace("Executing findAuditLogs [{}]", pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        return auditLogDao.findAuditLogsByTenantId(tenantId.getId(), pageLink);
+        return auditLogDao.findAuditLogsByTenantId(tenantId.getId(), actionTypes, pageLink);
     }
 
     @Override
@@ -246,6 +246,7 @@ public class AuditLogServiceImpl implements AuditLogService {
                 break;
             case LOGIN:
             case LOGOUT:
+            case LOCKOUT:
                 String clientAddress = extractParameter(String.class, 0, additionalInfo);
                 String browser = extractParameter(String.class, 1, additionalInfo);
                 String os = extractParameter(String.class, 2, additionalInfo);

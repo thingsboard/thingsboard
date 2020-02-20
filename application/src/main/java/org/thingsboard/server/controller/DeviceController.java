@@ -40,7 +40,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
-import org.thingsboard.server.controller.claim.data.ClaimRequest;
+import org.thingsboard.server.common.data.ClaimRequest;
 import org.thingsboard.server.dao.device.claim.ClaimResponse;
 import org.thingsboard.server.dao.device.claim.ClaimResult;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
@@ -91,7 +91,8 @@ public class DeviceController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device", method = RequestMethod.POST)
     @ResponseBody
-    public Device saveDevice(@RequestBody Device device) throws ThingsboardException {
+    public Device saveDevice(@RequestBody Device device,
+                             @RequestParam(name = "accessToken", required = false) String accessToken) throws ThingsboardException {
         try {
             device.setTenantId(getCurrentUser().getTenantId());
 
@@ -100,7 +101,7 @@ public class DeviceController extends BaseController {
             accessControlService.checkPermission(getCurrentUser(), Resource.DEVICE, operation,
                     device.getId(), device);
 
-            Device savedDevice = checkNotNull(deviceService.saveDevice(device));
+            Device savedDevice = checkNotNull(deviceService.saveDeviceWithAccessToken(device, accessToken));
 
             actorService
                     .onDeviceNameOrTypeUpdate(
@@ -479,11 +480,7 @@ public class DeviceController extends BaseController {
                             deferredResult.setResult(new ResponseEntity<>(result, status));
                         } else {
                             status = HttpStatus.BAD_REQUEST;
-                            if (result.getResponse().equals(ClaimResponse.FAILURE)) {
-                                deferredResult.setResult(new ResponseEntity<>(result.getResponse(), status));
-                            } else {
-                                deferredResult.setResult(new ResponseEntity<>(result, status));
-                            }
+                            deferredResult.setResult(new ResponseEntity<>(result.getResponse(), status));
                         }
                     } else {
                         deferredResult.setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));

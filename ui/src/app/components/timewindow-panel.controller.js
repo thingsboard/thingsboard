@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /*@ngInject*/
-export default function TimewindowPanelController(mdPanelRef, $scope, timeService, types, timewindow, historyOnly, aggregation, onTimewindowUpdate) {
+export default function TimewindowPanelController(mdPanelRef, $scope, timeService, types, timewindow, historyOnly, aggregation, isEdit, onTimewindowUpdate) {
 
     var vm = this;
 
@@ -33,6 +33,7 @@ export default function TimewindowPanelController(mdPanelRef, $scope, timeServic
     vm.maxHistoryAggInterval = maxHistoryAggInterval;
     vm.minDatapointsLimit = minDatapointsLimit;
     vm.maxDatapointsLimit = maxDatapointsLimit;
+    vm.isEdit = isEdit;
 
     if (vm.historyOnly) {
         vm.timewindow.selectedTab = 1;

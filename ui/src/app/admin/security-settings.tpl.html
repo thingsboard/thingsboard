@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2019 The Thingsboard Authors
+    Copyright © 2016-2020 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -30,6 +30,37 @@
             <form name="vm.settingsForm" ng-submit="vm.save()" tb-confirm-on-exit confirm-form="vm.settingsForm">
                 <fieldset ng-disabled="$root.loading">
                     <md-expansion-panel-group md-component-id="securitySettingsPanelGroup" auto-expand="true" multiple>
+                        <md-expansion-panel md-component-id="generalPolicyPanel" id="generalPolicyPanel">
+                            <md-expansion-panel-collapsed>
+                                <div class="tb-panel-title" translate>admin.general-policy</div>
+                                <md-expansion-panel-icon></md-expansion-panel-icon>
+                            </md-expansion-panel-collapsed>
+                            <md-expansion-panel-expanded>
+                                <md-expansion-panel-header ng-click="vm.$mdExpansionPanel('generalPolicyPanel').collapse()">
+                                    <div class="tb-panel-title" translate>admin.general-policy</div>
+                                    <md-expansion-panel-icon></md-expansion-panel-icon>
+                                </md-expansion-panel-header>
+                                <md-expansion-panel-content>
+                                    <md-input-container class="md-block">
+                                        <label translate>admin.max-failed-login-attempts</label>
+                                        <input type="number"
+                                               step="1"
+                                               min="0"
+                                               name="maxFailedLoginAttempts"
+                                               ng-model="vm.securitySettings.maxFailedLoginAttempts">
+                                        <div ng-messages="vm.settingsForm.maxFailedLoginAttempts.$error">
+                                            <div translate ng-message="min">admin.minimum-max-failed-login-attempts-range</div>
+                                        </div>
+                                    </md-input-container>
+                                    <md-input-container class="md-block">
+                                        <label translate>admin.user-lockout-notification-email</label>
+                                        <input type="email"
+                                               name="userLockoutNotificationEmail"
+                                               ng-model="vm.securitySettings.userLockoutNotificationEmail">
+                                    </md-input-container>
+                                </md-expansion-panel-content>
+                            </md-expansion-panel-expanded>
+                        </md-expansion-panel>
                         <md-expansion-panel md-component-id="passwordPolicyPanel" id="passwordPolicyPanel">
                             <md-expansion-panel-collapsed>
                                 <div class="tb-panel-title" translate>admin.password-policy</div>
@@ -109,6 +140,17 @@
                                                ng-model="vm.securitySettings.passwordPolicy.passwordExpirationPeriodDays">
                                         <div ng-messages="vm.settingsForm.passwordExpirationPeriodDays.$error">
                                             <div translate ng-message="min">admin.password-expiration-period-days-range</div>
+                                        </div>
+                                    </md-input-container>
+                                    <md-input-container class="md-block">
+                                        <label translate>admin.password-reuse-frequency-days</label>
+                                        <input type="number"
+                                               step="1"
+                                               min="0"
+                                               name="passwordReuseFrequencyDays"
+                                               ng-model="vm.securitySettings.passwordPolicy.passwordReuseFrequencyDays">
+                                        <div ng-messages="vm.settingsForm.passwordReuseFrequencyDays.$error">
+                                            <div translate ng-message="min">admin.password-reuse-frequency-days-range</div>
                                         </div>
                                     </md-input-container>
                                 </md-expansion-panel-content>

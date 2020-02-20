@@ -21,7 +21,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.dao.model.sql.AuditLogEntity;
+
+import java.util.List;
 
 public interface AuditLogRepository extends PagingAndSortingRepository<AuditLogEntity, String> {
 
@@ -29,6 +32,7 @@ public interface AuditLogRepository extends PagingAndSortingRepository<AuditLogE
             "a.tenantId = :tenantId " +
             "AND (:startId IS NULL OR a.id >= :startId) " +
             "AND (:endId IS NULL OR a.id <= :endId) " +
+            "AND (:actionTypes IS NULL OR a.actionType in :actionTypes) " +
             "AND (LOWER(a.entityType) LIKE LOWER(CONCAT(:textSearch, '%'))" +
             "OR LOWER(a.entityName) LIKE LOWER(CONCAT(:textSearch, '%'))" +
             "OR LOWER(a.userName) LIKE LOWER(CONCAT(:textSearch, '%'))" +
@@ -40,6 +44,7 @@ public interface AuditLogRepository extends PagingAndSortingRepository<AuditLogE
                                  @Param("textSearch") String textSearch,
                                  @Param("startId") String startId,
                                  @Param("endId") String endId,
+                                 @Param("actionTypes") List<ActionType> actionTypes,
                                  Pageable pageable);
 
     @Query("SELECT a FROM AuditLogEntity a WHERE " +
@@ -47,6 +52,7 @@ public interface AuditLogRepository extends PagingAndSortingRepository<AuditLogE
             "AND a.entityType = :entityType AND a.entityId = :entityId " +
             "AND (:startId IS NULL OR a.id >= :startId) " +
             "AND (:endId IS NULL OR a.id <= :endId) " +
+            "AND (:actionTypes IS NULL OR a.actionType in :actionTypes) " +
             "AND (LOWER(a.entityName) LIKE LOWER(CONCAT(:textSearch, '%'))" +
             "OR LOWER(a.userName) LIKE LOWER(CONCAT(:textSearch, '%'))" +
             "OR LOWER(a.actionType) LIKE LOWER(CONCAT(:textSearch, '%'))" +
@@ -58,6 +64,7 @@ public interface AuditLogRepository extends PagingAndSortingRepository<AuditLogE
                                                             @Param("textSearch") String textSearch,
                                                             @Param("startId") String startId,
                                                             @Param("endId") String endId,
+                                                            @Param("actionTypes") List<ActionType> actionTypes,
                                                             Pageable pageable);
 
     @Query("SELECT a FROM AuditLogEntity a WHERE " +
@@ -65,6 +72,7 @@ public interface AuditLogRepository extends PagingAndSortingRepository<AuditLogE
             "AND a.customerId = :customerId " +
             "AND (:startId IS NULL OR a.id >= :startId) " +
             "AND (:endId IS NULL OR a.id <= :endId) " +
+            "AND (:actionTypes IS NULL OR a.actionType in :actionTypes) " +
             "AND (LOWER(a.entityType) LIKE LOWER(CONCAT(:textSearch, '%'))" +
             "OR LOWER(a.entityName) LIKE LOWER(CONCAT(:textSearch, '%'))" +
             "OR LOWER(a.userName) LIKE LOWER(CONCAT(:textSearch, '%'))" +
@@ -76,6 +84,7 @@ public interface AuditLogRepository extends PagingAndSortingRepository<AuditLogE
                                                               @Param("textSearch") String textSearch,
                                                               @Param("startId") String startId,
                                                               @Param("endId") String endId,
+                                                              @Param("actionTypes") List<ActionType> actionTypes,
                                                               Pageable pageable);
 
     @Query("SELECT a FROM AuditLogEntity a WHERE " +
@@ -83,6 +92,7 @@ public interface AuditLogRepository extends PagingAndSortingRepository<AuditLogE
             "AND a.userId = :userId " +
             "AND (:startId IS NULL OR a.id >= :startId) " +
             "AND (:endId IS NULL OR a.id <= :endId) " +
+            "AND (:actionTypes IS NULL OR a.actionType in :actionTypes) " +
             "AND (LOWER(a.entityType) LIKE LOWER(CONCAT(:textSearch, '%'))" +
             "OR LOWER(a.entityName) LIKE LOWER(CONCAT(:textSearch, '%'))" +
             "OR LOWER(a.actionType) LIKE LOWER(CONCAT(:textSearch, '%'))" +
@@ -93,6 +103,7 @@ public interface AuditLogRepository extends PagingAndSortingRepository<AuditLogE
                                                           @Param("textSearch") String textSearch,
                                                           @Param("startId") String startId,
                                                           @Param("endId") String endId,
+                                                          @Param("actionTypes") List<ActionType> actionTypes,
                                                           Pageable pageable);
 
 }

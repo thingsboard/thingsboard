@@ -21,11 +21,11 @@ import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -43,10 +43,10 @@ import java.util.List;
         nodeDescription = "Create or Update Alarm",
         nodeDetails =
                 "Details - JS function that creates JSON object based on incoming message. This object will be added into Alarm.details field.\n" +
-                "Node output:\n" +
-                "If alarm was not created, original message is returned. Otherwise new Message returned with type 'ALARM', Alarm object in 'msg' property and 'matadata' will contains one of those properties 'isNewAlarm/isExistingAlarm'. " +
-                "Message payload can be accessed via <code>msg</code> property. For example <code>'temperature = ' + msg.temperature ;</code>. " +
-                "Message metadata can be accessed via <code>metadata</code> property. For example <code>'name = ' + metadata.customerName;</code>.",
+                        "Node output:\n" +
+                        "If alarm was not created, original message is returned. Otherwise new Message returned with type 'ALARM', Alarm object in 'msg' property and 'matadata' will contains one of those properties 'isNewAlarm/isExistingAlarm'. " +
+                        "Message payload can be accessed via <code>msg</code> property. For example <code>'temperature = ' + msg.temperature ;</code>. " +
+                        "Message metadata can be accessed via <code>metadata</code> property. For example <code>'name = ' + metadata.customerName;</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeCreateAlarmConfig",
         icon = "notifications_active"
@@ -60,7 +60,7 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
     protected TbCreateAlarmNodeConfiguration loadAlarmNodeConfig(TbNodeConfiguration configuration) throws TbNodeException {
         TbCreateAlarmNodeConfiguration nodeConfiguration = TbNodeUtils.convert(configuration, TbCreateAlarmNodeConfiguration.class);
         relationTypes = nodeConfiguration.getRelationTypes();
-        return TbNodeUtils.convert(configuration, TbCreateAlarmNodeConfiguration.class);
+        return nodeConfiguration;
     }
 
     @Override
@@ -107,11 +107,15 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
 
     private ListenableFuture<AlarmResult> createNewAlarm(TbContext ctx, TbMsg msg, Alarm msgAlarm) {
         ListenableFuture<Alarm> asyncAlarm;
-        if (msgAlarm != null ) {
+        if (msgAlarm != null) {
             asyncAlarm = Futures.immediateCheckedFuture(msgAlarm);
         } else {
+            ctx.logJsEvalRequest();
             asyncAlarm = Futures.transform(buildAlarmDetails(ctx, msg, null),
-                    details -> buildAlarm(msg, details, ctx.getTenantId()));
+                    details -> {
+                        ctx.logJsEvalResponse();
+                        return buildAlarm(msg, details, ctx.getTenantId());
+                    });
         }
         ListenableFuture<Alarm> asyncCreated = Futures.transform(asyncAlarm,
                 alarm -> ctx.getAlarmService().createOrUpdateAlarm(alarm), ctx.getDbCallbackExecutor());
@@ -119,13 +123,17 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
     }
 
     private ListenableFuture<AlarmResult> updateAlarm(TbContext ctx, TbMsg msg, Alarm existingAlarm, Alarm msgAlarm) {
+        ctx.logJsEvalRequest();
         ListenableFuture<Alarm> asyncUpdated = Futures.transform(buildAlarmDetails(ctx, msg, existingAlarm.getDetails()), (Function<JsonNode, Alarm>) details -> {
+            ctx.logJsEvalResponse();
             if (msgAlarm != null) {
                 existingAlarm.setSeverity(msgAlarm.getSeverity());
                 existingAlarm.setPropagate(msgAlarm.isPropagate());
+                existingAlarm.setPropagateRelationTypes(msgAlarm.getPropagateRelationTypes());
             } else {
                 existingAlarm.setSeverity(config.getSeverity());
                 existingAlarm.setPropagate(config.isPropagate());
+                existingAlarm.setPropagateRelationTypes(relationTypes);
             }
             existingAlarm.setDetails(details);
             existingAlarm.setEndTs(System.currentTimeMillis());
@@ -143,6 +151,7 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
                 .severity(config.getSeverity())
                 .propagate(config.isPropagate())
                 .type(TbNodeUtils.processPattern(this.config.getAlarmType(), msg.getMetaData()))
+                .propagateRelationTypes(relationTypes)
                 //todo-vp: alarm date should be taken from Message or current Time should be used?
 //                .startTs(System.currentTimeMillis())
 //                .endTs(System.currentTimeMillis())

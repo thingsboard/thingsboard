@@ -15,4 +15,4 @@
 # limitations under the License.
 #
 
-kubectl -n thingsboard delete svc,sts,deploy,pv,pvc,cm,po,ing --all --include-uninitialized
+kubectl -n thingsboard delete svc,sts,deploy,pv,pvc,cm,po,ing --all

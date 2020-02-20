@@ -83,6 +83,7 @@
         "timeout-required": "超时必填。",
         "timeout-invalid": "这看起来不像有效的超时值。",
         "enable-tls": "启用TLS",
+        "tls-version" : "TLS版本",
         "send-test-mail": "发送测试邮件"
     },
     "alarm": {
@@ -241,7 +242,8 @@
         "select-asset": "选择资产",
         "no-assets-matching": "没有找到匹配 '{{entity}}' 的资产。",
         "asset-required": "资产必填",
-        "name-starts-with": "资产名称以此开头"
+        "name-starts-with": "资产名称以此开头",
+        "label": "标签"
     },
     "attribute": {
         "attributes": "属性",
@@ -1600,21 +1602,6 @@
         }
     },
     "language": {
-        "language": "语言",
-        "locales": {
-            "de_DE": "德语",
-            "en_US": "英语",
-            "fr_FR": "法国",
-            "ko_KR": "韩语",
-            "zh_CN": "汉语",
-            "ru_RU": "俄语",
-            "es_ES": "西班牙语",
-            "it_IT": "意大利",
-            "ja_JA": "日本",
-            "tr_TR": "土耳其",
-            "fa_IR": "波斯语",
-            "uk_UA": "乌克兰",
-            "cs_CZ": "在捷克"            
-        }
+        "language": "语言"
     }
 }

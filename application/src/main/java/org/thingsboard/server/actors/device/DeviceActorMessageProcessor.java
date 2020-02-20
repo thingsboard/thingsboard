@@ -69,6 +69,7 @@ import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.service.rpc.ToDeviceRpcRequestActorMsg;
 import org.thingsboard.server.service.rpc.ToServerRpcResponseActorMsg;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
+import org.thingsboard.server.utils.JsonUtils;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -102,7 +103,6 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     private final Map<Integer, ToServerRpcRequestMetadata> toServerRpcPendingMap;
 
     private final Gson gson = new Gson();
-    private final JsonParser jsonParser = new JsonParser();
 
     private int rpcSeq = 0;
     private String deviceName;
@@ -223,6 +223,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     }
 
     void process(ActorContext context, TransportToDeviceActorMsgWrapper wrapper) {
+        boolean reportDeviceActivity = false;
         TransportToDeviceActorMsg msg = wrapper.getMsg();
         if (msg.hasSessionEvent()) {
             processSessionStateMsgs(msg.getSessionInfo(), msg.getSessionEvent());
@@ -235,11 +236,11 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         }
         if (msg.hasPostAttributes()) {
             handlePostAttributesRequest(context, msg.getSessionInfo(), msg.getPostAttributes());
-            reportLogicalDeviceActivity();
+            reportDeviceActivity = true;
         }
         if (msg.hasPostTelemetry()) {
             handlePostTelemetryRequest(context, msg.getSessionInfo(), msg.getPostTelemetry());
-            reportLogicalDeviceActivity();
+            reportDeviceActivity = true;
         }
         if (msg.hasGetAttributes()) {
             handleGetAttributesRequest(context, msg.getSessionInfo(), msg.getGetAttributes());
@@ -249,10 +250,13 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         }
         if (msg.hasToServerRPCCallRequest()) {
             handleClientSideRPCRequest(context, msg.getSessionInfo(), msg.getToServerRPCCallRequest());
-            reportLogicalDeviceActivity();
+            reportDeviceActivity = true;
         }
         if (msg.hasSubscriptionInfo()) {
             handleSessionActivity(context, msg.getSessionInfo(), msg.getSubscriptionInfo());
+        }
+        if (reportDeviceActivity) {
+            reportLogicalDeviceActivity();
         }
     }
 
@@ -323,7 +327,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     }
 
     private void handlePostAttributesRequest(ActorContext context, SessionInfoProto sessionInfo, PostAttributeMsg postAttributes) {
-        JsonObject json = getJsonObject(postAttributes.getKvList());
+        JsonObject json = JsonUtils.getJsonObject(postAttributes.getKvList());
         TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), SessionMsgType.POST_ATTRIBUTES_REQUEST.name(), deviceId, defaultMetaData.copy(),
                 TbMsgDataType.JSON, gson.toJson(json), null, null, 0L);
         pushToRuleEngine(context, tbMsg);
@@ -331,7 +335,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
 
     private void handlePostTelemetryRequest(ActorContext context, SessionInfoProto sessionInfo, PostTelemetryMsg postTelemetry) {
         for (TsKvListProto tsKv : postTelemetry.getTsKvListList()) {
-            JsonObject json = getJsonObject(tsKv.getKvList());
+            JsonObject json = JsonUtils.getJsonObject(tsKv.getKvList());
             TbMsgMetaData metaData = defaultMetaData.copy();
             metaData.putValue("ts", tsKv.getTs() + "");
             TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, metaData, TbMsgDataType.JSON, gson.toJson(json), null, null, 0L);
@@ -343,7 +347,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         UUID sessionId = getSessionId(sessionInfo);
         JsonObject json = new JsonObject();
         json.addProperty("method", request.getMethodName());
-        json.add("params", jsonParser.parse(request.getParams()));
+        json.add("params", JsonUtils.parse(request.getParams()));
 
         TbMsgMetaData requestMetaData = defaultMetaData.copy();
         requestMetaData.putValue("requestId", Integer.toString(request.getRequestId()));
@@ -547,27 +551,6 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         this.defaultMetaData.putValue("deviceType", deviceType);
     }
 
-    private JsonObject getJsonObject(List<KeyValueProto> tsKv) {
-        JsonObject json = new JsonObject();
-        for (KeyValueProto kv : tsKv) {
-            switch (kv.getType()) {
-                case BOOLEAN_V:
-                    json.addProperty(kv.getKey(), kv.getBoolV());
-                    break;
-                case LONG_V:
-                    json.addProperty(kv.getKey(), kv.getLongV());
-                    break;
-                case DOUBLE_V:
-                    json.addProperty(kv.getKey(), kv.getDoubleV());
-                    break;
-                case STRING_V:
-                    json.addProperty(kv.getKey(), kv.getStringV());
-                    break;
-            }
-        }
-        return json;
-    }
-
     private void sendToTransport(GetAttributeResponseMsg responseMsg, SessionInfoProto sessionInfo) {
         DeviceActorToTransportMsg msg = DeviceActorToTransportMsg.newBuilder()
                 .setSessionIdMSB(sessionInfo.getSessionIdMSB())
@@ -638,6 +621,10 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             case STRING:
                 builder.setType(KeyValueType.STRING_V);
                 builder.setStringV(kvEntry.getStrValue().get());
+                break;
+            case JSON:
+                builder.setType(KeyValueType.JSON_V);
+                builder.setJsonV(kvEntry.getJsonValue().get());
                 break;
         }
         return builder.build();

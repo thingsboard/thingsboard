@@ -32,12 +32,10 @@ import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.Column;
-import javax.persistence.Entity;
 import javax.persistence.MappedSuperclass;
-import javax.persistence.Table;
 
-import static org.thingsboard.server.dao.model.ModelConstants.ASSET_COLUMN_FAMILY_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.ASSET_CUSTOMER_ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ASSET_LABEL_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ASSET_NAME_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ASSET_TENANT_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ASSET_TYPE_PROPERTY;
@@ -60,6 +58,9 @@ public abstract class AbstractAssetEntity<T extends Asset> extends BaseSqlEntity
 
     @Column(name = ASSET_TYPE_PROPERTY)
     private String type;
+
+    @Column(name = ASSET_LABEL_PROPERTY)
+    private String label;
 
     @Column(name = SEARCH_TEXT_PROPERTY)
     private String searchText;
@@ -84,6 +85,7 @@ public abstract class AbstractAssetEntity<T extends Asset> extends BaseSqlEntity
         }
         this.name = asset.getName();
         this.type = asset.getType();
+        this.label = asset.getLabel();
         this.additionalInfo = asset.getAdditionalInfo();
     }
 
@@ -122,6 +124,7 @@ public abstract class AbstractAssetEntity<T extends Asset> extends BaseSqlEntity
         }
         asset.setName(name);
         asset.setType(type);
+        asset.setLabel(label);
         asset.setAdditionalInfo(additionalInfo);
         return asset;
     }

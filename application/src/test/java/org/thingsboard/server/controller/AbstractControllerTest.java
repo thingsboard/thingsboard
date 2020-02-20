@@ -345,7 +345,6 @@ public abstract class AbstractControllerTest {
         urlTemplate += "pageSize={pageSize}&page={page}";
         pageLinkVariables.add(pageLink.getPageSize());
         pageLinkVariables.add(pageLink.getPage());
-
         if (pageLink.getStartTime() != null) {
             urlTemplate += "&startTime={startTime}";
             pageLinkVariables.add(pageLink.getStartTime());
@@ -354,9 +353,14 @@ public abstract class AbstractControllerTest {
             urlTemplate += "&endTime={endTime}";
             pageLinkVariables.add(pageLink.getEndTime());
         }
+        if (StringUtils.isNotEmpty(pageLink.getTextSearch())) {
+            urlTemplate += "&textSearch={textSearch}";
+            pageLinkVariables.add(pageLink.getTextSearch());
+        }
         if (pageLink.getSortOrder() != null) {
-            urlTemplate += "&ascOrder={ascOrder}";
-            pageLinkVariables.add(pageLink.getSortOrder().getDirection() == SortOrder.Direction.ASC);
+            urlTemplate += "&sortProperty={sortProperty}&sortOrder={sortOrder}";
+            pageLinkVariables.add(pageLink.getSortOrder().getProperty());
+            pageLinkVariables.add(pageLink.getSortOrder().getDirection().name());
         }
         Object[] vars = new Object[urlVariables.length + pageLinkVariables.size()];
         System.arraycopy(urlVariables, 0, vars, 0, urlVariables.length);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,9 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
         sendTwoWayRpcCommand: sendTwoWayRpcCommand,
         findByQuery: findByQuery,
         getDeviceTypes: getDeviceTypes,
-        findByName: findByName
+        findByName: findByName,
+        claimDevice: claimDevice,
+        unclaimDevice: unclaimDevice
     };
 
     return service;
@@ -329,6 +331,30 @@ function DeviceService($http, $q, $window, userService, attributeService, custom
             deferred.resolve(response.data);
         }, function fail() {
             deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function claimDevice(deviceName, deviceSecret, config) {
+        deviceSecret = deviceSecret || {};
+        config = config || {};
+        const deferred = $q.defer();
+        const url = '/api/customer/device/' + deviceName + '/claim';
+        $http.post(url, deviceSecret, config).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail(rejection) {
+            deferred.reject(rejection);
+        });
+        return deferred.promise;
+    }
+
+    function unclaimDevice(deviceName) {
+        const deferred = $q.defer();
+        const url = '/api/customer/device/' + deviceName + '/claim';
+        $http.delete(url).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail(rejection) {
+            deferred.reject(rejection);
         });
         return deferred.promise;
     }

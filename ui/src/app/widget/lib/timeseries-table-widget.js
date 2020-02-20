@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ function TimeseriesTableWidget() {
 /*@ngInject*/
 function TimeseriesTableWidgetController($element, $scope, $filter, $timeout, types) {
     var vm = this;
-    let dateFormatFilter = 'yyyy-MM-dd HH:mm:ss';
+    let dateFormatFilter;
 
     vm.sources = [];
     vm.sourceIndex = 0;
@@ -98,6 +98,7 @@ function TimeseriesTableWidgetController($element, $scope, $filter, $timeout, ty
         vm.ctx.widgetActions = [ vm.searchAction ];
         vm.actionCellDescriptors = vm.ctx.actionsApi.getActionDescriptors('actionCellButton');
         vm.showTimestamp = vm.settings.showTimestamp !== false;
+        dateFormatFilter = (vm.settings.showMilliseconds !== true) ? 'yyyy-MM-dd HH:mm:ss' :  'yyyy-MM-dd HH:mm:ss.sss';
         var origColor = vm.widgetConfig.color || 'rgba(0, 0, 0, 0.87)';
         var defaultColor = tinycolor(origColor);
         var mdDark = defaultColor.setAlpha(0.87).toRgbString();
@@ -189,9 +190,10 @@ function TimeseriesTableWidgetController($element, $scope, $filter, $timeout, ty
         }
         var descriptors = vm.ctx.actionsApi.getActionDescriptors('rowClick');
         if (descriptors.length) {
-						var entityId = vm.ctx.activeEntityInfo.entityId;
+            var entityId = vm.ctx.activeEntityInfo.entityId;
             var entityName = vm.ctx.activeEntityInfo.entityName;
-            vm.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, row);
+            var entityLabel = vm.ctx.activeEntityInfo.entityLabel;
+            vm.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, row, entityLabel);
         }
     }
 
@@ -199,9 +201,10 @@ function TimeseriesTableWidgetController($element, $scope, $filter, $timeout, ty
         if ($event) {
             $event.stopPropagation();
         }
-				var entityId = vm.ctx.activeEntityInfo.entityId;
+        var entityId = vm.ctx.activeEntityInfo.entityId;
         var entityName = vm.ctx.activeEntityInfo.entityName;
-        vm.ctx.actionsApi.handleWidgetAction($event, actionDescriptor, entityId, entityName, row);
+        var entityLabel = vm.ctx.activeEntityInfo.entityLabel;
+        vm.ctx.actionsApi.handleWidgetAction($event, actionDescriptor, entityId, entityName, row, entityLabel);
     }
 
 

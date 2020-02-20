@@ -21,6 +21,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.alarm.Alarm;
@@ -34,15 +36,20 @@ import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.MappedSuperclass;
+import java.util.Arrays;
+import java.util.Collections;
 
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ACK_TS_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_CLEAR_TS_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.ALARM_COLUMN_FAMILY_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_END_TS_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ORIGINATOR_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ORIGINATOR_TYPE_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_PROPAGATE_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ALARM_PROPAGATE_RELATION_TYPES;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_SEVERITY_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_START_TS_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_STATUS_PROPERTY;
@@ -94,6 +101,9 @@ public abstract class AbstractAlarmEntity<T extends Alarm> extends BaseSqlEntity
     @Column(name = ALARM_PROPAGATE_PROPERTY)
     private Boolean propagate;
 
+    @Column(name = ALARM_PROPAGATE_RELATION_TYPES)
+    private String propagateRelationTypes;
+
     public AbstractAlarmEntity() {
         super();
     }
@@ -117,6 +127,11 @@ public abstract class AbstractAlarmEntity<T extends Alarm> extends BaseSqlEntity
         this.ackTs = alarm.getAckTs();
         this.clearTs = alarm.getClearTs();
         this.details = alarm.getDetails();
+        if (!CollectionUtils.isEmpty(alarm.getPropagateRelationTypes())) {
+            this.propagateRelationTypes = String.join(",", alarm.getPropagateRelationTypes());
+        } else {
+            this.propagateRelationTypes = null;
+        }
     }
 
     public AbstractAlarmEntity(AlarmEntity alarmEntity) {
@@ -134,6 +149,7 @@ public abstract class AbstractAlarmEntity<T extends Alarm> extends BaseSqlEntity
         this.ackTs = alarmEntity.getAckTs();
         this.clearTs = alarmEntity.getClearTs();
         this.details = alarmEntity.getDetails();
+        this.propagateRelationTypes = alarmEntity.getPropagateRelationTypes();
     }
 
     protected Alarm toAlarm() {
@@ -152,6 +168,11 @@ public abstract class AbstractAlarmEntity<T extends Alarm> extends BaseSqlEntity
         alarm.setAckTs(ackTs);
         alarm.setClearTs(clearTs);
         alarm.setDetails(details);
+        if (!StringUtils.isEmpty(propagateRelationTypes)) {
+            alarm.setPropagateRelationTypes(Arrays.asList(propagateRelationTypes.split(",")));
+        } else {
+            alarm.setPropagateRelationTypes(Collections.emptyList());
+        }
         return alarm;
     }
 }

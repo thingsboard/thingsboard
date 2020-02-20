@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.transport;
 
 import akka.actor.ActorRef;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.BlockingBucket;
 import io.github.bucket4j.Bucket4j;
@@ -30,11 +29,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.actors.ActorSystemContext;
-import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceActorToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
@@ -44,7 +43,6 @@ import org.thingsboard.server.kafka.TBKafkaConsumerTemplate;
 import org.thingsboard.server.kafka.TBKafkaProducerTemplate;
 import org.thingsboard.server.kafka.TbKafkaSettings;
 import org.thingsboard.server.kafka.TbNodeIdProvider;
-import org.thingsboard.server.service.cluster.discovery.DiscoveryService;
 import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
 import org.thingsboard.server.service.cluster.rpc.ClusterRpcService;
 import org.thingsboard.server.service.encoding.DataDecodingEncodingService;
@@ -83,6 +81,8 @@ public class RemoteRuleEngineTransportService implements RuleEngineTransportServ
     private long pollRecordsPerSecond;
     @Value("${transport.remote.rule_engine.max_poll_records_per_minute}")
     private long pollRecordsPerMinute;
+    @Value("${transport.remote.rule_engine.stats.enabled:false}")
+    private boolean statsEnabled;
 
     @Autowired
     private TbKafkaSettings kafkaSettings;
@@ -104,9 +104,11 @@ public class RemoteRuleEngineTransportService implements RuleEngineTransportServ
     private TBKafkaConsumerTemplate<ToRuleEngineMsg> ruleEngineConsumer;
     private TBKafkaProducerTemplate<ToTransportMsg> notificationsProducer;
 
-    private ExecutorService mainConsumerExecutor = Executors.newSingleThreadExecutor();
+    private ExecutorService mainConsumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-main-consumer"));
 
     private volatile boolean stopped = false;
+
+    private final RuleEngineStats stats = new RuleEngineStats();
 
     @PostConstruct
     public void init() {
@@ -176,6 +178,13 @@ public class RemoteRuleEngineTransportService implements RuleEngineTransportServ
         });
     }
 
+    @Scheduled(fixedDelayString = "${transport.remote.rule_engine.stats.print_interval_ms}")
+    public void printStats() {
+        if (statsEnabled) {
+            stats.printStats();
+        }
+    }
+
     @Override
     public void process(String nodeId, DeviceActorToTransportMsg msg) {
         process(nodeId, msg, null, null);
@@ -191,6 +200,9 @@ public class RemoteRuleEngineTransportService implements RuleEngineTransportServ
     }
 
     private void forwardToDeviceActor(TransportToDeviceActorMsg toDeviceActorMsg) {
+        if (statsEnabled) {
+            stats.log(toDeviceActorMsg);
+        }
         TransportToDeviceActorMsgWrapper wrapper = new TransportToDeviceActorMsgWrapper(toDeviceActorMsg);
         Optional<ServerAddress> address = routingService.resolveById(wrapper.getDeviceId());
         if (address.isPresent()) {

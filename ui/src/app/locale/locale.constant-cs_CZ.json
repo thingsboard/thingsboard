@@ -83,6 +83,7 @@
         "timeout-required": "Hodnota Časový limit je povinná.",
         "timeout-invalid": "Tohle nevypadá jako platný časový limit.",
         "enable-tls": "Povolit TLS",
+        "tls-version": "Verze TLS",
         "send-test-mail": "Odeslat testovací zprávu"
     },
     "alarm": {
@@ -246,7 +247,8 @@
         "select-asset": "Vybrat aktivum",
         "no-assets-matching": "Žádná aktiva odpovídající '{{entity}}' nebyla nalezena.",
         "asset-required": "Aktivum je povinné",
-        "name-starts-with": "Název aktiva začíná"
+        "name-starts-with": "Název aktiva začíná",
+        "label": "Název"
     },
     "attribute": {
         "attributes": "Atributy",
@@ -1636,21 +1638,6 @@
         }
     },
     "language": {
-        "language": "Jazyk",
-        "locales": {
-            "de_DE": "German",
-            "fr_FR": "French",
-            "zh_CN": "Chinese",
-            "en_US": "English",
-            "it_IT": "Italian",
-            "ko_KR": "Korean",
-            "ru_RU": "Russian",
-            "es_ES": "Spanish",
-            "ja_JA": "Japanese",
-            "tr_TR": "Turkish",
-            "fa_IR": "Persian",
-            "uk_UA": "Ukrainian",
-            "cs_CZ": "Česky"
-        }
+        "language": "Jazyk"
     }
 }

@@ -73,7 +73,9 @@ public class AdminSettingsServiceImpl implements AdminSettingsService {
                         if (!existentAdminSettings.getKey().equals(adminSettings.getKey())) {
                             throw new DataValidationException("Changing key of admin settings entry is prohibited!");
                         }
-                        validateJsonStructure(existentAdminSettings.getJsonValue(), adminSettings.getJsonValue());
+                        if (adminSettings.getKey().equals("mail")) {
+                            validateJsonStructure(existentAdminSettings.getJsonValue(), adminSettings.getJsonValue());
+                        }
                     }
                 }
 

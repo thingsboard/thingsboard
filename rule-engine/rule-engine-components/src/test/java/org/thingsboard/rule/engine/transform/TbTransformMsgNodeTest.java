@@ -26,6 +26,7 @@ import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
+import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
@@ -64,10 +65,10 @@ public class TbTransformMsgNodeTest {
         TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, rawJson, ruleChainId, ruleNodeId, 0L);
         TbMsg transformedMsg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, "{new}", ruleChainId, ruleNodeId, 0L);
         mockJsExecutor();
-        when(scriptEngine.executeUpdate(msg)).thenReturn(transformedMsg);
+        when(scriptEngine.executeUpdateAsync(msg)).thenReturn(Futures.immediateFuture(transformedMsg));
 
         node.onMsg(ctx, msg);
-        verify(ctx).getJsExecutor();
+        verify(ctx).getDbCallbackExecutor();
         ArgumentCaptor<TbMsg> captor = ArgumentCaptor.forClass(TbMsg.class);
         verify(ctx).tellNext(captor.capture(), eq(SUCCESS));
         TbMsg actualMsg = captor.getValue();
@@ -85,7 +86,7 @@ public class TbTransformMsgNodeTest {
         RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
         TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, rawJson, ruleChainId, ruleNodeId, 0L);
         mockJsExecutor();
-        when(scriptEngine.executeUpdate(msg)).thenThrow(new IllegalStateException("error"));
+        when(scriptEngine.executeUpdateAsync(msg)).thenReturn(Futures.immediateFailedFuture(new IllegalStateException("error")));
 
         node.onMsg(ctx, msg);
         verifyError(msg, "error", IllegalStateException.class);

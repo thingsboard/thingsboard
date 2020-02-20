@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -190,6 +190,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
     vm.widgetTitle = widgetTitle;
     vm.widgetTitleIcon = widgetTitleIcon;
     vm.widgetTitleIconStyle = widgetTitleIconStyle;
+    vm.widgetTitleTooltip = widgetTitleTooltip;
     vm.customWidgetHeaderActions = customWidgetHeaderActions;
     vm.widgetActions = widgetActions;
     vm.dropWidgetShadow = dropWidgetShadow;
@@ -352,6 +353,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
         ids.sort(function (id1, id2) {
             return id1.localeCompare(id2);
         });
+        sortWidgets();
         if (angular.equals(ids, vm.widgetIds)) {
             return;
         }
@@ -387,7 +389,6 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
                 delete vm.widgetLayoutInfo[widgetId];
             }
         }
-        sortWidgets();
         $mdUtil.nextTick(function () {
             if (autofillHeight()) {
                 updateMobileOpts();
@@ -962,6 +963,16 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
             style.fontSize = widget.config.iconSize;
         }
         return style;
+    }
+
+    function widgetTitleTooltip(widget) {
+        var ctx = widgetContext(widget);
+        if (ctx && ctx.widgetTitleTooltip
+            && ctx.widgetTitleTooltip.length) {
+            return ctx.widgetTitleTooltip;
+        } else {
+            return widget.config.titleTooltip;
+        }
     }
 
     function customWidgetHeaderActions(widget) {

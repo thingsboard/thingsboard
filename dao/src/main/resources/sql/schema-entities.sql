@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS alarm (
     start_ts bigint,
     status varchar(255),
     tenant_id varchar(31),
+    propagate_relation_types varchar,
     type varchar(255)
 );
 
@@ -42,9 +43,11 @@ CREATE TABLE IF NOT EXISTS asset (
     additional_info varchar,
     customer_id varchar(31),
     name varchar(255),
+    label varchar(255),
     search_text varchar(255),
     tenant_id varchar(31),
-    type varchar(255)
+    type varchar(255),
+    CONSTRAINT asset_name_unq_key UNIQUE (tenant_id, name)
 );
 
 CREATE TABLE IF NOT EXISTS audit_log (
@@ -71,6 +74,7 @@ CREATE TABLE IF NOT EXISTS attribute_kv (
   str_v varchar(10000000),
   long_v bigint,
   dbl_v double precision,
+  json_v json,
   last_update_ts bigint,
   CONSTRAINT attribute_kv_pkey PRIMARY KEY (entity_type, entity_id, attribute_type, attribute_key)
 );
@@ -104,7 +108,7 @@ CREATE TABLE IF NOT EXISTS customer (
 
 CREATE TABLE IF NOT EXISTS dashboard (
     id varchar(31) NOT NULL CONSTRAINT dashboard_pkey PRIMARY KEY,
-    configuration varchar(10000000),
+    configuration varchar(100000000),
     assigned_customers varchar(1000000),
     search_text varchar(255),
     tenant_id varchar(31),
@@ -119,7 +123,8 @@ CREATE TABLE IF NOT EXISTS device (
     name varchar(255),
     label varchar(255),
     search_text varchar(255),
-    tenant_id varchar(31)
+    tenant_id varchar(31),
+    CONSTRAINT device_name_unq_key UNIQUE (tenant_id, name)
 );
 
 CREATE TABLE IF NOT EXISTS device_credentials (
@@ -127,7 +132,8 @@ CREATE TABLE IF NOT EXISTS device_credentials (
     credentials_id varchar,
     credentials_type varchar(255),
     credentials_value varchar,
-    device_id varchar(31)
+    device_id varchar(31),
+    CONSTRAINT device_credentials_id_unq_key UNIQUE (credentials_id)
 );
 
 CREATE TABLE IF NOT EXISTS event (

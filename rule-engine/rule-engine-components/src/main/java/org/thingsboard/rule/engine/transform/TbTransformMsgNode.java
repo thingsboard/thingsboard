@@ -21,6 +21,9 @@ import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
+import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
+import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
+
 @RuleNode(
         type = ComponentType.TRANSFORMATION,
         name = "script",
@@ -49,7 +52,20 @@ public class TbTransformMsgNode extends TbAbstractTransformNode {
 
     @Override
     protected ListenableFuture<TbMsg> transform(TbContext ctx, TbMsg msg) {
-        return ctx.getJsExecutor().executeAsync(() -> jsEngine.executeUpdate(msg));
+        ctx.logJsEvalRequest();
+        return jsEngine.executeUpdateAsync(msg);
+    }
+
+    @Override
+    protected void transformSuccess(TbContext ctx, TbMsg msg, TbMsg m) {
+        ctx.logJsEvalResponse();
+        super.transformSuccess(ctx, msg, m);
+    }
+
+    @Override
+    protected void transformFailure(TbContext ctx, TbMsg msg, Throwable t) {
+        ctx.logJsEvalFailure();
+        super.transformFailure(ctx, msg, t);
     }
 
     @Override

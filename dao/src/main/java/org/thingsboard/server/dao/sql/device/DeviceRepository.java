@@ -18,7 +18,6 @@ package org.thingsboard.server.dao.sql.device;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.model.sql.DeviceEntity;
@@ -57,6 +56,10 @@ public interface DeviceRepository extends PagingAndSortingRepository<DeviceEntit
                                                    @Param("customerId") String customerId,
                                                    @Param("searchText") String searchText,
                                                    Pageable pageable);
+
+    @Query("SELECT d FROM DeviceEntity d WHERE d.tenantId = :tenantId")
+    Page<DeviceEntity> findByTenantId(@Param("tenantId") String tenantId,
+                                      Pageable pageable);
 
     @Query("SELECT d FROM DeviceEntity d WHERE d.tenantId = :tenantId " +
             "AND LOWER(d.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")

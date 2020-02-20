@@ -26,7 +26,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -443,6 +442,7 @@ public class BaseRelationService implements RelationService {
 
     @Override
     public ListenableFuture<List<EntityRelation>> findByQuery(TenantId tenantId, EntityRelationsQuery query) {
+        //boolean fetchLastLevelOnly = true;
         log.trace("Executing findByQuery [{}]", query);
         RelationsSearchParameters params = query.getParameters();
         final List<EntityTypeFilter> filters = query.getFilters();
@@ -453,7 +453,7 @@ public class BaseRelationService implements RelationService {
         int maxLvl = params.getMaxLevel() > 0 ? params.getMaxLevel() : Integer.MAX_VALUE;
 
         try {
-            ListenableFuture<Set<EntityRelation>> relationSet = findRelationsRecursively(tenantId, params.getEntityId(), params.getDirection(), params.getRelationTypeGroup(), maxLvl, new ConcurrentHashMap<>());
+            ListenableFuture<Set<EntityRelation>> relationSet = findRelationsRecursively(tenantId, params.getEntityId(), params.getDirection(), params.getRelationTypeGroup(), maxLvl, params.isFetchLastLevelOnly(), new ConcurrentHashMap<>());
             return Futures.transform(relationSet, input -> {
                 List<EntityRelation> relations = new ArrayList<>();
                 if (filters == null || filters.isEmpty()) {
@@ -570,7 +570,7 @@ public class BaseRelationService implements RelationService {
     }
 
     private ListenableFuture<Set<EntityRelation>> findRelationsRecursively(final TenantId tenantId, final EntityId rootId, final EntitySearchDirection direction,
-                                                                           RelationTypeGroup relationTypeGroup, int lvl,
+                                                                           RelationTypeGroup relationTypeGroup, int lvl, boolean fetchLastLevelOnly,
                                                                            final ConcurrentHashMap<EntityId, Boolean> uniqueMap) throws Exception {
         if (lvl == 0) {
             return Futures.immediateFuture(Collections.emptySet());
@@ -596,10 +596,13 @@ public class BaseRelationService implements RelationService {
         }
         List<ListenableFuture<Set<EntityRelation>>> futures = new ArrayList<>();
         for (EntityId entityId : childrenIds) {
-            futures.add(findRelationsRecursively(tenantId, entityId, direction, relationTypeGroup, lvl, uniqueMap));
+            futures.add(findRelationsRecursively(tenantId, entityId, direction, relationTypeGroup, lvl, fetchLastLevelOnly, uniqueMap));
         }
         //TODO: try to remove this blocking operation
         List<Set<EntityRelation>> relations = Futures.successfulAsList(futures).get();
+        if (fetchLastLevelOnly && lvl > 0){
+            children.clear();
+        }
         relations.forEach(r -> r.forEach(children::add));
         return Futures.immediateFuture(children);
     }

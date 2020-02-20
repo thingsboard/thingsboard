@@ -46,7 +46,7 @@ public class EntitiesRelatedDeviceIdAsyncLoader {
     private static DeviceSearchQuery buildQuery(EntityId originator, DeviceRelationsQuery deviceRelationsQuery) {
         DeviceSearchQuery query = new DeviceSearchQuery();
         RelationsSearchParameters parameters = new RelationsSearchParameters(originator,
-                deviceRelationsQuery.getDirection(), deviceRelationsQuery.getMaxLevel());
+                deviceRelationsQuery.getDirection(), deviceRelationsQuery.getMaxLevel(), deviceRelationsQuery.isFetchLastLevelOnly());
         query.setParameters(parameters);
         query.setRelationType(deviceRelationsQuery.getRelationType());
         query.setDeviceTypes(deviceRelationsQuery.getDeviceTypes());

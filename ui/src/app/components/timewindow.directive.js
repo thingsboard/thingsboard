@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,10 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
     var linker = function (scope, element, attrs, ngModelCtrl) {
 
         /* tbTimewindow (ng-model)
-         * {
+         * {         
+         *    hideInterval: false,
+         *    hideAggregation: false,
+         *    hideAggInterval: false,
          * 	  realtime: {
          * 	        interval: 0,
          * 			timewindowMs: 0
@@ -63,6 +66,8 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
          */
 
         scope.historyOnly = angular.isDefined(attrs.historyOnly);
+
+        scope.isEdit = attrs.isEdit === 'true';
 
         scope.aggregation = scope.$eval(attrs.aggregation);
 
@@ -92,7 +97,7 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
         element.html(template);
 
         scope.openEditMode = function (event) {
-            if (scope.disabled) {
+            if (scope.timewindowDisabled) {
                 return;
             }
             var position;
@@ -135,7 +140,8 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
                 locals: {
                     'timewindow': angular.copy(scope.model),
                     'historyOnly': scope.historyOnly,
-                    'aggregation': scope.aggregation,
+                    'aggregation': scope.aggregation,                    
+                    'isEdit': scope.isEdit,
                     'onTimewindowUpdate': function (timewindow) {
                         scope.model = timewindow;
                         scope.updateView();
@@ -176,7 +182,10 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
             value.aggregation = {
                 type: model.aggregation.type,
                 limit: model.aggregation.limit
-            };
+            };            
+            value.hideInterval = model.hideInterval;
+            value.hideAggregation = model.hideAggregation;
+            value.hideAggInterval = model.hideAggInterval;
             ngModelCtrl.$setViewValue(value);
             scope.updateDisplayValue();
         }
@@ -201,6 +210,10 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
             } else {
                 translationPending = true;
             }
+        }
+
+        function isTimewindowDisabled () {
+            return scope.disabled || (!scope.isEdit && scope.model.hideInterval && scope.model.hideAggregation && scope.model.hideAggInterval);
         }
 
         ngModelCtrl.$render = function () {
@@ -230,9 +243,19 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
                     }
                     model.aggregation.limit = value.aggregation.limit || Math.floor(timeService.getMaxDatapointsLimit() / 2);
                 }
+                model.hideInterval = value.hideInterval;
+                model.hideAggregation = value.hideAggregation;
+                model.hideAggInterval = value.hideAggInterval;
             }
+            scope.timewindowDisabled = isTimewindowDisabled();
             scope.updateDisplayValue();
         };
+
+        scope.$watchGroup(['disabled', 'isEdit'], function(newValue, oldValue) {
+            if (!angular.equals(newValue, oldValue)) {
+                scope.timewindowDisabled = isTimewindowDisabled();
+            }
+        });
 
         $compile(element.contents())(scope);
     }
@@ -242,7 +265,9 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
         require: "^ngModel",
         scope: {
             asButton: '=asButton',
-            disabled:'=ngDisabled'
+            disabled:'=ngDisabled',
+            isEdit: '&?'
+
         },
         link: linker
     };

@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.gen.transport.TransportProtos.ClaimDeviceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestMsg;
@@ -100,7 +101,7 @@ public class RemoteTransportService extends AbstractTransportService {
     private TBKafkaProducerTemplate<ToRuleEngineMsg> ruleEngineProducer;
     private TBKafkaConsumerTemplate<ToTransportMsg> mainConsumer;
 
-    private ExecutorService mainConsumerExecutor = Executors.newSingleThreadExecutor();
+    private ExecutorService mainConsumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("remote-transport-consumer"));
 
     private volatile boolean stopped = false;
 
@@ -320,28 +321,19 @@ public class RemoteTransportService extends AbstractTransportService {
         send(sessionInfo, toRuleEngineMsg, callback);
     }
 
-    private static class TransportCallbackAdaptor implements Callback {
-        private final TransportServiceCallback<Void> callback;
-
-        TransportCallbackAdaptor(TransportServiceCallback<Void> callback) {
-            this.callback = callback;
-        }
-
-        @Override
-        public void onCompletion(RecordMetadata metadata, Exception exception) {
-            if (exception == null) {
-                if (callback != null) {
-                    callback.onSuccess(null);
-                }
-            } else {
-                if (callback != null) {
-                    callback.onError(exception);
+    private void send(SessionInfoProto sessionInfo, ToRuleEngineMsg toRuleEngineMsg, TransportServiceCallback<Void> callback) {
+        ruleEngineProducer.send(getRoutingKey(sessionInfo), toRuleEngineMsg, (metadata, exception) -> {
+            if (callback != null) {
+                if (exception == null) {
+                    this.transportCallbackExecutor.submit(() -> {
+                        callback.onSuccess(null);
+                    });
+                } else {
+                    this.transportCallbackExecutor.submit(() -> {
+                        callback.onError(exception);
+                    });
                 }
             }
-        }
-    }
-
-    private void send(SessionInfoProto sessionInfo, ToRuleEngineMsg toRuleEngineMsg, TransportServiceCallback<Void> callback) {
-        ruleEngineProducer.send(getRoutingKey(sessionInfo), toRuleEngineMsg, new TransportCallbackAdaptor(callback));
+        });
     }
 }

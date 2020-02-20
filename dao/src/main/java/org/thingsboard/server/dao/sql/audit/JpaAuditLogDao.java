@@ -16,11 +16,10 @@
 package org.thingsboard.server.dao.sql.audit;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -33,10 +32,9 @@ import org.thingsboard.server.dao.model.sql.AuditLogEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import javax.annotation.PreDestroy;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.concurrent.Executors;
 
 import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
 import static org.thingsboard.server.dao.DaoUtil.endTimeToId;
@@ -45,8 +43,6 @@ import static org.thingsboard.server.dao.DaoUtil.startTimeToId;
 @Component
 @SqlDao
 public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> implements AuditLogDao {
-
-    private ListeningExecutorService insertService = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
 
     @Autowired
     private AuditLogRepository auditLogRepository;
@@ -61,21 +57,16 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
         return auditLogRepository;
     }
 
-    @PreDestroy
-    void onDestroy() {
-        insertService.shutdown();
-    }
-
     @Override
     public ListenableFuture<Void> saveByTenantId(AuditLog auditLog) {
-        return insertService.submit(() -> {
+        return service.submit(() -> {
             save(auditLog.getTenantId(), auditLog);
             return null;
         });
     }
 
     @Override
-    public PageData<AuditLog> findAuditLogsByTenantIdAndEntityId(UUID tenantId, EntityId entityId, TimePageLink pageLink) {
+    public PageData<AuditLog> findAuditLogsByTenantIdAndEntityId(UUID tenantId, EntityId entityId, List<ActionType> actionTypes, TimePageLink pageLink) {
         return DaoUtil.toPageData(
                 auditLogRepository
                         .findAuditLogsByTenantIdAndEntityId(
@@ -85,11 +76,12 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
                                 Objects.toString(pageLink.getTextSearch(), ""),
                                 startTimeToId(pageLink.getStartTime()),
                                 endTimeToId(pageLink.getEndTime()),
+                                actionTypes,
                                 DaoUtil.toPageable(pageLink)));
     }
 
     @Override
-    public PageData<AuditLog> findAuditLogsByTenantIdAndCustomerId(UUID tenantId, CustomerId customerId, TimePageLink pageLink) {
+    public PageData<AuditLog> findAuditLogsByTenantIdAndCustomerId(UUID tenantId, CustomerId customerId, List<ActionType> actionTypes, TimePageLink pageLink) {
         return DaoUtil.toPageData(
                 auditLogRepository
                         .findAuditLogsByTenantIdAndCustomerId(
@@ -98,11 +90,12 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
                                 Objects.toString(pageLink.getTextSearch(), ""),
                                 startTimeToId(pageLink.getStartTime()),
                                 endTimeToId(pageLink.getEndTime()),
+                                actionTypes,
                                 DaoUtil.toPageable(pageLink)));
     }
 
     @Override
-    public PageData<AuditLog> findAuditLogsByTenantIdAndUserId(UUID tenantId, UserId userId, TimePageLink pageLink) {
+    public PageData<AuditLog> findAuditLogsByTenantIdAndUserId(UUID tenantId, UserId userId, List<ActionType> actionTypes, TimePageLink pageLink) {
         return DaoUtil.toPageData(
                 auditLogRepository
                         .findAuditLogsByTenantIdAndUserId(
@@ -111,17 +104,19 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
                                 Objects.toString(pageLink.getTextSearch(), ""),
                                 startTimeToId(pageLink.getStartTime()),
                                 endTimeToId(pageLink.getEndTime()),
+                                actionTypes,
                                 DaoUtil.toPageable(pageLink)));
     }
 
     @Override
-    public PageData<AuditLog> findAuditLogsByTenantId(UUID tenantId, TimePageLink pageLink) {
+    public PageData<AuditLog> findAuditLogsByTenantId(UUID tenantId, List<ActionType> actionTypes, TimePageLink pageLink) {
         return DaoUtil.toPageData(
                 auditLogRepository.findByTenantId(
                         fromTimeUUID(tenantId),
                         Objects.toString(pageLink.getTextSearch(), ""),
                         startTimeToId(pageLink.getStartTime()),
                         endTimeToId(pageLink.getEndTime()),
+                        actionTypes,
                         DaoUtil.toPageable(pageLink)));
     }
 }
