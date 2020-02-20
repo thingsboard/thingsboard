@@ -31,7 +31,7 @@ public class NoSqlDaoServiceTestSuite {
 
     @ClassRule
     public static CustomSqlUnit sqlUnit = new CustomSqlUnit(
-            Arrays.asList("sql/schema-entities.sql", "sql/schema-entities-idx.sql", "sql/system-data.sql", "sql/system-test.sql"),
+            Arrays.asList("sql/schema-entities-hsql.sql", "sql/schema-entities-idx.sql", "sql/system-data.sql", "sql/system-test.sql"),
             "sql/drop-all-tables.sql",
             "nosql-test.properties"
     );
