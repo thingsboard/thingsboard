@@ -49,6 +49,7 @@
         "import": "Importar",
         "export": "Exportar",
         "share-via": "Compartir vía {{provider}}",
+        "discard-changes": "Cancelar los cambios",
         "continue": "Continuar"
     },
     "aggregation": {
@@ -84,6 +85,7 @@
         "timeout-required": "Tiempo de espera es requerido.",
         "timeout-invalid": "Eso no parece un tiempo de espera válido.",
         "enable-tls": "Habilitar TLS",
+        "tls-version": "Versión TLS",
         "send-test-mail": "Enviar correo de prueba",
         "password-policy": "Política de contraseñas",
         "security-settings": "Configuraciones de seguridad",
@@ -99,7 +101,13 @@
         "minimum-special-characters": "Número mínimo de caracteres especiales.",
         "minimum-special-characters-range": "El número mínimo de caracteres especiales no puede ser negativo.",
         "password-expiration-period-days": "Periodo de caducidad de contraseña en días",
-        "password-expiration-period-days-range": "El período de caducidad de la contraseña en días no puede ser negativo"
+        "password-expiration-period-days-range": "El período de caducidad de la contraseña en días no puede ser negativo",
+        "password-reuse-frequency-days": "Frecuencia de reutilización de contraseña en días",
+        "password-reuse-frequency-days-range": "La frecuencia de reutilización de contraseña en días no puede ser negativa",
+        "general-policy": "Política general",
+        "max-failed-login-attempts": "Número máximo de intentos fallidos de inicio de sesión, antes de que la cuenta esté bloqueada",
+        "minimum-max-failed-login-attempts-range": "El número máximo de intentos fallidos de inicio de sesión no puede ser negativo",
+        "user-lockout-notification-email": "En caso de bloqueo de la cuenta del usuario, envíe una notificación por correo electrónico"
     },
     "alarm": {
         "alarm": "Alarma",
@@ -264,7 +272,8 @@
         "asset-required": "El activo es requerido",
         "name-starts-with": "El nombre del activo comienza con",
         "import": "Importar activos",
-        "asset-file": "Archivo del activo"
+        "asset-file": "Archivo del activo",
+        "label": "Etiqueta"
     },
     "attribute": {
         "attributes": "Atributos",
@@ -323,6 +332,7 @@
         "type-alarm-clear": "Borrada",
         "type-login": "Inicio de sesión",
         "type-logout": "Cierre de sesión",
+        "type-lockout": "Cierre patronal",
         "status-success": "Correcto",
         "status-failure": "Erróneo",
         "audit-log-details": "Detalle del registro de auditoría",
@@ -799,6 +809,22 @@
         "no-data": "No hay datos para mostrar",
         "columns-to-display": "Columnas a mostrar"
     },
+    "entity-field": {
+        "created-time": "Tiempo de creación",
+        "name": "Nombre",
+        "type": "Tipo",
+        "first-name": "Nombre",
+        "last-name": "Apellido",
+        "email": "Correo electrónico",
+        "title": "Título",
+        "country": "País",
+        "state": "Estado",
+        "city": "Ciudad",
+        "address": "Dirección",
+        "address2": "Dirección 2",
+        "zip": "Código postal",
+        "phone": "Teléfono"
+    },
     "entity-view": {
         "entity-view": "Vista de entidad",
         "entity-view-required": "Vista de entidad es requerido.",
@@ -1176,7 +1202,7 @@
         "select": "Seleccionar diseño objetivo"
     },
     "legend": {
-        "direction": "",
+        "direction": "Dirección de la leyenda",
         "position": "Posición de la leyenda",
         "show-max": "Mostrar valor máximo",
         "show-min": "Mostrar valor mínimo",
@@ -1214,6 +1240,7 @@
     },
     "profile": {
         "profile": "Perfil",
+        "last-login-time": "Último acceso",
         "change-password": "Cambiar contraseña",
         "current-password": "Contraseña actual"
     },
@@ -1410,7 +1437,8 @@
         "edit": "Editar ventana de tiempo",
         "date-range": "Rango de fecha",
         "last": "Último(s)",
-        "time-period": "Período de tiempo"
+        "time-period": "Período de tiempo",
+        "hide": "Ocultar"
     },
     "user": {
         "user": "Usuario",
@@ -1453,7 +1481,11 @@
         "activation-link-copied-message": "El enlace de activación de usuario ha sido copiado al portapapeles",
         "details": "Detalles",
         "login-as-tenant-admin": "Iniciar sesión como Administrador de la Organización",
-        "login-as-customer-user": "Iniciar sesión como Usuario cliente"
+        "login-as-customer-user": "Iniciar sesión como Usuario cliente",
+        "disable-account": "Deshabilitar cuenta de usuario",
+        "enable-account": "Habilitar cuenta de usuario",
+        "enable-account-message": "¡La cuenta de usuario se ha habilitado correctamente!",
+        "disable-account-message": "¡La cuenta de usuario se deshabilitó correctamente!"
     },
     "value": {
         "type": "Tipo de valor",
@@ -1568,6 +1600,7 @@
         "settings": "Configuración",
         "advanced": "Avanzado",
         "title": "Título",
+        "title-tooltip": "Tooltip Título",
         "general-settings": "Configuración general",
         "display-title": "Mostrar título",
         "drop-shadow": "Colocar sombra",
@@ -1682,29 +1715,29 @@
             }
         },
         "input-widgets": {
-          "attribute-not-allowed": "El parámetro de atributo no se puede usar en este widget",
-          "date": "Fecha",
-          "discard-changes": "Descartar los cambios",
-          "entity-attribute-required": "Se requiere atributo de entidad",
-          "entity-timeseries-required": "Se requiere la serie de tiempo de la entidad",
-          "not-allowed-entity": "La entidad seleccionada no puede tener atributos compartidos",
-          "no-attribute-selected": "No se seleccionó ningún atributo",
-          "no-datakey-selected": "No se seleccionó ninguna clave de datos",
-          "no-entity-selected": "Ninguna entidad seleccionada",
-          "no-image": "Sin imágen",
-          "no-support-web-camera": "No hay cámara web compatible",
-          "no-timeseries-selected": "No hay series de tiempo seleccionadas",
-          "switch-attribute-value": "Cambiar el valor del atributo de entidad",
-          "switch-camera": "Cambiar de cámara",
-          "switch-timeseries-value": "Cambiar el valor de la serie de tiempo de la entidad",
-          "take-photo": "Tomar foto",
-          "time": "Tiempo",
-          "timeseries-not-allowed": "El parámetro Timeseries no se puede usar en este widget",
-          "update-failed": "Actualización fallida",
-          "update-successful": "Actualización exitosa",
-          "update-attribute": "Actualizar atributo",
-          "update-timeseries": "Actualizar series de tiempo",
-          "value": "Valor"
+            "attribute-not-allowed": "El parámetro de atributo no se puede usar en este widget",
+            "date": "Fecha",
+            "discard-changes": "Descartar los cambios",
+            "entity-attribute-required": "Se requiere atributo de entidad",
+            "entity-timeseries-required": "Se requiere la serie de tiempo de la entidad",
+            "not-allowed-entity": "La entidad seleccionada no puede tener atributos compartidos",
+            "no-attribute-selected": "No se seleccionó ningún atributo",
+            "no-datakey-selected": "No se seleccionó ninguna clave de datos",
+            "no-entity-selected": "Ninguna entidad seleccionada",
+            "no-image": "Sin imágen",
+            "no-support-web-camera": "No hay cámara web compatible",
+            "no-timeseries-selected": "No hay series de tiempo seleccionadas",
+            "switch-attribute-value": "Cambiar el valor del atributo de entidad",
+            "switch-camera": "Cambiar de cámara",
+            "switch-timeseries-value": "Cambiar el valor de la serie de tiempo de la entidad",
+            "take-photo": "Tomar foto",
+            "time": "Tiempo",
+            "timeseries-not-allowed": "El parámetro Timeseries no se puede usar en este widget",
+            "update-failed": "Actualización fallida",
+            "update-successful": "Actualización exitosa",
+            "update-attribute": "Actualizar atributo",
+            "update-timeseries": "Actualizar series de tiempo",
+            "value": "Valor"
         }
     },
     "icon": {
@@ -1721,25 +1754,12 @@
             "marker-click": "Clic en el polígono",
             "tooltip-tag-action": "Acción de etiqueta para globo de ayuda",
             "node-selected": "Clic en el nodo seleccionado",
-            "element-click": "Clic en el elemento HTML"
+            "element-click": "Clic en el elemento HTML",
+            "pie-slice-click": "Clic en la rebanada",
+            "row-double-click": "Doble clic en la fila"
         }
     },
     "language": {
-        "language": "Lenguaje",
-        "locales": {
-            "de_DE": "Alemán",
-            "fr_FR": "Francés",
-            "zh_CN": "Chino",
-            "en_US": "Inglés",
-            "it_IT": "Italiano",
-            "ko_KR": "Coreano",
-            "ru_RU": "Ruso",
-            "es_ES": "Español",
-            "ja_JA": "Japonés",
-            "tr_TR": "Turco",
-            "fa_IR": "Persa",
-            "uk_UA": "Ucraniano",
-            "cs_CZ": "Checo"
-        }
+        "language": "Lenguaje"
     }
 }
