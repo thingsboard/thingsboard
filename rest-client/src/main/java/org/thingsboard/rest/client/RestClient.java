@@ -98,6 +98,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -1612,31 +1613,40 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     public List<TsKvEntry> getLatestTimeseries(EntityId entityId, List<String> keys) {
+        return getLatestTimeseries(entityId, keys, true);
+    }
+
+    public List<TsKvEntry> getLatestTimeseries(EntityId entityId, List<String> keys, boolean useStrictDataTypes) {
         Map<String, List<JsonNode>> timeseries = restTemplate.exchange(
-                baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/values/timeseries?keys={keys}",
+                baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/values/timeseries?keys={keys}&useStrictDataTypes={useStrictDataTypes}",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<Map<String, List<JsonNode>>>() {
                 },
                 entityId.getEntityType().name(),
                 entityId.getId().toString(),
-                listToString(keys)).getBody();
+                listToString(keys),
+                useStrictDataTypes).getBody();
 
         return RestJsonConverter.toTimeseries(timeseries);
     }
 
-
     public List<TsKvEntry> getTimeseries(EntityId entityId, List<String> keys, Long interval, Aggregation agg, TimePageLink pageLink) {
+        return getTimeseries(entityId, keys, interval, agg, pageLink, true);
+    }
+
+    public List<TsKvEntry> getTimeseries(EntityId entityId, List<String> keys, Long interval, Aggregation agg, TimePageLink pageLink, boolean useStrictDataTypes) {
         Map<String, String> params = new HashMap<>();
-        addPageLinkToParam(params, pageLink);
         params.put("entityType", entityId.getEntityType().name());
         params.put("entityId", entityId.getId().toString());
         params.put("keys", listToString(keys));
         params.put("interval", interval == null ? "0" : interval.toString());
         params.put("agg", agg == null ? "NONE" : agg.name());
+        params.put("useStrictDataTypes", Boolean.toString(useStrictDataTypes));
+        addPageLinkToParam(params, pageLink);
 
         Map<String, List<JsonNode>> timeseries = restTemplate.exchange(
-                baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/values/timeseries?keys={keys}&interval={interval}&agg={agg}&" + getUrlParams(pageLink),
+                baseURL + "/api/plugins/telemetry/{entityType}/{entityId}/values/timeseries?keys={keys}&interval={interval}&agg={agg}&useStrictDataTypes={useStrictDataTypes}&" + getUrlParams(pageLink),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<Map<String, List<JsonNode>>>() {

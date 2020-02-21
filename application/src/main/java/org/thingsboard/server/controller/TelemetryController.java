@@ -183,11 +183,11 @@ public class TelemetryController extends BaseController {
     public DeferredResult<ResponseEntity> getLatestTimeseries(
             @PathVariable("entityType") String entityType, @PathVariable("entityId") String entityIdStr,
             @RequestParam(name = "keys", required = false) String keysStr,
-            @RequestParam(name = "useStrictType", required = false, defaultValue = "false") Boolean useStrictType) throws ThingsboardException {
+            @RequestParam(name = "useStrictDataTypes", required = false, defaultValue = "false") Boolean useStrictDataTypes) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
 
         return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_TELEMETRY, entityType, entityIdStr,
-                (result, tenantId, entityId) -> getLatestTimeseriesValuesCallback(result, user, entityId, keysStr, useStrictType));
+                (result, tenantId, entityId) -> getLatestTimeseriesValuesCallback(result, user, entityId, keysStr, useStrictDataTypes));
     }
 
 
@@ -202,7 +202,7 @@ public class TelemetryController extends BaseController {
             @RequestParam(name = "interval", defaultValue = "0") Long interval,
             @RequestParam(name = "limit", defaultValue = "100") Integer limit,
             @RequestParam(name = "agg", defaultValue = "NONE") String aggStr,
-            @RequestParam(name = "useStrictType", required = false, defaultValue = "false") Boolean useStrictType) throws ThingsboardException {
+            @RequestParam(name = "useStrictDataTypes", required = false, defaultValue = "false") Boolean useStrictDataTypes) throws ThingsboardException {
         return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_TELEMETRY, entityType, entityIdStr,
                 (result, tenantId, entityId) -> {
                     // If interval is 0, convert this to a NONE aggregation, which is probably what the user really wanted
@@ -210,7 +210,7 @@ public class TelemetryController extends BaseController {
                     List<ReadTsKvQuery> queries = toKeysList(keys).stream().map(key -> new BaseReadTsKvQuery(key, startTs, endTs, interval, limit, agg))
                             .collect(Collectors.toList());
 
-                    Futures.addCallback(tsService.findAll(tenantId, entityId, queries), getTsKvListCallback(result, useStrictType));
+                    Futures.addCallback(tsService.findAll(tenantId, entityId, queries), getTsKvListCallback(result, useStrictDataTypes));
                 });
     }
 
@@ -455,14 +455,14 @@ public class TelemetryController extends BaseController {
         });
     }
 
-    private void getLatestTimeseriesValuesCallback(@Nullable DeferredResult<ResponseEntity> result, SecurityUser user, EntityId entityId, String keys, Boolean useStrictType) {
+    private void getLatestTimeseriesValuesCallback(@Nullable DeferredResult<ResponseEntity> result, SecurityUser user, EntityId entityId, String keys, Boolean useStrictDataTypes) {
         ListenableFuture<List<TsKvEntry>> future;
         if (StringUtils.isEmpty(keys)) {
             future = tsService.findAllLatest(user.getTenantId(), entityId);
         } else {
             future = tsService.findLatest(user.getTenantId(), entityId, toKeysList(keys));
         }
-        Futures.addCallback(future, getTsKvListCallback(result, useStrictType));
+        Futures.addCallback(future, getTsKvListCallback(result, useStrictDataTypes));
     }
 
     private void getAttributeValuesCallback(@Nullable DeferredResult<ResponseEntity> result, SecurityUser user, EntityId entityId, String scope, String keys) {
@@ -560,13 +560,13 @@ public class TelemetryController extends BaseController {
         };
     }
 
-    private FutureCallback<List<TsKvEntry>> getTsKvListCallback(final DeferredResult<ResponseEntity> response, Boolean useStrictType) {
+    private FutureCallback<List<TsKvEntry>> getTsKvListCallback(final DeferredResult<ResponseEntity> response, Boolean useStrictDataTypes) {
         return new FutureCallback<List<TsKvEntry>>() {
             @Override
             public void onSuccess(List<TsKvEntry> data) {
                 Map<String, List<TsData>> result = new LinkedHashMap<>();
                 for (TsKvEntry entry : data) {
-                    Object value = useStrictType ? getKvValue(entry) : entry.getValueAsString();
+                    Object value = useStrictDataTypes ? getKvValue(entry) : entry.getValueAsString();
                     result.computeIfAbsent(entry.getKey(), k -> new ArrayList<>()).add(new TsData(entry.getTs(), value));
                 }
                 response.setResult(new ResponseEntity<>(result, HttpStatus.OK));
