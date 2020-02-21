@@ -352,8 +352,23 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     this.onDestroy();
   }
 
+  private displayWidgetInstance(): boolean {
+    if (this.widget.type !== widgetType.static) {
+      for (const id of Object.keys(this.widgetContext.subscriptions)) {
+        const subscription = this.widgetContext.subscriptions[id];
+        if (subscription.isDataResolved()) {
+          return true;
+        }
+      }
+      return false;
+    } else {
+      return true;
+    }
+  }
+
   private onDestroy() {
     if (this.widgetContext) {
+      const shouldDestroyWidgetInstance = this.displayWidgetInstance();
       for (const id of Object.keys(this.widgetContext.subscriptions)) {
         const subscription = this.widgetContext.subscriptions[id];
         subscription.destroy();
@@ -369,7 +384,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           }
         }
         try {
-          this.widgetTypeInstance.onDestroy();
+          if (shouldDestroyWidgetInstance) {
+            this.widgetTypeInstance.onDestroy();
+          }
         } catch (e) {
           this.handleWidgetException(e);
         }
@@ -471,7 +488,11 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       }
       this.cafs.init = this.raf.raf(() => {
         try {
-          this.widgetTypeInstance.onInit();
+          if (this.displayWidgetInstance()) {
+            this.widgetTypeInstance.onInit();
+          } else {
+            this.loadingData = false;
+          }
           this.detectChanges();
         } catch (e) {
           this.handleWidgetException(e);
@@ -492,7 +513,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         }
         this.cafs.resize = this.raf.raf(() => {
           try {
-            this.widgetTypeInstance.onResize();
+            if (this.displayWidgetInstance()) {
+              this.widgetTypeInstance.onResize();
+            }
           } catch (e) {
             this.handleWidgetException(e);
           }
@@ -513,7 +536,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         }
         this.cafs.editMode = this.raf.raf(() => {
           try {
-            this.widgetTypeInstance.onEditModeChanged();
+            if (this.displayWidgetInstance()) {
+              this.widgetTypeInstance.onEditModeChanged();
+            }
           } catch (e) {
             this.handleWidgetException(e);
           }
@@ -532,7 +557,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         }
         this.cafs.mobileMode = this.raf.raf(() => {
           try {
-            this.widgetTypeInstance.onMobileModeChanged();
+            if (this.displayWidgetInstance()) {
+              this.widgetTypeInstance.onMobileModeChanged();
+            }
           } catch (e) {
             this.handleWidgetException(e);
           }
@@ -781,7 +808,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     options.callbacks = {
       onDataUpdated: () => {
         try {
-          this.widgetTypeInstance.onDataUpdated();
+          if (this.displayWidgetInstance()) {
+            this.widgetTypeInstance.onDataUpdated();
+          }
         } catch (e){}
       },
       onDataUpdateError: (subscription, e) => {

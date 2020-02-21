@@ -259,6 +259,8 @@ export interface IWidgetSubscription {
 
   subscribe(): void;
 
+  isDataResolved(): boolean;
+
   destroy(): void;
 
   update(): void;

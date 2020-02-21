@@ -112,6 +112,7 @@ export class WidgetSubscription implements IWidgetSubscription {
   init$: Observable<IWidgetSubscription>;
 
   cafs: {[cafId: string]: CancelAnimationFrame} = {};
+  hasResolvedData = false;
 
   targetDeviceAliasId: string;
   targetDeviceId: string;
@@ -249,6 +250,7 @@ export class WidgetSubscription implements IWidgetSubscription {
             } else {
               this.rpcEnabled = this.ctx.utils.widgetEditMode ? true : false;
             }
+            this.hasResolvedData = this.rpcEnabled;
             this.callbacks.rpcStateChanged(this);
             initRpcSubject.next();
             initRpcSubject.complete();
@@ -275,6 +277,7 @@ export class WidgetSubscription implements IWidgetSubscription {
       } else {
         this.rpcEnabled = this.ctx.utils.widgetEditMode ? true : false;
       }
+      this.hasResolvedData = true;
       this.callbacks.rpcStateChanged(this);
       initRpcSubject.next();
       initRpcSubject.complete();
@@ -286,6 +289,7 @@ export class WidgetSubscription implements IWidgetSubscription {
     const initAlarmSubscriptionSubject = new ReplaySubject(1);
     this.loadStDiff().subscribe(() => {
       if (!this.ctx.aliasController) {
+        this.hasResolvedData = true;
         this.configureAlarmsData();
         initAlarmSubscriptionSubject.next();
         initAlarmSubscriptionSubject.complete();
@@ -293,6 +297,9 @@ export class WidgetSubscription implements IWidgetSubscription {
         this.ctx.aliasController.resolveAlarmSource(this.alarmSource).subscribe(
           (alarmSource) => {
             this.alarmSource = alarmSource;
+            if (alarmSource) {
+              this.hasResolvedData = true;
+            }
             this.configureAlarmsData();
             initAlarmSubscriptionSubject.next();
             initAlarmSubscriptionSubject.complete();
@@ -313,6 +320,7 @@ export class WidgetSubscription implements IWidgetSubscription {
     const initDataSubscriptionSubject = new ReplaySubject(1);
     this.loadStDiff().subscribe(() => {
       if (!this.ctx.aliasController) {
+        this.hasResolvedData = true;
         this.configureData();
         initDataSubscriptionSubject.next();
         initDataSubscriptionSubject.complete();
@@ -320,6 +328,9 @@ export class WidgetSubscription implements IWidgetSubscription {
         this.ctx.aliasController.resolveDatasources(this.datasources).subscribe(
           (datasources) => {
             this.datasources = datasources;
+            if (datasources && datasources.length) {
+              this.hasResolvedData = true;
+            }
             this.configureData();
             initDataSubscriptionSubject.next();
             initDataSubscriptionSubject.complete();
@@ -802,6 +813,10 @@ export class WidgetSubscription implements IWidgetSubscription {
       }
     }
     return subscriptionsChanged;
+  }
+
+  isDataResolved(): boolean {
+    return this.hasResolvedData;
   }
 
   destroy(): void {
