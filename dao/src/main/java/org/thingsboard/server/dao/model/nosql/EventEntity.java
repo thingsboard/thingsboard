@@ -94,12 +94,12 @@ public class EventEntity implements BaseEntity<Event> {
     }
 
     @Override
-    public UUID getId() {
+    public UUID getUuid() {
         return id;
     }
 
     @Override
-    public void setId(UUID id) {
+    public void setUuid(UUID id) {
         this.id = id;
     }
 

@@ -16,14 +16,6 @@
 package org.thingsboard.server.dao.model.sqlts.psql;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
-import org.thingsboard.server.common.data.kv.BooleanDataEntry;
-import org.thingsboard.server.common.data.kv.DoubleDataEntry;
-import org.thingsboard.server.common.data.kv.KvEntry;
-import org.thingsboard.server.common.data.kv.LongDataEntry;
-import org.thingsboard.server.common.data.kv.StringDataEntry;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.dao.model.ToData;
 import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
 
 import javax.persistence.Column;
@@ -31,28 +23,18 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.IdClass;
 import javax.persistence.Table;
-import javax.persistence.Transient;
-import java.util.UUID;
 
-import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_ID_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.KEY_COLUMN;
 
 @Data
 @Entity
 @Table(name = "ts_kv")
 @IdClass(TsKvCompositeKey.class)
-public final class TsKvEntity extends AbstractTsKvEntity implements ToData<TsKvEntry> {
-
-    @Id
-    @Column(name = ENTITY_ID_COLUMN, columnDefinition = "uuid")
-    protected UUID entityId;
+public final class TsKvEntity extends AbstractTsKvEntity {
 
     @Id
     @Column(name = KEY_COLUMN)
-    protected int key;
-
-    @Transient
-    protected String strKey;
+    private int key;
 
     public TsKvEntity() {
     }
@@ -100,12 +82,14 @@ public final class TsKvEntity extends AbstractTsKvEntity implements ToData<TsKvE
         }
     }
 
-    public TsKvEntity(Long booleanValueCount, Long strValueCount, Long longValueCount, Long doubleValueCount) {
+    public TsKvEntity(Long booleanValueCount, Long strValueCount, Long longValueCount, Long doubleValueCount, Long jsonValueCount) {
         if (!isAllNull(booleanValueCount, strValueCount, longValueCount, doubleValueCount)) {
             if (booleanValueCount != 0) {
                 this.longValue = booleanValueCount;
             } else if (strValueCount != 0) {
                 this.longValue = strValueCount;
+            } else if (jsonValueCount != 0) {
+                this.longValue = jsonValueCount;
             } else {
                 this.longValue = longValueCount + doubleValueCount;
             }
@@ -116,20 +100,4 @@ public final class TsKvEntity extends AbstractTsKvEntity implements ToData<TsKvE
     public boolean isNotEmpty() {
         return strValue != null || longValue != null || doubleValue != null || booleanValue != null;
     }
-
-    @Override
-    public TsKvEntry toData() {
-        KvEntry kvEntry = null;
-        if (strValue != null) {
-            kvEntry = new StringDataEntry(strKey, strValue);
-        } else if (longValue != null) {
-            kvEntry = new LongDataEntry(strKey, longValue);
-        } else if (doubleValue != null) {
-            kvEntry = new DoubleDataEntry(strKey, doubleValue);
-        } else if (booleanValue != null) {
-            kvEntry = new BooleanDataEntry(strKey, booleanValue);
-        }
-        return new BasicTsKvEntry(ts, kvEntry);
-    }
-
 }

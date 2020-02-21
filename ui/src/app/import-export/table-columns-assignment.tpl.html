@@ -39,10 +39,7 @@
             </td>
             <td md-cell>
                 <md-input-container md-no-float
-                                    ng-if="column.type != vm.columnTypes.name.value &&
-                                           column.type != vm.columnTypes.type.value &&
-                                           column.type != vm.columnTypes.label.value &&
-                                           column.type != vm.columnTypes.accessToken.value">
+                                    ng-if="isColumnTypeDiffers(column.type)">
                     <input required name="columnKeyName"
                            placeholder="{{ 'import.column-value' | translate }}"
                            ng-model="column.key"

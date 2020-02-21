@@ -13,10 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.util;
+package org.thingsboard.server.dao.sqlts;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
 
-@ConditionalOnProperty(prefix = "database.ts", value = "type", havingValue = "timescale")
-public @interface TimescaleDBTsDao {
+import java.util.List;
+
+public interface InsertLatestTsRepository {
+
+    void saveOrUpdate(List<TsKvLatestEntity> entities);
+
 }

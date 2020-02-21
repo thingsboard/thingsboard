@@ -40,7 +40,7 @@ public class HsqlComponentDescriptorInsertRepository extends AbstractComponentDe
     @Override
     protected ComponentDescriptorEntity doProcessSaveOrUpdate(ComponentDescriptorEntity entity, String query) {
         getQuery(entity, query).executeUpdate();
-        return entityManager.find(ComponentDescriptorEntity.class, UUIDConverter.fromTimeUUID(entity.getId()));
+        return entityManager.find(ComponentDescriptorEntity.class, UUIDConverter.fromTimeUUID(entity.getUuid()));
     }
 
     private static String getInsertString(String conflictStatement) {

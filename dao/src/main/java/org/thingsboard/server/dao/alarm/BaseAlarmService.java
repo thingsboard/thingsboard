@@ -386,13 +386,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     private void updateRelations(Alarm alarm, AlarmStatus oldStatus, AlarmStatus newStatus) {
         try {
             List<EntityRelation> relations = relationService.findByToAsync(alarm.getTenantId(), alarm.getId(), RelationTypeGroup.ALARM).get();
-
-            List<String> propagateRelationTypes = alarm.getPropagateRelationTypes();
-            Stream<EntityRelation> relationStream = relations.stream();
-            if (!CollectionUtils.isEmpty(propagateRelationTypes)) {
-                relationStream = relationStream.filter(entityRelation -> propagateRelationTypes.contains(entityRelation.getType()));
-            }
-            Set<EntityId> parents = relationStream.map(EntityRelation::getFrom).collect(Collectors.toSet());
+            Set<EntityId> parents = relations.stream().map(EntityRelation::getFrom).collect(Collectors.toSet());
             for (EntityId parentId : parents) {
                 updateAlarmRelation(alarm.getTenantId(), parentId, alarm.getId(), oldStatus, newStatus);
             }

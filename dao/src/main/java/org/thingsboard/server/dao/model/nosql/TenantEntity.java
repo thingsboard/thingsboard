@@ -110,11 +110,11 @@ public final class TenantEntity implements SearchTextEntity<Tenant> {
         this.additionalInfo = tenant.getAdditionalInfo();
     }
     
-    public UUID getId() {
+    public UUID getUuid() {
         return id;
     }
 
-    public void setId(UUID id) {
+    public void setUuid(UUID id) {
         this.id = id;
     }
 

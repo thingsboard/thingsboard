@@ -16,51 +16,55 @@
 package org.thingsboard.server.service.install;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.dao.util.PsqlDao;
 import org.thingsboard.server.dao.util.SqlTsDao;
 
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Types;
 
 @Service
 @Profile("install")
 @Slf4j
 @SqlTsDao
 @PsqlDao
-public class PsqlTsDatabaseUpgradeService implements DatabaseTsUpgradeService {
+public class PsqlTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgradeService implements DatabaseTsUpgradeService {
 
-    private static final String CALL_REGEX = "call ";
     private static final String LOAD_FUNCTIONS_SQL = "schema_update_psql_ts.sql";
-    private static final String CHECK_VERSION = CALL_REGEX + "check_version()";
-    private static final String CREATE_PARTITION_TABLE = CALL_REGEX + "create_partition_table()";
-    private static final String CREATE_PARTITIONS = CALL_REGEX + "create_partitions()";
-    private static final String CREATE_TS_KV_DICTIONARY_TABLE = CALL_REGEX + "create_ts_kv_dictionary_table()";
-    private static final String INSERT_INTO_DICTIONARY = CALL_REGEX + "insert_into_dictionary()";
-    private static final String INSERT_INTO_TS_KV = CALL_REGEX + "insert_into_ts_kv()";
-    private static final String DROP_OLD_TABLE = "DROP TABLE ts_kv_old;";
 
-    @Value("${spring.datasource.url}")
-    private String dbUrl;
+    private static final String TS_KV_OLD = "ts_kv_old;";
+    private static final String TS_KV_LATEST_OLD = "ts_kv_latest_old;";
 
-    @Value("${spring.datasource.username}")
-    private String dbUserName;
+    private static final String CREATE_PARTITION_TS_KV_TABLE = "create_partition_ts_kv_table()";
+    private static final String CREATE_NEW_TS_KV_LATEST_TABLE = "create_new_ts_kv_latest_table()";
+    private static final String CREATE_PARTITIONS = "create_partitions()";
+    private static final String CREATE_TS_KV_DICTIONARY_TABLE = "create_ts_kv_dictionary_table()";
+    private static final String INSERT_INTO_DICTIONARY = "insert_into_dictionary()";
+    private static final String INSERT_INTO_TS_KV = "insert_into_ts_kv()";
+    private static final String INSERT_INTO_TS_KV_LATEST = "insert_into_ts_kv_latest()";
 
-    @Value("${spring.datasource.password}")
-    private String dbPassword;
+    private static final String CALL_CREATE_PARTITION_TS_KV_TABLE = CALL_REGEX + CREATE_PARTITION_TS_KV_TABLE;
+    private static final String CALL_CREATE_NEW_TS_KV_LATEST_TABLE = CALL_REGEX + CREATE_NEW_TS_KV_LATEST_TABLE;
+    private static final String CALL_CREATE_PARTITIONS = CALL_REGEX + CREATE_PARTITIONS;
+    private static final String CALL_CREATE_TS_KV_DICTIONARY_TABLE = CALL_REGEX + CREATE_TS_KV_DICTIONARY_TABLE;
+    private static final String CALL_INSERT_INTO_DICTIONARY = CALL_REGEX + INSERT_INTO_DICTIONARY;
+    private static final String CALL_INSERT_INTO_TS_KV = CALL_REGEX + INSERT_INTO_TS_KV;
+    private static final String CALL_INSERT_INTO_TS_KV_LATEST = CALL_REGEX + INSERT_INTO_TS_KV_LATEST;
 
-    @Autowired
-    private InstallScripts installScripts;
+    private static final String DROP_TABLE_TS_KV_OLD = DROP_TABLE + TS_KV_OLD;
+    private static final String DROP_TABLE_TS_KV_LATEST_OLD = DROP_TABLE + TS_KV_LATEST_OLD;
+
+    private static final String DROP_FUNCTION_CHECK_VERSION = DROP_FUNCTION_IF_EXISTS + CHECK_VERSION;
+    private static final String DROP_FUNCTION_CREATE_PARTITION_TS_KV_TABLE = DROP_FUNCTION_IF_EXISTS + CREATE_PARTITION_TS_KV_TABLE;
+    private static final String DROP_FUNCTION_CREATE_NEW_TS_KV_LATEST_TABLE = DROP_FUNCTION_IF_EXISTS + CREATE_NEW_TS_KV_LATEST_TABLE;
+    private static final String DROP_FUNCTION_CREATE_PARTITIONS = DROP_FUNCTION_IF_EXISTS + CREATE_PARTITIONS;
+    private static final String DROP_FUNCTION_CREATE_TS_KV_DICTIONARY_TABLE = DROP_FUNCTION_IF_EXISTS + CREATE_TS_KV_DICTIONARY_TABLE;
+    private static final String DROP_FUNCTION_INSERT_INTO_DICTIONARY = DROP_FUNCTION_IF_EXISTS + INSERT_INTO_DICTIONARY;
+    private static final String DROP_FUNCTION_INSERT_INTO_TS_KV = DROP_FUNCTION_IF_EXISTS + INSERT_INTO_TS_KV;
+    private static final String DROP_FUNCTION_INSERT_INTO_TS_KV_LATEST = DROP_FUNCTION_IF_EXISTS + INSERT_INTO_TS_KV_LATEST;
 
     @Override
     public void upgradeDatabase(String fromVersion) throws Exception {
@@ -70,7 +74,6 @@ public class PsqlTsDatabaseUpgradeService implements DatabaseTsUpgradeService {
                     log.info("Updating timeseries schema ...");
                     log.info("Load upgrade functions ...");
                     loadSql(conn);
-                    log.info("Upgrade functions successfully loaded!");
                     boolean versionValid = checkVersion(conn);
                     if (!versionValid) {
                         log.info("PostgreSQL version should be at least more than 10!");
@@ -78,12 +81,29 @@ public class PsqlTsDatabaseUpgradeService implements DatabaseTsUpgradeService {
                     } else {
                         log.info("PostgreSQL version is valid!");
                         log.info("Updating schema ...");
-                        executeFunction(conn, CREATE_PARTITION_TABLE);
-                        executeFunction(conn, CREATE_PARTITIONS);
-                        executeFunction(conn, CREATE_TS_KV_DICTIONARY_TABLE);
-                        executeFunction(conn, INSERT_INTO_DICTIONARY);
-                        executeFunction(conn, INSERT_INTO_TS_KV);
-                        dropOldTable(conn, DROP_OLD_TABLE);
+                        executeFunction(conn, CALL_CREATE_PARTITION_TS_KV_TABLE);
+                        executeFunction(conn, CALL_CREATE_PARTITIONS);
+                        executeFunction(conn, CALL_CREATE_TS_KV_DICTIONARY_TABLE);
+                        executeFunction(conn, CALL_INSERT_INTO_DICTIONARY);
+                        executeFunction(conn, CALL_INSERT_INTO_TS_KV);
+                        executeFunction(conn, CALL_CREATE_NEW_TS_KV_LATEST_TABLE);
+                        executeFunction(conn, CALL_INSERT_INTO_TS_KV_LATEST);
+
+                        executeDropStatement(conn, DROP_TABLE_TS_KV_OLD);
+                        executeDropStatement(conn, DROP_TABLE_TS_KV_LATEST_OLD);
+
+                        executeDropStatement(conn, DROP_FUNCTION_CHECK_VERSION);
+                        executeDropStatement(conn, DROP_FUNCTION_CREATE_PARTITION_TS_KV_TABLE);
+                        executeDropStatement(conn, DROP_FUNCTION_CREATE_PARTITIONS);
+                        executeDropStatement(conn, DROP_FUNCTION_CREATE_TS_KV_DICTIONARY_TABLE);
+                        executeDropStatement(conn, DROP_FUNCTION_INSERT_INTO_DICTIONARY);
+                        executeDropStatement(conn, DROP_FUNCTION_INSERT_INTO_TS_KV);
+                        executeDropStatement(conn, DROP_FUNCTION_CREATE_NEW_TS_KV_LATEST_TABLE);
+                        executeDropStatement(conn, DROP_FUNCTION_INSERT_INTO_TS_KV_LATEST);
+
+                        executeQuery(conn, "ALTER TABLE ts_kv ADD COLUMN json_v json;");
+                        executeQuery(conn, "ALTER TABLE ts_kv_latest ADD COLUMN json_v json;");
+
                         log.info("schema timeseries updated!");
                     }
                 }
@@ -93,53 +113,13 @@ public class PsqlTsDatabaseUpgradeService implements DatabaseTsUpgradeService {
         }
     }
 
-    private void loadSql(Connection conn) {
+    protected void loadSql(Connection conn) {
         Path schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "2.4.3", LOAD_FUNCTIONS_SQL);
         try {
             loadFunctions(schemaUpdateFile, conn);
+            log.info("Upgrade functions successfully loaded!");
         } catch (Exception e) {
             log.info("Failed to load PostgreSQL upgrade functions due to: {}", e.getMessage());
-        }
-    }
-
-    private void loadFunctions(Path sqlFile, Connection conn) throws Exception {
-        String sql = new String(Files.readAllBytes(sqlFile), StandardCharsets.UTF_8);
-        conn.createStatement().execute(sql); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
-    }
-
-    private boolean checkVersion(Connection conn) {
-        log.info("Check the current PostgreSQL version...");
-        boolean versionValid = false;
-        try {
-            CallableStatement callableStatement = conn.prepareCall("{? = " + CHECK_VERSION + " }");
-            callableStatement.registerOutParameter(1, Types.BOOLEAN);
-            callableStatement.execute();
-            versionValid = callableStatement.getBoolean(1);
-            callableStatement.close();
-        } catch (Exception e) {
-            log.info("Failed to check current PostgreSQL version due to: {}", e.getMessage());
-        }
-        return versionValid;
-    }
-
-    private void executeFunction(Connection conn, String query) {
-        log.info("{} ... ", query);
-        try {
-            CallableStatement callableStatement = conn.prepareCall("{" + query + "}");
-            callableStatement.execute();
-            callableStatement.close();
-            log.info("Successfully executed: {}", query.replace(CALL_REGEX, ""));
-        } catch (Exception e) {
-            log.info("Failed to execute {} due to: {}", query, e.getMessage());
-        }
-    }
-
-    private void dropOldTable(Connection conn, String query) {
-        try {
-            conn.createStatement().execute(query); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
-            Thread.sleep(5000);
-        } catch (InterruptedException | SQLException e) {
-            log.info("Failed to drop table {} due to: {}", query.replace("DROP TABLE ", ""), e.getMessage());
         }
     }
 }

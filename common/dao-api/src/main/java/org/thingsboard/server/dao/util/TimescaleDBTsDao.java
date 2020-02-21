@@ -13,19 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.install;
+package org.thingsboard.server.dao.util;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
-import org.thingsboard.server.dao.util.SqlDao;
-import org.thingsboard.server.dao.util.TimescaleDBTsDao;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
-@Service
-@TimescaleDBTsDao
-@Profile("install")
-public class SqlTimescaleDatabaseSchemaService extends SqlAbstractDatabaseSchemaService
-        implements TsDatabaseSchemaService {
-    public SqlTimescaleDatabaseSchemaService() {
-        super("schema-timescale.sql", "schema-timescale-idx.sql");
-    }
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+
+@Retention(RetentionPolicy.RUNTIME)
+@ConditionalOnProperty(prefix = "database.ts", value = "type", havingValue = "timescale")
+public @interface TimescaleDBTsDao {
 }

@@ -114,9 +114,7 @@ public abstract class AbstractControllerTest {
      */
     private static final long DEFAULT_TIMEOUT = -1L;
 
-    protected MediaType contentType = new MediaType(MediaType.APPLICATION_JSON.getType(),
-            MediaType.APPLICATION_JSON.getSubtype(),
-            Charset.forName("utf8"));
+    protected MediaType contentType = MediaType.APPLICATION_JSON;
 
     protected MockMvc mockMvc;
 

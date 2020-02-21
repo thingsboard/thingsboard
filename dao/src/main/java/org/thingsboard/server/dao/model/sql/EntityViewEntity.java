@@ -99,7 +99,7 @@ public class EntityViewEntity extends BaseSqlEntity<EntityView> implements Searc
 
     public EntityViewEntity(EntityView entityView) {
         if (entityView.getId() != null) {
-            this.setId(entityView.getId().getId());
+            this.setUuid(entityView.getId().getId());
         }
         if (entityView.getEntityId() != null) {
             this.entityId = toString(entityView.getEntityId().getId());
@@ -136,8 +136,8 @@ public class EntityViewEntity extends BaseSqlEntity<EntityView> implements Searc
 
     @Override
     public EntityView toData() {
-        EntityView entityView = new EntityView(new EntityViewId(getId()));
-        entityView.setCreatedTime(UUIDs.unixTimestamp(getId()));
+        EntityView entityView = new EntityView(new EntityViewId(this.getUuid()));
+        entityView.setCreatedTime(UUIDs.unixTimestamp(this.getUuid()));
 
         if (entityId != null) {
             entityView.setEntityId(EntityIdFactory.getByTypeAndId(entityType.name(), toUUID(entityId).toString()));

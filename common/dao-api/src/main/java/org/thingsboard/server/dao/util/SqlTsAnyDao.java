@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sqlts;
+package org.thingsboard.server.dao.util;
 
-import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 
-import java.util.List;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
-public interface InsertLatestRepository {
-
-    void saveOrUpdate(List<TsKvLatestEntity> entities);
-
+@Retention(RetentionPolicy.RUNTIME)
+@ConditionalOnExpression("'${database.ts.type}'=='sql' || '${database.ts.type}'=='timescale'")
+public @interface SqlTsAnyDao {
 }
