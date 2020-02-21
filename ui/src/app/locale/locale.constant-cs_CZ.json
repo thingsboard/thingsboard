@@ -1103,9 +1103,7 @@
     "js-func": {
         "no-return-error": "Funkce musí vrátit hodnotu!",
         "return-type-mismatch": "Funkce musí vrátit hodnotu '{{type}}' typu!",
-        "tidy": "Tidy",
-        "mini": "Mini",
-        "minifier": "Minifier"
+        "tidy": "Tidy"
     },
     "key-val": {
         "key": "Klíč",

@@ -15,11 +15,11 @@
     limitations under the License.
 
 -->
-<md-dialog>
-    <form name="theForm" ng-submit="vm.save()" class="attribute-edit-json-dialog">
+<md-dialog class="attribute-edit-json-dialog">
+    <form name="theForm" ng-submit="vm.save()">
         <md-toolbar>
             <div class="md-toolbar-tools">
-                <h2>{{ 'action.edit' | translate }} {{ 'value.json' | translate }}</h2>
+                <h2>{{ 'details.edit-json' | translate }}</h2>
                 <span flex></span>
                 <md-button class="md-icon-button"
                            ng-click="vm.cancel()"
@@ -28,16 +28,19 @@
                 </md-button>
             </div>
         </md-toolbar>
-        <div flex="100" class="tb-json-object-edit">
-            <tb-json-content
-                    ng-model="vm.jsonValue"
-                    label="{{ 'value.json-value' | translate }}"
-                    content-type="vm.types.contentType.JSON.value"
-                    validate-content="true"
-                    fill-height="false"
-                    ng-readonly="vm.readOnly">
-            </tb-json-content>
-        </div>
+        <md-dialog-content>
+            <div class="md-dialog-content">
+                    <tb-json-content
+                            ng-model="vm.json"
+                            label="{{ 'value.json-value' | translate }}"
+                            content-type="vm.contentType"
+                            validate-content="true"
+                            hide-error-toast="true"
+                            fill-height="false"
+                            ng-readonly="vm.readOnly">
+                    </tb-json-content>
+            </div>
+        </md-dialog-content>
         <md-dialog-actions layout="row" layout-align="end center" class="action-buttons">
             <md-button ng-disabled="$root.loading || theForm.$invalid || !theForm.$dirty" type="submit"
                        class="md-raised md-primary">

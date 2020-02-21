@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 .attribute-edit-json-dialog{
-  position: relative;
   min-width: 400px;
-  height: 100%;
+}
+
+@media (max-width: 425px){
+  .attribute-edit-json-dialog {
+    min-width: 200px;
+  }
 }

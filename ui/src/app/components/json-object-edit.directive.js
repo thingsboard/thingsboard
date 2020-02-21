@@ -50,14 +50,12 @@ function JsonObjectEdit($compile, $templateCache, $document, toast, utils) {
             updateEditorSize();
         };
 
-        scope.beautifyJson = function () {
-            var res = angular.toJson(scope.object, true);
-            scope.contentBody = res;
+        scope.beautifyJSON = function () {
+            scope.contentBody = angular.toJson(scope.object, 4);
         };
 
-        scope.minifierJson = function () {
-              var res = angular.toJson(scope.object, false);
-            scope.contentBody = res;
+        scope.minifyJSON = function () {
+            scope.contentBody = angular.toJson(scope.object);
         };
 
         function updateEditorSize() {

@@ -1657,9 +1657,7 @@
   "js-func": {
     "no-return-error": "Η λειτουργία πρέπει να επιστρέφει τιμή!",
     "return-type-mismatch": "Η λειτουργία πρέπει να επιστρέφει τιμή από '{{type}}' τύπο!",
-    "tidy": "Tidy",
-    "mini": "Mini",
-    "minifier": "Minifier"
+    "tidy": "Tidy"
   },
   "key-val": {
     "key": "Όνομα",

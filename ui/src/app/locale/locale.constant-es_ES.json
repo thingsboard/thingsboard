@@ -1183,9 +1183,7 @@
     "js-func": {
         "no-return-error": "La función debe devolver el valor!",
         "return-type-mismatch": "La función debe devolver el valor de '{{type}}' type!",
-        "tidy": "Formatear",
-        "mini": "Mini",
-        "minifier": "Minifier"
+        "tidy": "Formatear"
     },
     "key-val": {
         "key": "Clave",

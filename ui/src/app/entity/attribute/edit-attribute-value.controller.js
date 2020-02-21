@@ -19,15 +19,13 @@ import AttributeDialogEditJsonController from "./attribute-dialog-edit-json.cont
 import attributeDialogEditJsonTemplate from "./attribute-dialog-edit-json.tpl.html";
 
 /*@ngInject*/
-export default function EditAttributeValueController($scope, $mdDialog, $document, $q, $element, types, attributeValue, save) {
+export default function EditAttributeValueController($scope, $mdDialog, $q, $element, $document, types, attributeValue, save) {
 
     $scope.valueTypes = types.valueType;
 
-    $scope.model = {};
-
-    $scope.model.value = attributeValue;
-
-    $scope.editJson = editJson;
+    $scope.model = {
+        value: attributeValue
+    };
 
     if ($scope.model.value === true || $scope.model.value === false) {
         $scope.valueType = types.valueType.boolean;
@@ -38,7 +36,6 @@ export default function EditAttributeValueController($scope, $mdDialog, $documen
             $scope.valueType = types.valueType.double;
         }
     } else if (angular.isObject($scope.model.value)) {
-        $scope.model.viewJsonStr = angular.toJson($scope.model.value);
         $scope.valueType = types.valueType.json;
     } else {
         $scope.valueType = types.valueType.string;
@@ -46,6 +43,7 @@ export default function EditAttributeValueController($scope, $mdDialog, $documen
 
     $scope.submit = submit;
     $scope.dismiss = dismiss;
+    $scope.editJSON = editJSON;
 
     function dismiss() {
         $element.remove();
@@ -69,56 +67,43 @@ export default function EditAttributeValueController($scope, $mdDialog, $documen
 
 
     $scope.$watch('valueType', function (newVal, prevVal) {
-        if (newVal != prevVal) {
+        if (newVal !== prevVal) {
             if ($scope.valueType === types.valueType.boolean) {
                 $scope.model.value = false;
+            } else if ($scope.valueType === types.valueType.json) {
+                $scope.model.value = {};
             } else {
                 $scope.model.value = null;
             }
         }
     });
 
-    function editJson($event, jsonValue, readOnly) {
-        showJsonDialog($event, jsonValue, readOnly).then((response) => {
+    function editJSON($event) {
+        $scope.hideDialog = true;
+        showJsonDialog($event, $scope.model.value, false).then((response) => {
             $scope.hideDialog = false;
-            if (response || response === null) {
-                if (!angular.equals(response, $scope.model.value)) {
-                    $scope.editDialog.$setDirty();
-                }
-
-                if (response === null) {
-                    $scope.model.viewJsonStr = null;
-                    $scope.model.value = null;
-                } else {
-                    $scope.model.value = angular.fromJson(response);
-                    $scope.model.viewJsonStr = response;
-                }
+            if (!angular.equals(response, $scope.model.value)) {
+                $scope.editDialog.$setDirty();
             }
+            $scope.model.value = response;
         })
     }
 
     function showJsonDialog($event, jsonValue, readOnly) {
-
-        if (jsonValue) {
-            jsonValue = angular.toJson(angular.fromJson(jsonValue));
-        }
         if ($event) {
             $event.stopPropagation();
         }
-        $scope.hideDialog = true;
-        const promis = $mdDialog.show({
+        return $mdDialog.show({
             controller: AttributeDialogEditJsonController,
             controllerAs: 'vm',
             templateUrl: attributeDialogEditJsonTemplate,
-            parent: angular.element($document[0].body),
             locals: {
                 jsonValue: jsonValue,
                 readOnly: readOnly
             },
             targetEvent: $event,
             fullscreen: true,
-            multiple: true,
+            multiple: true
         });
-        return promis;
     }
 }

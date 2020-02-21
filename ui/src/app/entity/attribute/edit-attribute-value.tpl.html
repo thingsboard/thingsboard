@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<md-edit-dialog ng-hide="hideDialog" >
+<md-edit-dialog class="tb-edit-dialog">
     <form name="editDialog" ng-submit="submit()" >
         <div layout="column" class="md-content" style="width: 400px;">
             <fieldset>
@@ -57,23 +57,20 @@
                             {{ (model.value ? 'value.true' : 'value.false') | translate }}
                         </md-checkbox>
                     </div>
-                    <div layout="row" ng-if="valueType===valueTypes.json" flex="60">
+                    <div layout="row" layout-align="center" ng-if="valueType===valueTypes.json" flex="60">
                         <md-input-container class="md-block">
                             <label translate>value.json-value</label>
-                            <input required name="value" ng-model="model.viewJsonStr"
-                                   ng-click="editJson($event, model.value, false)"
-                                   readonly="true">
+                            <input required tb-json-to-string name="value" ng-model="model.value">
                             <div ng-messages="editDialog.value.$error">
                                 <div translate ng-message="required">attribute.value-required</div>
                             </div>
                         </md-input-container>
-                        <md-button class="md-icon-button"
-                                   ng-click="editJson($event, model.value, false)"
-                                   aria-label="{{ 'action.edit' | translate }}">
+                        <md-button class="md-icon-button" style="margin: 18px 0;"
+                                   ng-click="editJSON($event)" aria-label="{{ 'action.edit' | translate }}">
                             <md-tooltip md-direction="top">
                                 {{ 'action.edit' | translate }}
                             </md-tooltip>
-                            <ng-md-icon size="20" icon="edit"></ng-md-icon>
+                            <ng-md-icon size="20" icon="open_in_new"></ng-md-icon>
                         </md-button>
                     </div>
                 </section>
@@ -89,4 +86,3 @@
         </div>
     </form>
 </md-edit-dialog>
-
