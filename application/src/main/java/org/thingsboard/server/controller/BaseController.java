@@ -642,6 +642,8 @@ public abstract class BaseController {
                                     entityNode.put(attr.getKey(), attr.getDoubleValue().get());
                                 } else if (attr.getDataType() == DataType.LONG) {
                                     entityNode.put(attr.getKey(), attr.getLongValue().get());
+                                } else if (attr.getDataType() == DataType.JSON) {
+                                    entityNode.set(attr.getKey(), json.readTree(attr.getJsonValue().get()));
                                 } else {
                                     entityNode.put(attr.getKey(), attr.getValueAsString());
                                 }

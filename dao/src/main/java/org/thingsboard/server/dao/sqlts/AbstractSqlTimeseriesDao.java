@@ -253,6 +253,8 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
         latestEntity.setDoubleValue(tsKvEntry.getDoubleValue().orElse(null));
         latestEntity.setLongValue(tsKvEntry.getLongValue().orElse(null));
         latestEntity.setBooleanValue(tsKvEntry.getBooleanValue().orElse(null));
+        latestEntity.setJsonValue(tsKvEntry.getJsonValue().orElse(null));
+
         return tsLatestQueue.add(latestEntity);
     }
 

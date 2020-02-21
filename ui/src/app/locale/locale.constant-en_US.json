@@ -50,8 +50,7 @@
         "export": "Export",
         "share-via": "Share via {{provider}}",
         "continue": "Continue",
-        "discard-changes": "Discard Changes",
-        "download": "Download"
+        "discard-changes": "Discard Changes"
     },
     "aggregation": {
         "aggregation": "Aggregation",
@@ -86,6 +85,7 @@
         "timeout-required": "Timeout is required.",
         "timeout-invalid": "That doesn't look like a valid timeout.",
         "enable-tls": "Enable TLS",
+        "tls-version": "TLS version",
         "send-test-mail": "Send test mail",
         "security-settings": "Security settings",
         "password-policy": "Password policy",
@@ -206,6 +206,7 @@
         "entity-filter-no-entity-matched": "No entities matching specified filter were found.",
         "no-entity-filter-specified": "No entity filter specified",
         "root-state-entity": "Use dashboard state entity as root",
+        "last-level-relation": "Fetch last level relation only",
         "root-entity": "Root entity",
         "state-entity-parameter-name": "State entity parameter name",
         "default-state-entity": "Default state entity",
@@ -1246,7 +1247,9 @@
             "server-attribute": "Server attribute",
             "timeseries": "Timeseries",
             "entity-field": "Entity field",
-            "access-token": "Access token"
+            "access-token": "Access token",
+            "isgateway": "Is Gateway",
+            "description": "Description"
         },
         "stepper-text":{
             "select-file": "Select a file",
@@ -1867,22 +1870,23 @@
     "language": {
         "language": "Language",
         "locales": {
-            "de_DE": "German",
-            "fr_FR": "French",
-            "zh_CN": "Simplified Chinese",
-            "zh_TW": "Traditional Chinese",
+            "de_DE": "Deutsch",
+            "fr_FR": "Français",
+            "zh_CN": "简体中文",
+            "zh_TW": "繁體中文",
             "en_US": "English",
-            "it_IT": "Italian",
-            "ko_KR": "Korean",
-            "ru_RU": "Russian",
-            "es_ES": "Spanish",
-            "ja_JA": "Japanese",
-            "tr_TR": "Turkish",
-            "fa_IR": "Persian",
-            "uk_UA": "Ukrainian",
-            "cs_CZ": "Czech",
-            "el_GR": "Greek",
-            "lv_LV": "Latvian"
+            "it_IT": "Italiano",
+            "ko_KR": "한글",
+            "ru_RU": "Русский",
+            "es_ES": "Español",
+            "ja_JA": "日本語",
+            "tr_TR": "Türkçe",
+            "fa_IR": "فارسي",
+            "uk_UA": "Українська",
+            "cs_CZ": "Česky",
+            "el_GR": "Ελληνικά",
+            "ro_RO": "Română",
+            "lv_LV": "Latviešu"
         }
     }
 }

@@ -36,11 +36,11 @@ import java.util.List;
 public class HsqlLatestInsertTsRepository extends AbstractInsertRepository implements InsertLatestTsRepository {
 
     private static final String INSERT_OR_UPDATE =
-            "MERGE INTO ts_kv_latest USING(VALUES ?, ?, ?, ?, ?, ?, ?) " +
-                    "T (entity_id, key, ts, bool_v, str_v, long_v, dbl_v) " +
+            "MERGE INTO ts_kv_latest USING(VALUES ?, ?, ?, ?, ?, ?, ?, ?) " +
+                    "T (entity_id, key, ts, bool_v, str_v, long_v, dbl_v, json_v) " +
                     "ON (ts_kv_latest.entity_id=T.entity_id " +
                     "AND ts_kv_latest.key=T.key) " +
-                    "WHEN MATCHED THEN UPDATE SET ts_kv_latest.ts = T.ts, ts_kv_latest.bool_v = T.bool_v, ts_kv_latest.str_v = T.str_v, ts_kv_latest.long_v = T.long_v, ts_kv_latest.dbl_v = T.dbl_v " +
+                    "WHEN MATCHED THEN UPDATE SET ts_kv_latest.ts = T.ts, ts_kv_latest.bool_v = T.bool_v, ts_kv_latest.str_v = T.str_v, ts_kv_latest.long_v = T.long_v, ts_kv_latest.dbl_v = T.dbl_v, ts_kv_latest.json_v = T.json_v " +
                     "WHEN NOT MATCHED THEN INSERT (entity_id, key, ts, bool_v, str_v, long_v, dbl_v) " +
                     "VALUES (T.entity_id, T.key, T.ts, T.bool_v, T.str_v, T.long_v, T.dbl_v);";
 
@@ -72,6 +72,8 @@ public class HsqlLatestInsertTsRepository extends AbstractInsertRepository imple
                 } else {
                     ps.setNull(7, Types.DOUBLE);
                 }
+
+                ps.setString(8, entities.get(i).getJsonValue());
             }
 
             @Override
