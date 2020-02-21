@@ -287,6 +287,10 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
         this.dataSettings.addControl('alarmSearchStatus', this.fb.control(null));
         this.dataSettings.addControl('alarmsPollingInterval', this.fb.control(null,
           [Validators.required, Validators.min(1)]));
+        this.dataSettings.addControl('alarmsMaxCountLoad', this.fb.control(null,
+          [Validators.required, Validators.min(0)]));
+        this.dataSettings.addControl('alarmsFetchSize', this.fb.control(null,
+          [Validators.required, Validators.min(10)]));
       }
     }
     if (this.modelValue.isDataEnabled) {
@@ -438,6 +442,14 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
             this.dataSettings.patchValue(
               { alarmsPollingInterval: isDefined(config.alarmsPollingInterval) ?
                   config.alarmsPollingInterval : 5}, {emitEvent: false}
+            );
+            this.dataSettings.patchValue(
+              { alarmsMaxCountLoad: isDefined(config.alarmsMaxCountLoad) ?
+                  config.alarmsMaxCountLoad : 0}, {emitEvent: false}
+            );
+            this.dataSettings.patchValue(
+              { alarmsFetchSize: isDefined(config.alarmsFetchSize) ?
+                  config.alarmsFetchSize : 100}, {emitEvent: false}
             );
             this.alarmSourceSettings.patchValue(
               config.alarmSource, {emitEvent: false}

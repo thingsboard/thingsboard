@@ -190,6 +190,8 @@ export interface WidgetSubscriptionOptions {
   alarmSource?: Datasource;
   alarmSearchStatus?: AlarmSearchStatus;
   alarmsPollingInterval?: number;
+  alarmsMaxCountLoad?: number;
+  alarmsFetchSize?: number;
   datasources?: Array<Datasource>;
   targetDeviceAliasIds?: Array<string>;
   targetDeviceIds?: Array<string>;

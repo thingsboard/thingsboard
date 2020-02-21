@@ -110,7 +110,7 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
   }
 
   fetchAlarms(pageLink: TimePageLink): Observable<PageData<AlarmInfo>> {
-    const query = new AlarmQuery(this.entityId, pageLink, this.searchStatus, null, true);
+    const query = new AlarmQuery(this.entityId, pageLink, this.searchStatus, null, true, null);
     return this.alarmService.getAlarms(query);
   }
 

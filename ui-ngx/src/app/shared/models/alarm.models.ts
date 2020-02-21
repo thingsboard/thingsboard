@@ -14,16 +14,14 @@
 /// limitations under the License.
 ///
 
-import {BaseData} from '@shared/models/base-data';
-import {AssetId} from '@shared/models/id/asset-id';
-import {TenantId} from '@shared/models/id/tenant-id';
-import {CustomerId} from '@shared/models/id/customer-id';
-import {AlarmId} from '@shared/models/id/alarm-id';
-import {EntityId} from '@shared/models/id/entity-id';
-import { ActionStatus } from '@shared/models/audit-log.models';
+import { BaseData } from '@shared/models/base-data';
+import { TenantId } from '@shared/models/id/tenant-id';
+import { AlarmId } from '@shared/models/id/alarm-id';
+import { EntityId } from '@shared/models/id/entity-id';
 import { TimePageLink } from '@shared/models/page/page-link';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { EntityType } from '@shared/models/entity-type.models';
+import { isString } from '@core/utils';
 
 export enum AlarmSeverity {
   CRITICAL = 'CRITICAL',
@@ -199,15 +197,17 @@ export class AlarmQuery {
   searchStatus: AlarmSearchStatus;
   status: AlarmStatus;
   fetchOriginator: boolean;
+  offset: string;
 
   constructor(entityId: EntityId, pageLink: TimePageLink,
               searchStatus: AlarmSearchStatus, status: AlarmStatus,
-              fetchOriginator: boolean) {
+              fetchOriginator: boolean, offset: string) {
     this.affectedEntityId = entityId;
     this.pageLink = pageLink;
     this.searchStatus = searchStatus;
     this.status = status;
     this.fetchOriginator = fetchOriginator;
+    this.offset = offset;
   }
 
   public toQuery(): string {
@@ -220,6 +220,9 @@ export class AlarmQuery {
     }
     if (typeof this.fetchOriginator !== 'undefined' && this.fetchOriginator !== null) {
       query += `&fetchOriginator=${this.fetchOriginator}`;
+    }
+    if (isString(this.offset) && this.offset.length) {
+      query += `&offset=${this.offset}`;
     }
     return query;
   }
