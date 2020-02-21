@@ -21,8 +21,8 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserCredentialsId;
 import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.page.TextPageData;
-import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.UserCredentials;
 
 public interface UserService {
@@ -53,11 +53,11 @@ public interface UserService {
 
 	void deleteUser(TenantId tenantId, UserId userId);
 	
-	TextPageData<User> findTenantAdmins(TenantId tenantId, TextPageLink pageLink);
+	PageData<User> findTenantAdmins(TenantId tenantId, PageLink pageLink);
 	
 	void deleteTenantAdmins(TenantId tenantId);
-	
-	TextPageData<User> findCustomerUsers(TenantId tenantId, CustomerId customerId, TextPageLink pageLink);
+
+    PageData<User> findCustomerUsers(TenantId tenantId, CustomerId customerId, PageLink pageLink);
 	    
 	void deleteCustomerUsers(TenantId tenantId, CustomerId customerId);
 

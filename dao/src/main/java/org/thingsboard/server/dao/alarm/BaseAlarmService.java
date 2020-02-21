@@ -36,7 +36,7 @@ import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.TimePageData;
+import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
@@ -270,32 +270,26 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     }
 
     @Override
-    public ListenableFuture<TimePageData<AlarmInfo>> findAlarms(TenantId tenantId, AlarmQuery query) {
-        ListenableFuture<List<AlarmInfo>> alarms = alarmDao.findAlarms(tenantId, query);
+    public ListenableFuture<PageData<AlarmInfo>> findAlarms(TenantId tenantId, AlarmQuery query) {
+        PageData<AlarmInfo> alarms = alarmDao.findAlarms(tenantId, query);
         if (query.getFetchOriginator() != null && query.getFetchOriginator().booleanValue()) {
-            alarms = Futures.transformAsync(alarms, input -> {
-                List<ListenableFuture<AlarmInfo>> alarmFutures = new ArrayList<>(input.size());
-                for (AlarmInfo alarmInfo : input) {
-                    alarmFutures.add(Futures.transform(
-                            entityService.fetchEntityNameAsync(tenantId, alarmInfo.getOriginator()), originatorName -> {
-                                if (originatorName == null) {
-                                    originatorName = "Deleted";
-                                }
-                                alarmInfo.setOriginatorName(originatorName);
-                                return alarmInfo;
+            List<ListenableFuture<AlarmInfo>> alarmFutures = new ArrayList<>(alarms.getData().size());
+            for (AlarmInfo alarmInfo : alarms.getData()) {
+                alarmFutures.add(Futures.transform(
+                        entityService.fetchEntityNameAsync(tenantId, alarmInfo.getOriginator()), originatorName -> {
+                            if (originatorName == null) {
+                                originatorName = "Deleted";
                             }
-                    ));
-                }
-                return Futures.successfulAsList(alarmFutures);
+                            alarmInfo.setOriginatorName(originatorName);
+                            return alarmInfo;
+                        }
+                ));
+            }
+            return Futures.transform(Futures.successfulAsList(alarmFutures), alarmInfos -> {
+                return new PageData(alarmInfos, alarms.getTotalPages(), alarms.getTotalElements(), alarms.hasNext());
             });
         }
-        return Futures.transform(alarms, new Function<List<AlarmInfo>, TimePageData<AlarmInfo>>() {
-            @Nullable
-            @Override
-            public TimePageData<AlarmInfo> apply(@Nullable List<AlarmInfo> alarms) {
-                return new TimePageData<>(alarms, query.getPageLink());
-            }
-        });
+        return Futures.immediateFuture(alarms);
     }
 
     @Override
@@ -307,19 +301,11 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         AlarmQuery query;
         while (hasNext && AlarmSeverity.CRITICAL != highestSeverity) {
             query = new AlarmQuery(entityId, nextPageLink, alarmSearchStatus, alarmStatus, false);
-            List<AlarmInfo> alarms;
-            try {
-                alarms = alarmDao.findAlarms(tenantId, query).get();
-            } catch (ExecutionException | InterruptedException e) {
-                log.warn("Failed to find highest alarm severity. EntityId: [{}], AlarmSearchStatus: [{}], AlarmStatus: [{}]",
-                        entityId, alarmSearchStatus, alarmStatus);
-                throw new RuntimeException(e);
+            PageData<AlarmInfo> alarms = alarmDao.findAlarms(tenantId, query);
+            if (alarms.hasNext()) {
+                nextPageLink = nextPageLink.nextPageLink();
             }
-            hasNext = alarms.size() == nextPageLink.getLimit();
-            if (hasNext) {
-                nextPageLink = new TimePageData<>(alarms, nextPageLink).getNextPageLink();
-            }
-            AlarmSeverity severity = detectHighestSeverity(alarms);
+            AlarmSeverity severity = detectHighestSeverity(alarms.getData());
             if (severity == null) {
                 continue;
             }

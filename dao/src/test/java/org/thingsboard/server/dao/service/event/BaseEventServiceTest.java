@@ -25,7 +25,8 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EventId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.TimePageData;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
 
@@ -74,23 +75,23 @@ public abstract class BaseEventServiceTest extends AbstractServiceTest {
         Event savedEvent3 = saveEventWithProvidedTime(eventTime+2, customerId, tenantId);
         saveEventWithProvidedTime(timeAfterEndTime, customerId, tenantId);
 
-        TimePageData<Event> events = eventService.findEvents(tenantId, customerId, DataConstants.STATS,
-                new TimePageLink(2, startTime, endTime, true));
+        TimePageLink timePageLink = new TimePageLink(2, 0, "", new SortOrder("createdTime"), startTime, endTime);
+
+        PageData<Event> events = eventService.findEvents(tenantId, customerId, DataConstants.STATS,
+                timePageLink);
 
         Assert.assertNotNull(events.getData());
         Assert.assertTrue(events.getData().size() == 2);
         Assert.assertTrue(events.getData().get(0).getUuidId().equals(savedEvent.getUuidId()));
         Assert.assertTrue(events.getData().get(1).getUuidId().equals(savedEvent2.getUuidId()));
         Assert.assertTrue(events.hasNext());
-        Assert.assertNotNull(events.getNextPageLink());
 
-        events = eventService.findEvents(tenantId, customerId, DataConstants.STATS, events.getNextPageLink());
+        events = eventService.findEvents(tenantId, customerId, DataConstants.STATS, timePageLink.nextPageLink());
 
         Assert.assertNotNull(events.getData());
         Assert.assertTrue(events.getData().size() == 1);
         Assert.assertTrue(events.getData().get(0).getUuidId().equals(savedEvent3.getUuidId()));
         Assert.assertFalse(events.hasNext());
-        Assert.assertNull(events.getNextPageLink());
     }
 
     @Test
@@ -109,23 +110,23 @@ public abstract class BaseEventServiceTest extends AbstractServiceTest {
         Event savedEvent3 = saveEventWithProvidedTime(eventTime+2, customerId, tenantId);
         saveEventWithProvidedTime(timeAfterEndTime, customerId, tenantId);
 
-        TimePageData<Event> events = eventService.findEvents(tenantId, customerId, DataConstants.STATS,
-                new TimePageLink(2, startTime, endTime, false));
+        TimePageLink timePageLink = new TimePageLink(2, 0, "", new SortOrder("createdTime", SortOrder.Direction.DESC), startTime, endTime);
+
+        PageData<Event> events = eventService.findEvents(tenantId, customerId, DataConstants.STATS,
+                timePageLink);
 
         Assert.assertNotNull(events.getData());
         Assert.assertTrue(events.getData().size() == 2);
         Assert.assertTrue(events.getData().get(0).getUuidId().equals(savedEvent3.getUuidId()));
         Assert.assertTrue(events.getData().get(1).getUuidId().equals(savedEvent2.getUuidId()));
         Assert.assertTrue(events.hasNext());
-        Assert.assertNotNull(events.getNextPageLink());
 
-        events = eventService.findEvents(tenantId, customerId, DataConstants.STATS, events.getNextPageLink());
+        events = eventService.findEvents(tenantId, customerId, DataConstants.STATS, timePageLink.nextPageLink());
 
         Assert.assertNotNull(events.getData());
         Assert.assertTrue(events.getData().size() == 1);
         Assert.assertTrue(events.getData().get(0).getUuidId().equals(savedEvent.getUuidId()));
         Assert.assertFalse(events.hasNext());
-        Assert.assertNull(events.getNextPageLink());
     }
 
     private Event saveEventWithProvidedTime(long time, EntityId entityId, TenantId tenantId) throws IOException {

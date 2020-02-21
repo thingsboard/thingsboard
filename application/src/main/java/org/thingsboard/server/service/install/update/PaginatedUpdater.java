@@ -17,29 +17,29 @@ package org.thingsboard.server.service.install.update;
 
 import org.thingsboard.server.common.data.SearchTextBased;
 import org.thingsboard.server.common.data.id.UUIDBased;
-import org.thingsboard.server.common.data.page.TextPageData;
-import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 
 public abstract class PaginatedUpdater<I, D extends SearchTextBased<? extends UUIDBased>> {
 
     private static final int DEFAULT_LIMIT = 100;
 
     public void updateEntities(I id) {
-        TextPageLink pageLink = new TextPageLink(DEFAULT_LIMIT);
+        PageLink pageLink = new PageLink(DEFAULT_LIMIT);
         boolean hasNext = true;
         while (hasNext) {
-            TextPageData<D> entities = findEntities(id, pageLink);
+            PageData<D> entities = findEntities(id, pageLink);
             for (D entity : entities.getData()) {
                 updateEntity(entity);
             }
             hasNext = entities.hasNext();
             if (hasNext) {
-                pageLink = entities.getNextPageLink();
+                pageLink = pageLink.nextPageLink();
             }
         }
     }
 
-    protected abstract TextPageData<D> findEntities(I id, TextPageLink pageLink);
+    protected abstract PageData<D> findEntities(I id, PageLink pageLink);
 
     protected abstract void updateEntity(D entity);
 

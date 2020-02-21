@@ -25,7 +25,8 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
@@ -73,14 +74,17 @@ public class JpaUserDaoTest extends AbstractJpaDaoTest {
         UUID tenantId = UUIDs.timeBased();
         UUID customerId = UUIDs.timeBased();
         create30Adminsand60Users(tenantId, customerId);
-        List<User> tenantAdmins1 = userDao.findTenantAdmins(tenantId, new TextPageLink(20));
-        assertEquals(20, tenantAdmins1.size());
-        List<User> tenantAdmins2 = userDao.findTenantAdmins(tenantId,
-                new TextPageLink(20, null, tenantAdmins1.get(19).getId().getId(), null));
-        assertEquals(10, tenantAdmins2.size());
-        List<User> tenantAdmins3 = userDao.findTenantAdmins(tenantId,
-                new TextPageLink(20, null, tenantAdmins2.get(9).getId().getId(), null));
-        assertEquals(0, tenantAdmins3.size());
+        PageLink pageLink = new PageLink(20);
+        PageData<User> tenantAdmins1 = userDao.findTenantAdmins(tenantId, pageLink);
+        assertEquals(20, tenantAdmins1.getData().size());
+        pageLink = pageLink.nextPageLink();
+        PageData<User> tenantAdmins2 = userDao.findTenantAdmins(tenantId,
+                pageLink);
+        assertEquals(10, tenantAdmins2.getData().size());
+        pageLink = pageLink.nextPageLink();
+        PageData<User> tenantAdmins3 = userDao.findTenantAdmins(tenantId,
+                pageLink);
+        assertEquals(0, tenantAdmins3.getData().size());
     }
 
     @Test
@@ -89,14 +93,17 @@ public class JpaUserDaoTest extends AbstractJpaDaoTest {
         UUID tenantId = UUIDs.timeBased();
         UUID customerId = UUIDs.timeBased();
         create30Adminsand60Users(tenantId, customerId);
-        List<User> customerUsers1 = userDao.findCustomerUsers(tenantId, customerId, new TextPageLink(40));
-        assertEquals(40, customerUsers1.size());
-        List<User> customerUsers2 = userDao.findCustomerUsers(tenantId, customerId,
-                new TextPageLink(20, null, customerUsers1.get(39).getId().getId(), null));
-        assertEquals(20, customerUsers2.size());
-        List<User> customerUsers3 = userDao.findCustomerUsers(tenantId, customerId,
-                new TextPageLink(20, null, customerUsers2.get(19).getId().getId(), null));
-        assertEquals(0, customerUsers3.size());
+        PageLink pageLink = new PageLink(40);
+        PageData<User> customerUsers1 = userDao.findCustomerUsers(tenantId, customerId, pageLink);
+        assertEquals(40, customerUsers1.getData().size());
+        pageLink = pageLink.nextPageLink();
+        PageData<User> customerUsers2 = userDao.findCustomerUsers(tenantId, customerId,
+                pageLink);
+        assertEquals(20, customerUsers2.getData().size());
+        pageLink = pageLink.nextPageLink();
+        PageData<User> customerUsers3 = userDao.findCustomerUsers(tenantId, customerId,
+                pageLink);
+        assertEquals(0, customerUsers3.getData().size());
     }
 
     @Test

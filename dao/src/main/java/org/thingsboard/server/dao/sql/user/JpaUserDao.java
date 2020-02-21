@@ -21,7 +21,8 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.UserEntity;
@@ -62,29 +63,27 @@ public class JpaUserDao extends JpaAbstractSearchTextDao<UserEntity, User> imple
     }
 
     @Override
-    public List<User> findTenantAdmins(UUID tenantId, TextPageLink pageLink) {
-        return DaoUtil.convertDataList(
+    public PageData<User> findTenantAdmins(UUID tenantId, PageLink pageLink) {
+        return DaoUtil.toPageData(
                 userRepository
                         .findUsersByAuthority(
                                 fromTimeUUID(tenantId),
                                 NULL_UUID_STR,
-                                pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
                                 Objects.toString(pageLink.getTextSearch(), ""),
                                 Authority.TENANT_ADMIN,
-                                new PageRequest(0, pageLink.getLimit())));
+                                DaoUtil.toPageable(pageLink)));
     }
 
     @Override
-    public List<User> findCustomerUsers(UUID tenantId, UUID customerId, TextPageLink pageLink) {
-        return DaoUtil.convertDataList(
+    public PageData<User> findCustomerUsers(UUID tenantId, UUID customerId, PageLink pageLink) {
+        return DaoUtil.toPageData(
                 userRepository
                         .findUsersByAuthority(
                                 fromTimeUUID(tenantId),
                                 fromTimeUUID(customerId),
-                                pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
                                 Objects.toString(pageLink.getTextSearch(), ""),
                                 Authority.CUSTOMER_USER,
-                                new PageRequest(0, pageLink.getLimit())));
+                                DaoUtil.toPageable(pageLink)));
 
     }
 }

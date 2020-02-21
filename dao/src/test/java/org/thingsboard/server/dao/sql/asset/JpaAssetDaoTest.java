@@ -24,7 +24,8 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import org.thingsboard.server.dao.asset.AssetDao;
 
@@ -61,17 +62,17 @@ public class JpaAssetDaoTest extends AbstractJpaDaoTest {
         }
         assertEquals(60, assetDao.find(new TenantId(tenantId1)).size());
 
-        TextPageLink pageLink1 = new TextPageLink(20, "ASSET_");
-        List<Asset> assets1 = assetDao.findAssetsByTenantId(tenantId1, pageLink1);
-        assertEquals(20, assets1.size());
+        PageLink pageLink = new PageLink(20, 0, "ASSET_");
+        PageData<Asset> assets1 = assetDao.findAssetsByTenantId(tenantId1, pageLink);
+        assertEquals(20, assets1.getData().size());
 
-        TextPageLink pageLink2 = new TextPageLink(20, "ASSET_", assets1.get(19).getId().getId(), null);
-        List<Asset> assets2 = assetDao.findAssetsByTenantId(tenantId1, pageLink2);
-        assertEquals(10, assets2.size());
+        pageLink = pageLink.nextPageLink();
+        PageData<Asset> assets2 = assetDao.findAssetsByTenantId(tenantId1, pageLink);
+        assertEquals(10, assets2.getData().size());
 
-        TextPageLink pageLink3 = new TextPageLink(20, "ASSET_", assets2.get(9).getId().getId(), null);
-        List<Asset> assets3 = assetDao.findAssetsByTenantId(tenantId1, pageLink3);
-        assertEquals(0, assets3.size());
+        pageLink = pageLink.nextPageLink();
+        PageData<Asset> assets3 = assetDao.findAssetsByTenantId(tenantId1, pageLink);
+        assertEquals(0, assets3.getData().size());
     }
 
     @Test
@@ -87,17 +88,17 @@ public class JpaAssetDaoTest extends AbstractJpaDaoTest {
             saveAsset(assetId, tenantId, customerId, "ASSET_" + i, "TYPE_1");
         }
 
-        TextPageLink pageLink1 = new TextPageLink(20, "ASSET_");
-        List<Asset> assets1 = assetDao.findAssetsByTenantIdAndCustomerId(tenantId1, customerId1, pageLink1);
-        assertEquals(20, assets1.size());
+        PageLink pageLink = new PageLink(20, 0,  "ASSET_");
+        PageData<Asset> assets1 = assetDao.findAssetsByTenantIdAndCustomerId(tenantId1, customerId1, pageLink);
+        assertEquals(20, assets1.getData().size());
 
-        TextPageLink pageLink2 = new TextPageLink(20, "ASSET_", assets1.get(19).getId().getId(), null);
-        List<Asset> assets2 = assetDao.findAssetsByTenantIdAndCustomerId(tenantId1, customerId1, pageLink2);
-        assertEquals(10, assets2.size());
+        pageLink = pageLink.nextPageLink();
+        PageData<Asset> assets2 = assetDao.findAssetsByTenantIdAndCustomerId(tenantId1, customerId1, pageLink);
+        assertEquals(10, assets2.getData().size());
 
-        TextPageLink pageLink3 = new TextPageLink(20, "ASSET_", assets2.get(9).getId().getId(), null);
-        List<Asset> assets3 = assetDao.findAssetsByTenantIdAndCustomerId(tenantId1, customerId1, pageLink3);
-        assertEquals(0, assets3.size());
+        pageLink = pageLink.nextPageLink();
+        PageData<Asset> assets3 = assetDao.findAssetsByTenantIdAndCustomerId(tenantId1, customerId1, pageLink);
+        assertEquals(0, assets3.getData().size());
     }
 
     @Test

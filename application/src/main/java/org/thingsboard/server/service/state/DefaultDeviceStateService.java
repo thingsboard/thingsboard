@@ -39,13 +39,13 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.common.data.page.TextPageData;
-import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -227,13 +227,13 @@ public class DefaultDeviceStateService implements DeviceStateService {
 
     private void onClusterUpdateSync() {
         clusterUpdatePending = false;
-        List<Tenant> tenants = tenantService.findTenants(new TextPageLink(Integer.MAX_VALUE)).getData();
+        List<Tenant> tenants = tenantService.findTenants(new PageLink(Integer.MAX_VALUE)).getData();
         for (Tenant tenant : tenants) {
             List<ListenableFuture<DeviceStateData>> fetchFutures = new ArrayList<>();
-            TextPageLink pageLink = new TextPageLink(initFetchPackSize);
+            PageLink pageLink = new PageLink(initFetchPackSize);
             while (pageLink != null) {
-                TextPageData<Device> page = deviceService.findDevicesByTenantId(tenant.getId(), pageLink);
-                pageLink = page.getNextPageLink();
+                PageData<Device> page = deviceService.findDevicesByTenantId(tenant.getId(), pageLink);
+                pageLink = page.hasNext() ? pageLink.nextPageLink() : null;
                 for (Device device : page.getData()) {
                     if (!routingService.resolveById(device.getId()).isPresent()) {
                         if (!deviceStates.containsKey(device.getId())) {
@@ -260,13 +260,13 @@ public class DefaultDeviceStateService implements DeviceStateService {
 
     private void initStateFromDB() {
         try {
-            List<Tenant> tenants = tenantService.findTenants(new TextPageLink(Integer.MAX_VALUE)).getData();
+            List<Tenant> tenants = tenantService.findTenants(new PageLink(Integer.MAX_VALUE)).getData();
             for (Tenant tenant : tenants) {
                 List<ListenableFuture<DeviceStateData>> fetchFutures = new ArrayList<>();
-                TextPageLink pageLink = new TextPageLink(initFetchPackSize);
+                PageLink pageLink = new PageLink(initFetchPackSize);
                 while (pageLink != null) {
-                    TextPageData<Device> page = deviceService.findDevicesByTenantId(tenant.getId(), pageLink);
-                    pageLink = page.getNextPageLink();
+                    PageData<Device> page = deviceService.findDevicesByTenantId(tenant.getId(), pageLink);
+                    pageLink = page.hasNext() ? pageLink.nextPageLink() : null;
                     for (Device device : page.getData()) {
                         if (!routingService.resolveById(device.getId()).isPresent()) {
                             fetchFutures.add(fetchDeviceState(device));

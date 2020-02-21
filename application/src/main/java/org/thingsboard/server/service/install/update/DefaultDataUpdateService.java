@@ -22,8 +22,8 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.SearchTextBased;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.UUIDBased;
-import org.thingsboard.server.common.data.page.TextPageData;
-import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
@@ -59,7 +59,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
             new PaginatedUpdater<String, Tenant>() {
 
                 @Override
-                protected TextPageData<Tenant> findEntities(String region, TextPageLink pageLink) {
+                protected PageData<Tenant> findEntities(String region, PageLink pageLink) {
                     return tenantService.findTenants(pageLink);
                 }
 

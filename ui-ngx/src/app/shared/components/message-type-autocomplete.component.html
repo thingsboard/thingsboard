@@ -1,0 +1,43 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<mat-form-field [formGroup]="messageTypeFormGroup" class="mat-block">
+  <mat-label>{{ 'rulenode.message-type' | translate }}</mat-label>
+  <input matInput type="text" placeholder="{{ 'rulenode.select-message-type' | translate }}"
+         #messageTypeInput
+         formControlName="messageType"
+         (focusin)="onFocus()"
+         [required]="required"
+         [matAutocomplete]="messageTypeAutocomplete">
+  <button *ngIf="messageTypeFormGroup.get('messageType').value && !disabled"
+          type="button"
+          matSuffix mat-button mat-icon-button aria-label="Clear"
+          (click)="clear()">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+  <mat-autocomplete
+    class="tb-autocomplete"
+    #messageTypeAutocomplete="matAutocomplete"
+    [displayWith]="displayMessageTypeFn">
+    <mat-option *ngFor="let messageType of filteredMessageTypes | async" [value]="messageType">
+      <span [innerHTML]="displayMessageTypeFn(messageType) | highlight:searchText"></span>
+    </mat-option>
+  </mat-autocomplete>
+  <mat-error *ngIf="messageTypeFormGroup.get('messageType').hasError('required')">
+    {{ 'rulenode.message-type-required' | translate }}
+  </mat-error>
+</mat-form-field>

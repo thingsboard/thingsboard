@@ -43,7 +43,7 @@ import java.util.Map;
         configClazz = TbMsgTimeseriesNodeConfiguration.class,
         nodeDescription = "Saves timeseries data",
         nodeDetails = "Saves timeseries telemetry data based on configurable TTL parameter. Expects messages with 'POST_TELEMETRY_REQUEST' message type",
-        uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
+        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeTimeseriesConfig",
         icon = "file_upload"
 )

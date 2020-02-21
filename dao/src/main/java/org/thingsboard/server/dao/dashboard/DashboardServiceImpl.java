@@ -29,9 +29,8 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.TextPageData;
-import org.thingsboard.server.common.data.page.TextPageLink;
-import org.thingsboard.server.common.data.page.TimePageData;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
@@ -174,12 +173,11 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     }
 
     @Override
-    public TextPageData<DashboardInfo> findDashboardsByTenantId(TenantId tenantId, TextPageLink pageLink) {
+    public PageData<DashboardInfo> findDashboardsByTenantId(TenantId tenantId, PageLink pageLink) {
         log.trace("Executing findDashboardsByTenantId, tenantId [{}], pageLink [{}]", tenantId, pageLink);
         Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        Validator.validatePageLink(pageLink, "Incorrect page link " + pageLink);
-        List<DashboardInfo> dashboards = dashboardInfoDao.findDashboardsByTenantId(tenantId.getId(), pageLink);
-        return new TextPageData<>(dashboards, pageLink);
+        Validator.validatePageLink(pageLink);
+        return dashboardInfoDao.findDashboardsByTenantId(tenantId.getId(), pageLink);
     }
 
     @Override
@@ -190,20 +188,12 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     }
 
     @Override
-    public ListenableFuture<TimePageData<DashboardInfo>> findDashboardsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, TimePageLink pageLink) {
+    public PageData<DashboardInfo> findDashboardsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink) {
         log.trace("Executing findDashboardsByTenantIdAndCustomerId, tenantId [{}], customerId [{}], pageLink [{}]", tenantId, customerId, pageLink);
         Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         Validator.validateId(customerId, "Incorrect customerId " + customerId);
-        Validator.validatePageLink(pageLink, "Incorrect page link " + pageLink);
-        ListenableFuture<List<DashboardInfo>> dashboards = dashboardInfoDao.findDashboardsByTenantIdAndCustomerId(tenantId.getId(), customerId.getId(), pageLink);
-
-        return Futures.transform(dashboards, new Function<List<DashboardInfo>, TimePageData<DashboardInfo>>() {
-            @Nullable
-            @Override
-            public TimePageData<DashboardInfo> apply(@Nullable List<DashboardInfo> dashboards) {
-                return new TimePageData<>(dashboards, pageLink);
-            }
-        });
+        Validator.validatePageLink(pageLink);
+        return dashboardInfoDao.findDashboardsByTenantIdAndCustomerId(tenantId.getId(), customerId.getId(), pageLink);
     }
 
     @Override
@@ -250,7 +240,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             new PaginatedRemover<TenantId, DashboardInfo>() {
         
         @Override
-        protected List<DashboardInfo> findEntities(TenantId tenantId, TenantId id, TextPageLink pageLink) {
+        protected PageData<DashboardInfo> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
             return dashboardInfoDao.findDashboardsByTenantId(id.getId(), pageLink);
         }
 
@@ -260,7 +250,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         }
     };
     
-    private class CustomerDashboardsUnassigner extends TimePaginatedRemover<Customer, DashboardInfo> {
+    private class CustomerDashboardsUnassigner extends PaginatedRemover<Customer, DashboardInfo> {
         
         private Customer customer;
 
@@ -269,13 +259,8 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         }
 
         @Override
-        protected List<DashboardInfo> findEntities(TenantId tenantId, Customer customer, TimePageLink pageLink) {
-            try {
-                return dashboardInfoDao.findDashboardsByTenantIdAndCustomerId(customer.getTenantId().getId(), customer.getId().getId(), pageLink).get();
-            } catch (InterruptedException | ExecutionException e) {
-                log.warn("Failed to get dashboards by tenantId [{}] and customerId [{}].", customer.getTenantId().getId(), customer.getId().getId());
-                throw new RuntimeException(e);
-            }
+        protected PageData<DashboardInfo> findEntities(TenantId tenantId, Customer customer, PageLink pageLink) {
+            return dashboardInfoDao.findDashboardsByTenantIdAndCustomerId(customer.getTenantId().getId(), customer.getId().getId(), pageLink);
         }
 
         @Override
@@ -285,7 +270,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         
     }
 
-    private class CustomerDashboardsUpdater extends TimePaginatedRemover<Customer, DashboardInfo> {
+    private class CustomerDashboardsUpdater extends PaginatedRemover<Customer, DashboardInfo> {
 
         private Customer customer;
 
@@ -294,13 +279,8 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         }
 
         @Override
-        protected List<DashboardInfo> findEntities(TenantId tenantId, Customer customer, TimePageLink pageLink) {
-            try {
-                return dashboardInfoDao.findDashboardsByTenantIdAndCustomerId(customer.getTenantId().getId(), customer.getId().getId(), pageLink).get();
-            } catch (InterruptedException | ExecutionException e) {
-                log.warn("Failed to get dashboards by tenantId [{}] and customerId [{}].", customer.getTenantId().getId(), customer.getId().getId());
-                throw new RuntimeException(e);
-            }
+        protected PageData<DashboardInfo> findEntities(TenantId tenantId, Customer customer, PageLink pageLink) {
+            return dashboardInfoDao.findDashboardsByTenantIdAndCustomerId(customer.getTenantId().getId(), customer.getId().getId(), pageLink);
         }
 
         @Override

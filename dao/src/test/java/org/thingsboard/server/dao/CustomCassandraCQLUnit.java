@@ -73,6 +73,7 @@ public class CustomCassandraCQLUnit extends BaseCassandraUnit {
         CQLDataLoader dataLoader = new CQLDataLoader(session);
         dataSets.forEach(dataLoader::load);
         session = dataLoader.getSession();
+        System.setSecurityManager(null);
     }
 
     @Override

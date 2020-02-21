@@ -25,7 +25,8 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import org.thingsboard.server.dao.device.DeviceDao;
 
@@ -54,13 +55,14 @@ public class JpaDeviceDaoTest extends AbstractJpaDaoTest {
         UUID customerId2 = UUIDs.timeBased();
         createDevices(tenantId1, tenantId2, customerId1, customerId2, 40);
 
-        TextPageLink pageLink1 = new TextPageLink(15, "SEARCH_TEXT");
-        List<Device> devices1 = deviceDao.findDevicesByTenantId(tenantId1, pageLink1);
-        assertEquals(15, devices1.size());
+        PageLink pageLink = new PageLink(15, 0,  "SEARCH_TEXT");
+        PageData<Device> devices1 = deviceDao.findDevicesByTenantId(tenantId1, pageLink);
+        assertEquals(15, devices1.getData().size());
 
-        TextPageLink pageLink2 = new TextPageLink(15, "SEARCH_TEXT",  devices1.get(14).getId().getId(), null);
-        List<Device> devices2 = deviceDao.findDevicesByTenantId(tenantId1, pageLink2);
-        assertEquals(5, devices2.size());
+        pageLink = pageLink.nextPageLink();
+
+        PageData<Device> devices2 = deviceDao.findDevicesByTenantId(tenantId1, pageLink);
+        assertEquals(5, devices2.getData().size());
     }
 
     @Test

@@ -1,0 +1,39 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-switch" fxLayout="column" [ngStyle]="{'pointerEvents': ctx.isEdit ? 'none' : 'all'}">
+  <div #switchErrorContainer class="error-container" [ngStyle]="{'background': error?.length ? 'rgba(255,255,255,0.25)' : 'none'}"
+       fxLayout="row" fxLayoutAlign="center center">
+    <span #switchError class="switch-error">{{ error }}</span>
+  </div>
+  <div #switchTitleContainer fxFlex="30" class="title-container" fxLayout="row" fxLayoutAlign="center center" [fxShow]="showTitle">
+    <span #switchTitle class="switch-title">{{title}}</span>
+  </div>
+  <div #switchContainer fxFlex="{{showTitle ? 70 : 100}}" id="switch-container" fxLayout="column" fxLayoutAlign="center center">
+    <div #switch class="switch">
+      <mat-slide-toggle #matSlideToggle [(ngModel)]="value" (change)="onValue()">
+      </mat-slide-toggle>
+    </div>
+    <div #onoffContainer class="onoff-container" fxLayout="row" fxLayoutAlign="center start" [fxShow]="showOnOffLabels">
+      <span #offLabel fxFlex class="off-label" [fxShow]="!value" style="text-align: center;">OFF</span>
+      <span fxFlex [fxShow]="value"></span>
+      <span #onLabel fxFlex class="on-label" [fxShow]="value" style="text-align: center;">ON</span>
+      <span fxFlex [fxShow]="!value"></span>
+    </div>
+  </div>
+  <div #textMeasure id="text-measure"></div>
+</div>

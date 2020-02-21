@@ -21,8 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
@@ -31,6 +29,7 @@ import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EventId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.event.EventDao;
@@ -39,13 +38,11 @@ import org.thingsboard.server.dao.sql.JpaAbstractSearchTimeDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import javax.persistence.criteria.Predicate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
-import static org.springframework.data.jpa.domain.Specifications.where;
-import static org.thingsboard.server.dao.model.ModelConstants.ID_PROPERTY;
+import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
+import static org.thingsboard.server.dao.DaoUtil.endTimeToId;
+import static org.thingsboard.server.dao.DaoUtil.startTimeToId;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 /**
@@ -110,17 +107,31 @@ public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event
     }
 
     @Override
-    public List<Event> findEvents(UUID tenantId, EntityId entityId, TimePageLink pageLink) {
-        return findEvents(tenantId, entityId, null, pageLink);
+    public PageData<Event> findEvents(UUID tenantId, EntityId entityId, TimePageLink pageLink) {
+        return DaoUtil.toPageData(
+                eventRepository
+                        .findEventsByTenantIdAndEntityId(
+                                fromTimeUUID(tenantId),
+                                entityId.getEntityType(),
+                                fromTimeUUID(entityId.getId()),
+                                Objects.toString(pageLink.getTextSearch(), ""),
+                                startTimeToId(pageLink.getStartTime()),
+                                endTimeToId(pageLink.getEndTime()),
+                                DaoUtil.toPageable(pageLink)));
     }
 
     @Override
-    public List<Event> findEvents(UUID tenantId, EntityId entityId, String eventType, TimePageLink pageLink) {
-        Specification<EventEntity> timeSearchSpec = JpaAbstractSearchTimeDao.getTimeSearchPageSpec(pageLink, "id");
-        Specification<EventEntity> fieldsSpec = getEntityFieldsSpec(tenantId, entityId, eventType);
-        Sort.Direction sortDirection = pageLink.isAscOrder() ? Sort.Direction.ASC : Sort.Direction.DESC;
-        Pageable pageable = new PageRequest(0, pageLink.getLimit(), sortDirection, ID_PROPERTY);
-        return DaoUtil.convertDataList(eventRepository.findAll(where(timeSearchSpec).and(fieldsSpec), pageable).getContent());
+    public PageData<Event> findEvents(UUID tenantId, EntityId entityId, String eventType, TimePageLink pageLink) {
+        return DaoUtil.toPageData(
+                eventRepository
+                        .findEventsByTenantIdAndEntityIdAndEventType(
+                                fromTimeUUID(tenantId),
+                                entityId.getEntityType(),
+                                fromTimeUUID(entityId.getId()),
+                                eventType,
+                                startTimeToId(pageLink.getStartTime()),
+                                endTimeToId(pageLink.getEndTime()),
+                                DaoUtil.toPageable(pageLink)));
     }
 
     @Override

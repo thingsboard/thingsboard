@@ -1,0 +1,51 @@
+<!--
+
+    Copyright © 2016-2020 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-entities-hierarchy tb-absolute-fill" tb-toast toastTarget="{{ toastTargetId }}">
+  <div fxFlex fxLayout="column" class="tb-absolute-fill">
+    <mat-toolbar class="mat-table-toolbar" [fxShow]="textSearchMode">
+      <div class="mat-toolbar-tools">
+        <button mat-button mat-icon-button
+                matTooltip="{{ 'action.search' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>search</mat-icon>
+        </button>
+        <mat-form-field fxFlex>
+          <mat-label>&nbsp;</mat-label>
+          <input #searchInput matInput
+                 [(ngModel)]="textSearch"
+                 placeholder="{{ 'entity.search' | translate }}"/>
+        </mat-form-field>
+        <button mat-button mat-icon-button (click)="exitFilterMode()"
+                matTooltip="{{ 'action.close' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </mat-toolbar>
+    <div fxFlex class="tb-entities-nav-tree-panel">
+      <tb-nav-tree
+        [loadNodes]="loadNodes"
+        [onNodeSelected]="onNodeSelected"
+        [onNodesInserted]="onNodesInserted"
+        [editCallbacks]="nodeEditCallbacks"
+        enableSearch="true"
+        [searchCallback]="searchCallback"
+      ></tb-nav-tree>
+    </div>
+  </div>
+</div>
