@@ -16,12 +16,12 @@
 
 DROP MATERIALIZED VIEW IF EXISTS thingsboard.provision_profile_by_key;
 
-DROP MATERIALIZED VIEW IF EXISTS thingsboard.provision_profile_by_tenant;
+DROP MATERIALIZED VIEW IF EXISTS thingsboard.provision_profile_by_tenant_and_search_text;
 
 DROP TABLE IF EXISTS thingsboard.provision_profile;
 
 CREATE TABLE IF NOT EXISTS thingsboard.provision_profile (
-    id timeuuid PRIMARY KEY,
+    id timeuuid,
     tenant_id timeuuid,
     customer_id timeuuid,
     key text,
@@ -29,17 +29,23 @@ CREATE TABLE IF NOT EXISTS thingsboard.provision_profile (
     provision_request_validation_strategy_type text,
     search_text text,
     additional_info text,
+    PRIMARY KEY (id, search_text)
 );
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.provision_profile_by_key AS
 	SELECT *
 	from thingsboard.provision_profile
-	WHERE key IS NOT NULL AND id IS NOT NULL
-	PRIMARY KEY ( key, id );
+	WHERE key IS NOT NULL
+	  AND id IS NOT NULL
+      AND search_text IS NOT NULL
+	PRIMARY KEY (key, id, search_text)
+    WITH CLUSTERING ORDER BY (id ASC, search_text DESC);
 
-CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.provision_profile_by_tenant AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.provision_profile_by_tenant_and_search_text AS
     SELECT *
     from thingsboard.provision_profile
     WHERE tenant_id IS NOT NULL
       AND id IS NOT NULL
-    PRIMARY KEY ( tenant_id, id);
+      AND search_text IS NOT NULL
+    PRIMARY KEY (tenant_id, search_text, id)
+    WITH CLUSTERING ORDER BY (search_text ASC, id DESC);

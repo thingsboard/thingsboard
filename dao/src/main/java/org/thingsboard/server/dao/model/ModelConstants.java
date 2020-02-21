@@ -274,7 +274,7 @@ public class ModelConstants {
     public static final String PROVISION_PROFILE_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
 
     public static final String PROVISION_PROFILE_BY_KEY_COLUMN_FAMILY_NAME = "provision_profile_by_key";
-    public static final String PROVISION_PROFILE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "provision_profile_by_tenant";
+    public static final String PROVISION_PROFILE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "provision_profile_by_tenant_and_search_text";
 
     /**
      * Cassandra widgets_bundle constants.
