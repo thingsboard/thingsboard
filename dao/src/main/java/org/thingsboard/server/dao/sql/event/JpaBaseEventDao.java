@@ -139,11 +139,11 @@ public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event
             log.trace("Save system event with predefined id {}", systemTenantId);
             entity.setTenantId(UUIDConverter.fromTimeUUID(systemTenantId));
         }
-        if (entity.getId() == null) {
-            entity.setId(UUIDs.timeBased());
+        if (entity.getUuid() == null) {
+            entity.setUuid(UUIDs.timeBased());
         }
         if (StringUtils.isEmpty(entity.getEventUid())) {
-            entity.setEventUid(entity.getId().toString());
+            entity.setEventUid(entity.getUuid().toString());
         }
         if (ifNotExists &&
                 eventRepository.findByTenantIdAndEntityTypeAndEntityId(entity.getTenantId(), entity.getEntityType(), entity.getEntityId()) != null) {

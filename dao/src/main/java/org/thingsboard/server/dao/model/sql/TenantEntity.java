@@ -82,7 +82,7 @@ public final class TenantEntity extends BaseSqlEntity<Tenant> implements SearchT
 
     public TenantEntity(Tenant tenant) {
         if (tenant.getId() != null) {
-            this.setId(tenant.getId().getId());
+            this.setUuid(tenant.getId().getId());
         }
         this.title = tenant.getTitle();
         this.region = tenant.getRegion();
@@ -113,8 +113,8 @@ public final class TenantEntity extends BaseSqlEntity<Tenant> implements SearchT
 
     @Override
     public Tenant toData() {
-        Tenant tenant = new Tenant(new TenantId(getId()));
-        tenant.setCreatedTime(UUIDs.unixTimestamp(getId()));
+        Tenant tenant = new Tenant(new TenantId(this.getUuid()));
+        tenant.setCreatedTime(UUIDs.unixTimestamp(this.getUuid()));
         tenant.setTitle(title);
         tenant.setRegion(region);
         tenant.setCountry(country);
