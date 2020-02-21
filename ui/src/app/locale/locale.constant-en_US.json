@@ -607,6 +607,7 @@
     },
     "details": {
         "edit-mode": "Edit mode",
+        "edit-json": "Edit JSON",
         "toggle-edit-mode": "Toggle edit mode"
     },
     "device": {
@@ -1269,8 +1270,7 @@
         "no-return-error": "Function must return value!",
         "return-type-mismatch": "Function must return value of '{{type}}' type!",
         "tidy": "Tidy",
-        "mini": "Mini",
-        "minifier": "Minifier"
+        "mini": "Mini"
     },
     "key-val": {
         "key": "Key",
@@ -1594,8 +1594,8 @@
         "false": "False",
         "true": "True",
         "long": "Long",
-        "json": "Json",
-        "json-value": "Json value"
+        "json": "JSON",
+        "json-value": "JSON value"
     },
     "widget": {
         "widget-library": "Widgets Library",

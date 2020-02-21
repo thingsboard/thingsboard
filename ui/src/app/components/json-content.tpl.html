@@ -20,10 +20,10 @@
         <label class="tb-title no-padding"
                ng-class="{'tb-error': !contentValid}">{{ label }}</label>
         <span flex></span>
-        <md-button ng-if="!readonly" class="tidy" aria-label="{{ 'js-func.tidy' | translate }}" ng-click="beautifyJson()">{{
+        <md-button ng-if="!readonly" class="tidy" aria-label="{{ 'js-func.tidy' | translate }}" ng-click="beautifyJSON()">{{
             'js-func.tidy' | translate }}
         </md-button>
-        <md-button ng-if="!readonly" class="tidy" aria-label="{{ 'js-func.mini' | translate }}" ng-click="minifierJson()">{{
+        <md-button ng-if="!readonly" class="tidy" aria-label="{{ 'js-func.mini' | translate }}" ng-click="minifyJSON()">{{
             'js-func.mini' | translate }}
         </md-button>
         <md-button id="expand-button" aria-label="Fullscreen" class="md-icon-button tb-md-32 tb-fullscreen-button-style"></md-button>
