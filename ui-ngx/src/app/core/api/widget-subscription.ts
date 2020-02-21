@@ -93,6 +93,8 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   alarmsPollingInterval: number;
+  alarmsMaxCountLoad: number;
+  alarmsFetchSize: number;
   alarmSourceListener: AlarmSourceListener;
 
   loadingData: boolean;
@@ -153,6 +155,10 @@ export class WidgetSubscription implements IWidgetSubscription {
         options.alarmSearchStatus : AlarmSearchStatus.ANY;
       this.alarmsPollingInterval = isDefined(options.alarmsPollingInterval) ?
         options.alarmsPollingInterval : 5000;
+      this.alarmsMaxCountLoad = isDefined(options.alarmsMaxCountLoad) ?
+        options.alarmsMaxCountLoad : 0;
+      this.alarmsFetchSize = isDefined(options.alarmsFetchSize) ?
+        options.alarmsFetchSize : 100;
       this.alarmSourceListener = null;
       this.alarms = [];
       this.originalTimewindow = null;
@@ -712,6 +718,8 @@ export class WidgetSubscription implements IWidgetSubscription {
       alarmSource: this.alarmSource,
       alarmSearchStatus: this.alarmSearchStatus,
       alarmsPollingInterval: this.alarmsPollingInterval,
+      alarmsMaxCountLoad: this.alarmsMaxCountLoad,
+      alarmsFetchSize: this.alarmsFetchSize,
       alarmsUpdated: alarms => this.alarmsUpdated(alarms)
     };
     this.alarms = null;

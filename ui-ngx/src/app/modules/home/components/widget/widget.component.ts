@@ -828,6 +828,10 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           this.widget.config.alarmSearchStatus : AlarmSearchStatus.ANY;
         options.alarmsPollingInterval = isDefined(this.widget.config.alarmsPollingInterval) ?
           this.widget.config.alarmsPollingInterval * 1000 : 5000;
+        options.alarmsMaxCountLoad = isDefined(this.widget.config.alarmsMaxCountLoad) ?
+          this.widget.config.alarmsMaxCountLoad : 0;
+        options.alarmsFetchSize = isDefined(this.widget.config.alarmsFetchSize) ?
+          this.widget.config.alarmsFetchSize : 100;
       } else {
         options.datasources = deepClone(this.widget.config.datasources);
       }

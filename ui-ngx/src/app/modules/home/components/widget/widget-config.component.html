@@ -36,29 +36,60 @@
                          fxFlex formControlName="timewindow"></tb-timewindow>
         </section>
       </div>
-      <div *ngIf="widgetType === widgetTypes.alarm" fxLayout="column" fxLayoutGap="8px" fxLayoutAlign="center"
-           fxLayout.gt-sm="row" fxLayoutAlign.gt-sm="start center">
-        <mat-form-field fxFlex class="mat-block">
-          <mat-label translate>alarm.alarm-status</mat-label>
-          <mat-select matInput formControlName="alarmSearchStatus">
-            <mat-option *ngFor="let searchStatus of alarmSearchStatuses" [value]="searchStatus">
-              {{ ('alarm.search-status.' + searchStatus) | translate }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field fxFlex class="mat-block">
-          <mat-label translate>alarm.polling-interval</mat-label>
-          <input matInput required
-                 formControlName="alarmsPollingInterval"
-                 type="number"
-                 step="1"/>
-          <mat-error *ngIf="dataSettings.get('alarmsPollingInterval').hasError('required')">
-            {{ 'alarm.polling-interval-required' | translate }}
-          </mat-error>
-          <mat-error *ngIf="dataSettings.get('alarmsPollingInterval').hasError('min')">
-            {{ 'alarm.min-polling-interval-message' | translate }}
-          </mat-error>
-        </mat-form-field>
+      <div *ngIf="widgetType === widgetTypes.alarm" fxLayout="column" fxLayoutAlign="center">
+        <div fxLayout.gt-sm="row" fxLayoutAlign.gt-sm="start center" fxLayoutGap="8px">
+          <mat-form-field fxFlex class="mat-block">
+            <mat-label translate>alarm.alarm-status</mat-label>
+            <mat-select matInput formControlName="alarmSearchStatus">
+              <mat-option *ngFor="let searchStatus of alarmSearchStatuses" [value]="searchStatus">
+                {{ ('alarm.search-status.' + searchStatus) | translate }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field fxFlex class="mat-block">
+            <mat-label translate>alarm.polling-interval</mat-label>
+            <input matInput required
+                   formControlName="alarmsPollingInterval"
+                   type="number"
+                   step="1"/>
+            <mat-error *ngIf="dataSettings.get('alarmsPollingInterval').hasError('required')">
+              {{ 'alarm.polling-interval-required' | translate }}
+            </mat-error>
+            <mat-error *ngIf="dataSettings.get('alarmsPollingInterval').hasError('min')">
+              {{ 'alarm.min-polling-interval-message' | translate }}
+            </mat-error>
+          </mat-form-field>
+        </div>
+        <div fxLayout.gt-sm="row" fxLayoutAlign.gt-sm="start center" fxLayoutGap="8px">
+          <mat-form-field fxFlex class="mat-block">
+            <mat-label translate>alarm.max-count-load</mat-label>
+            <input matInput required
+                   formControlName="alarmsMaxCountLoad"
+                   type="number"
+                   min="0"
+                   step="1">
+            <mat-error *ngIf="dataSettings.get('alarmsMaxCountLoad').hasError('required')">
+              {{ 'alarm.max-count-load-required' | translate }}
+            </mat-error>
+            <mat-error *ngIf="dataSettings.get('alarmsMaxCountLoad').hasError('min')">
+              {{ 'alarm.max-count-load-error-min' | translate }}
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field fxFlex class="mat-block">
+            <mat-label translate>alarm.fetch-size</mat-label>
+            <input matInput required
+                   formControlName="alarmsFetchSize"
+                   type="number"
+                   min="10"
+                   step="1">
+            <mat-error *ngIf="dataSettings.get('alarmsFetchSize').hasError('required')">
+              {{ 'alarm.fetch-size-required' | translate }}
+            </mat-error>
+            <mat-error *ngIf="dataSettings.get('alarmsFetchSize').hasError('min')">
+              {{ 'alarm.fetch-size-error-min' | translate }}
+            </mat-error>
+          </mat-form-field>
+        </div>
       </div>
       <mat-expansion-panel class="tb-datasources" *ngIf="widgetType !== widgetTypes.rpc &&
                                   widgetType !== widgetTypes.alarm &&

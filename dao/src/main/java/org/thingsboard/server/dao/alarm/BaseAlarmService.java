@@ -300,7 +300,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         AlarmSeverity highestSeverity = null;
         AlarmQuery query;
         while (hasNext && AlarmSeverity.CRITICAL != highestSeverity) {
-            query = new AlarmQuery(entityId, nextPageLink, alarmSearchStatus, alarmStatus, false);
+            query = new AlarmQuery(entityId, nextPageLink, alarmSearchStatus, alarmStatus, false, null);
             PageData<AlarmInfo> alarms = alarmDao.findAlarms(tenantId, query);
             if (alarms.hasNext()) {
                 nextPageLink = nextPageLink.nextPageLink();

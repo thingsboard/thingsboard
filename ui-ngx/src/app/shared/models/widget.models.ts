@@ -360,6 +360,8 @@ export interface WidgetConfig {
   alarmSource?: Datasource;
   alarmSearchStatus?: AlarmSearchStatus;
   alarmsPollingInterval?: number;
+  alarmsMaxCountLoad?: number;
+  alarmsFetchSize?: number;
   datasources?: Array<Datasource>;
   targetDeviceAliasIds?: Array<string>;
   [key: string]: any;

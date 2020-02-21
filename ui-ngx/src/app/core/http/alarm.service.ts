@@ -38,12 +38,15 @@ import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { concatMap, expand, map, toArray } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
 import Timeout = NodeJS.Timeout;
+import { isDefined } from '@core/utils';
 
 interface AlarmSourceListenerQuery {
   entityType: EntityType;
   entityId: string;
   alarmSearchStatus: AlarmSearchStatus;
   alarmStatus: AlarmStatus;
+  alarmsMaxCountLoad: number;
+  alarmsFetchSize: number;
   fetchOriginator?: boolean;
   limit?: number;
   interval?: number;
@@ -58,6 +61,8 @@ export interface AlarmSourceListener {
   alarmSource: Datasource;
   alarmsPollingInterval: number;
   alarmSearchStatus: AlarmSearchStatus;
+  alarmsMaxCountLoad: number;
+  alarmsFetchSize: number;
   alarmsUpdated: (alarms: Array<AlarmInfo>) => void;
   lastUpdateTs?: number;
   alarmsQuery?: AlarmSourceListenerQuery;
@@ -132,7 +137,9 @@ export class AlarmService {
         entityType: alarmSource.entityType,
         entityId: alarmSource.entityId,
         alarmSearchStatus: alarmSourceListener.alarmSearchStatus,
-        alarmStatus: null
+        alarmStatus: null,
+        alarmsMaxCountLoad: alarmSourceListener.alarmsMaxCountLoad,
+        alarmsFetchSize: alarmSourceListener.alarmsFetchSize
       };
       const originatorKeys = alarmSource.dataKeys.filter(dataKey => dataKey.name.toLocaleLowerCase().includes('originator'));
       if (originatorKeys.length) {
@@ -186,32 +193,49 @@ export class AlarmService {
         null,
         sortOrder);
     } else if (alarmsQuery.interval) {
-      pageLink = new TimePageLink(100, 0,
+      pageLink = new TimePageLink(alarmsQuery.alarmsFetchSize || 100, 0,
         null,
         sortOrder, time - alarmsQuery.interval);
     } else if (alarmsQuery.startTime) {
-      pageLink = new TimePageLink(100, 0,
+      pageLink = new TimePageLink(alarmsQuery.alarmsFetchSize || 100, 0,
         null,
         sortOrder, Math.round(alarmsQuery.startTime));
       if (alarmsQuery.endTime) {
         pageLink.endTime = Math.round(alarmsQuery.endTime);
       }
     }
-    return this.fetchAlarms(alarmsQuery, pageLink);
+    let leftToLoad;
+    if (isDefined(alarmsQuery.alarmsMaxCountLoad) && alarmsQuery.alarmsMaxCountLoad !== 0) {
+      leftToLoad = alarmsQuery.alarmsMaxCountLoad;
+      if (leftToLoad < pageLink.pageSize) {
+        pageLink.pageSize = leftToLoad;
+      }
+    }
+    return this.fetchAlarms(alarmsQuery, pageLink, leftToLoad);
   }
 
   private fetchAlarms(query: AlarmSourceListenerQuery,
-                      pageLink: TimePageLink): Observable<Array<AlarmInfo>> {
+                      pageLink: TimePageLink, leftToLoad?: number): Observable<Array<AlarmInfo>> {
     const alarmQuery = new AlarmQuery(
       {id: query.entityId, entityType: query.entityType},
       pageLink,
       query.alarmSearchStatus,
       query.alarmStatus,
-      query.fetchOriginator);
+      query.fetchOriginator,
+      null);
     return this.getAlarms(alarmQuery, {ignoreLoading: true}).pipe(
       expand((data) => {
-        if (data.hasNext && !query.limit) {
-          alarmQuery.pageLink.page += 1;
+        let continueLoad = data.hasNext && !query.limit;
+        if (continueLoad && isDefined(leftToLoad)) {
+          leftToLoad -= data.data.length;
+          if (leftToLoad === 0) {
+            continueLoad = false;
+          } else if (leftToLoad < alarmQuery.pageLink.pageSize) {
+            alarmQuery.pageLink.pageSize = leftToLoad;
+          }
+        }
+        if (continueLoad) {
+          alarmQuery.offset = data.data[data.data.length-1].id.id;
           return this.getAlarms(alarmQuery, {ignoreLoading: true});
         } else {
           return EMPTY;

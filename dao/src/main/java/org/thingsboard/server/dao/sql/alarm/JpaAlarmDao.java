@@ -117,6 +117,7 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
                     relationType,
                     startTimeToId(query.getPageLink().getStartTime()),
                     endTimeToId(query.getPageLink().getEndTime()),
+                    query.getIdOffset() != null ? UUIDConverter.fromTimeUUID(query.getIdOffset()) : null,
                     Objects.toString(query.getPageLink().getTextSearch(), ""),
                     DaoUtil.toPageable(query.getPageLink())
             )

@@ -44,6 +44,8 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api")
 public class AlarmController extends BaseController {
@@ -155,6 +157,7 @@ public class AlarmController extends BaseController {
             @RequestParam(required = false) String sortOrder,
             @RequestParam(required = false) Long startTime,
             @RequestParam(required = false) Long endTime,
+            @RequestParam(required = false) String offset,
             @RequestParam(required = false) Boolean fetchOriginator
     ) throws ThingsboardException {
         checkParameter("EntityId", strEntityId);
@@ -168,8 +171,12 @@ public class AlarmController extends BaseController {
         }
         checkEntityId(entityId, Operation.READ);
         TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
+        UUID idOffsetUuid = null;
+        if (StringUtils.isNotEmpty(offset)) {
+            idOffsetUuid = toUUID(offset);
+        }
         try {
-            return checkNotNull(alarmService.findAlarms(getCurrentUser().getTenantId(), new AlarmQuery(entityId, pageLink, alarmSearchStatus, alarmStatus, fetchOriginator)).get());
+            return checkNotNull(alarmService.findAlarms(getCurrentUser().getTenantId(), new AlarmQuery(entityId, pageLink, alarmSearchStatus, alarmStatus, fetchOriginator, idOffsetUuid)).get());
         } catch (Exception e) {
             throw handleException(e);
         }

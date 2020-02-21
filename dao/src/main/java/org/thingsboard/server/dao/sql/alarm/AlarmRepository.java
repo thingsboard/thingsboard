@@ -33,7 +33,7 @@ import java.util.List;
 @SqlDao
 public interface AlarmRepository extends CrudRepository<AlarmEntity, String> {
 
-    @Query("SELECT a FROM AlarmEntity a WHERE a.originatorId = :originatorId AND a.type = :alarmType ORDER BY startTs DESC")
+    @Query("SELECT a FROM AlarmEntity a WHERE a.originatorId = :originatorId AND a.type = :alarmType ORDER BY a.startTs DESC")
     List<AlarmEntity> findLatestByOriginatorAndType(@Param("originatorId") String originatorId,
                                                     @Param("alarmType") String alarmType,
                                                     Pageable pageable);
@@ -48,6 +48,7 @@ public interface AlarmRepository extends CrudRepository<AlarmEntity, String> {
             "AND re.fromType = :affectedEntityType " +
             "AND (:startId IS NULL OR a.id >= :startId) " +
             "AND (:endId IS NULL OR a.id <= :endId) " +
+            "AND (:idOffset IS NULL OR a.id < :idOffset) " +
             "AND (LOWER(a.type) LIKE LOWER(CONCAT(:searchText, '%'))" +
             "OR LOWER(a.severity) LIKE LOWER(CONCAT(:searchText, '%'))" +
             "OR LOWER(a.status) LIKE LOWER(CONCAT(:searchText, '%')))")
@@ -57,6 +58,7 @@ public interface AlarmRepository extends CrudRepository<AlarmEntity, String> {
                                      @Param("relationType") String relationType,
                                      @Param("startId") String startId,
                                      @Param("endId") String endId,
+                                     @Param("idOffset") String idOffset,
                                      @Param("searchText") String searchText,
                                      Pageable pageable);
 }
