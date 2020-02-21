@@ -18,9 +18,9 @@ package org.thingsboard.server.service.telemetry;
 public class TsData implements Comparable<TsData>{
 
     private final long ts;
-    private final String value;
+    private final Object value;
 
-    public TsData(long ts, String value) {
+    public TsData(long ts, Object value) {
         super();
         this.ts = ts;
         this.value = value;
@@ -30,7 +30,7 @@ public class TsData implements Comparable<TsData>{
         return ts;
     }
 
-    public String getValue() {
+    public Object getValue() {
         return value;
     }
 
