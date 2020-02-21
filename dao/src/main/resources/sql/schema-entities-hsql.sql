@@ -249,3 +249,15 @@ CREATE TABLE IF NOT EXISTS entity_view (
     search_text varchar(255),
     additional_info varchar
 );
+
+CREATE TABLE IF NOT EXISTS provision_profile (
+    id varchar(31) NOT NULL CONSTRAINT provision_profile_pkey PRIMARY KEY,
+    key varchar(255),
+    secret varchar(255),
+    customer_id varchar(31),
+    tenant_id varchar(31),
+    provision_request_validation_strategy_type varchar(255),
+    additional_info varchar,
+    search_text varchar(255),
+    CONSTRAINT provision_profile_unq_key UNIQUE (key)
+);
