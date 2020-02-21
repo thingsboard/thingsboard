@@ -420,6 +420,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
           const dataKeyTypes = [DataKeyType.timeseries];
           if (this.widgetType === widgetType.latest) {
             dataKeyTypes.push(DataKeyType.attribute);
+            dataKeyTypes.push(DataKeyType.entityField);
           }
           fetchObservable = this.callbacks.fetchEntityKeys(this.entityAliasId, this.searchText, dataKeyTypes);
         } else {

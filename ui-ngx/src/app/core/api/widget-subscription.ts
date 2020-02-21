@@ -50,6 +50,8 @@ import { AlarmSourceListener } from '@core/http/alarm.service';
 import { DatasourceListener } from '@core/api/datasource.service';
 import * as deepEqual from 'deep-equal';
 import { EntityId } from '@app/shared/models/id/entity-id';
+import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { entityFields } from '@shared/models/entity.models';
 
 export class WidgetSubscription implements IWidgetSubscription {
 
@@ -342,6 +344,12 @@ export class WidgetSubscription implements IWidgetSubscription {
           dataKey,
           data: []
         };
+        if (dataKey.type === DataKeyType.entityField && datasource.entity) {
+          const propName = entityFields[dataKey.name] ? entityFields[dataKey.name].value : dataKey.name;
+          if (datasource.entity[propName]) {
+            datasourceData.data.push([Date.now(), datasource.entity[propName]]);
+          }
+        }
         this.data.push(datasourceData);
         this.hiddenData.push({data: []});
         if (this.displayLegend) {
@@ -682,8 +690,15 @@ export class WidgetSubscription implements IWidgetSubscription {
           },
           datasourceIndex: index
         };
+
+        let entityFieldKey = false;
+
         for (let a = 0; a < datasource.dataKeys.length; a++) {
-          this.data[index + a].data = [];
+          if (datasource.dataKeys[a].type !== DataKeyType.entityField) {
+            this.data[index + a].data = [];
+          } else {
+            entityFieldKey = true;
+          }
         }
         index += datasource.dataKeys.length;
         this.datasourceListeners.push(listener);
@@ -691,7 +706,7 @@ export class WidgetSubscription implements IWidgetSubscription {
         if (datasource.dataKeys.length) {
           this.ctx.datasourceService.subscribeToDatasource(listener);
         }
-        if (datasource.unresolvedStateEntity ||
+        if (datasource.unresolvedStateEntity || entityFieldKey ||
           !datasource.dataKeys.length ||
           (datasource.type === DatasourceType.entity && !datasource.entityId)
         ) {

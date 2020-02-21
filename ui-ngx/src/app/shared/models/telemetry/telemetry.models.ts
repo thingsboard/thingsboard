@@ -26,7 +26,8 @@ export enum DataKeyType {
   timeseries = 'timeseries',
   attribute = 'attribute',
   function = 'function',
-  alarm = 'alarm'
+  alarm = 'alarm',
+  entityField = 'entityField'
 }
 
 export enum LatestTelemetry {

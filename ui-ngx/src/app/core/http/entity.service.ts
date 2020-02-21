@@ -44,7 +44,7 @@ import { AliasInfo, StateParams, SubscriptionInfo } from '@core/api/widget-api.m
 import { Datasource, DatasourceType, KeyInfo } from '@app/shared/models/widget.models';
 import { UtilsService } from '@core/services/utils.service';
 import { AliasFilterType, EntityAlias, EntityAliasFilter, EntityAliasFilterResult } from '@shared/models/alias.models';
-import { EntityInfo, ImportEntitiesResultInfo, ImportEntityData } from '@shared/models/entity.models';
+import { entityFields, EntityInfo, ImportEntitiesResultInfo, ImportEntityData } from '@shared/models/entity.models';
 import {
   EntityRelationInfo,
   EntityRelationsQuery,
@@ -503,8 +503,50 @@ export class EntityService {
     return entityTypes;
   }
 
+  private getEntityFieldKeys (entityType: EntityType, searchText: string): Array<string> {
+    const entityFieldKeys: string[] = [];
+    const query = searchText.toLowerCase();
+    switch(entityType) {
+      case EntityType.USER:
+        entityFieldKeys.push(entityFields.name.keyName);
+        entityFieldKeys.push(entityFields.email.keyName);
+        entityFieldKeys.push(entityFields.firstName.keyName);
+        entityFieldKeys.push(entityFields.lastName.keyName);
+        break;
+      case EntityType.TENANT:
+      case EntityType.CUSTOMER:
+        entityFieldKeys.push(entityFields.title.keyName);
+        entityFieldKeys.push(entityFields.email.keyName);
+        entityFieldKeys.push(entityFields.country.keyName);
+        entityFieldKeys.push(entityFields.state.keyName);
+        entityFieldKeys.push(entityFields.city.keyName);
+        entityFieldKeys.push(entityFields.address.keyName);
+        entityFieldKeys.push(entityFields.address2.keyName);
+        entityFieldKeys.push(entityFields.zip.keyName);
+        entityFieldKeys.push(entityFields.phone.keyName);
+        break;
+      case EntityType.ENTITY_VIEW:
+        entityFieldKeys.push(entityFields.name.keyName);
+        entityFieldKeys.push(entityFields.type.keyName);
+        break;
+      case EntityType.DEVICE:
+      case EntityType.ASSET:
+        entityFieldKeys.push(entityFields.name.keyName);
+        entityFieldKeys.push(entityFields.type.keyName);
+        entityFieldKeys.push(entityFields.label.keyName);
+        break;
+      case EntityType.DASHBOARD:
+        entityFieldKeys.push(entityFields.title.keyName);
+        break;
+    }
+    return query ? entityFieldKeys.filter((entityField) => entityField.toLowerCase().indexOf(query) === 0) : entityFieldKeys;
+  }
+
   public getEntityKeys(entityId: EntityId, query: string, type: DataKeyType,
                        config?: RequestConfig): Observable<Array<string>> {
+    if (type === DataKeyType.entityField) {
+      return of(this.getEntityFieldKeys(entityId.entityType as EntityType, query));
+    }
     let url = `/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/keys/`;
     if (type === DataKeyType.timeseries) {
       url += 'timeseries';
@@ -588,7 +630,8 @@ export class EntityService {
     if (filter.stateEntityParamName && filter.stateEntityParamName.length) {
       result.entityParamName = filter.stateEntityParamName;
     }
-    const stateEntityId = this.getStateEntityId(filter, stateParams);
+    const stateEntityInfo = this.getStateEntityInfo(filter, stateParams);
+    const stateEntityId = stateEntityInfo.entityId;
     switch (filter.type) {
       case AliasFilterType.singleEntity:
         const aliasEntityId = this.resolveAliasEntityId(filter.singleEntity.entityType, filter.singleEntity.id);
@@ -697,7 +740,8 @@ export class EntityService {
             parameters: {
               rootId: relationQueryRootEntityId.id,
               rootType: relationQueryRootEntityId.entityType as EntityType,
-              direction: filter.direction
+              direction: filter.direction,
+              fetchLastLevelOnly: filter.fetchLastLevelOnly
             },
             filters: filter.filters
           };
@@ -741,10 +785,12 @@ export class EntityService {
             parameters: {
               rootId: searchQueryRootEntityId.id,
               rootType: searchQueryRootEntityId.entityType as EntityType,
-              direction: filter.direction
+              direction: filter.direction,
+              fetchLastLevelOnly: filter.fetchLastLevelOnly
             },
             relationType: filter.relationType
           };
+          searchQuery.parameters.maxLevel = filter.maxLevel && filter.maxLevel > 0 ? filter.maxLevel : -1;
           let findByQueryObservable: Observable<Array<BaseData<EntityId>>>;
           if (filter.type === AliasFilterType.assetSearchQuery) {
             const assetSearchQuery = searchQuery as AssetSearchQuery;
@@ -988,8 +1034,8 @@ export class EntityService {
     );
   }
 
-  private getStateEntityId(filter: EntityAliasFilter, stateParams: StateParams): EntityId {
-    let entityId = null;
+  private getStateEntityInfo(filter: EntityAliasFilter, stateParams: StateParams): {entityId: EntityId} {
+    let entityId: EntityId = null;
     if (stateParams) {
       if (filter.stateEntityParamName && filter.stateEntityParamName.length) {
         if (stateParams[filter.stateEntityParamName]) {
@@ -1005,7 +1051,7 @@ export class EntityService {
     if (entityId) {
       entityId = this.resolveAliasEntityId(entityId.entityType, entityId.id);
     }
-    return entityId;
+    return {entityId};
   }
 
   private resolveAliasEntityId(entityType: EntityType | AliasEntityType, id: string): EntityId {

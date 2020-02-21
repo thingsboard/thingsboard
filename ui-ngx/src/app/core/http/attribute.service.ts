@@ -45,11 +45,11 @@ export class AttributeService {
       defaultHttpOptionsFromConfig(config));
   }
 
-  public deleteEntityTimeseries(entityId: EntityId, timeseries: Array<AttributeData>,
+  public deleteEntityTimeseries(entityId: EntityId, timeseries: Array<AttributeData>, deleteAllDataForKeys = false,
                                 config?: RequestConfig): Observable<any> {
     const keys = timeseries.map(attribute => attribute.key).join(',');
     return this.http.delete(`/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/timeseries/delete` +
-      `?keys=${keys}`,
+      `?keys=${keys}&deleteAllDataForKeys=${deleteAllDataForKeys}`,
       defaultHttpOptionsFromConfig(config));
   }
 
@@ -93,7 +93,7 @@ export class AttributeService {
     });
     let deleteEntityTimeseriesObservable: Observable<any>;
     if (deleteTimeseries.length) {
-      deleteEntityTimeseriesObservable = this.deleteEntityTimeseries(entityId, deleteTimeseries, config);
+      deleteEntityTimeseriesObservable = this.deleteEntityTimeseries(entityId, deleteTimeseries, true, config);
     } else {
       deleteEntityTimeseriesObservable = of(null);
     }

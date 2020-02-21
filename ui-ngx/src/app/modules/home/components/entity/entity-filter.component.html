@@ -133,6 +133,14 @@
             </tb-entity-select>
           </div>
         </div>
+        <div fxFlex fxLayout="row">
+          <section class="tb-root-state-entity-switch" fxLayout="row" fxLayoutAlign="start center" style="padding-left: 0px;">
+            <mat-slide-toggle class="root-state-entity-switch"
+                              formControlName="fetchLastLevelOnly">
+            </mat-slide-toggle>
+            <label class="tb-small root-state-entity-label" translate>alias.last-level-relation</label>
+          </section>
+        </div>
         <div fxFlex fxLayoutGap="8px" fxLayout="row">
           <mat-form-field class="mat-block" style="min-width: 100px;">
             <mat-label translate>relation.direction</mat-label>
@@ -190,6 +198,14 @@
                             formControlName="defaultStateEntity">
           </tb-entity-select>
         </div>
+      </div>
+      <div fxFlex fxLayout="row">
+        <section class="tb-root-state-entity-switch" fxLayout="row" fxLayoutAlign="start center" style="padding-left: 0px;">
+          <mat-slide-toggle class="root-state-entity-switch"
+                            formControlName="fetchLastLevelOnly">
+          </mat-slide-toggle>
+          <label class="tb-small root-state-entity-label" translate>alias.last-level-relation</label>
+        </section>
       </div>
       <div fxFlex fxLayoutGap="8px" fxLayout="row">
         <mat-form-field class="mat-block" style="min-width: 100px;">

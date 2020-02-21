@@ -20,7 +20,13 @@ import { Observable, ReplaySubject } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
-import { Device, DeviceCredentials, DeviceInfo, DeviceSearchQuery } from '@app/shared/models/device.models';
+import {
+  ClaimRequest, ClaimResult,
+  Device,
+  DeviceCredentials,
+  DeviceInfo,
+  DeviceSearchQuery
+} from '@app/shared/models/device.models';
 import { EntitySubtype } from '@app/shared/models/entity-type.models';
 import { AuthService } from '@core/auth/auth.service';
 
@@ -125,6 +131,15 @@ export class DeviceService {
 
   public findByName(deviceName: string, config?: RequestConfig): Observable<Device> {
     return this.http.get<Device>(`/api/tenant/devices?deviceName=${deviceName}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public claimDevice(deviceName: string, claimRequest: ClaimRequest,
+                     config?: RequestConfig): Observable<ClaimResult> {
+    return this.http.post<ClaimResult>(`api/customer/device/${deviceName}/claim`, claimRequest, defaultHttpOptionsFromConfig(config));
+  }
+
+  public unclaimDevice(deviceName: string, config?: RequestConfig) {
+    return this.http.delete(`/api/customer/device/${deviceName}/claim`, defaultHttpOptionsFromConfig(config));
   }
 
 }

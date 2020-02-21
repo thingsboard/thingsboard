@@ -91,6 +91,7 @@ export interface RelationsQueryFilter {
   direction?: EntitySearchDirection;
   filters?: Array<EntityTypeFilter>;
   maxLevel?: number;
+  fetchLastLevelOnly?: boolean;
 }
 
 export interface EntitySearchQueryFilter {
@@ -100,6 +101,8 @@ export interface EntitySearchQueryFilter {
   rootEntity?: EntityId;
   relationType?: string;
   direction?: EntitySearchDirection;
+  maxLevel?: number;
+  fetchLastLevelOnly?: boolean;
 }
 
 export interface AssetSearchQueryFilter extends EntitySearchQueryFilter {

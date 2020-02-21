@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectionStrategy, Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -22,12 +22,11 @@ import {
   DataKey,
   Datasource,
   DatasourceType,
-  datasourceTypeTranslationMap, defaultLegendConfig,
-  WidgetActionDescriptor,
+  datasourceTypeTranslationMap,
+  defaultLegendConfig,
   widgetType
 } from '@shared/models/widget.models';
 import {
-  AbstractControl,
   ControlValueAccessor,
   FormArray,
   FormBuilder,
@@ -58,7 +57,8 @@ import { MatDialog } from '@angular/material/dialog';
 import { EntityService } from '@core/http/entity.service';
 import { JsonFormComponentData } from '@shared/components/json-form/json-form-component.models';
 import { WidgetActionsData } from './action/manage-widget-actions.component.models';
-import { Dashboard, DashboardState } from '@shared/models/dashboard.models';
+import { DashboardState } from '@shared/models/dashboard.models';
+import { entityFields } from '@shared/models/entity.models';
 
 const emptySettingsSchema = {
   type: 'object',
@@ -621,10 +621,10 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
       return chip;
     } else {
       let label: string = chip;
-      if (type === DataKeyType.alarm) {
-        const alarmField = alarmFields[label];
-        if (alarmField) {
-          label = this.translate.instant(alarmField.name);
+      if (type === DataKeyType.alarm || type === DataKeyType.entityField) {
+        const keyField = type === DataKeyType.alarm ? alarmFields[label] : entityFields[chip];;
+        if (keyField) {
+          label = this.translate.instant(keyField.name);
         }
       }
       label = this.genNextLabel(label);

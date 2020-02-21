@@ -38,6 +38,12 @@
                   <mat-icon class="tb-mat-20"
                             svgIcon="alpha-a-circle-outline"></mat-icon>
               </span>
+              <span *ngIf="key.type === dataKeyTypes.entityField"
+                    matTooltip="{{'datakey.entity-field' | translate }}"
+                    matTooltipPosition="above">
+                  <mat-icon class="tb-mat-20"
+                            svgIcon="alpha-e-circle-outline"></mat-icon>
+              </span>
               <span *ngIf="key.type === dataKeyTypes.timeseries"
                     matTooltip="{{'datakey.timeseries' | translate }}"
                     matTooltipPosition="above">
@@ -87,6 +93,12 @@
               <mat-icon class="tb-mat-16"
                         svgIcon="alpha-a-circle-outline"></mat-icon>
           </span>
+          <span *ngIf="key.type === dataKeyTypes.entityField"
+                matTooltip="{{'datakey.entity-field' | translate }}"
+                matTooltipPosition="above">
+              <mat-icon class="tb-mat-16"
+                        svgIcon="alpha-e-circle-outline"></mat-icon>
+          </span>
           <span *ngIf="key.type === dataKeyTypes.timeseries"
                 matTooltip="{{'datakey.timeseries' | translate }}"
                 matTooltipPosition="above">
@@ -114,15 +126,22 @@
             <span *ngIf="widgetType == widgetTypes.latest"
                   matTooltip="{{'datakey.attributes' | translate }}"
                   matTooltipPosition="above">
-            <mat-icon (click)="createKey(searchText, dataKeyTypes.attribute)"
+              <mat-icon (click)="createKey(searchText, dataKeyTypes.attribute)"
                       class="tb-mat-16"
                       svgIcon="alpha-a-circle-outline"></mat-icon>
-          </span>
+            </span>
+            <span *ngIf="widgetType == widgetTypes.latest"
+                  matTooltip="{{'datakey.entity-field' | translate }}"
+                  matTooltipPosition="above">
+              <mat-icon (click)="createKey(searchText, dataKeyTypes.entityField)"
+                        class="tb-mat-16"
+                        svgIcon="alpha-e-circle-outline"></mat-icon>
+            </span>
             <span matTooltip="{{'datakey.timeseries' | translate }}"
                   matTooltipPosition="above">
-            <mat-icon (click)="createKey(searchText, dataKeyTypes.timeseries)"
+              <mat-icon (click)="createKey(searchText, dataKeyTypes.timeseries)"
                       class="tb-mat-16">timeline</mat-icon>
-          </span>
+            </span>
           </ng-template>
         </ng-template>
       </div>

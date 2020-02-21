@@ -64,6 +64,7 @@ export interface RelationsSearchParameters {
   direction: EntitySearchDirection;
   relationTypeGroup?: RelationTypeGroup;
   maxLevel?: number;
+  fetchLastLevelOnly?: boolean;
 }
 
 export interface EntityRelationsQuery {

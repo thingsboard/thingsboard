@@ -57,3 +57,18 @@ export interface DeviceCredentials extends BaseData<DeviceCredentialsId> {
 export interface DeviceSearchQuery extends EntitySearchQuery {
   deviceTypes: Array<string>;
 }
+
+export interface ClaimRequest {
+  secretKey: string;
+}
+
+export enum ClaimResponse {
+  SUCCESS = 'SUCCESS',
+  FAILURE = 'FAILURE',
+  CLAIMED = 'CLAIMED'
+}
+
+export interface ClaimResult {
+  device: Device,
+  response: ClaimResponse
+}
