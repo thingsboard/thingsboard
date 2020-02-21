@@ -221,10 +221,6 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                             }
                         }
                     }
-                    try {
-                        conn.createStatement().execute("ALTER TABLE dashboard ALTER COLUMN configuration SET DATA TYPE varchar(100000000);"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
-                    } catch (Exception e) {
-                    }
                     schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "2.5.0", SCHEMA_UPDATE_SQL);
                     loadSql(schemaUpdateFile, conn);
                     log.info("Schema updated.");

@@ -108,7 +108,7 @@ CREATE TABLE IF NOT EXISTS customer (
 
 CREATE TABLE IF NOT EXISTS dashboard (
     id varchar(31) NOT NULL CONSTRAINT dashboard_pkey PRIMARY KEY,
-    configuration varchar(100000000),
+    configuration varchar(10000000),
     assigned_customers varchar(1000000),
     search_text varchar(255),
     tenant_id varchar(31),
