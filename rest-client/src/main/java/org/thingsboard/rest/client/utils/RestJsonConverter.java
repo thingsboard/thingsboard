@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
+import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
@@ -73,15 +74,28 @@ public class RestJsonConverter {
         if (!value.isObject()) {
             if (value.isBoolean()) {
                 return new BooleanDataEntry(key, value.asBoolean());
-            } else if (value.isDouble()) {
-                return new DoubleDataEntry(key, value.asDouble());
-            } else if (value.isLong()) {
-                return new LongDataEntry(key, value.asLong());
-            } else {
+            } else if (value.isNumber()) {
+                return parseNumericValue(key, value);
+            } else if (value.isTextual()) {
                 return new StringDataEntry(key, value.asText());
+            } else {
+                throw new RuntimeException(CAN_T_PARSE_VALUE + value);
             }
         } else {
-            throw new RuntimeException(CAN_T_PARSE_VALUE + value);
+            return new JsonDataEntry(key, value.toString());
+        }
+    }
+
+    private static KvEntry parseNumericValue(String key, JsonNode value) {
+        if (value.isFloatingPointNumber()) {
+            return new DoubleDataEntry(key, value.asDouble());
+        } else {
+            try {
+                long longValue = Long.parseLong(value.toString());
+                return new LongDataEntry(key, longValue);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Big integer values are not supported!");
+            }
         }
     }
 }

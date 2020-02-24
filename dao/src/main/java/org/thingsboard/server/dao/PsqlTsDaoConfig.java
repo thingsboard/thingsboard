@@ -26,9 +26,9 @@ import org.thingsboard.server.dao.util.SqlTsDao;
 
 @Configuration
 @EnableAutoConfiguration
-@ComponentScan({"org.thingsboard.server.dao.sqlts.psql", "org.thingsboard.server.dao.sqlts.latest"})
-@EnableJpaRepositories({"org.thingsboard.server.dao.sqlts.psql", "org.thingsboard.server.dao.sqlts.latest", "org.thingsboard.server.dao.sqlts.dictionary"})
-@EntityScan({"org.thingsboard.server.dao.model.sqlts.psql", "org.thingsboard.server.dao.model.sqlts.latest", "org.thingsboard.server.dao.model.sqlts.dictionary"})
+@ComponentScan({"org.thingsboard.server.dao.sqlts.psql"})
+@EnableJpaRepositories({"org.thingsboard.server.dao.sqlts.ts", "org.thingsboard.server.dao.sqlts.insert.psql", "org.thingsboard.server.dao.sqlts.insert.latest.psql", "org.thingsboard.server.dao.sqlts.latest", "org.thingsboard.server.dao.sqlts.dictionary"})
+@EntityScan({"org.thingsboard.server.dao.model.sqlts.ts", "org.thingsboard.server.dao.model.sqlts.latest", "org.thingsboard.server.dao.model.sqlts.dictionary"})
 @EnableTransactionManagement
 @SqlTsDao
 @PsqlDao

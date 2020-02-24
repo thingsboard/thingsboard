@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model.sqlts.hsql;
+package org.thingsboard.server.dao.model.sqlts.ts;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.dao.model.ToData;
 import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
 
 import javax.persistence.Column;
@@ -32,7 +30,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.KEY_COLUMN;
 @Entity
 @Table(name = "ts_kv")
 @IdClass(TsKvCompositeKey.class)
-public final class TsKvEntity extends AbstractTsKvEntity implements ToData<TsKvEntry> {
+public final class TsKvEntity extends AbstractTsKvEntity {
 
     @Id
     @Column(name = KEY_COLUMN)

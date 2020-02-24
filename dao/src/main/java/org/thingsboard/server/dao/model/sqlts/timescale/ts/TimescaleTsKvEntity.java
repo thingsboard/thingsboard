@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model.sqlts.timescale;
+package org.thingsboard.server.dao.model.sqlts.timescale.ts;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;

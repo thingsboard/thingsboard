@@ -43,6 +43,7 @@ import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueue;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
 import org.thingsboard.server.dao.sqlts.dictionary.TsKvDictionaryRepository;
+import org.thingsboard.server.dao.sqlts.insert.latest.InsertLatestTsRepository;
 import org.thingsboard.server.dao.sqlts.latest.SearchTsKvLatestRepository;
 import org.thingsboard.server.dao.sqlts.latest.TsKvLatestRepository;
 import org.thingsboard.server.dao.timeseries.SimpleListenableFuture;

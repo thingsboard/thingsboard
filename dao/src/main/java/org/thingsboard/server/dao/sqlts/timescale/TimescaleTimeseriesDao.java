@@ -31,12 +31,12 @@ import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.model.sqlts.timescale.TimescaleTsKvEntity;
+import org.thingsboard.server.dao.model.sqlts.timescale.ts.TimescaleTsKvEntity;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueue;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
 import org.thingsboard.server.dao.sqlts.AbstractSqlTimeseriesDao;
 import org.thingsboard.server.dao.sqlts.EntityContainer;
-import org.thingsboard.server.dao.sqlts.InsertTsRepository;
+import org.thingsboard.server.dao.sqlts.insert.InsertTsRepository;
 import org.thingsboard.server.dao.timeseries.TimeseriesDao;
 import org.thingsboard.server.dao.util.TimescaleDBTsDao;
 
