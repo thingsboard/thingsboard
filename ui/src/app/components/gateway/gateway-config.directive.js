@@ -84,6 +84,7 @@ function GatewayConfigController($scope, $document, $mdDialog, $mdUtil, $window,
             multiple: true,
         }).then(function (config) {
             if (config && index > -1) {
+                console.log(config); //eslint-disable-line
                 if (!angular.equals(vm.gatewayConfig[index].config, config)) {
                     $scope.gatewayConfiguration.$setDirty();
                 }
