@@ -23,7 +23,7 @@ import {
   Datasource,
   DatasourceType,
   datasourceTypeTranslationMap,
-  defaultLegendConfig,
+  defaultLegendConfig, GroupInfo, JsonSchema,
   widgetType
 } from '@shared/models/widget.models';
 import {
@@ -60,11 +60,11 @@ import { WidgetActionsData } from './action/manage-widget-actions.component.mode
 import { DashboardState } from '@shared/models/dashboard.models';
 import { entityFields } from '@shared/models/entity.models';
 
-const emptySettingsSchema = {
+const emptySettingsSchema: JsonSchema = {
   type: 'object',
   properties: {}
 };
-const emptySettingsGroupInfoes = [];
+const emptySettingsGroupInfoes: GroupInfo[] = [];
 const defaultSettingsForm = [
   '*'
 ];
@@ -594,7 +594,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   }
 
   public displayAdvanced(): boolean {
-    return this.modelValue && this.modelValue.settingsSchema && this.modelValue.settingsSchema.schema;
+    return !!this.modelValue && !!this.modelValue.settingsSchema && !!this.modelValue.settingsSchema.schema;
   }
 
   public removeDatasource(index: number) {

@@ -17,7 +17,8 @@
 // tslint:disable-next-line:no-reference
 /// <reference path="../../../../../../../src/typings/jquery.flot.typings.d.ts" />
 
-import { JsonSettingsSchema, DataKey, DatasourceData } from '@shared/models/widget.models';
+import { JsonSettingsSchema, DataKey, DatasourceData, Datasource } from '@shared/models/widget.models';
+import * as moment_ from 'moment';
 
 export declare type ChartType = 'line' | 'pie' | 'bar' | 'state' | 'graph';
 
@@ -29,6 +30,7 @@ export declare type TbFlotTicksFormatterFunction = (t: number, a?: TbFlotPlotAxi
 
 export interface TbFlotSeries extends DatasourceData, JQueryPlotSeriesOptions {
   dataKey: TbFlotDataKey;
+  xaxisIndex?: number;
   yaxisIndex?: number;
   yaxis?: number;
 }
@@ -50,6 +52,7 @@ export interface TbFlotAxisOptions extends JQueryPlotAxisOptions {
 }
 
 export interface TbFlotPlotDataSeries extends JQueryPlotDataSeries {
+  datasource?: Datasource;
   dataKey?: TbFlotDataKey;
   percent?: number;
 }
@@ -93,6 +96,12 @@ export interface TbFlotXAxisSettings {
   color: boolean;
 }
 
+export interface TbFlotSecondXAxisSettings {
+  axisPosition: TbFlotXAxisPosition;
+  showLabels: boolean;
+  title: string;
+}
+
 export interface TbFlotYAxisSettings {
   min: number;
   max: number;
@@ -112,16 +121,23 @@ export interface TbFlotBaseSettings {
   tooltipIndividual: boolean;
   tooltipCumulative: boolean;
   tooltipValueFormatter: string;
+  hideZeros: boolean;
   grid: TbFlotGridSettings;
   xaxis: TbFlotXAxisSettings;
   yaxis: TbFlotYAxisSettings;
 }
 
-export interface TbFlotGraphSettings extends TbFlotBaseSettings {
+export interface TbFlotComparisonSettings {
+  comparisonEnabled: boolean;
+  timeForComparison: moment_.unitOfTime.DurationConstructor;
+  xaxisSecond: TbFlotSecondXAxisSettings;
+}
+
+export interface TbFlotGraphSettings extends TbFlotBaseSettings, TbFlotComparisonSettings {
   smoothLines: boolean;
 }
 
-export interface TbFlotBarSettings extends TbFlotBaseSettings {
+export interface TbFlotBarSettings extends TbFlotBaseSettings, TbFlotComparisonSettings {
   defaultBarWidth: number;
 }
 
@@ -140,11 +156,17 @@ export interface TbFlotPieSettings {
 }
 
 export declare type TbFlotYAxisPosition = 'left' | 'right';
+export declare type TbFlotXAxisPosition = 'top' | 'bottom';
 
 export interface TbFlotKeySettings {
+  excludeFromStacking: boolean;
   showLines: boolean;
   fillLines: boolean;
   showPoints: boolean;
+  showPointShape: string;
+  pointShapeFormatter: string;
+  showPointsLineWidth: number;
+  showPointsRadius: number;
   lineWidth: number;
   tooltipValueFormatter: string;
   showSeparateAxis: boolean;
@@ -217,6 +239,11 @@ export function flotSettingsSchema(chartType: ChartType): JsonSettingsSchema {
     title: 'Tooltip value format function, f(value)',
     type: 'string',
     default: ''
+  };
+  properties.hideZeros = {
+    title: 'Hide zero/false values from tooltip',
+    type: 'boolean',
+    default: false
   };
 
   properties.grid = {
@@ -345,6 +372,7 @@ export function flotSettingsSchema(chartType: ChartType): JsonSettingsSchema {
     key: 'tooltipValueFormatter',
     type: 'javascript'
   });
+  schema.form.push('hideZeros');
   schema.form.push({
     key: 'grid',
     items: [
@@ -395,8 +423,111 @@ export function flotSettingsSchema(chartType: ChartType): JsonSettingsSchema {
       }
     ]
   });
+  if (chartType === 'graph' || chartType === 'bar') {
+    schema.groupInfoes = [{
+      formIndex: 0,
+      GroupTitle: 'Common Settings'
+    }];
+    schema.form = [schema.form];
+    schema.schema.properties = {...schema.schema.properties, ...chartSettingsSchemaForComparison.schema.properties};
+    schema.schema.required = schema.schema.required.concat(chartSettingsSchemaForComparison.schema.required);
+    schema.form.push(chartSettingsSchemaForComparison.form);
+    schema.groupInfoes.push({
+      formIndex: schema.groupInfoes.length,
+      GroupTitle:'Comparison Settings'
+    });
+  }
   return schema;
 }
+
+const chartSettingsSchemaForComparison: JsonSettingsSchema = {
+  schema: {
+    title: 'Comparison Settings',
+    type: 'object',
+    properties: {
+      comparisonEnabled: {
+        title: 'Enable comparison',
+        type: 'boolean',
+        default: false
+      },
+      timeForComparison: {
+        title: 'Time to show historical data',
+        type: 'string',
+        default: 'months'
+      },
+      xaxisSecond: {
+        title: 'Second X axis',
+        type: 'object',
+        properties: {
+          axisPosition: {
+            title: 'Axis position',
+            type: 'string',
+            default: 'top'
+          },
+          showLabels: {
+            title: 'Show labels',
+            type: 'boolean',
+            default: true
+          },
+          title: {
+            title: 'Axis title',
+            type: 'string',
+            default: null
+          }
+        }
+      }
+    },
+    required: []
+  },
+  form: [
+    'comparisonEnabled',
+    {
+      key: 'timeForComparison',
+      type: 'rc-select',
+      multiple: false,
+      items: [
+        {
+          value: 'days',
+          label: 'Day ago'
+        },
+        {
+          value: 'weeks',
+          label: 'Week ago'
+        },
+        {
+          value: 'months',
+          label: 'Month ago (default)'
+        },
+        {
+          value: 'years',
+          label: 'Year ago'
+        }
+      ]
+    },
+    {
+      key: 'xaxisSecond',
+      items: [
+        {
+          key: 'xaxisSecond.axisPosition',
+          type: 'rc-select',
+          multiple: false,
+          items: [
+            {
+              value: 'top',
+              label: 'Top (default)'
+            },
+            {
+              value: 'bottom',
+              label: 'Bottom'
+            }
+          ]
+        },
+        'xaxisSecond.showLabels',
+        'xaxisSecond.title',
+      ]
+    }
+  ]
+};
 
 export const flotPieSettingsSchema: JsonSettingsSchema = {
     schema: {
@@ -481,12 +612,17 @@ export const flotPieSettingsSchema: JsonSettingsSchema = {
     ]
 };
 
-export function flotDatakeySettingsSchema(defaultShowLines: boolean): JsonSettingsSchema {
-  return {
+export function flotDatakeySettingsSchema(defaultShowLines: boolean, chartType: ChartType): JsonSettingsSchema {
+  const schema: JsonSettingsSchema = {
     schema: {
       type: 'object',
       title: 'DataKeySettings',
       properties: {
+        excludeFromStacking: {
+          title: 'Exclude from stacking(available in "Stacking" mode)',
+          type: 'boolean',
+          default: false
+        },
         showLines: {
           title: 'Show lines',
           type: 'boolean',
@@ -502,10 +638,29 @@ export function flotDatakeySettingsSchema(defaultShowLines: boolean): JsonSettin
           type: 'boolean',
           default: false
         },
-        lineWidth: {
-          title: 'Line width',
+        showPointShape: {
+          title: 'Select point shape:',
+          type: 'string',
+          default: 'circle'
+        },
+        pointShapeFormatter: {
+          title: 'Point shape format function, f(ctx, x, y, radius, shadow)',
+          type: 'string',
+          default: 'var size = radius * Math.sqrt(Math.PI) / 2;\n' +
+            'ctx.moveTo(x - size, y - size);\n' +
+            'ctx.lineTo(x + size, y + size);\n' +
+            'ctx.moveTo(x - size, y + size);\n' +
+            'ctx.lineTo(x + size, y - size);'
+        },
+        showPointsLineWidth: {
+          title: 'Line width of points',
           type: 'number',
-          default: null
+          default: 5
+        },
+        showPointsRadius: {
+          title: 'Radius of points',
+          type: 'number',
+          default: 3
         },
         tooltipValueFormatter: {
           title: 'Tooltip value format function, f(value)',
@@ -556,9 +711,47 @@ export function flotDatakeySettingsSchema(defaultShowLines: boolean): JsonSettin
       required: ['showLines', 'fillLines', 'showPoints']
     },
     form: [
+      'excludeFromStacking',
       'showLines',
       'fillLines',
       'showPoints',
+      {
+        key: 'showPointShape',
+        type: 'rc-select',
+        multiple: false,
+        items: [
+          {
+            value: 'circle',
+            label: 'Circle'
+          },
+          {
+            value: 'cross',
+            label: 'Cross'
+          },
+          {
+            value: 'diamond',
+            label: 'Diamond'
+          },
+          {
+            value: 'square',
+            label: 'Square'
+          },
+          {
+            value: 'triangle',
+            label: 'Triangle'
+          },
+          {
+            value: 'custom',
+            label: 'Custom function'
+          }
+        ]
+      },
+      {
+        key: 'pointShapeFormatter',
+        type: 'javascript'
+      },
+      'showPointsLineWidth',
+      'showPointsRadius',
       {
         key: 'tooltipValueFormatter',
         type: 'javascript'
@@ -590,4 +783,43 @@ export function flotDatakeySettingsSchema(defaultShowLines: boolean): JsonSettin
       }
     ]
   };
+
+  const properties = schema.schema.properties;
+  if (chartType === 'graph' || chartType === 'bar') {
+    properties.comparisonSettings = {
+      title: 'Comparison Settings',
+      type: 'object',
+      properties: {
+        showValuesForComparison: {
+          title: 'Show historical values for comparison',
+          type: 'boolean',
+          default: true
+        },
+        comparisonValuesLabel: {
+          title: 'Historical values label',
+          type: 'string',
+          default: ''
+        },
+        color: {
+          title: 'Color',
+          type: 'string',
+          default: ''
+        }
+      },
+      required: ['showValuesForComparison']
+    };
+    schema.form.push({
+      key: 'comparisonSettings',
+      items: [
+        'comparisonSettings.showValuesForComparison',
+        'comparisonSettings.comparisonValuesLabel',
+        {
+          key: 'comparisonSettings.color',
+          type: 'color'
+        }
+      ]
+    });
+  }
+
+  return schema;
 }

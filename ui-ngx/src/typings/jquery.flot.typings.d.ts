@@ -24,6 +24,7 @@ interface JQueryPlot extends jquery.flot.plot {
 interface JQueryPlotPoint extends jquery.flot.point {
   pageX: number;
   pageY: number;
+  x2: number;
 }
 
 interface JQueryPlotDataSeries extends jquery.flot.dataSeries, JQueryPlotSeriesOptions {

@@ -42,6 +42,7 @@ import * as ReactDOM from 'react-dom';
 import ReactSchemaForm from './react/json-form-react';
 import JsonFormUtils from './react/json-form-utils';
 import { JsonFormComponentData } from './json-form-component.models';
+import { GroupInfo } from '@shared/models/widget.models';
 
 const tinycolor = tinycolor_;
 
@@ -94,7 +95,7 @@ export class JsonFormComponent implements OnInit, ControlValueAccessor, Validato
   model: any;
   schema: any;
   form: any;
-  groupInfoes: any[];
+  groupInfoes: GroupInfo[];
 
   isModelValid = true;
 

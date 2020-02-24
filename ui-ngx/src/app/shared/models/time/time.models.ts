@@ -16,6 +16,9 @@
 
 import { TimeService } from '@core/services/time.service';
 import { deepClone, isDefined, isUndefined } from '@app/core/utils';
+import * as moment_ from 'moment';
+
+const moment = moment_;
 
 export const SECOND = 1000;
 export const MINUTE = 60 * SECOND;
@@ -287,6 +290,31 @@ export function createSubscriptionTimewindow(timewindow: Timewindow, stDiff: num
     aggregation.limit = Math.ceil(aggTimewindow / subscriptionTimewindow.aggregation.interval);
   }
   return subscriptionTimewindow;
+}
+
+export function createTimewindowForComparison(subscriptionTimewindow: SubscriptionTimewindow,
+                                              timeUnit: moment_.unitOfTime.DurationConstructor): SubscriptionTimewindow {
+  const timewindowForComparison: SubscriptionTimewindow = {
+    fixedWindow: null,
+    realtimeWindowMs: null,
+    aggregation: subscriptionTimewindow.aggregation
+  };
+
+  if (subscriptionTimewindow.realtimeWindowMs) {
+    timewindowForComparison.startTs = moment(subscriptionTimewindow.startTs).subtract(1, timeUnit).valueOf();
+    timewindowForComparison.realtimeWindowMs = subscriptionTimewindow.realtimeWindowMs;
+  } else if (subscriptionTimewindow.fixedWindow) {
+    const timeInterval = subscriptionTimewindow.fixedWindow.endTimeMs - subscriptionTimewindow.fixedWindow.startTimeMs;
+    const endTimeMs = moment(subscriptionTimewindow.fixedWindow.endTimeMs).subtract(1, timeUnit).valueOf();
+
+    timewindowForComparison.startTs = endTimeMs - timeInterval;
+    timewindowForComparison.fixedWindow = {
+      startTimeMs: timewindowForComparison.startTs,
+      endTimeMs
+    };
+  }
+
+  return timewindowForComparison;
 }
 
 export function cloneSelectedTimewindow(timewindow: Timewindow): Timewindow {

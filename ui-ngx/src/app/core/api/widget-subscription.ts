@@ -22,6 +22,7 @@ import {
   WidgetSubscriptionOptions
 } from '@core/api/widget-api.models';
 import {
+  DataKey,
   DataSet,
   DataSetHolder,
   Datasource,
@@ -36,6 +37,7 @@ import {
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   createSubscriptionTimewindow,
+  createTimewindowForComparison,
   SubscriptionTimewindow,
   Timewindow,
   toHistoryTimewindow,
@@ -52,6 +54,9 @@ import * as deepEqual from 'deep-equal';
 import { EntityId } from '@app/shared/models/id/entity-id';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { entityFields } from '@shared/models/entity.models';
+import * as moment_ from 'moment';
+
+const moment = moment_;
 
 export class WidgetSubscription implements IWidgetSubscription {
 
@@ -77,6 +82,10 @@ export class WidgetSubscription implements IWidgetSubscription {
   stateData: boolean;
   decimals: number;
   units: string;
+  comparisonEnabled: boolean;
+  timeForComparison: moment_.unitOfTime.DurationConstructor;
+  comparisonTimeWindow: WidgetTimewindow;
+  timewindowForComparison: SubscriptionTimewindow;
 
   alarms: Array<AlarmInfo>;
   alarmSource: Datasource;
@@ -204,6 +213,13 @@ export class WidgetSubscription implements IWidgetSubscription {
       }
 
       this.subscriptionTimewindow = null;
+      this.comparisonEnabled = options.comparisonEnabled;
+      if (this.comparisonEnabled) {
+        this.timeForComparison = options.timeForComparison;
+
+        this.comparisonTimeWindow = {};
+        this.timewindowForComparison = null;
+      }
 
       this.units = options.units || '';
       this.decimals = isDefined(options.decimals) ? options.decimals : 2;
@@ -345,11 +361,23 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   private configureData() {
+    const additionalDatasources: Datasource[] = [];
     let dataIndex = 0;
+    let additionalKeysNumber = 0;
     this.datasources.forEach((datasource) => {
+      const additionalDataKeys: DataKey[] = [];
+      let datasourceAdditionalKeysNumber = 0;
       datasource.dataKeys.forEach((dataKey) => {
         dataKey.hidden = false;
         dataKey.pattern = dataKey.label;
+        if (this.comparisonEnabled && dataKey.settings.comparisonSettings && dataKey.settings.comparisonSettings.showValuesForComparison) {
+          datasourceAdditionalKeysNumber++;
+          additionalKeysNumber++;
+          const additionalDataKey = this.ctx.utils.createAdditionalDataKey(dataKey, datasource,
+            this.timeForComparison, this.datasources, additionalKeysNumber);
+          dataKey.settings.comparisonSettings.color = additionalDataKey.color;
+          additionalDataKeys.push(additionalDataKey);
+        }
         const datasourceData: DatasourceData = {
           datasource,
           dataKey,
@@ -379,7 +407,43 @@ export class WidgetSubscription implements IWidgetSubscription {
           this.legendData.data.push(legendKeyData);
         }
       });
+      if (datasourceAdditionalKeysNumber > 0) {
+        const additionalDatasource: Datasource = deepClone(datasource);
+        additionalDatasource.dataKeys = additionalDataKeys;
+        additionalDatasource.isAdditional = true;
+        additionalDatasources.push(additionalDatasource);
+      }
     });
+
+    additionalDatasources.forEach((additionalDatasource) => {
+      additionalDatasource.dataKeys.forEach((additionalDataKey) => {
+        const additionalDatasourceData: DatasourceData = {
+          datasource: additionalDatasource,
+          dataKey: additionalDataKey,
+          data: []
+        };
+        this.data.push(additionalDatasourceData);
+        this.hiddenData.push({data: []});
+        if (this.displayLegend) {
+          const additionalLegendKey: LegendKey = {
+            dataKey: additionalDataKey,
+            dataIndex: dataIndex++
+          };
+          this.legendData.keys.push(additionalLegendKey);
+          const additionalLegendKeyData: LegendKeyData = {
+            min: null,
+            max: null,
+            avg: null,
+            total: null,
+            hidden: false
+          };
+          this.legendData.data.push(additionalLegendKeyData);
+        }
+      });
+    });
+
+    this.datasources = this.datasources.concat(additionalDatasources);
+
     if (this.displayLegend) {
       this.legendData.keys = this.legendData.keys.sort((key1, key2) => key1.dataKey.label.localeCompare(key2.dataKey.label));
     }
@@ -678,6 +742,9 @@ export class WidgetSubscription implements IWidgetSubscription {
       this.notifyDataLoading();
       if (this.type === widgetType.timeseries && this.timeWindowConfig) {
         this.updateRealtimeSubscription();
+        if (this.comparisonEnabled) {
+          this.updateSubscriptionForComparison();
+        }
         if (this.subscriptionTimewindow.fixedWindow) {
           this.onDataUpdated();
         }
@@ -701,6 +768,17 @@ export class WidgetSubscription implements IWidgetSubscription {
           },
           datasourceIndex: index
         };
+
+        if (this.comparisonEnabled && datasource.isAdditional) {
+          listener.subscriptionTimewindow = this.timewindowForComparison;
+          listener.updateRealtimeSubscription = () => {
+            this.subscriptionTimewindow = this.updateSubscriptionForComparison();
+            return this.subscriptionTimewindow;
+          };
+          listener.setRealtimeSubscription = () => {
+            this.updateSubscriptionForComparison();
+          };
+        }
 
         let entityFieldKey = false;
 
@@ -842,7 +920,7 @@ export class WidgetSubscription implements IWidgetSubscription {
   private updateTimewindow() {
     this.timeWindow.interval = this.subscriptionTimewindow.aggregation.interval || 1000;
     if (this.subscriptionTimewindow.realtimeWindowMs) {
-      this.timeWindow.maxTime = Date.now() + this.timeWindow.stDiff;
+      this.timeWindow.maxTime = moment().valueOf() + this.timeWindow.stDiff;
       this.timeWindow.minTime = this.timeWindow.maxTime - this.subscriptionTimewindow.realtimeWindowMs;
     } else if (this.subscriptionTimewindow.fixedWindow) {
       this.timeWindow.maxTime = this.subscriptionTimewindow.fixedWindow.endTimeMs;
@@ -860,6 +938,26 @@ export class WidgetSubscription implements IWidgetSubscription {
     }
     this.updateTimewindow();
     return this.subscriptionTimewindow;
+  }
+
+  private updateComparisonTimewindow() {
+    this.comparisonTimeWindow.interval = this.timewindowForComparison.aggregation.interval || 1000;
+    if (this.timewindowForComparison.realtimeWindowMs) {
+      this.comparisonTimeWindow.maxTime = moment(this.timeWindow.maxTime).subtract(1, this.timeForComparison).valueOf();
+      this.comparisonTimeWindow.minTime = this.comparisonTimeWindow.maxTime - this.timewindowForComparison.realtimeWindowMs;
+    } else if (this.timewindowForComparison.fixedWindow) {
+      this.comparisonTimeWindow.maxTime = this.timewindowForComparison.fixedWindow.endTimeMs;
+      this.comparisonTimeWindow.minTime = this.timewindowForComparison.fixedWindow.startTimeMs;
+    }
+  }
+
+  private updateSubscriptionForComparison() {
+    if (!this.subscriptionTimewindow) {
+      this.subscriptionTimewindow = this.updateRealtimeSubscription();
+    }
+    this.timewindowForComparison = createTimewindowForComparison(this.subscriptionTimewindow, this.timeForComparison);
+    this.updateComparisonTimewindow();
+    return this.timewindowForComparison;
   }
 
   private dataUpdated(sourceData: DataSetHolder, datasourceIndex: number, dataKeyIndex: number, detectChanges: boolean) {
@@ -892,6 +990,9 @@ export class WidgetSubscription implements IWidgetSubscription {
     if (update) {
       if (this.subscriptionTimewindow && this.subscriptionTimewindow.realtimeWindowMs) {
         this.updateTimewindow();
+        if (this.timewindowForComparison && this.timewindowForComparison.realtimeWindowMs) {
+          this.updateComparisonTimewindow();
+        }
       }
       currentData.data = sourceData.data;
       if (this.caulculateLegendData) {

@@ -27,7 +27,7 @@ import {
   widgetType,
   WidgetTypeDescriptor,
   WidgetTypeParameters,
-  Widget
+  Widget, JsonSettingsSchema
 } from '@shared/models/widget.models';
 import { Timewindow, WidgetTimewindow } from '@shared/models/time/time.models';
 import {
@@ -243,8 +243,8 @@ export interface WidgetConfigComponentData {
   typeParameters: WidgetTypeParameters;
   actionSources: {[actionSourceId: string]: WidgetActionSource};
   isDataEnabled: boolean;
-  settingsSchema: any;
-  dataKeySettingsSchema: any;
+  settingsSchema: JsonSettingsSchema;
+  dataKeySettingsSchema: JsonSettingsSchema;
 }
 
 export const MissingWidgetType: WidgetInfo = {

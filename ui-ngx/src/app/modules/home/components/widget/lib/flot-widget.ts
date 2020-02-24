@@ -41,6 +41,7 @@ import * as tinycolor_ from 'tinycolor2';
 import { AggregationType } from '@shared/models/time/time.models';
 import { CancelAnimationFrame } from '@core/services/raf.service';
 import Timeout = NodeJS.Timeout;
+import { UtilsService } from '@core/services/utils.service';
 
 const tinycolor = tinycolor_;
 const moment = moment_;
@@ -56,6 +57,7 @@ export class TbFlot {
   private readonly yAxisTickFormatter: TbFlotTicksFormatterFunction;
   private ticksFormatterFunction: TbFlotTicksFormatterFunction;
   private readonly yaxis: TbFlotAxisOptions;
+  private readonly xaxis: TbFlotAxisOptions;
   private yaxes: Array<TbFlotAxisOptions>;
 
   private readonly options: JQueryPlotOptions;
@@ -66,6 +68,7 @@ export class TbFlot {
   private readonly trackDecimals: number;
   private readonly tooltipIndividual: boolean;
   private readonly tooltipCumulative: boolean;
+  private readonly hideZeros: boolean;
 
   private readonly defaultBarWidth: number;
 
@@ -106,13 +109,14 @@ export class TbFlot {
     return flotSettingsSchema(chartType);
   }
 
-  static datakeySettingsSchema(defaultShowLines: boolean): JsonSettingsSchema {
-    return flotDatakeySettingsSchema(defaultShowLines);
+  static datakeySettingsSchema(defaultShowLines: boolean, chartType: ChartType): JsonSettingsSchema {
+    return flotDatakeySettingsSchema(defaultShowLines, chartType);
   }
 
   constructor(private ctx: WidgetContext, private readonly chartType: ChartType) {
     this.chartType = this.chartType || 'line';
     this.settings = ctx.settings as TbFlotSettings;
+    const utils = this.ctx.$injector.get(UtilsService);
     this.tooltip = $('#flot-series-tooltip');
     if (this.tooltip.length === 0) {
       this.tooltip = this.createTooltipElement();
@@ -123,6 +127,7 @@ export class TbFlot {
     this.tooltipIndividual = this.chartType === 'pie' || (isDefined(this.settings.tooltipIndividual)
       ? this.settings.tooltipIndividual : false);
     this.tooltipCumulative = isDefined(this.settings.tooltipCumulative) ? this.settings.tooltipCumulative : false;
+    this.hideZeros = isDefined(this.settings.hideZeros) ? this.settings.hideZeros : false;
 
     const font = {
       color: this.settings.fontColor || '#545454',
@@ -147,7 +152,8 @@ export class TbFlot {
     };
 
     if (this.chartType === 'line' || this.chartType === 'bar' || this.chartType === 'state') {
-      this.options.xaxis = {
+      this.options.xaxes = [];
+      this.xaxis = {
         mode: 'time',
         timezone: 'browser',
         font: deepClone(font),
@@ -158,16 +164,11 @@ export class TbFlot {
         labelFont: deepClone(font)
       };
       if (this.settings.xaxis) {
-        if (this.settings.xaxis.showLabels === false) {
-          this.options.xaxis.tickFormatter = () => {
-            return '';
-          };
-        }
-        this.options.xaxis.font.color = this.settings.xaxis.color || this.options.xaxis.font.color;
-        this.options.xaxis.label = this.settings.xaxis.title || null;
-        this.options.xaxis.labelFont.color = this.options.xaxis.font.color;
-        this.options.xaxis.labelFont.size = this.options.xaxis.font.size + 2;
-        this.options.xaxis.labelFont.weight = 'bold';
+        this.xaxis.font.color = this.settings.xaxis.color || this.xaxis.font.color;
+        this.xaxis.label = utils.customTranslation(this.settings.xaxis.title, this.settings.xaxis.title) || null;
+        this.xaxis.labelFont.color = this.xaxis.font.color;
+        this.xaxis.labelFont.size = this.xaxis.font.size + 2;
+        this.xaxis.labelFont.weight = 'bold';
       }
 
       this.yAxisTickFormatter = this.formatYAxisTicks.bind(this);
@@ -178,7 +179,7 @@ export class TbFlot {
         this.yaxis.font.color = this.settings.yaxis.color || this.yaxis.font.color;
         this.yaxis.min = isDefined(this.settings.yaxis.min) ? this.settings.yaxis.min : null;
         this.yaxis.max = isDefined(this.settings.yaxis.max) ? this.settings.yaxis.max : null;
-        this.yaxis.label = this.settings.yaxis.title || null;
+        this.yaxis.label = utils.customTranslation(this.settings.yaxis.title, this.settings.yaxis.title) || null;
         this.yaxis.labelFont.color = this.yaxis.font.color;
         this.yaxis.labelFont.size = this.yaxis.font.size + 2;
         this.yaxis.labelFont.weight = 'bold';
@@ -212,7 +213,7 @@ export class TbFlot {
         this. options.grid.borderWidth = isDefined(this.settings.grid.outlineWidth) ?
           this.settings.grid.outlineWidth : 1;
         if (this.settings.grid.verticalLines === false) {
-          this.options.xaxis.tickLength = 0;
+          this.xaxis.tickLength = 0;
         }
         if (this.settings.grid.horizontalLines === false) {
           this.yaxis.tickLength = 0;
@@ -225,12 +226,39 @@ export class TbFlot {
         }
       }
 
+      this.options.xaxes[0] = deepClone(this.xaxis);
+      if (this.settings.xaxis && this.settings.xaxis.showLabels === false) {
+        this.options.xaxes[0].tickFormatter = () => {
+          return '';
+        };
+      }
+
+      if (this.settings.comparisonEnabled) {
+        const xaxis = deepClone(this.xaxis);
+        xaxis.position = 'top';
+        if (this.settings.xaxisSecond) {
+          if (this.settings.xaxisSecond.showLabels === false) {
+            xaxis.tickFormatter = () => {
+              return '';
+            };
+          }
+          xaxis.label = utils.customTranslation(this.settings.xaxisSecond.title, this.settings.xaxisSecond.title) || null;
+          xaxis.position = this.settings.xaxisSecond.axisPosition;
+        }
+        xaxis.tickLength = 0;
+        this.options.xaxes.push(xaxis);
+
+        this.options.series = {
+          stack: false
+        };
+      } else {
+        this.options.series = {
+          stack: this.settings.stack === true
+        };
+      }
+
       this.options.crosshair = {
         mode: 'x'
-      };
-
-      this.options.series = {
-        stack: this.settings.stack === true
       };
 
       if (this.chartType === 'line' && this.settings.smoothLines) {
@@ -339,6 +367,13 @@ export class TbFlot {
       series.lines = {
         fill: keySettings.fillLines === true
       };
+
+      if (this.settings.stack && !this.settings.comparisonEnabled) {
+        series.stack = !keySettings.excludeFromStacking;
+      } else {
+        series.stack = false;
+      }
+
       if (this.chartType === 'line' || this.chartType === 'state') {
         series.lines.show = keySettings.showLines !== false;
       } else {
@@ -353,8 +388,16 @@ export class TbFlot {
       };
       if (keySettings.showPoints === true) {
         series.points.show = true;
-        series.points.lineWidth = 5;
-        series.points.radius = 3;
+        series.points.lineWidth = isDefined(keySettings.showPointsLineWidth) ? keySettings.showPointsLineWidth : 5;
+        series.points.radius = isDefined(keySettings.showPointsRadius) ? keySettings.showPointsRadius : 3;
+        series.points.symbol = isDefined(keySettings.showPointShape) ? keySettings.showPointShape : 'circle';
+        if (series.points.symbol === 'custom' && keySettings.pointShapeFormatter) {
+          try {
+            series.points.symbol = new Function('ctx, x, y, radius, shadow', keySettings.pointShapeFormatter);
+          } catch (e) {
+            series.points.symbol = 'circle';
+          }
+        }
       }
       if (this.chartType === 'line' && this.settings.smoothLines && !series.points.show) {
         series.curvedLines = {
@@ -366,6 +409,14 @@ export class TbFlot {
       lineColor.setAlpha(.75);
 
       series.highlightColor = lineColor.toRgbString();
+
+      if (series.datasource.isAdditional) {
+        series.xaxisIndex = 1;
+        series.xaxis = 2;
+      } else {
+        series.xaxisIndex = 0;
+        series.xaxis = 1;
+      }
 
       if (this.yaxis) {
         const units = series.dataKey.units && series.dataKey.units.length ? series.dataKey.units : this.trackUnits;
@@ -384,7 +435,7 @@ export class TbFlot {
         series.yaxisIndex = this.yaxes.indexOf(yaxis);
         series.yaxis = series.yaxisIndex + 1;
         yaxis.keysInfo[i] = {hidden: false};
-        yaxis.hidden = false;
+        yaxis.show = true;
       }
     }
     this.options.colors = colors;
@@ -398,8 +449,12 @@ export class TbFlot {
           this.options.series.bars.barWidth = this.subscription.timeWindow.interval * 0.6;
         }
       }
-      this.options.xaxis.min = this.subscription.timeWindow.minTime;
-      this.options.xaxis.max = this.subscription.timeWindow.maxTime;
+      this.options.xaxes[0].min = this.subscription.timeWindow.minTime;
+      this.options.xaxes[0].max = this.subscription.timeWindow.maxTime;
+      if (this.settings.comparisonEnabled) {
+        this.options.xaxes[1].min = this.subscription.comparisonTimeWindow.minTime;
+        this.options.xaxes[1].max = this.subscription.comparisonTimeWindow.maxTime;
+      }
     }
 
     this.checkMouseEvents();
@@ -469,8 +524,12 @@ export class TbFlot {
             }
           }
 
-          this.options.xaxis.min = this.subscription.timeWindow.minTime;
-          this.options.xaxis.max = this.subscription.timeWindow.maxTime;
+          this.options.xaxes[0].min = this.subscription.timeWindow.minTime;
+          this.options.xaxes[0].max = this.subscription.timeWindow.maxTime;
+          if (this.settings.comparisonEnabled) {
+            this.options.xaxes[1].min = this.subscription.comparisonTimeWindow.minTime;
+            this.options.xaxes[1].max = this.subscription.comparisonTimeWindow.maxTime;
+          }
           if (this.chartType === 'bar') {
             if (this.subscription.timeWindowConfig.aggregation &&
               this.subscription.timeWindowConfig.aggregation.type === AggregationType.NONE) {
@@ -485,6 +544,10 @@ export class TbFlot {
           } else {
             this.plot.getOptions().xaxes[0].min = this.subscription.timeWindow.minTime;
             this.plot.getOptions().xaxes[0].max = this.subscription.timeWindow.maxTime;
+            if (this.settings.comparisonEnabled) {
+              this.plot.getOptions().xaxes[1].min = this.subscription.comparisonTimeWindow.minTime;
+              this.plot.getOptions().xaxes[1].max = this.subscription.comparisonTimeWindow.maxTime;
+            }
             if (this.chartType === 'bar') {
               if (this.subscription.timeWindowConfig.aggregation &&
                 this.subscription.timeWindowConfig.aggregation.type === AggregationType.NONE) {
@@ -653,7 +716,7 @@ export class TbFlot {
     divElement.css({
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'flex-start'
+      justifyContent: 'space-between'
     });
     const lineSpan = $('<span></span>');
     lineSpan.css({
@@ -734,57 +797,98 @@ export class TbFlot {
     return divElement.prop('outerHTML');
   }
 
-  private formatChartTooltip(hoverInfo: TbFlotHoverInfo, seriesIndex: number): string {
+  private formatChartTooltip(hoverInfo: TbFlotHoverInfo[], seriesIndex: number): string {
     let content = '';
-    const timestamp = parseInt(hoverInfo.time, 10);
-    const date = moment(timestamp).format('YYYY-MM-DD HH:mm:ss');
-    const dateDiv = $(`<div>${date}</div>`);
-    dateDiv.css({
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '4px',
-      fontWeight: '700'
-    });
-    content += dateDiv.prop('outerHTML');
     if (this.tooltipIndividual) {
-      const found = hoverInfo.seriesHover.find((seriesHover) => {
+      let seriesHoverArray: TbFlotSeriesHoverInfo[];
+      if (hoverInfo[1] && hoverInfo[1].seriesHover.length) {
+        seriesHoverArray = hoverInfo[0].seriesHover.concat(hoverInfo[1].seriesHover);
+      } else {
+        seriesHoverArray = hoverInfo[0].seriesHover;
+      }
+      const found = seriesHoverArray.filter((seriesHover) => {
         return seriesHover.index === seriesIndex;
       });
-      if (found) {
-        content += this.seriesInfoDivFromInfo(found, seriesIndex);
+      if (found && found.length) {
+        let timestamp: number;
+        if (!isNumber(hoverInfo[0].time) || (found[0].time < hoverInfo[0].time)) {
+          timestamp = parseInt(hoverInfo[1].time, 10);
+        } else {
+          timestamp = parseInt(hoverInfo[0].time, 10);
+        }
+        const date = moment(timestamp).format('YYYY-MM-DD HH:mm:ss');
+        const dateDiv = $('<div>' + date + '</div>');
+        dateDiv.css({
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '4px',
+          fontWeight: '700'
+        });
+        content += dateDiv.prop('outerHTML');
+        content += this.seriesInfoDivFromInfo(found[0], seriesIndex);
       }
     } else {
-      const seriesDiv = $('<div></div>');
-      seriesDiv.css({
-        display: 'flex',
-        flexDirection: 'row'
-      });
-      const maxRows = 15;
-      const columns = Math.ceil(hoverInfo.seriesHover.length / maxRows);
-      let columnsContent = '';
-      for (let c = 0; c < columns; c++) {
-        const columnDiv = $('<div></div>');
-        columnDiv.css({
-          display: 'flex',
-          flexDirection: 'column'
-        });
-        let columnContent = '';
-        for (let i = c * maxRows; i < (c + 1) * maxRows; i++) {
-          if (i === hoverInfo.seriesHover.length) {
-            break;
-          }
-          const seriesHoverInfo = hoverInfo.seriesHover[i];
-          columnContent += this.seriesInfoDivFromInfo(seriesHoverInfo, seriesIndex);
-        }
-        columnDiv.html(columnContent);
-        if (c > 0) {
-          columnsContent += '<span style="width: 20px;"></span>';
-        }
-        columnsContent += columnDiv.prop('outerHTML');
+      let maxRows: number;
+      if (hoverInfo[1] && hoverInfo[1].seriesHover.length) {
+        maxRows = 5;
+      } else {
+        maxRows = 15;
       }
-      seriesDiv.html(columnsContent);
-      content += seriesDiv.prop('outerHTML');
+      let columns = 0;
+      if (hoverInfo[1] && (hoverInfo[1].seriesHover.length > hoverInfo[0].seriesHover.length)) {
+        columns = Math.ceil(hoverInfo[1].seriesHover.length / maxRows);
+      } else {
+        columns = Math.ceil(hoverInfo[0].seriesHover.length / maxRows);
+      }
+      hoverInfo.forEach((hoverData) => {
+        if (isNumber(hoverData.time)) {
+          let columnsContent = '';
+          const timestamp = parseInt(hoverData.time, 10);
+          const date = moment(timestamp).format('YYYY-MM-DD HH:mm:ss');
+          const dateDiv = $('<div>' + date + '</div>');
+          dateDiv.css({
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '4px',
+            fontWeight: '700'
+          });
+          content += dateDiv.prop('outerHTML');
+
+          const seriesDiv = $('<div></div>');
+          seriesDiv.css({
+            display: 'flex',
+            flexDirection: 'row'
+          });
+          for (let c = 0; c < columns; c++) {
+            const columnDiv = $('<div></div>');
+            columnDiv.css({
+              display: 'flex',
+              flexDirection: 'column',
+              flex: '1'
+            });
+            let columnContent = '';
+            for (let i = c*maxRows; i < (c+1)*maxRows; i++) {
+              if (i >= hoverData.seriesHover.length) {
+                break;
+              }
+              const seriesHoverInfo = hoverData.seriesHover[i];
+              columnContent += this.seriesInfoDivFromInfo(seriesHoverInfo, seriesIndex);
+            }
+            columnDiv.html(columnContent);
+
+            if (columnContent) {
+              if (c > 0) {
+                columnsContent += '<span style="min-width: 20px;"></span>';
+              }
+              columnsContent += columnDiv.prop('outerHTML');
+            }
+          }
+          seriesDiv.html(columnsContent);
+          content += seriesDiv.prop('outerHTML');
+        }
+      });
     }
     return content;
   }
@@ -848,16 +952,21 @@ export class TbFlot {
       const pageY = pos.pageY;
 
       let tooltipHtml;
-      let hoverInfo: TbFlotHoverInfo;
+      let hoverInfo: TbFlotHoverInfo[];
 
       if (this.chartType === 'pie') {
         tooltipHtml = this.formatPieTooltip(item);
       } else {
         hoverInfo = this.getHoverInfo(this.plot.getData(), pos);
-        if (isNumber(hoverInfo.time)) {
-          hoverInfo.seriesHover.sort((a, b) => {
+        if (isNumber(hoverInfo[0].time) || (hoverInfo[1] && isNumber(hoverInfo[1].time))) {
+          hoverInfo[0].seriesHover.sort((a, b) => {
             return b.value - a.value;
           });
+          if (hoverInfo[1] && hoverInfo[1].seriesHover.length) {
+            hoverInfo[1].seriesHover.sort((a, b) => {
+              return b.value - a.value;
+            });
+          }
           tooltipHtml = this.formatChartTooltip(hoverInfo, item ? item.seriesIndex : -1);
         }
       }
@@ -883,8 +992,10 @@ export class TbFlot {
           left
         });
         if (multipleModeTooltip) {
-          hoverInfo.seriesHover.forEach((seriesHoverInfo) => {
-            this.plot.highlight(seriesHoverInfo.index, seriesHoverInfo.hoverIndex);
+          hoverInfo.forEach((hoverData) => {
+            hoverData.seriesHover.forEach((seriesHoverInfo) => {
+              this.plot.highlight(seriesHoverInfo.index, seriesHoverInfo.hoverIndex);
+            });
           });
         }
       }
@@ -927,7 +1038,7 @@ export class TbFlot {
     this.isMouseInteraction = false;
   }
 
-  private getHoverInfo(seriesList: TbFlotPlotDataSeries[], pos: JQueryPlotPoint): TbFlotHoverInfo {
+  private getHoverInfo(seriesList: TbFlotPlotDataSeries[], pos: JQueryPlotPoint): TbFlotHoverInfo[] {
     let i: number;
     let series: TbFlotPlotDataSeries;
     let hoverIndex: number;
@@ -935,19 +1046,40 @@ export class TbFlot {
     let minDistance: number;
     let pointTime: any;
     let minTime: any;
+    let minTimeHistorical: any;
+    let hoverData: TbFlotSeriesHoverInfo;
     let value: any;
     let lastValue: any;
-    const results: TbFlotHoverInfo = {
+    let minDistanceHistorical: number;
+    const results: TbFlotHoverInfo[] = [{
       seriesHover: []
-    };
+    }];
+    if (this.settings.comparisonEnabled) {
+      results.push({
+        seriesHover: []
+      });
+    }
     for (i = 0; i < seriesList.length; i++) {
       series = seriesList[i];
-      hoverIndex = this.findHoverIndexFromData(pos.x, series);
+      let posx: number;
+      if (series.datasource.isAdditional) {
+        posx = pos.x2;
+      } else {
+        posx = pos.x;
+      }
+      hoverIndex = this.findHoverIndexFromData(posx, series);
       if (series.data[hoverIndex] && series.data[hoverIndex][0]) {
-        hoverDistance = pos.x - series.data[hoverIndex][0];
+        hoverDistance = posx - series.data[hoverIndex][0];
         pointTime = series.data[hoverIndex][0];
 
-        if (!minDistance
+        if (series.datasource.isAdditional) {
+          if (!minDistanceHistorical
+            || (hoverDistance >= 0 && (hoverDistance < minDistanceHistorical || minDistanceHistorical < 0))
+            || (hoverDistance < 0 && hoverDistance > minDistanceHistorical)) {
+            minDistanceHistorical = hoverDistance;
+            minTimeHistorical = pointTime;
+          }
+        } else if (!minDistance
           || (hoverDistance >= 0 && (hoverDistance < minDistance || minDistance < 0))
           || (hoverDistance < 0 && hoverDistance > minDistance)) {
           minDistance = hoverDistance;
@@ -964,23 +1096,33 @@ export class TbFlot {
           value = series.data[hoverIndex][1];
         }
         if (series.stack || (series.curvedLines && series.curvedLines.apply)) {
-          hoverIndex = this.findHoverIndexFromDataPoints(pos.x, series, hoverIndex);
+          hoverIndex = this.findHoverIndexFromDataPoints(posx, series, hoverIndex);
         }
-        results.seriesHover.push({
-          value,
-          hoverIndex,
-          color: series.dataKey.color,
-          label: series.dataKey.label,
-          units: series.dataKey.units,
-          decimals: series.dataKey.decimals,
-          tooltipValueFormatFunction: series.dataKey.tooltipValueFormatFunction,
-          time: pointTime,
-          distance: hoverDistance,
-          index: i
-        });
+        if (!this.hideZeros || value) {
+          hoverData = {
+            value,
+            hoverIndex,
+            color: series.dataKey.color,
+            label: series.dataKey.label,
+            units: series.dataKey.units,
+            decimals: series.dataKey.decimals,
+            tooltipValueFormatFunction: series.dataKey.tooltipValueFormatFunction,
+            time: pointTime,
+            distance: hoverDistance,
+            index: i
+          };
+          if (series.datasource.isAdditional) {
+            results[1].seriesHover.push(hoverData);
+          } else {
+            results[0].seriesHover.push(hoverData);
+          }
+        }
       }
     }
-    results.time = minTime;
+    if (results[1] && results[1].seriesHover.length) {
+      results[1].time = minTimeHistorical;
+    }
+    results[0].time = minTime;
     return results;
   }
 

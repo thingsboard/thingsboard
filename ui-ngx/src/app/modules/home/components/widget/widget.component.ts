@@ -44,7 +44,7 @@ import {
   Widget,
   WidgetActionDescriptor,
   widgetActionSources,
-  WidgetActionType,
+  WidgetActionType, WidgetComparisonSettings,
   WidgetResource,
   widgetType,
   WidgetTypeParameters
@@ -847,9 +847,12 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     const createSubscriptionSubject = new ReplaySubject();
     let options: WidgetSubscriptionOptions;
     if (this.widget.type !== widgetType.rpc && this.widget.type !== widgetType.static) {
+      const comparisonSettings: WidgetComparisonSettings = this.widgetContext.settings;
       options = {
         type: this.widget.type,
-        stateData: this.typeParameters.stateData
+        stateData: this.typeParameters.stateData,
+        comparisonEnabled: comparisonSettings.comparisonEnabled,
+        timeForComparison: comparisonSettings.timeForComparison
       };
       if (this.widget.type === widgetType.alarm) {
         options.alarmSource = deepClone(this.widget.config.alarmSource);

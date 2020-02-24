@@ -20,9 +20,9 @@ import { WidgetTypeId } from '@shared/models/id/widget-type-id';
 import { Timewindow } from '@shared/models/time/time.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AlarmSearchStatus } from '@shared/models/alarm.models';
-import { Data } from '@angular/router';
 import { DataKeyType } from './telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
+import * as moment_ from 'moment';
 
 export enum widgetType {
   timeseries = 'timeseries',
@@ -261,6 +261,7 @@ export interface Datasource {
   entityLabel?: string;
   entityDescription?: string;
   generated?: boolean;
+  isAdditional?: boolean;
   [key: string]: any;
 }
 
@@ -331,6 +332,11 @@ export interface WidgetActionDescriptor extends CustomActionDescriptor {
   stateEntityParamName?: string;
 }
 
+export interface WidgetComparisonSettings {
+  comparisonEnabled?: boolean;
+  timeForComparison?: moment_.unitOfTime.DurationConstructor;
+}
+
 export interface WidgetConfig {
   title?: string;
   titleIcon?: string;
@@ -382,14 +388,22 @@ export interface Widget {
   config: WidgetConfig;
 }
 
+export interface GroupInfo {
+  formIndex: number;
+  GroupTitle: string;
+}
+
+export interface JsonSchema {
+  type: string;
+  title?: string;
+  properties: {[key: string]: any};
+  required?: string[];
+}
+
 export interface JsonSettingsSchema {
-  schema?: {
-    type: string;
-    title: string;
-    properties: {[key: string]: any};
-    required?: string[];
-  };
+  schema?: JsonSchema;
   form?: any[];
+  groupInfoes?: GroupInfo[]
 }
 
 export interface WidgetPosition {

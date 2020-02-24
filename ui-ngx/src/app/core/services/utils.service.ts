@@ -359,6 +359,26 @@ export class UtilsService {
     return dataKey;
   }
 
+  public createAdditionalDataKey(dataKey: DataKey, datasource: Datasource, timeUnit: string,
+                                 datasources: Datasource[], additionalKeysNumber: number): DataKey {
+    const additionalDataKey = deepClone(dataKey);
+    if (dataKey.settings.comparisonSettings.comparisonValuesLabel) {
+      additionalDataKey.label = this.createLabelFromDatasource(datasource, dataKey.settings.comparisonSettings.comparisonValuesLabel);
+    } else {
+      additionalDataKey.label = dataKey.label + ' ' + this.translate.instant('legend.comparison-time-ago.'+timeUnit);
+    }
+    additionalDataKey.pattern = additionalDataKey.label;
+    if (dataKey.settings.comparisonSettings.color) {
+      additionalDataKey.color = dataKey.settings.comparisonSettings.color;
+    } else {
+      const index = datasources.map((_datasource) => datasource.dataKeys.length)
+        .reduce((previousValue, currentValue) => previousValue + currentValue, 0);
+      additionalDataKey.color = this.getMaterialColor(index + additionalKeysNumber);
+    }
+    additionalDataKey._hash = Math.random();
+    return additionalDataKey;
+  }
+
   public createLabelFromDatasource(datasource: Datasource, pattern: string) {
     let label = pattern;
     if (!datasource) {

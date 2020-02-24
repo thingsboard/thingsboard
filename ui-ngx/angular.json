@@ -55,6 +55,7 @@
               "node_modules/flot/src/plugins/jquery.flot.pie.js",
               "node_modules/flot/src/plugins/jquery.flot.crosshair.js",
               "node_modules/flot/src/plugins/jquery.flot.stack.js",
+              "node_modules/flot/src/plugins/jquery.flot.symbol.js",
               "node_modules/flot.curvedlines/curvedLines.js",
               "node_modules/tinycolor2/dist/tinycolor-min.js",
               "node_modules/tooltipster/dist/js/tooltipster.bundle.min.js",

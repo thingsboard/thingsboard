@@ -19,6 +19,7 @@ import * as equal from 'deep-equal';
 import ObjectPath from 'objectpath';
 import * as React from 'react';
 import * as tinycolor_ from 'tinycolor2';
+import { GroupInfo } from '@shared/models/widget.models';
 
 const tinycolor = tinycolor_;
 
@@ -43,11 +44,6 @@ export interface DefaultsFormOptions {
   path?: string[];
   lookup?: {[key: string]: any};
   ignore?: {[key: string]: boolean};
-}
-
-export interface GroupInfo {
-  formIndex: number;
-  GroupTitle: string;
 }
 
 export type onChangeFn = (key: (string | number)[], val: any, forceUpdate?: boolean) => void;

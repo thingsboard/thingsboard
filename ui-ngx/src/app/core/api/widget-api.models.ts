@@ -17,12 +17,15 @@
 import { Observable } from 'rxjs';
 import { EntityId } from '@app/shared/models/id/entity-id';
 import {
-  WidgetActionDescriptor,
-  widgetType,
+  DataSet,
+  Datasource,
+  DatasourceData,
+  DatasourceType,
+  KeyInfo,
   LegendConfig,
   LegendData,
-  Datasource,
-  DatasourceData, DataSet, DatasourceType, KeyInfo
+  WidgetActionDescriptor,
+  widgetType
 } from '@shared/models/widget.models';
 import { TimeService } from '../services/time.service';
 import { DeviceService } from '../http/device.service';
@@ -36,10 +39,8 @@ import { DatasourceService } from '@core/api/datasource.service';
 import { RafService } from '@core/services/raf.service';
 import { EntityAliases } from '@shared/models/alias.models';
 import { EntityInfo } from '@app/shared/models/entity.models';
-import { Type } from '@angular/core';
-import { AssetService } from '@core/http/asset.service';
-import { DialogService } from '@core/services/dialog.service';
 import { IDashboardComponent } from '@home/models/dashboard-component.models';
+import * as moment_ from 'moment';
 
 export interface TimewindowFunctions {
   onUpdateTimewindow: (startTimeMs: number, endTimeMs: number, interval?: number) => void;
@@ -200,6 +201,8 @@ export interface WidgetSubscriptionOptions {
   timeWindowConfig?: Timewindow;
   dashboardTimewindow?: Timewindow;
   legendConfig?: LegendConfig;
+  comparisonEnabled?: boolean;
+  timeForComparison?: moment_.unitOfTime.DurationConstructor;
   decimals?: number;
   units?: string;
   callbacks?: WidgetSubscriptionCallbacks;
@@ -227,6 +230,7 @@ export interface IWidgetSubscription {
   hiddenData?: Array<{data: DataSet}>;
   timeWindowConfig?: Timewindow;
   timeWindow?: WidgetTimewindow;
+  comparisonTimeWindow?: WidgetTimewindow;
 
   alarms?: Array<AlarmInfo>;
   alarmSource?: Datasource;
