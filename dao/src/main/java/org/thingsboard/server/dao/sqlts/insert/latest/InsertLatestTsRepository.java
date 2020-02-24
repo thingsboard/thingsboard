@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sqlts;
+package org.thingsboard.server.dao.sqlts.insert.latest;
 
-import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
+import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
 
 import java.util.List;
 
-public interface InsertTsRepository<T extends AbstractTsKvEntity> {
+public interface InsertLatestTsRepository {
 
-    void saveOrUpdate(List<EntityContainer<T>> entities);
+    void saveOrUpdate(List<TsKvLatestEntity> entities);
 
 }

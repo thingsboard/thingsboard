@@ -13,26 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model.sqlts.timescale;
+package org.thingsboard.server.dao.sqlts.insert;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
+import org.thingsboard.server.dao.sqlts.EntityContainer;
 
-import javax.persistence.Transient;
-import java.io.Serializable;
-import java.util.UUID;
+import java.util.List;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class TimescaleTsKvCompositeKey implements Serializable {
+public interface InsertTsRepository<T extends AbstractTsKvEntity> {
 
-    @Transient
-    private static final long serialVersionUID = -4089175869616037523L;
+    void saveOrUpdate(List<EntityContainer<T>> entities);
 
-    private UUID tenantId;
-    private UUID entityId;
-    private int key;
-    private long ts;
-} 
+}

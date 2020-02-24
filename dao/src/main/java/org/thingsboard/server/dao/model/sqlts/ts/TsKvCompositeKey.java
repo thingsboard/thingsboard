@@ -13,14 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sqlts;
+package org.thingsboard.server.dao.model.sqlts.ts;
 
-import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.util.List;
+import javax.persistence.Transient;
+import java.io.Serializable;
+import java.util.UUID;
 
-public interface InsertLatestTsRepository {
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class TsKvCompositeKey implements Serializable {
 
-    void saveOrUpdate(List<TsKvLatestEntity> entities);
+    @Transient
+    private static final long serialVersionUID = -4089175869616037523L;
 
+    private UUID entityId;
+    private int key;
+    private long ts;
 }
