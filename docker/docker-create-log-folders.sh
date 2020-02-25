@@ -15,19 +15,10 @@
 # limitations under the License.
 #
 
-CONF_FOLDER="/config"
-jarfile=${pkg.installFolder}/bin/${pkg.name}.jar
-configfile=${pkg.name}.conf
+mkdir -p tb-node/log/ && sudo chown -R 799:799 tb-node/log/
 
-source "${CONF_FOLDER}/${configfile}"
+mkdir -p tb-transports/coap/log && sudo chown -R 799:799 tb-transports/coap/log
 
-export LOADER_PATH=/config,${LOADER_PATH}
+mkdir -p tb-transports/http/log && sudo chown -R 799:799 tb-transports/http/log
 
-echo "Starting '${project.name}' ..."
-
-cd ${pkg.installFolder}/bin
-
-exec java -cp ${jarfile} $JAVA_OPTS -Dloader.main=org.thingsboard.server.coap.ThingsboardCoapTransportApplication \
-                    -Dspring.jpa.hibernate.ddl-auto=none \
-                    -Dlogging.config=/config/logback.xml \
-                    org.springframework.boot.loader.PropertiesLauncher
+mkdir -p tb-transports/mqtt/log && sudo chown -R 799:799 tb-transports/mqtt/log

@@ -15,4 +15,8 @@
 # limitations under the License.
 #
 
-kubectl -n thingsboard delete svc,sts,deploy,pv,pvc,cm,po,ing --all
+kubectl -n thingsboard delete svc,sts,deploy,cm,po,ing --all
+
+kubectl -n thingsboard delete pvc postgres-pv-claim
+
+kubectl -n thingsboard delete pv cassandra
