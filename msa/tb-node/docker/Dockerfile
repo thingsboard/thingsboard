@@ -23,9 +23,9 @@ RUN chmod a+x /tmp/*.sh \
 
 RUN dpkg -i /tmp/${pkg.name}.deb
 
-RUN chown -R ${pkg.user}:${pkg.user} /tmp
-
 RUN systemctl --no-reload disable --now ${pkg.name}.service > /dev/null 2>&1 || :
+
+RUN chown -R ${pkg.user}:${pkg.user} /tmp
 
 USER ${pkg.user}
 
