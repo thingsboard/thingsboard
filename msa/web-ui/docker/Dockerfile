@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM debian:stretch
+FROM volodymyrbabak/basis
 
 COPY start-web-ui.sh ${pkg.name}.deb /tmp/
 

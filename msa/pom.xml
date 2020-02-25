@@ -36,12 +36,12 @@
     </properties>
 
     <modules>
-<!--        <module>tb</module>-->
+        <module>tb</module>
         <module>js-executor</module>
         <module>web-ui</module>
         <module>tb-node</module>
         <module>transport</module>
-<!--        <module>black-box-tests</module>-->
+        <module>black-box-tests</module>
     </modules>
 
     <build>
