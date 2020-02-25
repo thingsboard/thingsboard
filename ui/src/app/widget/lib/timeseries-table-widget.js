@@ -160,6 +160,12 @@ function TimeseriesTableWidgetController($element, $scope, $filter, $timeout, ty
         updateDatasources();
     }
 
+    $scope.$watch("vm.query.search", function(newVal, prevVal) {
+        if (!angular.equals(newVal, prevVal)) {
+            dataUpdated();
+        }
+    });
+
     $scope.$on('timeseries-table-data-updated', function(event, tableId) {
         if (vm.tableId == tableId) {
             dataUpdated();
