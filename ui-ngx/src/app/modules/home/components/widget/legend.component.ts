@@ -15,7 +15,7 @@
 ///
 
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { LegendConfig, LegendData, LegendDirection, LegendPosition } from '@shared/models/widget.models';
+import { LegendConfig, LegendData, LegendDirection, LegendKey, LegendPosition } from '@shared/models/widget.models';
 
 @Component({
   selector: 'tb-legend',
@@ -52,8 +52,15 @@ export class LegendComponent implements OnInit {
   }
 
   toggleHideData(index: number) {
-    this.legendData.keys[index].dataKey.hidden = !this.legendData.keys[index].dataKey.hidden;
-    this.legendKeyHiddenChange.emit(index);
+    if (!this.legendData.keys[index].dataKey.settings.disableDataHiding) {
+      this.legendData.keys[index].dataKey.hidden = !this.legendData.keys[index].dataKey.hidden;
+      this.legendKeyHiddenChange.emit(index);
+    }
+  }
+
+  legendKeys(): LegendKey[] {
+    return this.legendData.keys
+      .filter(legendKey => this.legendData.keys[legendKey.dataIndex].dataKey.inLegend);
   }
 
 }

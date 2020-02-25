@@ -231,6 +231,7 @@ export interface DataKey extends KeyInfo {
   settings?: any;
   usePostProcessing?: boolean;
   hidden?: boolean;
+  inLegend?: boolean;
   _hash?: number;
 }
 

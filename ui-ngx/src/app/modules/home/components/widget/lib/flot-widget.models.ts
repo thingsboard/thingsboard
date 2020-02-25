@@ -160,6 +160,9 @@ export declare type TbFlotXAxisPosition = 'top' | 'bottom';
 
 export interface TbFlotKeySettings {
   excludeFromStacking: boolean;
+  hideDataByDefault: boolean;
+  disableDataHiding: boolean;
+  removeFromLegend: boolean;
   showLines: boolean;
   fillLines: boolean;
   showPoints: boolean;
@@ -612,6 +615,36 @@ export const flotPieSettingsSchema: JsonSettingsSchema = {
     ]
 };
 
+export const flotPieDatakeySettingsSchema: JsonSettingsSchema = {
+  schema: {
+    type: 'object',
+    title: 'DataKeySettings',
+    properties: {
+      hideDataByDefault: {
+        title: 'Data is hidden by default',
+        type: 'boolean',
+        default: false
+      },
+      disableDataHiding: {
+        title: 'Disable data hiding',
+        type: 'boolean',
+        default: false
+      },
+      removeFromLegend: {
+        title: 'Remove datakey from legend',
+        type: 'boolean',
+        default: false
+      }
+    },
+    required: []
+  },
+  form: [
+    'hideDataByDefault',
+    'disableDataHiding',
+    'removeFromLegend'
+  ]
+};
+
 export function flotDatakeySettingsSchema(defaultShowLines: boolean, chartType: ChartType): JsonSettingsSchema {
   const schema: JsonSettingsSchema = {
     schema: {
@@ -620,6 +653,21 @@ export function flotDatakeySettingsSchema(defaultShowLines: boolean, chartType: 
       properties: {
         excludeFromStacking: {
           title: 'Exclude from stacking(available in "Stacking" mode)',
+          type: 'boolean',
+          default: false
+        },
+        hideDataByDefault: {
+          title: 'Data is hidden by default',
+          type: 'boolean',
+          default: false
+        },
+        disableDataHiding: {
+          title: 'Disable data hiding',
+          type: 'boolean',
+          default: false
+        },
+        removeFromLegend: {
+          title: 'Remove datakey from legend',
           type: 'boolean',
           default: false
         },
@@ -711,6 +759,9 @@ export function flotDatakeySettingsSchema(defaultShowLines: boolean, chartType: 
       required: ['showLines', 'fillLines', 'showPoints']
     },
     form: [
+      'hideDataByDefault',
+      'disableDataHiding',
+      'removeFromLegend',
       'excludeFromStacking',
       'showLines',
       'fillLines',

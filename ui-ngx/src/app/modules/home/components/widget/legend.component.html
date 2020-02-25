@@ -26,7 +26,7 @@
   </tr>
   </thead>
   <tbody>
-  <tr class="tb-legend-keys" *ngFor="let legendKey of legendData.keys" [ngClass]="{ 'tb-row-direction': isRowDirection }">
+  <tr class="tb-legend-keys" *ngFor="let legendKey of legendKeys()" [ngClass]="{ 'tb-row-direction': isRowDirection }">
     <td><span class="tb-legend-line" [ngStyle]="{backgroundColor: legendKey.dataKey.color}"></span></td>
     <td class="tb-legend-label"
         (click)="toggleHideData(legendKey.dataIndex)"

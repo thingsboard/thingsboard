@@ -352,6 +352,7 @@ export class WidgetSubscription implements IWidgetSubscription {
             initDataSubscriptionSubject.complete();
           },
           (err) => {
+            this.notifyDataLoaded();
             initDataSubscriptionSubject.error(err);
           }
         );
@@ -368,7 +369,8 @@ export class WidgetSubscription implements IWidgetSubscription {
       const additionalDataKeys: DataKey[] = [];
       let datasourceAdditionalKeysNumber = 0;
       datasource.dataKeys.forEach((dataKey) => {
-        dataKey.hidden = false;
+        dataKey.hidden = dataKey.settings.hideDataByDefault ? true : false;
+        dataKey.inLegend = dataKey.settings.removeFromLegend ? false : true;
         dataKey.pattern = dataKey.label;
         if (this.comparisonEnabled && dataKey.settings.comparisonSettings && dataKey.settings.comparisonSettings.showValuesForComparison) {
           datasourceAdditionalKeysNumber++;

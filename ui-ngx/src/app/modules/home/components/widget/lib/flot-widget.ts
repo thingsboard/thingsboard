@@ -21,7 +21,7 @@ import { IWidgetSubscription } from '@core/api/widget-api.models';
 import { DatasourceData, JsonSettingsSchema } from '@app/shared/models/widget.models';
 import {
   ChartType,
-  flotDatakeySettingsSchema,
+  flotDatakeySettingsSchema, flotPieDatakeySettingsSchema,
   flotPieSettingsSchema,
   flotSettingsSchema,
   TbFlotAxisOptions,
@@ -47,6 +47,7 @@ const tinycolor = tinycolor_;
 const moment = moment_;
 
 const flotPieSettingsSchemaValue = flotPieSettingsSchema;
+const flotPieDatakeySettingsSchemaValue = flotPieDatakeySettingsSchema;
 
 export class TbFlot {
 
@@ -103,7 +104,7 @@ export class TbFlot {
   }
 
   static pieDatakeySettingsSchema(): JsonSettingsSchema {
-    return {};
+    return flotPieDatakeySettingsSchemaValue;
   }
 
   static settingsSchema(chartType: ChartType): JsonSettingsSchema {
@@ -814,12 +815,7 @@ export class TbFlot {
         return seriesHover.index === seriesIndex;
       });
       if (found && found.length) {
-        let timestamp: number;
-        if (!isNumber(hoverInfo[0].time) || (found[0].time < hoverInfo[0].time)) {
-          timestamp = parseInt(hoverInfo[1].time, 10);
-        } else {
-          timestamp = parseInt(hoverInfo[0].time, 10);
-        }
+        const timestamp = parseInt(found[0].time, 10);
         const date = moment(timestamp).format('YYYY-MM-DD HH:mm:ss');
         const dateDiv = $('<div>' + date + '</div>');
         dateDiv.css({
