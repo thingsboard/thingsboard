@@ -104,6 +104,7 @@ export class JsonFormComponent implements OnInit, ControlValueAccessor, Validato
   fullscreenFinishFn: () => void;
 
   private propagateChange = null;
+  private propagateChangePending = false;
 
   constructor(public elementRef: ElementRef,
               private translate: TranslateService,
@@ -120,6 +121,12 @@ export class JsonFormComponent implements OnInit, ControlValueAccessor, Validato
 
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
+    if (this.propagateChangePending) {
+      this.propagateChangePending = false;
+      setTimeout(() => {
+        this.propagateChange(this.data);
+      }, 0);
+    }
   }
 
   registerOnTouched(fn: any): void {
@@ -154,7 +161,11 @@ export class JsonFormComponent implements OnInit, ControlValueAccessor, Validato
   updateView() {
     if (this.data) {
       this.data.model = this.model;
-      this.propagateChange(this.data);
+      if (this.propagateChange) {
+        this.propagateChange(this.data);
+      } else {
+        this.propagateChangePending = true;
+      }
     }
   }
 

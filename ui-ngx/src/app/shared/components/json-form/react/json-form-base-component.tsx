@@ -33,9 +33,9 @@ export default ThingsboardBaseComponent => class<P extends JsonFormFieldProps>
     }
 
     componentDidMount() {
-        /* if (typeof this.state.value !== 'undefined') {
+        if (typeof this.state.value !== 'undefined') {
             this.props.onChange(this.props.form.key, this.state.value);
-        }*/
+        }
     }
 
     onChangeValidate(e, forceUpdate?: boolean) {
