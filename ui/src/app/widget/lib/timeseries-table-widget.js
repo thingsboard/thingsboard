@@ -254,6 +254,19 @@ function TimeseriesTableWidgetController($element, $scope, $filter, $timeout, ty
         }
     }
 
+    vm.headerStyle = function(header) {
+        var style = {};
+        var styleInfo = header.stylesInfo;
+        if (styleInfo.useHeaderStyleFunction && styleInfo.headerStyleFunction) {
+            try {
+                style = styleInfo.headerStyleFunction();
+            } catch (e) {
+                style = {};
+            }
+        }
+        return style;
+    }
+
     $scope.$watch('vm.sourceIndex', function(newIndex, oldIndex) {
         if (newIndex != oldIndex) {
             updateSourceData(vm.sources[vm.sourceIndex]);
@@ -311,9 +324,30 @@ function TimeseriesTableWidgetController($element, $scope, $filter, $timeout, ty
                 for (var a = 0; a < datasource.dataKeys.length; a++ ) {
                     var dataKey = datasource.dataKeys[a];
                     var keySettings = dataKey.settings;
+                    var headerStyleFunction = null;
+                    var useHeaderStyleFunction = false;
+
+                    if (keySettings.useHeaderStyleFunction === true) {
+                        if (angular.isDefined(keySettings.headerStyleFunction) && keySettings.headerStyleFunction.length > 0) {
+                            try {
+                                headerStyleFunction = new Function(keySettings.headerStyleFunction);
+                                useHeaderStyleFunction = true;
+                            } catch (e) {
+                                headerStyleFunction = null;
+                                useHeaderStyleFunction = false;
+                            }
+                        }
+                    }
+
+                    var stylesInfo = {
+                        useHeaderStyleFunction: useHeaderStyleFunction,
+                        headerStyleFunction: headerStyleFunction
+                    }
+
                     source.ts.header.push({
                         index: a+1,
-                        dataKey: dataKey
+                        dataKey: dataKey,
+                        stylesInfo: stylesInfo
                     });
                     source.ts.rowDataTemplate[dataKey.label] = null;
 
