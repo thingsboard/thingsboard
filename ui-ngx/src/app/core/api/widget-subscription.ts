@@ -467,6 +467,7 @@ export class WidgetSubscription implements IWidgetSubscription {
   getFirstEntityInfo(): SubscriptionEntityInfo {
     let entityId: EntityId;
     let entityName: string;
+    let entityLabel: string;
     if (this.type === widgetType.rpc) {
       if (this.targetDeviceId) {
         entityId = {
@@ -482,6 +483,7 @@ export class WidgetSubscription implements IWidgetSubscription {
           id: this.alarmSource.entityId
         };
         entityName = this.alarmSource.entityName;
+        entityLabel = this.alarmSource.entityLabel;
       }
     } else {
       for (const datasource of this.datasources) {
@@ -491,6 +493,7 @@ export class WidgetSubscription implements IWidgetSubscription {
             id: datasource.entityId
           };
           entityName = datasource.entityName;
+          entityLabel = datasource.entityLabel;
           break;
         }
       }
@@ -498,7 +501,8 @@ export class WidgetSubscription implements IWidgetSubscription {
     if (entityId) {
       return {
         entityId,
-        entityName
+        entityName,
+        entityLabel
       };
     } else {
       return null;

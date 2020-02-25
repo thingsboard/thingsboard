@@ -41,6 +41,7 @@ export interface TableWidgetDataKeySettings {
 export interface EntityData {
   id: EntityId;
   entityName: string;
+  entityLabel?: string;
   entityType?: string;
   [key: string]: any;
 }

@@ -82,6 +82,8 @@ interface EntitiesTableWidgetSettings extends TableWidgetSettings {
   entitiesTitle: string;
   displayEntityName: boolean;
   entityNameColumnTitle: string;
+  displayEntityLabel: boolean;
+  entityLabelColumnTitle: string;
   displayEntityType: boolean;
 }
 
@@ -233,11 +235,18 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   private updateDatasources() {
 
     const displayEntityName = isDefined(this.settings.displayEntityName) ? this.settings.displayEntityName : true;
+    const displayEntityLabel = isDefined(this.settings.displayEntityLabel) ? this.settings.displayEntityLabel : false;
     let entityNameColumnTitle: string;
+    let entityLabelColumnTitle: string;
     if (this.settings.entityNameColumnTitle && this.settings.entityNameColumnTitle.length) {
       entityNameColumnTitle = this.utils.customTranslation(this.settings.entityNameColumnTitle, this.settings.entityNameColumnTitle);
     } else {
       entityNameColumnTitle = this.translate.instant('entity.entity-name');
+    }
+    if (this.settings.entityLabelColumnTitle && this.settings.entityLabelColumnTitle.length) {
+      entityLabelColumnTitle = this.utils.customTranslation(this.settings.entityLabelColumnTitle, this.settings.entityLabelColumnTitle);
+    } else {
+      entityLabelColumnTitle = this.translate.instant('entity.entity-label');
     }
     const displayEntityType = isDefined(this.settings.displayEntityType) ? this.settings.displayEntityType : true;
 
@@ -257,6 +266,23 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
         useCellStyleFunction: false
       };
       this.columnWidth.entityName = '0px';
+    }
+    if (displayEntityLabel) {
+      this.columns.push(
+        {
+          name: 'entityLabel',
+          label: 'entityLabel',
+          def: 'entityLabel',
+          title: entityLabelColumnTitle
+        } as EntityColumn
+      );
+      this.contentsInfo.entityLabel = {
+        useCellContentFunction: false
+      };
+      this.stylesInfo.entityLabel = {
+        useCellStyleFunction: false
+      };
+      this.columnWidth.entityLabel = '0px';
     }
     if (displayEntityType) {
       this.columns.push(
@@ -458,11 +484,13 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     if (descriptors.length) {
       let entityId;
       let entityName;
+      let entityLabel;
       if (entity) {
         entityId = entity.id;
         entityName = entity.entityName;
+        entityLabel = entity.entityLabel;
       }
-      this.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName);
+      this.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, null, entityLabel);
     }
   }
 
@@ -472,11 +500,13 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     }
     let entityId;
     let entityName;
+    let entityLabel;
     if (entity) {
       entityId = entity.id;
       entityName = entity.entityName;
+      entityLabel = entity.entityLabel;
     }
-    this.ctx.actionsApi.handleWidgetAction($event, actionDescriptor, entityId, entityName);
+    this.ctx.actionsApi.handleWidgetAction($event, actionDescriptor, entityId, entityName, null, entityLabel);
   }
 
   private defaultStyle(key: EntityColumn, value: any): any {
@@ -510,7 +540,8 @@ class EntityDatasource implements DataSource<EntityData> {
       }
       const entity: EntityData = {
         id: {} as EntityId,
-        entityName: datasource.entityName
+        entityName: datasource.entityName,
+        entityLabel: datasource.entityLabel ? datasource.entityLabel : datasource.entityName
       };
       if (datasource.entityId) {
         entity.id.id = datasource.entityId;

@@ -161,6 +161,8 @@ export class WidgetContext {
   isEdit: boolean;
   isMobile: boolean;
 
+  widgetForceReInit?: () => void;
+
   widgetNamespace?: string;
   subscriptionApi?: WidgetSubscriptionApi;
 
@@ -225,6 +227,7 @@ export interface IDynamicWidgetComponent {
   rpcErrorText: string;
   rpcRejection: HttpErrorResponse;
   raf: RafService;
+  widgetForceReInit(): void;
   [key: string]: any;
 }
 

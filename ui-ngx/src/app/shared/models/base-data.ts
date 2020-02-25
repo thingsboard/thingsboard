@@ -23,4 +23,5 @@ export interface BaseData<T extends HasId> {
   createdTime?: number;
   id?: T;
   name?: string;
+  label?: string;
 }

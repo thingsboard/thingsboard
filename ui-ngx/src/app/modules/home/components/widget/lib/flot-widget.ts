@@ -87,6 +87,7 @@ export class TbFlot {
   private mousedownHandler = this.onFlotMouseDown.bind(this);
   private mouseupHandler = this.onFlotMouseUp.bind(this);
   private mouseleaveHandler = this.onFlotMouseLeave.bind(this);
+  private flotClickHandler = this.onFlotClick.bind(this);
 
   private readonly animatedPie: boolean;
   private pieDataAnimationDuration: number;
@@ -309,6 +310,9 @@ export class TbFlot {
           }
         }
       };
+
+      this.options.grid.clickable = true;
+
       if (this.settings.stroke) {
         this.options.series.pie.stroke.color = this.settings.stroke.color || '#fff';
         this.options.series.pie.stroke.width = this.settings.stroke.width || 0;
@@ -925,6 +929,7 @@ export class TbFlot {
     this.$element.bind('mousedown', this.mousedownHandler);
     this.$element.bind('mouseup', this.mouseupHandler);
     this.$element.bind('mouseleave', this.mouseleaveHandler);
+    this.$element.bind('plotclick', this.flotClickHandler);
   }
 
   private disableMouseEvents() {
@@ -937,6 +942,7 @@ export class TbFlot {
     this.$element.unbind('mousedown', this.mousedownHandler);
     this.$element.unbind('mouseup', this.mouseupHandler);
     this.$element.unbind('mouseleave', this.mouseleaveHandler);
+    this.$element.unbind('plotclick', this.flotClickHandler);
   }
 
   private onFlotHover(e: any, pos: JQueryPlotPoint, item: TbFlotPlotItem) {
@@ -1036,6 +1042,13 @@ export class TbFlot {
       this.plot.unhighlight();
     }
     this.isMouseInteraction = false;
+  }
+
+  private onFlotClick(e: any, pos: JQueryPlotPoint, item: TbFlotPlotItem) {
+    if (!this.plot) {
+      return;
+    }
+    this.onPieSliceClick(e, item);
   }
 
   private getHoverInfo(seriesList: TbFlotPlotDataSeries[], pos: JQueryPlotPoint): TbFlotHoverInfo[] {
@@ -1216,6 +1229,18 @@ export class TbFlot {
     this.pieDataRendered();
     this.plot.setData(this.pieData);
     this.plot.draw();
+  }
+
+  private onPieSliceClick($event: any, item: TbFlotPlotItem) {
+    const descriptors = this.ctx.actionsApi.getActionDescriptors('sliceClick');
+    if ($event && descriptors.length) {
+      $event.stopPropagation();
+      const entityInfo = this.ctx.actionsApi.getActiveEntityInfo();
+      const entityId = entityInfo ? entityInfo.entityId : null;
+      const entityName = entityInfo ? entityInfo.entityName : null;
+      const entityLabel = entityInfo ? entityInfo.entityLabel : null;
+      this.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, item, entityLabel);
+    }
   }
 
 }

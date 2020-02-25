@@ -263,6 +263,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     this.widgetContext.servicesMap = ServicesMap;
     this.widgetContext.isEdit = this.isEdit;
     this.widgetContext.isMobile = this.isMobile;
+    this.widgetContext.widgetForceReInit = this.reInit.bind(this);
 
     this.widgetContext.subscriptionApi = {
       createSubscription: this.createSubscription.bind(this),
@@ -280,7 +281,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       actionDescriptorsBySourceId,
       getActionDescriptors: this.getActionDescriptors.bind(this),
       handleWidgetAction: this.handleWidgetAction.bind(this),
-      elementClick: this.elementClick.bind(this)
+      elementClick: this.elementClick.bind(this),
+      getActiveEntityInfo: this.getActiveEntityInfo.bind(this)
     };
 
     this.widgetContext.customHeaderActions = [];
@@ -295,7 +297,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           const entityInfo = this.getActiveEntityInfo();
           const entityId = entityInfo ? entityInfo.entityId : null;
           const entityName = entityInfo ? entityInfo.entityName : null;
-          this.handleWidgetAction($event, descriptor, entityId, entityName);
+          const entityLabel = entityInfo ? entityInfo.entityLabel : null;
+          this.handleWidgetAction($event, descriptor, entityId, entityName, null, entityLabel);
         }
       };
       this.widgetContext.customHeaderActions.push(headerAction);
@@ -958,7 +961,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   }
 
   private handleWidgetAction($event: Event, descriptor: WidgetActionDescriptor,
-                             entityId?: EntityId, entityName?: string, additionalParams?: any): void {
+                             entityId?: EntityId, entityName?: string, additionalParams?: any, entityLabel?: string): void {
     const type = descriptor.type;
     const targetEntityParamName = descriptor.stateEntityParamName;
     let targetEntityId: EntityId;
@@ -970,7 +973,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       case WidgetActionType.updateDashboardState:
         let targetDashboardStateId = descriptor.targetDashboardStateId;
         const params = deepClone(this.widgetContext.stateController.getStateParams());
-        this.updateEntityParams(params, targetEntityParamName, targetEntityId, entityName);
+        this.updateEntityParams(params, targetEntityParamName, targetEntityId, entityName, entityLabel);
         if (type === WidgetActionType.openDashboardState) {
           this.widgetContext.stateController.openState(targetDashboardStateId, params, descriptor.openRightLayout);
         } else {
@@ -982,7 +985,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         targetDashboardStateId = descriptor.targetDashboardStateId;
         const stateObject: StateObject = {};
         stateObject.params = {};
-        this.updateEntityParams(stateObject.params, targetEntityParamName, targetEntityId, entityName);
+        this.updateEntityParams(stateObject.params, targetEntityParamName, targetEntityId, entityName, entityLabel);
         if (targetDashboardStateId) {
           stateObject.id = targetDashboardStateId;
         }
@@ -1055,14 +1058,16 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
             const entityInfo = this.getActiveEntityInfo();
             const entityId = entityInfo ? entityInfo.entityId : null;
             const entityName = entityInfo ? entityInfo.entityName : null;
-            this.handleWidgetAction(event, descriptor, entityId, entityName);
+            const entityLabel = entityInfo && entityInfo.entityLabel ? entityInfo.entityLabel : null;
+            this.handleWidgetAction(event, descriptor, entityId, entityName, null, entityLabel);
           }
         });
       }
     }
   }
 
-  private updateEntityParams(params: StateParams, targetEntityParamName?: string, targetEntityId?: EntityId, entityName?: string) {
+  private updateEntityParams(params: StateParams, targetEntityParamName?: string, targetEntityId?: EntityId,
+                             entityName?: string, entityLabel?: string) {
     if (targetEntityId) {
       let targetEntityParams: StateParams;
       if (targetEntityParamName && targetEntityParamName.length) {
@@ -1078,6 +1083,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       targetEntityParams.entityId = targetEntityId;
       if (entityName) {
         targetEntityParams.entityName = entityName;
+      }
+      if (entityLabel) {
+        targetEntityParams.entityLabel = entityLabel;
       }
     }
   }

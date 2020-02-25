@@ -27,7 +27,7 @@ import { base64toObj, objToBase64 } from '@app/core/utils';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { EntityService } from '@core/http/entity.service';
 import { EntityType } from '@shared/models/entity-type.models';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-entity-state-controller',
@@ -103,8 +103,7 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
   public openState(id: string, params?: StateParams, openRightLayout?: boolean): void {
     if (this.states && this.states[id]) {
       this.resolveEntity(params).subscribe(
-        (entityName) => {
-          params.entityName = entityName;
+        () => {
           const newState: StateObject = {
             id,
             params
@@ -123,8 +122,7 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
     }
     if (this.states && this.states[id]) {
       this.resolveEntity(params).subscribe(
-        (entityName) => {
-          params.entityName = entityName;
+        () => {
           const newState: StateObject = {
             id,
             params
@@ -199,11 +197,17 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
       let stateName = this.states[this.stateObject[index].id].name;
       stateName = this.utils.customTranslation(stateName, stateName);
       const params = this.stateObject[index].params;
-      const entityName = params && params.entityName ? params.entityName : '';
+      const targetParams = params && params.targetEntityParamName ? params[params.targetEntityParamName] : params;
+      const entityName = targetParams && targetParams.entityName ? targetParams.entityName : '';
+      const entityLabel = targetParams && targetParams.entityLabel ? targetParams.entityLabel : '';
       result = this.utils.insertVariable(stateName, 'entityName', entityName);
+      result = this.utils.insertVariable(stateName, 'entityLabel', entityLabel);
       for (const prop of Object.keys(params)) {
         if (params[prop] && params[prop].entityName) {
           result = this.utils.insertVariable(result, prop + ':entityName', params[prop].entityName);
+        }
+        if (params[prop] && params[prop].entityLabel) {
+          result = this.utils.insertVariable(result, prop + ':entityLabel', params[prop].entityLabel);
         }
       }
     }
@@ -282,22 +286,33 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
     return true;
   }
 
-  private resolveEntity(params: StateParams): Observable<string> {
+  private resolveEntity(params: StateParams): Observable<void> {
     if (params && params.targetEntityParamName) {
       params = params[params.targetEntityParamName];
     }
     if (params && params.entityId && params.entityId.id && params.entityId.entityType) {
-      if (params.entityName && params.entityName.length) {
-        return of(params.entityName);
+      if (this.isEntityResolved(params)) {
+        return of(null);
       } else {
         return this.entityService.getEntity(params.entityId.entityType as EntityType,
           params.entityId.id, {ignoreLoading: true, ignoreErrors: true}).pipe(
-          map((entity) => entity.name)
+            tap((entity) => {
+              params.entityName = entity.name;
+              params.entityLabel = entity.label;
+            }),
+          map(() => null)
         );
       }
     } else {
-      return of('');
+      return of(null);
     }
+  }
+
+  private isEntityResolved(params: StateParams): boolean {
+    if (!params.entityName || !params.entityName.length) {
+      return false;
+    }
+    return true;
   }
 
   private getStateObjById(id: string): StateObject {

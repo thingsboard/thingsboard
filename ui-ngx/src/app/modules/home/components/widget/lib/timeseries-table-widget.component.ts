@@ -300,7 +300,8 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
             entityType: datasource.entityType,
             id: datasource.entityId
           },
-          entityName: datasource.entityName
+          entityName: datasource.entityName,
+          entityLabel: datasource.entityLabel
         };
       }
     }
@@ -421,11 +422,13 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
       }
       let entityId;
       let entityName;
+      let entityLabel;
       if (this.ctx.activeEntityInfo) {
         entityId = this.ctx.activeEntityInfo.entityId;
         entityName = this.ctx.activeEntityInfo.entityName;
+        entityLabel = this.ctx.activeEntityInfo.entityLabel;
       }
-      this.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, row);
+      this.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, row, entityLabel);
     }
   }
 
@@ -435,11 +438,13 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     }
     let entityId;
     let entityName;
+    let entityLabel;
     if (this.ctx.activeEntityInfo) {
       entityId = this.ctx.activeEntityInfo.entityId;
       entityName = this.ctx.activeEntityInfo.entityName;
+      entityLabel = this.ctx.activeEntityInfo.entityLabel;
     }
-    this.ctx.actionsApi.handleWidgetAction($event, actionDescriptor, entityId, entityName, row);
+    this.ctx.actionsApi.handleWidgetAction($event, actionDescriptor, entityId, entityName, row, entityLabel);
   }
 }
 

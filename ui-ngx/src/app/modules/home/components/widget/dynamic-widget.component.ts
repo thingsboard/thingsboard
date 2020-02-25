@@ -102,4 +102,8 @@ export class DynamicWidgetComponent extends PageComponent implements IDynamicWid
       }));
   }
 
+  widgetForceReInit() {
+    this.ctx.widgetForceReInit();
+  }
+
 }

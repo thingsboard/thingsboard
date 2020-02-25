@@ -68,8 +68,9 @@ export interface WidgetActionsApi {
   actionDescriptorsBySourceId: {[sourceId: string]: Array<WidgetActionDescriptor>};
   getActionDescriptors: (actionSourceId: string) => Array<WidgetActionDescriptor>;
   handleWidgetAction: ($event: Event, descriptor: WidgetActionDescriptor,
-                       entityId?: EntityId, entityName?: string, additionalParams?: any) => void;
+                       entityId?: EntityId, entityName?: string, additionalParams?: any, entityLabel?: string) => void;
   elementClick: ($event: Event) => void;
+  getActiveEntityInfo: () => SubscriptionEntityInfo;
 }
 
 export interface AliasInfo {
@@ -108,6 +109,7 @@ export interface StateObject {
 
 export interface StateParams {
   entityName?: string;
+  entityLabel?: string;
   targetEntityParamName?: string;
   entityId?: EntityId;
   [key: string]: any | null;
@@ -211,6 +213,7 @@ export interface WidgetSubscriptionOptions {
 export interface SubscriptionEntityInfo {
   entityId: EntityId;
   entityName: string;
+  entityLabel: string;
 }
 
 export interface IWidgetSubscription {
