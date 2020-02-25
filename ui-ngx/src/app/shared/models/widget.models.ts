@@ -345,6 +345,7 @@ export interface WidgetConfig {
   showTitleIcon?: boolean;
   iconColor?: string;
   iconSize?: string;
+  titleTooltip?: string;
   dropShadow?: boolean;
   enableFullscreen?: boolean;
   useDashboardTimewindow?: boolean;

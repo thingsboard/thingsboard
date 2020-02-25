@@ -48,6 +48,7 @@ export interface TimewindowPanelData {
   historyOnly: boolean;
   timewindow: Timewindow;
   aggregation: boolean;
+  isEdit: boolean;
 }
 
 @Component({
@@ -60,6 +61,8 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
   historyOnly = false;
 
   aggregation = false;
+
+  isEdit = false;
 
   timewindow: Timewindow;
 
@@ -82,18 +85,19 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
               protected store: Store<AppState>,
               public fb: FormBuilder,
               private timeService: TimeService,
-              private translate: TranslateService,
-              private millisecondsToTimeStringPipe: MillisecondsToTimeStringPipe,
-              private datePipe: DatePipe,
-              private overlay: Overlay,
               public viewContainerRef: ViewContainerRef) {
     super(store);
     this.historyOnly = data.historyOnly;
     this.timewindow = data.timewindow;
     this.aggregation = data.aggregation;
+    this.isEdit = data.isEdit;
   }
 
   ngOnInit(): void {
+    const hideInterval = this.timewindow.hideInterval || false;
+    const hideAggregation = this.timewindow.hideAggregation || false;
+    const hideAggInterval = this.timewindow.hideAggInterval || false;
+
     this.timewindowForm = this.fb.group({
         realtime: this.fb.group(
           {
@@ -109,42 +113,46 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
         ),
         history: this.fb.group(
           {
-            historyType: [
-              this.timewindow.history && typeof this.timewindow.history.historyType !== 'undefined'
-                ? this.timewindow.history.historyType : HistoryWindowType.LAST_INTERVAL
-            ],
-            timewindowMs: [
-              this.timewindow.history && typeof this.timewindow.history.timewindowMs !== 'undefined'
-                ? this.timewindow.history.timewindowMs : null
-            ],
+            historyType: this.fb.control({
+              value: this.timewindow.history && typeof this.timewindow.history.historyType !== 'undefined'
+                ? this.timewindow.history.historyType : HistoryWindowType.LAST_INTERVAL,
+              disabled: hideInterval
+            }),
+            timewindowMs: this.fb.control({
+              value: this.timewindow.history && typeof this.timewindow.history.timewindowMs !== 'undefined'
+                ? this.timewindow.history.timewindowMs : null,
+              disabled: hideInterval
+            }),
             interval: [
               this.timewindow.history && typeof this.timewindow.history.interval !== 'undefined'
                 ? this.timewindow.history.interval : null
             ],
-            fixedTimewindow: [
-              this.timewindow.history && typeof this.timewindow.history.fixedTimewindow !== 'undefined'
-                ? this.timewindow.history.fixedTimewindow : null
-            ]
+            fixedTimewindow: this.fb.control({
+              value: this.timewindow.history && typeof this.timewindow.history.fixedTimewindow !== 'undefined'
+                ? this.timewindow.history.fixedTimewindow : null,
+              disabled: hideInterval
+            })
           }
         ),
         aggregation: this.fb.group(
           {
-            type: [
-              this.timewindow.aggregation && typeof this.timewindow.aggregation.type !== 'undefined'
-                ? this.timewindow.aggregation.type : null
-            ],
-            limit: [
-              this.timewindow.aggregation && typeof this.timewindow.aggregation.limit !== 'undefined'
+            type: this.fb.control({
+              value: this.timewindow.aggregation && typeof this.timewindow.aggregation.type !== 'undefined'
+                ? this.timewindow.aggregation.type : null,
+              disabled: hideAggregation
+            }),
+            limit: this.fb.control({
+              value: this.timewindow.aggregation && typeof this.timewindow.aggregation.limit !== 'undefined'
                 ? this.timewindow.aggregation.limit : null,
-              [Validators.min(this.minDatapointsLimit()), Validators.max(this.maxDatapointsLimit())]
-            ]
+              disabled: hideAggInterval
+            }, [Validators.min(this.minDatapointsLimit()), Validators.max(this.maxDatapointsLimit())])
           }
         )
     });
   }
 
   update() {
-    const timewindowFormValue = this.timewindowForm.value;
+    const timewindowFormValue = this.timewindowForm.getRawValue();
     this.timewindow.realtime = {
       timewindowMs: timewindowFormValue.realtime.timewindowMs,
       interval: timewindowFormValue.realtime.interval
@@ -194,13 +202,44 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
   }
 
   currentHistoryTimewindow() {
-    const timewindowFormValue = this.timewindowForm.value;
+    const timewindowFormValue = this.timewindowForm.getRawValue();
     if (timewindowFormValue.history.historyType === HistoryWindowType.LAST_INTERVAL) {
       return timewindowFormValue.history.timewindowMs;
     } else {
       return timewindowFormValue.history.fixedTimewindow.endTimeMs -
         timewindowFormValue.history.fixedTimewindow.startTimeMs;
     }
+  }
+
+  onHideIntervalChanged() {
+    if (this.timewindow.hideInterval) {
+      this.timewindowForm.get('history').get('historyType').disable({emitEvent: false});
+      this.timewindowForm.get('history').get('timewindowMs').disable({emitEvent: false});
+      this.timewindowForm.get('history').get('fixedTimewindow').disable({emitEvent: false});
+    } else {
+      this.timewindowForm.get('history').get('historyType').enable({emitEvent: false});
+      this.timewindowForm.get('history').get('timewindowMs').enable({emitEvent: false});
+      this.timewindowForm.get('history').get('fixedTimewindow').enable({emitEvent: false});
+    }
+    this.timewindowForm.markAsDirty();
+  }
+
+  onHideAggregationChanged() {
+    if (this.timewindow.hideAggregation) {
+      this.timewindowForm.get('aggregation').get('type').disable({emitEvent: false});
+    } else {
+      this.timewindowForm.get('aggregation').get('type').enable({emitEvent: false});
+    }
+    this.timewindowForm.markAsDirty();
+  }
+
+  onHideAggIntervalChanged() {
+    if (this.timewindow.hideAggInterval) {
+      this.timewindowForm.get('aggregation').get('limit').disable({emitEvent: false});
+    } else {
+      this.timewindowForm.get('aggregation').get('limit').enable({emitEvent: false});
+    }
+    this.timewindowForm.markAsDirty();
   }
 
 }

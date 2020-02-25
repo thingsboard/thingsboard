@@ -49,6 +49,8 @@ export interface DefaultsFormOptions {
 export type onChangeFn = (key: (string | number)[], val: any, forceUpdate?: boolean) => void;
 export type OnColorClickFn = (key: (string | number)[], val: tinycolor.ColorFormats.RGBA,
                               colorSelectedFn: (color: tinycolor.ColorFormats.RGBA) => void) => void;
+export type OnIconClickFn = (key: (string | number)[], val: string,
+                              iconSelectedFn: (icon: string) => void) => void;
 export type onToggleFullscreenFn = (element: HTMLElement, fullscreenFinishFn?: () => void) => void;
 
 export interface JsonFormProps {
@@ -61,6 +63,7 @@ export interface JsonFormProps {
   option: FormOption;
   onModelChange?: onChangeFn;
   onColorClick?: OnColorClickFn;
+  onIconClick?: OnIconClickFn;
   onToggleFullscreen?: onToggleFullscreenFn;
   mapper?: {[type: string]: any};
 }
@@ -107,6 +110,7 @@ export type ComponentBuilderFn = (form: JsonFormData,
                                   index: number,
                                   onChange: onChangeFn,
                                   onColorClick: OnColorClickFn,
+                                  onIconClick: OnIconClickFn,
                                   onToggleFullscreen: onToggleFullscreenFn,
                                   mapper: {[type: string]: any}) => JSX.Element;
 
@@ -118,6 +122,7 @@ export interface JsonFormFieldProps {
   mapper?: {[type: string]: any};
   onChange?: onChangeFn;
   onColorClick?: OnColorClickFn;
+  onIconClick?: OnIconClickFn;
   onChangeValidate?: (e: any, forceUpdate?: boolean) => void;
   onToggleFullscreen?: onToggleFullscreenFn;
   valid?: boolean;

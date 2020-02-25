@@ -32,7 +32,8 @@ import ThingsboardImage from './json-form-image';
 import ThingsboardCheckbox from './json-form-checkbox';
 import ThingsboardHelp from './json-form-help';
 import ThingsboardFieldSet from './json-form-fieldset';
-import { JsonFormProps, JsonFormData, onChangeFn, OnColorClickFn } from './json-form.models';
+import ThingsboardIcon from './json-form-icon';
+import { JsonFormProps, JsonFormData, onChangeFn, OnColorClickFn, OnIconClickFn } from './json-form.models';
 
 import _ from 'lodash';
 import * as tinycolor_ from 'tinycolor2';
@@ -65,11 +66,13 @@ class ThingsboardSchemaForm extends React.Component<JsonFormProps, any> {
       css: ThingsboardCss,
       color: ThingsboardColor,
       'rc-select': ThingsboardRcSelect,
-      fieldset: ThingsboardFieldSet
+      fieldset: ThingsboardFieldSet,
+      icon: ThingsboardIcon
     };
 
     this.onChange = this.onChange.bind(this);
     this.onColorClick = this.onColorClick.bind(this);
+    this.onIconClick = this.onIconClick.bind(this);
     this.onToggleFullscreen = this.onToggleFullscreen.bind(this);
     this.hasConditions = false;
   }
@@ -86,6 +89,11 @@ class ThingsboardSchemaForm extends React.Component<JsonFormProps, any> {
     this.props.onColorClick(key, val, colorSelectedFn);
   }
 
+  onIconClick(key: (string | number)[], val: string,
+               iconSelectedFn: (icon: string) => void) {
+    this.props.onIconClick(key, val, iconSelectedFn);
+  }
+
   onToggleFullscreen(element: HTMLElement, fullscreenFinishFn?: () => void) {
     this.props.onToggleFullscreen(element, fullscreenFinishFn);
   }
@@ -96,6 +104,7 @@ class ThingsboardSchemaForm extends React.Component<JsonFormProps, any> {
           index: number,
           onChange: onChangeFn,
           onColorClick: OnColorClickFn,
+          onIconClick: OnIconClickFn,
           onToggleFullscreen: () => void,
           mapper: {[type: string]: any}): JSX.Element {
     const type = form.type;
@@ -113,6 +122,7 @@ class ThingsboardSchemaForm extends React.Component<JsonFormProps, any> {
     }
     return <Field model={model} form={form} key={index} onChange={onChange}
                   onColorClick={onColorClick}
+                  onIconClick={onIconClick}
                   onToggleFullscreen={onToggleFullscreen}
                   mapper={mapper} builder={this.builder}/>;
   }
@@ -124,7 +134,8 @@ class ThingsboardSchemaForm extends React.Component<JsonFormProps, any> {
       mapper = _.merge(this.mapper, this.props.mapper);
     }
     const forms = merged.map(function(form, index) {
-      return this.builder(form, this.props.model, index, this.onChange, this.onColorClick, this.onToggleFullscreen, mapper);
+      return this.builder(form, this.props.model, index, this.onChange, this.onColorClick,
+        this.onIconClick, this.onToggleFullscreen, mapper);
     }.bind(this));
 
     let formClass = 'SchemaForm';

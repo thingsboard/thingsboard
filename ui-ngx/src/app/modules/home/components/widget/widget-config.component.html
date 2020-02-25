@@ -32,6 +32,7 @@
         <section fxFlex fxLayout="row" fxLayoutAlign="start center" style="margin-bottom: 16px;">
           <span [ngClass]="{'tb-disabled-label': dataSettings.get('useDashboardTimewindow').value}" translate style="padding-right: 8px;">widget-config.timewindow</span>
           <tb-timewindow asButton="true"
+                         isEdit="true"
                          aggregation="{{ widgetType === widgetTypes.timeseries }}"
                          fxFlex formControlName="timewindow"></tb-timewindow>
         </section>
@@ -306,6 +307,10 @@
           <mat-form-field fxFlex>
             <mat-label translate>widget-config.icon-size</mat-label>
             <input matInput formControlName="iconSize">
+          </mat-form-field>
+          <mat-form-field fxFlex>
+            <mat-label translate>widget-config.title-tooltip</mat-label>
+            <input matInput formControlName="titleTooltip">
           </mat-form-field>
         </div>
         <div fxLayout="column" fxLayoutAlign="center" fxLayout.gt-sm="row" fxLayoutAlign.gt-sm="start center"

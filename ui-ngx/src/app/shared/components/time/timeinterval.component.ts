@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, forwardRef, Input, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
 import {
   ControlValueAccessor,
   FormControl,
@@ -24,6 +24,7 @@ import {
 } from '@angular/forms';
 import { Timewindow } from '@shared/models/time/time.models';
 import { TimeInterval, TimeService } from '@core/services/time.service';
+import { coerceBooleanProperty } from '@angular/cdk/coercion';
 
 @Component({
   selector: 'tb-timeinterval',
@@ -61,6 +62,31 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
   }
 
   @Input() predefinedName: string;
+
+  isEditValue = false;
+
+  @Input()
+  set isEdit(val) {
+    this.isEditValue = coerceBooleanProperty(val);
+  }
+
+  get isEdit() {
+    return this.isEditValue;
+  }
+
+  hideFlagValue = false;
+
+  @Input()
+  get hideFlag() {
+    return this.hideFlagValue;
+  }
+
+  set hideFlag(val) {
+    this.hideFlagValue = val;
+  }
+
+  @Output() hideFlagChange = new EventEmitter<boolean>();
+
   @Input() disabled: boolean;
 
   days = 0;
@@ -187,6 +213,10 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
       this.setIntervalMs(intervalMs);
     }
     this.updateView();
+  }
+
+  onHideFlagChange() {
+    this.hideFlagChange.emit(this.hideFlagValue);
   }
 
   onTimeInputChange(type: string) {

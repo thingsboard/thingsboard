@@ -87,6 +87,7 @@ export class JsonFormComponent implements OnInit, ControlValueAccessor, Validato
     },
     onModelChange: this.onModelChange.bind(this),
     onColorClick: this.onColorClick.bind(this),
+    onIconClick: this.onIconClick.bind(this),
     onToggleFullscreen: this.onToggleFullscreen.bind(this)
   };
 
@@ -197,6 +198,16 @@ export class JsonFormComponent implements OnInit, ControlValueAccessor, Validato
     this.dialogs.colorPicker(tinycolor(val).toRgbString()).subscribe((color) => {
       if (colorSelectedFn) {
         colorSelectedFn(tinycolor(color).toRgb());
+      }
+    });
+  }
+
+  private onIconClick(key: (string | number)[],
+                       val: string,
+                       iconSelectedFn: (icon: string) => void) {
+    this.dialogs.materialIconPicker(val).subscribe((icon) => {
+      if (icon && iconSelectedFn) {
+        iconSelectedFn(icon);
       }
     });
   }

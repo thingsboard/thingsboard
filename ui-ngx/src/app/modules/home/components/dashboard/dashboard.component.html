@@ -82,14 +82,19 @@
               <div *ngIf="widget.hasWidgetTitleTemplate">
                 TODO:
               </div>
-              <span [fxShow]="widget.showTitle" [ngStyle]="widget.titleStyle" class="mat-subheading-2 title">
+              <span [fxShow]="widget.showTitle"
+                    [ngStyle]="widget.titleStyle"
+                    [matTooltip]="widget.titleTooltip"
+                    matTooltipPosition="above"
+                    class="mat-subheading-2 title">
                 <mat-icon *ngIf="widget.showTitleIcon" [ngStyle]="widget.titleIconStyle">{{widget.titleIcon}}</mat-icon>
                 {{widget.title}}
               </span>
               <tb-timewindow *ngIf="widget.hasTimewindow"
                              #timewindowComponent
                              aggregation="{{widget.hasAggregation}}"
-                             [ngModel]="widgetComponent.widget.config.timewindow"
+                             [isEdit]="isEdit"
+                             [(ngModel)]="widgetComponent.widget.config.timewindow"
                              (ngModelChange)="widgetComponent.onTimewindowChanged($event)">
               </tb-timewindow>
             </div>

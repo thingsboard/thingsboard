@@ -178,6 +178,7 @@ export class WidgetContext {
 
   widgetTitleTemplate?: string;
   widgetTitle?: string;
+  widgetTitleTooltip?: string;
   customHeaderActions?: Array<WidgetHeaderAction>;
   widgetActions?: Array<WidgetAction>;
 

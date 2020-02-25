@@ -53,6 +53,7 @@ import { WINDOW } from '@core/services/window.service';
 import { TimeService } from '@core/services/time.service';
 import { TooltipPosition } from '@angular/material/tooltip';
 import { deepClone } from '@core/utils';
+import { coerceBooleanProperty } from '@angular/cdk/coercion';
 
 // @dynamic
 @Component({
@@ -73,7 +74,7 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
 
   @Input()
   set historyOnly(val) {
-    this.historyOnlyValue = true;
+    this.historyOnlyValue = coerceBooleanProperty(val);
   }
 
   get historyOnly() {
@@ -84,7 +85,7 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
 
   @Input()
   set aggregation(val) {
-    this.aggregationValue = true;
+    this.aggregationValue = coerceBooleanProperty(val);
   }
 
   get aggregation() {
@@ -95,7 +96,7 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
 
   @Input()
   set isToolbar(val) {
-    this.isToolbarValue = true;
+    this.isToolbarValue = coerceBooleanProperty(val);
   }
 
   get isToolbar() {
@@ -106,11 +107,23 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
 
   @Input()
   set asButton(val) {
-    this.asButtonValue = true;
+    this.asButtonValue = coerceBooleanProperty(val);
   }
 
   get asButton() {
     return this.asButtonValue;
+  }
+
+  isEditValue = false;
+
+  @Input()
+  set isEdit(val) {
+    this.isEditValue = coerceBooleanProperty(val);
+    this.timewindowDisabled = this.isTimewindowDisabled();
+  }
+
+  get isEdit() {
+    return this.isEditValue;
   }
 
   @Input()
@@ -124,6 +137,8 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
   @ViewChild('timewindowPanelOrigin') timewindowPanelOrigin: CdkOverlayOrigin;
 
   innerValue: Timewindow;
+
+  timewindowDisabled: boolean;
 
   private propagateChange = (_: any) => {};
 
@@ -145,7 +160,7 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
   }
 
   openEditMode() {
-    if (this.disabled) {
+    if (this.timewindowDisabled) {
       return;
     }
     const isGtSm = this.breakpointObserver.isMatched(MediaBreakpoints['gt-sm']);
@@ -212,7 +227,8 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
       {
         timewindow: deepClone(this.innerValue),
         historyOnly: this.historyOnly,
-        aggregation: this.aggregation
+        aggregation: this.aggregation,
+        isEdit: this.isEdit
       }
     );
 
@@ -220,6 +236,7 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
     componentRef.onDestroy(() => {
       if (componentRef.instance.result) {
         this.innerValue = componentRef.instance.result;
+        this.timewindowDisabled = this.isTimewindowDisabled();
         this.updateDisplayValue();
         this.notifyChanged();
       }
@@ -243,10 +260,12 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
+    this.timewindowDisabled = this.isTimewindowDisabled();
   }
 
   writeValue(obj: Timewindow): void {
     this.innerValue = initModelFromDefaultTimewindow(obj, this.timeService);
+    this.timewindowDisabled = this.isTimewindowDisabled();
     this.updateDisplayValue();
   }
 
@@ -274,6 +293,12 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
 
   hideLabel() {
     return this.isToolbar && !this.breakpointObserver.isMatched(MediaBreakpoints['gt-md']);
+  }
+
+  private isTimewindowDisabled(): boolean {
+    return this.disabled ||
+      (!this.isEdit && (!this.innerValue || this.innerValue.hideInterval &&
+        (!this.aggregation || this.innerValue.hideAggregation && this.innerValue.hideAggInterval)));
   }
 
 }

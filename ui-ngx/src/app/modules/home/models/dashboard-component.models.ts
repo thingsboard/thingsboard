@@ -295,6 +295,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
   margin: string;
 
   title: string;
+  titleTooltip: string;
   showTitle: boolean;
   titleStyle: {[klass: string]: any};
 
@@ -360,6 +361,8 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
 
     this.title = isDefined(this.widgetContext.widgetTitle)
       && this.widgetContext.widgetTitle.length ? this.widgetContext.widgetTitle : this.widget.config.title;
+    this.titleTooltip = isDefined(this.widgetContext.widgetTitleTooltip)
+      && this.widgetContext.widgetTitleTooltip.length ? this.widgetContext.widgetTitleTooltip : this.widget.config.titleTooltip;
     this.showTitle = isDefined(this.widget.config.showTitle) ? this.widget.config.showTitle : true;
     this.titleStyle = this.widget.config.titleStyle ? this.widget.config.titleStyle : {};
 

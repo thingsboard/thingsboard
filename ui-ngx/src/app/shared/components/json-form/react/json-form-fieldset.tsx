@@ -25,7 +25,7 @@ class ThingsboardFieldSet extends React.Component<JsonFormFieldProps, JsonFormFi
     render() {
         const forms = (this.props.form.items as JsonFormData[]).map((form: JsonFormData, index) => {
             return this.props.builder(form, this.props.model, index, this.props.onChange,
-              this.props.onColorClick, this.props.onToggleFullscreen, this.props.mapper);
+              this.props.onColorClick, this.props.onIconClick, this.props.onToggleFullscreen, this.props.mapper);
         });
 
         return (

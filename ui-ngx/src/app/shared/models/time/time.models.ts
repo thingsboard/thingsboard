@@ -79,6 +79,9 @@ export interface Aggregation {
 
 export interface Timewindow {
   displayValue?: string;
+  hideInterval?: boolean;
+  hideAggregation?: boolean;
+  hideAggInterval?: boolean;
   selectedTab?: TimewindowType;
   realtime?: IntervalWindow;
   history?: HistoryWindow;
@@ -115,9 +118,12 @@ export function historyInterval(timewindowMs: number): Timewindow {
 }
 
 export function defaultTimewindow(timeService: TimeService): Timewindow {
-  const currentTime = Date.now();
+  const currentTime = moment().valueOf();
   const timewindow: Timewindow = {
     displayValue: '',
+    hideInterval: false,
+    hideAggregation: false,
+    hideAggInterval: false,
     selectedTab: TimewindowType.REALTIME,
     realtime: {
       interval: SECOND,
@@ -143,6 +149,9 @@ export function defaultTimewindow(timeService: TimeService): Timewindow {
 export function initModelFromDefaultTimewindow(value: Timewindow, timeService: TimeService): Timewindow {
   const model = defaultTimewindow(timeService);
   if (value) {
+    model.hideInterval = value.hideInterval;
+    model.hideAggregation = value.hideAggregation;
+    model.hideAggInterval = value.hideAggInterval;
     if (isUndefined(value.selectedTab)) {
       if (value.realtime) {
         model.selectedTab = TimewindowType.REALTIME;
@@ -206,6 +215,9 @@ export function toHistoryTimewindow(timewindow: Timewindow, startTimeMs: number,
     limit = timeService.getMaxDatapointsLimit();
   }
   const historyTimewindow: Timewindow = {
+    hideInterval: timewindow.hideInterval || false,
+    hideAggregation: timewindow.hideAggregation || false,
+    hideAggInterval: timewindow.hideAggInterval || false,
     selectedTab: TimewindowType.HISTORY,
     history: {
       historyType: HistoryWindowType.FIXED,
@@ -319,6 +331,9 @@ export function createTimewindowForComparison(subscriptionTimewindow: Subscripti
 
 export function cloneSelectedTimewindow(timewindow: Timewindow): Timewindow {
   const cloned: Timewindow = {};
+  cloned.hideInterval = timewindow.hideInterval || false;
+  cloned.hideAggregation = timewindow.hideAggregation || false;
+  cloned.hideAggInterval = timewindow.hideAggInterval || false;
   if (isDefined(timewindow.selectedTab)) {
     cloned.selectedTab = timewindow.selectedTab;
     if (timewindow.selectedTab === TimewindowType.REALTIME) {
