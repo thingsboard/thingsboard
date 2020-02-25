@@ -13,19 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: dummy-pv-claim
-  labels:
-    app: dummy
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
----
+
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
