@@ -18,7 +18,9 @@ import 'leaflet.markercluster/dist/MarkerCluster.css'
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 import * as L from 'leaflet';
 import 'leaflet-providers';
-import 'leaflet.markercluster/dist/leaflet.markercluster'
+import 'leaflet.markercluster/dist/leaflet.markercluster';
+import 'leaflet-editable/src/Leaflet.Editable';
+
 
 export default class TbOpenStreetMap {
 
@@ -43,7 +45,7 @@ export default class TbOpenStreetMap {
 		}
 
         defaultCenterPosition = defaultCenterPosition || [0,0];
-		this.map = L.map($containerElement[0]).setView(defaultCenterPosition, this.defaultZoomLevel || 8);
+		this.map = L.map($containerElement[0], {editable: true}).setView(defaultCenterPosition, this.defaultZoomLevel || 8);
 
 		if (disableScrollZooming) {
 			this.map.scrollWheelZoom.disable();
@@ -229,7 +231,7 @@ export default class TbOpenStreetMap {
 		this.map.removeLayer(polyline);
 	}
 
-	createPolygon(latLangs, settings, location,  onClickListener, markerArgs) {
+	createPolygon(latLangs, settings, location,  onClickListener, markerArgs, isEdit, editCallback) {
 		let polygon = L.polygon(latLangs, {
 			fill: true,
 			fillColor: settings.polygonColor,
@@ -245,6 +247,14 @@ export default class TbOpenStreetMap {
 		if (onClickListener) {
 			polygon.on('click', onClickListener);
 		}
+        if (isEdit && editCallback) {
+            polygon.on("editable:editing", (el)=>{
+                editCallback(el.target._latlngs)
+            });
+        }
+        if (isEdit) {
+            polygon.enableEdit();
+        }
 		return polygon;
 	}
 
@@ -316,6 +326,38 @@ export default class TbOpenStreetMap {
 
 	createBounds() {
 		return L.latLngBounds();
+	}
+
+    mapPolygonArray(rawArray) {
+        let map = this;
+        if (!rawArray || rawArray.length === 0) return [];
+        return rawArray.map(function (el) {
+            if (el.length === 2) {
+                if (!angular.isNumber(el[0]) && !angular.isNumber(el[1])) {
+                    return el.map(function (subEl) {
+                        return map.mapPolygonArray(subEl);
+                    })
+                } else {
+                    return map.createLatLng(el[0], el[1]);
+                }
+            } else if (el.length > 2) {
+                return map.mapPolygonArray(el);
+            } else {
+                return map.createLatLng(false);
+            }
+        });
+    }
+
+    reverseMapPolygonArray(polArray) {
+        let map = this;
+        return polArray.map(el=> {
+                if (angular.isArray(el) && el.length >1) {
+                    return map.reverseMapPolygonArray(el);
+                } else {
+                    return [el.lat, el.lng];
+                }
+            }
+        );
 	}
 
 	extendBounds(bounds, polyline) {

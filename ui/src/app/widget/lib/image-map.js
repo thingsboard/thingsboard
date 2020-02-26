@@ -15,6 +15,7 @@
  */
 import 'leaflet/dist/leaflet.css';
 import * as L from 'leaflet';
+import 'leaflet-editable/src/Leaflet.Editable';
 
 const maxZoom = 4;
 
@@ -170,7 +171,8 @@ export default class TbImageMap {
                 center: center,
                 zoom: 1,
                 crs: L.CRS.Simple,
-                attributionControl: false
+                attributionControl: false,
+                editable: true
             });
             this.updateBounds(updateImage);
             this.updateMarkers();
@@ -183,6 +185,39 @@ export default class TbImageMap {
 
     latLngToPoint(latLng) {
         return L.CRS.Simple.latLngToPoint(latLng, maxZoom-1);
+    }
+
+    mapPolygonArray (rawArray) {
+        let map = this;
+        if (!rawArray || rawArray.length === 0) return [];
+        return rawArray.map(function (el) {
+            if (el.length === 2) {
+                if (!angular.isNumber(el[0]) && !angular.isNumber(el[1])) {
+                    return el.map(function (subEl) {
+                        return map.mapPolygonArray(subEl);
+                    })
+                } else {
+                    return map.pointToLatLng(el[0]*map.width, el[1]*map.height);
+                }
+            } else if (el.length > 2) {
+                return map.mapPolygonArray(el);
+            } else {
+                return map.pointToLatLng((el[0]*map.width), el[1]*map.height);
+            }
+        });
+    }
+
+    reverseMapPolygonArray(polArray) {
+        let map = this;
+        return polArray.map(el=> {
+                if (angular.isArray(el) && el.length >1) {
+                    return map.reverseMapPolygonArray(el);
+                } else {
+                    let points = map.latLngToPoint(el);
+                    return [(points.x / map.width), (points.y / map.height)];
+                }
+            }
+        );
     }
 
     inited() {
@@ -402,20 +437,58 @@ export default class TbImageMap {
     removePolyline(/*polyline*/) {
     }
 
-	createPolygon(/*latLangs, settings*/) {
+	createPolygon(latLangs, settings, location,  onClickListener, markerArgs, isEdit, editCallback) {
+        let polygon = L.polygon(latLangs, {
+            fill: true,
+            fillColor: settings.polygonColor,
+            color: settings.polygonStrokeColor,
+            weight: settings.polygonStrokeWeight,
+            fillOpacity: settings.polygonOpacity,
+            opacity: settings.polygonStrokeOpacity
+        }).addTo(this.map);
+
+        if (settings.displayTooltip) {
+            this.createTooltip(polygon, location.dsIndex, settings, markerArgs);
+        }
+        if (onClickListener) {
+            polygon.on('click', onClickListener);
+        }
+        if (isEdit && editCallback) {
+            polygon.on("editable:editing", (el)=>{
+                editCallback(el.target._latlngs)
+            });
+        }
+        if (isEdit) {
+            polygon.enableEdit();
+        }
+        return polygon;
 	}
 
-	removePolygon(/*latLangs, settings*/) {
-	}
+    removePolygon(polygon) {
+        polygon.disableEdit();
+        this.map.removeLayer(polygon);
+    }
 
-	updatePolygonColor(/*latLangs, settings*/) {
-	}
+    updatePolygonColor(polygon, settings, color) {
+        let style = {
+            fill: true,
+            fillColor: color,
+            color: color,
+            weight: settings.polygonStrokeWeight,
+            fillOpacity: settings.polygonOpacity,
+            opacity: settings.polygonStrokeOpacity
+        };
+        polygon.setStyle(style);
+    }
 
-	getPolygonLatLngs(/*latLangs, settings*/) {
-	}
+    getPolygonLatLngs(polygon) {
+        return polygon.getLatLngs();
+    }
 
-	setPolygonLatLngs(/*latLangs, settings*/) {
-	}
+    setPolygonLatLngs(polygon, latLngs) {
+        polygon.setLatLngs(latLngs);
+        polygon.redraw();
+    }
 
     fitBounds() {
     }

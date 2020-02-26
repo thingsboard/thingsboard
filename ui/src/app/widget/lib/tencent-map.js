@@ -360,7 +360,7 @@ export default class TbTencentMap {
 	}
 
 	/* eslint-disable no-undef */
-	createPolygon(latLangs, settings, location,  onClickListener, markerArgs) {
+	createPolygon(latLangs, settings, location,  onClickListener, markerArgs, isEdit, editCallback) {
 		let polygon = new qq.maps.Polygon({
 			map: this.map,
 			path: latLangs,
@@ -372,8 +372,9 @@ export default class TbTencentMap {
 		let popup = new qq.maps.InfoWindow({
 			content: ''
 		});
+		let map = this;
 		if (!this.tooltips) this.tooltips = [];
-		this.tooltips.push({
+        map.tooltips.push({
 			markerArgs: markerArgs,
 			popup: popup,
 			locationSettings: settings,
@@ -383,7 +384,7 @@ export default class TbTencentMap {
 		if (onClickListener) {
 			qq.maps.event.addListener(polygon, 'click', function (event) {
 				if (settings.autocloseTooltip) {
-					map.tooltips.forEach((tooltip) => {
+                    map.tooltips.forEach((tooltip) => {
 						tooltip.popup.close();
 					});
 				}
@@ -395,6 +396,22 @@ export default class TbTencentMap {
 				onClickListener();
 			});
 		}
+        if (isEdit) {
+            polygon.setEditable(true);
+        }
+        if (isEdit && editCallback) {
+            polygon.getPaths().forEach(function(path){
+                qq.maps.event.addListener(path, 'insert_at', function () {// eslint-disable-line no-undef
+                    editCallback(polygon.getPaths().getArray());
+                });
+                qq.maps.event.addListener(path, 'remove_at', function () {// eslint-disable-line no-undef
+                    editCallback(polygon.getPaths().getArray());
+                });
+                qq.maps.event.addListener(path, 'set_at', function () {// eslint-disable-line no-undef
+                    editCallback(polygon.getPaths().getArray());
+                });
+            });
+        }
 		return polygon;
 	}
 
@@ -425,6 +442,40 @@ export default class TbTencentMap {
 	setPolygonLatLngs(polygon, latLngs) {
 		polygon.setPath(latLngs);
 	}
+
+    mapPolygonArray(rawArray) {
+        let map = this;
+        if (!rawArray || rawArray.length === 0) return [];
+        returnrawArray.map(function (el) {
+            if (el.length === 2) {
+                if (!angular.isNumber(el[0]) && !angular.isNumber(el[1])) {
+                    return el.map(function (subEl) {
+                        return map.mapPolygonArray(subEl);
+                    })
+                } else {
+                    return map.createLatLng(el[0], el[1]);
+                }
+            } else if (el.length > 2) {
+                return map.mapPolygonArray(el);
+            } else {
+                return map.createLatLng(false);
+            }
+        });
+    }
+
+    reverseMapPolygonArray(polArray) {
+        let map = this;
+        return polArray.map(el=> {
+                if (angular.isArray(el) && el.length >1) {
+                    return map.reverseMapPolygonArray(el);
+                } else if (!el.lat && !el.lng){
+                    return map.reverseMapPolygonArray(el.getArray());
+                } else {
+                    return [el.lat(), el.lng()];
+                }
+            }
+        );
+    }
 
 	/* eslint-disable no-undef ,no-unused-vars*/
 	fitBounds(bounds, useDefaultZoom) {

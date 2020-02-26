@@ -194,12 +194,11 @@ export default class TbMapWidgetV2 {
 		if (this.mapProvider == 'image-map') {
 			this.locationSettings.latKeyName = this.ctx.settings.xPosKeyName || 'xPos';
 			this.locationSettings.lngKeyName = this.ctx.settings.yPosKeyName || 'yPos';
-			this.locationSettings.markerOffsetX = angular.isDefined(this.ctx.settings.markerOffsetX) ? this.ctx.settings.markerOffsetX : 0.5;
+            this.locationSettings.markerOffsetX = angular.isDefined(this.ctx.settings.markerOffsetX) ? this.ctx.settings.markerOffsetX : 0.5;
 			this.locationSettings.markerOffsetY = angular.isDefined(this.ctx.settings.markerOffsetY) ? this.ctx.settings.markerOffsetY : 1;
 		} else {
 			this.locationSettings.latKeyName = this.ctx.settings.latKeyName || 'latitude';
 			this.locationSettings.lngKeyName = this.ctx.settings.lngKeyName || 'longitude';
-			this.locationSettings.polygonKeyName = this.ctx.settings.polygonKeyName || 'coordinates';
 		}
 
 		this.locationSettings.tooltipPattern = this.ctx.settings.tooltipPattern || "<b>${entityName}</b><br/><br/><b>Latitude:</b> ${" + this.locationSettings.latKeyName + ":7}<br/><b>Longitude:</b> ${" + this.locationSettings.lngKeyName + ":7}";
@@ -212,7 +211,8 @@ export default class TbMapWidgetV2 {
 		this.locationSettings.showPolygon = this.ctx.settings.showPolygon === true;
 		this.locationSettings.labelColor = this.ctx.widgetConfig.color || '#000000';
 		this.locationSettings.label = this.ctx.settings.label || "${entityName}";
-		this.locationSettings.color = this.ctx.settings.color ? tinycolor(this.ctx.settings.color).toHexString() : "#FE7569";
+        this.locationSettings.polygonKeyName = this.ctx.settings.polygonKeyName || 'coordinates';
+        this.locationSettings.color = this.ctx.settings.color ? tinycolor(this.ctx.settings.color).toHexString() : "#FE7569";
 		this.locationSettings.polygonColor = this.ctx.settings.polygonColor ? tinycolor(this.ctx.settings.polygonColor).toHexString() : "#0000ff";
 		this.locationSettings.polygonStrokeColor = this.ctx.settings.polygonStrokeColor ? tinycolor(this.ctx.settings.polygonStrokeColor).toHexString() : "#fe0001";
 		this.locationSettings.polygonOpacity = angular.isDefined(this.ctx.settings.polygonOpacity) ? this.ctx.settings.polygonOpacity : 0.5;
@@ -321,7 +321,7 @@ export default class TbMapWidgetV2 {
 			.relativeTo(element)
 			.addPanelPosition($mdPanel.xPosition.ALIGN_END, $mdPanel.yPosition.BELOW);
 
-		let locationsWithoutMarker = this.locations.filter((location) => !location.marker);
+		let locationsWithoutMarker = this.locations.filter((location) => !location.marker && angular.isDefined(location.latIndex) && angular.isDefined(location.lngIndex));
 		let entitiesWithoutPosition = [];
 		for (let i = 0; i < locationsWithoutMarker.length; i++) {
 			entitiesWithoutPosition.push(this.subscription.datasources[locationsWithoutMarker[i].dsIndex]);
@@ -350,6 +350,74 @@ export default class TbMapWidgetV2 {
 			$mdPanel.open(config);
 		}
 	}
+
+    selectPolygonEntity($event) {
+        var tbMap = this;
+
+        function setDefaultPolygon(entity) {
+            let center = tbMap.map.getCenter();
+            let coordinates;
+            if (tbMap.mapProvider === "image-map") {
+                center = tbMap.map.latLngToPoint(center);
+                let centerPos = [center.x / tbMap.map.width,center.y / tbMap.map.height];
+                coordinates = [
+					[centerPos[0]*1.1, centerPos[1]*1.1],
+					[centerPos[0]*1.1, centerPos[1]*0.9],
+					[centerPos[0]*0.9, centerPos[1]*0.9],
+					[centerPos[0]*0.9, centerPos[1]*1.1]
+				];
+            } else {
+                coordinates = [
+                    [center.lat*1.1, center.lng*1.1],
+                    [center.lat*1.1, center.lng*0.9],
+                    [center.lat*0.9, center.lng*0.9],
+                    [center.lat*0.9, center.lng*1.1]
+                ];
+			}
+
+            tbMap.savePolygonLocation(
+                entity,
+                locationsWithoutPolygon[entitiesWithoutPosition.indexOf(entity)],
+                coordinates
+            );
+        }
+
+        const element = angular.element($event.target);
+        const $mdPanel = this.ctx.$scope.$injector.get('$mdPanel');
+        const $document = this.ctx.$scope.$injector.get('$document');
+        let position = $mdPanel.newPanelPosition()
+            .relativeTo(element)
+            .addPanelPosition($mdPanel.xPosition.ALIGN_END, $mdPanel.yPosition.BELOW);
+
+        let locationsWithoutPolygon = this.locations.filter((location) => !location.polygon && angular.isDefined(location.polIndex));
+        let entitiesWithoutPosition = [];
+        for (let i = 0; i < locationsWithoutPolygon.length; i++) {
+            entitiesWithoutPosition.push(this.subscription.datasources[locationsWithoutPolygon[i].dsIndex]);
+        }
+        
+        if(entitiesWithoutPosition.length === 1){
+            setDefaultPolygon(entitiesWithoutPosition[0]);
+        } else {
+            let config = {
+                attachTo: angular.element($document[0].body),
+                controller: addEntityPanelController,
+                controllerAs: 'vm',
+                templateUrl: addEntityPanelTemplate,
+                panelClass: 'tb-add-entity-panel',
+                position: position,
+                fullscreen: false,
+                locals: {
+                    'entities': entitiesWithoutPosition,
+                    'onClose': setDefaultPolygon
+                },
+                openFrom: $event,
+                clickOutsideToClose: true,
+                escapeToClose: true,
+                focusOnOpen: false
+            };
+            $mdPanel.open(config);
+        }
+    }
 
 	saveMarkerLocation(datasource, location, coordinate) {
 		var tbMap = this;
@@ -400,6 +468,56 @@ export default class TbMapWidgetV2 {
 			))
 		}
 		return $q.all([promises]);
+	}
+
+	savePolygonLocation(datasource, location, latLngArr) {
+        var tbMap = this;
+
+        const types = tbMap.ctx.$scope.$injector.get('types');
+        const $q = tbMap.ctx.$scope.$injector.get('$q');
+        const attributeService = tbMap.ctx.$scope.$injector.get('attributeService');
+
+        let attributesLocation = [];
+        let timeseriesLocation = [];
+        let promises = [];
+
+        let dataKeys = datasource.dataKeys;
+        for (let i = 0; i < dataKeys.length; i++) {
+            if (dataKeys[i].name === location.settings.polygonKeyName) {
+                let newLocation = {
+                    key: dataKeys[i].name,
+                    value: latLngArr
+                };
+                if (dataKeys[i].type === types.dataKeyType.attribute) {
+                    attributesLocation.push(newLocation);
+                } else if (dataKeys[i].type === types.dataKeyType.timeseries) {
+                    timeseriesLocation.push(newLocation);
+                }
+            }
+        }
+        if (attributesLocation.length > 0) {
+            promises.push(attributeService.saveEntityAttributes(
+                datasource.entityType,
+                datasource.entityId,
+                types.attributesScope.server.value,
+                attributesLocation,
+                {
+                    ignoreLoading: true
+                }
+            ))
+        }
+        if (timeseriesLocation.length > 0) {
+            promises.push(attributeService.saveEntityTimeseries(
+                datasource.entityType,
+                datasource.entityId,
+                "scope",
+                timeseriesLocation,
+                {
+                    ignoreLoading: true
+                }
+            ))
+        }
+        return $q.all([promises]);
 	}
 
 	update() {
@@ -641,11 +759,18 @@ export default class TbMapWidgetV2 {
 					location.polygon = tbMap.map.createPolygon(polygonLatLngs, location.settings, location, function (event) {
 						tbMap.callbacks.onLocationClick(location);
 						locationPolygonClick(event, location);
-					}, [location.dsIndex]);
+					}, [location.dsIndex], tbMap.isEdit,
+						function (newPolArray) {
+                            tbMap.savePolygonLocation(tbMap.subscription.datasources[location.dsIndex], location, tbMap.map.reverseMapPolygonArray(newPolArray));
+                        });
 					tbMap.polygons.push(location.polygon);
 					if (location.settings.usePolygonColorFunction) updateLocationPolygonColor(location, calculateLocationPolygonColor(location, dataMap));
 				} else if (polygonLatLngs.length > 0) {
 					let prevPolygonArr = tbMap.map.getPolygonLatLngs(location.polygon);
+					if (tbMap.mapProvider === 'google-map') {
+                        prevPolygonArr = tbMap.map.reverseMapPolygonArray(prevPolygonArr);
+                        polygonLatLngs = tbMap.map.reverseMapPolygonArray(polygonLatLngs);
+					}
 					if (!prevPolygonArr || !arraysEqual(prevPolygonArr, polygonLatLngs)) {
 						tbMap.map.setPolygonLatLngs(location.polygon, polygonLatLngs);
 					}
@@ -727,8 +852,8 @@ export default class TbMapWidgetV2 {
 					location.dsIndex = datasources.findIndex(function (ds) {
 						return dataEl.datasource.entityId === ds.entityId;
 					});
-					tbMap.locations.push(location);
-					createUpdatePolygon(location, dataMap);
+                    tbMap.locations.push(location);
+                    createUpdatePolygon(location, dataMap);
 					if (!tbMap.locationSettings.useDefaultCenterPosition) {
                         tbMap.map.extendBounds(bounds, location.polygon);
                     }
@@ -739,33 +864,20 @@ export default class TbMapWidgetV2 {
 		}
 
 		function mapPolygonArray (rawArray) {
-			let latLngArray = rawArray.map(function (el) {
-				if (el.length === 2) {
-					if (!angular.isNumber(el[0]) && !angular.isNumber(el[1])) {
-						return el.map(function (subEl) {
-							return mapPolygonArray(subEl);
-						})
-					} else {
-						return tbMap.map.createLatLng(el[0], el[1]);
-					}
-				} else if (el.length > 2) {
-					return mapPolygonArray(el);
-				} else {
-					return tbMap.map.createLatLng(false);
-				}
-			});
-			return latLngArray;
-		}
+            return tbMap.map.mapPolygonArray(rawArray)
+        }
 
 		function updateLocations(data, datasources) {
 			var locationsChanged = false;
 			var bounds = tbMap.locationSettings.useDefaultCenterPosition ? tbMap.map.createBounds().extend(tbMap.map.map.getCenter()) : tbMap.map.createBounds();
 			var dataMap = toLabelValueMap(data, datasources);
-			for (var p = 0; p < tbMap.locations.length; p++) {
-				var location = tbMap.locations[p];
-				locationsChanged |= updateLocation(location, data, dataMap);
-                createUpdatePolygon(location, dataMap);
-				if (!tbMap.locationSettings.useDefaultCenterPosition) {
+            for (var p = 0; p < tbMap.locations.length; p++) {
+                var location = tbMap.locations[p];
+                locationsChanged |= updateLocation(location, data, dataMap);
+                if (angular.isDefined(location.polIndex)) {
+                    createUpdatePolygon(location, dataMap);
+                }
+                if (!tbMap.locationSettings.useDefaultCenterPosition) {
                     if (location.polyline) {
                         tbMap.map.extendBounds(bounds, location.polyline);
                     } else if (location.marker) {
@@ -774,15 +886,15 @@ export default class TbMapWidgetV2 {
                         tbMap.map.extendBounds(bounds, location.polygon);
                     }
                 }
-			}
-			if (locationsChanged && tbMap.initBounds) {
-				let dataReceived = datasources.every(
-					function (ds) {
-						return ds.dataReceived === true;
-					});
-				let dataValid = dataReceived && dataMap.dsDataMap.every(function (ds) {
-					return !(!ds[tbMap.locationSettings.latKeyName] && !ds[tbMap.locationSettings.lngKeyName]);
-				});
+            }
+            if (locationsChanged && tbMap.initBounds) {
+                let dataReceived = datasources.every(
+                    function (ds) {
+                        return ds.dataReceived === true;
+                    });
+                let dataValid = dataReceived && dataMap.dsDataMap.every(function (ds) {
+                    return !(!ds[tbMap.locationSettings.latKeyName] && !ds[tbMap.locationSettings.lngKeyName]);
+                });
 				tbMap.initBounds = !dataValid;
 
 				if(!tbMap.isEdit && tbMap.markers.length !== 1 || tbMap.polylines || tbMap.polygons) {
@@ -803,21 +915,21 @@ export default class TbMapWidgetV2 {
 				}
 				if (settings.tooltipPattern) {
 					settings.tooltipPattern = tbMap.utils.createLabelFromDatasource(datasources[tooltip.dsIndex], settings.tooltipPattern);
-					settings.tooltipReplaceInfo = processPattern(settings.tooltipPattern, datasources, tooltip.dsIndex);
+
 				}
 			}
+            settings.tooltipReplaceInfo = processPattern(settings.tooltipPattern, datasources, tooltip.dsIndex);
 			content = fillPattern(settings.tooltipPattern, settings.tooltipReplaceInfo, data);
 			return fillPatternWithActions(content, 'onTooltipAction', tooltip.markerArgs);
 		}
 
-		if (this.map && this.map.inited() && this.subscription) {
+		if (this && this.map && this.map.inited() && this.subscription) {
 			if (this.subscription.data) {
 				if (!this.locations) {
 					loadLocations(this.subscription.data, this.subscription.datasources);
-
                 } else {
 					updateLocations(this.subscription.data, this.subscription.datasources);
-				}
+                }
 				var tooltips = this.map.getTooltips();
 				for (var t = 0; t < tooltips.length; t++) {
 					var tooltip = tooltips[t];
@@ -834,6 +946,20 @@ export default class TbMapWidgetV2 {
 			if (this.locations && this.locations.length > 0) {
 				map.invalidateSize();
 				var bounds = this.locationSettings.useDefaultCenterPosition ? map.createBounds().extend(map.map.getCenter()) : map.createBounds();
+				if (this.mapProvider === "image-map") {
+                    var dataMap = toLabelValueMap(this.subscription.data, this.subscription.datasources);
+                    this.locations.forEach(location=>{
+                        if (location.polygon) {
+                            if (this.isEdit) {
+                                location.polygon.disableEdit(this.map.map);
+                            }
+                            this.map.setPolygonLatLngs(location.polygon, this.map.mapPolygonArray(angular.fromJson(dataMap.dsDataMap[location.dsIndex][location.settings.polygonKeyName])));
+                            if (this.isEdit) {
+                                location.polygon.enableEdit(this.map.map);
+                            }
+						}
+					});
+				}
 				if (!this.locationSettings.useDefaultCenterPosition) {
                     if (this.markers && this.markers.length > 0) {
                         this.markers.forEach(function (marker) {
@@ -1657,6 +1783,48 @@ const imageMapSettingsSchema =
 					"title": "Color function: f(data, dsData, dsIndex)",
 					"type": "string"
 				},
+                "showPolygon": {
+                    "title": "Show polygon",
+                    "type": "boolean",
+                    "default": false
+                },
+                "polygonKeyName": {
+                    "title": "Polygon key name",
+                    "type": "string",
+                    "default": "coordinates"
+                },
+                "polygonColor": {
+                    "title": "Polygon color",
+                    "type": "string"
+                },
+                "polygonOpacity": {
+                    "title": "Polygon opacity",
+                    "type": "number",
+                    "default": 0.5
+                },
+                "polygonStrokeColor": {
+                    "title": "Stroke color",
+                    "type": "string"
+                },
+                "polygonStrokeOpacity": {
+                    "title": "Stroke opacity",
+                    "type": "number",
+                    "default": 1
+                },
+                "polygonStrokeWeight": {
+                    "title": "Stroke weight",
+                    "type": "number",
+                    "default": 1
+                },
+                "usePolygonColorFunction": {
+                    "title": "Use polygon color function",
+                    "type": "boolean",
+                    "default": false
+                },
+                "polygonColorFunction": {
+                    "title": "Polygon Color function: f(data, dsData, dsIndex)",
+                    "type": "string"
+                },
 				"markerImage": {
 					"title": "Custom marker image",
 					"type": "string"
@@ -1743,7 +1911,21 @@ const imageMapSettingsSchema =
 			{
 				"key": "colorFunction",
 				"type": "javascript"
-			},
+			}, "showPolygon", "polygonKeyName",
+            {
+                "key": "polygonColor",
+                "type": "color"
+            },
+            "polygonOpacity",
+            {
+                "key": "polygonStrokeColor",
+                "type": "color"
+            },
+            "polygonStrokeOpacity","polygonStrokeWeight","usePolygonColorFunction",
+            {
+                "key": "polygonColorFunction",
+                "type": "javascript"
+            },
 			{
 				"key": "markerImage",
 				"type": "image"

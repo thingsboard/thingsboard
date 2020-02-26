@@ -347,7 +347,7 @@ export default class TbGoogleMap {
     }
 
 
-	createPolygon(latLangs, settings, location,  onClickListener, markerArgs) {
+	createPolygon(latLangs, settings, location,  onClickListener, markerArgs, isEdit, editCallback) {
 		let polygon = new google.maps.Polygon({ // eslint-disable-line no-undef
 			map: this.map,
 			paths: latLangs,
@@ -389,6 +389,22 @@ export default class TbGoogleMap {
 				onClickListener();
 			});
 		}
+        if (isEdit) {
+            polygon.setEditable(true);
+        }
+        if (isEdit && editCallback) {
+            polygon.getPaths().forEach(function(path){
+                google.maps.event.addListener(path, 'insert_at', function () {// eslint-disable-line no-undef
+                    editCallback(polygon.getPaths().getArray());
+                });
+                google.maps.event.addListener(path, 'remove_at', function () {// eslint-disable-line no-undef
+                    editCallback(polygon.getPaths().getArray());
+                });
+                google.maps.event.addListener(path, 'set_at', function () {// eslint-disable-line no-undef
+                    editCallback(polygon.getPaths().getArray());
+                });
+            });
+        }
 		return polygon;
 	}
 	/* eslint-disable no-undef */
@@ -459,6 +475,40 @@ export default class TbGoogleMap {
 
     setPolylineLatLngs(polyline, latLngs) {
         polyline.setPath(latLngs);
+    }
+
+    mapPolygonArray(rawArray) {
+        let map = this;
+        if (!rawArray || rawArray.length === 0) return [];
+        return rawArray.map(function (el) {
+            if (el.length === 2) {
+                if (!angular.isNumber(el[0]) && !angular.isNumber(el[1])) {
+                    return el.map(function (subEl) {
+                        return map.mapPolygonArray(subEl);
+                    })
+                } else {
+                    return map.createLatLng(el[0], el[1]);
+                }
+            } else if (el.length > 2) {
+                return map.mapPolygonArray(el);
+            } else {
+                return map.createLatLng(false);
+            }
+        });
+    }
+
+    reverseMapPolygonArray(polArray) {
+        let map = this;
+        return polArray.map(el=> {
+                if (angular.isArray(el) && el.length >1) {
+                    return map.reverseMapPolygonArray(el);
+                } else if (!el.lat && !el.lng){
+                    return map.reverseMapPolygonArray(el.getArray());
+                } else {
+                    return [el.lat(), el.lng()];
+                }
+            }
+        );
     }
 
     createBounds() {

@@ -16,7 +16,7 @@
 
 -->
 <md-list ng-cloak>
-    <md-list-item ng-repeat="entity in vm.entities" ng-click="vm.selectEntity(entity)">
+    <md-list-item ng-repeat="entity in vm.entities track by $index" ng-click="vm.selectEntity(entity)">
         <span>{{ entity.entityLabel || entity.name }}</span>
     </md-list-item>
 </md-list>
