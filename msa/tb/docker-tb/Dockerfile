@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM volodymyrbabak/openjdk8
+FROM thingsboard/openjdk8
 
 COPY logback.xml ${pkg.name}.conf start-db.sh stop-db.sh start-tb.sh upgrade-tb.sh install-tb.sh ${pkg.name}.deb /tmp/
 

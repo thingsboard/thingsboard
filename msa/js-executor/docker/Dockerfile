@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM volodymyrbabak/basis
+FROM thingsboard/base
 
 COPY start-js-executor.sh ${pkg.name}.deb /tmp/
 

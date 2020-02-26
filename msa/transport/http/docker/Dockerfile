@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM volodymyrbabak/openjdk8
+FROM thingsboard/openjdk8
 
 COPY start-tb-http-transport.sh ${pkg.name}.deb /tmp/
 
