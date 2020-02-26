@@ -14,7 +14,8 @@
 /// limitations under the License.
 ///
 
-import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import _ from 'lodash';
+import { Observable, Subject } from 'rxjs';
 import { finalize, share } from 'rxjs/operators';
 import base64js from 'base64-js';
 
@@ -382,6 +383,10 @@ export function deepClone<T>(target: T, ignoreFields?: string[]): T {
     return cp as T;
   }
   return target;
+}
+
+export function isEqual(a: any, b: any): boolean {
+  return _.isEqual(a, b);
 }
 
 export function guid(): string {

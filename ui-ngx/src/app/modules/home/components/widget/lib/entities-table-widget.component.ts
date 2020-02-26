@@ -475,12 +475,13 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     }
   }
 
-  public onRowClick($event: Event, entity: EntityData) {
+  public onRowClick($event: Event, entity: EntityData, isDouble?: boolean) {
     if ($event) {
       $event.stopPropagation();
     }
     this.entityDatasource.toggleCurrentEntity(entity);
-    const descriptors = this.ctx.actionsApi.getActionDescriptors('rowClick');
+    const actionSourceId = isDouble ? 'rowDoubleClick' : 'rowClick';
+    const descriptors = this.ctx.actionsApi.getActionDescriptors(actionSourceId);
     if (descriptors.length) {
       let entityId;
       let entityName;

@@ -14,31 +14,21 @@
 /// limitations under the License.
 ///
 
-import {COMMA, ENTER, SEMICOLON} from '@angular/cdk/keycodes';
-import {AfterViewInit, Component, ElementRef, forwardRef, Input, OnInit, SkipSelf, ViewChild} from '@angular/core';
-import {
-  ControlValueAccessor,
-  FormBuilder,
-  FormControl,
-  FormGroup,
-  FormGroupDirective,
-  NG_VALUE_ACCESSOR, NgForm
-} from '@angular/forms';
-import {Observable, of} from 'rxjs';
-import {map, mergeMap, startWith, tap, share, pairwise, filter} from 'rxjs/operators';
-import {Store} from '@ngrx/store';
-import {AppState} from '@app/core/core.state';
-import {TranslateService} from '@ngx-translate/core';
-import {AliasEntityType, EntityType} from '@shared/models/entity-type.models';
-import {BaseData} from '@shared/models/base-data';
-import {EntityId} from '@shared/models/id/entity-id';
-import {EntityService} from '@core/http/entity.service';
+import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
+import { AfterViewInit, Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
+import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { Observable, of } from 'rxjs';
+import { map, mergeMap, share } from 'rxjs/operators';
+import { Store } from '@ngrx/store';
+import { AppState } from '@app/core/core.state';
+import { TranslateService } from '@ngx-translate/core';
+import { EntityId } from '@shared/models/id/entity-id';
+import { EntityService } from '@core/http/entity.service';
 import { MatAutocomplete, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
-import { MatChipList, MatChipInputEvent } from '@angular/material/chips';
-import { ErrorStateMatcher } from '@angular/material/core';
+import { MatChipInputEvent, MatChipList } from '@angular/material/chips';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import {DataKeyType} from '@shared/models/telemetry/telemetry.models';
-import * as equal from 'deep-equal';
+import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { isEqual } from '@core/utils';
 
 @Component({
   selector: 'tb-entity-keys-list',
@@ -62,7 +52,7 @@ export class EntityKeysListComponent implements ControlValueAccessor, OnInit, Af
 
   @Input()
   set entityId(entityId: EntityId) {
-    if (!equal(this.entityIdValue, entityId)) {
+    if (!isEqual(this.entityIdValue, entityId)) {
       this.entityIdValue = entityId;
       this.dirty = true;
     }

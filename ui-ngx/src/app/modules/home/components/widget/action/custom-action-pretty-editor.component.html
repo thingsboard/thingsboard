@@ -43,7 +43,7 @@
             [(ngModel)]="action.customFunction"
             (ngModelChange)="onActionUpdated()"
             [fillHeight]="true"
-            [functionArgs]="['$event', 'widgetContext', 'entityId', 'entityName', 'htmlTemplate', 'additionalParams']"
+            [functionArgs]="['$event', 'widgetContext', 'entityId', 'entityName', 'htmlTemplate', 'additionalParams', 'entityLabel']"
             [validationArgs]="[]">
           </tb-js-func>
         </div>

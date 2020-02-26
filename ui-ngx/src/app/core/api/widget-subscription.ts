@@ -47,10 +47,9 @@ import { Observable, ReplaySubject, Subject, throwError } from 'rxjs';
 import { CancelAnimationFrame } from '@core/services/raf.service';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AlarmInfo, AlarmSearchStatus } from '@shared/models/alarm.models';
-import { deepClone, isDefined } from '@core/utils';
+import { deepClone, isDefined, isEqual } from '@core/utils';
 import { AlarmSourceListener } from '@core/http/alarm.service';
 import { DatasourceListener } from '@core/api/datasource.service';
-import * as deepEqual from 'deep-equal';
 import { EntityId } from '@app/shared/models/id/entity-id';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { entityFields } from '@shared/models/entity.models';
@@ -539,7 +538,7 @@ export class WidgetSubscription implements IWidgetSubscription {
   onDashboardTimewindowChanged(newDashboardTimewindow: Timewindow): void {
     if (this.type === widgetType.timeseries || this.type === widgetType.alarm) {
       if (this.useDashboardTimewindow) {
-        if (!deepEqual(this.timeWindowConfig, newDashboardTimewindow) && newDashboardTimewindow) {
+        if (!isEqual(this.timeWindowConfig, newDashboardTimewindow) && newDashboardTimewindow) {
           this.timeWindowConfig = deepClone(newDashboardTimewindow);
           this.update();
         }
@@ -1010,7 +1009,7 @@ export class WidgetSubscription implements IWidgetSubscription {
 
   private alarmsUpdated(alarms: Array<AlarmInfo>) {
     this.notifyDataLoaded();
-    const updated = !this.alarms || !deepEqual(this.alarms, alarms);
+    const updated = !this.alarms || !isEqual(this.alarms, alarms);
     this.alarms = alarms;
     if (this.subscriptionTimewindow && this.subscriptionTimewindow.realtimeWindowMs) {
       this.updateTimewindow();

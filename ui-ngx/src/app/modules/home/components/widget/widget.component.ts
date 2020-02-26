@@ -1007,8 +1007,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
               additionalParams = {};
             }
             const customActionFunction = new Function('$event', 'widgetContext', 'entityId',
-              'entityName', 'additionalParams', customFunction);
-            customActionFunction($event, this.widgetContext, entityId, entityName, additionalParams);
+              'entityName', 'additionalParams', 'entityLabel', customFunction);
+            customActionFunction($event, this.widgetContext, entityId, entityName, additionalParams, entityLabel);
           } catch (e) {
             //
           }
@@ -1032,8 +1032,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
                   additionalParams = {};
                 }
                 const customActionPrettyFunction = new Function('$event', 'widgetContext', 'entityId',
-                  'entityName', 'htmlTemplate', 'additionalParams', customPrettyFunction);
-                customActionPrettyFunction($event, this.widgetContext, entityId, entityName, htmlTemplate, additionalParams);
+                  'entityName', 'htmlTemplate', 'additionalParams', 'entityLabel', customPrettyFunction);
+                customActionPrettyFunction($event, this.widgetContext, entityId, entityName, htmlTemplate, additionalParams, entityLabel);
               } catch (e) {
                 //
               }

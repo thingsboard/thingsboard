@@ -17,12 +17,11 @@
 import { AliasInfo, IAliasController, StateControllerHolder, StateEntityInfo } from '@core/api/widget-api.models';
 import { forkJoin, Observable, of, ReplaySubject, Subject } from 'rxjs';
 import { DataKey, Datasource, DatasourceType } from '@app/shared/models/widget.models';
-import { deepClone } from '@core/utils';
+import { deepClone, isEqual } from '@core/utils';
 import { EntityService } from '@core/http/entity.service';
 import { UtilsService } from '@core/services/utils.service';
 import { EntityAliases } from '@shared/models/alias.models';
 import { EntityInfo } from '@shared/models/entity.models';
-import * as equal from 'deep-equal';
 import { map } from 'rxjs/operators';
 
 export class AliasController implements IAliasController {
@@ -53,7 +52,7 @@ export class AliasController implements IAliasController {
     for (const aliasId of Object.keys(newEntityAliases)) {
       const newEntityAlias = newEntityAliases[aliasId];
       const prevEntityAlias = this.entityAliases[aliasId];
-      if (!equal(newEntityAlias, prevEntityAlias)) {
+      if (!isEqual(newEntityAlias, prevEntityAlias)) {
         changedAliasIds.push(aliasId);
         this.setAliasUnresolved(aliasId);
       }
@@ -76,7 +75,7 @@ export class AliasController implements IAliasController {
       const stateEntityInfo = this.resolvedAliasesToStateEntities[aliasId];
       const newEntityId = this.stateControllerHolder().getEntityId(stateEntityInfo.entityParamName);
       const prevEntityId = stateEntityInfo.entityId;
-      if (!equal(newEntityId, prevEntityId)) {
+      if (!isEqual(newEntityId, prevEntityId)) {
         changedAliasIds.push(aliasId);
         this.setAliasUnresolved(aliasId);
       }
@@ -319,7 +318,7 @@ export class AliasController implements IAliasController {
     const aliasInfo = this.resolvedAliases[aliasId];
     if (aliasInfo) {
       const prevCurrentEntity = aliasInfo.currentEntity;
-      if (!equal(currentEntity, prevCurrentEntity)) {
+      if (!isEqual(currentEntity, prevCurrentEntity)) {
         aliasInfo.currentEntity = currentEntity;
         this.entityAliasesChangedSubject.next([aliasId]);
       }

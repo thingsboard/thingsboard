@@ -79,6 +79,18 @@ export interface TbFlotSeriesHoverInfo {
   distance: number;
 }
 
+export interface TbFlotThresholdMarking {
+  lineWidth?: number;
+  color?: string;
+  [key: string]: any;
+}
+
+export interface TbFlotThresholdKeySettings {
+  yaxis: number;
+  lineWidth: number;
+  color: string;
+}
+
 export interface TbFlotGridSettings {
   color: string;
   backgroundColor: string;
@@ -133,12 +145,19 @@ export interface TbFlotComparisonSettings {
   xaxisSecond: TbFlotSecondXAxisSettings;
 }
 
-export interface TbFlotGraphSettings extends TbFlotBaseSettings, TbFlotComparisonSettings {
+export interface TbFlotThresholdsSettings {
+  thresholdsLineWidth: number;
+}
+
+export interface TbFlotGraphSettings extends TbFlotBaseSettings, TbFlotThresholdsSettings, TbFlotComparisonSettings {
   smoothLines: boolean;
 }
 
-export interface TbFlotBarSettings extends TbFlotBaseSettings, TbFlotComparisonSettings {
+export declare type BarAlignment = 'left' | 'right' | 'center';
+
+export interface TbFlotBarSettings extends TbFlotBaseSettings, TbFlotThresholdsSettings, TbFlotComparisonSettings {
   defaultBarWidth: number;
+  barAlignment: BarAlignment;
 }
 
 export interface TbFlotPieSettings {
@@ -157,6 +176,23 @@ export interface TbFlotPieSettings {
 
 export declare type TbFlotYAxisPosition = 'left' | 'right';
 export declare type TbFlotXAxisPosition = 'top' | 'bottom';
+
+export declare type TbFlotThresholdValueSource = 'predefinedValue' | 'entityAttribute';
+
+export interface TbFlotKeyThreshold {
+  thresholdValueSource: TbFlotThresholdValueSource;
+  thresholdEntityAlias: string;
+  thresholdAttribute: string;
+  thresholdValue: number;
+  lineWidth: number;
+  color: string;
+}
+
+export interface TbFlotKeyComparisonSettings {
+  showValuesForComparison: boolean;
+  comparisonValuesLabel: string;
+  color: string;
+}
 
 export interface TbFlotKeySettings {
   excludeFromStacking: boolean;
@@ -180,6 +216,8 @@ export interface TbFlotKeySettings {
   axisTickSize: number;
   axisPosition: TbFlotYAxisPosition;
   axisTicksFormatter: string;
+  thresholds: TbFlotKeyThreshold[];
+  comparisonSettings: TbFlotKeyComparisonSettings;
 }
 
 export function flotSettingsSchema(chartType: ChartType): JsonSettingsSchema {
@@ -211,6 +249,17 @@ export function flotSettingsSchema(chartType: ChartType): JsonSettingsSchema {
       title: 'Default bar width for non-aggregated data (milliseconds)',
       type: 'number',
       default: 600
+    };
+    properties.barAlignment = {
+      title: 'Bar alignment',
+      type: 'string',
+      default: 'left'
+    };
+  }
+  if (chartType === 'graph' || chartType === 'bar') {
+    properties.thresholdsLineWidth = {
+      title: 'Default line width for all thresholds',
+      type: 'number'
     };
   }
   properties.shadowSize = {
@@ -362,6 +411,28 @@ export function flotSettingsSchema(chartType: ChartType): JsonSettingsSchema {
   }
   if (chartType === 'bar') {
     schema.form.push('defaultBarWidth');
+    schema.form.push({
+      key: 'barAlignment',
+      type: 'rc-select',
+      multiple: false,
+      items: [
+        {
+          value: 'left',
+          label: 'Left'
+        },
+        {
+          value: 'right',
+          label: 'Right'
+        },
+        {
+          value: 'center',
+          label: 'Center'
+        }
+      ]
+    });
+  }
+  if (chartType === 'graph' || chartType === 'bar') {
+    schema.form.push('thresholdsLineWidth');
   }
   schema.form.push('shadowSize');
   schema.form.push({
@@ -837,6 +908,70 @@ export function flotDatakeySettingsSchema(defaultShowLines: boolean, chartType: 
 
   const properties = schema.schema.properties;
   if (chartType === 'graph' || chartType === 'bar') {
+    properties.thresholds = {
+      title: 'Thresholds',
+      type: 'array',
+      items: {
+        title: 'Threshold',
+        type: 'object',
+        properties: {
+          thresholdValueSource: {
+            title: 'Threshold value source',
+            type: 'string',
+            default: 'predefinedValue'
+          },
+          thresholdEntityAlias: {
+            title: 'Thresholds source entity alias',
+            type: 'string'
+          },
+          thresholdAttribute: {
+            title: 'Threshold source entity attribute',
+            type: 'string'
+          },
+          thresholdValue: {
+            title: 'Threshold value (if predefined value is selected)',
+            type: 'number'
+          },
+          lineWidth: {
+            title: 'Line width',
+            type: 'number'
+          },
+          color: {
+            title: 'Color',
+            type: 'string'
+          }
+        }
+      },
+      required: []
+    };
+    schema.form.push({
+      key: 'thresholds',
+      items: [
+        {
+          key: 'thresholds[].thresholdValueSource',
+          type: 'rc-select',
+          multiple: false,
+          items: [
+            {
+              value: 'predefinedValue',
+              label: 'Predefined value (Default)'
+            },
+            {
+              value: 'entityAttribute',
+              label: 'Value taken from entity attribute'
+            }
+          ]
+        },
+        'thresholds[].thresholdValue',
+        'thresholds[].thresholdEntityAlias',
+        'thresholds[].thresholdAttribute',
+        {
+          key: 'thresholds[].color',
+          type: 'color'
+        },
+        'thresholds[].lineWidth'
+      ]
+    });
     properties.comparisonSettings = {
       title: 'Comparison Settings',
       type: 'object',

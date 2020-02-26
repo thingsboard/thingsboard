@@ -24,8 +24,7 @@ import {
   JsonSchemaData,
   JsonFormData
 } from './json-form.models';
-import { isDefined, isString, isUndefined } from '@core/utils';
-import * as equal from 'deep-equal';
+import { isDefined, isEqual, isString, isUndefined } from '@core/utils';
 
 function validateBySchema(schema: any, value: any): SchemaValidationResult {
   return tv.validateResult(value, schema);
@@ -530,7 +529,7 @@ function setValue(obj: any, key: string, val: any): boolean {
         changed = true;
       }
     } else {
-      changed = !equal(obj[key], val);
+      changed = !isEqual(obj[key], val);
       obj[key] = val;
     }
   }

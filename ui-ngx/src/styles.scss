@@ -968,4 +968,13 @@ mat-label {
       height: 100%;
     }
   }
+
+  .tb-tooltip-multiline {
+    max-width: 400px;
+    height: auto !important;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    line-height: 1.5;
+    white-space: pre-line;
+  }
 }
