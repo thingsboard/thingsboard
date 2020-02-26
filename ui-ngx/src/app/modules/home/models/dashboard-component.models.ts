@@ -311,9 +311,6 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
 
   style: {[klass: string]: any};
 
-  hasWidgetTitleTemplate: boolean;
-  widgetTitleTemplate: string;
-
   showWidgetTitlePanel: boolean;
   showWidgetActions: boolean;
 
@@ -395,11 +392,8 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
       this.style = {...this.widget.config.widgetStyle, ...this.style};
     }
 
-    this.hasWidgetTitleTemplate = this.widgetContext.widgetTitleTemplate ? true : false;
-    this.widgetTitleTemplate = this.widgetContext.widgetTitleTemplate ? this.widgetContext.widgetTitleTemplate : '';
-
     this.showWidgetTitlePanel = this.widgetContext.hideTitlePanel ? false :
-      this.hasWidgetTitleTemplate || this.showTitle || this.hasTimewindow;
+      this.showTitle || this.hasTimewindow;
 
     this.showWidgetActions = this.widgetContext.hideTitlePanel ? false : true;
 

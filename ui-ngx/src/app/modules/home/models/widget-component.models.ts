@@ -176,7 +176,6 @@ export class WidgetContext {
 
   hideTitlePanel = false;
 
-  widgetTitleTemplate?: string;
   widgetTitle?: string;
   widgetTitleTooltip?: string;
   customHeaderActions?: Array<WidgetHeaderAction>;
@@ -212,7 +211,6 @@ export class WidgetContext {
   reset() {
     this.destroyed = false;
     this.hideTitlePanel = false;
-    this.widgetTitleTemplate = undefined;
     this.widgetTitle = undefined;
     this.customHeaderActions = undefined;
     this.widgetActions = undefined;

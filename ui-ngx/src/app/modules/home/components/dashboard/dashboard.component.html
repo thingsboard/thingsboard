@@ -79,9 +79,6 @@
              (contextmenu)="openWidgetContextMenu($event, widget)">
           <div fxLayout="row" fxLayoutAlign="space-between start">
             <div class="tb-widget-title" fxLayout="column" fxLayoutAlign="center start" [fxShow]="widget.showWidgetTitlePanel">
-              <div *ngIf="widget.hasWidgetTitleTemplate">
-                TODO:
-              </div>
               <span [fxShow]="widget.showTitle"
                     [ngStyle]="widget.titleStyle"
                     [matTooltip]="widget.titleTooltip"
@@ -101,7 +98,7 @@
             </div>
             <div [fxShow]="widget.showWidgetActions"
                  class="tb-widget-actions"
-                 [ngClass]="{'tb-widget-actions-absolute': !(widget.showWidgetTitlePanel&&(widget.hasWidgetTitleTemplate||widget.showTitle||widget.hasAggregation))}"
+                 [ngClass]="{'tb-widget-actions-absolute': !(widget.showWidgetTitlePanel&&(widget.showTitle||widget.hasAggregation))}"
                  fxLayout="row"
                  fxLayoutAlign="start center"
                  (mousedown)="$event.stopPropagation()">
