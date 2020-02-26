@@ -91,22 +91,9 @@ export class LegendConfigPanelComponent extends PageComponent implements OnInit 
       }
       this.legendConfigForm.patchValue(
         {
-          position,
-          showMin: false,
-          showMax: false,
-          showAvg: false,
-          showTotal: false
+          position
         }, {emitEvent: false}
       );
-      this.legendConfigForm.get('showMin').disable({emitEvent: false});
-      this.legendConfigForm.get('showMax').disable({emitEvent: false});
-      this.legendConfigForm.get('showAvg').disable({emitEvent: false});
-      this.legendConfigForm.get('showTotal').disable({emitEvent: false});
-    } else {
-      this.legendConfigForm.get('showMin').enable({emitEvent: false});
-      this.legendConfigForm.get('showMax').enable({emitEvent: false});
-      this.legendConfigForm.get('showAvg').enable({emitEvent: false});
-      this.legendConfigForm.get('showTotal').enable({emitEvent: false});
     }
   }
 

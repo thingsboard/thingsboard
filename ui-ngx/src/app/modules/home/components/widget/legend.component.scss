@@ -15,8 +15,16 @@
  */
 :host {
   table.tb-legend {
-    width: 100%;
     font-size: 12px;
+
+    &.tb-legend-column {
+      width: 100%;
+    }
+
+    &.tb-legend-row {
+      width: auto;
+      margin-left: auto;
+    }
 
     .tb-legend-header,
     .tb-legend-value {
@@ -42,6 +50,15 @@
         white-space: nowrap;
       }
 
+      .tb-legend-type {
+        min-width: 50px;
+        padding: 0 10px 1px 0;
+        font-weight: 700;
+        color: rgb(255, 110, 64);
+        text-align: right;
+        white-space: nowrap;
+      }
+
       .tb-legend-line {
         display: inline-block;
         width: 15px;
@@ -50,7 +67,9 @@
       }
 
       .tb-legend-label {
+        padding: 2px 10px;
         text-align: left;
+        white-space: nowrap;
         outline: none;
 
         &.tb-horizontal {
