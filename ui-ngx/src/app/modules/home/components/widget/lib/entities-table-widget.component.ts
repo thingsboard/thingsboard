@@ -304,7 +304,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
 
     const dataKeys: Array<DataKey> = [];
 
-    const datasource = this.subscription.datasources[0];
+    const datasource = this.subscription.options.datasources ? this.subscription.options.datasources[0] : null;
 
     if (datasource) {
       datasource.dataKeys.forEach((entityDataKey) => {

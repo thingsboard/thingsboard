@@ -26,7 +26,7 @@ import { map } from 'rxjs/operators';
 
 export class AliasController implements IAliasController {
 
-  private entityAliasesChangedSubject = new Subject<Array<string>>();
+  entityAliasesChangedSubject = new Subject<Array<string>>();
   entityAliasesChanged: Observable<Array<string>> = this.entityAliasesChangedSubject.asObservable();
 
   private entityAliasResolvedSubject = new Subject<string>();
@@ -69,6 +69,23 @@ export class AliasController implements IAliasController {
     }
   }
 
+  updateAliases(aliasIds?: Array<string>) {
+    if (!aliasIds) {
+      aliasIds = [];
+      for (const aliasId of Object.keys(this.resolvedAliases)) {
+        aliasIds.push(aliasId);
+      }
+    }
+    const tasks: Observable<AliasInfo>[] = [];
+    for (const aliasId of aliasIds) {
+      this.setAliasUnresolved(aliasId);
+      tasks.push(this.getAliasInfo(aliasId));
+    }
+    forkJoin(tasks).subscribe(() => {
+      this.entityAliasesChangedSubject.next(aliasIds);
+    });
+  }
+
   dashboardStateChanged() {
     const changedAliasIds: Array<string> = [];
     for (const aliasId of Object.keys(this.resolvedAliasesToStateEntities)) {
@@ -85,7 +102,7 @@ export class AliasController implements IAliasController {
     }
   }
 
-  private setAliasUnresolved(aliasId: string) {
+  setAliasUnresolved(aliasId: string) {
     delete this.resolvedAliases[aliasId];
     delete this.resolvedAliasesObservable[aliasId];
     delete this.resolvedAliasesToStateEntities[aliasId];
@@ -225,7 +242,7 @@ export class AliasController implements IAliasController {
   resolveAlarmSource(alarmSource: Datasource): Observable<Datasource> {
     return this.resolveDatasource(alarmSource, true).pipe(
       map((datasources) => {
-        const datasource = datasources[0];
+        const datasource = datasources && datasources.length ? datasources[0] : deepClone(alarmSource);
         if (datasource.type === DatasourceType.function) {
           let name: string;
           if (datasource.name && datasource.name.length) {

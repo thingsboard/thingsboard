@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { EntityId } from '@app/shared/models/id/entity-id';
 import {
   DataSet,
@@ -99,6 +99,7 @@ export interface IAliasController {
   getEntityAliases(): EntityAliases;
   updateCurrentAliasEntity(aliasId: string, currentEntity: EntityInfo);
   updateEntityAliases(entityAliases: EntityAliases);
+  updateAliases(aliasIds?: Array<string>);
   dashboardStateChanged();
 }
 
@@ -218,6 +219,7 @@ export interface SubscriptionEntityInfo {
 
 export interface IWidgetSubscription {
 
+  options: WidgetSubscriptionOptions;
   id: string;
   init$: Observable<IWidgetSubscription>;
   ctx: WidgetSubscriptionContext;

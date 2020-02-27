@@ -127,7 +127,7 @@ export class WidgetSubscription implements IWidgetSubscription {
   targetDeviceName: string;
   executingSubjects: Array<Subject<any>>;
 
-  constructor(subscriptionContext: WidgetSubscriptionContext, options: WidgetSubscriptionOptions) {
+  constructor(subscriptionContext: WidgetSubscriptionContext, public options: WidgetSubscriptionOptions) {
     const subscriptionSubject = new ReplaySubject<IWidgetSubscription>();
     this.init$ = subscriptionSubject.asObservable();
     this.ctx = subscriptionContext;
@@ -878,8 +878,8 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   private checkAlarmSource(aliasIds: Array<string>): boolean {
-    if (this.alarmSource && this.alarmSource.entityAliasId) {
-      return aliasIds.indexOf(this.alarmSource.entityAliasId) > -1;
+    if (this.options.alarmSource && this.options.alarmSource.entityAliasId) {
+      return aliasIds.indexOf(this.options.alarmSource.entityAliasId) > -1;
     } else {
       return false;
     }
@@ -887,11 +887,14 @@ export class WidgetSubscription implements IWidgetSubscription {
 
   private checkSubscriptions(aliasIds: Array<string>): boolean {
     let subscriptionsChanged = false;
-    for (const listener of this.datasourceListeners) {
-      if (listener.datasource.entityAliasId) {
-        if (aliasIds.indexOf(listener.datasource.entityAliasId) > -1) {
-          subscriptionsChanged = true;
-          break;
+    const datasources = this.options.datasources;
+    if (datasources) {
+      for (const datasource of datasources) {
+        if (datasource.entityAliasId) {
+          if (aliasIds.indexOf(datasource.entityAliasId) > -1) {
+            subscriptionsChanged = true;
+            break;
+          }
         }
       }
     }
