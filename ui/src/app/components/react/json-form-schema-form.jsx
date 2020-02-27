@@ -126,7 +126,7 @@ class ThingsboardSchemaForm extends React.Component {
         }.bind(this));
 
         let formClass = 'SchemaForm';
-        if (this.props.isFullscreen && groupId === this.state.groupId /*&& theForm[0].title !== 'Background image'*/) {
+        if (this.props.isFullscreen && groupId === this.state.groupId) {
             formClass += ' SchemaFormFullscreen';
         } else if (this.props.isFullscreen ) {
             formClass += ' SchemaFormNotFullscreen';
