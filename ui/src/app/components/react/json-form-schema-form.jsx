@@ -119,12 +119,17 @@ class ThingsboardSchemaForm extends React.Component {
             mapper = _.merge(this.mapper, this.props.mapper);
         }
         let forms = merged.map(function(form, index) {
+            if(!groupId) {
+                groupId = 'noGroupId';
+            }
             return this.builder(form, groupId, this.props.model, index, this.onChange, this.onColorClick, this.onIconClick, this.onToggleFullscreen, mapper);
         }.bind(this));
 
         let formClass = 'SchemaForm';
-        if (this.props.isFullscreen && groupId === this.state.groupId) {
+        if (this.props.isFullscreen && groupId === this.state.groupId /*&& theForm[0].title !== 'Background image'*/) {
             formClass += ' SchemaFormFullscreen';
+        } else if (this.props.isFullscreen ) {
+            formClass += ' SchemaFormNotFullscreen';
         }
 
         return (

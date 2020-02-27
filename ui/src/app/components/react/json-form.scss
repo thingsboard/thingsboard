@@ -24,7 +24,9 @@ $input-label-float-scale: .75 !default;
 .tb-fullscreen {
   [name="ReactSchemaForm"] {
     .SchemaForm {
-      display: none;
+      &.SchemaFormNotFullscreen {
+        display: none;
+      }
 
       &.SchemaFormFullscreen {
         position: absolute;
