@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.gson.JsonParseException;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +40,7 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -179,6 +181,13 @@ public class TbGetTelemetryNode implements TbNode {
                 break;
             case DOUBLE:
                 obj.put("value", entry.getDoubleValue().get());
+                break;
+            case JSON:
+                try {
+                    obj.set("value", mapper.readTree(entry.getJsonValue().get()));
+                } catch (IOException e) {
+                    throw new JsonParseException("Can't parse jsonValue: " + entry.getJsonValue().get(), e);
+                }
                 break;
         }
         return obj;

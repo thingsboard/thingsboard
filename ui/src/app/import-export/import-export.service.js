@@ -18,6 +18,7 @@
 import importDialogTemplate from './import-dialog.tpl.html';
 import importDialogCSVTemplate from './import-dialog-csv.tpl.html';
 import entityAliasesTemplate from '../entity/alias/entity-aliases.tpl.html';
+import * as JSZip from 'jszip';
 
 /* eslint-enable import/no-unresolved, import/default */
 
@@ -28,6 +29,10 @@ import entityAliasesTemplate from '../entity/alias/entity-aliases.tpl.html';
 export default function ImportExport($log, $translate, $q, $mdDialog, $document, $http, itembuffer, utils, types, $rootScope,
                                      dashboardUtils, entityService, dashboardService, ruleChainService, widgetService, toast, attributeService) {
 
+    const ZIP_TYPE = {
+        mimeType: 'application/zip',
+        extension: 'zip'
+    };
 
     var service = {
         exportDashboard: exportDashboard,
@@ -40,6 +45,7 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         importWidgetType: importWidgetType,
         exportWidgetsBundle: exportWidgetsBundle,
         importWidgetsBundle: importWidgetsBundle,
+        exportJSZip: exportJSZip,
         exportExtension: exportExtension,
         importExtension: importExtension,
         importEntities: importEntities,
@@ -851,7 +857,7 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         });
         return $q.all(promises);
     }
-    
+
     function createMultiEntity(arrayData, entityType, updateData, config) {
         let partSize = 100;
         partSize = arrayData.length > partSize ? partSize : arrayData.length;
@@ -981,6 +987,39 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
     function fixedDialogSize(scope, element) {
         let dialogElement = element[0].getElementsByTagName('md-dialog');
         dialogElement[0].style.width = dialogElement[0].offsetWidth + 2 + "px";
+    }
+
+    function exportJSZip(data, filename) {
+        let jsZip = new JSZip();
+        for (let keyName in data) {
+            let valueData = data[keyName];
+            jsZip.file(keyName, valueData);
+        }
+        jsZip.generateAsync({type: "blob"}).then(function (content) {
+            downloadFile(content, filename, ZIP_TYPE);
+        });
+    }
+
+
+    function downloadFile(data, filename, fileType) {
+        if (!filename) {
+            filename = 'download';
+        }
+        filename += '.' + fileType.extension;
+        var blob = new Blob([data], {type: fileType.mimeType});
+        // FOR IE:
+        if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+            window.navigator.msSaveOrOpenBlob(blob, filename);
+        } else {
+            var e = document.createEvent('MouseEvents'),
+                a = document.createElement('a');
+            a.download = filename;
+            a.href = window.URL.createObjectURL(blob);
+            a.dataset.downloadurl = [fileType.mimeType, a.download, a.href].join(':');
+            e.initEvent('click', true, false, window,
+                0, 0, 0, 0, 0, false, false, false, false, 0, null);
+            a.dispatchEvent(e);
+        }
     }
 }
 
