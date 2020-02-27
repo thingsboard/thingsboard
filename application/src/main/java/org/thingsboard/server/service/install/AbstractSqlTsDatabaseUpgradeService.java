@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.SQLWarning;
 import java.sql.Types;
 
 @Slf4j
@@ -93,6 +94,15 @@ public abstract class AbstractSqlTsDatabaseUpgradeService {
         try {
             CallableStatement callableStatement = conn.prepareCall("{" + query + "}");
             callableStatement.execute();
+            SQLWarning warnings = callableStatement.getWarnings();
+            if (warnings != null) {
+                log.info("{}", warnings.getMessage());
+                SQLWarning nextWarning = warnings.getNextWarning();
+                while (nextWarning != null) {
+                    log.info("{}", nextWarning.getMessage());
+                    nextWarning = nextWarning.getNextWarning();
+                }
+            }
             callableStatement.close();
             log.info(SUCCESSFULLY_EXECUTED_FUNCTION, query.replace(CALL_REGEX, ""));
             Thread.sleep(2000);
