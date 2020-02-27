@@ -79,7 +79,6 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
     let archiveFileName = '';
     let gatewayNameExists = '';
     let successfulSaved = '';
-
     vm.securityTypes = [{
         name: 'gateway.security-types.access-token',
         value: 'accessToken'
@@ -124,7 +123,7 @@ function GatewayFormController($scope, $injector, $document, $mdExpansionPanel, 
     function initWidgetSettings() {
         let widgetTitle;
         if (vm.settings) {
-            vm.isReadOnlyForm = (vm.settings.readOnly) ? vm.settings.readOnly : false;
+            vm.isReadOnlyForm = (vm.settings.isReadOnly) ? vm.settings.isReadOnly : false;
             if (vm.settings.gatewayTitle && vm.settings.gatewayTitle.length) {
                 widgetTitle = utils.customTranslation(vm.settings.gatewayTitle, vm.settings.gatewayTitle);
             }
