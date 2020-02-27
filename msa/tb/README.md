@@ -4,7 +4,7 @@ This project provides the build for the ThingsBoard single docker images.
 
 * `thingsboard/tb` - single instance of ThingsBoard with embedded HSQLDB database.
 * `thingsboard/tb-postgres` - single instance of ThingsBoard with PostgreSQL database.
-* `thingsboard/tb-cassandra` - single instance of ThingsBoard with Cassandra database.
+* `thingsboard/tb-cassandra` - single instance of ThingsBoard with Hybrid PostgreSQL (entities) and Cassandra (timeseries) database.
 
 ## Running
 
