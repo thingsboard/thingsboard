@@ -4,6 +4,7 @@ import { deepClone } from '@core/utils';
 import { openstreetMapSettingsSchema, googleMapSettingsSchema, imageMapSettingsSchema, tencentMapSettingsSchema, hereMapSettingsSchema, commonMapSettingsSchema, routeMapSettingsSchema, markerClusteringSettingsSchema, markerClusteringSettingsSchemaGoogle, markerClusteringSettingsSchemaLeaflet } from './schemes';
 import { MapWidgetStaticInterface, MapWidgetInterface } from './map-widget.interface';
 import { OpenStreetMap, TencentMap } from './providers';
+import { GoogleMap } from './providers/google-map';
 
 const providerSets = {
     'openstreet-map': {
@@ -13,6 +14,10 @@ const providerSets = {
     'tencent-map': {
         MapClass: TencentMap,
         schema: tencentMapSettingsSchema
+    },
+    'google-map': {
+        MapClass: GoogleMap,
+        schema: googleMapSettingsSchema
     }
 }
 
@@ -39,13 +44,12 @@ TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
             defaultCenterPosition: [0, 0],
             markerClusteringSetting: null
         }
-        console.log("TCL: TbMapWidgetV2 -> constructor -> providerSets[mapProvider]", providerSets[mapProvider], mapProvider)
+        console.log("TCL: TbMapWidgetV2 -> constructor -> providerSets[mapProvider]",mapProvider)
         let MapClass = providerSets[mapProvider]?.MapClass;
         if(!MapClass){
             //delete this;
             return;
         }
-        console.log("TCL: TbMapWidgetV2 -> constructor -> MapClass", MapClass)
         this.map = new MapClass($element, options)
 
         this.schema = providerSets[mapProvider]?.schema;

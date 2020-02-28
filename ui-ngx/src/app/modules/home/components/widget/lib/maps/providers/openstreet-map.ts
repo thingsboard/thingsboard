@@ -1,4 +1,3 @@
-
 import L from 'leaflet';
 import LeafletMap from '../leaflet-map';
 import { MapOptions } from '../map-models';

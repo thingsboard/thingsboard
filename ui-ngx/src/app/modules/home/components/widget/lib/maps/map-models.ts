@@ -5,7 +5,7 @@ export interface MapOptions {
     disableScrollZooming?: boolean,
     minZoomLevel?: number,
     mapProvider: MapProviders,
-    credentials?: string,
+    credentials?: any, // declare credentials format
     defaultCenterPosition?: L.LatLngExpression,
     markerClusteringSetting?
 }
