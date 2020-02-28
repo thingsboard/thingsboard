@@ -52,6 +52,14 @@ import { CustomDialogService } from '@home/components/widget/dialog/custom-dialo
 import { isDefined, formatValue } from '@core/utils';
 import { forkJoin, Observable, of, ReplaySubject } from 'rxjs';
 import { WidgetSubscription } from '@core/api/widget-subscription';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import {
+  NotificationHorizontalPosition,
+  NotificationType,
+  NotificationVerticalPosition
+} from '@core/notification/notification.models';
+import { ActionNotificationShow } from '@core/notification/notification.actions';
 
 export interface IWidgetAction {
   name: string;
@@ -152,8 +160,8 @@ export class WidgetContext {
     formatValue
   };
 
-  $container: JQuery<any>;
-  $containerParent: JQuery<any>;
+  $container: JQuery<HTMLElement>;
+  $containerParent: JQuery<HTMLElement>;
   width: number;
   height: number;
   $scope: IDynamicWidgetComponent;
@@ -184,10 +192,43 @@ export class WidgetContext {
 
   ngZone?: NgZone;
 
+  store?: Store<AppState>;
+
   rxjs = {
     forkJoin,
     of
   };
+
+  showSuccessToast(message: string, duration: number = 1000,
+                   verticalPosition: NotificationVerticalPosition = 'bottom',
+                   horizontalPosition: NotificationHorizontalPosition = 'left',
+                   target?: string) {
+    this.showToast('success', message, duration, verticalPosition, horizontalPosition, target);
+  }
+
+  showErrorToast(message: string,
+                 verticalPosition: NotificationVerticalPosition = 'bottom',
+                 horizontalPosition: NotificationHorizontalPosition = 'left',
+                 target?: string) {
+    this.showToast('error', message, undefined, verticalPosition, horizontalPosition, target);
+  }
+
+  showToast(type: NotificationType, message: string, duration: number,
+            verticalPosition: NotificationVerticalPosition = 'bottom',
+            horizontalPosition: NotificationHorizontalPosition = 'left',
+            target?: string) {
+    this.store.dispatch(new ActionNotificationShow(
+      {
+        message,
+        type,
+        duration,
+        verticalPosition,
+        horizontalPosition,
+        target,
+        panelClass: this.widgetNamespace,
+        forceDismiss: true
+      }));
+  }
 
   detectChanges(updateWidgetParams: boolean = false) {
     if (!this.destroyed) {

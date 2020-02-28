@@ -27,7 +27,7 @@ import { MillisecondsToTimeStringPipe } from '@shared/pipe/milliseconds-to-time-
 import {
   Aggregation,
   aggregationTranslations,
-  AggregationType,
+  AggregationType, DAY,
   HistoryWindow,
   HistoryWindowType,
   IntervalWindow,
@@ -205,9 +205,11 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
     const timewindowFormValue = this.timewindowForm.getRawValue();
     if (timewindowFormValue.history.historyType === HistoryWindowType.LAST_INTERVAL) {
       return timewindowFormValue.history.timewindowMs;
-    } else {
+    } else if (timewindowFormValue.history.fixedTimewindow) {
       return timewindowFormValue.history.fixedTimewindow.endTimeMs -
         timewindowFormValue.history.fixedTimewindow.startTimeMs;
+    } else {
+      return DAY;
     }
   }
 

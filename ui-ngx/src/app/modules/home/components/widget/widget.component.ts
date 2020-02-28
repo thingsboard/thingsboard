@@ -260,6 +260,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     this.widgetContext = this.dashboardWidget.widgetContext;
     this.widgetContext.changeDetector = this.cd;
     this.widgetContext.ngZone = this.ngZone;
+    this.widgetContext.store = this.store;
     this.widgetContext.servicesMap = ServicesMap;
     this.widgetContext.isEdit = this.isEdit;
     this.widgetContext.isMobile = this.isMobile;
