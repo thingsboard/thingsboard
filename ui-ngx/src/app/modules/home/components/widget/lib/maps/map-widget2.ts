@@ -3,11 +3,16 @@ import LeafletMap from './leaflet-map';
 import { deepClone } from '@core/utils';
 import { openstreetMapSettingsSchema, googleMapSettingsSchema, imageMapSettingsSchema, tencentMapSettingsSchema, hereMapSettingsSchema, commonMapSettingsSchema, routeMapSettingsSchema, markerClusteringSettingsSchema, markerClusteringSettingsSchemaGoogle, markerClusteringSettingsSchemaLeaflet } from './schemes';
 import { MapWidgetStaticInterface, MapWidgetInterface } from './map-widget.interface';
+import { OpenStreetMap, TencentMap } from './providers';
 
 const providerSets = {
-    openstreet: {
-        constructor: LeafletMap,
+    'openstreet-map': {
+        MapClass: OpenStreetMap,
         schema: openstreetMapSettingsSchema
+    },
+    'tencent-map': {
+        MapClass: TencentMap,
+        schema: tencentMapSettingsSchema
     }
 }
 
@@ -34,11 +39,16 @@ TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
             defaultCenterPosition: [0, 0],
             markerClusteringSetting: null
         }
-        this.map = new LeafletMap($element, options)
+        console.log("TCL: TbMapWidgetV2 -> constructor -> providerSets[mapProvider]", providerSets[mapProvider], mapProvider)
+        let MapClass = providerSets[mapProvider]?.MapClass;
+        if(!MapClass){
+            //delete this;
+            return;
+        }
+        console.log("TCL: TbMapWidgetV2 -> constructor -> MapClass", MapClass)
+        this.map = new MapClass($element, options)
 
         this.schema = providerSets[mapProvider]?.schema;
-
-
     }
 
     onInit() {
@@ -48,7 +58,6 @@ TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
     }
 
     onResize() {
-    console.log("TCL: TbMapWidgetV2 -> onResize -> onResize")
     }
 
     getSettingsSchema(): Object {
@@ -56,7 +65,6 @@ TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
     }
 
     resize() {
-        console.log("TCL: TbMapWidgetV2 -> resize -> resize")
         this.map?.invalidateSize();
     }
 

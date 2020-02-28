@@ -12,37 +12,38 @@ export default class LeafletMap {
     markers = [];
     tooltips = [];
     map: L.Map;
+    options;
     isMarketCluster;
 
 
     constructor($container, options: MapOptions) {
-        this.isMarketCluster = options.markerClusteringSetting?.isMarketCluster;
-        // defaultCenterPosition = options.defaultCenterPosition || [0, 0];
-        this.map = L.map($container).setView(options.defaultCenterPosition, options.defaultZoomLevel || 8);
+        this.options = options;
+    }
 
-        if (options.disableScrollZooming) {
+    public initSettings(options: MapOptions) {
+        const { initCallback,
+            defaultZoomLevel,
+            dontFitMapBounds,
+            disableScrollZooming,
+            minZoomLevel,
+            mapProvider,
+            credentials,
+            defaultCenterPosition,
+            markerClusteringSetting }: MapOptions = options;
+        if (disableScrollZooming) {
             this.map.scrollWheelZoom.disable();
         }
-        let credetials = {
-            app_id: "AhM6TzD9ThyK78CT3ptx",
-            app_code: "p6NPiITB3Vv0GMUFnkLOOg"
+        if (initCallback) {
+            setTimeout(options.initCallback, 0);
         }
-        var tileLayer = (L.tileLayer as any).provider("OpenStreetMap.Mapnik", credetials);
-        tileLayer.addTo(this.map);
-
-        /*  if (this.isMarketCluster) {
-              this.markersCluster = L.markerClusterGroup(options.markerClusteringSetting);
-              this.map.addLayer(this.markersCluster);
-          }*/
-
-        if (options.initCallback) {
-            setTimeout(options.initCallback, 0); //eslint-disable-line
-        }
-
     }
 
     inited() {
         return !!this.map;
+    }
+
+    public setMap(map: L.Map) {
+        this.map = map;
     }
 
     getContainer() {
