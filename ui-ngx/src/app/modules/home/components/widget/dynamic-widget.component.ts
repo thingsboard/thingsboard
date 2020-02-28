@@ -85,7 +85,7 @@ export class DynamicWidgetComponent extends PageComponent implements IDynamicWid
     this.showToast('error', message, undefined, verticalPosition, horizontalPosition, target);
   }
 
-  showToast(type: NotificationType, message: string, duration: number = 1000,
+  showToast(type: NotificationType, message: string, duration: number,
             verticalPosition: NotificationVerticalPosition = 'bottom',
             horizontalPosition: NotificationHorizontalPosition = 'left',
             target?: string) {

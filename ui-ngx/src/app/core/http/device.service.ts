@@ -135,7 +135,7 @@ export class DeviceService {
 
   public claimDevice(deviceName: string, claimRequest: ClaimRequest,
                      config?: RequestConfig): Observable<ClaimResult> {
-    return this.http.post<ClaimResult>(`api/customer/device/${deviceName}/claim`, claimRequest, defaultHttpOptionsFromConfig(config));
+    return this.http.post<ClaimResult>(`/api/customer/device/${deviceName}/claim`, claimRequest, defaultHttpOptionsFromConfig(config));
   }
 
   public unclaimDevice(deviceName: string, config?: RequestConfig) {
