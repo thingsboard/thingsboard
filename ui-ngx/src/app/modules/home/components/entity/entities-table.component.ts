@@ -51,7 +51,7 @@ import { EntityTypeTranslation } from '@shared/models/entity-type.models';
 import { DialogService } from '@core/services/dialog.service';
 import { AddEntityDialogComponent } from './add-entity-dialog.component';
 import { AddEntityDialogData, EntityAction } from '@home/models/entity/entity-component.models';
-import { historyInterval, Timewindow } from '@shared/models/time/time.models';
+import { historyInterval, HistoryWindowType, Timewindow } from '@shared/models/time/time.models';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 import { isDefined, isUndefined } from '@core/utils';
@@ -218,7 +218,7 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
     this.pageLink.sortOrder.direction = Direction[this.sort.direction.toUpperCase()];
     if (this.entitiesTableConfig.useTimePageLink) {
       const timePageLink = this.pageLink as TimePageLink;
-      if (this.timewindow.history.timewindowMs) {
+      if (this.timewindow.history.historyType === HistoryWindowType.LAST_INTERVAL) {
         const currentTime = Date.now();
         timePageLink.startTime = currentTime - this.timewindow.history.timewindowMs;
         timePageLink.endTime = currentTime;

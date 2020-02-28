@@ -95,6 +95,7 @@ public abstract class AbstractAssetEntity<T extends Asset> extends BaseSqlEntity
         this.customerId = assetEntity.getCustomerId();
         this.type = assetEntity.getType();
         this.name = assetEntity.getName();
+        this.label = assetEntity.getLabel();
         this.searchText = assetEntity.getSearchText();
         this.additionalInfo = assetEntity.getAdditionalInfo();
     }

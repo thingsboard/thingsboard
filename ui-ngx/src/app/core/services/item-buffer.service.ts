@@ -19,16 +19,13 @@ import { Dashboard, DashboardLayoutId } from '@app/shared/models/dashboard.model
 import { EntityAlias, EntityAliasFilter, EntityAliases, EntityAliasInfo, AliasesInfo } from '@shared/models/alias.models';
 import { DatasourceType, Widget, WidgetPosition, WidgetSize } from '@shared/models/widget.models';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
-import { deepClone } from '@core/utils';
-import * as equal from 'deep-equal';
+import { deepClone, isEqual } from '@core/utils';
 import { UtilsService } from '@core/services/utils.service';
 import { Observable, of, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { FcRuleEdge, FcRuleNode, ruleNodeTypeDescriptors } from '@shared/models/rule-node.models';
+import { FcRuleNode, ruleNodeTypeDescriptors } from '@shared/models/rule-node.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { RuleChainImport } from '@shared/models/rule-chain.models';
-import { Simulate } from 'react-dom/test-utils';
-import error = Simulate.error;
 
 const WIDGET_ITEM = 'widget_item';
 const WIDGET_REFERENCE = 'widget_reference';
@@ -219,7 +216,7 @@ export class ItemBufferService {
     let callAliasUpdateFunction = false;
     if (aliasesInfo) {
       const newEntityAliases = this.updateAliases(theDashboard, widget, aliasesInfo);
-      const aliasesUpdated = !equal(newEntityAliases, theDashboard.configuration.entityAliases);
+      const aliasesUpdated = !isEqual(newEntityAliases, theDashboard.configuration.entityAliases);
       if (aliasesUpdated) {
         theDashboard.configuration.entityAliases = newEntityAliases;
         if (onAliasesUpdateFunction) {
@@ -405,7 +402,7 @@ export class ItemBufferService {
   }
 
   private isEntityAliasEqual(alias1: EntityAliasInfo, alias2: EntityAliasInfo): boolean {
-    return equal(alias1.filter, alias2.filter);
+    return isEqual(alias1.filter, alias2.filter);
   }
 
   private getEntityAliasId(entityAliases: EntityAliases, aliasInfo: EntityAliasInfo): string {

@@ -16,12 +16,20 @@
 
 
 import { WidgetContext } from '@home/models/widget-component.models';
-import { deepClone, isDefined, isNumber, isUndefined } from '@app/core/utils';
-import { IWidgetSubscription } from '@core/api/widget-api.models';
-import { DatasourceData, JsonSettingsSchema } from '@app/shared/models/widget.models';
+import { deepClone, isDefined, isEqual, isNumber, isUndefined } from '@app/core/utils';
+import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
+import {
+  DataKey,
+  Datasource,
+  DatasourceData,
+  DatasourceType,
+  JsonSettingsSchema,
+  widgetType
+} from '@app/shared/models/widget.models';
 import {
   ChartType,
-  flotDatakeySettingsSchema, flotPieDatakeySettingsSchema,
+  flotDatakeySettingsSchema,
+  flotPieDatakeySettingsSchema,
   flotPieSettingsSchema,
   flotSettingsSchema,
   TbFlotAxisOptions,
@@ -33,6 +41,8 @@ import {
   TbFlotSeries,
   TbFlotSeriesHoverInfo,
   TbFlotSettings,
+  TbFlotThresholdKeySettings,
+  TbFlotThresholdMarking,
   TbFlotTicksFormatterFunction,
   TooltipValueFormatFunction
 } from './flot-widget.models';
@@ -40,8 +50,9 @@ import * as moment_ from 'moment';
 import * as tinycolor_ from 'tinycolor2';
 import { AggregationType } from '@shared/models/time/time.models';
 import { CancelAnimationFrame } from '@core/services/raf.service';
-import Timeout = NodeJS.Timeout;
 import { UtilsService } from '@core/services/utils.service';
+import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import Timeout = NodeJS.Timeout;
 
 const tinycolor = tinycolor_;
 const moment = moment_;
@@ -51,12 +62,13 @@ const flotPieDatakeySettingsSchemaValue = flotPieDatakeySettingsSchema;
 
 export class TbFlot {
 
+  private readonly utils: UtilsService;
+
   private settings: TbFlotSettings;
 
   private readonly tooltip: JQuery<any>;
 
   private readonly yAxisTickFormatter: TbFlotTicksFormatterFunction;
-  private ticksFormatterFunction: TbFlotTicksFormatterFunction;
   private readonly yaxis: TbFlotAxisOptions;
   private readonly xaxis: TbFlotAxisOptions;
   private yaxes: Array<TbFlotAxisOptions>;
@@ -72,6 +84,9 @@ export class TbFlot {
   private readonly hideZeros: boolean;
 
   private readonly defaultBarWidth: number;
+
+  private thresholdsSourcesSubscription: IWidgetSubscription;
+  private predefinedThresholds: TbFlotThresholdMarking[];
 
   private plotInited = false;
   private plot: JQueryPlot;
@@ -118,7 +133,7 @@ export class TbFlot {
   constructor(private ctx: WidgetContext, private readonly chartType: ChartType) {
     this.chartType = this.chartType || 'line';
     this.settings = ctx.settings as TbFlotSettings;
-    const utils = this.ctx.$injector.get(UtilsService);
+    this.utils = this.ctx.$injector.get(UtilsService);
     this.tooltip = $('#flot-series-tooltip');
     if (this.tooltip.length === 0) {
       this.tooltip = this.createTooltipElement();
@@ -145,7 +160,8 @@ export class TbFlot {
       grid: {
         hoverable: true,
         mouseActiveRadius: 10,
-        autoHighlight: this.tooltipIndividual === true
+        autoHighlight: this.tooltipIndividual === true,
+        markings: []
       },
       selection : { mode : ctx.isMobile ? null : 'x' },
       legend : {
@@ -167,7 +183,7 @@ export class TbFlot {
       };
       if (this.settings.xaxis) {
         this.xaxis.font.color = this.settings.xaxis.color || this.xaxis.font.color;
-        this.xaxis.label = utils.customTranslation(this.settings.xaxis.title, this.settings.xaxis.title) || null;
+        this.xaxis.label = this.utils.customTranslation(this.settings.xaxis.title, this.settings.xaxis.title) || null;
         this.xaxis.labelFont.color = this.xaxis.font.color;
         this.xaxis.labelFont.size = this.xaxis.font.size + 2;
         this.xaxis.labelFont.weight = 'bold';
@@ -181,7 +197,7 @@ export class TbFlot {
         this.yaxis.font.color = this.settings.yaxis.color || this.yaxis.font.color;
         this.yaxis.min = isDefined(this.settings.yaxis.min) ? this.settings.yaxis.min : null;
         this.yaxis.max = isDefined(this.settings.yaxis.max) ? this.settings.yaxis.max : null;
-        this.yaxis.label = utils.customTranslation(this.settings.yaxis.title, this.settings.yaxis.title) || null;
+        this.yaxis.label = this.utils.customTranslation(this.settings.yaxis.title, this.settings.yaxis.title) || null;
         this.yaxis.labelFont.color = this.yaxis.font.color;
         this.yaxis.labelFont.size = this.yaxis.font.size + 2;
         this.yaxis.labelFont.weight = 'bold';
@@ -244,7 +260,7 @@ export class TbFlot {
               return '';
             };
           }
-          xaxis.label = utils.customTranslation(this.settings.xaxisSecond.title, this.settings.xaxisSecond.title) || null;
+          xaxis.label = this.utils.customTranslation(this.settings.xaxisSecond.title, this.settings.xaxisSecond.title) || null;
           xaxis.position = this.settings.xaxisSecond.axisPosition;
         }
         xaxis.tickLength = 0;
@@ -270,6 +286,10 @@ export class TbFlot {
         };
       }
 
+      if (this.chartType === 'line' && isFinite(this.settings.thresholdsLineWidth)) {
+        this.options.grid.markingsLineWidth = this.settings.thresholdsLineWidth;
+      }
+
       if (this.chartType === 'bar') {
         this.options.series.lines = {
           show: false,
@@ -279,7 +299,8 @@ export class TbFlot {
         this.options.series.bars = {
           show: true,
           lineWidth: 0,
-          fill: 0.9
+          fill: 0.9,
+          align: this.settings.barAlignment || 'left'
         };
         this.defaultBarWidth = this.settings.defaultBarWidth || 600;
       }
@@ -346,6 +367,8 @@ export class TbFlot {
     const colors: string[] = [];
     this.yaxes = [];
     const yaxesMap: {[units: string]: TbFlotAxisOptions} = {};
+    const predefinedThresholds: TbFlotThresholdMarking[] = [];
+    const thresholdsDatasources: Datasource[] = [];
 
     let tooltipValueFormatFunction: TooltipValueFormatFunction = null;
     if (this.settings.tooltipValueFormatter && this.settings.tooltipValueFormatter.length) {
@@ -441,8 +464,54 @@ export class TbFlot {
         series.yaxis = series.yaxisIndex + 1;
         yaxis.keysInfo[i] = {hidden: false};
         yaxis.show = true;
+
+        if (keySettings.thresholds && keySettings.thresholds.length) {
+          for (const threshold of keySettings.thresholds) {
+            if (threshold.thresholdValueSource === 'predefinedValue' && isFinite(threshold.thresholdValue)) {
+              const colorIndex = this.subscription.data.length + predefinedThresholds.length;
+              this.generateThreshold(predefinedThresholds, series.yaxis, threshold.lineWidth,
+                threshold.color, colorIndex, threshold.thresholdValue);
+            } else if (threshold.thresholdEntityAlias && threshold.thresholdAttribute) {
+              const entityAliasId = this.ctx.aliasController.getEntityAliasId(threshold.thresholdEntityAlias);
+              if (!entityAliasId) {
+                continue;
+              }
+              let datasource = thresholdsDatasources.filter((thresholdDatasource) => {
+                return thresholdDatasource.entityAliasId === entityAliasId;
+              })[0];
+              const dataKey: DataKey = {
+                type: DataKeyType.attribute,
+                name: threshold.thresholdAttribute,
+                label: threshold.thresholdAttribute,
+                settings: {
+                  yaxis: series.yaxis,
+                  lineWidth: threshold.lineWidth,
+                  color: threshold.color
+                } as TbFlotThresholdKeySettings,
+                _hash: Math.random()
+              };
+              if (datasource) {
+                datasource.dataKeys.push(dataKey);
+              } else {
+                datasource = {
+                  type: DatasourceType.entity,
+                  name: threshold.thresholdEntityAlias,
+                  aliasName: threshold.thresholdEntityAlias,
+                  entityAliasId,
+                  dataKeys: [ dataKey ]
+                };
+                thresholdsDatasources.push(datasource);
+              }
+            }
+          }
+        }
       }
     }
+
+    this.subscribeForThresholdsAttributes(thresholdsDatasources);
+    this.options.grid.markings = predefinedThresholds;
+    this.predefinedThresholds = predefinedThresholds;
+
     this.options.colors = colors;
     this.options.yaxes = deepClone(this.yaxes);
     if (this.chartType === 'line' || this.chartType === 'bar' || this.chartType === 'state') {
@@ -712,6 +781,72 @@ export class TbFlot {
       }
     }
     return yaxis;
+  }
+
+  private subscribeForThresholdsAttributes(datasources: Datasource[]) {
+    const thresholdsSourcesSubscriptionOptions: WidgetSubscriptionOptions = {
+      datasources,
+      useDashboardTimewindow: false,
+      type: widgetType.latest,
+      callbacks: {
+        onDataUpdated: (subscription) => {this.thresholdsSourcesDataUpdated(subscription.data)}
+      }
+    };
+    this.ctx.subscriptionApi.createSubscription(thresholdsSourcesSubscriptionOptions, true).subscribe(
+      (subscription) => {
+        this.thresholdsSourcesSubscription = subscription;
+      }
+    );
+  }
+
+  private thresholdsSourcesDataUpdated(data: DatasourceData[]) {
+    const allThresholds = deepClone(this.predefinedThresholds);
+    data.forEach((keyData) => {
+      if (keyData && keyData.data && keyData.data[0]) {
+        const attrValue = keyData.data[0][1];
+        if (isFinite(attrValue)) {
+          const settings: TbFlotThresholdKeySettings = keyData.dataKey.settings;
+          const colorIndex = this.subscription.data.length + allThresholds.length;
+          this.generateThreshold(allThresholds, settings.yaxis, settings.lineWidth, settings.color, colorIndex, attrValue);
+        }
+      }
+    });
+    this.options.grid.markings = allThresholds;
+    this.redrawPlot();
+  }
+
+  private generateThreshold(existingThresholds: TbFlotThresholdMarking[], yaxis: number, lineWidth: number,
+                            color: string, defaultColorIndex: number, thresholdValue: number) {
+    const marking: TbFlotThresholdMarking = {};
+    let markingYAxis;
+
+    if (yaxis !== 1) {
+      markingYAxis = 'y' + yaxis + 'axis';
+    } else {
+      markingYAxis = 'yaxis';
+    }
+
+    if (isFinite(lineWidth)) {
+      marking.lineWidth = lineWidth;
+    }
+
+    if (isDefined(color)) {
+      marking.color = color;
+    } else {
+      marking.color = this.utils.getMaterialColor(defaultColorIndex);
+    }
+
+    marking[markingYAxis] = {
+      from: thresholdValue,
+      to: thresholdValue
+    };
+
+    const similarMarkings = existingThresholds.filter((existingMarking) => {
+      return isEqual(existingMarking[markingYAxis], marking[markingYAxis]);
+    });
+    if (!similarMarkings.length) {
+      existingThresholds.push(marking);
+    }
   }
 
   private seriesInfoDiv(label: string, color: string, value: any,

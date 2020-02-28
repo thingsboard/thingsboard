@@ -109,15 +109,20 @@ export class CustomActionPrettyResourcesTabsComponent extends PageComponent impl
   }
 
   private validate(): boolean {
-    for (const resource of this.action.customResources) {
-      if (!resource.url) {
-        return false;
+    if (this.action.customResources) {
+      for (const resource of this.action.customResources) {
+        if (!resource.url) {
+          return false;
+        }
       }
     }
     return true;
   }
 
   public addResource() {
+    if (!this.action.customResources) {
+      this.action.customResources = [];
+    }
     this.action.customResources.push({url: ''});
     this.notifyActionUpdated();
   }

@@ -19,11 +19,12 @@ version: '2.2'
 services:
   postgres:
     restart: always
-    image: "postgres:10"
+    image: "postgres:11.6"
     ports:
     - "5432"
     environment:
       POSTGRES_DB: thingsboard
+      POSTGRES_PASSWORD: postgres
     volumes:
       - ./tb-node/postgres:/var/lib/postgresql/data
   tb1:

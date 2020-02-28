@@ -24,6 +24,7 @@ import { isDefined, isNumber } from '@core/utils';
 import { CanvasDigitalGauge, CanvasDigitalGaugeOptions } from '@home/components/widget/lib/canvas-digital-gauge';
 import GenericOptions = CanvasGauges.GenericOptions;
 import * as tinycolor_ from 'tinycolor2';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 const tinycolor = tinycolor_;
 
@@ -338,6 +339,9 @@ export class KnobComponent extends PageComponent implements OnInit, OnDestroy {
     let textWidth = this.measureTextWidth(text, fontSize);
     while (textWidth > maxWidth) {
       fontSize--;
+      if (fontSize < 0) {
+        break;
+      }
       textWidth = this.measureTextWidth(text, fontSize);
     }
     element.css({fontSize: fontSize+'px', lineHeight: fontSize+'px'});
@@ -345,7 +349,7 @@ export class KnobComponent extends PageComponent implements OnInit, OnDestroy {
 
   private measureTextWidth(text: string, fontSize: number): number {
     this.textMeasure.css({fontSize: fontSize+'px', lineHeight: fontSize+'px'});
-    this.textMeasure.text(text);
+    this.textMeasure.html(text);
     return this.textMeasure.width();
   }
 

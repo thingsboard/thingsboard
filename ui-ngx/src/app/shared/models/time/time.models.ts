@@ -110,7 +110,9 @@ export interface WidgetTimewindow {
 
 export function historyInterval(timewindowMs: number): Timewindow {
   const timewindow: Timewindow = {
+    selectedTab: TimewindowType.HISTORY,
     history: {
+      historyType: HistoryWindowType.LAST_INTERVAL,
       timewindowMs
     }
   };

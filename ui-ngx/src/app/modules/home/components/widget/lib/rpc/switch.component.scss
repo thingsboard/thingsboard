@@ -19,8 +19,6 @@ $thumb-checked-img: url("./svg/thumb-checked.svg") !default;
 $thumb-bar-img: url("./svg/thumb-bar.svg") !default;
 $thumb-bar-checked-img: url("./svg/thumb-bar-checked.svg") !default;
 
-$background-color: #e6e7e8 !default;
-
 $error-height: 14px !default;
 
 :host {
@@ -28,7 +26,6 @@ $error-height: 14px !default;
   .tb-switch {
     width: 100%;
     height: 100%;
-    background: $background-color;
 
     .error-container {
       position: absolute;

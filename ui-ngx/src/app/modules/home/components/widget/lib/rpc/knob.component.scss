@@ -26,13 +26,10 @@ $minmax-height: percentage(.04) !default;
 $minmax-container-margin-pct: percentage(.18) !default;
 $minmax-container-margin-bottom-pct: percentage(.12) !default;
 
-$background-color: #e6e7e8 !default;
-
 :host {
   .tb-knob {
     width: 100%;
     height: 100%;
-    background: $background-color;
 
     .knob {
       position: relative;

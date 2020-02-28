@@ -14,7 +14,6 @@
 /// limitations under the License.
 ///
 
-import { ExceptionData } from '@shared/models/error.models';
 import { IDashboardComponent } from '@home/models/dashboard-component.models';
 import {
   DataSet,
@@ -51,7 +50,7 @@ import { AssetService } from '@app/core/http/asset.service';
 import { DialogService } from '@core/services/dialog.service';
 import { CustomDialogService } from '@home/components/widget/dialog/custom-dialog.service';
 import { isDefined, formatValue } from '@core/utils';
-import { Observable, of, ReplaySubject } from 'rxjs';
+import { forkJoin, Observable, of, ReplaySubject } from 'rxjs';
 import { WidgetSubscription } from '@core/api/widget-subscription';
 
 export interface IWidgetAction {
@@ -161,8 +160,6 @@ export class WidgetContext {
   isEdit: boolean;
   isMobile: boolean;
 
-  widgetForceReInit?: () => void;
-
   widgetNamespace?: string;
   subscriptionApi?: WidgetSubscriptionApi;
 
@@ -176,7 +173,6 @@ export class WidgetContext {
 
   hideTitlePanel = false;
 
-  widgetTitleTemplate?: string;
   widgetTitle?: string;
   widgetTitleTooltip?: string;
   customHeaderActions?: Array<WidgetHeaderAction>;
@@ -187,6 +183,11 @@ export class WidgetContext {
   $injector?: Injector;
 
   ngZone?: NgZone;
+
+  rxjs = {
+    forkJoin,
+    of
+  };
 
   detectChanges(updateWidgetParams: boolean = false) {
     if (!this.destroyed) {
@@ -209,12 +210,14 @@ export class WidgetContext {
     }
   }
 
+  updateAliases(aliasIds?: Array<string>) {
+    this.aliasController.updateAliases(aliasIds);
+  }
+
   reset() {
     this.destroyed = false;
     this.hideTitlePanel = false;
-    this.widgetTitleTemplate = undefined;
     this.widgetTitle = undefined;
-    this.customHeaderActions = undefined;
     this.widgetActions = undefined;
   }
 }
@@ -228,7 +231,6 @@ export interface IDynamicWidgetComponent {
   rpcErrorText: string;
   rpcRejection: HttpErrorResponse;
   raf: RafService;
-  widgetForceReInit(): void;
   [key: string]: any;
 }
 

@@ -46,7 +46,6 @@
     "compass-sass-mixins": "^0.12.7",
     "core-js": "^3.6.4",
     "date-fns": "^2.9.0",
-    "deep-equal": "^2.0.1",
     "flot": "git://github.com/thingsboard/flot.git#0.9-work",
     "flot.curvedlines": "git://github.com/MichaelZinsmaier/CurvedLines.git#master",
     "font-awesome": "^4.7.0",

@@ -20,10 +20,9 @@ import { WidgetLayout, WidgetLayouts } from '@app/shared/models/dashboard.models
 import { IDashboardWidget, WidgetAction, WidgetContext, WidgetHeaderAction } from './widget-component.models';
 import { Timewindow } from '@shared/models/time/time.models';
 import { Observable, of, Subject } from 'rxjs';
-import { guid, isDefined, isUndefined } from '@app/core/utils';
+import { guid, isDefined, isEqual, isUndefined } from '@app/core/utils';
 import { IterableDiffer, KeyValueDiffer, NgZone } from '@angular/core';
 import { IAliasController, IStateController } from '@app/core/api/widget-api.models';
-import * as deepEqual from 'deep-equal';
 
 export interface WidgetsData {
   widgets: Array<Widget>;
@@ -166,8 +165,8 @@ export class DashboardWidgets implements Iterable<DashboardWidget> {
             index = this.dashboardWidgets.findIndex((dashboardWidget) => dashboardWidget.widgetId === record.widgetId);
             if (index > -1) {
               const prevDashboardWidget = this.dashboardWidgets[index];
-              if (!deepEqual(prevDashboardWidget.widget, record.widget) ||
-                  !deepEqual(prevDashboardWidget.widgetLayout, record.widgetLayout)) {
+              if (!isEqual(prevDashboardWidget.widget, record.widget) ||
+                  !isEqual(prevDashboardWidget.widgetLayout, record.widgetLayout)) {
                 this.dashboardWidgets[index] = new DashboardWidget(this.dashboard, record.widget, record.widgetLayout);
                 this.dashboardWidgets[index].highlighted = prevDashboardWidget.highlighted;
                 this.dashboardWidgets[index].selected = prevDashboardWidget.selected;
@@ -312,9 +311,6 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
 
   style: {[klass: string]: any};
 
-  hasWidgetTitleTemplate: boolean;
-  widgetTitleTemplate: string;
-
   showWidgetTitlePanel: boolean;
   showWidgetActions: boolean;
 
@@ -396,11 +392,8 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
       this.style = {...this.widget.config.widgetStyle, ...this.style};
     }
 
-    this.hasWidgetTitleTemplate = this.widgetContext.widgetTitleTemplate ? true : false;
-    this.widgetTitleTemplate = this.widgetContext.widgetTitleTemplate ? this.widgetContext.widgetTitleTemplate : '';
-
     this.showWidgetTitlePanel = this.widgetContext.hideTitlePanel ? false :
-      this.hasWidgetTitleTemplate || this.showTitle || this.hasTimewindow;
+      this.showTitle || this.hasTimewindow;
 
     this.showWidgetActions = this.widgetContext.hideTitlePanel ? false : true;
 

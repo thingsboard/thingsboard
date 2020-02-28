@@ -28,7 +28,7 @@ import { PageLink } from '@shared/models/page/page-link';
 import { catchError, map, publishReplay, refCount, share, take, tap } from 'rxjs/operators';
 import { entityTypeTranslations } from '@shared/models/entity-type.models';
 import { UtilsService } from '@core/services/utils.service';
-import { deepClone, isUndefined } from '@core/utils';
+import { deepClone, isDefined, isUndefined } from '@core/utils';
 
 import customSampleJs from '!raw-loader!./custom-sample-js.raw';
 import customSampleCss from '!raw-loader!./custom-sample-css.raw';
@@ -72,7 +72,7 @@ export function toCustomAction(action: WidgetActionDescriptorInfo): CustomAction
       customFunction: action.customFunction
     };
   }
-  result.customResources = action ? deepClone(action.customResources) : [];
+  result.customResources = action && isDefined(action.customResources) ? deepClone(action.customResources) : [];
   return result;
 }
 

@@ -84,7 +84,7 @@
         <mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
         <mat-row [ngClass]="{'tb-current-entity': entityDatasource.isCurrentEntity(entity)}"
                  *matRowDef="let entity; columns: displayedColumns;"
-                 (click)="onRowClick($event, entity)"></mat-row>
+                 (click)="onRowClick($event, entity)" (dblclick)="onRowClick($event, entity, true)"></mat-row>
       </mat-table>
       <span [fxShow]="entityDatasource.isEmpty() | async"
             fxLayoutAlign="center center"

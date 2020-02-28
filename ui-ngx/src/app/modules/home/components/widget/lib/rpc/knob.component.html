@@ -29,7 +29,7 @@
       <div class="top"></div>
       <div #knobErrorContainer class="error-container" [ngStyle]="{'background': error?.length ? 'rgba(255,255,255,0.25)' : 'none'}"
            fxLayout="row" fxLayoutAlign="center center">
-        <span #knobError class="knob-error">{{ error }}</span>
+        <span #knobError class="knob-error" [innerHTML]="error"></span>
       </div>
       <div #knobTitleContainer class="title-container" fxLayout="row" fxLayoutAlign="center center">
         <span #knobTitle class="knob-title">{{ title }}</span>

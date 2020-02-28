@@ -30,11 +30,13 @@ import { getCurrentAuthState, selectAuthUser, selectUserDetails } from '@core/au
 import { MediaBreakpoints } from '@shared/models/constants';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { Router } from '@angular/router';
-import * as screenfull from 'screenfull';
+import * as _screenfull from 'screenfull';
 import { MatSidenav } from '@angular/material/sidenav';
 import { AuthState } from '@core/auth/auth.models';
 import { WINDOW } from '@core/services/window.service';
 import { ISearchableComponent, instanceOfSearchableComponent } from '@home/models/searchable-component.models';
+
+const screenfull = _screenfull as _screenfull.Screenfull;
 
 @Component({
   selector: 'tb-home',
@@ -60,8 +62,7 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
 
   @ViewChild('searchInput') searchInputField: ElementRef;
 
-  // @ts-ignore
-  fullscreenEnabled = screenfull.enabled;
+  fullscreenEnabled = screenfull.isEnabled;
 
   authUser$: Observable<any>;
   userDetails$: Observable<User>;
@@ -125,15 +126,12 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
   }
 
   toggleFullscreen() {
-    // @ts-ignore
-    if (screenfull.enabled) {
-      // @ts-ignore
+    if (screenfull.isEnabled) {
       screenfull.toggle();
     }
   }
 
   isFullscreen() {
-    // @ts-ignore
     return screenfull.isFullscreen;
   }
 

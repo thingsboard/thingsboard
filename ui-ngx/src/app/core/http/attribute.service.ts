@@ -20,6 +20,7 @@ import { forkJoin, Observable, of } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeData, AttributeScope } from '@shared/models/telemetry/telemetry.models';
+import { isDefinedAndNotNull } from '@core/utils';
 
 @Injectable({
   providedIn: 'root'
@@ -31,10 +32,12 @@ export class AttributeService {
   ) { }
 
   public getEntityAttributes(entityId: EntityId, attributeScope: AttributeScope,
-                             config?: RequestConfig): Observable<Array<AttributeData>> {
-    return this.http.get<Array<AttributeData>>(`/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/values/attributes/` +
-      `${attributeScope}`,
-      defaultHttpOptionsFromConfig(config));
+                             keys?: Array<string>, config?: RequestConfig): Observable<Array<AttributeData>> {
+    let url = `/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/values/attributes/${attributeScope}`;
+    if (keys && keys.length) {
+      url += `?keys=${keys.join(',')}`;
+    }
+    return this.http.get<Array<AttributeData>>(url, defaultHttpOptionsFromConfig(config));
   }
 
   public deleteEntityAttributes(entityId: EntityId, attributeScope: AttributeScope, attributes: Array<AttributeData>,
@@ -58,7 +61,7 @@ export class AttributeService {
     const attributesData: {[key: string]: any} = {};
     const deleteAttributes: AttributeData[] = [];
     attributes.forEach((attribute) => {
-      if (attribute.value !== null) {
+      if (isDefinedAndNotNull(attribute.value)) {
         attributesData[attribute.key] = attribute.value;
       } else {
         deleteAttributes.push(attribute);
@@ -85,7 +88,7 @@ export class AttributeService {
     const timeseriesData: {[key: string]: any} = {};
     const deleteTimeseries: AttributeData[] = [];
     timeseries.forEach((attribute) => {
-      if (attribute.value !== null) {
+      if (isDefinedAndNotNull(attribute.value)) {
         timeseriesData[attribute.key] = attribute.value;
       } else {
         deleteTimeseries.push(attribute);

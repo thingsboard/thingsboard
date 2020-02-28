@@ -263,7 +263,6 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     this.widgetContext.servicesMap = ServicesMap;
     this.widgetContext.isEdit = this.isEdit;
     this.widgetContext.isMobile = this.isMobile;
-    this.widgetContext.widgetForceReInit = this.reInit.bind(this);
 
     this.widgetContext.subscriptionApi = {
       createSubscription: this.createSubscription.bind(this),
@@ -1007,8 +1006,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
               additionalParams = {};
             }
             const customActionFunction = new Function('$event', 'widgetContext', 'entityId',
-              'entityName', 'additionalParams', customFunction);
-            customActionFunction($event, this.widgetContext, entityId, entityName, additionalParams);
+              'entityName', 'additionalParams', 'entityLabel', customFunction);
+            customActionFunction($event, this.widgetContext, entityId, entityName, additionalParams, entityLabel);
           } catch (e) {
             //
           }
@@ -1032,8 +1031,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
                   additionalParams = {};
                 }
                 const customActionPrettyFunction = new Function('$event', 'widgetContext', 'entityId',
-                  'entityName', 'htmlTemplate', 'additionalParams', customPrettyFunction);
-                customActionPrettyFunction($event, this.widgetContext, entityId, entityName, htmlTemplate, additionalParams);
+                  'entityName', 'htmlTemplate', 'additionalParams', 'entityLabel', customPrettyFunction);
+                customActionPrettyFunction($event, this.widgetContext, entityId, entityName, htmlTemplate, additionalParams, entityLabel);
               } catch (e) {
                 //
               }
@@ -1096,7 +1095,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       this.cssParser.createStyleElement(actionNamespace, customCss, 'nonamespace');
     }
     const resourceTasks: Observable<string>[] = [];
-    if (customResources.length > 0) {
+    if (isDefined(customResources) && customResources.length > 0) {
       customResources.forEach((resource) => {
         resourceTasks.push(
           this.resources.loadResource(resource.url).pipe(

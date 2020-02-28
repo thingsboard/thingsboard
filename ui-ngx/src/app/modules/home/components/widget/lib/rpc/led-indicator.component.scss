@@ -17,13 +17,10 @@
 
 $error-height: 14px !default;
 
-$background-color: #e6e7e8 !default;
-
 :host {
   .tb-led-indicator {
     width: 100%;
     height: 100%;
-    background: $background-color;
 
     .title-container {
       .led-title {
