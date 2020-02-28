@@ -37,7 +37,8 @@
               "node_modules/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-shadow.min.css",
               "src/app/shared/components/json-form/react/json-form.scss",
               "node_modules/rc-select/assets/index.less",
-              "node_modules/jstree-bootstrap-theme/dist/themes/proton/style.min.css"
+              "node_modules/jstree-bootstrap-theme/dist/themes/proton/style.min.css",
+              "node_modules/leaflet/dist/leaflet.css"
             ],
             "stylePreprocessorOptions": {
               "includePaths": [

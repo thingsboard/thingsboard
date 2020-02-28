@@ -13,8 +13,6 @@ const providerSets = {
 
 export let TbMapWidgetV2: MapWidgetStaticInterface;
 TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
-
-
     map: LeafletMap;
     provider: MapProviders;
     schema;
@@ -50,6 +48,7 @@ TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
     }
 
     onResize() {
+    console.log("TCL: TbMapWidgetV2 -> onResize -> onResize")
     }
 
     getSettingsSchema(): Object {
@@ -57,7 +56,8 @@ TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
     }
 
     resize() {
-
+        console.log("TCL: TbMapWidgetV2 -> resize -> resize")
+        this.map?.invalidateSize();
     }
 
     public static dataKeySettingsSchema(): Object {
