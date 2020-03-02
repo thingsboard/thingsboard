@@ -724,6 +724,7 @@
     "details": {
         "details": "Деталі",
         "edit-mode": "Режим редагування",
+        "edit-json": "Редагувати JSON",
         "toggle-edit-mode": "Перемкнути режим редагування"
     },
     "device": {
@@ -1606,8 +1607,7 @@
     },
     "js-func": {
         "no-return-error": "Функція повинна повертати значення!",
-        "return-type-mismatch": "Функція повинна повернути значення типу '{{type}}'!",
-        "tidy": "Tidy"
+        "return-type-mismatch": "Функція повинна повернути значення типу '{{type}}'!"
     },
     "key-val": {
         "key": "Ключ",

@@ -607,6 +607,7 @@
     },
     "details": {
         "edit-mode": "Режим редактирования",
+        "edit-json": "Редактировать JSON",
         "toggle-edit-mode": "Режим редактирования"
     },
     "device": {
@@ -1191,8 +1192,7 @@
     },
     "js-func": {
         "no-return-error": "Функция должна возвращать значение!",
-        "return-type-mismatch": "Функция должна возвращать значение типа '{{type}}'!",
-        "tidy": "Tidy"
+        "return-type-mismatch": "Функция должна возвращать значение типа '{{type}}'!"
     },
     "key-val": {
         "key": "Ключ",

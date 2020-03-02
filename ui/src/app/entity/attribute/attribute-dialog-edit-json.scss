@@ -13,39 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-tb-json-object-edit {
-  position: relative;
-
-  .fill-height {
-    height: 100%;
-  }
+.attribute-edit-json-dialog{
+  min-width: 400px;
 }
 
-.tb-json-object-edit-toolbar {
-  .md-button.tidy {
-    min-width: 32px;
-    min-height: 15px;
-    padding: 4px;
-    margin: 0 5px 0 0;
-    font-size: 12px;
-    line-height: 15px;
-    color: #7b7b7b;
-    background: rgba(220, 220, 220, .35);
-  }
-}
-
-.tb-json-object-panel {
-  height: 100%;
-  margin-left: 15px;
-  border: 1px solid #c0c0c0;
-
-  #tb-json-input {
-    width: 100%;
+@media (max-width: 425px){
+  .attribute-edit-json-dialog {
     min-width: 200px;
-    height: 100%;
-
-    &:not(.fill-height) {
-      min-height: 200px;
-    }
   }
 }
