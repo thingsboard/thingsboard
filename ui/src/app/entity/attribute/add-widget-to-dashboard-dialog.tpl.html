@@ -26,7 +26,8 @@
                 </md-button>
             </div>
         </md-toolbar>
-        <md-progress-linear class="md-warn" md-mode="indeterminate" ng-disabled="!$root.loading" ng-show="$root.loading"></md-progress-linear>
+        <md-progress-linear class="md-warn" md-mode="indeterminate" ng-disabled="!$root.loading"
+                            ng-show="$root.loading"></md-progress-linear>
         <span style="min-height: 5px;" flex="" ng-show="!$root.loading"></span>
         <md-dialog-content>
             <div class="md-dialog-content">
@@ -37,10 +38,10 @@
                                 <section flex layout="column" style="width: 300px;">
                                     <span translate style="padding-bottom: 10px;">dashboard.select-existing</span>
                                     <tb-dashboard-autocomplete the-form="theForm"
-                                                         ng-disabled="$root.loading || vm.addToDashboardType != 0"
-                                                         tb-required="vm.addToDashboardType === 0"
-                                                         ng-model="vm.dashboardId"
-                                                         select-first-dashboard="false">
+                                                               ng-disabled="$root.loading || vm.addToDashboardType != 0"
+                                                               tb-required="vm.addToDashboardType === 0"
+                                                               ng-model="vm.dashboardId"
+                                                               select-first-dashboard="false">
                                     </tb-dashboard-autocomplete>
                                 </section>
                             </md-radio-button>
@@ -49,7 +50,8 @@
                                     <span translate>dashboard.create-new</span>
                                     <md-input-container class="md-block">
                                         <label translate>dashboard.new-dashboard-title</label>
-                                        <input ng-required="vm.addToDashboardType === 1" name="title" ng-model="vm.newDashboard.title">
+                                        <input ng-required="vm.addToDashboardType === 1" name="title"
+                                               ng-model="vm.newDashboard.title">
                                         <div ng-messages="theForm.title.$error">
                                             <div translate ng-message="required">dashboard.title-required</div>
                                         </div>
@@ -66,15 +68,15 @@
             <md-checkbox
                     ng-model="vm.openDashboard"
                     aria-label="{{ 'dashboard.open-dashboard' | translate }}"
-                    style="margin-bottom: 0px; padding-right: 20px;">
+                    style="margin-bottom: 0; padding-right: 20px;">
                 {{ 'dashboard.open-dashboard' | translate }}
             </md-checkbox>
             <md-button ng-disabled="$root.loading || theForm.$invalid || !theForm.$dirty" type="submit"
                        class="md-raised md-primary">
                 {{ 'action.add' | translate }}
             </md-button>
-            <md-button ng-disabled="$root.loading" ng-click="vm.cancel()" style="margin-right:20px;">{{ 'action.cancel' |
-                translate }}
+            <md-button ng-disabled="$root.loading" ng-click="vm.cancel()" style="margin-right:20px;">
+                {{ 'action.cancel' | translate }}
             </md-button>
         </md-dialog-actions>
     </form>

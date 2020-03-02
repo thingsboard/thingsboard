@@ -58,3 +58,11 @@ md-toolbar.md-table-toolbar.alternate {
     }
   }
 }
+
+md-edit-dialog.tb-edit-dialog{
+  z-index: 78;
+}
+
+md-backdrop.md-edit-dialog-backdrop{
+  z-index: 77;
+}
