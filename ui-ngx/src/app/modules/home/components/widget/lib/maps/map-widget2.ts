@@ -4,19 +4,23 @@ import { deepClone } from '@core/utils';
 import { openstreetMapSettingsSchema, googleMapSettingsSchema, imageMapSettingsSchema, tencentMapSettingsSchema, hereMapSettingsSchema, commonMapSettingsSchema, routeMapSettingsSchema, markerClusteringSettingsSchema, markerClusteringSettingsSchemaGoogle, markerClusteringSettingsSchemaLeaflet } from './schemes';
 import { MapWidgetStaticInterface, MapWidgetInterface } from './map-widget.interface';
 import { OpenStreetMap, TencentMap, ImageMap, GoogleMap } from './providers';
+import { string } from 'prop-types';
 
 const providerSets = {
     'openstreet-map': {
         MapClass: OpenStreetMap,
-        schema: openstreetMapSettingsSchema
+        schema: openstreetMapSettingsSchema,
+        name: "Openstreet"
     },
     'tencent-map': {
         MapClass: TencentMap,
-        schema: tencentMapSettingsSchema
+        schema: tencentMapSettingsSchema,
+        name: "Tencent"
     },
     'google-map': {
         MapClass: GoogleMap,
-        schema: googleMapSettingsSchema
+        schema: googleMapSettingsSchema,
+        name: "Openstreet"
     },
     'image-map': {
         MapClass: ImageMap,
@@ -32,13 +36,12 @@ TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
 
     constructor(mapProvider: MapProviders, drawRoutes, ctx, useDynamicLocations, $element, isEdit) {
         console.log(ctx.settings);
-        
-        // if(!$element) return
+
         if (!$element) {
             $element = ctx.$container[0];
         }
         this.provider = mapProvider;
-        const options: MapOptions = {
+        const baseOptions: MapOptions = {
             initCallback: () => { },
             defaultZoomLevel: 8,
             dontFitMapBounds: false,
@@ -51,11 +54,10 @@ TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
             markerClusteringSetting: null
         }
         let MapClass = providerSets[mapProvider]?.MapClass;
-        if(!MapClass){
-            //delete this;
+        if (!MapClass) {
             return;
         }
-        this.map = new MapClass($element, options)
+        this.map = new MapClass($element, { ...baseOptions, ...ctx.settings })
 
         this.schema = providerSets[mapProvider]?.schema;
     }
@@ -68,7 +70,7 @@ TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
 
     onResize() {
         this.map.onResize();//not work
-    }    
+    }
 
     getSettingsSchema(): Object {
         return this.schema;
@@ -84,74 +86,57 @@ TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
     }
 
     public static settingsSchema(mapProvider, drawRoutes): Object {
-        var schema;
-        if (mapProvider === 'google-map') {
-            schema = googleMapSettingsSchema;
-            schema.groupInfoes = [{
-                "formIndex": 0,
-                "GroupTitle": "Google Map Settings"
-            }];
-        } else if (mapProvider === 'openstreet-map') {
-            schema = deepClone(openstreetMapSettingsSchema);
-            schema.groupInfoes = [{
-                "formIndex": 0,
-                "GroupTitle": "Openstreet Map Settings"
-            }];
-        } else if (mapProvider === 'image-map') {
-            return imageMapSettingsSchema;
-        } else if (mapProvider === 'tencent-map') {
-            schema = deepClone(tencentMapSettingsSchema);
-            schema.groupInfoes = [{
-                "formIndex": 0,
-                "GroupTitle": "Tencent Map Settings"
-            }];
-        } else if (mapProvider === 'here') {
-            schema = deepClone(hereMapSettingsSchema);
-            schema.groupInfoes = [{
-                "formIndex": 0,
-                "GroupTitle": "Here Map Settings"
-            }];
+        const providerInfo = providerSets[mapProvider];
+        let schema = providerInfo.schema;
+        schema.groupInfoes = [];
+
+        function addGroupInfo(title: string) {
+            schema.groupInfoes.push({
+                "formIndex": schema.groupInfoes?.length || 0,
+                "GroupTitle": title
+            });
         }
-        if (!schema.groupInfoes) schema.groupInfoes = [];
+
+        function mergeSchema(newSchema) {
+            Object.assign(schema.schema.properties, newSchema.schema.properties);
+            schema.schema.required = schema.schema.required.concat(newSchema.schema.required);
+            schema.form.push(newSchema.form);//schema.form.concat(commonMapSettingsSchema.form);
+        }
+
+        if (providerInfo.name)
+            addGroupInfo(providerInfo.name + ' Map Settings');
         schema.form = [schema.form];
 
-        Object.assign(schema.schema.properties, commonMapSettingsSchema.schema.properties);
-        schema.schema.required = schema.schema.required.concat(commonMapSettingsSchema.schema.required);
-        schema.form.push(commonMapSettingsSchema.form);//schema.form.concat(commonMapSettingsSchema.form);
-        schema.groupInfoes.push({
-            "formIndex": schema.groupInfoes.length,
-            "GroupTitle": "Common Map Settings"
-        });
-        if (drawRoutes) {
-            Object.assign(schema.schema.properties, routeMapSettingsSchema.schema.properties);
-            schema.schema.required = schema.schema.required.concat(routeMapSettingsSchema.schema.required);
-            schema.form.push(routeMapSettingsSchema.form);//schema.form = schema.form.concat(routeMapSettingsSchema.form);
-            schema.groupInfoes.push({
-                "formIndex": schema.groupInfoes.length,
-                "GroupTitle": "Route Map Settings"
-            });
-        } else if (mapProvider !== 'image-map') {
-            Object.assign(schema.schema.properties, markerClusteringSettingsSchema.schema.properties);
-            schema.schema.required = schema.schema.required.concat(markerClusteringSettingsSchema.schema.required);
-            schema.form.push(markerClusteringSettingsSchema.form);
-            if (mapProvider === 'google-map' || mapProvider === 'tencent-map') {
-                Object.assign(schema.schema.properties, markerClusteringSettingsSchemaGoogle.schema.properties);
-                schema.schema.required = schema.schema.required.concat(markerClusteringSettingsSchemaGoogle.schema.required);
-                schema.form[schema.form.length - 1] = schema.form[schema.form.length - 1].concat(markerClusteringSettingsSchemaGoogle.form);
-            }
-            if (mapProvider === 'openstreet-map' || mapProvider === 'here') {
-                Object.assign(schema.schema.properties, markerClusteringSettingsSchemaLeaflet.schema.properties);
-                schema.schema.required = schema.schema.required.concat(markerClusteringSettingsSchemaLeaflet.schema.required);
-                schema.form[schema.form.length - 1] = schema.form[schema.form.length - 1].concat(markerClusteringSettingsSchemaLeaflet.form);
-            }
-            schema.groupInfoes.push({
-                "formIndex": schema.groupInfoes.length,
-                "GroupTitle": "Markers Clustering Settings"
-            });
-        }
-        return schema;
+        mergeSchema(commonMapSettingsSchema);
+        addGroupInfo("Common Map Settings");
 
+        if (drawRoutes) {
+            mergeSchema(routeMapSettingsSchema);
+            addGroupInfo("Route Map Settings");
+        } else if (mapProvider !== 'image-map') {
+            let clusteringSchema: any = {
+                schema: {
+                    properties: {
+                        ...markerClusteringSettingsSchemaLeaflet.schema.properties,
+                        ...markerClusteringSettingsSchema.schema.properties
+                    },
+                    required: {
+                        ...markerClusteringSettingsSchemaLeaflet.schema.required,
+                        ...markerClusteringSettingsSchema.schema.required
+                    }
+                },
+                form: [
+                    ...markerClusteringSettingsSchemaLeaflet.form,
+                    ...markerClusteringSettingsSchema.form
+                ]
+            };
+            mergeSchema(clusteringSchema);
+            addGroupInfo("Markers Clustering Settings");
+        }
+
+        return schema;
     }
+
     public static actionSources(): Object {
         return {
             'markerClick': {
@@ -168,10 +153,9 @@ TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
             }
         };
     }
+
     onDestroy() {
     }
-
-
 }
 
 let defaultSettings = {

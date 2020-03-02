@@ -207,7 +207,10 @@ export const openstreetMapSettingsSchema =
             ]
         },
         "useCustomProvider",
-        "customProviderTileUrl"
+        {
+            "key": "customProviderTileUrl",
+            "condition": "model.useCustomProvider === true",
+        }
     ]
 };
 
