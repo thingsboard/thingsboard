@@ -53,7 +53,7 @@ public class TimescaleInsertTsRepository extends AbstractInsertRepository implem
 
                 if (tsKvEntity.getBooleanValue() != null) {
                     ps.setBoolean(5, tsKvEntity.getBooleanValue());
-                    ps.setBoolean(9, tsKvEntity.getBooleanValue());
+                    ps.setBoolean(10, tsKvEntity.getBooleanValue());
                 } else {
                     ps.setNull(5, Types.BOOLEAN);
                     ps.setNull(10, Types.BOOLEAN);
