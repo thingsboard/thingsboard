@@ -3,8 +3,7 @@ import LeafletMap from './leaflet-map';
 import { deepClone } from '@core/utils';
 import { openstreetMapSettingsSchema, googleMapSettingsSchema, imageMapSettingsSchema, tencentMapSettingsSchema, hereMapSettingsSchema, commonMapSettingsSchema, routeMapSettingsSchema, markerClusteringSettingsSchema, markerClusteringSettingsSchemaGoogle, markerClusteringSettingsSchemaLeaflet } from './schemes';
 import { MapWidgetStaticInterface, MapWidgetInterface } from './map-widget.interface';
-import { OpenStreetMap, TencentMap } from './providers';
-import { GoogleMap } from './providers/google-map';
+import { OpenStreetMap, TencentMap, ImageMap, GoogleMap } from './providers';
 
 const providerSets = {
     'openstreet-map': {
@@ -18,6 +17,10 @@ const providerSets = {
     'google-map': {
         MapClass: GoogleMap,
         schema: googleMapSettingsSchema
+    },
+    'image-map': {
+        MapClass: ImageMap,
+        schema: imageMapSettingsSchema
     }
 }
 
@@ -28,6 +31,8 @@ TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
     schema;
 
     constructor(mapProvider: MapProviders, drawRoutes, ctx, useDynamicLocations, $element, isEdit) {
+        console.log(ctx.settings);
+        
         // if(!$element) return
         if (!$element) {
             $element = ctx.$container[0];
@@ -40,11 +45,11 @@ TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
             disableScrollZooming: false,
             minZoomLevel: drawRoutes ? 18 : 15,
             mapProvider: mapProvider,
+            mapUrl: ctx?.settings?.mapImageUrl,
             credentials: '',
             defaultCenterPosition: [0, 0],
             markerClusteringSetting: null
         }
-        console.log("TCL: TbMapWidgetV2 -> constructor -> providerSets[mapProvider]",mapProvider)
         let MapClass = providerSets[mapProvider]?.MapClass;
         if(!MapClass){
             //delete this;
@@ -62,7 +67,8 @@ TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
     }
 
     onResize() {
-    }
+        this.map.onResize();//not work
+    }    
 
     getSettingsSchema(): Object {
         return this.schema;
@@ -70,6 +76,7 @@ TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
 
     resize() {
         this.map?.invalidateSize();
+        this.map.onResize();
     }
 
     public static dataKeySettingsSchema(): Object {

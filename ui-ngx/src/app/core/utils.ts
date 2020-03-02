@@ -15,8 +15,8 @@
 ///
 
 import _ from 'lodash';
-import { Observable, Subject } from 'rxjs';
-import { finalize, share } from 'rxjs/operators';
+import { Observable, Subject, from, fromEvent, of } from 'rxjs';
+import { finalize, share, map } from 'rxjs/operators';
 import base64js from 'base64-js';
 
 export function onParentScrollOrWindowResize(el: Node): Observable<Event> {
@@ -221,6 +221,18 @@ function scrollParents(node: Node): Node[] {
   return scrollParentNodes;
 }
 
+function hashCode(str) {
+  var hash = 0;
+  var i, char;
+  if (str.length == 0) return hash;
+  for (i = 0; i < str.length; i++) {
+      char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32bit integer
+  }
+  return hash;
+}
+
 function easeInOut(
   currentTime: number,
   startTime: number,
@@ -410,4 +422,28 @@ export function snakeCase(name: string, separator: string): string {
 
 export function getDescendantProp(obj: any, path: string): any {
   return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+}
+
+export function imageLoader(imageUrl: string): Observable<HTMLImageElement>{
+  const image = new Image();
+  const imageLoad$ = fromEvent(image, 'load').pipe(map(event=>image));
+  image.src = imageUrl;
+  return imageLoad$;
+}
+
+const imageAspectMap = {};
+
+export function aspectCache(imageUrl: string): Observable<number>{
+  if(imageUrl?.length){
+    const hash = hashCode(imageUrl);
+    let aspect = imageAspectMap[hash];
+    if(aspect){
+      return of(aspect);
+    }
+    else return imageLoader(imageUrl).pipe(map(image=>{
+      aspect = image.width/image.height;
+      imageAspectMap[hash] = aspect;
+      return aspect;
+    }))
+  }
 }

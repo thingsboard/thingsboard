@@ -12,11 +12,11 @@ export default class LeafletMap {
     markers = [];
     tooltips = [];
     map: L.Map;
-    options;
+    options: MapOptions;
     isMarketCluster;
 
 
-    constructor($container, options: MapOptions) {
+    constructor($container: HTMLElement, options: MapOptions) {
         this.options = options;
     }
 
@@ -103,6 +103,10 @@ export default class LeafletMap {
             locationSettings: settings,
             dsIndex: dsIndex
         }
+    }
+
+    onResize(){
+        
     }
 
     getTooltips() {
