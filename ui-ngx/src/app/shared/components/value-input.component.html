@@ -59,5 +59,21 @@
         {{ (modelValue ? 'value.true' : 'value.false') | translate }}
       </mat-checkbox>
     </div>
+    <div fxLayout="row" fxLayoutAlign="center" fxFlex="60" *ngIf="valueType === valueTypeEnum.JSON" class="mat-block">
+      <mat-form-field fxFlex class="mat-block">
+        <mat-label translate>value.json-value</mat-label>
+        <input [disabled]="disabled" matInput tb-json-to-string required name="value" #value="ngModel"
+               [(ngModel)]="modelValue" (ngModelChange)="onValueChanged()"/>
+        <button matSuffix mat-button mat-icon-button (click)="openEditJSONDialog($event)">
+          <mat-icon>open_in_new</mat-icon>
+        </button>
+        <mat-error *ngIf="value.hasError('required')">
+          {{ (requiredText ? requiredText : 'value.json-value-required') | translate }}
+        </mat-error>
+        <mat-error *ngIf="value.hasError('invalidJSON')">
+          {{ 'value.json-value-invalid' | translate }}
+        </mat-error>
+      </mat-form-field>
+    </div>
   </section>
 </form>

@@ -30,6 +30,7 @@ import {
   DateRangeNavigatorPanelComponent,
   DateRangeNavigatorWidgetComponent
 } from '@home/components/widget/lib/date-range-navigator/date-range-navigator.component';
+import { MultipleInputWidgetComponent } from './lib/multiple-input-widget.component';
 
 @NgModule({
   declarations:
@@ -41,7 +42,8 @@ import {
       TimeseriesTableWidgetComponent,
       EntitiesHierarchyWidgetComponent,
       DateRangeNavigatorWidgetComponent,
-      DateRangeNavigatorPanelComponent
+      DateRangeNavigatorPanelComponent,
+      MultipleInputWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -55,7 +57,8 @@ import {
     TimeseriesTableWidgetComponent,
     EntitiesHierarchyWidgetComponent,
     RpcWidgetsModule,
-    DateRangeNavigatorWidgetComponent
+    DateRangeNavigatorWidgetComponent,
+    MultipleInputWidgetComponent
   ],
   providers: [
     CustomDialogService

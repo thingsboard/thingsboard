@@ -75,31 +75,21 @@ export class DynamicWidgetComponent extends PageComponent implements IDynamicWid
                    verticalPosition: NotificationVerticalPosition = 'bottom',
                    horizontalPosition: NotificationHorizontalPosition = 'left',
                    target?: string) {
-    this.showToast('success', message, duration, verticalPosition, horizontalPosition, target);
+    this.ctx.showSuccessToast(message, duration, verticalPosition, horizontalPosition, target);
   }
 
   showErrorToast(message: string,
                  verticalPosition: NotificationVerticalPosition = 'bottom',
                  horizontalPosition: NotificationHorizontalPosition = 'left',
                  target?: string) {
-    this.showToast('error', message, undefined, verticalPosition, horizontalPosition, target);
+    this.ctx.showErrorToast(message, verticalPosition, horizontalPosition, target);
   }
 
-  showToast(type: NotificationType, message: string, duration: number = 1000,
+  showToast(type: NotificationType, message: string, duration: number,
             verticalPosition: NotificationVerticalPosition = 'bottom',
             horizontalPosition: NotificationHorizontalPosition = 'left',
             target?: string) {
-    this.store.dispatch(new ActionNotificationShow(
-      {
-        message,
-        type,
-        duration,
-        verticalPosition,
-        horizontalPosition,
-        target,
-        panelClass: this.ctx.widgetNamespace,
-        forceDismiss: true
-      }));
+    this.ctx.showToast(type, message, duration, verticalPosition, horizontalPosition, target);
   }
 
 }

@@ -18,12 +18,20 @@
 <div style="background: #fff;" [ngClass]="{'fill-height': fillHeight}"
      tb-fullscreen
      [fullscreen]="fullscreen" (fullscreenChanged)="onFullscreen()" fxLayout="column">
-  <div fxLayout="row" fxLayoutAlign="start center">
+  <div fxLayout="row" fxLayoutAlign="start center" class="tb-json-object-toolbar">
     <label class="tb-title no-padding"
            ng-class="{'tb-required': required,
                       'tb-readonly': readonly,
                       'tb-error': !objectValid}">{{ label }}</label>
     <span fxFlex></span>
+    <button type="button"
+            mat-button *ngIf="!readonly" class="tidy" (click)="beautifyJSON()">
+      {{'js-func.tidy' | translate }}
+    </button>
+    <button type="button"
+            mat-button *ngIf="!readonly" class="tidy" (click)="minifyJSON()">
+      {{'js-func.mini' | translate }}
+    </button>
     <button mat-button mat-icon-button (click)="fullscreen = !fullscreen"
             matTooltip="{{(fullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
             matTooltipPosition="above">

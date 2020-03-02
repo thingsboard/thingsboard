@@ -22,8 +22,12 @@
     <label class="tb-title no-padding">{{ label }}</label>
     <span fxFlex></span>
     <button type="button"
-            mat-button *ngIf="!readonly" class="tidy" (click)="beautifyJson()">
+            mat-button *ngIf="!readonly" class="tidy" (click)="beautifyJSON()">
       {{'js-func.tidy' | translate }}
+    </button>
+    <button type="button"
+            mat-button *ngIf="!readonly" class="tidy" (click)="minifyJSON()">
+      {{'js-func.mini' | translate }}
     </button>
     <button type='button' mat-button mat-icon-button (click)="fullscreen = !fullscreen"
             class="tb-mat-32"

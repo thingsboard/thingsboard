@@ -626,6 +626,7 @@
     "details": {
         "details": "Details",
         "edit-mode": "Edit mode",
+        "edit-json": "Edit JSON",
         "toggle-edit-mode": "Toggle edit mode"
     },
     "device": {
@@ -1298,7 +1299,8 @@
     "js-func": {
         "no-return-error": "Function must return value!",
         "return-type-mismatch": "Function must return value of '{{type}}' type!",
-        "tidy": "Tidy"
+        "tidy": "Tidy",
+        "mini": "Mini"
     },
     "key-val": {
         "key": "Key",
@@ -1635,7 +1637,11 @@
         "boolean-value": "Boolean value",
         "false": "False",
         "true": "True",
-        "long": "Long"
+        "long": "Long",
+        "json": "JSON",
+        "json-value": "JSON value",
+        "json-value-invalid": "JSON value has an invalid format",
+        "json-value-required": "JSON value is required."
     },
     "widget": {
         "widget-library": "Widgets Library",

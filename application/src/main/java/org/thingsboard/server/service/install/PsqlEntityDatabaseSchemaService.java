@@ -15,18 +15,18 @@
  */
 package org.thingsboard.server.service.install;
 
-public interface SystemDataLoaderService {
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+import org.thingsboard.server.dao.util.PsqlDao;
+import org.thingsboard.server.dao.util.SqlDao;
 
-    void createSysAdmin() throws Exception;
-
-    void createAdminSettings() throws Exception;
-
-    void loadSystemWidgets() throws Exception;
-
-    void updateSystemWidgets() throws Exception;
-
-    void loadDemoData() throws Exception;
-
-    void deleteSystemWidgetBundle(String bundleAlias) throws Exception;
-
+@Service
+@SqlDao
+@PsqlDao
+@Profile("install")
+public class PsqlEntityDatabaseSchemaService extends SqlAbstractDatabaseSchemaService
+        implements EntityDatabaseSchemaService {
+    public PsqlEntityDatabaseSchemaService() {
+        super("schema-entities.sql", "schema-entities-idx.sql");
+    }
 }

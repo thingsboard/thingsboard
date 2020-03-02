@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,20 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.install;
+/* eslint-enable import/no-unresolved, import/default */
 
-public interface SystemDataLoaderService {
+import './attribute-dialog-edit-json.scss';
 
-    void createSysAdmin() throws Exception;
+/*@ngInject*/
+export default function AttributeDialogEditJsonController($mdDialog, types, jsonValue, readOnly) {
 
-    void createAdminSettings() throws Exception;
+    let vm = this;
+    vm.json = angular.toJson(jsonValue, 4);
+    vm.readOnly = readOnly;
+    vm.contentType = types.contentType.JSON.value;
 
-    void loadSystemWidgets() throws Exception;
+    vm.save = () => {
+        $mdDialog.hide(angular.fromJson(vm.json));
+    };
 
-    void updateSystemWidgets() throws Exception;
-
-    void loadDemoData() throws Exception;
-
-    void deleteSystemWidgetBundle(String bundleAlias) throws Exception;
-
+    vm.cancel = () => {
+        $mdDialog.cancel();
+    };
 }

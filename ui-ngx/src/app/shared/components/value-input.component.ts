@@ -17,6 +17,12 @@
 import { Component, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, NgForm } from '@angular/forms';
 import { ValueType, valueTypesMap } from '@shared/models/constants';
+import { isObject } from "@core/utils";
+import { MatDialog } from "@angular/material/dialog";
+import {
+  JsonObjectEditDialogComponent,
+  JsonObjectEdittDialogData
+} from "@shared/components/dialog/json-object-edit-dialog.component";
 
 @Component({
   selector: 'tb-value-input',
@@ -50,11 +56,33 @@ export class ValueInputComponent implements OnInit, ControlValueAccessor {
 
   private propagateChange = null;
 
-  constructor() {
+  constructor(
+    public dialog: MatDialog,
+  ) {
 
   }
 
   ngOnInit(): void {
+  }
+
+  openEditJSONDialog($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.dialog.open<JsonObjectEditDialogComponent, JsonObjectEdittDialogData, Object>(JsonObjectEditDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        jsonValue: this.modelValue
+      }
+    }).afterClosed().subscribe(
+      (res) => {
+        if (res) {
+          this.modelValue = res;
+          this.inputForm.control.patchValue({'value': this.modelValue});
+        }
+      }
+    );
   }
 
   registerOnChange(fn: any): void {
@@ -78,6 +106,8 @@ export class ValueInputComponent implements OnInit, ControlValueAccessor {
       } else {
         this.valueType = ValueType.DOUBLE;
       }
+    } else if (isObject(this.modelValue)) {
+      this.valueType = ValueType.JSON;
     } else {
       this.valueType = ValueType.STRING;
     }
@@ -94,6 +124,8 @@ export class ValueInputComponent implements OnInit, ControlValueAccessor {
   onValueTypeChanged() {
     if (this.valueType === ValueType.BOOLEAN) {
       this.modelValue = false;
+    } if (this.valueType === ValueType.JSON) {
+      this.modelValue = {};
     } else {
       this.modelValue = null;
     }
