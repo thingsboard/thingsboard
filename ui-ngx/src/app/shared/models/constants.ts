@@ -121,7 +121,8 @@ export enum ValueType {
   STRING = 'STRING',
   INTEGER = 'INTEGER',
   DOUBLE = 'DOUBLE',
-  BOOLEAN = 'BOOLEAN'
+  BOOLEAN = 'BOOLEAN',
+  JSON = 'JSON'
 }
 
 export const valueTypesMap = new Map<ValueType, ValueTypeData>(
@@ -152,6 +153,13 @@ export const valueTypesMap = new Map<ValueType, ValueTypeData>(
       {
         name: 'value.boolean',
         icon: 'mdi:checkbox-marked-outline'
+      }
+    ],
+    [
+      ValueType.JSON,
+      {
+        name: 'value.json',
+        icon: 'mdi:json'
       }
     ]
   ]

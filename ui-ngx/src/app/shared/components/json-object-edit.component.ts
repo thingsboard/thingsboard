@@ -195,6 +195,22 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
     }
   }
 
+  beautifyJSON() {
+    const res = JSON.stringify(this.modelValue, null, 2);
+    if (this.jsonEditor) {
+      this.jsonEditor.setValue(res ? res : '', -1);
+    }
+    this.updateView();
+  }
+
+  minifyJSON() {
+    const res = JSON.stringify(this.modelValue);
+    if (this.jsonEditor) {
+      this.jsonEditor.setValue(res ? res : '', -1);
+    }
+    this.updateView();
+  }
+
   writeValue(value: any): void {
     this.modelValue = value;
     this.contentValue = '';
