@@ -1,10 +1,19 @@
 import { MapProviders, MapOptions } from "./map-models";
 import LeafletMap from './leaflet-map';
-import { deepClone } from '@core/utils';
-import { openstreetMapSettingsSchema, googleMapSettingsSchema, imageMapSettingsSchema, tencentMapSettingsSchema, hereMapSettingsSchema, commonMapSettingsSchema, routeMapSettingsSchema, markerClusteringSettingsSchema, markerClusteringSettingsSchemaGoogle, markerClusteringSettingsSchemaLeaflet } from './schemes';
+import {
+    openstreetMapSettingsSchema,
+    googleMapSettingsSchema,
+    imageMapSettingsSchema,
+    tencentMapSettingsSchema,
+    commonMapSettingsSchema,
+    routeMapSettingsSchema,
+    markerClusteringSettingsSchema,
+    markerClusteringSettingsSchemaLeaflet,
+    hereMapSettingsSchema
+} from './schemes';
 import { MapWidgetStaticInterface, MapWidgetInterface } from './map-widget.interface';
-import { OpenStreetMap, TencentMap, ImageMap, GoogleMap } from './providers';
-import { string } from 'prop-types';
+import { OpenStreetMap, TencentMap, GoogleMap, HEREMap, ImageMap } from './providers';
+
 
 const providerSets = {
     'openstreet-map': {
@@ -22,6 +31,11 @@ const providerSets = {
         schema: googleMapSettingsSchema,
         name: "Openstreet"
     },
+    'here': {
+        MapClass: HEREMap,
+        schema: hereMapSettingsSchema,
+        name: "HERE"
+    },
     'image-map': {
         MapClass: ImageMap,
         schema: imageMapSettingsSchema
@@ -34,7 +48,7 @@ TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
     provider: MapProviders;
     schema;
 
-    constructor(mapProvider: MapProviders, drawRoutes, ctx, useDynamicLocations, $element, isEdit) {
+    constructor(mapProvider: MapProviders, drawRoutes, ctx, $element) {
         console.log(ctx.settings);
 
         if (!$element) {
@@ -58,7 +72,7 @@ TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
             return;
         }
         this.map = new MapClass($element, { ...baseOptions, ...ctx.settings })
-
+        this.map.createMarker();
         this.schema = providerSets[mapProvider]?.schema;
     }
 
@@ -156,93 +170,4 @@ TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
 
     onDestroy() {
     }
-}
-
-let defaultSettings = {
-    xPosKeyName: 'xPos',
-    yPosKeyName: 'yPos',
-    markerOffsetX: 0.5,
-    markerOffsetY: 1,
-    latKeyName: 'latitude',
-    lngKeyName: 'longitude',
-    polygonKeyName: 'coordinates',
-
-
-    //this.locationSettings.tooltipPattern = this.ctx.settings.tooltipPattern || "<b>${entityName}</b><br/><br/><b>Latitude:</b> ${" + this.locationSettings.latKeyName + ":7}<br/><b>Longitude:</b> ${" + this.locationSettings.lngKeyName + ":7}",
-    showLabel: false,
-    showTooltip: false,
-    useDefaultCenterPosition: true,
-    showTooltipAction: "click",
-    autocloseTooltip: false,
-    showPolygon: true,
-    labelColor: '#000000',
-    /*  this.locationSettings.label = this.ctx.settings.label || "${entityName}",
-      this.locationSettings.color = this.ctx.settings.color ? tinycolor(this.ctx.settings.color).toHexString() : "#FE7569",
-      this.locationSettings.polygonColor = this.ctx.settings.polygonColor ? tinycolor(this.ctx.settings.polygonColor).toHexString() : "#0000ff",
-      this.locationSettings.polygonStrokeColor = this.ctx.settings.polygonStrokeColor ? tinycolor(this.ctx.settings.polygonStrokeColor).toHexString() : "#fe0001",
-      this.locationSettings.polygonOpacity = angular.isDefined(this.ctx.settings.polygonOpacity) ? this.ctx.settings.polygonOpacity : 0.5,
-      this.locationSettings.polygonStrokeOpacity = angular.isDefined(this.ctx.settings.polygonStrokeOpacity) ? this.ctx.settings.polygonStrokeOpacity : 1,
-      this.locationSettings.polygonStrokeWeight = angular.isDefined(this.ctx.settings.polygonStrokeWeight) ? this.ctx.settings.polygonStrokeWeight : 1,
-  
-      this.locationSettings.useLabelFunction = this.ctx.settings.useLabelFunction === true,
-      if(angular.isDefined(this.ctx.settings.labelFunction) && this.ctx.settings.labelFunction.length > 0) {
-          try {
-              this.locationSettings.labelFunction = new Function('data, dsData, dsIndex', this.ctx.settings.labelFunction),
-          } catch (e) {
-              this.locationSettings.labelFunction = null,
-      }
-  }
-  
-  this.locationSettings.useTooltipFunction = this.ctx.settings.useTooltipFunction === true,
-  if (angular.isDefined(this.ctx.settings.tooltipFunction) && this.ctx.settings.tooltipFunction.length > 0) {
-      try {
-          this.locationSettings.tooltipFunction = new Function('data, dsData, dsIndex', this.ctx.settings.tooltipFunction),
-      } catch (e) {
-          this.locationSettings.tooltipFunction = null,
-      }
-  }
-  
-  this.locationSettings.useColorFunction = this.ctx.settings.useColorFunction === true,
-  if (angular.isDefined(this.ctx.settings.colorFunction) && this.ctx.settings.colorFunction.length > 0) {
-      try {
-          this.locationSettings.colorFunction = new Function('data, dsData, dsIndex', this.ctx.settings.colorFunction),
-      } catch (e) {
-          this.locationSettings.colorFunction = null,
-      }
-  }
-  this.locationSettings.usePolygonColorFunction = this.ctx.settings.usePolygonColorFunction === true,
-  if (angular.isDefined(this.ctx.settings.polygonColorFunction) && this.ctx.settings.polygonColorFunction.length > 0) {
-      try {
-          this.locationSettings.polygonColorFunction = new Function('data, dsData, dsIndex', this.ctx.settings.polygonColorFunction),
-      } catch (e) {
-          this.locationSettings.polygonColorFunction = null,
-      }
-  }
-  
-  this.locationSettings.useMarkerImageFunction = this.ctx.settings.useMarkerImageFunction === true,
-  if (angular.isDefined(this.ctx.settings.markerImageFunction) && this.ctx.settings.markerImageFunction.length > 0) {
-      try {
-          this.locationSettings.markerImageFunction = new Function('data, images, dsData, dsIndex', this.ctx.settings.markerImageFunction),
-      } catch (e) {
-          this.locationSettings.markerImageFunction = null,
-      }
-  }
-  
-  this.locationSettings.markerImages = this.ctx.settings.markerImages || [],
-  
-  if (!this.locationSettings.useMarkerImageFunction &&
-      angular.isDefined(this.ctx.settings.markerImage) &&
-      this.ctx.settings.markerImage.length > 0) {
-      this.locationSettings.useMarkerImage = true,
-      var url = this.ctx.settings.markerImage,
-      var size = this.ctx.settings.markerImageSize || 34,
-      this.locationSettings.currentImage = {
-          url: url,
-          size: size
-      },
-  }
-  
-  if (this.drawRoutes) {
-      this.locationSettings.strokeWeight = this.ctx.settings.strokeWeight || 2,
-          this.locationSettings.strokeOpacity = this.ctx.settings.strokeOpacity || 1.0,*/
 }

@@ -1,6 +1,6 @@
 import L from 'leaflet';
 
-export function createTooltip(target, dsIndex, settings, targetArgs?) {
+export function createTooltip(target, settings, targetArgs?) {
     var popup = L.popup();
     popup.setContent('');
     target.bindPopup(popup, { autoClose: settings.autocloseTooltip, closeOnClick: false });
@@ -17,6 +17,6 @@ export function createTooltip(target, dsIndex, settings, targetArgs?) {
         markerArgs: targetArgs,
         popup: popup,
         locationSettings: settings,
-        dsIndex: dsIndex
+        dsIndex: settings.dsIndex
     };
 }

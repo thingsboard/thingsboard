@@ -5,13 +5,16 @@ import 'leaflet.markercluster/dist/MarkerCluster.css'
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 import 'leaflet.markercluster/dist/leaflet.markercluster'
 
-import { MapOptions } from './map-models';
+import { MapOptions, MarkerSettings } from './map-models';
+import { Marker } from './markers';
+import { Observable, of } from 'rxjs';
 
 export default class LeafletMap {
 
     markers = [];
     tooltips = [];
     map: L.Map;
+    map$: Observable<L.Map>;
     options: MapOptions;
     isMarketCluster;
 
@@ -44,6 +47,7 @@ export default class LeafletMap {
 
     public setMap(map: L.Map) {
         this.map = map;
+        this.map$ = of(this.map);
     }
 
     getContainer() {
@@ -84,7 +88,7 @@ export default class LeafletMap {
         this.map.invalidateSize(true);
     }
 
-    createTooltip(marker, dsIndex, settings, markerArgs) {
+    createTool0tip(marker, dsIndex, settings, markerArgs) {
         var popup = L.popup();
         popup.setContent('');
         marker.bindPopup(popup, { autoClose: settings.autocloseTooltip, closeOnClick: false });
@@ -105,8 +109,8 @@ export default class LeafletMap {
         }
     }
 
-    onResize(){
-        
+    onResize() {
+
     }
 
     getTooltips() {
@@ -115,6 +119,24 @@ export default class LeafletMap {
 
     getCenter() {
         return this.map.getCenter();
+    }
+
+    ////Markers
+
+
+    createMarker() {
+        let setings: MarkerSettings = {
+
+        }
+        this.markers.push(new Marker(this.map$, { lat: 0, lng: 0 }, setings))
+    }
+
+    updateMarker() {
+
+    }
+
+    deleteMarker() {
+
     }
 
 

@@ -1,30 +1,34 @@
 import L from 'leaflet';
 import { createTooltip } from './maps-utils';
+import { MarkerSettings } from './map-models';
+import { Observable } from 'rxjs';
 
 export class Marker {
 
     leafletMarker: L.Marker;
-    map: L.Map;
+    // map: L.Map;
 
     tooltipOffset;
     tooltip;
 
-    constructor(map: L.Map, location, dsIndex, settings, onClickListener, markerArgs, onDragendListener) {
-        this.map = map;
+    constructor(private map$: Observable<L.Map>, location: L.LatLngExpression, settings: MarkerSettings, onClickListener?, markerArgs?, onDragendListener?) {
+        //this.map = map;
         this.leafletMarker = L.marker(location, {
-            draggable: settings.drraggable
+            draggable: settings.draggable
         });
+
         this.createMarkerIcon(this.leafletMarker, settings, (iconInfo) => {
             this.leafletMarker.setIcon(iconInfo.icon);
             if (settings.showLabel) {
                 this.tooltipOffset = [0, -iconInfo.size[1] + 10];
                 this.updateMarkerLabel(settings)
             }
-            this.leafletMarker.addTo(this.map);
+            map$.subscribe(map =>
+                this.leafletMarker.addTo(map))
         });
 
         if (settings.displayTooltip) {
-            this.tooltip = createTooltip(this.leafletMarker, dsIndex, settings, markerArgs);
+            this.tooltip = createTooltip(this.leafletMarker, settings, markerArgs);
         }
 
         if (onClickListener) {
@@ -120,7 +124,8 @@ export class Marker {
 
 
     removeMarker() {
-        this.map.removeLayer(this.leafletMarker);
+        this.map$.subscribe(map =>
+            this.leafletMarker.addTo(map))
     }
 
     extendBoundsWithMarker(bounds) {
