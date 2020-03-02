@@ -257,8 +257,14 @@ export class JsonContentComponent implements OnInit, ControlValueAccessor, Valid
     }
   }
 
-  beautifyJson() {
+  beautifyJSON() {
     const res = js_beautify(this.contentBody, {indent_size: 4, wrap_line_length: 60});
+    this.jsonEditor.setValue(res ? res : '', -1);
+    this.updateView();
+  }
+
+  minifyJSON() {
+    const res = JSON.stringify(this.contentBody);
     this.jsonEditor.setValue(res ? res : '', -1);
     this.updateView();
   }
