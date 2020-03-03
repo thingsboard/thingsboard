@@ -41,9 +41,7 @@ export default function EntityListDirective($compile, $templateCache, $q, $mdUti
                  function success(result) {
                     if (result) {
                         let filteredResult = result;
-                        for (let i = 0; i < scope.ngModelCtrl.$modelValue.length; i++) {
-                            filteredResult = filteredResult.filter(item => item.id.id !== scope.ngModelCtrl.$modelValue[i]);
-                        }
+                        filteredResult = filteredResult.filter(item => !(scope.ngModelCtrl.$modelValue.includes(item.id.id)));
                         if (filteredResult.length > 10) {
                             filteredResult.splice(10);
                         }
