@@ -101,6 +101,11 @@ export class ImageMap extends LeafletMap {
         }
     }
 
+    convertPosition(expression: { x, y }): L.LatLngExpression {
+    console.log("ImageMap -> expression", expression)
+        return this.pointToLatLng(expression.x, expression.y) as L.LatLngExpression;
+    }
+
 
     pointToLatLng(x, y) {
         return L.CRS.Simple.pointToLatLng({ x, y } as L.PointExpression, maxZoom - 1);

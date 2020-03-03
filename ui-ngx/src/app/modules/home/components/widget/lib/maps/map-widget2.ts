@@ -72,7 +72,10 @@ TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
             return;
         }
         this.map = new MapClass($element, { ...baseOptions, ...ctx.settings })
-        this.map.createMarker();
+        if(mapProvider !== "image-map")
+        this.map.createMarker({ lat: 0, lng: 0 }, { color: '#FD2785' })
+        else
+        this.map.createMarker({ x: 500, y: 500 }, { color: '#6D2785' });
         this.schema = providerSets[mapProvider]?.schema;
     }
 

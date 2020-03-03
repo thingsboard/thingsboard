@@ -7,14 +7,16 @@ import 'leaflet.markercluster/dist/leaflet.markercluster'
 
 import { MapOptions, MarkerSettings } from './map-models';
 import { Marker } from './markers';
-import { Observable, of } from 'rxjs';
+import { Observable, of, BehaviorSubject, Subject } from 'rxjs';
+import { filter } from 'rxjs/operators';
 
 export default class LeafletMap {
 
     markers = [];
     tooltips = [];
     map: L.Map;
-    map$: Observable<L.Map>;
+    map$: BehaviorSubject<L.Map> = new BehaviorSubject(null);
+    ready$: Observable<L.Map> = this.map$.pipe(filter(map => !!map));
     options: MapOptions;
     isMarketCluster;
 
@@ -47,7 +49,7 @@ export default class LeafletMap {
 
     public setMap(map: L.Map) {
         this.map = map;
-        this.map$ = of(this.map);
+        this.map$.next(this.map);
     }
 
     getContainer() {
@@ -121,14 +123,20 @@ export default class LeafletMap {
         return this.map.getCenter();
     }
 
+    convertPosition(expression: L.LatLngExpression | { x, y }): L.LatLngExpression {
+        return expression as L.LatLngExpression;
+    }
+
     ////Markers
 
 
-    createMarker() {
-        let setings: MarkerSettings = {
-
-        }
-        this.markers.push(new Marker(this.map$, { lat: 0, lng: 0 }, setings))
+    createMarker(location, settings: MarkerSettings) {
+        this.ready$.subscribe(() => {
+            let defaultSettings: MarkerSettings = {
+                color: '#FD2785'
+            }
+            this.markers.push(new Marker(this.map, this.convertPosition(location), { ...defaultSettings, ...settings }))
+        });
     }
 
     updateMarker() {

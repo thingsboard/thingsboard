@@ -22,5 +22,6 @@ export enum MapProviders {
 export interface MarkerSettings{
     showLabel?: boolean,
     draggable?: boolean,
-    displayTooltip?: boolean
+    displayTooltip?: boolean,
+    color: string
 }

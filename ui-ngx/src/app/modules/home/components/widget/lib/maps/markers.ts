@@ -2,6 +2,7 @@ import L from 'leaflet';
 import { createTooltip } from './maps-utils';
 import { MarkerSettings } from './map-models';
 import { Observable } from 'rxjs';
+import { aspectCache } from '@app/core/utils';
 
 export class Marker {
 
@@ -11,21 +12,22 @@ export class Marker {
     tooltipOffset;
     tooltip;
 
-    constructor(private map$: Observable<L.Map>, location: L.LatLngExpression, settings: MarkerSettings, onClickListener?, markerArgs?, onDragendListener?) {
+    constructor(private map: L.Map, location: L.LatLngExpression, settings: MarkerSettings, onClickListener?, markerArgs?, onDragendListener?) {
         //this.map = map;
         this.leafletMarker = L.marker(location, {
             draggable: settings.draggable
         });
 
-        this.createMarkerIcon(this.leafletMarker, settings, (iconInfo) => {
+        this.createMarkerIcon(settings, (iconInfo) => {
             this.leafletMarker.setIcon(iconInfo.icon);
             if (settings.showLabel) {
                 this.tooltipOffset = [0, -iconInfo.size[1] + 10];
                 this.updateMarkerLabel(settings)
             }
-            map$.subscribe(map =>
-                this.leafletMarker.addTo(map))
-        });
+
+            this.leafletMarker.addTo(map)
+        }
+        );
 
         if (settings.displayTooltip) {
             this.tooltip = createTooltip(this.leafletMarker, settings, markerArgs);
@@ -48,14 +50,14 @@ export class Marker {
                 { className: 'tb-marker-label', permanent: true, direction: 'top', offset: this.tooltipOffset });
     }
 
-    updateMarkerColor(marker, color) {
+    updateMarkerColor(color) {
         this.createDefaultMarkerIcon(color, (iconInfo) => {
             this.leafletMarker.setIcon(iconInfo.icon);
         });
     }
 
-    updateMarkerIcon(marker, settings) {
-        this.createMarkerIcon(marker, settings, (iconInfo) => {
+    updateMarkerIcon( settings) {
+        this.createMarkerIcon(settings, (iconInfo) => {
             this.leafletMarker.setIcon(iconInfo.icon);
             if (settings.showLabel) {
                 this.tooltipOffset = [0, -iconInfo.size[1] + 10];
@@ -66,41 +68,41 @@ export class Marker {
 
 
 
-    createMarkerIcon(marker, settings, onMarkerIconReady) {
+    createMarkerIcon(settings, onMarkerIconReady) {
         var currentImage = settings.currentImage;
         // var opMap = this;
-        /*  if (currentImage && currentImage.url) {
-              this.utils.loadImageAspect(currentImage.url).then(
-                  (aspect) => {
-                      if (aspect) {
-                          var width;
-                          var height;
-                          if (aspect > 1) {
-                              width = currentImage.size;
-                              height = currentImage.size / aspect;
-                          } else {
-                              width = currentImage.size * aspect;
-                              height = currentImage.size;
-                          }
-                          var icon = L.icon({
-                              iconUrl: currentImage.url,
-                              iconSize: [width, height],
-                              iconAnchor: [width / 2, height],
-                              popupAnchor: [0, -height]
-                          });
-                          var iconInfo = {
-                              size: [width, height],
-                              icon: icon
-                          };
-                          onMarkerIconReady(iconInfo);
-                      } else {
-                          opMap.createDefaultMarkerIcon(settings.color, onMarkerIconReady);
-                      }
-                  }
-              );
-          } else {
-              this.createDefaultMarkerIcon(settings.color, onMarkerIconReady);
-          }*/
+        if (currentImage && currentImage.url) {
+            aspectCache(currentImage.url).subscribe(
+                (aspect) => {
+                    if (aspect) {
+                        var width;
+                        var height;
+                        if (aspect > 1) {
+                            width = currentImage.size;
+                            height = currentImage.size / aspect;
+                        } else {
+                            width = currentImage.size * aspect;
+                            height = currentImage.size;
+                        }
+                        var icon = L.icon({
+                            iconUrl: currentImage.url,
+                            iconSize: [width, height],
+                            iconAnchor: [width / 2, height],
+                            popupAnchor: [0, -height]
+                        });
+                        var iconInfo = {
+                            size: [width, height],
+                            icon: icon
+                        };
+                        onMarkerIconReady(iconInfo);
+                    } else {
+                        this.createDefaultMarkerIcon(settings.color, onMarkerIconReady);
+                    }
+                }
+            );
+        } else {
+            this.createDefaultMarkerIcon(settings.color, onMarkerIconReady);
+        }
     }
 
     createDefaultMarkerIcon(color, onMarkerIconReady) {
@@ -124,8 +126,8 @@ export class Marker {
 
 
     removeMarker() {
-        this.map$.subscribe(map =>
-            this.leafletMarker.addTo(map))
+        /*     this.map$.subscribe(map =>
+                 this.leafletMarker.addTo(map))*/
     }
 
     extendBoundsWithMarker(bounds) {
