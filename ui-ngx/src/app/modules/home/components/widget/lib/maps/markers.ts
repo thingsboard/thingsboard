@@ -7,13 +7,14 @@ import { aspectCache } from '@app/core/utils';
 export class Marker {
 
     leafletMarker: L.Marker;
-    // map: L.Map;
 
     tooltipOffset;
     tooltip;
+    location;
 
     constructor(private map: L.Map, location: L.LatLngExpression, settings: MarkerSettings, onClickListener?, markerArgs?, onDragendListener?) {
         //this.map = map;
+        this.location = location;
         this.leafletMarker = L.marker(location, {
             draggable: settings.draggable
         });
@@ -43,6 +44,10 @@ export class Marker {
 
     }
 
+    updateMarkerPosition(position: L.LatLngExpression){
+        this.leafletMarker.setLatLng(position);
+    }
+
     updateMarkerLabel(settings) {
         this.leafletMarker.unbindTooltip();
         if (settings.showLabel)
@@ -56,7 +61,7 @@ export class Marker {
         });
     }
 
-    updateMarkerIcon( settings) {
+    updateMarkerIcon(settings) {
         this.createMarkerIcon(settings, (iconInfo) => {
             this.leafletMarker.setIcon(iconInfo.icon);
             if (settings.showLabel) {

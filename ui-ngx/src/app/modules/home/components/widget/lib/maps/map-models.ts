@@ -4,6 +4,10 @@ export interface MapOptions {
     dontFitMapBounds?: boolean,
     disableScrollZooming?: boolean,
     minZoomLevel?: number,
+    latKeyName?: string,
+    lngKeyName?: string,
+    xPosKeyName?: string,
+    yPosKeyName?: string,
     mapProvider: MapProviders,
     mapUrl?: string;
     credentials?: any, // declare credentials format
@@ -19,9 +23,9 @@ export enum MapProviders {
     tencent = 'tencent-map'
 }
 
-export interface MarkerSettings{
+export interface MarkerSettings {
     showLabel?: boolean,
     draggable?: boolean,
     displayTooltip?: boolean,
-    color: string
+    color?: string
 }

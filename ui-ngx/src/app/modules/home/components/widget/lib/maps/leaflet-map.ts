@@ -9,11 +9,13 @@ import { MapOptions, MarkerSettings } from './map-models';
 import { Marker } from './markers';
 import { Observable, of, BehaviorSubject, Subject } from 'rxjs';
 import { filter } from 'rxjs/operators';
+import { Polyline } from './polyline';
 
-export default class LeafletMap {
+export default abstract class LeafletMap {
 
-    markers = [];
+    markers: Map<string, Marker> = new Map();
     tooltips = [];
+    poly: Polyline;
     map: L.Map;
     map$: BehaviorSubject<L.Map> = new BehaviorSubject(null);
     ready$: Observable<L.Map> = this.map$.pipe(filter(map => !!map));
@@ -22,6 +24,7 @@ export default class LeafletMap {
 
 
     constructor($container: HTMLElement, options: MapOptions) {
+        console.log("LeafletMap -> constructor -> options", options)
         this.options = options;
     }
 
@@ -123,29 +126,69 @@ export default class LeafletMap {
         return this.map.getCenter();
     }
 
-    convertPosition(expression: L.LatLngExpression | { x, y }): L.LatLngExpression {
-        return expression as L.LatLngExpression;
+    convertPosition(expression: any): L.LatLng {
+        return L.latLng(expression[this.options.latKeyName], expression[this.options.lngKeyName]) as L.LatLng;
     }
 
     ////Markers
+    updateMarkers(markersData) {
+        markersData.forEach(data => {
+            if (this.markers.get(data.aliasName)) {
+                this.updateMarker(data.aliasName, this.convertPosition(data), this.options as MarkerSettings)
+            }
+            else {
+                this.createMarker(data.aliasName, this.convertPosition(data), this.options as MarkerSettings);
+            }
+        });
+    }
 
-
-    createMarker(location, settings: MarkerSettings) {
+    private createMarker(key, location, settings: MarkerSettings) {
         this.ready$.subscribe(() => {
             let defaultSettings: MarkerSettings = {
                 color: '#FD2785'
             }
-            this.markers.push(new Marker(this.map, this.convertPosition(location), { ...defaultSettings, ...settings }))
+            this.markers.set(key, new Marker(this.map, location, { ...defaultSettings, ...settings }))
         });
     }
 
-    updateMarker() {
+    private updateMarker(key, location: L.LatLng, settings: MarkerSettings) {
+        const marker: Marker = this.markers.get(key);
+        if (!location.equals(marker.location)) {
+            marker.updateMarkerPosition(location);
+        }
+        //other implements later
 
     }
 
-    deleteMarker() {
+    private deleteMarker() {
 
     }
 
+    //polyline
 
+    updatePolylines(polyData) {
+        if (this.poly) {
+
+        }
+
+        else {
+            this.map$
+            this.createPolyline(polyData.map(data => this.convertPosition(data)), this.options);
+        }
+
+        /*  markersData.forEach(data => {
+              if (this.markers.get(data.aliasName)) {
+                  this.updateMarker(data.aliasName, this.convertPosition(data), this.options as MarkerSettings)
+              }
+              else {
+                  this.createMarker(data.aliasName, this.convertPosition(data), this.options as MarkerSettings);
+              }
+          });*/
+    }
+
+    createPolyline(locations, settings) {
+        this.ready$.subscribe(() =>
+            this.poly = new Polyline(this.map, locations, settings)
+        )
+    }
 }

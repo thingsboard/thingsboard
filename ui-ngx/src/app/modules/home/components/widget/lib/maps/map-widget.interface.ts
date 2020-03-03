@@ -1,5 +1,6 @@
 export interface MapWidgetInterface {
     resize(),
+    update(),
     onInit(),
     onDataUpdated();
     onResize();

@@ -2,10 +2,9 @@ import L from 'leaflet';
 
 export class Polyline {
 
-    map: L.Map;
     leafletPoly: L.Polyline;
 
-    constructor(locations, settings) {
+    constructor(private map: L.Map, locations, settings) {
         this.leafletPoly = L.polyline(locations,
             {
                 color: settings.color,

@@ -13,44 +13,21 @@ import {
 } from './schemes';
 import { MapWidgetStaticInterface, MapWidgetInterface } from './map-widget.interface';
 import { OpenStreetMap, TencentMap, GoogleMap, HEREMap, ImageMap } from './providers';
-
-
-const providerSets = {
-    'openstreet-map': {
-        MapClass: OpenStreetMap,
-        schema: openstreetMapSettingsSchema,
-        name: "Openstreet"
-    },
-    'tencent-map': {
-        MapClass: TencentMap,
-        schema: tencentMapSettingsSchema,
-        name: "Tencent"
-    },
-    'google-map': {
-        MapClass: GoogleMap,
-        schema: googleMapSettingsSchema,
-        name: "Openstreet"
-    },
-    'here': {
-        MapClass: HEREMap,
-        schema: hereMapSettingsSchema,
-        name: "HERE"
-    },
-    'image-map': {
-        MapClass: ImageMap,
-        schema: imageMapSettingsSchema
-    }
-}
+import { WidgetSubscription } from '@app/core/public-api';
+import { parseData, parseArray } from './maps-utils';
 
 export let TbMapWidgetV2: MapWidgetStaticInterface;
 TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
     map: LeafletMap;
     provider: MapProviders;
     schema;
+    data;
 
-    constructor(mapProvider: MapProviders, drawRoutes, ctx, $element) {
-        console.log(ctx.settings);
-
+    constructor(mapProvider: MapProviders, private drawRoutes, ctx, $element) {
+        console.log("TbMapWidgetV2 -> constructor -> ctx", ctx)
+        // console.log(ctx.subscriptions, ctx.data, ctx.datasources);
+        this.data = ctx.data;
+        //this.subsciptions.
         if (!$element) {
             $element = ctx.$container[0];
         }
@@ -71,15 +48,19 @@ TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
         if (!MapClass) {
             return;
         }
-        this.map = new MapClass($element, { ...baseOptions, ...ctx.settings })
-        if(mapProvider !== "image-map")
-        this.map.createMarker({ lat: 0, lng: 0 }, { color: '#FD2785' })
-        else
-        this.map.createMarker({ x: 500, y: 500 }, { color: '#6D2785' });
+        this.map = new MapClass($element, { ...baseOptions, ...ctx.settings });
         this.schema = providerSets[mapProvider]?.schema;
     }
 
     onInit() {
+    }
+
+    update() {  
+        console.log(this.data,parseData(this.data) );
+              
+        if (this.drawRoutes)
+            this.map.updatePolylines(parseArray(this.data));
+        this.map.updateMarkers(parseData(this.data));
     }
 
     onDataUpdated() {
@@ -172,5 +153,32 @@ TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
     }
 
     onDestroy() {
+    }
+}
+
+const providerSets = {
+    'openstreet-map': {
+        MapClass: OpenStreetMap,
+        schema: openstreetMapSettingsSchema,
+        name: "Openstreet"
+    },
+    'tencent-map': {
+        MapClass: TencentMap,
+        schema: tencentMapSettingsSchema,
+        name: "Tencent"
+    },
+    'google-map': {
+        MapClass: GoogleMap,
+        schema: googleMapSettingsSchema,
+        name: "Openstreet"
+    },
+    'here': {
+        MapClass: HEREMap,
+        schema: hereMapSettingsSchema,
+        name: "HERE"
+    },
+    'image-map': {
+        MapClass: ImageMap,
+        schema: imageMapSettingsSchema
     }
 }

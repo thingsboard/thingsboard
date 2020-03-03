@@ -101,7 +101,7 @@ export function isNumber(value: any): boolean {
 }
 
 export function isNumeric(value: any): boolean {
-  return (value - parseFloat( value ) + 1) >= 0;
+  return (value - parseFloat(value) + 1) >= 0;
 }
 
 export function isString(value: any): boolean {
@@ -226,9 +226,9 @@ function hashCode(str) {
   var i, char;
   if (str.length == 0) return hash;
   for (i = 0; i < str.length; i++) {
-      char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32bit integer
+    char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
   }
   return hash;
 }
@@ -424,24 +424,24 @@ export function getDescendantProp(obj: any, path: string): any {
   return path.split('.').reduce((acc, part) => acc && acc[part], obj);
 }
 
-export function imageLoader(imageUrl: string): Observable<HTMLImageElement>{
+export function imageLoader(imageUrl: string): Observable<HTMLImageElement> {
   const image = new Image();
-  const imageLoad$ = fromEvent(image, 'load').pipe(map(event=>image));
+  const imageLoad$ = fromEvent(image, 'load').pipe(map(event => image));
   image.src = imageUrl;
   return imageLoad$;
 }
 
 const imageAspectMap = {};
 
-export function aspectCache(imageUrl: string): Observable<number>{
-  if(imageUrl?.length){
+export function aspectCache(imageUrl: string): Observable<number> {
+  if (imageUrl?.length) {
     const hash = hashCode(imageUrl);
     let aspect = imageAspectMap[hash];
-    if(aspect){
+    if (aspect) {
       return of(aspect);
     }
-    else return imageLoader(imageUrl).pipe(map(image=>{
-      aspect = image.width/image.height;
+    else return imageLoader(imageUrl).pipe(map(image => {
+      aspect = image.width / image.height;
       imageAspectMap[hash] = aspect;
       return aspect;
     }))
