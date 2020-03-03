@@ -19,6 +19,26 @@ import { GaugeType } from '@home/components/widget/lib/canvas-digital-gauge';
 import { AnimationRule } from '@home/components/widget/lib/analogue-gauge.models';
 import { FontSettings } from '@home/components/widget/lib/settings.models';
 
+export interface colorLevelProperty {
+  valueSource: string;
+  entityAlias?: string;
+  attribute?: string;
+  value?: number;
+}
+
+export interface fixedLevelColors {
+  from?: colorLevelProperty;
+  to?: colorLevelProperty;
+  color: string;
+}
+
+export interface colorLevelSetting {
+  value: number;
+  color: string;
+}
+
+export type colorLevel = Array<string | colorLevelSetting>;
+
 export interface DigitalGaugeSettings {
   minValue?: number;
   maxValue?: number;
@@ -38,7 +58,9 @@ export interface DigitalGaugeSettings {
   gaugeWidthScale?: number;
   defaultColor?: string;
   gaugeColor?: string;
-  levelColors?: string[];
+  useFixedLevelColor?: boolean;
+  levelColors?: colorLevel;
+  fixedLevelColors?: fixedLevelColors[];
   animation?: boolean;
   animationDuration?: number;
   animationRule?: AnimationRule;
@@ -147,12 +169,77 @@ export const digitalGaugeSettingsSchema: JsonSettingsSchema = {
         type: 'string',
         default: null
       },
+      useFixedLevelColor: {
+        title: 'Use precise value for the color indicator',
+        type: 'boolean',
+        default: false
+      },
       levelColors: {
         title: 'Colors of indicator, from lower to upper',
         type: 'array',
         items: {
           title: 'Color',
           type: 'string'
+        }
+      },
+      fixedLevelColors: {
+        title: 'The colors for the indicator using boundary values',
+        type: 'array',
+        items: {
+          title: 'levelColor',
+          type: 'object',
+          properties: {
+            from: {
+              title: 'From',
+              type: 'object',
+              properties: {
+                valueSource: {
+                  title: '[From] Value source',
+                  type: 'string',
+                  default: 'predefinedValue'
+                },
+                entityAlias: {
+                  title: '[From] Source entity alias',
+                  type: 'string'
+                },
+                attribute: {
+                  title: '[From] Source entity attribute',
+                  type: 'string'
+                },
+                value: {
+                  title: '[From] Value (if predefined value is selected)',
+                  type: 'number'
+                }
+              }
+            },
+            to: {
+              title: 'To',
+              type: 'object',
+              properties: {
+                valueSource: {
+                  title: '[To] Value source',
+                  type: 'string',
+                  default: 'predefinedValue'
+                },
+                entityAlias: {
+                  title: '[To] Source entity alias',
+                  type: 'string'
+                },
+                attribute: {
+                  title: '[To] Source entity attribute',
+                  type: 'string'
+                },
+                value: {
+                  title: '[To] Value (if predefined value is selected)',
+                  type: 'number'
+                }
+              }
+            },
+            color: {
+              title: 'Color',
+              type: 'string'
+            }
+          }
         }
       },
       animation: {
@@ -343,11 +430,59 @@ export const digitalGaugeSettingsSchema: JsonSettingsSchema = {
       key: 'gaugeColor',
       type: 'color'
     },
+    'useFixedLevelColor',
     {
       key: 'levelColors',
+      condition: 'model.useFixedLevelColor !== true',
       items: [
         {
           key: 'levelColors[]',
+          type: 'color'
+        }
+      ]
+    },
+    {
+      key: 'fixedLevelColors',
+      condition: 'model.useFixedLevelColor === true',
+      items: [
+        {
+          key: 'fixedLevelColors[].from.valueSource',
+          type: 'rc-select',
+          multiple: false,
+          items: [
+            {
+              value: 'predefinedValue',
+              label: 'Predefined value (Default)'
+            },
+            {
+              value: 'entityAttribute',
+              label: 'Value taken from entity attribute'
+            }
+          ]
+        },
+        'fixedLevelColors[].from.value',
+        'fixedLevelColors[].from.entityAlias',
+        'fixedLevelColors[].from.attribute',
+        {
+          key: 'fixedLevelColors[].to.valueSource',
+          type: 'rc-select',
+          multiple: false,
+          items: [
+            {
+              value: 'predefinedValue',
+              label: 'Predefined value (Default)'
+            },
+            {
+              value: 'entityAttribute',
+              label: 'Value taken from entity attribute'
+            }
+          ]
+        },
+        'fixedLevelColors[].to.value',
+        'fixedLevelColors[].to.entityAlias',
+        'fixedLevelColors[].to.attribute',
+        {
+          key: 'fixedLevelColors[].color',
           type: 'color'
         }
       ]
