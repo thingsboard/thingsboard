@@ -50,10 +50,16 @@ export default class TbCanvasDigitalGauge {
         this.localSettings.gaugeWidthScale = settings.gaugeWidthScale || 0.75;
         this.localSettings.gaugeColor = settings.gaugeColor || tinycolor(keyColor).setAlpha(0.2).toRgbString();
 
-        if (!settings.levelColors || settings.levelColors.length <= 0) {
-            this.localSettings.levelColors = [keyColor];
+        this.localSettings.useFixedLevelColor = settings.useFixedLevelColor || false;
+        if (!settings.useFixedLevelColor) {
+            if (!settings.levelColors || settings.levelColors.length <= 0) {
+                this.localSettings.levelColors = [keyColor];
+            } else {
+                this.localSettings.levelColors = settings.levelColors.slice();
+            }
         } else {
-            this.localSettings.levelColors = settings.levelColors.slice();
+            this.localSettings.levelColors = [keyColor];
+            this.localSettings.fixedLevelColors = settings.fixedLevelColors || [];
         }
 
         this.localSettings.decimals = angular.isDefined(dataKey.decimals) ? dataKey.decimals :
@@ -191,15 +197,137 @@ export default class TbCanvasDigitalGauge {
         };
 
         this.gauge = new CanvasDigitalGauge(gaugeData).draw();
+        this.init();
+    }
 
+    init() {
+        if (this.localSettings.useFixedLevelColor) {
+            if (this.localSettings.fixedLevelColors && this.localSettings.fixedLevelColors.length > 0) {
+                this.localSettings.levelColors = this.settingLevelColorsSubscribe(this.localSettings.fixedLevelColors);
+                this.updateLevelColors(this.localSettings.levelColors);
+            }
+        }
+    }
+
+    settingLevelColorsSubscribe(options) {
+        let levelColorsDatasource = [];
+        let predefineLevelColors = [];
+
+        function setLevelColor(levelSetting, color) {
+            if (levelSetting.valueSource === 'predefinedValue' && isFinite(levelSetting.value)) {
+                predefineLevelColors.push({
+                    value: levelSetting.value,
+                    color: color
+                })
+            } else if (levelSetting.entityAlias && levelSetting.attribute) {
+                let entityAliasId = this.ctx.aliasController.getEntityAliasId(levelSetting.entityAlias);
+                if (!entityAliasId) {
+                    return;
+                }
+
+                let datasource = levelColorsDatasource.filter((datasource) => {
+                    return datasource.entityAliasId === entityAliasId;
+                })[0];
+
+                let dataKey = {
+                    type: this.ctx.$scope.$injector.get('types').dataKeyType.attribute,
+                    name: levelSetting.attribute,
+                    label: levelSetting.attribute,
+                    settings: [{
+                        color: color,
+                        index: predefineLevelColors.length
+                    }],
+                    _hash: Math.random()
+                };
+
+                if (datasource) {
+                    let findDataKey = datasource.dataKeys.filter((dataKey) => {
+                        return dataKey.name === levelSetting.attribute;
+                    })[0];
+
+                    if (findDataKey) {
+                        findDataKey.settings.push({
+                            color: color,
+                            index: predefineLevelColors.length
+                        });
+                    } else {
+                        datasource.dataKeys.push(dataKey)
+                    }
+                } else {
+                    datasource = {
+                        type: this.ctx.$scope.$injector.get('types').datasourceType.entity,
+                        name: levelSetting.entityAlias,
+                        aliasName: levelSetting.entityAlias,
+                        entityAliasId: entityAliasId,
+                        dataKeys: [dataKey]
+                    };
+                    levelColorsDatasource.push(datasource);
+                }
+
+                predefineLevelColors.push(null);
+            }
+        }
+
+        for (let i = 0; i < options.length; i++) {
+            let levelColor = options[i];
+            if (levelColor.from) {
+                setLevelColor.call(this, levelColor.from, levelColor.color);
+            }
+            if (levelColor.to) {
+                setLevelColor.call(this, levelColor.to, levelColor.color);
+            }
+        }
+
+        this.subscribeLevelColorsAttributes(levelColorsDatasource);
+
+        return predefineLevelColors;
+    }
+
+    updateLevelColors(levelColors) {
+        this.gauge.options.levelColors = levelColors;
+        this.gauge.options = CanvasDigitalGauge.configure(this.gauge.options);
+        this.gauge.update();
+    }
+
+    subscribeLevelColorsAttributes(datasources) {
+        let TbCanvasDigitalGauge = this;
+        let levelColorsSourcesSubscriptionOptions = {
+            datasources: datasources,
+            useDashboardTimewindow: false,
+            type: this.ctx.$scope.$injector.get('types').widgetType.latest.value,
+            callbacks: {
+                onDataUpdated: (subscription) => {
+                    for (let i = 0; i < subscription.data.length; i++) {
+                        let keyData = subscription.data[i];
+                        if (keyData && keyData.data && keyData.data[0]) {
+                            let attrValue = keyData.data[0][1];
+                            if (isFinite(attrValue)) {
+                                for (let i = 0; i < keyData.dataKey.settings.length; i++) {
+                                    let setting = keyData.dataKey.settings[i];
+                                    this.localSettings.levelColors[setting.index] = {
+                                        value: attrValue,
+                                        color: setting.color
+                                    };
+                                }
+                            }
+                        }
+                    }
+                    this.updateLevelColors(this.localSettings.levelColors);
+                }
+            }
+        };
+        this.ctx.subscriptionApi.createSubscription(levelColorsSourcesSubscriptionOptions, true).then(
+            (subscription) => {
+                TbCanvasDigitalGauge.levelColorSourcesSubscription = subscription;
+            }
+        );
     }
 
     update() {
         if (this.ctx.data.length > 0) {
             var cellData = this.ctx.data[0];
             if (cellData.data.length > 0) {
-                var tvPair = cellData.data[cellData.data.length -
-                1];
+                var tvPair = cellData.data[cellData.data.length - 1];
                 var timestamp;
                 if (this.localSettings.showTimestamp) {
                     timestamp = tvPair[0];
@@ -325,12 +453,77 @@ export default class TbCanvasDigitalGauge {
                         "type": "string",
                         "default": null
                     },
+                    "useFixedLevelColor": {
+                        "title": "Use precise value for the color indicator",
+                        "type": "boolean",
+                        "default": false
+                    },
                     "levelColors": {
                         "title": "Colors of indicator, from lower to upper",
                         "type": "array",
                         "items": {
                             "title": "Color",
                             "type": "string"
+                        }
+                    },
+                    "fixedLevelColors": {
+                        "title": "The colors for the indicator using boundary values",
+                        "type": "array",
+                        "items": {
+                            "title": "levelColor",
+                            "type": "object",
+                            "properties": {
+                                "from": {
+                                    "title": "From",
+                                    "type": "object",
+                                    "properties": {
+                                        "valueSource": {
+                                            "title": "[From] Value source",
+                                            "type": "string",
+                                            "default": "predefinedValue"
+                                        },
+                                        "entityAlias": {
+                                            "title": "[From] Source entity alias",
+                                            "type": "string"
+                                        },
+                                        "attribute": {
+                                            "title": "[From] Source entity attribute",
+                                            "type": "string"
+                                        },
+                                        "value": {
+                                            "title": "[From] Value (if predefined value is selected)",
+                                            "type": "number"
+                                        }
+                                    }
+                                },
+                                "to": {
+                                    "title": "To",
+                                    "type": "object",
+                                    "properties": {
+                                        "valueSource": {
+                                            "title": "[To] Value source",
+                                            "type": "string",
+                                            "default": "predefinedValue"
+                                        },
+                                        "entityAlias": {
+                                            "title": "[To] Source entity alias",
+                                            "type": "string"
+                                        },
+                                        "attribute": {
+                                            "title": "[To] Source entity attribute",
+                                            "type": "string"
+                                        },
+                                        "value": {
+                                            "title": "[To] Value (if predefined value is selected)",
+                                            "type": "number"
+                                        }
+                                    }
+                                },
+                                "color": {
+                                    "title": "Color",
+                                    "type": "string"
+                                }
+                            }
                         }
                     },
                     "animation": {
@@ -521,11 +714,59 @@ export default class TbCanvasDigitalGauge {
                     "key": "gaugeColor",
                     "type": "color"
                 },
+                "useFixedLevelColor",
                 {
                     "key": "levelColors",
+                    "condition": "model.useFixedLevelColor !== true",
                     "items": [
                         {
                             "key": "levelColors[]",
+                            "type": "color"
+                        }
+                    ]
+                },
+                {
+                    "key": "fixedLevelColors",
+                    "condition": "model.useFixedLevelColor === true",
+                    "items": [
+                        {
+                            "key": "fixedLevelColors[].from.valueSource",
+                            "type": "rc-select",
+                            "multiple": false,
+                            "items": [
+                                {
+                                    "value": "predefinedValue",
+                                    "label": "Predefined value (Default)"
+                                },
+                                {
+                                    "value": "entityAttribute",
+                                    "label": "Value taken from entity attribute"
+                                }
+                            ]
+                        },
+                        "fixedLevelColors[].from.value",
+                        "fixedLevelColors[].from.entityAlias",
+                        "fixedLevelColors[].from.attribute",
+                        {
+                            "key": "fixedLevelColors[].to.valueSource",
+                            "type": "rc-select",
+                            "multiple": false,
+                            "items": [
+                                {
+                                    "value": "predefinedValue",
+                                    "label": "Predefined value (Default)"
+                                },
+                                {
+                                    "value": "entityAttribute",
+                                    "label": "Value taken from entity attribute"
+                                }
+                            ]
+                        },
+                        "fixedLevelColors[].to.value",
+                        "fixedLevelColors[].to.entityAlias",
+                        "fixedLevelColors[].to.attribute",
+                        {
+                            "key": "fixedLevelColors[].color",
                             "type": "color"
                         }
                     ]
