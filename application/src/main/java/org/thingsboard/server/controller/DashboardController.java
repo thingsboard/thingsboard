@@ -32,10 +32,13 @@ import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
+import org.thingsboard.server.common.data.ShortEdgeInfo;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -470,6 +473,243 @@ public class DashboardController extends BaseController {
             checkCustomerId(customerId, Operation.READ);
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
             return checkNotNull(dashboardService.findDashboardsByTenantIdAndCustomerId(tenantId, customerId, pageLink));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/edge/{edgeId}/dashboard/{dashboardId}", method = RequestMethod.POST)
+    @ResponseBody
+    public Dashboard assignDashboardToEdge(@PathVariable("edgeId") String strEdgeId,
+                                           @PathVariable(DASHBOARD_ID) String strDashboardId) throws ThingsboardException {
+        checkParameter("edgeId", strEdgeId);
+        checkParameter(DASHBOARD_ID, strDashboardId);
+        try {
+            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+            Edge edge = checkEdgeId(edgeId, Operation.READ);
+
+            DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
+            checkDashboardId(dashboardId, Operation.ASSIGN_TO_EDGE);
+
+            Dashboard savedDashboard = checkNotNull(dashboardService.assignDashboardToEdge(getCurrentUser().getTenantId(), dashboardId, edgeId));
+
+            logEntityAction(dashboardId, savedDashboard,
+                    null,
+                    ActionType.ASSIGNED_TO_EDGE, null, strDashboardId, strEdgeId, edge.getName());
+
+
+            return savedDashboard;
+        } catch (Exception e) {
+
+            logEntityAction(emptyId(EntityType.DASHBOARD), null,
+                    null,
+                    ActionType.ASSIGNED_TO_EDGE, e, strDashboardId, strEdgeId);
+
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/edge/{edgeId}/dashboard/{dashboardId}", method = RequestMethod.DELETE)
+    @ResponseBody
+    public Dashboard unassignDashboardFromEdge(@PathVariable("edgeId") String strEdgeId,
+                                               @PathVariable(DASHBOARD_ID) String strDashboardId) throws ThingsboardException {
+        checkParameter("edgeId", strEdgeId);
+        checkParameter(DASHBOARD_ID, strDashboardId);
+        try {
+            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+            Edge edge = checkEdgeId(edgeId, Operation.READ);
+            DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
+            Dashboard dashboard = checkDashboardId(dashboardId, Operation.UNASSIGN_FROM_EDGE);
+
+            Dashboard savedDashboard = checkNotNull(dashboardService.unassignDashboardFromEdge(getCurrentUser().getTenantId(), dashboardId, edgeId));
+
+            logEntityAction(dashboardId, dashboard,
+                    null,
+                    ActionType.UNASSIGNED_FROM_EDGE, null, strDashboardId, edge.getId().toString(), edge.getName());
+
+            return savedDashboard;
+        } catch (Exception e) {
+
+            logEntityAction(emptyId(EntityType.DASHBOARD), null,
+                    null,
+                    ActionType.UNASSIGNED_FROM_EDGE, e, strDashboardId);
+
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/dashboard/{dashboardId}/edges", method = RequestMethod.POST)
+    @ResponseBody
+    public Dashboard updateDashboardEdges(@PathVariable(DASHBOARD_ID) String strDashboardId,
+                                          @RequestBody String[] strEdgeIds) throws ThingsboardException {
+        checkParameter(DASHBOARD_ID, strDashboardId);
+        try {
+            DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
+            Dashboard dashboard = checkDashboardId(dashboardId, Operation.ASSIGN_TO_EDGE);
+
+            Set<EdgeId> edgeIds = new HashSet<>();
+            if (strEdgeIds != null) {
+                for (String strEdgeId : strEdgeIds) {
+                    edgeIds.add(new EdgeId(toUUID(strEdgeId)));
+                }
+            }
+
+            Set<EdgeId> addedEdgeIds = new HashSet<>();
+            Set<EdgeId> removedEdgeIds = new HashSet<>();
+            for (EdgeId edgeId : edgeIds) {
+                if (!dashboard.isAssignedToEdge(edgeId)) {
+                    addedEdgeIds.add(edgeId);
+                }
+            }
+
+            Set<ShortEdgeInfo> assignedEdges = dashboard.getAssignedEdges();
+            if (assignedEdges != null) {
+                for (ShortEdgeInfo edgeInfo : assignedEdges) {
+                    if (!edgeIds.contains(edgeInfo.getEdgeId())) {
+                        removedEdgeIds.add(edgeInfo.getEdgeId());
+                    }
+                }
+            }
+
+            if (addedEdgeIds.isEmpty() && removedEdgeIds.isEmpty()) {
+                return dashboard;
+            } else {
+                Dashboard savedDashboard = null;
+                for (EdgeId edgeId : addedEdgeIds) {
+                    savedDashboard = checkNotNull(dashboardService.assignDashboardToEdge(getCurrentUser().getTenantId(), dashboardId, edgeId));
+                    ShortEdgeInfo edgeInfo = savedDashboard.getAssignedEdgeInfo(edgeId);
+                    logEntityAction(dashboardId, savedDashboard,
+                            null,
+                            ActionType.ASSIGNED_TO_EDGE, null, strDashboardId, edgeId.toString(), edgeInfo.getTitle());
+                }
+                for (EdgeId edgeId : removedEdgeIds) {
+                    ShortEdgeInfo edgeInfo = dashboard.getAssignedEdgeInfo(edgeId);
+                    savedDashboard = checkNotNull(dashboardService.unassignDashboardFromEdge(getCurrentUser().getTenantId(), dashboardId, edgeId));
+                    logEntityAction(dashboardId, dashboard,
+                            null,
+                            ActionType.UNASSIGNED_FROM_EDGE, null, strDashboardId, edgeId.toString(), edgeInfo.getTitle());
+
+                }
+                return savedDashboard;
+            }
+        } catch (Exception e) {
+
+            logEntityAction(emptyId(EntityType.DASHBOARD), null,
+                    null,
+                    ActionType.ASSIGNED_TO_EDGE, e, strDashboardId);
+
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/dashboard/{dashboardId}/edges/add", method = RequestMethod.POST)
+    @ResponseBody
+    public Dashboard addDashboardEdges(@PathVariable(DASHBOARD_ID) String strDashboardId,
+                                       @RequestBody String[] strEdgeIds) throws ThingsboardException {
+        checkParameter(DASHBOARD_ID, strDashboardId);
+        try {
+            DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
+            Dashboard dashboard = checkDashboardId(dashboardId, Operation.ASSIGN_TO_EDGE);
+
+            Set<EdgeId> edgeIds = new HashSet<>();
+            if (strEdgeIds != null) {
+                for (String strEdgeId : strEdgeIds) {
+                    EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+                    if (!dashboard.isAssignedToEdge(edgeId)) {
+                        edgeIds.add(edgeId);
+                    }
+                }
+            }
+
+            if (edgeIds.isEmpty()) {
+                return dashboard;
+            } else {
+                Dashboard savedDashboard = null;
+                for (EdgeId edgeId : edgeIds) {
+                    savedDashboard = checkNotNull(dashboardService.assignDashboardToEdge(getCurrentUser().getTenantId(), dashboardId, edgeId));
+                    ShortEdgeInfo edgeInfo = savedDashboard.getAssignedEdgeInfo(edgeId);
+                    logEntityAction(dashboardId, savedDashboard,
+                            null,
+                            ActionType.ASSIGNED_TO_EDGE, null, strDashboardId, edgeId.toString(), edgeInfo.getTitle());
+                }
+                return savedDashboard;
+            }
+        } catch (Exception e) {
+
+            logEntityAction(emptyId(EntityType.DASHBOARD), null,
+                    null,
+                    ActionType.ASSIGNED_TO_EDGE, e, strDashboardId);
+
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/dashboard/{dashboardId}/edges/remove", method = RequestMethod.POST)
+    @ResponseBody
+    public Dashboard removeDashboardEdges(@PathVariable(DASHBOARD_ID) String strDashboardId,
+                                          @RequestBody String[] strEdgeIds) throws ThingsboardException {
+        checkParameter(DASHBOARD_ID, strDashboardId);
+        try {
+            DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
+            Dashboard dashboard = checkDashboardId(dashboardId, Operation.UNASSIGN_FROM_EDGE);
+
+            Set<EdgeId> edgeIds = new HashSet<>();
+            if (strEdgeIds != null) {
+                for (String strEdgeId : strEdgeIds) {
+                    EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+                    if (dashboard.isAssignedToEdge(edgeId)) {
+                        edgeIds.add(edgeId);
+                    }
+                }
+            }
+
+            if (edgeIds.isEmpty()) {
+                return dashboard;
+            } else {
+                Dashboard savedDashboard = null;
+                for (EdgeId edgeId : edgeIds) {
+                    ShortEdgeInfo edgeInfo = dashboard.getAssignedEdgeInfo(edgeId);
+                    savedDashboard = checkNotNull(dashboardService.unassignDashboardFromEdge(getCurrentUser().getTenantId(), dashboardId, edgeId));
+                    logEntityAction(dashboardId, dashboard,
+                            null,
+                            ActionType.UNASSIGNED_FROM_EDGE, null, strDashboardId, edgeId.toString(), edgeInfo.getTitle());
+
+                }
+                return savedDashboard;
+            }
+        } catch (Exception e) {
+
+            logEntityAction(emptyId(EntityType.DASHBOARD), null,
+                    null,
+                    ActionType.UNASSIGNED_FROM_EDGE, e, strDashboardId);
+
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/edge/{edgeId}/dashboards", params = {"pageSize", "page"}, method = RequestMethod.GET)
+    @ResponseBody
+    public PageData<DashboardInfo> getEdgeDashboards(
+            @PathVariable("edgeId") String strEdgeId,
+            @RequestParam int pageSize,
+            @RequestParam int page,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String textSearch,
+            @RequestParam(required = false) String sortProperty,
+            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        checkParameter("edgeId", strEdgeId);
+        try {
+            TenantId tenantId = getCurrentUser().getTenantId();
+            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+            checkEdgeId(edgeId, Operation.READ);
+            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+            return checkNotNull(dashboardService.findDashboardsByTenantIdAndEdgeId(tenantId, edgeId, pageLink));
         } catch (Exception e) {
             throw handleException(e);
         }

@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
@@ -65,6 +66,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
     public void testSaveRuleChain() throws IOException {
         RuleChain ruleChain = new RuleChain();
         ruleChain.setTenantId(tenantId);
+        ruleChain.setType(RuleChainType.SYSTEM);
         ruleChain.setName("My RuleChain");
 
         RuleChain savedRuleChain = ruleChainService.saveRuleChain(ruleChain);
@@ -103,6 +105,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         RuleChain ruleChain = new RuleChain();
         ruleChain.setTenantId(tenantId);
         ruleChain.setName("My RuleChain");
+        ruleChain.setType(RuleChainType.SYSTEM);
         RuleChain savedRuleChain = ruleChainService.saveRuleChain(ruleChain);
         RuleChain foundRuleChain = ruleChainService.findRuleChainById(tenantId, savedRuleChain.getId());
         Assert.assertNotNull(foundRuleChain);
@@ -115,6 +118,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         RuleChain ruleChain = new RuleChain();
         ruleChain.setTenantId(tenantId);
         ruleChain.setName("My RuleChain");
+        ruleChain.setType(RuleChainType.SYSTEM);
         RuleChain savedRuleChain = ruleChainService.saveRuleChain(ruleChain);
         RuleChain foundRuleChain = ruleChainService.findRuleChainById(tenantId, savedRuleChain.getId());
         Assert.assertNotNull(foundRuleChain);
@@ -134,6 +138,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         List<RuleChain> ruleChains = new ArrayList<>();
         for (int i = 0; i < 165; i++) {
             RuleChain ruleChain = new RuleChain();
+            ruleChain.setType(RuleChainType.SYSTEM);
             ruleChain.setTenantId(tenantId);
             ruleChain.setName("RuleChain" + i);
             ruleChains.add(ruleChainService.saveRuleChain(ruleChain));
@@ -172,6 +177,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         for (int i = 0; i < 123; i++) {
             RuleChain ruleChain = new RuleChain();
             ruleChain.setTenantId(tenantId);
+            ruleChain.setType(RuleChainType.SYSTEM);
             String suffix = RandomStringUtils.randomAlphanumeric((int) (Math.random() * 17));
             String name = name1 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
@@ -183,6 +189,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         for (int i = 0; i < 193; i++) {
             RuleChain ruleChain = new RuleChain();
             ruleChain.setTenantId(tenantId);
+            ruleChain.setType(RuleChainType.SYSTEM);
             String suffix = RandomStringUtils.randomAlphanumeric((int) (Math.random() * 15));
             String name = name2 + suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
@@ -320,6 +327,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
     private RuleChainMetaData createRuleChainMetadata() throws Exception {
         RuleChain ruleChain = new RuleChain();
         ruleChain.setName("My RuleChain");
+        ruleChain.setType(RuleChainType.SYSTEM);
         ruleChain.setTenantId(tenantId);
         RuleChain savedRuleChain = ruleChainService.saveRuleChain(ruleChain);
 

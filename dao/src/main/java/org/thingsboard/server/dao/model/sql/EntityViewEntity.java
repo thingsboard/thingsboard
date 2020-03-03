@@ -25,10 +25,6 @@ import org.thingsboard.server.dao.util.mapping.JsonStringType;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 
-/**
- * Created by Victor Basanets on 8/30/2017.
- */
-
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity

@@ -256,6 +256,22 @@ public class AuditLogServiceImpl implements AuditLogService {
                 actionData.put("os", os);
                 actionData.put("device", device);
                 break;
+            case ASSIGNED_TO_EDGE:
+                strEntityId = extractParameter(String.class, 0, additionalInfo);
+                String strEdgeId = extractParameter(String.class, 1, additionalInfo);
+                String strEdgeName = extractParameter(String.class, 2, additionalInfo);
+                actionData.put("entityId", strEntityId);
+                actionData.put("assignedEdgeId", strEdgeId);
+                actionData.put("assignedEdgeName", strEdgeName);
+                break;
+            case UNASSIGNED_FROM_EDGE:
+                strEntityId = extractParameter(String.class, 0, additionalInfo);
+                strEdgeId = extractParameter(String.class, 1, additionalInfo);
+                strEdgeName = extractParameter(String.class, 2, additionalInfo);
+                actionData.put("entityId", strEntityId);
+                actionData.put("unassignedEdgeId", strEdgeId);
+                actionData.put("unassignedEdgeName", strEdgeName);
+                break;
         }
         return actionData;
     }

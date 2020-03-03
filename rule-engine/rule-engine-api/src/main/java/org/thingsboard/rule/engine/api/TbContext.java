@@ -36,6 +36,7 @@ import org.thingsboard.server.dao.cassandra.CassandraCluster;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
 import org.thingsboard.server.dao.relation.RelationService;
@@ -79,6 +80,10 @@ public interface TbContext {
 
     TbMsg alarmCreatedMsg(Alarm alarm, RuleNodeId ruleNodeId);
 
+    TbMsg alarmUpdatedMsg(Alarm alarm, RuleNodeId ruleNodeId);
+
+    TbMsg alarmClearedMsg(Alarm alarm, RuleNodeId ruleNodeId);
+
     RuleNodeId getSelfId();
 
     TenantId getTenantId();
@@ -110,6 +115,8 @@ public interface TbContext {
     RelationService getRelationService();
 
     EntityViewService getEntityViewService();
+
+    EdgeService getEdgeService();
 
     ListeningExecutor getJsExecutor();
 

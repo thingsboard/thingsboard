@@ -153,4 +153,30 @@ public interface EntityViewDao extends Dao<EntityView> {
      */
     ListenableFuture<List<EntitySubtype>> findTenantEntityViewTypesAsync(UUID tenantId);
 
+    /**
+     * Find entity views by tenantId, edgeId and page link.
+     *
+     * @param tenantId the tenantId
+     * @param edgeId   the edgeId
+     * @param pageLink the page link
+     * @return the list of entity view objects
+     */
+    PageData<EntityView> findEntityViewsByTenantIdAndEdgeId(UUID tenantId,
+                                                        UUID edgeId,
+                                                        PageLink pageLink);
+
+    /**
+     * Find entity views by tenantId, edgeId, type and page link.
+     *
+     * @param tenantId the tenantId
+     * @param edgeId   the edgeId
+     * @param type     the type
+     * @param pageLink the page link
+     * @return the list of entity view objects
+     */
+    PageData<EntityView> findEntityViewsByTenantIdAndEdgeIdAndType(UUID tenantId,
+                                                               UUID edgeId,
+                                                               String type,
+                                                               PageLink pageLink);
+
 }

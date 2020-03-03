@@ -21,6 +21,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.rule.RuleChainType;
+import org.thingsboard.server.dao.model.sql.DashboardInfoEntity;
 import org.thingsboard.server.dao.model.sql.RuleChainEntity;
 import org.thingsboard.server.dao.util.SqlDao;
 
@@ -35,4 +37,20 @@ public interface RuleChainRepository extends PagingAndSortingRepository<RuleChai
                                          @Param("searchText") String searchText,
                                          Pageable pageable);
 
+    @Query("SELECT rc FROM RuleChainEntity rc WHERE rc.tenantId = :tenantId " +
+            "AND rc.type = :type " +
+            "AND LOWER(rc.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
+    Page<RuleChainEntity> findByTenantIdAndType(@Param("tenantId") String tenantId,
+                                                @Param("type") RuleChainType type,
+                                                @Param("searchText") String searchText,
+                                                Pageable pageable);
+
+    @Query("SELECT rc FROM RuleChainEntity rc, RelationEntity re WHERE rc.tenantId = :tenantId " +
+            "AND rc.id = re.toId AND re.toType = 'RULE_CHAIN' AND re.relationTypeGroup = 'EDGE' " +
+            "AND re.relationType = 'Contains' AND re.fromId = :edgeId AND re.fromType = 'EDGE' " +
+            "AND LOWER(rc.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
+    Page<RuleChainEntity> findByTenantIdAndEdgeId(@Param("tenantId") String tenantId,
+                                                      @Param("edgeId") String edgeId,
+                                                      @Param("searchText") String searchText,
+                                                      Pageable pageable);
 }

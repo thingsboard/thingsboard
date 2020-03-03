@@ -26,8 +26,10 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -35,6 +37,7 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.customer.CustomerDao;
+import org.thingsboard.server.dao.edge.EdgeDao;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -66,6 +69,9 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     
     @Autowired
     private CustomerDao customerDao;
+
+    @Autowired
+    private EdgeDao edgeDao;
 
     @Override
     public Dashboard findDashboardById(TenantId tenantId, DashboardId dashboardId) {
@@ -218,6 +224,89 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         new CustomerDashboardsUpdater(customer).removeEntities(tenantId, customer);
     }
 
+    @Override
+    public Dashboard assignDashboardToEdge(TenantId tenantId, DashboardId dashboardId, EdgeId edgeId) {
+        Dashboard dashboard = findDashboardById(tenantId, dashboardId);
+        Edge edge = edgeDao.findById(tenantId, edgeId.getId());
+        if (edge == null) {
+            throw new DataValidationException("Can't assign dashboard to non-existent edge!");
+        }
+        if (!edge.getTenantId().getId().equals(dashboard.getTenantId().getId())) {
+            throw new DataValidationException("Can't assign dashboard to edge from different tenant!");
+        }
+        if (dashboard.addAssignedEdge(edge)) {
+            try {
+                createRelation(tenantId, new EntityRelation(edgeId, dashboardId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
+            } catch (ExecutionException | InterruptedException e) {
+                log.warn("[{}] Failed to create dashboard relation. Edge Id: [{}]", dashboardId, edgeId);
+                throw new RuntimeException(e);
+            }
+            return saveDashboard(dashboard);
+        } else {
+            return dashboard;
+        }
+    }
+
+    @Override
+    public Dashboard unassignDashboardFromEdge(TenantId tenantId, DashboardId dashboardId, EdgeId edgeId) {
+        Dashboard dashboard = findDashboardById(tenantId, dashboardId);
+        Edge edge = edgeDao.findById(tenantId, edgeId.getId());
+        if (edge == null) {
+            throw new DataValidationException("Can't unassign dashboard from non-existent edge!");
+        }
+        if (dashboard.removeAssignedEdge(edge)) {
+            try {
+                deleteRelation(tenantId, new EntityRelation(edgeId, dashboardId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
+            } catch (ExecutionException | InterruptedException e) {
+                log.warn("[{}] Failed to delete dashboard relation. Edge Id: [{}]", dashboardId, edgeId);
+                throw new RuntimeException(e);
+            }
+            return saveDashboard(dashboard);
+        } else {
+            return dashboard;
+        }
+    }
+
+    @Override
+    public void unassignEdgeDashboards(TenantId tenantId, EdgeId edgeId) {
+        log.trace("Executing unassignEdgeDashboards, edgeId [{}]", edgeId);
+        Validator.validateId(edgeId, "Incorrect edgeId " + edgeId);
+        Edge edge = edgeDao.findById(tenantId, edgeId.getId());
+        if (edge == null) {
+            throw new DataValidationException("Can't unassign dashboards from non-existent edge!");
+        }
+        new EdgeDashboardsUnassigner(edge).removeEntities(tenantId, edge);
+    }
+
+    @Override
+    public void updateEdgeDashboards(TenantId tenantId, EdgeId edgeId) {
+        log.trace("Executing updateEdgeDashboards, edgeId [{}]", edgeId);
+        Validator.validateId(edgeId, "Incorrect edgeId " + edgeId);
+        Edge edge = edgeDao.findById(tenantId, edgeId.getId());
+        if (edge == null) {
+            throw new DataValidationException("Can't update dashboards for non-existent edge!");
+        }
+        new EdgeDashboardsUpdater(edge).removeEntities(tenantId, edge);
+    }
+
+    @Override
+    public PageData<DashboardInfo> findDashboardsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, PageLink pageLink) {
+        log.trace("Executing findDashboardsByTenantIdAndEdgeId, tenantId [{}], edgeId [{}], pageLink [{}]", tenantId, edgeId, pageLink);
+        Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        Validator.validateId(edgeId, "Incorrect customerId " + edgeId);
+        Validator.validatePageLink(pageLink);
+        return dashboardInfoDao.findDashboardsByTenantIdAndEdgeId(tenantId.getId(), edgeId.getId(), pageLink);
+    }
+
+    private Dashboard updateAssignedEdge(TenantId tenantId, DashboardId dashboardId, Edge edge) {
+        Dashboard dashboard = findDashboardById(tenantId, dashboardId);
+        if (dashboard.updateAssignedEdge(edge)) {
+            return saveDashboard(dashboard);
+        } else {
+            return dashboard;
+        }
+    }
+
     private DataValidator<Dashboard> dashboardValidator =
             new DataValidator<Dashboard>() {
                 @Override
@@ -286,6 +375,45 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         @Override
         protected void removeEntity(TenantId tenantId, DashboardInfo entity) {
             updateAssignedCustomer(customer.getTenantId(), new DashboardId(entity.getUuidId()), this.customer);
+        }
+
+    }
+
+    private class EdgeDashboardsUnassigner extends TimePaginatedRemover<Edge, DashboardInfo> {
+
+        private Edge edge;
+
+        EdgeDashboardsUnassigner(Edge edge) {
+            this.edge = edge;
+        }
+
+        @Override
+        protected PageData<DashboardInfo> findEntities(TenantId tenantId, Edge edge, TimePageLink pageLink) {
+            return dashboardInfoDao.findDashboardsByTenantIdAndEdgeId(edge.getTenantId().getId(), edge.getId().getId(), pageLink);
+        }
+
+        @Override
+        protected void removeEntity(TenantId tenantId, DashboardInfo entity) {
+            unassignDashboardFromEdge(edge.getTenantId(), new DashboardId(entity.getUuidId()), this.edge.getId());
+        }
+    }
+
+    private class EdgeDashboardsUpdater extends TimePaginatedRemover<Edge, DashboardInfo> {
+
+        private Edge edge;
+
+        EdgeDashboardsUpdater(Edge edge) {
+            this.edge = edge;
+        }
+
+        @Override
+        protected PageData<DashboardInfo> findEntities(TenantId tenantId, Edge edge, TimePageLink pageLink) {
+            return dashboardInfoDao.findDashboardsByTenantIdAndEdgeId(edge.getTenantId().getId(), edge.getId().getId(), pageLink);
+        }
+
+        @Override
+        protected void removeEntity(TenantId tenantId, DashboardInfo entity) {
+            updateAssignedEdge(edge.getTenantId(), new DashboardId(entity.getUuidId()), this.edge);
         }
 
     }

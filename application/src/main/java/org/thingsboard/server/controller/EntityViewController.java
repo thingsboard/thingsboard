@@ -31,9 +31,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -55,6 +57,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.controller.CustomerController.CUSTOMER_ID;
+import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
 
 /**
  * Created by Victor Basanets on 8/28/2017.
@@ -423,6 +426,86 @@ public class EntityViewController extends BaseController {
             logEntityAction(emptyId(EntityType.ENTITY_VIEW), null,
                     null,
                     ActionType.ASSIGNED_TO_CUSTOMER, e, strEntityViewId);
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/edge/{edgeId}/entityView/{entityViewId}", method = RequestMethod.POST)
+    @ResponseBody
+    public EntityView assignEntityViewToEdge(@PathVariable(EDGE_ID) String strEdgeId,
+                                             @PathVariable(ENTITY_VIEW_ID) String strEntityViewId) throws ThingsboardException {
+        checkParameter(EDGE_ID, strEdgeId);
+        checkParameter(ENTITY_VIEW_ID, strEntityViewId);
+        try {
+            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+            Edge edge = checkEdgeId(edgeId, Operation.READ);
+
+            EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
+            checkEntityViewId(entityViewId, Operation.ASSIGN_TO_EDGE);
+
+            EntityView savedEntityView = checkNotNull(entityViewService.assignEntityViewToEdge(getTenantId(), entityViewId, edgeId));
+            logEntityAction(entityViewId, savedEntityView,
+                    savedEntityView.getCustomerId(),
+                    ActionType.ASSIGNED_TO_EDGE, null, strEntityViewId, strEdgeId, edge.getName());
+            return savedEntityView;
+        } catch (Exception e) {
+            logEntityAction(emptyId(EntityType.ENTITY_VIEW), null,
+                    null,
+                    ActionType.ASSIGNED_TO_EDGE, e, strEntityViewId, strEdgeId);
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/edge/entityView/{entityViewId}", method = RequestMethod.DELETE)
+    @ResponseBody
+    public EntityView unassignEntityViewFromEdge(@PathVariable(ENTITY_VIEW_ID) String strEntityViewId) throws ThingsboardException {
+        checkParameter(ENTITY_VIEW_ID, strEntityViewId);
+        try {
+            EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
+            EntityView entityView = checkEntityViewId(entityViewId, Operation.UNASSIGN_FROM_EDGE);
+            if (entityView.getEdgeId() == null || entityView.getEdgeId().getId().equals(ModelConstants.NULL_UUID)) {
+                throw new IncorrectParameterException("Entity View isn't assigned to any edge!");
+            }
+            Edge edge = checkEdgeId(entityView.getEdgeId(), Operation.READ);
+            EntityView savedEntityView = checkNotNull(entityViewService.unassignEntityViewFromEdge(getTenantId(), entityViewId));
+            logEntityAction(entityViewId, entityView,
+                    entityView.getCustomerId(),
+                    ActionType.UNASSIGNED_FROM_EDGE, null, strEntityViewId, edge.getId().toString(), edge.getName());
+
+            return savedEntityView;
+        } catch (Exception e) {
+            logEntityAction(emptyId(EntityType.ENTITY_VIEW), null,
+                    null,
+                    ActionType.UNASSIGNED_FROM_EDGE, e, strEntityViewId);
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/edge/{edgeId}/entityViews", params = {"pageSize", "page"}, method = RequestMethod.GET)
+    @ResponseBody
+    public PageData<EntityView> getEdgeEntityViews(
+            @PathVariable("edgeId") String strEdgeId,
+            @RequestParam int pageSize,
+            @RequestParam int page,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String textSearch,
+            @RequestParam(required = false) String sortProperty,
+            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        checkParameter("edgeId", strEdgeId);
+        try {
+            TenantId tenantId = getCurrentUser().getTenantId();
+            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+            checkEdgeId(edgeId, Operation.READ);
+            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+            if (type != null && type.trim().length()>0) {
+                return checkNotNull(entityViewService.findEntityViewsByTenantIdAndEdgeIdAndType(tenantId, edgeId, type, pageLink));
+            } else {
+                return checkNotNull(entityViewService.findEntityViewsByTenantIdAndEdgeId(tenantId, edgeId, pageLink));
+            }
+        } catch (Exception e) {
             throw handleException(e);
         }
     }

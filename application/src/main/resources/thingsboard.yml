@@ -294,6 +294,9 @@ caffeine:
     securitySettings:
       timeToLiveInMinutes: 1440
       maxSize: 1
+    edges:
+      timeToLiveInMinutes: 1440
+      maxSize: 100000
 
 redis:
   # standalone or cluster
@@ -557,6 +560,17 @@ transport:
     bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"
     bind_port: "${COAP_BIND_PORT:5683}"
     timeout: "${COAP_TIMEOUT:10000}"
+
+# Edges parameters
+edges:
+  rpc:
+    enabled: "${EDGES_RPC_ENABLED:true}"
+    port: "${EDGES_RPC_PORT:60061}"
+    ssl:
+      # Enable/disable SSL support
+      enabled: "${EDGES_RPC_SSL_ENABLED:false}"
+      cert: "${EDGES_RPC_SSL_CERT:certChainFile.pem}"
+      privateKey: "${EDGES_RPC_SSL_PRIVATE_KEY:privateKeyFile.pem}"
 
 swagger:
   api_path_regex: "${SWAGGER_API_PATH_REGEX:/api.*}"

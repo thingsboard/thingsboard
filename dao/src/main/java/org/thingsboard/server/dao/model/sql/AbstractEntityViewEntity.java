@@ -26,6 +26,7 @@ import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -63,6 +64,9 @@ public abstract class AbstractEntityViewEntity<T extends EntityView> extends Bas
 
     @Column(name = ModelConstants.ENTITY_VIEW_CUSTOMER_ID_PROPERTY)
     private String customerId;
+
+    @Column(name = ModelConstants.ENTITY_VIEW_EDGE_ID_PROPERTY)
+    private String edgeId;
 
     @Column(name = ModelConstants.DEVICE_TYPE_PROPERTY)
     private String type;
@@ -105,6 +109,9 @@ public abstract class AbstractEntityViewEntity<T extends EntityView> extends Bas
         }
         if (entityView.getCustomerId() != null) {
             this.customerId = toString(entityView.getCustomerId().getId());
+        }
+        if (entityView.getEdgeId() != null) {
+            this.edgeId = toString(entityView.getEdgeId().getId());
         }
         this.type = entityView.getType();
         this.name = entityView.getName();
@@ -156,6 +163,9 @@ public abstract class AbstractEntityViewEntity<T extends EntityView> extends Bas
         }
         if (customerId != null) {
             entityView.setCustomerId(new CustomerId(toUUID(customerId)));
+        }
+        if (edgeId != null) {
+            entityView.setEdgeId(new EdgeId(toUUID(edgeId)));
         }
         entityView.setType(type);
         entityView.setName(name);

@@ -67,8 +67,10 @@ public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfigura
                         ctx.sendTbMsgToRuleEngine(ctx.alarmCreatedMsg(alarmResult.alarm, ctx.getSelfId()));
                     } else if (alarmResult.isUpdated) {
                         ctx.tellNext(toAlarmMsg(ctx, alarmResult, msg), "Updated");
+                        ctx.sendTbMsgToRuleEngine(ctx.alarmUpdatedMsg(alarmResult.alarm, ctx.getSelfId()));
                     } else if (alarmResult.isCleared) {
                         ctx.tellNext(toAlarmMsg(ctx, alarmResult, msg), "Cleared");
+                        ctx.sendTbMsgToRuleEngine(ctx.alarmClearedMsg(alarmResult.alarm, ctx.getSelfId()));
                     }
                 },
                 t -> ctx.tellFailure(msg, t)

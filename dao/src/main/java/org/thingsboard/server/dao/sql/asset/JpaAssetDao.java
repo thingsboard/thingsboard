@@ -183,4 +183,25 @@ public class JpaAssetDao extends JpaAbstractSearchTextDao<AssetEntity, Asset> im
         }
         return list;
     }
+
+    @Override
+    public PageData<Asset> findAssetsByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, PageLink pageLink) {
+        return DaoUtil.toPageData(assetRepository
+                .findByTenantIdAndEdgeId(
+                        fromTimeUUID(tenantId),
+                        fromTimeUUID(edgeId),
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<Asset> findAssetsByTenantIdAndEdgeIdAndType(UUID tenantId, UUID edgeId, String type, PageLink pageLink) {
+        return DaoUtil.toPageData(assetRepository
+                .findByTenantIdAndEdgeIdAndType(
+                        fromTimeUUID(tenantId),
+                        fromTimeUUID(edgeId),
+                        type,
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        DaoUtil.toPageable(pageLink)));
+    }
 }

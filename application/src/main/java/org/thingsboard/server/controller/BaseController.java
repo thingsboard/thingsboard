@@ -35,12 +35,14 @@ import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
@@ -75,6 +77,7 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.ClaimDevicesService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
@@ -177,6 +180,9 @@ public abstract class BaseController {
 
     @Autowired
     protected ClaimDevicesService claimDevicesService;
+
+    @Autowired
+    protected EdgeService edgeService;
 
     @Value("${server.log_controller_error_stack_trace}")
     @Getter
@@ -352,6 +358,9 @@ public abstract class BaseController {
                     return;
                 case ENTITY_VIEW:
                     checkEntityViewId(new EntityViewId(entityId.getId()), operation);
+                    return;
+                case EDGE:
+                    checkEdgeId(new EdgeId(entityId.getId()), operation);
                     return;
                 default:
                     throw new IllegalArgumentException("Unsupported entity type: " + entityId.getEntityType());
@@ -548,6 +557,17 @@ public abstract class BaseController {
         return ruleNode;
     }
 
+    Edge checkEdgeId(EdgeId edgeId, Operation operation) throws ThingsboardException {
+        try {
+            validateId(edgeId, "Incorrect edgeId " + edgeId);
+            Edge edge = edgeService.findEdgeById(getTenantId(), edgeId);
+            checkNotNull(edge);
+            accessControlService.checkPermission(getCurrentUser(), Resource.EDGE, operation, edgeId, edge);
+            return edge;
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
+    }
 
     protected String constructBaseUrl(HttpServletRequest request) {
         String scheme = request.getScheme();
@@ -637,6 +657,12 @@ public abstract class BaseController {
             case ALARM_CLEAR:
                 msgType = DataConstants.ALARM_CLEAR;
                 break;
+            case ASSIGNED_TO_EDGE:
+                msgType = DataConstants.ENTITY_ASSIGNED_TO_EDGE;
+                break;
+            case UNASSIGNED_FROM_EDGE:
+                msgType = DataConstants.ENTITY_UNASSIGNED_FROM_EDGE;
+                break;
         }
         if (!StringUtils.isEmpty(msgType)) {
             try {
@@ -656,6 +682,12 @@ public abstract class BaseController {
                     String strCustomerName = extractParameter(String.class, 2, additionalInfo);
                     metaData.putValue("unassignedCustomerId", strCustomerId);
                     metaData.putValue("unassignedCustomerName", strCustomerName);
+                } else if (actionType == ActionType.ASSIGNED_TO_EDGE) {
+                    String strEdgeId = extractParameter(String.class, 1, additionalInfo);
+                    metaData.putValue("assignedEdgeId", strEdgeId);
+                } else if (actionType == ActionType.UNASSIGNED_FROM_EDGE) {
+                    String strEdgeId = extractParameter(String.class, 1, additionalInfo);
+                    metaData.putValue("unassignedEdgeId", strEdgeId);
                 }
                 ObjectNode entityNode;
                 if (entity != null) {

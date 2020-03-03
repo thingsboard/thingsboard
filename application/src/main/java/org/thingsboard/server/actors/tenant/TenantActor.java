@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.aware.DeviceAwareMsg;
 import org.thingsboard.server.common.msg.aware.RuleChainAwareMsg;
@@ -139,11 +140,18 @@ public class TenantActor extends RuleChainManagerActor {
     }
 
     private void onComponentLifecycleMsg(ComponentLifecycleMsg msg) {
+        RuleChain ruleChain = null;
+        if (msg.getEntityId().getEntityType() == EntityType.RULE_CHAIN) {
+            ruleChain = systemContext.getRuleChainService().findRuleChainById(tenantId, new RuleChainId(msg.getEntityId().getId()));
+            if (ruleChain !=null && !RuleChainType.SYSTEM.equals(ruleChain.getType())) {
+                log.debug("[{}] Non SYSTEM rule chains are ignored and not started. Current rule chain type [{}]", tenantId, ruleChain.getType());
+                return;
+            }
+        }
+
         ActorRef target = getEntityActorRef(msg.getEntityId());
         if (target != null) {
-            if (msg.getEntityId().getEntityType() == EntityType.RULE_CHAIN) {
-                RuleChain ruleChain = systemContext.getRuleChainService().
-                        findRuleChainById(tenantId, new RuleChainId(msg.getEntityId().getId()));
+            if (msg.getEntityId().getEntityType() == EntityType.RULE_CHAIN && ruleChain != null) {
                 ruleChainManager.visit(ruleChain, target);
             }
             target.tell(msg, ActorRef.noSender());

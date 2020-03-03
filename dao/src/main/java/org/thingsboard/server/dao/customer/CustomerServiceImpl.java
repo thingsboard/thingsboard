@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -76,6 +77,9 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
     @Autowired
     private DashboardService dashboardService;
 
+    @Autowired
+    private EdgeService edgeService;
+
     @Override
     public Customer findCustomerById(TenantId tenantId, CustomerId customerId) {
         log.trace("Executing findCustomerById [{}]", customerId);
@@ -119,6 +123,7 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
         assetService.unassignCustomerAssets(customer.getTenantId(), customerId);
         deviceService.unassignCustomerDevices(customer.getTenantId(), customerId);
         userService.deleteCustomerUsers(customer.getTenantId(), customerId);
+        edgeService.unassignCustomerEdges(customer.getTenantId(), customerId);
         deleteEntityRelations(tenantId, customerId);
         customerDao.removeById(tenantId, customerId.getId());
     }

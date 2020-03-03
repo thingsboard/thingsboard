@@ -56,6 +56,7 @@ import org.thingsboard.server.dao.cassandra.CassandraCluster;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.nosql.CassandraBufferedRateExecutor;
@@ -247,6 +248,11 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private RuleChainTransactionService ruleChainTransactionService;
+
+    @Lazy
+    @Autowired
+    @Getter
+    private EdgeService edgeService;
 
     @Value("${cluster.partition_id}")
     @Getter

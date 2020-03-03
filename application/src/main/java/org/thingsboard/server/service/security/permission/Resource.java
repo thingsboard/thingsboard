@@ -27,6 +27,7 @@ public enum Resource {
     CUSTOMER(EntityType.CUSTOMER),
     DASHBOARD(EntityType.DASHBOARD),
     ENTITY_VIEW(EntityType.ENTITY_VIEW),
+    EDGE(EntityType.EDGE),
     TENANT(EntityType.TENANT),
     RULE_CHAIN(EntityType.RULE_CHAIN),
     USER(EntityType.USER),

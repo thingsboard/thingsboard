@@ -33,10 +33,12 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.asset.AssetSearchQuery;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -50,6 +52,8 @@ import org.thingsboard.server.service.security.permission.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
 
 @RestController
 @RequestMapping("/api")
@@ -392,6 +396,95 @@ public class AssetController extends BaseController {
             TenantId tenantId = user.getTenantId();
             ListenableFuture<List<EntitySubtype>> assetTypes = assetService.findAssetTypesByTenantId(tenantId);
             return checkNotNull(assetTypes.get());
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/edge/{edgeId}/asset/{assetId}", method = RequestMethod.POST)
+    @ResponseBody
+    public Asset assignAssetToEdge(@PathVariable(EDGE_ID) String strEdgeId,
+                                   @PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
+        checkParameter(EDGE_ID, strEdgeId);
+        checkParameter(ASSET_ID, strAssetId);
+        try {
+            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+            Edge edge = checkEdgeId(edgeId, Operation.READ);
+
+            AssetId assetId = new AssetId(toUUID(strAssetId));
+            checkAssetId(assetId, Operation.ASSIGN_TO_EDGE);
+
+            Asset savedAsset = checkNotNull(assetService.assignAssetToEdge(getTenantId(), assetId, edgeId));
+
+            logEntityAction(assetId, savedAsset,
+                    savedAsset.getCustomerId(),
+                    ActionType.ASSIGNED_TO_EDGE, null, strAssetId, strEdgeId, edge.getName());
+
+            return  savedAsset;
+        } catch (Exception e) {
+
+            logEntityAction(emptyId(EntityType.ASSET), null,
+                    null,
+                    ActionType.ASSIGNED_TO_EDGE, e, strAssetId, strEdgeId);
+
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/edge/asset/{assetId}", method = RequestMethod.DELETE)
+    @ResponseBody
+    public Asset unassignAssetFromEdge(@PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
+        checkParameter(ASSET_ID, strAssetId);
+        try {
+            AssetId assetId = new AssetId(toUUID(strAssetId));
+            Asset asset = checkAssetId(assetId, Operation.UNASSIGN_FROM_EDGE);
+            if (asset.getEdgeId() == null || asset.getEdgeId().getId().equals(ModelConstants.NULL_UUID)) {
+                throw new IncorrectParameterException("Asset isn't assigned to any edge!");
+            }
+
+            Edge edge = checkEdgeId(asset.getEdgeId(), Operation.READ);
+
+            Asset savedAsset = checkNotNull(assetService.unassignAssetFromEdge(getTenantId(), assetId));
+
+            logEntityAction(assetId, asset,
+                    asset.getCustomerId(),
+                    ActionType.UNASSIGNED_FROM_EDGE, null, strAssetId, edge.getId().toString(), edge.getName());
+
+            return savedAsset;
+        } catch (Exception e) {
+
+            logEntityAction(emptyId(EntityType.ASSET), null,
+                    null,
+                    ActionType.UNASSIGNED_FROM_EDGE, e, strAssetId);
+
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/edge/{edgeId}/assets", params = {"pageSize", "page"}, method = RequestMethod.GET)
+    @ResponseBody
+    public PageData<Asset> getEdgeAssets(
+            @PathVariable("edgeId") String strEdgeId,
+            @RequestParam int pageSize,
+            @RequestParam int page,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String textSearch,
+            @RequestParam(required = false) String sortProperty,
+            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        checkParameter("edgeId", strEdgeId);
+        try {
+            TenantId tenantId = getCurrentUser().getTenantId();
+            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+            checkEdgeId(edgeId, Operation.READ);
+            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+            if (type != null && type.trim().length()>0) {
+                return checkNotNull(assetService.findAssetsByTenantIdAndEdgeIdAndType(tenantId, edgeId, type, pageLink));
+            } else {
+                return checkNotNull(assetService.findAssetsByTenantIdAndEdgeId(tenantId, edgeId, pageLink));
+            }
         } catch (Exception e) {
             throw handleException(e);
         }

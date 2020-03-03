@@ -166,4 +166,24 @@ public interface AssetDao extends Dao<Asset> {
      */
     ListenableFuture<List<EntitySubtype>> findTenantAssetTypesAsync(UUID tenantId);
 
+    /**
+     * Find assets by tenantId, customerId and page link.
+     *
+     * @param tenantId the tenantId
+     * @param edgeId the edgeId
+     * @param pageLink the page link
+     * @return the list of asset objects
+     */
+    PageData<Asset> findAssetsByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, PageLink pageLink);
+
+    /**
+     * Find assets by tenantId, customerId, type and page link.
+     *
+     * @param tenantId the tenantId
+     * @param edgeId the edgeId
+     * @param type the type
+     * @param pageLink the page link
+     * @return the list of asset objects
+     */
+    PageData<Asset> findAssetsByTenantIdAndEdgeIdAndType(UUID tenantId, UUID edgeId, String type, PageLink pageLink);
 }

@@ -1,0 +1,251 @@
+/**
+ * Copyright © 2016-2020 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+syntax = "proto3";
+
+option java_package = "org.thingsboard.server.gen.edge";
+option java_multiple_files = true;
+option java_outer_classname = "EdgeProtos";
+
+package edge;
+
+// Interface exported by the ThingsBoard Edge Transport.
+service EdgeRpcService {
+
+    rpc handleMsgs(stream RequestMsg) returns (stream ResponseMsg) {}
+
+}
+
+/**
+ * Data Structures;
+ */
+message RequestMsg {
+    RequestMsgType msgType = 1;
+    ConnectRequestMsg connectRequestMsg = 2;
+    UplinkMsg uplinkMsg = 3;
+}
+
+message ResponseMsg {
+    ConnectResponseMsg connectResponseMsg = 1;
+    UplinkResponseMsg uplinkResponseMsg = 2;
+    EntityUpdateMsg entityUpdateMsg = 3;
+    DownlinkMsg downlinkMsg = 4;
+}
+
+message EntityUpdateMsg {
+    DeviceUpdateMsg deviceUpdateMsg = 1;
+    RuleChainUpdateMsg ruleChainUpdateMsg = 2;
+    RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = 3;
+    DashboardUpdateMsg dashboardUpdateMsg = 4;
+    AssetUpdateMsg assetUpdateMsg = 5;
+    EntityViewUpdateMsg entityViewUpdateMsg = 6;
+    AlarmUpdateMsg alarmUpdateMsg = 7;
+    UserUpdateMsg userUpdateMsg = 8;
+    CustomerUpdateMsg customerUpdateMsg = 9;
+}
+
+enum RequestMsgType {
+    CONNECT_RPC_MESSAGE = 0;
+    UPLINK_RPC_MESSAGE = 1;
+}
+
+message ConnectRequestMsg {
+    string edgeRoutingKey = 1;
+    string edgeSecret = 2;
+}
+
+enum ConnectResponseCode {
+    ACCEPTED = 0;
+    BAD_CREDENTIALS = 1;
+    SERVER_UNAVAILABLE = 2;
+}
+
+message ConnectResponseMsg {
+    ConnectResponseCode responseCode = 1;
+    string errorMsg = 2;
+    EdgeConfiguration configuration = 3;
+}
+
+message EdgeConfiguration {
+    int64 tenantIdMSB = 1;
+    int64 tenantIdLSB = 2;
+    string name = 5;
+    string routingKey = 6;
+    string type = 7;
+    string cloudType = 8;
+}
+
+enum UpdateMsgType {
+    ENTITY_CREATED_RPC_MESSAGE = 0;
+    ENTITY_UPDATED_RPC_MESSAGE = 1;
+    ENTITY_DELETED_RPC_MESSAGE = 2;
+    ALARM_ACK_RPC_MESSAGE = 3;
+    ALARM_CLEAR_RPC_MESSAGE = 4;
+    RULE_CHAIN_CUSTOM_MESSAGE = 5;
+}
+
+message EntityDataProto {
+    string entityName = 1;
+    string entityType = 2;
+    bytes tbMsg = 3;
+}
+
+message RuleChainUpdateMsg {
+    UpdateMsgType msgType = 1;
+    int64 idMSB = 2;
+    int64 idLSB = 3;
+    string name = 4;
+    int64 firstRuleNodeIdMSB = 5;
+    int64 firstRuleNodeIdLSB = 6;
+    bool root = 7;
+    bool debugMode = 8;
+    string configuration = 9;
+}
+
+message RuleChainMetadataUpdateMsg {
+    UpdateMsgType msgType = 1;
+    int64 ruleChainIdMSB = 2;
+    int64 ruleChainIdLSB = 3;
+    int32 firstNodeIndex = 4;
+    repeated RuleNodeProto nodes =  5;
+    repeated NodeConnectionInfoProto connections =  6;
+    repeated RuleChainConnectionInfoProto ruleChainConnections =  7;
+}
+
+message RuleNodeProto {
+    int64 idMSB = 1;
+    int64 idLSB = 2;
+    string type = 3;
+    string name = 4;
+    bool debugMode = 5;
+    string configuration = 6;
+    string additionalInfo = 7;
+}
+
+message NodeConnectionInfoProto {
+    int32 fromIndex = 1;
+    int32 toIndex = 2;
+    string type = 3;
+}
+
+message RuleChainConnectionInfoProto {
+    int32 fromIndex = 1;
+    int64 targetRuleChainIdMSB = 2;
+    int64 targetRuleChainIdLSB = 3;
+    string type = 4;
+    string additionalInfo = 5;
+}
+
+message DashboardUpdateMsg {
+    UpdateMsgType msgType = 1;
+    int64 idMSB = 2;
+    int64 idLSB = 3;
+    string title = 4;
+    string configuration = 5;
+}
+
+message DeviceUpdateMsg {
+    UpdateMsgType msgType = 1;
+    string name = 2;
+    string type = 3;
+}
+
+message AssetUpdateMsg {
+    UpdateMsgType msgType = 1;
+    string name = 2;
+    string type = 3;
+}
+
+message EntityViewUpdateMsg {
+    UpdateMsgType msgType = 1;
+    string name = 2;
+    string type = 3;
+    string relatedName = 4;
+    string relatedType = 5;
+    EntityType relatedEntityType = 6;
+}
+
+message AlarmUpdateMsg {
+    UpdateMsgType msgType = 1;
+    string name = 2;
+    string type = 3;
+    string originatorType = 4;
+    string originatorName = 5;
+    string severity = 6;
+    string status = 7;
+    int64 startTs = 8;
+    int64 endTs = 9;
+    int64 ackTs = 10;
+    int64 clearTs = 11;
+    string details = 12;
+    bool propagate = 13;
+}
+
+message CustomerUpdateMsg {
+    UpdateMsgType msgType = 1;
+    int64 idMSB = 2;
+    int64 idLSB = 3;
+    string title = 4;
+    string country = 5;
+    string state = 6;
+    string city = 7;
+    string address = 8;
+    string address2 = 9;
+    string zip = 10;
+    string phone = 11;
+    string email = 12;
+    string additionalInfo = 13;
+}
+
+message UserUpdateMsg {
+    UpdateMsgType msgType = 1;
+    int64 idMSB = 2;
+    int64 idLSB = 3;
+    int64 customerIdMSB = 4;
+    int64 customerIdLSB = 5;
+    string email = 7;
+    string authority = 8;
+    string firstName = 9;
+    string lastName = 10;
+    string additionalInfo = 11;
+    bool enabled = 12;
+    string password = 13;
+}
+
+enum EntityType {
+    DEVICE = 0;
+    ASSET = 1;
+}
+
+/**
+ * Main Messages;
+ */
+
+message UplinkMsg {
+    int32 uplinkMsgId = 1;
+    repeated EntityDataProto entityData = 2;
+    repeated DeviceUpdateMsg deviceUpdateMsg = 3;
+    repeated AlarmUpdateMsg alarmUpdatemsg = 4;
+}
+
+message UplinkResponseMsg {
+    bool success = 1;
+    string errorMsg = 2;
+}
+
+message DownlinkMsg {
+    int32 downlinkMsgId = 1;
+    repeated EntityDataProto entityData = 2;
+}
