@@ -138,16 +138,10 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
 
     @Override
     public ListenableFuture<List<Void>> removeAll(TenantId tenantId, EntityId entityId, String attributeType, List<String> keys) {
-        List<AttributeKvEntity> entitiesToDelete = keys
-                .stream()
-                .map(key -> {
-                    AttributeKvEntity entityToDelete = new AttributeKvEntity();
-                    entityToDelete.setId(new AttributeKvCompositeKey(entityId.getEntityType(), fromTimeUUID(entityId.getId()), attributeType, key));
-                    return entityToDelete;
-                }).collect(Collectors.toList());
-
         return service.submit(() -> {
-            attributeKvRepository.deleteAll(entitiesToDelete);
+            keys.forEach(key ->
+                    attributeKvRepository.delete(entityId.getEntityType(), UUIDConverter.fromTimeUUID(entityId.getId()), attributeType, key)
+            );
             return null;
         });
     }
