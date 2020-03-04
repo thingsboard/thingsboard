@@ -34,7 +34,7 @@ public abstract class AbstractRelationInsertRepository implements RelationInsert
         if (entity.getAdditionalInfo() == null) {
             nativeQuery.setParameter("additionalInfo", null);
         } else {
-            nativeQuery.setParameter("additionalInfo", entity.getAdditionalInfo().asText());
+            nativeQuery.setParameter("additionalInfo", entity.getAdditionalInfo().toString());
         }
         return nativeQuery
                 .setParameter("fromId", entity.getFromId())
