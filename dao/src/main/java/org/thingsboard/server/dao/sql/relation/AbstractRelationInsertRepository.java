@@ -31,7 +31,7 @@ public abstract class AbstractRelationInsertRepository implements RelationInsert
 
     protected Query getQuery(RelationEntity entity, String query) {
         Query nativeQuery = entityManager.createNativeQuery(query, RelationEntity.class);
-        if (entity.getAdditionalInfo().isNull()) {
+        if (entity.getAdditionalInfo() == null) {
             nativeQuery.setParameter("additionalInfo", null);
         } else {
             nativeQuery.setParameter("additionalInfo", entity.getAdditionalInfo().asText());
