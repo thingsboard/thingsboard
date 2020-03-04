@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
+import org.thingsboard.server.dao.util.NoSqlAnyDao;
 import org.thingsboard.server.dao.util.SqlDao;
 import org.thingsboard.server.service.install.EntityDatabaseSchemaService;
 
@@ -42,6 +43,7 @@ import static org.thingsboard.server.service.install.migrate.CassandraToSqlColum
 @Service
 @Profile("install")
 @SqlDao
+@NoSqlAnyDao
 @Slf4j
 public class CassandraEntitiesToSqlMigrateService implements EntitiesMigrateService {
 
