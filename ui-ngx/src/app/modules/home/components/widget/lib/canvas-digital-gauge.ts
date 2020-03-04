@@ -20,7 +20,7 @@ import BaseGauge = CanvasGauges.BaseGauge;
 import { FontStyle, FontWeight } from '@home/components/widget/lib/settings.models';
 import * as tinycolor_ from 'tinycolor2';
 import { ColorFormats } from 'tinycolor2';
-import { isDefined, isUndefined } from '@core/utils';
+import { isDefined, isString, isUndefined } from '@core/utils';
 
 const tinycolor = tinycolor_;
 
@@ -32,13 +32,20 @@ export interface DigitalGaugeColorRange {
   rgbString: string;
 }
 
+export interface colorLevelSetting {
+  value: number;
+  color: string;
+}
+
+export type levelColors = Array<string | colorLevelSetting>;
+
 export interface CanvasDigitalGaugeOptions extends GenericOptions {
   gaugeType?: GaugeType;
   gaugeWithScale?: number;
   dashThickness?: number;
   roundedLineCap?: boolean;
   gaugeColor?: string;
-  levelColors?: string[];
+  levelColors?: levelColors;
   symbol?: string;
   label?: string;
   hideValue?: boolean;
@@ -229,26 +236,30 @@ export class CanvasDigitalGauge extends BaseGauge {
     }
 
     const colorsCount = options.levelColors.length;
+    const isColorProperty = isString(options.levelColors[0]);
     const inc = colorsCount > 1 ? (1 / (colorsCount - 1)) : 1;
     options.colorsRange = [];
     if (options.neonGlowBrightness) {
       options.neonColorsRange = [];
     }
     for (let i = 0; i < options.levelColors.length; i++) {
-      const percentage = inc * i;
-      let tColor = tinycolor(options.levelColors[i]);
-      options.colorsRange[i] = {
-        pct: percentage,
-        color: tColor.toRgb(),
-        rgbString: tColor.toRgbString()
-      };
-      if (options.neonGlowBrightness) {
-        tColor = tinycolor(options.levelColors[i]).brighten(options.neonGlowBrightness);
-        options.neonColorsRange[i] = {
+      let levelColor: any = options.levelColors[i];
+      if (levelColor !== null) {
+        let percentage = isColorProperty ? inc * i : CanvasDigitalGauge.normalizeValue(levelColor.value, options.minValue, options.maxValue);
+        let tColor = tinycolor(isColorProperty ? levelColor : levelColor.color);
+        options.colorsRange[i] = {
           pct: percentage,
           color: tColor.toRgb(),
           rgbString: tColor.toRgbString()
         };
+        if (options.neonGlowBrightness) {
+          tColor = tinycolor(isColorProperty ? levelColor : levelColor.color).brighten(options.neonGlowBrightness);
+          options.neonColorsRange[i] = {
+            pct: percentage,
+            color: tColor.toRgb(),
+            rgbString: tColor.toRgbString()
+          };
+        }
       }
     }
 
@@ -260,6 +271,17 @@ export class CanvasDigitalGauge extends BaseGauge {
     }
 
     return options;
+  }
+
+  static normalizeValue (value: number, min: number, max: number): number {
+    let normalValue = (value - min) / (max - min);
+    if (normalValue <= 0) {
+      return 0;
+    }
+    if (normalValue >= 1) {
+      return 1;
+    }
+    return normalValue;
   }
 
   private initValueClone() {
