@@ -23,5 +23,6 @@ public enum CassandraToSqlColumnType {
     BIGINT,
     BOOLEAN,
     STRING,
+    JSON,
     ENUM_TO_INT
 }

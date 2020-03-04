@@ -80,8 +80,8 @@ public class ThingsboardInstallService {
                 if ("2.5.0-cassandra".equals(upgradeFromVersion)) {
                     log.info("Migrating ThingsBoard entities data from cassandra to SQL database ...");
                     entitiesMigrateService.migrate();
-                    log.info("Updating system data...");
-                    systemDataLoaderService.updateSystemWidgets();
+                    // log.info("Updating system data...");
+                    // systemDataLoaderService.updateSystemWidgets();
                 } else {
                     switch (upgradeFromVersion) {
                         case "1.2.3": //NOSONAR, Need to execute gradual upgrade starting from upgradeFromVersion

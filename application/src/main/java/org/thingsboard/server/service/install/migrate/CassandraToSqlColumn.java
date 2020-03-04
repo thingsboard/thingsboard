@@ -22,14 +22,21 @@ import org.thingsboard.server.common.data.UUIDConverter;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.regex.Pattern;
 
 @Data
 public class CassandraToSqlColumn {
 
+    private static final ThreadLocal<Pattern> PATTERN_THREAD_LOCAL = ThreadLocal.withInitial(() -> Pattern.compile(String.valueOf(Character.MIN_VALUE)));
+    private static final String EMPTY_STR = "";
+
+    private int index;
+    private int sqlIndex;
     private String cassandraColumnName;
     private String sqlColumnName;
     private CassandraToSqlColumnType type;
     private int sqlType;
+    private int size;
     private Class<? extends Enum> enumClass;
 
     public static CassandraToSqlColumn idColumn(String name) {
@@ -54,6 +61,10 @@ public class CassandraToSqlColumn {
 
     public static CassandraToSqlColumn booleanColumn(String name) {
         return new CassandraToSqlColumn(name, CassandraToSqlColumnType.BOOLEAN);
+    }
+
+    public static CassandraToSqlColumn jsonColumn(String name) {
+        return new CassandraToSqlColumn(name, CassandraToSqlColumnType.JSON);
     }
 
     public static CassandraToSqlColumn enumToIntColumn(String name, Class<? extends Enum> enumClass) {
@@ -82,36 +93,9 @@ public class CassandraToSqlColumn {
         this.sqlColumnName = sqlColumnName;
         this.type = type;
         this.enumClass = enumClass;
-        switch (this.type) {
-            case ID:
-            case STRING:
-                this.sqlType = Types.VARCHAR;
-                break;
-            case DOUBLE:
-                this.sqlType = Types.DOUBLE;
-                break;
-            case INTEGER:
-            case ENUM_TO_INT:
-                this.sqlType = Types.INTEGER;
-                break;
-            case FLOAT:
-                this.sqlType = Types.FLOAT;
-                break;
-            case BIGINT:
-                this.sqlType = Types.BIGINT;
-                break;
-            case BOOLEAN:
-                this.sqlType = Types.BOOLEAN;
-                break;
-        }
     }
 
-    public void prepareColumnValue(Row row, PreparedStatement sqlInsertStatement, int index) throws SQLException {
-        String value = this.getColumnValue(row, index);
-        this.setColumnValue(sqlInsertStatement, index, value);
-    }
-
-    private String getColumnValue(Row row, int index) {
+    public String getColumnValue(Row row) {
         if (row.isNull(index)) {
             return null;
         } else {
@@ -129,45 +113,55 @@ public class CassandraToSqlColumn {
                 case BOOLEAN:
                     return Boolean.toString(row.getBool(index));
                 case STRING:
+                case JSON:
                 case ENUM_TO_INT:
                 default:
-                   return row.getString(index);
+                    String value = row.getString(index);
+                    return this.replaceNullChars(value);
             }
         }
     }
 
-    private void setColumnValue(PreparedStatement sqlInsertStatement, int index, String value) throws SQLException {
+    public void setColumnValue(PreparedStatement sqlInsertStatement, String value) throws SQLException {
         if (value == null) {
-            sqlInsertStatement.setNull(index, this.sqlType);
+            sqlInsertStatement.setNull(this.sqlIndex, this.sqlType);
         } else {
             switch (this.type) {
                 case DOUBLE:
-                    sqlInsertStatement.setDouble(index, Double.parseDouble(value));
+                    sqlInsertStatement.setDouble(this.sqlIndex, Double.parseDouble(value));
                     break;
                 case INTEGER:
-                    sqlInsertStatement.setInt(index, Integer.parseInt(value));
+                    sqlInsertStatement.setInt(this.sqlIndex, Integer.parseInt(value));
                     break;
                 case FLOAT:
-                    sqlInsertStatement.setFloat(index, Float.parseFloat(value));
+                    sqlInsertStatement.setFloat(this.sqlIndex, Float.parseFloat(value));
                     break;
                 case BIGINT:
-                    sqlInsertStatement.setLong(index, Long.parseLong(value));
+                    sqlInsertStatement.setLong(this.sqlIndex, Long.parseLong(value));
                     break;
                 case BOOLEAN:
-                    sqlInsertStatement.setBoolean(index, Boolean.parseBoolean(value));
+                    sqlInsertStatement.setBoolean(this.sqlIndex, Boolean.parseBoolean(value));
                     break;
                 case ENUM_TO_INT:
                     Enum enumVal = Enum.valueOf(this.enumClass, value);
                     int intValue = enumVal.ordinal();
-                    sqlInsertStatement.setInt(index, intValue);
+                    sqlInsertStatement.setInt(this.sqlIndex, intValue);
                     break;
+                case JSON:
                 case STRING:
                 case ID:
                 default:
-                    sqlInsertStatement.setString(index, value);
+                    sqlInsertStatement.setString(this.sqlIndex, value);
                     break;
             }
         }
+    }
+
+    private String replaceNullChars(String strValue) {
+        if (strValue != null) {
+            return PATTERN_THREAD_LOCAL.get().matcher(strValue).replaceAll(EMPTY_STR);
+        }
+        return strValue;
     }
 
 }
