@@ -21,10 +21,10 @@ export default abstract class LeafletMap {
     ready$: Observable<L.Map> = this.map$.pipe(filter(map => !!map));
     options: MapOptions;
     isMarketCluster;
+    bounds: L.LatLngBounds;
 
 
     constructor($container: HTMLElement, options: MapOptions) {
-        console.log("LeafletMap -> constructor -> options", options)
         this.options = options;
     }
 
@@ -52,6 +52,11 @@ export default abstract class LeafletMap {
 
     public setMap(map: L.Map) {
         this.map = map;
+        if (this.options.useDefaultCenterPosition) {
+            this.map.panTo(this.options.defaultCenterPosition);
+            this.bounds = map.getBounds();
+        }
+        else this.bounds = new L.LatLngBounds(null, null)
         this.map$.next(this.map);
     }
 
@@ -147,7 +152,9 @@ export default abstract class LeafletMap {
             let defaultSettings: MarkerSettings = {
                 color: '#FD2785'
             }
-            this.markers.set(key, new Marker(this.map, location, { ...defaultSettings, ...settings }))
+            const newMarker = new Marker(this.map, location, { ...defaultSettings, ...settings });
+            this.map.fitBounds(this.bounds.extend(newMarker.leafletMarker.getLatLng()));
+            this.markers.set(key, newMarker);
         });
     }
 
@@ -172,7 +179,6 @@ export default abstract class LeafletMap {
         }
 
         else {
-            this.map$
             this.createPolyline(polyData.map(data => this.convertPosition(data)), this.options);
         }
 
@@ -187,8 +193,13 @@ export default abstract class LeafletMap {
     }
 
     createPolyline(locations, settings) {
-        this.ready$.subscribe(() =>
-            this.poly = new Polyline(this.map, locations, settings)
-        )
+        this.ready$.subscribe(() => {
+            this.poly = new Polyline(this.map, locations, settings);
+            const bounds = this.bounds.extend(this.poly.leafletPoly.getBounds());
+            if (bounds.isValid()) {
+                this.map.fitBounds(bounds);
+                this.bounds = bounds;
+            }
+        });
     }
 }

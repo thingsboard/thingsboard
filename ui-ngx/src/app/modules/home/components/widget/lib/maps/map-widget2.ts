@@ -55,9 +55,7 @@ TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
     onInit() {
     }
 
-    update() {  
-        console.log(this.data,parseData(this.data) );
-              
+    update() {                
         if (this.drawRoutes)
             this.map.updatePolylines(parseArray(this.data));
         this.map.updateMarkers(parseData(this.data));

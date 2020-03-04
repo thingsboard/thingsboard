@@ -1,3 +1,5 @@
+import { LatLngExpression } from 'leaflet';
+
 export interface MapOptions {
     initCallback?: Function,
     defaultZoomLevel?: number,
@@ -11,8 +13,9 @@ export interface MapOptions {
     mapProvider: MapProviders,
     mapUrl?: string;
     credentials?: any, // declare credentials format
-    defaultCenterPosition?: L.LatLngExpression,
-    markerClusteringSetting?
+    defaultCenterPosition?: LatLngExpression,
+    markerClusteringSetting?,
+    useDefaultCenterPosition?: boolean
 }
 
 export enum MapProviders {
