@@ -27,11 +27,14 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmId;
+import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.util.UUID;
 
 import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
 import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
@@ -41,6 +44,7 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
         type = ComponentType.FILTER,
         name = "checks alarm status",
         configClazz = TbCheckAlarmStatusNodeConfig.class,
+        relationTypes = {"True", "False"},
         nodeDescription = "Checks alarm status.",
         nodeDetails = "If the alarm status matches the specified one - msg is success if does not match - msg is failure.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
@@ -64,18 +68,22 @@ public class TbCheckAlarmStatusNode implements TbNode {
             Futures.addCallback(latest, new FutureCallback<Alarm>() {
                 @Override
                 public void onSuccess(@Nullable Alarm result) {
-                    boolean isPresent = false;
-                    for (String alarmStatus : config.getAlarmStatusList()) {
-                        if (alarm.getStatus().name().equals(alarmStatus)) {
-                            isPresent = true;
-                            break;
+                    if (result != null) {
+                        boolean isPresent = false;
+                        for (AlarmStatus alarmStatus : config.getAlarmStatusList()) {
+                            if (alarm.getStatus() == alarmStatus) {
+                                isPresent = true;
+                                break;
+                            }
                         }
-                    }
 
-                    if (isPresent) {
-                        ctx.tellNext(msg, SUCCESS);
+                        if (isPresent) {
+                            ctx.tellNext(msg, "True");
+                        } else {
+                            ctx.tellNext(msg, "False");
+                        }
                     } else {
-                        ctx.tellNext(msg, FAILURE);
+                        ctx.tellFailure(msg, new TbNodeException("No such Alarm found."));
                     }
                 }
 
