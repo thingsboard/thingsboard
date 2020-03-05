@@ -186,7 +186,6 @@ export class JsonFormComponent implements OnInit, ControlValueAccessor, Validato
       val = undefined;
     }
     if (JsonFormUtils.updateValue(key, this.model, val) || forceUpdate) {
-      this.formProps.model = this.model;
       this.isModelValid = this.validateModel();
       this.updateView();
     }
@@ -233,7 +232,7 @@ export class JsonFormComponent implements OnInit, ControlValueAccessor, Validato
     this.formProps.schema = this.schema;
     this.formProps.form = this.form;
     this.formProps.groupInfoes = this.groupInfoes;
-    this.formProps.model = deepClone(this.model);
+    this.formProps.model = this.model;
     this.renderReactSchemaForm();
   }
 

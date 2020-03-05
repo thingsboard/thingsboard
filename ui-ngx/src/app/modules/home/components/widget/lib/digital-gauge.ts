@@ -16,14 +16,20 @@
 
 import * as CanvasGauges from 'canvas-gauges';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { DigitalGaugeSettings, digitalGaugeSettingsSchema } from '@home/components/widget/lib/digital-gauge.models';
+import {
+  colorLevelSetting,
+  DigitalGaugeSettings,
+  digitalGaugeSettingsSchema
+} from '@home/components/widget/lib/digital-gauge.models';
 import * as tinycolor_ from 'tinycolor2';
 import { isDefined } from '@core/utils';
 import { prepareFontSettings } from '@home/components/widget/lib/settings.models';
 import { CanvasDigitalGauge, CanvasDigitalGaugeOptions } from '@home/components/widget/lib/canvas-digital-gauge';
 import { DatePipe } from '@angular/common';
-import { JsonSettingsSchema } from '@shared/models/widget.models';
+import {DataKey, Datasource, DatasourceType, JsonSettingsSchema, widgetType} from '@shared/models/widget.models';
 import GenericOptions = CanvasGauges.GenericOptions;
+import {IWidgetSubscription, WidgetSubscriptionOptions} from "@core/api/widget-api.models";
+import {DataKeyType} from "@shared/models/telemetry/telemetry.models";
 
 const tinycolor = tinycolor_;
 
@@ -32,6 +38,7 @@ const digitalGaugeSettingsSchemaValue = digitalGaugeSettingsSchema;
 export class TbCanvasDigitalGauge {
 
   private localSettings: DigitalGaugeSettings;
+  private levelColorsSourcesSubscription: IWidgetSubscription;
 
   private gauge: CanvasDigitalGauge;
 
@@ -65,10 +72,16 @@ export class TbCanvasDigitalGauge {
     this.localSettings.gaugeWidthScale = settings.gaugeWidthScale || 0.75;
     this.localSettings.gaugeColor = settings.gaugeColor || tinycolor(keyColor).setAlpha(0.2).toRgbString();
 
-    if (!settings.levelColors || settings.levelColors.length <= 0) {
-      this.localSettings.levelColors = [keyColor];
+    this.localSettings.useFixedLevelColor = settings.useFixedLevelColor || false;
+    if (!settings.useFixedLevelColor) {
+      if (!settings.levelColors || settings.levelColors.length <= 0) {
+        this.localSettings.levelColors = [keyColor];
+      } else {
+        this.localSettings.levelColors = settings.levelColors.slice();
+      }
     } else {
-      this.localSettings.levelColors = settings.levelColors.slice();
+      this.localSettings.levelColors = [keyColor];
+      this.localSettings.fixedLevelColors = settings.fixedLevelColors || [];
     }
 
     this.localSettings.decimals = isDefined(dataKey.decimals) ? dataKey.decimals :
@@ -176,6 +189,130 @@ export class TbCanvasDigitalGauge {
     };
 
     this.gauge = new CanvasDigitalGauge(gaugeData).draw();
+    this.init();
+  }
+
+  init() {
+    if (this.localSettings.useFixedLevelColor) {
+      if (this.localSettings.fixedLevelColors && this.localSettings.fixedLevelColors.length > 0) {
+        this.localSettings.levelColors = this.settingLevelColorsSubscribe(this.localSettings.fixedLevelColors);
+        this.updateLevelColors(this.localSettings.levelColors);
+      }
+    }
+  }
+
+  settingLevelColorsSubscribe(options) {
+    let levelColorsDatasource: Datasource[] = [];
+    let predefineLevelColors: colorLevelSetting[] = [];
+
+    function setLevelColor(levelSetting, color) {
+      if (levelSetting.valueSource === 'predefinedValue' && isFinite(levelSetting.value)) {
+        predefineLevelColors.push({
+          value: levelSetting.value,
+          color: color
+        })
+      } else if (levelSetting.entityAlias && levelSetting.attribute) {
+        let entityAliasId = this.ctx.aliasController.getEntityAliasId(levelSetting.entityAlias);
+        if (!entityAliasId) {
+          return;
+        }
+
+        let datasource = levelColorsDatasource.find((datasource) => {
+          return datasource.entityAliasId === entityAliasId;
+        });
+
+        let dataKey: DataKey = {
+          type: DataKeyType.attribute,
+          name: levelSetting.attribute,
+          label: levelSetting.attribute,
+          settings: [{
+            color: color,
+            index: predefineLevelColors.length
+          }],
+          _hash: Math.random()
+        };
+
+        if (datasource) {
+          let findDataKey = datasource.dataKeys.find((dataKey) => {
+            return dataKey.name === levelSetting.attribute;
+          });
+
+          if (findDataKey) {
+            findDataKey.settings.push({
+              color: color,
+              index: predefineLevelColors.length
+            });
+          } else {
+            datasource.dataKeys.push(dataKey)
+          }
+        } else {
+          let datasource: Datasource = {
+            type: DatasourceType.entity,
+            name: levelSetting.entityAlias,
+            aliasName: levelSetting.entityAlias,
+            entityAliasId: entityAliasId,
+            dataKeys: [dataKey]
+          };
+          levelColorsDatasource.push(datasource);
+        }
+
+        predefineLevelColors.push(null);
+      }
+    }
+
+    for (let i = 0; i < options.length; i++) {
+      let levelColor = options[i];
+      if (levelColor.from) {
+        setLevelColor.call(this, levelColor.from, levelColor.color);
+      }
+      if (levelColor.to) {
+        setLevelColor.call(this, levelColor.to, levelColor.color);
+      }
+    }
+
+    this.subscribeLevelColorsAttributes(levelColorsDatasource);
+
+    return predefineLevelColors;
+  }
+
+  updateLevelColors(levelColors) {
+    (this.gauge.options as CanvasDigitalGaugeOptions).levelColors = levelColors;
+    this.gauge.options = CanvasDigitalGauge.configure(this.gauge.options);
+    this.gauge.update({} as CanvasDigitalGaugeOptions);
+  }
+
+  subscribeLevelColorsAttributes(datasources: Datasource[]) {
+    let TbCanvasDigitalGauge = this;
+    let levelColorsSourcesSubscriptionOptions: WidgetSubscriptionOptions = {
+      datasources: datasources,
+      useDashboardTimewindow: false,
+      type: widgetType.latest,
+      callbacks: {
+        onDataUpdated: (subscription) => {
+          for (let i = 0; i < subscription.data.length; i++) {
+            let keyData = subscription.data[i];
+            if (keyData && keyData.data && keyData.data[0]) {
+              let attrValue = keyData.data[0][1];
+              if (isFinite(attrValue)) {
+                for (let i = 0; i < keyData.dataKey.settings.length; i++) {
+                  let setting = keyData.dataKey.settings[i];
+                  this.localSettings.levelColors[setting.index] = {
+                    value: attrValue,
+                    color: setting.color
+                  };
+                }
+              }
+            }
+          }
+          this.updateLevelColors(this.localSettings.levelColors);
+        }
+      }
+    };
+    this.ctx.subscriptionApi.createSubscription(levelColorsSourcesSubscriptionOptions, true).subscribe(
+      (subscription) => {
+        TbCanvasDigitalGauge.levelColorsSourcesSubscription = subscription;
+      }
+    );
   }
 
   update() {
