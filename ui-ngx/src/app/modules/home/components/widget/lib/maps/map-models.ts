@@ -26,9 +26,13 @@ export enum MapProviders {
     tencent = 'tencent-map'
 }
 
-export interface MarkerSettings {
+export interface MarkerSettings extends MapOptions {
     showLabel?: boolean,
     draggable?: boolean,
     displayTooltip?: boolean,
-    color?: string
+    color?: string,
+    currentImage?: string;
+    useMarkerImageFunction?: boolean,
+    markerImages?: string[],
+    markerImageFunction?: Function;
 }

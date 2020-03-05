@@ -1,26 +1,31 @@
 import L from 'leaflet';
+import { safeExecute } from './maps-utils';
 
 export class Polyline {
 
     leafletPoly: L.Polyline;
+    dataSources;
+    data;
 
-    constructor(private map: L.Map, locations, settings) {
+    constructor(private map: L.Map, locations, data, dataSources, settings) {
+        this.dataSources = dataSources;
+        this.data = data;
         this.leafletPoly = L.polyline(locations,
-            {
-                color: settings.color,
-                opacity: settings.strokeOpacity,
-                weight: settings.strokeWeight
-            }
+            this.getPolyStyle(settings, data, dataSources)
         ).addTo(this.map);
     }
 
-    updatePolylineColor(settings, color) {
-        var style = {
-            color: color,
+    updatePolyline(settings, data, dataSources) {
+        this.leafletPoly.setStyle(this.getPolyStyle(settings, data, dataSources));
+
+    }
+
+    getPolyStyle(settings, data, dataSources): L.PolylineOptions {
+        return {
+            color: settings.useColorFunction ? safeExecute(settings.colorFunction, [data, dataSources, data[0]?.dsIndex]) : settings.color,
             opacity: settings.strokeOpacity,
             weight: settings.strokeWeight
-        };
-        this.leafletPoly.setStyle(style);
+        }
     }
 
     removePolyline() {

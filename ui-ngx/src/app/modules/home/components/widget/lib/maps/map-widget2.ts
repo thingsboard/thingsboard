@@ -13,8 +13,7 @@ import {
 } from './schemes';
 import { MapWidgetStaticInterface, MapWidgetInterface } from './map-widget.interface';
 import { OpenStreetMap, TencentMap, GoogleMap, HEREMap, ImageMap } from './providers';
-import { WidgetSubscription } from '@app/core/public-api';
-import { parseData, parseArray } from './maps-utils';
+import { parseData, parseArray, parseFunction } from './maps-utils';
 
 export let TbMapWidgetV2: MapWidgetStaticInterface;
 TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
@@ -24,38 +23,45 @@ TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
     data;
 
     constructor(mapProvider: MapProviders, private drawRoutes, ctx, $element) {
-        console.log("TbMapWidgetV2 -> constructor -> ctx", ctx)
-        // console.log(ctx.subscriptions, ctx.data, ctx.datasources);
         this.data = ctx.data;
-        //this.subsciptions.
         if (!$element) {
             $element = ctx.$container[0];
         }
         this.provider = mapProvider;
-        const baseOptions: MapOptions = {
-            initCallback: () => { },
-            defaultZoomLevel: 8,
-            dontFitMapBounds: false,
-            disableScrollZooming: false,
-            minZoomLevel: drawRoutes ? 18 : 15,
-            mapProvider: mapProvider,
-            mapUrl: ctx?.settings?.mapImageUrl,
-            credentials: '',
-            defaultCenterPosition: [0, 0],
-            markerClusteringSetting: null
-        }
         let MapClass = providerSets[mapProvider]?.MapClass;
+        let settings = this.initSettings(ctx?.settings);
         if (!MapClass) {
             return;
         }
-        this.map = new MapClass($element, { ...baseOptions, ...ctx.settings });
+        this.map = new MapClass($element, settings);
         this.schema = providerSets[mapProvider]?.schema;
     }
 
     onInit() {
     }
 
-    update() {                
+    initSettings(settings: any) {
+        const functionParams = ['data', 'dsData', 'dsIndex'];
+        const customOptions = {
+            mapProvider: this.provider,
+            mapUrl: settings?.mapImageUrl,
+            labelFunction: parseFunction(settings.labelFunction, functionParams),
+            tooltipFunction: parseFunction(settings.tooltipFunction, functionParams),
+            colorFunction: parseFunction(settings.colorFunction, functionParams),
+            polygonColorFunction: parseFunction(settings.polygonColorFunction, functionParams),
+            markerImageFunction: parseFunction(settings.markerImageFunction, ['data', 'images', 'dsData', 'dsIndex']),
+            tooltipPattern: settings.tooltipPattern ||
+                "<b>${entityName}</b><br/><br/><b>Latitude:</b> ${" + settings.latKeyName + ":7}<br/><b>Longitude:</b> ${" + settings.lngKeyName + ":7}",
+            label: settings.label || "${entityName}",
+            currentImage: (settings.useMarkerImage && settings.markerImage?.length) ? {
+                url: settings.markerImage,
+                size: settings.markerImageSize || 34
+            } : null
+        }
+        return { ...defaultSettings, ...settings, ...customOptions, }
+    }
+
+    update() {
         if (this.drawRoutes)
             this.map.updatePolylines(parseArray(this.data));
         this.map.updateMarkers(parseData(this.data));
@@ -179,4 +185,39 @@ const providerSets = {
         MapClass: ImageMap,
         schema: imageMapSettingsSchema
     }
+}
+
+const defaultSettings = {
+    xPosKeyName: 'xPos',
+    yPosKeyName: 'yPos',
+    markerOffsetX: 0.5,
+    markerOffsetY: 1,
+    latKeyName: 'latitude',
+    lngKeyName: 'longitude',
+    polygonKeyName: 'coordinates',
+    showLabel: false,
+    showTooltip: false,
+    useDefaultCenterPosition: false,
+    showTooltipAction: "click",
+    autocloseTooltip: false,
+    showPolygon: true,
+    labelColor: '#000000',
+    color: "#FE7569",
+    polygonColor: "#0000ff",
+    polygonStrokeColor: "#fe0001",
+    polygonOpacity: 0.5,
+    polygonStrokeOpacity: 1,
+    polygonStrokeWeight: 1,
+    useLabelFunction: true,
+    markerImages: [],
+    strokeWeight: 2,
+    strokeOpacity: 1.0,
+    initCallback: () => { },
+    defaultZoomLevel: 8,
+    dontFitMapBounds: false,
+    disableScrollZooming: false,
+    minZoomLevel: 16,
+    credentials: '',
+    defaultCenterPosition: [0, 0],
+    markerClusteringSetting: null,
 }

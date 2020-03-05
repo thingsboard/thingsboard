@@ -98,7 +98,7 @@ export default abstract class LeafletMap {
         this.map.invalidateSize(true);
     }
 
-    createTool0tip(marker, dsIndex, settings, markerArgs) {
+    createTooltip(marker, dsIndex, settings, markerArgs) {
         var popup = L.popup();
         popup.setContent('');
         marker.bindPopup(popup, { autoClose: settings.autocloseTooltip, closeOnClick: false });
@@ -139,32 +139,29 @@ export default abstract class LeafletMap {
     updateMarkers(markersData) {
         markersData.forEach(data => {
             if (this.markers.get(data.aliasName)) {
-                this.updateMarker(data.aliasName, this.convertPosition(data), this.options as MarkerSettings)
+                this.updateMarker(data.aliasName, data, markersData, this.options as MarkerSettings)
             }
             else {
-                this.createMarker(data.aliasName, this.convertPosition(data), this.options as MarkerSettings);
+                this.createMarker(data.aliasName, data, markersData, this.options as MarkerSettings);
             }
         });
     }
 
-    private createMarker(key, location, settings: MarkerSettings) {
+    private createMarker(key, data, dataSources, settings: MarkerSettings) {
         this.ready$.subscribe(() => {
-            let defaultSettings: MarkerSettings = {
-                color: '#FD2785'
-            }
-            const newMarker = new Marker(this.map, location, { ...defaultSettings, ...settings });
+            const newMarker = new Marker(this.map, this.convertPosition(data), settings, data, dataSources);
             this.map.fitBounds(this.bounds.extend(newMarker.leafletMarker.getLatLng()));
             this.markers.set(key, newMarker);
         });
     }
 
-    private updateMarker(key, location: L.LatLng, settings: MarkerSettings) {
+    private updateMarker(key, data, dataSources, settings: MarkerSettings) {
         const marker: Marker = this.markers.get(key);
+        let location = this.convertPosition(data)
         if (!location.equals(marker.location)) {
             marker.updateMarkerPosition(location);
         }
-        //other implements later
-
+        marker.updateMarkerIcon(settings, data, dataSources);
     }
 
     private deleteMarker() {
@@ -173,28 +170,34 @@ export default abstract class LeafletMap {
 
     //polyline
 
-    updatePolylines(polyData) {
-        if (this.poly) {
-
-        }
-
-        else {
-            this.createPolyline(polyData.map(data => this.convertPosition(data)), this.options);
-        }
-
-        /*  markersData.forEach(data => {
-              if (this.markers.get(data.aliasName)) {
-                  this.updateMarker(data.aliasName, this.convertPosition(data), this.options as MarkerSettings)
-              }
-              else {
-                  this.createMarker(data.aliasName, this.convertPosition(data), this.options as MarkerSettings);
-              }
-          });*/
+    updatePolylines(polyData: Array<Array<any>>) {
+        polyData.forEach(data => {
+            if (data.length) {
+                let dataSource = polyData.map(arr=>arr[0]);
+                if (this.poly) {
+                    this.updatePolyline(data, dataSource, this.options);
+                }
+                else {
+                    this.createPolyline(data, dataSource, this.options);
+                }
+            }
+        })
     }
 
-    createPolyline(locations, settings) {
+    createPolyline(data, dataSources, settings) {
         this.ready$.subscribe(() => {
-            this.poly = new Polyline(this.map, locations, settings);
+            this.poly = new Polyline(this.map, data.map(data => this.convertPosition(data)), data, dataSources, settings);
+            const bounds = this.bounds.extend(this.poly.leafletPoly.getBounds());
+            if (bounds.isValid()) {
+                this.map.fitBounds(bounds);
+                this.bounds = bounds;
+            }
+        });
+    }
+
+    updatePolyline(data, dataSources, settings) {
+        this.ready$.subscribe(() => {
+            this.poly.updatePolyline(settings, data, dataSources);
             const bounds = this.bounds.extend(this.poly.leafletPoly.getBounds());
             if (bounds.isValid()) {
                 this.map.fitBounds(bounds);

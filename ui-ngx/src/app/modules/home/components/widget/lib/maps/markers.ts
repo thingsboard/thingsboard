@@ -1,7 +1,6 @@
 import L from 'leaflet';
-import { createTooltip } from './maps-utils';
+import { createTooltip, safeExecute } from './maps-utils';
 import { MarkerSettings } from './map-models';
-import { Observable } from 'rxjs';
 import { aspectCache } from '@app/core/utils';
 
 export class Marker {
@@ -11,15 +10,19 @@ export class Marker {
     tooltipOffset;
     tooltip;
     location;
+    data;
+    dataSources;
 
-    constructor(private map: L.Map, location: L.LatLngExpression, settings: MarkerSettings, onClickListener?, markerArgs?, onDragendListener?) {
+    constructor(private map: L.Map, location: L.LatLngExpression, public settings: MarkerSettings, data, dataSources, onClickListener?, markerArgs?, onDragendListener?) {
         //this.map = map;
         this.location = location;
+        this.data = data;
+        this.dataSources = dataSources;
         this.leafletMarker = L.marker(location, {
             draggable: settings.draggable
         });
 
-        this.createMarkerIcon(settings, (iconInfo) => {
+        this.createMarkerIcon(dataSources, (iconInfo) => {
             this.leafletMarker.setIcon(iconInfo.icon);
             if (settings.showLabel) {
                 this.tooltipOffset = [0, -iconInfo.size[1] + 10];
@@ -44,7 +47,7 @@ export class Marker {
 
     }
 
-    updateMarkerPosition(position: L.LatLngExpression){
+    updateMarkerPosition(position: L.LatLngExpression) {
         this.leafletMarker.setLatLng(position);
     }
 
@@ -61,8 +64,9 @@ export class Marker {
         });
     }
 
-    updateMarkerIcon(settings) {
-        this.createMarkerIcon(settings, (iconInfo) => {
+    updateMarkerIcon(settings, data, dataSources) {
+        this.data = data;
+        this.createMarkerIcon(dataSources, (iconInfo) => {
             this.leafletMarker.setIcon(iconInfo.icon);
             if (settings.showLabel) {
                 this.tooltipOffset = [0, -iconInfo.size[1] + 10];
@@ -71,10 +75,9 @@ export class Marker {
         });
     }
 
-
-
-    createMarkerIcon(settings, onMarkerIconReady) {
-        var currentImage = settings.currentImage;
+    createMarkerIcon(dataSources, onMarkerIconReady) {
+        const currentImage = this.settings.useMarkerImageFunction ?
+            safeExecute(this.settings.markerImageFunction, [this.data, this.settings.markerImages, dataSources, this.data.dsIndex]) : this.settings.currentImage;
         // var opMap = this;
         if (currentImage && currentImage.url) {
             aspectCache(currentImage.url).subscribe(
@@ -101,12 +104,12 @@ export class Marker {
                         };
                         onMarkerIconReady(iconInfo);
                     } else {
-                        this.createDefaultMarkerIcon(settings.color, onMarkerIconReady);
+                        this.createDefaultMarkerIcon(this.settings.color, onMarkerIconReady);
                     }
                 }
             );
         } else {
-            this.createDefaultMarkerIcon(settings.color, onMarkerIconReady);
+            this.createDefaultMarkerIcon(this.settings.color, onMarkerIconReady);
         }
     }
 
