@@ -117,18 +117,18 @@ export default class CanvasDigitalGauge extends canvasGauges.BaseGauge {
             if (levelColor !== null) {
                 let percentage = isColorProperty ? inc * i : CanvasDigitalGauge.normalizeValue(levelColor.value, options.minValue, options.maxValue);
                 let tColor = tinycolor(isColorProperty ? levelColor : levelColor.color);
-                options.colorsRange[i] = {
+                options.colorsRange.push({
                     pct: percentage,
                     color: tColor.toRgb(),
                     rgbString: tColor.toRgbString()
-                };
+                });
                 if (options.neonGlowBrightness) {
                     tColor = tinycolor(isColorProperty ? levelColor : levelColor.color).brighten(options.neonGlowBrightness);
-                    options.neonColorsRange[i] = {
+                    options.neonColorsRange.push({
                         pct: percentage,
                         color: tColor.toRgb(),
                         rgbString: tColor.toRgbString()
-                    };
+                    });
                 }
             }
         }
