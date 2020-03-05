@@ -74,6 +74,7 @@ export default function EntityTypeListDirective($compile, $templateCache, $q, $m
         scope.fetchEntityTypes = function(searchText) {
             var deferred = $q.defer();
             var entityTypes = $filter('filter')(scope.entityTypesList, {name: searchText});
+            entityTypes = entityTypes.filter(type => !(ngModelCtrl.$viewValue.includes(type.value)));
             deferred.resolve(entityTypes);
             return deferred.promise;
         }

@@ -63,8 +63,17 @@ export default function EntitySubtypeListDirective($compile, $templateCache, $q,
             var deferred = $q.defer();
             loadSubTypes().then(
                 function success(subTypes) {
-                    var result = $filter('filter')(subTypes, {'$': searchText});
-                    if (result && result.length) {
+                    var result = subTypes;
+                    if(ngModelCtrl.$viewValue && ngModelCtrl.$viewValue.length) {
+                        result = result.filter(subType => !(ngModelCtrl.$viewValue.includes(subType)));
+                    }
+                    result = $filter('filter')(result, {'$': searchText});
+
+                    if(!result) {
+                        result = [];
+                    }
+
+                    if (result || result.length) {
                         deferred.resolve(result);
                     } else {
                         deferred.resolve([searchText]);
