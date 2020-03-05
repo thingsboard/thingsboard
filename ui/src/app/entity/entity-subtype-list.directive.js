@@ -73,7 +73,7 @@ export default function EntitySubtypeListDirective($compile, $templateCache, $q,
                         result = [];
                     }
 
-                    if (result || result.length) {
+                    if (result) {
                         deferred.resolve(result);
                     } else {
                         deferred.resolve([searchText]);
