@@ -1,7 +1,7 @@
 import L from 'leaflet';
-import { createTooltip, safeExecute, parseFunction } from './maps-utils';
 import { MarkerSettings } from './map-models';
-import { aspectCache } from '@app/core/utils';
+import { aspectCache, safeExecute, parseFunction } from '@app/core/utils';
+import { createTooltip } from './maps-utils';
 
 export class Marker {
 

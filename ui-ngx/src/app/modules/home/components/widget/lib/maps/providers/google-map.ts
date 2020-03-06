@@ -14,7 +14,7 @@ export class GoogleMap extends LeafletMap {
         this.loadGoogle(() => {
             const map = L.map($container).setView(options?.defaultCenterPosition, options?.defaultZoomLevel);
             var roads = (L.gridLayer as any).googleMutant({
-                type: options?.gmDefaultMapType || 'roadmap'	// valid values are 'roadmap', 'satellite', 'terrain' and 'hybrid'
+                type: options?.gmDefaultMapType || 'roadmap'
             }).addTo(map);
             super.setMap(map);
         }, options.credentials.apiKey);

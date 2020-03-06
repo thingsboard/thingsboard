@@ -1,5 +1,5 @@
 import L from 'leaflet';
-import { safeExecute } from './maps-utils';
+import { safeExecute } from '@app/core/utils';
 
 export class Polyline {
 

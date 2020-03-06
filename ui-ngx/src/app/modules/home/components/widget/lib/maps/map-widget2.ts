@@ -14,10 +14,9 @@ import {
 } from './schemes';
 import { MapWidgetStaticInterface, MapWidgetInterface } from './map-widget.interface';
 import { OpenStreetMap, TencentMap, GoogleMap, HEREMap, ImageMap } from './providers';
-import { parseData, parseArray, parseFunction } from './maps-utils';
+import { parseFunction, parseArray, parseData } from '@app/core/utils';
 
-export let TbMapWidgetV2: MapWidgetStaticInterface;
-TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
+export class MapWidgetController implements MapWidgetInterface {
 
     map: LeafletMap;
     provider: MapProviders;
@@ -200,6 +199,9 @@ TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
     onDestroy() {
     }
 }
+
+export let TbMapWidgetV2: MapWidgetStaticInterface = MapWidgetController;
+
 
 const providerSets = {
     'openstreet-map': {
