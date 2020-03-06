@@ -78,7 +78,7 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
                     loadSql(conn);
                     boolean versionValid = checkVersion(conn);
                     if (!versionValid) {
-                        log.info("PostgreSQL version should be at least more than 9.6!");
+                        log.info("PostgreSQL version should be at least more than 11!");
                         log.info("Please upgrade your PostgreSQL and restart the script!");
                     } else {
                         log.info("PostgreSQL version is valid!");
