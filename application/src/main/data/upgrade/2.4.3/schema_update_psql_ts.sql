@@ -14,33 +14,27 @@
 -- limitations under the License.
 --
 
--- select check_version();
+-- call check_version();
 
-CREATE OR REPLACE FUNCTION check_version() RETURNS boolean AS $$
+CREATE OR REPLACE PROCEDURE check_version(INOUT valid_version boolean) LANGUAGE plpgsql AS $BODY$
 DECLARE
     current_version integer;
-    valid_version boolean;
 BEGIN
     RAISE NOTICE 'Check the current installed PostgreSQL version...';
     SELECT current_setting('server_version_num') INTO current_version;
-    IF current_version < 100000 THEN
-        valid_version := FALSE;
-    ELSE
-        valid_version := TRUE;
-    END IF;
-    IF valid_version = FALSE THEN
-        RAISE NOTICE 'Postgres version should be at least more than 10!';
-    ELSE
+    IF current_version > 110000 THEN
         RAISE NOTICE 'PostgreSQL version is valid!';
         RAISE NOTICE 'Schema update started...';
+        SELECT true INTO valid_version;
+    ELSE
+        RAISE NOTICE 'Postgres version should be at least more than 10!';
     END IF;
-    RETURN valid_version;
 END;
-$$ LANGUAGE 'plpgsql';
+$BODY$;
 
--- select create_partition_ts_kv_table();
+-- call create_partition_ts_kv_table();
 
-CREATE OR REPLACE FUNCTION create_partition_ts_kv_table() RETURNS VOID AS $$
+CREATE OR REPLACE PROCEDURE create_partition_ts_kv_table() LANGUAGE plpgsql AS $$
 
 BEGIN
   ALTER TABLE ts_kv
@@ -57,11 +51,11 @@ BEGIN
   ALTER TABLE ts_kv
     ALTER COLUMN key TYPE integer USING key::integer;
 END;
-$$ LANGUAGE 'plpgsql';
+$$;
 
--- select create_new_ts_kv_latest_table();
+-- call create_new_ts_kv_latest_table();
 
-CREATE OR REPLACE FUNCTION create_new_ts_kv_latest_table() RETURNS VOID AS $$
+CREATE OR REPLACE PROCEDURE create_new_ts_kv_latest_table() LANGUAGE plpgsql AS $$
 
 BEGIN
   ALTER TABLE ts_kv_latest
@@ -81,13 +75,13 @@ BEGIN
   ALTER TABLE ts_kv_latest
     ADD CONSTRAINT ts_kv_latest_pkey PRIMARY KEY (entity_id, key);
 END;
-$$ LANGUAGE 'plpgsql';
+$$;
 
 
--- select create_partitions();
+-- call create_partitions();
 
-CREATE OR REPLACE FUNCTION create_partitions() RETURNS VOID AS
-$$
+CREATE OR REPLACE PROCEDURE create_partitions() LANGUAGE plpgsql AS $$
+
 DECLARE
     partition_date varchar;
     from_ts        bigint;
@@ -111,11 +105,11 @@ BEGIN
 
     CLOSE key_cursor;
 END;
-$$ language 'plpgsql';
+$$;
 
--- select create_ts_kv_dictionary_table();
+-- call create_ts_kv_dictionary_table();
 
-CREATE OR REPLACE FUNCTION create_ts_kv_dictionary_table() RETURNS VOID AS $$
+CREATE OR REPLACE PROCEDURE create_ts_kv_dictionary_table() LANGUAGE plpgsql AS $$
 
 BEGIN
   CREATE TABLE IF NOT EXISTS ts_kv_dictionary
@@ -125,12 +119,12 @@ BEGIN
     CONSTRAINT ts_key_id_pkey PRIMARY KEY (key)
   );
 END;
-$$ LANGUAGE 'plpgsql';
+$$;
 
--- select insert_into_dictionary();
+-- call insert_into_dictionary();
 
-CREATE OR REPLACE FUNCTION insert_into_dictionary() RETURNS VOID AS
-$$
+CREATE OR REPLACE PROCEDURE insert_into_dictionary() LANGUAGE plpgsql AS $$
+
 DECLARE
     insert_record RECORD;
     key_cursor CURSOR FOR SELECT DISTINCT key
@@ -150,12 +144,11 @@ BEGIN
     END LOOP;
     CLOSE key_cursor;
 END;
-$$ language 'plpgsql';
+$$;
 
--- select insert_into_ts_kv();
+-- call insert_into_ts_kv();
 
-CREATE OR REPLACE FUNCTION insert_into_ts_kv() RETURNS void AS
-$$
+CREATE OR REPLACE PROCEDURE insert_into_ts_kv() LANGUAGE plpgsql AS $$
 DECLARE
     insert_size CONSTANT integer := 10000;
     insert_counter       integer DEFAULT 0;
@@ -198,12 +191,11 @@ BEGIN
     END LOOP;
     CLOSE insert_cursor;
 END;
-$$ LANGUAGE 'plpgsql';
+$$;
 
--- select insert_into_ts_kv_latest();
+-- call insert_into_ts_kv_latest();
 
-CREATE OR REPLACE FUNCTION insert_into_ts_kv_latest() RETURNS void AS
-$$
+CREATE OR REPLACE PROCEDURE insert_into_ts_kv_latest() LANGUAGE plpgsql AS $$
 DECLARE
     insert_size CONSTANT integer := 10000;
     insert_counter       integer DEFAULT 0;
@@ -246,6 +238,6 @@ BEGIN
     END LOOP;
     CLOSE insert_cursor;
 END;
-$$ LANGUAGE 'plpgsql';
+$$;
 
 

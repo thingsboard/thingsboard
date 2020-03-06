@@ -14,33 +14,28 @@
 -- limitations under the License.
 --
 
--- select check_version();
+-- call check_version();
 
-CREATE OR REPLACE FUNCTION check_version() RETURNS boolean AS $$
+CREATE OR REPLACE PROCEDURE check_version(INOUT valid_version boolean) LANGUAGE plpgsql AS $BODY$
+
 DECLARE
     current_version integer;
-    valid_version boolean;
 BEGIN
     RAISE NOTICE 'Check the current installed PostgreSQL version...';
     SELECT current_setting('server_version_num') INTO current_version;
-    IF current_version < 90600 THEN
-        valid_version := FALSE;
-    ELSE
-        valid_version := TRUE;
-    END IF;
-    IF valid_version = FALSE THEN
-        RAISE NOTICE 'Postgres version should be at least more than 9.6!';
-    ELSE
+    IF current_version > 110000 THEN
         RAISE NOTICE 'PostgreSQL version is valid!';
         RAISE NOTICE 'Schema update started...';
+        SELECT true INTO valid_version;
+    ELSE
+        RAISE NOTICE 'Postgres version should be at least more than 10!';
     END IF;
-    RETURN valid_version;
 END;
-$$ LANGUAGE 'plpgsql';
+$BODY$;
 
--- select create_new_tenant_ts_kv_table();
+-- call create_new_tenant_ts_kv_table();
 
-CREATE OR REPLACE FUNCTION create_new_tenant_ts_kv_table() RETURNS VOID AS $$
+CREATE OR REPLACE PROCEDURE create_new_tenant_ts_kv_table() LANGUAGE plpgsql AS $$
 
 BEGIN
   ALTER TABLE tenant_ts_kv
@@ -59,15 +54,14 @@ BEGIN
     ADD CONSTRAINT tenant_ts_kv_pkey PRIMARY KEY(tenant_id, entity_id, key, ts);
   ALTER INDEX idx_tenant_ts_kv RENAME TO idx_tenant_ts_kv_old;
   ALTER INDEX tenant_ts_kv_ts_idx RENAME TO tenant_ts_kv_ts_idx_old;
---   PERFORM create_hypertable('tenant_ts_kv', 'ts', chunk_time_interval => 86400000, if_not_exists => true);
   CREATE INDEX IF NOT EXISTS idx_tenant_ts_kv ON tenant_ts_kv(tenant_id, entity_id, key, ts);
 END;
-$$ LANGUAGE 'plpgsql';
+$$;
 
 
--- select create_ts_kv_latest_table();
+-- call create_ts_kv_latest_table();
 
-CREATE OR REPLACE FUNCTION create_ts_kv_latest_table() RETURNS VOID AS $$
+CREATE OR REPLACE PROCEDURE create_ts_kv_latest_table() LANGUAGE plpgsql AS $$
 
 BEGIN
     CREATE TABLE IF NOT EXISTS ts_kv_latest
@@ -82,12 +76,12 @@ BEGIN
         CONSTRAINT ts_kv_latest_pkey PRIMARY KEY (entity_id, key)
     );
 END;
-$$ LANGUAGE 'plpgsql';
+$$;
 
 
--- select create_ts_kv_dictionary_table();
+-- call create_ts_kv_dictionary_table();
 
-CREATE OR REPLACE FUNCTION create_ts_kv_dictionary_table() RETURNS VOID AS $$
+CREATE OR REPLACE PROCEDURE create_ts_kv_dictionary_table() LANGUAGE plpgsql AS $$
 
 BEGIN
   CREATE TABLE IF NOT EXISTS ts_kv_dictionary
@@ -97,12 +91,12 @@ BEGIN
     CONSTRAINT ts_key_id_pkey PRIMARY KEY (key)
   );
 END;
-$$ LANGUAGE 'plpgsql';
+$$;
 
--- select insert_into_dictionary();
+-- call insert_into_dictionary();
 
-CREATE OR REPLACE FUNCTION insert_into_dictionary() RETURNS VOID AS
-$$
+CREATE OR REPLACE PROCEDURE insert_into_dictionary() LANGUAGE plpgsql AS $$
+
 DECLARE
     insert_record RECORD;
     key_cursor CURSOR FOR SELECT DISTINCT key
@@ -122,12 +116,12 @@ BEGIN
     END LOOP;
     CLOSE key_cursor;
 END;
-$$ language 'plpgsql';
+$$;
 
--- select insert_into_tenant_ts_kv();
+-- call insert_into_tenant_ts_kv();
 
-CREATE OR REPLACE FUNCTION insert_into_tenant_ts_kv() RETURNS void AS
-$$
+CREATE OR REPLACE PROCEDURE insert_into_tenant_ts_kv() LANGUAGE plpgsql AS $$
+
 DECLARE
     insert_size CONSTANT integer := 10000;
     insert_counter       integer DEFAULT 0;
@@ -176,12 +170,12 @@ BEGIN
     END LOOP;
     CLOSE insert_cursor;
 END;
-$$ LANGUAGE 'plpgsql';
+$$;
 
--- select insert_into_ts_kv_latest();
+-- call insert_into_ts_kv_latest();
 
-CREATE OR REPLACE FUNCTION insert_into_ts_kv_latest() RETURNS void AS
-$$
+CREATE OR REPLACE PROCEDURE insert_into_ts_kv_latest() LANGUAGE plpgsql AS $$
+
 DECLARE
     insert_size CONSTANT integer := 10000;
     insert_counter       integer DEFAULT 0;
@@ -210,4 +204,4 @@ BEGIN
     END LOOP;
     CLOSE insert_cursor;
 END;
-$$ LANGUAGE 'plpgsql';
+$$;

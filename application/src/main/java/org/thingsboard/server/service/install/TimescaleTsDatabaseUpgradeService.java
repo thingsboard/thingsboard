@@ -58,12 +58,12 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
 
     private static final String DROP_OLD_TENANT_TS_KV_TABLE = DROP_TABLE + TENANT_TS_KV_OLD_TABLE;
 
-    private static final String DROP_FUNCTION_CREATE_TS_KV_LATEST_TABLE = DROP_FUNCTION_IF_EXISTS + CREATE_TS_KV_LATEST_TABLE;
-    private static final String DROP_FUNCTION_CREATE_TENANT_TS_KV_TABLE_COPY = DROP_FUNCTION_IF_EXISTS + CREATE_NEW_TENANT_TS_KV_TABLE;
-    private static final String DROP_FUNCTION_CREATE_TS_KV_DICTIONARY_TABLE = DROP_FUNCTION_IF_EXISTS + CREATE_TS_KV_DICTIONARY_TABLE;
-    private static final String DROP_FUNCTION_INSERT_INTO_DICTIONARY = DROP_FUNCTION_IF_EXISTS + INSERT_INTO_DICTIONARY;
-    private static final String DROP_FUNCTION_INSERT_INTO_TENANT_TS_KV = DROP_FUNCTION_IF_EXISTS + INSERT_INTO_TENANT_TS_KV;
-    private static final String DROP_FUNCTION_INSERT_INTO_TS_KV_LATEST = DROP_FUNCTION_IF_EXISTS + INSERT_INTO_TS_KV_LATEST;
+    private static final String DROP_PROCEDURE_CREATE_TS_KV_LATEST_TABLE = DROP_PROCEDURE_IF_EXISTS + CREATE_TS_KV_LATEST_TABLE;
+    private static final String DROP_PROCEDURE_CREATE_TENANT_TS_KV_TABLE_COPY = DROP_PROCEDURE_IF_EXISTS + CREATE_NEW_TENANT_TS_KV_TABLE;
+    private static final String DROP_PROCEDURE_CREATE_TS_KV_DICTIONARY_TABLE = DROP_PROCEDURE_IF_EXISTS + CREATE_TS_KV_DICTIONARY_TABLE;
+    private static final String DROP_PROCEDURE_INSERT_INTO_DICTIONARY = DROP_PROCEDURE_IF_EXISTS + INSERT_INTO_DICTIONARY;
+    private static final String DROP_PROCEDURE_INSERT_INTO_TENANT_TS_KV = DROP_PROCEDURE_IF_EXISTS + INSERT_INTO_TENANT_TS_KV;
+    private static final String DROP_PROCEDURE_INSERT_INTO_TS_KV_LATEST = DROP_PROCEDURE_IF_EXISTS + INSERT_INTO_TS_KV_LATEST;
 
     @Autowired
     private InstallScripts installScripts;
@@ -83,26 +83,24 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
                     } else {
                         log.info("PostgreSQL version is valid!");
                         log.info("Updating schema ...");
-                        executeFunction(conn, CALL_CREATE_TS_KV_LATEST_TABLE);
-                        executeFunction(conn, CALL_CREATE_NEW_TENANT_TS_KV_TABLE);
+                        executeQuery(conn, CALL_CREATE_TS_KV_LATEST_TABLE);
+                        executeQuery(conn, CALL_CREATE_NEW_TENANT_TS_KV_TABLE);
 
                         executeQuery(conn, "SELECT create_hypertable('tenant_ts_kv', 'ts', chunk_time_interval => " + chunkTimeInterval + ", if_not_exists => true);");
 
-                        executeFunction(conn, CALL_CREATE_TS_KV_DICTIONARY_TABLE);
-                        executeFunction(conn, CALL_INSERT_INTO_DICTIONARY);
-                        executeFunction(conn, CALL_INSERT_INTO_TS_KV);
-                        executeFunction(conn, CALL_INSERT_INTO_TS_KV_LATEST);
+                        executeQuery(conn, CALL_CREATE_TS_KV_DICTIONARY_TABLE);
+                        executeQuery(conn, CALL_INSERT_INTO_DICTIONARY);
+                        executeQuery(conn, CALL_INSERT_INTO_TS_KV);
+                        executeQuery(conn, CALL_INSERT_INTO_TS_KV_LATEST);
 
-                        //executeQuery(conn, "SELECT set_chunk_time_interval('tenant_ts_kv', " + chunkTimeInterval +");");
+                        executeQuery(conn, DROP_OLD_TENANT_TS_KV_TABLE);
 
-                        executeDropStatement(conn, DROP_OLD_TENANT_TS_KV_TABLE);
-
-                        executeDropStatement(conn, DROP_FUNCTION_CREATE_TS_KV_LATEST_TABLE);
-                        executeDropStatement(conn, DROP_FUNCTION_CREATE_TENANT_TS_KV_TABLE_COPY);
-                        executeDropStatement(conn, DROP_FUNCTION_CREATE_TS_KV_DICTIONARY_TABLE);
-                        executeDropStatement(conn, DROP_FUNCTION_INSERT_INTO_DICTIONARY);
-                        executeDropStatement(conn, DROP_FUNCTION_INSERT_INTO_TENANT_TS_KV);
-                        executeDropStatement(conn, DROP_FUNCTION_INSERT_INTO_TS_KV_LATEST);
+                        executeQuery(conn, DROP_PROCEDURE_CREATE_TS_KV_LATEST_TABLE);
+                        executeQuery(conn, DROP_PROCEDURE_CREATE_TENANT_TS_KV_TABLE_COPY);
+                        executeQuery(conn, DROP_PROCEDURE_CREATE_TS_KV_DICTIONARY_TABLE);
+                        executeQuery(conn, DROP_PROCEDURE_INSERT_INTO_DICTIONARY);
+                        executeQuery(conn, DROP_PROCEDURE_INSERT_INTO_TENANT_TS_KV);
+                        executeQuery(conn, DROP_PROCEDURE_INSERT_INTO_TS_KV_LATEST);
 
                         executeQuery(conn, "ALTER TABLE tenant_ts_kv ADD COLUMN json_v json;");
                         executeQuery(conn, "ALTER TABLE ts_kv_latest ADD COLUMN json_v json;");
