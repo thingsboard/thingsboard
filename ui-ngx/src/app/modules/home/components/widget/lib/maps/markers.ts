@@ -1,5 +1,5 @@
 import L from 'leaflet';
-import { createTooltip, safeExecute } from './maps-utils';
+import { createTooltip, safeExecute, parseFunction } from './maps-utils';
 import { MarkerSettings } from './map-models';
 import { aspectCache } from '@app/core/utils';
 
@@ -16,13 +16,12 @@ export class Marker {
     constructor(private map: L.Map, location: L.LatLngExpression, public settings: MarkerSettings, data, dataSources, onClickListener?, markerArgs?, onDragendListener?) {
         //this.map = map;
         this.location = location;
-        this.data = data;
-        this.dataSources = dataSources;
+        this.setDataSources(data, dataSources)
         this.leafletMarker = L.marker(location, {
             draggable: settings.draggable
         });
 
-        this.createMarkerIcon(dataSources, (iconInfo) => {
+        this.createMarkerIcon((iconInfo) => {
             this.leafletMarker.setIcon(iconInfo.icon);
             if (settings.showLabel) {
                 this.tooltipOffset = [0, -iconInfo.size[1] + 10];
@@ -47,15 +46,45 @@ export class Marker {
 
     }
 
+    setDataSources(data, dataSources) {
+        this.data = data;
+        this.dataSources = dataSources;
+    }
+
     updateMarkerPosition(position: L.LatLngExpression) {
         this.leafletMarker.setLatLng(position);
     }
 
+
+
     updateMarkerLabel(settings) {
+
+        function getText(template, data) {
+            let res = null;
+            try {
+                let variables = '';
+                for (let key in data) {
+                    if (!key.includes('|'))
+                        variables += `var ${key} = '${data[key]}';`;
+                }
+                res = safeExecute(parseFunction(variables + 'return' + '`' + template + '`'));
+            }
+            catch (ex) {
+            }
+            return res;
+        }
+
+        
         this.leafletMarker.unbindTooltip();
-        if (settings.showLabel)
+        if (settings.showLabel) {
+            if (settings.useLabelFunction) {
+                settings.labelText = safeExecute(settings.labelFunction, [this.data, this.dataSources, this.data.dsIndex])
+            }
+            else settings.labelText = getText(settings.label, this.data);
+
             this.leafletMarker.bindTooltip(`<div style="color: ${settings.labelColor};"><b>${settings.labelText}</b></div>`,
                 { className: 'tb-marker-label', permanent: true, direction: 'top', offset: this.tooltipOffset });
+        }
     }
 
     updateMarkerColor(color) {
@@ -64,9 +93,8 @@ export class Marker {
         });
     }
 
-    updateMarkerIcon(settings, data, dataSources) {
-        this.data = data;
-        this.createMarkerIcon(dataSources, (iconInfo) => {
+    updateMarkerIcon(settings) {
+        this.createMarkerIcon((iconInfo) => {
             this.leafletMarker.setIcon(iconInfo.icon);
             if (settings.showLabel) {
                 this.tooltipOffset = [0, -iconInfo.size[1] + 10];
@@ -75,9 +103,9 @@ export class Marker {
         });
     }
 
-    createMarkerIcon(dataSources, onMarkerIconReady) {
+    createMarkerIcon(onMarkerIconReady) {
         const currentImage = this.settings.useMarkerImageFunction ?
-            safeExecute(this.settings.markerImageFunction, [this.data, this.settings.markerImages, dataSources, this.data.dsIndex]) : this.settings.currentImage;
+            safeExecute(this.settings.markerImageFunction, [this.data, this.settings.markerImages, this.dataSources, this.data.dsIndex]) : this.settings.currentImage;
         // var opMap = this;
         if (currentImage && currentImage.url) {
             aspectCache(currentImage.url).subscribe(

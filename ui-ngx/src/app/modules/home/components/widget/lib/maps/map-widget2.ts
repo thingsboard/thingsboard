@@ -50,7 +50,7 @@ TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
         const functionParams = ['data', 'dsData', 'dsIndex'];
         this.provider = settings.provider ? settings.provider : this.mapProvider;
         const customOptions = {
-            mapProvider: this.provider,
+            provider: this.provider,
             mapUrl: settings?.mapImageUrl,
             labelFunction: parseFunction(settings.labelFunction, functionParams),
             tooltipFunction: parseFunction(settings.tooltipFunction, functionParams),
@@ -59,8 +59,7 @@ TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
             markerImageFunction: parseFunction(settings.markerImageFunction, ['data', 'images', 'dsData', 'dsIndex']),
             tooltipPattern: settings.tooltipPattern ||
                 "<b>${entityName}</b><br/><br/><b>Latitude:</b> ${" + settings.latKeyName + ":7}<br/><b>Longitude:</b> ${" + settings.lngKeyName + ":7}",
-            label: settings.label || "${entityName}",
-            defaultCenterPosition: settings?.defaultCenterPosition?.split(',') || [0,0],
+            defaultCenterPosition: settings?.defaultCenterPosition?.split(',') || [0, 0],
             currentImage: (settings.useMarkerImage && settings.markerImage?.length) ? {
                 url: settings.markerImage,
                 size: settings.markerImageSize || 34
@@ -81,7 +80,6 @@ TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
     onResize() {
         this.map.onResize();//not work
     }
-
 
     resize() {
         this.map?.invalidateSize();
@@ -239,7 +237,8 @@ const defaultSettings = {
     latKeyName: 'latitude',
     lngKeyName: 'longitude',
     polygonKeyName: 'coordinates',
-    showLabel: false,
+    showLabel: true,
+    label: "${entityName}",
     showTooltip: false,
     useDefaultCenterPosition: false,
     showTooltipAction: "click",
@@ -252,7 +251,7 @@ const defaultSettings = {
     polygonOpacity: 0.5,
     polygonStrokeOpacity: 1,
     polygonStrokeWeight: 1,
-    useLabelFunction: true,
+    useLabelFunction: false,
     markerImages: [],
     strokeWeight: 2,
     strokeOpacity: 1.0,

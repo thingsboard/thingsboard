@@ -15,7 +15,9 @@ export interface MapOptions {
     credentials?: any, // declare credentials format
     defaultCenterPosition?: LatLngTuple,
     markerClusteringSetting?,
-    useDefaultCenterPosition?: boolean
+    useDefaultCenterPosition?: boolean,
+    gmDefaultMapType?: string,
+    useLabelFunction: string;
 }
 
 export enum MapProviders {

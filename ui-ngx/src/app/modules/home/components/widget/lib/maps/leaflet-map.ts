@@ -61,24 +61,8 @@ export default abstract class LeafletMap {
     }
 
     getContainer() {
-        return /* this.isMarketCluster ? this.markersCluster :*/ this.map;
+        return this.map;
     }
-    /*
-        fitBounds(bounds, useDefaultZoom) {
-            if (bounds.isValid()) {
-                if ((this.dontFitMapBounds || useDefaultZoom) && this.defaultZoomLevel) {
-                    this.map.setZoom(this.defaultZoomLevel, { animate: false });
-                    this.map.panTo(bounds.getCenter(), { animate: false });
-                } else {
-                    this.map.once('zoomend', () => {
-                        if (!this.defaultZoomLevel && this.map.getZoom() > this.minZoomLevel) {
-                            this.map.setZoom(this.minZoomLevel, { animate: false });
-                        }
-                    });
-                    this.map.fitBounds(bounds, { padding: [50, 50], animate: false });
-                }
-            }
-        }*/
 
     createLatLng(lat, lng) {
         return L.latLng(lat, lng);
@@ -161,7 +145,8 @@ export default abstract class LeafletMap {
         if (!location.equals(marker.location)) {
             marker.updateMarkerPosition(location);
         }
-        marker.updateMarkerIcon(settings, data, dataSources);
+        marker.setDataSources(data, dataSources);
+        marker.updateMarkerIcon(settings);
     }
 
     private deleteMarker() {
@@ -173,7 +158,7 @@ export default abstract class LeafletMap {
     updatePolylines(polyData: Array<Array<any>>) {
         polyData.forEach(data => {
             if (data.length) {
-                let dataSource = polyData.map(arr=>arr[0]);
+                let dataSource = polyData.map(arr => arr[0]);
                 if (this.poly) {
                     this.updatePolyline(data, dataSource, this.options);
                 }

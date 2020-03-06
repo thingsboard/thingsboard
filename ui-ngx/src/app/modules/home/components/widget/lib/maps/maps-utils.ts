@@ -34,6 +34,9 @@ export function parseArray(input: any[]): any[] {
             alliasArray.forEach(el => {
                 obj[el?.dataKey?.label] = el?.data[i][1];
                 obj[el?.dataKey?.label + '|ts'] = el?.data[0][0];
+                if (el?.dataKey?.label == 'type') {
+                    obj['deviceType'] = el?.data[0][1];
+                }
             });
             return obj;
         })
@@ -44,18 +47,22 @@ export function parseData(input: any[]): any[] {
     return _(input).groupBy(el => el?.datasource?.aliasName).values().value().map((alliasArray, i) => {
         const obj = {
             aliasName: alliasArray[0]?.datasource?.aliasName,
+            entityName: alliasArray[0]?.datasource?.entityName,
             $datasource: alliasArray[0]?.datasource,
             dsIndex: i
         };
         alliasArray.forEach(el => {
             obj[el?.dataKey?.label] = el?.data[0][1];
             obj[el?.dataKey?.label + '|ts'] = el?.data[0][0];
+            if (el?.dataKey?.label == 'type') {
+                obj['deviceType'] = el?.data[0][1];
+            }
         });
         return obj;
     });
 }
 
-export function safeExecute(func: Function, params = []) {  
+export function safeExecute(func: Function, params = []) {
     let res = null;
     if (func && typeof (func) == "function") {
         try {
