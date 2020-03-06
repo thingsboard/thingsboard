@@ -9,7 +9,8 @@ import {
     routeMapSettingsSchema,
     markerClusteringSettingsSchema,
     markerClusteringSettingsSchemaLeaflet,
-    hereMapSettingsSchema
+    hereMapSettingsSchema,
+    mapProviderSchema
 } from './schemes';
 import { MapWidgetStaticInterface, MapWidgetInterface } from './map-widget.interface';
 import { OpenStreetMap, TencentMap, GoogleMap, HEREMap, ImageMap } from './providers';
@@ -17,24 +18,29 @@ import { parseData, parseArray, parseFunction } from './maps-utils';
 
 export let TbMapWidgetV2: MapWidgetStaticInterface;
 TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
+
     map: LeafletMap;
     provider: MapProviders;
     schema;
     data;
 
-    constructor(mapProvider: MapProviders, private drawRoutes, ctx, $element) {
+    constructor(public mapProvider: MapProviders, private drawRoutes, ctx, $element) {
+        if (this.map) {
+            this.map.map.remove();
+            delete this.map;
+        }
+
         this.data = ctx.data;
         if (!$element) {
             $element = ctx.$container[0];
         }
-        this.provider = mapProvider;
-        let MapClass = providerSets[mapProvider]?.MapClass;
-        let settings = this.initSettings(ctx?.settings);
+        let settings = this.initSettings(ctx.settings);
+
+        let MapClass = providerSets[this.provider]?.MapClass;
         if (!MapClass) {
             return;
         }
         this.map = new MapClass($element, settings);
-        this.schema = providerSets[mapProvider]?.schema;
     }
 
     onInit() {
@@ -42,6 +48,7 @@ TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
 
     initSettings(settings: any) {
         const functionParams = ['data', 'dsData', 'dsIndex'];
+        this.provider = settings.provider ? settings.provider : this.mapProvider;
         const customOptions = {
             mapProvider: this.provider,
             mapUrl: settings?.mapImageUrl,
@@ -53,6 +60,7 @@ TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
             tooltipPattern: settings.tooltipPattern ||
                 "<b>${entityName}</b><br/><br/><b>Latitude:</b> ${" + settings.latKeyName + ":7}<br/><b>Longitude:</b> ${" + settings.lngKeyName + ":7}",
             label: settings.label || "${entityName}",
+            defaultCenterPosition: settings?.defaultCenterPosition?.split(',') || [0,0],
             currentImage: (settings.useMarkerImage && settings.markerImage?.length) ? {
                 url: settings.markerImage,
                 size: settings.markerImageSize || 34
@@ -74,9 +82,6 @@ TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
         this.map.onResize();//not work
     }
 
-    getSettingsSchema(): Object {
-        return this.schema;
-    }
 
     resize() {
         this.map?.invalidateSize();
@@ -88,9 +93,20 @@ TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
     }
 
     public static settingsSchema(mapProvider, drawRoutes): Object {
-        const providerInfo = providerSets[mapProvider];
-        let schema = providerInfo.schema;
-        schema.groupInfoes = [];
+        //const providerInfo = providerSets[mapProvider];
+        let schema = initSchema();
+
+        function initSchema() {
+            return {
+                schema: {
+                    type: "object",
+                    properties: {},
+                    required: []
+                },
+                form: [],
+                groupInfoes: []
+            };
+        }
 
         function addGroupInfo(title: string) {
             schema.groupInfoes.push({
@@ -99,42 +115,69 @@ TbMapWidgetV2 = class TbMapWidgetV2 implements MapWidgetInterface {
             });
         }
 
-        function mergeSchema(newSchema) {
+        function addToSchema(newSchema) {
             Object.assign(schema.schema.properties, newSchema.schema.properties);
             schema.schema.required = schema.schema.required.concat(newSchema.schema.required);
             schema.form.push(newSchema.form);//schema.form.concat(commonMapSettingsSchema.form);
         }
 
-        if (providerInfo.name)
-            addGroupInfo(providerInfo.name + ' Map Settings');
-        schema.form = [schema.form];
+        function mergeSchemes(schemes: any[]) {
+            return schemes.reduce((finalSchema, schema) => {
+                return {
+                    schema: {
+                        properties: {
+                            ...finalSchema.schema.properties,
+                            ...schema.schema.properties
+                        },
+                        required: [
+                            ...finalSchema.schema.required,
+                            ...schema.schema.required
+                        ]
+                    },
+                    form: [
+                        ...finalSchema.form,
+                        ...schema.form
+                    ]
+                }
+            }, initSchema());
+        }
 
-        mergeSchema(commonMapSettingsSchema);
+        function addCondition(schema, condition: String) {
+            schema.form = schema.form.map(element => {
+                if (typeof element === 'string') {
+                    return {
+                        key: element,
+                        condition: condition
+                    }
+                }
+                if (typeof element == 'object') {
+                    if (element.condition) {
+                        element.condition += ' && ' + condition
+                    }
+                    else element.condition = condition;
+                }
+                return element;
+            });
+            return schema;
+        }
+
+        addToSchema(mergeSchemes([mapProviderSchema,
+            ...Object.values(providerSets)?.map(
+                setting => addCondition(setting?.schema, `model.provider === '${setting.name}'`))]));
+
+        addGroupInfo("Map Provider Settings");
+        addToSchema(commonMapSettingsSchema);
         addGroupInfo("Common Map Settings");
 
         if (drawRoutes) {
-            mergeSchema(routeMapSettingsSchema);
+            addToSchema(routeMapSettingsSchema);
             addGroupInfo("Route Map Settings");
         } else if (mapProvider !== 'image-map') {
-            let clusteringSchema: any = {
-                schema: {
-                    properties: {
-                        ...markerClusteringSettingsSchemaLeaflet.schema.properties,
-                        ...markerClusteringSettingsSchema.schema.properties
-                    },
-                    required: {
-                        ...markerClusteringSettingsSchemaLeaflet.schema.required,
-                        ...markerClusteringSettingsSchema.schema.required
-                    }
-                },
-                form: [
-                    ...markerClusteringSettingsSchemaLeaflet.form,
-                    ...markerClusteringSettingsSchema.form
-                ]
-            };
-            mergeSchema(clusteringSchema);
+            let clusteringSchema = mergeSchemes([markerClusteringSettingsSchemaLeaflet, markerClusteringSettingsSchema])
+            addToSchema(clusteringSchema);
             addGroupInfo("Markers Clustering Settings");
         }
+        console.log(11, schema);
 
         return schema;
     }
@@ -164,26 +207,27 @@ const providerSets = {
     'openstreet-map': {
         MapClass: OpenStreetMap,
         schema: openstreetMapSettingsSchema,
-        name: "Openstreet"
+        name: "openstreet-map",
     },
     'tencent-map': {
         MapClass: TencentMap,
         schema: tencentMapSettingsSchema,
-        name: "Tencent"
+        name: "tencent-map"
     },
     'google-map': {
         MapClass: GoogleMap,
         schema: googleMapSettingsSchema,
-        name: "Openstreet"
+        name: "google-map"
     },
     'here': {
         MapClass: HEREMap,
         schema: hereMapSettingsSchema,
-        name: "HERE"
+        name: "here"
     },
     'image-map': {
         MapClass: ImageMap,
-        schema: imageMapSettingsSchema
+        schema: imageMapSettingsSchema,
+        name: "image-map"
     }
 }
 
@@ -218,6 +262,5 @@ const defaultSettings = {
     disableScrollZooming: false,
     minZoomLevel: 16,
     credentials: '',
-    defaultCenterPosition: [0, 0],
     markerClusteringSetting: null,
 }

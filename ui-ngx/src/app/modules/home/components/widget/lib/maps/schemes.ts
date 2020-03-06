@@ -15,7 +15,6 @@ export const googleMapSettingsSchema =
             }
         },
         "required": [
-            "gmApiKey"
         ]
     },
     "form": [
@@ -63,7 +62,6 @@ export const tencentMapSettingsSchema =
             }
         },
         "required": [
-            "tmApiKey"
         ]
     },
     "form": [
@@ -809,6 +807,51 @@ export const imageMapSettingsSchema =
                 {
                     "key": "markerImages[]",
                     "type": "image"
+                }
+            ]
+        }
+    ]
+};
+
+export const mapProviderSchema =
+{
+    "schema": {
+        "title": "Map Provider Configuration",
+        "type": "object",
+        "properties": {
+            "provider": {
+                "title": "Map Provider",
+                "type": "string",
+                "default": "openstreet-map"
+            }
+        },
+        "required": []
+    },
+    "form": [
+        {
+            "key": "provider",
+            "type": "rc-select",
+            "multiple": false,
+            "items": [
+                {
+                    "value": "google-map",
+                    "label": "Google maps"
+                },
+                {
+                    "value": "openstreet-map",
+                    "label": "Openstreet maps"
+                },
+                {
+                    "value": "here",
+                    "label": "HERE maps"
+                },
+                {
+                    "value": "image-map",
+                    "label": "Image map"
+                },
+                {
+                    "value": "tencent-map",
+                    "label": "Tencent maps"
                 }
             ]
         }

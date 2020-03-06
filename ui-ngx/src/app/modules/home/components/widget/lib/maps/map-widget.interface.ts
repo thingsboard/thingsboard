@@ -4,7 +4,6 @@ export interface MapWidgetInterface {
     onInit(),
     onDataUpdated();
     onResize();
-    getSettingsSchema(): Object;
     onDestroy();
 }
 

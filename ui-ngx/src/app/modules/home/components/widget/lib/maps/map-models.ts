@@ -1,4 +1,4 @@
-import { LatLngExpression } from 'leaflet';
+import { LatLngExpression, LatLngTuple } from 'leaflet';
 
 export interface MapOptions {
     initCallback?: Function,
@@ -13,7 +13,7 @@ export interface MapOptions {
     mapProvider: MapProviders,
     mapUrl?: string;
     credentials?: any, // declare credentials format
-    defaultCenterPosition?: LatLngExpression,
+    defaultCenterPosition?: LatLngTuple,
     markerClusteringSetting?,
     useDefaultCenterPosition?: boolean
 }
