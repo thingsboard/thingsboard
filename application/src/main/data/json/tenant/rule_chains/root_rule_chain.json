@@ -4,6 +4,7 @@
     "name": "Root Rule Chain",
     "firstRuleNodeId": null,
     "root": true,
+    "type": "SYSTEM",
     "debugMode": false,
     "configuration": null
   },

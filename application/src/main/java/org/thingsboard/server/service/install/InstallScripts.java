@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.dashboard.DashboardService;
@@ -114,6 +115,7 @@ public class InstallScripts {
                             RuleChainMetaData ruleChainMetaData = objectMapper.treeToValue(ruleChainJson.get("metadata"), RuleChainMetaData.class);
 
                             ruleChain.setTenantId(tenantId);
+                            ruleChain.setType(RuleChainType.SYSTEM);
                             ruleChain = ruleChainService.saveRuleChain(ruleChain);
 
                             ruleChainMetaData.setRuleChainId(ruleChain.getId());

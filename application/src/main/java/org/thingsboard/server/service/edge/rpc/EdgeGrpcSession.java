@@ -249,6 +249,7 @@ public final class EdgeGrpcSession implements Cloneable {
                 break;
         }
         if (entityId != null) {
+            final EntityId finalEntityId = entityId;
             ListenableFuture<List<AttributeKvEntry>> ssAttrFuture = ctx.getAttributesService().findAll(edge.getTenantId(), entityId, DataConstants.SERVER_SCOPE);
             Futures.transform(ssAttrFuture, ssAttributes -> {
                 if (ssAttributes != null && !ssAttributes.isEmpty()) {
@@ -267,7 +268,7 @@ public final class EdgeGrpcSession implements Cloneable {
                                 entityNode.put(attr.getKey(), attr.getValueAsString());
                             }
                         }
-                        TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), DataConstants.ATTRIBUTES_UPDATED, entityId, metaData, TbMsgDataType.JSON
+                        TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), DataConstants.ATTRIBUTES_UPDATED, finalEntityId, metaData, TbMsgDataType.JSON
                                 , objectMapper.writeValueAsString(entityNode)
                                 , null, null, 0L);
                         log.debug("Sending donwlink entity data msg, entityName [{}], tbMsg [{}]", entityName, tbMsg);
