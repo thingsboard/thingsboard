@@ -84,20 +84,20 @@ export default function EntitySubtypeListDirective($compile, $templateCache, $q,
                 }
             );
             return deferred.promise;
-        }
+        };
 
         scope.updateValidity = function() {
             var value = ngModelCtrl.$viewValue;
             var valid = !scope.tbRequired || value && value.length > 0;
             ngModelCtrl.$setValidity('entitySubtypesList', valid);
-        }
+        };
 
         ngModelCtrl.$render = function () {
             scope.entitySubtypesList = ngModelCtrl.$viewValue;
             if (!scope.entitySubtypesList) {
                 scope.entitySubtypesList = [];
             }
-        }
+        };
 
         scope.$watch('entitySubtypesList', function () {
             ngModelCtrl.$setViewValue(scope.entitySubtypesList);
@@ -146,7 +146,7 @@ export default function EntitySubtypeListDirective($compile, $templateCache, $q,
             } );
         });
 
-    }
+    };
 
     return {
         restrict: "E",
