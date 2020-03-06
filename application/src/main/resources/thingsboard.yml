@@ -298,7 +298,7 @@ caffeine:
 redis:
   # standalone or cluster
   connection:
-    type: standalone
+    type: "${REDIS_CONNECTION_TYPE:standalone}"
   standalone:
     host: "${REDIS_HOST:localhost}"
     port: "${REDIS_PORT:6379}"

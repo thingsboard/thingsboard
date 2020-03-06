@@ -15,4 +15,7 @@
 # limitations under the License.
 #
 
-kubectl -n thingsboard delete svc,sts,deploy,pv,pvc,cm,po,ing --all
+set -e
+
+kubectl config set-context $(kubectl config current-context) --namespace=thingsboard
+kubectl delete -f thirdparty.yml
