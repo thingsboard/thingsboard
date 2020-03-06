@@ -85,8 +85,8 @@ public abstract class AbstractSqlTsDatabaseUpgradeService {
                     nextWarning = nextWarning.getNextWarning();
                 }
             }
-            log.info("Successfully executed query: {}", query);
             Thread.sleep(5000);
+            log.info("Successfully executed query: {}", query);
         } catch (InterruptedException | SQLException e) {
             log.info("Failed to execute query: {} due to: {}", query, e.getMessage());
         }
