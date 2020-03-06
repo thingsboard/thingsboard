@@ -30,17 +30,23 @@ export default function EntityListDirective($compile, $templateCache, $q, $mdUti
         element.html(template);
 
         scope.ngModelCtrl = ngModelCtrl;
+        scope.entityLimit = 10;
 
         scope.$watch('tbRequired', function () {
             scope.updateValidity();
         });
 
-        scope.fetchEntities = function(searchText, limit) {
+        scope.fetchEntities = function(searchText) {
              var deferred = $q.defer();
-             entityService.getEntitiesByNameFilter(scope.entityType, searchText, limit, {ignoreLoading: true}).then(
+             entityService.getEntitiesByNameFilter(scope.entityType, searchText, scope.entityLimit, {ignoreLoading: true}).then(
                  function success(result) {
                     if (result) {
-                        deferred.resolve(result);
+                        let filteredResult = result;
+                        filteredResult = filteredResult.filter(item => !(scope.ngModelCtrl.$modelValue.includes(item.id.id)));
+                        if (filteredResult.length > 10) {
+                            filteredResult.splice(10);
+                        }
+                        deferred.resolve(filteredResult);
                     } else {
                         deferred.resolve([]);
                     }
@@ -56,6 +62,7 @@ export default function EntityListDirective($compile, $templateCache, $q, $mdUti
             var value = ngModelCtrl.$viewValue;
             var valid = !scope.tbRequired || value && value.length > 0;
             ngModelCtrl.$setValidity('entityList', valid);
+            scope.entityLimit = 10 + scope.ngModelCtrl.$modelValue.length;
         }
 
         ngModelCtrl.$render = function () {
