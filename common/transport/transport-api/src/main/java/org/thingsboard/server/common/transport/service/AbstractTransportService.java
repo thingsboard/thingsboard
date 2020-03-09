@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.transport.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.EntityType;
@@ -26,6 +27,7 @@ import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
+import org.thingsboard.server.common.transport.queue.TransportQueueProvider;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.Random;
@@ -48,6 +50,9 @@ public abstract class AbstractTransportService implements TransportService {
     private long sessionInactivityTimeout;
     @Value("${transport.sessions.report_timeout}")
     private long sessionReportTimeout;
+
+    @Autowired
+    private TransportQueueProvider queueProvider;
 
     protected ScheduledExecutorService schedulerExecutor;
     protected ExecutorService transportCallbackExecutor;
