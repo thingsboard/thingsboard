@@ -202,6 +202,16 @@ export default function RuleChainsController(ruleChainService, userService, edge
                 isEnabled: isNonRootRuleChain
             });
 
+            ruleChainActionsList.push({
+                onAction: function ($event, item) {
+                    setDefaultRootEdgeRuleChain($event, item);
+                },
+                name: function() { return $translate.instant('rulechain.set-default-root-edge') },
+                details: function() { return $translate.instant('rulechain.set-default-root-edge') },
+                icon: "flag",
+                isEnabled: isNonRootRuleChain
+            });
+
             ruleChainGroupActionsList.push(
                 {
                     onAction: function ($event, items) {
@@ -426,6 +436,24 @@ export default function RuleChainsController(ruleChainService, userService, edge
         });
     }
 
+    function setDefaultRootEdgeRuleChain($event, ruleChain) {
+        $event.stopPropagation();
+        var confirm = $mdDialog.confirm()
+            .targetEvent($event)
+            .title($translate.instant('rulechain.set-default-root-edge-rulechain-title', {ruleChainName: ruleChain.name}))
+            .htmlContent($translate.instant('rulechain.set-default-root-edge-rulechain-text'))
+            .ariaLabel($translate.instant('rulechain.set-root-rulechain-text'))
+            .cancel($translate.instant('action.no'))
+            .ok($translate.instant('action.yes'));
+        $mdDialog.show(confirm).then(function () {
+            ruleChainService.setDefaultRootEdgeRuleChain(ruleChain.id.id).then(
+                () => {
+                    vm.grid.refreshList();
+                }
+            );
+        });
+    }
+
     function manageAssignedEdges($event, ruleChain) {
         showManageAssignedEdgesDialog($event, [ruleChain.id.id], 'manage', ruleChain.assignedEdgesIds);
     }
@@ -488,7 +516,7 @@ export default function RuleChainsController(ruleChainService, userService, edge
             $event.stopPropagation();
         }
         var pageSize = 10;
-        ruleChainService.getRuleChains({limit: pageSize, textSearch: ''}).then(
+        ruleChainService.getEdgesRuleChains({limit: pageSize, textSearch: ''}).then(
             function success(_ruleChains) {
                 var ruleChains = {
                     pageSize: pageSize,

@@ -115,7 +115,6 @@ public class InstallScripts {
                             RuleChainMetaData ruleChainMetaData = objectMapper.treeToValue(ruleChainJson.get("metadata"), RuleChainMetaData.class);
 
                             ruleChain.setTenantId(tenantId);
-                            ruleChain.setType(RuleChainType.SYSTEM);
                             ruleChain = ruleChainService.saveRuleChain(ruleChain);
 
                             ruleChainMetaData.setRuleChainId(ruleChain.getId());

@@ -40,13 +40,15 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
         addRuleChainEdges: addRuleChainEdges,
         removeRuleChainEdges: removeRuleChainEdges,
         getEdgeRuleChains: getEdgeRuleChains,
+        getEdgesRuleChains: getEdgesRuleChains,
         assignRuleChainToEdge: assignRuleChainToEdge,
-        unassignRuleChainFromEdge: unassignRuleChainFromEdge
+        unassignRuleChainFromEdge: unassignRuleChainFromEdge,
+        setDefaultRootEdgeRuleChain: setDefaultRootEdgeRuleChain
     };
 
     return service;
 
-    function getRuleChains (pageLink, config, type) {
+    function getRuleChains(pageLink, config, type) {
         var deferred = $q.defer();
         var url = '/api/ruleChains?limit=' + pageLink.limit;
         if (angular.isDefined(pageLink.textSearch)) {
@@ -341,6 +343,10 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
         return deferred.promise;
     }
 
+    function getEdgesRuleChains(pageLink, config) {
+        return getRuleChains(pageLink, config, types.edgeRuleChainType);
+    }
+
     function getEdgeRuleChains(edgeId, pageLink, config) {
         var deferred = $q.defer();
         var url = '/api/edge/' + edgeId + '/ruleChains?limit=' + pageLink.limit;
@@ -375,6 +381,17 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
         var url = '/api/edge/' + edgeId + '/ruleChain/' + ruleChainId;
         $http.delete(url).then(function success(response) {
             deferred.resolve(prepareRuleChain(response.data));
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function setDefaultRootEdgeRuleChain(ruleChainId) {
+        var deferred = $q.defer();
+        var url = '/api/ruleChain/' + ruleChainId + '/defaultRootEdge';
+        $http.post(url).then(function success(response) {
+            deferred.resolve(response.data);
         }, function fail() {
             deferred.reject();
         });
