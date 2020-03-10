@@ -36,7 +36,6 @@
         <main.dir>${basedir}/../../..</main.dir>
         <pkg.name>tb-http-transport</pkg.name>
         <docker.name>tb-http-transport</docker.name>
-        <pkg.user>thingsboard</pkg.user>
         <pkg.logFolder>/var/log/${pkg.name}</pkg.logFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
     </properties>
