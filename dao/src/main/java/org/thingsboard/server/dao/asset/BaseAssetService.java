@@ -19,6 +19,7 @@ package org.thingsboard.server.dao.asset;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -298,9 +299,9 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
                 }
             }
             return Futures.successfulAsList(futures);
-        });
+        }, MoreExecutors.directExecutor());
         assets = Futures.transform(assets, assetList ->
-            assetList == null ? Collections.emptyList() : assetList.stream().filter(asset -> query.getAssetTypes().contains(asset.getType())).collect(Collectors.toList())
+            assetList == null ? Collections.emptyList() : assetList.stream().filter(asset -> query.getAssetTypes().contains(asset.getType())).collect(Collectors.toList()), MoreExecutors.directExecutor()
         );
         return assets;
     }
@@ -314,7 +315,7 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
                 assetTypes -> {
                     assetTypes.sort(Comparator.comparing(EntitySubtype::getType));
                     return assetTypes;
-                });
+                }, MoreExecutors.directExecutor());
     }
 
     private DataValidator<Asset> assetValidator =
