@@ -73,6 +73,10 @@ export class MapWidgetController implements MapWidgetInterface {
         this.map.updateMarkers(parseData(this.data));
     }
 
+    public updateHistoryData(dataSources){
+        dataSources.map()
+    }
+
     onDataUpdated() {
     }
 

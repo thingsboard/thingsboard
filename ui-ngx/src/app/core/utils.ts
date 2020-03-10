@@ -451,13 +451,13 @@ export function aspectCache(imageUrl: string): Observable<number> {
 
 export function parseArray(input: any[]): any[] {
   let alliases: any = _(input).groupBy(el => el?.datasource?.aliasName).values().value();
-  console.log("alliases", alliases)
   return alliases.map((alliasArray, dsIndex) =>
       alliasArray[0].data.map((el, i) => {
           const obj = {
               aliasName: alliasArray[0]?.datasource?.aliasName,
               $datasource: alliasArray[0]?.datasource,
-              dsIndex: dsIndex
+              dsIndex: dsIndex,
+              time: el[0]
           };
           alliasArray.forEach(el => {
               obj[el?.dataKey?.label] = el?.data[i][1];

@@ -6,34 +6,41 @@
         <button mat-icon-button class="mat-icon-button" aria-label="Previous" ng-click="movePrev()">
             <mat-icon class="material-icons" ng-style="{'color': staticSettings.buttonColor}">skip_previous</mat-icon>
         </button>
-       <!-- <mat-slider ng-model="index" [min]="minTimeIndex" [max]="maxTimeIndex" (change)="recalculateTrips()">
-        </mat-slider>-->
+        <mat-slider [(ngModel)]="index" [min]="minTimeIndex" [max]="maxTimeIndex" (change)="recalculateTrips()">
+        </mat-slider>
         <button mat-icon-button class="mat-icon-button" aria-label="Next" ng-click="moveNext()">
             <mat-icon class="material-icons" ng-style="{'color': staticSettings.buttonColor}">skip_next</mat-icon>
         </button>
         <button mat-icon-button class="mat-icon-button" aria-label="End" ng-click="moveEnd()">
             <mat-icon class="material-icons" ng-style="{'color': staticSettings.buttonColor}">fast_forward</mat-icon>
         </button>
-        <button mat-icon-button class="mat-icon-button" aria-label="Play" ng-click="playMove(true)"
-            ng-disabled="isPlaying">
-            <mat-icon class="material-icons"
-                ng-style="{'color': isPlaying ? staticSettings.disabledButtonColor : staticSettings.buttonColor}">
+        <!--<div class="play-pause">
+            <input type="checkbox" [(ngModel)]="play" value="" id="playPauseCheckbox" name="playPauseCheckbox" />
+            <label for="playPauseCheckbox"></label>
+        </div>-->
+        <button mat-icon-button class="mat-icon-button" aria-label="Play" >
+            <mat-icon (click)="play()" *ngIf="!playing" class="material-icons" ng-style="{'color': settings.buttonColor}">
                 play_circle_outline
             </mat-icon>
+            <mat-icon (click)="pause()" *ngIf="playing" class="material-icons" ng-style="{'color': settings.buttonColor}">
+                pause_circle_outline
+            </mat-icon>
         </button>
-       <!-- <mat-select ng-model="speed" aria-label="Speed selector">
+        <!-- <mat-select [(ngModel)]="speed" aria-label="Speed selector">
             <mat-option ng-value="speed" flex="1" ng-repeat="speed in speeds track by $index">{{ speed}}
             </mat-option>
         </mat-select>-->
-        <button mat-icon-button class="mat-icon-button" aria-label="Stop playing" ng-click="stopPlay()"
+        <!-- <button mat-icon-button class="mat-icon-button" aria-label="Stop playing" ng-click="stopPlay()"
             ng-disabled="!isPlaying">
             <mat-icon class="material-icons"
                 ng-style="{'color': isPlaying ? staticSettings.buttonColor : staticSettings.disabledButtonColor}">
                 pause_circle_outline
             </mat-icon>
-        </button>
+        </button>-->
     </div>
     <div class="panel-timer">
         <span *ngIf="animationTime">{{ animationTime | date:'medium'}}</span>
         <span *ngIf="!animationTime">{{ "widget.no-data-found" | translate}}</span>
     </div>
+
+    <div>{{index}}</div>
