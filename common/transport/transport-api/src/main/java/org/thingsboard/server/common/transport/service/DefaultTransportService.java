@@ -18,8 +18,11 @@ package org.thingsboard.server.common.transport.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.TbQueueCallback;
 import org.thingsboard.server.TbQueueConsumer;
+import org.thingsboard.server.TbQueueMsgMetadata;
 import org.thingsboard.server.TbQueueProducer;
 import org.thingsboard.server.TbQueueRequestTemplate;
 import org.thingsboard.server.common.TbProtoQueueMsg;
@@ -37,16 +40,27 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
+import org.thingsboard.server.kafka.AsyncCallbackTemplate;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import java.util.List;
 import java.util.Random;
 import java.util.UUID;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by ashvayka on 17.10.18.
  */
 @Slf4j
-public abstract class AbstractTransportService implements TransportService {
+@Service
+public class DefaultTransportService implements TransportService {
 
     @Value("${transport.rate_limits.enabled}")
     private boolean rateLimitEnabled;
@@ -62,23 +76,83 @@ public abstract class AbstractTransportService implements TransportService {
     @Autowired
     private TransportQueueProvider queueProvider;
 
+    @Value("${kafka.notifications.poll_interval}")
+    private int notificationsPollDuration;
 
     protected TbQueueRequestTemplate<TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> transportApiRequestTemplate;
-
     protected TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> ruleEngineMsgProducer;
-
     protected TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> tbCoreMsgProducer;
-
     protected TbQueueConsumer<TbProtoQueueMsg<ToTransportMsg>> transportNotificationsConsumer;
 
     protected ScheduledExecutorService schedulerExecutor;
     protected ExecutorService transportCallbackExecutor;
 
     private ConcurrentMap<UUID, SessionMetaData> sessions = new ConcurrentHashMap<>();
-
     //TODO: Implement cleanup of this maps.
     private ConcurrentMap<TenantId, TbRateLimits> perTenantLimits = new ConcurrentHashMap<>();
     private ConcurrentMap<DeviceId, TbRateLimits> perDeviceLimits = new ConcurrentHashMap<>();
+
+    private ExecutorService mainConsumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("transport-consumer"));
+    private volatile boolean stopped = false;
+
+    @PostConstruct
+    public void init() {
+        if (rateLimitEnabled) {
+            //Just checking the configuration parameters
+            new TbRateLimits(perTenantLimitsConf);
+            new TbRateLimits(perDevicesLimitsConf);
+        }
+        this.schedulerExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("transport-scheduler"));
+        this.transportCallbackExecutor = Executors.newWorkStealingPool(20);
+        this.schedulerExecutor.scheduleAtFixedRate(this::checkInactivityAndReportActivity, new Random().nextInt((int) sessionReportTimeout), sessionReportTimeout, TimeUnit.MILLISECONDS);
+        transportApiRequestTemplate = queueProvider.getTransportApiRequestTemplate();
+        ruleEngineMsgProducer = queueProvider.getRuleEngineMsgProducer();
+        tbCoreMsgProducer = queueProvider.getTbCoreMsgProducer();
+        transportNotificationsConsumer = queueProvider.getTransportNotificationsConsumer();
+
+        mainConsumerExecutor.execute(() -> {
+            while (!stopped) {
+                try {
+                    List<TbProtoQueueMsg<ToTransportMsg>> records = transportNotificationsConsumer.poll(notificationsPollDuration);
+                    records.forEach(record -> {
+                        try {
+                            ToTransportMsg toTransportMsg = record.getValue();
+                            if (toTransportMsg.hasToDeviceSessionMsg()) {
+                                processToTransportMsg(toTransportMsg.getToDeviceSessionMsg());
+                            }
+                        } catch (Throwable e) {
+                            log.warn("Failed to process the notification.", e);
+                        }
+                    });
+                } catch (Exception e) {
+                    log.warn("Failed to obtain messages from queue.", e);
+                    try {
+                        Thread.sleep(notificationsPollDuration);
+                    } catch (InterruptedException e2) {
+                        log.trace("Failed to wait until the server has capacity to handle new requests", e2);
+                    }
+                }
+            }
+        });
+    }
+
+    @PreDestroy
+    public void destroy() {
+        if (rateLimitEnabled) {
+            perTenantLimits.clear();
+            perDeviceLimits.clear();
+        }
+        stopped = true;
+        if (schedulerExecutor != null) {
+            schedulerExecutor.shutdownNow();
+        }
+        if (transportCallbackExecutor != null) {
+            transportCallbackExecutor.shutdownNow();
+        }
+        if (mainConsumerExecutor != null) {
+            mainConsumerExecutor.shutdownNow();
+        }
+    }
 
     @Override
     public void registerAsyncSession(TransportProtos.SessionInfoProto sessionInfo, SessionMsgListener listener) {
@@ -86,10 +160,50 @@ public abstract class AbstractTransportService implements TransportService {
     }
 
     @Override
+    public void process(TransportProtos.ValidateDeviceTokenRequestMsg msg, TransportServiceCallback<TransportProtos.ValidateDeviceCredentialsResponseMsg> callback) {
+        log.trace("Processing msg: {}", msg);
+        TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), TransportApiRequestMsg.newBuilder().setValidateTokenRequestMsg(msg).build());
+        AsyncCallbackTemplate.withCallback(transportApiRequestTemplate.send(protoMsg),
+                response -> callback.onSuccess(response.getValue().getValidateTokenResponseMsg()), callback::onError, transportCallbackExecutor);
+    }
+
+    @Override
+    public void process(TransportProtos.ValidateDeviceX509CertRequestMsg msg, TransportServiceCallback<TransportProtos.ValidateDeviceCredentialsResponseMsg> callback) {
+        log.trace("Processing msg: {}", msg);
+        TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), TransportApiRequestMsg.newBuilder().setValidateX509CertRequestMsg(msg).build());
+        AsyncCallbackTemplate.withCallback(transportApiRequestTemplate.send(protoMsg),
+                response -> callback.onSuccess(response.getValue().getValidateTokenResponseMsg()), callback::onError, transportCallbackExecutor);
+    }
+
+    @Override
+    public void process(TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg msg, TransportServiceCallback<TransportProtos.GetOrCreateDeviceFromGatewayResponseMsg> callback) {
+        log.trace("Processing msg: {}", msg);
+        TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), TransportApiRequestMsg.newBuilder().setGetOrCreateDeviceRequestMsg(msg).build());
+        AsyncCallbackTemplate.withCallback(transportApiRequestTemplate.send(protoMsg),
+                response -> callback.onSuccess(response.getValue().getGetOrCreateDeviceResponseMsg()), callback::onError, transportCallbackExecutor);
+    }
+
+    @Override
+    public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.SubscriptionInfoProto msg, TransportServiceCallback<Void> callback) {
+        if (log.isTraceEnabled()) {
+            log.trace("[{}] Processing msg: {}", toId(sessionInfo), msg);
+        }
+        ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
+                TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
+                        .setSubscriptionInfo(msg).build()
+        ).build();
+        send(sessionInfo, toRuleEngineMsg, callback);
+    }
+
+    @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.SessionEventMsg msg, TransportServiceCallback<Void> callback) {
         if (checkLimits(sessionInfo, msg, callback)) {
             reportActivityInternal(sessionInfo);
-            doProcess(sessionInfo, msg, callback);
+            ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
+                    TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
+                            .setSessionEvent(msg).build()
+            ).build();
+            send(sessionInfo, toRuleEngineMsg, callback);
         }
     }
 
@@ -97,7 +211,11 @@ public abstract class AbstractTransportService implements TransportService {
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.PostTelemetryMsg msg, TransportServiceCallback<Void> callback) {
         if (checkLimits(sessionInfo, msg, callback)) {
             reportActivityInternal(sessionInfo);
-            doProcess(sessionInfo, msg, callback);
+            ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
+                    TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
+                            .setPostTelemetry(msg).build()
+            ).build();
+            send(sessionInfo, toRuleEngineMsg, callback);
         }
     }
 
@@ -105,7 +223,11 @@ public abstract class AbstractTransportService implements TransportService {
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.PostAttributeMsg msg, TransportServiceCallback<Void> callback) {
         if (checkLimits(sessionInfo, msg, callback)) {
             reportActivityInternal(sessionInfo);
-            doProcess(sessionInfo, msg, callback);
+            ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
+                    TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
+                            .setPostAttributes(msg).build()
+            ).build();
+            send(sessionInfo, toRuleEngineMsg, callback);
         }
     }
 
@@ -113,7 +235,11 @@ public abstract class AbstractTransportService implements TransportService {
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.GetAttributeRequestMsg msg, TransportServiceCallback<Void> callback) {
         if (checkLimits(sessionInfo, msg, callback)) {
             reportActivityInternal(sessionInfo);
-            doProcess(sessionInfo, msg, callback);
+            ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
+                    TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
+                            .setGetAttributes(msg).build()
+            ).build();
+            send(sessionInfo, toRuleEngineMsg, callback);
         }
     }
 
@@ -122,7 +248,11 @@ public abstract class AbstractTransportService implements TransportService {
         if (checkLimits(sessionInfo, msg, callback)) {
             SessionMetaData sessionMetaData = reportActivityInternal(sessionInfo);
             sessionMetaData.setSubscribedToAttributes(!msg.getUnsubscribe());
-            doProcess(sessionInfo, msg, callback);
+            ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
+                    TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
+                            .setSubscribeToAttributes(msg).build()
+            ).build();
+            send(sessionInfo, toRuleEngineMsg, callback);
         }
     }
 
@@ -131,7 +261,11 @@ public abstract class AbstractTransportService implements TransportService {
         if (checkLimits(sessionInfo, msg, callback)) {
             SessionMetaData sessionMetaData = reportActivityInternal(sessionInfo);
             sessionMetaData.setSubscribedToRPC(!msg.getUnsubscribe());
-            doProcess(sessionInfo, msg, callback);
+            ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
+                    TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
+                            .setSubscribeToRPC(msg).build()
+            ).build();
+            send(sessionInfo, toRuleEngineMsg, callback);
         }
     }
 
@@ -139,7 +273,11 @@ public abstract class AbstractTransportService implements TransportService {
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ToDeviceRpcResponseMsg msg, TransportServiceCallback<Void> callback) {
         if (checkLimits(sessionInfo, msg, callback)) {
             reportActivityInternal(sessionInfo);
-            doProcess(sessionInfo, msg, callback);
+            ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
+                    TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
+                            .setToDeviceRPCCallResponse(msg).build()
+            ).build();
+            send(sessionInfo, toRuleEngineMsg, callback);
         }
     }
 
@@ -147,38 +285,28 @@ public abstract class AbstractTransportService implements TransportService {
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ToServerRpcRequestMsg msg, TransportServiceCallback<Void> callback) {
         if (checkLimits(sessionInfo, msg, callback)) {
             reportActivityInternal(sessionInfo);
-            doProcess(sessionInfo, msg, callback);
+            ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
+                    TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
+                            .setToServerRPCCallRequest(msg).build()
+            ).build();
+            send(sessionInfo, toRuleEngineMsg, callback);
         }
     }
 
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ClaimDeviceMsg msg,
                         TransportServiceCallback<Void> callback) {
-        registerClaimingInfo(sessionInfo, msg, callback);
+        ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
+                TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
+                        .setClaimDevice(msg).build()
+        ).build();
+        send(sessionInfo, toRuleEngineMsg, callback);
     }
 
     @Override
     public void reportActivity(TransportProtos.SessionInfoProto sessionInfo) {
         reportActivityInternal(sessionInfo);
     }
-
-    protected abstract void doProcess(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.SessionEventMsg msg, TransportServiceCallback<Void> callback);
-
-    protected abstract void doProcess(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.PostTelemetryMsg msg, TransportServiceCallback<Void> callback);
-
-    protected abstract void doProcess(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.PostAttributeMsg msg, TransportServiceCallback<Void> callback);
-
-    protected abstract void doProcess(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.GetAttributeRequestMsg msg, TransportServiceCallback<Void> callback);
-
-    protected abstract void doProcess(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.SubscribeToAttributeUpdatesMsg msg, TransportServiceCallback<Void> callback);
-
-    protected abstract void doProcess(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.SubscribeToRPCMsg msg, TransportServiceCallback<Void> callback);
-
-    protected abstract void doProcess(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ToDeviceRpcResponseMsg msg, TransportServiceCallback<Void> callback);
-
-    protected abstract void doProcess(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ToServerRpcRequestMsg msg, TransportServiceCallback<Void> callback);
-
-    protected abstract void registerClaimingInfo(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ClaimDeviceMsg msg, TransportServiceCallback<Void> callback);
 
     private SessionMetaData reportActivityInternal(TransportProtos.SessionInfoProto sessionInfo) {
         UUID sessionId = toId(sessionInfo);
@@ -317,37 +445,36 @@ public abstract class AbstractTransportService implements TransportService {
         return new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB());
     }
 
-    public void init() {
-        if (rateLimitEnabled) {
-            //Just checking the configuration parameters
-            new TbRateLimits(perTenantLimitsConf);
-            new TbRateLimits(perDevicesLimitsConf);
-        }
-        this.schedulerExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("transport-scheduler"));
-        this.transportCallbackExecutor = Executors.newWorkStealingPool(20);
-        this.schedulerExecutor.scheduleAtFixedRate(this::checkInactivityAndReportActivity, new Random().nextInt((int) sessionReportTimeout), sessionReportTimeout, TimeUnit.MILLISECONDS);
-        transportApiRequestTemplate = queueProvider.getTransportApiRequestTemplate();
-        ruleEngineMsgProducer = queueProvider.getRuleEngineMsgProducer();
-        tbCoreMsgProducer = queueProvider.getTbCoreMsgProducer();
-        transportNotificationsConsumer = queueProvider.getTransportNotificationsConsumer();
-    }
-
-    public void destroy() {
-        if (rateLimitEnabled) {
-            perTenantLimits.clear();
-            perDeviceLimits.clear();
-        }
-        if (schedulerExecutor != null) {
-            schedulerExecutor.shutdownNow();
-        }
-        if (transportCallbackExecutor != null) {
-            transportCallbackExecutor.shutdownNow();
-        }
-    }
-
     public static TransportProtos.SessionEventMsg getSessionEventMsg(TransportProtos.SessionEvent event) {
         return TransportProtos.SessionEventMsg.newBuilder()
                 .setSessionType(TransportProtos.SessionType.ASYNC)
                 .setEvent(event).build();
+    }
+
+    protected void send(TransportProtos.SessionInfoProto sessionInfo, ToRuleEngineMsg toRuleEngineMsg, TransportServiceCallback<Void> callback) {
+        ruleEngineMsgProducer.send(new TbProtoQueueMsg<>(getRoutingKey(sessionInfo), toRuleEngineMsg), callback != null ?
+                new TransportTbQueueCallback(callback) : null);
+    }
+
+    private class TransportTbQueueCallback implements TbQueueCallback {
+        private final TransportServiceCallback<Void> callback;
+
+        private TransportTbQueueCallback(TransportServiceCallback<Void> callback) {
+            this.callback = callback;
+        }
+
+        @Override
+        public void onSuccess(TbQueueMsgMetadata metadata) {
+            DefaultTransportService.this.transportCallbackExecutor.submit(() -> {
+                callback.onSuccess(null);
+            });
+        }
+
+        @Override
+        public void onFailure(Throwable t) {
+            DefaultTransportService.this.transportCallbackExecutor.submit(() -> {
+                callback.onError(t);
+            });
+        }
     }
 }
