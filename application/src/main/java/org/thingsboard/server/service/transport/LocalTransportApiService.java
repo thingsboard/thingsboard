@@ -19,10 +19,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Device;
@@ -42,19 +41,10 @@ import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponse
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
-import org.thingsboard.server.kafka.TBKafkaConsumerTemplate;
-import org.thingsboard.server.kafka.TBKafkaProducerTemplate;
-import org.thingsboard.server.kafka.TbKafkaResponseTemplate;
-import org.thingsboard.server.kafka.TbKafkaSettings;
-import org.thingsboard.server.service.cluster.discovery.DiscoveryService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.state.DeviceStateService;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -145,7 +135,7 @@ public class LocalTransportApiService implements TransportApiService {
             try {
                 ValidateDeviceCredentialsResponseMsg.Builder builder = ValidateDeviceCredentialsResponseMsg.newBuilder();
                 builder.setDeviceInfo(getDeviceInfoProto(device));
-                if(!StringUtils.isEmpty(credentials.getCredentialsValue())){
+                if (!StringUtils.isEmpty(credentials.getCredentialsValue())) {
                     builder.setCredentialsBody(credentials.getCredentialsValue());
                 }
                 return TransportApiResponseMsg.newBuilder()
@@ -154,7 +144,7 @@ public class LocalTransportApiService implements TransportApiService {
                 log.warn("[{}] Failed to lookup device by id", deviceId, e);
                 return getEmptyTransportApiResponse();
             }
-        });
+        }, MoreExecutors.directExecutor());
     }
 
     private DeviceInfoProto getDeviceInfoProto(Device device) throws JsonProcessingException {

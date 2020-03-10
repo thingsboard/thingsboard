@@ -22,6 +22,7 @@ import com.google.common.base.Function;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
@@ -174,7 +175,7 @@ public class TelemetryController extends BaseController {
     public DeferredResult<ResponseEntity> getTimeseriesKeys(
             @PathVariable("entityType") String entityType, @PathVariable("entityId") String entityIdStr) throws ThingsboardException {
         return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_TELEMETRY, entityType, entityIdStr,
-                (result, tenantId, entityId) -> Futures.addCallback(tsService.findAllLatest(tenantId, entityId), getTsKeysToResponseCallback(result)));
+                (result, tenantId, entityId) -> Futures.addCallback(tsService.findAllLatest(tenantId, entityId), getTsKeysToResponseCallback(result), MoreExecutors.directExecutor()));
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
@@ -210,7 +211,7 @@ public class TelemetryController extends BaseController {
                     List<ReadTsKvQuery> queries = toKeysList(keys).stream().map(key -> new BaseReadTsKvQuery(key, startTs, endTs, interval, limit, agg))
                             .collect(Collectors.toList());
 
-                    Futures.addCallback(tsService.findAll(tenantId, entityId, queries), getTsKvListCallback(result, useStrictDataTypes));
+                    Futures.addCallback(tsService.findAll(tenantId, entityId, queries), getTsKvListCallback(result, useStrictDataTypes), MoreExecutors.directExecutor());
                 });
     }
 
@@ -462,7 +463,7 @@ public class TelemetryController extends BaseController {
         } else {
             future = tsService.findLatest(user.getTenantId(), entityId, toKeysList(keys));
         }
-        Futures.addCallback(future, getTsKvListCallback(result, useStrictDataTypes));
+        Futures.addCallback(future, getTsKvListCallback(result, useStrictDataTypes), MoreExecutors.directExecutor());
     }
 
     private void getAttributeValuesCallback(@Nullable DeferredResult<ResponseEntity> result, SecurityUser user, EntityId entityId, String scope, String keys) {
@@ -470,9 +471,9 @@ public class TelemetryController extends BaseController {
         FutureCallback<List<AttributeKvEntry>> callback = getAttributeValuesToResponseCallback(result, user, scope, entityId, keyList);
         if (!StringUtils.isEmpty(scope)) {
             if (keyList != null && !keyList.isEmpty()) {
-                Futures.addCallback(attributesService.find(user.getTenantId(), entityId, scope, keyList), callback);
+                Futures.addCallback(attributesService.find(user.getTenantId(), entityId, scope, keyList), callback, MoreExecutors.directExecutor());
             } else {
-                Futures.addCallback(attributesService.findAll(user.getTenantId(), entityId, scope), callback);
+                Futures.addCallback(attributesService.findAll(user.getTenantId(), entityId, scope), callback, MoreExecutors.directExecutor());
             }
         } else {
             List<ListenableFuture<List<AttributeKvEntry>>> futures = new ArrayList<>();
@@ -486,12 +487,12 @@ public class TelemetryController extends BaseController {
 
             ListenableFuture<List<AttributeKvEntry>> future = mergeAllAttributesFutures(futures);
 
-            Futures.addCallback(future, callback);
+            Futures.addCallback(future, callback, MoreExecutors.directExecutor());
         }
     }
 
     private void getAttributeKeysCallback(@Nullable DeferredResult<ResponseEntity> result, TenantId tenantId, EntityId entityId, String scope) {
-        Futures.addCallback(attributesService.findAll(tenantId, entityId, scope), getAttributeKeysToResponseCallback(result));
+        Futures.addCallback(attributesService.findAll(tenantId, entityId, scope), getAttributeKeysToResponseCallback(result), MoreExecutors.directExecutor());
     }
 
     private void getAttributeKeysCallback(@Nullable DeferredResult<ResponseEntity> result, TenantId tenantId, EntityId entityId) {
@@ -502,7 +503,7 @@ public class TelemetryController extends BaseController {
 
         ListenableFuture<List<AttributeKvEntry>> future = mergeAllAttributesFutures(futures);
 
-        Futures.addCallback(future, getAttributeKeysToResponseCallback(result));
+        Futures.addCallback(future, getAttributeKeysToResponseCallback(result), MoreExecutors.directExecutor());
     }
 
     private FutureCallback<List<TsKvEntry>> getTsKeysToResponseCallback(final DeferredResult<ResponseEntity> response) {
