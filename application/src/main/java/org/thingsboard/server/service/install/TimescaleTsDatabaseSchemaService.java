@@ -45,13 +45,13 @@ public class TimescaleTsDatabaseSchemaService extends SqlAbstractDatabaseSchemaS
     private long chunkTimeInterval;
 
     public TimescaleTsDatabaseSchemaService() {
-        super("schema-timescale.sql", "schema-timescale-idx.sql");
+        super("schema-timescale.sql", null);
     }
 
     @Override
     public void createDatabaseSchema() throws Exception {
         super.createDatabaseSchema();
-        executeQuery("SELECT create_hypertable('tenant_ts_kv', 'ts', chunk_time_interval => " + chunkTimeInterval + ", if_not_exists => true);");
+        executeQuery("SELECT create_hypertable('ts_kv', 'ts', chunk_time_interval => " + chunkTimeInterval + ", if_not_exists => true);");
     }
 
     private void executeQuery(String query) {
