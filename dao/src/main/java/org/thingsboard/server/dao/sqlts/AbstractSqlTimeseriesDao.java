@@ -20,6 +20,7 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -235,7 +236,7 @@ public abstract class AbstractSqlTimeseriesDao extends JpaAbstractDaoListeningEx
             public void onFailure(Throwable t) {
                 log.warn("[{}] Failed to process remove of the latest value", entityId, t);
             }
-        });
+        }, MoreExecutors.directExecutor());
         return resultFuture;
     }
 
