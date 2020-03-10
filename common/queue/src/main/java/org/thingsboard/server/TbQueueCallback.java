@@ -2,7 +2,7 @@ package org.thingsboard.server;
 
 public interface TbQueueCallback {
 
-    void onSuccess();
+    void onSuccess(TbQueueMsgMetadata metadata);
 
     void onFailure(Throwable t);
 }

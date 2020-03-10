@@ -4,7 +4,11 @@ import java.util.List;
 
 public interface TbQueueConsumer<T extends TbQueueMsg> {
 
-    List<TbQueueMsg> poll();
+    String getTopic();
+
+    void subscribe();
+
+    List<T> poll(long durationInMillis);
 
     void commit();
 
