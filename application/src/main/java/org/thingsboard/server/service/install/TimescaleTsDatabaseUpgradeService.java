@@ -43,26 +43,26 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
     private static final String TENANT_TS_KV_OLD_TABLE = "tenant_ts_kv_old;";
 
     private static final String CREATE_TS_KV_LATEST_TABLE = "create_ts_kv_latest_table()";
-    private static final String CREATE_NEW_TENANT_TS_KV_TABLE = "create_new_tenant_ts_kv_table()";
+    private static final String CREATE_NEW_TS_KV_TABLE = "create_new_ts_kv_table()";
     private static final String CREATE_TS_KV_DICTIONARY_TABLE = "create_ts_kv_dictionary_table()";
     private static final String INSERT_INTO_DICTIONARY = "insert_into_dictionary()";
-    private static final String INSERT_INTO_TENANT_TS_KV = "insert_into_tenant_ts_kv()";
+    private static final String INSERT_INTO_TS_KV = "insert_into_ts_kv()";
     private static final String INSERT_INTO_TS_KV_LATEST = "insert_into_ts_kv_latest()";
 
     private static final String CALL_CREATE_TS_KV_LATEST_TABLE = CALL_REGEX + CREATE_TS_KV_LATEST_TABLE;
-    private static final String CALL_CREATE_NEW_TENANT_TS_KV_TABLE = CALL_REGEX + CREATE_NEW_TENANT_TS_KV_TABLE;
+    private static final String CALL_CREATE_NEW_TENANT_TS_KV_TABLE = CALL_REGEX + CREATE_NEW_TS_KV_TABLE;
     private static final String CALL_CREATE_TS_KV_DICTIONARY_TABLE = CALL_REGEX + CREATE_TS_KV_DICTIONARY_TABLE;
     private static final String CALL_INSERT_INTO_DICTIONARY = CALL_REGEX + INSERT_INTO_DICTIONARY;
-    private static final String CALL_INSERT_INTO_TS_KV = CALL_REGEX + INSERT_INTO_TENANT_TS_KV;
+    private static final String CALL_INSERT_INTO_TS_KV = CALL_REGEX + INSERT_INTO_TS_KV;
     private static final String CALL_INSERT_INTO_TS_KV_LATEST = CALL_REGEX + INSERT_INTO_TS_KV_LATEST;
 
     private static final String DROP_OLD_TENANT_TS_KV_TABLE = DROP_TABLE + TENANT_TS_KV_OLD_TABLE;
 
     private static final String DROP_PROCEDURE_CREATE_TS_KV_LATEST_TABLE = DROP_PROCEDURE_IF_EXISTS + CREATE_TS_KV_LATEST_TABLE;
-    private static final String DROP_PROCEDURE_CREATE_TENANT_TS_KV_TABLE_COPY = DROP_PROCEDURE_IF_EXISTS + CREATE_NEW_TENANT_TS_KV_TABLE;
+    private static final String DROP_PROCEDURE_CREATE_TENANT_TS_KV_TABLE_COPY = DROP_PROCEDURE_IF_EXISTS + CREATE_NEW_TS_KV_TABLE;
     private static final String DROP_PROCEDURE_CREATE_TS_KV_DICTIONARY_TABLE = DROP_PROCEDURE_IF_EXISTS + CREATE_TS_KV_DICTIONARY_TABLE;
     private static final String DROP_PROCEDURE_INSERT_INTO_DICTIONARY = DROP_PROCEDURE_IF_EXISTS + INSERT_INTO_DICTIONARY;
-    private static final String DROP_PROCEDURE_INSERT_INTO_TENANT_TS_KV = DROP_PROCEDURE_IF_EXISTS + INSERT_INTO_TENANT_TS_KV;
+    private static final String DROP_PROCEDURE_INSERT_INTO_TENANT_TS_KV = DROP_PROCEDURE_IF_EXISTS + INSERT_INTO_TS_KV;
     private static final String DROP_PROCEDURE_INSERT_INTO_TS_KV_LATEST = DROP_PROCEDURE_IF_EXISTS + INSERT_INTO_TS_KV_LATEST;
 
     @Autowired
@@ -86,7 +86,7 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
                         executeQuery(conn, CALL_CREATE_TS_KV_LATEST_TABLE);
                         executeQuery(conn, CALL_CREATE_NEW_TENANT_TS_KV_TABLE);
 
-                        executeQuery(conn, "SELECT create_hypertable('tenant_ts_kv', 'ts', chunk_time_interval => " + chunkTimeInterval + ", if_not_exists => true);");
+                        executeQuery(conn, "SELECT create_hypertable('ts_kv', 'ts', chunk_time_interval => " + chunkTimeInterval + ", if_not_exists => true);");
 
                         executeQuery(conn, CALL_CREATE_TS_KV_DICTIONARY_TABLE);
                         executeQuery(conn, CALL_INSERT_INTO_DICTIONARY);
@@ -102,7 +102,7 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
                         executeQuery(conn, DROP_PROCEDURE_INSERT_INTO_TENANT_TS_KV);
                         executeQuery(conn, DROP_PROCEDURE_INSERT_INTO_TS_KV_LATEST);
 
-                        executeQuery(conn, "ALTER TABLE tenant_ts_kv ADD COLUMN json_v json;");
+                        executeQuery(conn, "ALTER TABLE ts_kv ADD COLUMN json_v json;");
                         executeQuery(conn, "ALTER TABLE ts_kv_latest ADD COLUMN json_v json;");
 
                         log.info("schema timeseries updated!");

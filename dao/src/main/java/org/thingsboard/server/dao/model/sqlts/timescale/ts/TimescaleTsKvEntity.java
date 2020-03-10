@@ -18,25 +18,18 @@ package org.thingsboard.server.dao.model.sqlts.timescale.ts;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.util.StringUtils;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.dao.model.ToData;
 import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
 
-import javax.persistence.Column;
 import javax.persistence.ColumnResult;
 import javax.persistence.ConstructorResult;
 import javax.persistence.Entity;
-import javax.persistence.Id;
 import javax.persistence.IdClass;
 import javax.persistence.NamedNativeQueries;
 import javax.persistence.NamedNativeQuery;
 import javax.persistence.SqlResultSetMapping;
 import javax.persistence.SqlResultSetMappings;
 import javax.persistence.Table;
-import java.util.UUID;
 
-import static org.thingsboard.server.dao.model.ModelConstants.KEY_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.TENANT_ID_COLUMN;
 import static org.thingsboard.server.dao.sqlts.timescale.AggregationRepository.FIND_AVG;
 import static org.thingsboard.server.dao.sqlts.timescale.AggregationRepository.FIND_AVG_QUERY;
 import static org.thingsboard.server.dao.sqlts.timescale.AggregationRepository.FIND_COUNT;
@@ -52,7 +45,7 @@ import static org.thingsboard.server.dao.sqlts.timescale.AggregationRepository.F
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = "tenant_ts_kv")
+@Table(name = "ts_kv")
 @IdClass(TimescaleTsKvCompositeKey.class)
 @SqlResultSetMappings({
         @SqlResultSetMapping(
@@ -116,15 +109,7 @@ import static org.thingsboard.server.dao.sqlts.timescale.AggregationRepository.F
                 resultSetMapping = "timescaleCountMapping"
         )
 })
-public final class TimescaleTsKvEntity extends AbstractTsKvEntity implements ToData<TsKvEntry> {
-
-    @Id
-    @Column(name = TENANT_ID_COLUMN, columnDefinition = "uuid")
-    private UUID tenantId;
-
-    @Id
-    @Column(name = KEY_COLUMN)
-    private int key;
+public final class TimescaleTsKvEntity extends AbstractTsKvEntity {
 
     public TimescaleTsKvEntity() {
     }
