@@ -20,6 +20,7 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
 
@@ -34,7 +35,9 @@ import org.thingsboard.server.common.msg.session.SessionMsgType;
         nodeDescription = "Route incoming messages by Message Type",
         nodeDetails = "Sends messages with message types <b>\"Post attributes\", \"Post telemetry\", \"RPC Request\"</b> etc. via corresponding chain, otherwise <b>Other</b> chain is used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbNodeEmptyConfig")
+        configDirective = "tbNodeEmptyConfig",
+        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+)
 public class TbMsgTypeSwitchNode implements TbNode {
 
     EmptyNodeConfiguration config;

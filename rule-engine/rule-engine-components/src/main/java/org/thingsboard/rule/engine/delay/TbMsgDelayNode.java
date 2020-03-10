@@ -24,6 +24,7 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -44,7 +45,8 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
         nodeDetails = "Delays messages for configurable period.",
         icon = "pause",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbActionNodeMsgDelayConfig"
+        configDirective = "tbActionNodeMsgDelayConfig",
+        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
 )
 
 public class TbMsgDelayNode implements TbNode {

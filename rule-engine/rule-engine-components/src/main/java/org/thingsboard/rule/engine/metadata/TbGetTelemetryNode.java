@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.List;
@@ -64,7 +65,9 @@ import static org.thingsboard.server.common.data.kv.Aggregation.NONE;
                 "Also, the rule node allows you to select telemetry sampling order: <b>ASC</b> or <b>DESC</b>. </br>" +
                 "<b>Note</b>: The maximum size of the fetched array is 1000 records.\n ",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbEnrichmentNodeGetTelemetryFromDatabase")
+        configDirective = "tbEnrichmentNodeGetTelemetryFromDatabase",
+        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+)
 public class TbGetTelemetryNode implements TbNode {
 
     private static final String DESC_ORDER = "DESC";

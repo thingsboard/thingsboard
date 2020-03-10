@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.Set;
@@ -38,7 +39,9 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
                 "Message metadata can be accessed via <code>metadata</code> property. For example <code>metadata.customerName === 'John';</code><br/>" +
                 "Message type can be accessed via <code>msgType</code> property.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbFilterNodeSwitchConfig")
+        configDirective = "tbFilterNodeSwitchConfig",
+        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+)
 public class TbJsSwitchNode implements TbNode {
 
     private TbJsSwitchNodeConfiguration config;

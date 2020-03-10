@@ -19,7 +19,7 @@ export default angular.module('thingsboard.api.ruleChain', [])
 /*@ngInject*/
 function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, componentDescriptorService) {
 
-    var ruleNodeComponents = null;
+    var ruleNodeComponents = {};
 
     var service = {
         getRuleChains: getRuleChains,
@@ -154,20 +154,20 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
         return component.configurationDescriptor.nodeDefinition.customRelations;
     }
 
-    function getRuleNodeComponents() {
+    function getRuleNodeComponents(ruleChainType) {
         var deferred = $q.defer();
-        if (ruleNodeComponents) {
-            deferred.resolve(ruleNodeComponents);
+        if (ruleNodeComponents[ruleChainType]) {
+            deferred.resolve(ruleNodeComponents[ruleChainType]);
         } else {
-            loadRuleNodeComponents().then(
+            loadRuleNodeComponents(ruleChainType).then(
                 (components) => {
                     resolveRuleNodeComponentsUiResources(components).then(
                         (components) => {
-                            ruleNodeComponents = components;
-                            ruleNodeComponents.push(
+                            ruleNodeComponents[ruleChainType] = components;
+                            ruleNodeComponents[ruleChainType].push(
                                 types.ruleChainNodeComponent
                             );
-                            ruleNodeComponents.sort(
+                            ruleNodeComponents[ruleChainType].sort(
                                 (comp1, comp2) => {
                                     var result = comp1.type.localeCompare(comp2.type);
                                     if (result == 0) {
@@ -176,7 +176,7 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
                                     return result;
                                 }
                             );
-                            deferred.resolve(ruleNodeComponents);
+                            deferred.resolve(ruleNodeComponents[ruleChainType]);
                         },
                         () => {
                             deferred.reject();
@@ -233,8 +233,8 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
         return deferred.promise;
     }
 
-    function getRuleNodeComponentByClazz(clazz) {
-        var res = $filter('filter')(ruleNodeComponents, {clazz: clazz}, true);
+    function getRuleNodeComponentByClazz(clazz, ruleNodeType) {
+        var res = $filter('filter')(ruleNodeComponents[ruleNodeType], {clazz: clazz}, true);
         if (res && res.length) {
             return res[0];
         }
@@ -284,8 +284,8 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
         return deferred.promise;
     }
 
-    function loadRuleNodeComponents() {
-        return componentDescriptorService.getComponentDescriptorsByTypes(types.ruleNodeTypeComponentTypes);
+    function loadRuleNodeComponents(ruleChainType) {
+        return componentDescriptorService.getComponentDescriptorsByTypes(types.ruleNodeTypeComponentTypes, ruleChainType);
     }
 
     function testScript(inputParams) {

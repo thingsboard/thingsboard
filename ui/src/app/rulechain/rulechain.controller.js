@@ -774,7 +774,7 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
             x = scrollLeft + scrollParent.width()/2;
             y = scrollTop + scrollParent.height()/2;
         }
-        var ruleNodes = itembuffer.pasteRuleNodes(x, y, event);
+        var ruleNodes = itembuffer.pasteRuleNodes(vm.ruleChain.type, x, y);
         if (ruleNodes) {
             vm.modelservice.deselectAll();
             var nodes = [];
@@ -972,7 +972,7 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
         var nodes = [];
         for (var i=0;i<vm.ruleChainMetaData.nodes.length;i++) {
             var ruleNode = vm.ruleChainMetaData.nodes[i];
-            var component = ruleChainService.getRuleNodeComponentByClazz(ruleNode.type);
+            var component = ruleChainService.getRuleNodeComponentByClazz(ruleNode.type, vm.ruleChain.type);
             if (component) {
                 var icon = vm.types.ruleNodeType[component.type].icon;
                 var iconUrl = null;

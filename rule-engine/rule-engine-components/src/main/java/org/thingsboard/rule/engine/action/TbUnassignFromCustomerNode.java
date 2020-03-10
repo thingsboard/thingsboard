@@ -23,6 +23,7 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 @RuleNode(
@@ -33,7 +34,8 @@ import org.thingsboard.server.common.msg.TbMsg;
         nodeDetails = "Finds target Entity Customer by Customer name pattern and then unassign Originator Entity from this customer.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeUnAssignToCustomerConfig",
-        icon = "remove_circle"
+        icon = "remove_circle",
+        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
 )
 public class TbUnassignFromCustomerNode extends TbAbstractCustomerActionNode<TbUnassignFromCustomerNodeConfiguration> {
 

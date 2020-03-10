@@ -22,6 +22,7 @@ import org.springframework.util.StringUtils;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -40,7 +41,8 @@ import static org.thingsboard.rule.engine.mail.TbSendEmailNode.SEND_EMAIL_TYPE;
                       "Set 'SEND_EMAIL' output message type.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbTransformationNodeToEmailConfig",
-        icon = "email"
+        icon = "email",
+        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
 )
 public class TbMsgToEmailNode implements TbNode {
 

@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 @RuleNode(
@@ -34,7 +35,9 @@ import org.thingsboard.server.common.msg.TbMsg;
                 "<code>{ msg: <i style=\"color: #666;\">new payload</i>,<br/>&nbsp&nbsp&nbspmetadata: <i style=\"color: #666;\">new metadata</i>,<br/>&nbsp&nbsp&nbspmsgType: <i style=\"color: #666;\">new msgType</i> }</code><br/>" +
                 "All fields in resulting object are optional and will be taken from original message if not specified.",
         uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
-        configDirective = "tbTransformationNodeScriptConfig")
+        configDirective = "tbTransformationNodeScriptConfig",
+        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+)
 public class TbTransformMsgNode extends TbAbstractTransformNode {
 
     private TbTransformMsgNodeConfiguration config;

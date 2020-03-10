@@ -22,7 +22,7 @@ import ruleChainTemplate from './rulechain.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function RuleChainRoutes($stateProvider, NodeTemplatePathProvider) {
+export default function RuleChainRoutes($stateProvider, NodeTemplatePathProvider, types) {
 
     NodeTemplatePathProvider.setTemplatePath(ruleNodeTemplate);
 
@@ -82,7 +82,7 @@ export default function RuleChainRoutes($stateProvider, NodeTemplatePathProvider
                 ruleNodeComponents:
                 /*@ngInject*/
                     function($stateParams, ruleChainService) {
-                        return ruleChainService.getRuleNodeComponents();
+                        return ruleChainService.getRuleNodeComponents(types.systemRuleChainType);
                     }
             },
             data: {
@@ -122,7 +122,7 @@ export default function RuleChainRoutes($stateProvider, NodeTemplatePathProvider
             ruleNodeComponents:
             /*@ngInject*/
                 function($stateParams, ruleChainService) {
-                    return ruleChainService.getRuleNodeComponents();
+                    return ruleChainService.getRuleNodeComponents(types.systemRuleChainType);
                 }
         },
         data: {
@@ -179,7 +179,7 @@ export default function RuleChainRoutes($stateProvider, NodeTemplatePathProvider
             ruleNodeComponents:
             /*@ngInject*/
                 function($stateParams, ruleChainService) {
-                    return ruleChainService.getRuleNodeComponents();
+                    return ruleChainService.getRuleNodeComponents(types.edgeRuleChainType);
                 }
         },
         data: {
@@ -236,7 +236,7 @@ export default function RuleChainRoutes($stateProvider, NodeTemplatePathProvider
             ruleNodeComponents:
             /*@ngInject*/
                 function($stateParams, ruleChainService) {
-                    return ruleChainService.getRuleNodeComponents();
+                    return ruleChainService.getRuleNodeComponents(types.edgeRuleChainType);
                 }
         },
         data: {

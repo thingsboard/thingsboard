@@ -25,6 +25,7 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 /**
@@ -40,7 +41,9 @@ import org.thingsboard.server.common.msg.TbMsg;
                   "To access those attributes in other nodes this template can be used " +
                 "<code>metadata.cs_temperature</code> or <code>metadata.shared_limit</code> ",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbEnrichmentNodeOriginatorAttributesConfig")
+        configDirective = "tbEnrichmentNodeOriginatorAttributesConfig",
+        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+)
 public class TbGetAttributesNode extends TbAbstractGetAttributesNode<TbGetAttributesNodeConfiguration, EntityId> {
 
     @Override

@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.io.IOException;
@@ -53,7 +54,8 @@ import java.util.concurrent.TimeUnit;
                 "If the RPC call request is originated by REST API call from user, will forward the response to user immediately.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeRpcRequestConfig",
-        icon = "call_made"
+        icon = "call_made",
+        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
 )
 public class TbSendRPCRequestNode implements TbNode {
 

@@ -20,6 +20,7 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 @Slf4j
@@ -31,7 +32,9 @@ import org.thingsboard.server.common.msg.TbMsg;
         nodeDescription = "Route incoming messages by Message Originator Type",
         nodeDetails = "Routes messages to chain according to the originator type ('Device', 'Asset', etc.).",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbNodeEmptyConfig")
+        configDirective = "tbNodeEmptyConfig",
+        ruleChainTypes = {RuleChainType.SYSTEM, RuleChainType.EDGE}
+)
 public class TbOriginatorTypeSwitchNode implements TbNode {
 
     EmptyNodeConfiguration config;
