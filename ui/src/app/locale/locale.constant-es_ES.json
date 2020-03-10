@@ -1760,23 +1760,6 @@
         }
     },
     "language": {
-        "language": "Lenguaje",
-        "locales": {
-            "de_DE": "Alemán",
-            "fr_FR": "Francés",
-            "zh_CN": "Chino",
-            "en_US": "Inglés",
-            "it_IT": "Italiano",
-            "ko_KR": "Coreano",
-            "ru_RU": "Ruso",
-            "es_ES": "Español",
-            "ja_JA": "Japonés",
-            "tr_TR": "Turco",
-            "fa_IR": "Persa",
-            "uk_UA": "Ucraniano",
-            "cs_CZ": "Checo",
-            "el_GR": "Griego",
-            "lv_LV": "Letón"
-        }
+        "language": "Lenguaje"
     }
 }

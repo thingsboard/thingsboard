@@ -397,6 +397,14 @@ export default angular.module('thingsboard.types', [])
                 accessToken: {
                     name: 'import.column-type.access-token',
                     value: 'ACCESS_TOKEN'
+                },
+                isGateway: {
+                    name: 'import.column-type.isgateway',
+                    value: 'gateway'
+                },
+                description: {
+                    name: 'import.column-type.description',
+                    value: 'description'
                 }
             },
             aliasEntityType: {
@@ -873,6 +881,11 @@ export default angular.module('thingsboard.types', [])
                     value: "boolean",
                     name: "value.boolean",
                     icon: "mdi:checkbox-marked-outline"
+                },
+                json: {
+                    value: "json",
+                    name: "value.json",
+                    icon: "mdi:json"
                 }
             },
             widgetType: {

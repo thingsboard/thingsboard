@@ -1170,24 +1170,7 @@
         "value": "Valeur"
     },
     "language": {
-        "language": "Language",
-        "locales": {
-            "de_DE": "Allemand",
-            "en_US": "Anglais",
-            "fr_FR": "Français",
-            "es_ES": "Espagnol",
-            "it_IT": "Italien",
-            "ko_KR": "Coréen",
-            "ru_RU": "Russe",
-            "zh_CN": "Chinois",
-            "ja_JA": "Japonaise",
-            "tr_TR": "Turc",
-            "fa_IR": "Persane",
-            "uk_UA": "Ukrainien",
-            "cs_CZ": "Tchèque",
-            "el_GR": "Grec",
-            "lv_LV": "Letton"
-        }
+        "language": "Language"
     },
     "layout": {
         "color": "Couleur",

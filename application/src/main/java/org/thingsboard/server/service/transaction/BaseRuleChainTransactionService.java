@@ -93,6 +93,7 @@ public class BaseRuleChainTransactionService implements RuleChainTransactionServ
             TbTransactionTask transactionTask = new TbTransactionTask(msg, onStart, onEnd, onFailure, System.currentTimeMillis() + duration);
             int queueSize = queue.size();
             if (queueSize >= finalQueueSize) {
+                log.trace("Queue has no space: {}", transactionTask);
                 executeOnFailure(transactionTask.getOnFailure(), "Queue has no space!");
             } else {
                 addMsgToQueues(queue, transactionTask);

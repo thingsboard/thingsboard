@@ -21,6 +21,19 @@ tb-json-object-edit {
   }
 }
 
+.tb-json-object-edit-toolbar {
+  .md-button.tidy {
+    min-width: 32px;
+    min-height: 15px;
+    padding: 4px;
+    margin: 0 5px 0 0;
+    font-size: 12px;
+    line-height: 15px;
+    color: #7b7b7b;
+    background: rgba(220, 220, 220, .35);
+  }
+}
+
 .tb-json-object-panel {
   height: 100%;
   margin-left: 15px;

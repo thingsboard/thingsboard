@@ -1686,23 +1686,6 @@
     }
   },
   "language": {
-    "language": "Sprache",
-    "locales": {
-      "de_DE": "Deutsch",
-      "fr_FR": "Französisch",
-      "zh_CN": "Chinesisch",
-      "en_US": "Englisch",
-      "it_IT": "Italienisch",
-      "ko_KR": "Koreanisch",
-      "ru_RU": "Russisch",
-      "es_ES": "Spanisch",
-      "ja_JA": "Japanisch",
-      "tr_TR": "Türkisch",
-      "fa_IR": "Persisch",
-      "uk_UA": "Ukrainisch",
-      "cs_CZ": "Tschechisch",
-      "el_GR": "Griechisch",
-      "lv_LV": "Lettisch"
-    }
+    "language": "Sprache"
   }
 }

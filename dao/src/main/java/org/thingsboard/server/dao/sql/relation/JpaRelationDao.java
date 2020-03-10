@@ -56,6 +56,9 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
     @Autowired
     private RelationRepository relationRepository;
 
+    @Autowired
+    private RelationInsertRepository relationInsertRepository;
+
     @Override
     public ListenableFuture<List<EntityRelation>> findAllByFrom(TenantId tenantId, EntityId from, RelationTypeGroup typeGroup) {
         return service.submit(() -> DaoUtil.convertDataList(
@@ -117,12 +120,12 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
 
     @Override
     public boolean saveRelation(TenantId tenantId, EntityRelation relation) {
-        return relationRepository.save(new RelationEntity(relation)) != null;
+        return relationInsertRepository.saveOrUpdate(new RelationEntity(relation)) != null;
     }
 
     @Override
     public ListenableFuture<Boolean> saveRelationAsync(TenantId tenantId, EntityRelation relation) {
-        return service.submit(() -> relationRepository.save(new RelationEntity(relation)) != null);
+        return service.submit(() -> relationInsertRepository.saveOrUpdate(new RelationEntity(relation)) != null);
     }
 
     @Override

@@ -70,7 +70,7 @@ public abstract class AbstractNashornJsInvokeService extends AbstractJsInvokeSer
     @Value("${js.local.stats.enabled:false}")
     private boolean statsEnabled;
 
-    @Scheduled(fixedDelayString = "${js.remote.stats.print_interval_ms:10000}")
+    @Scheduled(fixedDelayString = "${js.local.stats.print_interval_ms:10000}")
     public void printStats() {
         if (statsEnabled) {
             int pushedMsgs = jsPushedMsgs.getAndSet(0);

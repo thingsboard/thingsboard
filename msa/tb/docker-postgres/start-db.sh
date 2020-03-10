@@ -17,13 +17,15 @@
 
 firstlaunch=${DATA_FOLDER}/.firstlaunch
 
+export PG_CTL=$(find /usr/lib/postgresql/ -name pg_ctl)
+
 if [ ! -d ${PGDATA} ]; then
     mkdir -p ${PGDATA}
     chown -R postgres:postgres ${PGDATA}
-    su postgres -c '/usr/lib/postgresql/10/bin/pg_ctl initdb -U postgres'
+    su postgres -c '${PG_CTL} initdb -U postgres'
 fi
 
-su postgres -c '/usr/lib/postgresql/10/bin/pg_ctl -l /var/log/postgres/postgres.log -w start'
+su postgres -c '${PG_CTL} -l /var/log/postgres/postgres.log -w start'
 
 if [ ! -f ${firstlaunch} ]; then
     su postgres -c 'psql -U postgres -d postgres -c "CREATE DATABASE thingsboard"'
