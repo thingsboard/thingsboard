@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.sqlts.timescale;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -143,7 +144,7 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
             } else {
                 return Collections.emptyList();
             }
-        });
+        }, MoreExecutors.directExecutor());
     }
 
     @Override

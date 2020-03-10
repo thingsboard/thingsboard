@@ -23,6 +23,7 @@ import com.datastax.driver.mapping.Result;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Device;
@@ -178,14 +179,14 @@ public class CassandraDeviceDao extends CassandraAbstractSearchTextDao<DeviceEnt
                 if (result != null) {
                     List<EntitySubtype> entitySubtypes = new ArrayList<>();
                     result.all().forEach((entitySubtypeEntity) ->
-                        entitySubtypes.add(entitySubtypeEntity.toEntitySubtype())
+                            entitySubtypes.add(entitySubtypeEntity.toEntitySubtype())
                     );
                     return entitySubtypes;
                 } else {
                     return Collections.emptyList();
                 }
             }
-        });
+        }, MoreExecutors.directExecutor());
     }
 
 }
