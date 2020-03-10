@@ -133,7 +133,7 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
     }
 
     @Override
-    public ListenableFuture<Response> send(String key, Request request) {
+    public ListenableFuture<Response> send(Request request) {
         if (tickSize > maxPendingRequests) {
             return Futures.immediateFailedFuture(new RuntimeException("Pending request map is full!"));
         }
@@ -143,7 +143,7 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
         SettableFuture<Response> future = SettableFuture.create();
         ResponseMetaData<Response> responseMetaData = new ResponseMetaData<>(tickTs + maxRequestTimeout, future);
         pendingRequests.putIfAbsent(requestId, responseMetaData);
-        log.trace("[{}] Sending request, key [{}], expTime [{}]", requestId, key, responseMetaData.expTime);
+        log.trace("[{}] Sending request, key [{}], expTime [{}]", requestId, request.getKey(), responseMetaData.expTime);
         requestTemplate.send(request, new TbQueueCallback() {
             @Override
             public void onSuccess(TbQueueMsgMetadata metadata) {

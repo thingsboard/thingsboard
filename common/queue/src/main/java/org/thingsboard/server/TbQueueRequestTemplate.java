@@ -4,6 +4,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 public interface TbQueueRequestTemplate<Request extends TbQueueMsg, Response extends TbQueueMsg> {
 
-    ListenableFuture<Response> send(String key, Request request);
+    ListenableFuture<Response> send(Request request);
 
 }

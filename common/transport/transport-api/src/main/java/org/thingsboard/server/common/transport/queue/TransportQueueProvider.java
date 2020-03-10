@@ -1,19 +1,22 @@
 package org.thingsboard.server.common.transport.queue;
 
 import org.thingsboard.server.TbQueueConsumer;
-import org.thingsboard.server.TbQueueMsg;
 import org.thingsboard.server.TbQueueProducer;
+import org.thingsboard.server.TbQueueRequestTemplate;
+import org.thingsboard.server.common.TbProtoQueueMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
 
 public interface TransportQueueProvider {
 
-    TbQueueProducer<TransportApiCallRequest> getTransportApiCallRequestsProducer();
+    TbQueueRequestTemplate<TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> getTransportApiRequestTemplate();
 
-    TbQueueConsumer<TbQueueMsg> getTransportApiCallResponsesConsumer();
+    TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> getRuleEngineMsgProducer();
 
-    TbQueueProducer<TbQueueMsg> getRuleEngineMsgProducer();
+    TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> getTbCoreMsgProducer();
 
-    TbQueueProducer<TbQueueMsg> getTbCoreMsgProducer();
-
-    TbQueueConsumer<TbQueueMsg> getTransportNotificationsConsumer();
+    TbQueueConsumer<TbProtoQueueMsg<ToTransportMsg>> getTransportNotificationsConsumer();
 
 }

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,6 +19,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.TbQueueConsumer;
+import org.thingsboard.server.TbQueueProducer;
+import org.thingsboard.server.TbQueueRequestTemplate;
+import org.thingsboard.server.common.TbProtoQueueMsg;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -29,6 +33,10 @@ import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.queue.TransportQueueProvider;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
 
 import java.util.Random;
 import java.util.UUID;
@@ -53,6 +61,15 @@ public abstract class AbstractTransportService implements TransportService {
 
     @Autowired
     private TransportQueueProvider queueProvider;
+
+
+    protected TbQueueRequestTemplate<TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> transportApiRequestTemplate;
+
+    protected TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> ruleEngineMsgProducer;
+
+    protected TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> tbCoreMsgProducer;
+
+    protected TbQueueConsumer<TbProtoQueueMsg<ToTransportMsg>> transportNotificationsConsumer;
 
     protected ScheduledExecutorService schedulerExecutor;
     protected ExecutorService transportCallbackExecutor;
@@ -296,8 +313,8 @@ public abstract class AbstractTransportService implements TransportService {
         return new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB());
     }
 
-    protected String getRoutingKey(TransportProtos.SessionInfoProto sessionInfo) {
-        return new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()).toString();
+    protected UUID getRoutingKey(TransportProtos.SessionInfoProto sessionInfo) {
+        return new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB());
     }
 
     public void init() {
@@ -309,6 +326,10 @@ public abstract class AbstractTransportService implements TransportService {
         this.schedulerExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("transport-scheduler"));
         this.transportCallbackExecutor = Executors.newWorkStealingPool(20);
         this.schedulerExecutor.scheduleAtFixedRate(this::checkInactivityAndReportActivity, new Random().nextInt((int) sessionReportTimeout), sessionReportTimeout, TimeUnit.MILLISECONDS);
+        transportApiRequestTemplate = queueProvider.getTransportApiRequestTemplate();
+        ruleEngineMsgProducer = queueProvider.getRuleEngineMsgProducer();
+        tbCoreMsgProducer = queueProvider.getTbCoreMsgProducer();
+        transportNotificationsConsumer = queueProvider.getTransportNotificationsConsumer();
     }
 
     public void destroy() {
