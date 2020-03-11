@@ -117,12 +117,10 @@ kind: StatefulSet
 metadata:
   name: tb-kafka
   namespace: thingsboard
-  labels:
-    app: tb-kafka
 spec:
+  serviceName: "tb-kafka"
   replicas: 3
   podManagementPolicy: OrderedReady
-  serviceName: server
   selector:
     matchLabels:
       app: tb-kafka
@@ -137,23 +135,40 @@ spec:
           image: wurstmeister/kafka:2.12-2.2.1
           ports:
             - containerPort: 9092
+              name: kafka-int
+            - containerPort: 9093
+              name: kafka-ext
           readinessProbe:
-            periodSeconds: 20
+            periodSeconds: 5
+            timeoutSeconds: 5
             tcpSocket:
               port: 9092
+            initialDelaySeconds: 60
           livenessProbe:
+            timeoutSeconds: 5
             periodSeconds: 5
             tcpSocket:
               port: 9092
+            initialDelaySeconds: 80
           env:
             - name: BROKER_ID_COMMAND
               value: "hostname | cut -d'-' -f3"
             - name: KAFKA_ZOOKEEPER_CONNECT
               value: "zookeeper:2181"
-            - name: KAFKA_ADVERTISED_PORT
-              value: "9092"
+            - name: KAFKA_ZOOKEEPER_CONNECTION_TIMEOUT_MS
+              value: "60000"
+            - name: KAFKA_UNCLEAN_LEADER_ELECTION_ENABLE
+              value: "true"
             - name: KAFKA_LISTENERS
-              value: "PLAINTEXT://:9092"
+              value: "INSIDE://:9092,OUTSIDE://:9093"
+            - name: KAFKA_ADVERTISED_LISTENERS
+              value: "INSIDE://:9092,OUTSIDE://:9093"
+            - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+              value: "INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT"
+            - name: KAFKA_INTER_BROKER_LISTENER_NAME
+              value: "INSIDE"
+            - name: KAFKA_CONTROLLER_SHUTDOWN_ENABLE
+              value: "true"
             - name: KAFKA_CREATE_TOPICS
               value: "js.eval.requests:100:1:delete --config=retention.ms=60000 --config=segment.bytes=26214400 --config=retention.bytes=104857600,tb.transport.api.requests:30:1:delete --config=retention.ms=60000 --config=segment.bytes=26214400 --config=retention.bytes=104857600,tb.rule-engine:30:1:delete --config=retention.ms=60000 --config=segment.bytes=26214400 --config=retention.bytes=104857600"
             - name: KAFKA_AUTO_CREATE_TOPICS_ENABLE
@@ -191,11 +206,15 @@ metadata:
   namespace: thingsboard
 spec:
   type: ClusterIP
+  ports:
+    - port: 9092
+      targetPort: 9092
+      name: kafka-int
+    - port: 9093
+      targetPort: 9093
+      name: kafka-ext
   selector:
     app: tb-kafka
-  ports:
-    - name: tb-kafka-port
-      port: 9092
 ---
 apiVersion: v1
 kind: ConfigMap
