@@ -76,13 +76,13 @@ public class TbKafkaNode implements TbNode {
             config.getOtherProperties()
                     .forEach(properties::put);
         }
+        addMetadataKeyValuesAsKafkaHeaders = BooleanUtils.toBooleanDefaultIfNull(config.isAddMetadataKeyValuesAsKafkaHeaders(), false);
+        toBytesCharset = config.getKafkaHeadersCharset() != null ? Charset.forName(config.getKafkaHeadersCharset()) : StandardCharsets.UTF_8;
         try {
             this.producer = new KafkaProducer<>(properties);
         } catch (Exception e) {
             throw new TbNodeException(e);
         }
-        addMetadataKeyValuesAsKafkaHeaders = BooleanUtils.toBooleanDefaultIfNull(config.isAddMetadataKeyValuesAsKafkaHeaders(), false);
-        toBytesCharset = config.getKafkaHeadersCharset() != null ? Charset.forName(config.getKafkaHeadersCharset()) : StandardCharsets.UTF_8;
     }
 
     @Override
