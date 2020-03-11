@@ -15,9 +15,8 @@
  */
 package org.thingsboard.server.common.data;
 
-import org.thingsboard.server.common.data.id.AdminSettingsId;
-
 import com.fasterxml.jackson.databind.JsonNode;
+import org.thingsboard.server.common.data.id.AdminSettingsId;
 
 public class AdminSettings extends BaseData<AdminSettingsId> {
 
