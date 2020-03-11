@@ -40,7 +40,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
-import org.thingsboard.server.kafka.AsyncCallbackTemplate;
+import org.thingsboard.server.common.AsyncCallbackTemplate;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;

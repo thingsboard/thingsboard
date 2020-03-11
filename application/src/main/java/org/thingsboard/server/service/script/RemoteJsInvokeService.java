@@ -25,11 +25,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.TbQueueProducer;
+import org.thingsboard.server.common.DefaultTbQueueRequestTemplate;
+import org.thingsboard.server.common.TbProtoQueueMsg;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
-import org.thingsboard.server.kafka.TBKafkaConsumerTemplate;
-import org.thingsboard.server.kafka.TBKafkaProducerTemplate;
-import org.thingsboard.server.kafka.TbKafkaRequestTemplate;
-import org.thingsboard.server.kafka.TbKafkaSettings;
 import org.thingsboard.server.kafka.TbNodeIdProvider;
 
 import javax.annotation.Nullable;
@@ -40,7 +39,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @ConditionalOnProperty(prefix = "js", value = "evaluator", havingValue = "remote", matchIfMissing = true)
@@ -99,42 +97,43 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
         }
     }
 
-    private TbKafkaRequestTemplate<JsInvokeProtos.RemoteJsRequest, JsInvokeProtos.RemoteJsResponse> kafkaTemplate;
+    private DefaultTbQueueRequestTemplate<TbProtoQueueMsg<JsInvokeProtos.RemoteJsRequest>, TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> defaultTemplate;
     private Map<UUID, String> scriptIdToBodysMap = new ConcurrentHashMap<>();
 
     @PostConstruct
     public void init() {
-        TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<JsInvokeProtos.RemoteJsRequest> requestBuilder = TBKafkaProducerTemplate.builder();
-        requestBuilder.settings(kafkaSettings);
-        requestBuilder.clientId("producer-js-invoke-" + nodeIdProvider.getNodeId());
-        requestBuilder.defaultTopic(requestTopic);
-        requestBuilder.encoder(new RemoteJsRequestEncoder());
+//        TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<TbProtoQueueMsg<JsInvokeProtos.RemoteJsRequest>> requestBuilder = TBKafkaProducerTemplate.builder();
+//        requestBuilder.settings(kafkaSettings);
+//        requestBuilder.clientId("producer-js-invoke-" + nodeIdProvider.getNodeId());
+//        requestBuilder.defaultTopic(requestTopic);
+//        requestBuilder.encoder(new RemoteJsRequestEncoder());
+        TbQueueProducer<TbProtoQueueMsg<JsInvokeProtos.RemoteJsRequest>> producer;
 
-        TBKafkaConsumerTemplate.TBKafkaConsumerTemplateBuilder<JsInvokeProtos.RemoteJsResponse> responseBuilder = TBKafkaConsumerTemplate.builder();
-        responseBuilder.settings(kafkaSettings);
-        responseBuilder.topic(responseTopicPrefix + "." + nodeIdProvider.getNodeId());
-        responseBuilder.clientId("js-" + nodeIdProvider.getNodeId());
-        responseBuilder.groupId("rule-engine-node-" + nodeIdProvider.getNodeId());
-        responseBuilder.autoCommit(true);
-        responseBuilder.autoCommitIntervalMs(autoCommitInterval);
-        responseBuilder.decoder(new RemoteJsResponseDecoder());
-        responseBuilder.requestIdExtractor((response) -> new UUID(response.getRequestIdMSB(), response.getRequestIdLSB()));
-
-        TbKafkaRequestTemplate.TbKafkaRequestTemplateBuilder
-                <JsInvokeProtos.RemoteJsRequest, JsInvokeProtos.RemoteJsResponse> builder = TbKafkaRequestTemplate.builder();
-        builder.requestTemplate(requestBuilder.build());
-        builder.responseTemplate(responseBuilder.build());
-        builder.maxPendingRequests(maxPendingRequests);
-        builder.maxRequestTimeout(maxRequestsTimeout);
-        builder.pollInterval(responsePollDuration);
-        kafkaTemplate = builder.build();
-        kafkaTemplate.init();
+//        TBKafkaConsumerTemplate.TBKafkaConsumerTemplateBuilder<JsInvokeProtos.RemoteJsResponse> responseBuilder = TBKafkaConsumerTemplate.builder();
+//        responseBuilder.settings(kafkaSettings);
+//        responseBuilder.topic(responseTopicPrefix + "." + nodeIdProvider.getNodeId());
+//        responseBuilder.clientId("js-" + nodeIdProvider.getNodeId());
+//        responseBuilder.groupId("rule-engine-node-" + nodeIdProvider.getNodeId());
+//        responseBuilder.autoCommit(true);
+//        responseBuilder.autoCommitIntervalMs(autoCommitInterval);
+//        responseBuilder.decoder(new RemoteJsResponseDecoder());
+//        responseBuilder.requestIdExtractor((response) -> new UUID(response.getRequestIdMSB(), response.getRequestIdLSB()));
+//
+//        TbKafkaRequestTemplate.TbKafkaRequestTemplateBuilder
+//                <JsInvokeProtos.RemoteJsRequest, JsInvokeProtos.RemoteJsResponse> builder = TbKafkaRequestTemplate.builder();
+//        builder.requestTemplate(requestBuilder.build());
+//        builder.responseTemplate(responseBuilder.build());
+//        builder.maxPendingRequests(maxPendingRequests);
+//        builder.maxRequestTimeout(maxRequestsTimeout);
+//        builder.pollInterval(responsePollDuration);
+//        defaultTemplate = builder.build();
+//        defaultTemplate.init();
     }
 
     @PreDestroy
     public void destroy() {
-        if (kafkaTemplate != null) {
-            kafkaTemplate.stop();
+        if (defaultTemplate != null) {
+            defaultTemplate.stop();
         }
     }
 
@@ -151,11 +150,12 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 .build();
 
         log.trace("Post compile request for scriptId [{}]", scriptId);
-        ListenableFuture<JsInvokeProtos.RemoteJsResponse> future = kafkaTemplate.post(UUID.randomUUID().toString(), jsRequestWrapper);
+        ListenableFuture<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> future = defaultTemplate.send(new TbProtoQueueMsg<>(UUID.randomUUID(), jsRequestWrapper));
+
         kafkaPushedMsgs.incrementAndGet();
-        Futures.addCallback(future, new FutureCallback<JsInvokeProtos.RemoteJsResponse>() {
+        Futures.addCallback(future, new FutureCallback<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>>() {
             @Override
-            public void onSuccess(@Nullable JsInvokeProtos.RemoteJsResponse result) {
+            public void onSuccess(@Nullable TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse> result) {
                 kafkaEvalMsgs.incrementAndGet();
             }
 
@@ -168,7 +168,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
             }
         });
         return Futures.transform(future, response -> {
-            JsInvokeProtos.JsCompileResponse compilationResult = response.getCompileResponse();
+            JsInvokeProtos.JsCompileResponse compilationResult = response.getValue().getCompileResponse();
             UUID compiledScriptId = new UUID(compilationResult.getScriptIdMSB(), compilationResult.getScriptIdLSB());
             if (compilationResult.getSuccess()) {
                 scriptIdToNameMap.put(scriptId, functionName);
@@ -202,11 +202,11 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 .setInvokeRequest(jsRequestBuilder.build())
                 .build();
 
-        ListenableFuture<JsInvokeProtos.RemoteJsResponse> future = kafkaTemplate.post(UUID.randomUUID().toString(), jsRequestWrapper);
+        ListenableFuture<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> future = defaultTemplate.send(new TbProtoQueueMsg<>(UUID.randomUUID(), jsRequestWrapper));
         kafkaPushedMsgs.incrementAndGet();
-        Futures.addCallback(future, new FutureCallback<JsInvokeProtos.RemoteJsResponse>() {
+        Futures.addCallback(future, new FutureCallback<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>>() {
             @Override
-            public void onSuccess(@Nullable JsInvokeProtos.RemoteJsResponse result) {
+            public void onSuccess(@Nullable TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse> result) {
                 kafkaInvokeMsgs.incrementAndGet();
             }
 
@@ -219,7 +219,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
             }
         });
         return Futures.transform(future, response -> {
-            JsInvokeProtos.JsInvokeResponse invokeResult = response.getInvokeResponse();
+            JsInvokeProtos.JsInvokeResponse invokeResult = response.getValue().getInvokeResponse();
             if (invokeResult.getSuccess()) {
                 return invokeResult.getResult();
             } else {
@@ -240,8 +240,8 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 .setReleaseRequest(jsRequest)
                 .build();
 
-        ListenableFuture<JsInvokeProtos.RemoteJsResponse> future = kafkaTemplate.post(UUID.randomUUID().toString(), jsRequestWrapper);
-        JsInvokeProtos.RemoteJsResponse response = future.get();
+        ListenableFuture<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> future = defaultTemplate.send(new TbProtoQueueMsg<>(UUID.randomUUID(), jsRequestWrapper));
+        JsInvokeProtos.RemoteJsResponse response = future.get().getValue();
 
         JsInvokeProtos.JsReleaseResponse compilationResult = response.getReleaseResponse();
         UUID compiledScriptId = new UUID(compilationResult.getScriptIdMSB(), compilationResult.getScriptIdLSB());

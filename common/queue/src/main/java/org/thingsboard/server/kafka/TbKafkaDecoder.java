@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.kafka;
 
+import org.thingsboard.server.TbQueueMsg;
+
 import java.io.IOException;
 
 /**
@@ -22,6 +24,6 @@ import java.io.IOException;
  */
 public interface TbKafkaDecoder<T> {
 
-    T decode(byte[] data) throws IOException;
+    T decode(TbQueueMsg msg) throws IOException;
 
 }

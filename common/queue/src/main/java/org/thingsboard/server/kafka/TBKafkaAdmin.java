@@ -15,10 +15,12 @@
  */
 package org.thingsboard.server.kafka;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.kafka.clients.admin.*;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.KafkaFuture;
+import org.thingsboard.server.TbQueueAdmin;
 
 import java.time.Duration;
 import java.util.Collections;
@@ -30,7 +32,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * Created by ashvayka on 24.09.18.
  */
-public class TBKafkaAdmin {
+public class TBKafkaAdmin implements TbQueueAdmin {
 
     AdminClient client;
 
@@ -66,4 +68,9 @@ public class TBKafkaAdmin {
         }
     }
 
+    @Override
+    public ListenableFuture<Void> createTopicIfNotExists(String topic) {
+
+        return null;
+    }
 }

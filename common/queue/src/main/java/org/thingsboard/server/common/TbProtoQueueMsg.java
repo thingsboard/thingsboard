@@ -11,13 +11,13 @@ public class TbProtoQueueMsg<T extends com.google.protobuf.GeneratedMessageV3> i
 
     private final UUID key;
     private final T value;
-    private final DefaultTbQueueMsgHeaders headers;
+    private final TbQueueMsgHeaders headers;
 
     public TbProtoQueueMsg(UUID key, T value) {
         this(key, value, new DefaultTbQueueMsgHeaders());
     }
 
-    public TbProtoQueueMsg(UUID key, T value, DefaultTbQueueMsgHeaders headers) {
+    public TbProtoQueueMsg(UUID key, T value, TbQueueMsgHeaders headers) {
         this.key = key;
         this.value = value;
         this.headers = headers;

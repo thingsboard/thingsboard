@@ -7,7 +7,7 @@ import java.util.Map;
 
 public class DefaultTbQueueMsgHeaders implements TbQueueMsgHeaders {
 
-    private final Map<String, byte[]> data = new HashMap<>();
+    protected final Map<String, byte[]> data = new HashMap<>();
 
     @Override
     public byte[] put(String key, byte[] value) {
@@ -17,5 +17,10 @@ public class DefaultTbQueueMsgHeaders implements TbQueueMsgHeaders {
     @Override
     public byte[] get(String key) {
         return data.get(key);
+    }
+
+    @Override
+    public Map<String, byte[]> getData() {
+        return data;
     }
 }
