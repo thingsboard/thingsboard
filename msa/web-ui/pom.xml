@@ -36,7 +36,6 @@
         <main.dir>${basedir}/../..</main.dir>
         <pkg.name>tb-web-ui</pkg.name>
         <docker.name>tb-web-ui</docker.name>
-        <pkg.user>thingsboard</pkg.user>
         <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
         <pkg.linux.dist>${project.build.directory}/package/linux</pkg.linux.dist>

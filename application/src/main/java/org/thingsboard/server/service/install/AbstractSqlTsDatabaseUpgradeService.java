@@ -22,38 +22,21 @@ import org.springframework.beans.factory.annotation.Value;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
-import java.sql.Types;
+import java.sql.Statement;
 
 @Slf4j
 public abstract class AbstractSqlTsDatabaseUpgradeService {
 
     protected static final String CALL_REGEX = "call ";
-    protected static final String CHECK_VERSION = "check_version()";
+    protected static final String CHECK_VERSION = "check_version(false)";
+    protected static final String CHECK_VERSION_TO_DELETE = "check_version(INOUT valid_version boolean)";
     protected static final String DROP_TABLE = "DROP TABLE ";
-    protected static final String DROP_FUNCTION_IF_EXISTS = "DROP FUNCTION IF EXISTS ";
-
-    private static final String CALL_CHECK_VERSION = CALL_REGEX + CHECK_VERSION;
-
-
-    private static final String FUNCTION = "function: {}";
-    private static final String DROP_STATEMENT = "drop statement: {}";
-    private static final String QUERY = "query: {}";
-    private static final String SUCCESSFULLY_EXECUTED = "Successfully executed ";
-    private static final String FAILED_TO_EXECUTE = "Failed to execute ";
-    private static final String FAILED_DUE_TO = " due to: {}";
-
-    protected static final String SUCCESSFULLY_EXECUTED_FUNCTION = SUCCESSFULLY_EXECUTED + FUNCTION;
-    protected static final String FAILED_TO_EXECUTE_FUNCTION_DUE_TO = FAILED_TO_EXECUTE + FUNCTION + FAILED_DUE_TO;
-
-    protected static final String SUCCESSFULLY_EXECUTED_DROP_STATEMENT = SUCCESSFULLY_EXECUTED + DROP_STATEMENT;
-    protected static final String FAILED_TO_EXECUTE_DROP_STATEMENT = FAILED_TO_EXECUTE + DROP_STATEMENT + FAILED_DUE_TO;
-
-    protected static final String SUCCESSFULLY_EXECUTED_QUERY = SUCCESSFULLY_EXECUTED + QUERY;
-    protected static final String FAILED_TO_EXECUTE_QUERY = FAILED_TO_EXECUTE + QUERY + FAILED_DUE_TO;
+    protected static final String DROP_PROCEDURE_IF_EXISTS = "DROP PROCEDURE IF EXISTS ";
+    protected static final String DROP_PROCEDURE_CHECK_VERSION = DROP_PROCEDURE_IF_EXISTS + CHECK_VERSION_TO_DELETE;
 
     @Value("${spring.datasource.url}")
     protected String dbUrl;
@@ -78,23 +61,22 @@ public abstract class AbstractSqlTsDatabaseUpgradeService {
         log.info("Check the current PostgreSQL version...");
         boolean versionValid = false;
         try {
-            CallableStatement callableStatement = conn.prepareCall("{? = " + CALL_CHECK_VERSION + " }");
-            callableStatement.registerOutParameter(1, Types.BOOLEAN);
-            callableStatement.execute();
-            versionValid = callableStatement.getBoolean(1);
-            callableStatement.close();
+            Statement statement = conn.createStatement();
+            ResultSet resultSet = statement.executeQuery(CALL_REGEX + CHECK_VERSION);
+            resultSet.next();
+            versionValid = resultSet.getBoolean(1);
+            statement.close();
         } catch (Exception e) {
             log.info("Failed to check current PostgreSQL version due to: {}", e.getMessage());
         }
         return versionValid;
     }
 
-    protected void executeFunction(Connection conn, String query) {
-        log.info("{} ... ", query);
+    protected void executeQuery(Connection conn, String query) {
         try {
-            CallableStatement callableStatement = conn.prepareCall("{" + query + "}");
-            callableStatement.execute();
-            SQLWarning warnings = callableStatement.getWarnings();
+            Statement statement = conn.createStatement();
+            statement.execute(query); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
+            SQLWarning warnings = statement.getWarnings();
             if (warnings != null) {
                 log.info("{}", warnings.getMessage());
                 SQLWarning nextWarning = warnings.getNextWarning();
@@ -103,31 +85,10 @@ public abstract class AbstractSqlTsDatabaseUpgradeService {
                     nextWarning = nextWarning.getNextWarning();
                 }
             }
-            callableStatement.close();
-            log.info(SUCCESSFULLY_EXECUTED_FUNCTION, query.replace(CALL_REGEX, ""));
-            Thread.sleep(2000);
-        } catch (Exception e) {
-            log.info(FAILED_TO_EXECUTE_FUNCTION_DUE_TO, query, e.getMessage());
-        }
-    }
-
-    protected void executeDropStatement(Connection conn, String query) {
-        try {
-            conn.createStatement().execute(query); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
-            log.info(SUCCESSFULLY_EXECUTED_DROP_STATEMENT, query);
             Thread.sleep(5000);
+            log.info("Successfully executed query: {}", query);
         } catch (InterruptedException | SQLException e) {
-            log.info(FAILED_TO_EXECUTE_DROP_STATEMENT, query, e.getMessage());
-        }
-    }
-
-    protected void executeQuery(Connection conn, String query) {
-        try {
-            conn.createStatement().execute(query); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
-            log.info(SUCCESSFULLY_EXECUTED_QUERY, query);
-            Thread.sleep(5000);
-        } catch (InterruptedException | SQLException e) {
-            log.info(FAILED_TO_EXECUTE_QUERY, query, e.getMessage());
+            log.info("Failed to execute query: {} due to: {}", query, e.getMessage());
         }
     }
 

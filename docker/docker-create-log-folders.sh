@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # Copyright © 2016-2020 The Thingsboard Authors
 #
@@ -14,17 +15,10 @@
 # limitations under the License.
 #
 
-FROM thingsboard/openjdk8
+mkdir -p tb-node/log/ && sudo chown -R 799:799 tb-node/log/
 
-COPY start-tb-coap-transport.sh ${pkg.name}.deb /tmp/
+mkdir -p tb-transports/coap/log && sudo chown -R 799:799 tb-transports/coap/log
 
-RUN chmod a+x /tmp/*.sh \
-    && mv /tmp/start-tb-coap-transport.sh /usr/bin
+mkdir -p tb-transports/http/log && sudo chown -R 799:799 tb-transports/http/log
 
-RUN dpkg -i /tmp/${pkg.name}.deb
-
-RUN update-rc.d ${pkg.name} disable
-
-USER ${pkg.user}
-
-CMD ["start-tb-coap-transport.sh"]
+mkdir -p tb-transports/mqtt/log && sudo chown -R 799:799 tb-transports/mqtt/log

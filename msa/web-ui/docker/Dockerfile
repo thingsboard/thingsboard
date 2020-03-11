@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM debian:stretch
+FROM thingsboard/base
 
 COPY start-web-ui.sh ${pkg.name}.deb /tmp/
 
@@ -24,5 +24,7 @@ RUN chmod a+x /tmp/*.sh \
 RUN dpkg -i /tmp/${pkg.name}.deb
 
 RUN update-rc.d ${pkg.name} disable
+
+USER ${pkg.user}
 
 CMD ["start-web-ui.sh"]

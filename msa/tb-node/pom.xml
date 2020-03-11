@@ -36,7 +36,6 @@
         <main.dir>${basedir}/../..</main.dir>
         <pkg.name>thingsboard</pkg.name>
         <docker.name>tb-node</docker.name>
-        <pkg.user>thingsboard</pkg.user>
         <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
     </properties>

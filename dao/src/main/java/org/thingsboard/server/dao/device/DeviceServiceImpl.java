@@ -29,7 +29,13 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.thingsboard.server.common.data.*;
+import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceInfo;
+import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -409,18 +415,18 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
             };
 
     private PaginatedRemover<TenantId, Device> tenantDevicesRemover =
-        new PaginatedRemover<TenantId, Device>() {
+            new PaginatedRemover<TenantId, Device>() {
 
-            @Override
-            protected PageData<Device> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
-                return deviceDao.findDevicesByTenantId(id.getId(), pageLink);
-            }
+                @Override
+                protected PageData<Device> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+                    return deviceDao.findDevicesByTenantId(id.getId(), pageLink);
+                }
 
-            @Override
-            protected void removeEntity(TenantId tenantId, Device entity) {
-                deleteDevice(tenantId, new DeviceId(entity.getUuidId()));
-            }
-        };
+                @Override
+                protected void removeEntity(TenantId tenantId, Device entity) {
+                    deleteDevice(tenantId, new DeviceId(entity.getUuidId()));
+                }
+            };
 
     private PaginatedRemover<CustomerId, Device> customerDeviceUnasigner = new PaginatedRemover<CustomerId, Device>() {
 

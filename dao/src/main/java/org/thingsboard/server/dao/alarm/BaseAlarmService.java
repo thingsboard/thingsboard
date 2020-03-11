@@ -265,8 +265,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                             entityService.fetchEntityNameAsync(tenantId, alarmInfo.getOriginator()), originatorName -> {
                                 alarmInfo.setOriginatorName(originatorName);
                                 return alarmInfo;
-                            }, MoreExecutors.directExecutor()
-                    );
+                            }, MoreExecutors.directExecutor());
                 }, MoreExecutors.directExecutor());
     }
 
@@ -286,9 +285,9 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                         }, MoreExecutors.directExecutor()
                 ));
             }
-            return Futures.transform(Futures.successfulAsList(alarmFutures), alarmInfos -> {
-                return new PageData(alarmInfos, alarms.getTotalPages(), alarms.getTotalElements(), alarms.hasNext());
-            }, MoreExecutors.directExecutor());
+            return Futures.transform(Futures.successfulAsList(alarmFutures),
+                    alarmInfos -> new PageData(alarmInfos, alarms.getTotalPages(), alarms.getTotalElements(),
+                            alarms.hasNext()), MoreExecutors.directExecutor());
         }
         return Futures.immediateFuture(alarms);
     }
