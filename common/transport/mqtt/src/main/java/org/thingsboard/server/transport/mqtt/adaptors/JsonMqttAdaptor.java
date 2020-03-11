@@ -197,14 +197,14 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
     @Override
     public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.ProvisionDeviceResponseMsg responseMsg) {
         return Optional.of(createMqttPublishMsg(ctx,
-                MqttTopics.DEVICE_PROVISION_RESPONSE_TOPIC,
+                MqttTopics.DEVICE_PROVISION_TOPIC,
                 JsonConverter.toJson(responseMsg)));
     }
 
     @Override
     public Optional<MqttMessage> convertToGatewayPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.ProvisionDeviceResponseMsg responseMsg, int requestId) {
         return Optional.of(createMqttPublishMsg(ctx,
-                MqttTopics.DEVICE_PROVISION_RESPONSE_TOPIC,
+                MqttTopics.GATEWAY_PROVISION_TOPIC,
                 JsonConverter.toJson(responseMsg, requestId)));
     }
 
