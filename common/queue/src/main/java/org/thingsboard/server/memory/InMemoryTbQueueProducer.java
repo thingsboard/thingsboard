@@ -2,16 +2,18 @@ package org.thingsboard.server.memory;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import lombok.Data;
 import org.thingsboard.server.TbQueueCallback;
 import org.thingsboard.server.TbQueueMsg;
 import org.thingsboard.server.TbQueueMsgMetadata;
 import org.thingsboard.server.TbQueueProducer;
 
+@Data
 public class InMemoryTbQueueProducer<T extends TbQueueMsg> implements TbQueueProducer<T> {
 
     private final InMemoryStorage storage = InMemoryStorage.getInstance();
 
-    private String defaultTopic;
+    private final String defaultTopic;
 
     @Override
     public void init() {

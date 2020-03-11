@@ -192,7 +192,7 @@ public class DefaultTransportService implements TransportService {
                 TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
                         .setSubscriptionInfo(msg).build()
         ).build();
-        send(sessionInfo, toRuleEngineMsg, callback);
+        sendToDeviceActor(sessionInfo, toRuleEngineMsg, callback);
     }
 
     @Override
@@ -203,7 +203,7 @@ public class DefaultTransportService implements TransportService {
                     TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
                             .setSessionEvent(msg).build()
             ).build();
-            send(sessionInfo, toRuleEngineMsg, callback);
+            sendToDeviceActor(sessionInfo, toRuleEngineMsg, callback);
         }
     }
 
@@ -215,7 +215,7 @@ public class DefaultTransportService implements TransportService {
                     TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
                             .setPostTelemetry(msg).build()
             ).build();
-            send(sessionInfo, toRuleEngineMsg, callback);
+            sendToRuleEngine(sessionInfo, toRuleEngineMsg, callback);
         }
     }
 
@@ -227,7 +227,7 @@ public class DefaultTransportService implements TransportService {
                     TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
                             .setPostAttributes(msg).build()
             ).build();
-            send(sessionInfo, toRuleEngineMsg, callback);
+            sendToRuleEngine(sessionInfo, toRuleEngineMsg, callback);
         }
     }
 
@@ -239,7 +239,7 @@ public class DefaultTransportService implements TransportService {
                     TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
                             .setGetAttributes(msg).build()
             ).build();
-            send(sessionInfo, toRuleEngineMsg, callback);
+            sendToDeviceActor(sessionInfo, toRuleEngineMsg, callback);
         }
     }
 
@@ -252,7 +252,7 @@ public class DefaultTransportService implements TransportService {
                     TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
                             .setSubscribeToAttributes(msg).build()
             ).build();
-            send(sessionInfo, toRuleEngineMsg, callback);
+            sendToDeviceActor(sessionInfo, toRuleEngineMsg, callback);
         }
     }
 
@@ -265,7 +265,7 @@ public class DefaultTransportService implements TransportService {
                     TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
                             .setSubscribeToRPC(msg).build()
             ).build();
-            send(sessionInfo, toRuleEngineMsg, callback);
+            sendToDeviceActor(sessionInfo, toRuleEngineMsg, callback);
         }
     }
 
@@ -277,10 +277,11 @@ public class DefaultTransportService implements TransportService {
                     TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
                             .setToDeviceRPCCallResponse(msg).build()
             ).build();
-            send(sessionInfo, toRuleEngineMsg, callback);
+            sendToDeviceActor(sessionInfo, toRuleEngineMsg, callback);
         }
     }
 
+    //TODO 2.5: Need to handle timeouts on the transport level and not on the Device Actor Level.
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ToServerRpcRequestMsg msg, TransportServiceCallback<Void> callback) {
         if (checkLimits(sessionInfo, msg, callback)) {
@@ -289,18 +290,20 @@ public class DefaultTransportService implements TransportService {
                     TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
                             .setToServerRPCCallRequest(msg).build()
             ).build();
-            send(sessionInfo, toRuleEngineMsg, callback);
+            sendToRuleEngine(sessionInfo, toRuleEngineMsg, callback);
         }
     }
 
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ClaimDeviceMsg msg,
                         TransportServiceCallback<Void> callback) {
-        ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
-                TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
-                        .setClaimDevice(msg).build()
-        ).build();
-        send(sessionInfo, toRuleEngineMsg, callback);
+        if (checkLimits(sessionInfo, msg, callback)) {
+            ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
+                    TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
+                            .setClaimDevice(msg).build()
+            ).build();
+            sendToDeviceActor(sessionInfo, toRuleEngineMsg, callback);
+        }
     }
 
     @Override
@@ -451,7 +454,12 @@ public class DefaultTransportService implements TransportService {
                 .setEvent(event).build();
     }
 
-    protected void send(TransportProtos.SessionInfoProto sessionInfo, ToRuleEngineMsg toRuleEngineMsg, TransportServiceCallback<Void> callback) {
+    protected void sendToDeviceActor(TransportProtos.SessionInfoProto sessionInfo, ToRuleEngineMsg toRuleEngineMsg, TransportServiceCallback<Void> callback) {
+        tbCoreMsgProducer.send(new TbProtoQueueMsg<>(getRoutingKey(sessionInfo), toRuleEngineMsg), callback != null ?
+                new TransportTbQueueCallback(callback) : null);
+    }
+
+    protected void sendToRuleEngine(TransportProtos.SessionInfoProto sessionInfo, ToRuleEngineMsg toRuleEngineMsg, TransportServiceCallback<Void> callback) {
         ruleEngineMsgProducer.send(new TbProtoQueueMsg<>(getRoutingKey(sessionInfo), toRuleEngineMsg), callback != null ?
                 new TransportTbQueueCallback(callback) : null);
     }
