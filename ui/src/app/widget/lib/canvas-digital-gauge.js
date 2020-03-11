@@ -63,7 +63,7 @@ export default class TbCanvasDigitalGauge {
         }
 
         this.localSettings.showTicks = settings.showTicks || false;
-        this.localSettings.ticksValue = settings.ticksValue;
+        this.localSettings.ticksValue = settings.ticksValue || [];
         this.localSettings.tickWidth = settings.tickWidth || 4;
         this.localSettings.colorTicks = settings.colorTicks || '#666';
 
