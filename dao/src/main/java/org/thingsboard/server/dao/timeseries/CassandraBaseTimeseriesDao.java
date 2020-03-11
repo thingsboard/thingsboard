@@ -28,6 +28,7 @@ import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -330,7 +331,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
             stmt.setInt(6, (int) ttl);
         }
         futures.add(getFuture(executeAsyncWrite(tenantId, stmt), rs -> null));
-        return Futures.transform(Futures.allAsList(futures), result -> null);
+        return Futures.transform(Futures.allAsList(futures), result -> null, MoreExecutors.directExecutor());
     }
 
     private void processSetNullValues(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry, long ttl, List<ListenableFuture<Void>> futures, long partition, DataType type) {
@@ -545,7 +546,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
             public void onFailure(Throwable t) {
                 log.warn("[{}] Failed to process remove of the latest value", entityId, t);
             }
-        });
+        }, MoreExecutors.directExecutor());
         return resultFuture;
     }
 
