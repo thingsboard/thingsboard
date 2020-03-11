@@ -51,6 +51,10 @@ let defaultDigitalGaugeOptions = Object.assign({}, canvasGauges.GenericOptions, 
 
         neonGlowBrightness: 0,
 
+        colorTicks: 'gray',
+        tickWidth: 4,
+        ticks: [],
+
         isMobile: false
 
 });
@@ -130,6 +134,13 @@ export default class CanvasDigitalGauge extends canvasGauges.BaseGauge {
                         rgbString: tColor.toRgbString()
                     });
                 }
+            }
+        }
+
+        options.ticksValue = [];
+        for(let i = 0; i < options.ticks.length; i++){
+            if(options.ticks[i] !== null){
+                options.ticksValue.push(CanvasDigitalGauge.normalizeValue(options.ticks[i], options.minValue, options.maxValue))
             }
         }
 
@@ -729,6 +740,48 @@ function drawBarGlow(context, startX, startY, endX, endY, color, strokeWidth, is
     context.stroke();
 }
 
+function drawTickArc(context, tickValues, Cx, Cy, Ri, Rm, Ro, startAngle, endAngle, color, tickWidth) {
+    if(!tickValues.length) {
+        return;
+    }
+
+    const strokeWidth = Ro - Ri;
+    context.beginPath();
+    context.lineWidth = tickWidth;
+    context.strokeStyle = color;
+    for (let i = 0; i < tickValues.length; i++) {
+        var angle = startAngle + tickValues[i] * endAngle;
+        var x1 = Cx + (Ri + strokeWidth) * Math.cos(angle);
+        var y1 = Cy + (Ri + strokeWidth) * Math.sin(angle);
+        var x2 = Cx + Ri * Math.cos(angle);
+        var y2 = Cy + Ri * Math.sin(angle);
+        context.moveTo(x1, y1);
+        context.lineTo(x2, y2);
+    }
+    context.stroke();
+}
+
+function drawTickBar(context, tickValues, startX, startY, distanceBar, strokeWidth, isVertical, color, tickWidth) {
+    if(!tickValues.length) {
+        return;
+    }
+
+    context.beginPath();
+    context.lineWidth = tickWidth;
+    context.strokeStyle = color;
+    for (let i = 0; i < tickValues.length; i++) {
+        let tickValue = tickValues[i] * distanceBar;
+        if (isVertical) {
+            context.moveTo(startX - strokeWidth / 2, startY + tickValue - distanceBar);
+            context.lineTo(startX + strokeWidth / 2, startY + tickValue - distanceBar);
+        } else {
+            context.moveTo(startX + tickValue, startY);
+            context.lineTo(startX + tickValue, startY + strokeWidth);
+        }
+    }
+    context.stroke();
+}
+
 function drawProgress(context, options, progress) {
     var neonColor;
     if (options.neonGlowBrightness) {
@@ -759,6 +812,7 @@ function drawProgress(context, options, progress) {
         if (options.neonGlowBrightness && !options.isMobile) {
             drawArcGlow(context, Cx, Cy, Ri, Rm, Ro, neonColor, progress, true, options.donutStartAngle, options.donutEndAngle);
         }
+        drawTickArc(context, options.ticksValue, Cx, Cy, Ri, Rm, Ro, options.donutStartAngle, options.donutEndAngle - options.donutStartAngle, options.colorTicks, options.tickWidth);
     } else if (options.gaugeType === 'arc') {
         if (options.neonGlowBrightness) {
             context.strokeStyle = neonColor;
@@ -769,6 +823,7 @@ function drawProgress(context, options, progress) {
         if (options.neonGlowBrightness && !options.isMobile) {
             drawArcGlow(context, Cx, Cy, Ri, Rm, Ro, neonColor, progress, false);
         }
+        drawTickArc(context, options.ticksValue, Cx, Cy, Ri, Rm, Ro, Math.PI, Math.PI, options.colorTicks, options.tickWidth);
     } else if (options.gaugeType === 'horizontalBar') {
         if (options.neonGlowBrightness) {
             context.strokeStyle = neonColor;
@@ -781,6 +836,7 @@ function drawProgress(context, options, progress) {
             drawBarGlow(context, barLeft, barTop + strokeWidth/2, barLeft + (barRight-barLeft)*progress, barTop + strokeWidth/2,
                 neonColor, strokeWidth, false);
         }
+        drawTickBar(context, options.ticksValue, barLeft, barTop, barRight - barLeft, strokeWidth, false, options.colorTicks, options.tickWidth);
     } else if (options.gaugeType === 'verticalBar') {
         if (options.neonGlowBrightness) {
             context.strokeStyle = neonColor;
@@ -793,6 +849,7 @@ function drawProgress(context, options, progress) {
             drawBarGlow(context, baseX + width/2, barBottom, baseX + width/2, barBottom - (barBottom-barTop)*progress,
                 neonColor, strokeWidth, true);
         }
+        drawTickBar(context, options.ticksValue, baseX + width / 2, barTop, barTop - barBottom, strokeWidth, true, options.colorTicks, options.tickWidth);
     }
 }
 
