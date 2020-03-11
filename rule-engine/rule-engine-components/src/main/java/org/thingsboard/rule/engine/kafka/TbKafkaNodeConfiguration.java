@@ -53,6 +53,7 @@ public class TbKafkaNodeConfiguration implements NodeConfiguration<TbKafkaNodeCo
         configuration.setValueSerializer(StringSerializer.class.getName());
         configuration.setOtherProperties(Collections.emptyMap());
         configuration.setAddMetadataKeyValuesAsKafkaHeaders(false);
+        configuration.setKafkaHeadersCharset("UTF-8");
         return configuration;
     }
 }
