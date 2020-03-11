@@ -16,8 +16,7 @@
 
 CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;
 
-CREATE TABLE IF NOT EXISTS tenant_ts_kv (
-    tenant_id uuid NOT NULL,
+CREATE TABLE IF NOT EXISTS ts_kv (
     entity_id uuid NOT NULL,
     key int NOT NULL,
     ts bigint NOT NULL,
@@ -26,7 +25,7 @@ CREATE TABLE IF NOT EXISTS tenant_ts_kv (
     long_v bigint,
     dbl_v double precision,
     json_v json,
-    CONSTRAINT tenant_ts_kv_pkey PRIMARY KEY (tenant_id, entity_id, key, ts)
+    CONSTRAINT ts_kv_pkey PRIMARY KEY (entity_id, key, ts)
 );
 
 CREATE TABLE IF NOT EXISTS ts_kv_dictionary (
