@@ -1,8 +1,12 @@
 import { Component, OnInit, Input, ViewChild, AfterViewInit, ChangeDetectorRef } from '@angular/core';
-import { MapWidgetController } from '../lib/maps/map-widget2';
+import { MapWidgetController, TbMapWidgetV2 } from '../lib/maps/map-widget2';
 import { MapProviders } from '../lib/maps/map-models';
 import { parseArray } from '@app/core/utils';
 import { interpolateArray } from '../lib/maps/maps-utils';
+import tinycolor from "tinycolor2";
+import { initSchema, addToSchema, addGroupInfo } from '@app/core/schema-utils';
+import { tripAnimationSchema } from '../lib/maps/schemes';
+import L from 'leaflet';
 
 @Component({
   selector: 'trip-animation',
@@ -18,35 +22,45 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
   mapWidget: MapWidgetController;
   historicalData;
   intervals;
-  normalizationStep = 500;
+  normalizationStep = 1000;
   interpolatedData = [];
-
+  widgetConfig;
+  settings;
 
   constructor(private cd: ChangeDetectorRef) { }
 
   ngOnInit(): void {
+    this.widgetConfig = this.ctx.widgetConfig;
+    const settings = {
+      normalizationStep: 1000,
+      buttonColor: tinycolor(this.widgetConfig.color).setAlpha(0.54).toRgbString(),
+      disabledButtonColor: tinycolor(this.widgetConfig.color).setAlpha(0.3).toRgbString(),     
+      rotationAngle: 0
+    }
+    this.settings = { ...settings, ...this.ctx.settings };
+    //this.ctx.settings = settings;
+    console.log("TripAnimationComponent -> ngOnInit -> this.ctx.settings", this.ctx.settings)
     let subscription = this.ctx.subscriptions[Object.keys(this.ctx.subscriptions)[0]];
     if (subscription) subscription.callbacks.onDataUpdated = (updated) => {
       this.historicalData = parseArray(this.ctx.data);
-      this.historicalData.forEach(el => {
-      console.log("TripAnimationComponent -> if -> el", el)
+      this.historicalData.forEach(ds => ds.forEach(el => {
         el.longitude += (Math.random() - 0.5)
         el.latitude += (Math.random() - 0.5)
-      });
+      }));
       this.calculateIntervals();
+      this.timeUpdated(this.intervals[0]);
       this.cd.detectChanges();
+      this.mapWidget.map.map.invalidateSize();
     }
   }
 
   ngAfterViewInit() {
     this.mapWidget = new MapWidgetController(MapProviders.openstreet, false, this.ctx, this.mapContainer.nativeElement);
-    this.mapWidget.data
   }
 
   timeUpdated(time) {
-     //this.mapWidget.ma 
-     const currentPosition = this.interpolatedData.map(dataSource=>dataSource[time]);
-     console.log("TripAnimationComponent -> timeUpdated -> currentPosition", currentPosition)
+    const currentPosition = this.interpolatedData.map(dataSource => dataSource[time]);
+      this.mapWidget.map.updateMarkers(currentPosition);
   }
 
   calculateIntervals() {
@@ -57,9 +71,17 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
       }
       this.intervals.push(dataSource[dataSource.length - 1]?.time);
       this.interpolatedData[index] = interpolateArray(dataSource, this.intervals);
-      console.log("TripAnimationComponent -> calculateIntervals -> this.intervals", this.intervals)
-
     });
   }
 
+  static getSettingsSchema() {
+    let schema = initSchema();
+    addToSchema(schema, TbMapWidgetV2.getProvidersSchema());
+    addGroupInfo(schema, "Map Provider Settings");
+    addToSchema(schema, tripAnimationSchema);
+    addGroupInfo(schema, "Trip Animation Settings");
+    return schema;
+  }
 }
+
+export let TbTripAnimationWidget = TripAnimationComponent;

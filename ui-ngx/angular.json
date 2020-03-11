@@ -38,7 +38,8 @@
               "src/app/shared/components/json-form/react/json-form.scss",
               "node_modules/rc-select/assets/index.less",
               "node_modules/jstree-bootstrap-theme/dist/themes/proton/style.min.css",
-              "node_modules/leaflet/dist/leaflet.css"
+              "node_modules/leaflet/dist/leaflet.css",
+              "src/app/modules/home/components/widget/lib/maps/markers.scss"
             ],
             "stylePreprocessorOptions": {
               "includePaths": [

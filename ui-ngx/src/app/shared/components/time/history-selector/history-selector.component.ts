@@ -1,5 +1,5 @@
 import { Component, OnInit, OnChanges, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
-import { interval } from 'rxjs';
+import { interval, Subscription } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 
 @Component({
@@ -34,23 +34,25 @@ export class HistorySelectorComponent implements OnInit, OnChanges {
 
   play() {
     this.playing = true;
-    this.interval = interval(1000 / this.speed)
-      .pipe(
-        filter(() => this.playing),
-        tap(() => this.index++)).subscribe(() => {
-          if (this.index < this.maxTimeIndex) {
-            this.cd.detectChanges();
-            this.onTimeUpdated.emit(this.intervals[this.index]);
-          }
-          else {
-            this.interval.complete();
-          }
-        }, err => {
-          console.log(err);
-        }, () => {
-          this.index = this.minTimeIndex;
-          this.playing = false;
-        })
+    if (!this.interval)
+      this.interval = interval(1000 / this.speed)
+        .pipe(
+          filter(() => this.playing),
+          tap(() => this.index++)).subscribe(() => {
+            if (this.index < this.maxTimeIndex) {
+              this.cd.detectChanges();
+              this.onTimeUpdated.emit(this.intervals[this.index]);
+            }
+            else {
+              this.interval.complete();
+            }
+          }, err => {
+            console.log(err);
+          }, () => {
+            this.index = this.minTimeIndex;
+            this.playing = false;
+            this.interval = null;
+          });
   }
 
   pause() {

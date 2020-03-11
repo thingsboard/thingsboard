@@ -1,4 +1,3 @@
 <div class="map" #map ></div>
-<div>{{historicalData?.lenth}}</div>
-<tb-history-selector *ngIf="historicalData" [settings]="ctx.settings" [intervals]="intervals"
+<tb-history-selector *ngIf="historicalData" [settings]="settings" [intervals]="intervals"
     (onTimeUpdated)="timeUpdated($event)"></tb-history-selector>

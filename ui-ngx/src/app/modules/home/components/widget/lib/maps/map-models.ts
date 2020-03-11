@@ -18,6 +18,7 @@ export interface MapOptions {
     useDefaultCenterPosition?: boolean,
     gmDefaultMapType?: string,
     useLabelFunction: string;
+    icon?: any;
 }
 
 export enum MapProviders {
@@ -29,6 +30,7 @@ export enum MapProviders {
 }
 
 export interface MarkerSettings extends MapOptions {
+    icon?: any;
     showLabel?: boolean,
     draggable?: boolean,
     displayTooltip?: boolean,

@@ -15,6 +15,7 @@ import {
 import { MapWidgetStaticInterface, MapWidgetInterface } from './map-widget.interface';
 import { OpenStreetMap, TencentMap, GoogleMap, HEREMap, ImageMap } from './providers';
 import { parseFunction, parseArray, parseData } from '@app/core/utils';
+import { initSchema, addToSchema, mergeSchemes, addCondition, addGroupInfo } from '@app/core/schema-utils';
 
 export class MapWidgetController implements MapWidgetInterface {
 
@@ -73,7 +74,7 @@ export class MapWidgetController implements MapWidgetInterface {
         this.map.updateMarkers(parseData(this.data));
     }
 
-    public updateHistoryData(dataSources){
+    public updateHistoryData(dataSources) {
         dataSources.map()
     }
 
@@ -93,90 +94,28 @@ export class MapWidgetController implements MapWidgetInterface {
         return {};
     }
 
+    public static getProvidersSchema(){
+     return   mergeSchemes([mapProviderSchema,
+            ...Object.values(providerSets)?.map(
+                setting => addCondition(setting?.schema, `model.provider === '${setting.name}'`))])
+    } 
+
     public static settingsSchema(mapProvider, drawRoutes): Object {
         //const providerInfo = providerSets[mapProvider];
         let schema = initSchema();
+        addToSchema(schema,this.getProvidersSchema());
 
-        function initSchema() {
-            return {
-                schema: {
-                    type: "object",
-                    properties: {},
-                    required: []
-                },
-                form: [],
-                groupInfoes: []
-            };
-        }
-
-        function addGroupInfo(title: string) {
-            schema.groupInfoes.push({
-                "formIndex": schema.groupInfoes?.length || 0,
-                "GroupTitle": title
-            });
-        }
-
-        function addToSchema(newSchema) {
-            Object.assign(schema.schema.properties, newSchema.schema.properties);
-            schema.schema.required = schema.schema.required.concat(newSchema.schema.required);
-            schema.form.push(newSchema.form);//schema.form.concat(commonMapSettingsSchema.form);
-        }
-
-        function mergeSchemes(schemes: any[]) {
-            return schemes.reduce((finalSchema, schema) => {
-                return {
-                    schema: {
-                        properties: {
-                            ...finalSchema.schema.properties,
-                            ...schema.schema.properties
-                        },
-                        required: [
-                            ...finalSchema.schema.required,
-                            ...schema.schema.required
-                        ]
-                    },
-                    form: [
-                        ...finalSchema.form,
-                        ...schema.form
-                    ]
-                }
-            }, initSchema());
-        }
-
-        function addCondition(schema, condition: String) {
-            schema.form = schema.form.map(element => {
-                if (typeof element === 'string') {
-                    return {
-                        key: element,
-                        condition: condition
-                    }
-                }
-                if (typeof element == 'object') {
-                    if (element.condition) {
-                        element.condition += ' && ' + condition
-                    }
-                    else element.condition = condition;
-                }
-                return element;
-            });
-            return schema;
-        }
-
-        addToSchema(mergeSchemes([mapProviderSchema,
-            ...Object.values(providerSets)?.map(
-                setting => addCondition(setting?.schema, `model.provider === '${setting.name}'`))]));
-
-        addGroupInfo("Map Provider Settings");
-        addToSchema(commonMapSettingsSchema);
-        addGroupInfo("Common Map Settings");
+        addGroupInfo(schema, "Map Provider Settings");
+        addToSchema(schema, commonMapSettingsSchema);
+        addGroupInfo(schema, "Common Map Settings");
 
         if (drawRoutes) {
-            addToSchema(routeMapSettingsSchema);
-            addGroupInfo("Route Map Settings");
+            addToSchema(schema, routeMapSettingsSchema);
+            addGroupInfo(schema, "Route Map Settings");
         } else if (mapProvider !== 'image-map') {
             let clusteringSchema = mergeSchemes([markerClusteringSettingsSchemaLeaflet, markerClusteringSettingsSchema])
-            addToSchema(clusteringSchema);
-            addGroupInfo("Markers Clustering Settings");
+            addToSchema(schema, clusteringSchema);
+            addGroupInfo(schema, "Markers Clustering Settings");
         }
         console.log(11, schema);
 
@@ -243,7 +182,7 @@ const defaultSettings = {
     latKeyName: 'latitude',
     lngKeyName: 'longitude',
     polygonKeyName: 'coordinates',
-    showLabel: true,
+    showLabel: false,
     label: "${entityName}",
     showTooltip: false,
     useDefaultCenterPosition: false,

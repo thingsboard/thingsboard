@@ -8,7 +8,8 @@ export interface MapWidgetInterface {
 }
 
 export interface MapWidgetStaticInterface {
-    settingsSchema(mapProvider, drawRoutes): Object;
+    settingsSchema(mapProvider?, drawRoutes?): Object;
+    getProvidersSchema():Object
     dataKeySettingsSchema(): Object;
     actionSources(): Object;
 }

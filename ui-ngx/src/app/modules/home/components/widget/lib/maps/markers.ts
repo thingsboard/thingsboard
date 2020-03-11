@@ -25,7 +25,7 @@ export class Marker {
             this.leafletMarker.setIcon(iconInfo.icon);
             if (settings.showLabel) {
                 this.tooltipOffset = [0, -iconInfo.size[1] + 10];
-                this.updateMarkerLabel(settings)
+               // this.updateMarkerLabel(settings)
             }
 
             this.leafletMarker.addTo(map)
@@ -55,8 +55,6 @@ export class Marker {
         this.leafletMarker.setLatLng(position);
     }
 
-
-
     updateMarkerLabel(settings) {
 
         function getText(template, data) {
@@ -74,7 +72,7 @@ export class Marker {
             return res;
         }
 
-        
+
         this.leafletMarker.unbindTooltip();
         if (settings.showLabel) {
             if (settings.useLabelFunction) {
@@ -104,9 +102,20 @@ export class Marker {
     }
 
     createMarkerIcon(onMarkerIconReady) {
-        const currentImage = this.settings.useMarkerImageFunction ?
-            safeExecute(this.settings.markerImageFunction, [this.data, this.settings.markerImages, this.dataSources, this.data.dsIndex]) : this.settings.currentImage;
-        // var opMap = this;
+
+        if (this.settings.icon) {
+            onMarkerIconReady({
+                size: [30,30],
+                icon: this.settings.icon,
+            });
+            return;
+        }
+
+        let currentImage = this.settings.useMarkerImageFunction ?
+            safeExecute(this.settings.markerImageFunction,
+                [this.data, this.settings.markerImages, this.dataSources, this.data.dsIndex]) : this.settings.currentImage;
+       
+        
         if (currentImage && currentImage.url) {
             aspectCache(currentImage.url).subscribe(
                 (aspect) => {

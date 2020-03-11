@@ -30,6 +30,12 @@ export function interpolateArray(originData, interpolatedIntervals) {
         return (intermediateMoment - firsMoment) / (secondMoment - firsMoment);
     };
 
+    function findAngle(startPoint, endPoint) {
+        let angle = -Math.atan2(endPoint.latitude - startPoint.longitude, endPoint.longitude - startPoint.latitude);
+        angle = angle * 180 / Math.PI;
+        return parseInt(angle.toFixed(2));
+    }
+
     const result = {};
 
     for (let i = 1, j = 0; i < originData.length, j < interpolatedIntervals.length;) {
@@ -37,10 +43,16 @@ export function interpolateArray(originData, interpolatedIntervals) {
         while (originData[i].time < currentTime) i++;
         const before = originData[i - 1];
         const after = originData[i];
-        result[currentTime] = (interpolateOnPointSegment(
+        const interpolation = interpolateOnPointSegment(
             new L.Point(before.latitude, before.longitude),
             new L.Point(after.latitude, after.longitude),
-            getRatio(before.time, after.time, currentTime)));
+            getRatio(before.time, after.time, currentTime));
+        result[currentTime] = ({
+            ...originData[i],
+            rotationAngle: findAngle(before, after),
+            latitude: interpolation.x,
+            longitude: interpolation.y
+        });
         j++;
     }
 
