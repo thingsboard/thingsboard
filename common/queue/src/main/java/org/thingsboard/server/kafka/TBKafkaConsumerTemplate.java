@@ -17,21 +17,27 @@ package org.thingsboard.server.kafka;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.thingsboard.server.TbQueueConsumer;
+import org.thingsboard.server.TbQueueMsg;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
 
 /**
  * Created by ashvayka on 24.09.18.
  */
-public class TBKafkaConsumerTemplate<T> {
+@Slf4j
+public class TBKafkaConsumerTemplate<T extends TbQueueMsg> implements TbQueueConsumer<T> {
 
     private final KafkaConsumer<String, byte[]> consumer;
     private final TbKafkaDecoder<T> decoder;
@@ -66,23 +72,55 @@ public class TBKafkaConsumerTemplate<T> {
         this.topic = topic;
     }
 
+    @Override
     public void subscribe() {
         consumer.subscribe(Collections.singletonList(topic));
     }
 
+    @Override
+    public List<T> poll(long durationInMillis) {
+        ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(durationInMillis));
+        if (records.count() > 0) {
+            List<T> result = new ArrayList<>();
+            records.forEach(record -> {
+                try {
+                    result.add(decode(record));
+                } catch (IOException e) {
+                    log.error("Failed decode record: [{}]", record);
+                }
+            });
+            return result;
+        }
+
+        return Collections.emptyList();
+    }
+
+    @Override
+    public void commit() {
+        consumer.commitAsync();
+    }
+
+    @Override
     public void unsubscribe() {
         consumer.unsubscribe();
     }
 
-    public ConsumerRecords<String, byte[]> poll(Duration duration) {
-        return consumer.poll(duration);
-    }
+//    public void subscribe() {
+//        consumer.subscribe(Collections.singletonList(topic));
+//    }
+//
+
+//
+//    public ConsumerRecords<String, byte[]> poll(Duration duration) {
+//        return consumer.poll(duration);
+//    }
 
     public T decode(ConsumerRecord<String, byte[]> record) throws IOException {
-        return decoder.decode(record.value());
+        return decoder.decode(new KafkaTbQueueMsg(record));
     }
 
     public UUID extractRequestId(T value) {
         return requestIdExtractor.extractRequestId(value);
     }
+
 }

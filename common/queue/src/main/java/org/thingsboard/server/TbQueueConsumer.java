@@ -8,6 +8,8 @@ public interface TbQueueConsumer<T extends TbQueueMsg> {
 
     void subscribe();
 
+    void unsubscribe();
+
     List<T> poll(long durationInMillis);
 
     void commit();

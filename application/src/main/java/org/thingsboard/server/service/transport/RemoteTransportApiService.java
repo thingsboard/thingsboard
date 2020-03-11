@@ -22,9 +22,16 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.TbQueueConsumer;
+import org.thingsboard.server.TbQueueProducer;
+import org.thingsboard.server.TbQueueRequestTemplate;
+import org.thingsboard.server.TbQueueResponseTemplate;
+import org.thingsboard.server.common.DefaultTbQueueRequestTemplate;
+import org.thingsboard.server.common.DefaultTbQueueResponseTemplate;
+import org.thingsboard.server.common.TbProtoQueueMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
-import org.thingsboard.server.kafka.*;
+import org.thingsboard.server.kafka.TbNodeIdProvider;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -49,9 +56,9 @@ public class RemoteTransportApiService {
     @Value("${transport.remote.transport_api.request_auto_commit_interval}")
     private int autoCommitInterval;
 
-    @Autowired
-    private TbKafkaSettings kafkaSettings;
-
+//    @Autowired
+//    private TbKafkaSettings kafkaSettings;
+//
     @Autowired
     private TbNodeIdProvider nodeIdProvider;
 
@@ -60,7 +67,7 @@ public class RemoteTransportApiService {
 
     private ExecutorService transportCallbackExecutor;
 
-    private TbKafkaResponseTemplate<TransportApiRequestMsg, TransportApiResponseMsg> transportApiTemplate;
+    private TbQueueResponseTemplate<TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> transportApiTemplate;
 
     @PostConstruct
     public void init() {
@@ -79,11 +86,14 @@ public class RemoteTransportApiService {
         requestBuilder.autoCommit(true);
         requestBuilder.autoCommitIntervalMs(autoCommitInterval);
         requestBuilder.decoder(new TransportApiRequestDecoder());
+        TbQueueProducer<TbProtoQueueMsg<TransportApiResponseMsg>> producer = null;
+        TbQueueConsumer<TbProtoQueueMsg<TransportApiRequestMsg>> consumer = null;
 
-        TbKafkaResponseTemplate.TbKafkaResponseTemplateBuilder
-                <TransportApiRequestMsg, TransportApiResponseMsg> builder = TbKafkaResponseTemplate.builder();
-        builder.requestTemplate(requestBuilder.build());
-        builder.responseTemplate(responseBuilder.build());
+
+        DefaultTbQueueResponseTemplate.DefaultTbQueueResponseTemplateBuilder
+                <TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> builder = DefaultTbQueueResponseTemplate.builder();
+        builder.requestTemplate(consumer);
+        builder.responseTemplate(producer);
         builder.maxPendingRequests(maxPendingRequests);
         builder.requestTimeout(requestTimeout);
         builder.pollInterval(responsePollDuration);

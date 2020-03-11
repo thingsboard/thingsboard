@@ -22,9 +22,6 @@ import io.github.bucket4j.Bucket4j;
 import io.github.bucket4j.local.LocalBucket;
 import io.github.bucket4j.local.LocalBucketBuilder;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.producer.Callback;
-import org.apache.kafka.clients.producer.RecordMetadata;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -33,15 +30,17 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.TbQueueCallback;
+import org.thingsboard.server.TbQueueConsumer;
+import org.thingsboard.server.TbQueueMsgMetadata;
+import org.thingsboard.server.TbQueueProducer;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.common.TbProtoQueueMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceActorToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
-import org.thingsboard.server.kafka.TBKafkaConsumerTemplate;
-import org.thingsboard.server.kafka.TBKafkaProducerTemplate;
-import org.thingsboard.server.kafka.TbKafkaSettings;
 import org.thingsboard.server.kafka.TbNodeIdProvider;
 import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
 import org.thingsboard.server.service.cluster.rpc.ClusterRpcService;
@@ -51,6 +50,7 @@ import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWra
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -84,9 +84,9 @@ public class RemoteRuleEngineTransportService implements RuleEngineTransportServ
     @Value("${transport.remote.rule_engine.stats.enabled:false}")
     private boolean statsEnabled;
 
-    @Autowired
-    private TbKafkaSettings kafkaSettings;
-
+//    @Autowired
+//    private TbKafkaSettings kafkaSettings;
+//
     @Autowired
     private TbNodeIdProvider nodeIdProvider;
 
@@ -101,8 +101,9 @@ public class RemoteRuleEngineTransportService implements RuleEngineTransportServ
     @Autowired
     private DataDecodingEncodingService encodingService;
 
-    private TBKafkaConsumerTemplate<ToRuleEngineMsg> ruleEngineConsumer;
-    private TBKafkaProducerTemplate<ToTransportMsg> notificationsProducer;
+    private TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> ruleEngineConsumer;
+
+    private TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> notificationsProducer;
 
     private ExecutorService mainConsumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-main-consumer"));
 
@@ -146,8 +147,8 @@ public class RemoteRuleEngineTransportService implements RuleEngineTransportServ
         mainConsumerExecutor.execute(() -> {
             while (!stopped) {
                 try {
-                    ConsumerRecords<String, byte[]> records = ruleEngineConsumer.poll(Duration.ofMillis(pollDuration));
-                    int recordsCount = records.count();
+                    List<TbProtoQueueMsg<ToRuleEngineMsg>> msgs = ruleEngineConsumer.poll(pollDuration);
+                    int recordsCount = msgs.size();
                     if (recordsCount > 0) {
                         while (!blockingPollRateBucket.tryConsume(recordsCount, TimeUnit.SECONDS.toNanos(5))) {
                             log.info("Rule Engine consumer is busy. Required tokens: [{}]. Available tokens: [{}].", recordsCount, pollRateBucket.getAvailableTokens());
@@ -155,9 +156,9 @@ public class RemoteRuleEngineTransportService implements RuleEngineTransportServ
                         }
                         log.trace("Processing {} records", recordsCount);
                     }
-                    records.forEach(record -> {
+                    msgs.forEach(msg -> {
                         try {
-                            ToRuleEngineMsg toRuleEngineMsg = ruleEngineConsumer.decode(record);
+                            ToRuleEngineMsg toRuleEngineMsg = msg.getValue();
                             log.trace("Forwarding message to rule engine {}", toRuleEngineMsg);
                             if (toRuleEngineMsg.hasToDeviceActorMsg()) {
                                 forwardToDeviceActor(toRuleEngineMsg.getToDeviceActorMsg());
@@ -196,7 +197,8 @@ public class RemoteRuleEngineTransportService implements RuleEngineTransportServ
         UUID sessionId = new UUID(msg.getSessionIdMSB(), msg.getSessionIdLSB());
         ToTransportMsg transportMsg = ToTransportMsg.newBuilder().setToDeviceSessionMsg(msg).build();
         log.trace("[{}][{}] Pushing session data to topic: {}", topic, sessionId, transportMsg);
-        notificationsProducer.send(topic, sessionId.toString(), transportMsg, new QueueCallbackAdaptor(onSuccess, onFailure));
+        TbProtoQueueMsg<ToTransportMsg> queueMsg = new TbProtoQueueMsg<>(sessionId, transportMsg);
+        notificationsProducer.send(topic, queueMsg, new QueueCallbackAdaptor(onSuccess, onFailure));
     }
 
     private void forwardToDeviceActor(TransportToDeviceActorMsg toDeviceActorMsg) {
@@ -225,7 +227,7 @@ public class RemoteRuleEngineTransportService implements RuleEngineTransportServ
         }
     }
 
-    private static class QueueCallbackAdaptor implements Callback {
+    private static class QueueCallbackAdaptor implements TbQueueCallback {
         private final Runnable onSuccess;
         private final Consumer<Throwable> onFailure;
 
@@ -235,17 +237,17 @@ public class RemoteRuleEngineTransportService implements RuleEngineTransportServ
         }
 
         @Override
-        public void onCompletion(RecordMetadata metadata, Exception exception) {
-            if (exception == null) {
-                if (onSuccess != null) {
-                    onSuccess.run();
-                }
-            } else {
-                if (onFailure != null) {
-                    onFailure.accept(exception);
-                }
+        public void onSuccess(TbQueueMsgMetadata metadata) {
+            if (onSuccess != null) {
+                onSuccess.run();
+            }
+        }
+
+        @Override
+        public void onFailure(Throwable t) {
+            if (onFailure != null) {
+                onFailure.accept(t);
             }
         }
     }
-
 }
