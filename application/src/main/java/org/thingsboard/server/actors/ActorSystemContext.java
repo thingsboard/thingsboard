@@ -81,7 +81,6 @@ import org.thingsboard.server.service.script.JsInvokeService;
 import org.thingsboard.server.service.session.DeviceSessionCacheService;
 import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
-import org.thingsboard.server.service.transport.RuleEngineTransportService;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -237,11 +236,6 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private DeviceSessionCacheService deviceSessionCacheService;
-
-    @Lazy
-    @Autowired
-    @Getter
-    private RuleEngineTransportService ruleEngineTransportService;
 
     @Lazy
     @Autowired

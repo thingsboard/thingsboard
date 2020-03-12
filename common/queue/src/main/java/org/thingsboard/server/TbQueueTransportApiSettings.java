@@ -15,10 +15,26 @@
  */
 package org.thingsboard.server;
 
-import com.google.common.util.concurrent.ListenableFuture;
+import lombok.Data;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
-public interface TbQueueRequestTemplate<Request extends TbQueueMsg, Response extends TbQueueMsg> {
+@Data
+@Component
+public class TbQueueTransportApiSettings {
+    @Value("${queue.transport_api.requests_topic}")
+    private String requestsTopic;
 
-    ListenableFuture<Response> send(Request request);
+    @Value("${queue.transport_api.responses_topic}")
+    private String responsesTopic;
+
+    @Value("${queue.transport_api.max_pending_requests}")
+    private int maxPendingRequests;
+
+    @Value("${queue.transport_api.max_requests_timeout}")
+    private int maxRequestsTimeout;
+
+    @Value("${queue.transport_api.response_poll_interval}")
+    private long responsePollInterval;
 
 }
