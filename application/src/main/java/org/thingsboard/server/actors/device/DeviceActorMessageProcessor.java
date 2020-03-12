@@ -234,24 +234,24 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         if (msg.hasSubscribeToRPC()) {
             processSubscriptionCommands(context, msg.getSessionInfo(), msg.getSubscribeToRPC());
         }
-        if (msg.hasPostAttributes()) {
-            handlePostAttributesRequest(context, msg.getSessionInfo(), msg.getPostAttributes());
-            reportDeviceActivity = true;
-        }
-        if (msg.hasPostTelemetry()) {
-            handlePostTelemetryRequest(context, msg.getSessionInfo(), msg.getPostTelemetry());
-            reportDeviceActivity = true;
-        }
+//        if (msg.hasPostAttributes()) {
+//            handlePostAttributesRequest(context, msg.getSessionInfo(), msg.getPostAttributes());
+//            reportDeviceActivity = true;
+//        }
+//        if (msg.hasPostTelemetry()) {
+//            handlePostTelemetryRequest(context, msg.getSessionInfo(), msg.getPostTelemetry());
+//            reportDeviceActivity = true;
+//        }
         if (msg.hasGetAttributes()) {
             handleGetAttributesRequest(context, msg.getSessionInfo(), msg.getGetAttributes());
         }
         if (msg.hasToDeviceRPCCallResponse()) {
             processRpcResponses(context, msg.getSessionInfo(), msg.getToDeviceRPCCallResponse());
         }
-        if (msg.hasToServerRPCCallRequest()) {
-            handleClientSideRPCRequest(context, msg.getSessionInfo(), msg.getToServerRPCCallRequest());
-            reportDeviceActivity = true;
-        }
+//        if (msg.hasToServerRPCCallRequest()) {
+//            handleClientSideRPCRequest(context, msg.getSessionInfo(), msg.getToServerRPCCallRequest());
+//            reportDeviceActivity = true;
+//        }
         if (msg.hasSubscriptionInfo()) {
             handleSessionActivity(context, msg.getSessionInfo(), msg.getSubscriptionInfo());
         }
@@ -260,6 +260,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         }
     }
 
+    //TODO: 2.5 move this as a notification to the queue;
     private void reportLogicalDeviceActivity() {
         systemContext.getDeviceStateService().onDeviceActivity(deviceId);
     }
@@ -540,7 +541,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                 .setSessionIdMSB(sessionId.getMostSignificantBits())
                 .setSessionIdLSB(sessionId.getLeastSignificantBits())
                 .setSessionCloseNotification(SessionCloseNotificationProto.getDefaultInstance()).build();
-        systemContext.getRuleEngineTransportService().process(sessionMd.getSessionInfo().getNodeId(), msg);
+        systemContext.getTbCoreToTransportService().process(sessionMd.getSessionInfo().getNodeId(), msg);
     }
 
     void processNameOrTypeUpdate(DeviceNameOrTypeUpdateMsg msg) {
@@ -556,7 +557,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                 .setSessionIdMSB(sessionInfo.getSessionIdMSB())
                 .setSessionIdLSB(sessionInfo.getSessionIdLSB())
                 .setGetAttributesResponse(responseMsg).build();
-        systemContext.getRuleEngineTransportService().process(sessionInfo.getNodeId(), msg);
+        systemContext.getTbCoreToTransportService().process(sessionInfo.getNodeId(), msg);
     }
 
     private void sendToTransport(AttributeUpdateNotificationMsg notificationMsg, UUID sessionId, String nodeId) {
@@ -564,7 +565,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                 .setSessionIdMSB(sessionId.getMostSignificantBits())
                 .setSessionIdLSB(sessionId.getLeastSignificantBits())
                 .setAttributeUpdateNotification(notificationMsg).build();
-        systemContext.getRuleEngineTransportService().process(nodeId, msg);
+        systemContext.getTbCoreToTransportService().process(nodeId, msg);
     }
 
     private void sendToTransport(ToDeviceRpcRequestMsg rpcMsg, UUID sessionId, String nodeId) {
@@ -572,7 +573,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                 .setSessionIdMSB(sessionId.getMostSignificantBits())
                 .setSessionIdLSB(sessionId.getLeastSignificantBits())
                 .setToDeviceRequest(rpcMsg).build();
-        systemContext.getRuleEngineTransportService().process(nodeId, msg);
+        systemContext.getTbCoreToTransportService().process(nodeId, msg);
     }
 
     private void sendToTransport(TransportProtos.ToServerRpcResponseMsg rpcMsg, UUID sessionId, String nodeId) {
@@ -580,7 +581,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                 .setSessionIdMSB(sessionId.getMostSignificantBits())
                 .setSessionIdLSB(sessionId.getLeastSignificantBits())
                 .setToServerResponse(rpcMsg).build();
-        systemContext.getRuleEngineTransportService().process(nodeId, msg);
+        systemContext.getTbCoreToTransportService().process(nodeId, msg);
     }
 
 

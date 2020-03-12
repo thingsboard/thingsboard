@@ -23,7 +23,7 @@ option java_outer_classname = "TransportProtos";
  * Transport Service Data Structures;
  */
 message SessionInfoProto {
-  string ServiceId = 1;
+  string nodeId = 1;
   int64 sessionIdMSB = 2;
   int64 sessionIdLSB = 3;
   int64 tenantIdMSB = 4;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.transport;
+package org.thingsboard.server.service.queue;
 
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -21,7 +21,7 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
-public class RuleEngineStats {
+public class TbRuleEngineConsumerStats {
 
     private final AtomicInteger totalCounter = new AtomicInteger(0);
     private final AtomicInteger sessionEventCounter = new AtomicInteger(0);

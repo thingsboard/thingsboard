@@ -67,7 +67,6 @@ import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.kafka.TbNodeIdProvider;
 import org.thingsboard.server.service.cluster.discovery.DiscoveryService;
 import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
-import org.thingsboard.server.service.cluster.rpc.ClusterRpcService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.encoding.DataDecodingEncodingService;
 import org.thingsboard.server.service.executors.ClusterRpcCallbackExecutorService;
@@ -81,7 +80,7 @@ import org.thingsboard.server.service.script.JsInvokeService;
 import org.thingsboard.server.service.session.DeviceSessionCacheService;
 import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
-import org.thingsboard.server.service.transport.RuleEngineTransportService;
+import org.thingsboard.server.service.transport.TbCoreToTransportService;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -121,10 +120,6 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private ClusterRoutingService routingService;
-
-    @Autowired
-    @Getter
-    private ClusterRpcService rpcService;
 
     @Autowired
     @Getter
@@ -241,7 +236,7 @@ public class ActorSystemContext {
     @Lazy
     @Autowired
     @Getter
-    private RuleEngineTransportService ruleEngineTransportService;
+    private TbCoreToTransportService tbCoreToTransportService;
 
     @Lazy
     @Autowired

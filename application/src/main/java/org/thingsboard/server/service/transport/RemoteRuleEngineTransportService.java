@@ -45,6 +45,7 @@ import org.thingsboard.server.kafka.TbNodeIdProvider;
 import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
 import org.thingsboard.server.service.cluster.rpc.ClusterRpcService;
 import org.thingsboard.server.service.encoding.DataDecodingEncodingService;
+import org.thingsboard.server.service.queue.TbCoreConsumerStats;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 
 import javax.annotation.PostConstruct;
@@ -109,7 +110,7 @@ public class RemoteRuleEngineTransportService implements RuleEngineTransportServ
 
     private volatile boolean stopped = false;
 
-    private final RuleEngineStats stats = new RuleEngineStats();
+    private final TbCoreConsumerStats stats = new TbCoreConsumerStats();
 
     @PostConstruct
     public void init() {
