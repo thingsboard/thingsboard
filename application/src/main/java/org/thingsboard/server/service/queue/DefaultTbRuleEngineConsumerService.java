@@ -27,8 +27,7 @@ import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.TbQueueConsumer;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.TbProtoQueueMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.provider.TbCoreQueueProvider;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 
@@ -45,24 +44,25 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
-@ConditionalOnExpression("'${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core')")
+@ConditionalOnExpression("'${service.type:null}'=='monolith' || '${service.type:null}'=='tb-rule-engine')")
 @Slf4j
-public class DefaultTbCoreConsumerService implements TbCoreConsumerService {
+public class DefaultTbRuleEngineConsumerService implements TbRuleEngineConsumerService {
 
-    @Value("${queue.core.poll_interval}")
+
+    @Value("${queue.rule-engine.poll_interval}")
     private long pollDuration;
-    @Value("${queue.core.pack_processing_timeout}")
+    @Value("${queue.rule-engine.pack_processing_timeout}")
     private long packProcessingTimeout;
-    @Value("${queue.core.stats.enabled:false}")
+    @Value("${queue.rule-engine.stats.enabled:false}")
     private boolean statsEnabled;
 
     private final ActorSystemContext actorContext;
-    private final TbQueueConsumer<TbProtoQueueMsg<ToCoreMsg>> consumer;
+    private final TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToCoreMsg>> consumer;
     private final TbCoreConsumerStats stats = new TbCoreConsumerStats();
     private volatile ExecutorService mainConsumerExecutor;
     private volatile boolean stopped = false;
 
-    public DefaultTbCoreConsumerService(TbCoreQueueProvider tbCoreQueueProvider, ActorSystemContext actorContext) {
+    public DefaultTbRuleEngineConsumerService(TbCoreQueueProvider tbCoreQueueProvider, ActorSystemContext actorContext) {
         this.consumer = tbCoreQueueProvider.getToCoreMsgConsumer();
         this.actorContext = actorContext;
     }
@@ -78,14 +78,14 @@ public class DefaultTbCoreConsumerService implements TbCoreConsumerService {
         mainConsumerExecutor.execute(() -> {
             while (!stopped) {
                 try {
-                    List<TbProtoQueueMsg<ToCoreMsg>> msgs = consumer.poll(pollDuration);
-                    ConcurrentMap<UUID, TbProtoQueueMsg<ToCoreMsg>> ackMap = msgs.stream().collect(
+                    List<TbProtoQueueMsg<TransportProtos.ToCoreMsg>> msgs = consumer.poll(pollDuration);
+                    ConcurrentMap<UUID, TbProtoQueueMsg<TransportProtos.ToCoreMsg>> ackMap = msgs.stream().collect(
                             Collectors.toConcurrentMap(s -> UUID.randomUUID(), Function.identity()));
                     CountDownLatch processingTimeoutLatch = new CountDownLatch(1);
                     ackMap.forEach((id, msg) -> {
                         TbMsgCallback callback = new MsgPackCallback<>(id, processingTimeoutLatch, ackMap);
                         try {
-                            ToCoreMsg toCoreMsg = msg.getValue();
+                            TransportProtos.ToCoreMsg toCoreMsg = msg.getValue();
                             log.trace("Forwarding message to rule engine {}", toCoreMsg);
                             if (toCoreMsg.hasToDeviceActorMsg()) {
                                 forwardToDeviceActor(toCoreMsg.getToDeviceActorMsg(), callback);
@@ -112,7 +112,7 @@ public class DefaultTbCoreConsumerService implements TbCoreConsumerService {
         });
     }
 
-    private void forwardToDeviceActor(TransportToDeviceActorMsg toDeviceActorMsg, TbMsgCallback callback) {
+    private void forwardToDeviceActor(TransportProtos.TransportToDeviceActorMsg toDeviceActorMsg, TbMsgCallback callback) {
         if (statsEnabled) {
             stats.log(toDeviceActorMsg);
         }
@@ -136,5 +136,4 @@ public class DefaultTbCoreConsumerService implements TbCoreConsumerService {
             mainConsumerExecutor.shutdownNow();
         }
     }
-
 }

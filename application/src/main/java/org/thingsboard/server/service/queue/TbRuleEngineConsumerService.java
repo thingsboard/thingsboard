@@ -13,20 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.cluster.rpc;
+package org.thingsboard.server.service.queue;
 
-import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
+public interface TbRuleEngineConsumerService {
 
-/**
- * @author Andrew Shvayka
- */
-public interface GrpcSessionListener {
-
-    void onConnected(GrpcSession session);
-
-    void onDisconnected(GrpcSession session);
-
-    void onReceiveClusterGrpcMsg(GrpcSession session, ClusterAPIProtos.ClusterMessage clusterMessage);
-
-    void onError(GrpcSession session, Throwable t);
 }
