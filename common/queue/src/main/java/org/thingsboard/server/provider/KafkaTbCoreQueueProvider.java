@@ -8,7 +8,7 @@ import org.thingsboard.server.common.TbProtoQueueMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 @Component
-@ConditionalOnExpression("'${transport.type:null}'=='local' || '${transport.type:null}'=='remote'")
+@ConditionalOnExpression("'${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core') && ${queue.type:null}'=='kafka'")
 public class KafkaTbCoreQueueProvider implements TbCoreQueueProvider{
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToTransportMsg>> getTransportMsgProducer() {

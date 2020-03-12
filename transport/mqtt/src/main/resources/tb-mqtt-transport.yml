@@ -62,6 +62,9 @@ transport:
     # Maximum allowed string value length when processing Telemetry/Attributes JSON (0 value disables string value length check)
     max_string_value_length: "${JSON_MAX_STRING_VALUE_LENGTH:0}"
 
+service:
+  type: "${TB_SERVICE_TYPE:tb-transport}" # monolith or tb-core or tb-rule-engine or tb-transport
+
 queue:
   type: "${TB_QUEUE_TYPE:kafka}"
   kafka:

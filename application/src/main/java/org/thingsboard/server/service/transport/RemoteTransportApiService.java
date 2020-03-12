@@ -22,6 +22,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.thingsboard.server.TbQueueConsumer;
 import org.thingsboard.server.TbQueueProducer;
 import org.thingsboard.server.TbQueueRequestTemplate;
@@ -42,7 +43,7 @@ import java.util.concurrent.*;
  * Created by ashvayka on 05.10.18.
  */
 @Slf4j
-@Component
+@Service
 @ConditionalOnProperty(prefix = "transport", value = "type", havingValue = "remote")
 public class RemoteTransportApiService {
 

@@ -466,7 +466,6 @@ js:
       print_interval_ms: "${TB_JS_REMOTE_STATS_PRINT_INTERVAL_MS:10000}"
 
 transport:
-  type: "${TRANSPORT_TYPE:local}" # local or remote
   sessions:
     inactivity_timeout: "${TB_TRANSPORT_SESSIONS_INACTIVITY_TIMEOUT:300000}"
     report_timeout: "${TB_TRANSPORT_SESSIONS_REPORT_TIMEOUT:30000}"
@@ -533,7 +532,6 @@ swagger:
     url: "${SWAGGER_LICENSE_URL:https://github.com/thingsboard/thingsboard/blob/master/LICENSE}"
   version: "${SWAGGER_VERSION:2.0}"
 
-
 queue:
   type: "${TB_QUEUE_TYPE:kafka}"
   kafka:
@@ -555,6 +553,10 @@ queue:
     topic: "${TB_QUEUE_CORE_TOPIC:tb.core}"
     poll_interval: "${TB_QUEUE_CORE_POLL_INTERVAL_MS:25}"
     partitions: "${TB_QUEUE_CORE_PARTITIONS:100}"
+    pack_processing_timeout: "${TB_QUEUE_CORE_PACK_PROCESSING_TIMEOUT_MS:60000}"
+    stats:
+      enabled: "${TB_QUEUE_CORE_STATS_ENABLED:false}"
+      print_interval_ms: "${TB_QUEUE_CORE_STATS_PRINT_INTERVAL_MS:10000}"
   rule_engine:
     topic: "${TB_QUEUE_RULE_ENGINE_TOPIC:tb.rule-engine}"
     poll_interval: "${TB_QUEUE_RULE_ENGINE_POLL_INTERVAL_MS:25}"
@@ -565,5 +567,5 @@ queue:
   notifications:
     topic: "${TB_QUEUE_TRANSPORT_NOTIFICATIONS_TOPIC:tb.transport.notifications}"
 
-rule_engine:
-  type: "${RULE_ENGINE_TYPE:local}" # local or remote
+service:
+  type: "${TB_SERVICE_TYPE:monolith}" # monolith or tb-core or tb-rule-engine or tb-transport

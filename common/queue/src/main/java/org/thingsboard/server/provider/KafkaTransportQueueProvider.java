@@ -14,7 +14,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestM
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
 
 @Component
-@ConditionalOnExpression("'${transport.type:null}'=='null' || '${transport.type}'=='local'")
+@ConditionalOnExpression("'${service.type:null}'=='monolith' || '${service.type:null}'=='tb-transport') && ${queue.type:null}'=='kafka'")
 @Slf4j
 public class KafkaTransportQueueProvider implements TransportQueueProvider {
     @Override
