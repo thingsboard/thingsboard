@@ -20,16 +20,18 @@ option java_package = "org.thingsboard.server.gen.transport";
 option java_outer_classname = "TransportProtos";
 
 /**
- * Data Structures;
+ * Transport Service Data Structures;
  */
 message SessionInfoProto {
-  string nodeId = 1;
+  string ServiceId = 1;
   int64 sessionIdMSB = 2;
   int64 sessionIdLSB = 3;
   int64 tenantIdMSB = 4;
   int64 tenantIdLSB = 5;
   int64 deviceIdMSB = 6;
   int64 deviceIdLSB = 7;
+  string deviceName = 8;
+  string deviceType = 9;
 }
 
 enum SessionEvent {
@@ -81,7 +83,7 @@ message DeviceInfoProto {
 }
 
 /**
- * Messages that use Data Structures;
+ * Transport Service Messages;
  */
 message SessionEventMsg {
   SessionType sessionType = 1;
@@ -181,7 +183,7 @@ message ClaimDeviceMsg {
   int64 durationMs = 4;
 }
 
-//Used to report session state to tb-node and persist this state in the cache on the tb-node level.
+//Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.
 message SubscriptionInfoProto {
   int64 lastActivityTime = 1;
   bool attributeSubscription = 2;
@@ -200,45 +202,61 @@ message DeviceSessionsCacheEntry {
 message TransportToDeviceActorMsg {
   SessionInfoProto sessionInfo = 1;
   SessionEventMsg sessionEvent = 2;
-  PostTelemetryMsg postTelemetry = 3;
-  PostAttributeMsg postAttributes = 4;
-  GetAttributeRequestMsg getAttributes = 5;
-  SubscribeToAttributeUpdatesMsg subscribeToAttributes = 6;
-  SubscribeToRPCMsg subscribeToRPC = 7;
-  ToDeviceRpcResponseMsg toDeviceRPCCallResponse = 8;
-  ToServerRpcRequestMsg toServerRPCCallRequest = 9;
-  SubscriptionInfoProto subscriptionInfo = 10;
-  ClaimDeviceMsg claimDevice = 11;
+  GetAttributeRequestMsg getAttributes = 3;
+  SubscribeToAttributeUpdatesMsg subscribeToAttributes = 4;
+  SubscribeToRPCMsg subscribeToRPC = 5;
+  ToDeviceRpcResponseMsg toDeviceRPCCallResponse = 6;
+  SubscriptionInfoProto subscriptionInfo = 7;
+  ClaimDeviceMsg claimDevice = 8;
+}
+
+message TransportToRuleEngineMsg {
+  SessionInfoProto sessionInfo = 1;
+  PostTelemetryMsg postTelemetry = 2;
+  PostAttributeMsg postAttributes = 3;
+  ToDeviceRpcResponseMsg toDeviceRPCCallResponse = 4;
+  ToServerRpcRequestMsg toServerRPCCallRequest = 5;
+  SubscriptionInfoProto subscriptionInfo = 6;
 }
 
 message DeviceActorToTransportMsg {
-   int64 sessionIdMSB = 1;
-   int64 sessionIdLSB = 2;
-   SessionCloseNotificationProto sessionCloseNotification = 3;
-   GetAttributeResponseMsg getAttributesResponse = 4;
-   AttributeUpdateNotificationMsg attributeUpdateNotification = 5;
-   ToDeviceRpcRequestMsg toDeviceRequest = 6;
-   ToServerRpcResponseMsg toServerResponse = 7;
+  int64 sessionIdMSB = 1;
+  int64 sessionIdLSB = 2;
+  SessionCloseNotificationProto sessionCloseNotification = 3;
+  GetAttributeResponseMsg getAttributesResponse = 4;
+  AttributeUpdateNotificationMsg attributeUpdateNotification = 5;
+  ToDeviceRpcRequestMsg toDeviceRequest = 6;
+  ToServerRpcResponseMsg toServerResponse = 7;
 }
 
 /**
  * Main messages;
  */
-message ToRuleEngineMsg {
-  TransportToDeviceActorMsg toDeviceActorMsg = 1;
-}
 
-message ToTransportMsg {
-  DeviceActorToTransportMsg toDeviceSessionMsg = 1;
-}
-
+/* Request from Transport Service to ThingsBoard Core Service */
 message TransportApiRequestMsg {
    ValidateDeviceTokenRequestMsg validateTokenRequestMsg = 1;
    ValidateDeviceX509CertRequestMsg validateX509CertRequestMsg = 2;
    GetOrCreateDeviceFromGatewayRequestMsg getOrCreateDeviceRequestMsg = 3;
 }
 
+/* Response from ThingsBoard Core Service to Transport Service */
 message TransportApiResponseMsg {
    ValidateDeviceCredentialsResponseMsg validateTokenResponseMsg = 1;
    GetOrCreateDeviceFromGatewayResponseMsg getOrCreateDeviceResponseMsg = 2;
+}
+
+/* Messages that are handled by ThingsBoard Core Service */
+message ToCoreMsg {
+  TransportToDeviceActorMsg toDeviceActorMsg = 1;
+}
+
+/* Messages that are handled by ThingsBoard RuleEngine Service */
+message ToRuleEngineMsg {
+  TransportToRuleEngineMsg toRuleEngineMsg = 1;
+}
+
+/* Messages that are handled by ThingsBoard Transport Service */
+message ToTransportMsg {
+  DeviceActorToTransportMsg toDeviceSessionMsg = 1;
 }

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,6 +32,7 @@ import org.thingsboard.server.common.TbProtoQueueMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
 import org.thingsboard.server.kafka.TbNodeIdProvider;
+import org.thingsboard.server.provider.TbCoreQueueProvider;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -45,50 +46,32 @@ import java.util.concurrent.*;
 @ConditionalOnProperty(prefix = "transport", value = "type", havingValue = "remote")
 public class RemoteTransportApiService {
 
-    @Value("${transport.remote.transport_api.requests_topic}")
-    private String transportApiRequestsTopic;
-    @Value("${transport.remote.transport_api.max_pending_requests}")
+    private final TbCoreQueueProvider tbCoreQueueProvider;
+    private final TransportApiService transportApiService;
+
+    @Value("${queue.transport_api.max_pending_requests:10000}")
     private int maxPendingRequests;
-    @Value("${transport.remote.transport_api.request_timeout}")
+    @Value("${queue.transport_api.max_requests_timeout:10000}")
     private long requestTimeout;
-    @Value("${transport.remote.transport_api.request_poll_interval}")
+    @Value("${queue.transport_api.request_poll_interval:25}")
     private int responsePollDuration;
-    @Value("${transport.remote.transport_api.request_auto_commit_interval}")
-    private int autoCommitInterval;
-
-//    @Autowired
-//    private TbKafkaSettings kafkaSettings;
-//
-    @Autowired
-    private TbNodeIdProvider nodeIdProvider;
-
-    @Autowired
-    private TransportApiService transportApiService;
+    @Value("${queue.transport_api.max_callback_threads:100}")
+    private int maxCallbackThreads;
 
     private ExecutorService transportCallbackExecutor;
+    private TbQueueResponseTemplate<TbProtoQueueMsg<TransportApiRequestMsg>,
+            TbProtoQueueMsg<TransportApiResponseMsg>> transportApiTemplate;
 
-    private TbQueueResponseTemplate<TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> transportApiTemplate;
+    public RemoteTransportApiService(TbCoreQueueProvider tbCoreQueueProvider, TransportApiService transportApiService) {
+        this.tbCoreQueueProvider = tbCoreQueueProvider;
+        this.transportApiService = transportApiService;
+    }
 
     @PostConstruct
     public void init() {
-        this.transportCallbackExecutor = Executors.newWorkStealingPool(100);
-
-        TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<TransportApiResponseMsg> responseBuilder = TBKafkaProducerTemplate.builder();
-        responseBuilder.settings(kafkaSettings);
-        responseBuilder.clientId("producer-transport-api-response-" + nodeIdProvider.getNodeId());
-        responseBuilder.encoder(new TransportApiResponseEncoder());
-
-        TBKafkaConsumerTemplate.TBKafkaConsumerTemplateBuilder<TransportApiRequestMsg> requestBuilder = TBKafkaConsumerTemplate.builder();
-        requestBuilder.settings(kafkaSettings);
-        requestBuilder.topic(transportApiRequestsTopic);
-        requestBuilder.clientId(nodeIdProvider.getNodeId());
-        requestBuilder.groupId("tb-node");
-        requestBuilder.autoCommit(true);
-        requestBuilder.autoCommitIntervalMs(autoCommitInterval);
-        requestBuilder.decoder(new TransportApiRequestDecoder());
-        TbQueueProducer<TbProtoQueueMsg<TransportApiResponseMsg>> producer = null;
-        TbQueueConsumer<TbProtoQueueMsg<TransportApiRequestMsg>> consumer = null;
-
+        this.transportCallbackExecutor = Executors.newWorkStealingPool(maxCallbackThreads);
+        TbQueueProducer<TbProtoQueueMsg<TransportApiResponseMsg>> producer = tbCoreQueueProvider.getTransportApiResponseProducer();
+        TbQueueConsumer<TbProtoQueueMsg<TransportApiRequestMsg>> consumer = tbCoreQueueProvider.getTransportApiRequestConsumer();
 
         DefaultTbQueueResponseTemplate.DefaultTbQueueResponseTemplateBuilder
                 <TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> builder = DefaultTbQueueResponseTemplate.builder();
@@ -105,7 +88,7 @@ public class RemoteTransportApiService {
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
         log.info("Received application ready event. Starting polling for events.");
-        transportApiTemplate.init();
+        transportApiTemplate.init(transportApiService);
     }
 
     @PreDestroy

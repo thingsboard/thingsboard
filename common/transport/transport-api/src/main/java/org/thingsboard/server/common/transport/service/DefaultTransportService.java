@@ -34,12 +34,15 @@ import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
-import org.thingsboard.server.common.transport.queue.TransportQueueProvider;
+import org.thingsboard.server.provider.TransportQueueProvider;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.TransportToRuleEngineMsg;
 import org.thingsboard.server.common.AsyncCallbackTemplate;
 
 import javax.annotation.PostConstruct;
@@ -81,7 +84,7 @@ public class DefaultTransportService implements TransportService {
 
     protected TbQueueRequestTemplate<TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> transportApiRequestTemplate;
     protected TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> ruleEngineMsgProducer;
-    protected TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> tbCoreMsgProducer;
+    protected TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> tbCoreMsgProducer;
     protected TbQueueConsumer<TbProtoQueueMsg<ToTransportMsg>> transportNotificationsConsumer;
 
     protected ScheduledExecutorService schedulerExecutor;
@@ -188,22 +191,16 @@ public class DefaultTransportService implements TransportService {
         if (log.isTraceEnabled()) {
             log.trace("[{}] Processing msg: {}", toId(sessionInfo), msg);
         }
-        ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
-                TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
-                        .setSubscriptionInfo(msg).build()
-        ).build();
-        sendToDeviceActor(sessionInfo, toRuleEngineMsg, callback);
+        sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
+                .setSubscriptionInfo(msg).build(), callback);
     }
 
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.SessionEventMsg msg, TransportServiceCallback<Void> callback) {
         if (checkLimits(sessionInfo, msg, callback)) {
             reportActivityInternal(sessionInfo);
-            ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
-                    TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
-                            .setSessionEvent(msg).build()
-            ).build();
-            sendToDeviceActor(sessionInfo, toRuleEngineMsg, callback);
+            sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
+                    .setSessionEvent(msg).build(), callback);
         }
     }
 
@@ -211,11 +208,8 @@ public class DefaultTransportService implements TransportService {
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.PostTelemetryMsg msg, TransportServiceCallback<Void> callback) {
         if (checkLimits(sessionInfo, msg, callback)) {
             reportActivityInternal(sessionInfo);
-            ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
-                    TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
-                            .setPostTelemetry(msg).build()
-            ).build();
-            sendToRuleEngine(sessionInfo, toRuleEngineMsg, callback);
+            sendToRuleEngine(sessionInfo, TransportToRuleEngineMsg.newBuilder().setSessionInfo(sessionInfo).
+                    setPostTelemetry(msg).build(), callback);
         }
     }
 
@@ -223,11 +217,8 @@ public class DefaultTransportService implements TransportService {
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.PostAttributeMsg msg, TransportServiceCallback<Void> callback) {
         if (checkLimits(sessionInfo, msg, callback)) {
             reportActivityInternal(sessionInfo);
-            ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
-                    TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
-                            .setPostAttributes(msg).build()
-            ).build();
-            sendToRuleEngine(sessionInfo, toRuleEngineMsg, callback);
+            sendToRuleEngine(sessionInfo, TransportToRuleEngineMsg.newBuilder().setSessionInfo(sessionInfo).
+                    setPostAttributes(msg).build(), callback);
         }
     }
 
@@ -235,11 +226,8 @@ public class DefaultTransportService implements TransportService {
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.GetAttributeRequestMsg msg, TransportServiceCallback<Void> callback) {
         if (checkLimits(sessionInfo, msg, callback)) {
             reportActivityInternal(sessionInfo);
-            ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
-                    TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
-                            .setGetAttributes(msg).build()
-            ).build();
-            sendToDeviceActor(sessionInfo, toRuleEngineMsg, callback);
+            sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
+                    .setGetAttributes(msg).build(), callback);
         }
     }
 
@@ -248,11 +236,8 @@ public class DefaultTransportService implements TransportService {
         if (checkLimits(sessionInfo, msg, callback)) {
             SessionMetaData sessionMetaData = reportActivityInternal(sessionInfo);
             sessionMetaData.setSubscribedToAttributes(!msg.getUnsubscribe());
-            ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
-                    TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
-                            .setSubscribeToAttributes(msg).build()
-            ).build();
-            sendToDeviceActor(sessionInfo, toRuleEngineMsg, callback);
+            sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
+                    .setSubscribeToAttributes(msg).build(), callback);
         }
     }
 
@@ -261,11 +246,8 @@ public class DefaultTransportService implements TransportService {
         if (checkLimits(sessionInfo, msg, callback)) {
             SessionMetaData sessionMetaData = reportActivityInternal(sessionInfo);
             sessionMetaData.setSubscribedToRPC(!msg.getUnsubscribe());
-            ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
-                    TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
-                            .setSubscribeToRPC(msg).build()
-            ).build();
-            sendToDeviceActor(sessionInfo, toRuleEngineMsg, callback);
+            sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
+                    .setSubscribeToRPC(msg).build(), callback);
         }
     }
 
@@ -273,11 +255,8 @@ public class DefaultTransportService implements TransportService {
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ToDeviceRpcResponseMsg msg, TransportServiceCallback<Void> callback) {
         if (checkLimits(sessionInfo, msg, callback)) {
             reportActivityInternal(sessionInfo);
-            ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
-                    TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
-                            .setToDeviceRPCCallResponse(msg).build()
-            ).build();
-            sendToDeviceActor(sessionInfo, toRuleEngineMsg, callback);
+            sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
+                    .setToDeviceRPCCallResponse(msg).build(), callback);
         }
     }
 
@@ -286,23 +265,16 @@ public class DefaultTransportService implements TransportService {
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ToServerRpcRequestMsg msg, TransportServiceCallback<Void> callback) {
         if (checkLimits(sessionInfo, msg, callback)) {
             reportActivityInternal(sessionInfo);
-            ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
-                    TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
-                            .setToServerRPCCallRequest(msg).build()
-            ).build();
-            sendToRuleEngine(sessionInfo, toRuleEngineMsg, callback);
+            sendToRuleEngine(sessionInfo, TransportToRuleEngineMsg.newBuilder().setSessionInfo(sessionInfo).
+                    setToServerRPCCallRequest(msg).build(), callback);
         }
     }
 
     @Override
-    public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ClaimDeviceMsg msg,
-                        TransportServiceCallback<Void> callback) {
+    public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ClaimDeviceMsg msg, TransportServiceCallback<Void> callback) {
         if (checkLimits(sessionInfo, msg, callback)) {
-            ToRuleEngineMsg toRuleEngineMsg = ToRuleEngineMsg.newBuilder().setToDeviceActorMsg(
-                    TransportProtos.TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
-                            .setClaimDevice(msg).build()
-            ).build();
-            sendToDeviceActor(sessionInfo, toRuleEngineMsg, callback);
+            sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
+                    .setClaimDevice(msg).build(), callback);
         }
     }
 
@@ -454,13 +426,15 @@ public class DefaultTransportService implements TransportService {
                 .setEvent(event).build();
     }
 
-    protected void sendToDeviceActor(TransportProtos.SessionInfoProto sessionInfo, ToRuleEngineMsg toRuleEngineMsg, TransportServiceCallback<Void> callback) {
-        tbCoreMsgProducer.send(new TbProtoQueueMsg<>(getRoutingKey(sessionInfo), toRuleEngineMsg), callback != null ?
+    protected void sendToDeviceActor(TransportProtos.SessionInfoProto sessionInfo, TransportToDeviceActorMsg toDeviceActorMsg, TransportServiceCallback<Void> callback) {
+        tbCoreMsgProducer.send(new TbProtoQueueMsg<>(getRoutingKey(sessionInfo),
+                ToCoreMsg.newBuilder().setToDeviceActorMsg(toDeviceActorMsg).build()), callback != null ?
                 new TransportTbQueueCallback(callback) : null);
     }
 
-    protected void sendToRuleEngine(TransportProtos.SessionInfoProto sessionInfo, ToRuleEngineMsg toRuleEngineMsg, TransportServiceCallback<Void> callback) {
-        ruleEngineMsgProducer.send(new TbProtoQueueMsg<>(getRoutingKey(sessionInfo), toRuleEngineMsg), callback != null ?
+    protected void sendToRuleEngine(TransportProtos.SessionInfoProto sessionInfo, TransportToRuleEngineMsg toRuleEngineMsg, TransportServiceCallback<Void> callback) {
+        ruleEngineMsgProducer.send(new TbProtoQueueMsg<>(getRoutingKey(sessionInfo),
+                ToRuleEngineMsg.newBuilder().setToRuleEngineMsg(toRuleEngineMsg).build()), callback != null ?
                 new TransportTbQueueCallback(callback) : null);
     }
 
@@ -473,16 +447,12 @@ public class DefaultTransportService implements TransportService {
 
         @Override
         public void onSuccess(TbQueueMsgMetadata metadata) {
-            DefaultTransportService.this.transportCallbackExecutor.submit(() -> {
-                callback.onSuccess(null);
-            });
+            DefaultTransportService.this.transportCallbackExecutor.submit(() -> callback.onSuccess(null));
         }
 
         @Override
         public void onFailure(Throwable t) {
-            DefaultTransportService.this.transportCallbackExecutor.submit(() -> {
-                callback.onError(t);
-            });
+            DefaultTransportService.this.transportCallbackExecutor.submit(() -> callback.onError(t));
         }
     }
 }
