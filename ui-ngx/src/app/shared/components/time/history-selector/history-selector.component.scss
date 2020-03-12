@@ -134,31 +134,7 @@
   }
 }
 
-.playpause {
-  label {
-    display: block;
-    box-sizing: border-box;
-
-    width: 0;
-    height: 74px;
-
-    cursor: pointer;
-
-    border-color: transparent transparent transparent #202020;
-    transition: 100ms all ease;
-    will-change: border-width;
-
-    // paused state
-    border-style: double;
-    border-width: 0px 0 0px 60px;
-  }
-  input[type="checkbox"] {
-    visibility: hidden;
-
-    &:checked + label {
-      // play state
-      border-style: solid;
-      border-width: 37px 0 37px 60px;
-    }
-  }
+.speed-select{
+  width: 50px;
+  margin-left: 20px;
 }

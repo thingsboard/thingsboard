@@ -6,7 +6,6 @@ import { interpolateArray } from '../lib/maps/maps-utils';
 import tinycolor from "tinycolor2";
 import { initSchema, addToSchema, addGroupInfo } from '@app/core/schema-utils';
 import { tripAnimationSchema } from '../lib/maps/schemes';
-import L from 'leaflet';
 
 @Component({
   selector: 'trip-animation',
@@ -38,8 +37,6 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
       rotationAngle: 0
     }
     this.settings = { ...settings, ...this.ctx.settings };
-    //this.ctx.settings = settings;
-    console.log("TripAnimationComponent -> ngOnInit -> this.ctx.settings", this.ctx.settings)
     let subscription = this.ctx.subscriptions[Object.keys(this.ctx.subscriptions)[0]];
     if (subscription) subscription.callbacks.onDataUpdated = (updated) => {
       this.historicalData = parseArray(this.ctx.data);
@@ -49,8 +46,8 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
       }));
       this.calculateIntervals();
       this.timeUpdated(this.intervals[0]);
-      this.cd.detectChanges();
       this.mapWidget.map.map.invalidateSize();
+      this.cd.detectChanges();
     }
   }
 

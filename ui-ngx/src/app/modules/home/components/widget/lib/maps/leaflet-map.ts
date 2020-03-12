@@ -122,10 +122,13 @@ export default abstract class LeafletMap {
     ////Markers
     updateMarkers(markersData) {
         markersData.forEach(data => {
-            if(data.rotationAngle){
-                this.options.icon= L.divIcon({
+            if (data.rotationAngle) {
+                this.options.icon = L.divIcon({
                     html: `<div class="arrow" style="transform: rotate(${data.rotationAngle}deg)"><div>`
-                  })
+                })
+            }
+            else {
+                this.options.icon = null;
             }
             if (this.markers.get(data.aliasName)) {
                 this.updateMarker(data.aliasName, data, markersData, this.options as MarkerSettings)

@@ -31,7 +31,7 @@ export function interpolateArray(originData, interpolatedIntervals) {
     };
 
     function findAngle(startPoint, endPoint) {
-        let angle = -Math.atan2(endPoint.latitude - startPoint.longitude, endPoint.longitude - startPoint.latitude);
+        let angle = -Math.atan2(endPoint.latitude - startPoint.latitude, endPoint.longitude - startPoint.longitude);
         angle = angle * 180 / Math.PI;
         return parseInt(angle.toFixed(2));
     }

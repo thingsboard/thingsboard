@@ -1,46 +1,34 @@
 <div class="trip-animation-control-panel">
     <div>
-        <button mat-icon-button class="mat-icon-button" aria-label="Start" ng-click="moveStart()">
-            <mat-icon class="material-icons" ng-style="{'color': staticSettings.buttonColor}">fast_rewind</mat-icon>
+        <button mat-icon-button class="mat-icon-button" aria-label="Start" (click)="moveStart()">
+            <mat-icon class="material-icons" [ngStyle]="{'color': settings.buttonColor}">fast_rewind</mat-icon>
         </button>
-        <button mat-icon-button class="mat-icon-button" aria-label="Previous" ng-click="movePrev()">
-            <mat-icon class="material-icons" ng-style="{'color': staticSettings.buttonColor}">skip_previous</mat-icon>
+        <button mat-icon-button class="mat-icon-button" aria-label="Previous" (click)="movePrev()">
+            <mat-icon class="material-icons" [ngStyle]="{'color': settings.buttonColor}">skip_previous</mat-icon>
         </button>
-        <mat-slider [(ngModel)]="index" [min]="minTimeIndex" [max]="maxTimeIndex" (change)="recalculateTrips()">
+        <mat-slider [(ngModel)]="index" [min]="minTimeIndex" [max]="maxTimeIndex" (change)="changeIndex()">
         </mat-slider>
-        <button mat-icon-button class="mat-icon-button" aria-label="Next" ng-click="moveNext()">
-            <mat-icon class="material-icons" ng-style="{'color': staticSettings.buttonColor}">skip_next</mat-icon>
+        <button mat-icon-button class="mat-icon-button" aria-label="Next" (click)="moveNext()">
+            <mat-icon class="material-icons" [ngStyle]="{'color': settings.buttonColor}">skip_next</mat-icon>
         </button>
-        <button mat-icon-button class="mat-icon-button" aria-label="End" ng-click="moveEnd()">
-            <mat-icon class="material-icons" ng-style="{'color': staticSettings.buttonColor}">fast_forward</mat-icon>
+        <button mat-icon-button class="mat-icon-button" aria-label="End" (click)="moveEnd()">
+            <mat-icon class="material-icons" [ngStyle]="{'color': settings.buttonColor}">fast_forward</mat-icon>
         </button>
-        <!--<div class="play-pause">
-            <input type="checkbox" [(ngModel)]="play" value="" id="playPauseCheckbox" name="playPauseCheckbox" />
-            <label for="playPauseCheckbox"></label>
-        </div>-->
-        <button mat-icon-button class="mat-icon-button" aria-label="Play" >
-            <mat-icon (click)="play()" *ngIf="!playing" class="material-icons" ng-style="{'color': settings.buttonColor}">
+        <button mat-icon-button class="mat-icon-button" aria-label="Play">
+            <mat-icon (click)="play()" *ngIf="!playing" class="material-icons"
+                [ngStyle]="{'color': settings.buttonColor}">
                 play_circle_outline
             </mat-icon>
-            <mat-icon (click)="pause()" *ngIf="playing" class="material-icons" ng-style="{'color': settings.buttonColor}">
+            <mat-icon (click)="pause()" *ngIf="playing" class="material-icons"
+                [ngStyle]="{'color': settings.buttonColor}">
                 pause_circle_outline
             </mat-icon>
         </button>
-        <!-- <mat-select [(ngModel)]="speed" aria-label="Speed selector">
-            <mat-option ng-value="speed" flex="1" ng-repeat="speed in speeds track by $index">{{ speed}}
-            </mat-option>
-        </mat-select>-->
-        <!-- <button mat-icon-button class="mat-icon-button" aria-label="Stop playing" ng-click="stopPlay()"
-            ng-disabled="!isPlaying">
-            <mat-icon class="material-icons"
-                ng-style="{'color': isPlaying ? staticSettings.buttonColor : staticSettings.disabledButtonColor}">
-                pause_circle_outline
-            </mat-icon>
-        </button>-->
+        <mat-select matInput [(ngModel)]="speed" (selectionChange)="reeneble()" class="speed-select" aria-label="Speed selector">
+            <mat-option [value]="speedValue" flex="1" *ngFor="let speedValue of speeds">{{speedValue}} </mat-option>
+        </mat-select>
     </div>
     <div class="panel-timer">
-        <span *ngIf="animationTime">{{ animationTime | date:'medium'}}</span>
-        <span *ngIf="!animationTime">{{ "widget.no-data-found" | translate}}</span>
+        <span *ngIf="this.intervals[this.index]">{{ this.intervals[this.index] | date:'medium'}}</span>
+        <span *ngIf="!this.intervals[this.index]">{{ "widget.no-data-found" | translate}}</span>
     </div>
-
-    <div>{{index}}</div>

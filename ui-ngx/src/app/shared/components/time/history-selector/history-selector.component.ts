@@ -21,6 +21,7 @@ export class HistorySelectorComponent implements OnInit, OnChanges {
   index = 0;
   playing = false;
   interval;
+  speeds = [1, 5, 10, 25];
 
 
   constructor(private cd: ChangeDetectorRef) { }
@@ -52,112 +53,48 @@ export class HistorySelectorComponent implements OnInit, OnChanges {
             this.index = this.minTimeIndex;
             this.playing = false;
             this.interval = null;
+            this.cd.detectChanges();
           });
+  }
+
+  reeneble() {
+    if (this.playing) {
+      this.interval.complete();
+      this.play();
+    }
   }
 
   pause() {
     this.playing = false;
-  }
-  /*
-    setSpeed() {
-      if (this.interval) this.interval.unsubscribe();
-      this.interval = interval(1000 / this.speed)
-        .pipe(
-          takeWhile(() => this.index < this.maxTimeIndex),
-          filter(() => this.play),
-          tap(() => this.index++))
-        .subscribe(() => {
-          console.log(this.intervals);
-  
-          this.onTimeUpdated.emit(this.intervals[this.index]);
-  
-        }, err => {
-          console.log(err);
-        }, () => {
-          this.index = this.minTimeIndex;
-          this.play = false;
-        })
-    }*/
-
-
-
-
-  /*
-   
-    playMove(play) {
-      if (play && this.isPlaying) return;
-      if (play || this.isPlaying) this.isPlaying = true;
-      if (this.isPlaying) {
-        moveInc(1);
-        this.timeout = $timeout(function () {
-          this.playMove();
-        }, 1000 / this.speed)
-      }
-    };
-   
-    moveNext() {
-      this.stopPlay();
-      if (this.staticSettings.usePointAsAnchor) {
-        let newIndex = this.maxTimeIndex;
-        for (let index = this.index + 1; index < this.maxTimeIndex; index++) {
-          if (this.trips.some(function (trip) {
-            return calculateCurrentDate(trip.timeRange, index).hasAnchor;
-          })) {
-            newIndex = index;
-            break;
-          }
-        }
-        this.moveToIndex(newIndex);
-      } else moveInc(1);
-    };
-   
-    movePrev() {
-      this.stopPlay();
-      if (this.staticSettings.usePointAsAnchor) {
-        let newIndex = this.minTimeIndex;
-        for (let index = this.index - 1; index > this.minTimeIndex; index--) {
-          if (this.trips.some(function (trip) {
-            return calculateCurrentDate(trip.timeRange, index).hasAnchor;
-          })) {
-            newIndex = index;
-            break;
-          }
-        }
-        this.moveToIndex(newIndex);
-      } else moveInc(-1);
-    };
-   
-    moveStart = function () {
-      this.stopPlay();
-      this.moveToIndex(this.minTimeIndex);
-    };
-   
-    moveEnd = function () {
-      this.stopPlay();
-      this.moveToIndex(this.maxTimeIndex);
-    };
-   
-    stopPlay = function () {
-      if (this.isPlaying) {
-        this.isPlaying = false;
-        $timeout.cancel(this.timeout);
-      }
-    };
-   
-    moveInc(inc) {
-      let newIndex = this.index + inc;
-      this.moveToIndex(newIndex);
-    }
-   
-    moveToIndex(newIndex) {
-      if (newIndex > this.maxTimeIndex || newIndex < this.minTimeIndex) return;
-      this.index = newIndex;
-      this.animationTime = this.minTime + this.index * this.staticSettings.normalizationStep;
-      recalculateTrips();
-    }
-  */
-  recalculateTrips() {
-
+    this.cd.detectChanges();
+    this.onTimeUpdated.emit(this.intervals[this.index]);
   }
 
+  moveNext() {
+    if (this.index < this.maxTimeIndex) {
+      this.index++;
+    }
+    this.pause();
+  }
+
+  movePrev() {
+    if (this.index > this.minTimeIndex) {
+      this.index++;
+    }
+    this.pause();
+  }
+
+  moveStart() {
+    this.index = this.minTimeIndex;
+    this.pause();
+  }
+
+  moveEnd() {
+    this.index = this.maxTimeIndex;
+    this.pause();
+  }
+
+  changeIndex() {
+    this.onTimeUpdated.emit(this.intervals[this.index]);
+  }
 }
