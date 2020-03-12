@@ -94,7 +94,7 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
                     responses.forEach(response -> {
                         log.trace("Received response to Kafka Template request: {}", response);
                         byte[] requestIdHeader = response.getHeaders().get(REQUEST_ID_HEADER);
-                        UUID requestId = null;
+                        UUID requestId;
                         if (requestIdHeader == null) {
                             log.error("[{}] Missing requestId in header and body", response);
                         } else {
@@ -155,6 +155,7 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
         UUID requestId = UUID.randomUUID();
         request.getHeaders().put(REQUEST_ID_HEADER, uuidToBytes(requestId));
         request.getHeaders().put(RESPONSE_TOPIC_HEADER, stringToBytes(responseTemplate.getTopic()));
+        request.getHeaders().put(REQUEST_TIME, longToBytes(System.currentTimeMillis()));
         SettableFuture<Response> future = SettableFuture.create();
         ResponseMetaData<Response> responseMetaData = new ResponseMetaData<>(tickTs + maxRequestTimeout, future);
         pendingRequests.putIfAbsent(requestId, responseMetaData);

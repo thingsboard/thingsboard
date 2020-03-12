@@ -22,6 +22,7 @@ import java.util.UUID;
 public class AbstractTbQueueTemplate {
     protected static final String REQUEST_ID_HEADER = "requestId";
     protected static final String RESPONSE_TOPIC_HEADER = "responseTopic";
+    protected static final String REQUEST_TIME = "requestTime";
 
     protected byte[] uuidToBytes(UUID uuid) {
         ByteBuffer buf = ByteBuffer.allocate(16);
@@ -43,5 +44,18 @@ public class AbstractTbQueueTemplate {
 
     protected String bytesToString(byte[] data) {
         return new String(data, StandardCharsets.UTF_8);
+    }
+
+    private static ByteBuffer longBuffer = ByteBuffer.allocate(Long.BYTES);
+
+    protected static byte[] longToBytes(long x) {
+        longBuffer.putLong(0, x);
+        return longBuffer.array();
+    }
+
+    protected static long bytesToLong(byte[] bytes) {
+        longBuffer.put(bytes, 0, bytes.length);
+        longBuffer.flip();//need flip
+        return longBuffer.getLong();
     }
 }

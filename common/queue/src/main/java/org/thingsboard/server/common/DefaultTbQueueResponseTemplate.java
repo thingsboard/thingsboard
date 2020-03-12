@@ -85,41 +85,46 @@ public class DefaultTbQueueResponseTemplate<Request extends TbQueueMsg, Response
                         }
                     }
                     List<Request> requests = requestTemplate.poll(pollInterval);
+
                     requests.forEach(request -> {
-                        byte[] requestIdHeader = request.getHeaders().get(REQUEST_ID_HEADER);
-                        if (requestIdHeader == null) {
-                            log.error("[{}] Missing requestId in header", request);
-                            return;
-                        }
-                        byte[] responseTopicHeader = request.getHeaders().get(RESPONSE_TOPIC_HEADER);
-                        if (responseTopicHeader == null) {
-                            log.error("[{}] Missing response topic in header", request);
-                            return;
-                        }
-                        UUID requestId = bytesToUuid(requestIdHeader);
-                        String responseTopic = bytesToString(responseTopicHeader);
-                        try {
-                            pendingRequestCount.getAndIncrement();
-                            AsyncCallbackTemplate.withCallbackAndTimeout(handler.handle(request),
-                                    response -> {
-                                        pendingRequestCount.decrementAndGet();
-                                        response.getHeaders().put(REQUEST_ID_HEADER, uuidToBytes(requestId));
-                                        responseTemplate.send(responseTopic, response, null);
-                                    },
-                                    e -> {
-                                        pendingRequestCount.decrementAndGet();
-                                        if (e.getCause() != null && e.getCause() instanceof TimeoutException) {
-                                            log.warn("[{}] Timeout to process the request: {}", requestId, request, e);
-                                        } else {
-                                            log.trace("[{}] Failed to process the request: {}", requestId, request, e);
-                                        }
-                                    },
-                                    requestTimeout,
-                                    timeoutExecutor,
-                                    callbackExecutor);
-                        } catch (Throwable e) {
-                            pendingRequestCount.decrementAndGet();
-                            log.warn("[{}] Failed to process the request: {}", requestId, request, e);
+                        long currentTime = System.currentTimeMillis();
+                        long requestTime = bytesToLong(request.getHeaders().get(REQUEST_TIME));
+                        if (requestTime + requestTimeout >= currentTime) {
+                            byte[] requestIdHeader = request.getHeaders().get(REQUEST_ID_HEADER);
+                            if (requestIdHeader == null) {
+                                log.error("[{}] Missing requestId in header", request);
+                                return;
+                            }
+                            byte[] responseTopicHeader = request.getHeaders().get(RESPONSE_TOPIC_HEADER);
+                            if (responseTopicHeader == null) {
+                                log.error("[{}] Missing response topic in header", request);
+                                return;
+                            }
+                            UUID requestId = bytesToUuid(requestIdHeader);
+                            String responseTopic = bytesToString(responseTopicHeader);
+                            try {
+                                pendingRequestCount.getAndIncrement();
+                                AsyncCallbackTemplate.withCallbackAndTimeout(handler.handle(request),
+                                        response -> {
+                                            pendingRequestCount.decrementAndGet();
+                                            response.getHeaders().put(REQUEST_ID_HEADER, uuidToBytes(requestId));
+                                            responseTemplate.send(responseTopic, response, null);
+                                        },
+                                        e -> {
+                                            pendingRequestCount.decrementAndGet();
+                                            if (e.getCause() != null && e.getCause() instanceof TimeoutException) {
+                                                log.warn("[{}] Timeout to process the request: {}", requestId, request, e);
+                                            } else {
+                                                log.trace("[{}] Failed to process the request: {}", requestId, request, e);
+                                            }
+                                        },
+                                        requestTimeout,
+                                        timeoutExecutor,
+                                        callbackExecutor);
+                            } catch (Throwable e) {
+                                pendingRequestCount.decrementAndGet();
+                                log.warn("[{}] Failed to process the request: {}", requestId, request, e);
+                            }
                         }
                     });
                     requestTemplate.commit();
