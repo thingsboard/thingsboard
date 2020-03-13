@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.kafka;
+package org.thingsboard.server.discovery;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.apache.kafka.clients.producer.RecordMetadata;
-import org.thingsboard.server.TbQueueMsgMetadata;
 
 @Data
-@AllArgsConstructor
-public class KafkaTbQueueMsgMetadata implements TbQueueMsgMetadata {
-    private RecordMetadata metadata;
+public class TopicPartitionInfo {
+
+    private String topic;
+    private int partition;
+
 }

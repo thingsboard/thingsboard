@@ -20,6 +20,16 @@ option java_package = "org.thingsboard.server.gen.transport";
 option java_outer_classname = "TransportProtos";
 
 /**
+ * Service Discovery Data Structures;
+ */
+message ServiceInfo {
+  string serviceId = 1;
+  repeated string serviceTypes = 2;
+  int64 tenantIdMSB = 3;
+  int64 tenantIdLSB = 4;
+}
+
+/**
  * Transport Service Data Structures;
  */
 message SessionInfoProto {
