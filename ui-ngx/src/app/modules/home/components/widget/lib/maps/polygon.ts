@@ -34,7 +34,7 @@ export class Polygon {
             opacity: settings.polygonStrokeOpacity
         }).addTo(this.map);
 
-        if (settings.displayTooltip) {
+        if (settings.showTooltip) {
             this.tooltip = createTooltip(this.leafletPoly, location.dsIndex, settings);
         }
         if (onClickListener) {

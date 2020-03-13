@@ -48,8 +48,9 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
     this.widgetConfig = this.ctx.widgetConfig;
     const settings = {
       normalizationStep: 1000,
+      showLabel: false,
       buttonColor: tinycolor(this.widgetConfig.color).setAlpha(0.54).toRgbString(),
-      disabledButtonColor: tinycolor(this.widgetConfig.color).setAlpha(0.3).toRgbString(),     
+      disabledButtonColor: tinycolor(this.widgetConfig.color).setAlpha(0.3).toRgbString(),
       rotationAngle: 0
     }
     this.settings = { ...settings, ...this.ctx.settings };
@@ -73,7 +74,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
 
   timeUpdated(time) {
     const currentPosition = this.interpolatedData.map(dataSource => dataSource[time]);
-      this.mapWidget.map.updateMarkers(currentPosition);
+    this.mapWidget.map.updateMarkers(currentPosition);
   }
 
   calculateIntervals() {

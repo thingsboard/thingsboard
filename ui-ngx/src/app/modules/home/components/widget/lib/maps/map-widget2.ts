@@ -40,7 +40,7 @@ export class MapWidgetController implements MapWidgetInterface {
     schema;
     data;
 
-    constructor(public mapProvider: MapProviders, private drawRoutes, ctx, $element) {
+    constructor(public mapProvider: MapProviders, private drawRoutes, public ctx, $element) {
         if (this.map) {
             this.map.map.remove();
             delete this.map;
@@ -73,6 +73,7 @@ export class MapWidgetController implements MapWidgetInterface {
             colorFunction: parseFunction(settings.colorFunction, functionParams),
             polygonColorFunction: parseFunction(settings.polygonColorFunction, functionParams),
             markerImageFunction: parseFunction(settings.markerImageFunction, ['data', 'images', 'dsData', 'dsIndex']),
+            labelColor: this.ctx.widgetConfig.color,
             tooltipPattern: settings.tooltipPattern ||
                 "<b>${entityName}</b><br/><br/><b>Latitude:</b> ${" + settings.latKeyName + ":7}<br/><b>Longitude:</b> ${" + settings.lngKeyName + ":7}",
             defaultCenterPosition: settings?.defaultCenterPosition?.split(',') || [0, 0],
@@ -120,7 +121,6 @@ export class MapWidgetController implements MapWidgetInterface {
         //const providerInfo = providerSets[mapProvider];
         let schema = initSchema();
         addToSchema(schema,this.getProvidersSchema());
-
         addGroupInfo(schema, "Map Provider Settings");
         addToSchema(schema, commonMapSettingsSchema);
         addGroupInfo(schema, "Common Map Settings");

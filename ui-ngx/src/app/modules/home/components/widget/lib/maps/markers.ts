@@ -16,7 +16,7 @@
 
 import L from 'leaflet';
 import { MarkerSettings } from './map-models';
-import { aspectCache, safeExecute, parseFunction } from '@app/core/utils';
+import { aspectCache, safeExecute, parseTemplate } from '@app/core/utils';
 import { createTooltip } from './maps-utils';
 
 export class Marker {
@@ -32,24 +32,21 @@ export class Marker {
     constructor(private map: L.Map, location: L.LatLngExpression, public settings: MarkerSettings, data, dataSources, onClickListener?, markerArgs?, onDragendListener?) {
         //this.map = map;
         this.location = location;
-        this.setDataSources(data, dataSources)
+        this.setDataSources(data, dataSources);
         this.leafletMarker = L.marker(location, {
             draggable: settings.draggable
         });
 
         this.createMarkerIcon((iconInfo) => {
             this.leafletMarker.setIcon(iconInfo.icon);
-            if (settings.showLabel) {
-                this.tooltipOffset = [0, -iconInfo.size[1] + 10];
-               // this.updateMarkerLabel(settings)
-            }
+            this.tooltipOffset = [0, -iconInfo.size[1] + 10];
+            this.updateMarkerLabel(settings);
+            this.leafletMarker.addTo(map);
+        });
 
-            this.leafletMarker.addTo(map)
-        }
-        );
-
-        if (settings.displayTooltip) {
+        if (settings.showTooltip) {
             this.tooltip = createTooltip(this.leafletMarker, settings, markerArgs);
+            this.tooltip.setContent(parseTemplate(this.settings.tooltipPattern, data));
         }
 
         if (onClickListener) {
@@ -67,35 +64,22 @@ export class Marker {
         this.dataSources = dataSources;
     }
 
+    updateMarkerTooltip(data) {
+        this.tooltip.setContent(parseTemplate(this.settings.tooltipPattern, data));
+    }
+
     updateMarkerPosition(position: L.LatLngExpression) {
         this.leafletMarker.setLatLng(position);
     }
 
     updateMarkerLabel(settings) {
-
-        function getText(template, data) {
-            let res = null;
-            try {
-                let variables = '';
-                for (let key in data) {
-                    if (!key.includes('|'))
-                        variables += `var ${key} = '${data[key]}';`;
-                }
-                res = safeExecute(parseFunction(variables + 'return' + '`' + template + '`'));
-            }
-            catch (ex) {
-            }
-            return res;
-        }
-
-
         this.leafletMarker.unbindTooltip();
+
         if (settings.showLabel) {
             if (settings.useLabelFunction) {
                 settings.labelText = safeExecute(settings.labelFunction, [this.data, this.dataSources, this.data.dsIndex])
             }
-            else settings.labelText = getText(settings.label, this.data);
-
+            else settings.labelText = parseTemplate(settings.label, this.data);
             this.leafletMarker.bindTooltip(`<div style="color: ${settings.labelColor};"><b>${settings.labelText}</b></div>`,
                 { className: 'tb-marker-label', permanent: true, direction: 'top', offset: this.tooltipOffset });
         }
@@ -110,10 +94,8 @@ export class Marker {
     updateMarkerIcon(settings) {
         this.createMarkerIcon((iconInfo) => {
             this.leafletMarker.setIcon(iconInfo.icon);
-            if (settings.showLabel) {
-                this.tooltipOffset = [0, -iconInfo.size[1] + 10];
-                this.updateMarkerLabel(settings)
-            }
+            this.tooltipOffset = [0, -iconInfo.size[1] + 10];
+            this.updateMarkerLabel(settings);
         });
     }
 
@@ -121,7 +103,7 @@ export class Marker {
 
         if (this.settings.icon) {
             onMarkerIconReady({
-                size: [30,30],
+                size: [30, 30],
                 icon: this.settings.icon,
             });
             return;
@@ -130,8 +112,8 @@ export class Marker {
         let currentImage = this.settings.useMarkerImageFunction ?
             safeExecute(this.settings.markerImageFunction,
                 [this.data, this.settings.markerImages, this.dataSources, this.data.dsIndex]) : this.settings.currentImage;
-       
-        
+
+
         if (currentImage && currentImage.url) {
             aspectCache(currentImage.url).subscribe(
                 (aspect) => {

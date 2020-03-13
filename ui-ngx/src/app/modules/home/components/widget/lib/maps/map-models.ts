@@ -46,10 +46,11 @@ export enum MapProviders {
 }
 
 export interface MarkerSettings extends MapOptions {
+    tooltipPattern?: any;
     icon?: any;
     showLabel?: boolean,
     draggable?: boolean,
-    displayTooltip?: boolean,
+    showTooltip?: boolean,
     color?: string,
     currentImage?: string;
     useMarkerImageFunction?: boolean,

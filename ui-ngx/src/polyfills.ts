@@ -108,4 +108,3 @@ const tinycolor = tinycolor_;
 (window as any).TbCanvasDigitalGauge = TbCanvasDigitalGauge;
 (window as any).TbMapWidgetV2 = TbMapWidgetV2;
 (window as any).TbTripAnimationWidget = TbTripAnimationWidget;
-console.log("TbTripAnimationWidget", TbTripAnimationWidget)

@@ -22,7 +22,10 @@
   background-position: center center;
 }
 
-.leaflet-div-icon {
-  background: none;
+.leaflet-div-icon,
+.tb-marker-label,
+.tb-marker-label:before {
   border: none;
+  background: none;
+  box-shadow: none;
 }

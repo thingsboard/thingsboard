@@ -98,26 +98,6 @@ export default abstract class LeafletMap {
         this.map.invalidateSize(true);
     }
 
-    createTooltip(marker, dsIndex, settings, markerArgs) {
-        var popup = L.popup();
-        popup.setContent('');
-        marker.bindPopup(popup, { autoClose: settings.autocloseTooltip, closeOnClick: false });
-        if (settings.displayTooltipAction == 'hover') {
-            marker.off('click');
-            marker.on('mouseover', function () {
-                this.openPopup();
-            });
-            marker.on('mouseout', function () {
-                this.closePopup();
-            });
-        }
-        return {
-            markerArgs: markerArgs,
-            popup: popup,
-            locationSettings: settings,
-            dsIndex: dsIndex
-        }
-    }
 
     onResize() {
 
@@ -169,6 +149,9 @@ export default abstract class LeafletMap {
         if (!location.equals(marker.location)) {
             marker.updateMarkerPosition(location);
         }
+        if (settings.showTooltip) {
+            marker.updateMarkerTooltip(data);
+        }
         marker.setDataSources(data, dataSources);
         marker.updateMarkerIcon(settings);
     }
@@ -207,11 +190,11 @@ export default abstract class LeafletMap {
     updatePolyline(data, dataSources, settings) {
         this.ready$.subscribe(() => {
             this.poly.updatePolyline(settings, data, dataSources);
-            const bounds = this.bounds.extend(this.poly.leafletPoly.getBounds());
-            if (bounds.isValid()) {
-                this.map.fitBounds(bounds);
-                this.bounds = bounds;
-            }
+            /*   const bounds = this.bounds.extend(this.poly.leafletPoly.getBounds());
+               if (bounds.isValid()) {
+                   this.map.fitBounds(bounds);
+                   this.bounds = bounds;
+               }*/
         });
     }
 }

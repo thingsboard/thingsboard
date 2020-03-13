@@ -31,12 +31,12 @@ export function createTooltip(target, settings, targetArgs?) {
             this.closePopup();
         });
     }
-    return {
+    return popup/*{
         markerArgs: targetArgs,
         popup: popup,
         locationSettings: settings,
         dsIndex: settings.dsIndex
-    };
+    };*/
 }
 
 

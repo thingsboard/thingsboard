@@ -518,3 +518,50 @@ export function parseFunction(source: string, params: string[] = []): Function {
   }
   return res;
 }
+
+export function parseTemplate(template, data) {
+  function formatValue(value, pattern) {
+
+  }
+
+  let res = '';
+  try {
+    let variables = '';
+    let expressions = template
+      .match(/\{(.*?)\}/g) // find expressions
+      .map(exp => exp.replace(/{|}/g, '')) // remove brackets 
+      .map(exp => exp.split(':'))
+      .filter(arr => !!arr[1]) //filter expressions without format
+      .reduce((res, current) => {
+        res[current[0]] = current[1];
+        return res;
+      }, {});
+
+    for (let key in data) {
+      if (!key.includes('|'))
+        variables += `let ${key} = '${expressions[key] ? padValue(data[key], +expressions[key]) : data[key]}';`;
+    }
+    template = template.replace(/:\d+}/g, '}');
+    res = safeExecute(parseFunction(variables + 'return' + '`' + template + '`'));
+  }
+  catch (ex) {
+  }
+  return res;
+}
+
+export function padValue(val: any, dec: number): string {
+  let strVal;
+  let n;
+
+  val = parseFloat(val);
+  n = (val < 0);
+  val = Math.abs(val);
+
+  if (dec > 0) {
+    strVal = val.toFixed(dec).toString()
+  } else {
+    strVal = Math.round(val).toString();
+  }
+  strVal = (n ? '-' : '') + strVal;
+  return strVal;
+}

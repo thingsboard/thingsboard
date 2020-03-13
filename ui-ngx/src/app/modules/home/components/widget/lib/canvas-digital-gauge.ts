@@ -20,7 +20,7 @@ import BaseGauge = CanvasGauges.BaseGauge;
 import { FontStyle, FontWeight } from '@home/components/widget/lib/settings.models';
 import * as tinycolor_ from 'tinycolor2';
 import { ColorFormats } from 'tinycolor2';
-import { isDefined, isString, isUndefined } from '@core/utils';
+import { isDefined, isString, isUndefined, padValue } from '@core/utils';
 
 const tinycolor = tinycolor_;
 
@@ -765,24 +765,6 @@ function drawDigitalMinMax(context: DigitalGaugeCanvasRenderingContext2D, option
   drawText(context, options, 'MinMax', options.maxValue+'', maxX, maxY);
 }
 
-function padValue(val: any, options: CanvasDigitalGaugeOptions): string {
-  const dec = options.valueDec;
-  let strVal;
-  let n;
-
-  val = parseFloat(val);
-  n = (val < 0);
-  val = Math.abs(val);
-
-  if (dec > 0) {
-    strVal = val.toFixed(dec).toString()
-  } else {
-    strVal = Math.round(val).toString();
-  }
-  strVal = (n ? '-' : '') + strVal;
-  return strVal;
-}
-
 function drawDigitalValue(context: DigitalGaugeCanvasRenderingContext2D, options: CanvasDigitalGaugeOptions, value: any) {
   if (options.hideValue) return;
 
@@ -792,7 +774,7 @@ function drawDigitalValue(context: DigitalGaugeCanvasRenderingContext2D, options
   const textX = Math.round(baseX + width / 2);
   const textY = valueY;
 
-  let text = options.valueText || padValue(value, options);
+  let text = options.valueText || padValue(value, options.valueDec);
   text += options.symbol;
 
   context.save();
