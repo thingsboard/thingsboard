@@ -25,13 +25,13 @@ public class TbRuleEngineConsumerStats {
 
     private final AtomicInteger totalCounter = new AtomicInteger(0);
     private final AtomicInteger sessionEventCounter = new AtomicInteger(0);
-    private final AtomicInteger postTelemetryCounter = new AtomicInteger(0);
-    private final AtomicInteger postAttributesCounter = new AtomicInteger(0);
+//    private final AtomicInteger postTelemetryCounter = new AtomicInteger(0);
+//    private final AtomicInteger postAttributesCounter = new AtomicInteger(0);
     private final AtomicInteger getAttributesCounter = new AtomicInteger(0);
     private final AtomicInteger subscribeToAttributesCounter = new AtomicInteger(0);
     private final AtomicInteger subscribeToRPCCounter = new AtomicInteger(0);
     private final AtomicInteger toDeviceRPCCallResponseCounter = new AtomicInteger(0);
-    private final AtomicInteger toServerRPCCallRequestCounter = new AtomicInteger(0);
+//    private final AtomicInteger toServerRPCCallRequestCounter = new AtomicInteger(0);
     private final AtomicInteger subscriptionInfoCounter = new AtomicInteger(0);
     private final AtomicInteger claimDeviceCounter = new AtomicInteger(0);
 
@@ -40,12 +40,12 @@ public class TbRuleEngineConsumerStats {
         if (msg.hasSessionEvent()) {
             sessionEventCounter.incrementAndGet();
         }
-        if (msg.hasPostTelemetry()) {
-            postTelemetryCounter.incrementAndGet();
-        }
-        if (msg.hasPostAttributes()) {
-            postAttributesCounter.incrementAndGet();
-        }
+//        if (msg.hasPostTelemetry()) {
+//            postTelemetryCounter.incrementAndGet();
+//        }
+//        if (msg.hasPostAttributes()) {
+//            postAttributesCounter.incrementAndGet();
+//        }
         if (msg.hasGetAttributes()) {
             getAttributesCounter.incrementAndGet();
         }
@@ -58,9 +58,9 @@ public class TbRuleEngineConsumerStats {
         if (msg.hasToDeviceRPCCallResponse()) {
             toDeviceRPCCallResponseCounter.incrementAndGet();
         }
-        if (msg.hasToServerRPCCallRequest()) {
-            toServerRPCCallRequestCounter.incrementAndGet();
-        }
+//        if (msg.hasToServerRPCCallRequest()) {
+//            toServerRPCCallRequestCounter.incrementAndGet();
+//        }
         if (msg.hasSubscriptionInfo()) {
             subscriptionInfoCounter.incrementAndGet();
         }

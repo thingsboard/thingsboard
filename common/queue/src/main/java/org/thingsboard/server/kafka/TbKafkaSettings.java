@@ -35,22 +35,22 @@ public class TbKafkaSettings {
     static final String REQUEST_ID_HEADER = "requestId";
     static final String RESPONSE_TOPIC_HEADER = "responseTopic";
 
-    @Value("${kafka.bootstrap.servers}")
+    @Value("${queue.kafka.bootstrap.servers}")
     private String servers;
 
-    @Value("${kafka.acks}")
+    @Value("${queue.kafka.acks}")
     private String acks;
 
-    @Value("${kafka.retries}")
+    @Value("${queue.queue.kafka.retries}")
     private int retries;
 
-    @Value("${kafka.batch.size}")
+    @Value("${queue.kafka.batch.size}")
     private int batchSize;
 
-    @Value("${kafka.linger.ms}")
+    @Value("${queue.kafka.linger.ms}")
     private long lingerMs;
 
-    @Value("${kafka.buffer.memory}")
+    @Value("${queue.kafka.buffer.memory}")
     private long bufferMemory;
 
     @Value("${kafka.other:#{null}}")

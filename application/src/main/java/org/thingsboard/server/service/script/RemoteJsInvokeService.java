@@ -20,7 +20,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -29,7 +28,6 @@ import org.thingsboard.server.TbQueueProducer;
 import org.thingsboard.server.common.DefaultTbQueueRequestTemplate;
 import org.thingsboard.server.common.TbProtoQueueMsg;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
-import org.thingsboard.server.kafka.TbNodeIdProvider;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
@@ -44,12 +42,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 @ConditionalOnProperty(prefix = "js", value = "evaluator", havingValue = "remote", matchIfMissing = true)
 @Service
 public class RemoteJsInvokeService extends AbstractJsInvokeService {
-
-    @Autowired
-    private TbNodeIdProvider nodeIdProvider;
-
-    @Autowired
-    private TbKafkaSettings kafkaSettings;
 
     @Value("${js.remote.request_topic}")
     private String requestTopic;

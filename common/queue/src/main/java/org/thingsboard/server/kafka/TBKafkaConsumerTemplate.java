@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
-import java.util.UUID;
 
 /**
  * Created by ashvayka on 24.09.18.
@@ -42,15 +41,11 @@ public class TBKafkaConsumerTemplate<T extends TbQueueMsg> implements TbQueueCon
     private final KafkaConsumer<String, byte[]> consumer;
     private final TbKafkaDecoder<T> decoder;
 
-    @Builder.Default
-    private TbKafkaRequestIdExtractor<T> requestIdExtractor = ((response) -> null);
-
     @Getter
     private final String topic;
 
     @Builder
     private TBKafkaConsumerTemplate(TbKafkaSettings settings, TbKafkaDecoder<T> decoder,
-                                    TbKafkaRequestIdExtractor<T> requestIdExtractor,
                                     String clientId, String groupId, String topic,
                                     boolean autoCommit, int autoCommitIntervalMs,
                                     int maxPollRecords) {
@@ -68,7 +63,6 @@ public class TBKafkaConsumerTemplate<T extends TbQueueMsg> implements TbQueueCon
         }
         this.consumer = new KafkaConsumer<>(props);
         this.decoder = decoder;
-        this.requestIdExtractor = requestIdExtractor;
         this.topic = topic;
     }
 
@@ -105,22 +99,8 @@ public class TBKafkaConsumerTemplate<T extends TbQueueMsg> implements TbQueueCon
         consumer.unsubscribe();
     }
 
-//    public void subscribe() {
-//        consumer.subscribe(Collections.singletonList(topic));
-//    }
-//
-
-//
-//    public ConsumerRecords<String, byte[]> poll(Duration duration) {
-//        return consumer.poll(duration);
-//    }
-
     public T decode(ConsumerRecord<String, byte[]> record) throws IOException {
         return decoder.decode(new KafkaTbQueueMsg(record));
-    }
-
-    public UUID extractRequestId(T value) {
-        return requestIdExtractor.extractRequestId(value);
     }
 
 }

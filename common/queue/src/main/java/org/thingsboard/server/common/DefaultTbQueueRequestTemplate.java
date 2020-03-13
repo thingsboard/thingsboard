@@ -1,3 +1,18 @@
+/**
+ * Copyright © 2016-2020 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.thingsboard.server.common;
 
 import com.google.common.util.concurrent.Futures;
@@ -79,7 +94,7 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
                     responses.forEach(response -> {
                         log.trace("Received response to Kafka Template request: {}", response);
                         byte[] requestIdHeader = response.getHeaders().get(REQUEST_ID_HEADER);
-                        UUID requestId = null;
+                        UUID requestId;
                         if (requestIdHeader == null) {
                             log.error("[{}] Missing requestId in header and body", response);
                         } else {
@@ -140,6 +155,7 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
         UUID requestId = UUID.randomUUID();
         request.getHeaders().put(REQUEST_ID_HEADER, uuidToBytes(requestId));
         request.getHeaders().put(RESPONSE_TOPIC_HEADER, stringToBytes(responseTemplate.getTopic()));
+        request.getHeaders().put(REQUEST_TIME, longToBytes(System.currentTimeMillis()));
         SettableFuture<Response> future = SettableFuture.create();
         ResponseMetaData<Response> responseMetaData = new ResponseMetaData<>(tickTs + maxRequestTimeout, future);
         pendingRequests.putIfAbsent(requestId, responseMetaData);

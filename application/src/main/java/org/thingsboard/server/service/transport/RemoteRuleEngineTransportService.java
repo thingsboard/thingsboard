@@ -41,9 +41,8 @@ import org.thingsboard.server.gen.transport.TransportProtos.DeviceActorToTranspo
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
-import org.thingsboard.server.kafka.TbNodeIdProvider;
+import org.thingsboard.server.provider.TbCoreQueueProvider;
 import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
-import org.thingsboard.server.service.cluster.rpc.ClusterRpcService;
 import org.thingsboard.server.service.encoding.DataDecodingEncodingService;
 import org.thingsboard.server.service.queue.TbCoreConsumerStats;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
@@ -65,7 +64,7 @@ import java.util.function.Consumer;
 @Slf4j
 @Service
 @ConditionalOnProperty(prefix = "transport", value = "type", havingValue = "remote")
-public class RemoteRuleEngineTransportService implements RuleEngineTransportService {
+public class RemoteRuleEngineTransportService {
 
     @Value("${transport.remote.rule_engine.topic}")
     private String ruleEngineTopic;
@@ -85,12 +84,6 @@ public class RemoteRuleEngineTransportService implements RuleEngineTransportServ
     @Value("${transport.remote.rule_engine.stats.enabled:false}")
     private boolean statsEnabled;
 
-//    @Autowired
-//    private TbKafkaSettings kafkaSettings;
-//
-    @Autowired
-    private TbNodeIdProvider nodeIdProvider;
-
     @Autowired
     private ActorSystemContext actorContext;
 
@@ -101,6 +94,9 @@ public class RemoteRuleEngineTransportService implements RuleEngineTransportServ
     private ClusterRpcService rpcService;
     @Autowired
     private DataDecodingEncodingService encodingService;
+
+    @Autowired
+    private TbCoreQueueProvider coreQueueProvider;
 
     private TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> ruleEngineConsumer;
 
@@ -114,26 +110,12 @@ public class RemoteRuleEngineTransportService implements RuleEngineTransportServ
 
     @PostConstruct
     public void init() {
-        TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<ToTransportMsg> notificationsProducerBuilder = TBKafkaProducerTemplate.builder();
-        notificationsProducerBuilder.settings(kafkaSettings);
-        notificationsProducerBuilder.clientId("producer-transport-notification-" + nodeIdProvider.getNodeId());
-        notificationsProducerBuilder.encoder(new ToTransportMsgEncoder());
-
-        notificationsProducer = notificationsProducerBuilder.build();
+        notificationsProducer = coreQueueProvider.getTransportMsgProducer();
         notificationsProducer.init();
 
-        TBKafkaConsumerTemplate.TBKafkaConsumerTemplateBuilder<ToRuleEngineMsg> ruleEngineConsumerBuilder = TBKafkaConsumerTemplate.builder();
-        ruleEngineConsumerBuilder.settings(kafkaSettings);
-        ruleEngineConsumerBuilder.topic(ruleEngineTopic);
-        ruleEngineConsumerBuilder.clientId("transport-" + nodeIdProvider.getNodeId());
-        ruleEngineConsumerBuilder.groupId("tb-node");
-        ruleEngineConsumerBuilder.autoCommit(true);
-        ruleEngineConsumerBuilder.autoCommitIntervalMs(autoCommitInterval);
-        ruleEngineConsumerBuilder.maxPollRecords(pollRecordsPackSize);
-        ruleEngineConsumerBuilder.decoder(new ToRuleEngineMsgDecoder());
-
-        ruleEngineConsumer = ruleEngineConsumerBuilder.build();
-        ruleEngineConsumer.subscribe();
+        //TODO: 2.5
+//        ruleEngineConsumer =
+//        ruleEngineConsumer.subscribe();
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -198,6 +180,7 @@ public class RemoteRuleEngineTransportService implements RuleEngineTransportServ
         UUID sessionId = new UUID(msg.getSessionIdMSB(), msg.getSessionIdLSB());
         ToTransportMsg transportMsg = ToTransportMsg.newBuilder().setToDeviceSessionMsg(msg).build();
         log.trace("[{}][{}] Pushing session data to topic: {}", topic, sessionId, transportMsg);
+        //TODO: 2.5 id
         TbProtoQueueMsg<ToTransportMsg> queueMsg = new TbProtoQueueMsg<>(sessionId, transportMsg);
         notificationsProducer.send(topic, queueMsg, new QueueCallbackAdaptor(onSuccess, onFailure));
     }
