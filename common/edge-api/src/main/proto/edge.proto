@@ -81,10 +81,10 @@ message ConnectResponseMsg {
 message EdgeConfiguration {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
-  string name = 5;
-  string routingKey = 6;
-  string type = 7;
-  string cloudType = 8;
+  string name = 3;
+  string routingKey = 4;
+  string type = 5;
+  string cloudType = 6;
 }
 
 enum UpdateMsgType {
@@ -237,7 +237,7 @@ message UplinkMsg {
   int32 uplinkMsgId = 1;
   repeated EntityDataProto entityData = 2;
   repeated DeviceUpdateMsg deviceUpdateMsg = 3;
-  repeated AlarmUpdateMsg alarmUpdatemsg = 4;
+  repeated AlarmUpdateMsg alarmUpdateMsg = 4;
 }
 
 message UplinkResponseMsg {

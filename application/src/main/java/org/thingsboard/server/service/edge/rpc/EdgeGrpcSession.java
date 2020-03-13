@@ -150,6 +150,9 @@ public final class EdgeGrpcSession implements Cloneable {
                     if (ConnectResponseCode.ACCEPTED != responseMsg.getResponseCode()) {
                         outputStream.onError(new RuntimeException(responseMsg.getErrorMsg()));
                     }
+                    if (ConnectResponseCode.ACCEPTED == responseMsg.getResponseCode()) {
+                        ctx.getInitEdgeService().init(edge, outputStream);
+                    }
                 }
                 if (connected) {
                     if (requestMsg.getMsgType().equals(RequestMsgType.UPLINK_RPC_MESSAGE) && requestMsg.hasUplinkMsg()) {
@@ -403,7 +406,7 @@ public final class EdgeGrpcSession implements Cloneable {
 
     private void onRuleChainUpdated(UpdateMsgType msgType, RuleChain ruleChain) {
         EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
-                .setRuleChainUpdateMsg(constructRuleChainUpdatedMsg(msgType, ruleChain))
+                .setRuleChainUpdateMsg(ctx.getRuleChainMetadataConstructor().constructRuleChainUpdatedMsg(edge, msgType, ruleChain))
                 .build();
         outputStream.onNext(ResponseMsg.newBuilder()
                 .setEntityUpdateMsg(entityUpdateMsg)
@@ -411,7 +414,8 @@ public final class EdgeGrpcSession implements Cloneable {
     }
 
     private void onRuleChainMetadataUpdated(UpdateMsgType msgType, RuleChainMetaData ruleChainMetaData) {
-        RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = constructRuleChainMetadataUpdatedMsg(msgType, ruleChainMetaData);
+        RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg =
+                ctx.getRuleChainMetadataConstructor().constructRuleChainMetadataUpdatedMsg(msgType, ruleChainMetaData);
         if (ruleChainMetadataUpdateMsg != null) {
             EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
                     .setRuleChainMetadataUpdateMsg(ruleChainMetadataUpdateMsg)
@@ -433,41 +437,11 @@ public final class EdgeGrpcSession implements Cloneable {
 
     private void onAlarmUpdated(UpdateMsgType msgType, Alarm alarm) {
         EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
-                .setAlarmUpdateMsg(constructAlarmUpdatedMsg(msgType, alarm))
+                .setAlarmUpdateMsg(ctx.getAlarmMetadataConstructor().constructAlarmUpdatedMsg(edge.getTenantId(), msgType, alarm))
                 .build();
         outputStream.onNext(ResponseMsg.newBuilder()
                 .setEntityUpdateMsg(entityUpdateMsg)
                 .build());
-    }
-
-    private AlarmUpdateMsg constructAlarmUpdatedMsg(UpdateMsgType msgType, Alarm alarm) {
-        String entityName = null;
-        switch (alarm.getOriginator().getEntityType()) {
-            case DEVICE:
-                entityName = ctx.getDeviceService().findDeviceById(edge.getTenantId(), new DeviceId(alarm.getOriginator().getId())).getName();
-                break;
-            case ASSET:
-                entityName = ctx.getAssetService().findAssetById(edge.getTenantId(), new AssetId(alarm.getOriginator().getId())).getName();
-                break;
-            case ENTITY_VIEW:
-                entityName = ctx.getEntityViewService().findEntityViewById(edge.getTenantId(), new EntityViewId(alarm.getOriginator().getId())).getName();
-                break;
-        }
-        AlarmUpdateMsg.Builder builder = AlarmUpdateMsg.newBuilder()
-                .setMsgType(msgType)
-                .setName(alarm.getName())
-                .setType(alarm.getType())
-                .setOriginatorName(entityName)
-                .setOriginatorType(alarm.getOriginator().getEntityType().name())
-                .setSeverity(alarm.getSeverity().name())
-                .setStatus(alarm.getStatus().name())
-                .setStartTs(alarm.getStartTs())
-                .setEndTs(alarm.getEndTs())
-                .setAckTs(alarm.getAckTs())
-                .setClearTs(alarm.getClearTs())
-                .setDetails(JacksonUtil.toString(alarm.getDetails()))
-                .setPropagate(alarm.isPropagate());
-        return builder.build();
     }
 
     private UpdateMsgType getResponseMsgType(String msgType) {
@@ -496,22 +470,6 @@ public final class EdgeGrpcSession implements Cloneable {
         }
     }
 
-    private RuleChainUpdateMsg constructRuleChainUpdatedMsg(UpdateMsgType msgType, RuleChain ruleChain) {
-        RuleChainUpdateMsg.Builder builder = RuleChainUpdateMsg.newBuilder()
-                .setMsgType(msgType)
-                .setIdMSB(ruleChain.getId().getId().getMostSignificantBits())
-                .setIdLSB(ruleChain.getId().getId().getLeastSignificantBits())
-                .setName(ruleChain.getName())
-                .setRoot(ruleChain.getId().equals(edge.getRootRuleChainId()))
-                .setDebugMode(ruleChain.isDebugMode())
-                .setConfiguration(JacksonUtil.toString(ruleChain.getConfiguration()));
-        if (ruleChain.getFirstRuleNodeId() != null) {
-             builder.setFirstRuleNodeIdMSB(ruleChain.getFirstRuleNodeId().getId().getMostSignificantBits())
-                    .setFirstRuleNodeIdLSB(ruleChain.getFirstRuleNodeId().getId().getLeastSignificantBits());
-        }
-        return builder.build();
-    }
-
     private DownlinkMsg constructDownlinkEntityDataMsg(String entityName, TbMsg tbMsg) {
         EntityDataProto entityData = EntityDataProto.newBuilder()
                 .setEntityName(entityName)
@@ -521,85 +479,6 @@ public final class EdgeGrpcSession implements Cloneable {
                 .addAllEntityData(Collections.singletonList(entityData));
 
         return builder.build();
-    }
-
-    private RuleChainMetadataUpdateMsg constructRuleChainMetadataUpdatedMsg(UpdateMsgType msgType, RuleChainMetaData ruleChainMetaData) {
-        try {
-            RuleChainMetadataUpdateMsg.Builder builder = RuleChainMetadataUpdateMsg.newBuilder()
-                    .setRuleChainIdMSB(ruleChainMetaData.getRuleChainId().getId().getMostSignificantBits())
-                    .setRuleChainIdLSB(ruleChainMetaData.getRuleChainId().getId().getLeastSignificantBits())
-                    .addAllNodes(constructNodes(ruleChainMetaData.getNodes()))
-                    .addAllConnections(constructConnections(ruleChainMetaData.getConnections()))
-                    .addAllRuleChainConnections(constructRuleChainConnections(ruleChainMetaData.getRuleChainConnections()));
-            if (ruleChainMetaData.getFirstNodeIndex() != null) {
-                builder.setFirstNodeIndex(ruleChainMetaData.getFirstNodeIndex());
-            }
-            builder.setMsgType(msgType);
-            return builder.build();
-        } catch (JsonProcessingException ex) {
-            log.error("Can't construct RuleChainMetadataUpdateMsg", ex);
-        }
-        return null;
-    }
-
-    private List<RuleChainConnectionInfoProto> constructRuleChainConnections(List<RuleChainConnectionInfo> ruleChainConnections) throws JsonProcessingException {
-        List<RuleChainConnectionInfoProto> result = new ArrayList<>();
-        if (ruleChainConnections != null && !ruleChainConnections.isEmpty()) {
-            for (RuleChainConnectionInfo ruleChainConnectionInfo : ruleChainConnections) {
-                result.add(constructRuleChainConnection(ruleChainConnectionInfo));
-            }
-        }
-        return result;
-    }
-
-    private RuleChainConnectionInfoProto constructRuleChainConnection(RuleChainConnectionInfo ruleChainConnectionInfo) throws JsonProcessingException {
-        return RuleChainConnectionInfoProto.newBuilder()
-                .setFromIndex(ruleChainConnectionInfo.getFromIndex())
-                .setTargetRuleChainIdMSB(ruleChainConnectionInfo.getTargetRuleChainId().getId().getMostSignificantBits())
-                .setTargetRuleChainIdLSB(ruleChainConnectionInfo.getTargetRuleChainId().getId().getLeastSignificantBits())
-                .setType(ruleChainConnectionInfo.getType())
-                .setAdditionalInfo(objectMapper.writeValueAsString(ruleChainConnectionInfo.getAdditionalInfo()))
-                .build();
-    }
-
-    private List<NodeConnectionInfoProto> constructConnections(List<NodeConnectionInfo> connections) {
-        List<NodeConnectionInfoProto> result = new ArrayList<>();
-        if (connections != null && !connections.isEmpty()) {
-            for (NodeConnectionInfo connection : connections) {
-                result.add(constructConnection(connection));
-            }
-        }
-        return result;
-    }
-
-    private NodeConnectionInfoProto constructConnection(NodeConnectionInfo connection) {
-        return NodeConnectionInfoProto.newBuilder()
-                .setFromIndex(connection.getFromIndex())
-                .setToIndex(connection.getToIndex())
-                .setType(connection.getType())
-                .build();
-    }
-
-    private List<RuleNodeProto> constructNodes(List<RuleNode> nodes) throws JsonProcessingException {
-        List<RuleNodeProto> result = new ArrayList<>();
-        if (nodes != null && !nodes.isEmpty()) {
-            for (RuleNode node : nodes) {
-                result.add(constructNode(node));
-            }
-        }
-        return result;
-    }
-
-    private RuleNodeProto constructNode(RuleNode node) throws JsonProcessingException {
-        return RuleNodeProto.newBuilder()
-                .setIdMSB(node.getId().getId().getMostSignificantBits())
-                .setIdLSB(node.getId().getId().getLeastSignificantBits())
-                .setType(node.getType())
-                .setName(node.getName())
-                .setDebugMode(node.isDebugMode())
-                .setConfiguration(objectMapper.writeValueAsString(node.getConfiguration()))
-                .setAdditionalInfo(objectMapper.writeValueAsString(node.getAdditionalInfo()))
-                .build();
     }
 
     private DashboardUpdateMsg constructDashboardUpdatedMsg(UpdateMsgType msgType, Dashboard dashboard) {

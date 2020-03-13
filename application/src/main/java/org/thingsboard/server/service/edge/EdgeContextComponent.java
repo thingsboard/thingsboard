@@ -29,6 +29,9 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.service.edge.rpc.alarm.AlarmMetadataConstructor;
+import org.thingsboard.server.service.edge.rpc.init.InitEdgeService;
+import org.thingsboard.server.service.edge.rpc.ruleChain.RuleChainMetadataConstructor;
 
 @Component
 @Data
@@ -73,4 +76,16 @@ public class EdgeContextComponent {
     @Lazy
     @Autowired
     private ActorService actorService;
+
+    @Lazy
+    @Autowired
+    private InitEdgeService initEdgeService;
+
+    @Lazy
+    @Autowired
+    private RuleChainMetadataConstructor ruleChainMetadataConstructor;
+
+    @Lazy
+    @Autowired
+    private AlarmMetadataConstructor alarmMetadataConstructor;
 }

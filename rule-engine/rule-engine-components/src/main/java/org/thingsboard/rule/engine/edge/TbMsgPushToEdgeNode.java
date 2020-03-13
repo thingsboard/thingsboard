@@ -48,6 +48,10 @@ public class TbMsgPushToEdgeNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
+        if ("edge".equalsIgnoreCase(msg.getMetaData().getValue("source"))) {
+            return;
+        }
+        msg.getMetaData().putValue("source", "cloud");
         ctx.getEdgeService().pushEventToEdge(ctx.getTenantId(), msg, new PushToEdgeNodeCallback(ctx, msg));
     }
 
