@@ -57,10 +57,6 @@ export class TripAnimationComponent implements OnInit, AfterViewInit {
     let subscription = this.ctx.subscriptions[Object.keys(this.ctx.subscriptions)[0]];
     if (subscription) subscription.callbacks.onDataUpdated = (updated) => {
       this.historicalData = parseArray(this.ctx.data);
-      this.historicalData.forEach(ds => ds.forEach(el => {
-        el.longitude += (Math.random() - 0.5)
-        el.latitude += (Math.random() - 0.5)
-      }));
       this.calculateIntervals();
       this.timeUpdated(this.intervals[0]);
       this.mapWidget.map.map.invalidateSize();

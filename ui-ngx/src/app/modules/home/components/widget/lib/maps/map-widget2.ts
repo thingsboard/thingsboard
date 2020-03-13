@@ -39,6 +39,7 @@ export class MapWidgetController implements MapWidgetInterface {
     provider: MapProviders;
     schema;
     data;
+    settings;
 
     constructor(public mapProvider: MapProviders, private drawRoutes, public ctx, $element) {
         if (this.map) {
@@ -50,13 +51,13 @@ export class MapWidgetController implements MapWidgetInterface {
         if (!$element) {
             $element = ctx.$container[0];
         }
-        let settings = this.initSettings(ctx.settings);
+        this.settings = this.initSettings(ctx.settings);
 
         let MapClass = providerSets[this.provider]?.MapClass;
         if (!MapClass) {
             return;
         }
-        this.map = new MapClass($element, settings);
+        this.map = new MapClass($element, this.settings);
     }
 
     onInit() {
@@ -88,6 +89,13 @@ export class MapWidgetController implements MapWidgetInterface {
     update() {
         if (this.drawRoutes)
             this.map.updatePolylines(parseArray(this.data));
+        if(this.settings.showPolygon)
+        {
+            console.log(this.data);
+            
+            let dummy = [[37.771121,-22.510761],[37.774581,-22.454885],[37.766575,-22.453683],[37.764268,-22.509945]];
+            this.map.updatePolygon(dummy);            
+        }
         this.map.updateMarkers(parseData(this.data));
     }
 
@@ -114,11 +122,10 @@ export class MapWidgetController implements MapWidgetInterface {
     public static getProvidersSchema(){
      return   mergeSchemes([mapProviderSchema,
             ...Object.values(providerSets)?.map(
-                setting => addCondition(setting?.schema, `model.provider === '${setting.name}'`))])
+                setting => addCondition(setting?.schema, `model.provider === '${setting.name}'`))]);
     } 
 
     public static settingsSchema(mapProvider, drawRoutes): Object {
-        //const providerInfo = providerSets[mapProvider];
         let schema = initSchema();
         addToSchema(schema,this.getProvidersSchema());
         addGroupInfo(schema, "Map Provider Settings");
@@ -133,8 +140,6 @@ export class MapWidgetController implements MapWidgetInterface {
             addToSchema(schema, clusteringSchema);
             addGroupInfo(schema, "Markers Clustering Settings");
         }
-        console.log(11, schema);
-
         return schema;
     }
 

@@ -29,7 +29,7 @@ export class Marker {
     data;
     dataSources;
 
-    constructor(private map: L.Map, location: L.LatLngExpression, public settings: MarkerSettings, data, dataSources, onClickListener?, markerArgs?, onDragendListener?) {
+    constructor(private map: L.Map, location: L.LatLngExpression, public settings: MarkerSettings, data, dataSources, onClickListener?, onDragendListener?) {
         //this.map = map;
         this.location = location;
         this.setDataSources(data, dataSources);
@@ -45,7 +45,7 @@ export class Marker {
         });
 
         if (settings.showTooltip) {
-            this.tooltip = createTooltip(this.leafletMarker, settings, markerArgs);
+            this.tooltip = createTooltip(this.leafletMarker, settings);
             this.tooltip.setContent(parseTemplate(this.settings.tooltipPattern, data));
         }
 

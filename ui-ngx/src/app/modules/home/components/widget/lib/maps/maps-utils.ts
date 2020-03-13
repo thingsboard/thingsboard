@@ -18,7 +18,7 @@ import L from 'leaflet';
 import { interpolateOnPointSegment } from 'leaflet-geometryutil';
 import _ from 'lodash';
 
-export function createTooltip(target, settings, targetArgs?) {
+export function createTooltip(target, settings) {
     const popup = L.popup();
     popup.setContent('');
     target.bindPopup(popup, { autoClose: settings.autocloseTooltip, closeOnClick: false });
@@ -31,12 +31,7 @@ export function createTooltip(target, settings, targetArgs?) {
             this.closePopup();
         });
     }
-    return popup/*{
-        markerArgs: targetArgs,
-        popup: popup,
-        locationSettings: settings,
-        dsIndex: settings.dsIndex
-    };*/
+    return popup;
 }
 
 

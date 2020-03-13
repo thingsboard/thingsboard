@@ -19,13 +19,12 @@ import { createTooltip } from './maps-utils';
 
 export class Polygon {
 
-    map: L.Map;
     leafletPoly: L.Polygon;
 
     tooltip;
 
-    constructor(latLangs, settings, location, onClickListener) {
-        this.leafletPoly = L.polygon(latLangs, {
+    constructor(public map, coordinates, dataSources, settings, onClickListener?) {
+        this.leafletPoly = L.polygon(coordinates, {
             fill: true,
             fillColor: settings.polygonColor,
             color: settings.polygonStrokeColor,
@@ -35,7 +34,7 @@ export class Polygon {
         }).addTo(this.map);
 
         if (settings.showTooltip) {
-            this.tooltip = createTooltip(this.leafletPoly, location.dsIndex, settings);
+            this.tooltip = createTooltip(this.leafletPoly,  settings);
         }
         if (onClickListener) {
             this.leafletPoly.on('click', onClickListener);

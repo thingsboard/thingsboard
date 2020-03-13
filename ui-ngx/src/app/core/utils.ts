@@ -520,10 +520,6 @@ export function parseFunction(source: string, params: string[] = []): Function {
 }
 
 export function parseTemplate(template, data) {
-  function formatValue(value, pattern) {
-
-  }
-
   let res = '';
   try {
     let variables = '';

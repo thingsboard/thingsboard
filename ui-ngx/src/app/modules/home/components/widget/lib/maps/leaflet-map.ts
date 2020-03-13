@@ -26,12 +26,14 @@ import { Marker } from './markers';
 import { Observable, of, BehaviorSubject, Subject } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { Polyline } from './polyline';
+import { Polygon } from './polygon';
 
 export default abstract class LeafletMap {
 
     markers: Map<string, Marker> = new Map();
     tooltips = [];
     poly: Polyline;
+    polygon: Polygon;
     map: L.Map;
     map$: BehaviorSubject<L.Map> = new BehaviorSubject(null);
     ready$: Observable<L.Map> = this.map$.pipe(filter(map => !!map));
@@ -189,12 +191,40 @@ export default abstract class LeafletMap {
 
     updatePolyline(data, dataSources, settings) {
         this.ready$.subscribe(() => {
-            this.poly.updatePolyline(settings, data, dataSources);
-            /*   const bounds = this.bounds.extend(this.poly.leafletPoly.getBounds());
-               if (bounds.isValid()) {
-                   this.map.fitBounds(bounds);
-                   this.bounds = bounds;
-               }*/
+            this.poly.updatePolyline(settings, data, dataSources);        
+        });
+    }  
+
+      //polygon
+
+      updatePolygon(polyData: Array<Array<any>>) {
+        polyData.forEach(data => {
+            if (data.length) {
+                let dataSource = polyData.map(arr => arr[0]);
+                if (this.poly) {
+                    this.updatePolyline(data, dataSource, this.options);
+                }
+                else {
+                    this.createPolyline(data, dataSource, this.options);
+                }
+            }
+        })
+    }
+
+    createPolygon(data, dataSources, settings) {
+        this.ready$.subscribe(() => {
+            this.polygon = new Polygon(this.map, data.map(data => this.convertPosition(data)), data, dataSources, settings);
+            const bounds = this.bounds.extend(this.poly.leafletPoly.getBounds());
+            if (bounds.isValid()) {
+                this.map.fitBounds(bounds);
+                this.bounds = bounds;
+            }
         });
     }
+
+    updatePolygons(data, dataSources, settings) {
+        this.ready$.subscribe(() => {
+            this.poly.updatePolyline(settings, data, dataSources);        
+        });
+    }  
 }
