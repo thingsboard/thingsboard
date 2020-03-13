@@ -30,6 +30,8 @@ import org.thingsboard.server.provider.TbCoreQueueProvider;
 import java.util.UUID;
 import java.util.function.Consumer;
 
+import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
+
 @Slf4j
 @Service
 @ConditionalOnExpression("'${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core')")
@@ -57,7 +59,7 @@ public class DefaultTbCoreToTransportService implements TbCoreToTransportService
         UUID sessionId = new UUID(msg.getSessionIdMSB(), msg.getSessionIdLSB());
         ToTransportMsg transportMsg = ToTransportMsg.newBuilder().setToDeviceSessionMsg(msg).build();
         log.trace("[{}][{}] Pushing session data to topic: {}", topic, sessionId, transportMsg);
-        TbProtoQueueMsg<ToTransportMsg> queueMsg = new TbProtoQueueMsg<>(sessionId, transportMsg);
+        TbProtoQueueMsg<ToTransportMsg> queueMsg = new TbProtoQueueMsg<>(NULL_UUID, transportMsg);
         tbTransportProducer.send(topic, queueMsg, new QueueCallbackAdaptor(onSuccess, onFailure));
     }
 

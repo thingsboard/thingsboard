@@ -17,8 +17,6 @@ package org.thingsboard.server.provider;
 
 import org.thingsboard.server.TbQueueConsumer;
 import org.thingsboard.server.TbQueueProducer;
-import org.thingsboard.server.TbQueueRequestTemplate;
-import org.thingsboard.server.TbQueueResponseTemplate;
 import org.thingsboard.server.common.TbProtoQueueMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;

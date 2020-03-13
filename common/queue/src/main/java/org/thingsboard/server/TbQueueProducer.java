@@ -16,7 +16,6 @@
 package org.thingsboard.server;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.server.discovery.TopicPartitionInfo;
 
 public interface TbQueueProducer<T extends TbQueueMsg> {
 
@@ -24,9 +23,9 @@ public interface TbQueueProducer<T extends TbQueueMsg> {
 
     String getDefaultTopic();
 
-    ListenableFuture<TbQueueMsgMetadata> send(T msg, TbQueueCallback callback);
+    void send(T msg, TbQueueCallback callback);
 
-    ListenableFuture<TbQueueMsgMetadata> send(String topic, T msg, TbQueueCallback callback);
+    void send(String topic, T msg, TbQueueCallback callback);
 
     ListenableFuture<TbQueueMsgMetadata> send(String topic, int partition, T msg, TbQueueCallback callback);
 

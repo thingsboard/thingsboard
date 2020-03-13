@@ -15,9 +15,6 @@
  */
 package org.thingsboard.server.kafka;
 
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.JdkFutureAdapters;
-import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +28,6 @@ import org.apache.kafka.common.header.internals.RecordHeader;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.TbQueueCallback;
 import org.thingsboard.server.TbQueueMsg;
-import org.thingsboard.server.TbQueueMsgMetadata;
 import org.thingsboard.server.TbQueueProducer;
 
 import java.util.List;
@@ -91,12 +87,12 @@ public class TBKafkaProducerTemplate<T extends TbQueueMsg> implements TbQueuePro
     }
 
     @Override
-    public ListenableFuture<TbQueueMsgMetadata> send(T msg, TbQueueCallback callback) {
-        return send(defaultTopic, msg, callback);
+    public void send(T msg, TbQueueCallback callback) {
+        send(defaultTopic, msg, callback);
     }
 
     @Override
-    public ListenableFuture<TbQueueMsgMetadata> send(String topic, T msg, TbQueueCallback callback) {
+    public void send(String topic, T msg, TbQueueCallback callback) {
         String key = msg.getKey().toString();
         byte[] data = msg.getData();
         ProducerRecord<String, byte[]> record;
@@ -111,41 +107,7 @@ public class TBKafkaProducerTemplate<T extends TbQueueMsg> implements TbQueuePro
                 callback.onFailure(exception);
             }
         });
-
-        return Futures.transform(JdkFutureAdapters.listenInPoolThread(result), metadata -> new KafkaTbQueueMsgMetadata(metadata));
     }
-
-//    public Future<RecordMetadata> send(String key, T value, Callback callback) {
-//        return send(key, value, null, callback);
-//    }
-//
-//    public Future<RecordMetadata> send(String key, T value, Iterable<Header> headers, Callback callback) {
-//        return send(key, value, null, headers, callback);
-//    }
-//
-//    public Future<RecordMetadata> send(String key, T value, Long timestamp, Iterable<Header> headers, Callback callback) {
-//        if (!StringUtils.isEmpty(this.defaultTopic)) {
-//            return send(this.defaultTopic, key, value, timestamp, headers, callback);
-//        } else {
-//            throw new RuntimeException("Failed to send message! Default topic is not specified!");
-//        }
-//    }
-//
-//    public Future<RecordMetadata> send(String topic, String key, T value, Iterable<Header> headers, Callback callback) {
-//        return send(topic, key, value, null, headers, callback);
-//    }
-//
-//    public Future<RecordMetadata> send(String topic, String key, T value, Callback callback) {
-//        return send(topic, key, value, null, null, callback);
-//    }
-//
-//    public Future<RecordMetadata> send(String topic, String key, T value, Long timestamp, Iterable<Header> headers, Callback callback) {
-//        byte[] data = encoder.encode(value);
-//        ProducerRecord<String, byte[]> record;
-//        Integer partition = getPartition(topic, key, value, data);
-//        record = new ProducerRecord<>(topic, partition, timestamp, key, data, headers);
-//        return producer.send(record, callback);
-//    }
 
     private Integer getPartition(String topic, T value) {
         if (partitioner == null) {

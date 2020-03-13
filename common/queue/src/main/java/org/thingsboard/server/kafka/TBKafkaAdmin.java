@@ -15,16 +15,17 @@
  */
 package org.thingsboard.server.kafka;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.JdkFutureAdapters;
 import com.google.common.util.concurrent.ListenableFuture;
-import org.apache.kafka.clients.admin.*;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.CreateTopicsResult;
+import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.clients.admin.TopicDescription;
 import org.apache.kafka.common.KafkaFuture;
 import org.thingsboard.server.TbQueueAdmin;
 
-import java.time.Duration;
 import java.util.Collections;
-import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -38,6 +39,19 @@ public class TBKafkaAdmin implements TbQueueAdmin {
 
     public TBKafkaAdmin(TbKafkaSettings settings) {
         client = AdminClient.create(settings.toProps());
+    }
+
+    @Override
+    public ListenableFuture<Void> createTopicIfNotExists(String topic) {
+
+        KafkaFuture<TopicDescription> topicDescriptionFuture = client.describeTopics(Collections.singleton(topic)).values().get(topic);
+
+        ListenableFuture<TopicDescription> topicFuture = JdkFutureAdapters.listenInPoolThread(topicDescriptionFuture);
+
+        return Futures.transformAsync(topicFuture, topicDescription -> {
+            KafkaFuture<Void> resultFuture = createTopic(new NewTopic(topic, 1, (short) 1)).values().get(topic);
+            return JdkFutureAdapters.listenInPoolThread(resultFuture);
+        });
     }
 
     public void waitForTopic(String topic, long timeout, TimeUnit timeoutUnit) throws InterruptedException, TimeoutException {
@@ -54,7 +68,7 @@ public class TBKafkaAdmin implements TbQueueAdmin {
         }
     }
 
-    public CreateTopicsResult createTopic(NewTopic topic){
+    public CreateTopicsResult createTopic(NewTopic topic) {
         return client.createTopics(Collections.singletonList(topic));
     }
 
@@ -66,11 +80,5 @@ public class TBKafkaAdmin implements TbQueueAdmin {
         } catch (ExecutionException e) {
             return false;
         }
-    }
-
-    @Override
-    public ListenableFuture<Void> createTopicIfNotExists(String topic) {
-
-        return null;
     }
 }

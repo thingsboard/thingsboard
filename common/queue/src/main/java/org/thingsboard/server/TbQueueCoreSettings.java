@@ -13,12 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.kafka;
+package org.thingsboard.server;
 
-import java.util.UUID;
+import lombok.Data;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
-public interface TbKafkaRequestIdExtractor<T> {
+@Data
+@Component
+public class TbQueueCoreSettings {
 
-    UUID extractRequestId(T value);
+    @Value("${queue.core.topic}")
+    private String topic;
 
+    @Value("${queue.core.partitions}")
+    private int partitions;
 }
