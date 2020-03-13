@@ -62,6 +62,12 @@ export default class TbCanvasDigitalGauge {
             this.localSettings.fixedLevelColors = settings.fixedLevelColors || [];
         }
 
+        this.localSettings.showTicks = settings.showTicks || false;
+        this.localSettings.ticks = [];
+        this.localSettings.ticksValue = settings.ticksValue || [];
+        this.localSettings.tickWidth = settings.tickWidth || 4;
+        this.localSettings.colorTicks = settings.colorTicks || '#666';
+
         this.localSettings.decimals = angular.isDefined(dataKey.decimals) ? dataKey.decimals :
             ((angular.isDefined(settings.decimals) && settings.decimals !== null)
             ? settings.decimals : ctx.decimals);
@@ -145,6 +151,10 @@ export default class TbCanvasDigitalGauge {
             gaugeColor: this.localSettings.gaugeColor,
             levelColors: this.localSettings.levelColors,
 
+            colorTicks: this.localSettings.colorTicks,
+            tickWidth: this.localSettings.tickWidth,
+            ticks: this.localSettings.ticks,
+
             title: this.localSettings.title,
 
             fontTitleSize: this.localSettings.titleFont.size,
@@ -204,9 +214,81 @@ export default class TbCanvasDigitalGauge {
         if (this.localSettings.useFixedLevelColor) {
             if (this.localSettings.fixedLevelColors && this.localSettings.fixedLevelColors.length > 0) {
                 this.localSettings.levelColors = this.settingLevelColorsSubscribe(this.localSettings.fixedLevelColors);
-                this.updateLevelColors(this.localSettings.levelColors);
             }
         }
+        if (this.localSettings.showTicks) {
+            if (this.localSettings.ticksValue && this.localSettings.ticksValue.length) {
+                this.localSettings.ticks = this.settingTicksSubscribe(this.localSettings.ticksValue);
+            }
+        }
+        this.updateSetting();
+    }
+
+    static generateDatasorce(ctx, datasources, entityAlias, attribute, settings){
+        let entityAliasId = ctx.aliasController.getEntityAliasId(entityAlias);
+        if (!entityAliasId) {
+            throw new Error('Not valid entity aliase name ' + entityAlias);
+        }
+
+        let datasource = datasources.filter((datasource) => {
+            return datasource.entityAliasId === entityAliasId;
+        })[0];
+
+        let dataKey = {
+            type: ctx.$scope.$injector.get('types').dataKeyType.attribute,
+            name: attribute,
+            label: attribute,
+            settings: [settings],
+            _hash: Math.random()
+        };
+
+        if (datasource) {
+            let findDataKey = datasource.dataKeys.filter((dataKey) => {
+                return dataKey.name === attribute;
+            })[0];
+
+            if (findDataKey) {
+                findDataKey.settings.push(settings);
+            } else {
+                datasource.dataKeys.push(dataKey)
+            }
+        } else {
+            datasource = {
+                type: ctx.$scope.$injector.get('types').datasourceType.entity,
+                name: entityAlias,
+                aliasName: entityAlias,
+                entityAliasId: entityAliasId,
+                dataKeys: [dataKey]
+            };
+            datasources.push(datasource);
+        }
+
+        return datasources;
+    }
+
+    settingTicksSubscribe(options) {
+        let ticksDatasource = [];
+        let predefineTicks = [];
+
+        for (let i = 0; i < options.length; i++) {
+            let tick = options[i];
+            if (tick.valueSource === 'predefinedValue' && isFinite(tick.value)) {
+                predefineTicks.push(tick.value)
+            } else if (tick.entityAlias && tick.attribute) {
+                try {
+                    ticksDatasource = TbCanvasDigitalGauge.generateDatasorce(this.ctx, ticksDatasource, tick.entityAlias, tick.attribute, predefineTicks.length);
+                } catch (e) {
+                    continue;
+                }
+                predefineTicks.push(null);
+            }
+        }
+
+        this.subscribeAttributes(ticksDatasource, 'ticks').then((subscription) => {
+            this.ticksSourcesSubscription = subscription;
+        });
+
+        return predefineTicks;
     }
 
     settingLevelColorsSubscribe(options) {
@@ -220,50 +302,14 @@ export default class TbCanvasDigitalGauge {
                     color: color
                 })
             } else if (levelSetting.entityAlias && levelSetting.attribute) {
-                let entityAliasId = this.ctx.aliasController.getEntityAliasId(levelSetting.entityAlias);
-                if (!entityAliasId) {
-                    return;
-                }
-
-                let datasource = levelColorsDatasource.filter((datasource) => {
-                    return datasource.entityAliasId === entityAliasId;
-                })[0];
-
-                let dataKey = {
-                    type: this.ctx.$scope.$injector.get('types').dataKeyType.attribute,
-                    name: levelSetting.attribute,
-                    label: levelSetting.attribute,
-                    settings: [{
+                try {
+                    levelColorsDatasource = TbCanvasDigitalGauge.generateDatasorce(this.ctx, levelColorsDatasource, levelSetting.entityAlias, levelSetting.attribute, {
                         color: color,
                         index: predefineLevelColors.length
-                    }],
-                    _hash: Math.random()
-                };
-
-                if (datasource) {
-                    let findDataKey = datasource.dataKeys.filter((dataKey) => {
-                        return dataKey.name === levelSetting.attribute;
-                    })[0];
-
-                    if (findDataKey) {
-                        findDataKey.settings.push({
-                            color: color,
-                            index: predefineLevelColors.length
-                        });
-                    } else {
-                        datasource.dataKeys.push(dataKey)
-                    }
-                } else {
-                    datasource = {
-                        type: this.ctx.$scope.$injector.get('types').datasourceType.entity,
-                        name: levelSetting.entityAlias,
-                        aliasName: levelSetting.entityAlias,
-                        entityAliasId: entityAliasId,
-                        dataKeys: [dataKey]
-                    };
-                    levelColorsDatasource.push(datasource);
+                    });
+                } catch (e) {
+                    return;
                 }
-
                 predefineLevelColors.push(null);
             }
         }
@@ -278,49 +324,63 @@ export default class TbCanvasDigitalGauge {
             }
         }
 
-        this.subscribeLevelColorsAttributes(levelColorsDatasource);
+        this.subscribeAttributes(levelColorsDatasource, 'levelColors').then((subscription) => {
+            this.levelColorSourcesSubscription = subscription;
+        });
 
         return predefineLevelColors;
     }
 
-    updateLevelColors(levelColors) {
-        this.gauge.options.levelColors = levelColors;
-        this.gauge.options = CanvasDigitalGauge.configure(this.gauge.options);
-        this.gauge.update();
-    }
+    subscribeAttributes(datasources, typeAttributes) {
+        if (!datasources.length) {
+            return this.ctx.$scope.$injector.get('$q').when(null);
+        }
 
-    subscribeLevelColorsAttributes(datasources) {
-        let TbCanvasDigitalGauge = this;
         let levelColorsSourcesSubscriptionOptions = {
             datasources: datasources,
             useDashboardTimewindow: false,
             type: this.ctx.$scope.$injector.get('types').widgetType.latest.value,
             callbacks: {
                 onDataUpdated: (subscription) => {
-                    for (let i = 0; i < subscription.data.length; i++) {
-                        let keyData = subscription.data[i];
-                        if (keyData && keyData.data && keyData.data[0]) {
-                            let attrValue = keyData.data[0][1];
-                            if (isFinite(attrValue)) {
-                                for (let i = 0; i < keyData.dataKey.settings.length; i++) {
-                                    let setting = keyData.dataKey.settings[i];
-                                    this.localSettings.levelColors[setting.index] = {
-                                        value: attrValue,
-                                        color: setting.color
-                                    };
-                                }
-                            }
-                        }
-                    }
-                    this.updateLevelColors(this.localSettings.levelColors);
+                    this.updateAttribute(subscription.data, typeAttributes);
                 }
             }
         };
-        this.ctx.subscriptionApi.createSubscription(levelColorsSourcesSubscriptionOptions, true).then(
-            (subscription) => {
-                TbCanvasDigitalGauge.levelColorSourcesSubscription = subscription;
+
+        return this.ctx.subscriptionApi.createSubscription(levelColorsSourcesSubscriptionOptions, true);
+    }
+
+    updateAttribute(data, typeAttributes) {
+        for (let i = 0; i < data.length; i++) {
+            let keyData = data[i];
+            if (keyData && keyData.data && keyData.data[0]) {
+                let attrValue = keyData.data[0][1];
+                if (isFinite(attrValue)) {
+                    for (let i = 0; i < keyData.dataKey.settings.length; i++) {
+                        let setting = keyData.dataKey.settings[i];
+                        switch (typeAttributes) {
+                            case 'levelColors':
+                                this.localSettings.levelColors[setting.index] = {
+                                    value: attrValue,
+                                    color: setting.color
+                                };
+                                break;
+                            case 'ticks':
+                                this.localSettings.ticks[setting] = attrValue;
+                                break;
+                        }
+                    }
+                }
             }
-        );
+        }
+        this.updateSetting();
+    }
+
+    updateSetting() {
+        this.gauge.options.ticks = this.localSettings.ticks;
+        this.gauge.options.levelColors = this.localSettings.levelColors;
+        this.gauge.options = CanvasDigitalGauge.configure(this.gauge.options);
+        this.gauge.update();
     }
 
     update() {
@@ -522,6 +582,48 @@ export default class TbCanvasDigitalGauge {
                                 "color": {
                                     "title": "Color",
                                     "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "showTicks": {
+                        "title": "Show ticks",
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "tickWidth": {
+                        "title": "Width ticks",
+                        "type": "number",
+                        "default": 4
+                    },
+                    "colorTicks": {
+                        "title": "Color ticks",
+                        "type": "string",
+                        "default": "#666"
+                    },
+                    "ticksValue": {
+                        "title": "The ticks predefined value",
+                        "type": "array",
+                        "items": {
+                            "title": "tickValue",
+                            "type": "object",
+                            "properties": {
+                                "valueSource": {
+                                    "title": "Value source",
+                                    "type": "string",
+                                    "default": "predefinedValue"
+                                },
+                                "entityAlias": {
+                                    "title": "Source entity alias",
+                                    "type": "string"
+                                },
+                                "attribute": {
+                                    "title": "Source entity attribute",
+                                    "type": "string"
+                                },
+                                "value": {
+                                    "title": "Value (if predefined value is selected)",
+                                    "type": "number"
                                 }
                             }
                         }
@@ -769,6 +871,40 @@ export default class TbCanvasDigitalGauge {
                             "key": "fixedLevelColors[].color",
                             "type": "color"
                         }
+                    ]
+                },
+                "showTicks",
+                {
+                    "key": "tickWidth",
+                    "condition": "model.showTicks === true"
+                },
+                {
+                    "key": "colorTicks",
+                    "condition": "model.showTicks === true",
+                    "type": "color"
+                },
+                {
+                    "key": "ticksValue",
+                    "condition": "model.showTicks === true",
+                    "items": [
+                        {
+                            "key": "ticksValue[].valueSource",
+                            "type": "rc-select",
+                            "multiple": false,
+                            "items": [
+                                {
+                                    "value": "predefinedValue",
+                                    "label": "Predefined value (Default)"
+                                },
+                                {
+                                    "value": "entityAttribute",
+                                    "label": "Value taken from entity attribute"
+                                }
+                            ]
+                        },
+                        "ticksValue[].value",
+                        "ticksValue[].entityAlias",
+                        "ticksValue[].attribute"
                     ]
                 },
                 "animation",
