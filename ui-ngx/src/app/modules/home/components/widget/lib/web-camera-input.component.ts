@@ -14,24 +14,36 @@
 /// limitations under the License.
 ///
 
-import {Component, ElementRef, Inject, Input, NgZone, OnDestroy, OnInit, ViewContainerRef} from "@angular/core";
+import {
+  Component,
+  ElementRef,
+  Inject,
+  Input,
+  NgZone,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  ViewContainerRef
+} from "@angular/core";
 import {PageComponent} from "@shared/components/page.component";
 import {WidgetContext} from "@home/models/widget-component.models";
 import {Store} from "@ngrx/store";
 import {AppState} from "@core/core.state";
 import {Overlay} from "@angular/cdk/overlay";
 import {UtilsService} from "@core/services/utils.service";
-import {Datasource, DatasourceType} from "@shared/models/widget.models";
+import {Datasource, DatasourceData, DatasourceType} from "@shared/models/widget.models";
 import {WINDOW} from '@core/services/window.service';
-import {from, Observable} from "rxjs";
+import {AttributeService} from "@core/http/attribute.service";
+import {EntityId} from "@shared/models/id/entity-id";
+import {AttributeScope, DataKeyType} from "@shared/models/telemetry/telemetry.models";
+import {Observable} from "rxjs";
 
 interface webCameraInputWidgetSettings {
   widgetTitle: string;
-}
-
-interface inputDeviceInfo {
-  deviceId?: string;
-  label: string;
+  imageQuality: number;
+  imageFormat: string;
+  maxWidth: number;
+  maxHeight: number;
 }
 
 @Component({
@@ -40,12 +52,22 @@ interface inputDeviceInfo {
   styleUrls: ['./web-camera-input.component.scss']
 })
 export class WebCameraInputWidgetComponent extends PageComponent implements OnInit, OnDestroy {
+  private static DEFAULT_IMAGE_TYPE: string = 'image/jpeg';
+  private static DEFAULT_IMAGE_QUALITY: number = 0.92;
+
   @Input()
   ctx: WidgetContext;
 
+  @ViewChild('videoStream', {static: true}) videoStreamRef: ElementRef<HTMLVideoElement>;
+  @ViewChild('canvas', {static: true}) canvasRef: ElementRef<HTMLCanvasElement>;
+
+  private videoInputsIndex: number = 0;
   private settings: webCameraInputWidgetSettings;
   private datasource: Datasource;
-  private videoInput: inputDeviceInfo[];
+  private width: number = 640;
+  private height: number = 480;
+  private availableVideoInputs: MediaDeviceInfo[];
+  private mediaStream: MediaStream;
 
   isEntityDetected: boolean = false;
   dataKeyDetected: boolean = false;
@@ -53,8 +75,10 @@ export class WebCameraInputWidgetComponent extends PageComponent implements OnIn
   isDeviceDetect: boolean = false;
   isShowCamera: boolean = false;
   isPreviewPhoto: boolean = false;
-  toastTargetId = 'web-camera-input-widget' + this.utils.guid();
+  singleDevice: boolean = true;
+  updatePhoto: boolean = false;
   previewPhoto: any;
+  lastPhoto: any;
 
   constructor(@Inject(WINDOW) private window: Window,
               protected store: Store<AppState>,
@@ -63,8 +87,7 @@ export class WebCameraInputWidgetComponent extends PageComponent implements OnIn
               private overlay: Overlay,
               private viewContainerRef: ViewContainerRef,
               private utils: UtilsService,
-              // private attributeService: AttributeService,
-              // private translate: TranslateService
+              private attributeService: AttributeService,
   ) {
     super(store);
   }
@@ -80,6 +103,9 @@ export class WebCameraInputWidgetComponent extends PageComponent implements OnIn
       this.ctx.widgetTitle = this.ctx.widgetConfig.title;
     }
 
+    this.width = this.settings.maxWidth ? this.settings.maxWidth : 640;
+    this.height = this.settings.maxHeight ? this.settings.maxWidth : 480;
+
     if (this.datasource.type === DatasourceType.entity) {
       if (this.datasource.entityType && this.datasource.entityId) {
         this.isEntityDetected = true;
@@ -88,66 +114,159 @@ export class WebCameraInputWidgetComponent extends PageComponent implements OnIn
     if (this.datasource.dataKeys.length) {
       this.dataKeyDetected = true;
     }
-    if (WebCameraInputWidgetComponent.hasGetUserMedia()) {
-      this.isCameraSupport = true;
-      //   WebCameraInputWidgetComponent.getDevices().pipe(
-      //     filter((device) => device.kind === 'videoinput')
-      //   )
-      //     .subscribe(() => {
-      //       this.isDeviceDetect = !!this.videoInput.length;
-      //     });
-      // }
-    }
+    this.detectAvailableDevices();
   }
 
   ngOnDestroy(): void {
+    this.stopMediaTracks();
+  }
 
+  private updateWidgetData(data: Array<DatasourceData>) {
+    const keyData = data[0].data;
+    if (keyData && keyData.length) {
+      this.lastPhoto = keyData[0][1];
+    }
+  }
+
+  public onDataUpdated() {
+    this.ngZone.run(() => {
+      this.updateWidgetData(this.ctx.defaultSubscription.data);
+      this.ctx.detectChanges();
+    });
+  }
+
+  public get videoElement() {
+    return this.videoStreamRef.nativeElement;
+  }
+
+  public get canvasElement() {
+    return this.canvasRef.nativeElement;
+  }
+
+
+  private detectAvailableDevices(): void {
+    if (WebCameraInputWidgetComponent.hasGetUserMedia()) {
+      this.isCameraSupport = true;
+      WebCameraInputWidgetComponent.getAvailableVideoInputs().then((devices) => {
+          this.isDeviceDetect = !!devices.length;
+          this.singleDevice = devices.length < 2;
+          this.availableVideoInputs = devices;
+        }, () => {
+          this.availableVideoInputs = [];
+        }
+      )
+    }
   }
 
   private static hasGetUserMedia(): boolean {
     return !!(window.navigator.mediaDevices && window.navigator.mediaDevices.getUserMedia);
   }
 
-  private static getDevices(): Observable<MediaDeviceInfo[]> {
-    return from(window.navigator.mediaDevices.enumerateDevices());
+  private static getAvailableVideoInputs(): Promise<MediaDeviceInfo[]> {
+    return new Promise((resolve, reject) => {
+      navigator.mediaDevices.enumerateDevices()
+        .then((devices: MediaDeviceInfo[]) => {
+          resolve(devices.filter((device: MediaDeviceInfo) => device.kind === 'videoinput'));
+        })
+        .catch(err => {
+          reject(err.message || err);
+        });
+    });
   }
 
-  private gotDevices(deviceInfos: MediaDeviceInfo[]): inputDeviceInfo[] {
-    let videoInput: inputDeviceInfo[] = [];
-    for (const deviceInfo of deviceInfos) {
-      let device: inputDeviceInfo = {
-        deviceId: deviceInfo.deviceId,
-        label: ""
-      };
-      if (deviceInfo.kind === 'videoinput') {
-        device.label = deviceInfo.label || `Camera ${this.videoInput.length + 1}`;
-        this.videoInput.push(device);
-      }
+  private getVideoAspectRatio(): number {
+    if (this.videoElement.videoWidth && this.videoElement.videoWidth > 0 &&
+      this.videoElement.videoHeight && this.videoElement.videoHeight > 0) {
+      return this.videoElement.videoWidth / this.videoElement.videoHeight;
     }
-    return videoInput;
+    return this.width / this.height;
+  }
+
+  public get videoWidth() {
+    const videoRatio = this.getVideoAspectRatio();
+    return Math.min(this.width, this.height * videoRatio);
+  }
+
+  public get videoHeight() {
+    const videoRatio = this.getVideoAspectRatio();
+    return Math.min(this.height, this.width / videoRatio);
+  }
+
+  private stopMediaTracks() {
+    if (this.mediaStream && this.mediaStream.getTracks) {
+      this.mediaStream.getTracks()
+        .forEach((track: MediaStreamTrack) => track.stop());
+    }
   }
 
   takePhoto() {
-
-  }
-
-  cancelPhoto() {
-
-  }
-
-  savePhoto() {
-
-  }
-
-  switchWebCamera() {
-
-  }
-
-  createPhoto() {
-
+    this.isShowCamera = true;
+    this.initWebCamera(this.availableVideoInputs[this.videoInputsIndex].deviceId);
   }
 
   closeCamera() {
+    this.stopMediaTracks();
+    this.videoElement.srcObject = null;
+    this.isShowCamera = false;
+  }
 
+  cancelPhoto() {
+    this.isPreviewPhoto = false;
+    this.previewPhoto = "";
+  }
+
+  savePhoto() {
+    this.updatePhoto = true;
+    let task: Observable<any>;
+    const entityId: EntityId = {
+      entityType: this.datasource.entityType,
+      id: this.datasource.entityId
+    };
+    let saveData = [{
+      key: this.datasource.dataKeys[0].name,
+      value: this.previewPhoto
+    }];
+    if(this.datasource.dataKeys[0].type === DataKeyType.attribute){
+      task = this.attributeService.saveEntityAttributes(entityId, AttributeScope.SERVER_SCOPE, saveData);
+    } else if(this.datasource.dataKeys[0].type === DataKeyType.timeseries){
+      task = this.attributeService.saveEntityTimeseries(entityId, "scope", saveData);
+    }
+    task.subscribe(()=>{
+      this.isPreviewPhoto = false;
+      this.updatePhoto = false;
+      this.closeCamera();
+    }, () => {
+      this.updatePhoto = false;
+    })
+  }
+
+  switchWebCamera() {
+    this.videoInputsIndex = (this.videoInputsIndex + 1) % this.availableVideoInputs.length;
+    this.stopMediaTracks();
+    this.initWebCamera(this.availableVideoInputs[this.videoInputsIndex].deviceId)
+  }
+
+  createPhoto() {
+    this.canvasElement.width = this.videoElement.videoWidth;
+    this.canvasElement.height = this.videoElement.videoHeight;
+    this.canvasElement.getContext('2d').drawImage(this.videoElement, 0, 0, this.videoWidth, this.videoHeight);
+
+    const mimeType: string = this.settings.imageFormat ? this.settings.imageFormat : WebCameraInputWidgetComponent.DEFAULT_IMAGE_TYPE;
+    const quality: number = this.settings.imageQuality ? this.settings.imageQuality : WebCameraInputWidgetComponent.DEFAULT_IMAGE_QUALITY;
+    this.previewPhoto = this.canvasElement.toDataURL(mimeType, quality);
+    this.isPreviewPhoto = true;
+  }
+
+  private initWebCamera(deviceId?: string) {
+    if (window.navigator.mediaDevices && window.navigator.mediaDevices.getUserMedia) {
+      const videoTrackConstraints = {
+        video: {deviceId: deviceId !== "" ? {exact: deviceId} : undefined}
+      };
+
+      window.navigator.mediaDevices.getUserMedia(videoTrackConstraints).then((stream: MediaStream) => {
+        this.mediaStream = stream;
+        this.videoElement.srcObject = stream;
+      })
+    }
   }
 }

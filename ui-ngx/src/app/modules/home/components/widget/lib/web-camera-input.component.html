@@ -19,43 +19,40 @@
   <div [fxShow]="isEntityDetected && dataKeyDetected && isCameraSupport && isDeviceDetect" fxFlexFill>
     <div [fxShow]="!isShowCamera" fxLayout="column" fxLayoutAlign="space-between center" fxFlexFill>
       <div class="tb-web-camera__last-photo" fxFlex>
-        <span [fxShow]="!ctx.data[0].data[0][1]" class="tb-web-camera__last-photo_text" translate>widgets.input-widgets.no-image</span>
-        <img [fxShow]="ctx.data[0].data[0][1]" class="tb-web-camera__last-photo_img" [src]="ctx.data[0].data[0][1]"/>
+        <span [fxShow]="!lastPhoto" class="tb-web-camera__last-photo_text" translate>widgets.input-widgets.no-image</span>
+        <img [fxShow]="lastPhoto" class="tb-web-camera__last-photo_img" [src]="lastPhoto" alt="last photo"/>
       </div>
-      <button mat-raised-button color="primary"
-              (click)="takePhoto()">{{ "widgets.input-widgets.take-photo" | translate }}</button>
+      <button mat-raised-button color="primary" (click)="takePhoto()">
+        {{ "widgets.input-widgets.take-photo" | translate }}
+      </button>
     </div>
-    <div [fxShow]="isShowCamera" fxLayout="column" fxLayoutAlign="center center" id="photoCamera">
+    <div [fxShow]="isShowCamera" fxLayout="column" fxLayoutAlign="center center" tb-fullscreen [fullscreen]="isShowCamera">
       <div class="camera" [fxShow]="!isPreviewPhoto">
-        <video autoplay muted playsinline id="videoStream" class="camera-stream"></video>
+        <video [width]="videoWidth" [height]="videoHeight" autoplay muted playsinline class="camera-stream" #videoStream></video>
         <div class="camera-controls" fxLayout="row" fxLayoutAlign="space-between end">
           <div fxFlex></div>
-          <button mat-mini-fab color="primary" aria-label="{{ 'widgets.input-widgets.switch-camera' | translate }}"
-                  (click)="switchWebCamera()" [disabled]="videoInput.length < 2">
-            <mat-icon aria-label="{{ 'widgets.input-widgets.switch-camera' | translate }}">switch_camera</mat-icon>
+          <button mat-mini-fab color="primary" (click)="switchWebCamera()" [disabled]="singleDevice">
+            <mat-icon>switch_camera</mat-icon>
           </button>
-          <button mat-flat-button color="primary mat-hue-2"
-                  aria-label="{{ 'widgets.input-widgets.take-photo' | translate }}" (click)="createPhoto()">
-            <mat-icon aria-label="{{ 'widgets.input-widgets.take-photo' | translate }}">photo_camera</mat-icon>
+          <button mat-fab color="accent" (click)="createPhoto()">
+            <mat-icon>photo_camera</mat-icon>
           </button>
-          <button mat-mini-fab color="primary" aria-label="{{ 'action.cancel' | translate }}" (click)="closeCamera()">
-            <mat-icon md-font-icon="close" aria-label="{{ 'action.cancel' | translate }}">close</mat-icon>
+          <button mat-mini-fab color="primary" (click)="closeCamera()">
+            <mat-icon>close</mat-icon>
           </button>
           <div fxFlex></div>
         </div>
       </div>
       <div class="camera" [fxShow]="isPreviewPhoto">
-        <img class="camera-stream" [src]="previewPhoto">
-        <canvas style="display:none;"></canvas>
+        <img alt="preview photo" class="camera-stream" [src]="previewPhoto">
+        <canvas #canvas style="display:none;"></canvas>
         <div class="camera-controls" fxLayout="row" fxLayoutAlign="space-between end">
           <div fxFlex></div>
-          <button mat-flat-button color="primary" aria-label="{{ 'action.cancel' | translate }}"
-                  (click)="cancelPhoto()">
-            <mat-icon aria-label="{{ 'action.cancel' | translate }}">close</mat-icon>
+          <button mat-fab color="primary" [disabled]="updatePhoto" (click)="cancelPhoto()">
+            <mat-icon>close</mat-icon>
           </button>
-          <button mat-flat-button color="primary mat-hue-2" aria-label="{{ 'action.save' | translate }}"
-                  (click)="savePhoto()">
-            <mat-icon aria-label="{{ 'action.save' | translate }}">check</mat-icon>
+          <button mat-fab color="accent" [disabled]="updatePhoto" (click)="savePhoto()">
+            <mat-icon>check</mat-icon>
           </button>
           <div fxFlex></div>
         </div>
@@ -65,13 +62,13 @@
   <div class="message-text" [fxHide]="isEntityDetected">
     {{ 'widgets.input-widgets.no-entity-selected' | translate }}
   </div>
-  <div class="message-text" [fxHide]="isEntityDetected && !dataKeyDetected">
+  <div class="message-text" [fxShow]="isEntityDetected && !dataKeyDetected">
     {{ 'widgets.input-widgets.no-datakey-selected' | translate }}
   </div>
-  <div class="message-text" [fxHide]="isEntityDetected && dataKeyDetected && !isCameraSupport">
+  <div class="message-text" [fxShow]="isEntityDetected && dataKeyDetected && !isCameraSupport">
     {{ 'widgets.input-widgets.no-support-web-camera' | translate }}
   </div>
-  <div class="message-text" [fxHide]="isEntityDetected && dataKeyDetected && isCameraSupport && !isDeviceDetect">
+  <div class="message-text" [fxShow]="isEntityDetected && dataKeyDetected && isCameraSupport && !isDeviceDetect">
     {{ 'widgets.input-widgets.no-support-web-camera' | translate }}
   </div>
 </div>
