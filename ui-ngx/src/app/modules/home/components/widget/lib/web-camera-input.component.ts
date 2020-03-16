@@ -23,7 +23,7 @@ import {
   OnDestroy,
   OnInit,
   ViewChild,
-  ViewContainerRef
+  ViewContainerRef, ViewEncapsulation
 } from "@angular/core";
 import {PageComponent} from "@shared/components/page.component";
 import {WidgetContext} from "@home/models/widget-component.models";
@@ -49,7 +49,8 @@ interface webCameraInputWidgetSettings {
 @Component({
   selector: 'tb-web-camera-widget',
   templateUrl: './web-camera-input.component.html',
-  styleUrls: ['./web-camera-input.component.scss']
+  styleUrls: ['./web-camera-input.component.scss'],
+  encapsulation: ViewEncapsulation.None
 })
 export class WebCameraInputWidgetComponent extends PageComponent implements OnInit, OnDestroy {
   private static DEFAULT_IMAGE_TYPE: string = 'image/jpeg';
@@ -151,6 +152,7 @@ export class WebCameraInputWidgetComponent extends PageComponent implements OnIn
           this.isDeviceDetect = !!devices.length;
           this.singleDevice = devices.length < 2;
           this.availableVideoInputs = devices;
+          this.ctx.detectChanges();
         }, () => {
           this.availableVideoInputs = [];
         }
@@ -247,8 +249,8 @@ export class WebCameraInputWidgetComponent extends PageComponent implements OnIn
   }
 
   createPhoto() {
-    this.canvasElement.width = this.videoElement.videoWidth;
-    this.canvasElement.height = this.videoElement.videoHeight;
+    this.canvasElement.width = this.videoWidth;
+    this.canvasElement.height = this.videoHeight;
     this.canvasElement.getContext('2d').drawImage(this.videoElement, 0, 0, this.videoWidth, this.videoHeight);
 
     const mimeType: string = this.settings.imageFormat ? this.settings.imageFormat : WebCameraInputWidgetComponent.DEFAULT_IMAGE_TYPE;

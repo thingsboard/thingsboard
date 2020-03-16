@@ -13,60 +13,62 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  .tb-web-camera {
-    height: 100%;
+.tb-web-camera {
+  height: 100%;
 
-    &__last-photo {
-      width: 100%;
-      margin: 5px 0;
-      text-align: center;
-      border: solid 1px;
+  &__last-photo {
+    width: 100%;
+    margin: 5px 0;
+    text-align: center;
+    border: solid 1px;
 
-      &_text {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        margin-top: -.625em;
-        transform: translate(-50%, -50%);
-      }
-
-      &_img {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-      }
+    &_text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      margin-top: -.625em;
+      transform: translate(-50%, -50%);
     }
 
-    .camera {
-      position: relative;
+    &_img {
       width: 100%;
       height: 100%;
-      overflow: hidden;
+      object-fit: contain;
+    }
+  }
 
-      .camera-stream {
-        display: block;
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-      }
+  .camera-container{
+    height: 100%;
+  }
 
-      .camera-controls {
-        position: absolute;
-        bottom: 0;
-        width: 100%;
-        padding: 0 5px 5px;
+  .camera {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
 
-        .mat-button-base{
-          margin: 6px 8px;
-        }
-      }
+    .camera-stream {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
     }
 
-    .message-text {
-      font-size: 18px;
-      color: #a0a0a0;
-      text-align: center;
+    .camera-controls {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      padding: 0 5px 5px;
+
+      .mat-button-base{
+        margin: 6px 8px;
+      }
     }
+  }
+
+  .message-text {
+    font-size: 18px;
+    color: #a0a0a0;
+    text-align: center;
   }
 }
