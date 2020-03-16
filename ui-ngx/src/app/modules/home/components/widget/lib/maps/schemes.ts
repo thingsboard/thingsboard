@@ -371,6 +371,11 @@ export const commonMapSettingsSchema =
                 "title": "Polygon Color function: f(data, dsData, dsIndex)",
                 "type": "string"
             },
+            "draggableMarker": {
+                "title": "Draggable Marker",
+                "type": "boolean",
+                "default": false
+            },
             "markerImage": {
                 "title": "Custom marker image",
                 "type": "string"
@@ -411,6 +416,7 @@ export const commonMapSettingsSchema =
         "showLabel",
         "label",
         "useLabelFunction",
+        "draggableMarker",
         {
             "key": "labelFunction",
             "type": "javascript"

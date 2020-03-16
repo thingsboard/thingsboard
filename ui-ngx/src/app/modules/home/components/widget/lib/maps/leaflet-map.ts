@@ -31,6 +31,7 @@ import { Polygon } from './polygon';
 export default abstract class LeafletMap {
 
     markers: Map<string, Marker> = new Map();
+    dragMode = false;
     tooltips = [];
     poly: Polyline;
     polygon: Polygon;
@@ -55,6 +56,7 @@ export default abstract class LeafletMap {
             mapProvider,
             credentials,
             defaultCenterPosition,
+            draggebleMarker,
             markerClusteringSetting }: MapOptions = options;
         if (disableScrollZooming) {
             this.map.scrollWheelZoom.disable();
@@ -62,6 +64,33 @@ export default abstract class LeafletMap {
         if (initCallback) {
             setTimeout(options.initCallback, 0);
         }
+    }
+
+    addMarkerControl() {
+        if (this.options.draggebleMarker)
+            L.Control['AddMarker'] = L.Control.extend({
+                onAdd: function (map) {
+                    let img = L.DomUtil.create('img') as any;
+                    img.src = `assets/add_location.svg`;
+                    img.style.width = '32px';
+                    img.style.height = '32px';
+                    img.onclick = this.dragMarker;
+                    return img;
+                },
+                addHooks: function () {
+                    L.DomEvent.on(window as any, 'onclick', this.enableDragMode, this);
+                },
+                onRemove: function (map) {
+                },
+                dragMarker: ($event) => {
+                    this.dragMode = !this.dragMode;
+                }
+            });
+
+        L.control['addmarker'] = function (opts) {
+            return new L.Control['AddMarker'](opts);
+        }
+        L.control['addmarker']({ position: 'topright' }).addTo(this.map);
     }
 
     inited() {
@@ -74,8 +103,19 @@ export default abstract class LeafletMap {
             this.map.panTo(this.options.defaultCenterPosition);
             this.bounds = map.getBounds();
         }
-        else this.bounds = new L.LatLngBounds(null, null)
+        else this.bounds = new L.LatLngBounds(null, null);
+        if (this.options.draggebleMarker) {
+            this.addMarkerControl();
+            this.map.on('click', (e: L.LeafletMouseEvent) => {
+                if (this.dragMode)
+                    this.saveMarkerLocation(this.convertToCustomFormat(e.latlng));
+            })
+        }
         this.map$.next(this.map);
+    }
+
+    public saveMarkerLocation(e) {
+
     }
 
     getContainer() {
@@ -115,6 +155,13 @@ export default abstract class LeafletMap {
 
     convertPosition(expression: any): L.LatLng {
         return L.latLng(expression[this.options.latKeyName], expression[this.options.lngKeyName]) as L.LatLng;
+    }
+
+    convertToCustomFormat(position: L.LatLng): object {
+        return {
+            [this.options.latKeyName]: position.lat,
+            [this.options.lngKeyName]: position.lng
+        }
     }
 
     ////Markers
@@ -179,33 +226,34 @@ export default abstract class LeafletMap {
     }
 
     createPolyline(data, dataSources, settings) {
-        this.ready$.subscribe(() => {
-            this.poly = new Polyline(this.map, data.map(data => this.convertPosition(data)), data, dataSources, settings);
-            const bounds = this.bounds.extend(this.poly.leafletPoly.getBounds());
-            if (bounds.isValid()) {
-                this.map.fitBounds(bounds);
-                this.bounds = bounds;
-            }
-        });
+        if (data.length)
+            this.ready$.subscribe(() => {
+                this.poly = new Polyline(this.map, data.map(data => this.convertPosition(data)), data, dataSources, settings);
+                const bounds = this.bounds.extend(this.poly.leafletPoly.getBounds());
+                if (bounds.isValid()) {
+                    this.map.fitBounds(bounds);
+                    this.bounds = bounds;
+                }
+            });
     }
 
     updatePolyline(data, dataSources, settings) {
         this.ready$.subscribe(() => {
-            this.poly.updatePolyline(settings, data, dataSources);        
+            this.poly.updatePolyline(settings, data, dataSources);
         });
-    }  
+    }
 
-      //polygon
+    //polygon
 
-      updatePolygon(polyData: Array<Array<any>>) {
-        polyData.forEach(data => {
-            if (data.length) {
+    updatePolygons(polyData: Array<Array<any>>) {
+        polyData.forEach((data: any) => {
+            if (data.data.length) {
                 let dataSource = polyData.map(arr => arr[0]);
-                if (this.poly) {
-                    this.updatePolyline(data, dataSource, this.options);
+                if (this.polygon) {
+                    this.updatePolygon(data, dataSource, this.options);
                 }
                 else {
-                    this.createPolyline(data, dataSource, this.options);
+                    this.createPolygon(data, dataSource, this.options);
                 }
             }
         })
@@ -214,7 +262,7 @@ export default abstract class LeafletMap {
     createPolygon(data, dataSources, settings) {
         this.ready$.subscribe(() => {
             this.polygon = new Polygon(this.map, data.map(data => this.convertPosition(data)), data, dataSources, settings);
-            const bounds = this.bounds.extend(this.poly.leafletPoly.getBounds());
+            const bounds = this.bounds.extend(this.polygon.leafletPoly.getBounds());
             if (bounds.isValid()) {
                 this.map.fitBounds(bounds);
                 this.bounds = bounds;
@@ -222,9 +270,9 @@ export default abstract class LeafletMap {
         });
     }
 
-    updatePolygons(data, dataSources, settings) {
+    updatePolygon(data, dataSources, settings) {
         this.ready$.subscribe(() => {
-            this.poly.updatePolyline(settings, data, dataSources);        
+            this.poly.updatePolyline(settings, data, dataSources);
         });
-    }  
+    }
 }

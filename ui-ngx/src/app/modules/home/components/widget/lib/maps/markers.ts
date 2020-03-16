@@ -29,7 +29,7 @@ export class Marker {
     data;
     dataSources;
 
-    constructor(private map: L.Map, location: L.LatLngExpression, public settings: MarkerSettings, data, dataSources, onClickListener?, onDragendListener?) {
+    constructor(private map: L.Map, location: L.LatLngExpression, public settings: MarkerSettings, data?, dataSources?, onClickListener?, onDragendListener?) {
         //this.map = map;
         this.location = location;
         this.setDataSources(data, dataSources);

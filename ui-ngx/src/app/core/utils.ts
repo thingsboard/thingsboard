@@ -498,7 +498,7 @@ export function safeExecute(func: Function, params = []) {
       res = func(...params);
     }
     catch (err) {
-      console.error(err);
+      console.log(err);
       res = null;
     }
   }

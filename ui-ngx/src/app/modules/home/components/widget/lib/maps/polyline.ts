@@ -24,6 +24,7 @@ export class Polyline {
     data;
 
     constructor(private map: L.Map, locations, data, dataSources, settings) {
+        console.log("Polyline -> constructor -> data", data)
         this.dataSources = dataSources;
         this.data = data;
         this.leafletPoly = L.polyline(locations,

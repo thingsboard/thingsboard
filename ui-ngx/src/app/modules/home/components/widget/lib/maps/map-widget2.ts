@@ -32,6 +32,8 @@ import { MapWidgetStaticInterface, MapWidgetInterface } from './map-widget.inter
 import { OpenStreetMap, TencentMap, GoogleMap, HEREMap, ImageMap } from './providers';
 import { parseFunction, parseArray, parseData } from '@app/core/utils';
 import { initSchema, addToSchema, mergeSchemes, addCondition, addGroupInfo } from '@app/core/schema-utils';
+import { AttributeScope, EntityId } from '@app/shared/public-api';
+import { forkJoin } from 'rxjs';
 
 export class MapWidgetController implements MapWidgetInterface {
 
@@ -58,9 +60,41 @@ export class MapWidgetController implements MapWidgetInterface {
             return;
         }
         this.map = new MapClass($element, this.settings);
+        this.map.saveMarkerLocation = this.setMarkerLocation;
     }
 
     onInit() {
+    }
+
+    setMarkerLocation = (e) => {
+        console.log("MapWidgetController -> setMarkerLocation -> e", e)
+        console.log(this.data);
+
+        let attributeService = this.ctx.$scope.$injector.get(this.ctx.servicesMap.get('attributeService'));
+
+
+        let attributesLocation = [];
+        let timeseriesLocation = [];
+        let promises = [];
+        forkJoin(
+            this.data.filter(data => !!e[data.dataKey.name])
+                .map(data => {
+                    const entityId: EntityId = {
+                        entityType: data.datasource.entityType,
+                        id: data.datasource.entityId
+                    };
+                    return attributeService.saveEntityAttributes(
+                        entityId,
+                        AttributeScope.SHARED_SCOPE,
+                        [{
+                            key: data.dataKey.name,
+                            value: e[data.dataKey.name]
+                        }]
+                    );
+                })).subscribe(res => {
+                    console.log("MapWidgetController -> setMarkerLocation -> res", res)
+
+                });
     }
 
     initSettings(settings: any) {
@@ -78,6 +112,7 @@ export class MapWidgetController implements MapWidgetInterface {
             tooltipPattern: settings.tooltipPattern ||
                 "<b>${entityName}</b><br/><br/><b>Latitude:</b> ${" + settings.latKeyName + ":7}<br/><b>Longitude:</b> ${" + settings.lngKeyName + ":7}",
             defaultCenterPosition: settings?.defaultCenterPosition?.split(',') || [0, 0],
+            useDraggableMarker: true,
             currentImage: (settings.useMarkerImage && settings.markerImage?.length) ? {
                 url: settings.markerImage,
                 size: settings.markerImageSize || 34
@@ -89,18 +124,14 @@ export class MapWidgetController implements MapWidgetInterface {
     update() {
         if (this.drawRoutes)
             this.map.updatePolylines(parseArray(this.data));
-        if(this.settings.showPolygon)
-        {
-            console.log(this.data);
-            
-            let dummy = [[37.771121,-22.510761],[37.774581,-22.454885],[37.766575,-22.453683],[37.764268,-22.509945]];
-            this.map.updatePolygon(dummy);            
+        if (this.settings.showPolygon) {
+            //console.log(this.data, this.ctx);
+
+            //  let dummy = [[37.771121,-22.510761],[37.774581,-22.454885],[37.766575,-22.453683],[37.764268,-22.509945]];
+            //this.data[0].data = dummy
+            //this.map.updatePolygons(this.data);            
         }
         this.map.updateMarkers(parseData(this.data));
-    }
-
-    public updateHistoryData(dataSources) {
-        dataSources.map()
     }
 
     onDataUpdated() {
@@ -119,15 +150,15 @@ export class MapWidgetController implements MapWidgetInterface {
         return {};
     }
 
-    public static getProvidersSchema(){
-     return   mergeSchemes([mapProviderSchema,
+    public static getProvidersSchema() {
+        return mergeSchemes([mapProviderSchema,
             ...Object.values(providerSets)?.map(
                 setting => addCondition(setting?.schema, `model.provider === '${setting.name}'`))]);
-    } 
+    }
 
     public static settingsSchema(mapProvider, drawRoutes): Object {
         let schema = initSchema();
-        addToSchema(schema,this.getProvidersSchema());
+        addToSchema(schema, this.getProvidersSchema());
         addGroupInfo(schema, "Map Provider Settings");
         addToSchema(schema, commonMapSettingsSchema);
         addGroupInfo(schema, "Common Map Settings");
@@ -228,4 +259,5 @@ const defaultSettings = {
     minZoomLevel: 16,
     credentials: '',
     markerClusteringSetting: null,
+    draggebleMarker: true
 }
