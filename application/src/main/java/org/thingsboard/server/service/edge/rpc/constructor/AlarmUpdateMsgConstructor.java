@@ -1,4 +1,4 @@
-package org.thingsboard.server.service.edge.rpc.alarm;
+package org.thingsboard.server.service.edge.rpc.constructor;
 
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.jcajce.provider.symmetric.DES;
@@ -19,7 +19,7 @@ import org.thingsboard.server.gen.edge.UpdateMsgType;
 
 @Component
 @Slf4j
-public class AlarmMetadataConstructor {
+public class AlarmUpdateMsgConstructor {
 
     @Autowired
     private DeviceService deviceService;

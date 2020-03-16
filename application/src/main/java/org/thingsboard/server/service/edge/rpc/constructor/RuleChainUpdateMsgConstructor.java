@@ -1,4 +1,4 @@
-package org.thingsboard.server.service.edge.rpc.ruleChain;
+package org.thingsboard.server.service.edge.rpc.constructor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,7 +23,7 @@ import java.util.List;
 
 @Component
 @Slf4j
-public class RuleChainMetadataConstructor {
+public class RuleChainUpdateMsgConstructor {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -109,7 +109,6 @@ public class RuleChainMetadataConstructor {
                 .setAdditionalInfo(objectMapper.writeValueAsString(ruleChainConnectionInfo.getAdditionalInfo()))
                 .build();
     }
-
 
 
     private RuleNodeProto constructNode(RuleNode node) throws JsonProcessingException {

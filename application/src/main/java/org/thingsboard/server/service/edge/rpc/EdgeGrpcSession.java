@@ -29,7 +29,6 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.User;
@@ -37,7 +36,6 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeQueueEntry;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -45,7 +43,6 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -56,48 +53,36 @@ import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
-import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChain;
-import org.thingsboard.server.common.data.rule.RuleChainConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
-import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
-import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 import org.thingsboard.server.gen.edge.AlarmUpdateMsg;
-import org.thingsboard.server.gen.edge.AssetUpdateMsg;
 import org.thingsboard.server.gen.edge.ConnectRequestMsg;
 import org.thingsboard.server.gen.edge.ConnectResponseCode;
 import org.thingsboard.server.gen.edge.ConnectResponseMsg;
 import org.thingsboard.server.gen.edge.CustomerUpdateMsg;
-import org.thingsboard.server.gen.edge.DashboardUpdateMsg;
 import org.thingsboard.server.gen.edge.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.DownlinkMsg;
 import org.thingsboard.server.gen.edge.EdgeConfiguration;
 import org.thingsboard.server.gen.edge.EntityDataProto;
 import org.thingsboard.server.gen.edge.EntityUpdateMsg;
-import org.thingsboard.server.gen.edge.EntityViewUpdateMsg;
-import org.thingsboard.server.gen.edge.NodeConnectionInfoProto;
 import org.thingsboard.server.gen.edge.RequestMsg;
 import org.thingsboard.server.gen.edge.RequestMsgType;
 import org.thingsboard.server.gen.edge.ResponseMsg;
-import org.thingsboard.server.gen.edge.RuleChainConnectionInfoProto;
+import org.thingsboard.server.gen.edge.RuleChainMetadataRequestMsg;
 import org.thingsboard.server.gen.edge.RuleChainMetadataUpdateMsg;
-import org.thingsboard.server.gen.edge.RuleChainUpdateMsg;
-import org.thingsboard.server.gen.edge.RuleNodeProto;
 import org.thingsboard.server.gen.edge.UpdateMsgType;
 import org.thingsboard.server.gen.edge.UplinkMsg;
 import org.thingsboard.server.gen.edge.UplinkResponseMsg;
 import org.thingsboard.server.gen.edge.UserUpdateMsg;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
 
-import javax.swing.text.html.parser.Entity;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -108,7 +93,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import static org.thingsboard.server.gen.edge.UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE;
-import static org.thingsboard.server.gen.edge.UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE;
 
 @Slf4j
 @Data
@@ -176,7 +160,6 @@ public final class EdgeGrpcSession implements Cloneable {
         };
     }
 
-
     void processHandleMessages() throws ExecutionException, InterruptedException {
         Long queueStartTs = getQueueStartTs().get();
         // TODO: this 100 value must be changed properly
@@ -184,7 +167,7 @@ public final class EdgeGrpcSession implements Cloneable {
         TimePageData<Event> pageData;
         UUID ifOffset = null;
         do {
-            pageData =  ctx.getEdgeService().findQueueEvents(edge.getTenantId(), edge.getId(), pageLink);
+            pageData = ctx.getEdgeService().findQueueEvents(edge.getTenantId(), edge.getId(), pageLink);
             if (!pageData.getData().isEmpty()) {
                 log.trace("[{}] [{}] event(s) are going to be processed.", this.sessionId, pageData.getData().size());
                 for (Event event : pageData.getData()) {
@@ -363,13 +346,13 @@ public final class EdgeGrpcSession implements Cloneable {
         ListenableFuture<Optional<AttributeKvEntry>> future =
                 ctx.getAttributesService().find(edge.getTenantId(), edge.getId(), DataConstants.SERVER_SCOPE, "queueStartTs");
         return Futures.transform(future, attributeKvEntryOpt -> {
-                    if (attributeKvEntryOpt != null && attributeKvEntryOpt.isPresent()) {
-                        AttributeKvEntry attributeKvEntry = attributeKvEntryOpt.get();
-                        return attributeKvEntry.getLongValue().isPresent() ? attributeKvEntry.getLongValue().get() : 0L;
-                    } else {
-                        return 0L;
-                    }
-                } );
+            if (attributeKvEntryOpt != null && attributeKvEntryOpt.isPresent()) {
+                AttributeKvEntry attributeKvEntry = attributeKvEntryOpt.get();
+                return attributeKvEntry.getLongValue().isPresent() ? attributeKvEntry.getLongValue().get() : 0L;
+            } else {
+                return 0L;
+            }
+        });
     }
 
     private void onEdgeUpdated(UpdateMsgType msgType, Edge edge) {
@@ -379,7 +362,7 @@ public final class EdgeGrpcSession implements Cloneable {
 
     private void onDeviceUpdated(UpdateMsgType msgType, Device device) {
         EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
-                .setDeviceUpdateMsg(constructDeviceUpdatedMsg(msgType, device))
+                .setDeviceUpdateMsg(ctx.getDeviceUpdateMsgConstructor().constructDeviceUpdatedMsg(msgType, device))
                 .build();
         outputStream.onNext(ResponseMsg.newBuilder()
                 .setEntityUpdateMsg(entityUpdateMsg)
@@ -388,7 +371,7 @@ public final class EdgeGrpcSession implements Cloneable {
 
     private void onAssetUpdated(UpdateMsgType msgType, Asset asset) {
         EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
-                .setAssetUpdateMsg(constructAssetUpdatedMsg(msgType, asset))
+                .setAssetUpdateMsg(ctx.getAssetUpdateMsgConstructor().constructAssetUpdatedMsg(msgType, asset))
                 .build();
         outputStream.onNext(ResponseMsg.newBuilder()
                 .setEntityUpdateMsg(entityUpdateMsg)
@@ -397,7 +380,7 @@ public final class EdgeGrpcSession implements Cloneable {
 
     private void onEntityViewUpdated(UpdateMsgType msgType, EntityView entityView) {
         EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
-                .setEntityViewUpdateMsg(constructEntityViewUpdatedMsg(msgType, entityView))
+                .setEntityViewUpdateMsg(ctx.getEntityViewUpdateMsgConstructor().constructEntityViewUpdatedMsg(msgType, entityView))
                 .build();
         outputStream.onNext(ResponseMsg.newBuilder()
                 .setEntityUpdateMsg(entityUpdateMsg)
@@ -406,7 +389,7 @@ public final class EdgeGrpcSession implements Cloneable {
 
     private void onRuleChainUpdated(UpdateMsgType msgType, RuleChain ruleChain) {
         EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
-                .setRuleChainUpdateMsg(ctx.getRuleChainMetadataConstructor().constructRuleChainUpdatedMsg(edge, msgType, ruleChain))
+                .setRuleChainUpdateMsg(ctx.getRuleChainUpdateMsgConstructor().constructRuleChainUpdatedMsg(edge, msgType, ruleChain))
                 .build();
         outputStream.onNext(ResponseMsg.newBuilder()
                 .setEntityUpdateMsg(entityUpdateMsg)
@@ -415,7 +398,7 @@ public final class EdgeGrpcSession implements Cloneable {
 
     private void onRuleChainMetadataUpdated(UpdateMsgType msgType, RuleChainMetaData ruleChainMetaData) {
         RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg =
-                ctx.getRuleChainMetadataConstructor().constructRuleChainMetadataUpdatedMsg(msgType, ruleChainMetaData);
+                ctx.getRuleChainUpdateMsgConstructor().constructRuleChainMetadataUpdatedMsg(msgType, ruleChainMetaData);
         if (ruleChainMetadataUpdateMsg != null) {
             EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
                     .setRuleChainMetadataUpdateMsg(ruleChainMetadataUpdateMsg)
@@ -428,7 +411,7 @@ public final class EdgeGrpcSession implements Cloneable {
 
     private void onDashboardUpdated(UpdateMsgType msgType, Dashboard dashboard) {
         EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
-                .setDashboardUpdateMsg(constructDashboardUpdatedMsg(msgType, dashboard))
+                .setDashboardUpdateMsg(ctx.getDashboardUpdateMsgConstructor().constructDashboardUpdatedMsg(msgType, dashboard))
                 .build();
         outputStream.onNext(ResponseMsg.newBuilder()
                 .setEntityUpdateMsg(entityUpdateMsg)
@@ -437,7 +420,7 @@ public final class EdgeGrpcSession implements Cloneable {
 
     private void onAlarmUpdated(UpdateMsgType msgType, Alarm alarm) {
         EntityUpdateMsg entityUpdateMsg = EntityUpdateMsg.newBuilder()
-                .setAlarmUpdateMsg(ctx.getAlarmMetadataConstructor().constructAlarmUpdatedMsg(edge.getTenantId(), msgType, alarm))
+                .setAlarmUpdateMsg(ctx.getAlarmUpdateMsgConstructor().constructAlarmUpdatedMsg(edge.getTenantId(), msgType, alarm))
                 .build();
         outputStream.onNext(ResponseMsg.newBuilder()
                 .setEntityUpdateMsg(entityUpdateMsg)
@@ -481,17 +464,6 @@ public final class EdgeGrpcSession implements Cloneable {
         return builder.build();
     }
 
-    private DashboardUpdateMsg constructDashboardUpdatedMsg(UpdateMsgType msgType, Dashboard dashboard) {
-        dashboard = ctx.getDashboardService().findDashboardById(edge.getTenantId(), dashboard.getId());
-        DashboardUpdateMsg.Builder builder = DashboardUpdateMsg.newBuilder()
-                .setMsgType(msgType)
-                .setIdMSB(dashboard.getId().getId().getMostSignificantBits())
-                .setIdLSB(dashboard.getId().getId().getLeastSignificantBits())
-                .setTitle(dashboard.getTitle())
-                .setConfiguration(JacksonUtil.toString(dashboard.getConfiguration()));
-        return builder.build();
-    }
-
     private CustomerUpdateMsg constructCustomerUpdatedMsg(UpdateMsgType msgType, Customer customer) {
         CustomerUpdateMsg.Builder builder = CustomerUpdateMsg.newBuilder()
                 .setMsgType(msgType);
@@ -504,47 +476,6 @@ public final class EdgeGrpcSession implements Cloneable {
         return builder.build();
     }
 
-    private DeviceUpdateMsg constructDeviceUpdatedMsg(UpdateMsgType msgType, Device device) {
-        DeviceUpdateMsg.Builder builder = DeviceUpdateMsg.newBuilder()
-                .setMsgType(msgType)
-                .setName(device.getName())
-                .setType(device.getType());
-        return builder.build();
-    }
-
-    private AssetUpdateMsg constructAssetUpdatedMsg(UpdateMsgType msgType, Asset asset) {
-        AssetUpdateMsg.Builder builder = AssetUpdateMsg.newBuilder()
-                .setMsgType(msgType)
-                .setName(asset.getName())
-                .setType(asset.getType());
-        return builder.build();
-    }
-
-    private EntityViewUpdateMsg constructEntityViewUpdatedMsg(UpdateMsgType msgType, EntityView entityView) {
-        String relatedName;
-        String relatedType;
-        org.thingsboard.server.gen.edge.EntityType relatedEntityType;
-        if (entityView.getEntityId().getEntityType().equals(EntityType.DEVICE)) {
-            Device device = ctx.getDeviceService().findDeviceById(entityView.getTenantId(), new DeviceId(entityView.getEntityId().getId()));
-            relatedName = device.getName();
-            relatedType = device.getType();
-            relatedEntityType = org.thingsboard.server.gen.edge.EntityType.DEVICE;
-        } else {
-            Asset asset = ctx.getAssetService().findAssetById(entityView.getTenantId(), new AssetId(entityView.getEntityId().getId()));
-            relatedName = asset.getName();
-            relatedType = asset.getType();
-            relatedEntityType = org.thingsboard.server.gen.edge.EntityType.ASSET;
-        }
-        EntityViewUpdateMsg.Builder builder = EntityViewUpdateMsg.newBuilder()
-                .setMsgType(msgType)
-                .setName(entityView.getName())
-                .setType(entityView.getType())
-                .setRelatedName(relatedName)
-                .setRelatedType(relatedType)
-                .setRelatedEntityType(relatedEntityType);
-        return builder.build();
-    }
-    
     private UplinkResponseMsg processUplinkMsg(UplinkMsg uplinkMsg) {
         try {
             if (uplinkMsg.getEntityDataList() != null && !uplinkMsg.getEntityDataList().isEmpty()) {
@@ -594,9 +525,14 @@ public final class EdgeGrpcSession implements Cloneable {
                     }
                 }
             }
-            if (uplinkMsg.getAlarmUpdatemsgList() != null && !uplinkMsg.getAlarmUpdatemsgList().isEmpty()) {
-                for (AlarmUpdateMsg alarmUpdateMsg : uplinkMsg.getAlarmUpdatemsgList()) {
+            if (uplinkMsg.getAlarmUpdateMsgList() != null && !uplinkMsg.getAlarmUpdateMsgList().isEmpty()) {
+                for (AlarmUpdateMsg alarmUpdateMsg : uplinkMsg.getAlarmUpdateMsgList()) {
                     onAlarmUpdate(alarmUpdateMsg);
+                }
+            }
+            if (uplinkMsg.getRuleChainMetadataRequestMsgList() != null && !uplinkMsg.getRuleChainMetadataRequestMsgList().isEmpty()) {
+                for (RuleChainMetadataRequestMsg ruleChainMetadataRequestMsg : uplinkMsg.getRuleChainMetadataRequestMsgList()) {
+                    ctx.getInitEdgeService().initRuleChainMetadata(edge, ruleChainMetadataRequestMsg, outputStream);
                 }
             }
         } catch (Exception e) {
