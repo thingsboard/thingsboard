@@ -20,10 +20,9 @@ import { createTooltip } from './maps-utils';
 export class Polygon {
 
     leafletPoly: L.Polygon;
-
     tooltip;
 
-    constructor(public map, coordinates, dataSources, settings, onClickListener?) {
+    constructor(public map, coordinates, dataSources, settings, onClickListener?) {     
         this.leafletPoly = L.polygon(coordinates, {
             fill: true,
             fillColor: settings.polygonColor,

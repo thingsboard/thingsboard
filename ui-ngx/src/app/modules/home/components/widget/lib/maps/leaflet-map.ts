@@ -27,6 +27,7 @@ import { Observable, of, BehaviorSubject, Subject } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { Polyline } from './polyline';
 import { Polygon } from './polygon';
+import { string } from 'prop-types';
 
 export default abstract class LeafletMap {
 
@@ -140,13 +141,8 @@ export default abstract class LeafletMap {
         this.map.invalidateSize(true);
     }
 
-
     onResize() {
 
-    }
-
-    getTooltips() {
-        return this.tooltips;//rewrite
     }
 
     getCenter() {
@@ -247,21 +243,24 @@ export default abstract class LeafletMap {
 
     updatePolygons(polyData: Array<Array<any>>) {
         polyData.forEach((data: any) => {
-            if (data.data.length) {
-                let dataSource = polyData.map(arr => arr[0]);
+            if (data.data.length && data.dataKey.name === this.options.polygonKeyName) {
+                if (typeof (data?.data[0][1]) === 'string') {
+                    data.data = JSON.parse(data.data[0][1]);
+                }
                 if (this.polygon) {
-                    this.updatePolygon(data, dataSource, this.options);
+                    this.updatePolygon(data.data, polyData, this.options);
                 }
                 else {
-                    this.createPolygon(data, dataSource, this.options);
+                    this.createPolygon(data.data, polyData, this.options);
                 }
             }
-        })
+        });
     }
 
     createPolygon(data, dataSources, settings) {
         this.ready$.subscribe(() => {
-            this.polygon = new Polygon(this.map, data.map(data => this.convertPosition(data)), data, dataSources, settings);
+            //public map, coordinates, dataSources, settings, onClickListener?
+            this.polygon = new Polygon(this.map, data, dataSources, settings);
             const bounds = this.bounds.extend(this.polygon.leafletPoly.getBounds());
             if (bounds.isValid()) {
                 this.map.fitBounds(bounds);
@@ -272,7 +271,7 @@ export default abstract class LeafletMap {
 
     updatePolygon(data, dataSources, settings) {
         this.ready$.subscribe(() => {
-            this.poly.updatePolyline(settings, data, dataSources);
+            //   this.polygon.updatePolygon(settings, data, dataSources);
         });
     }
 }

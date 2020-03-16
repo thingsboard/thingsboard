@@ -67,15 +67,7 @@ export class MapWidgetController implements MapWidgetInterface {
     }
 
     setMarkerLocation = (e) => {
-        console.log("MapWidgetController -> setMarkerLocation -> e", e)
-        console.log(this.data);
-
         let attributeService = this.ctx.$scope.$injector.get(this.ctx.servicesMap.get('attributeService'));
-
-
-        let attributesLocation = [];
-        let timeseriesLocation = [];
-        let promises = [];
         forkJoin(
             this.data.filter(data => !!e[data.dataKey.name])
                 .map(data => {
@@ -93,7 +85,6 @@ export class MapWidgetController implements MapWidgetInterface {
                     );
                 })).subscribe(res => {
                     console.log("MapWidgetController -> setMarkerLocation -> res", res)
-
                 });
     }
 
@@ -125,11 +116,7 @@ export class MapWidgetController implements MapWidgetInterface {
         if (this.drawRoutes)
             this.map.updatePolylines(parseArray(this.data));
         if (this.settings.showPolygon) {
-            //console.log(this.data, this.ctx);
-
-            //  let dummy = [[37.771121,-22.510761],[37.774581,-22.454885],[37.766575,-22.453683],[37.764268,-22.509945]];
-            //this.data[0].data = dummy
-            //this.map.updatePolygons(this.data);            
+            this.map.updatePolygons(this.data);
         }
         this.map.updateMarkers(parseData(this.data));
     }

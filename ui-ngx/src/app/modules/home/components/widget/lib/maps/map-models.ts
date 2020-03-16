@@ -17,6 +17,7 @@
 import { LatLngExpression, LatLngTuple } from 'leaflet';
 
 export interface MapOptions {
+    polygonKeyName: any;
     draggebleMarker: any;
     initCallback?: Function,
     defaultZoomLevel?: number,
