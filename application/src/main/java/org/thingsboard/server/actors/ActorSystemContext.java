@@ -65,8 +65,6 @@ import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.kafka.TbNodeIdProvider;
-import org.thingsboard.server.service.cluster.discovery.DiscoveryService;
-import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.encoding.DataDecodingEncodingService;
 import org.thingsboard.server.service.executors.ClusterRpcCallbackExecutorService;
@@ -110,16 +108,8 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
-    private DiscoveryService discoveryService;
-
-    @Autowired
-    @Getter
     @Setter
     private ComponentDiscoveryService componentService;
-
-    @Autowired
-    @Getter
-    private ClusterRoutingService routingService;
 
     @Autowired
     @Getter
@@ -368,7 +358,8 @@ public class ActorSystemContext {
         event.setTenantId(tenantId);
         event.setEntityId(entityId);
         event.setType(DataConstants.ERROR);
-        event.setBody(toBodyJson(discoveryService.getCurrentServer().getServerAddress(), method, toString(e)));
+        //TODO 2.5
+//        event.setBody(toBodyJson(discoveryService.getCurrentServer().getServerAddress(), method, toString(e)));
         persistEvent(event);
     }
 
@@ -377,7 +368,8 @@ public class ActorSystemContext {
         event.setTenantId(tenantId);
         event.setEntityId(entityId);
         event.setType(DataConstants.LC_EVENT);
-        event.setBody(toBodyJson(discoveryService.getCurrentServer().getServerAddress(), lcEvent, Optional.ofNullable(e)));
+        //TODO 2.5
+//        event.setBody(toBodyJson(discoveryService.getCurrentServer().getServerAddress(), lcEvent, Optional.ofNullable(e)));
         persistEvent(event);
     }
 
@@ -406,8 +398,11 @@ public class ActorSystemContext {
         return mapper.createObjectNode().put("server", server.toString()).put("method", method).put("error", body);
     }
 
+
     public String getServerAddress() {
-        return discoveryService.getCurrentServer().getServerAddress().toString();
+        //TODO 2.5
+//        return discoveryService.getCurrentServer().getServerAddress().toString();
+        return null;
     }
 
     public void persistDebugInput(TenantId tenantId, EntityId entityId, TbMsg tbMsg, String relationType) {

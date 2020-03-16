@@ -528,7 +528,7 @@ swagger:
   version: "${SWAGGER_VERSION:2.0}"
 
 queue:
-  type: "${TB_QUEUE_TYPE:kafka}"
+  type: "${TB_QUEUE_TYPE:in-memory}" # kafka or in-memory
   kafka:
     bootstrap.servers: "${TB_KAFKA_SERVERS:localhost:9092}"
     acks: "${TB_KAFKA_ACKS:all}"
@@ -556,6 +556,7 @@ queue:
     topic: "${TB_QUEUE_RULE_ENGINE_TOPIC:tb.rule-engine}"
     poll_interval: "${TB_QUEUE_RULE_ENGINE_POLL_INTERVAL_MS:25}"
     partitions: "${TB_QUEUE_RULE_ENGINE_PARTITIONS:100}"
+    pack_processing_timeout: "${TB_QUEUE_RULE_ENGINE_PACK_PROCESSING_TIMEOUT_MS:60000}"
     stats:
       enabled: "${TB_QUEUE_RULE_ENGINE_STATS_ENABLED:false}"
       print_interval_ms: "${TB_QUEUE_RULE_ENGINE_STATS_PRINT_INTERVAL_MS:10000}"

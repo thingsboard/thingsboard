@@ -15,12 +15,27 @@
  */
 package org.thingsboard.server.discovery;
 
-import lombok.Data;
+import lombok.Builder;
+import org.thingsboard.server.common.data.id.TenantId;
 
-@Data
+import java.util.Optional;
+
+@Builder
 public class TopicPartitionInfo {
 
-    private String topic;
-    private int partition;
+    private final String topic;
+    private final TenantId tenantId;
+    private final Integer partition;
 
+    public String getTopic() {
+        return topic;
+    }
+
+    public Optional<TenantId> getTenantId() {
+        return Optional.ofNullable(tenantId);
+    }
+
+    public Optional<Integer> getPartition() {
+        return Optional.ofNullable(partition);
+    }
 }

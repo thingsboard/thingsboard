@@ -21,10 +21,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.transport.SessionMsgProcessor;
-import org.thingsboard.server.service.cluster.discovery.DiscoveryServiceListener;
-import org.thingsboard.server.service.cluster.rpc.RpcMsgListener;
 
-public interface ActorService extends SessionMsgProcessor, RpcMsgListener, DiscoveryServiceListener {
+public interface ActorService extends SessionMsgProcessor {
 
     void onEntityStateChange(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent state);
 

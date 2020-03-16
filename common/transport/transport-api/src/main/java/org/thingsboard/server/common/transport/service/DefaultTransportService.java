@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -34,6 +34,9 @@ import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
+import org.thingsboard.server.discovery.PartitionService;
+import org.thingsboard.server.discovery.ServiceType;
+import org.thingsboard.server.discovery.TopicPartitionInfo;
 import org.thingsboard.server.provider.TransportQueueProvider;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
@@ -76,8 +79,8 @@ public class DefaultTransportService implements TransportService {
     @Value("${transport.sessions.report_timeout}")
     private long sessionReportTimeout;
 
-    @Autowired
-    private TransportQueueProvider queueProvider;
+    private final TransportQueueProvider queueProvider;
+    private final PartitionService partitionService;
 
     @Value("${kafka.notifications.poll_interval}")
     private int notificationsPollDuration;
@@ -97,6 +100,11 @@ public class DefaultTransportService implements TransportService {
 
     private ExecutorService mainConsumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("transport-consumer"));
     private volatile boolean stopped = false;
+
+    public DefaultTransportService(TransportQueueProvider queueProvider, PartitionService partitionService) {
+        this.queueProvider = queueProvider;
+        this.partitionService = partitionService;
+    }
 
     @PostConstruct
     public void init() {
@@ -420,6 +428,14 @@ public class DefaultTransportService implements TransportService {
         return new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB());
     }
 
+    protected TenantId getTenantId(TransportProtos.SessionInfoProto sessionInfo) {
+        return new TenantId(new UUID(sessionInfo.getTenantIdMSB(), sessionInfo.getTenantIdLSB()));
+    }
+
+    protected DeviceId getDeviceId(TransportProtos.SessionInfoProto sessionInfo) {
+        return new DeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
+    }
+
     public static TransportProtos.SessionEventMsg getSessionEventMsg(TransportProtos.SessionEvent event) {
         return TransportProtos.SessionEventMsg.newBuilder()
                 .setSessionType(TransportProtos.SessionType.ASYNC)
@@ -427,15 +443,19 @@ public class DefaultTransportService implements TransportService {
     }
 
     protected void sendToDeviceActor(TransportProtos.SessionInfoProto sessionInfo, TransportToDeviceActorMsg toDeviceActorMsg, TransportServiceCallback<Void> callback) {
-        tbCoreMsgProducer.send(new TbProtoQueueMsg<>(getRoutingKey(sessionInfo),
-                ToCoreMsg.newBuilder().setToDeviceActorMsg(toDeviceActorMsg).build()), callback != null ?
-                new TransportTbQueueCallback(callback) : null);
+        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, getTenantId(sessionInfo), getDeviceId(sessionInfo));
+        tbCoreMsgProducer.send(tpi,
+                new TbProtoQueueMsg<>(getRoutingKey(sessionInfo),
+                        ToCoreMsg.newBuilder().setToDeviceActorMsg(toDeviceActorMsg).build()), callback != null ?
+                        new TransportTbQueueCallback(callback) : null);
     }
 
     protected void sendToRuleEngine(TransportProtos.SessionInfoProto sessionInfo, TransportToRuleEngineMsg toRuleEngineMsg, TransportServiceCallback<Void> callback) {
-        ruleEngineMsgProducer.send(new TbProtoQueueMsg<>(getRoutingKey(sessionInfo),
-                ToRuleEngineMsg.newBuilder().setToRuleEngineMsg(toRuleEngineMsg).build()), callback != null ?
-                new TransportTbQueueCallback(callback) : null);
+        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, getTenantId(sessionInfo), getDeviceId(sessionInfo));
+        ruleEngineMsgProducer.send(tpi,
+                new TbProtoQueueMsg<>(getRoutingKey(sessionInfo),
+                        ToRuleEngineMsg.newBuilder().setToRuleEngineMsg(toRuleEngineMsg).build()), callback != null ?
+                        new TransportTbQueueCallback(callback) : null);
     }
 
     private class TransportTbQueueCallback implements TbQueueCallback {

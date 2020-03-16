@@ -19,7 +19,6 @@ import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
 import akka.actor.Terminated;
-import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,25 +31,16 @@ import org.thingsboard.rule.engine.api.msg.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.app.AppActor;
 import org.thingsboard.server.actors.app.AppInitMsg;
-import org.thingsboard.server.actors.rpc.RpcBroadcastMsg;
-import org.thingsboard.server.actors.rpc.RpcManagerActor;
-import org.thingsboard.server.actors.rpc.RpcSessionCreateRequestMsg;
 import org.thingsboard.server.actors.stats.StatsActor;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
-import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
-import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.cluster.ToAllNodesMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
-import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
-import org.thingsboard.server.service.cluster.discovery.DiscoveryService;
-import org.thingsboard.server.service.cluster.discovery.ServerInstance;
-import org.thingsboard.server.service.cluster.rpc.ClusterRpcService;
 import org.thingsboard.server.service.state.DeviceStateService;
 import scala.concurrent.Await;
 import scala.concurrent.Future;
@@ -59,8 +49,6 @@ import scala.concurrent.duration.Duration;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.thingsboard.server.gen.cluster.ClusterAPIProtos.MessageType.CLUSTER_ACTOR_MESSAGE;
 
 @Service
 @Slf4j
@@ -76,12 +64,6 @@ public class DefaultActorService implements ActorService {
 
     @Autowired
     private ActorSystemContext actorContext;
-
-    @Autowired
-    private ClusterRpcService rpcService;
-
-    @Autowired
-    private DiscoveryService discoveryService;
 
     @Autowired
     private DeviceStateService deviceStateService;
@@ -102,13 +84,9 @@ public class DefaultActorService implements ActorService {
         appActor = system.actorOf(Props.create(new AppActor.ActorCreator(actorContext)).withDispatcher(APP_DISPATCHER_NAME), "appActor");
         actorContext.setAppActor(appActor);
 
-        rpcManagerActor = system.actorOf(Props.create(new RpcManagerActor.ActorCreator(actorContext)).withDispatcher(CORE_DISPATCHER_NAME),
-                "rpcManagerActor");
-
         ActorRef statsActor = system.actorOf(Props.create(new StatsActor.ActorCreator(actorContext)).withDispatcher(CORE_DISPATCHER_NAME), "statsActor");
         actorContext.setStatsActor(statsActor);
 
-        rpcService.init(this);
         log.info("Actor system initialized.");
     }
 
@@ -134,22 +112,23 @@ public class DefaultActorService implements ActorService {
         appActor.tell(msg, ActorRef.noSender());
     }
 
-    @Override
-    public void onServerAdded(ServerInstance server) {
-        log.trace("Processing onServerAdded msg: {}", server);
-        broadcast(new ClusterEventMsg(server.getServerAddress(), true));
-    }
-
-    @Override
-    public void onServerUpdated(ServerInstance server) {
-        //Do nothing
-    }
-
-    @Override
-    public void onServerRemoved(ServerInstance server) {
-        log.trace("Processing onServerRemoved msg: {}", server);
-        broadcast(new ClusterEventMsg(server.getServerAddress(), false));
-    }
+    //TODO 2.5
+//    @Override
+//    public void onServerAdded(ServerInstance server) {
+//        log.trace("Processing onServerAdded msg: {}", server);
+//        broadcast(new ClusterEventMsg(server.getServerAddress(), true));
+//    }
+//
+//    @Override
+//    public void onServerUpdated(ServerInstance server) {
+//        //Do nothing
+//    }
+//
+//    @Override
+//    public void onServerRemoved(ServerInstance server) {
+//        log.trace("Processing onServerRemoved msg: {}", server);
+//        broadcast(new ClusterEventMsg(server.getServerAddress(), false));
+//    }
 
     @Override
     public void onEntityStateChange(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent state) {
@@ -172,12 +151,13 @@ public class DefaultActorService implements ActorService {
 
     public void broadcast(ToAllNodesMsg msg) {
         actorContext.getEncodingService().encode(msg);
-        rpcService.broadcast(new RpcBroadcastMsg(ClusterAPIProtos.ClusterMessage
-                .newBuilder()
-                .setPayload(ByteString
-                        .copyFrom(actorContext.getEncodingService().encode(msg)))
-                .setMessageType(CLUSTER_ACTOR_MESSAGE)
-                .build()));
+        //TODO 2.5
+//        rpcService.broadcast(new RpcBroadcastMsg(ClusterAPIProtos.ClusterMessage
+//                .newBuilder()
+//                .setPayload(ByteString
+//                        .copyFrom(actorContext.getEncodingService().encode(msg)))
+//                .setMessageType(CLUSTER_ACTOR_MESSAGE)
+//                .build()));
         appActor.tell(msg, ActorRef.noSender());
     }
 
@@ -204,79 +184,78 @@ public class DefaultActorService implements ActorService {
         }
     }
 
-    @Override
-    public void onReceivedMsg(ServerAddress source, ClusterAPIProtos.ClusterMessage msg) {
-        if (statsEnabled) {
-            receivedClusterMsgs.incrementAndGet();
-        }
-        ServerAddress serverAddress = new ServerAddress(source.getHost(), source.getPort(), source.getServerType());
-        if (log.isDebugEnabled()) {
-            log.info("Received msg [{}] from [{}]", msg.getMessageType().name(), serverAddress);
-            log.info("MSG: {}", msg);
-        }
-        switch (msg.getMessageType()) {
-            case CLUSTER_ACTOR_MESSAGE:
-                java.util.Optional<TbActorMsg> decodedMsg = actorContext.getEncodingService()
-                        .decode(msg.getPayload().toByteArray());
-                if (decodedMsg.isPresent()) {
-                    appActor.tell(decodedMsg.get(), ActorRef.noSender());
-                } else {
-                    log.error("Error during decoding cluster proto message");
-                }
-                break;
-            case TO_ALL_NODES_MSG:
-                //TODO
-                break;
-            case CLUSTER_TELEMETRY_SUBSCRIPTION_CREATE_MESSAGE:
-                actorContext.getTsSubService().onNewRemoteSubscription(serverAddress, msg.getPayload().toByteArray());
-                break;
-            case CLUSTER_TELEMETRY_SUBSCRIPTION_UPDATE_MESSAGE:
-                actorContext.getTsSubService().onRemoteSubscriptionUpdate(serverAddress, msg.getPayload().toByteArray());
-                break;
-            case CLUSTER_TELEMETRY_SUBSCRIPTION_CLOSE_MESSAGE:
-                actorContext.getTsSubService().onRemoteSubscriptionClose(serverAddress, msg.getPayload().toByteArray());
-                break;
-            case CLUSTER_TELEMETRY_SESSION_CLOSE_MESSAGE:
-                actorContext.getTsSubService().onRemoteSessionClose(serverAddress, msg.getPayload().toByteArray());
-                break;
-            case CLUSTER_TELEMETRY_ATTR_UPDATE_MESSAGE:
-                actorContext.getTsSubService().onRemoteAttributesUpdate(serverAddress, msg.getPayload().toByteArray());
-                break;
-            case CLUSTER_TELEMETRY_TS_UPDATE_MESSAGE:
-                actorContext.getTsSubService().onRemoteTsUpdate(serverAddress, msg.getPayload().toByteArray());
-                break;
-            case CLUSTER_RPC_FROM_DEVICE_RESPONSE_MESSAGE:
-                actorContext.getDeviceRpcService().processResponseToServerSideRPCRequestFromRemoteServer(serverAddress, msg.getPayload().toByteArray());
-                break;
-            case CLUSTER_DEVICE_STATE_SERVICE_MESSAGE:
-                actorContext.getDeviceStateService().onRemoteMsg(serverAddress, msg.getPayload().toByteArray());
-                break;
-            case CLUSTER_TRANSACTION_SERVICE_MESSAGE:
-                actorContext.getRuleChainTransactionService().onRemoteTransactionMsg(serverAddress, msg.getPayload().toByteArray());
-                break;
-        }
-    }
-
-    @Override
-    public void onSendMsg(ClusterAPIProtos.ClusterMessage msg) {
-        if (statsEnabled) {
-            sentClusterMsgs.incrementAndGet();
-        }
-        rpcManagerActor.tell(msg, ActorRef.noSender());
-    }
-
-    @Override
-    public void onRpcSessionCreateRequestMsg(RpcSessionCreateRequestMsg msg) {
-        if (statsEnabled) {
-            sentClusterMsgs.incrementAndGet();
-        }
-        rpcManagerActor.tell(msg, ActorRef.noSender());
-    }
-
-    @Override
-    public void onBroadcastMsg(RpcBroadcastMsg msg) {
-        rpcManagerActor.tell(msg, ActorRef.noSender());
-    }
+    //TODO 2.5
+//    @Override
+//    public void onReceivedMsg(ServerAddress source, ClusterAPIProtos.ClusterMessage msg) {
+//        if (statsEnabled) {
+//            receivedClusterMsgs.incrementAndGet();
+//        }
+//        ServerAddress serverAddress = new ServerAddress(source.getHost(), source.getPort(), source.getServerType());
+//        if (log.isDebugEnabled()) {
+//            log.info("Received msg [{}] from [{}]", msg.getMessageType().name(), serverAddress);
+//            log.info("MSG: {}", msg);
+//        }
+//        switch (msg.getMessageType()) {
+//            case CLUSTER_ACTOR_MESSAGE:
+//                java.util.Optional<TbActorMsg> decodedMsg = actorContext.getEncodingService()
+//                        .decode(msg.getPayload().toByteArray());
+//                if (decodedMsg.isPresent()) {
+//                    appActor.tell(decodedMsg.get(), ActorRef.noSender());
+//                } else {
+//                    log.error("Error during decoding cluster proto message");
+//                }
+//                break;
+//            case TO_ALL_NODES_MSG:
+//                //TODO
+//                break;
+//            case CLUSTER_TELEMETRY_SUBSCRIPTION_CREATE_MESSAGE:
+//                actorContext.getTsSubService().onNewRemoteSubscription(serverAddress, msg.getPayload().toByteArray());
+//                break;
+//            case CLUSTER_TELEMETRY_SUBSCRIPTION_UPDATE_MESSAGE:
+//                actorContext.getTsSubService().onRemoteSubscriptionUpdate(serverAddress, msg.getPayload().toByteArray());
+//                break;
+//            case CLUSTER_TELEMETRY_SUBSCRIPTION_CLOSE_MESSAGE:
+//                actorContext.getTsSubService().onRemoteSubscriptionClose(serverAddress, msg.getPayload().toByteArray());
+//                break;
+//            case CLUSTER_TELEMETRY_SESSION_CLOSE_MESSAGE:
+//                actorContext.getTsSubService().onRemoteSessionClose(serverAddress, msg.getPayload().toByteArray());
+//                break;
+//            case CLUSTER_TELEMETRY_ATTR_UPDATE_MESSAGE:
+//                actorContext.getTsSubService().onRemoteAttributesUpdate(serverAddress, msg.getPayload().toByteArray());
+//                break;
+//            case CLUSTER_TELEMETRY_TS_UPDATE_MESSAGE:
+//                actorContext.getTsSubService().onRemoteTsUpdate(serverAddress, msg.getPayload().toByteArray());
+//                break;
+//            case CLUSTER_RPC_FROM_DEVICE_RESPONSE_MESSAGE:
+//                actorContext.getDeviceRpcService().processResponseToServerSideRPCRequestFromRemoteServer(serverAddress, msg.getPayload().toByteArray());
+//                break;
+//            case CLUSTER_DEVICE_STATE_SERVICE_MESSAGE:
+//                actorContext.getDeviceStateService().onRemoteMsg(serverAddress, msg.getPayload().toByteArray());
+//                break;
+//            case CLUSTER_TRANSACTION_SERVICE_MESSAGE:
+//                actorContext.getRuleChainTransactionService().onRemoteTransactionMsg(serverAddress, msg.getPayload().toByteArray());
+//                break;
+//        }
+//    }
+//    @Override
+//    public void onSendMsg(ClusterAPIProtos.ClusterMessage msg) {
+//        if (statsEnabled) {
+//            sentClusterMsgs.incrementAndGet();
+//        }
+//        rpcManagerActor.tell(msg, ActorRef.noSender());
+//    }
+//
+//    @Override
+//    public void onRpcSessionCreateRequestMsg(RpcSessionCreateRequestMsg msg) {
+//        if (statsEnabled) {
+//            sentClusterMsgs.incrementAndGet();
+//        }
+//        rpcManagerActor.tell(msg, ActorRef.noSender());
+//    }
+//    @Override
+//    public void onBroadcastMsg(RpcBroadcastMsg msg) {
+//        rpcManagerActor.tell(msg, ActorRef.noSender());
+//    }
 
     @Override
     public void onDeviceAdded(Device device) {

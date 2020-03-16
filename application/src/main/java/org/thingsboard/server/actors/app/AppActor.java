@@ -134,13 +134,15 @@ public class AppActor extends RuleChainManagerActor {
     }
 
     private void onPossibleClusterMsg(SendToClusterMsg msg) {
-        Optional<ServerAddress> address = systemContext.getRoutingService().resolveById(msg.getEntityId());
-        if (address.isPresent()) {
-            systemContext.getRpcService().tell(
-                    systemContext.getEncodingService().convertToProtoDataMessage(address.get(), msg.getMsg()));
-        } else {
+        //TODO 2.5
+//        Optional<ServerAddress> address = systemContext.getRoutingService().resolveById(msg.getEntityId());
+//        if (address.isPresent()) {
+
+//            systemContext.getRpcService().tell(
+//                    systemContext.getEncodingService().convertToProtoDataMessage(address.get(), msg.getMsg()));
+//        } else {
             self().tell(msg.getMsg(), ActorRef.noSender());
-        }
+//        }
     }
 
     private void onServiceToRuleEngineMsg(ServiceToRuleEngineMsg msg) {

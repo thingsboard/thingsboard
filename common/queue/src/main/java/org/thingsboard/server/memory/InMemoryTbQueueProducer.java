@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,6 +19,7 @@ import lombok.Data;
 import org.thingsboard.server.TbQueueCallback;
 import org.thingsboard.server.TbQueueMsg;
 import org.thingsboard.server.TbQueueProducer;
+import org.thingsboard.server.discovery.TopicPartitionInfo;
 
 @Data
 public class InMemoryTbQueueProducer<T extends TbQueueMsg> implements TbQueueProducer<T> {
@@ -37,18 +38,8 @@ public class InMemoryTbQueueProducer<T extends TbQueueMsg> implements TbQueuePro
     }
 
     @Override
-    public String getDefaultTopic() {
-        return defaultTopic;
-    }
-
-    @Override
-    public void send(T msg, TbQueueCallback callback) {
-        send(defaultTopic, msg, callback);
-    }
-
-    @Override
-    public void send(String topic, T msg, TbQueueCallback callback) {
-        boolean result = storage.put(topic, msg);
+    public void send(TopicPartitionInfo tpi, T msg, TbQueueCallback callback) {
+        boolean result = storage.put(tpi.getTopic(), msg);
         if (result) {
             callback.onSuccess(null);
         } else {

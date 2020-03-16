@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,6 +28,7 @@ import org.thingsboard.server.TbQueueMsg;
 import org.thingsboard.server.TbQueueMsgMetadata;
 import org.thingsboard.server.TbQueueProducer;
 import org.thingsboard.server.TbQueueRequestTemplate;
+import org.thingsboard.server.discovery.TopicPartitionInfo;
 
 import java.util.List;
 import java.util.UUID;
@@ -160,7 +161,7 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
         ResponseMetaData<Response> responseMetaData = new ResponseMetaData<>(tickTs + maxRequestTimeout, future);
         pendingRequests.putIfAbsent(requestId, responseMetaData);
         log.trace("[{}] Sending request, key [{}], expTime [{}]", requestId, request.getKey(), responseMetaData.expTime);
-        requestTemplate.send(request, new TbQueueCallback() {
+        requestTemplate.send(TopicPartitionInfo.builder().topic(requestTemplate.getDefaultTopic()).build(), request, new TbQueueCallback() {
             @Override
             public void onSuccess(TbQueueMsgMetadata metadata) {
                 log.trace("[{}] Request sent: {}", requestId, metadata);

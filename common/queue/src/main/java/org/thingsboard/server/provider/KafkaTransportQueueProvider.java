@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -35,7 +35,7 @@ import org.thingsboard.server.kafka.TbKafkaSettings;
 import org.thingsboard.server.kafka.TbNodeIdProvider;
 
 @Component
-@ConditionalOnExpression("('${service.type:null}'=='monolith' || '${service.type:null}'=='tb-transport') && '${queue.type:null}'=='kafka'")
+@ConditionalOnExpression("'${queue.type:null}'=='kafka' && ('${service.type:null}'=='monolith' || '${service.type:null}'=='tb-transport')")
 @Slf4j
 public class KafkaTransportQueueProvider implements TransportQueueProvider {
 
@@ -62,9 +62,7 @@ public class KafkaTransportQueueProvider implements TransportQueueProvider {
         responseBuilder.clientId("consumer-transport-" + nodeIdProvider.getNodeId());
         responseBuilder.groupId("rule-engine-node-" + nodeIdProvider.getNodeId());
         responseBuilder.autoCommit(true);
-        //TODO: 2.5
-//        responseBuilder.autoCommitIntervalMs(autoCommitInterval);
-//        responseBuilder.decoder(new TransportApiResponseDecoder());
+        responseBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportApiResponseMsg.parseFrom(msg.getData()), msg.getHeaders()));
 
         DefaultTbQueueRequestTemplate.DefaultTbQueueRequestTemplateBuilder
                 <TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> templateBuilder = DefaultTbQueueRequestTemplate.builder();

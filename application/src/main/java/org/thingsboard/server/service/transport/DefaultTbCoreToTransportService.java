@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,6 +23,7 @@ import org.thingsboard.server.TbQueueCallback;
 import org.thingsboard.server.TbQueueMsgMetadata;
 import org.thingsboard.server.TbQueueProducer;
 import org.thingsboard.server.common.TbProtoQueueMsg;
+import org.thingsboard.server.discovery.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceActorToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.provider.TbCoreQueueProvider;
@@ -34,17 +35,15 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 @Slf4j
 @Service
-@ConditionalOnExpression("'${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core')")
+@ConditionalOnExpression("'${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core'")
 public class DefaultTbCoreToTransportService implements TbCoreToTransportService {
 
-    private final TbCoreQueueProvider tbCoreQueueProvider;
     private final TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> tbTransportProducer;
 
     @Value("${queue.notifications.topic}")
     private String notificationsTopic;
 
     public DefaultTbCoreToTransportService(TbCoreQueueProvider tbCoreQueueProvider) {
-        this.tbCoreQueueProvider = tbCoreQueueProvider;
         this.tbTransportProducer = tbCoreQueueProvider.getTransportMsgProducer();
     }
 
@@ -60,7 +59,7 @@ public class DefaultTbCoreToTransportService implements TbCoreToTransportService
         ToTransportMsg transportMsg = ToTransportMsg.newBuilder().setToDeviceSessionMsg(msg).build();
         log.trace("[{}][{}] Pushing session data to topic: {}", topic, sessionId, transportMsg);
         TbProtoQueueMsg<ToTransportMsg> queueMsg = new TbProtoQueueMsg<>(NULL_UUID, transportMsg);
-        tbTransportProducer.send(topic, queueMsg, new QueueCallbackAdaptor(onSuccess, onFailure));
+        tbTransportProducer.send(TopicPartitionInfo.builder().topic(topic).build(), queueMsg, new QueueCallbackAdaptor(onSuccess, onFailure));
     }
 
     private static class QueueCallbackAdaptor implements TbQueueCallback {

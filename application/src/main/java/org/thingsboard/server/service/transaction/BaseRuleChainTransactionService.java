@@ -24,9 +24,6 @@ import org.thingsboard.rule.engine.api.RuleChainTransactionService;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
-import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
-import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
-import org.thingsboard.server.service.cluster.rpc.ClusterRpcService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 
 import javax.annotation.PostConstruct;
@@ -49,12 +46,6 @@ import java.util.function.Consumer;
 @Service
 @Slf4j
 public class BaseRuleChainTransactionService implements RuleChainTransactionService {
-
-    @Autowired
-    private ClusterRoutingService routingService;
-
-    @Autowired
-    private ClusterRpcService clusterRpcService;
 
     @Autowired
     private DbCallbackExecutorService callbackExecutor;
@@ -110,13 +101,14 @@ public class BaseRuleChainTransactionService implements RuleChainTransactionServ
 
     @Override
     public void endTransaction(TbMsg msg, Consumer<TbMsg> onSuccess, Consumer<Throwable> onFailure) {
-        Optional<ServerAddress> address = routingService.resolveById(msg.getTransactionData().getOriginatorId());
-        if (address.isPresent()) {
-            sendTransactionEventToRemoteServer(msg, address.get());
-            executeOnSuccess(onSuccess, msg);
-        } else {
+        //TODO 2.5
+//        Optional<ServerAddress> address = routingService.resolveById(msg.getTransactionData().getOriginatorId());
+//        if (address.isPresent()) {
+//            sendTransactionEventToRemoteServer(msg, address.get());
+//            executeOnSuccess(onSuccess, msg);
+//        } else {
             endLocalTransaction(msg, onSuccess, onFailure);
-        }
+//        }
     }
 
     @Override
@@ -237,6 +229,7 @@ public class BaseRuleChainTransactionService implements RuleChainTransactionServ
 
     private void sendTransactionEventToRemoteServer(TbMsg msg, ServerAddress address) {
         log.trace("[{}][{}] Originator is monitored on other server: {}", msg.getTransactionData().getOriginatorId(), msg.getTransactionData().getTransactionId(), address);
-        clusterRpcService.tell(address, ClusterAPIProtos.MessageType.CLUSTER_TRANSACTION_SERVICE_MESSAGE, TbMsg.toByteArray(msg));
+        //TODO 2.5
+//        clusterRpcService.tell(address, ClusterAPIProtos.MessageType.CLUSTER_TRANSACTION_SERVICE_MESSAGE, TbMsg.toByteArray(msg));
     }
 }

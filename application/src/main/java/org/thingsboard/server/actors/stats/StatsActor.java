@@ -58,7 +58,8 @@ public class StatsActor extends ContextAwareActor {
         event.setEntityId(msg.getEntityId());
         event.setTenantId(msg.getTenantId());
         event.setType(DataConstants.STATS);
-        event.setBody(toBodyJson(systemContext.getDiscoveryService().getCurrentServer().getServerAddress(), msg.getMessagesProcessed(), msg.getErrorsOccurred()));
+        //TODO 2.5
+//        event.setBody(toBodyJson(systemContext.getDiscoveryService().getCurrentServer().getServerAddress(), msg.getMessagesProcessed(), msg.getErrorsOccurred()));
         systemContext.getEventService().save(event);
     }
 

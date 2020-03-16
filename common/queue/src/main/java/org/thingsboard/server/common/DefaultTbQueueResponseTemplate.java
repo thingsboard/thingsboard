@@ -23,6 +23,7 @@ import org.thingsboard.server.TbQueueHandler;
 import org.thingsboard.server.TbQueueMsg;
 import org.thingsboard.server.TbQueueProducer;
 import org.thingsboard.server.TbQueueResponseTemplate;
+import org.thingsboard.server.discovery.TopicPartitionInfo;
 
 import java.util.List;
 import java.util.UUID;
@@ -108,7 +109,7 @@ public class DefaultTbQueueResponseTemplate<Request extends TbQueueMsg, Response
                                         response -> {
                                             pendingRequestCount.decrementAndGet();
                                             response.getHeaders().put(REQUEST_ID_HEADER, uuidToBytes(requestId));
-                                            responseTemplate.send(responseTopic, response, null);
+                                            responseTemplate.send(TopicPartitionInfo.builder().topic(responseTopic).build(), response, null);
                                         },
                                         e -> {
                                             pendingRequestCount.decrementAndGet();

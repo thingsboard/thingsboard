@@ -56,8 +56,6 @@ import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
-import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
-import org.thingsboard.server.service.cluster.rpc.ClusterRpcService;
 import org.thingsboard.server.service.state.DefaultDeviceStateService;
 import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.telemetry.sub.Subscription;
@@ -103,12 +101,6 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
     private TimeseriesService tsService;
 
     @Autowired
-    private ClusterRoutingService routingService;
-
-    @Autowired
-    private ClusterRpcService rpcService;
-
-    @Autowired
     private EntityViewService entityViewService;
 
     @Autowired
@@ -152,7 +144,8 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
             endTime = entityView.getEndTimeMs();
             sub = getUpdatedSubscriptionState(entityId, sub, entityView);
         }
-        Optional<ServerAddress> server = routingService.resolveById(entityId);
+        //TODO 2.5
+        Optional<ServerAddress> server = Optional.empty();//routingService.resolveById(entityId);
         Subscription subscription;
         if (server.isPresent()) {
             ServerAddress address = server.get();
@@ -340,7 +333,8 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
         while (deviceIterator.hasNext()) {
             Map.Entry<EntityId, Set<Subscription>> e = deviceIterator.next();
             Set<Subscription> subscriptions = e.getValue();
-            Optional<ServerAddress> newAddressOptional = routingService.resolveById(e.getKey());
+            //TODO 2.5
+            Optional<ServerAddress> newAddressOptional = Optional.empty();// routingService.resolveById(e.getKey());
             if (newAddressOptional.isPresent()) {
                 newAddressOptional.ifPresent(serverAddress -> checkSubscriptionsNewAddress(serverAddress, subscriptions));
             } else {
@@ -424,7 +418,8 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
     }
 
     private void onAttributesUpdate(EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
-        Optional<ServerAddress> serverAddress = routingService.resolveById(entityId);
+        //TODO 2.5
+        Optional<ServerAddress> serverAddress = Optional.empty();//routingService.resolveById(entityId);
         if (!serverAddress.isPresent()) {
             onLocalAttributesUpdate(entityId, scope, attributes);
             if (entityId.getEntityType() == EntityType.DEVICE && DataConstants.SERVER_SCOPE.equalsIgnoreCase(scope)) {
@@ -440,7 +435,8 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
     }
 
     private void onTimeseriesUpdate(EntityId entityId, List<TsKvEntry> ts) {
-        Optional<ServerAddress> serverAddress = routingService.resolveById(entityId);
+        //TODO 2.5
+        Optional<ServerAddress> serverAddress = Optional.empty();//routingService.resolveById(entityId);
         if (!serverAddress.isPresent()) {
             onLocalTimeseriesUpdate(entityId, ts);
         } else {
@@ -632,7 +628,8 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
         }
         sub.getKeyStates().entrySet().forEach(e -> builder.addKeyStates(
                 ClusterAPIProtos.SubscriptionKetStateProto.newBuilder().setKey(e.getKey()).setTs(e.getValue()).build()));
-        rpcService.tell(address, ClusterAPIProtos.MessageType.CLUSTER_TELEMETRY_SUBSCRIPTION_CREATE_MESSAGE, builder.build().toByteArray());
+        //TODO 2.5
+//        rpcService.tell(address, ClusterAPIProtos.MessageType.CLUSTER_TELEMETRY_SUBSCRIPTION_CREATE_MESSAGE, builder.build().toByteArray());
     }
 
     private void tellRemoteSubUpdate(ServerAddress address, String sessionId, SubscriptionUpdate update) {
@@ -657,7 +654,8 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
                     builder.addData(dataBuilder.build());
                 }
         );
-        rpcService.tell(address, ClusterAPIProtos.MessageType.CLUSTER_TELEMETRY_SUBSCRIPTION_UPDATE_MESSAGE, builder.build().toByteArray());
+        //TODO 2.5
+//        rpcService.tell(address, ClusterAPIProtos.MessageType.CLUSTER_TELEMETRY_SUBSCRIPTION_UPDATE_MESSAGE, builder.build().toByteArray());
     }
 
     private void tellRemoteAttributesUpdate(ServerAddress address, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
@@ -666,7 +664,8 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
         builder.setEntityType(entityId.getEntityType().name());
         builder.setScope(scope);
         attributes.forEach(v -> builder.addData(toKeyValueProto(v.getLastUpdateTs(), v).build()));
-        rpcService.tell(address, ClusterAPIProtos.MessageType.CLUSTER_TELEMETRY_ATTR_UPDATE_MESSAGE, builder.build().toByteArray());
+        //TODO 2.5
+//        rpcService.tell(address, ClusterAPIProtos.MessageType.CLUSTER_TELEMETRY_ATTR_UPDATE_MESSAGE, builder.build().toByteArray());
     }
 
     private void tellRemoteTimeseriesUpdate(ServerAddress address, EntityId entityId, List<TsKvEntry> ts) {
@@ -674,17 +673,20 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
         builder.setEntityId(entityId.getId().toString());
         builder.setEntityType(entityId.getEntityType().name());
         ts.forEach(v -> builder.addData(toKeyValueProto(v.getTs(), v).build()));
-        rpcService.tell(address, ClusterAPIProtos.MessageType.CLUSTER_TELEMETRY_TS_UPDATE_MESSAGE, builder.build().toByteArray());
+        //TODO 2.5
+//        rpcService.tell(address, ClusterAPIProtos.MessageType.CLUSTER_TELEMETRY_TS_UPDATE_MESSAGE, builder.build().toByteArray());
     }
 
     private void tellRemoteSessionClose(ServerAddress address, String sessionId) {
         ClusterAPIProtos.SessionCloseProto proto = ClusterAPIProtos.SessionCloseProto.newBuilder().setSessionId(sessionId).build();
-        rpcService.tell(address, ClusterAPIProtos.MessageType.CLUSTER_TELEMETRY_SESSION_CLOSE_MESSAGE, proto.toByteArray());
+        //TODO 2.5
+//        rpcService.tell(address, ClusterAPIProtos.MessageType.CLUSTER_TELEMETRY_SESSION_CLOSE_MESSAGE, proto.toByteArray());
     }
 
     private void tellRemoteSubClose(ServerAddress address, String sessionId, int subscriptionId) {
         ClusterAPIProtos.SubscriptionCloseProto proto = ClusterAPIProtos.SubscriptionCloseProto.newBuilder().setSessionId(sessionId).setSubscriptionId(subscriptionId).build();
-        rpcService.tell(address, ClusterAPIProtos.MessageType.CLUSTER_TELEMETRY_SUBSCRIPTION_CLOSE_MESSAGE, proto.toByteArray());
+        //TODO 2.5
+//        rpcService.tell(address, ClusterAPIProtos.MessageType.CLUSTER_TELEMETRY_SUBSCRIPTION_CLOSE_MESSAGE, proto.toByteArray());
     }
 
     private ClusterAPIProtos.KeyValueProto.Builder toKeyValueProto(long ts, KvEntry attr) {

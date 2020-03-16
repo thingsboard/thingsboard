@@ -121,8 +121,10 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public boolean isLocalEntity(EntityId entityId) {
-        Optional<ServerAddress> address = mainCtx.getRoutingService().resolveById(entityId);
-        return !address.isPresent();
+        //TODO 2.5
+//        Optional<ServerAddress> address = mainCtx.getRoutingService().resolveById(entityId);
+//        return !address.isPresent();
+        return true;
     }
 
     private void scheduleMsgWithDelay(Object msg, long delayInMs, ActorRef target) {
@@ -353,13 +355,14 @@ class DefaultTbContext implements TbContext {
                         src.isOneway(), src.getExpirationTime(), new ToDeviceRpcRequestBody(src.getMethod(), src.getBody()));
                 mainCtx.getDeviceRpcService().forwardServerSideRPCRequestToDeviceActor(request, response -> {
                     if (src.isRestApiCall()) {
-                        ServerAddress requestOriginAddress;
-                        if (!StringUtils.isEmpty(src.getOriginHost())) {
-                            requestOriginAddress = new ServerAddress(src.getOriginHost(), src.getOriginPort(), ServerType.CORE);
-                        } else {
-                            requestOriginAddress = mainCtx.getRoutingService().getCurrentServer();
-                        }
-                        mainCtx.getDeviceRpcService().processResponseToServerSideRPCRequestFromRuleEngine(requestOriginAddress, response);
+                        //TODO 2.5
+//                        ServerAddress requestOriginAddress;
+//                        if (!StringUtils.isEmpty(src.getOriginHost())) {
+//                            requestOriginAddress = new ServerAddress(src.getOriginHost(), src.getOriginPort(), ServerType.CORE);
+//                        } else {
+//                            requestOriginAddress = mainCtx.getRoutingService().getCurrentServer();
+//                        }
+//                        mainCtx.getDeviceRpcService().processResponseToServerSideRPCRequestFromRuleEngine(requestOriginAddress, response);
                     }
                     consumer.accept(RuleEngineDeviceRpcResponse.builder()
                             .deviceId(src.getDeviceId())

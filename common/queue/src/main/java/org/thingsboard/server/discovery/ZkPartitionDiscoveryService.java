@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,11 +15,13 @@
  */
 package org.thingsboard.server.discovery;
 
+import com.google.protobuf.InvalidProtocolBufferException;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.SerializationUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.imps.CuratorFrameworkState;
+import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
@@ -39,16 +41,21 @@ import org.springframework.util.Assert;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.cluster.ServerAddress;
+import org.thingsboard.server.gen.transport.TransportProtos;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.Collections;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
+
+import static org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent.Type.CHILD_REMOVED;
 
 @Service
 @ConditionalOnProperty(prefix = "zk", value = "enabled", havingValue = "true", matchIfMissing = false)
@@ -66,16 +73,8 @@ public class ZkPartitionDiscoveryService implements PartitionDiscoveryService, P
     @Value("${zk.zk_dir}")
     private String zkDir;
 
-    @Value("${queue.core.partitions:100}")
-    private Integer corePartitions;
-    @Value("${queue.rule_engine.partitions:100}")
-    private Integer ruleEnginePartitions;
-
-    @Autowired
-    private TbServiceInfoProvider serviceIdProvider;
-
-    private final ConcurrentMap<ServiceType, Integer> partitionSizes = new ConcurrentHashMap<>();
-    private final ConcurrentMap<ServiceType, List<Integer>> myPartitions = new ConcurrentHashMap<>();
+    private final TbServiceInfoProvider serviceInfoProvider;
+    private final PartitionService partitionService;
 
     private ExecutorService reconnectExecutorService;
     private CuratorFramework client;
@@ -85,14 +84,9 @@ public class ZkPartitionDiscoveryService implements PartitionDiscoveryService, P
 
     private volatile boolean stopped = true;
 
-    @Override
-    public List<TopicPartitionInfo> getCurrentPartitions(ServiceType serviceType) {
-        return Collections.emptyList();
-    }
-
-    @Override
-    public TopicPartitionInfo resolve(ServiceType serviceType, TenantId tenantId, EntityId entityId) {
-
+    public ZkPartitionDiscoveryService(TbServiceInfoProvider serviceInfoProvider, PartitionService partitionService) {
+        this.serviceInfoProvider = serviceInfoProvider;
+        this.partitionService = partitionService;
     }
 
     @PostConstruct
@@ -105,13 +99,24 @@ public class ZkPartitionDiscoveryService implements PartitionDiscoveryService, P
 
         reconnectExecutorService = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("zk-discovery"));
 
-        partitionSizes.put(ServiceType.TB_CORE, corePartitions);
-        partitionSizes.put(ServiceType.TB_RULE_ENGINE, ruleEnginePartitions);
-
         log.info("Initializing discovery service using ZK connect string: {}", zkUrl);
 
         zkNodesDir = zkDir + "/nodes";
         initZkClient();
+    }
+
+    private List<TransportProtos.ServiceInfo> getOtherServers() {
+        return cache.getCurrentData().stream()
+                .filter(cd -> !cd.getPath().equals(nodePath))
+                .map(cd -> {
+                    try {
+                        return TransportProtos.ServiceInfo.parseFrom(cd.getData());
+                    } catch (NoSuchElementException | InvalidProtocolBufferException e) {
+                        log.error("Failed to decode ZK node", e);
+                        throw new RuntimeException(e);
+                    }
+                })
+                .collect(Collectors.toList());
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -127,23 +132,20 @@ public class ZkPartitionDiscoveryService implements PartitionDiscoveryService, P
             return;
         }
         publishCurrentServer();
-        getOtherServers().forEach(
-                server -> log.info("Found active server: [{}:{}]", server.getHost(), server.getPort())
-        );
+        partitionService.recalculatePartitions(serviceInfoProvider.getServiceInfo(), getOtherServers());
     }
 
-    @Override
     public synchronized void publishCurrentServer() {
-        ServerInstance self = this.serverInstance.getSelf();
+        TransportProtos.ServiceInfo self = serviceInfoProvider.getServiceInfo();
         if (currentServerExists()) {
-            log.info("[{}:{}] ZK node for current instance already exists, NOT created new one: {}", self.getHost(), self.getPort(), nodePath);
+            log.info("[{}] ZK node for current instance already exists, NOT created new one: {}", self.getServiceId(), nodePath);
         } else {
             try {
-                log.info("[{}:{}] Creating ZK node for current instance", self.getHost(), self.getPort());
+                log.info("[{}] Creating ZK node for current instance", self.getServiceId());
                 nodePath = client.create()
                         .creatingParentsIfNeeded()
-                        .withMode(CreateMode.EPHEMERAL_SEQUENTIAL).forPath(zkNodesDir + "/", SerializationUtils.serialize(self.getServerAddress()));
-                log.info("[{}:{}] Created ZK node for current instance: {}", self.getHost(), self.getPort(), nodePath);
+                        .withMode(CreateMode.EPHEMERAL_SEQUENTIAL).forPath(zkNodesDir + "/", self.toByteArray());
+                log.info("[{}] Created ZK node for current instance: {}", self.getServiceId(), nodePath);
                 client.getConnectionStateListenable().addListener(checkReconnect(self));
             } catch (Exception e) {
                 log.error("Failed to create ZK node", e);
@@ -157,10 +159,10 @@ public class ZkPartitionDiscoveryService implements PartitionDiscoveryService, P
             return false;
         }
         try {
-            ServerInstance self = this.serverInstance.getSelf();
-            ServerAddress registeredServerAdress = null;
-            registeredServerAdress = SerializationUtils.deserialize(client.getData().forPath(nodePath));
-            if (self.getServerAddress() != null && self.getServerAddress().equals(registeredServerAdress)) {
+            TransportProtos.ServiceInfo self = serviceInfoProvider.getServiceInfo();
+            TransportProtos.ServiceInfo registeredServerInfo = null;
+            registeredServerInfo = TransportProtos.ServiceInfo.parseFrom(client.getData().forPath(nodePath));
+            if (self.equals(registeredServerInfo)) {
                 return true;
             }
         } catch (KeeperException.NoNodeException e) {
@@ -171,9 +173,9 @@ public class ZkPartitionDiscoveryService implements PartitionDiscoveryService, P
         return false;
     }
 
-    private ConnectionStateListener checkReconnect(ServerInstance self) {
+    private ConnectionStateListener checkReconnect(TransportProtos.ServiceInfo self) {
         return (client, newState) -> {
-            log.info("[{}:{}] ZK state changed: {}", self.getHost(), self.getPort(), newState);
+            log.info("[{}] ZK state changed: {}", self.getServiceId(), newState);
             if (newState == ConnectionState.LOST) {
                 reconnectExecutorService.submit(this::reconnect);
             }
@@ -250,6 +252,46 @@ public class ZkPartitionDiscoveryService implements PartitionDiscoveryService, P
 
     @Override
     public void childEvent(CuratorFramework curatorFramework, PathChildrenCacheEvent pathChildrenCacheEvent) throws Exception {
-
+        if (stopped) {
+            log.debug("Ignoring {}. Service is stopped.", pathChildrenCacheEvent);
+            return;
+        }
+        if (client.getState() != CuratorFrameworkState.STARTED) {
+            log.debug("Ignoring {}, ZK client is not started, ZK client state [{}]", pathChildrenCacheEvent, client.getState());
+            return;
+        }
+        ChildData data = pathChildrenCacheEvent.getData();
+        if (data == null) {
+            log.debug("Ignoring {} due to empty child data", pathChildrenCacheEvent);
+            return;
+        } else if (data.getData() == null) {
+            log.debug("Ignoring {} due to empty child's data", pathChildrenCacheEvent);
+            return;
+        } else if (nodePath != null && nodePath.equals(data.getPath())) {
+            if (pathChildrenCacheEvent.getType() == CHILD_REMOVED) {
+                log.info("ZK node for current instance is somehow deleted.");
+                publishCurrentServer();
+            }
+            log.debug("Ignoring event about current server {}", pathChildrenCacheEvent);
+            return;
+        }
+        TransportProtos.ServiceInfo instance;
+        try {
+            instance = TransportProtos.ServiceInfo.parseFrom(data.getData());
+        } catch (InvalidProtocolBufferException e) {
+            log.error("Failed to decode server instance for node {}", data.getPath(), e);
+            throw e;
+        }
+        log.info("Processing [{}] event for [{}]", pathChildrenCacheEvent.getType(), instance.getServiceId());
+        switch (pathChildrenCacheEvent.getType()) {
+            case CHILD_ADDED:
+            case CHILD_UPDATED:
+            case CHILD_REMOVED:
+                partitionService.recalculatePartitions(serviceInfoProvider.getServiceInfo(), getOtherServers());
+                break;
+            default:
+                break;
+        }
     }
+
 }

@@ -230,20 +230,21 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         checkActive();
         TbMsg msg = envelope.getMsg();
         EntityId originatorEntityId = msg.getOriginator();
-        Optional<ServerAddress> address = systemContext.getRoutingService().resolveById(originatorEntityId);
-
-        if (address.isPresent()) {
-            onRemoteTellNext(address.get(), envelope);
-        } else {
+        //TODO 2.5
+//        Optional<ServerAddress> address = systemContext.getRoutingService().resolveById(originatorEntityId);
+//        if (address.isPresent()) {
+//            onRemoteTellNext(address.get(), envelope);
+//        } else {
             onLocalTellNext(envelope);
-        }
+//        }
     }
 
     private void onRemoteTellNext(ServerAddress serverAddress, RuleNodeToRuleChainTellNextMsg envelope) {
         TbMsg msg = envelope.getMsg();
         log.debug("Forwarding [{}] msg to remote server [{}] due to changed originator id: [{}]", msg.getId(), serverAddress, msg.getOriginator());
         envelope = new RemoteToRuleChainTellNextMsg(envelope, tenantId, entityId);
-        systemContext.getRpcService().tell(systemContext.getEncodingService().convertToProtoDataMessage(serverAddress, envelope));
+        //TODO 2.5
+//        systemContext.getRpcService().tell(systemContext.getEncodingService().convertToProtoDataMessage(serverAddress, envelope));
     }
 
     private void onLocalTellNext(RuleNodeToRuleChainTellNextMsg envelope) {

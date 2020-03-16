@@ -15,15 +15,6 @@
  */
 package org.thingsboard.server.discovery;
 
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
-
-import java.util.List;
-
 public interface PartitionDiscoveryService {
-
-    List<TopicPartitionInfo> getCurrentPartitions(ServiceType serviceType);
-
-    TopicPartitionInfo resolve(ServiceType serviceType, TenantId tenantId, EntityId entityId);
 
 }

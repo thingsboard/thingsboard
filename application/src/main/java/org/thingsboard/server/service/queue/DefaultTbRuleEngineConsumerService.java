@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,6 +29,7 @@ import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.TbProtoQueueMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.provider.TbCoreQueueProvider;
+import org.thingsboard.server.provider.TbRuleEngineQueueProvider;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 
 import javax.annotation.PostConstruct;
@@ -44,26 +45,26 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
-@ConditionalOnExpression("'${service.type:null}'=='monolith' || '${service.type:null}'=='tb-rule-engine')")
+@ConditionalOnExpression("'${service.type:null}'=='monolith' || '${service.type:null}'=='tb-rule-engine'")
 @Slf4j
 public class DefaultTbRuleEngineConsumerService implements TbRuleEngineConsumerService {
 
 
-    @Value("${queue.rule-engine.poll_interval}")
+    @Value("${queue.rule_engine.poll_interval}")
     private long pollDuration;
-    @Value("${queue.rule-engine.pack_processing_timeout}")
+    @Value("${queue.rule_engine.pack_processing_timeout}")
     private long packProcessingTimeout;
-    @Value("${queue.rule-engine.stats.enabled:false}")
+    @Value("${queue.rule_engine.stats.enabled:false}")
     private boolean statsEnabled;
 
     private final ActorSystemContext actorContext;
-    private final TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToCoreMsg>> consumer;
+    private final TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> consumer;
     private final TbCoreConsumerStats stats = new TbCoreConsumerStats();
     private volatile ExecutorService mainConsumerExecutor;
     private volatile boolean stopped = false;
 
-    public DefaultTbRuleEngineConsumerService(TbCoreQueueProvider tbCoreQueueProvider, ActorSystemContext actorContext) {
-        this.consumer = tbCoreQueueProvider.getToCoreMsgConsumer();
+    public DefaultTbRuleEngineConsumerService(TbRuleEngineQueueProvider tbRuleEngineQueueProvider, ActorSystemContext actorContext) {
+        this.consumer = tbRuleEngineQueueProvider.getToRuleEngineMsgConsumer();
         this.actorContext = actorContext;
     }
 
@@ -78,17 +79,17 @@ public class DefaultTbRuleEngineConsumerService implements TbRuleEngineConsumerS
         mainConsumerExecutor.execute(() -> {
             while (!stopped) {
                 try {
-                    List<TbProtoQueueMsg<TransportProtos.ToCoreMsg>> msgs = consumer.poll(pollDuration);
-                    ConcurrentMap<UUID, TbProtoQueueMsg<TransportProtos.ToCoreMsg>> ackMap = msgs.stream().collect(
+                    List<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> msgs = consumer.poll(pollDuration);
+                    ConcurrentMap<UUID, TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> ackMap = msgs.stream().collect(
                             Collectors.toConcurrentMap(s -> UUID.randomUUID(), Function.identity()));
                     CountDownLatch processingTimeoutLatch = new CountDownLatch(1);
                     ackMap.forEach((id, msg) -> {
                         TbMsgCallback callback = new MsgPackCallback<>(id, processingTimeoutLatch, ackMap);
                         try {
-                            TransportProtos.ToCoreMsg toCoreMsg = msg.getValue();
-                            log.trace("Forwarding message to rule engine {}", toCoreMsg);
-                            if (toCoreMsg.hasToDeviceActorMsg()) {
-                                forwardToDeviceActor(toCoreMsg.getToDeviceActorMsg(), callback);
+                            TransportProtos.ToRuleEngineMsg toRuleEngineMsg = msg.getValue();
+                            log.trace("Forwarding message to rule engine {}", toRuleEngineMsg);
+                            if (toRuleEngineMsg.hasToRuleEngineMsg()) {
+                                forwardToRuleEngineActor(toRuleEngineMsg.getToRuleEngineMsg(), callback);
                             } else {
                                 callback.onSuccess();
                             }
@@ -112,11 +113,12 @@ public class DefaultTbRuleEngineConsumerService implements TbRuleEngineConsumerS
         });
     }
 
-    private void forwardToDeviceActor(TransportProtos.TransportToDeviceActorMsg toDeviceActorMsg, TbMsgCallback callback) {
-        if (statsEnabled) {
-            stats.log(toDeviceActorMsg);
-        }
-        actorContext.getAppActor().tell(new TransportToDeviceActorMsgWrapper(toDeviceActorMsg, callback), ActorRef.noSender());
+    //TODO 2.5
+    private void forwardToRuleEngineActor(TransportProtos.TransportToRuleEngineMsg toDeviceActorMsg, TbMsgCallback callback) {
+//        if (statsEnabled) {
+//            stats.log(toDeviceActorMsg);
+//        }
+//        actorContext.getAppActor().tell(new TransportToDeviceActorMsgWrapper(toDeviceActorMsg, callback), ActorRef.noSender());
     }
 
     @Scheduled(fixedDelayString = "${queue.core.stats.print_interval_ms}")

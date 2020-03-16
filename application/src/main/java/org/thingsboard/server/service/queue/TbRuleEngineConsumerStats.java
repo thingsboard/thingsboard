@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,60 +24,29 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class TbRuleEngineConsumerStats {
 
     private final AtomicInteger totalCounter = new AtomicInteger(0);
-    private final AtomicInteger sessionEventCounter = new AtomicInteger(0);
-//    private final AtomicInteger postTelemetryCounter = new AtomicInteger(0);
-//    private final AtomicInteger postAttributesCounter = new AtomicInteger(0);
-    private final AtomicInteger getAttributesCounter = new AtomicInteger(0);
-    private final AtomicInteger subscribeToAttributesCounter = new AtomicInteger(0);
-    private final AtomicInteger subscribeToRPCCounter = new AtomicInteger(0);
-    private final AtomicInteger toDeviceRPCCallResponseCounter = new AtomicInteger(0);
-//    private final AtomicInteger toServerRPCCallRequestCounter = new AtomicInteger(0);
-    private final AtomicInteger subscriptionInfoCounter = new AtomicInteger(0);
-    private final AtomicInteger claimDeviceCounter = new AtomicInteger(0);
+    private final AtomicInteger postTelemetryCounter = new AtomicInteger(0);
+    private final AtomicInteger postAttributesCounter = new AtomicInteger(0);
+    private final AtomicInteger toServerRPCCallRequestCounter = new AtomicInteger(0);
 
-    public void log(TransportProtos.TransportToDeviceActorMsg msg) {
+    public void log(TransportProtos.TransportToRuleEngineMsg msg) {
         totalCounter.incrementAndGet();
-        if (msg.hasSessionEvent()) {
-            sessionEventCounter.incrementAndGet();
+        if (msg.hasPostTelemetry()) {
+            postTelemetryCounter.incrementAndGet();
         }
-//        if (msg.hasPostTelemetry()) {
-//            postTelemetryCounter.incrementAndGet();
-//        }
-//        if (msg.hasPostAttributes()) {
-//            postAttributesCounter.incrementAndGet();
-//        }
-        if (msg.hasGetAttributes()) {
-            getAttributesCounter.incrementAndGet();
+        if (msg.hasPostAttributes()) {
+            postAttributesCounter.incrementAndGet();
         }
-        if (msg.hasSubscribeToAttributes()) {
-            subscribeToAttributesCounter.incrementAndGet();
-        }
-        if (msg.hasSubscribeToRPC()) {
-            subscribeToRPCCounter.incrementAndGet();
-        }
-        if (msg.hasToDeviceRPCCallResponse()) {
-            toDeviceRPCCallResponseCounter.incrementAndGet();
-        }
-//        if (msg.hasToServerRPCCallRequest()) {
-//            toServerRPCCallRequestCounter.incrementAndGet();
-//        }
-        if (msg.hasSubscriptionInfo()) {
-            subscriptionInfoCounter.incrementAndGet();
-        }
-        if (msg.hasClaimDevice()) {
-            claimDeviceCounter.incrementAndGet();
+        if (msg.hasToServerRPCCallRequest()) {
+            toServerRPCCallRequestCounter.incrementAndGet();
         }
     }
 
     public void printStats() {
         int total = totalCounter.getAndSet(0);
         if (total > 0) {
-            log.info("Transport total [{}] sessionEvents [{}] telemetry [{}] attributes [{}] getAttr [{}] subToAttr [{}] subToRpc [{}] toDevRpc [{}] " +
-                            "toServerRpc [{}] subInfo [{}] claimDevice [{}] ",
-                    total, sessionEventCounter.getAndSet(0), postTelemetryCounter.getAndSet(0),
-                    postAttributesCounter.getAndSet(0), getAttributesCounter.getAndSet(0), subscribeToAttributesCounter.getAndSet(0),
-                    subscribeToRPCCounter.getAndSet(0), toDeviceRPCCallResponseCounter.getAndSet(0),
-                    toServerRPCCallRequestCounter.getAndSet(0), subscriptionInfoCounter.getAndSet(0), claimDeviceCounter.getAndSet(0));
+            log.info("Transport total [{}] telemetry [{}] attributes [{}] toServerRpc [{}]",
+                    total, postTelemetryCounter.getAndSet(0),
+                    postAttributesCounter.getAndSet(0), toServerRPCCallRequestCounter.getAndSet(0));
         }
     }
 }

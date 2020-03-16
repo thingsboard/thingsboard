@@ -32,14 +32,14 @@ import org.thingsboard.server.kafka.TbKafkaSettings;
 import org.thingsboard.server.kafka.TbNodeIdProvider;
 
 @Component
-@ConditionalOnExpression("'${queue.type:null}'=='kafka' && '${service.type:null}'=='tb-core'")
-public class KafkaTbCoreQueueProvider implements TbCoreQueueProvider {
+@ConditionalOnExpression("'${queue.type:null}'=='kafka' && '${service.type:null}'=='monolith'")
+public class KafkaMonolithQueueProvider implements TbCoreQueueProvider, TbRuleEngineQueueProvider {
 
     private final TbKafkaSettings kafkaSettings;
     private final TbNodeIdProvider nodeIdProvider;
     private final TbQueueCoreSettings coreSettings;
 
-    public KafkaTbCoreQueueProvider(TbKafkaSettings kafkaSettings, TbNodeIdProvider nodeIdProvider, TbQueueCoreSettings coreSettings) {
+    public KafkaMonolithQueueProvider(TbKafkaSettings kafkaSettings, TbNodeIdProvider nodeIdProvider, TbQueueCoreSettings coreSettings) {
         this.kafkaSettings = kafkaSettings;
         this.nodeIdProvider = nodeIdProvider;
         this.coreSettings = coreSettings;
@@ -70,6 +70,18 @@ public class KafkaTbCoreQueueProvider implements TbCoreQueueProvider {
         requestBuilder.clientId("producer-core-" + nodeIdProvider.getNodeId());
         requestBuilder.defaultTopic(coreSettings.getTopic());
         return requestBuilder.build();
+    }
+
+    @Override
+    public TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> getToRuleEngineMsgConsumer() {
+        TBKafkaConsumerTemplate.TBKafkaConsumerTemplateBuilder<TbProtoQueueMsg<ToRuleEngineMsg>> responseBuilder = TBKafkaConsumerTemplate.builder();
+        responseBuilder.settings(kafkaSettings);
+        responseBuilder.topic(coreSettings.getTopic());
+        responseBuilder.clientId("tb-rule-engine-consumer-" + nodeIdProvider.getNodeId());
+        responseBuilder.groupId("tb-rule-engine-" + nodeIdProvider.getNodeId());
+        responseBuilder.autoCommit(true);
+        responseBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), ToRuleEngineMsg.parseFrom(msg.getData()), msg.getHeaders()));
+        return responseBuilder.build();
     }
 
     @Override

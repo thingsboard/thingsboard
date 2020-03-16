@@ -45,7 +45,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
-@ConditionalOnExpression("'${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core')")
+@ConditionalOnExpression("'${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core'")
 @Slf4j
 public class DefaultTbCoreConsumerService implements TbCoreConsumerService {
 

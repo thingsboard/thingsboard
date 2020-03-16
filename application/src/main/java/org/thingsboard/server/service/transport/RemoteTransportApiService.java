@@ -44,7 +44,8 @@ import java.util.concurrent.*;
  */
 @Slf4j
 @Service
-@ConditionalOnProperty(prefix = "transport", value = "type", havingValue = "remote")
+//TODO 2.5: This Confitional annotation should be removed, and Service renamed to something meaningful
+//@ConditionalOnProperty(prefix = "transport", value = "type", havingValue = "remote")
 public class RemoteTransportApiService {
 
     private final TbCoreQueueProvider tbCoreQueueProvider;

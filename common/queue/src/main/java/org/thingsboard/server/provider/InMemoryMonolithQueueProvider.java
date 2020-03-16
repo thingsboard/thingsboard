@@ -32,12 +32,12 @@ import org.thingsboard.server.memory.InMemoryTbQueueProducer;
 
 @Slf4j
 @Component
-@ConditionalOnExpression("('${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core') && '${queue.type:null}'=='in-memory'")
-public class InMemoryTbCoreQueueProvider implements TbCoreQueueProvider {
+@ConditionalOnExpression("'${queue.type:null}'=='in-memory' && '${service.type:null}'=='monolith'")
+public class InMemoryMonolithQueueProvider implements TbCoreQueueProvider, TbRuleEngineQueueProvider {
 
     private final TbQueueCoreSettings coreSettings;
 
-    public InMemoryTbCoreQueueProvider(TbQueueCoreSettings coreSettings) {
+    public InMemoryMonolithQueueProvider(TbQueueCoreSettings coreSettings) {
         this.coreSettings = coreSettings;
     }
 
@@ -57,6 +57,12 @@ public class InMemoryTbCoreQueueProvider implements TbCoreQueueProvider {
     public TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> getTbCoreMsgProducer() {
         InMemoryTbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> producer = new InMemoryTbQueueProducer<>(coreSettings.getTopic());
         return producer;
+    }
+
+    @Override
+    public TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> getToRuleEngineMsgConsumer() {
+        InMemoryTbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> consumer = new InMemoryTbQueueConsumer<>(coreSettings.getTopic());
+        return consumer;
     }
 
     @Override

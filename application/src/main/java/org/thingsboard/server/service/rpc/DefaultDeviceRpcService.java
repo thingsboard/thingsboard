@@ -42,8 +42,6 @@ import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
-import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
-import org.thingsboard.server.service.cluster.rpc.ClusterRpcService;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -63,12 +61,6 @@ import java.util.function.Consumer;
 public class DefaultDeviceRpcService implements DeviceRpcService {
 
     private static final ObjectMapper json = new ObjectMapper();
-
-    @Autowired
-    private ClusterRoutingService routingService;
-
-    @Autowired
-    private ClusterRpcService rpcService;
 
     @Autowired
     private DeviceService deviceService;
@@ -106,7 +98,8 @@ public class DefaultDeviceRpcService implements DeviceRpcService {
     @Override
     public void processResponseToServerSideRPCRequestFromRuleEngine(ServerAddress requestOriginAddress, FromDeviceRpcResponse response) {
         log.trace("[{}] Received response to server-side RPC request from rule engine: [{}]", response.getId(), requestOriginAddress);
-        if (routingService.getCurrentServer().equals(requestOriginAddress)) {
+        //TODO 2.5
+        if (true) {//routingService.getCurrentServer().equals(requestOriginAddress)
             UUID requestId = response.getId();
             Consumer<FromDeviceRpcResponse> consumer = localToRuleEngineRpcRequests.remove(requestId);
             if (consumer != null) {
@@ -124,7 +117,8 @@ public class DefaultDeviceRpcService implements DeviceRpcService {
             } else {
                 builder.setError(-1);
             }
-            rpcService.tell(requestOriginAddress, ClusterAPIProtos.MessageType.CLUSTER_RPC_FROM_DEVICE_RESPONSE_MESSAGE, builder.build().toByteArray());
+            //TODO 2.5
+//            rpcService.tell(requestOriginAddress, ClusterAPIProtos.MessageType.CLUSTER_RPC_FROM_DEVICE_RESPONSE_MESSAGE, builder.build().toByteArray());
         }
     }
 
@@ -159,7 +153,8 @@ public class DefaultDeviceRpcService implements DeviceRpcService {
         }
         RpcError error = proto.getError() > 0 ? RpcError.values()[proto.getError()] : null;
         FromDeviceRpcResponse response = new FromDeviceRpcResponse(new UUID(proto.getRequestIdMSB(), proto.getRequestIdLSB()), proto.getResponse(), error);
-        processResponseToServerSideRPCRequestFromRuleEngine(routingService.getCurrentServer(), response);
+        //TODO 2.5
+//        processResponseToServerSideRPCRequestFromRuleEngine(routingService.getCurrentServer(), response);
     }
 
     @Override
@@ -172,8 +167,9 @@ public class DefaultDeviceRpcService implements DeviceRpcService {
         ObjectNode entityNode = json.createObjectNode();
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("requestUUID", msg.getId().toString());
-        metaData.putValue("originHost", routingService.getCurrentServer().getHost());
-        metaData.putValue("originPort", Integer.toString(routingService.getCurrentServer().getPort()));
+        //TODO 2.5
+//        metaData.putValue("originHost", routingService.getCurrentServer().getHost());
+//        metaData.putValue("originPort", Integer.toString(routingService.getCurrentServer().getPort()));
         metaData.putValue("expirationTime", Long.toString(msg.getExpirationTime()));
         metaData.putValue("oneway", Boolean.toString(msg.isOneway()));
 
@@ -197,9 +193,10 @@ public class DefaultDeviceRpcService implements DeviceRpcService {
     }
 
     private void sendRpcRequestToDevice(ToDeviceRpcRequest msg) {
-        ToDeviceRpcRequestActorMsg rpcMsg = new ToDeviceRpcRequestActorMsg(routingService.getCurrentServer(), msg);
-        log.trace("[{}] Forwarding msg {} to device actor!", msg.getDeviceId(), msg);
-        forward(msg.getDeviceId(), rpcMsg);
+        //TODO 2.5
+//        ToDeviceRpcRequestActorMsg rpcMsg = new ToDeviceRpcRequestActorMsg(routingService.getCurrentServer(), msg);
+//        log.trace("[{}] Forwarding msg {} to device actor!", msg.getDeviceId(), msg);
+//        forward(msg.getDeviceId(), rpcMsg);
     }
 
     private <T extends ToDeviceActorNotificationMsg> void forward(DeviceId deviceId, T msg) {

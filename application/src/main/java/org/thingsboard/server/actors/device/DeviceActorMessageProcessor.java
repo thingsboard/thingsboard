@@ -260,7 +260,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         }
     }
 
-    //TODO: 2.5 move this as a notification to the queue;
+    //TODO 2.5 move this as a notification to the queue;
     private void reportLogicalDeviceActivity() {
         systemContext.getDeviceStateService().onDeviceActivity(deviceId);
     }

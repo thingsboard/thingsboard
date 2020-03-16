@@ -57,21 +57,31 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
-import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
-import org.thingsboard.server.service.cluster.rpc.ClusterRpcService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static org.thingsboard.server.common.data.DataConstants.*;
+import static org.thingsboard.server.common.data.DataConstants.ACTIVITY_EVENT;
+import static org.thingsboard.server.common.data.DataConstants.CONNECT_EVENT;
+import static org.thingsboard.server.common.data.DataConstants.DISCONNECT_EVENT;
+import static org.thingsboard.server.common.data.DataConstants.INACTIVITY_EVENT;
+import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 
 /**
  * Created by ashvayka on 01.05.18.
@@ -110,12 +120,6 @@ public class DefaultDeviceStateService implements DeviceStateService {
 
     @Autowired
     private TelemetrySubscriptionService tsSubService;
-
-    @Autowired
-    private ClusterRoutingService routingService;
-
-    @Autowired
-    private ClusterRpcService clusterRpcService;
 
     @Value("${state.defaultInactivityTimeoutInSec}")
     @Getter
@@ -235,19 +239,20 @@ public class DefaultDeviceStateService implements DeviceStateService {
                 TextPageData<Device> page = deviceService.findDevicesByTenantId(tenant.getId(), pageLink);
                 pageLink = page.getNextPageLink();
                 for (Device device : page.getData()) {
-                    if (!routingService.resolveById(device.getId()).isPresent()) {
+                    //TODO 2.5
+//                    if (!routingService.resolveById(device.getId()).isPresent()) {
                         if (!deviceStates.containsKey(device.getId())) {
                             fetchFutures.add(fetchDeviceState(device));
                         }
-                    } else {
-                        Set<DeviceId> tenantDeviceSet = tenantDevices.get(tenant.getId());
-                        if (tenantDeviceSet != null) {
-                            tenantDeviceSet.remove(device.getId());
-                        }
-                        deviceStates.remove(device.getId());
-                        deviceLastReportedActivity.remove(device.getId());
-                        deviceLastSavedActivity.remove(device.getId());
-                    }
+//                    } else {
+//                        Set<DeviceId> tenantDeviceSet = tenantDevices.get(tenant.getId());
+//                        if (tenantDeviceSet != null) {
+//                            tenantDeviceSet.remove(device.getId());
+//                        }
+//                        deviceStates.remove(device.getId());
+//                        deviceLastReportedActivity.remove(device.getId());
+//                        deviceLastSavedActivity.remove(device.getId());
+//                    }
                 }
                 try {
                     Futures.successfulAsList(fetchFutures).get().forEach(this::addDeviceUsingState);
@@ -268,9 +273,10 @@ public class DefaultDeviceStateService implements DeviceStateService {
                     TextPageData<Device> page = deviceService.findDevicesByTenantId(tenant.getId(), pageLink);
                     pageLink = page.getNextPageLink();
                     for (Device device : page.getData()) {
-                        if (!routingService.resolveById(device.getId()).isPresent()) {
+                        //TODO 2.5
+//                        if (!routingService.resolveById(device.getId()).isPresent()) {
                             fetchFutures.add(fetchDeviceState(device));
-                        }
+//                        }
                     }
                     try {
                         Futures.successfulAsList(fetchFutures).get().forEach(this::addDeviceUsingState);
@@ -356,7 +362,8 @@ public class DefaultDeviceStateService implements DeviceStateService {
     private DeviceStateData getOrFetchDeviceStateData(DeviceId deviceId) {
         DeviceStateData deviceStateData = deviceStates.get(deviceId);
         if (deviceStateData == null) {
-            if (!routingService.resolveById(deviceId).isPresent()) {
+            //TODO 2.5
+//            if (!routingService.resolveById(deviceId).isPresent()) {
                 Device device = deviceService.findDeviceById(TenantId.SYS_TENANT_ID, deviceId);
                 if (device != null) {
                     try {
@@ -366,7 +373,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
                         log.debug("[{}] Failed to fetch device state!", deviceId, e);
                     }
                 }
-            }
+//            }
         }
         return deviceStateData;
     }
@@ -389,8 +396,9 @@ public class DefaultDeviceStateService implements DeviceStateService {
     }
 
     private void onDeviceAddedSync(Device device) {
-        Optional<ServerAddress> address = routingService.resolveById(device.getId());
-        if (!address.isPresent()) {
+        //TODO 2.5
+//        Optional<ServerAddress> address = routingService.resolveById(device.getId());
+//        if (!address.isPresent()) {
             Futures.addCallback(fetchDeviceState(device), new FutureCallback<DeviceStateData>() {
                 @Override
                 public void onSuccess(@Nullable DeviceStateData state) {
@@ -402,9 +410,9 @@ public class DefaultDeviceStateService implements DeviceStateService {
                     log.warn("Failed to register device to the state service", t);
                 }
             });
-        } else {
-            sendDeviceEvent(device.getTenantId(), device.getId(), address.get(), true, false, false);
-        }
+//        } else {
+//            sendDeviceEvent(device.getTenantId(), device.getId(), address.get(), true, false, false);
+//        }
     }
 
     private void sendDeviceEvent(TenantId tenantId, DeviceId deviceId, ServerAddress address, boolean added, boolean updated, boolean deleted) {
@@ -417,12 +425,14 @@ public class DefaultDeviceStateService implements DeviceStateService {
         builder.setAdded(added);
         builder.setUpdated(updated);
         builder.setDeleted(deleted);
-        clusterRpcService.tell(address, ClusterAPIProtos.MessageType.CLUSTER_DEVICE_STATE_SERVICE_MESSAGE, builder.build().toByteArray());
+        //TODO 2.5
+//        clusterRpcService.tell(address, ClusterAPIProtos.MessageType.CLUSTER_DEVICE_STATE_SERVICE_MESSAGE, builder.build().toByteArray());
     }
 
     private void onDeviceUpdatedSync(Device device) {
-        Optional<ServerAddress> address = routingService.resolveById(device.getId());
-        if (!address.isPresent()) {
+        //TODO 2.5
+//        Optional<ServerAddress> address = routingService.resolveById(device.getId());
+//        if (!address.isPresent()) {
             DeviceStateData stateData = getOrFetchDeviceStateData(device.getId());
             if (stateData != null) {
                 TbMsgMetaData md = new TbMsgMetaData();
@@ -430,14 +440,15 @@ public class DefaultDeviceStateService implements DeviceStateService {
                 md.putValue("deviceType", device.getType());
                 stateData.setMetaData(md);
             }
-        } else {
-            sendDeviceEvent(device.getTenantId(), device.getId(), address.get(), false, true, false);
-        }
+//        } else {
+//            sendDeviceEvent(device.getTenantId(), device.getId(), address.get(), false, true, false);
+//        }
     }
 
     private void onDeviceDeleted(TenantId tenantId, DeviceId deviceId) {
-        Optional<ServerAddress> address = routingService.resolveById(deviceId);
-        if (!address.isPresent()) {
+        //TODO 2.5
+//        Optional<ServerAddress> address = routingService.resolveById(deviceId);
+//        if (!address.isPresent()) {
             deviceStates.remove(deviceId);
             deviceLastReportedActivity.remove(deviceId);
             deviceLastSavedActivity.remove(deviceId);
@@ -448,9 +459,9 @@ public class DefaultDeviceStateService implements DeviceStateService {
                     tenantDevices.remove(tenantId);
                 }
             }
-        } else {
-            sendDeviceEvent(tenantId, deviceId, address.get(), false, false, true);
-        }
+//        } else {
+//            sendDeviceEvent(tenantId, deviceId, address.get(), false, false, true);
+//        }
     }
 
     private ListenableFuture<DeviceStateData> fetchDeviceState(Device device) {
