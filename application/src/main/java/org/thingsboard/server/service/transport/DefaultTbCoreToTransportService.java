@@ -44,7 +44,7 @@ public class DefaultTbCoreToTransportService implements TbCoreToTransportService
     private String notificationsTopic;
 
     public DefaultTbCoreToTransportService(TbCoreQueueProvider tbCoreQueueProvider) {
-        this.tbTransportProducer = tbCoreQueueProvider.getTransportMsgProducer();
+        this.tbTransportProducer = tbCoreQueueProvider.getTransportNotificationsMsgProducer();
     }
 
     @Override

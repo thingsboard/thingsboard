@@ -18,6 +18,7 @@ package org.thingsboard.server.kafka;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -28,7 +29,7 @@ import java.util.Properties;
  * Created by ashvayka on 25.09.18.
  */
 @Slf4j
-@ConditionalOnProperty(prefix = "kafka", value = "enabled", havingValue = "true", matchIfMissing = false)
+@ConditionalOnExpression("'${queue.type:null}'=='kafka'")
 @Component
 public class TbKafkaSettings {
 
@@ -41,7 +42,7 @@ public class TbKafkaSettings {
     @Value("${queue.kafka.acks}")
     private String acks;
 
-    @Value("${queue.queue.kafka.retries}")
+    @Value("${queue.kafka.retries}")
     private int retries;
 
     @Value("${queue.kafka.batch.size}")

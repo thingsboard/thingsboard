@@ -55,7 +55,7 @@ public class InMemoryMonolithQueueProvider implements TbCoreQueueProvider, TbRul
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> getTransportMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> getTransportNotificationsMsgProducer() {
         return new InMemoryTbQueueProducer<>(notificationSettings.getNotificationsTopic());
     }
 

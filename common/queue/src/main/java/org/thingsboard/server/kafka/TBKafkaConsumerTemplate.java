@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 /**
@@ -39,6 +40,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class TBKafkaConsumerTemplate<T extends TbQueueMsg> implements TbQueueConsumer<T> {
 
+    private final TBKafkaAdmin admin;
     private final KafkaConsumer<String, byte[]> consumer;
     private final TbKafkaDecoder<T> decoder;
     private volatile boolean subscribed;
@@ -63,6 +65,7 @@ public class TBKafkaConsumerTemplate<T extends TbQueueMsg> implements TbQueueCon
         if (maxPollRecords > 0) {
             props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, maxPollRecords);
         }
+        this.admin = new TBKafkaAdmin(settings);
         this.consumer = new KafkaConsumer<>(props);
         this.decoder = decoder;
         this.topic = topic;
@@ -70,13 +73,16 @@ public class TBKafkaConsumerTemplate<T extends TbQueueMsg> implements TbQueueCon
 
     @Override
     public void subscribe() {
+        createTopicIfNotExists(topic);
         consumer.subscribe(Collections.singletonList(topic));
         subscribed = true;
     }
 
     @Override
     public void subscribe(List<Integer> partitions) {
-        consumer.subscribe(partitions.stream().map(partition -> topic + "." + partition).collect(Collectors.toList()));
+        List<String> topicNames = partitions.stream().map(partition -> topic + "." + partition).collect(Collectors.toList());
+        topicNames.forEach(this::createTopicIfNotExists);
+        consumer.subscribe(topicNames);
         subscribed = true;
     }
 
@@ -119,4 +125,7 @@ public class TBKafkaConsumerTemplate<T extends TbQueueMsg> implements TbQueueCon
         return decoder.decode(new KafkaTbQueueMsg(record));
     }
 
+    private void createTopicIfNotExists(String topic) {
+        admin.createTopicIfNotExists(topic);
+    }
 }

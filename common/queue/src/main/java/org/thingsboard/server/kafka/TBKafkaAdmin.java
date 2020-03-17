@@ -18,11 +18,13 @@ package org.thingsboard.server.kafka;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.JdkFutureAdapters;
 import com.google.common.util.concurrent.ListenableFuture;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.admin.TopicDescription;
 import org.apache.kafka.common.KafkaFuture;
+import org.apache.kafka.common.errors.TopicExistsException;
 import org.thingsboard.server.TbQueueAdmin;
 
 import java.util.Collections;
@@ -33,6 +35,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * Created by ashvayka on 24.09.18.
  */
+@Slf4j
 public class TBKafkaAdmin implements TbQueueAdmin {
 
     AdminClient client;
@@ -41,17 +44,31 @@ public class TBKafkaAdmin implements TbQueueAdmin {
         client = AdminClient.create(settings.toProps());
     }
 
+    //TODO 2.5
     @Override
-    public ListenableFuture<Void> createTopicIfNotExists(String topic) {
-
-        KafkaFuture<TopicDescription> topicDescriptionFuture = client.describeTopics(Collections.singleton(topic)).values().get(topic);
-
-        ListenableFuture<TopicDescription> topicFuture = JdkFutureAdapters.listenInPoolThread(topicDescriptionFuture);
-
-        return Futures.transformAsync(topicFuture, topicDescription -> {
-            KafkaFuture<Void> resultFuture = createTopic(new NewTopic(topic, 1, (short) 1)).values().get(topic);
-            return JdkFutureAdapters.listenInPoolThread(resultFuture);
-        });
+    public void createTopicIfNotExists(String topic) {
+        try {
+            createTopic(new NewTopic(topic, 1, (short) 1)).values().get(topic).get();
+        } catch (ExecutionException ee) {
+            if (ee.getCause() instanceof TopicExistsException) {
+                //do nothing
+            } else {
+                log.warn("[{}] Failed to create topic", topic, ee);
+                throw new RuntimeException(ee);
+            }
+        } catch (Exception e) {
+            log.warn("[{}] Failed to create topic", topic, e);
+            throw new RuntimeException(e);
+        }
+//
+//        KafkaFuture<TopicDescription> topicDescriptionFuture = client.describeTopics(Collections.singleton(topic)).values().get(topic);
+//
+//        ListenableFuture<TopicDescription> topicFuture = JdkFutureAdapters.listenInPoolThread(topicDescriptionFuture);
+//
+//        return Futures.transformAsync(topicFuture, topicDescription -> {
+//            KafkaFuture<Void> resultFuture = createTopic(new NewTopic(topic, 1, (short) 1)).values().get(topic);
+//            return JdkFutureAdapters.listenInPoolThread(resultFuture);
+//        });
     }
 
     public void waitForTopic(String topic, long timeout, TimeUnit timeoutUnit) throws InterruptedException, TimeoutException {

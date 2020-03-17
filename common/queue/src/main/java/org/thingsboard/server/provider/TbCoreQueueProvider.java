@@ -37,7 +37,7 @@ public interface TbCoreQueueProvider {
      *
      * @return
      */
-    TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> getTransportMsgProducer();
+    TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> getTransportNotificationsMsgProducer();
 
     /**
      * Used to push messages to instances of TB RuleEngine Service

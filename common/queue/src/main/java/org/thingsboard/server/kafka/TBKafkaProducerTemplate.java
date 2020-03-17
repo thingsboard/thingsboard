@@ -86,9 +86,15 @@ public class TBKafkaProducerTemplate<T extends TbQueueMsg> implements TbQueuePro
         record = new ProducerRecord<>(topic.toString(), null, key, data, headers);
         producer.send(record, (metadata, exception) -> {
             if (exception == null) {
-                callback.onSuccess(new KafkaTbQueueMsgMetadata(metadata));
+                if (callback != null) {
+                    callback.onSuccess(new KafkaTbQueueMsgMetadata(metadata));
+                }
             } else {
-                callback.onFailure(exception);
+                if (callback != null) {
+                    callback.onFailure(exception);
+                } else {
+                    log.warn("Producer template failure", exception);
+                }
             }
         });
     }

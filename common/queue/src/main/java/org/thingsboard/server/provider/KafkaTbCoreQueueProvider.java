@@ -21,8 +21,6 @@ import org.thingsboard.server.TbQueueConsumer;
 import org.thingsboard.server.TbQueueCoreSettings;
 import org.thingsboard.server.TbQueueProducer;
 import org.thingsboard.server.common.TbProtoQueueMsg;
-import org.thingsboard.server.discovery.PartitionChangeEvent;
-import org.thingsboard.server.discovery.ServiceType;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
@@ -48,7 +46,7 @@ public class KafkaTbCoreQueueProvider implements TbCoreQueueProvider {
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> getTransportMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> getTransportNotificationsMsgProducer() {
         TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<TbProtoQueueMsg<ToTransportMsg>> requestBuilder = TBKafkaProducerTemplate.builder();
         requestBuilder.settings(kafkaSettings);
         requestBuilder.clientId("producer-transport-" + nodeIdProvider.getNodeId());
@@ -93,7 +91,6 @@ public class KafkaTbCoreQueueProvider implements TbCoreQueueProvider {
         responseBuilder.clientId("consumer-transport-" + nodeIdProvider.getNodeId());
         responseBuilder.groupId("rule-engine-node-" + nodeIdProvider.getNodeId());
         responseBuilder.autoCommit(true);
-        //TODO 2.5
         responseBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportApiRequestMsg.parseFrom(msg.getData()), msg.getHeaders()));
         return responseBuilder.build();
     }

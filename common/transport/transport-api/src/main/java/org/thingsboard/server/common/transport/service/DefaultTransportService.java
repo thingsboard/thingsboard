@@ -119,6 +119,7 @@ public class DefaultTransportService implements TransportService {
         ruleEngineMsgProducer = queueProvider.getRuleEngineMsgProducer();
         tbCoreMsgProducer = queueProvider.getTbCoreMsgProducer();
         transportNotificationsConsumer = queueProvider.getTransportNotificationsConsumer();
+        transportNotificationsConsumer.subscribe();
         transportApiRequestTemplate.init();
         mainConsumerExecutor.execute(() -> {
             while (!stopped) {
