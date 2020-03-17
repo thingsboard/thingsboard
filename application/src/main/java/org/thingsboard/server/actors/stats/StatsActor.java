@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -58,13 +58,12 @@ public class StatsActor extends ContextAwareActor {
         event.setEntityId(msg.getEntityId());
         event.setTenantId(msg.getTenantId());
         event.setType(DataConstants.STATS);
-        //TODO 2.5
-//        event.setBody(toBodyJson(systemContext.getDiscoveryService().getCurrentServer().getServerAddress(), msg.getMessagesProcessed(), msg.getErrorsOccurred()));
+        event.setBody(toBodyJson(systemContext.getServiceInfoProvider().getServiceId(), msg.getMessagesProcessed(), msg.getErrorsOccurred()));
         systemContext.getEventService().save(event);
     }
 
-    private JsonNode toBodyJson(ServerAddress server, long messagesProcessed, long errorsOccurred) {
-        return mapper.createObjectNode().put("server", server.toString()).put("messagesProcessed", messagesProcessed).put("errorsOccurred", errorsOccurred);
+    private JsonNode toBodyJson(String serviceId, long messagesProcessed, long errorsOccurred) {
+        return mapper.createObjectNode().put("server", serviceId).put("messagesProcessed", messagesProcessed).put("errorsOccurred", errorsOccurred);
     }
 
     public static class ActorCreator extends ContextBasedCreator<StatsActor> {

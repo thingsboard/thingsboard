@@ -134,13 +134,3 @@ message FromDeviceRPCResponseProto {
     string response = 3;
     int32 error = 4;
 }
-
-message DeviceStateServiceMsgProto {
-    int64 tenantIdMSB = 1;
-    int64 tenantIdLSB = 2;
-    int64 deviceIdMSB = 3;
-    int64 deviceIdLSB = 4;
-    bool added = 5;
-    bool updated = 6;
-    bool deleted = 7;
-}

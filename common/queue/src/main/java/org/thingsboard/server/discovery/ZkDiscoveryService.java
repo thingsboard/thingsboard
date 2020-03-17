@@ -16,7 +16,6 @@
 package org.thingsboard.server.discovery;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -31,7 +30,6 @@ import org.apache.curator.retry.RetryForever;
 import org.apache.curator.utils.CloseableUtils;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -39,18 +37,12 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -60,7 +52,7 @@ import static org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent.
 @Service
 @ConditionalOnProperty(prefix = "zk", value = "enabled", havingValue = "true", matchIfMissing = false)
 @Slf4j
-public class ZkPartitionDiscoveryService implements PartitionDiscoveryService, PathChildrenCacheListener {
+public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheListener {
 
     @Value("${zk.url}")
     private String zkUrl;
@@ -84,7 +76,7 @@ public class ZkPartitionDiscoveryService implements PartitionDiscoveryService, P
 
     private volatile boolean stopped = true;
 
-    public ZkPartitionDiscoveryService(TbServiceInfoProvider serviceInfoProvider, PartitionService partitionService) {
+    public ZkDiscoveryService(TbServiceInfoProvider serviceInfoProvider, PartitionService partitionService) {
         this.serviceInfoProvider = serviceInfoProvider;
         this.partitionService = partitionService;
     }

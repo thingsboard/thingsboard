@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -45,6 +45,8 @@ public class KafkaMonolithQueueProvider implements TbCoreQueueProvider, TbRuleEn
     private final TbQueueTransportApiSettings transportApiSettings;
     private final TbQueueTransportNotificationSettings transportNotificationSettings;
 
+    private TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> tbCoreProducer;
+
     public KafkaMonolithQueueProvider(TbKafkaSettings kafkaSettings,
                                       TbNodeIdProvider nodeIdProvider,
                                       TbQueueCoreSettings coreSettings,
@@ -77,13 +79,21 @@ public class KafkaMonolithQueueProvider implements TbCoreQueueProvider, TbRuleEn
         return requestBuilder.build();
     }
 
+    //TODO 2.5 Singleton
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> getTbCoreMsgProducer() {
-        TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<TbProtoQueueMsg<ToCoreMsg>> requestBuilder = TBKafkaProducerTemplate.builder();
-        requestBuilder.settings(kafkaSettings);
-        requestBuilder.clientId("producer-core-" + nodeIdProvider.getNodeId());
-        requestBuilder.defaultTopic(coreSettings.getTopic());
-        return requestBuilder.build();
+        if (tbCoreProducer == null) {
+            synchronized (this) {
+                if (tbCoreProducer == null) {
+                    TBKafkaProducerTemplate.TBKafkaProducerTemplateBuilder<TbProtoQueueMsg<ToCoreMsg>> requestBuilder = TBKafkaProducerTemplate.builder();
+                    requestBuilder.settings(kafkaSettings);
+                    requestBuilder.clientId("producer-core-" + nodeIdProvider.getNodeId());
+                    requestBuilder.defaultTopic(coreSettings.getTopic());
+                    tbCoreProducer = requestBuilder.build();
+                }
+            }
+        }
+        return tbCoreProducer;
     }
 
     @Override

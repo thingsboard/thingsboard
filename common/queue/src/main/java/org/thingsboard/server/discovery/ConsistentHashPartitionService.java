@@ -101,6 +101,7 @@ public class ConsistentHashPartitionService implements PartitionService {
         return topicPartitions;
     }
 
+    //TODO 2.5 This should return cached TopicPartitionInfo objects instead of creating new one every time.
     @Override
     public TopicPartitionInfo resolve(ServiceType serviceType, TenantId tenantId, EntityId entityId) {
         boolean isolated = isolatedTenants.get(tenantId) != null && isolatedTenants.get(tenantId).contains(serviceType);

@@ -36,6 +36,7 @@ public class MsgPackCallback<T extends com.google.protobuf.GeneratedMessageV3> i
 
     @Override
     public void onSuccess() {
+        log.trace("[{}] ON SUCCESS", id);
         if (ackMap.remove(id) != null && ackMap.isEmpty()) {
             processingTimeoutLatch.countDown();
         }
@@ -43,6 +44,7 @@ public class MsgPackCallback<T extends com.google.protobuf.GeneratedMessageV3> i
 
     @Override
     public void onFailure(Throwable t) {
+        log.trace("[{}] ON FAILURE", id);
         TbProtoQueueMsg<T> message = ackMap.remove(id);
         log.warn("Failed to process message: {}", message.getValue(), t);
         if (ackMap.isEmpty()) {

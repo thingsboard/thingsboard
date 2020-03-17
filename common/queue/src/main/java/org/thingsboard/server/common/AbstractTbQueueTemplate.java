@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -46,16 +46,13 @@ public class AbstractTbQueueTemplate {
         return new String(data, StandardCharsets.UTF_8);
     }
 
-    private static ByteBuffer longBuffer = ByteBuffer.allocate(Long.BYTES);
-
     protected static byte[] longToBytes(long x) {
+        ByteBuffer longBuffer = ByteBuffer.allocate(Long.BYTES);
         longBuffer.putLong(0, x);
         return longBuffer.array();
     }
 
     protected static long bytesToLong(byte[] bytes) {
-        longBuffer.put(bytes, 0, bytes.length);
-        longBuffer.flip();//need flip
-        return longBuffer.getLong();
+        return ByteBuffer.wrap(bytes).getLong();
     }
 }

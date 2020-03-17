@@ -57,6 +57,10 @@ public class TbCoreConsumerStats {
         }
     }
 
+    public void log(TransportProtos.DeviceStateServiceMsgProto deviceStateServiceMsg) {
+        //TODO 2.5
+    }
+
     public void printStats() {
         int total = totalCounter.getAndSet(0);
         if (total > 0) {
@@ -67,4 +71,5 @@ public class TbCoreConsumerStats {
                     subscriptionInfoCounter.getAndSet(0), claimDeviceCounter.getAndSet(0));
         }
     }
+
 }

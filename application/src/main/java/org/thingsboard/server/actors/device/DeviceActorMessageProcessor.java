@@ -65,6 +65,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcResponseM
 import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvListProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
+import org.thingsboard.server.service.queue.TbMsgCallback;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.service.rpc.ToDeviceRpcRequestActorMsg;
 import org.thingsboard.server.service.rpc.ToServerRpcResponseActorMsg;
@@ -225,6 +226,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     void process(ActorContext context, TransportToDeviceActorMsgWrapper wrapper) {
         boolean reportDeviceActivity = false;
         TransportToDeviceActorMsg msg = wrapper.getMsg();
+        TbMsgCallback callback = wrapper.getCallback();
         if (msg.hasSessionEvent()) {
             processSessionStateMsgs(msg.getSessionInfo(), msg.getSessionEvent());
         }
@@ -258,6 +260,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         if (reportDeviceActivity) {
             reportLogicalDeviceActivity();
         }
+        callback.onSuccess();
     }
 
     //TODO 2.5 move this as a notification to the queue;

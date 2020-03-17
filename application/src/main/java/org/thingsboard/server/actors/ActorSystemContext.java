@@ -361,7 +361,6 @@ public class ActorSystemContext {
         event.setTenantId(tenantId);
         event.setEntityId(entityId);
         event.setType(DataConstants.ERROR);
-        //TODO 2.5
         event.setBody(toBodyJson(serviceInfoProvider.getServiceInfo().getServiceId(), method, toString(e)));
         persistEvent(event);
     }
@@ -371,7 +370,6 @@ public class ActorSystemContext {
         event.setTenantId(tenantId);
         event.setEntityId(entityId);
         event.setType(DataConstants.LC_EVENT);
-        //TODO 2.5
         event.setBody(toBodyJson(serviceInfoProvider.getServiceInfo().getServiceId(), lcEvent, Optional.ofNullable(e)));
         persistEvent(event);
     }
@@ -403,9 +401,7 @@ public class ActorSystemContext {
 
 
     public String getServerAddress() {
-        //TODO 2.5
-//        return discoveryService.getCurrentServer().getServerAddress().toString();
-        return null;
+        return serviceInfoProvider.getServiceId();
     }
 
     public void persistDebugInput(TenantId tenantId, EntityId entityId, TbMsg tbMsg, String relationType) {

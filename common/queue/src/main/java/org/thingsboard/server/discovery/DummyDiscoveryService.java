@@ -28,7 +28,7 @@ import java.util.Collections;
 @ConditionalOnProperty(prefix = "zk", value = "enabled", havingValue = "false", matchIfMissing = true)
 @Slf4j
 @DependsOn("environmentLogService")
-public class DummyDiscoveryService implements PartitionDiscoveryService {
+public class DummyDiscoveryService implements DiscoveryService {
 
     private final TbServiceInfoProvider serviceInfoProvider;
     private final PartitionService partitionService;

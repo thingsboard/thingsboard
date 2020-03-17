@@ -15,6 +15,6 @@
  */
 package org.thingsboard.server.discovery;
 
-public interface PartitionDiscoveryService {
+public interface DiscoveryService {
 
 }

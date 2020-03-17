@@ -15,14 +15,17 @@
  */
 package org.thingsboard.server.service.state;
 
+import org.springframework.context.ApplicationListener;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.msg.cluster.ServerAddress;
+import org.thingsboard.server.discovery.PartitionChangeEvent;
+import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.service.queue.TbMsgCallback;
 
 /**
  * Created by ashvayka on 01.05.18.
  */
-public interface DeviceStateService {
+public interface DeviceStateService extends ApplicationListener<PartitionChangeEvent> {
 
     void onDeviceAdded(Device device);
 
@@ -38,7 +41,6 @@ public interface DeviceStateService {
 
     void onDeviceInactivityTimeoutUpdate(DeviceId deviceId, long inactivityTimeout);
 
-    void onClusterUpdate();
+    void onQueueMsg(TransportProtos.DeviceStateServiceMsgProto serverAddress, TbMsgCallback bytes);
 
-    void onRemoteMsg(ServerAddress serverAddress, byte[] bytes);
 }
